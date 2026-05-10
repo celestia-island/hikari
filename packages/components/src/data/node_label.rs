@@ -1,36 +1,33 @@
 // hi-components/src/data/node_label.rs
 // TreeNodeLabel component - label text for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;
 
-/// Label text for tree nodes
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct TreeNodeLabelProps {
-    /// Label text to display
     pub label: String,
 
-    /// Optional icon element
-    #[props(default)]
+    #[default]
     pub icon: Option<Element>,
 
-    /// Custom classes
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-/// TreeNodeLabel - The text/icon display for a tree node
 #[component]
 pub fn TreeNodeLabel(props: TreeNodeLabelProps) -> Element {
-    rsx! {
-        // Optional icon
-        if let Some(icon) = &props.icon {
-            span { class: "hi-tree-node-icon", { icon } }
+    // Build icon and label separately, then combine
+    let icon_el = if let Some(icon) = &props.icon {
+        rsx! {
+            span { class: "hi-tree-node-icon", {icon.clone()} }
         }
+    } else {
+        VNode::empty()
+    };
 
-        // Label text
-        span {
-            class: format!("hi-tree-node-label {}", props.class),
-            "{props.label}"
-        }
-    }
+    let label_el = rsx! {
+        span { class: format!("hi-tree-node-label {}", props.class), "{props.label}" }
+    };
+
+    VNode::Fragment(vec![icon_el, label_el])
 }

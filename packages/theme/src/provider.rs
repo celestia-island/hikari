@@ -8,103 +8,90 @@
 //! - `"hikari"` - Light theme (光)
 //! - `"tairitsu"` - Dark theme (tairitsu)
 
-use dioxus::prelude::*;
-use palette::*;
+use crate::{
+    context::{LayoutDirection, ThemeContext},
+    prelude::*,
+};
 
-use crate::context::{LayoutDirection, ThemeContext};
-
-/// Theme provider properties
-///
-/// Defines the props accepted by [`ThemeProvider`] component.
-///
-/// # Fields
-///
-/// - `initial_palette` - Initial theme identifier string (default: "hikari")
-/// - `language` - Language code string (default: "en-US")
-/// - `direction` - Layout direction for RTL support (default: "ltr")
-/// - `children` - Child elements to render within the theme context
-#[derive(Clone, Props, PartialEq)]
+/// Theme Provider Props
+#[derive(Debug, Clone)]
 pub struct ThemeProviderProps {
-    #[props(default = "hikari".to_string())]
+    /// Initial theme identifier ("hikari" or "tairitsu")
     pub initial_palette: String,
-
-    #[props(default = "en-US".to_string())]
+    /// Language code ("en", "zhs", etc.)
     pub language: String,
-
-    #[props(default = "ltr".to_string())]
+    /// Layout direction ("ltr" or "rtl")
     pub direction: String,
+    /// Child elements
+    pub children: Vec<VNode>,
+}
 
-    children: Element,
+impl Default for ThemeProviderProps {
+    fn default() -> Self {
+        Self {
+            initial_palette: "hikari".to_string(),
+            language: "en".to_string(),
+            direction: "ltr".to_string(),
+            children: Vec::new(),
+        }
+    }
 }
 
 /// Theme Provider component
 ///
 /// Provides theme context to all child components with dynamic theme switching support.
 ///
-/// # Props
-///
-/// - `initial_palette` - Initial theme identifier ("hikari" or "tairitsu")
-/// - `language` - Language code ("en-US", "zh-CHS", etc.)
-/// - `direction` - Layout direction ("ltr" or "rtl")
-/// - `children` - Child elements that receive theme context
-///
 /// # Example
 ///
 /// ```rust,no_run
-/// use theme::ThemeProvider;
+/// use hikari_theme::ThemeProvider;
 ///
 /// rsx! {
 ///     ThemeProvider {
 ///         initial_palette: "tairitsu",
-///         language: "zh-CHS",
+///         language: "zhs",
 ///         direction: "ltr",
 ///     } {
 ///         // Children here
 ///     }
 /// }
-/// }
 /// ```
-#[component]
-pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
-    let current_palette = use_signal(|| props.initial_palette.clone());
-    let current_colors = use_signal(|| match props.initial_palette.as_str() {
+#[allow(non_snake_case)]
+pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
+    // Get the theme palette
+    let palette_name = props.initial_palette.as_str();
+    let colors = match palette_name {
         "hikari" => themes::Hikari::palette(),
         "tairitsu" => themes::Tairitsu::palette(),
         _ => themes::Hikari::palette(),
-    });
-    let current_direction = use_signal(|| match props.direction.as_str() {
-        "rtl" => LayoutDirection::Rtl,
-        _ => LayoutDirection::Ltr,
-    });
+    };
 
-    let mut palette_for_callback = current_palette;
-    let mut colors_for_callback = current_colors;
-    let set_theme = Callback::new(move |new_palette: String| {
-        let new_colors = match new_palette.as_str() {
-            "hikari" => themes::Hikari::palette(),
-            "tairitsu" => themes::Tairitsu::palette(),
-            _ => themes::Hikari::palette(),
-        };
-        palette_for_callback.set(new_palette);
-        colors_for_callback.set(new_colors);
-    });
+    let dir = match props.direction.as_str() {
+        "rtl" => "rtl",
+        _ => "ltr",
+    };
 
-    use_context_provider(move || ThemeContext {
-        palette: (*current_palette.read()).clone(),
-        colors: (*current_colors.read()).clone(),
-        direction: *current_direction.read(),
-        set_theme,
-    });
+    // Create theme context
+    let context = ThemeContext {
+        palette: props.initial_palette.clone(),
+        colors,
+        direction: if dir == "rtl" {
+            LayoutDirection::Rtl
+        } else {
+            LayoutDirection::Ltr
+        },
+        set_theme: Callback::new(|_| {}),
+    };
 
-    let dir = current_direction.read().as_str();
+    provide_context(context);
 
     rsx! {
         div {
             class: "hi-theme-provider",
-            "data-theme": "{current_palette.read()}",
-            "data-language": "{props.language}",
-            "dir": "{dir}",
-            {props.children}
+            "data-theme": palette_name,
+            "data-language": props.language.as_str(),
+            "dir": dir,
+            ..props.children
         }
     }
 }

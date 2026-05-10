@@ -1,268 +1,222 @@
-// Unit tests for Layer 2 feedback components (Modal, Dropdown, Drawer)
+mod tests {
 
-use dioxus::prelude::*;
-use hikari_components::feedback::{
-    {DrawerPlacement, DrawerProps, DrawerSize}, {MaskMode, ModalConfig, ModalPosition},
-};
+    use hikari_components::prelude::*;
 
-// ==================== Modal Tests ====================
+    #[test]
+    fn test_glow_props_default() {
+        let props = GlowProps::default();
+        assert_eq!(props.blur, hikari_components::feedback::GlowBlur::Medium);
+        assert_eq!(props.color, hikari_components::feedback::GlowColor::Ghost);
+        assert_eq!(
+            props.intensity,
+            hikari_components::feedback::GlowIntensity::Soft
+        );
+        assert!(!props.block);
+        assert!(props.active_intensity.is_none());
+        assert_eq!(props.preset, hikari_components::feedback::GlowPreset::None);
+        assert_eq!(props.transition_duration, "100");
+    }
 
-#[test]
-fn test_modal_config_default() {
-    let config = ModalConfig::default();
-    assert_eq!(config.position, ModalPosition::Center);
-    assert_eq!(config.mask_mode, MaskMode::Opaque);
-    assert!(config.closable);
-    assert!(config.mask_closable);
-}
+    #[test]
+    fn test_glow_blur_variants() {
+        use hikari_components::feedback::GlowBlur;
+        let blurs = [
+            GlowBlur::None,
+            GlowBlur::Light,
+            GlowBlur::Medium,
+            GlowBlur::Heavy,
+        ];
+        for b in blurs {
+            let props = GlowProps {
+                blur: b,
+                ..Default::default()
+            };
+            assert_eq!(props.blur, b);
+        }
+    }
 
-#[test]
-fn test_modal_config_custom() {
-    let config = ModalConfig {
-        position: ModalPosition::Top,
-        mask_mode: MaskMode::Transparent,
-        closable: false,
-        mask_closable: false,
-        class: "custom-modal".to_string(),
-        ..Default::default()
-    };
-    assert_eq!(config.position, ModalPosition::Top);
-    assert_eq!(config.mask_mode, MaskMode::Transparent);
-    assert!(!config.closable);
-    assert!(!config.mask_closable);
-}
+    #[test]
+    fn test_glow_color_variants() {
+        use hikari_components::feedback::GlowColor;
+        let colors = [
+            GlowColor::Ghost,
+            GlowColor::Primary,
+            GlowColor::Secondary,
+            GlowColor::Danger,
+            GlowColor::Success,
+            GlowColor::Warning,
+            GlowColor::Info,
+        ];
+        for c in colors {
+            let props = GlowProps {
+                color: c,
+                ..Default::default()
+            };
+            assert_eq!(props.color, c);
+        }
+    }
 
-#[test]
-fn test_modal_position_center() {
-    let config = ModalConfig {
-        position: ModalPosition::Center,
-        ..Default::default()
-    };
-    assert_eq!(config.position, ModalPosition::Center);
-}
+    #[test]
+    fn test_glow_intensity_variants() {
+        use hikari_components::feedback::GlowIntensity;
+        let intensities = [
+            GlowIntensity::Dim,
+            GlowIntensity::Soft,
+            GlowIntensity::Bright,
+        ];
+        for i in intensities {
+            let props = GlowProps {
+                intensity: i,
+                ..Default::default()
+            };
+            assert_eq!(props.intensity, i);
+        }
+    }
 
-#[test]
-fn test_modal_position_top_left() {
-    let config = ModalConfig {
-        position: ModalPosition::TopLeft,
-        ..Default::default()
-    };
-    assert_eq!(config.position, ModalPosition::TopLeft);
-}
+    #[test]
+    fn test_glow_preset_variants() {
+        use hikari_components::feedback::GlowPreset;
+        let presets = [
+            GlowPreset::None,
+            GlowPreset::Pulse,
+            GlowPreset::Breathe,
+            GlowPreset::Shimmer,
+        ];
+        for p in presets {
+            let props = GlowProps {
+                preset: p,
+                ..Default::default()
+            };
+            assert_eq!(props.preset, p);
+        }
+    }
 
-#[test]
-fn test_modal_position_top_right() {
-    let config = ModalConfig {
-        position: ModalPosition::TopRight,
-        ..Default::default()
-    };
-    assert_eq!(config.position, ModalPosition::TopRight);
-}
+    #[test]
+    fn test_glow_with_active_intensity() {
+        let props = GlowProps {
+            active_intensity: Some(hikari_components::feedback::GlowIntensity::Bright),
+            ..Default::default()
+        };
+        assert_eq!(
+            props.active_intensity,
+            Some(hikari_components::feedback::GlowIntensity::Bright)
+        );
+    }
 
-#[test]
-fn test_modal_mask_mode_opaque() {
-    let config = ModalConfig {
-        mask_mode: MaskMode::Opaque,
-        ..Default::default()
-    };
-    assert_eq!(config.mask_mode, MaskMode::Opaque);
-}
+    #[test]
+    fn test_glow_with_block() {
+        let props = GlowProps {
+            block: true,
+            ..Default::default()
+        };
+        assert!(props.block);
+    }
 
-#[test]
-fn test_modal_mask_mode_transparent() {
-    let config = ModalConfig {
-        mask_mode: MaskMode::Transparent,
-        ..Default::default()
-    };
-    assert_eq!(config.mask_mode, MaskMode::Transparent);
-}
+    #[test]
+    fn test_glow_with_custom_class() {
+        let props = GlowProps {
+            class: "custom-glow".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(props.class, "custom-glow");
+    }
 
-#[test]
-fn test_modal_with_custom_class() {
-    let config = ModalConfig {
-        class: "my-custom-modal-class".to_string(),
-        ..Default::default()
-    };
-    assert_eq!(config.class, "my-custom-modal-class");
-}
+    #[test]
+    fn test_glow_blur_display() {
+        use hikari_components::feedback::GlowBlur;
+        use tairitsu_vdom::IntoAttrValue;
+        assert_eq!(GlowBlur::None.into_attr_value(), Some("none".to_string()));
+        assert_eq!(GlowBlur::Light.into_attr_value(), Some("light".to_string()));
+        assert_eq!(
+            GlowBlur::Medium.into_attr_value(),
+            Some("medium".to_string())
+        );
+        assert_eq!(GlowBlur::Heavy.into_attr_value(), Some("heavy".to_string()));
+    }
 
-// ==================== Drawer Tests ====================
+    #[test]
+    fn test_glow_color_display() {
+        use hikari_components::feedback::GlowColor;
+        use tairitsu_vdom::IntoAttrValue;
+        assert_eq!(
+            GlowColor::Ghost.into_attr_value(),
+            Some("ghost".to_string())
+        );
+        assert_eq!(
+            GlowColor::Primary.into_attr_value(),
+            Some("primary".to_string())
+        );
+        assert_eq!(
+            GlowColor::Danger.into_attr_value(),
+            Some("danger".to_string())
+        );
+    }
 
-#[test]
-fn test_drawer_props_default() {
-    let props = DrawerProps {
-        open: false,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
+    #[test]
+    fn test_glow_preset_display() {
+        use hikari_components::feedback::GlowPreset;
+        use tairitsu_vdom::IntoAttrValue;
+        assert_eq!(GlowPreset::None.into_attr_value(), None);
+        assert_eq!(
+            GlowPreset::Pulse.into_attr_value(),
+            Some("pulse".to_string())
+        );
+        assert_eq!(
+            GlowPreset::Breathe.into_attr_value(),
+            Some("breathe".to_string())
+        );
+        assert_eq!(
+            GlowPreset::Shimmer.into_attr_value(),
+            Some("shimmer".to_string())
+        );
+    }
 
-    assert!(!props.open);
-    assert_eq!(props.placement, DrawerPlacement::Right);
-    assert_eq!(props.size, DrawerSize::Medium);
-    assert!(props.mask_closable);
-    assert!(props.title.is_none());
-    assert!(props.footer.is_none());
-}
+    #[test]
+    fn test_portal_id_counter_increments() {
+        use hikari_components::portal::generate_portal_id;
+        let id1 = generate_portal_id();
+        let id2 = generate_portal_id();
+        assert_ne!(id1, id2);
+    }
 
-#[test]
-fn test_drawer_open() {
-    let props = DrawerProps {
-        open: true,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert!(props.open);
-}
+    #[test]
+    fn test_portal_positioning_strategies() {
+        use hikari_components::portal::PortalPositionStrategy;
+        let _fixed = PortalPositionStrategy::Fixed(100.0, 200.0);
+        let _trigger = PortalPositionStrategy::TriggerBased {
+            placement: hikari_components::portal::TriggerPlacement::Bottom,
+        };
+    }
 
-#[test]
-fn test_drawer_closed() {
-    let props = DrawerProps {
-        open: false,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert!(!props.open);
-}
+    #[test]
+    fn test_portal_mask_modes() {
+        use hikari_components::portal::PortalMaskMode;
+        let modes = [PortalMaskMode::Dimmed, PortalMaskMode::Transparent];
+        for m in modes {
+            let _ = m;
+        }
+    }
 
-#[test]
-fn test_drawer_placement_right() {
-    let props = DrawerProps {
-        open: false,
-        placement: DrawerPlacement::Right,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.placement, DrawerPlacement::Right);
-}
-
-#[test]
-fn test_drawer_placement_left() {
-    let props = DrawerProps {
-        open: false,
-        placement: DrawerPlacement::Left,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.placement, DrawerPlacement::Left);
-}
-
-#[test]
-fn test_drawer_placement_top() {
-    let props = DrawerProps {
-        open: false,
-        placement: DrawerPlacement::Top,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.placement, DrawerPlacement::Top);
-}
-
-#[test]
-fn test_drawer_placement_bottom() {
-    let props = DrawerProps {
-        open: false,
-        placement: DrawerPlacement::Bottom,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.placement, DrawerPlacement::Bottom);
-}
-
-#[test]
-fn test_drawer_size_small() {
-    let props = DrawerProps {
-        open: false,
-        size: DrawerSize::Small,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.size, DrawerSize::Small);
-}
-
-#[test]
-fn test_drawer_size_medium() {
-    let props = DrawerProps {
-        open: false,
-        size: DrawerSize::Medium,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.size, DrawerSize::Medium);
-}
-
-#[test]
-fn test_drawer_size_large() {
-    let props = DrawerProps {
-        open: false,
-        size: DrawerSize::Large,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.size, DrawerSize::Large);
-}
-
-#[test]
-fn test_drawer_mask_closable() {
-    let props = DrawerProps {
-        open: false,
-        mask_closable: true,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert!(props.mask_closable);
-}
-
-#[test]
-fn test_drawer_not_mask_closable() {
-    let props = DrawerProps {
-        open: false,
-        mask_closable: false,
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert!(!props.mask_closable);
-}
-
-#[test]
-fn test_drawer_with_title() {
-    let props = DrawerProps {
-        open: false,
-        title: Some("Settings".to_string()),
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.title, Some("Settings".to_string()));
-}
-
-#[test]
-fn test_drawer_with_footer() {
-    let footer = rsx! {
-        div { "Footer content" }
-    };
-    let props = DrawerProps {
-        open: false,
-        footer: Some(footer),
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert!(props.footer.is_some());
-}
-
-#[test]
-fn test_drawer_with_custom_class() {
-    let props = DrawerProps {
-        open: false,
-        class: "custom-drawer".to_string(),
-        children: rsx! { div { "Content" } },
-        ..Default::default()
-    };
-    assert_eq!(props.class, "custom-drawer");
-}
-
-// ==================== Dropdown Tests ====================
-
-#[test]
-fn test_dropdown_default_renders() {
-    // Test that Dropdown can be imported and used
-    // Dropdown is a complex component, we test its basic rendering capability
+    #[test]
+    fn test_portal_trigger_placements() {
+        use hikari_components::portal::TriggerPlacement;
+        let placements = [
+            TriggerPlacement::Bottom,
+            TriggerPlacement::Top,
+            TriggerPlacement::Left,
+            TriggerPlacement::Right,
+            TriggerPlacement::BottomLeft,
+            TriggerPlacement::BottomRight,
+            TriggerPlacement::TopLeft,
+            TriggerPlacement::TopRight,
+            TriggerPlacement::LeftTop,
+            TriggerPlacement::LeftBottom,
+            TriggerPlacement::RightTop,
+            TriggerPlacement::RightBottom,
+            TriggerPlacement::Center,
+        ];
+        for p in placements {
+            let _ = p;
+        }
+    }
 }

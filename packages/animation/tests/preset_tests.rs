@@ -1,13 +1,12 @@
 // E2E tests for animation presets
 // Tests verify that animation presets compile and generate correct CSS
+// Only available on browser WASM (wasm32-unknown-unknown)
 
-#[cfg(target_arch = "wasm32")]
 use hikari_animation::presets::transition::{
-    bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in, slide_out, zoom_in,
-    zoom_out, SlideDirection,
+    SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
+    slide_out, zoom_in, zoom_out,
 };
 
-#[cfg(target_arch = "wasm32")]
 #[test]
 fn test_transition_presets_compile() {
     // Test that all transition presets compile and return CSS strings
@@ -51,7 +50,6 @@ fn test_transition_presets_compile() {
     assert!(rotate_out_css.contains("ease-in"));
 }
 
-#[cfg(target_arch = "wasm32")]
 #[test]
 fn test_all_slide_directions() {
     let directions = vec![

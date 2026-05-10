@@ -7,6 +7,9 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+#[cfg(feature = "tairitsu")]
+use tairitsu_vdom::IntoAttrValue;
+
 /// Material Design Icons - minimal set for Hikari
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum MdiIcon {
@@ -23,14 +26,17 @@ pub enum MdiIcon {
 
     // Actions
     Magnify,
+    MagnifyPlus,
     Cog,
     Check,
     GestureTap,
     Translate,
+    Microphone,
 
     // Media / Playback
     Play,
     Pause,
+    Stop,
     VolumeHigh,
     VolumeMute,
     Fullscreen,
@@ -93,6 +99,7 @@ pub enum MdiIcon {
     CheckboxMarkedCircle,
     ToggleSwitch,
     Minus,
+    Plus,
 
     // Data
     Table,
@@ -124,7 +131,6 @@ pub enum MdiIcon {
     ArrowExpandHorizontal,
     ChartTimeline,
     BookOpen,
-    MagnifyPlus,
 
     // Theme
     MoonWaningCrescent,
@@ -148,8 +154,10 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::Check => write!(f, "check"),
             MdiIcon::GestureTap => write!(f, "gesture-tap"),
             MdiIcon::Translate => write!(f, "translate"),
+            MdiIcon::Microphone => write!(f, "microphone"),
             MdiIcon::Play => write!(f, "play"),
             MdiIcon::Pause => write!(f, "pause"),
+            MdiIcon::Stop => write!(f, "stop"),
             MdiIcon::VolumeHigh => write!(f, "volume-high"),
             MdiIcon::VolumeMute => write!(f, "volume-mute"),
             MdiIcon::Fullscreen => write!(f, "fullscreen"),
@@ -200,6 +208,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::CheckboxMarkedCircle => write!(f, "checkbox-marked-circle"),
             MdiIcon::ToggleSwitch => write!(f, "toggle-switch"),
             MdiIcon::Minus => write!(f, "minus"),
+            MdiIcon::Plus => write!(f, "plus"),
             MdiIcon::Table => write!(f, "table"),
             MdiIcon::Tree => write!(f, "tree"),
             MdiIcon::SourceBranch => write!(f, "source-branch"),
@@ -245,8 +254,10 @@ impl std::convert::From<&str> for MdiIcon {
             "check" => MdiIcon::Check,
             "gesture-tap" => MdiIcon::GestureTap,
             "translate" => MdiIcon::Translate,
+            "microphone" => MdiIcon::Microphone,
             "play" => MdiIcon::Play,
             "pause" => MdiIcon::Pause,
+            "stop" => MdiIcon::Stop,
             "volume-high" => MdiIcon::VolumeHigh,
             "volume-mute" => MdiIcon::VolumeMute,
             "fullscreen" => MdiIcon::Fullscreen,
@@ -297,6 +308,7 @@ impl std::convert::From<&str> for MdiIcon {
             "checkbox-marked-circle" => MdiIcon::CheckboxMarkedCircle,
             "toggle-switch" => MdiIcon::ToggleSwitch,
             "minus" => MdiIcon::Minus,
+            "plus" => MdiIcon::Plus,
             "table" => MdiIcon::Table,
             "tree" => MdiIcon::Tree,
             "source-branch" => MdiIcon::SourceBranch,
@@ -322,5 +334,13 @@ impl std::convert::From<&str> for MdiIcon {
             "white-balance-sunny" => MdiIcon::WhiteBalanceSunny,
             _ => MdiIcon::Alert, // Default fallback
         }
+    }
+}
+
+// Implement IntoAttrValue so MdiIcon can be used as HTML attributes
+#[cfg(feature = "tairitsu")]
+impl IntoAttrValue for MdiIcon {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
     }
 }

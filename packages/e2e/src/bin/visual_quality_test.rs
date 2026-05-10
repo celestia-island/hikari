@@ -2,7 +2,7 @@
 // Binary to run visual quality and interactive behavior tests
 
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
-use thirtyfour::{WebDriver, prelude::*};
+use thirtyfour::{prelude::*, WebDriver};
 use tracing::{error, info};
 
 #[tokio::main]

@@ -7,7 +7,7 @@
 // Drag Layer Container
 // ============================================
 
-.hikari-drag-layer {
+.hi-drag-layer {
     position: fixed;
     inset: 0;
     pointer-events: none;
@@ -19,7 +19,7 @@
 // Drag Preview (Ghost Element)
 // ============================================
 
-.hikari-drag-preview {
+.hi-drag-preview {
     position: absolute;
     pointer-events: none;
     opacity: 0.8;
@@ -41,13 +41,13 @@
     animation: hikari-drag-glow 1.5s ease-in-out infinite;
 
     // Scale effect on drag start
-    &.hikari-drag-starting {
+    &.hi-drag-starting {
         transform: rotate(3deg) scale(0.9);
         opacity: 0.6;
     }
 
     // Scale effect on drag end
-    &.hikari-drag-ending {
+    &.hi-drag-ending {
         transform: rotate(0deg) scale(1);
         opacity: 0;
     }
@@ -57,7 +57,7 @@
 // Drag Preview Content
 // ============================================
 
-.hikari-drag-preview-content {
+.hi-drag-preview-content {
     padding: $hikari-spacing-md;
     min-width: 100px;
     min-height: 40px;
@@ -73,14 +73,14 @@
     text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-.hikari-drag-preview-icon {
+.hi-drag-preview-icon {
     width: 20px;
     height: 20px;
     color: var(--hi-color-primary);
     filter: drop-shadow(0 0 8px currentColor);
 }
 
-.hikari-drag-preview-label {
+.hi-drag-preview-label {
     @include text-ellipsis;
     font-weight: 500;
 }
@@ -89,7 +89,7 @@
 // Drag Cursor States
 // ============================================
 
-.hikari-draggable {
+.hi-draggable {
     cursor: grab;
     transition: transform $hikari-transition-fast;
 
@@ -103,7 +103,7 @@
     }
 
     // Dragging state on original element
-    &.hikari-dragging {
+    &.hi-dragging {
         opacity: 0.4;
         cursor: grabbing;
     }
@@ -113,12 +113,12 @@
 // Drop Zone Indicator
 // ============================================
 
-.hikari-drop-zone {
+.hi-drop-zone {
     position: relative;
     transition: all $hikari-transition-base;
 
     // Valid drop target
-    &.hikari-drop-zone-valid {
+    &.hi-drop-zone-valid {
         border-color: var(--hi-color-success);
         background-color: rgba(16, 185, 129, 0.05);
         box-shadow:
@@ -127,7 +127,7 @@
     }
 
     // Invalid drop target
-    &.hikari-drop-zone-invalid {
+    &.hi-drop-zone-invalid {
         border-color: var(--hi-color-danger);
         background-color: rgba(239, 68, 68, 0.05);
         box-shadow:
@@ -136,7 +136,7 @@
     }
 
     // Active drop target (dragging over)
-    &.hikari-drop-zone-active {
+    &.hi-drop-zone-active {
         border-color: var(--hi-color-accent);
         background-color: rgba(245, 158, 11, 0.1);
         box-shadow:
@@ -152,7 +152,7 @@
 // Drag Overlay
 // ============================================
 
-.hikari-drag-overlay {
+.hi-drag-overlay {
     position: absolute;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
@@ -161,7 +161,7 @@
     transition: opacity $hikari-transition-base;
     pointer-events: none;
 
-    &.hikari-drag-overlay-active {
+    &.hi-drag-overlay-active {
         opacity: 1;
         pointer-events: auto;
     }
@@ -171,7 +171,7 @@
 // Drag Handle
 // ============================================
 
-.hikari-drag-handle {
+.hi-drag-handle {
     display: inline-flex;
     align-items: center;
     gap: $hikari-spacing-xs;
@@ -197,18 +197,18 @@
         transform: scale(0.95);
     }
 
-    &.hikari-drag-handle-dragging {
+    &.hi-drag-handle-dragging {
         opacity: 0.6;
     }
 }
 
-.hikari-drag-handle-icon {
+.hi-drag-handle-icon {
     width: 16px;
     height: 16px;
     color: currentColor;
 }
 
-.hikari-drag-handle-label {
+.hi-drag-handle-label {
     font-size: $hikari-font-size-xs;
     font-weight: 500;
     text-transform: uppercase;
@@ -220,18 +220,18 @@
 // ============================================
 
 // Card preview
-.hikari-drag-preview-card {
+.hi-drag-preview-card {
     @include card-base;
     min-width: 200px;
 
-    .hikari-drag-preview-content {
+    .hi-drag-preview-content {
         flex-direction: column;
         align-items: flex-start;
     }
 }
 
 // List item preview
-.hikari-drag-preview-list-item {
+.hi-drag-preview-list-item {
     background-color: var(--hi-color-surface);
     border-left: 3px solid var(--hi-color-primary);
     border-radius: $hikari-radius-sm;
@@ -239,13 +239,13 @@
     min-width: 150px;
     box-shadow: $hikari-shadow-md;
 
-    .hikari-drag-preview-content {
+    .hi-drag-preview-content {
         justify-content: flex-start;
     }
 }
 
 // Table row preview
-.hikari-drag-preview-table-row {
+.hi-drag-preview-table-row {
     display: flex;
     align-items: center;
     background-color: var(--hi-color-surface);
@@ -253,7 +253,7 @@
     border-radius: $hikari-radius-sm;
     overflow: hidden;
 
-    .hikari-drag-preview-cell {
+    .hi-drag-preview-cell {
         padding: $hikari-spacing-sm $hikari-spacing-md;
         border-right: 1px solid var(--hi-color-border);
         font-size: $hikari-font-size-sm;
@@ -269,7 +269,7 @@
 // Drag Line Indicator
 // ============================================
 
-.hikari-drag-line {
+.hi-drag-line {
     position: absolute;
     background-color: var(--hi-color-primary);
     transition: all $hikari-transition-fast;
@@ -279,21 +279,21 @@
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
 
     // Horizontal line
-    &.hikari-drag-line-horizontal {
+    &.hi-drag-line-horizontal {
         height: 3px;
         left: 0;
         right: 0;
     }
 
     // Vertical line
-    &.hikari-drag-line-vertical {
+    &.hi-drag-line-vertical {
         width: 3px;
         top: 0;
         bottom: 0;
     }
 
     // Pulsing animation
-    &.hikari-drag-line-active {
+    &.hi-drag-line-active {
         animation: hi-pulse 1s ease-in-out infinite;
     }
 }
@@ -302,7 +302,7 @@
 // Multiple Selection Drag
 // ============================================
 
-.hikari-drag-preview-multiple {
+.hi-drag-preview-multiple {
     display: flex;
     flex-direction: column;
     gap: $hikari-spacing-xs;
@@ -328,7 +328,7 @@
     }
 }
 
-.hikari-drag-preview-item {
+.hi-drag-preview-item {
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
@@ -342,22 +342,22 @@
 // Z-Index Management
 // ============================================
 
-.hikari-drag-layer {
+.hi-drag-layer {
     // Ensure drag layer is always on top
     z-index: 9999;
 
     // Drag preview z-index
-    .hikari-drag-preview {
+    .hi-drag-preview {
         z-index: 10000;
     }
 
     // Drag line z-index
-    .hikari-drag-line {
+    .hi-drag-line {
         z-index: 10001;
     }
 
     // Drop overlay z-index
-    .hikari-drag-overlay {
+    .hi-drag-overlay {
         z-index: 9998;
     }
 }
@@ -367,17 +367,17 @@
 // ============================================
 
 @include mobile {
-    .hikari-drag-preview {
+    .hi-drag-preview {
         transform: rotate(2deg) scale(0.9);
     }
 
-    .hikari-drag-preview-content {
+    .hi-drag-preview-content {
         padding: $hikari-spacing-sm;
         font-size: $hikari-font-size-xs;
     }
 
-    .hikari-drop-zone {
-        &.hikari-drop-zone-active {
+    .hi-drop-zone {
+        &.hi-drop-zone-active {
             animation: none; // Disable animation on mobile for performance
         }
     }

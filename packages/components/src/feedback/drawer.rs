@@ -1,13 +1,19 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
-use animation::style::{CssProperty, StyleStringBuilder};
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, DrawerClass};
 
-use crate::styled::StyledComponent;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-/// Drawer placement
+use tairitsu_hooks::ReactiveSignal;
+
+use crate::{
+    platform,
+    prelude::*,
+    styled::StyledComponent,
+};
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {
     #[default]
@@ -17,7 +23,6 @@ pub enum DrawerPlacement {
     Bottom,
 }
 
-/// Drawer size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerSize {
     #[default]
@@ -26,95 +31,71 @@ pub enum DrawerSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`Drawer`] component, controlling placement, size, mask behavior, and content.
+
+struct DrawerAnimState {
+    start_ts: Option<f64>,
+    stopped: bool,
+}
+
+const DRAWER_ANIM_DURATION_MS: f64 = 300.0;
+
+fn drawer_anim_tick(
+    state: Rc<RefCell<DrawerAnimState>>,
+    progress_signal: ReactiveSignal<f64>,
+) {
+    platform::request_animation_frame_with_timestamp(move |ts| {
+        let mut s = state.borrow_mut();
+        if s.stopped {
+            return;
+        }
+        let start = s.start_ts.unwrap_or(ts);
+        if s.start_ts.is_none() {
+            s.start_ts = Some(ts);
+        }
+        let elapsed = ts - start;
+        let progress = (elapsed / DRAWER_ANIM_DURATION_MS).min(1.0);
+        drop(s);
+
+        let eased = 1.0 - (1.0 - progress).powi(3);
+        progress_signal.set(eased);
+
+        if progress < 1.0 {
+            drawer_anim_tick(state.clone(), progress_signal.clone());
+        }
+    });
+}
+
+#[define_props]
 pub struct DrawerProps {
-    /// Whether the drawer is open
     pub open: bool,
 
-    /// Callback when open state changes
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
 
-    /// Drawer placement
-    #[props(default)]
     pub placement: DrawerPlacement,
 
-    /// Drawer size
-    #[props(default)]
     pub size: DrawerSize,
 
-    /// Whether clicking outside closes the drawer
-    #[props(default)]
     pub mask_closable: bool,
 
-    /// Drawer title (optional)
-    #[props(default)]
     pub title: Option<String>,
 
-    /// Drawer footer content (optional)
-    #[props(default)]
     pub footer: Option<Element>,
 
-    /// Additional CSS class
-    #[props(default)]
     pub class: String,
 
-    /// Drawer content
     pub children: Element,
 }
 
-impl Default for DrawerProps {
-    fn default() -> Self {
-        Self {
-            open: false,
-            on_close: None,
-            placement: Default::default(),
-            size: Default::default(),
-            mask_closable: true,
-            title: None,
-            footer: None,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
-/// Drawer component with slide-in animation
-///
-/// A drawer panel that slides in from the edge of the screen.
-/// Commonly used for settings, forms, or detailed content.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Drawer, Button};
-///
-/// fn app() -> Element {
-///     let mut open = use_signal(|| false);
-///
-///     rsx! {
-///         Button {
-///             onclick: move |_| open.set(true),
-///             "Open Drawer"
-///         }
-///         Drawer {
-///             open: open(),
-///             on_close: move |_| open.set(false),
-///             title: Some("Settings".to_string()),
-///             div { "Drawer content goes here" }
-///         }
-///     }
-/// }
-/// ```
+/// A slide-in panel overlay that renders from any screen edge with optional title, footer, and mask.
 #[component]
 pub fn Drawer(props: DrawerProps) -> Element {
     let on_close = props.on_close;
     let mask_closable = props.mask_closable;
 
+    let on_close_for_mask = on_close.clone();
     let handle_mask_click = move |e: MouseEvent| {
-        if mask_closable && let Some(handler) = on_close.as_ref() {
+        if mask_closable && let Some(handler) = on_close_for_mask.as_ref() {
             handler.call(e);
         }
     };
@@ -134,58 +115,84 @@ pub fn Drawer(props: DrawerProps) -> Element {
         (DrawerPlacement::Bottom, DrawerSize::Large) => (DrawerClass::Bottom, "100%", "700px"),
     };
 
-    let drawer_style = use_memo(move || {
-        if props.open {
-            StyleStringBuilder::new()
-                .add(CssProperty::Display, "block")
-                .add(CssProperty::Opacity, "1")
-                .build_clean()
-        } else {
-            StyleStringBuilder::new()
-                .add(CssProperty::Display, "none")
-                .add(CssProperty::Opacity, "0")
-                .build_clean()
-        }
-    });
+    let progress_signal = use_signal(|| 0.0_f64);
+    let prev_open_signal = use_signal(|| false);
 
-    let mask_style = use_memo(move || {
-        if props.open {
-            StyleStringBuilder::new()
-                .add(CssProperty::Opacity, "1")
-                .build_clean()
-        } else {
-            StyleStringBuilder::new()
-                .add(CssProperty::Opacity, "0")
-                .build_clean()
-        }
-    });
+    let prev_open = prev_open_signal.get();
+    if props.open && !prev_open {
+        prev_open_signal.set(true);
+        progress_signal.set(0.0);
+        let prog_sig = progress_signal.clone();
+        let state = Rc::new(RefCell::new(DrawerAnimState {
+            start_ts: None,
+            stopped: false,
+        }));
+        let s_ref = state.clone();
+        platform::request_animation_frame_with_timestamp(move |ts| {
+            let mut s = s_ref.borrow_mut();
+            if s.stopped {
+                return;
+            }
+            s.start_ts = Some(ts);
+            drop(s);
+            drawer_anim_tick(s_ref, prog_sig);
+        });
+    }
+    if !props.open && prev_open {
+        prev_open_signal.set(false);
+    }
+
+    let progress = progress_signal.get();
+
+    let drawer_style = if props.open {
+        let offset = 100.0 * (1.0 - progress);
+        let transform = match props.placement {
+            DrawerPlacement::Right => format!("translateX({offset:.1}%)"),
+            DrawerPlacement::Left => format!("translateX(-{offset:.1}%)"),
+            DrawerPlacement::Top => format!("translateY(-{offset:.1}%)"),
+            DrawerPlacement::Bottom => format!("translateY({offset:.1}%)"),
+        };
+        format!("display: block; transform: {transform};")
+    } else {
+        "display: none;".to_string()
+    };
+
+    let mask_style = if props.open {
+        format!("opacity: {progress:.2};")
+    } else {
+        "opacity: 0;".to_string()
+    };
 
     let drawer_classes = ClassesBuilder::new()
-        .add(DrawerClass::Drawer)
-        .add(placement_class)
-        .add_raw(&props.class)
+        .add_typed(DrawerClass::Drawer)
+        .add_typed(placement_class)
+        .add(&props.class)
         .build();
 
     rsx! {
         if props.open {
             // Mask overlay
             div {
-                class: "{DrawerClass::Mask.as_class()}",
-                style: "{mask_style}",
+                class: DrawerClass::Mask.class_name(),
+                style: mask_style,
                 onclick: handle_mask_click,
             }
 
             // Drawer panel
             div {
-                class: "{drawer_classes}",
-                style: "{drawer_style}",
+                class: drawer_classes,
+                style: drawer_style,
+                role: "dialog",
+                "aria-modal": "true",
+                "aria-labelledby": "hi-drawer-title",
 
                 // Header
                 if let Some(title) = props.title {
-                    div { class: "{DrawerClass::Header.as_class()}",
-                        div { class: "{DrawerClass::Title.as_class()}", "{title}" }
+                    div { class: DrawerClass::Header.class_name(),
+                        div { id: "hi-drawer-title", class: DrawerClass::Title.class_name(), "{title}" }
                         button {
-                            class: "{DrawerClass::Close.as_class()}",
+                            class: DrawerClass::Close.class_name(),
+                            "aria-label": "Close",
                             onclick: move |e| {
                                 if let Some(handler) = on_close.as_ref() {
                                     handler.call(e);
@@ -204,13 +211,13 @@ pub fn Drawer(props: DrawerProps) -> Element {
                 }
 
                 // Body
-                div { class: "{DrawerClass::Body.as_class()}",
+                div { class: DrawerClass::Body.class_name(),
                     { props.children }
                 }
 
                 // Footer
                 if let Some(footer) = props.footer {
-                    div { class: "{DrawerClass::Footer.as_class()}",
+                    div { class: DrawerClass::Footer.class_name(),
                         { footer }
                     }
                 }
@@ -219,7 +226,6 @@ pub fn Drawer(props: DrawerProps) -> Element {
     }
 }
 
-/// Drawer component's type wrapper for StyledComponent
 pub struct DrawerComponent;
 
 impl StyledComponent for DrawerComponent {
@@ -231,12 +237,6 @@ impl StyledComponent for DrawerComponent {
   z-index: 1000;
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
-  animation: hi-drawer-mask-fade-in 0.2s ease-out;
-}
-
-@keyframes hi-drawer-mask-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .hi-drawer {
@@ -246,7 +246,6 @@ impl StyledComponent for DrawerComponent {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  animation: hi-drawer-slide-in 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 [data-theme="dark"] .hi-drawer {
@@ -280,54 +279,6 @@ impl StyledComponent for DrawerComponent {
   left: 0;
   width: 100vw;
   border-top: 1px solid var(--hi-border);
-}
-
-@keyframes hi-drawer-slide-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.hi-drawer-left {
-  animation-name: hi-drawer-slide-in-left;
-}
-
-@keyframes hi-drawer-slide-in-left {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.hi-drawer-top {
-  animation-name: hi-drawer-slide-in-top;
-}
-
-@keyframes hi-drawer-slide-in-top {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-.hi-drawer-bottom {
-  animation-name: hi-drawer-slide-in-bottom;
-}
-
-@keyframes hi-drawer-slide-in-bottom {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
 }
 
 .hi-drawer-header {

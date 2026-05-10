@@ -1,31 +1,36 @@
 // hi-components/src/data/node_arrow.rs
 // TreeNodeArrow component - expand/collapse arrow for tree nodes
 
-use dioxus::prelude::*;
+use crate::{
+    basic::{Arrow, ArrowDirection},
+    prelude::*,
+};
 
-use crate::basic::{Arrow, ArrowDirection};
-
-/// Expand/collapse arrow for tree nodes
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeArrowProps {
-    /// Whether to node is expanded
     #[props(default)]
     pub expanded: bool,
 
-    /// Whether to node is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler (when clicking specifically on arrow)
-    #[props(default)]
-    pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: EventHandler<MouseEvent>,
 }
 
-/// TreeNodeArrow - The expand/collapse arrow indicator
+impl Default for TreeNodeArrowProps {
+    fn default() -> Self {
+        Self {
+            expanded: false,
+            disabled: false,
+            class: String::new(),
+            onclick: EventHandler::new(|_| {}),
+        }
+    }
+}
+
 #[component]
 pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
     if props.disabled {
@@ -40,7 +45,7 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
             if props.expanded {
                 "hi-tree-node-arrow-expanded"
             } else {
-                ""
+                { "" }
             },
             props.class
         );
@@ -55,18 +60,13 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
 
         rsx! {
             span {
-                class: "{arrow_class}",
+                class: arrow_class,
                 aria_hidden: "true",
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
-                    if let Some(ref h) = handler {
-                        h.call(e);
-                    }
+                    handler.call(e);
                 },
-                Arrow {
-                    direction,
-                    size: 14,
-                }
+                Arrow { direction, size: 14 }
             }
         }
     }

@@ -1,8 +1,6 @@
-pub mod basic_components_tests;
-pub mod collapse_tests;
-pub mod data_components_tests;
-pub mod feedback_components_tests;
-pub mod feedback_layer2_tests;
-pub mod feedback_remaining_tests;
-pub mod form_utility_tests;
-pub mod navigation_components_tests;
+mod basic_components_tests;
+mod production_components_tests;
+mod display_components_tests;
+mod entry_components_tests;
+mod layout_components_tests;
+mod navigation_extra_tests;

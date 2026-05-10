@@ -1,101 +1,93 @@
-//! Animated value and transition hooks for Dioxus
+//! Animated value and transition hooks
+//!
+//! Provides `use_animated_value` for simple animated state and
+//! `use_transition` for enter/exit transitions with configurable duration.
 
-use dioxus::prelude::*;
-use wasm_bindgen::JsCast;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::provider::try_use_animation_config;
 
-pub fn use_animated_value<T: Clone + 'static>(initial: T) -> Signal<T> {
-    use_signal(|| initial)
-}
-
-pub fn use_transition(duration_ms: u64) -> UseTransition {
-    use_hook(move || UseTransition::new(duration_ms))
-}
-
-pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
-    use_hook(move || {
-        let scaled_duration = if let Some(ctx) = try_use_animation_config() {
-            ctx.config.read().scale_duration(duration_ms)
-        } else {
-            duration_ms
-        };
-        UseTransition::new(scaled_duration)
-    })
+pub fn use_animated_value<T: Clone + 'static>(initial: T) -> tairitsu_hooks::ReactiveSignal<T> {
+    tairitsu_hooks::use_signal(|| initial)
 }
 
 #[derive(Clone)]
 pub struct UseTransition {
-    is_visible: Signal<bool>,
-    is_animating: Signal<bool>,
+    is_visible: Rc<RefCell<bool>>,
+    is_animating: Rc<RefCell<bool>>,
     duration_ms: u64,
 }
 
 impl UseTransition {
     fn new(duration_ms: u64) -> Self {
         Self {
-            is_visible: Signal::new(false),
-            is_animating: Signal::new(false),
+            is_visible: Rc::new(RefCell::new(false)),
+            is_animating: Rc::new(RefCell::new(false)),
             duration_ms,
         }
     }
 
     pub fn is_visible(&self) -> bool {
-        *self.is_visible.read()
+        *self.is_visible.borrow()
     }
 
     pub fn is_animating(&self) -> bool {
-        *self.is_animating.read()
+        *self.is_animating.borrow()
     }
 
-    pub fn enter(&mut self) {
-        self.is_visible.set(true);
-        self.is_animating.set(true);
+    pub fn enter(&self) {
+        *self.is_visible.borrow_mut() = true;
+        *self.is_animating.borrow_mut() = true;
 
-        let mut is_animating = self.is_animating;
-        let duration_ms = self.duration_ms as i32;
-
-        let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
-            is_animating.set(false);
-        }) as Box<dyn FnOnce()>);
-
-        web_sys::window()
-            .unwrap()
-            .set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                duration_ms,
-            )
-            .unwrap();
-        closure.forget();
+        let is_animating = self.is_animating.clone();
+        let platform = tairitsu_web::BrowserPlatform::new();
+        platform.set_timeout(
+            move || {
+                *is_animating.borrow_mut() = false;
+            },
+            self.duration_ms as u32,
+        );
     }
 
-    pub fn exit(&mut self) {
-        self.is_animating.set(true);
+    pub fn exit(&self) {
+        *self.is_animating.borrow_mut() = true;
 
-        let mut is_visible = self.is_visible;
-        let mut is_animating = self.is_animating;
-        let duration_ms = self.duration_ms as i32;
-
-        let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
-            is_visible.set(false);
-            is_animating.set(false);
-        }) as Box<dyn FnOnce()>);
-
-        web_sys::window()
-            .unwrap()
-            .set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                duration_ms,
-            )
-            .unwrap();
-        closure.forget();
+        let is_visible = self.is_visible.clone();
+        let is_animating = self.is_animating.clone();
+        let platform = tairitsu_web::BrowserPlatform::new();
+        platform.set_timeout(
+            move || {
+                *is_visible.borrow_mut() = false;
+                *is_animating.borrow_mut() = false;
+            },
+            self.duration_ms as u32,
+        );
     }
 
-    pub fn toggle(&mut self) {
-        if *self.is_visible.read() {
+    pub fn toggle(&self) {
+        if self.is_visible() {
             self.exit();
         } else {
             self.enter();
         }
     }
+}
+
+pub fn use_transition(duration_ms: u64) -> UseTransition {
+    UseTransition::new(duration_ms)
+}
+
+pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
+    let scaled_duration = if let Some(ctx) = try_use_animation_config() {
+        let cfg = ctx.get();
+        if cfg.duration_scale != 1.0 {
+            (duration_ms as f64 * cfg.duration_scale as f64) as u64
+        } else {
+            duration_ms
+        }
+    } else {
+        duration_ms
+    };
+    UseTransition::new(scaled_duration)
 }

@@ -394,11 +394,11 @@
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
   box-shadow:
-    0 4px 8px rgba(214, 236, 240, 0.5),
+    0 4px 8px var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5)),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-tabs-header {
-    background: rgba(214, 236, 240, 0.5);
+    background: var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5));
     border-radius: vars.$hikari-radius-fui-md vars.$hikari-radius-fui-md 0 0;
     margin: 0;
   }
@@ -408,10 +408,10 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-primary);
+      background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
       box-shadow:
-        0 0 12px var(--hi-primary),
-        inset 0 0 8px var(--hi-primary);
+        0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
+        inset 0 0 8px rgba(255, 255, 255, 0.1);
     }
   }
 
@@ -427,11 +427,11 @@
   border: 2px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
   box-shadow:
-    0 4px 8px rgba(214, 236, 240, 0.5),
+    0 4px 8px var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5)),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
   .hi-tabs-header {
-    background: rgba(214, 236, 240, 0.5);
+    background: var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5));
   }
 
   .hi-tab {
@@ -439,11 +439,11 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-primary);
-      border-color: var(--hi-primary);
+      background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+      border-color: var(--hi-color-primary);
       box-shadow:
-        0 0 12px var(--hi-primary),
-        inset 0 0 8px var(--hi-primary);
+        0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
+        inset 0 0 8px rgba(255, 255, 255, 0.1);
     }
   }
 }
@@ -451,7 +451,7 @@
 // Segment type (pill-shaped)
 .hi-tabs-type-segment {
   .hi-tabs-header {
-    background: rgba(23, 89, 168, 0.15);
+    background: var(--hi-button-primary-light, rgba(255, 192, 203, 0.15));
     border-radius: vars.$hikari-radius-fui-md;
     border: none;
     padding: 0.375rem;

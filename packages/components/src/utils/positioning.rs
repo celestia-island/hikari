@@ -1,9 +1,8 @@
 // hi-components/src/utils/positioning.rs
 // Positioning utility for components (Tooltip, Popover, Dropdown, Select)
 
-use dioxus::prelude::*;
+use crate::prelude::*;
 
-/// Placement position relative to trigger element
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Placement {
     #[default]
@@ -22,7 +21,6 @@ pub enum Placement {
 }
 
 impl Placement {
-    /// Get the opposite placement
     pub fn flip(&self) -> Self {
         match self {
             Placement::Top => Placement::Bottom,
@@ -40,7 +38,6 @@ impl Placement {
         }
     }
 
-    /// Get CSS position string
     pub fn css_position(&self) -> &'static str {
         match self {
             Placement::Top => "top: 100%; left: 50%; transform: translateX(-50%);",
@@ -59,7 +56,6 @@ impl Placement {
     }
 }
 
-/// Position strategy for overlay components
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum PositionStrategy {
     #[default]
@@ -68,7 +64,6 @@ pub enum PositionStrategy {
 }
 
 impl PositionStrategy {
-    /// Get CSS position value
     pub fn css_value(&self) -> &'static str {
         match self {
             PositionStrategy::Absolute => "absolute",
@@ -77,22 +72,16 @@ impl PositionStrategy {
     }
 }
 
-/// Position configuration for overlay components
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct PositionConfig {
-    /// Placement relative to trigger
     pub placement: Placement,
 
-    /// Position strategy (absolute or fixed)
     pub strategy: PositionStrategy,
 
-    /// Offset from trigger (pixels)
     pub offset: (i32, i32),
 
-    /// Flip to opposite side if not enough space
     pub flip: bool,
 
-    /// Minimum distance from viewport edge (pixels)
     pub padding: i32,
 }
 
@@ -109,7 +98,6 @@ impl Default for PositionConfig {
 }
 
 impl PositionConfig {
-    /// Create new position config with custom placement
     pub fn new(placement: Placement) -> Self {
         Self {
             placement,
@@ -117,31 +105,26 @@ impl PositionConfig {
         }
     }
 
-    /// Set custom offset
     pub fn offset(mut self, x: i32, y: i32) -> Self {
         self.offset = (x, y);
         self
     }
 
-    /// Set position strategy
     pub fn strategy(mut self, strategy: PositionStrategy) -> Self {
         self.strategy = strategy;
         self
     }
 
-    /// Enable or disable flipping
     pub fn flip(mut self, flip: bool) -> Self {
         self.flip = flip;
         self
     }
 
-    /// Set padding from viewport edge
     pub fn padding(mut self, padding: i32) -> Self {
         self.padding = padding;
         self
     }
 
-    /// Generate CSS style string for positioning
     pub fn css_style(&self) -> String {
         let mut style = format!(
             "position: {}; {};",
@@ -178,23 +161,16 @@ impl PositionConfig {
     }
 }
 
-/// Z-index management for overlay components
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum OverlayZIndex {
-    /// Default overlay (1000-1099)
     Default,
-    /// Tooltip (1100-1199)
     Tooltip,
-    /// Dropdown (1200-1299)
     Dropdown,
-    /// Popover (1300-1399)
     Popover,
-    /// Modal (2000+)
     Modal,
 }
 
 impl OverlayZIndex {
-    /// Get z-index value
     pub fn value(&self) -> i32 {
         match self {
             OverlayZIndex::Default => 1000,
@@ -206,7 +182,6 @@ impl OverlayZIndex {
     }
 }
 
-/// Hook for managing overlay position
 pub fn use_position() -> UsePositionReturn {
     // In a full implementation, this would:
     // 1. Track trigger element position
@@ -227,13 +202,10 @@ pub fn use_position() -> UsePositionReturn {
     }
 }
 
-/// Return value for use_position hook
 #[derive(Clone, PartialEq)]
 pub struct UsePositionReturn {
-    /// Update position based on config
     pub update_position: Callback<PositionConfig>,
 
-    /// Get CSS position string
     pub get_position: Callback<PositionConfig, String>,
 }
 

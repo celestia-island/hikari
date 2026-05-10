@@ -1,12 +1,10 @@
 // packages/components/src/basic/form_field.rs
 // FormField component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, FormFieldClass};
+use hikari_palette::classes::{ClassesBuilder, FormFieldClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// FormField component type wrapper (for StyledComponent)
 pub struct FormFieldComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -18,48 +16,41 @@ pub enum FormFieldStatus {
     Success,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct FormFieldProps {
-    /// Field label
+    #[default]
     pub label: String,
 
-    /// Whether the field is required
-    #[props(default = false)]
+    #[default(false)]
     pub required: bool,
 
-    /// Field help text (optional)
-    #[props(default)]
+    #[default]
     pub help_text: Option<String>,
 
-    /// Field error message (optional)
-    #[props(default)]
+    #[default]
     pub error_message: Option<String>,
 
-    /// Field status
-    #[props(default)]
+    #[default]
     pub status: FormFieldStatus,
 
-    /// Whether to show the status icon
-    #[props(default = true)]
+    #[default(true)]
     pub show_status: bool,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Additional inline style
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    /// Children - the form input component
-    children: Element,
+    #[default]
+    pub children: Element,
 }
 
 #[component]
 pub fn FormField(props: FormFieldProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(FormFieldClass::FormField)
-        .add_raw(&props.class)
+        .add_typed(FormFieldClass::FormField)
+        .add(&props.class)
         .build();
 
     let status_class = match props.status {
@@ -69,38 +60,65 @@ pub fn FormField(props: FormFieldProps) -> Element {
         FormFieldStatus::Success => "hi-form-field-success",
     };
 
+    let full_classes = if status_class.is_empty() {
+        wrapper_classes.clone()
+    } else {
+        format!("{} {}", wrapper_classes, status_class)
+    };
+
+    let has_label = !props.label.is_empty();
+    let has_help = props.help_text.is_some();
+    let has_error = props.error_message.is_some();
+
+    let label_el = if has_label {
+        let required_marker = if props.required {
+            rsx! {
+                span { class: "hi-form-field-required", " *" }
+            }
+        } else {
+            VNode::empty()
+        };
+        Some(rsx! {
+            label { class: "hi-form-field-label",
+                "{props.label.clone()}"
+                {required_marker}
+            }
+        })
+    } else {
+        None
+    };
+
+    let help_el = if has_help {
+        Some(rsx! {
+            div { class: "hi-form-field-help", "{props.help_text.as_ref().unwrap()}" }
+        })
+    } else if props.show_status && has_error {
+        Some(rsx! {
+            div { class: "hi-form-field-error-msg", "{props.error_message.as_ref().unwrap()}" }
+        })
+    } else if props.show_status && props.status == FormFieldStatus::Success {
+        Some(rsx! {
+            div { class: "hi-form-field-success-msg", "Valid" }
+        })
+    } else if props.show_status && props.status == FormFieldStatus::Warning {
+        Some(rsx! {
+            div { class: "hi-form-field-warning-msg", "Warning" }
+        })
+    } else {
+        None
+    };
+
     rsx! {
-        div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
-            class: "{status_class}",
+        div { class: full_classes, style: props.style,
 
             // Label
-            if !props.label.is_empty() {
-                label {
-                    class: "hi-form-field-label",
-                    { props.label }
-                    if props.required {
-                        span { class: "hi-form-field-required", " *" }
-                    }
-                }
-            }
+            {label_el.unwrap_or_else(VNode::empty)}
 
             // Children (form input)
-            { props.children }
+            {props.children}
 
             // Help text or error message
-            if let Some(ref help) = props.help_text {
-                div { class: "hi-form-field-help", "{help}" }
-            } else if props.show_status {
-                if let Some(ref error) = props.error_message {
-                    div { class: "hi-form-field-error-msg", "{error}" }
-                } else if props.status == FormFieldStatus::Success {
-                    div { class: "hi-form-field-success-msg", "Valid" }
-                } else if props.status == FormFieldStatus::Warning {
-                    div { class: "hi-form-field-warning-msg", "Warning" }
-                }
-            }
+            {help_el.unwrap_or_else(VNode::empty)}
         }
     }
 }

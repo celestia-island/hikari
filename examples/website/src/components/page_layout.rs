@@ -1,103 +1,69 @@
-use dioxus::prelude::*;
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use crate::components::Layout;
-use _palette::classes::{ClassesBuilder, FontSize, FontWeight, MarginBottom, Padding, TextColor};
-
-#[derive(Clone, PartialEq, Props)]
-pub struct DemoSectionProps {
-    pub title: String,
-    #[props(default)]
-    pub description: Option<String>,
-    pub children: Element,
+fn txt(s: &str) -> VNode {
+    VNode::Text(VText::new(s))
 }
 
-#[component]
-pub fn DemoSection(props: DemoSectionProps) -> Element {
-    rsx! {
-        section {
-            class: ClassesBuilder::new()
-                .add(MarginBottom::Mb8)
-                .add(Padding::P6)
-                .build(),
-            style: "
-                border-radius: 0.75rem;
-                border: 1px solid var(--hi-color-border);
-                background: var(--hi-color-surface);
-            ",
+pub fn render_demo_section(title: &str, content: VNode) -> VNode {
+    VNode::Element(
+        VElement::new("section")
+            .class("demo-section")
+            .child(VNode::Element(
+                VElement::new("h2")
+                    .class("demo-section__title")
+                    .child(txt(title)),
+            ))
+            .child(content),
+    )
+}
 
-            h2 {
-                class: ClassesBuilder::new()
-                    .add(FontSize::Lg)
-                    .add(FontWeight::Semibold)
-                    .add(TextColor::Primary)
-                    .add(MarginBottom::Mb4)
-                    .build(),
-                style: "padding-bottom: 0.75rem; border-bottom: 1px solid var(--hi-color-border);",
-                "{props.title}"
-            }
+pub fn render_page_container(
+    page_id: &str,
+    title: Option<&str>,
+    description: Option<&str>,
+    content: VNode,
+) -> VNode {
+    let mut page_children: Vec<VNode> = Vec::new();
 
-            if let Some(desc) = &props.description {
-                p {
-                    class: ClassesBuilder::new()
-                        .add(TextColor::Secondary)
-                        .add(MarginBottom::Mb4)
-                        .build(),
-                    "{desc}"
-                }
-            }
-
-            {props.children}
-        }
+    if let Some(t) = title {
+        page_children.push(VNode::Element(
+            VElement::new("div")
+                .class("page-header")
+                .child(VNode::Element(
+                    VElement::new("h1")
+                        .class("page-header__title")
+                        .child(txt(t)),
+                ))
+                .child(if let Some(d) = description {
+                    VNode::Element(
+                        VElement::new("p")
+                            .class("page-header__subtitle")
+                            .child(txt(d)),
+                    )
+                } else {
+                    VNode::Text(VText::new(""))
+                }),
+        ));
+    } else if let Some(d) = description {
+        page_children.push(VNode::Element(
+            VElement::new("p")
+                .class("page-header__subtitle--standalone")
+                .child(txt(d)),
+        ));
     }
-}
 
-#[derive(Clone, PartialEq, Props)]
-pub struct PageContainerProps {
-    #[props(default)]
-    pub title: Option<String>,
-    #[props(default)]
-    pub description: Option<String>,
-    pub children: Element,
-    pub current_route: crate::app::Route,
-}
+    page_children.push(content);
 
-#[component]
-pub fn PageContainer(props: PageContainerProps) -> Element {
-    rsx! {
-        Layout {
-            current_route: props.current_route,
+    let hikari_page = VNode::Element(
+        VElement::new("div")
+            .attr("id", page_id)
+            .class("hikari-page")
+            .children(page_children),
+    );
 
-            div {
-                class: ClassesBuilder::new()
-                    .add(Padding::P6)
-                    .build(),
-                style: "max-width: 1200px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem;",
-
-                if let Some(title) = &props.title {
-                    h1 {
-                        class: ClassesBuilder::new()
-                            .add(FontSize::X4xl)
-                            .add(FontWeight::Bold)
-                            .add(TextColor::Primary)
-                            .add(MarginBottom::Mb2)
-                            .build(),
-                        "{title}"
-                    }
-                }
-
-                if let Some(desc) = &props.description {
-                    p {
-                        class: ClassesBuilder::new()
-                            .add(TextColor::Secondary)
-                            .add(MarginBottom::Mb8)
-                            .build(),
-                        style: "max-width: 800px; line-height: 1.6;",
-                        "{desc}"
-                    }
-                }
-
-                {props.children}
-            }
-        }
-    }
+    VNode::Element(
+        VElement::new("div")
+            .class("page-container")
+            .child(hikari_page),
+    )
 }

@@ -1,11 +1,10 @@
 // hi-components/src/navigation/tabs.rs
 // Tabs component with Arknights + FUI styling
 
-use dioxus::prelude::*;
+use tairitsu_hooks::ReactiveSignal;
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Tabs 组件的类型包装器（用于实现 StyledComponent）
 pub struct TabsComponent;
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum TabPosition {
@@ -16,71 +15,42 @@ pub enum TabPosition {
     Left,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TabPaneProps {
-    #[props(default)]
     pub item_key: String,
 
-    #[props(default)]
     pub tab: String,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub icon: Option<Element>,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 }
 
-impl Default for TabPaneProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            tab: String::default(),
-            disabled: false,
-            icon: None,
-            children: VNode::empty(),
-            class: String::default(),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TabsProps {
-    #[props(default)]
     pub default_active: String,
 
-    #[props(default)]
     pub tab_position: TabPosition,
 
-    #[props(default)]
+    #[default(true)]
     pub animated: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
 
     pub on_change: Option<EventHandler<String>>,
 }
 
-impl Default for TabsProps {
-    fn default() -> Self {
-        Self {
-            default_active: String::default(),
-            tab_position: Default::default(),
-            animated: true,
-            class: String::default(),
-            children: VNode::empty(),
-            on_change: None,
-        }
-    }
+#[derive(Clone)]
+pub struct TabsContext {
+    pub active_key: ReactiveSignal<String>,
+    pub on_change: Option<EventHandler<String>>,
 }
 
 /// Tabs component with modern, premium styling
@@ -216,9 +186,14 @@ impl Default for TabsProps {
 /// The component automatically adapts to dark mode when `data-theme="dark"` is set on the root element.
 #[component]
 pub fn Tabs(props: TabsProps) -> Element {
-    // Create and provide the active key signal for child TabPane components
     let active_key = use_signal(|| props.default_active.clone());
-    use_context_provider(|| active_key);
+
+    let on_change = props.on_change.clone();
+
+    let _ctx = use_context_provider(move || TabsContext {
+        active_key,
+        on_change,
+    });
 
     let position_class = match props.tab_position {
         TabPosition::Top => "hi-tabs-top",
@@ -234,18 +209,11 @@ pub fn Tabs(props: TabsProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
+        div { class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
 
-            div {
-                class: "hi-tabs-nav",
+            div { class: "hi-tabs-nav",
 
-                div {
-                    class: "hi-tabs-nav-list",
-                    role: "tablist",
-
-                    { props.children.clone() }
-                }
+                div { class: "hi-tabs-nav-list", role: "tablist", {props.children.clone()} }
 
                 div {
                     class: "hi-tabs-ink-bar",
@@ -253,12 +221,7 @@ pub fn Tabs(props: TabsProps) -> Element {
                 }
             }
 
-            div {
-                class: "hi-tabs-content",
-                role: "tabpanel",
-
-                { props.children }
-            }
+            div { class: "hi-tabs-content", role: "tabpanel", {props.children} }
         }
     }
 }
@@ -276,47 +239,70 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use palette::classes::{components::TabsClass, ClassesBuilder};
+    use hikari_palette::classes::{TypedClass, components::TabsClass, ClassesBuilder};
 
-    let active_key = use_context::<Signal<String>>();
-    let is_active = active_key() == props.item_key;
+    let ctx = use_context::<TabsContext>().expect("TabsContext not found");
+    let ctx = ctx.get();
+    let active_key = ctx.active_key.clone();
+    let on_change = ctx.on_change.clone();
+
+    let item_key = props.item_key.clone();
+    let is_active = *active_key.read() == item_key;
 
     let tab_classes = ClassesBuilder::new()
-        .add(TabsClass::TabsTab)
-        .add_if(TabsClass::TabActive, || is_active)
-        .add_if(TabsClass::TabDisabled, || props.disabled)
+        .add_typed(TabsClass::TabsTab)
+        .add_typed_if(TabsClass::TabActive, is_active)
+        .add_typed_if(TabsClass::TabDisabled, props.disabled)
         .build();
 
     let tabpane_classes = ClassesBuilder::new()
-        .add(TabsClass::TabsTabpane)
-        .add_if(TabsClass::TabpaneActive, || is_active)
-        .add_if(TabsClass::TabpaneInactive, || !is_active)
+        .add_typed(TabsClass::TabsTabpane)
+        .add_typed_if(TabsClass::TabpaneActive, is_active)
+        .add_typed_if(TabsClass::TabpaneInactive, !is_active)
         .build();
 
-    rsx! {
+    let tab_icon_class = TabsClass::TabsTabIcon.class_name();
+    let tab_label_class = TabsClass::TabsTabLabel.class_name();
+
+    let aria_hidden_val = (!is_active).to_string();
+
+    let item_key_for_click = item_key.clone();
+    let onclick_handler = move |_| {
+        if !props.disabled {
+            active_key.set(item_key_for_click.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(item_key_for_click.clone());
+            }
+        }
+    };
+
+    let tab_el = rsx! {
         div {
-            class: "{tab_classes}",
+            class: tab_classes,
             role: "tab",
-            "data-key": "{props.item_key}",
-            "aria-selected": "{is_active}",
-            "aria-disabled": "{props.disabled}",
+            "data-key": item_key.clone(),
+            "aria-selected": is_active,
+            "aria-disabled": props.disabled,
+            onclick: onclick_handler,
 
             if let Some(icon) = props.icon {
-                span { class: "hi-tabs-tab-icon", { icon } }
+                span { class: tab_icon_class, {icon} }
             }
 
-            span { class: "hi-tabs-tab-label", "{props.tab}" }
+            span { class: tab_label_class, "{props.tab}" }
         }
+    };
 
+    let tabpane_el = rsx! {
         div {
-            class: "{tabpane_classes}",
+            class: tabpane_classes,
             role: "tabpanel",
-            "data-key": "{props.item_key}",
-            "aria-hidden": "{!is_active}",
+            "data-key": item_key,
+            "aria-hidden": aria_hidden_val,
 
-            if is_active {
-                { props.children }
-            }
+            {if is_active { props.children } else { VNode::empty() }}
         }
-    }
+    };
+
+    VNode::Fragment(vec![tab_el, tabpane_el])
 }

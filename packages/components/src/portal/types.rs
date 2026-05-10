@@ -1,12 +1,12 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use dioxus::prelude::*;
-
 use crate::{
     feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition},
+    modal::{MaskMode, ModalPosition, ModalSize},
+    prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -15,6 +15,14 @@ pub enum PortalPositionStrategy {
     Fixed(f64, f64),
     TriggerBased { placement: TriggerPlacement },
     MouseBased { placement: TriggerPlacement },
+}
+
+impl Default for PortalPositionStrategy {
+    fn default() -> Self {
+        PortalPositionStrategy::TriggerBased {
+            placement: TriggerPlacement::default(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -35,14 +43,15 @@ pub enum TriggerPlacement {
     Center,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ModalAnimationState {
+    #[default]
     Appearing,
     Visible,
     Disappearing,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 pub enum PortalEntry {
     Modal {
         id: String,
@@ -51,6 +60,7 @@ pub enum PortalEntry {
         mask_mode: MaskMode,
         closable: bool,
         mask_closable: bool,
+        size: ModalSize,
         children: Element,
         animation_state: ModalAnimationState,
     },
@@ -77,7 +87,7 @@ pub enum PortalEntry {
         close_on_click_outside: bool,
         close_on_select: bool,
         on_close: Option<Callback<()>>,
-        close_requested: Signal<bool>,
+        close_requested: ReactiveSignal<bool>,
         children: Element,
     },
     Tooltip {
@@ -89,18 +99,20 @@ pub enum PortalEntry {
     },
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum PortalMaskMode {
+    #[default]
     Dimmed,
     Transparent,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ToastPosition {
     TopLeft,
     TopCenter,
     TopRight,
     BottomLeft,
     BottomCenter,
+    #[default]
     BottomRight,
 }

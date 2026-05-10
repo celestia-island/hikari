@@ -1,15 +1,12 @@
 // hi-components/src/layout/flex.rs
 // FlexBox component for flexible layouts
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use palette::classes::{
+use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent, theme::use_layout_direction};
 
-/// FlexBox component direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Direction {
     #[default]
@@ -19,7 +16,6 @@ pub enum Direction {
     ColumnReverse,
 }
 
-/// FlexBox component alignment
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Align {
     #[default]
@@ -30,7 +26,6 @@ pub enum Align {
     Baseline,
 }
 
-/// FlexBox component justify
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Justify {
     #[default]
@@ -42,7 +37,6 @@ pub enum Justify {
     Evenly,
 }
 
-/// FlexBox component wrap
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Wrap {
     #[default]
@@ -51,7 +45,6 @@ pub enum Wrap {
     WrapReverse,
 }
 
-/// FlexBox component gap size
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum FlexGap {
     #[default]
@@ -65,82 +58,42 @@ pub enum FlexGap {
     Gap8,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`FlexBox`] component.
+#[define_props]
 pub struct FlexBoxProps {
-    #[props(default)]
     pub direction: Direction,
 
-    #[props(default)]
     pub align: Align,
 
-    #[props(default)]
     pub justify: Justify,
 
-    #[props(default)]
     pub wrap: Wrap,
 
-    #[props(default)]
     pub gap: FlexGap,
 
-    #[props(default = true)]
+    #[default(true)]
     pub flex: bool,
 
-    /// Minimum width (CSS value like "120px", "10rem")
-    #[props(default)]
     pub min_width: Option<String>,
 
-    /// Minimum height (CSS value like "100px", "5rem")
-    #[props(default)]
     pub min_height: Option<String>,
 
-    /// Maximum width (CSS value like "300px", "20rem")
-    #[props(default)]
     pub max_width: Option<String>,
 
-    /// Maximum height (CSS value like "400px", "25rem")
-    #[props(default)]
     pub max_height: Option<String>,
 
-    /// Inline flex mode
-    #[props(default)]
     pub inline: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
     pub rtl: Option<bool>,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
 
-    #[props(default)]
     pub children: Element,
 }
 
-impl Default for FlexBoxProps {
-    fn default() -> Self {
-        Self {
-            direction: Direction::Column,
-            align: Align::Start,
-            justify: Justify::Start,
-            wrap: Wrap::NoWrap,
-            gap: FlexGap::None,
-            flex: true,
-            min_width: None,
-            min_height: None,
-            max_width: None,
-            max_height: None,
-            inline: false,
-            rtl: None,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
+/// A flexible box layout component supporting direction, alignment, justification, wrapping, and gap.
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -206,14 +159,14 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
     };
 
     let builder = ClassesBuilder::new()
-        .add(display_class)
-        .add(direction_class)
-        .add(align_class)
-        .add(justify_class)
-        .add(wrap_class)
-        .add_if(FlexUtil::Flex1, || props.flex)
-        .add_raw(gap_class)
-        .add_raw(&props.class);
+        .add_typed(display_class)
+        .add_typed(direction_class)
+        .add_typed(align_class)
+        .add_typed(justify_class)
+        .add_typed(wrap_class)
+        .add_typed_if(FlexUtil::Flex1, props.flex)
+        .add(gap_class)
+        .add(&props.class);
 
     let classes = builder.build();
 
@@ -233,8 +186,8 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
 
     rsx! {
         div {
-            class: "{classes}",
-            style: "{style}",
+            class: classes,
+            style: style,
             { props.children }
         }
     }

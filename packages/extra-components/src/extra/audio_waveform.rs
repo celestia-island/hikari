@@ -1,17 +1,24 @@
-// hi-extra-components/src/extra/audio_waveform.rs
-// AudioWaveform component with real waveform visualization
+//! AudioWaveform - Framework Agnostic State Model
+//!
+//! ## Migration Notice
+//!
+//! Previously a Dioxus component using Web Audio API (`AudioContext`, `AnalyserNode`)
+//! via `web-sys`. Now provides a pure state model with rendering data.
+//!
+//! ## Missing Platform API
+//!
+//! The tairitsu platform layer lacks Web Audio API support:
+//! - `AudioContext` creation and management
+//! - `AnalyserNode` for real-time frequency/time-domain analysis
+//! - `MediaElementSourceNode` for connecting `<audio>` to analysis graph
+//!
+//! Until these are available, waveform data must be provided externally
+//! or generated synthetically via `AudioWaveformState::generate_synth_waveform()`.
 
-use dioxus::prelude::*;
-use hikari_components::basic::IconButton;
-use hikari_icons::MdiIcon;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::closure::Closure;
-#[cfg(target_arch = "wasm32")]
-use web_sys::window;
+use serde::{Deserialize, Serialize};
+use tairitsu_vdom::{VElement, VNode, VText};
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 pub enum WaveformColor {
     #[default]
     Primary,
@@ -20,272 +27,193 @@ pub enum WaveformColor {
     Danger,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
-pub struct AudioWaveformProps {
-    /// Audio source URL
-    pub src: String,
-
-    /// Waveform color
-    #[props(default)]
-    pub waveform_color: WaveformColor,
-
-    /// Whether to show playback controls
-    #[props(default)]
-    pub show_controls: bool,
-
-    /// Additional CSS class
-    #[props(default)]
-    pub class: String,
-
-    /// Callback when playback starts
-    #[props(default)]
-    pub on_play: Option<EventHandler<()>>,
-
-    /// Callback when playback pauses
-    #[props(default)]
-    pub on_pause: Option<EventHandler<()>>,
-
-    /// Callback when audio is loaded and waveform is generated
-    #[props(default)]
-    pub on_waveform_ready: Option<EventHandler<Vec<f32>>>,
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+pub enum PlaybackState {
+    #[default]
+    Stopped,
+    Playing,
+    Paused,
 }
 
-/// AudioWaveform component with real waveform visualization
-///
-/// An audio player with waveform visualization using Web Audio API (WASM).
-///
-/// # Platform Support
-///
-/// ## WASM (Primary Target)
-/// - **Full Support**: Uses Web Audio API to generate real waveform from audio
-/// - Decodes actual audio data and visualizes frequency/amplitude
-/// - Provides accurate playback time and duration
-///
-/// ## Non-WASM (Limited Support)
-/// - **Placeholder Only**: Cannot decode audio without Web Audio API
-/// - Generates synthetic waveform data for visual demonstration
-/// - Audio playback still works through HTML5 audio element
-/// - **Recommendation**: Use only for UI testing, not production audio apps
-///
-/// # Why This Limitation?
-///
-/// The Web Audio API is browser-specific and not available in non-WASM environments.
-/// Alternatives like `rodio` crate could be implemented for native audio support,
-/// but would require significant additional code and dependencies.
-///
-/// # Examples
-///
-/// ## Basic Usage (WASM)
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_extra_components::AudioWaveform;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         AudioWaveform {
-///             src: "https://example.com/audio.mp3".to_string(),
-///             show_controls: true,
-///         }
-///     }
-/// }
-/// ```
-///
-/// ## With Waveform Callback
-/// ```rust
-/// AudioWaveform {
-///     src: "audio.mp3".to_string(),
-///     on_waveform_ready: Some(|data| {
-///         // data: Vec<f32> - waveform amplitude values (0.0 to 1.0)
-///         println!("Got {} waveform samples", data.len());
-///     }),
-/// }
-/// ```
-#[component]
-pub fn AudioWaveform(props: AudioWaveformProps) -> Element {
-    let mut is_playing = use_signal(|| false);
-    let current_time = use_signal(|| 0.0f64);
-    let duration = use_signal(|| 0.0f64);
-    let mut volume = use_signal(|| 1.0f64);
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub struct AudioWaveformState {
+    pub src: String,
+    pub waveform_color: WaveformColor,
+    pub show_controls: bool,
+    pub class: String,
+    pub is_playing: bool,
+    pub current_time: f64,
+    pub duration: f64,
+    pub volume: f64,
+    pub playback_state: PlaybackState,
+    pub waveform_data: Vec<f32>,
+    pub is_loaded: bool,
+    pub bar_count: usize,
+    pub fft_size: usize,
+}
 
-    let waveform_classes = format!("hi-audio-waveform hi-waveform-{:?}", props.waveform_color);
-
-    let waveform_data = use_signal(Vec::<f32>::new);
-    let is_loaded = use_signal(|| false);
-
-    let toggle_playback = move |_| {
-        is_playing.set(!is_playing());
-    };
-
-    let _handle_volume_change = move |vol: bool| {
-        volume.set(if vol { 1.0 } else { 0.0 });
-    };
-
-    #[cfg(target_arch = "wasm32")]
-    use_effect({
-        let src = props.src.clone();
-        let on_waveform_ready = props.on_waveform_ready.clone();
-        let waveform_data_clone1 = waveform_data.clone();
-        let is_loaded_clone1 = is_loaded.clone();
-
-        move || {
-            use web_sys::{AudioContext, HtmlAudioElement};
-
-            let source_url = src.clone();
-
-            let waveform_data_clone2 = waveform_data_clone1.clone();
-            let is_loaded_clone2 = is_loaded_clone1.clone();
-
-            wasm_bindgen_futures::spawn_local(async move {
-                if let Some(_win) = window() {
-                    if let Ok(audio_element) = HtmlAudioElement::new() {
-                        audio_element.set_cross_origin(Some("anonymous"));
-                        audio_element.set_src(&source_url);
-
-                        if let Ok(audio_context) = AudioContext::new() {
-                            let track = audio_context
-                                .create_media_element_source(&audio_element)
-                                .unwrap();
-                            let analyser = audio_context.create_analyser().unwrap();
-
-                            let _ = track.connect_with_audio_node(&analyser);
-                            let _ = analyser.connect_with_audio_node(&audio_context.destination());
-
-                            analyser.set_fft_size(512);
-
-                            let buffer_length = analyser.frequency_bin_count();
-                            let data_array = vec![0.0f32; buffer_length as usize];
-
-                            let mut waveform_data_clone3 = waveform_data_clone2.clone();
-                            let mut is_loaded_clone3 = is_loaded_clone2.clone();
-
-                            let loaded_callback = Closure::wrap(Box::new(move || {
-                                let normalized_data: Vec<f32> = (0..40)
-                                    .map(|i| {
-                                        let index = (i * buffer_length as usize / 40)
-                                            .min(data_array.len() - 1);
-                                        data_array[index] / 255.0
-                                    })
-                                    .collect();
-
-                                waveform_data_clone3.set(normalized_data.clone());
-                                is_loaded_clone3.set(true);
-
-                                if let Some(handler) = on_waveform_ready.as_ref() {
-                                    handler.call(normalized_data);
-                                }
-                            })
-                                as Box<dyn FnMut()>);
-
-                            audio_element.set_onloadedmetadata(Some(
-                                loaded_callback.as_ref().unchecked_ref(),
-                            ));
-                            loaded_callback.forget();
-
-                            let _ = audio_context.resume();
-                        }
-                    }
-                }
-            });
-        }
-    });
-
-    #[cfg(not(target_arch = "wasm32"))]
-    use_effect({
-        let on_waveform_ready = props.on_waveform_ready;
-        let waveform_data_clone = waveform_data;
-        let is_loaded_clone = is_loaded;
-
-        move || {
-            let mut waveform_data_clone2 = waveform_data_clone;
-            let mut is_loaded_clone2 = is_loaded_clone;
-
-            wasm_bindgen_futures::spawn_local(async move {
-                if let Some(handler) = on_waveform_ready.as_ref() {
-                    // NOTE: Non-WASM placeholder implementation
-                    // The Web Audio API is not available outside of browsers,
-                    // so we generate synthetic waveform data for UI demonstration.
-                    // The audio element will still play, but waveform is fake.
-                    //
-                    // For production native audio apps, consider:
-                    // 1. Using rodio crate for native audio decoding
-                    // 2. Implementing FFT analysis on CPU
-                    // 3. Or disabling waveform visualization on non-WASM
-                    let fake_data: Vec<f32> = (0..40)
-                        .map(|i| 0.2 + (i as f32 * 0.8).sin().abs() * 0.8)
-                        .collect();
-
-                    handler.call(fake_data.clone());
-                    waveform_data_clone2.set(fake_data);
-                    is_loaded_clone2.set(true);
-                }
-            });
-        }
-    });
-
-    let waveform_bars: Vec<f32> = if is_loaded() {
-        waveform_data().clone()
-    } else {
-        vec![]
-    };
-
-    let bars: Vec<(usize, f32)> = waveform_bars
-        .iter()
-        .enumerate()
-        .map(|(i, amplitude)| (i, *amplitude))
-        .collect();
-
-    rsx! {
-        div { class: "{waveform_classes} {props.class}",
-            // Audio element (hidden)
-            audio {
-                src: "{props.src}",
-                controls: if props.show_controls { "true" } else { "false" },
-                autoplay: if is_playing() { "true" } else { "false" },
-                volume: "{volume()}",
-            }
-
-            // Waveform visualization
-            div { class: "hi-waveform-container",
-                div { class: "hi-waveform-bars",
-                    for (i, amplitude) in bars {
-                        div {
-                            key: "{i}",
-                            class: "hi-waveform-bar",
-                            style: "height: {20.0 + amplitude * 80.0}px; opacity: {0.3 + amplitude * 0.7};"
-                        }
-                    }
-                }
-            }
-
-            // Playback controls
-            if props.show_controls {
-                div { class: "hi-audio-controls",
-                    // Play/Pause button - use Icon
-                    IconButton {
-                        icon: if is_playing() {
-                            MdiIcon::Pause
-                        } else {
-                            MdiIcon::Play
-                        },
-                        onclick: toggle_playback,
-                    }
-
-                    // Progress bar
-                    div { class: "hi-audio-progress",
-                        div {
-                            class: "hi-audio-progress-bar",
-                            style: "width: {(current_time() / duration() * 100.0)}%;"
-                        }
-                    }
-
-                    // Time display
-                    div { class: "hi-audio-time",
-                        "{format_time(current_time())} / {format_time(duration())}"
-                    }
-                }
-            }
+impl AudioWaveformState {
+    pub fn new(src: impl Into<String>) -> Self {
+        Self {
+            src: src.into(),
+            waveform_color: WaveformColor::default(),
+            show_controls: true,
+            class: String::new(),
+            is_playing: false,
+            current_time: 0.0,
+            duration: 0.0,
+            volume: 1.0,
+            playback_state: PlaybackState::default(),
+            waveform_data: Vec::new(),
+            is_loaded: false,
+            bar_count: 40,
+            fft_size: 512,
         }
     }
+
+    pub fn with_color(mut self, color: WaveformColor) -> Self {
+        self.waveform_color = color;
+        self
+    }
+
+    pub fn with_show_controls(mut self, show: bool) -> Self {
+        self.show_controls = show;
+        self
+    }
+
+    pub fn with_class(mut self, class: impl Into<String>) -> Self {
+        self.class = class.into();
+        self
+    }
+
+    pub fn with_volume(mut self, volume: f64) -> Self {
+        self.volume = volume.clamp(0.0, 1.0);
+        self
+    }
+
+    pub fn with_bar_count(mut self, count: usize) -> Self {
+        self.bar_count = count;
+        self
+    }
+
+    pub fn with_fft_size(mut self, size: usize) -> Self {
+        self.fft_size = size;
+        self
+    }
+
+    pub fn toggle_playback(&mut self) -> bool {
+        self.is_playing = !self.is_playing;
+        self.playback_state = if self.is_playing {
+            PlaybackState::Playing
+        } else {
+            PlaybackState::Paused
+        };
+        self.is_playing
+    }
+
+    pub fn play(&mut self) {
+        self.is_playing = true;
+        self.playback_state = PlaybackState::Playing;
+    }
+
+    pub fn pause(&mut self) {
+        self.is_playing = false;
+        self.playback_state = PlaybackState::Paused;
+    }
+
+    pub fn stop(&mut self) {
+        self.is_playing = false;
+        self.playback_state = PlaybackState::Stopped;
+        self.current_time = 0.0;
+    }
+
+    pub fn set_current_time(&mut self, time: f64) {
+        self.current_time = time.max(0.0);
+    }
+
+    pub fn set_duration(&mut self, duration: f64) {
+        self.duration = duration.max(0.0);
+    }
+
+    pub fn set_waveform_data(&mut self, data: Vec<f32>) {
+        self.waveform_data = data;
+        self.is_loaded = true;
+    }
+
+    pub fn progress_percent(&self) -> f64 {
+        if self.duration <= 0.0 {
+            0.0
+        } else {
+            (self.current_time / self.duration * 100.0).clamp(0.0, 100.0)
+        }
+    }
+
+    pub fn generate_synth_waveform(&mut self) {
+        let data: Vec<f32> = (0..self.bar_count)
+            .map(|i| 0.2 + (i as f32 * 0.8).sin().abs() * 0.8)
+            .collect();
+        self.set_waveform_data(data);
+    }
+
+    pub fn waveform_bars(&self) -> Vec<(usize, f32)> {
+        if !self.is_loaded {
+            return Vec::new();
+        }
+        self.waveform_data
+            .iter()
+            .enumerate()
+            .map(|(i, amplitude)| (i, *amplitude))
+            .collect()
+    }
+
+    pub fn bar_style(&self, amplitude: f32) -> String {
+        let height = 20.0 + amplitude * 80.0;
+        let opacity = 0.3 + amplitude * 0.7;
+        format!("height: {}px; opacity: {};", height, opacity)
+    }
+
+    pub fn color_class(&self) -> &'static str {
+        match self.waveform_color {
+            WaveformColor::Primary => "hi-waveform-Primary",
+            WaveformColor::Success => "hi-waveform-Success",
+            WaveformColor::Warning => "hi-waveform-Warning",
+            WaveformColor::Danger => "hi-waveform-Danger",
+        }
+    }
+
+    pub fn class_string(&self) -> String {
+        let base = format!("hi-audio-waveform {}", self.color_class());
+        if self.class.is_empty() {
+            base
+        } else {
+            format!("{} {}", base, self.class)
+        }
+    }
+
+    pub fn formatted_current_time(&self) -> String {
+        format_time(self.current_time)
+    }
+
+    pub fn formatted_duration(&self) -> String {
+        format_time(self.duration)
+    }
+}
+
+impl Default for AudioWaveformState {
+    fn default() -> Self {
+        Self::new("")
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct WaveformReadyEvent {
+    pub data: Vec<f32>,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct PlaybackChangeEvent {
+    pub is_playing: bool,
+    pub state: PlaybackState,
 }
 
 fn format_time(seconds: f64) -> String {
@@ -294,12 +222,99 @@ fn format_time(seconds: f64) -> String {
     format!("{:02}:{:02}", mins, secs)
 }
 
-/// AudioWaveform component's type wrapper for StyledComponent
-pub struct AudioWaveformComponent;
+pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
+    let mut container_children: Vec<VNode> = Vec::new();
 
-impl hikari_components::StyledComponent for AudioWaveformComponent {
-    fn styles() -> &'static str {
-        r#"
+    container_children.push(VNode::Element(
+        VElement::new("audio")
+            .attr("src", &state.src)
+            .attr("preload", "metadata"),
+    ));
+
+    let bars = state.waveform_bars();
+    let mut bars_container = VElement::new("div").class("hi-waveform-bars");
+
+    if !bars.is_empty() {
+        let bar_nodes: Vec<VNode> = bars
+            .iter()
+            .map(|(_i, amplitude)| {
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-waveform-bar")
+                        .attr("style", state.bar_style(*amplitude)),
+                )
+            })
+            .collect();
+        bars_container = bars_container.children(bar_nodes);
+    } else {
+        let placeholder_count = state.bar_count.min(20);
+        let placeholder_bars: Vec<VNode> = (0..placeholder_count)
+            .map(|i| {
+                let h = 20.0 + (i as f32 * 0.8).sin().abs() * 40.0;
+                let style = format!("height: {}px; opacity: 0.3;", h);
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-waveform-bar hi-waveform-bar--placeholder")
+                        .attr("style", style),
+                )
+            })
+            .collect();
+        bars_container = bars_container.children(placeholder_bars);
+    }
+
+    container_children.push(VNode::Element(
+        VElement::new("div")
+            .class("hi-waveform-container")
+            .attr("data-action", "waveform-click")
+            .child(VNode::Element(bars_container)),
+    ));
+
+    if state.show_controls {
+        let play_label = if state.is_playing { "Pause" } else { "Play" };
+        let play_icon = if state.is_playing { "Pause" } else { "Play" };
+        let progress_width = format!("{}%", state.progress_percent());
+        let time_display = format!(
+            "{} / {}",
+            state.formatted_current_time(),
+            state.formatted_duration()
+        );
+
+        let controls = VElement::new("div")
+            .class("hi-audio-controls")
+            .child(VNode::Element(
+                VElement::new("button")
+                    .class("hi-audio-control-btn")
+                    .attr("aria-label", play_label)
+                    .attr("data-action", "toggle-play")
+                    .child(VNode::Text(VText::new(play_icon))),
+            ))
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("hi-audio-progress")
+                    .attr("data-action", "audio-seek")
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class("hi-audio-progress-bar")
+                            .attr("style", format!("width: {};", progress_width)),
+                    )),
+            ))
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-audio-time")
+                    .child(VNode::Text(VText::new(&time_display))),
+            ));
+
+        container_children.push(VNode::Element(controls));
+    }
+
+    VNode::Element(
+        VElement::new("div")
+            .class(state.class_string())
+            .children(container_children),
+    )
+}
+
+pub const AUDIO_WAVEFORM_STYLES: &str = r#"
 .hi-audio-waveform {
   width: 100%;
   max-width: 600px;
@@ -390,10 +405,151 @@ impl hikari_components::StyledComponent for AudioWaveformComponent {
 [data-theme="dark"] .hi-audio-time {
   color: var(--hi-text-secondary);
 }
-"#
+"#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_state() {
+        let state = AudioWaveformState::new("test.mp3");
+        assert_eq!(state.src, "test.mp3");
+        assert!(!state.is_playing);
+        assert_eq!(state.playback_state, PlaybackState::Stopped);
+        assert_eq!(state.volume, 1.0);
+        assert!(!state.is_loaded);
+        assert!(state.waveform_data.is_empty());
     }
 
-    fn name() -> &'static str {
-        "audio_waveform"
+    #[test]
+    fn test_builder() {
+        let state = AudioWaveformState::new("audio.mp3")
+            .with_color(WaveformColor::Danger)
+            .with_show_controls(false)
+            .with_class("custom")
+            .with_volume(0.5)
+            .with_bar_count(60)
+            .with_fft_size(1024);
+
+        assert_eq!(state.waveform_color, WaveformColor::Danger);
+        assert!(!state.show_controls);
+        assert_eq!(state.class, "custom");
+        assert!((state.volume - 0.5).abs() < 0.001);
+        assert_eq!(state.bar_count, 60);
+        assert_eq!(state.fft_size, 1024);
+    }
+
+    #[test]
+    fn test_playback_controls() {
+        let mut state = AudioWaveformState::new("test.mp3");
+
+        state.play();
+        assert!(state.is_playing);
+        assert_eq!(state.playback_state, PlaybackState::Playing);
+
+        state.pause();
+        assert!(!state.is_playing);
+        assert_eq!(state.playback_state, PlaybackState::Paused);
+
+        state.toggle_playback();
+        assert!(state.is_playing);
+        assert_eq!(state.playback_state, PlaybackState::Playing);
+
+        state.stop();
+        assert!(!state.is_playing);
+        assert_eq!(state.playback_state, PlaybackState::Stopped);
+        assert_eq!(state.current_time, 0.0);
+    }
+
+    #[test]
+    fn test_time_and_progress() {
+        let mut state = AudioWaveformState::new("test.mp3");
+        state.set_duration(120.0);
+        state.set_current_time(30.0);
+
+        assert!((state.progress_percent() - 25.0).abs() < 0.001);
+        assert_eq!(state.formatted_current_time(), "00:30");
+        assert_eq!(state.formatted_duration(), "02:00");
+    }
+
+    #[test]
+    fn test_progress_clamp() {
+        let mut state = AudioWaveformState::new("test.mp3");
+        state.set_duration(60.0);
+        state.set_current_time(90.0);
+        assert!((state.progress_percent() - 100.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_synth_waveform() {
+        let mut state = AudioWaveformState::new("test.mp3");
+        state.generate_synth_waveform();
+
+        assert!(state.is_loaded);
+        assert_eq!(state.waveform_data.len(), 40);
+        assert!(state.waveform_data[0] >= 0.0 && state.waveform_data[0] <= 1.0);
+    }
+
+    #[test]
+    fn test_waveform_bars() {
+        let mut state = AudioWaveformState::new("test.mp3");
+        assert!(state.waveform_bars().is_empty());
+
+        state.generate_synth_waveform();
+        let bars = state.waveform_bars();
+        assert_eq!(bars.len(), 40);
+        assert_eq!(bars[0].0, 0);
+    }
+
+    #[test]
+    fn test_bar_style() {
+        let state = AudioWaveformState::new("test.mp3");
+        let style = state.bar_style(0.5);
+        assert!(style.contains("height: 60px"));
+        assert!(style.contains("opacity: 0.65"));
+    }
+
+    #[test]
+    fn test_class_string() {
+        let state = AudioWaveformState::new("test.mp3")
+            .with_color(WaveformColor::Success)
+            .with_class("my-class");
+        let class = state.class_string();
+        assert!(class.contains("hi-audio-waveform"));
+        assert!(class.contains("hi-waveform-Success"));
+        assert!(class.contains("my-class"));
+    }
+
+    #[test]
+    fn test_volume_clamp() {
+        let state = AudioWaveformState::new("test.mp3").with_volume(2.0);
+        assert!((state.volume - 1.0).abs() < 0.001);
+
+        let state = AudioWaveformState::new("test.mp3").with_volume(-0.5);
+        assert!((state.volume - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_set_waveform_data() {
+        let mut state = AudioWaveformState::new("test.mp3");
+        let data = vec![0.1, 0.5, 0.9, 0.3];
+        state.set_waveform_data(data.clone());
+
+        assert!(state.is_loaded);
+        assert_eq!(state.waveform_data, data);
+    }
+
+    #[test]
+    fn test_format_time() {
+        assert_eq!(format_time(0.0), "00:00");
+        assert_eq!(format_time(65.0), "01:05");
+        assert_eq!(format_time(3661.0), "61:01");
+    }
+
+    #[test]
+    fn test_default() {
+        let state = AudioWaveformState::default();
+        assert_eq!(state.src, "");
     }
 }

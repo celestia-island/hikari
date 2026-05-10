@@ -1,61 +1,45 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{components::ArrowClass, ClassesBuilder};
+use hikari_icons::{Icon, IconProps, MdiIcon};
+use hikari_palette::classes::{components::ArrowClass, ClassesBuilder};
 
-use crate::StyledComponent;
+use crate::{prelude::*, StyledComponent};
 
-/// Arrow component style holder
 pub struct ArrowComponent;
 
-/// Arrow direction
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ArrowDirection {
-    /// Arrow points right (default)
     #[default]
     Right,
-    /// Arrow points left
     Left,
-    /// Arrow points up
     Up,
-    /// Arrow points down
     Down,
 }
 
-/// Arrow indicator component
+impl IntoAttrValue for ArrowDirection {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            ArrowDirection::Right => "right".to_string(),
+            ArrowDirection::Left => "left".to_string(),
+            ArrowDirection::Up => "up".to_string(),
+            ArrowDirection::Down => "down".to_string(),
+        })
+    }
+}
+
 ///
-/// Displays a chevron arrow with rotation support.
-/// Default state points right, rotates based on direction.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Arrow, ArrowDirection};
 ///
-/// rsx! {
-///     // Default: points right
-///     Arrow { direction: ArrowDirection::Right }
 ///
-///     // Rotated: points up
-///     Arrow { direction: ArrowDirection::Up }
-/// }
-/// ```
 #[component]
 pub fn Arrow(
-    /// Arrow direction (controls rotation)
-    #[props(default)]
-    direction: ArrowDirection,
+    #[props(default)] direction: ArrowDirection,
 
-    /// Arrow size in pixels
-    #[props(default = 16)]
-    size: u32,
+    #[props(default = 16)] size: u32,
 
-    /// Additional CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     // Determine direction class
     let direction_class = match direction {
@@ -74,26 +58,23 @@ pub fn Arrow(
     };
 
     // Build classes
-    let mut builder = ClassesBuilder::new().add(ArrowClass::Arrow);
+    let mut builder = ClassesBuilder::new().add_typed(ArrowClass::Arrow);
 
-    // Add direction class
     if let Some(dir) = direction_class {
-        builder = builder.add(dir);
+        builder = builder.add_typed(dir);
     }
 
-    // Add size class
     if let Some(sz) = size_class {
-        builder = builder.add(sz);
+        builder = builder.add_typed(sz);
     }
 
-    // Add user custom class
-    builder = builder.add_raw(&class);
+    builder = builder.add(&class);
 
     let classes = builder.build();
 
     rsx! {
         span {
-            class: "{classes}",
+            class: classes,
             Icon {
                 icon: MdiIcon::ChevronRight,
                 size,

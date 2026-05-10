@@ -1,105 +1,73 @@
 // packages/components/src/display/empty.rs
 // Empty state component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{
+use hikari_palette::classes::{TypedClass, 
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
-    TextAlign, UtilityClass,
+    TextAlign,
 };
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Empty component type wrapper (for StyledComponent)
 pub struct EmptyComponent;
 
-/// Empty component with Arknights + FUI styling
-///
-/// A placeholder for empty states in lists, tables, or data displays.
-/// Provides a visual representation when no data is available.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Empty;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Empty {
-///             image: "placeholder.svg",
-///             description: "No data available",
-///         }
-///     }
-/// }
-/// ```
-#[derive(Clone, PartialEq, Props, Default)]
+/// Props for the Empty component
+#[define_props]
 pub struct EmptyProps {
-    #[props(default)]
+    #[default]
     pub image: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub title: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub description: String,
 
-    #[props(default)]
+    #[default]
     pub action: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub style: String,
 }
 
+/// An empty state placeholder component with optional image, title, and action.
 #[component]
 pub fn Empty(props: EmptyProps) -> Element {
     let container_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(FlexDirection::Column)
-        .add(AlignItems::Center)
-        .add(JustifyContent::Center)
-        .add(Gap::Gap4)
-        .add(Padding::P8)
-        .add(TextAlign::Center)
-        .add(EmptyClass::Container)
-        .add_raw(&props.class)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Column)
+        .add_typed(AlignItems::Center)
+        .add_typed(JustifyContent::Center)
+        .add_typed(Gap::Gap4)
+        .add_typed(Padding::P8)
+        .add_typed(TextAlign::Center)
+        .add_typed(EmptyClass::Container)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div {
-            class: "{container_classes}",
-            style: "{props.style}",
+        div { class: container_classes, style: props.style,
 
             if let Some(ref image) = props.image {
-                div {
-                    class: "{EmptyClass::Image.as_class()}",
+                div { class: EmptyClass::Image.class_name(),
                     img {
-                        src: "{image}",
+                        src: image,
                         alt: "Empty state",
-                        class: "{EmptyClass::Img.as_class()}"
+                        class: "{EmptyClass::Img.class_name()}",
                     }
                 }
             }
 
             if let Some(ref title) = props.title {
-                h3 {
-                    class: "{EmptyClass::Title.as_class()}",
-                    "{title}"
-                }
+                h3 { class: EmptyClass::Title.class_name(), "{title}" }
             }
 
-            p {
-                class: "{EmptyClass::Description.as_class()}",
-                "{props.description}"
-            }
+            p { class: EmptyClass::Description.class_name(), "{props.description}" }
 
             if let Some(action) = props.action {
-                div {
-                    class: "{EmptyClass::Action.as_class()}",
-                    { action }
-                }
+                div { class: EmptyClass::Action.class_name(), {action} }
             }
         }
     }

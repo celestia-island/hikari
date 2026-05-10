@@ -1011,7 +1011,7 @@ impl VisualQualityTests {
             ("/demos/layer2/dashboard", "demos_layer2_dashboard"),
             ("/demos/layer3/video", "demos_layer3_video"),
             // Layer 1 Components (5)
-            ("/components/layer1/basic", "layer1_basic"),
+            ("/components/layer1", "layer1_basic"),
             ("/components/layer1/form", "layer1_form"),
             ("/components/layer1/switch", "layer1_switch"),
             ("/components/layer1/feedback", "layer1_feedback"),

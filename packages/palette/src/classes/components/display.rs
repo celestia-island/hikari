@@ -1,45 +1,81 @@
 //! Display component classes (Card, Badge, Tag, etc.)
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use crate::classes::UtilityClass;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardClass {
     Card,
     CardHoverable,
     CardBordered,
+    CardFlat,
     CardHeader,
+    CardHeaderLeft,
+    CardHeaderAvatar,
+    CardHeaderAction,
     CardTitle,
     CardSubtitle,
     CardExtra,
     CardBody,
+    CardFooter,
     CardMedia,
+    CardCover,
     CardActions,
     CardActionsNoSpacing,
     CardSpotlightWrapper,
+    // Size variants
+    CardSm,
+    CardMd,
+    CardLg,
+    // Grid variants
+    CardGrid,
+    CardGrid2,
+    CardGrid3,
+    CardGrid4,
+    // States
+    CardLoading,
+    CardGlow,
+    // Animations
+    CardAnimateIn,
+    CardStagger,
 }
 
-impl UtilityClass for CardClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for CardClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            CardClass::Card => "card",
-            CardClass::CardHoverable => "card-hoverable",
-            CardClass::CardBordered => "card-bordered",
-            CardClass::CardHeader => "card-header",
-            CardClass::CardTitle => "card-title",
-            CardClass::CardSubtitle => "card-subtitle",
-            CardClass::CardExtra => "card-extra",
-            CardClass::CardBody => "card-body",
-            CardClass::CardMedia => "card-media",
-            CardClass::CardActions => "card-actions",
-            CardClass::CardActionsNoSpacing => "card-actions-no-spacing",
-            CardClass::CardSpotlightWrapper => "card-spotlight-wrapper",
+            CardClass::Card => "hi-card",
+            CardClass::CardHoverable => "hi-card-hoverable",
+            CardClass::CardBordered => "hi-card-bordered",
+            CardClass::CardFlat => "hi-card-flat",
+            CardClass::CardHeader => "hi-card-header",
+            CardClass::CardHeaderLeft => "hi-card-header-left",
+            CardClass::CardHeaderAvatar => "hi-card-header-avatar",
+            CardClass::CardHeaderAction => "hi-card-header-action",
+            CardClass::CardTitle => "hi-card-title",
+            CardClass::CardSubtitle => "hi-card-subtitle",
+            CardClass::CardExtra => "hi-card-extra",
+            CardClass::CardBody => "hi-card-body",
+            CardClass::CardFooter => "hi-card-footer",
+            CardClass::CardMedia => "hi-card-media",
+            CardClass::CardCover => "hi-card-cover",
+            CardClass::CardActions => "hi-card-actions",
+            CardClass::CardActionsNoSpacing => "hi-card-actions-no-spacing",
+            CardClass::CardSpotlightWrapper => "hi-card-spotlight-wrapper",
+            CardClass::CardSm => "hi-card-sm",
+            CardClass::CardMd => "hi-card-md",
+            CardClass::CardLg => "hi-card-lg",
+            CardClass::CardGrid => "hi-card-grid",
+            CardClass::CardGrid2 => "hi-card-grid-2",
+            CardClass::CardGrid3 => "hi-card-grid-3",
+            CardClass::CardGrid4 => "hi-card-grid-4",
+            CardClass::CardLoading => "hi-card-loading",
+            CardClass::CardGlow => "hi-card-glow",
+            CardClass::CardAnimateIn => "hi-card-animate-in",
+            CardClass::CardStagger => "hi-card-stagger",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpotlightClass {
     Spotlight,
     SpotlightWrapper,
@@ -47,18 +83,18 @@ pub enum SpotlightClass {
     SpotlightTheme,
 }
 
-impl UtilityClass for SpotlightClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for SpotlightClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            SpotlightClass::Spotlight => "spotlight",
-            SpotlightClass::SpotlightWrapper => "spotlight-wrapper",
-            SpotlightClass::SpotlightAuto => "spotlight-auto",
-            SpotlightClass::SpotlightTheme => "spotlight-theme",
+            SpotlightClass::Spotlight => "hi-spotlight",
+            SpotlightClass::SpotlightWrapper => "hi-spotlight-wrapper",
+            SpotlightClass::SpotlightAuto => "hi-spotlight-auto",
+            SpotlightClass::SpotlightTheme => "hi-spotlight-theme",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GlowClass {
     Glow,
     GlowWrapper,
@@ -77,29 +113,29 @@ pub enum GlowClass {
     GlowBright,
 }
 
-impl UtilityClass for GlowClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for GlowClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            GlowClass::Glow => "glow",
-            GlowClass::GlowWrapper => "glow-wrapper",
-            GlowClass::GlowWrapperBlock => "glow-wrapper-block",
-            GlowClass::GlowBlurNone => "glow-blur-none",
-            GlowClass::GlowBlurLight => "glow-blur-light",
-            GlowClass::GlowBlurMedium => "glow-blur-medium",
-            GlowClass::GlowBlurHeavy => "glow-blur-heavy",
-            GlowClass::GlowGhost => "glow-ghost",
-            GlowClass::GlowPrimary => "glow-primary",
-            GlowClass::GlowSecondary => "glow-secondary",
-            GlowClass::GlowDanger => "glow-danger",
-            GlowClass::GlowSuccess => "glow-success",
-            GlowClass::GlowDim => "glow-dim",
-            GlowClass::GlowSoft => "glow-soft",
-            GlowClass::GlowBright => "glow-bright",
+            GlowClass::Glow => "hi-glow",
+            GlowClass::GlowWrapper => "hi-glow-wrapper",
+            GlowClass::GlowWrapperBlock => "hi-glow-wrapper-block",
+            GlowClass::GlowBlurNone => "hi-glow-blur-none",
+            GlowClass::GlowBlurLight => "hi-glow-blur-light",
+            GlowClass::GlowBlurMedium => "hi-glow-blur-medium",
+            GlowClass::GlowBlurHeavy => "hi-glow-blur-heavy",
+            GlowClass::GlowGhost => "hi-glow-ghost",
+            GlowClass::GlowPrimary => "hi-glow-primary",
+            GlowClass::GlowSecondary => "hi-glow-secondary",
+            GlowClass::GlowDanger => "hi-glow-danger",
+            GlowClass::GlowSuccess => "hi-glow-success",
+            GlowClass::GlowDim => "hi-glow-dim",
+            GlowClass::GlowSoft => "hi-glow-soft",
+            GlowClass::GlowBright => "hi-glow-bright",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BadgeClass {
     Badge,
     Dot,
@@ -109,24 +145,28 @@ pub enum BadgeClass {
     Warning,
     Danger,
     Info,
+    Wrapper,
+    DotInner,
 }
 
-impl UtilityClass for BadgeClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for BadgeClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            BadgeClass::Badge => "badge",
-            BadgeClass::Dot => "badge-dot",
-            BadgeClass::Primary => "badge-primary",
-            BadgeClass::Secondary => "badge-secondary",
-            BadgeClass::Success => "badge-success",
-            BadgeClass::Warning => "badge-warning",
-            BadgeClass::Danger => "badge-danger",
-            BadgeClass::Info => "badge-info",
+            BadgeClass::Badge => "hi-badge",
+            BadgeClass::Dot => "hi-badge-dot",
+            BadgeClass::Primary => "hi-badge-primary",
+            BadgeClass::Secondary => "hi-badge-secondary",
+            BadgeClass::Success => "hi-badge-success",
+            BadgeClass::Warning => "hi-badge-warning",
+            BadgeClass::Danger => "hi-badge-danger",
+            BadgeClass::Info => "hi-badge-info",
+            BadgeClass::Wrapper => "hi-badge-wrapper",
+            BadgeClass::DotInner => "hi-badge-dot-inner",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TagClass {
     Tag,
     Default,
@@ -138,39 +178,39 @@ pub enum TagClass {
     Close,
 }
 
-impl UtilityClass for TagClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TagClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            TagClass::Tag => "tag",
-            TagClass::Default => "tag-default",
-            TagClass::Primary => "tag-primary",
-            TagClass::Success => "tag-success",
-            TagClass::Warning => "tag-warning",
-            TagClass::Danger => "tag-danger",
-            TagClass::Info => "tag-info",
-            TagClass::Close => "tag-close",
+            TagClass::Tag => "hi-tag",
+            TagClass::Default => "hi-tag-default",
+            TagClass::Primary => "hi-tag-primary",
+            TagClass::Success => "hi-tag-success",
+            TagClass::Warning => "hi-tag-warning",
+            TagClass::Danger => "hi-tag-danger",
+            TagClass::Info => "hi-tag-info",
+            TagClass::Close => "hi-tag-close",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DescriptionListClass {
     List,
     Term,
     Detail,
 }
 
-impl UtilityClass for DescriptionListClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for DescriptionListClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            DescriptionListClass::List => "description-list",
-            DescriptionListClass::Term => "description-list-term",
-            DescriptionListClass::Detail => "description-list-detail",
+            DescriptionListClass::List => "hi-description-list",
+            DescriptionListClass::Term => "hi-description-list-term",
+            DescriptionListClass::Detail => "hi-description-list-detail",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EmptyClass {
     Container,
     Image,
@@ -180,20 +220,20 @@ pub enum EmptyClass {
     Action,
 }
 
-impl UtilityClass for EmptyClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for EmptyClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            EmptyClass::Container => "empty-container",
-            EmptyClass::Image => "empty-image",
-            EmptyClass::Img => "empty-img",
-            EmptyClass::Title => "empty-title",
-            EmptyClass::Description => "empty-description",
-            EmptyClass::Action => "empty-action",
+            EmptyClass::Container => "hi-empty-container",
+            EmptyClass::Image => "hi-empty-image",
+            EmptyClass::Img => "hi-empty-img",
+            EmptyClass::Title => "hi-empty-title",
+            EmptyClass::Description => "hi-empty-description",
+            EmptyClass::Action => "hi-empty-action",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QRCodeClass {
     Container,
     Title,
@@ -201,13 +241,71 @@ pub enum QRCodeClass {
     Image,
 }
 
-impl UtilityClass for QRCodeClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for QRCodeClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            QRCodeClass::Container => "qrcode-container",
-            QRCodeClass::Title => "qrcode-title",
-            QRCodeClass::Wrapper => "qrcode-wrapper",
-            QRCodeClass::Image => "qrcode-image",
+            QRCodeClass::Container => "hi-qrcode-container",
+            QRCodeClass::Title => "hi-qrcode-title",
+            QRCodeClass::Wrapper => "hi-qrcode-wrapper",
+            QRCodeClass::Image => "hi-qrcode-image",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ImageClass {
+    ImageContainer,
+    Image,
+    Logo,
+    ImagePlaceholder,
+    ImageSkeleton,
+    ImageIconPlaceholder,
+}
+
+impl TypedClass for ImageClass {
+    fn class_name(&self) -> &'static str {
+        match self {
+            ImageClass::ImageContainer => "hi-image-container",
+            ImageClass::Image => "hi-image",
+            ImageClass::Logo => "hi-logo",
+            ImageClass::ImagePlaceholder => "hi-image-placeholder",
+            ImageClass::ImageSkeleton => "hi-image-skeleton",
+            ImageClass::ImageIconPlaceholder => "hi-image-icon-placeholder",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SkeletonDisplayClass {
+    Circular,
+    Rounded,
+    Sm,
+    Md,
+    Lg,
+    Group,
+    Card,
+    CardHeader,
+    CardContent,
+    TableRow,
+    Table,
+    TableHeader,
+}
+
+impl TypedClass for SkeletonDisplayClass {
+    fn class_name(&self) -> &'static str {
+        match self {
+            Self::Circular => "hi-skeleton-circular",
+            Self::Rounded => "hi-skeleton-rounded",
+            Self::Sm => "hi-skeleton-sm",
+            Self::Md => "hi-skeleton-md",
+            Self::Lg => "hi-skeleton-lg",
+            Self::Group => "hi-skeleton-group",
+            Self::Card => "hi-skeleton-card",
+            Self::CardHeader => "hi-skeleton-card-header",
+            Self::CardContent => "hi-skeleton-card-content",
+            Self::TableRow => "hi-skeleton-table-row",
+            Self::Table => "hi-skeleton-table",
+            Self::TableHeader => "hi-skeleton-table-header",
         }
     }
 }

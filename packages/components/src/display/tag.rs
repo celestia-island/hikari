@@ -1,40 +1,15 @@
 // packages/components/src/display/tag.rs
 // Tag component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass};
+use hikari_palette::classes::{
+    AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, TypedClass,
+};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Tag component type wrapper (for StyledComponent)
 pub struct TagComponent;
 
-/// Tag component with Arknights + FUI styling
-///
-/// A tag is similar to a badge but supports text content and an optional close button.
-/// Useful for displaying labels, tags, or keywords that users can add/remove.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Tag, TagVariant};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Tag {
-///             variant: TagVariant::Primary,
-///             "Rust"
-///         }
-///         Tag {
-///             variant: TagVariant::Success,
-///             closable: true,
-///             on_close: move |_| println!("Tag closed"),
-///             "WebAssembly"
-///         }
-///     }
-/// }
-/// ```
+/// Tag variant determining visual style
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TagVariant {
     #[default]
@@ -46,39 +21,18 @@ pub enum TagVariant {
     Info,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the Tag component.
+#[define_props]
 pub struct TagProps {
-    #[props(default)]
     pub variant: TagVariant,
-
-    #[props(default)]
     pub closable: bool,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
 }
 
-impl Default for TagProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            closable: false,
-            on_close: None,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
+/// A tag component for labeling and categorizing content with variant styles.
 #[component]
 pub fn Tag(props: TagProps) -> Element {
     let variant_class = match props.variant {
@@ -91,25 +45,23 @@ pub fn Tag(props: TagProps) -> Element {
     };
 
     let tag_classes = ClassesBuilder::new()
-        .add(Display::InlineFlex)
-        .add(Flex::Flex1)
-        .add(AlignItems::Center)
-        .add(Gap::Gap2)
-        .add(TagClass::Tag)
-        .add(variant_class)
-        .add_raw(&props.class)
+        .add_typed(Display::InlineFlex)
+        .add_typed(Flex::Flex1)
+        .add_typed(AlignItems::Center)
+        .add_typed(Gap::Gap2)
+        .add_typed(TagClass::Tag)
+        .add_typed(variant_class)
+        .add(&props.class)
         .build();
 
     rsx! {
-        span {
-            class: "{tag_classes}",
-            style: "{props.style}",
+        span { class: tag_classes, style: props.style,
 
-            { props.children }
+            {props.children}
 
             if props.closable {
                 button {
-                    class: "{TagClass::Close.as_class()}",
+                    class: TagClass::Close.class_name(),
                     onclick: move |e| {
                         if let Some(ref on_close) = props.on_close {
                             on_close.call(e);
@@ -139,57 +91,57 @@ impl StyledComponent for TagComponent {
 }
 
 .hi-tag-default {
-    background-color: rgba(107, 114, 128, 0.1);
-    color: var(--hi-color-text-primary);
-    border-color: rgba(107, 114, 128, 0.2);
+    background-color: rgba(var(--hi-color-text-secondary-rgb), 0.1);
+    color: var(--hi-color-text-secondary);
+    border-color: rgba(var(--hi-color-text-secondary-rgb), 0.2);
 }
 
 .hi-tag-default:hover {
-    background-color: rgba(107, 114, 128, 0.2);
+    background-color: rgba(var(--hi-color-text-secondary-rgb), 0.2);
 }
 
 .hi-tag-primary {
-    background-color: rgba(59, 130, 246, 0.1);
+    background-color: rgba(var(--hi-color-primary-rgb), 0.1);
     color: var(--hi-color-primary);
-    border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(var(--hi-color-primary-rgb), 0.3);
 }
 
 .hi-tag-primary:hover {
-    background-color: rgba(59, 130, 246, 0.2);
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    background-color: rgba(var(--hi-color-primary-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-primary-rgb), 0.3);
 }
 
 .hi-tag-success {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-    border-color: rgba(16, 185, 129, 0.3);
+    background-color: rgba(var(--hi-color-success-rgb), 0.1);
+    color: var(--hi-color-success);
+    border-color: rgba(var(--hi-color-success-rgb), 0.3);
 }
 
 .hi-tag-success:hover {
-    background-color: rgba(16, 185, 129, 0.2);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+    background-color: rgba(var(--hi-color-success-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-success-rgb), 0.3);
 }
 
 .hi-tag-warning {
-    background-color: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-    border-color: rgba(245, 158, 11, 0.3);
+    background-color: rgba(var(--hi-color-warning-rgb), 0.1);
+    color: var(--hi-color-warning);
+    border-color: rgba(var(--hi-color-warning-rgb), 0.3);
 }
 
 .hi-tag-warning:hover {
-    background-color: rgba(245, 158, 11, 0.2);
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    background-color: rgba(var(--hi-color-warning-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-warning-rgb), 0.3);
 }
 
 .hi-tag-danger {
-    background-color: rgba(255, 76, 0, 0.1);
-    color: #ff4c00;
-    border-color: rgba(255, 76, 0, 0.3);
+    background-color: rgba(var(--hi-color-danger-rgb), 0.1);
+    color: var(--hi-color-danger);
+    border-color: rgba(var(--hi-color-danger-rgb), 0.3);
 }
 
 .hi-tag-danger:hover {
-    background-color: rgba(255, 76, 0, 0.2);
-    box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
+    background-color: rgba(var(--hi-color-danger-rgb), 0.2);
+    box-shadow: 0 0 8px rgba(var(--hi-color-danger-rgb), 0.3);
 }
 
 .hi-tag-info {

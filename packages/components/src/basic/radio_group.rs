@@ -1,83 +1,87 @@
 // hi-components/src/basic/radio_group.rs
 // RadioGroup component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, RadioClass};
+use hikari_palette::classes::{ClassesBuilder, RadioClass};
+use tairitsu_hooks::ReactiveSignal;
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct RadioContext {
     pub name: &'static str,
-    pub selected_value: Signal<String>,
+    pub selected_value: ReactiveSignal<String>,
     pub on_change: EventHandler<String>,
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RadioButtonProps {
     pub value: String,
-    #[props(default)]
     pub children: Element,
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
+    pub on_change: Option<EventHandler<String>>,
 }
 
 #[component]
 pub fn RadioButton(props: RadioButtonProps) -> Element {
-    let ctx = use_context::<RadioContext>();
+    let ctx = use_context::<RadioContext>().expect("RadioContext not found");
+    let ctx = ctx.get();
     let is_checked = *ctx.selected_value.read() == props.value;
     let disabled = props.disabled || ctx.disabled;
 
     let radio_name = ctx.name.to_string();
+    let on_change = ctx.on_change.clone();
 
     let radio_classes = ClassesBuilder::new()
-        .add(RadioClass::Label)
-        .add_raw(&props.class)
+        .add_typed(RadioClass::Label)
+        .add(&props.class)
         .build();
 
     let handle_change = {
         let value = props.value.clone();
+        let on_change = props.on_change;
+        let group_on_change = ctx.on_change.clone();
+        let group_selected_value = ctx.selected_value.clone();
         move |_| {
-            (ctx.on_change)(value.clone());
+            group_selected_value.set(value.clone());
+            group_on_change.call(value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(value.clone());
+            }
         }
     };
 
     rsx! {
-        label { class: "{radio_classes}",
+        label { class: radio_classes,
             input {
                 r#type: "radio",
-                name: "{radio_name}",
+                name: radio_name,
                 value: "{props.value}",
                 checked: is_checked,
-                disabled: disabled,
+                disabled,
                 onchange: handle_change,
             }
             div { class: "hi-radio-indicator",
-                div {
-                    class: "hi-radio-dot",
-                }
+                div { class: "hi-radio-dot" }
             }
             span { class: "hi-radio-text", {props.children} }
         }
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct RadioGroupProps {
     pub name: String,
-    #[props(default)]
     pub value: String,
-    pub on_change: EventHandler<String>,
-    #[props(default)]
+    pub on_change: Option<EventHandler<String>>,
+    #[default(false)]
     pub disabled: bool,
-    #[props(default)]
     pub children: Element,
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
-    #[props(default)]
     pub direction: RadioDirection,
 }
 
@@ -94,9 +98,12 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
     let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
     let disabled = props.disabled;
-    let on_change = props.on_change;
+    let on_change = props
+        .on_change
+        .clone()
+        .unwrap_or_else(|| EventHandler::new(|_| {}));
 
-    let _ctx = use_context_provider(|| RadioContext {
+    let _ctx = use_context_provider(move || RadioContext {
         name,
         selected_value,
         on_change,
@@ -109,13 +116,13 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
     };
 
     let group_classes = ClassesBuilder::new()
-        .add(RadioClass::RadioGroup)
-        .add(direction_class)
-        .add_raw(&props.class)
+        .add_typed(RadioClass::RadioGroup)
+        .add_typed(direction_class)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div { class: "{group_classes}", {props.children} }
+        div { class: group_classes, {props.children} }
     }
 }
 

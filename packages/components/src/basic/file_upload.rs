@@ -1,12 +1,10 @@
 // packages/components/src/basic/file_upload.rs
 // FileUpload component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, FileUploadClass};
+use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// FileUpload component type wrapper (for StyledComponent)
 pub struct FileUploadComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -19,61 +17,48 @@ pub enum FileUploadStatus {
     Error,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct FileUploadProps {
-    /// Whether to accept multiple files
-    #[props(default = false)]
+    #[default(false)]
     pub multiple: bool,
 
-    /// Accepted file types (e.g., "image/*,.pdf")
-    #[props(default)]
+    #[default]
     pub accept: String,
 
-    /// Maximum file size in bytes
-    #[props(default = 10485760)] // 10MB default
+    #[default(10485760)] // 10MB default
     pub max_size: usize,
 
-    /// Whether to show file preview
-    #[props(default = true)]
+    #[default(true)]
     pub show_preview: bool,
 
-    /// Custom upload button text
-    #[props(default = "Click or drag file to upload".to_string())]
+    #[default("Click or drag file to upload".to_string())]
     pub upload_text: String,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Additional inline style
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    /// Callback when files are selected
-    #[props(default)]
+    #[default]
     pub on_files: Option<EventHandler<Vec<String>>>,
 
-    /// Callback when file is too large
-    #[props(default)]
+    #[default]
     pub on_error: Option<EventHandler<String>>,
 }
 
 #[component]
 pub fn FileUpload(props: FileUploadProps) -> Element {
-    let mut upload_status = use_signal(|| FileUploadStatus::Idle);
+    let upload_status = use_signal(|| FileUploadStatus::Idle);
 
-    #[cfg(target_arch = "wasm32")]
-    let mut files = use_signal(|| Vec::<String>::new());
-
-    #[cfg(not(target_arch = "wasm32"))]
     let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(FileUploadClass::FileUploadWrapper)
-        .add_raw(&props.class)
+        .add_typed(FileUploadClass::FileUploadWrapper)
+        .add(&props.class)
         .build();
 
-    let status_class = match upload_status() {
+    let status_class = match upload_status.get() {
         FileUploadStatus::Dragging => Some(FileUploadClass::Dragging),
         FileUploadStatus::Uploading => Some(FileUploadClass::Uploading),
         FileUploadStatus::Success => Some(FileUploadClass::Success),
@@ -81,120 +66,125 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         _ => None,
     };
 
-    let mut drag_builder = ClassesBuilder::new().add(FileUploadClass::FileUpload);
+    let mut drag_builder = ClassesBuilder::new().add_typed(FileUploadClass::FileUpload);
     if let Some(class) = status_class {
-        drag_builder = drag_builder.add(class);
+        drag_builder = drag_builder.add_typed(class);
     }
     let drag_classes = drag_builder.build();
 
+    let on_files_for_drop = props.on_files.clone();
+    let on_files_for_change = props.on_files.clone();
+    let on_error_for_drop = props.on_error.clone();
+    let on_error_for_change = props.on_error.clone();
+
+    let upload_status_for_drag_over = upload_status.clone();
     let on_drag_over = move |e: DragEvent| {
         e.prevent_default();
-        upload_status.set(FileUploadStatus::Dragging);
+        upload_status_for_drag_over.set(FileUploadStatus::Dragging);
     };
 
+    let upload_status_for_drag_leave = upload_status.clone();
     let on_drag_leave = move |_: DragEvent| {
-        upload_status.set(FileUploadStatus::Idle);
+        upload_status_for_drag_leave.set(FileUploadStatus::Idle);
     };
 
+    let upload_status_for_drop = upload_status.clone();
+    let files_for_drop = files.clone();
+    let max_size_for_drop = props.max_size;
     let on_drop = move |e: DragEvent| {
         e.prevent_default();
-        upload_status.set(FileUploadStatus::Idle);
+        upload_status_for_drop.set(FileUploadStatus::Idle);
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            let file_list = e.data_transfer().files();
+        if let Some(data_transfer) = &e.data_transfer {
+            let file_list = &data_transfer.files;
 
             let mut selected_files = Vec::new();
             let mut errors = Vec::new();
 
-            for file_data in file_list {
-                let size = file_data.size() as usize;
-
-                if size > props.max_size {
+            for file_name in file_list {
+                if file_name.len() > max_size_for_drop {
                     errors.push(format!(
-                        "File '{}' is too large (max: {} bytes)",
-                        file_data.name(),
-                        props.max_size
+                        "File '{}' exceeds maximum size of {} bytes",
+                        file_name, max_size_for_drop
                     ));
-                    continue;
+                } else {
+                    selected_files.push(file_name.clone());
                 }
-
-                selected_files.push(file_data.name());
             }
 
-            if !errors.is_empty() && props.on_error.is_some() {
+            if !errors.is_empty() && on_error_for_drop.is_some() {
                 for error in errors {
-                    if let Some(handler) = props.on_error.as_ref() {
+                    if let Some(handler) = on_error_for_drop.as_ref() {
                         handler.call(error);
                     }
                 }
             }
 
             if !selected_files.is_empty() {
-                files.set(selected_files.clone());
+                files_for_drop.set(selected_files.clone());
 
-                if let Some(handler) = props.on_files.as_ref() {
+                if let Some(handler) = on_files_for_drop.as_ref() {
                     handler.call(selected_files);
                 }
 
-                upload_status.set(FileUploadStatus::Success);
+                upload_status_for_drop.set(FileUploadStatus::Success);
             }
         }
     };
 
-    let on_change = move |e: Event<FormData>| {
-        #[cfg(target_arch = "wasm32")]
-        {
-            let file_list = e.files();
+    let upload_status_for_change = upload_status.clone();
+    let files_for_change = files.clone();
+    let max_size_for_change = props.max_size;
+    let on_change = move |e: ChangeEvent| {
+        let file_value = e.value;
+        if file_value.is_empty() {
+            return;
+        }
 
-            let mut selected_files = Vec::new();
-            let mut errors = Vec::new();
+        let selected_files: Vec<String> = file_value
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
 
-            for file_data in file_list {
-                let size = file_data.size() as usize;
+        let mut accepted_files = Vec::new();
+        let mut errors = Vec::new();
 
-                if size > props.max_size {
-                    errors.push(format!(
-                        "File '{}' is too large (max: {} bytes)",
-                        file_data.name(),
-                        props.max_size
-                    ));
-                    continue;
-                }
-
-                selected_files.push(file_data.name());
-            }
-
-            if !errors.is_empty() && props.on_error.is_some() {
-                for error in errors {
-                    if let Some(handler) = props.on_error.as_ref() {
-                        handler.call(error);
-                    }
-                }
-            }
-
-            if !selected_files.is_empty() {
-                files.set(selected_files.clone());
-
-                if let Some(handler) = props.on_files.as_ref() {
-                    handler.call(selected_files);
-                }
-
-                upload_status.set(FileUploadStatus::Success);
+        for file_name in &selected_files {
+            if file_name.len() > max_size_for_change {
+                errors.push(format!(
+                    "File '{}' exceeds maximum size of {} bytes",
+                    file_name, max_size_for_change
+                ));
+            } else {
+                accepted_files.push(file_name.clone());
             }
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let _ = e;
+        if !errors.is_empty() && on_error_for_change.is_some() {
+            for error in errors {
+                if let Some(handler) = on_error_for_change.as_ref() {
+                    handler.call(error);
+                }
+            }
+        }
+
+        if !accepted_files.is_empty() {
+            files_for_change.set(accepted_files.clone());
+
+            if let Some(handler) = on_files_for_change.as_ref() {
+                handler.call(accepted_files);
+            }
+
+            upload_status_for_change.set(FileUploadStatus::Success);
         }
     };
 
     rsx! {
-        div { class: "{wrapper_classes}", style: "{props.style}",
+        div { class: wrapper_classes, style: props.style,
 
             div {
-                class: "{drag_classes}",
+                class: drag_classes,
                 ondragover: on_drag_over,
                 ondragleave: on_drag_leave,
                 ondrop: on_drop,
@@ -231,9 +221,9 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
                     p { class: "hi-file-upload-text", "{props.upload_text}" }
 
-                    if props.show_preview && !files().is_empty() {
+                    if props.show_preview && !files.get().is_empty() {
                         div { class: "hi-file-upload-preview",
-                            for file in files().iter() {
+                            for file in files.get().iter() {
                                 div { class: "hi-file-upload-file", "{file}" }
                             }
                         }

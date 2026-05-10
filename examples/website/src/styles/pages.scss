@@ -38,7 +38,7 @@
   padding: 1.5rem;
   border-radius: 0.75rem;
   border: 1px solid var(--hi-color-border);
-  background: var(--hi-color-surface);
+  background: var(--hi-page-bg);
 }
 
 .section-title {
@@ -63,9 +63,66 @@
 
 .component-category-card {
   &:hover {
-    border-color: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
-    box-shadow: 0 4px 12px var(--hi-color-primary, rgba(139, 92, 246, 0.1));
-    transform: translateY(-2px);
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 4px 12px var(--hi-color-primary);
+  }
+}
+
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.component-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.125rem 1.25rem;
+  border: 1px solid var(--hi-border, #e5e7eb);
+  border-radius: var(--hi-radius-lg, 12px);
+  background: var(--hi-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--hi-color-primary, #F5A9A9);
+    box-shadow: 0 2px 8px rgba(245, 169, 169, 0.12);
+    text-decoration: none;
+  }
+
+  .component-card__icon {
+    font-size: 1.25rem;
+    color: var(--hi-color-text-secondary, #6b7280);
+    margin-bottom: 0.5rem;
+  }
+
+  .component-card__tag {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--hi-pink-dark, #e88a8a);
+    background: rgba(245, 169, 169, 0.1);
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    width: fit-content;
+  }
+
+  .component-card__name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--hi-color-text-primary, #374151);
+    margin: 0 0 0.25rem;
+  }
+
+  .component-card__desc {
+    font-size: 0.8125rem;
+    color: var(--hi-color-text-secondary, #6b7280);
+    line-height: 1.5;
+    margin: 0;
   }
 }
 
@@ -170,8 +227,8 @@
 }
 
 .icon-card:hover {
-  border-color: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
-  box-shadow: 0 2px 8px var(--hi-color-primary, rgba(139, 92, 246, 0.1));
+  border-color: var(--hi-color-primary);
+  box-shadow: 0 2px 8px var(--hi-color-primary);
 }
 
 .icon-display {
@@ -416,7 +473,7 @@
   border-radius: 0.5rem;
   border-width: 1px;
   border-style: solid;
-  box-shadow: 0 4px 12px var(--hi-shadow-md, rgba(0, 0, 0, 0.15));
+  box-shadow: 0 4px 12px var(--hi-shadow-md);
   z-index: 1000;
   min-width: 300px;
 }
@@ -582,7 +639,7 @@
   padding: 0.5rem 1.5rem;
   border-radius: 0.375rem;
   border: 1px solid var(--hi-color-primary, rgba(139, 92, 246, 0.5));
-  background: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  background: var(--hi-color-primary);
   color: var(--hi-color-text-primary);
   font-size: 0.875rem;
   cursor: pointer;
@@ -640,7 +697,7 @@
   padding: 0.375rem 1rem;
   border-radius: 0.375rem;
   border: 1px solid var(--hi-color-primary, rgba(139, 92, 246, 0.5));
-  background: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  background: var(--hi-color-primary);
   color: var(--hi-color-text-primary);
   font-size: 0.875rem;
   cursor: pointer;
@@ -679,7 +736,7 @@
   padding: 0.375rem 1rem;
   border-radius: 0.375rem;
   border: 1px solid var(--hi-color-primary, rgba(139, 92, 246, 0.5));
-  background: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  background: var(--hi-color-primary);
   color: var(--hi-color-text-primary, rgba(255, 255, 255, 0.95));
   font-size: 0.875rem;
   cursor: pointer;
@@ -729,7 +786,7 @@
   color: var(--hi-color-text-primary);
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  border: 1px solid var(--hi-color-primary);
 }
 
 .showcase-menu-item-icon {
@@ -888,8 +945,8 @@
 
 .top-nav-github-link {
   padding: 0.5rem 1rem;
-  background: var(--hi-color-primary, rgba(139, 92, 246, 0.1));
-  border: 1px solid var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  background: var(--hi-color-primary);
+  border: 1px solid var(--hi-color-primary);
   border-radius: 6px;
   color: var(--hi-color-primary, #a78bfa);
   text-decoration: none;
@@ -928,7 +985,7 @@
   padding: 0.5rem 1.5rem;
   border-radius: 6px;
   border: none;
-  background: var(--hi-color-primary, rgba(139, 92, 246, 0.3));
+  background: var(--hi-color-primary);
   color: var(--hi-color-text-primary);
   font-size: 0.875rem;
   text-decoration: none;

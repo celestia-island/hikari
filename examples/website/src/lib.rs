@@ -1,40 +1,59 @@
-// website/src/lib.rs
-// WASM library entry point
+//! Hikari Design System website.
+//!
+//! Built with Tairitsu framework, compiled to wasm32-wasip2.
+//!
+//! Type-safe CSS class enums — one per component SCSS source.
+//! Each enum variant maps 1:1 to a `.class-name` in that stylesheet.
+//! Typos are caught at compile time.
 
-#![allow(clippy::too_many_arguments)]
-#![allow(clippy::type_complexity)]
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/button.scss");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/input.scss", prefix: "HiInput");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/switch.scss", prefix: "HiSwitch");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/toast.scss", prefix: "HiToast");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/table.scss", prefix: "HiTable");
+tairitsu_macros::include_scss!("../../packages/components/src/styles/components/skeleton.scss", prefix: "HiSkeleton");
 
-// Import Dioxus (only needed for WASM target)
-#[cfg(target_arch = "wasm32")]
-use dioxus::prelude::*;
-
-// Use console_error_panic_hook for better error messages in WASM
-#[cfg(target_arch = "wasm32")]
-use console_error_panic_hook::set_once;
-
-// Re-export the app
-#[cfg(target_arch = "wasm32")]
-pub use app::App;
-
+mod animation;
 mod app;
 mod components;
+mod dynamic_docs;
 mod hooks;
+mod i18n_init;
+mod js;
+mod markdown;
 mod pages;
+mod reactive;
+mod routing;
+mod scrollbar_host;
+mod theme;
+mod ui;
 
-// Shared configuration (used by main.rs)
-#[cfg(not(target_arch = "wasm32"))]
-pub mod paths;
+use tairitsu_web::WitPlatform;
 
-// Initialize panic hook for WASM (auto-called on WASM startup)
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen::prelude::wasm_bindgen(start)]
-pub fn init_panic_hook() {
-    set_once();
+fn run_app() {
+    i18n_init::init();
+    let platform = WitPlatform::new().expect("WitPlatform init failed");
+    let vnode = app::render();
+    let _ = platform.mount_vnode_to_app(vnode);
+
+    #[cfg(target_family = "wasm")]
+    {
+        let host = scrollbar_host::PlatformScrollbarHost::new(&platform);
+        hikari_components::scripts::scrollbar_container::init_all(&host);
+    }
 }
 
-// WASM entry point - called from JavaScript after init()
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {
-    launch(App);
+#[unsafe(no_mangle)]
+pub extern "C" fn tairitsu_component_bootstrap() {
+    run_app();
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn hikari_anim_freeze() {
+    hikari_components::platform::freeze_animations();
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn hikari_anim_unfreeze() {
+    hikari_components::platform::unfreeze_animations();
 }

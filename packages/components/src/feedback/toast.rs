@@ -1,13 +1,15 @@
 // hi-components/src/feedback/toast.rs
 // Toast component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
+#![expect(clippy::needless_update)]
+
+use hikari_icons::{Icon, MdiIcon};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, ToastClass};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 
@@ -33,46 +35,17 @@ pub enum ToastPosition {
     BottomLeft,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct ToastProps {
-    #[props(default)]
     pub variant: ToastVariant,
-
-    #[props(default)]
     pub message: String,
-
-    #[props(default)]
     pub title: Option<String>,
-
-    #[props(default)]
     pub duration: Option<u64>,
-
-    #[props(default)]
     pub position: ToastPosition,
-
-    #[props(default = true)]
+    #[default(true)]
     pub closable: bool,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
-}
-
-impl Default for ToastProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            message: String::default(),
-            title: None,
-            duration: None,
-            position: Default::default(),
-            closable: true,
-            class: String::default(),
-            on_close: None,
-        }
-    }
 }
 
 #[component]
@@ -92,66 +65,64 @@ pub fn Toast(props: ToastProps) -> Element {
     };
 
     let toast_classes = ClassesBuilder::new()
-        .add(ToastClass::Toast)
-        .add(variant_class)
-        .add_raw(&props.class)
+        .add_typed(ToastClass::Toast)
+        .add_typed(variant_class)
+        .add(&props.class)
         .build();
 
     let default_icon = match props.variant {
         ToastVariant::Info => rsx! {
             Icon {
                 icon: MdiIcon::Information,
-                class: ToastClass::ToastIcon.as_class().to_string(),
+                class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Success => rsx! {
             Icon {
                 icon: MdiIcon::Check,
-                class: ToastClass::ToastIcon.as_class().to_string(),
+                class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Warning => rsx! {
             Icon {
                 icon: MdiIcon::AlertTriangle,
-                class: ToastClass::ToastIcon.as_class().to_string(),
+                class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Error => rsx! {
             Icon {
                 icon: MdiIcon::Alert,
-                class: ToastClass::ToastIcon.as_class().to_string(),
+                class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-white-100)",
+                color: "var(--hi-color-white-100)".to_string(),
             }
         },
     };
 
     rsx! {
         Glow {
-            class: "hi-toast-glow-wrapper",
+            class: "hi-toast-glow-wrapper".to_string(),
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            div {
-                class: "{toast_classes}",
+            block: true,
+            div { class: toast_classes,
 
-                div { class: "{ToastClass::ToastIconWrapper.as_class()}",
-                    { default_icon }
-                }
+                div { class: ToastClass::ToastIconWrapper.class_name(), {default_icon} }
 
-                div { class: "{ToastClass::ToastContent.as_class()}",
+                div { class: ToastClass::ToastContent.class_name(),
 
                     if let Some(title) = props.title {
-                        div { class: "{ToastClass::ToastTitle.as_class()}", "{title}" }
+                        div { class: ToastClass::ToastTitle.class_name(), "{title}" }
                     }
 
-                    div { class: "{ToastClass::ToastMessage.as_class()}", "{props.message}" }
+                    div { class: ToastClass::ToastMessage.class_name(), "{props.message}" }
                 }
 
                 if props.closable {
@@ -162,11 +133,13 @@ pub fn Toast(props: ToastProps) -> Element {
                         class: "hi-toast-close".to_string(),
                         icon_color: Some("var(--hi-color-white-100)".to_string()),
                         glow: false,
-                        onclick: move |e| {
-                            if let Some(handler) = props.on_close.as_ref() {
-                                handler.call(e);
-                            }
-                        },
+                        onclick: Some(
+                            EventHandler::new(move |e| {
+                                if let Some(handler) = props.on_close.as_ref() {
+                                    handler(e);
+                                }
+                            }),
+                        ),
                     }
                 }
             }

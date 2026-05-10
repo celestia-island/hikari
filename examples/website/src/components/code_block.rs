@@ -1,83 +1,40 @@
-// website/src/components/code_block.rs
-// Code block component with basic styling
-//
-// This component provides a code block display with language labels and styling.
-// It supports raw text display for code snippets and documentation examples.
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use dioxus::prelude::*;
+fn txt(s: &str) -> VNode {
+    VNode::Text(VText::new(s))
+}
 
-/// Code block component with basic styling
-///
-/// Displays code with language labels in a styled container.
-/// This is a foundational implementation that provides:
-/// - Language labeling for code snippets
-/// - Styled container with consistent appearance
-/// - Raw text display for all programming languages
-///
-/// # Platform Support
-///
-/// **WASM (Web)**: Fully supported, renders as pre/code HTML elements
-/// **SSR (Server)**: Fully supported, renders on the server
-///
-/// # Future Enhancements
-///
-/// Full syntax highlighting is planned for a future release (Phase 2).
-/// Potential implementations may include:
-/// - Client-side JavaScript libraries (Prism.js, Highlight.js)
-/// - Server-side Rust libraries (syntect)
-/// - WASM-compiled highlighting engines
-///
-/// # Examples
-///
-/// ## Basic usage
-///
-/// ```rust,no_run
-/// # use dioxus::prelude::*;
-/// CodeBlock {
-///     language: "rust".to_string(),
-///     code: r#"fn main() {
-///     println!("Hello, Hikari!");
-/// }"#.to_string(),
-/// }
-/// ```
-///
-/// ## With custom class
-///
-/// ```rust,no_run
-/// # use dioxus::prelude::*;
-/// CodeBlock {
-///     language: "javascript".to_string(),
-///     code: "console.log('Hello');".to_string(),
-///     class: "my-custom-class".to_string(),
-/// }
-/// ```
-#[component]
-pub fn CodeBlock(
-    #[props(into)] language: String,
-    #[props(into)] code: String,
-    #[props(default)] class: String,
-) -> Element {
-    rsx! {
-        div {
-            class: format!("hi-code-block {}", class),
-
-            // Language label
-            div {
-                class: "hi-code-block-header",
-                span {
-                    class: "hi-code-block-language",
-                    "{language}"
-                }
-            }
-
-            // Code content
-            pre {
-                class: "hi-code-block-content",
-                code {
-                    class: "hi-code-block-code",
-                    "{code}"
-                }
-            }
-        }
+pub fn render_code_block(language: String, code: String, class: Option<String>) -> VNode {
+    let mut class_str = String::from("hi-code-block");
+    if let Some(c) = &class {
+        class_str.push(' ');
+        class_str.push_str(c);
     }
+
+    let header = VNode::Element(
+        VElement::new("div")
+            .class("hi-code-block-header")
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-code-block-language")
+                    .child(txt(&language)),
+            )),
+    );
+
+    let code_content = VNode::Element(
+        VElement::new("pre")
+            .class("hi-code-block-content")
+            .child(VNode::Element(
+                VElement::new("code")
+                    .class("hi-code-block-code")
+                    .child(txt(&code)),
+            )),
+    );
+
+    VNode::Element(
+        VElement::new("div")
+            .class(class_str)
+            .child(header)
+            .child(code_content),
+    )
 }

@@ -1,16 +1,15 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, MarkdownEditorClass, UtilityClass};
+use hikari_icons::{Icon, MdiIcon};
+use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// MarkdownEditor component type wrapper (for StyledComponent)
+/// Marker struct providing the styled CSS for the markdown editor component.
 pub struct MarkdownEditorComponent;
 
-/// Markdown editor mode
+/// Display mode for the markdown editor.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorMode {
     #[default]
@@ -19,7 +18,7 @@ pub enum MarkdownEditorMode {
     Split,
 }
 
-/// Markdown editor size
+/// Available sizes for the markdown editor.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MarkdownEditorSize {
     #[default]
@@ -28,52 +27,38 @@ pub enum MarkdownEditorSize {
     Large,
 }
 
-/// MarkdownEditor component props
-#[derive(Clone, PartialEq, Props)]
+/// Props for the MarkdownEditor component.
+#[define_props]
 pub struct MarkdownEditorProps {
-    /// Initial content
-    #[props(default)]
+    #[default(String::default())]
     pub value: String,
 
-    /// Placeholder text
-    #[props(default)]
+    #[default(String::default())]
     pub placeholder: String,
 
-    /// Editor mode
-    #[props(default)]
     pub mode: MarkdownEditorMode,
 
-    /// Editor size
-    #[props(default)]
     pub size: MarkdownEditorSize,
 
-    /// Show toolbar
-    #[props(default = true)]
+    #[default(true)]
     pub toolbar: bool,
 
-    /// Show line numbers
-    #[props(default)]
+    #[default(false)]
     pub line_numbers: bool,
 
-    /// Custom height
-    #[props(default)]
     pub height: Option<String>,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default(String::default())]
     pub class: String,
 
-    /// Callback when content changes
     pub on_change: Option<EventHandler<String>>,
 }
 
-/// MarkdownEditor component with live preview
-///
-/// A markdown editor with toolbar, syntax highlighting support, and live preview.
+/// Renders a markdown editor with a formatting toolbar and edit/preview/split modes.
 #[component]
 pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
-    let mut content = use_signal(|| props.value.clone());
-    let mut current_mode = use_signal(|| props.mode);
+    let content = use_signal(|| props.value.clone());
+    let current_mode = use_signal(|| props.mode);
 
     let size_class = match props.size {
         MarkdownEditorSize::Small => MarkdownEditorClass::Sm,
@@ -82,9 +67,9 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(MarkdownEditorClass::Container)
-        .add(size_class)
-        .add_raw(&props.class)
+        .add_typed(MarkdownEditorClass::Container)
+        .add_typed(size_class)
+        .add(&props.class)
         .build();
 
     let height_style = if let Some(h) = &props.height {
@@ -93,10 +78,38 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         String::new()
     };
 
-    let handle_input = {
-        let on_change = props.on_change;
-        move |e: Event<FormData>| {
-            let new_value = e.value();
+    // Create two separate handlers for the two textareas
+    let handle_input_edit = {
+        let on_change = props.on_change.clone();
+        let content_for_edit = content.clone();
+        move |e: InputEvent| {
+            let new_value = e.data.clone();
+            content_for_edit.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
+        }
+    };
+
+    let handle_input_split = {
+        let on_change = props.on_change.clone();
+        let content_for_split = content.clone();
+        move |e: InputEvent| {
+            let new_value = e.data.clone();
+            content_for_split.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
+        }
+    };
+
+    // Insert handlers - each needs its own clones
+    let insert_bold = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("**{}**", current);
             content.set(new_value.clone());
             if let Some(handler) = on_change.as_ref() {
                 handler.call(new_value);
@@ -104,198 +117,226 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let on_change_for_insert = props.on_change;
-    let insert_bold = move |_| {
-        let current = content();
-        let new_value = format!("**{}**", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_insert.as_ref() {
-            handler.call(new_value);
+    let insert_italic = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("*{}*", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_italic = props.on_change;
-    let insert_italic = move |_| {
-        let current = content();
-        let new_value = format!("*{}*", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_italic.as_ref() {
-            handler.call(new_value);
+    let insert_heading = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("# {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_heading = props.on_change;
-    let insert_heading = move |_| {
-        let current = content();
-        let new_value = format!("# {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_heading.as_ref() {
-            handler.call(new_value);
+    let insert_code = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("```\n{}\n```", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_code = props.on_change;
-    let insert_code = move |_| {
-        let current = content();
-        let new_value = format!("```\n{}\n```", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_code.as_ref() {
-            handler.call(new_value);
+    let insert_link = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("[{}](url)", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_link = props.on_change;
-    let insert_link = move |_| {
-        let current = content();
-        let new_value = format!("[{}](url)", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_link.as_ref() {
-            handler.call(new_value);
+    let insert_image = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("![alt]({})", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_image = props.on_change;
-    let insert_image = move |_| {
-        let current = content();
-        let new_value = format!("![alt]({})", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_image.as_ref() {
-            handler.call(new_value);
+    let insert_list = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("- {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_list = props.on_change;
-    let insert_list = move |_| {
-        let current = content();
-        let new_value = format!("- {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_list.as_ref() {
-            handler.call(new_value);
+    let insert_numbered = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("1. {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_numbered = props.on_change;
-    let insert_numbered = move |_| {
-        let current = content();
-        let new_value = format!("1. {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_numbered.as_ref() {
-            handler.call(new_value);
+    let insert_quote = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
+        move |_| {
+            let current = content.get();
+            let new_value = format!("> {}", current);
+            content.set(new_value.clone());
+            if let Some(handler) = on_change.as_ref() {
+                handler.call(new_value);
+            }
         }
     };
 
-    let on_change_for_quote = props.on_change;
-    let insert_quote = move |_| {
-        let current = content();
-        let new_value = format!("> {}", current);
-        content.set(new_value.clone());
-        if let Some(handler) = on_change_for_quote.as_ref() {
-            handler.call(new_value);
+    // Mode setters - each needs its own clone of current_mode
+    let set_mode_edit = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Edit);
         }
     };
 
-    let set_mode_edit = move |_| {
-        current_mode.set(MarkdownEditorMode::Edit);
+    let set_mode_preview = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Preview);
+        }
     };
 
-    let set_mode_preview = move |_| {
-        current_mode.set(MarkdownEditorMode::Preview);
+    let set_mode_split = {
+        let current_mode = current_mode.clone();
+        move |_| {
+            current_mode.set(MarkdownEditorMode::Split);
+        }
     };
 
-    let set_mode_split = move |_| {
-        current_mode.set(MarkdownEditorMode::Split);
-    };
+    // Get current values for display
+    let current_mode_value = current_mode.get();
+    let content_value = content.get();
 
     rsx! {
         div {
-            class: "{container_classes}",
-            style: "{height_style}",
+            class: container_classes,
+            style: height_style,
 
             // Toolbar
             if props.toolbar {
-                div { class: "{MarkdownEditorClass::Toolbar.as_class()}",
+                div { class: MarkdownEditorClass::Toolbar.class_name(),
                     // Format buttons
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_bold,
                         title: "Bold",
                         Icon { icon: MdiIcon::FormatBold, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_italic,
                         title: "Italic",
                         Icon { icon: MdiIcon::FormatItalic, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_heading,
                         title: "Heading",
                         "H"
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_code,
                         title: "Code Block",
                         Icon { icon: MdiIcon::Code, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_link,
                         title: "Link",
                         "🔗"
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_image,
                         title: "Image",
                         Icon { icon: MdiIcon::Image, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_list,
                         title: "List",
                         Icon { icon: MdiIcon::FormatListBulleted, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_numbered,
                         title: "Numbered List",
                         Icon { icon: MdiIcon::FormatListNumbered, size: 18 }
                     }
                     button {
-                        class: "{MarkdownEditorClass::ToolbarButton.as_class()}",
+                        class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_quote,
                         title: "Quote",
                         "\""
                     }
 
-                    div { class: "{MarkdownEditorClass::ToolbarDivider.as_class()}" }
+                    div { class: "{MarkdownEditorClass::ToolbarDivider.class_name()}" }
 
                     // Mode buttons
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Edit {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                        class: if current_mode_value == MarkdownEditorMode::Edit {
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_edit,
                         "Edit"
                     }
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Preview {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                        class: if current_mode_value == MarkdownEditorMode::Preview {
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_preview,
                         "Preview"
                     }
                     button {
-                        class: if current_mode() == MarkdownEditorMode::Split {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()} {MarkdownEditorClass::ToolbarButtonActive.as_class()}"
+                        class: if current_mode_value == MarkdownEditorMode::Split {
+                            "{MarkdownEditorClass::ToolbarButton.class_name()} {MarkdownEditorClass::ToolbarButtonActive.class_name()}"
                         } else {
-                            "{MarkdownEditorClass::ToolbarButton.as_class()}"
+                            "{MarkdownEditorClass::ToolbarButton.class_name()}"
                         },
                         onclick: set_mode_split,
                         "Split"
@@ -304,36 +345,36 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
             }
 
             // Editor area
-            div { class: "{MarkdownEditorClass::Content.as_class()}",
-                match current_mode() {
+            div { class: MarkdownEditorClass::Content.class_name(),
+                match current_mode_value {
                     MarkdownEditorMode::Edit => rsx! {
                         textarea {
-                            class: "{MarkdownEditorClass::Textarea.as_class()}",
-                            placeholder: "{props.placeholder}",
-                            value: "{content}",
-                            oninput: handle_input,
+                            class: MarkdownEditorClass::Textarea.class_name(),
+                            placeholder: props.placeholder,
+                            value: "{content_value}",
+                            oninput: handle_input_edit,
                         }
                     },
                     MarkdownEditorMode::Preview => rsx! {
-                        div { class: "{MarkdownEditorClass::Preview.as_class()}",
+                        div { class: MarkdownEditorClass::Preview.class_name(),
                             // Basic markdown rendering (simplified)
                             div {
-                                dangerous_inner_html: "{render_markdown_simple(&content())}",
+                                dangerous_inner_html: render_markdown_simple(&content_value),
                             }
                         }
                     },
                     MarkdownEditorMode::Split => rsx! {
-                        div { class: "{MarkdownEditorClass::SplitContainer.as_class()}",
+                        div { class: MarkdownEditorClass::SplitContainer.class_name(),
                             textarea {
-                                class: "{MarkdownEditorClass::Textarea.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
-                                placeholder: "{props.placeholder}",
-                                value: "{content}",
-                                oninput: handle_input,
+                                class: "{MarkdownEditorClass::Textarea.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
+                                placeholder: props.placeholder,
+                                value: "{content_value}",
+                                oninput: handle_input_split,
                             }
                             div {
-                                class: "{MarkdownEditorClass::Preview.as_class()} {MarkdownEditorClass::SplitPane.as_class()}",
+                                class: "{MarkdownEditorClass::Preview.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
                                 div {
-                                    dangerous_inner_html: "{render_markdown_simple(&content())}",
+                                    dangerous_inner_html: render_markdown_simple(&content_value),
                                 }
                             }
                         }
@@ -344,45 +385,78 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
     }
 }
 
-/// Simple markdown to HTML converter (basic implementation)
 fn render_markdown_simple(markdown: &str) -> String {
     let mut html = markdown.to_string();
 
-    // Escape HTML
     html = html.replace('&', "&amp;");
     html = html.replace('<', "&lt;");
     html = html.replace('>', "&gt;");
 
-    // Headers
-    html = html.replace("\n### ", "\n<h3>");
-    html = html.replace("\n## ", "\n<h2>");
-    html = html.replace("\n# ", "\n<h1>");
+    let mut result = String::new();
+    let mut in_bold = false;
+    let mut in_italic = false;
+    let mut in_code = false;
+    let mut chars = html.chars().peekable();
 
-    // Bold
-    html = html
-        .replace("**", "<strong>")
-        .replacen("<strong>", "</strong>", 1);
-    while html.contains("<strong>") {
-        html = html.replacen("<strong>", "</strong>", 1);
+    while let Some(c) = chars.next() {
+        if c == '*' && chars.peek() == Some(&'*') && !in_code {
+            chars.next();
+            if in_bold {
+                result.push_str("</strong>");
+            } else {
+                result.push_str("<strong>");
+            }
+            in_bold = !in_bold;
+        } else if c == '*' && !in_bold && !in_code {
+            if in_italic {
+                result.push_str("</em>");
+            } else {
+                result.push_str("<em>");
+            }
+            in_italic = !in_italic;
+        } else if c == '`' && !in_bold && !in_italic {
+            if in_code {
+                result.push_str("</code>");
+            } else {
+                result.push_str("<code>");
+            }
+            in_code = !in_code;
+        } else if c == '\n' {
+            result.push_str("<br>");
+        } else {
+            result.push(c);
+        }
     }
 
-    // Italic
-    html = html.replace("*", "<em>").replacen("<em>", "</em>", 1);
-    while html.contains("<em>") {
-        html = html.replacen("<em>", "</em>", 1);
+    if in_bold {
+        result.push_str("</strong>");
+    }
+    if in_italic {
+        result.push_str("</em>");
+    }
+    if in_code {
+        result.push_str("</code>");
     }
 
-    // Code
-    html = html.replace("`", "<code>").replacen("<code>", "</code>", 1);
-    while html.contains("<code>") {
-        html = html.replacen("<code>", "</code>", 1);
+    let lines: Vec<&str> = result.split("<br>").collect();
+    let mut processed = Vec::new();
+    for line in lines {
+        let trimmed = line.trim_start_matches(' ');
+        if let Some(rest) = trimmed.strip_prefix("### ") {
+            processed.push(format!("<h3>{}</h3>", rest));
+        } else if let Some(rest) = trimmed.strip_prefix("## ") {
+            processed.push(format!("<h2>{}</h2>", rest));
+        } else if let Some(rest) = trimmed.strip_prefix("# ") {
+            processed.push(format!("<h1>{}</h1>", rest));
+        } else {
+            processed.push(line.to_string());
+        }
     }
 
-    // Line breaks
-    html = html.replace("\n", "<br>");
-
-    // Wrap in paragraph
-    format!("<div class=\"markdown-content\">{}</div>", html)
+    format!(
+        "<div class=\"markdown-content\">{}</div>",
+        processed.join("<br>")
+    )
 }
 
 impl StyledComponent for MarkdownEditorComponent {
@@ -399,7 +473,7 @@ impl StyledComponent for MarkdownEditorComponent {
 
 .hi-markdown-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow);
+    box-shadow: 0 0 0 2px var(--hi-glow-button-primary);
 }
 
 [data-theme="dark"] .hi-markdown-editor {

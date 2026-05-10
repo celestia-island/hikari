@@ -1,100 +1,49 @@
 // packages/components/src/entry/auto_complete.rs
 // AutoComplete component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// AutoComplete component type wrapper (for StyledComponent)
+/// Style provider for the AutoComplete component.
 pub struct AutoCompleteComponent;
 
-/// AutoComplete component with Arknights + FUI styling
-///
-/// An auto-complete input component that suggests options as user types.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::AutoComplete;
-///
-/// fn app() -> Element {
-///     let mut value = use_signal(|| String::new());
-///     let options = vec![
-///         "Rust".to_string(),
-///         "Python".to_string(),
-///         "TypeScript".to_string(),
-///     ];
-///
-///     rsx! {
-///         AutoComplete {
-///             value: value(),
-///             options: options,
-///             placeholder: "Select a language",
-///             on_select: move |v| value.set(v),
-///         }
-///     }
-/// }
-/// ```
-#[derive(Clone, PartialEq, Props)]
+/// Props for the AutoComplete component
+#[define_props]
 pub struct AutoCompleteProps {
-    /// Current input value
-    #[props(default)]
     pub value: String,
 
-    /// All available options
     pub options: Vec<String>,
 
-    /// Callback when option is selected
-    #[props(default)]
+    #[default(EventHandler::new(|_: String| {}))]
     pub on_select: EventHandler<String>,
 
-    /// Placeholder text
-    #[props(default)]
     pub placeholder: String,
 
-    /// Whether component is disabled
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    /// Whether to show clear button
-    #[props(default = false)]
+    #[default(false)]
     pub allow_clear: bool,
 
-    /// Custom classes
-    #[props(default)]
     pub class: String,
 
-    /// Custom styles
-    #[props(default)]
     pub style: String,
 }
 
-impl Default for AutoCompleteProps {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-            options: vec![],
-            on_select: EventHandler::new(|_: String| {}),
-            placeholder: String::new(),
-            disabled: false,
-            allow_clear: false,
-            class: String::new(),
-            style: String::new(),
-        }
-    }
-}
-
+/// An input field with a dropdown of filtered suggestions based on the current value.
 #[component]
 pub fn AutoComplete(props: AutoCompleteProps) -> Element {
-    let mut is_open = use_signal(|| false);
-    let mut focused_index = use_signal(|| 0);
-    let mut filtered_options = use_signal(Vec::new);
+    let is_open = use_signal(|| false);
+    let focused_index = use_signal(|| 0);
+    let filtered_options = use_signal(Vec::new);
 
     // Clone props values before using in effects
     let props_value = props.value.clone();
     let props_options = props.options.clone();
+
+    // Clone signals for use in multiple closures
+    let filtered_options_for_effect = filtered_options.clone();
 
     // Update filtered options when props change
     use_effect(move || {
@@ -106,64 +55,78 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             })
             .cloned()
             .collect::<Vec<_>>();
-        filtered_options.set(filtered);
+        filtered_options_for_effect.set(filtered);
     });
 
     // Handle input change
+    let is_open_for_input = is_open.clone();
+    let focused_index_for_input = focused_index.clone();
     let handle_input = {
-        let on_select = props.on_select;
-        move |e: Event<FormData>| {
-            on_select.call(e.value());
-            is_open.set(true);
-            focused_index.set(0);
+        let on_select = props.on_select.clone();
+        move |e: InputEvent| {
+            on_select.call(e.data.clone());
+            is_open_for_input.set(true);
+            focused_index_for_input.set(0);
         }
     };
 
     // Handle focus
-    let handle_focus = move |_| {
-        if !props.disabled {
-            is_open.set(true);
-            focused_index.set(0);
+    let is_open_for_focus = is_open.clone();
+    let focused_index_for_focus = focused_index.clone();
+    let handle_focus = {
+        let disabled = props.disabled;
+        move |_| {
+            if !disabled {
+                is_open_for_focus.set(true);
+                focused_index_for_focus.set(0);
+            }
         }
     };
 
     // Handle blur (close dropdown immediately)
+    let is_open_for_blur = is_open.clone();
     let handle_blur = move |_| {
-        is_open.set(false);
+        is_open_for_blur.set(false);
     };
 
-    // Handle option click
-    let mut handle_option_click = {
-        let on_select = props.on_select;
+    // Handle option click - used in keyboard navigation and click handler
+    let is_open_for_click = is_open.clone();
+    let handle_option_click = {
+        let on_select = props.on_select.clone();
         move |option: String| {
             on_select.call(option);
-            is_open.set(false);
+            is_open_for_click.set(false);
         }
     };
 
     // Handle keyboard navigation
+    let is_open_for_keydown = is_open.clone();
+    let focused_index_for_keydown = focused_index.clone();
+    let filtered_options_for_keydown = filtered_options.clone();
+    let handle_option_click_for_keydown = handle_option_click.clone();
     let handle_keydown = {
+        let disabled = props.disabled;
         move |e: KeyboardEvent| {
-            if props.disabled {
+            if disabled {
                 return;
             }
 
-            let options = filtered_options.read().clone();
-            let current = *focused_index.read();
+            let options = filtered_options_for_keydown.read().clone();
+            let current = focused_index_for_keydown.read();
 
-            match e.key() {
+            match e.get_key() {
                 Key::Enter => {
                     e.prevent_default();
                     if !options.is_empty() && current < options.len() {
                         let selected_option = options[current].clone();
-                        handle_option_click(selected_option);
+                        handle_option_click_for_keydown(selected_option);
                     }
                 }
                 Key::ArrowDown => {
                     e.prevent_default();
                     if !options.is_empty() {
                         let next = (current + 1) % options.len();
-                        focused_index.set(next);
+                        focused_index_for_keydown.set(next);
                     }
                 }
                 Key::ArrowUp => {
@@ -171,12 +134,12 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                     if !options.is_empty() {
                         let len = options.len();
                         let prev = (current + len - 1) % len;
-                        focused_index.set(prev);
+                        focused_index_for_keydown.set(prev);
                     }
                 }
                 Key::Escape => {
                     e.prevent_default();
-                    is_open.set(false);
+                    is_open_for_keydown.set(false);
                 }
                 _ => {}
             }
@@ -184,32 +147,33 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     };
 
     // Handle clear button
+    let is_open_for_clear = is_open.clone();
     let handle_clear = {
-        let on_select = props.on_select;
+        let on_select = props.on_select.clone();
         move |_| {
             on_select.call(String::new());
-            is_open.set(false);
+            is_open_for_clear.set(false);
         }
     };
 
-    let input_classes = ClassesBuilder::new().add(AutoCompleteClass::Input).build();
+    let input_classes = ClassesBuilder::new()
+        .add_typed(AutoCompleteClass::Input)
+        .build();
 
-    let is_open_value = *is_open.read();
-    let focused_index_value = *focused_index.read();
+    let is_open_value = is_open.read();
+    let focused_index_value = focused_index.read();
     let options_arr = filtered_options.read().clone();
 
-    let wrapper_class = AutoCompleteClass::Wrapper.as_class();
+    let wrapper_class = AutoCompleteClass::Wrapper.class_name();
 
     rsx! {
-        div {
-            class: "{wrapper_class}",
-            style: "position: relative; {props.style}",
+        div { class: wrapper_class, style: "position: relative; {props.style}",
 
             input {
-                class: "{input_classes}",
+                class: input_classes,
                 r#type: "text",
                 value: "{props.value}",
-                placeholder: "{props.placeholder}",
+                placeholder: props.placeholder,
                 disabled: props.disabled,
                 oninput: handle_input,
                 onfocus: handle_focus,
@@ -219,9 +183,9 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: "{AutoCompleteClass::Clear.as_class()}",
+                    class: AutoCompleteClass::Clear.class_name(),
                     onclick: handle_clear,
-                    type: "button",
+                    r#type: "button",
                     "×"
                 }
             }
@@ -229,21 +193,25 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             if is_open_value && !options_arr.is_empty() {
                 div {
                     class: ClassesBuilder::new()
-                        .add(AutoCompleteClass::Dropdown)
-                        .add(AutoCompleteClass::Show)
-                        .add_raw(&props.class)
+                        .add_typed(AutoCompleteClass::Dropdown)
+                        .add_typed(AutoCompleteClass::Show)
+                        .add(&props.class)
                         .build(),
 
                     for index in 0..options_arr.len() {
                         div {
                             class: ClassesBuilder::new()
-                                .add(AutoCompleteClass::Option)
-                                .add_if(AutoCompleteClass::OptionFocused, || index == focused_index_value)
+                                .add_typed(AutoCompleteClass::Option)
+                                .add_typed_if(AutoCompleteClass::OptionFocused, index == focused_index_value)
                                 .build(),
-                            onclick: move |_| {
-                                let options = filtered_options.read();
-                                if index < options.len() {
-                                    handle_option_click(options[index].clone())
+                            onclick: {
+                                let handle_option_click_for_click = handle_option_click.clone();
+                                let filtered_options_for_click = filtered_options.clone();
+                                move |_| {
+                                    let options = filtered_options_for_click.read();
+                                    if index < options.len() {
+                                        handle_option_click_for_click(options[index].clone())
+                                    }
                                 }
                             },
                             "{options_arr[index]}"
@@ -278,7 +246,7 @@ impl StyledComponent for AutoCompleteComponent {
 
 .hi-autocomplete-input:focus {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px rgba(238, 162, 164, 0.1);
 }
 
 .hi-autocomplete-input:disabled {

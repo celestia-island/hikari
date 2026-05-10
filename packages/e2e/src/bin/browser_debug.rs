@@ -1,12 +1,13 @@
 use anyhow::{Context, Result};
+use futures::StreamExt;
+use serde::{Deserialize, Serialize};
+use std::{path::PathBuf, time::Duration};
+
 use chromiumoxide::{
     browser::{Browser, BrowserConfig},
     cdp::browser_protocol::page::CaptureScreenshotFormat,
 };
 use clap::{Parser, Subcommand};
-use futures::StreamExt;
-use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, time::Duration};
 use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
@@ -77,8 +78,7 @@ struct BrowserDebug {
 
 impl BrowserDebug {
     async fn new() -> Result<Self> {
-        let chrome_bin = std::env::var("CHROME_BIN")
-            .unwrap_or_else(|_| "chromium".to_string());
+        let chrome_bin = std::env::var("CHROME_BIN").unwrap_or_else(|_| "chromium".to_string());
 
         let config = BrowserConfig::builder()
             .no_sandbox()
@@ -119,7 +119,8 @@ impl BrowserDebug {
     ) -> Result<String> {
         info!("Navigating to: {}", url);
 
-        let page = self.browser
+        let page = self
+            .browser
             .new_page(url.to_string())
             .await
             .context("Failed to create page")?;
@@ -128,7 +129,8 @@ impl BrowserDebug {
 
         if let Some(script) = inject_script {
             info!("Injecting script...");
-            let _ = page.evaluate(script)
+            let _ = page
+                .evaluate(script)
                 .await
                 .map_err(|e| warn!("Script injection warning: {}", e));
             tokio::time::sleep(Duration::from_millis(500)).await;
@@ -140,7 +142,7 @@ impl BrowserDebug {
             .map_err(|e| warn!("Failed to set viewport via JS: {}", e));
 
         let screenshot_path = PathBuf::from(output);
-        
+
         let params = chromiumoxide::page::ScreenshotParams::builder()
             .format(CaptureScreenshotFormat::Png)
             .full_page(full_page)
@@ -152,11 +154,12 @@ impl BrowserDebug {
 
         page.close().await?;
 
-        let path_str = screenshot_path.canonicalize()
+        let path_str = screenshot_path
+            .canonicalize()
             .unwrap_or(screenshot_path)
             .to_string_lossy()
             .to_string();
-        
+
         info!("Screenshot saved: {}", path_str);
         Ok(path_str)
     }
@@ -169,7 +172,8 @@ impl BrowserDebug {
     ) -> Result<serde_json::Value> {
         info!("Navigating to: {}", url);
 
-        let page = self.browser
+        let page = self
+            .browser
             .new_page(url.to_string())
             .await
             .context("Failed to create page")?;
@@ -177,12 +181,13 @@ impl BrowserDebug {
         tokio::time::sleep(Duration::from_secs(wait_secs)).await;
 
         info!("Executing script...");
-        let result = page.evaluate(script)
+        let result = page
+            .evaluate(script)
             .await
             .context("Failed to execute script")?;
 
         let value: serde_json::Value = result.into_value()?;
-        
+
         page.close().await?;
 
         Ok(value)
@@ -191,7 +196,8 @@ impl BrowserDebug {
     async fn check_page(&mut self, url: &str, wait_secs: u64) -> Result<DebugResult> {
         info!("Checking page: {}", url);
 
-        let page = self.browser
+        let page = self
+            .browser
             .new_page(url.to_string())
             .await
             .context("Failed to create page")?;
@@ -221,12 +227,13 @@ impl BrowserDebug {
             })()
         "#;
 
-        let result = page.evaluate(check_script)
+        let result = page
+            .evaluate(check_script)
             .await
             .context("Failed to check page")?;
 
         let value: serde_json::Value = result.into_value()?;
-        
+
         page.close().await?;
 
         Ok(DebugResult {
@@ -241,12 +248,16 @@ impl BrowserDebug {
         })
     }
 
-    async fn run_commands(&mut self, input_file: &str, output_dir: &str) -> Result<Vec<DebugResult>> {
-        let content = std::fs::read_to_string(input_file)
-            .context("Failed to read commands file")?;
-        
-        let commands: Vec<DebugCommand> = serde_json::from_str(&content)
-            .context("Failed to parse commands JSON")?;
+    async fn run_commands(
+        &mut self,
+        input_file: &str,
+        output_dir: &str,
+    ) -> Result<Vec<DebugResult>> {
+        let content =
+            std::fs::read_to_string(input_file).context("Failed to read commands file")?;
+
+        let commands: Vec<DebugCommand> =
+            serde_json::from_str(&content).context("Failed to parse commands JSON")?;
 
         std::fs::create_dir_all(output_dir)?;
 
@@ -264,17 +275,22 @@ impl BrowserDebug {
         match cmd.action.as_str() {
             "navigate" | "screenshot" => {
                 let url = cmd.url.as_deref().unwrap_or("http://localhost:3000");
-                let output = cmd.output.as_deref()
+                let output = cmd
+                    .output
+                    .as_deref()
                     .map(|o| format!("{}/{}", output_dir, o))
                     .unwrap_or_else(|| format!("{}/screenshot.png", output_dir));
-                
-                match self.navigate_and_screenshot(
-                    url,
-                    &output,
-                    cmd.wait_ms.unwrap_or(8000) / 1000,
-                    cmd.script.as_deref(),
-                    cmd.full_page.unwrap_or(true),
-                ).await {
+
+                match self
+                    .navigate_and_screenshot(
+                        url,
+                        &output,
+                        cmd.wait_ms.unwrap_or(8000) / 1000,
+                        cmd.script.as_deref(),
+                        cmd.full_page.unwrap_or(true),
+                    )
+                    .await
+                {
                     Ok(path) => DebugResult {
                         success: true,
                         message: "Screenshot captured".to_string(),
@@ -292,8 +308,11 @@ impl BrowserDebug {
             "script" => {
                 let url = cmd.url.as_deref().unwrap_or("http://localhost:3000");
                 let script = cmd.script.as_deref().unwrap_or("return document.title;");
-                
-                match self.execute_script(url, script, cmd.wait_ms.unwrap_or(8000) / 1000).await {
+
+                match self
+                    .execute_script(url, script, cmd.wait_ms.unwrap_or(8000) / 1000)
+                    .await
+                {
                     Ok(value) => DebugResult {
                         success: true,
                         message: "Script executed".to_string(),
@@ -310,7 +329,10 @@ impl BrowserDebug {
             }
             "check" => {
                 let url = cmd.url.as_deref().unwrap_or("http://localhost:3000");
-                match self.check_page(url, cmd.wait_ms.unwrap_or(8000) / 1000).await {
+                match self
+                    .check_page(url, cmd.wait_ms.unwrap_or(8000) / 1000)
+                    .await
+                {
                     Ok(result) => result,
                     Err(e) => DebugResult {
                         success: false,
@@ -325,7 +347,7 @@ impl BrowserDebug {
                 message: format!("Unknown action: {}", cmd.action),
                 output_path: None,
                 script_result: None,
-            }
+            },
         }
     }
 }
@@ -341,12 +363,17 @@ async fn main() -> Result<()> {
     let mut debug = BrowserDebug::new().await?;
 
     match args.command {
-        Commands::Navigate { url, output, wait, inject, full_page } => {
-            let path = debug.navigate_and_screenshot(
-                &url, &output, wait,
-                inject.as_deref(), full_page,
-            ).await?;
-            
+        Commands::Navigate {
+            url,
+            output,
+            wait,
+            inject,
+            full_page,
+        } => {
+            let path = debug
+                .navigate_and_screenshot(&url, &output, wait, inject.as_deref(), full_page)
+                .await?;
+
             let result = DebugResult {
                 success: true,
                 message: "Screenshot captured".to_string(),

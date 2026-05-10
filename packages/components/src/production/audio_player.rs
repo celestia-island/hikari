@@ -1,15 +1,14 @@
 // packages/components/src/production/audio_player.rs
 // Audio player component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{TypedClass, AudioPlayerClass, ClassesBuilder};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// AudioPlayer component type wrapper (for StyledComponent)
+/// Marker struct providing the styled CSS for the audio player component.
 pub struct AudioPlayerComponent;
 
-/// Audio player size variants
+/// Available sizes for the audio player.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AudioPlayerSize {
     #[default]
@@ -18,55 +17,29 @@ pub enum AudioPlayerSize {
     Large,
 }
 
-/// Audio player component with Arknights + FUI styling
-///
-/// A audio player with cover art, title/artist info, and native controls.
-#[derive(Clone, PartialEq, Props)]
+/// Props for the AudioPlayer component
+#[define_props]
 pub struct AudioPlayerProps {
-    /// Audio source URL
     pub src: String,
-
-    /// Audio title
-    #[props(default)]
     pub title: Option<String>,
-
-    /// Audio artist/author
-    #[props(default)]
     pub artist: Option<String>,
-
-    /// Cover image URL
-    #[props(default)]
     pub cover: Option<String>,
-
-    /// Autoplay audio
-    #[props(default)]
+    #[default(false)]
     pub autoplay: bool,
-
-    /// Show controls (uses native browser controls)
-    #[props(default = true)]
+    #[default(true)]
     pub controls: bool,
-
-    /// Loop audio
-    #[props(default)]
+    #[default(false)]
     pub loop_: bool,
-
-    /// Muted by default
-    #[props(default)]
+    #[default(false)]
     pub muted: bool,
-
-    /// Player size
-    #[props(default)]
     pub size: AudioPlayerSize,
-
-    /// Additional CSS classes
-    #[props(default)]
+    #[default(String::default())]
     pub class: String,
-
-    /// Additional CSS styles
-    #[props(default)]
+    #[default(String::default())]
     pub style: String,
 }
 
+/// Renders an audio player with cover art, title/artist info, and native HTML audio controls.
 #[component]
 pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
     let size_class = match props.size {
@@ -76,45 +49,43 @@ pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add(AudioPlayerClass::Container)
-        .add(size_class)
-        .add_raw(&props.class)
+        .add_typed(AudioPlayerClass::Container)
+        .add_typed(size_class)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div {
-            class: "{container_classes}",
-            style: "{props.style}",
+        div { class: container_classes, style: props.style,
 
             // Cover and info section
-            div { class: "{AudioPlayerClass::Header.as_class()}",
+            div { class: AudioPlayerClass::Header.class_name(),
                 if let Some(cover) = &props.cover {
-                    div { class: "{AudioPlayerClass::Cover.as_class()}",
+                    div { class: AudioPlayerClass::Cover.class_name(),
                         img {
-                            src: "{cover}",
+                            src: cover,
                             alt: props.title.as_deref().unwrap_or("Audio cover"),
-                            class: "{AudioPlayerClass::CoverImage.as_class()}",
+                            class: AudioPlayerClass::CoverImage.class_name(),
                         }
                     }
                 }
 
-                div { class: "{AudioPlayerClass::Info.as_class()}",
+                div { class: AudioPlayerClass::Info.class_name(),
                     if let Some(title) = &props.title {
-                        div { class: "{AudioPlayerClass::Title.as_class()}", "{title}" }
+                        div { class: AudioPlayerClass::Title.class_name(), "{title}" }
                     }
                     if let Some(artist) = &props.artist {
-                        div { class: "{AudioPlayerClass::Artist.as_class()}", "{artist}" }
+                        div { class: AudioPlayerClass::Artist.class_name(), "{artist}" }
                     }
                 }
             }
 
             // Audio element with native controls
             audio {
-                class: "{AudioPlayerClass::Audio.as_class()}",
-                src: "{props.src}",
+                class: AudioPlayerClass::Audio.class_name(),
+                src: props.src,
                 autoplay: props.autoplay,
                 controls: props.controls,
-                loop: props.loop_,
+                r#loop: props.loop_,
                 muted: props.muted,
             }
         }

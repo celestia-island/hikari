@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Header;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Header {
@@ -16,71 +16,46 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use dioxus_core::VNode;
-use palette::{classes::*, ClassesBuilder};
+use hikari_palette::{classes::*, ClassesBuilder};
 
-/// Header component - Modern application header bar
+use crate::{prelude::*, theme::use_layout_direction};
+
 ///
-/// # Design Features
-/// - Glassmorphism effect with backdrop blur
-/// - Subtle border for visual separation
-/// - Smooth elevation shadow
-/// - Refined spacing and typography
 ///
-/// # Elevation System
-/// - Default: elevation-1 (subtle shadow)
-/// - Can be customized with elevation prop
 #[component]
 pub fn Header(
-    /// Header content
     children: Element,
 
-    /// Border bottom (default: true)
-    #[props(default = true)]
-    bordered: bool,
+    #[props(default = true)] bordered: bool,
 
-    /// Whether to show mobile menu toggle button
-    #[props(default = false)]
-    show_menu_toggle: bool,
+    #[props(default = false)] show_menu_toggle: bool,
 
-    /// Callback when menu toggle is clicked
-    on_menu_toggle: EventHandler,
+    on_menu_toggle: Option<EventHandler<MouseEvent>>,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
-    /// Right side content (e.g., theme toggle, user menu)
-    #[props(default = VNode::empty())]
-    right_content: Element,
+    #[props(default)] right_content: Option<Element>,
 ) -> Element {
     let layout_direction = use_layout_direction();
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
 
     let content_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(AlignItems::Center)
-        .add(Gap::Gap3)
-        .add(MinWidth::MinW0)
-        .add(Flex::Shrink0)
+        .add_typed(Display::Flex)
+        .add_typed(AlignItems::Center)
+        .add_typed(Gap::Gap3)
+        .add_typed(MinWidth::MinW0)
+        .add_typed(Flex::Shrink0)
         .build();
 
-    let mut header_builder = ClassesBuilder::new()
-        .add(components::Header::Header)
-        .add(components::Header::Sticky)
-        .add(components::Header::Md)
-        .add_if(components::Header::Transparent, || !bordered)
-        .add_raw(&class);
-
-    if is_rtl {
-        header_builder = header_builder.add_raw("hi-header-rtl");
-    }
+    let header_builder = ClassesBuilder::new()
+        .add_typed(components::Header::Header)
+        .add_typed(components::Header::Sticky)
+        .add_typed(components::Header::Md)
+        .add_typed_if(components::Header::Transparent, !bordered)
+        .add_typed_if(components::Header::Rtl, is_rtl)
+        .add(&class);
 
     let header_classes = header_builder.build();
 
@@ -91,16 +66,18 @@ pub fn Header(
     };
 
     rsx! {
-        header {
-            class: "{header_classes}",
+        header { class: header_classes,
 
-            div {
-                class: "{left_class}",
+            div { class: left_class,
 
                 if show_menu_toggle {
                     button {
                         class: "hi-header-toggle",
-                        onclick: move |_| on_menu_toggle.call(()),
+                        onclick: move |e| {
+                            if let Some(handler) = &on_menu_toggle {
+                                handler.call(e);
+                            }
+                        },
                         "aria-label": "Toggle menu",
 
                         svg {
@@ -116,16 +93,99 @@ pub fn Header(
                     }
                 }
 
-                div {
-                    class: "{content_classes}",
-                    { children }
-                }
+                div { class: content_classes, {children} }
             }
 
-            div {
-                class: "{right_class}",
-                { right_content }
+            if let Some(right) = right_content {
+                div { class: right_class, {right} }
             }
         }
+    }
+}
+
+pub struct HeaderComponent;
+
+impl crate::styled::StyledComponent for HeaderComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 64px;
+  min-height: 64px;
+  padding: 0 1rem;
+  margin: 0;
+  border-radius: 0;
+  background: var(--hi-surface);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid var(--hi-border);
+  box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
+  position: relative;
+}
+
+.hi-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.hi-header-transparent {
+  background: transparent;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: none;
+  border-bottom: 1px solid transparent;
+}
+
+.hi-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.hi-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.hi-header-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .hi-header-toggle {
+    display: inline-flex;
+  }
+
+  .hi-header {
+    padding: 0 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hi-header {
+    padding: 0 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hi-header {
+    padding: 0 1rem;
+  }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "header"
     }
 }

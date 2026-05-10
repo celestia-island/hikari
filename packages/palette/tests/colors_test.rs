@@ -42,7 +42,7 @@ fn test_themes() {
     assert_eq!(tairitsu.mode, ThemeMode::Dark);
 
     assert_eq!(hikari.background.hex(), 月白.hex());
-    assert_eq!(tairitsu.background.hex(), 墨色.hex());
+    assert_eq!(tairitsu.background.hex(), 漆黑.hex());
 
     assert_eq!(hikari.primary.hex(), 牡丹粉红.hex());
     assert_eq!(tairitsu.primary.hex(), 鷃蓝.hex());

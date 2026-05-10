@@ -1,10 +1,8 @@
 //! Button component classes
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use crate::classes::UtilityClass;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonClass {
     Button,
     Primary,
@@ -39,44 +37,46 @@ pub enum ButtonClass {
     Disabled,
     IconButtonIcon,
     IconButtonDisabled,
+    Suffix,
 }
 
-impl UtilityClass for ButtonClass {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ButtonClass {
+    fn class_name(&self) -> &'static str {
         match self {
-            ButtonClass::Button => "button",
-            ButtonClass::Primary => "button-primary",
-            ButtonClass::Secondary => "button-secondary",
-            ButtonClass::Ghost => "button-ghost",
-            ButtonClass::Borderless => "button-borderless",
-            ButtonClass::Danger => "button-danger",
-            ButtonClass::Success => "button-success",
-            ButtonClass::Sm => "button-sm",
-            ButtonClass::Md => "button-md",
-            ButtonClass::Lg => "button-lg",
-            ButtonClass::Loading => "button-loading",
-            ButtonClass::Block => "button-block",
-            ButtonClass::Spinner => "button-spinner",
-            ButtonClass::Icon => "button-icon",
-            ButtonClass::SpaceBetween => "button-space-between",
-            ButtonClass::WidthAuto => "button-width-auto",
-            ButtonClass::Width120 => "button-width-120",
-            ButtonClass::Width140 => "button-width-140",
-            ButtonClass::Width160 => "button-width-160",
-            ButtonClass::IconButton => "icon-button",
-            ButtonClass::IconButtonSize16 => "icon-button-16",
-            ButtonClass::IconButtonSize24 => "icon-button-24",
-            ButtonClass::IconButtonSize32 => "icon-button-32",
-            ButtonClass::IconButtonSize36 => "icon-button-36",
-            ButtonClass::IconButtonSize40 => "icon-button-40",
-            ButtonClass::IconButtonGhost => "icon-button-ghost",
-            ButtonClass::IconButtonPrimary => "icon-button-primary",
-            ButtonClass::IconButtonSecondary => "icon-button-secondary",
-            ButtonClass::IconButtonDanger => "icon-button-danger",
-            ButtonClass::IconButtonSuccess => "icon-button-success",
-            ButtonClass::Disabled => "button-disabled",
-            ButtonClass::IconButtonIcon => "icon-button-icon",
-            ButtonClass::IconButtonDisabled => "icon-button-disabled",
+            ButtonClass::Button => "hi-button",
+            ButtonClass::Primary => "hi-button-primary",
+            ButtonClass::Secondary => "hi-button-secondary",
+            ButtonClass::Ghost => "hi-button-ghost",
+            ButtonClass::Borderless => "hi-button-borderless",
+            ButtonClass::Danger => "hi-button-danger",
+            ButtonClass::Success => "hi-button-success",
+            ButtonClass::Sm => "hi-button-sm",
+            ButtonClass::Md => "hi-button-md",
+            ButtonClass::Lg => "hi-button-lg",
+            ButtonClass::Loading => "hi-button-loading",
+            ButtonClass::Block => "hi-button-block",
+            ButtonClass::Spinner => "hi-button-spinner",
+            ButtonClass::Icon => "hi-button-icon",
+            ButtonClass::SpaceBetween => "hi-button-space-between",
+            ButtonClass::WidthAuto => "hi-button-width-auto",
+            ButtonClass::Width120 => "hi-button-width-120",
+            ButtonClass::Width140 => "hi-button-width-140",
+            ButtonClass::Width160 => "hi-button-width-160",
+            ButtonClass::IconButton => "hi-icon-button",
+            ButtonClass::IconButtonSize16 => "hi-icon-button-16",
+            ButtonClass::IconButtonSize24 => "hi-icon-button-24",
+            ButtonClass::IconButtonSize32 => "hi-icon-button-32",
+            ButtonClass::IconButtonSize36 => "hi-icon-button-36",
+            ButtonClass::IconButtonSize40 => "hi-icon-button-40",
+            ButtonClass::IconButtonGhost => "hi-icon-button-ghost",
+            ButtonClass::IconButtonPrimary => "hi-icon-button-primary",
+            ButtonClass::IconButtonSecondary => "hi-icon-button-secondary",
+            ButtonClass::IconButtonDanger => "hi-icon-button-danger",
+            ButtonClass::IconButtonSuccess => "hi-icon-button-success",
+            ButtonClass::Disabled => "hi-button-disabled",
+            ButtonClass::IconButtonIcon => "hi-icon-button-icon",
+            ButtonClass::IconButtonDisabled => "hi-icon-button-disabled",
+            ButtonClass::Suffix => "hi-button-suffix",
         }
     }
 }

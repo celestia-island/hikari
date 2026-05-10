@@ -14,5 +14,5 @@ pub use breadcrumb::*;
 pub use menu::*;
 pub use sidebar::*;
 pub use stepper::*;
-pub use steps::{StepItemProps, StepsComponent, StepsDirection, StepsProps};
+pub use steps::{StepData, StepsComponent, StepsDirection, StepsProps};
 pub use tabs::*;

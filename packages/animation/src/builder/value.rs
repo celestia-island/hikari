@@ -1,38 +1,32 @@
 //! Dynamic value types for animation system
 
-use super::super::{context::AnimationContext, state::AnimationState as StructAnimationState};
+use super::super::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
+use tairitsu_vdom::Platform;
 
 /// Simple callback type for dynamic values
-pub type AnimationCallback = dyn Fn(&AnimationContext) -> String + 'static;
+pub type AnimationCallback<P> = dyn Fn(&AnimationContext<P>) -> String + 'static;
 
 /// Callback type with state access
-pub type StatefulCallback =
-    dyn Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static;
+pub type StatefulCallback<P> =
+    dyn Fn(&AnimationContext<P>, &mut StructAnimationState) -> String + 'static;
 
 /// Callback type without return value
-pub type VoidCallback = dyn Fn(&AnimationContext) + 'static;
-
-/// Mouse move holder type
-pub type MousemoveHolder = std::rc::Rc<
-    std::cell::RefCell<
-        Option<wasm_bindgen::closure::Closure<dyn Fn(web_sys::MouseEvent) + 'static>>,
-    >,
->;
+pub type VoidCallback<P> = dyn Fn(&AnimationContext<P>) + 'static;
 
 /// Enhanced dynamic value that can be computed at runtime
 ///
 /// Values can be either static strings or callbacks that compute
 /// values based on current animation context and state.
-pub enum DynamicValue {
+pub enum DynamicValue<P: Platform> {
     /// Static string value
     Static(String),
     /// Dynamic value computed from context (element-specific)
-    Dynamic(Box<AnimationCallback>),
+    Dynamic(Box<AnimationCallback<P>>),
     /// Stateful dynamic value computed from context and animation state
-    StatefulDynamic(Box<StatefulCallback>),
+    StatefulDynamic(Box<StatefulCallback<P>>),
 }
 
-impl DynamicValue {
+impl<P: Platform> DynamicValue<P> {
     /// Create a static value
     pub fn static_value(value: impl Into<String>) -> Self {
         Self::Static(value.into())
@@ -41,7 +35,7 @@ impl DynamicValue {
     /// Create a dynamic value from a closure
     pub fn dynamic<F>(f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(&AnimationContext<P>) -> String + 'static,
     {
         Self::Dynamic(Box::new(f))
     }
@@ -49,13 +43,13 @@ impl DynamicValue {
     /// Create a stateful dynamic value from a closure
     pub fn stateful_dynamic<F>(f: F) -> Self
     where
-        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
+        F: Fn(&AnimationContext<P>, &mut StructAnimationState) -> String + 'static,
     {
         Self::StatefulDynamic(Box::new(f))
     }
 
     /// Evaluate dynamic value with given context and state
-    pub fn evaluate(&self, ctx: &AnimationContext, state: &mut StructAnimationState) -> String {
+    pub fn evaluate(&self, ctx: &AnimationContext<P>, state: &mut StructAnimationState) -> String {
         match self {
             DynamicValue::Static(s) => s.clone(),
             DynamicValue::Dynamic(f) => f(ctx),
@@ -64,13 +58,13 @@ impl DynamicValue {
     }
 }
 
-impl From<String> for DynamicValue {
+impl<P: Platform> From<String> for DynamicValue<P> {
     fn from(s: String) -> Self {
         Self::Static(s)
     }
 }
 
-impl From<&str> for DynamicValue {
+impl<P: Platform> From<&str> for DynamicValue<P> {
     fn from(s: &str) -> Self {
         Self::Static(s.to_string())
     }

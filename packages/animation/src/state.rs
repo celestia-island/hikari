@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-/// Animation state for managing custom data across animation frames
+/// Custom data store for managing state across animation frames
 ///
 /// This allows animations to maintain state information that persists
 /// between frames, enabling complex state machine patterns and
@@ -14,9 +14,9 @@ use std::collections::HashMap;
 /// # Examples
 ///
 /// ```ignore
-/// use animation::state::{AnimationState, StateValue};
+/// use animation::state::{AnimationDataStore, StateValue};
 ///
-/// let mut state = AnimationState::new();
+/// let mut state = AnimationDataStore::new();
 ///
 /// // Set custom values
 /// state.set("angle", StateValue::F64(0.0));
@@ -27,7 +27,7 @@ use std::collections::HashMap;
 /// let direction = state.get_i32("direction", 1);
 /// ```
 #[derive(Debug, Clone)]
-pub struct AnimationState {
+pub struct AnimationDataStore {
     /// Internal state storage
     values: HashMap<String, StateValue>,
 }
@@ -49,15 +49,15 @@ pub enum StateValue {
     VecF64(Vec<f64>),
 }
 
-impl AnimationState {
-    /// Create a new empty animation state
+impl AnimationDataStore {
+    /// Create a new empty animation data store
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
         }
     }
 
-    /// Create animation state with initial values
+    /// Create animation data store with initial values
     pub fn with_values(values: HashMap<String, StateValue>) -> Self {
         Self { values }
     }
@@ -227,7 +227,7 @@ impl AnimationState {
     }
 }
 
-impl Default for AnimationState {
+impl Default for AnimationDataStore {
     fn default() -> Self {
         Self::new()
     }

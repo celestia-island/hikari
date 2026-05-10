@@ -1,101 +1,131 @@
-// website/src/components/doc_components.rs
-// Documentation components
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use dioxus::prelude::*;
-
-/// Section component for documentation pages
-#[component]
-pub fn Section(title: String, content: Element) -> Element {
-    rsx! {
-        div {
-            class: "section mb-12",
-            h2 { class: "text-2xl font-bold mb-4", "{title}" }
-            {content}
-        }
-    }
+fn txt(s: &str) -> VNode {
+    VNode::Text(VText::new(s))
 }
 
-/// PropsRow struct for PropsTable
-#[derive(Clone, PartialEq, Props)]
-pub struct PropsRow {
-    pub name: String,
-    pub prop_type: String,
-    pub default: String,
-    pub description: String,
-    pub required: bool,
+pub fn render_section(title: &str, content: VNode) -> VNode {
+    VNode::Element(
+        VElement::new("div")
+            .class("section mb-12")
+            .child(VNode::Element(
+                VElement::new("h2")
+                    .class("text-2xl font-bold mb-4")
+                    .child(txt(title)),
+            ))
+            .child(content),
+    )
 }
 
-/// PropsTableProps for PropsTable component
-#[derive(Clone, PartialEq, Props)]
-pub struct PropsTableProps {
-    pub props: Vec<PropsRow>,
+pub fn render_props_table(props: Vec<(&str, &str, &str, &str)>) -> VNode {
+    let th_class = "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider";
+    let th_names = ["Name", "Type", "Default", "Description"];
+
+    let header_cells: Vec<VNode> = th_names
+        .iter()
+        .map(|name| VNode::Element(VElement::new("th").class(th_class).child(txt(name))))
+        .collect();
+
+    let thead = VNode::Element(
+        VElement::new("thead")
+            .class("bg-gray-50")
+            .child(VNode::Element(VElement::new("tr").children(header_cells))),
+    );
+
+    let td_mono = "px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono";
+    let td_name = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono";
+    let td_desc = "px-6 py-4 text-sm text-gray-500";
+
+    let rows: Vec<VNode> = props
+        .iter()
+        .map(|(name, prop_type, default, description)| {
+            VNode::Element(
+                VElement::new("tr")
+                    .child(VNode::Element(
+                        VElement::new("td").class(td_name).child(txt(name)),
+                    ))
+                    .child(VNode::Element(
+                        VElement::new("td").class(td_mono).child(txt(prop_type)),
+                    ))
+                    .child(VNode::Element(
+                        VElement::new("td").class(td_mono).child(txt(default)),
+                    ))
+                    .child(VNode::Element(
+                        VElement::new("td").class(td_desc).child(txt(description)),
+                    )),
+            )
+        })
+        .collect();
+
+    let tbody = VNode::Element(
+        VElement::new("tbody")
+            .class("bg-white divide-y divide-gray-200")
+            .children(rows),
+    );
+
+    let table = VNode::Element(
+        VElement::new("table")
+            .class("min-w-full divide-y divide-gray-200")
+            .child(thead)
+            .child(tbody),
+    );
+
+    VNode::Element(
+        VElement::new("div")
+            .class("props-table overflow-x-auto")
+            .child(table),
+    )
 }
 
-/// PropsTable component for displaying component props
-#[component]
-pub fn PropsTable(props: PropsTableProps) -> Element {
-    rsx! {
-        div {
-            class: "props-table overflow-x-auto",
-            table {
-                class: "min-w-full divide-y divide-gray-200",
-                thead {
-                    class: "bg-gray-50",
-                    tr {
-                        th { class: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", "Name" }
-                        th { class: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", "Type" }
-                        th { class: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", "Default" }
-                        th { class: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", "Description" }
-                        th { class: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", "Required" }
-                    }
-                }
-                tbody {
-                    class: "bg-white divide-y divide-gray-200",
-                    for prop in props.props.iter() {
-                        tr {
-                            td { class: "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono", "{prop.name}" }
-                            td { class: "px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono", "{prop.prop_type}" }
-                            td { class: "px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono", "{prop.default}" }
-                            td { class: "px-6 py-4 text-sm text-gray-500", "{prop.description}" }
-                            td { class: "px-6 py-4 whitespace-nowrap text-sm",
-                                if prop.required {
-                                    span { class: "px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800", "Required" }
-                                } else {
-                                    span { class: "px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800", "Optional" }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+pub fn render_example_card(title: &str, description: &str, code: VNode, preview: VNode) -> VNode {
+    let info = VNode::Element(
+        VElement::new("div")
+            .class("p-4 border-b")
+            .child(VNode::Element(
+                VElement::new("h3")
+                    .class("text-lg font-semibold mb-2")
+                    .child(txt(title)),
+            ))
+            .child(VNode::Element(
+                VElement::new("p")
+                    .class("text-gray-600 text-sm")
+                    .child(txt(description)),
+            )),
+    );
 
-/// ExampleCard component for showing code examples
-#[component]
-pub fn ExampleCard(title: String, description: String, code: String, preview: Element) -> Element {
-    rsx! {
-        div {
-            class: "example-card mb-6",
-            div {
-                class: "border rounded-lg overflow-hidden",
-                div {
-                    class: "p-4 border-b",
-                    h3 { class: "text-lg font-semibold mb-2", "{title}" }
-                    p { class: "text-gray-600 text-sm", "{description}" }
-                }
-                div {
-                    class: "p-4 bg-gray-50",
-                    h4 { class: "text-sm font-medium mb-2", "Code" }
-                    pre { class: "bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm font-mono", "{code}" }
-                }
-                div {
-                    class: "p-4",
-                    h4 { class: "text-sm font-medium mb-2", "Preview" }
-                    div { class: "preview", {preview} }
-                }
-            }
-        }
-    }
+    let code_section = VNode::Element(
+        VElement::new("div")
+            .class("p-4 bg-gray-50")
+            .child(VNode::Element(
+                VElement::new("h4")
+                    .class("text-sm font-medium mb-2")
+                    .child(txt("Code")),
+            ))
+            .child(code),
+    );
+
+    let preview_section = VNode::Element(
+        VElement::new("div")
+            .class("p-4")
+            .child(VNode::Element(
+                VElement::new("h4")
+                    .class("text-sm font-medium mb-2")
+                    .child(txt("Preview")),
+            ))
+            .child(VNode::Element(
+                VElement::new("div").class("preview").child(preview),
+            )),
+    );
+
+    VNode::Element(
+        VElement::new("div")
+            .class("example-card mb-6")
+            .child(VNode::Element(
+                VElement::new("div")
+                    .class("border rounded-lg overflow-hidden")
+                    .child(info)
+                    .child(code_section)
+                    .child(preview_section),
+            )),
+    )
 }

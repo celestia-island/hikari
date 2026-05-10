@@ -3,22 +3,20 @@
 
 use std::collections::HashMap;
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TableClass, UtilityClass};
+use hikari_palette::classes::TableClass;
+use hikari_palette::TypedClass;
+use tairitsu_style::ClassesBuilder;
 
 pub use super::{
     column::{ColumnAlign, ColumnDef},
     sort::{SortConfig, SortDirection},
 };
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Filter state for a column: map of column key to selected values
 pub type TableFilters = HashMap<String, Vec<String>>;
 
-/// Table component wrapper (for StyledComponent)
 pub struct TableComponent;
 
-/// Table size variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TableSize {
     #[default]
@@ -27,134 +25,50 @@ pub enum TableSize {
     Large,
 }
 
-/// Text alignment for table cells
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum Align {
+pub enum TableAlign {
     #[default]
     Left,
     Center,
     Right,
 }
 
-impl From<ColumnAlign> for Align {
+impl From<ColumnAlign> for TableAlign {
     fn from(align: ColumnAlign) -> Self {
         match align {
-            ColumnAlign::Left => Align::Left,
-            ColumnAlign::Center => Align::Center,
-            ColumnAlign::Right => Align::Right,
+            ColumnAlign::Left => TableAlign::Left,
+            ColumnAlign::Center => TableAlign::Center,
+            ColumnAlign::Right => TableAlign::Right,
         }
     }
 }
 
-/// Table component properties
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TableProps {
-    /// Table data (2D array of strings)
-    #[props(default)]
     pub data: Vec<Vec<String>>,
-
-    /// Column definitions
-    #[props(default)]
     pub columns: Vec<ColumnDef>,
-
-    /// Show borders
-    #[props(default)]
+    #[default(false)]
     pub bordered: bool,
-
-    /// Striped rows
-    #[props(default)]
+    #[default(false)]
     pub striped: bool,
-
-    /// Hover effect on rows
-    #[props(default)]
+    #[default(false)]
     pub hoverable: bool,
-
-    /// Table size
-    #[props(default)]
     pub size: TableSize,
-
-    /// Custom CSS classes
-    #[props(default)]
     pub class: String,
-
-    /// Empty state message
-    #[props(default)]
+    #[default(String::from("No data available"))]
     pub empty_text: String,
-
-    /// Current sort column key
-    #[props(default)]
     pub sort_column: String,
-
-    /// Current sort direction
-    #[props(default)]
     pub sort_direction: SortDirection,
-
-    /// Sort change callback
-    #[props(default)]
     pub on_sort_change: Option<EventHandler<SortConfig>>,
-
-    /// Active filters (column key -> selected values)
-    #[props(default)]
     pub filters: TableFilters,
-
-    /// Filter change callback
-    #[props(default)]
     pub on_filter_change: Option<EventHandler<TableFilters>>,
 }
 
-impl Default for TableProps {
-    fn default() -> Self {
-        Self {
-            data: Vec::default(),
-            columns: Vec::default(),
-            bordered: false,
-            striped: false,
-            hoverable: false,
-            size: Default::default(),
-            class: String::default(),
-            empty_text: String::from("No data available"),
-            sort_column: String::default(),
-            sort_direction: SortDirection::default(),
-            on_sort_change: None,
-            filters: TableFilters::default(),
-            on_filter_change: None,
-        }
-    }
-}
-
-/// Table component with Arknights + FUI styling
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Table;
-/// use hikari_components::ColumnDef;
-/// use hikari_components::ColumnAlign;
 ///
-/// fn app() -> Element {
-///     let columns = vec![
-///         ColumnDef::new("name", "Name").sortable(true),
-///         ColumnDef::new("role", "Role"),
-///         ColumnDef::new("level", "Level").align(ColumnAlign::Center),
-///     ];
 ///
-///     let data = vec![
-///         vec!["Amiya".to_string(), "Guard".to_string(), "6".to_string()],
-///         vec!["SilverAsh".to_string(), "Guard".to_string(), "6".to_string()],
-///     ];
 ///
-///     rsx! {
-///         Table {
-///             columns: columns,
-///             data: data,
-///             bordered: true,
-///             striped: true,
-///             hoverable: true,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Table(props: TableProps) -> Element {
     // First filter data, then sort it
@@ -167,16 +81,16 @@ pub fn Table(props: TableProps) -> Element {
     );
 
     let table_classes = ClassesBuilder::new()
-        .add(TableClass::Table)
-        .add(match props.size {
+        .add_typed(TableClass::Table)
+        .add_typed(match props.size {
             TableSize::Small => TableClass::TableSm,
             TableSize::Medium => TableClass::TableMd,
             TableSize::Large => TableClass::TableLg,
         })
-        .add_if(TableClass::TableBordered, || props.bordered)
-        .add_if(TableClass::TableStriped, || props.striped)
-        .add_if(TableClass::TableHover, || props.hoverable)
-        .add_raw(&props.class)
+        .add_typed_if(TableClass::TableBordered, props.bordered)
+        .add_typed_if(TableClass::TableStriped, props.striped)
+        .add_typed_if(TableClass::TableHover, props.hoverable)
+        .add(&props.class)
         .build();
 
     // Clone values for use in closures
@@ -189,140 +103,176 @@ pub fn Table(props: TableProps) -> Element {
     let has_columns = !props.columns.is_empty();
     let colspan_count = if has_columns { props.columns.len() } else { 1 };
 
-    rsx! {
-        div { class: "{TableClass::TableWrapper.as_class()}",
-            table {
-                class: "{table_classes}",
+    // Build table header if columns are defined
+    let header_el = if has_columns {
+        let columns = props.columns.clone();
+        // Pre-build header cells outside rsx!
+        let header_cells: Vec<Element> = columns
+            .iter()
+            .map(|column| {
+                let align_class = match column.align {
+                    ColumnAlign::Left => TableClass::TextLeft,
+                    ColumnAlign::Center => TableClass::TextCenter,
+                    ColumnAlign::Right => TableClass::TextRight,
+                };
 
-                // Render table header if columns are defined
-                if has_columns {
-                    thead {
-                        tr {
-                            class: "{TableClass::TableHeaderRow.as_class()}",
-                            {props.columns.iter().map(|column| {
-                                let align_class = match column.align {
-                                    ColumnAlign::Left => TableClass::TextLeft,
-                                    ColumnAlign::Center => TableClass::TextCenter,
-                                    ColumnAlign::Right => TableClass::TextRight,
-                                };
+                let width_style = column
+                    .width
+                    .as_ref()
+                    .map_or(String::new(), |w| format!("width: {w};"));
 
-                                let width_style = column.width.as_ref()
-                                    .map_or(String::new(), |w| format!("width: {w};"));
+                let is_sorted =
+                    sort_column == column.column_key && sort_direction != SortDirection::None;
 
-                                let is_sorted = sort_column == column.column_key
-                                    && sort_direction != SortDirection::None;
+                let sort_icon = if is_sorted {
+                    sort_direction.icon()
+                } else if column.sortable {
+                    "⇅"
+                } else {
+                    ""
+                };
 
-                                let sort_icon = if is_sorted {
-                                    sort_direction.icon()
-                                } else if column.sortable {
-                                    "⇅"
-                                } else {
-                                    ""
-                                };
+                let cell_classes = ClassesBuilder::new()
+                    .add_typed(TableClass::TableHeaderCell)
+                    .add_typed(align_class)
+                    .add_typed_if(TableClass::TableSortable, column.sortable)
+                    .add_typed_if(TableClass::TableSortActive, is_sorted)
+                    .add(&column.class)
+                    .build();
 
-                                let cell_classes = ClassesBuilder::new()
-                                    .add(TableClass::TableHeaderCell)
-                                    .add(align_class)
-                                    .add_if(TableClass::TableSortable, || column.sortable)
-                                    .add_if(TableClass::TableSortActive, || is_sorted)
-                                    .add_raw(&column.class)
-                                    .build();
+                // Clone for closure
+                let col_key = column.column_key.clone();
+                let current_sort_col = sort_column.clone();
+                let current_sort_dir = sort_direction;
+                let sort_handler = on_sort_handler.clone();
+                let is_sortable = column.sortable;
+                let column_title = column.title.clone();
+                let sort_icon_str = sort_icon.to_string();
 
-                                // Clone for closure
-                                let col_key = column.column_key.clone();
-                                let current_sort_col = sort_column.clone();
-                                let current_sort_dir = sort_direction;
-                                let sort_handler = on_sort_handler;
-                                let is_sortable = column.sortable;
+                rsx! {
+                    th {
+                        class: cell_classes,
+                        style: width_style,
+                        onclick: move |_| {
+                            if !is_sortable {
+                                return;
+                            }
+                            let new_direction = if current_sort_col == col_key {
+                                current_sort_dir.toggle()
+                            } else {
+                                SortDirection::Ascending
+                            };
 
-                                rsx! {
-                                    th {
-                                        class: "{cell_classes}",
-                                        style: "{width_style}",
-                                        onclick: move |_| {
-                                            if !is_sortable {
-                                                return;
-                                            }
-                                            let new_direction = if current_sort_col == col_key {
-                                                current_sort_dir.toggle()
-                                            } else {
-                                                SortDirection::Ascending
-                                            };
+                            if let Some(handler) = sort_handler.as_ref() {
+                                handler.call(SortConfig {
+                                    column: col_key.clone(),
+                                    direction: new_direction,
+                                });
+                            }
+                        },
 
-                                            if let Some(handler) = sort_handler.as_ref() {
-                                                handler.call(SortConfig {
-                                                    column: col_key.clone(),
-                                                    direction: new_direction,
-                                                });
-                                            }
-                                        },
+                        "{column_title}"
 
-                                        {column.title.clone()}
-
-                                        if !sort_icon.is_empty() {
-                                            span { class: "{TableClass::TableSortIcon.as_class()}",
-                                                "{sort_icon}"
-                                            }
-                                        }
-                                    }
-                                }
-                            })}
+                        if !sort_icon_str.is_empty() {
+                            span { class: TableClass::TableSortIcon.class_name(),
+                                "{sort_icon_str}"
+                            }
                         }
                     }
                 }
+            })
+            .collect();
+
+        Some(rsx! {
+            thead {
+                tr {
+                    class: TableClass::TableHeaderRow.class_name(),
+                    ..header_cells
+                }
+            }
+        })
+    } else {
+        None
+    };
+
+    // Build table body rows
+    let body_content = if has_data {
+        let columns = props.columns.clone();
+        let row_elements: Vec<Element> = sorted_data
+            .iter()
+            .enumerate()
+            .map(|(row_index, row)| {
+                let cols = columns.clone();
+                // Pre-build cell elements outside rsx!
+                let cell_elements: Vec<Element> = row
+                    .iter()
+                    .enumerate()
+                    .map(|(col_index, cell)| {
+                        let align_class = if has_columns && col_index < cols.len() {
+                            match cols[col_index].align {
+                                ColumnAlign::Left => TableClass::TextLeft,
+                                ColumnAlign::Center => TableClass::TextCenter,
+                                ColumnAlign::Right => TableClass::TextRight,
+                            }
+                        } else {
+                            TableClass::TextLeft
+                        };
+
+                        let cell_classes = ClassesBuilder::new()
+                            .add_typed(TableClass::TableCell)
+                            .add_typed(align_class)
+                            .build();
+
+                        let cell_value = cell.clone();
+                        rsx! {
+                            td {
+                                class: cell_classes,
+                                key: format!("{row_index}-{col_index}"),
+
+                                "{cell_value}"
+                            }
+                        }
+                    })
+                    .collect();
+
+                rsx! {
+                    tr {
+                        class: TableClass::TableRow.class_name(),
+                        key: "{row_index}",
+                        ..cell_elements
+                    }
+                }
+            })
+            .collect();
+
+        VNode::Fragment(row_elements)
+    } else {
+        // Empty state
+        rsx! {
+            tr {
+                class: TableClass::TableRow.class_name(),
+                td {
+                    class: TableClass::TableEmpty.class_name(),
+                    colspan: colspan_count,
+                    div { class: TableClass::TableEmptyContent.class_name(),
+                        "{props.empty_text.clone()}"
+                    }
+                }
+            }
+        }
+    };
+
+    rsx! {
+        div { class: TableClass::TableWrapper.class_name(),
+            table {
+                class: table_classes,
+
+                {header_el.unwrap_or_else(VNode::empty)}
 
                 // Render table body with sorted data
                 tbody {
-                    class: "{TableClass::TableBody.as_class()}",
-
-                    if has_data {
-                        {sorted_data.iter().enumerate().map(|(row_index, row)| {
-                            rsx! {
-                                tr {
-                                    class: "{TableClass::TableRow.as_class()}",
-                                    key: "{row_index}",
-
-                                    {row.iter().enumerate().map(|(col_index, cell)| {
-                                        let align_class = if has_columns && col_index < props.columns.len() {
-                                            match props.columns[col_index].align {
-                                                ColumnAlign::Left => TableClass::TextLeft,
-                                                ColumnAlign::Center => TableClass::TextCenter,
-                                                ColumnAlign::Right => TableClass::TextRight,
-                                            }
-                                        } else {
-                                            TableClass::TextLeft
-                                        };
-
-                                        let cell_classes = ClassesBuilder::new()
-                                            .add(TableClass::TableCell)
-                                            .add(align_class)
-                                            .build();
-
-                                        rsx! {
-                                            td {
-                                                class: "{cell_classes}",
-                                                key: "{row_index}-{col_index}",
-
-                                                {cell.clone()}
-                                            }
-                                        }
-                                    })}
-                                }
-                            }
-                        })}
-                    } else {
-                        // Empty state
-                        tr {
-                            class: "{TableClass::TableRow.as_class()}",
-                            td {
-                                class: "{TableClass::TableEmpty.as_class()}",
-                                colspan: "{colspan_count}",
-                                div { class: "{TableClass::TableEmptyContent.as_class()}",
-                                    {props.empty_text.clone()}
-                                }
-                            }
-                        }
-                    }
+                    class: TableClass::TableBody.class_name(),
+                    {body_content}
                 }
             }
         }
@@ -339,7 +289,6 @@ impl StyledComponent for TableComponent {
     }
 }
 
-/// Sort table data based on column and direction
 fn sort_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],
@@ -384,7 +333,6 @@ fn sort_data(
     sorted_data
 }
 
-/// Get sorted data (memoized hook-like behavior)
 fn use_sortable_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],
@@ -394,7 +342,6 @@ fn use_sortable_data(
     sort_data(data, columns, sort_column, sort_direction)
 }
 
-/// Filter table data based on active filters
 fn filter_data(
     data: &[Vec<String>],
     columns: &[ColumnDef],

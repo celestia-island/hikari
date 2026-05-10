@@ -1,16 +1,20 @@
 // hi-components/src/portal/provider.rs
 // PortalProvider and PortalContext
 
+#![expect(clippy::needless_update)]
+
 use std::sync::atomic::Ordering;
 
-use dioxus::prelude::*;
-
-use super::render::PortalRender;
-use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
+use super::render::{PortalRender, PortalRenderProps};
+use crate::{
+    portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
+    prelude::*,
+};
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Clone)]
 pub struct PortalContext {
-    pub entries: Signal<Vec<PortalEntry>>,
+    pub entries: ReactiveSignal<Vec<PortalEntry>>,
     pub add_entry: Callback<PortalEntry>,
     pub remove_entry: Callback<String>,
     pub clear_all: Callback<()>,
@@ -20,14 +24,14 @@ pub struct PortalContext {
 #[component]
 pub fn PortalProvider(children: Element) -> Element {
     let entries = use_signal(Vec::new);
-    let mut entries_for_callbacks = entries;
+    let mut entries_for_callbacks = entries.clone();
 
     let add_entry = Callback::new(move |entry: PortalEntry| {
         let mut e = entries_for_callbacks.write();
         e.push(entry);
     });
 
-    let mut entries_for_remove = entries;
+    let mut entries_for_remove = entries.clone();
     let remove_entry = Callback::new(move |id: String| {
         let mut e = entries_for_remove.write();
         e.retain(|entry| match entry {
@@ -39,13 +43,13 @@ pub fn PortalProvider(children: Element) -> Element {
         });
     });
 
-    let mut entries_for_clear = entries;
+    let mut entries_for_clear = entries.clone();
     let clear_all = Callback::new(move |_| {
         let mut e = entries_for_clear.write();
         e.clear();
     });
 
-    let mut entries_for_close_anim = entries;
+    let entries_for_close_anim = entries.clone();
     let start_close_animation = Callback::new(move |id: String| {
         let mut e = entries_for_close_anim.write();
         for entry in e.iter_mut() {
@@ -62,8 +66,11 @@ pub fn PortalProvider(children: Element) -> Element {
         }
     });
 
+    let entries_for_context = entries.clone();
+    let entries_for_render = entries.clone();
+
     use_context_provider(|| PortalContext {
-        entries,
+        entries: entries_for_context,
         add_entry,
         remove_entry,
         clear_all,
@@ -71,13 +78,14 @@ pub fn PortalProvider(children: Element) -> Element {
     });
 
     rsx! {
-        {children}
-        PortalRender { entries }
+        children {}
+        PortalRender { entries: Some(entries_for_render) }
     }
 }
 
 pub fn use_portal() -> PortalContext {
-    use_context::<PortalContext>()
+    let ctx = use_context::<PortalContext>().expect("PortalContext not found");
+    ctx.get().clone()
 }
 
 pub fn generate_portal_id() -> String {

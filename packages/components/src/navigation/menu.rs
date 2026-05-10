@@ -1,18 +1,19 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
-use animation::style::{CssProperty, StyleStringBuilder};
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, MenuClass};
+#![expect(clippy::needless_update)]
+
+use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::{
+    GlowBlur, GlowColor, GlowIntensity,
     basic::{Arrow, ArrowDirection},
     feedback::Glow,
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
     styled::StyledComponent,
-    GlowBlur, GlowColor, GlowIntensity,
 };
 
-/// Context for Menu to communicate with MenuItem
 #[derive(Clone, Default)]
 pub struct MenuContext {
     pub in_popover: bool,
@@ -30,7 +31,6 @@ impl MenuContext {
     }
 }
 
-/// Menu 组件的类型包装器（用于实现 StyledComponent）
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuMode {
     #[default]
@@ -38,7 +38,6 @@ pub enum MenuMode {
     Horizontal,
 }
 
-/// Menu item height variants
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum MenuItemHeight {
     #[default]
@@ -57,212 +56,104 @@ impl MenuItemHeight {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct MenuItemProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub item_key: String,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default(0)]
     pub level: u32,
 
-    #[props(default)]
     pub height: MenuItemHeight,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    #[props(default)]
+    #[default(false)]
     pub glow: bool,
 }
 
-impl Default for MenuItemProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            disabled: false,
-            icon: None,
-            children: VNode::empty(),
-            class: String::default(),
-            level: 0,
-            height: MenuItemHeight::Default,
-            onclick: None,
-            glow: false,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SubMenuProps {
-    #[props(default)]
+    #[default]
     pub item_key: String,
 
-    #[props(default)]
+    #[default]
     pub title: String,
 
-    #[props(default)]
+    #[default]
     pub icon: Option<Element>,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub default_expanded: bool,
 
-    #[props(default)]
+    #[default]
     pub level: u32,
 
-    #[props(default)]
+    #[default]
     pub height: MenuItemHeight,
 
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-impl Default for SubMenuProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            title: String::default(),
-            icon: None,
-            disabled: false,
-            default_expanded: false,
-            level: 0,
-            height: MenuItemHeight::Default,
-            children: VNode::empty(),
-            class: String::default(),
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct MenuProps {
-    #[props(default)]
+    #[default]
     pub default_active: String,
 
-    #[props(default)]
+    #[default]
     pub inline: bool,
 
-    #[props(default)]
+    #[default]
     pub mode: MenuMode,
 
-    #[props(default)]
+    #[default]
     pub compact: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    #[props(default)]
+    #[default]
     pub children: Element,
 
     pub on_select: Option<EventHandler<String>>,
 
-    /// Whether this menu is inside a Popover (enables auto-glow on items)
-    #[props(default)]
+    #[default]
     pub in_popover: bool,
 
-    /// Default glow setting for all items (overridden by in_popover)
-    #[props(default)]
+    #[default]
     pub glow: bool,
 
-    /// Callback to request closing the parent popover (when menu item is clicked)
-    #[props(default)]
+    #[default]
     pub request_close: Option<Callback<()>>,
 }
 
-impl Default for MenuProps {
-    fn default() -> Self {
-        Self {
-            default_active: String::default(),
-            inline: false,
-            mode: Default::default(),
-            compact: false,
-            class: String::default(),
-            children: VNode::empty(),
-            on_select: None,
-            in_popover: false,
-            glow: false,
-            request_close: None,
-        }
-    }
-}
-
-/// Menu component with modern, premium styling
 ///
-/// A flexible navigation menu component inspired by Material UI and Element Plus.
-/// Features smooth animations, proper icon support, and multiple layout modes.
 ///
-/// # Features
-/// - **Multiple Modes**: Vertical (default), Horizontal, and Inline variants
-/// - **Nested Menus**: Support for submenus with animated chevron icons
-/// - **Hover Effects**: Subtle background transitions on hover
-/// - **Active States**: Clear visual indication for selected items
-/// - **Accessibility**: Proper ARIA attributes and keyboard navigation
-/// - **Responsive**: Size variants (sm, lg) for different contexts
 ///
-/// # Examples
 ///
-/// ## Basic Vertical Menu
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Menu, MenuItem};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Menu {
-///             mode: MenuMode::Vertical,
-///             MenuItem { item_key: "1", "Dashboard" }
-///             MenuItem { item_key: "2", "Settings" }
-///             MenuItem { item_key: "3", "Profile" }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// ## Menu with Submenus
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Menu, MenuItem, SubMenu};
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Menu {
-///             MenuItem { item_key: "1", "Home" }
-///             SubMenu {
-///                 item_key: "2".to_string(),
-///                 title: "Products".to_string(),
-///                 MenuItem { item_key: "2-1", "Category A" }
-///                 MenuItem { item_key: "2-2", "Category B" }
-///             }
-///         }
-///     }
-/// }
-/// ```
 ///
-/// # Styling
-/// The component uses CSS custom properties for theming:
-/// - `--hi-background`: Background color
-/// - `--hi-border`: Border color
-/// - `--hi-text-primary`: Primary text color
-/// - `--hi-primary-600`: Active state color
 ///
-/// # Size Variants
-/// - **Default**: 14px font, 10px padding
-/// - **Small** (`.hi-menu-sm`): 13px font, 6px padding
-/// - **Large** (`.hi-menu-lg`): 15px font, 12px padding
 #[component]
 pub fn Menu(props: MenuProps) -> Element {
     let _active_key = use_signal(|| props.default_active.clone());
@@ -277,33 +168,27 @@ pub fn Menu(props: MenuProps) -> Element {
 
     let menu_classes = {
         let builder = ClassesBuilder::new()
-            .add(MenuClass::Menu)
-            .add_if(MenuClass::Inline, || props.inline)
-            .add(mode_class)
-            .add_if(MenuClass::Compact, || props.compact)
-            .add_if(MenuClass::PopoverMenu, || props.in_popover)
-            .add_raw(&props.class);
+            .add_typed(MenuClass::Menu)
+            .add_typed_if(MenuClass::Inline, props.inline)
+            .add_typed(mode_class)
+            .add_typed_if(MenuClass::Compact, props.compact)
+            .add_typed_if(MenuClass::PopoverMenu, props.in_popover)
+            .add(&props.class);
 
         builder.build()
     };
 
-    use_context_provider(|| MenuContext {
+    use_context_provider(move || MenuContext {
         in_popover: props.in_popover,
         glow_enabled,
-        request_close: props.request_close,
+        request_close: props.request_close.clone(),
     });
 
     rsx! {
-        ul {
-            class: "{menu_classes}",
-            role: "menu",
-
-            { props.children }
-        }
+        ul { class: menu_classes, role: "menu", {props.children} }
     }
 }
 
-/// Menu 组件的类型包装器（用于实现 StyledComponent）
 pub struct MenuComponent;
 
 impl StyledComponent for MenuComponent {
@@ -316,26 +201,29 @@ impl StyledComponent for MenuComponent {
     }
 }
 
-/// Menu item component
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
     let menu_context = try_consume_context::<MenuContext>();
     let should_glow = match &menu_context {
-        Some(ctx) => props.glow || (ctx.in_popover && ctx.glow_enabled),
+        Some(ctx) => {
+            let ctx_val = ctx.get();
+            props.glow || (ctx_val.in_popover && ctx_val.glow_enabled)
+        }
         None => props.glow,
     };
 
     let item_classes = ClassesBuilder::new()
-        .add(MenuClass::MenuItem)
-        .add_raw(props.height.as_str())
-        .add_raw(&props.class)
+        .add_typed(MenuClass::MenuItem)
+        .add(props.height.as_str())
+        .add(&props.class)
         .build();
 
+    let menu_context_for_click = menu_context.clone();
     let item_content = rsx! {
         li {
-            class: "{item_classes}",
+            class: item_classes,
             role: "menuitem",
-            "data-key": "{props.item_key}",
+            "data-key": props.item_key,
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
@@ -343,20 +231,21 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                         handler.call(e);
                     }
                     // Request close if in popover mode
-                    if let Some(ctx) = &menu_context
-                        && ctx.in_popover
-                            && let Some(close_cb) = &ctx.request_close {
-                                close_cb.call(());
-                            }
+                    if let Some(ctx) = &menu_context_for_click {
+                        let ctx_val = ctx.get();
+                        if let Some(close_cb) = &ctx_val.request_close {
+                            close_cb.call(());
+                        }
+                    }
                 }
             },
 
             div { class: "hi-menu-item-inner",
                 if let Some(icon) = props.icon {
-                    span { class: "hi-menu-item-icon", { icon } }
+                    span { class: "hi-menu-item-icon", {icon} }
                 }
 
-                span { class: "hi-menu-item-content", { props.children } }
+                span { class: "hi-menu-item-content", {props.children} }
             }
         }
     };
@@ -365,14 +254,14 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
         let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
         rsx! {
             div {
-                class: "{wrapper_class}",
+                class: wrapper_class,
                 style: "width: 100%; position: relative;",
                 Glow {
                     block: true,
                     blur: GlowBlur::Light,
                     color: GlowColor::Ghost,
                     intensity: GlowIntensity::Soft,
-                    children: item_content
+                    children: item_content,
                 }
             }
         }
@@ -381,21 +270,21 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
     }
 }
 
-/// Submenu component with nested items
 #[component]
 pub fn SubMenu(props: SubMenuProps) -> Element {
-    let mut is_open = use_signal(|| props.default_expanded);
+    let is_open = use_signal(|| props.default_expanded);
 
     let submenu_classes = ClassesBuilder::new()
-        .add(MenuClass::Submenu)
-        .add_if(MenuClass::SubmenuListOpen, || *is_open.read())
-        .add_raw(&props.class)
+        .add_typed(MenuClass::Submenu)
+        .add_typed_if(MenuClass::SubmenuListOpen, is_open.read())
+        .add(&props.class)
         .build();
 
-    let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
+    let list_classes = ClassesBuilder::new().add_typed(MenuClass::SubmenuList).build();
 
+    let is_open_for_memo = is_open.clone();
     let list_style = use_memo(move || {
-        let (display, opacity, transform) = if is_open() {
+        let (display, opacity, transform) = if is_open_for_memo.get() {
             ("block", "1", "translateX(0)")
         } else {
             ("none", "0", "translateX(-8px)")
@@ -409,61 +298,60 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
             .build()
     });
 
+    let is_open_for_click = is_open.clone();
     let title_content = rsx! {
-       div {
-           class: "{props.height.as_str()} hi-menu-submenu-title",
-           aria_disabled: props.disabled.to_string(),
-           onclick: move |_e| {
-               if !props.disabled {
-                   is_open.set(!is_open());
-               }
-           },
+        div {
+            class: "{props.height.as_str()} hi-menu-submenu-title",
+            aria_disabled: props.disabled.to_string(),
+            onclick: move |_e| {
+                if !props.disabled {
+                    is_open_for_click.set(!is_open_for_click.get());
+                }
+            },
 
-           div { class: "hi-menu-submenu-title-inner",
-               if let Some(icon) = props.icon {
-                   span { class: "hi-menu-item-icon", { icon } }
-               }
+            div { class: "hi-menu-submenu-title-inner",
+                if let Some(icon) = props.icon {
+                    span { class: "hi-menu-item-icon", {icon} }
+                }
 
-                 span { class: "hi-menu-item-content", "{props.title}" }
+                span { class: "hi-menu-item-content", "{props.title}" }
 
-                  Arrow {
-                     direction: if *is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
-                     size: 14,
-                     class: if *is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open" } else { "hi-menu-item-arrow" },
-                  }
-             }
-         }
+                Arrow {
+                    direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
+                    size: 14,
+                    class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hi-menu-item-arrow".to_string() },
+                }
+            }
+        }
     };
 
     let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
     let title_with_glow = rsx! {
-        div {
-            class: "{wrapper_class}",
-            style: "width: 100%; position: relative;",
+        div { class: wrapper_class, style: "width: 100%; position: relative;",
             Glow {
                 blur: GlowBlur::Medium,
                 color: GlowColor::Ghost,
                 intensity: GlowIntensity::Dim,
-                children: title_content
+                children: title_content,
             }
         }
     };
 
     rsx! {
         li {
-            class: "{submenu_classes}",
+            class: submenu_classes,
             role: "none",
-            "data-key": "{props.item_key}",
+            "data-key": props.item_key,
 
-            { title_with_glow }
+            {title_with_glow}
 
             ul {
-                class: "{list_classes}",
-                style: "{list_style}",
+                class: list_classes,
+                style: list_style,
                 role: "menu",
-                "aria-hidden": "{!is_open()}",
+                "aria-hidden": "{!is_open.get()}",
 
-                { props.children }
+                {props.children}
             }
         }
     }

@@ -1,8 +1,10 @@
 // Node Graph Integration Tests
 // Tests for history, serialization, and plugin systems
+// Note: Some tests require Dioxus runtime and are ignored
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused)]
 
     use std::collections::HashMap;
 
@@ -290,68 +292,32 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires Dioxus runtime"]
-    fn test_constant_node_plugin() {
+    fn test_constant_node_plugin_type() {
         let plugin = ConstantNode::numeric("number", 0.0);
-
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "constant/number");
-
-        let _ = plugin.render_node(
-            "const1".to_string(),
-            "Constant".to_string(),
-            NodeState::new("const1".to_string()),
-            vec![],
-        );
     }
 
     #[test]
-    #[ignore = "Requires Dioxus runtime"]
-    fn test_input_node_plugin() {
+    fn test_input_node_plugin_type() {
         let plugin = InputNode::numeric("number");
-
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "input/number");
-
-        let _ = plugin.render_node(
-            "input1".to_string(),
-            "Input".to_string(),
-            NodeState::new("input1".to_string()),
-            vec![],
-        );
     }
 
     #[test]
-    #[ignore = "Requires Dioxus runtime"]
-    fn test_output_node_plugin() {
+    fn test_output_node_plugin_type() {
         let plugin = OutputNode::numeric("number");
-
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "output/number");
         assert_eq!(plugin.output_type(), "number");
-
-        let _ = plugin.render_node(
-            "output1".to_string(),
-            "Output".to_string(),
-            NodeState::new("output1".to_string()),
-            vec![],
-        );
     }
 
     #[test]
-    #[ignore = "Requires Dioxus runtime"]
-    fn test_processor_node_plugin() {
+    fn test_processor_node_plugin_type() {
         let plugin = ProcessorNode::add();
-
         let node_type = plugin.node_type();
         assert_eq!(node_type.id(), "processor/add");
-
-        let _ = plugin.render_node(
-            "proc1".to_string(),
-            "Add".to_string(),
-            NodeState::new("proc1".to_string()),
-            vec![],
-        );
     }
 
     #[test]

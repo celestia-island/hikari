@@ -1,78 +1,37 @@
 // hi-components/src/layout/space.rs
 // Space component for adding spacing
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, SpaceClass};
+use hikari_palette::classes::{ClassesBuilder, SpaceClass};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+use crate::prelude::*;
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SpaceDirection {
+    #[default]
     Horizontal,
     Vertical,
     Both,
 }
 
-impl Default for SpaceDirection {
-    fn default() -> Self {
-        Self::Horizontal
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`Space`] component.
+#[define_props]
 pub struct SpaceProps {
-    /// Space size (number of 8px units)
-    #[props(default = 1)]
+    #[default(1)]
     pub size: u8,
 
-    /// Direction of spacing
-    #[props(default)]
+    #[default]
     pub direction: SpaceDirection,
 
-    /// Whether to wrap content
-    #[props(default = false)]
+    #[default(false)]
     pub wrap: bool,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Content to display
     pub children: Element,
 }
 
-impl Default for SpaceProps {
-    fn default() -> Self {
-        Self {
-            size: 1,
-            direction: SpaceDirection::Horizontal,
-            wrap: false,
-            class: String::new(),
-            children: VNode::empty(),
-        }
-    }
-}
-
-/// Space component for adding spacing
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Space, SpaceDirection};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Space {
-///             size: 2,
-///             div { "Content" }
-///         }
-///         Space {
-///             direction: SpaceDirection::Vertical,
-///             size: 1,
-///             div { "Content" }
-///         }
-///     }
-/// }
-/// ```
+/// Adds consistent spacing between elements in horizontal, vertical, or both directions.
 #[component]
 pub fn Space(props: SpaceProps) -> Element {
     let direction_class = match props.direction {
@@ -82,10 +41,10 @@ pub fn Space(props: SpaceProps) -> Element {
     };
 
     let space_classes = ClassesBuilder::new()
-        .add(SpaceClass::Space)
-        .add(direction_class)
-        .add_if(SpaceClass::Wrap, || props.wrap)
-        .add_raw(&props.class)
+        .add_typed(SpaceClass::Space)
+        .add_typed(direction_class)
+        .add_typed_if(SpaceClass::Wrap, props.wrap)
+        .add(&props.class)
         .build();
 
     let size_px = props.size * 8;
@@ -103,19 +62,16 @@ pub fn Space(props: SpaceProps) -> Element {
     };
 
     rsx! {
-        div {
-            class: "{space_classes}",
-            style: "{style}",
+        div { class: space_classes, style,
             if props.wrap {
-                div { { props.children } }
+                div { {props.children} }
             } else {
-                { props.children }
+                {props.children}
             }
         }
     }
 }
 
-/// Space component's type wrapper for StyledComponent
 pub struct SpaceComponent;
 
 impl crate::styled::StyledComponent for SpaceComponent {

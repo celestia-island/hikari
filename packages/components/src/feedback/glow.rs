@@ -1,102 +1,184 @@
 // hi-components/src/feedback/glow.rs
 // Unified glow effect component with mouse-following spotlight and acrylic blur
+//
+// Animation architecture:
+// - Uses CSS variables updated via mouse events for position tracking
+// - CSS transitions provide smooth interpolation between positions
+// - WASI-compatible: single implementation for both browser and server
+// - Server environments stub out mouse-related APIs automatically
+//
+// # CSS Value Type Integration
+//
+// This component can use the type-safe CSS value system from tairitsu-css-values:
+//
+// ```rust
+// use hikari_components::style_builder::{StyleStringBuilder, CssLength};
+//
+// // Type-safe approach (recommended for new code):
+// let style = StyleStringBuilder::new()
+//     .add_var_with_length("glow-x", CssLength::percent(50))
+//     .add_var_with_length("glow-y", CssLength::percent(50))
+//     .build();
+//
+// // Traditional string approach (still supported):
+// let style = StyleStringBuilder::new()
+//     .add_var("glow-x", "50%")
+//     .add_var("glow-y", "50%")
+//     .build();
+// ```
 
-#[cfg(target_arch = "wasm32")]
-use animation::style::StyleBuilder;
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, GlowClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
-#[cfg(target_arch = "wasm32")]
-use web_sys::HtmlElement;
+use crate::prelude::*;
+use crate::style_builder::StyleStringBuilder;
+use hikari_palette::classes::{ClassesBuilder, GlowClass};
+use tairitsu_vdom::IntoAttrValue;
 
-/// Glow blur intensity levels
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
-    /// No blur
     None,
-    /// Light blur (5px)
     Light,
-    /// Medium blur (10px, default)
     #[default]
     Medium,
-    /// Heavy blur (20px)
     Heavy,
 }
 
-/// Glow color mode
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowColor {
-    /// Ghost button - transparent background, use black/white glow
     #[default]
     Ghost,
-    /// Primary button - depends on theme
     Primary,
-    /// Secondary button - depends on theme
     Secondary,
-    /// Danger button - depends on theme
     Danger,
-    /// Success button - depends on theme
     Success,
-    /// Warning button - depends on theme
     Warning,
-    /// Info button - depends on theme
     Info,
 }
 
-/// Glow intensity (shadow strength)
-///
-/// Use `Dim` for large surface containers (cards, panels) — barely perceptible ambient glow.
-/// Use `Soft` (default) for interactive elements (buttons, inputs) — clear but balanced feedback.
-/// Use `Bright` for emphasis and active states — intense spotlight effect.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowIntensity {
-    /// Dim glow (subtle, for cards / containers)
     Dim,
-    /// Soft glow (medium, default for buttons / interactive)
     #[default]
     Soft,
-    /// Bright glow (intense, for emphasis)
     Bright,
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct GlowProps {
-    /// Child elements to wrap
-    children: Element,
-
-    /// Blur intensity
-    #[props(default)]
-    blur: GlowBlur,
-
-    /// Glow color mode
-    #[props(default)]
-    color: GlowColor,
-
-    /// Glow intensity
-    #[props(default)]
-    intensity: GlowIntensity,
-
-    /// Additional CSS classes
-    #[props(default)]
-    class: String,
-
-    /// Display mode: inline (default) or block
-    #[props(default)]
-    block: bool,
+impl std::fmt::Display for GlowBlur {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowBlur::None => write!(f, "none"),
+            GlowBlur::Light => write!(f, "light"),
+            GlowBlur::Medium => write!(f, "medium"),
+            GlowBlur::Heavy => write!(f, "heavy"),
+        }
+    }
 }
 
-/// Unified glow component with mouse-following effect
-///
-/// Combines spotlight (mouse-following glow) and acrylic (blur) effects.
-/// Automatically adapts to theme colors.
-///
-/// # Implementation Notes
-///
-/// Glow effects use component-isolated mouse tracking:
-/// - Uses onmousemove handler to track mouse position relative to element
-/// - Updates CSS variables directly on DOM without re-render
-/// - No global monitoring or MutationObserver needed
+impl std::fmt::Display for GlowColor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowColor::Ghost => write!(f, "ghost"),
+            GlowColor::Primary => write!(f, "primary"),
+            GlowColor::Secondary => write!(f, "secondary"),
+            GlowColor::Danger => write!(f, "danger"),
+            GlowColor::Success => write!(f, "success"),
+            GlowColor::Warning => write!(f, "warning"),
+            GlowColor::Info => write!(f, "info"),
+        }
+    }
+}
+
+impl std::fmt::Display for GlowIntensity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowIntensity::Dim => write!(f, "dim"),
+            GlowIntensity::Soft => write!(f, "soft"),
+            GlowIntensity::Bright => write!(f, "bright"),
+        }
+    }
+}
+
+impl IntoAttrValue for GlowBlur {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
+impl IntoAttrValue for GlowColor {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
+impl IntoAttrValue for GlowIntensity {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}
+
+/// Glow animation presets for continuous animation effects
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum GlowPreset {
+    #[default]
+    None,
+    Pulse,
+    Breathe,
+    Shimmer,
+}
+
+impl std::fmt::Display for GlowPreset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GlowPreset::None => write!(f, ""),
+            GlowPreset::Pulse => write!(f, "pulse"),
+            GlowPreset::Breathe => write!(f, "breathe"),
+            GlowPreset::Shimmer => write!(f, "shimmer"),
+        }
+    }
+}
+
+impl IntoAttrValue for GlowPreset {
+    fn into_attr_value(self) -> Option<String> {
+        if self == GlowPreset::None {
+            None
+        } else {
+            Some(self.to_string())
+        }
+    }
+}
+
+/// Props for the [`Glow`] component, controlling blur, color, intensity, and animation preset.
+#[define_props]
+pub struct GlowProps {
+    pub children: Element,
+    pub blur: GlowBlur,
+    pub color: GlowColor,
+    pub intensity: GlowIntensity,
+    pub active_intensity: Option<GlowIntensity>,
+    pub preset: GlowPreset,
+    pub class: String,
+    pub block: bool,
+    #[default("100".to_string())]
+    pub transition_duration: String,
+}
+
+/// Get opacity value for intensity level
+fn get_opacity_for_intensity(intensity: GlowIntensity) -> f32 {
+    match intensity {
+        GlowIntensity::Dim => 0.07,
+        GlowIntensity::Soft => 0.15,
+        GlowIntensity::Bright => 0.30,
+    }
+}
+
+/// Animation state for glow effect
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+struct GlowState {
+    mouse_x: f64,
+    mouse_y: f64,
+    is_inside: bool,
+    interaction_level: f32, // 0 = idle, 0.5 = hover, 1.0 = active
+}
+
+/// A mouse-following glow spotlight with acrylic blur, wrapping children in an interactive overlay.
 #[component]
 pub fn Glow(props: GlowProps) -> Element {
     let blur_class = match props.blur {
@@ -113,14 +195,14 @@ pub fn Glow(props: GlowProps) -> Element {
     };
 
     let glow_classes = ClassesBuilder::new()
-        .add(GlowClass::GlowWrapper)
-        .add_if(GlowClass::GlowWrapperBlock, || props.block)
-        .add(blur_class)
-        .add(intensity_class)
-        .add_raw(&props.class)
+        .add_typed(GlowClass::GlowWrapper)
+        .add_typed_if(GlowClass::GlowWrapperBlock, props.block)
+        .add_typed(blur_class)
+        .add_typed(intensity_class)
+        .add(&props.class)
+        .add(&props.preset.to_string())
         .build();
 
-    #[cfg(target_arch = "wasm32")]
     let glow_color = match props.color {
         GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
         GlowColor::Primary => "var(--hi-glow-button-primary)",
@@ -131,81 +213,189 @@ pub fn Glow(props: GlowProps) -> Element {
         GlowColor::Info => "var(--hi-glow-button-info)",
     };
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        let initial_style = format!(
-            "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: {};",
-            glow_color
-        );
+    let base_opacity = get_opacity_for_intensity(props.intensity);
+    let active_opacity = props.active_intensity.map(get_opacity_for_intensity);
 
-        let onmousemove_handler = move |event: Event<MouseData>| {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                let client_x = web_event.client_x() as f64;
-                let client_y = web_event.client_y() as f64;
+    // Animation state
+    let glow_state = use_signal(GlowState::default);
 
-                // Find the glow wrapper by traversing up from the target
-                let mut target: Option<web_sys::EventTarget> = web_event.target();
+    // Build initial style using StyleStringBuilder
+    let glow_style = use_signal(|| {
+        StyleStringBuilder::new()
+            .add_var("glow-x", "50%")
+            .add_var("glow-y", "50%")
+            .add_var("hi-glow-color", glow_color)
+            .add_var("glow-opacity", &base_opacity.to_string())
+            .add_var("glow-intensity-scale", "0")
+            .build()
+    });
 
-                while let Some(current) = target {
-                    let current_el = current.dyn_ref::<web_sys::Element>();
-
-                    if let Some(el) = current_el {
-                        if el.class_list().contains("hi-glow-wrapper") {
-                            // Found the glow wrapper
-                            if let Some(wrapper) = el.dyn_ref::<HtmlElement>() {
-                                let rect = wrapper.get_bounding_client_rect();
-
-                                let relative_x = client_x - rect.left();
-                                let relative_y = client_y - rect.top();
-
-                                let width = rect.width();
-                                let height = rect.height();
-
-                                if width > 0.0 && height > 0.0 {
-                                    let percent_x =
-                                        ((relative_x / width) * 100.0).clamp(0.0, 100.0);
-                                    let percent_y =
-                                        ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-
-                                    StyleBuilder::new(wrapper)
-                                        .add_custom("--glow-x", &format!("{:.1}%", percent_x))
-                                        .add_custom("--glow-y", &format!("{:.1}%", percent_y))
-                                        .apply();
-                                }
-                            }
-                            break;
-                        }
-                    }
-
-                    // Move up to parent
-                    let node = current.dyn_ref::<web_sys::Node>();
-                    target = node
-                        .and_then(|n| n.parent_node())
-                        .and_then(|n| n.dyn_into::<web_sys::EventTarget>().ok());
-                }
-            }
+    let build_style =
+        |interaction_level: f32, opacity: f32, glow_x: &str, glow_y: &str| -> String {
+            StyleStringBuilder::new()
+                .add_var("glow-x", glow_x)
+                .add_var("glow-y", glow_y)
+                .add_var("glow-intensity-scale", &interaction_level.to_string())
+                .add_var("glow-opacity", &format!("{:.3}", opacity))
+                .build()
         };
 
-        rsx! {
-            div {
-                class: "{glow_classes}",
-                "data-glow": "true",
-                style: "{initial_style}",
-                onmousemove: onmousemove_handler,
-                {props.children}
+    fn calc_glow_percent(event: &MouseEvent) -> (String, String) {
+        if let Some(target) = event.target {
+            let rect = tairitsu_vdom::get_bounding_client_rect(tairitsu_vdom::DomHandle::from_raw(target));
+            if rect.width > 0.0 && rect.height > 0.0 {
+                let px = (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
+                let py = (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
+                return (format!("{:.1}%", px), format!("{:.1}%", py));
             }
         }
+        ("50%".to_string(), "50%".to_string())
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        rsx! {
-            div { class: "{glow_classes}", "data-glow": "true", {props.children} }
+    // Clone values for event handlers
+    let base_opacity_clone = base_opacity;
+    let active_opacity_clone = active_opacity;
+
+    // Mouse move handler - update interaction level and style
+    let onmousemove_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+
+        move |event: MouseEvent| {
+            let (glow_x, glow_y) = calc_glow_percent(&event);
+
+            let current = state.read();
+            let new_state = GlowState {
+                mouse_x: event.offset_x as f64,
+                mouse_y: event.offset_y as f64,
+                is_inside: true,
+                interaction_level: current.interaction_level,
+            };
+            state.set(new_state);
+
+            let current_opacity = base_opacity_clone
+                + (active_opacity_clone.unwrap_or(base_opacity_clone * 2.0) - base_opacity_clone)
+                    * new_state.interaction_level;
+
+            let new_style = build_style(
+                new_state.interaction_level,
+                current_opacity,
+                &glow_x,
+                &glow_y,
+            );
+            style.set(new_style);
+        }
+    };
+
+    // Mouse enter handler
+    let onmouseenter_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |event: MouseEvent| {
+            let (glow_x, glow_y) = calc_glow_percent(&event);
+
+            let current = state.read();
+            let new_state = GlowState {
+                mouse_x: event.offset_x as f64,
+                mouse_y: event.offset_y as f64,
+                interaction_level: 0.5,
+                is_inside: true,
+            };
+            state.set(new_state);
+
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(
+                new_state.interaction_level,
+                current_opacity,
+                &glow_x,
+                &glow_y,
+            );
+            style.set(new_style);
+        }
+    };
+    // Mouse leave handler
+    let onmouseleave_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                is_inside: false,
+                interaction_level: 0.0,
+                ..current
+            };
+            state.set(new_state);
+
+            let new_style = build_style(0.0, 0.0, "50%", "50%");
+            style.set(new_style);
+        }
+    };
+
+    // Mouse down handler
+    let onmousedown_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let new_state = GlowState {
+                interaction_level: 1.0,
+                ..current
+            };
+            state.set(new_state);
+
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
+            style.set(new_style);
+        }
+    };
+
+    // Mouse up handler
+    let onmouseup_handler = {
+        let state = glow_state.clone();
+        let style = glow_style.clone();
+        let base_op = base_opacity_clone;
+
+        move |_: MouseEvent| {
+            let current = state.read();
+            let interaction_level = if current.is_inside { 0.5 } else { 0.0 };
+            let new_state = GlowState {
+                interaction_level,
+                ..current
+            };
+            state.set(new_state);
+
+            let current_opacity = base_op
+                + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
+                    * new_state.interaction_level;
+            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
+            style.set(new_style);
+        }
+    };
+
+    rsx! {
+        div {
+            class: glow_classes,
+            "data-glow": "true",
+            style: "{glow_style}",
+            onmousemove: onmousemove_handler,
+            onmouseenter: onmouseenter_handler,
+            onmouseleave: onmouseleave_handler,
+            onmousedown: onmousedown_handler,
+            onmouseup: onmouseup_handler,
+            {props.children}
         }
     }
 }
 
-/// Type wrapper for styling
 pub struct GlowComponent;
 
 impl crate::styled::StyledComponent for GlowComponent {
@@ -217,9 +407,3 @@ impl crate::styled::StyledComponent for GlowComponent {
         "glow"
     }
 }
-
-// Re-exports for backward compatibility
-pub use Glow as Acrylic;
-pub use GlowBlur as AcrylicBlur;
-pub use GlowColor as AcrylicMode;
-pub use GlowIntensity as AcrylicIntensity;

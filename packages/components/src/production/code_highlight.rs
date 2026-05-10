@@ -7,103 +7,73 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
-use dioxus::prelude::*;
-use gloo::timers::callback::Timeout;
-use palette::classes::{ClassesBuilder, CodeHighlightClass};
-use wasm_bindgen::prelude::*;
+use crate::platform;
+use crate::{prelude::*, styled::StyledComponent};
+use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 
-use crate::styled::StyledComponent;
-
-// Helper function to copy text to clipboard
-#[wasm_bindgen(inline_js = r#"
-export function copyToClipboard(text) {
-    if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
-    } else {
-        // Fallback to execCommand
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return Promise.resolve(success);
-    }
-}
-"#)]
-extern "C" {
-    fn copyToClipboard(text: &str) -> js_sys::Promise;
-}
-
-// Rust wrapper for the JS function
+// Copy text to clipboard using platform layer
 fn copy_to_clipboard(text: &str) -> bool {
-    let _promise = copyToClipboard(text);
-    // We can't easily await in this context, so assume success
-    // The actual copy happens asynchronously
-    true
+    platform::copy_to_clipboard(text)
 }
 
-/// CodeHighlight component type wrapper (for StyledComponent)
 pub struct CodeHighlightComponent;
 
-/// Code highlighting component with Arknights + FUI styling
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CodeHighlightProps {
-    #[props(default)]
+    #[default("".to_string())]
     pub language: String,
 
+    #[default("".to_string())]
     pub code: String,
 
-    #[props(default = true)]
+    #[default(true)]
     pub line_numbers: bool,
 
-    #[props(default = true)]
+    #[default(true)]
     pub copyable: bool,
 
-    #[props(default)]
     pub max_height: Option<String>,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    #[props(default)]
+    #[default("".to_string())]
     pub style: String,
 }
 
 #[component]
 pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
-    let mut copied = use_signal(|| false);
+    let copied = use_signal(|| false);
     let lines: Vec<&str> = props.code.lines().collect();
     let line_count = lines.len();
 
     let container_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Container)
-        .add_raw(&props.class)
+        .add_typed(CodeHighlightClass::Container)
+        .add(&props.class)
         .build();
 
     let header_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Header)
+        .add_typed(CodeHighlightClass::Header)
         .build();
 
     let language_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Language)
+        .add_typed(CodeHighlightClass::Language)
         .build();
 
     let copy_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::CopyButton)
+        .add_typed(CodeHighlightClass::CopyButton)
         .build();
 
-    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
+    let code_classes = ClassesBuilder::new()
+        .add_typed(CodeHighlightClass::Code)
+        .build();
 
     let line_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::LineNumbers)
+        .add_typed(CodeHighlightClass::LineNumbers)
         .build();
 
     let content_classes = ClassesBuilder::new()
-        .add(CodeHighlightClass::Content)
+        .add_typed(CodeHighlightClass::Content)
         .build();
 
     let max_height_style = if let Some(ref height) = props.max_height {
@@ -113,11 +83,13 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     };
 
     let code_for_copy = props.code.clone();
+    let code = props.code.clone();
+    let language = props.language.clone();
 
     // Computed button class with copied state
     let button_class = {
         let base = copy_classes.clone();
-        let copied_state = *copied.read();
+        let copied_state = copied.read();
         if copied_state {
             format!("{} copied hi-code-highlight-copy-copied", base)
         } else {
@@ -125,63 +97,60 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         }
     };
 
-    let button_text = if *copied.read() {
-        "已复制"
-    } else {
-        "复制"
-    };
+    let button_text = if copied.read() { "已复制" } else { "复制" };
+
+    let language_class = format!("language-{}", language);
+
+    // Pre-compute line number elements outside rsx! using VElement builder
+    let line_number_nodes: Vec<VNode> = (1..=line_count)
+        .map(|i| {
+            VNode::Element(
+                VElement::new("div")
+                    .class("hi-code-highlight-line-number")
+                    .child(VNode::Text(VText::new(&i.to_string()))),
+            )
+        })
+        .collect();
 
     rsx! {
-        div {
-            class: "{container_classes}",
+        div { class: container_classes,
 
-            div {
-                class: "{header_classes}",
+            div { class: header_classes,
 
-                div {
-                    class: "{language_classes}",
-                    "{props.language}"
-                }
+                div { class: language_classes, language }
 
                 if props.copyable {
                     button {
-                        class: "{button_class}",
-                        onclick: move |_| {
-                            if copy_to_clipboard(&code_for_copy) {
-                                copied.set(true);
-                                let mut copied_signal = copied;
-                                Timeout::new(2000, move || {
-                                    copied_signal.set(false);
-                                }).forget();
+                        class: button_class,
+                        onclick: {
+                            let code_for_copy = code_for_copy.clone();
+                            let copied_for_timeout = copied.clone();
+                            move |_| {
+                                if copy_to_clipboard(&code_for_copy) {
+                                    copied.set(true);
+                                    let copied_signal = copied_for_timeout.clone();
+                                    platform::set_timeout(
+                                        move || {
+                                            copied_signal.set(false);
+                                        },
+                                        2000,
+                                    );
+                                }
                             }
                         },
-                        "{button_text}"
+                        button_text,
                     }
                 }
             }
 
-            div {
-                class: "{content_classes}",
-                style: "{max_height_style}",
+            div { class: content_classes, style: max_height_style,
 
                 if props.line_numbers {
-                    div {
-                        class: "{line_classes}",
-                        for i in 1..=line_count {
-                            div {
-                                class: "hi-code-highlight-line-number",
-                                "{i}"
-                            }
-                        }
-                    }
+                    div { class: line_classes, ..line_number_nodes }
                 }
 
-                pre {
-                    class: "{code_classes}",
-                    code {
-                        class: "language-{props.language}",
-                        "{props.code}"
-                    }
+                pre { class: code_classes,
+                    code { class: language_class, code }
                 }
             }
         }
@@ -231,14 +200,14 @@ impl StyledComponent for CodeHighlightComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-code-highlight-copy.hi-code-highlight-copy-copied,
 .hi-code-highlight-copy.copied {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-glow-button-primary);
     opacity: 1;
 }
 
@@ -309,7 +278,7 @@ impl StyledComponent for CodeHighlightComponent {
 }
 
 .token-operator,
-.token.entity,
+.token-entity,
 .token.url,
 .language-css .token.string,
 .style .token.string {

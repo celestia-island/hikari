@@ -1,86 +1,46 @@
-//! Continuous animation hooks (timeout, interval) for Dioxus
+//! Continuous animation hooks (timeout, interval)
+//!
+//! Provides `use_timeout` and `use_interval` for timed callbacks.
+//! Uses tairitsu's Platform trait for cross-platform timer support.
 
-#[cfg(target_arch = "wasm32")]
-use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-#[cfg(target_arch = "wasm32")]
-use dioxus::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> impl Fn() {
+    let fired = Rc::new(RefCell::new(false));
 
-#[cfg(target_arch = "wasm32")]
-pub fn use_timeout(duration_ms: u64, callback: impl Fn() + 'static) -> impl Fn() {
-    let timeout_id = Arc::new(Mutex::new(Option::<i32>::None));
-    let callback_arc = Arc::new(callback);
-    let timeout_id_for_effect = timeout_id.clone();
-
-    use_effect(move || {
-        let window = web_sys::window().unwrap();
-        if let Some(id) = *timeout_id_for_effect.lock().unwrap() {
-            window.clear_timeout_with_handle(id);
+    move || {
+        if *fired.borrow() {
+            return;
         }
-    });
+        *fired.borrow_mut() = true;
 
-    let trigger = move || {
-        let window = web_sys::window().unwrap();
-
-        if let Some(id) = *timeout_id.lock().unwrap() {
-            window.clear_timeout_with_handle(id);
-        }
-
-        let callback_clone = callback_arc.clone();
-        let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
-            callback_clone();
-        }) as Box<dyn FnOnce()>);
-
-        let id = window
-            .set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                duration_ms as i32,
-            )
-            .unwrap();
-
-        *timeout_id.lock().unwrap() = Some(id);
-        closure.forget();
-    };
-
-    trigger
+        let cb = callback.clone();
+        let platform = tairitsu_web::BrowserPlatform::new();
+        platform.set_timeout(cb, duration_ms as u32);
+    }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn use_timeout(_duration_ms: u64, _callback: impl Fn() + 'static) -> impl Fn() {
-    move || {}
-}
-
-#[cfg(target_arch = "wasm32")]
 pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
-    let interval_id = Arc::new(Mutex::new(Option::<i32>::None));
-    let callback_arc = Arc::new(callback);
-    let interval_id_for_effect = interval_id.clone();
+    let callback = Rc::new(callback);
 
-    use_effect(move || {
-        let window = web_sys::window().unwrap();
-
-        let callback_clone = callback_arc.clone();
-        let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move || {
-            callback_clone();
-        }) as Box<dyn FnMut()>);
-
-        let id = window
-            .set_interval_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                duration_ms as i32,
-            )
-            .unwrap();
-
-        *interval_id.lock().unwrap() = Some(id);
-        closure.forget();
-
-        if let Some(id) = *interval_id_for_effect.lock().unwrap() {
-            window.clear_interval_with_handle(id);
-        }
-    });
+    let platform = tairitsu_web::BrowserPlatform::new();
+    platform.set_timeout(
+        {
+            let cb = callback.clone();
+            let dur = duration_ms;
+            move || {
+                cb();
+                let cb2 = callback.clone();
+                let platform = tairitsu_web::BrowserPlatform::new();
+                platform.set_timeout(
+                    move || {
+                        cb2();
+                    },
+                    dur as u32,
+                );
+            }
+        },
+        duration_ms as u32,
+    );
 }
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn use_interval(_duration_ms: u64, _callback: impl Fn() + 'static) {}

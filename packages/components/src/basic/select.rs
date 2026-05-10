@@ -1,21 +1,19 @@
 // hi-components/src/basic/select.rs
 // Custom Select component with Portal-based dropdown and FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, Display, Position, SelectClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
+use crate::platform;
 use crate::{
-    glow::Glow,
+    feedback::{Glow, GlowProps},
     portal::{
         generate_portal_id, use_portal, PortalEntry, PortalMaskMode, PortalPositionStrategy,
         TriggerPlacement,
     },
+    prelude::*,
     styled::StyledComponent,
 };
 
-/// Select 组件的类型包装器（用于实现 StyledComponent）
 pub struct SelectComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -26,83 +24,67 @@ pub enum SelectSize {
     Lg,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SelectOption {
+    #[default]
     pub label: String,
+
+    #[default]
     pub value: String,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[define_props]
 pub struct SelectProps {
-    #[props(default)]
+    #[default]
     pub options: Vec<SelectOption>,
 
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub size: SelectSize,
 
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Current selected value (controlled mode)
-    #[props(default)]
+    #[default]
     pub value: Option<String>,
 
-    #[props(default)]
+    #[default]
     pub on_change: Option<EventHandler<String>>,
+
+    #[default(false)]
+    pub glow: bool,
 }
 
-/// Custom Select component with Portal-based dropdown and FUI styling
 ///
-/// Uses the Portal system to render dropdown options as an overlay layer,
-/// ensuring proper z-index stacking and click-outside-to-close behavior.
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Select, SelectOption, SelectSize};
 ///
-/// fn app() -> Element {
-///     let mut selected = use_signal(|| String::new());
 ///
-///     rsx! {
-///         Select {
-///             placeholder: "Select an option".to_string(),
-///             size: SelectSize::Md,
-///             options: vec![
-///                 SelectOption { label: "Option 1".to_string(), value: "1".to_string() },
-///                 SelectOption { label: "Option 2".to_string(), value: "2".to_string() },
-///             ],
-///             on_change: move |value| selected.set(value),
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Select(props: SelectProps) -> Element {
     let portal = use_portal();
-    let mut internal_value = use_signal(|| props.value.clone().unwrap_or_default());
-    let mut dropdown_id = use_signal(String::new);
+    let internal_value = use_signal(|| props.value.clone().unwrap_or_default());
+    let dropdown_id = use_signal(String::new);
     let open = use_signal(|| false);
 
     // Sync controlled value
     let controlled_value = props.value.clone();
+    let internal_value_for_effect = internal_value.clone();
     use_effect(move || {
         if let Some(ref v) = controlled_value {
-            internal_value.set(v.clone());
+            internal_value_for_effect.set(v.clone());
         }
     });
 
     // Track open state from portal entries
-    let entries = portal.entries;
-    let dropdown_id_sync = dropdown_id;
-    let open_sync = open;
+    let entries = portal.entries.clone();
+    let dropdown_id_sync = dropdown_id.clone();
+    let open_sync = open.clone();
     use_effect(move || {
         let current_id = dropdown_id_sync.read();
         if !current_id.is_empty() {
@@ -113,12 +95,11 @@ pub fn Select(props: SelectProps) -> Element {
                     false
                 }
             });
-            let mut open_ref = open_sync;
-            open_ref.set(is_in_entries);
+            open_sync.set(is_in_entries);
         }
     });
 
-    let current_value = internal_value();
+    let current_value = internal_value.get();
     let selected_label = props
         .options
         .iter()
@@ -131,18 +112,25 @@ pub fn Select(props: SelectProps) -> Element {
         SelectSize::Lg => SelectClass::Lg,
     };
 
+    let open_for_classes = open.clone();
     let trigger_classes = ClassesBuilder::new()
-        .add(SelectClass::SelectTrigger)
-        .add(size_class)
-        .add_if(SelectClass::Disabled, || props.disabled)
-        .add_if(SelectClass::Open, move || open())
-        .add_raw(&props.class)
+        .add_typed(SelectClass::SelectTrigger)
+        .add_typed(size_class)
+        .add_typed_if(SelectClass::Disabled, props.disabled)
+        .add_typed_if(SelectClass::Open, open_for_classes.get())
+        .add(&props.class)
         .build();
 
     // Build the options menu for sharing in the click handler
     let options_for_menu = props.options.clone();
-    let on_change = props.on_change;
+    let on_change = props.on_change.clone();
 
+    let open_for_click = open.clone();
+    let dropdown_id_for_click = dropdown_id.clone();
+    let portal_remove = portal.remove_entry.clone();
+    let portal_add = portal.add_entry.clone();
+    let internal_value_for_click = internal_value.clone();
+    let dropdown_id_for_click2 = dropdown_id.clone();
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -150,66 +138,41 @@ pub fn Select(props: SelectProps) -> Element {
             return;
         }
 
-        let current_open = open();
+        let current_open = open_for_click.get();
 
         if current_open {
             // Close
-            let id = dropdown_id();
+            let id = dropdown_id_for_click.get();
             if !id.is_empty() {
-                portal.remove_entry.call(id);
+                portal_remove.call(id);
             }
         } else {
             // Open dropdown via Portal
             let id = generate_portal_id();
-            dropdown_id.set(id.clone());
+            dropdown_id_for_click.set(id.clone());
 
             // Get trigger rect for positioning
-            let trigger_rect_opt = {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    if let Some(web_event) = e.downcast::<web_sys::MouseEvent>() {
-                        if let Some(target) = web_event.target() {
-                            if let Some(element) = target.dyn_ref::<web_sys::Element>() {
-                                let trigger_el = element
-                                    .closest(".hi-select-trigger")
-                                    .ok()
-                                    .flatten()
-                                    .unwrap_or_else(|| element.clone());
-                                if let Some(html_el) = trigger_el.dyn_ref::<web_sys::HtmlElement>()
-                                {
-                                    let rect = html_el.get_bounding_client_rect();
-                                    Some((rect.x(), rect.y(), rect.width(), rect.height()))
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                }
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    None::<(f64, f64, f64, f64)>
-                }
+            let trigger_rect_opt = if let Some(target_el) =
+                platform::get_target_element_from_event(e.client_x, e.client_y)
+            {
+                platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
+                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+            } else {
+                None
             };
 
             let opts = options_for_menu.clone();
-            let on_change_inner = on_change;
-            let portal_inner = portal.clone();
+            let portal_inner = portal_remove.clone();
             let id_inner = id.clone();
-            let internal_value_clone2 = internal_value;
+            let internal_value_clone2 = internal_value_for_click.clone();
+            let glow_for_options = props.glow;
 
             let menu_content = rsx! {
                 div {
                     class: "hi-select-dropdown",
+                    role: "listbox",
                     // Match trigger width via inline style if we have the rect
-                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { String::new() },
+                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { "min-width: 100%;".to_string() },
 
                     for opt in opts.iter() {
                         {
@@ -217,30 +180,45 @@ pub fn Select(props: SelectProps) -> Element {
                             let label = opt.label.clone();
                             let is_selected = value == *internal_value_clone2.read();
                             let value_for_click = value.clone();
-                            let on_change_item = on_change_inner;
+                            let on_change_item = on_change.clone();
                             let portal_close = portal_inner.clone();
                             let id_close = id_inner.clone();
 
                             // Create click handler for this option
-                            let mut internal_value_clone3 = internal_value;
+                            let internal_value_clone3 = internal_value_for_click.clone();
                             let click_handler = EventHandler::new(move |e: MouseEvent| {
                                 e.stop_propagation();
                                 internal_value_clone3.set(value_for_click.clone());
                                 if let Some(handler) = on_change_item.as_ref() {
                                     handler.call(value_for_click.clone());
                                 }
-                                portal_close.remove_entry.call(id_close.clone());
+                                portal_close.call(id_close.clone());
                             });
 
-                            rsx! {
-                                Glow {
-                                    block: true,
-                                    blur: crate::GlowBlur::Light,
-                                    intensity: crate::GlowIntensity::Soft,
+                            let option_classes = if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" };
 
+                            let aria_selected = is_selected.to_string();
+
+                            rsx! {
+                                if glow_for_options {
+                                    Glow {
+                                        block: true,
+                                        blur: crate::GlowBlur::Light,
+                                        intensity: crate::GlowIntensity::Soft,
+                                        div {
+                                            class: option_classes,
+                                            onclick: click_handler,
+                                            role: "option",
+                                            "aria-selected": "{aria_selected}",
+                                            "{label}"
+                                        }
+                                    }
+                                } else {
                                     div {
-                                        class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
+                                        class: option_classes,
                                         onclick: click_handler,
+                                        role: "option",
+                                        "aria-selected": "{aria_selected}",
                                         "{label}"
                                     }
                                 }
@@ -261,34 +239,55 @@ pub fn Select(props: SelectProps) -> Element {
                 close_on_select: true,
             };
 
-            portal.add_entry.call(entry);
+            portal_add.call(entry);
         }
     };
 
+    let is_open = open.get();
+    let aria_expanded = if is_open { "true" } else { "false" };
+
     let wrapper_classes = ClassesBuilder::new()
-        .add(Position::Relative)
-        .add(Display::InlineBlock)
+        .add_typed(Position::Relative)
+        .add_typed(Display::InlineBlock)
         .build();
 
     rsx! {
-        div { class: "{wrapper_classes}",
+        div { class: wrapper_classes,
+            if props.glow {
+                Glow {
+                    block: true,
+                    blur: crate::GlowBlur::Light,
+                    intensity: crate::GlowIntensity::Soft,
+                    color: crate::GlowColor::Primary,
+                    div { class: trigger_classes, onclick: handle_trigger_click,
+                        role: "combobox",
+                        "aria-expanded": "{aria_expanded}",
+                        "aria-haspopup": "listbox",
 
-            div { class: "{trigger_classes}", onclick: handle_trigger_click,
+                        span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                            "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                        }
 
-                span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
-                    {
-                        if let Some(label) = &selected_label {
-                            label.clone()
-                        } else {
-                            props.placeholder.clone().unwrap_or_else(|| "请选择".to_string())
+                        span {
+                            class: "hi-select-arrow",
+                            dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
                         }
                     }
                 }
+            } else {
+                div { class: trigger_classes, onclick: handle_trigger_click,
+                    role: "combobox",
+                    "aria-expanded": "{aria_expanded}",
+                    "aria-haspopup": "listbox",
 
-                // Chevron arrow
-                span {
-                    class: "hi-select-arrow",
-                    dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                    span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                        "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                    }
+
+                    span {
+                        class: "hi-select-arrow",
+                        dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                    }
                 }
             }
         }

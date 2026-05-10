@@ -1,30 +1,24 @@
-// website/src/components/mod.rs
-// Demo-specific components
+//! Shared layout components: top nav and sidebar.
+//!
+//! Uses hikari-components CSS class names (hi-header, hi-aside, etc.)
+//! so the bundle.css styles apply correctly for the drawer/header/aside layout.
 
-// Layout components
 pub mod aside_footer;
-pub mod doc_page;
+pub mod icon_utils;
+pub mod breadcrumb;
+pub mod code_block;
+pub mod doc_components;
+pub mod dynamic_markdown;
+pub mod demo_page;
+pub mod glow;
 pub mod layout;
+pub mod markdown_renderer;
 pub mod page_layout;
-
-// Navigation components
+pub mod portal;
 pub mod sidebar;
 pub mod top_nav;
 
-// Dynamic component registry
 pub mod registry;
 
-// Editor components
-pub mod code_block;
-pub mod markdown_renderer;
-
-// Documentation components
-pub mod doc_components;
-
-// Re-export commonly used components
-pub use aside_footer::AsideFooter;
-pub use code_block::CodeBlock;
-pub use doc_page::DynamicDocPage;
-pub use layout::Layout;
-pub use markdown_renderer::{MarkdownRenderer, render_markdown};
-pub use page_layout::{DemoSection, PageContainer};
+pub use sidebar::render as sidebar;
+pub use top_nav::render as top_nav;

@@ -1,74 +1,32 @@
 // packages/components/src/display/calendar.rs
 // Calendar component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
+use chrono::{Datelike, Local};
 
-use crate::styled::StyledComponent;
+use hikari_palette::classes::{CalendarClass, ClassesBuilder, TypedClass};
 
-/// Get current year and month
+use crate::{prelude::*, styled::StyledComponent};
+
 fn get_current_date() -> (i32, u32) {
-    #[cfg(target_arch = "wasm32")]
-    {
-        use js_sys::Date;
-        let date = Date::new_0();
-        let year = date.get_full_year() as i32;
-        let month = (date.get_month() + 1) as u32;
-        (year, month)
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default();
-        let days = now.as_secs() / 86400;
-        let years = days / 365;
-        let remaining_days = days % 365;
-        let month = (remaining_days / 30 + 1).min(12) as u32;
-        ((1970 + years as i32), month)
-    }
+    let now = Local::now();
+    (now.year(), now.month())
 }
 
-/// Calendar component type wrapper (for StyledComponent)
 pub struct CalendarComponent;
 
-/// Calendar component with Arknights + FUI styling
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CalendarProps {
-    #[props(default = 2026)]
+    #[default(2026)]
     pub default_year: i32,
-
-    #[props(default = 1)]
+    #[default(1)]
     pub default_month: u32,
-
-    #[props(default)]
     pub on_date_select: Option<EventHandler<(i32, u32, u32)>>,
-
-    #[props(default = 1970)]
+    #[default(1970)]
     pub min_year: i32,
-
-    #[props(default = 2100)]
+    #[default(2100)]
     pub max_year: i32,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub style: String,
-}
-
-impl Default for CalendarProps {
-    fn default() -> Self {
-        Self {
-            default_year: 2026,
-            default_month: 1,
-            on_date_select: None,
-            min_year: 1970,
-            max_year: 2100,
-            class: String::default(),
-            style: String::default(),
-        }
-    }
 }
 
 fn is_leap_year(year: i32) -> bool {
@@ -120,186 +78,192 @@ const WEEKDAY_NAMES: [&str; 7] = ["日", "一", "二", "三", "四", "五", "六
 
 #[component]
 pub fn Calendar(props: CalendarProps) -> Element {
-    let mut current_year = use_signal(|| props.default_year);
-    let mut current_month = use_signal(|| props.default_month);
-    let mut selected_day = use_signal(|| 1u32);
+    let current_year = use_signal(|| props.default_year);
+    let current_month = use_signal(|| props.default_month);
+    let selected_day = use_signal(|| 1u32);
 
-    let month = current_month();
-    let year = current_year();
+    let month = current_month.read();
+    let year = current_year.read();
+    let sel_day = selected_day.read();
 
     let days_count = days_in_month(year, month);
     let first_day = first_day_of_month(year, month);
 
-    let cal_class = CalendarClass::Calendar.as_class();
-    let header_class = CalendarClass::CalendarHeader.as_class();
-    let nav_class = CalendarClass::CalendarNav.as_class();
-    let nav_btn_class = CalendarClass::CalendarNavButton.as_class();
-    let title_class = CalendarClass::CalendarTitle.as_class();
-    let weekdays_class = CalendarClass::CalendarWeekdays.as_class();
-    let weekday_class = CalendarClass::CalendarWeekday.as_class();
-    let grid_class = CalendarClass::CalendarGrid.as_class();
-    let day_cell_class = CalendarClass::CalendarDayCell.as_class();
+    let cal_class = CalendarClass::Calendar.class_name();
+    let header_class = CalendarClass::CalendarHeader.class_name();
+    let nav_class = CalendarClass::CalendarNav.class_name();
+    let nav_btn_class = CalendarClass::CalendarNavButton.class_name();
+    let title_class = CalendarClass::CalendarTitle.class_name();
+    let weekdays_class = CalendarClass::CalendarWeekdays.class_name();
+    let weekday_class = CalendarClass::CalendarWeekday.class_name();
+    let grid_class = CalendarClass::CalendarGrid.class_name();
+    let day_cell_class = CalendarClass::CalendarDayCell.class_name();
+    let day_class = CalendarClass::CalendarDay.class_name();
+    let selected_day_class = CalendarClass::CalendarDaySelected.class_name();
 
     let calendar_classes = ClassesBuilder::new()
-        .add(CalendarClass::Calendar)
-        .add_raw(&props.class)
+        .add_typed(CalendarClass::Calendar)
+        .add(&props.class)
         .build();
 
-    rsx! {
-        div {
-            class: "{calendar_classes}",
-            style: "{props.style}",
+    // Build weekday headers outside rsx!
+    let weekday_headers: Vec<VNode> = WEEKDAY_NAMES
+        .iter()
+        .map(|weekday| {
+            VNode::Element(
+                VElement::new("div")
+                    .class(weekday_class)
+                    .child(VNode::Text(VText::new(weekday))),
+            )
+        })
+        .collect();
 
-            div {
-                class: "{cal_class}",
+    // Build empty cells for days before the 1st
+    let empty_cells: Vec<VNode> = (0..first_day)
+        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class)))
+        .collect();
 
-                div {
-                    class: "{header_class}",
+    // Build day cells
+    let day_cells: Vec<VNode> = (1..=days_count)
+        .map(|day| {
+            let is_selected = day == sel_day;
+            let day_cell_cls = day_cell_class;
+            let inner_class = if is_selected {
+                format!("{} {}", day_class, selected_day_class)
+            } else {
+                day_class.to_string()
+            };
 
-                    div {
-                        class: "{nav_class}",
+            let cy = current_year.clone();
+            let cm = current_month.clone();
+            let sd = selected_day.clone();
+            let on_date_select = props.on_date_select.clone();
+            let y = year;
+            let m = month;
 
-                        button {
-                            class: "{nav_btn_class}",
-                            disabled: year <= props.min_year && month == 1,
-                            onclick: move |_| {
-                                let ny = if month == 1 { year - 1 } else { year };
-                                let nm = if month == 1 { 12 } else { month - 1 };
-                                if ny >= props.min_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "‹"
+            VNode::Element(
+                VElement::new("div")
+                    .class(day_cell_cls)
+                    .on_event("click", move |_e: Box<dyn EventData>| {
+                        *sd.write() = day;
+                        if let Some(ref handler) = on_date_select {
+                            handler.call((y, m, day));
                         }
+                    })
+                    .child(VNode::Element(
+                        VElement::new("div")
+                            .class(inner_class)
+                            .child(VNode::Text(VText::new(&day.to_string()))),
+                    )),
+            )
+        })
+        .collect();
 
-                        button {
-                            class: "{nav_btn_class}",
-                            onclick: move |_| {
-                                let ny = if month == 1 { year - 1 } else { year };
-                                let nm = if month == 1 { 12 } else { month - 1 };
-                                if ny >= props.min_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "◀"
-                        }
-
-                        button {
-                            class: "{nav_btn_class}",
-                            onclick: move |_| {
-                                let (today_year, today_month) = get_current_date();
-                                if today_year >= props.min_year && today_year <= props.max_year {
-                                    *current_year.write() = today_year;
-                                    *current_month.write() = today_month;
-                                }
-                            },
-                            "今天"
-                        }
-
-                        button {
-                            class: "{nav_btn_class}",
-                            onclick: move |_| {
-                                let ny = if month == 12 { year + 1 } else { year };
-                                let nm = if month == 12 { 1 } else { month + 1 };
-                                if ny <= props.max_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "▶"
-                        }
-
-                        button {
-                            class: "{nav_btn_class}",
-                            disabled: year >= props.max_year && month == 12,
-                            onclick: move |_| {
-                                let ny = if month == 12 { year + 1 } else { year };
-                                let nm = if month == 12 { 1 } else { month + 1 };
-                                if ny <= props.max_year {
-                                    *current_year.write() = ny;
-                                    *current_month.write() = nm;
-                                }
-                            },
-                            "›"
-                        }
-                    }
-
-                    div {
-                        class: "{title_class}",
-                        "{year}年 {MONTH_NAMES[(month - 1) as usize]}"
-                    }
+    // Build nav buttons
+    let cy_prev = current_year.clone();
+    let cm_prev = current_month.clone();
+    let min_yr = props.min_year;
+    let prev_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class)
+            .attr("disabled", year <= min_yr && month == 1)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 1 { year - 1 } else { year };
+                let nm = if month == 1 { 12 } else { month - 1 };
+                if ny >= min_yr {
+                    *cy_prev.write() = ny;
+                    *cm_prev.write() = nm;
                 }
+            })
+            .child(VNode::Text(VText::new("‹"))),
+    );
 
-                div {
-                    class: "{weekdays_class}",
-                    for weekday in WEEKDAY_NAMES {
-                        div {
-                            class: "{weekday_class}",
-                            "{weekday}"
-                        }
-                    }
+    let cy_prev2 = current_year.clone();
+    let cm_prev2 = current_month.clone();
+    let prev_btn2 = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 1 { year - 1 } else { year };
+                let nm = if month == 1 { 12 } else { month - 1 };
+                if ny >= min_yr {
+                    *cy_prev2.write() = ny;
+                    *cm_prev2.write() = nm;
                 }
+            })
+            .child(VNode::Text(VText::new("◀"))),
+    );
 
-                div {
-                    class: "{grid_class}",
-
-                    for _ in 0..first_day {
-                        div {
-                            class: "{day_cell_class}",
-                        }
-                    }
-
-                    for day in 1..=days_count {
-                        CalendarDayCell {
-                            day,
-                            year,
-                            month,
-                            selected_day: selected_day(),
-                            onclick: move |d: u32| {
-                                *selected_day.write() = d;
-                                if let Some(ref cb) = props.on_date_select {
-                                    cb.call((year, month, d));
-                                }
-                            },
-                        }
-                    }
+    let cy_today = current_year.clone();
+    let cm_today = current_month.clone();
+    let today_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let (today_year, today_month) = get_current_date();
+                if today_year >= min_yr && today_year <= props.max_year {
+                    *cy_today.write() = today_year;
+                    *cm_today.write() = today_month;
                 }
-            }
-        }
-    }
-}
+            })
+            .child(VNode::Text(VText::new("今天"))),
+    );
 
-#[derive(Clone, PartialEq, Props)]
-struct CalendarDayCellProps {
-    day: u32,
-    year: i32,
-    month: u32,
-    selected_day: u32,
-    onclick: EventHandler<u32>,
-}
+    let cy_next = current_year.clone();
+    let cm_next = current_month.clone();
+    let max_yr = props.max_year;
+    let next_btn = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 12 { year + 1 } else { year };
+                let nm = if month == 12 { 1 } else { month + 1 };
+                if ny <= max_yr {
+                    *cy_next.write() = ny;
+                    *cm_next.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("▶"))),
+    );
 
-#[component]
-fn CalendarDayCell(props: CalendarDayCellProps) -> Element {
-    let day_cls = CalendarClass::CalendarDay.as_class();
-    let day_sel_cls = CalendarClass::CalendarDaySelected.as_class();
-    let cell_cls = CalendarClass::CalendarDayCell.as_class();
+    let cy_next2 = current_year.clone();
+    let cm_next2 = current_month.clone();
+    let next_btn2 = VNode::Element(
+        VElement::new("button")
+            .class(nav_btn_class)
+            .attr("disabled", year >= max_yr && month == 12)
+            .on_event("click", move |_e: Box<dyn EventData>| {
+                let ny = if month == 12 { year + 1 } else { year };
+                let nm = if month == 12 { 1 } else { month + 1 };
+                if ny <= max_yr {
+                    *cy_next2.write() = ny;
+                    *cm_next2.write() = nm;
+                }
+            })
+            .child(VNode::Text(VText::new("›"))),
+    );
 
-    let is_sel = props.selected_day == props.day;
-    let day_classes = if is_sel {
-        format!("{} {}", day_cls, day_sel_cls)
-    } else {
-        day_cls
-    };
+    let title_text = format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize]);
+
+    // Combine all grid cells
+    let mut all_day_cells = empty_cells;
+    all_day_cells.extend(day_cells);
 
     rsx! {
-        div {
-            class: "{cell_cls}",
-            onclick: move |_| props.onclick.call(props.day),
-            div {
-                class: "{day_classes}",
-                "{props.day}"
+        div { class: calendar_classes, style: props.style,
+            div { class: cal_class,
+                div { class: header_class,
+                    div { class: nav_class,
+                        {prev_btn}
+                        {prev_btn2}
+                        {today_btn}
+                        {next_btn}
+                        {next_btn2}
+                    }
+                    div { class: title_class, "{title_text}" }
+                }
+                div { class: weekdays_class, ..weekday_headers }
+                div { class: grid_class, ..all_day_cells }
             }
         }
     }
@@ -350,7 +314,7 @@ impl StyledComponent for CalendarComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    box-shadow: 0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-calendar-nav-button:disabled {
@@ -414,7 +378,7 @@ impl StyledComponent for CalendarComponent {
 .hi-calendar-day.hi-calendar-day-selected {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-glow-button-primary);
 }
 
 .hi-calendar-day-today {

@@ -6,34 +6,22 @@
 // - Slide in/out animations
 // - Scale effects for smooth appearance
 //
-// This is based on the same pattern as ScrollbarAnimationState, but specifically
-// designed for dropdown overlay animations.
+// This is a pure state machine without direct DOM manipulation.
+// The actual rendering is handled by the component through CSS variables.
 
-use std::{cell::RefCell, rc::Rc};
-
-use animation::style::{CssProperty, StyleBuilder};
-use wasm_bindgen::prelude::*;
-
-/// Dropdown animation state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownAnimationState {
-    /// Dropdown is hidden (not visible)
     Hidden,
-    /// Dropdown is appearing (fade/scale in animation)
     Appearing,
-    /// Dropdown is visible and stable
     Visible,
-    /// Dropdown is disappearing (fade/scale out animation)
     Disappearing,
 }
 
 impl DropdownAnimationState {
-    /// Returns true if dropdown should be visible in DOM
     pub fn should_display(&self) -> bool {
         matches!(self, Self::Appearing | Self::Visible | Self::Disappearing)
     }
 
-    /// Returns the target opacity for this state
     pub fn target_opacity(&self) -> f64 {
         match self {
             Self::Hidden | Self::Disappearing => 0.0,
@@ -41,69 +29,72 @@ impl DropdownAnimationState {
         }
     }
 
-    /// Returns the target scale for this state
     pub fn target_scale(&self) -> f64 {
         match self {
             Self::Hidden | Self::Disappearing => 0.95,
             Self::Appearing | Self::Visible => 1.0,
         }
     }
+
+    pub fn overlay_opacity(&self) -> f64 {
+        match self {
+            Self::Appearing | Self::Visible => 0.5,
+            Self::Disappearing | Self::Hidden => 0.0,
+        }
+    }
 }
 
-/// Context for rendering dropdown animations
+/// Simple context for dropdown animation state
 #[derive(Clone)]
 pub struct DropdownRenderContext {
-    /// Overlay element (mask)
-    pub overlay: web_sys::Element,
-    /// Dropdown content element
-    pub content: web_sys::Element,
-    /// Current animation state
-    pub state: Rc<RefCell<DropdownAnimationState>>,
+    pub state: DropdownAnimationState,
+    // Note: DomRect doesn't implement Clone, so we use a simpler representation
+    pub has_overlay: bool,
+    pub has_content: bool,
 }
 
 impl DropdownRenderContext {
-    /// Create a new render context
-    pub fn new(overlay: web_sys::Element, content: web_sys::Element) -> Self {
+    pub fn new() -> Self {
         Self {
-            overlay,
-            content,
-            state: Rc::new(RefCell::new(DropdownAnimationState::Hidden)),
+            state: DropdownAnimationState::Hidden,
+            has_overlay: false,
+            has_content: false,
         }
     }
 
-    /// Get current animation state
-    pub fn state(&self) -> DropdownAnimationState {
-        *self.state.borrow()
+    pub fn with_elements() -> Self {
+        Self {
+            state: DropdownAnimationState::Hidden,
+            has_overlay: true,
+            has_content: true,
+        }
     }
 
-    /// Set animation state
-    pub fn set_state(&self, state: DropdownAnimationState) {
-        *self.state.borrow_mut() = state;
+    pub fn state(&self) -> DropdownAnimationState {
+        self.state
+    }
+
+    pub fn set_state(&mut self, state: DropdownAnimationState) {
+        self.state = state;
     }
 }
 
-/// Dropdown animation events
+impl Default for DropdownRenderContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropdownEvent {
-    /// Dropdown should appear (fade/scale in)
     Show,
-    /// Dropdown should disappear (fade/scale out)
     Hide,
-    /// Animation completed
     AnimationComplete,
 }
 
-/// Transition dropdown animation state based on event
-///
-/// # Arguments
-///
-/// * `ctx` - Dropdown render context
-/// * `event` - Animation event
-///
-/// # Returns
-///
-/// `true` if state changed, `false` otherwise
-pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) -> bool {
+/// Transition the dropdown animation state based on an event
+/// Returns true if the state changed
+pub fn dropdown_transition(ctx: &mut DropdownRenderContext, event: DropdownEvent) -> bool {
     let current_state = ctx.state();
     let new_state = match (current_state, event) {
         // From Hidden: only Show is valid
@@ -143,91 +134,51 @@ pub fn dropdown_transition(ctx: &DropdownRenderContext, event: DropdownEvent) ->
     changed
 }
 
-/// Render dropdown styles based on current animation state
-///
-/// # Arguments
-///
-/// * `ctx` - Dropdown render context
-///
-/// # Returns
-///
-/// Render output indicating if element should be visible
-pub fn dropdown_render(ctx: &DropdownRenderContext) -> bool {
+/// Get the CSS style string for the current dropdown state
+/// This returns CSS variables that can be applied to the overlay and content elements
+pub fn dropdown_get_styles(ctx: &DropdownRenderContext) -> (String, String) {
     let state = ctx.state();
     let opacity = state.target_opacity();
     let scale = state.target_scale();
-    let should_display = state.should_display();
+    let overlay_opacity = state.overlay_opacity();
 
-    if !should_display {
-        return false;
-    }
+    let overlay_style = format!("--dropdown-overlay-opacity: {};", overlay_opacity);
 
-    // Apply overlay opacity - always 0.5 for dimmed mode, 0 for transparent
-    // The parent component handles mask mode display
-    let overlay_opacity = match state {
-        DropdownAnimationState::Appearing | DropdownAnimationState::Visible => 0.5,
-        DropdownAnimationState::Disappearing | DropdownAnimationState::Hidden => 0.0,
-    };
+    let content_style = format!(
+        "--dropdown-opacity: {}; --dropdown-scale: {};",
+        opacity, scale
+    );
 
-    if let Some(overlay_html) = ctx.overlay.dyn_ref::<web_sys::HtmlElement>() {
-        StyleBuilder::new(overlay_html)
-            .add(CssProperty::Opacity, &format!("{}", overlay_opacity))
-            .apply();
-    }
-
-    // Apply content opacity and scale
-    if let Some(content_html) = ctx.content.dyn_ref::<web_sys::HtmlElement>() {
-        StyleBuilder::new(content_html)
-            .add(CssProperty::Opacity, &format!("{}", opacity))
-            .add(CssProperty::Transform, &format!("scale({})", scale))
-            .add(CssProperty::TransformOrigin, "top center")
-            .apply();
-    }
-
-    true
+    (overlay_style, content_style)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_state_transitions() {
-        let context = DropdownRenderContext::new(
-            web_sys::window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .create_element("div")
-                .unwrap(),
-            web_sys::window()
-                .unwrap()
-                .document()
-                .unwrap()
-                .create_element("div")
-                .unwrap(),
-        );
+        let mut context = DropdownRenderContext::new();
 
         // Hidden -> Show -> Appearing
         assert_eq!(context.state(), DropdownAnimationState::Hidden);
-        assert!(dropdown_transition(&context, DropdownEvent::Show));
+        assert!(dropdown_transition(&mut context, DropdownEvent::Show));
         assert_eq!(context.state(), DropdownAnimationState::Appearing);
 
         // Appearing -> AnimationComplete -> Visible
         assert!(dropdown_transition(
-            &context,
+            &mut context,
             DropdownEvent::AnimationComplete
         ));
         assert_eq!(context.state(), DropdownAnimationState::Visible);
 
         // Visible -> Hide -> Disappearing
-        assert!(dropdown_transition(&context, DropdownEvent::Hide));
+        assert!(dropdown_transition(&mut context, DropdownEvent::Hide));
         assert_eq!(context.state(), DropdownAnimationState::Disappearing);
 
         // Disappearing -> AnimationComplete -> Hidden
         assert!(dropdown_transition(
-            &context,
+            &mut context,
             DropdownEvent::AnimationComplete
         ));
         assert_eq!(context.state(), DropdownAnimationState::Hidden);
@@ -244,5 +195,15 @@ mod tests {
         assert_eq!(DropdownAnimationState::Visible.target_opacity(), 1.0);
         assert_eq!(DropdownAnimationState::Hidden.target_scale(), 0.95);
         assert_eq!(DropdownAnimationState::Visible.target_scale(), 1.0);
+    }
+
+    #[test]
+    fn test_dropdown_get_styles() {
+        let context = DropdownRenderContext::new();
+        let (overlay_style, content_style) = dropdown_get_styles(&context);
+
+        assert!(overlay_style.contains("--dropdown-overlay-opacity: 0"));
+        assert!(content_style.contains("--dropdown-opacity: 0"));
+        assert!(content_style.contains("--dropdown-scale: 0.95"));
     }
 }

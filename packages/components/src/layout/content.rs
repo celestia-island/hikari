@@ -1,43 +1,20 @@
 // hikari-components/src/layout/content.rs
 //! Content component - Main content area wrapper
 
-use dioxus::prelude::*;
+use crate::prelude::*;
 
-/// Content component - Main content area wrapper
-///
-/// # Example
-///
-/// ```rust
-/// use hikari_components::layout::Content;
-/// use dioxus::prelude::*;
-///
-/// rsx! {
-///     Content {
-///         h1 { "Page Title" }
-///         p { "Page content goes here..." }
-///     }
-/// }
-/// ```
+/// Main content area wrapper with configurable background, padding, and scroll behavior.
 #[component]
 pub fn Content(
-    /// Content
     children: Element,
 
-    /// Background color (default: uses theme background variable)
-    #[props(default = "var(--hi-background, #f5f5f5)".to_string())]
-    background_color: String,
+    #[props(default = "var(--hi-background, #f5f5f5)".to_string())] background_color: String,
 
-    /// Padding (default: p-6 lg:p-10)
-    #[props(default = "p-6 lg:p-10".to_string())]
-    padding: String,
+    #[props(default = "p-6 lg:p-10".to_string())] padding: String,
 
-    /// Whether to enable scroll
-    #[props(default = true)]
-    scrollable: bool,
+    #[props(default = true)] scrollable: bool,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     rsx! {
         div {

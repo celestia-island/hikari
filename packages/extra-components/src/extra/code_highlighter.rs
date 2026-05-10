@@ -1,16 +1,8 @@
-// hi-extra-components/src/extra/code_highlighter.rs
-// CodeHighlighter component with Arknights + FUI styling
+//! CodeHighlighter - Framework Agnostic State Model
 
-use dioxus::prelude::*;
-use hikari_palette::classes::ClassesBuilder;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::{JsCast, JsValue};
+use tairitsu_vdom::{VElement, VNode, VText};
 
-/// CodeHighlighter component type wrapper (for implementing StyledComponent)
-pub struct CodeHighlighterComponent;
-
-/// Programming language
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Language {
     #[default]
     Rust,
@@ -66,204 +58,257 @@ impl Language {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct CodeHighlighterProps {
-    /// Code content to display
-    #[props(into, default)]
+/// State model for a code highlighter
+///
+/// ## Example
+///
+/// ```rust
+/// use hikari_extra_components::extra::{CodeHighlighterState, Language};
+///
+/// let state = CodeHighlighterState::new(
+///     r#"fn main() { println!("Hello"); }"#.to_string(),
+///     Language::Rust,
+/// );
+///
+/// assert_eq!(state.line_count(), 1);
+/// assert!(state.show_line_numbers);
+/// ```
+#[derive(Clone, PartialEq, Debug)]
+pub struct CodeHighlighterState {
     pub code: String,
-
-    /// Programming language
-    #[props(default)]
     pub language: Language,
-
-    /// Whether to show line numbers
-    #[props(default = true)]
     pub show_line_numbers: bool,
-
-    /// Whether to show language label
-    #[props(default = true)]
     pub show_language: bool,
-
-    /// Whether to enable copy button
-    #[props(default = true)]
     pub show_copy: bool,
-
-    /// Whether to enable word wrap
-    #[props(default = true)]
     pub wrap: bool,
-
-    /// Custom CSS class
-    #[props(into, default)]
+    pub copied: bool,
+    pub copy_anim_progress: f64,
     pub class: String,
-
-    /// Custom inline style
-    #[props(into, default)]
     pub style: String,
 }
 
-impl Default for CodeHighlighterProps {
-    fn default() -> Self {
+impl CodeHighlighterState {
+    pub fn new(code: String, language: Language) -> Self {
         Self {
-            code: String::new(),
-            language: Language::default(),
+            code,
+            language,
             show_line_numbers: true,
             show_language: true,
             show_copy: true,
             wrap: true,
+            copied: false,
+            copy_anim_progress: 1.0,
             class: String::new(),
             style: String::new(),
         }
     }
-}
 
-/// CodeHighlighter component
-///
-/// Displays code with syntax highlighting (currently basic highlighting).
-/// Supports line numbers, language label, and copy functionality.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use hikari_extra_components::CodeHighlighter;
-///
-/// rsx! {
-///     CodeHighlighter {
-///         code: r#"fn main() {
-///     println!("Hello, Hikari!");
-/// }"#,
-///         language: Language::Rust,
-///     }
-/// }
-/// ```
-#[component]
-pub fn CodeHighlighter(props: CodeHighlighterProps) -> Element {
-    let mut copied = use_signal(|| false);
+    pub fn with_show_line_numbers(mut self, show: bool) -> Self {
+        self.show_line_numbers = show;
+        self
+    }
 
-    let code_ref = use_signal(|| props.code.clone());
-    let code = code_ref();
-    let lines: Vec<&str> = code.lines().collect();
-    let line_numbers: Vec<String> = (1..=lines.len()).map(|n| n.to_string()).collect();
+    pub fn with_show_language(mut self, show: bool) -> Self {
+        self.show_language = show;
+        self
+    }
 
-    let copy_text = move |_| {
-        let code_to_copy = code_ref();
+    pub fn with_show_copy(mut self, show: bool) -> Self {
+        self.show_copy = show;
+        self
+    }
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some(window) = web_sys::window() {
-                let js_window: &JsValue = window.as_ref();
-                let navigator_opt = js_sys::Reflect::get(js_window, &"navigator".into()).ok();
-                if let Some(navigator_js) = navigator_opt {
-                    let clipboard_opt =
-                        js_sys::Reflect::get(&navigator_js, &"clipboard".into()).ok();
-                    if let Some(clipboard_js) = clipboard_opt {
-                        let write_text_fn =
-                            js_sys::Reflect::get(&clipboard_js, &"writeText".into());
-                        if let Ok(func) = write_text_fn {
-                            let text = JsValue::from(code_to_copy.clone());
-                            let promise = js_sys::Function::from(func).call1(&clipboard_js, &text);
-                            let _ = promise;
-                        }
-                    }
-                }
-            }
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn with_class(mut self, class: impl Into<String>) -> Self {
+        self.class = class.into();
+        self
+    }
+
+    pub fn with_style(mut self, style: impl Into<String>) -> Self {
+        self.style = style.into();
+        self
+    }
+
+    pub fn line_count(&self) -> usize {
+        self.code.lines().count().max(1)
+    }
+
+    pub fn line_numbers(&self) -> Vec<String> {
+        (1..=self.line_count()).map(|n| n.to_string()).collect()
+    }
+
+    pub fn lines(&self) -> Vec<&str> {
+        let lines: Vec<&str> = self.code.lines().collect();
+        if lines.is_empty() && !self.code.is_empty() {
+            vec![self.code.as_str()]
+        } else {
+            lines
         }
+    }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let _ = code_to_copy;
+    pub fn mark_copied(&mut self) {
+        self.copied = true;
+        self.copy_anim_progress = 0.0;
+    }
+
+    pub fn reset_copied(&mut self) {
+        self.copied = false;
+        self.copy_anim_progress = 1.0;
+    }
+
+    pub fn tick_copy_animation(&mut self, delta_ms: f64) {
+        if self.copy_anim_progress < 1.0 {
+            self.copy_anim_progress = (self.copy_anim_progress + delta_ms / 300.0).min(1.0);
         }
+    }
 
-        copied.set(true);
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            let mut copied_clone = copied.clone();
-            let _ = web_sys::window().and_then(|w| {
-                w.set_timeout_with_callback_and_timeout_and_arguments_0(
-                    wasm_bindgen::closure::Closure::once_into_js(move || {
-                        copied_clone.set(false);
-                    })
-                    .as_ref()
-                    .unchecked_ref(),
-                    2000,
-                )
-                .ok()
-            });
+    pub fn copy_icon_scale(&self) -> f64 {
+        if self.copy_anim_progress >= 1.0 {
+            1.0
+        } else {
+            1.0 + 0.2 * (std::f64::consts::PI * self.copy_anim_progress).sin()
         }
+    }
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            // Non-WASM: just reset after 2 seconds (simulated)
-            let _ = copied;
+    pub fn container_class(&self) -> String {
+        let mut classes = String::from("hi-code-highlighter");
+        classes.push(' ');
+        classes.push_str(self.language.class_name());
+        if self.wrap {
+            classes.push_str(" hi-code-wrap");
         }
-    };
+        if self.copied {
+            classes.push_str(" hi-code-copied");
+        }
+        if !self.class.is_empty() {
+            classes.push(' ');
+            classes.push_str(&self.class);
+        }
+        classes
+    }
 
-    let base_classes = ClassesBuilder::new().build();
-
-    let code_block_classes = ClassesBuilder::new()
-        .add_raw("hi-code-highlighter")
-        .add_raw(props.language.class_name())
-        .add_raw(if props.wrap { "hi-code-wrap" } else { "" })
-        .build();
-
-    rsx! {
-        div {
-            class: format!("{} {}", base_classes, props.class),
-            style: "{props.style}",
-
-            div {
-                class: "hi-code-highlighter-container",
-
-                // Language label
-                if props.show_language {
-                    div {
-                        class: "hi-code-highlighter-language",
-                        span { class: "hi-code-highlighter-language-label", "{props.language.display_name()}" }
-                    }
-                }
-
-                // Copy button
-                if props.show_copy {
-                    button {
-                        class: "hi-code-highlighter-copy",
-                        onclick: copy_text,
-
-                        if copied() {
-                            span { class: "hi-code-highlighter-copy-icon", "✓" }
-                        } else {
-                            span { class: "hi-code-highlighter-copy-icon", "📋" }
-                        }
-                    }
-                }
-            }
-
-            // Code content
-            div {
-                class: format!("{} {}", code_block_classes, if copied() { "hi-code-copied" } else { "" }),
-
-                // Line numbers
-                if props.show_line_numbers && !lines.is_empty() {
-                    div {
-                        class: "hi-code-highlighter-line-numbers",
-                        for line_num in line_numbers.iter() {
-                            div { class: "hi-code-highlighter-line-number", "{line_num}" }
-                        }
-                    }
-                }
-
-                // Code lines
-                div {
-                    class: "hi-code-highlighter-content",
-                    for line in lines.iter() {
-                        div { class: "hi-code-highlighter-line",
-                            span { "{line}" }
-                        }
-                    }
-                }
-            }
+    pub fn copy_button_text(&self) -> &'static str {
+        if self.copied {
+            "✓"
+        } else {
+            "📋"
         }
     }
 }
+
+impl Default for CodeHighlighterState {
+    fn default() -> Self {
+        Self::new(String::new(), Language::default())
+    }
+}
+
+/// Event emitted when copy is triggered
+#[derive(Clone, PartialEq, Debug)]
+pub struct CodeHighlighterCopyEvent {
+    pub code: String,
+    pub language: Language,
+}
+
+pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
+    let lines = state.lines();
+    let line_numbers = state.line_numbers();
+
+    let mut container = VElement::new("div")
+        .class(state.container_class())
+        .attr_opt(
+            "style",
+            if state.style.is_empty() {
+                None
+            } else {
+                Some(state.style.clone())
+            },
+        );
+
+    // Header
+    let mut header = VElement::new("div").class("hi-code-highlighter-container");
+
+    if state.show_language {
+        let lang_div = VElement::new("div")
+            .class("hi-code-highlighter-language")
+            .child(VNode::Element(
+                VElement::new("span")
+                    .class("hi-code-highlighter-language-label")
+                    .child(VNode::Text(VText::new(state.language.display_name()))),
+            ));
+        header = header.child(VNode::Element(lang_div));
+    }
+
+    if state.show_copy {
+        // NOTE: clipboard copy is handled by the caller via state.copied.
+        // platform::copy_to_clipboard is a stub (returns false) until WIT is implemented.
+        // The caller should call copy_to_clipboard and toggle state.copied on success.
+        let copy_btn = VElement::new("button")
+            .class("hi-code-highlighter-copy")
+            .child(VNode::Element({
+                let scale = state.copy_icon_scale();
+                let icon_style = if (scale - 1.0).abs() > 0.001 {
+                    Some(format!("transform: scale({scale:.2});"))
+                } else {
+                    None
+                };
+                VElement::new("span")
+                    .class("hi-code-highlighter-copy-icon")
+                    .attr_opt("style", icon_style)
+                    .child(VNode::Text(VText::new(state.copy_button_text())))
+            }));
+        header = header.child(VNode::Element(copy_btn));
+    }
+
+    container = container.child(VNode::Element(header));
+
+    // Code body: line numbers + content side by side
+    let mut code_body = VElement::new("div").class(state.container_class());
+
+    if state.show_line_numbers && !lines.is_empty() {
+        let mut nums_div = VElement::new("div").class("hi-code-highlighter-line-numbers");
+
+        let num_nodes: Vec<VNode> = line_numbers
+            .iter()
+            .map(|n| {
+                VNode::Element(
+                    VElement::new("div")
+                        .class("hi-code-highlighter-line-number")
+                        .child(VNode::Text(VText::new(n))),
+                )
+            })
+            .collect();
+
+        nums_div = nums_div.children(num_nodes);
+        code_body = code_body.child(VNode::Element(nums_div));
+    }
+
+    // Content div with code lines
+    let mut content_div = VElement::new("div").class("hi-code-highlighter-content");
+
+    let line_nodes: Vec<VNode> = lines
+        .iter()
+        .map(|line| {
+            VNode::Element(
+                VElement::new("div")
+                    .class("hi-code-highlighter-line")
+                    .child(VNode::Text(VText::new(line))),
+            )
+        })
+        .collect();
+
+    content_div = content_div.children(line_nodes);
+    code_body = code_body.child(VNode::Element(content_div));
+
+    container = container.child(VNode::Element(code_body));
+
+    VNode::Element(container)
+}
+
+pub struct CodeHighlighterComponent;
 
 impl CodeHighlighterComponent {
     pub fn styles() -> &'static str {
@@ -330,21 +375,6 @@ impl CodeHighlighterComponent {
   transform: scale(0.95);
 }
 
-.hi-code-highlighter-wrapper {
-  display: flex;
-  flex: 1;
-  overflow-x: auto;
-}
-
-.hi-code-highlighter-lines {
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 0;
-  background-color: var(--hi-color-code-line-numbers, #252525);
-  border-right: 1px solid var(--hi-color-border, #e0e0e0);
-  user-select: none;
-}
-
 .hi-code-highlighter-content {
   flex: 1;
   padding: 1rem;
@@ -386,7 +416,6 @@ impl CodeHighlighterComponent {
   min-height: 1.6em;
 }
 
-// Language-specific colors (basic highlighting - will be enhanced with proper syntax highlighting)
 .hi-code-highlighter.language-rust {
   .hi-code-highlighter-content {
     .hi-code-highlighter-line:nth-child(1n) {
@@ -395,7 +424,6 @@ impl CodeHighlighterComponent {
   }
 }
 
-// FUI effect - subtle glow
 .hi-code-highlighter-language-label {
   box-shadow: 0 0 10px rgba(0, 160, 233, 0.2);
 }
@@ -404,7 +432,6 @@ impl CodeHighlighterComponent {
   box-shadow: 0 0 15px rgba(0, 160, 233, 0.1);
 }
 
-// Theme-specific colors
 [data-theme="hikari"] {
   .hi-code-highlighter {
     background-color: #1e1e1e;
@@ -463,7 +490,6 @@ impl CodeHighlighterComponent {
   }
 }
 
-// Copied state animation
 .hi-code-highlighter.hi-code-copied {
   .hi-code-highlighter-content {
     opacity: 0.6;
@@ -474,17 +500,7 @@ impl CodeHighlighterComponent {
   transition: all 0.2s ease;
 }
 
-@keyframes copy-success {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
-
 .hi-code-highlighter-copied .hi-code-highlighter-copy-icon {
-  animation: copy-success 0.3s ease;
   color: #4caf50;
 }
 "#
@@ -500,20 +516,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_code_highlighter_props_default() {
-        let props = CodeHighlighterProps::default();
-        assert_eq!(props.language, Language::Rust);
-        assert!(props.show_line_numbers);
-        assert!(props.show_language);
-        assert!(props.show_copy);
-        assert!(props.wrap);
-    }
-
-    #[test]
     fn test_language_display_name() {
         assert_eq!(Language::Rust.display_name(), "Rust");
         assert_eq!(Language::Python.display_name(), "Python");
         assert_eq!(Language::Plain.display_name(), "Plain Text");
+        assert_eq!(Language::Cpp.display_name(), "C++");
     }
 
     #[test]
@@ -521,10 +528,101 @@ mod tests {
         assert_eq!(Language::Rust.class_name(), "language-rust");
         assert_eq!(Language::Python.class_name(), "language-python");
         assert_eq!(Language::Plain.class_name(), "language-plain");
+        assert_eq!(Language::TypeScript.class_name(), "language-typescript");
     }
 
     #[test]
-    fn test_code_highlighter_component_name() {
+    fn test_state_new() {
+        let state = CodeHighlighterState::new("fn main() {}".to_string(), Language::Rust);
+        assert_eq!(state.code, "fn main() {}");
+        assert_eq!(state.language, Language::Rust);
+        assert!(state.show_line_numbers);
+        assert!(state.show_language);
+        assert!(state.show_copy);
+        assert!(state.wrap);
+        assert!(!state.copied);
+    }
+
+    #[test]
+    fn test_line_count() {
+        let state = CodeHighlighterState::new("line1\nline2\nline3".to_string(), Language::Rust);
+        assert_eq!(state.line_count(), 3);
+
+        let empty = CodeHighlighterState::new(String::new(), Language::Rust);
+        assert_eq!(empty.line_count(), 1);
+    }
+
+    #[test]
+    fn test_line_numbers() {
+        let state = CodeHighlighterState::new("a\nb\nc".to_string(), Language::Rust);
+        let nums = state.line_numbers();
+        assert_eq!(nums, vec!["1", "2", "3"]);
+    }
+
+    #[test]
+    fn test_lines() {
+        let state = CodeHighlighterState::new("a\nb\nc".to_string(), Language::Rust);
+        assert_eq!(state.lines(), vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_copied_state() {
+        let mut state = CodeHighlighterState::default();
+        assert!(!state.copied);
+        assert_eq!(state.copy_button_text(), "📋");
+
+        state.mark_copied();
+        assert!(state.copied);
+        assert_eq!(state.copy_button_text(), "✓");
+
+        state.reset_copied();
+        assert!(!state.copied);
+    }
+
+    #[test]
+    fn test_container_class() {
+        let state = CodeHighlighterState::new("code".to_string(), Language::Rust);
+        let cls = state.container_class();
+        assert!(cls.contains("hi-code-highlighter"));
+        assert!(cls.contains("language-rust"));
+        assert!(cls.contains("hi-code-wrap"));
+    }
+
+    #[test]
+    fn test_container_class_with_custom_class() {
+        let state =
+            CodeHighlighterState::new("code".to_string(), Language::Python).with_class("my-class");
+        let cls = state.container_class();
+        assert!(cls.contains("language-python"));
+        assert!(cls.contains("my-class"));
+    }
+
+    #[test]
+    fn test_builder_pattern() {
+        let state = CodeHighlighterState::new("fn main() {}".to_string(), Language::Rust)
+            .with_show_line_numbers(false)
+            .with_show_copy(false)
+            .with_wrap(false)
+            .with_class("custom");
+
+        assert!(!state.show_line_numbers);
+        assert!(!state.show_copy);
+        assert!(!state.wrap);
+        assert_eq!(state.class, "custom");
+    }
+
+    #[test]
+    fn test_component_name() {
         assert_eq!(CodeHighlighterComponent::name(), "code_highlighter");
+    }
+
+    #[test]
+    fn test_copy_event() {
+        let event = CodeHighlighterCopyEvent {
+            code: "fn main() {}".to_string(),
+            language: Language::Rust,
+        };
+        assert_eq!(event.code, "fn main() {}");
+        assert_eq!(event.language, Language::Rust);
     }
 }

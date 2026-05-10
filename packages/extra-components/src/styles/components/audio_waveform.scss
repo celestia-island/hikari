@@ -1,0 +1,109 @@
+// hikari-extra-components/styles/components/audio_waveform.scss
+// Audio waveform component styles with Arknights design + FUI glow
+
+// ============================================
+// Audio Waveform Container
+// ============================================
+
+.hi-audio-waveform {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--hi-surface);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .hi-audio-waveform {
+    background: var(--hi-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+// ============================================
+// Waveform Display
+// ============================================
+
+.hi-waveform-container {
+    margin: 16px 0;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hi-waveform-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+}
+
+.hi-waveform-bar {
+    width: 8px;
+    background: var(--hi-color-primary);
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+// ============================================
+// Waveform Color Variants
+// ============================================
+
+.hi-waveform-Primary .hi-waveform-bar {
+    background: var(--hi-color-primary);
+}
+
+.hi-waveform-Success .hi-waveform-bar {
+    background: var(--hi-color-success);
+}
+
+.hi-waveform-Warning .hi-waveform-bar {
+    background: var(--hi-color-warning);
+}
+
+.hi-waveform-Danger .hi-waveform-bar {
+    background: var(--hi-color-error);
+}
+
+// ============================================
+// Audio Controls
+// ============================================
+
+.hi-audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.hi-audio-progress {
+    flex: 1;
+    height: 4px;
+    background: var(--hi-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .hi-audio-progress {
+    background: var(--hi-border);
+}
+
+.hi-audio-progress-bar {
+    height: 100%;
+    background: var(--hi-color-primary);
+    transition: width 0.1s linear;
+}
+
+.hi-audio-time {
+    font-size: 12px;
+    color: var(--hi-text-secondary);
+    min-width: 100px;
+    text-align: center;
+}
+
+[data-theme="dark"] .hi-audio-time {
+    color: var(--hi-text-secondary);
+}

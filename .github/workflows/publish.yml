@@ -1,0 +1,167 @@
+---
+name: Publish to crates.io
+
+on:
+  push:
+    tags: [v*]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Dry run (skip actual publish)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+env:
+  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+jobs:
+  verify-versions:
+    name: Verify tag matches crate versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract tag version
+        id: tag
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Check workspace version matches tag
+        run: |
+          TAG_VERSION="${{ steps.tag.outputs.version }}"
+          WORKSPACE_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+          if [ "$WORKSPACE_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Workspace version ($WORKSPACE_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "OK — workspace version $WORKSPACE_VERSION matches tag $TAG_VERSION"
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: verify-versions
+    timeout-minutes: 15
+    env:
+      RUSTFLAGS: "--cfg releasing"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install apt dependencies
+        run: sudo apt-get install libasound2-dev libudev-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-release
+        run: cargo install cargo-release
+
+      - name: Login to crates.io
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      # --- Topological publish order ---
+      # palette → animation → theme → builder → icons → components → extra-components → i18n
+
+      - name: Publish hikari-palette
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-palette"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-animation
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-animation"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-theme
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-theme"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-builder
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-builder"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-icons
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-icons"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-components
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-components"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-extra-components
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-extra-components"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi
+
+      - name: Wait for index sync
+        if: github.event_name == 'push' || inputs.dry-run == 'false'
+        run: sleep 30
+
+      - name: Publish hikari-i18n
+        run: |
+          ARGS="publish --all-features --allow-branch HEAD --no-confirm --no-verify -p hikari-i18n"
+          if [ "${{ inputs.dry-run }}" != "false" ] && [ "${{ github.event_name }}" != "push" ]; then
+            cargo release $ARGS
+          else
+            cargo release $ARGS --execute
+          fi

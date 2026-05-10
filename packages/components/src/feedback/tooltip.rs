@@ -1,20 +1,15 @@
 // hi-components/src/feedback/tooltip.rs
 // Tooltip component with Arknights + FUI styling - Portal-based rendering with animation
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, TooltipClass};
 
+use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
-    portal::{
-        provider::{generate_portal_id, use_portal},
-    },
+    platform,
+    portal::provider::{generate_portal_id, use_portal},
+    prelude::*,
     styled::StyledComponent,
 };
-
-#[cfg(target_arch = "wasm32")]
-use crate::portal::{PortalEntry, TriggerPlacement};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
 
 pub struct TooltipComponent;
 
@@ -28,8 +23,7 @@ pub enum TooltipPlacement {
 }
 
 impl TooltipPlacement {
-    #[cfg(target_arch = "wasm32")]
-    fn to_trigger_placement(&self) -> TriggerPlacement {
+    fn to_trigger_placement(self) -> TriggerPlacement {
         match self {
             TooltipPlacement::Top => TriggerPlacement::Top,
             TooltipPlacement::Bottom => TriggerPlacement::Bottom,
@@ -39,90 +33,72 @@ impl TooltipPlacement {
     }
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct TooltipProps {
-    #[props(default)]
     pub content: String,
-
-    #[props(default)]
     pub placement: TooltipPlacement,
-
-    #[props(default)]
     pub delay: Option<u64>,
-
-    #[props(default = true)]
+    #[default(true)]
     pub arrow: bool,
-
-    #[props(default)]
     pub class: String,
-
     pub children: Element,
-}
-
-impl Default for TooltipProps {
-    fn default() -> Self {
-        Self {
-            content: String::default(),
-            placement: Default::default(),
-            delay: None,
-            arrow: true,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]
 pub fn Tooltip(props: TooltipProps) -> Element {
     let portal = use_portal();
-    let tooltip_id = use_signal(|| generate_portal_id());
+    let tooltip_id = use_signal(generate_portal_id);
+    #[allow(unused_mut)]
     let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(TooltipClass::TooltipWrapper)
-        .add_raw(&props.class)
+        .add_typed(TooltipClass::TooltipWrapper)
+        .add(&props.class)
         .build();
 
-    let handle_mouse_enter = move |event: Event<MouseData>| {
-        #[cfg(target_arch = "wasm32")]
-        {
-            if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                if let Some(target) = web_event.target() {
-                    if let Some(elem) = target.dyn_ref::<web_sys::Element>() {
-                        let rect = elem.get_bounding_client_rect();
-                        let rect_tuple = (rect.left(), rect.top(), rect.width(), rect.height());
-                        trigger_rect.set(Some(rect_tuple));
+    let handle_mouse_enter = {
+        let tooltip_id = tooltip_id.clone();
+        let trigger_rect = trigger_rect.clone();
+        let portal_add_entry = portal.add_entry.clone();
+        let content = props.content.clone();
+        let arrow = props.arrow;
+        let placement = props.placement.to_trigger_placement();
+        move |event: MouseEvent| {
+            let rect_tuple = if let Some(target_el) =
+                platform::get_target_element_from_event(event.client_x, event.client_y)
+            {
+                platform::get_bounding_rect_by_class_impl("hi-tooltip-trigger", &target_el)
+                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+            } else {
+                None
+            };
+            trigger_rect.set(rect_tuple);
 
-                        (portal.add_entry)(PortalEntry::Tooltip {
-                            id: tooltip_id(),
-                            trigger_rect: Some(rect_tuple),
-                            placement: props.placement.to_trigger_placement(),
-                            content: props.content.clone(),
-                            arrow: props.arrow,
-                        });
-                    }
-                }
-            }
-        }
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let _ = (&tooltip_id, &trigger_rect, &event);
+            portal_add_entry(PortalEntry::Tooltip {
+                id: tooltip_id.get(),
+                trigger_rect: rect_tuple,
+                placement,
+                content: content.clone(),
+                arrow,
+            });
         }
     };
 
+    let tooltip_id_for_leave = tooltip_id.clone();
+    let portal_remove_entry = portal.remove_entry.clone();
     let handle_mouse_leave = move |_| {
-        (portal.remove_entry)(tooltip_id());
+        portal_remove_entry(tooltip_id_for_leave.get());
     };
 
     rsx! {
-        div {
-            class: "{wrapper_classes}",
+        div { class: wrapper_classes,
 
             div {
-                class: "{TooltipClass::TooltipTrigger.as_class()}",
+                class: TooltipClass::TooltipTrigger.class_name(),
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
-                { props.children }
+                "aria-describedby": format!("hi-tooltip-{}", tooltip_id.get()),
+                {props.children}
             }
         }
     }

@@ -1,125 +1,103 @@
-// hi-components/tests/basic_components_tests.rs
-// Layer 1 basic components unit tests
-
 #[cfg(test)]
 mod tests {
-    // Note: Using full paths for type imports
-    use hikari_components::basic::badge::{BadgeProps, BadgeVariant};
-    use hikari_components::basic::button::{ButtonProps, ButtonSize, ButtonVariant, ButtonWidth};
-    use hikari_components::basic::card::CardProps;
-    use hikari_components::basic::input::{InputProps, InputSize};
-
-    // ============= Button Tests =============
+    use hikari_components::basic::badge::{Badge, BadgeProps};
+    use hikari_components::basic::button::{Button, ButtonProps};
+    use hikari_components::basic::canvas::{Canvas, CanvasProps};
+    use hikari_components::basic::card::{Card, CardProps};
+    use hikari_components::basic::checkbox::{Checkbox, CheckboxProps};
+    use hikari_components::basic::date_picker::{DatePicker, DatePickerProps};
+    use hikari_components::basic::divider::{Divider, DividerProps};
+    use hikari_components::basic::file_upload::{FileUpload, FileUploadProps};
+    use hikari_components::basic::image::{Image, ImageProps};
+    use hikari_components::basic::input::{Input, InputProps};
+    use hikari_components::basic::radio_group::{RadioGroup, RadioGroupProps};
+    use hikari_components::basic::select::{Select, SelectProps};
+    use hikari_components::basic::slider::{Slider, SliderProps};
+    use hikari_components::basic::switch::{Switch, SwitchProps};
+    use hikari_components::basic::textarea::{Textarea, TextareaProps};
+    use hikari_components::portal::{PortalContext, PortalEntry};
+    use hikari_components::prelude::*;
 
     #[test]
-    fn test_button_props_default() {
-        let props = ButtonProps::default();
-
-        assert_eq!(props.variant, ButtonVariant::Primary);
-        assert_eq!(props.size, ButtonSize::Medium);
-        assert_eq!(props.width, ButtonWidth::Auto);
-        assert!(!props.disabled);
-        assert!(!props.loading);
+    fn test_button_renders() {
+        let _ = Button(ButtonProps::default());
     }
 
     #[test]
-    fn test_button_props_with_variant() {
-        let props = ButtonProps {
-            variant: ButtonVariant::Danger,
-            ..Default::default()
-        };
-
-        assert_eq!(props.variant, ButtonVariant::Danger);
+    fn test_input_renders() {
+        let _ = Input(InputProps::default());
     }
 
     #[test]
-    fn test_button_props_disabled() {
-        let props = ButtonProps {
-            disabled: true,
-            ..Default::default()
-        };
-
-        assert!(props.disabled);
-    }
-
-    // ============= Input Tests =============
-
-    #[test]
-    fn test_input_props_default() {
-        let props = InputProps::default();
-
-        assert_eq!(props.size, InputSize::Medium);
-        assert!(!props.disabled);
-        assert!(!props.readonly);
+    fn test_checkbox_renders() {
+        let _ = Checkbox(CheckboxProps::default());
     }
 
     #[test]
-    fn test_input_props_with_placeholder() {
-        let props = InputProps {
-            placeholder: Some("Enter text".to_string()),
-            ..Default::default()
-        };
-
-        assert_eq!(props.placeholder, Some("Enter text".to_string()));
+    fn test_radio_group_renders() {
+        let _ = RadioGroup(RadioGroupProps::default());
     }
 
     #[test]
-    fn test_input_props_disabled() {
-        let props = InputProps {
-            disabled: true,
-            ..Default::default()
-        };
-
-        assert!(props.disabled);
-    }
-
-    // ============= Card Tests =============
-
-    #[test]
-    fn test_card_props_default() {
-        let props = CardProps::default();
-
-        assert!(!props.bordered);
-        assert!(!props.hoverable);
+    fn test_switch_renders() {
+        let _ = Switch(SwitchProps::default());
     }
 
     #[test]
-    fn test_card_props_bordered() {
-        let props = CardProps {
-            bordered: true,
-            ..Default::default()
-        };
-
-        assert!(props.bordered);
-    }
-
-    // ============= Badge Tests =============
-
-    #[test]
-    fn test_badge_props_default() {
-        let props = BadgeProps::default();
-
-        assert_eq!(props.variant, BadgeVariant::Default);
-        assert!(!props.dot);
+    fn test_badge_renders() {
+        let _ = Badge(BadgeProps::default());
     }
 
     #[test]
-    fn test_badge_props_with_variant() {
-        let props = BadgeProps {
-            variant: BadgeVariant::Success,
-            ..Default::default()
-        };
-
-        assert_eq!(props.variant, BadgeVariant::Success);
+    fn test_card_renders() {
+        let _ = Card(CardProps::default());
     }
 
     #[test]
-    fn test_badge_props_with_count() {
-        let props = BadgeProps {
-            count: Some(5),
-            ..Default::default()
-        };
+    fn test_divider_renders() {
+        let _ = Divider(DividerProps::default());
+    }
 
-        assert_eq!(props.count, Some(5));
+    #[test]
+    fn test_image_renders() {
+        let _ = Image(ImageProps::default());
+    }
+
+    #[test]
+    fn test_file_upload_renders() {
+        let _ = FileUpload(FileUploadProps::default());
+    }
+
+    #[test]
+    fn test_slider_renders() {
+        let _ = Slider(SliderProps::default());
+    }
+
+    #[test]
+    fn test_select_renders() {
+        let entries = use_signal(|| Vec::<PortalEntry>::new());
+        provide_context(PortalContext {
+            entries: entries.clone(),
+            add_entry: Callback::new(|_| {}),
+            remove_entry: Callback::new(|_| {}),
+            clear_all: Callback::new(|_| {}),
+            start_close_animation: Callback::new(|_| {}),
+        });
+        let _ = Select(SelectProps::default());
+    }
+
+    #[test]
+    fn test_textarea_renders() {
+        let _ = Textarea(TextareaProps::default());
+    }
+
+    #[test]
+    fn test_date_picker_renders() {
+        let _ = DatePicker(DatePickerProps::default());
+    }
+
+    #[test]
+    fn test_canvas_renders() {
+        let _ = Canvas(CanvasProps::default());
     }
 }

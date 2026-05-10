@@ -1,14 +1,14 @@
-// hi-extra-components/src/extra/user_guide.rs
-// UserGuide component with Arknights + FUI styling
+//! User guide component - Framework Agnostic State Model
+//!
+//! ## Migration Notice
+//!
+//! Previously a Dioxus component with modal overlay.
+//! Now provides a pure state model for user onboarding guides.
 
-use dioxus::prelude::*;
-use hikari_components::{Badge, Button, ButtonVariant};
+use tairitsu_vdom::VNode;
 
-/// UserGuide component type wrapper
-pub struct UserGuideComponent;
-
-/// Guide step position
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+/// Guide position on screen
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum GuidePosition {
     #[default]
     Center,
@@ -18,463 +18,381 @@ pub enum GuidePosition {
     BottomRight,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// A single step in the user guide
+#[derive(Clone, PartialEq, Debug)]
 pub struct GuideStep {
+    /// Step ID
+    pub id: String,
+
     /// Step title
-    #[props(into)]
     pub title: String,
 
     /// Step description
-    #[props(into)]
     pub description: String,
 
     /// Step icon (optional emoji or SVG)
-    #[props(into, default)]
     pub icon: String,
 
     /// Whether step is completed
-    #[props(default)]
     pub completed: bool,
 
     /// Step content to highlight (CSS selector)
-    #[props(into, default)]
     pub target_selector: String,
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct UserGuideProps {
+impl GuideStep {
+    /// Create a new guide step
+    pub fn new(id: impl Into<String>, title: impl Into<String>) -> Self {
+        Self {
+            id: id.into(),
+            title: title.into(),
+            description: String::new(),
+            icon: String::new(),
+            completed: false,
+            target_selector: String::new(),
+        }
+    }
+
+    /// Set the description
+    pub fn with_description(mut self, description: impl Into<String>) -> Self {
+        self.description = description.into();
+        self
+    }
+
+    /// Set the icon
+    pub fn with_icon(mut self, icon: impl Into<String>) -> Self {
+        self.icon = icon.into();
+        self
+    }
+
+    /// Set the target selector
+    pub fn with_target(mut self, selector: impl Into<String>) -> Self {
+        self.target_selector = selector.into();
+        self
+    }
+
+    /// Set completed status
+    pub fn with_completed(mut self, completed: bool) -> Self {
+        self.completed = completed;
+        self
+    }
+}
+
+/// State model for a user guide
+///
+/// ## Example
+///
+/// ```rust
+/// use hikari_extra_components::extra::{UserGuideState, GuideStep, GuidePosition};
+///
+/// let mut state = UserGuideState::new("Welcome".to_string(), "Let's get started".to_string());
+/// state.position = GuidePosition::Center;
+/// state.steps.push(
+///     GuideStep::new("1", "First Step")
+///         .with_description("Learn the basics")
+///         .with_icon("🎯")
+/// );
+/// state.visible = true;
+/// ```
+#[derive(Clone, PartialEq, Debug)]
+pub struct UserGuideState {
     /// Guide title
-    #[props(into)]
     pub title: String,
 
     /// Guide description
-    #[props(into)]
     pub description: String,
 
     /// Guide steps
-    #[props(into)]
     pub steps: Vec<GuideStep>,
 
     /// Whether to show guide
-    #[props(default)]
     pub visible: bool,
 
+    /// Current step index
+    pub current_step: usize,
+
     /// Guide position
-    #[props(default)]
     pub position: GuidePosition,
 
     /// Whether to allow skip
-    #[props(default = true)]
     pub allow_skip: bool,
 
     /// Whether to allow close
-    #[props(default = true)]
     pub allow_close: bool,
 
-    /// Callback when guide is dismissed
-    #[props(default)]
-    pub on_dismiss: EventHandler<()>,
+    /// Additional CSS classes
+    pub class: String,
 }
 
-impl Default for UserGuideProps {
-    fn default() -> Self {
+impl UserGuideState {
+    /// Create a new user guide state
+    pub fn new(title: String, description: String) -> Self {
         Self {
-            title: String::new(),
-            description: String::new(),
+            title,
+            description,
             steps: Vec::new(),
             visible: false,
+            current_step: 0,
             position: GuidePosition::default(),
             allow_skip: true,
             allow_close: true,
-            on_dismiss: EventHandler::new(|_| {}),
+            class: String::new(),
         }
     }
-}
 
-/// UserGuide component
-///
-/// Provides step-by-step user onboarding with highlighting of target elements.
-/// Supports multiple steps, completion tracking, and dismissible guides.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use hikari_extra_components::UserGuide;
-///
-/// rsx! {
-///     UserGuide {
-///         title: "Welcome to Hikari!",
-///         description: "Let's get you started with a quick tour.",
-///         steps: vec![
-///             GuideStep {
-///                 title: "Step 1",
-///                 description: "Learn about components",
-///                 icon: "🎨",
-///                 target_selector: ".hi-button",
-///             }
-///         ],
-///         visible: true,
-///     }
-/// }
-/// ```
-#[component]
-pub fn UserGuide(props: UserGuideProps) -> Element {
-    let mut current_step = use_signal(|| 0);
-    let mut show_guide = use_signal(|| props.visible);
+    /// Set the position
+    pub fn with_position(mut self, position: GuidePosition) -> Self {
+        self.position = position;
+        self
+    }
 
-    let total_steps = props.steps.len();
-    let current_step_data = props.steps.get(current_step()).cloned();
+    /// Set whether to allow skip
+    pub fn with_allow_skip(mut self, allow: bool) -> Self {
+        self.allow_skip = allow;
+        self
+    }
 
-    let next_step = move |_| {
-        if current_step() < total_steps - 1 {
-            current_step.set(current_step() + 1);
+    /// Set whether to allow close
+    pub fn with_allow_close(mut self, allow: bool) -> Self {
+        self.allow_close = allow;
+        self
+    }
+
+    /// Set custom CSS class
+    pub fn with_class(mut self, class: impl Into<String>) -> Self {
+        self.class = class.into();
+        self
+    }
+
+    /// Add a step
+    pub fn add_step(&mut self, step: GuideStep) {
+        self.steps.push(step);
+    }
+
+    /// Show the guide
+    pub fn show(&mut self) {
+        self.visible = true;
+        self.current_step = 0;
+    }
+
+    /// Hide the guide
+    pub fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    /// Get the current step
+    pub fn current_step(&self) -> Option<&GuideStep> {
+        self.steps.get(self.current_step)
+    }
+
+    /// Check if can go to previous step
+    pub fn can_previous(&self) -> bool {
+        self.current_step > 0
+    }
+
+    /// Check if can go to next step (or finish)
+    pub fn can_next(&self) -> bool {
+        self.current_step < self.steps.len().saturating_sub(1) || self.is_last_step()
+    }
+
+    /// Check if on last step
+    pub fn is_last_step(&self) -> bool {
+        self.current_step >= self.steps.len().saturating_sub(1)
+    }
+
+    /// Check if on first step
+    pub fn is_first_step(&self) -> bool {
+        self.current_step == 0
+    }
+
+    /// Go to previous step
+    pub fn previous(&mut self) -> bool {
+        if self.can_previous() {
+            self.current_step -= 1;
+            true
         } else {
-            show_guide.set(false);
+            false
         }
-    };
+    }
 
-    let prev_step = move |_| {
-        if current_step() > 0 {
-            current_step.set(current_step() - 1);
+    /// Go to next step, or hide if on last step
+    pub fn advance(&mut self) -> bool {
+        if self.is_last_step() {
+            self.hide();
+            false
+        } else if self.current_step + 1 < self.steps.len() {
+            self.current_step += 1;
+            true
+        } else {
+            false
         }
-    };
+    }
 
-    let dismiss = move |_| {
-        show_guide.set(false);
-        props.on_dismiss.call(());
-    };
+    /// Get progress count (current step number)
+    pub fn progress_count(&self) -> usize {
+        self.current_step + 1
+    }
 
-    let position_class = match props.position {
-        GuidePosition::Center => "hi-user-guide-position-center",
-        GuidePosition::TopLeft => "hi-user-guide-position-top-left",
-        GuidePosition::TopRight => "hi-user-guide-position-top-right",
-        GuidePosition::BottomLeft => "hi-user-guide-position-bottom-left",
-        GuidePosition::BottomRight => "hi-user-guide-position-bottom-right",
-    };
+    /// Get total steps count
+    pub fn total_steps(&self) -> usize {
+        self.steps.len()
+    }
 
-    // Pre-compute conditional values to avoid Signal dereferencing in rsx!
-    let step = current_step();
-    let show_previous = step > 0;
-    let is_last_step = step >= total_steps - 1;
-    let progress_count = (step + 1) as i32;
+    /// Get progress as percentage
+    pub fn progress_percent(&self) -> f64 {
+        if self.steps.is_empty() {
+            0.0
+        } else {
+            (self.current_step + 1) as f64 / self.steps.len() as f64 * 100.0
+        }
+    }
 
-    rsx! {
-        if show_guide() {
-            if let Some(step_data) = current_step_data {
-                div {
-                    class: format!("hi-user-guide {}", position_class),
-
-                    // Backdrop
-                    div {
-                        class: "hi-user-guide-backdrop",
-                        onclick: dismiss
-                    }
-
-                    // Guide content
-                    div {
-                        class: "hi-user-guide-content",
-
-                        // Header
-                        div {
-                            class: "hi-user-guide-header",
-
-                            // Close button
-                            if props.allow_close {
-                                button {
-                                    class: "hi-user-guide-close",
-                                    onclick: dismiss,
-                                    "×"
-                                }
-                            }
-
-                            // Title
-                            h3 {
-                                class: "hi-user-guide-title",
-                                "{props.title}"
-                            }
-
-                            // Progress badge
-                            Badge {
-                                count: Some(progress_count),
-                            }
-                        }
-
-                        // Description
-                        p {
-                            class: "hi-user-guide-description",
-                            "{props.description}"
-                        }
-
-                        // Step icon
-                        div {
-                            class: "hi-user-guide-icon",
-                            "{step_data.icon}"
-                        }
-
-                        // Step content
-                        div {
-                            class: "hi-user-guide-step",
-
-                            // Step title
-                            h4 {
-                                class: "hi-user-guide-step-title",
-                                "{step_data.title}"
-                            }
-
-                            // Step description
-                            p {
-                                class: "hi-user-guide-step-description",
-                                "{step_data.description}"
-                            }
-                        }
-
-                        // Navigation buttons
-                        div {
-                            class: "hi-user-guide-navigation",
-
-                            // Previous button
-                            if show_previous {
-                                Button {
-                                    variant: ButtonVariant::Secondary,
-                                    onclick: prev_step,
-                                    "Previous"
-                                }
-                            }
-
-                             // Next/Finish button
-                            Button {
-                                variant: ButtonVariant::Primary,
-                                onclick: next_step,
-                             if is_last_step {
-                                 "Finish"
-                                } else {
-                                    "Next"
-                                }
-                            }
-
-                            // Skip button
-                            if props.allow_skip {
-                                Button {
-                                    variant: ButtonVariant::Ghost,
-                                    onclick: dismiss,
-                                    "Skip"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    /// Get the position class name
+    pub fn position_class(&self) -> &'static str {
+        match self.position {
+            GuidePosition::Center => "hi-user-guide-position-center",
+            GuidePosition::TopLeft => "hi-user-guide-position-top-left",
+            GuidePosition::TopRight => "hi-user-guide-position-top-right",
+            GuidePosition::BottomLeft => "hi-user-guide-position-bottom-left",
+            GuidePosition::BottomRight => "hi-user-guide-position-bottom-right",
         }
     }
 }
 
-impl UserGuideComponent {
-    pub fn styles() -> &'static str {
-        r#"
-.hi-user-guide {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
+pub fn render_user_guide(state: &UserGuideState) -> VNode {
+    use tairitsu_vdom::{VElement, VText};
 
-.hi-user-guide-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  pointer-events: auto;
-}
-
-.hi-user-guide-content {
-  position: relative;
-  pointer-events: auto;
-  background-color: var(--hi-color-surface, #ffffff);
-  border: 1px solid var(--hi-color-border, #e0e0e0);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
-  padding: 1.5rem;
-  animation: hi-user-guide-slide-in 0.3s ease-out;
-}
-
-.hi-user-guide-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--hi-color-border, #e0e0e0);
-}
-
-.hi-user-guide-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--hi-color-text-secondary, #666);
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.hi-user-guide-close:hover {
-  background-color: var(--hi-color-background-hover, #f5f5f5);
-  color: var(--hi-color-text-primary, #333);
-}
-
-.hi-user-guide-title {
-  flex: 1;
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--hi-color-text-primary, #333);
-}
-
-.hi-user-guide-description {
-  margin: 0 0 1.5rem 0;
-  font-size: 0.875rem;
-  color: var(--hi-color-text-secondary, #666);
-  line-height: 1.5;
-}
-
-.hi-user-guide-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  font-size: 3rem;
-  margin-bottom: 1.5rem;
-  border-radius: 50%;
-  background-color: var(--hi-color-primary-alpha10, rgba(0, 160, 233, 0.1));
-  border: 2px solid var(--hi-color-primary, #00A0E9);
-}
-
-.hi-user-guide-step {
-  margin-bottom: 1.5rem;
-}
-
-.hi-user-guide-step-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--hi-color-text-primary, #333);
-}
-
-.hi-user-guide-step-description {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--hi-color-text-secondary, #666);
-  line-height: 1.5;
-}
-
-.hi-user-guide-navigation {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.hi-user-guide-position-center {
-  align-items: center;
-  justify-content: center;
-}
-
-.hi-user-guide-position-top-left {
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-
-.hi-user-guide-position-top-right {
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-
-.hi-user-guide-position-bottom-left {
-  align-items: flex-end;
-  justify-content: flex-start;
-}
-
-.hi-user-guide-position-bottom-right {
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-@keyframes hi-user-guide-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-[data-theme="tairitsu"] {
-  .hi-user-guide-content {
-    background-color: #1a1a1a;
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-  }
-
-  .hi-user-guide-header {
-    border-bottom-color: rgba(255, 255, 255, 0.12);
-  }
-
-  .hi-user-guide-title {
-    color: rgba(255, 255, 255, 0.95);
-  }
-
-  .hi-user-guide-description {
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .hi-user-guide-icon {
-    background-color: var(--hi-color-primary-alpha20, rgba(26, 35, 126, 0.2));
-    border-color: #1a237e;
-  }
-
-  .hi-user-guide-step-title {
-    color: rgba(255, 255, 255, 0.95);
-  }
-
-  .hi-user-guide-step-description {
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .hi-user-guide-close {
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .hi-user-guide-close:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.95);
-  }
-}
-
-.hi-user-guide-icon {
-  box-shadow: 0 0 30px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
-}
-
-[data-theme="tairitsu"] .hi-user-guide-icon {
-  box-shadow: 0 0 30px rgba(26, 35, 126, 0.3);
-}
-"#
+    if !state.visible || state.steps.is_empty() {
+        return VNode::empty();
     }
 
-    pub fn name() -> &'static str {
-        "user_guide"
-    }
+    let current_step = state.current_step.min(state.steps.len() - 1);
+    let total_steps = state.steps.len();
+    let is_last = state.is_last_step();
+    let is_first = state.is_first_step();
+    let step = &state.steps[current_step];
+
+    let content_class = format!("hi-user-guide-content {}", state.position_class());
+
+    let header_children = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if state.allow_close {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-close")
+                    .child(VNode::Text(VText::new("\u{00d7}"))),
+            ));
+        }
+
+        children.push(VNode::Element(
+            VElement::new("h3")
+                .class("hi-user-guide-title")
+                .child(VNode::Text(VText::new(&state.title))),
+        ));
+
+        let badge_text = format!("{}/{}", current_step + 1, total_steps);
+        children.push(VNode::Element(
+            VElement::new("span")
+                .class("hi-user-guide-badge")
+                .child(VNode::Text(VText::new(&badge_text))),
+        ));
+
+        children
+    };
+
+    let step_body = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if !step.icon.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("div")
+                    .class("hi-user-guide-icon")
+                    .child(VNode::Text(VText::new(&step.icon))),
+            ));
+        }
+
+        if !step.title.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("h4")
+                    .class("hi-user-guide-step-title")
+                    .child(VNode::Text(VText::new(&step.title))),
+            ));
+        }
+
+        if !step.description.is_empty() {
+            children.push(VNode::Element(
+                VElement::new("p")
+                    .class("hi-user-guide-step-description")
+                    .child(VNode::Text(VText::new(&step.description))),
+            ));
+        }
+
+        VNode::Fragment(children)
+    };
+
+    let nav_children = {
+        let mut children: Vec<VNode> = Vec::new();
+
+        if state.allow_skip && !is_last {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-skip")
+                    .child(VNode::Text(VText::new("Skip"))),
+            ));
+        }
+
+        if !is_first {
+            children.push(VNode::Element(
+                VElement::new("button")
+                    .class("hi-user-guide-previous")
+                    .child(VNode::Text(VText::new("Previous"))),
+            ));
+        }
+
+        let next_label = if is_last { "Finish" } else { "Next" };
+        children.push(VNode::Element(
+            VElement::new("button")
+                .class("hi-user-guide-next")
+                .child(VNode::Text(VText::new(next_label))),
+        ));
+
+        children
+    };
+
+    let content_children: Vec<VNode> = vec![
+        VNode::Element(
+            VElement::new("div")
+                .class("hi-user-guide-header")
+                .children(header_children),
+        ),
+        step_body,
+        VNode::Element(
+            VElement::new("div")
+                .class("hi-user-guide-navigation")
+                .children(nav_children),
+        ),
+    ];
+
+    VNode::Fragment(vec![
+        VNode::Element(VElement::new("div").class("hi-user-guide-backdrop")),
+        VNode::Element(
+            VElement::new("div")
+                .class(content_class)
+                .children(content_children),
+        ),
+    ])
+}
+
+/// Events emitted by the user guide
+#[derive(Clone, PartialEq, Debug)]
+pub enum UserGuideEvent {
+    /// Guide was dismissed
+    Dismissed,
+    /// Guide was completed (went through all steps)
+    Completed,
+    /// Step changed
+    StepChanged { from: usize, to: usize },
 }
 
 #[cfg(test)]
@@ -482,13 +400,114 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_guide_position() {
-        let center = GuidePosition::Center;
-        assert_eq!(center, GuidePosition::default());
+    fn test_guide_step_new() {
+        let step = GuideStep::new("1", "First Step");
+        assert_eq!(step.id, "1");
+        assert_eq!(step.title, "First Step");
+        assert!(!step.completed);
     }
 
     #[test]
-    fn test_user_guide_name() {
-        assert_eq!(UserGuideComponent::name(), "user_guide");
+    fn test_guide_step_builder() {
+        let step = GuideStep::new("1", "First")
+            .with_description("Description")
+            .with_icon("🎯")
+            .with_target(".my-element")
+            .with_completed(true);
+
+        assert_eq!(step.description, "Description");
+        assert_eq!(step.icon, "🎯");
+        assert_eq!(step.target_selector, ".my-element");
+        assert!(step.completed);
+    }
+
+    #[test]
+    fn test_user_guide_new() {
+        let state = UserGuideState::new("Welcome".to_string(), "Description".to_string());
+        assert_eq!(state.title, "Welcome");
+        assert!(!state.visible);
+        assert_eq!(state.current_step, 0);
+        assert!(state.allow_skip);
+        assert!(state.allow_close);
+    }
+
+    #[test]
+    fn test_user_guide_show_hide() {
+        let mut state = UserGuideState::new("Title".to_string(), "Desc".to_string());
+        assert!(!state.visible);
+
+        state.show();
+        assert!(state.visible);
+        assert_eq!(state.current_step, 0);
+
+        state.hide();
+        assert!(!state.visible);
+    }
+
+    #[test]
+    fn test_user_guide_navigation() {
+        let mut state = UserGuideState::new("Title".to_string(), "Desc".to_string());
+        state.add_step(GuideStep::new("1", "Step 1"));
+        state.add_step(GuideStep::new("2", "Step 2"));
+        state.add_step(GuideStep::new("3", "Step 3"));
+
+        assert_eq!(state.current_step, 0);
+        assert!(state.is_first_step());
+        assert!(!state.is_last_step());
+
+        assert!(state.advance());
+        assert_eq!(state.current_step, 1);
+
+        assert!(state.advance());
+        assert_eq!(state.current_step, 2);
+        assert!(state.is_last_step());
+
+        assert!(state.previous());
+        assert_eq!(state.current_step, 1);
+
+        assert!(state.previous()); // Can go to 0
+        assert_eq!(state.current_step, 0);
+
+        assert!(!state.previous()); // Can't go before 0
+    }
+
+    #[test]
+    fn test_progress() {
+        let mut state = UserGuideState::new("Title".to_string(), "Desc".to_string());
+        state.add_step(GuideStep::new("1", "Step 1"));
+        state.add_step(GuideStep::new("2", "Step 2"));
+        state.add_step(GuideStep::new("3", "Step 3"));
+        state.add_step(GuideStep::new("4", "Step 4"));
+
+        assert_eq!(state.total_steps(), 4);
+        assert_eq!(state.progress_count(), 1);
+        assert_eq!(state.progress_percent(), 25.0);
+
+        state.advance();
+        assert_eq!(state.progress_count(), 2);
+        assert_eq!(state.progress_percent(), 50.0);
+    }
+
+    #[test]
+    fn test_position_classes() {
+        let state = UserGuideState::new("Title".to_string(), "Desc".to_string());
+        assert_eq!(state.position_class(), "hi-user-guide-position-center");
+
+        let state = state.with_position(GuidePosition::TopLeft);
+        assert_eq!(state.position_class(), "hi-user-guide-position-top-left");
+    }
+
+    #[test]
+    fn test_builder_pattern() {
+        let state = UserGuideState::new("Title".to_string(), "Desc".to_string())
+            .with_position(GuidePosition::BottomRight)
+            .with_allow_skip(false)
+            .with_allow_close(false)
+            .with_class("custom-guide");
+
+        assert_eq!(state.position, GuidePosition::BottomRight);
+        assert!(!state.allow_skip);
+        assert!(!state.allow_close);
+        assert_eq!(state.class, "custom-guide");
     }
 }

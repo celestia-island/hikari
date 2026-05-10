@@ -2,7 +2,7 @@
 // Binary to test all 34 pages for basic quality
 
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
-use thirtyfour::{WebDriver, prelude::*};
+use thirtyfour::{prelude::*, WebDriver};
 use tracing::{error, info};
 
 #[tokio::main]

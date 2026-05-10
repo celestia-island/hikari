@@ -1,15 +1,12 @@
 // display/carousel.rs
 // Carousel component - Image/content slider with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{CarouselClass, ClassesBuilder, UtilityClass};
+use hikari_palette::classes::{TypedClass, CarouselClass, ClassesBuilder};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// CarouselComponent type wrapper
 pub struct CarouselComponent;
 
-/// Carousel indicator position
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CarouselIndicatorPosition {
     #[default]
@@ -19,7 +16,6 @@ pub enum CarouselIndicatorPosition {
     Right,
 }
 
-/// Carousel variant
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CarouselIndicatorType {
     #[default]
@@ -28,106 +24,121 @@ pub enum CarouselIndicatorType {
     Hidden,
 }
 
-/// Carousel props
-#[derive(Props, Clone, PartialEq, Debug)]
+#[define_props]
+#[derive(Debug)]
 pub struct CarouselProps {
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    #[props(default = 5000)]
+    #[default(5000)]
     pub autoplay: u64,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_arrows: bool,
 
-    #[props(default = CarouselIndicatorPosition::Bottom)]
+    #[default(CarouselIndicatorPosition::Bottom)]
     pub indicator_position: CarouselIndicatorPosition,
 
-    #[props(default = CarouselIndicatorType::Dots)]
+    #[default(CarouselIndicatorType::Dots)]
     pub indicator_type: CarouselIndicatorType,
 
-    #[props(default = true)]
+    #[default(true)]
     pub show_pause: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub infinite: bool,
 
-    #[props(default = false)]
+    #[default(false)]
     pub initial_paused: bool,
 }
 
-/// Carousel component - Image/content slider with navigation
 #[component]
 pub fn Carousel(props: CarouselProps) -> Element {
-    let mut current_index = use_signal(|| 0);
+    let current_index = use_signal(|| 0);
     let is_paused = use_signal(|| props.initial_paused);
-    let children_count = use_memo(move || {
-        let mut count = 0;
-        if let Some(children) = props.children.as_vnode() {
-            if let dioxus::core::VNode::Fragment(fragment) = &*children {
-                count = fragment.children.len();
-            }
-        }
-        count
-    });
 
-    let total = children_count.read();
+    // Count children without moving props.children
+    let total = match &props.children {
+        VNode::Fragment(children) => children.len(),
+        _ => 0,
+    };
 
+    let current_index_for_prev = current_index.clone();
     let handle_prev = move |_| {
         if total == 0 {
             return;
         }
-        let mut idx = current_index.write();
+        let mut idx = current_index_for_prev.write();
         *idx = if *idx == 0 { total - 1 } else { *idx - 1 };
     };
 
+    let current_index_for_next = current_index.clone();
     let handle_next = move |_| {
         if total == 0 {
             return;
         }
-        let mut idx = current_index.write();
+        let mut idx = current_index_for_next.write();
         *idx = (*idx + 1) % total;
     };
 
+    let current_index_for_dot = current_index.clone();
     let handle_dot_click = move |index: usize| {
-        *current_index.write() = index;
+        *current_index_for_dot.write() = index;
     };
 
+    let is_paused_for_toggle = is_paused.clone();
     let toggle_pause = move |_| {
-        *is_paused.write() = !is_paused();
+        *is_paused_for_toggle.write() = !is_paused_for_toggle.get();
     };
 
-    let index_for_autoplay = current_index;
+    // Autoplay implementation using platform::set_timeout
+    let autoplay_interval = props.autoplay;
+    let autoplay_index = current_index.clone();
+    let autoplay_paused = is_paused.clone();
+    let autoplay_total = total;
+    let autoplay_infinite = props.infinite;
+
     use_effect(move || {
-        if props.autoplay == 0 || is_paused() || total <= 1 {
+        if autoplay_interval == 0 || autoplay_paused.get() || autoplay_total == 0 {
             return;
         }
 
-        let index_signal = index_for_autoplay;
-        async move {
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_millis(props.autoplay)).await;
-                if total == 0 {
-                    break;
-                }
-                let mut idx = index_signal.write();
-                *idx = (*idx + 1) % total;
-            }
-        }
+        let index_for_timer = autoplay_index.clone();
+        let total_for_timer = autoplay_total;
+        let infinite_for_timer = autoplay_infinite;
+
+        crate::platform::set_timeout(
+            move || {
+                let current = index_for_timer.get();
+                let next = if infinite_for_timer {
+                    (current + 1) % total_for_timer
+                } else if current + 1 < total_for_timer {
+                    current + 1
+                } else {
+                    return;
+                };
+                index_for_timer.set(next);
+            },
+            autoplay_interval as i32,
+        );
     });
 
     let track_transform = format!(
         "transform: translateX(-{}%);",
-        current_index() as f64 * 100.0
+        current_index.get() as f64 * 100.0
     );
 
     let indicator_classes = ClassesBuilder::new()
-        .add(CarouselClass::Indicators)
-        .add(match props.indicator_position {
-            CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => CarouselClass::IndicatorsDots,
-            CarouselIndicatorPosition::Left | CarouselIndicatorPosition::Right => CarouselClass::IndicatorsHidden,
+        .add_typed(CarouselClass::Indicators)
+        .add_typed(match props.indicator_position {
+            CarouselIndicatorPosition::Bottom | CarouselIndicatorPosition::Top => {
+                CarouselClass::IndicatorsDots
+            }
+            CarouselIndicatorPosition::Left | CarouselIndicatorPosition::Right => {
+                CarouselClass::IndicatorsHidden
+            }
         })
-        .add(match props.indicator_type {
+        .add_typed(match props.indicator_type {
             CarouselIndicatorType::Dots => CarouselClass::IndicatorsDots,
             CarouselIndicatorType::Line => CarouselClass::IndicatorsLine,
             CarouselIndicatorType::Hidden => CarouselClass::IndicatorsHidden,
@@ -135,37 +146,63 @@ pub fn Carousel(props: CarouselProps) -> Element {
         .build();
 
     let prev_arrow_classes = ClassesBuilder::new()
-        .add(CarouselClass::Arrow)
-        .add(CarouselClass::ArrowPrev)
+        .add_typed(CarouselClass::Arrow)
+        .add_typed(CarouselClass::ArrowPrev)
         .build();
 
     let next_arrow_classes = ClassesBuilder::new()
-        .add(CarouselClass::Arrow)
-        .add(CarouselClass::ArrowNext)
+        .add_typed(CarouselClass::Arrow)
+        .add_typed(CarouselClass::ArrowNext)
         .build();
 
+    // Pre-compute dot elements
+    let current_index_for_dots = current_index.clone();
+    let dot_elements: Vec<Element> = (0..total)
+        .map(move |i| {
+            let current_index_in_map = current_index_for_dots.clone();
+            let current_index_for_add_if = current_index_in_map.clone();
+            let dot_classes = ClassesBuilder::new()
+                .add_typed(CarouselClass::Dot)
+                .add_typed_if(CarouselClass::DotActive, {
+                    i == current_index_for_add_if.get()
+                })
+                .build();
+
+            let idx_signal = current_index_in_map.clone();
+            rsx! {
+                button {
+                    class: dot_classes,
+                    onclick: move |_| {
+                        *idx_signal.write() = i;
+                    },
+                    aria_label: format!("Slide {}", i + 1),
+                    disabled: total <= 1,
+                }
+            }
+        })
+        .collect();
+
     rsx! {
-        div {
-            class: "{CarouselClass::Container.as_class()}",
-            
+        div { class: CarouselClass::Container.class_name(),
+
             // Track
             div {
-                class: "{CarouselClass::Track.as_class()}",
-                style: "{track_transform}",
+                class: CarouselClass::Track.class_name(),
+                style: track_transform,
                 {props.children}
             }
 
             // Navigation arrows
             if props.show_arrows {
                 button {
-                    class: "{prev_arrow_classes}",
+                    class: prev_arrow_classes,
                     onclick: handle_prev,
                     disabled: total <= 1,
                     "‹"
                 }
 
                 button {
-                    class: "{next_arrow_classes}",
+                    class: next_arrow_classes,
                     onclick: handle_next,
                     disabled: total <= 1,
                     "›"
@@ -174,35 +211,20 @@ pub fn Carousel(props: CarouselProps) -> Element {
 
             // Indicator dots
             if props.indicator_type != CarouselIndicatorType::Hidden && total > 1 {
-                div {
-                    class: "{indicator_classes}",
-                    for i in 0..total {
-                        {
-                            let dot_classes = ClassesBuilder::new()
-                                .add(CarouselClass::Dot)
-                                .add_if(CarouselClass::DotActive, move || i == current_index())
-                                .build();
-
-                            rsx! {
-                                button {
-                                    class: "{dot_classes}",
-                                    onclick: move |_| handle_dot_click(i),
-                                    aria_label: format!("Slide {}", i + 1),
-                                    disabled: total <= 1,
-                                }
-                            }
-                        }
-                    }
-                }
+                div { class: indicator_classes, ..dot_elements }
             }
 
             // Pause button
             if props.show_pause && props.autoplay > 0 && total > 1 {
                 button {
-                    class: "{CarouselClass::Pause.as_class()}",
+                    class: CarouselClass::Pause.class_name(),
                     onclick: toggle_pause,
-                    aria_label: if is_paused() { "Play" } else { "Pause" },
-                    if is_paused() { "▶" } else { "⏸" }
+                    aria_label: if is_paused.get() { "Play" } else { "Pause" },
+                    if is_paused.get() {
+                        "▶"
+                    } else {
+                        "⏸"
+                    }
                 }
             }
         }

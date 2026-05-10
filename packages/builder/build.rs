@@ -1,26 +1,22 @@
-//! Build script for Hikari UI applications
+//! Build script for hikari-builder
 //!
-//! This build script:
-//! 1. Scans for SCSS files in the project
-//! 2. Generates Rust constants for discovered components
-//! 3. Compiles SCSS to CSS bundle using Grass
-//!
-//! # Usage
-//!
-//! Add to your project's build.rs:
-//! ```rust,ignore
-//! fn main() {
-//!     hikari_builder::build().expect("Build failed");
-//! }
-//! ```
+//! Generates component constants and compiles SCSS using tairitsu-packager
 
 use std::{
     env, fs,
     path::{Path, PathBuf},
 };
 
-/// Main build function
-pub fn build() -> anyhow::Result<()> {
+use tairitsu_packager::styles::ScssCompiler;
+
+fn main() {
+    if let Err(e) = build() {
+        eprintln!("❌ Build failed: {}", e);
+        std::process::exit(1);
+    }
+}
+
+fn build() -> anyhow::Result<()> {
     println!("🔨 Hikari Builder starting...");
 
     // Get workspace root
@@ -75,7 +71,7 @@ pub fn build() -> anyhow::Result<()> {
 
     generate_component_constants(&generated_dir, &scss_files)?;
 
-    // Compile SCSS bundle
+    // Compile SCSS bundle using tairitsu-packager
     compile_scss_bundle(&workspace_root)?;
 
     println!("✅ Hikari Builder completed!");
@@ -184,9 +180,9 @@ pub fn default_components() -> HashSet<String> {
     Ok(())
 }
 
-/// Compile SCSS to CSS bundle using Grass (Rust Sass compiler)
+/// Compile SCSS to CSS bundle using tairitsu-packager's ScssCompiler
 fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
-    println!("🎨 Compiling SCSS with Grass...");
+    println!("🎨 Compiling SCSS with tairitsu-packager...");
 
     // Use index.scss as entry point (has @import for all components)
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
@@ -207,15 +203,17 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
         println!("🗑️  Removed old bundle.css");
     }
 
-    // Compile with Grass - it will handle @import and @use resolution automatically
-    let css_content = grass::from_path(&index_scss, &grass::Options::default())
-        .map_err(|e| anyhow::anyhow!("SCSS compilation failed: {:?}", e))?;
+    // Create compiler with default options (minify enabled)
+    let compiler = ScssCompiler::new();
+
+    // Compile the SCSS file
+    let css_content = compiler.compile_file(&index_scss)?;
 
     // Get file size
     let file_size = css_content.len();
 
     // Write to output
-    fs::write(&css_output, css_content.clone())?;
+    fs::write(&css_output, &css_content)?;
 
     // Verify file was written
     if css_output.exists() {
@@ -233,11 +231,4 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-fn main() {
-    if let Err(e) = build() {
-        eprintln!("❌ Build failed: {}", e);
-        std::process::exit(1);
-    }
 }

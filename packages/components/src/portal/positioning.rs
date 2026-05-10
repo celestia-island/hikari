@@ -25,14 +25,6 @@ pub fn calculate_position(
                 let trigger_center_x = rect_x + rect_w / 2.0;
                 let trigger_center_y = rect_y + rect_h / 2.0;
 
-                #[cfg(target_arch = "wasm32")]
-                {
-                    web_sys::console::log_1(
-                        &format!("Portal calculate_position: placement={:?}, trigger_rect=({:.1}, {:.1}, {:.1}, {:.1}), viewport=({:.1}, {:.1}), elem_width={:.1}",
-                            placement, rect_x, rect_y, rect_w, rect_h, viewport_width, viewport_height, element_width).into()
-                    );
-                }
-
                 let (x, y) = match placement {
                     TriggerPlacement::Bottom => (trigger_center_x, rect_y + rect_h + OFFSET),
                     TriggerPlacement::BottomLeft => (rect_x, rect_y + rect_h + OFFSET),
@@ -71,26 +63,8 @@ pub fn calculate_position(
                     TriggerPlacement::Center => y.clamp(PADDING, viewport_height - PADDING),
                 };
 
-                #[cfg(target_arch = "wasm32")]
-                {
-                    web_sys::console::log_1(
-                        &format!(
-                            "Portal calculated position: ({:.1}, {:.1}) -> ({:.1}, {:.1}), placement={:?}",
-                            x, y, x_clamped, y_clamped, placement
-                        )
-                        .into(),
-                    );
-                }
-
                 (x_clamped, y_clamped)
             } else {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    web_sys::console::log_1(
-                        &"Portal: trigger_rect is None, using center fallback".into(),
-                    );
-                }
-
                 let x = (viewport_width - element_width) / 2.0;
                 let y = (viewport_height - MENU_MAX_HEIGHT) / 2.0;
                 (x, y)

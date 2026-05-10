@@ -1,54 +1,41 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use dioxus::prelude::*;
+use hikari_palette::classes::CollapseClass;
+use tairitsu_style::ClassesBuilder;
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Collapse component wrapper (for StyledComponent)
 pub struct CollapseComponent;
 
-#[derive(Clone, PartialEq, Props, Debug)]
+#[define_props]
+#[derive(Debug)]
 pub struct CollapseProps {
-    /// Whether collapse is initially expanded
-    #[props(default)]
+    #[default]
     pub expanded: bool,
 
-    /// Animation duration in milliseconds
-    #[props(default)]
+    #[default(200)]
     pub duration: u64,
 
-    /// Whether to animate the collapse
-    #[props(default)]
+    #[default(true)]
     pub animated: bool,
 
-    /// Custom classes
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Content to collapse/expand
     pub children: Element,
 
-    /// Callback when expand/collapse state changes
     pub on_expand: Option<EventHandler<bool>>,
-}
-
-impl Default for CollapseProps {
-    fn default() -> Self {
-        Self {
-            expanded: false,
-            duration: 200,
-            animated: true,
-            class: String::default(),
-            children: VNode::empty(),
-            on_expand: None,
-        }
-    }
 }
 
 #[component]
 pub fn Collapse(props: CollapseProps) -> Element {
-    let mut is_expanded = use_signal(|| props.expanded);
+    let is_expanded = use_signal(|| props.expanded);
+
+    let content_id = use_signal(|| {
+        static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        format!("hi-collapse-panel-{}", COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+    });
 
     let animation_style = if props.animated {
         format!(
@@ -60,60 +47,76 @@ pub fn Collapse(props: CollapseProps) -> Element {
     };
 
     // Use a large max-height for expanded state (will be clamped by content height)
-    let max_height = if *is_expanded.read() {
+    let max_height = if is_expanded.get() {
         "1000px".to_string()
     } else {
         "0px".to_string()
     };
 
-    let opacity = if *is_expanded.read() { "1" } else { "0" };
+    let opacity = if is_expanded.get() { "1" } else { "0" };
 
-    let arrow_rotation = if *is_expanded.read() { "90deg" } else { "0deg" };
+    let arrow_rotation = if is_expanded.get() { "90deg" } else { "0deg" };
 
+    let is_expanded_for_toggle = is_expanded.clone();
+    let on_expand_for_toggle = props.on_expand.clone();
     let handle_toggle = move |_| {
-        is_expanded.set(!is_expanded());
+        is_expanded_for_toggle.set(!is_expanded_for_toggle.get());
 
-        if let Some(handler) = props.on_expand.as_ref() {
-            handler.call(*is_expanded.read());
+        if let Some(handler) = on_expand_for_toggle.as_ref() {
+            handler.call(is_expanded_for_toggle.get());
         }
     };
 
+    // Use CollapseClass for the content area
+    let content_classes = if is_expanded.read() {
+        ClassesBuilder::new()
+            .add_typed(CollapseClass::CollapseContent)
+            .add_typed(CollapseClass::Expanded)
+            .build()
+    } else {
+        ClassesBuilder::new()
+            .add_typed(CollapseClass::CollapseContent)
+            .add_typed(CollapseClass::Collapsed)
+            .build()
+    };
+
     rsx! {
-        div {
-            class: format!("hi-collapse {}", props.class),
+        div { class: format!("hi-collapse {}", props.class),
 
             div {
                 class: "hi-collapse-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
+                role: "button",
+                tabindex: "0",
+                "aria-expanded": if is_expanded.get() { "true" } else { "false" },
+                "aria-controls": "{content_id}",
                 onclick: handle_toggle,
 
                 span {
                     class: "hi-collapse-arrow",
                     style: format!(
                         "display: inline-block; transition: transform {}ms ease-in-out; transform: rotate({});",
-                        props.duration, arrow_rotation
+                        props.duration,
+                        arrow_rotation,
                     ),
                     "›"
                 }
 
-                span {
-                    class: "hi-collapse-header-content",
-                    { props.children.clone() }
-                }
+                span { class: "hi-collapse-header-content", {props.children.clone()} }
             }
 
             div {
-                class: "hi-collapse-content",
-                class: if *is_expanded.read() { "hi-collapse-expanded" } else { "" },
+                id: "{content_id}",
+                class: content_classes,
+                "aria-hidden": if is_expanded.get() { "false" } else { "true" },
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
-                    max_height, opacity, animation_style
+                    max_height,
+                    opacity,
+                    animation_style,
                 ),
 
-                div {
-                    class: "hi-collapse-inner",
-                    { props.children.clone() }
-                }
+                div { class: "hi-collapse-inner", {props.children.clone()} }
             }
         }
     }

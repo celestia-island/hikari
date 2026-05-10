@@ -11,7 +11,7 @@
 }
 
 .hi-code-block-header {
-    background-color: var(--hi-color-surface-secondary);
+    background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #fff 0%, #f0f0f4 100%));
     border-bottom: 1px solid var(--hi-color-border);
     padding: 0.5rem 1rem;
     display: flex;

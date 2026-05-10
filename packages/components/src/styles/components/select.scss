@@ -17,13 +17,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  width: 100%;
   min-width: 180px;
   cursor: pointer;
   user-select: none;
   position: relative;
 
   // Appearance — FUI translucent panel feel
-  background: var(--hi-color-surface);
+  background: transparent;
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
 

@@ -1,144 +1,252 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TreeNodeClass};
+#![expect(clippy::needless_update)]
 
-use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+use hikari_palette::classes::TreeNodeClass;
+use tairitsu_hooks::ReactiveSignal;
+use tairitsu_style::ClassesBuilder;
 
-/// Shared data structure for tree nodes
+use crate::{
+    data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel},
+    prelude::*,
+};
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {
-    /// Unique node identifier
     pub key: String,
-    /// Node display text
     pub label: String,
     pub children: Option<Vec<TreeNodeData>>,
     pub disabled: bool,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[derive(Clone, Props)]
 pub struct TreeNodeProps {
-    /// Unique node identifier
     pub node_key: String,
 
-    /// Node display text
     pub label: String,
 
-    /// Child nodes
     pub node_children: Option<Vec<TreeNodeData>>,
 
-    /// Custom icon
     #[props(default)]
     pub icon: Option<Element>,
 
-    /// Disable interaction
     #[props(default)]
     pub disabled: bool,
 
-    /// Initial expanded state
     #[props(default)]
     pub expanded: bool,
 
-    /// Selected state
     #[props(default)]
     pub selected: bool,
 
-    /// Nesting level for indentation
     #[props(default)]
     pub level: usize,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
     #[props(default)]
     pub onclick: Option<EventHandler<MouseEvent>>,
+
+    #[props(default)]
+    pub expanded_keys: Option<ReactiveSignal<Vec<String>>>,
+
+    #[props(default)]
+    pub selected_keys: Option<ReactiveSignal<Vec<String>>>,
+
+    #[props(default)]
+    pub on_select: Option<EventHandler<String>>,
+
+    #[props(default)]
+    pub on_expand: Option<EventHandler<String>>,
 }
 
-/// TreeNode component - A single tree node that can be expanded/collapsed
-///
-/// This component is composed of smaller sub-components for better modularity:
-/// - [`TreeNodeContent`] - Wraps the content with proper indentation
-/// - [`TreeNodeArrow`] - Expand/collapse arrow indicator
-/// - [`TreeNodeLabel`] - Text and optional icon display
+impl Default for TreeNodeProps {
+    fn default() -> Self {
+        Self {
+            node_key: String::new(),
+            label: String::new(),
+            node_children: None,
+            icon: None,
+            disabled: false,
+            expanded: false,
+            selected: false,
+            level: 0,
+            class: String::new(),
+            onclick: None,
+            expanded_keys: None,
+            selected_keys: None,
+            on_select: None,
+            on_expand: None,
+        }
+    }
+}
+
 #[component]
 pub fn TreeNode(props: TreeNodeProps) -> Element {
-    let mut is_expanded = use_signal(|| props.expanded);
+    let is_expanded_local = use_signal(|| props.expanded);
     let has_children = props.node_children.is_some();
 
+    let is_expanded = if let Some(ref ek) = props.expanded_keys {
+        ek.read().contains(&props.node_key)
+    } else {
+        is_expanded_local.get()
+    };
+
+    let is_selected = if let Some(ref sk) = props.selected_keys {
+        sk.read().contains(&props.node_key)
+    } else {
+        props.selected
+    };
+
     let node_classes = ClassesBuilder::new()
-        .add(TreeNodeClass::TreeNode)
-        .add_if(TreeNodeClass::TreeNodeSelected, || props.selected)
-        .add_if(TreeNodeClass::TreeNodeDisabled, || props.disabled)
-        .add_if(TreeNodeClass::TreeNodeParent, || has_children)
-        .add_raw(&props.class)
+        .add_typed(TreeNodeClass::TreeNode)
+        .add_typed_if(TreeNodeClass::TreeNodeSelected, is_selected)
+        .add_typed_if(TreeNodeClass::TreeNodeDisabled, props.disabled)
+        .add_typed_if(TreeNodeClass::TreeNodeParent, has_children)
+        .add(&props.class)
         .build();
+
+    let node_key = props.node_key.clone();
+    let level = props.level;
+
+    let child_nodes: Vec<Element> = if has_children && is_expanded {
+        if let Some(children) = &props.node_children {
+            let ek = props.expanded_keys.clone();
+            let sk = props.selected_keys.clone();
+            let on_select = props.on_select.clone();
+            let on_expand = props.on_expand.clone();
+
+            children
+                .iter()
+                .map(|child| {
+                    let child_ek = ek.clone();
+                    let child_sk = sk.clone();
+                    let child_expanded = child_ek
+                        .as_ref()
+                        .map(|s| s.read().contains(&child.key))
+                        .unwrap_or(false);
+                    let child_selected = child_sk
+                        .as_ref()
+                        .map(|s| s.read().contains(&child.key))
+                        .unwrap_or(false);
+
+                    TreeNode(TreeNodeProps {
+                        node_key: child.key.clone(),
+                        label: child.label.clone(),
+                        node_children: child.children.clone(),
+                        disabled: child.disabled,
+                        expanded: child_expanded,
+                        selected: child_selected,
+                        level: props.level + 1,
+                        expanded_keys: child_ek,
+                        selected_keys: child_sk,
+                        on_select: on_select.clone(),
+                        on_expand: on_expand.clone(),
+                        ..TreeNodeProps::default()
+                    })
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    } else {
+        vec![]
+    };
+
+    let is_expanded_for_click = is_expanded_local.clone();
+    let is_expanded_for_arrow = is_expanded_local.clone();
+    let is_expanded_for_children = is_expanded_local.clone();
+    let key_for_click = props.node_key.clone();
+    let key_for_arrow = props.node_key.clone();
+    let ek_for_click = props.expanded_keys.clone();
+    let sk_for_click = props.selected_keys.clone();
+    let on_select_for_click = props.on_select.clone();
+    let on_expand_for_click = props.on_expand.clone();
+    let ek_for_arrow = props.expanded_keys.clone();
+    let on_expand_for_arrow = props.on_expand.clone();
 
     rsx! {
         li {
-            class: "{node_classes}",
+            class: node_classes,
             role: "treeitem",
-            "data-node-key": "{props.node_key}",
-            "data-level": "{props.level}",
-            aria_expanded: if has_children { is_expanded().to_string() } else { "false".to_string() },
-            aria_selected: props.selected.to_string(),
+            "data-node-key": node_key,
+            "data-level": level,
+            aria_expanded: if has_children { is_expanded.to_string() } else { "false".to_string() },
+            aria_selected: is_selected.to_string(),
             aria_disabled: props.disabled.to_string(),
 
             TreeNodeContent {
                 level: props.level,
                 disabled: props.disabled,
                 class: props.class.clone(),
-                onclick: Some(EventHandler::new(move |e| {
+                onclick: EventHandler::new(move |e| {
                     if !props.disabled {
+                        if let Some(ref sk) = sk_for_click {
+                            sk.set(vec![key_for_click.clone()]);
+                        }
+                        if let Some(ref handler) = on_select_for_click {
+                            handler.call(key_for_click.clone());
+                        }
+
                         if has_children {
-                            is_expanded.set(!is_expanded());
+                            if let Some(ref ek) = ek_for_click {
+                                let mut keys = ek.read();
+                                if keys.contains(&key_for_click) {
+                                    keys.retain(|k| k != &key_for_click);
+                                } else {
+                                    keys.push(key_for_click.clone());
+                                }
+                                ek.set(keys);
+                            } else {
+                                is_expanded_for_click.set(!is_expanded_for_click.get());
+                            }
+
+                            if let Some(ref handler) = on_expand_for_click {
+                                handler.call(key_for_click.clone());
+                            }
                         }
 
                         if let Some(handler) = props.onclick.as_ref() {
                             handler.call(e);
                         }
                     }
-                })),
+                }),
 
-                // Expand/collapse arrow
                 TreeNodeArrow {
-                    expanded: is_expanded(),
+                    expanded: is_expanded_for_arrow.get(),
                     disabled: props.disabled,
-                    onclick: Some(EventHandler::new(move |e: MouseEvent| {
+                    onclick: EventHandler::new(move |e: MouseEvent| {
                         e.stop_propagation();
                         if !props.disabled {
-                            is_expanded.set(!is_expanded());
+                            if let Some(ref ek) = ek_for_arrow {
+                                let mut keys = ek.read();
+                                if keys.contains(&key_for_arrow) {
+                                    keys.retain(|k| k != &key_for_arrow);
+                                } else {
+                                    keys.push(key_for_arrow.clone());
+                                }
+                                ek.set(keys);
+                            } else {
+                                is_expanded_for_arrow.set(!is_expanded_for_arrow.get());
+                            }
+
+                            if let Some(ref handler) = on_expand_for_arrow {
+                                handler.call(key_for_arrow.clone());
+                            }
                         }
-                    }))
+                    }),
                 }
 
-                // Node label with optional icon
-                TreeNodeLabel {
-                    label: props.label.clone(),
-                    icon: props.icon.clone(),
-                }
+                TreeNodeLabel { label: props.label.clone(), icon: props.icon.clone() }
             }
 
-            // Render children if expanded
-            if has_children && is_expanded() {
+            if has_children && is_expanded_for_children.get() {
                 ul {
                     class: "hi-tree-node-children",
                     role: "group",
-
-                    if let Some(children) = &props.node_children {
-                        for child in children {
-                            TreeNode {
-                                node_key: child.key.clone(),
-                                label: child.label.clone(),
-                                node_children: child.children.clone(),
-                                disabled: child.disabled,
-                                level: props.level + 1,
-                                ..TreeNodeProps::default()
-                            }
-                        }
-                    }
+                    ..child_nodes
                 }
             }
         }

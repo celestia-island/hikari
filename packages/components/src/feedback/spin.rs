@@ -1,10 +1,6 @@
-// hi-components/src/feedback/spin.rs
-// Spin component with Arknights + FUI styling
+use hikari_palette::classes::{TypedClass, ClassesBuilder, SpinClass};
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, SpinClass, UtilityClass};
-
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SpinSize {
@@ -18,68 +14,20 @@ pub enum SpinSize {
 pub enum SpinTip {
     #[default]
     None,
-    #[cfg(target_arch = "wasm32")]
     Loading,
-    #[cfg(target_arch = "wasm32")]
     Success,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SpinProps {
-    /// Spin size
-    #[props(default)]
     pub size: SpinSize,
-
-    /// Whether to show tip text
-    #[props(default)]
     pub tip: SpinTip,
-
-    /// Custom tip text (overrides tip enum)
-    #[props(default)]
     pub custom_tip: Option<String>,
-
-    /// Whether to delay loading
-    #[props(default)]
     pub delay: Option<u64>,
-
-    /// Whether to spin (can be controlled externally)
-    #[props(default)]
     pub spinning: bool,
-
-    /// Additional CSS class
-    #[props(default)]
     pub class: String,
 }
 
-/// Spin component with loading animation
-///
-/// A loading spinner with optional tip text.
-///
-/// # Examples
-///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Spin;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Spin {}
-///     }
-/// }
-/// ```
-///
-/// ## With Size
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Spin, SpinSize};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Spin { size: SpinSize::Large }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Spin(props: SpinProps) -> Element {
     let size_class = match props.size {
@@ -89,10 +37,10 @@ pub fn Spin(props: SpinProps) -> Element {
     };
 
     let spin_classes = ClassesBuilder::new()
-        .add(SpinClass::Spin)
-        .add(size_class)
-        .add_if(SpinClass::Stopped, || !props.spinning)
-        .add_raw(&props.class)
+        .add_typed(SpinClass::Spin)
+        .add_typed(size_class)
+        .add_typed_if(SpinClass::Stopped, !props.spinning)
+        .add(&props.class)
         .build();
 
     let tip_text = if let Some(custom) = props.custom_tip {
@@ -100,26 +48,23 @@ pub fn Spin(props: SpinProps) -> Element {
     } else {
         match props.tip {
             SpinTip::None => String::new(),
-            #[cfg(target_arch = "wasm32")]
             SpinTip::Loading => "加载中...".to_string(),
-            #[cfg(target_arch = "wasm32")]
             SpinTip::Success => "加载成功".to_string(),
         }
     };
 
     rsx! {
-        div { class: "{spin_classes}",
-            div { class: "{SpinClass::Spinner.as_class()}" }
+        div { class: spin_classes,
+            div {
+                class: SpinClass::Spinner.class_name(),
+            }
             if !tip_text.is_empty() {
-                div { class: "{SpinClass::Tip.as_class()}",
-                    "{tip_text}"
-                }
+                div { class: SpinClass::Tip.class_name(), "{tip_text}" }
             }
         }
     }
 }
 
-/// Spin component's type wrapper for StyledComponent
 pub struct SpinComponent;
 
 impl StyledComponent for SpinComponent {
@@ -136,7 +81,7 @@ impl StyledComponent for SpinComponent {
   border-radius: 50%;
   border: 3px solid var(--hi-border);
   border-top-color: var(--hi-color-primary);
-  animation: hi-spin-rotate 0.9s linear infinite;
+  animation: hi-spin-rotate 0.6s linear infinite;
 }
 
 .hi-spin-sm .hi-spin-spinner {
@@ -163,8 +108,8 @@ impl StyledComponent for SpinComponent {
 }
 
 @keyframes hi-spin-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .hi-spin-tip {

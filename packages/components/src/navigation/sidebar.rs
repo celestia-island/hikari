@@ -7,121 +7,48 @@
 // - Fully customizable through props and classes
 // - Styles via SCSS with CSS variables for theming
 
-use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
+use hikari_icons::{Icon, MdiIcon};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, SidebarClass};
 
 use crate::{
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 
-/// Sidebar component type wrapper (for StyledComponent)
 pub struct SidebarComponent;
 
-/// Container props for the Sidebar
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`Sidebar`] component.
+#[define_props]
 pub struct SidebarProps {
-    /// Currently active item ID (for highlighting)
-    #[props(default)]
+    #[default("".to_string())]
     pub active_id: String,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    /// Child elements (SidebarSection, SidebarItem, etc.)
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
 }
 
-impl Default for SidebarProps {
-    fn default() -> Self {
-        Self {
-            active_id: String::default(),
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
-/// Sidebar - Main container component
+/// Sidebar navigation component
 ///
-/// A flexible, multi-level sidebar navigation component.
-/// Supports arbitrary nesting through recursive components.
-///
-/// # Features
-/// - **Arbitrary Nesting**: Support for unlimited levels through recursion
-/// - **Custom Rendering**: Children provide full control over content
-/// - **Active States**: Visual indication for selected items
-/// - **Collapsible Sections**: Sections can be expanded/collapsed
-/// - **Theme Support**: CSS variables for easy theming
-///
-/// # Examples
-///
-/// ## Basic Sidebar
-/// ```rust,ignore
-/// use dioxus::prelude::*;
-/// use hikari_components::{Sidebar, SidebarItem};
-/// use dioxus_router::components::Link;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Sidebar {
-///             active_id: "home".to_string(),
-///             SidebarItem {
-///                 id: "home".to_string(),
-///                 label: "Home".to_string(),
-///                 Link { to: "/", "Home" }
-///             }
-///             SidebarItem {
-///                 id: "settings".to_string(),
-///                 label: "Settings".to_string(),
-///                 Link { to: "/settings", "Settings" }
-///             }
-///         }
-///     }
-/// }
-/// ```
-///
-/// ## Nested Sections
-/// ```rust,ignore
-/// use dioxus::prelude::*;
-/// use hikari_components::{Sidebar, SidebarSection, SidebarItem};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Sidebar {
-///             active_id: "overview".to_string(),
-///             SidebarSection {
-///                 id: "components".to_string(),
-///                 title: "Components".to_string(),
-///                 secondary_title: Some("组件".to_string()),
-///                 default_expanded: true,
-///                 SidebarItem {
-///                     id: "basic".to_string(),
-///                     label: "Basic".to_string(),
-///                     Link { to: "/components/basic", "Basic" }
-///                 }
-///             }
-///         }
-///     }
-/// }
-/// ```
+/// A multi-level sidebar navigation component with support for
+/// nested sections, items, and leaf nodes.
 #[component]
 pub fn Sidebar(props: SidebarProps) -> Element {
     let nav_classes = ClassesBuilder::new()
-        .add(SidebarClass::Sidebar)
-        .add_raw(&props.class)
+        .add_typed(SidebarClass::Sidebar)
+        .add(&props.class)
         .build();
 
     rsx! {
         nav {
-            class: "{nav_classes}",
+            class: nav_classes,
             role: "navigation",
             "aria-label": "Sidebar navigation",
 
-            { props.children }
+            {props.children}
         }
     }
 }
@@ -136,69 +63,61 @@ impl StyledComponent for SidebarComponent {
     }
 }
 
-/// Sidebar Section - Collapsible category/section
-///
-/// A non-clickable header that can be expanded/collapsed to show children.
-/// Typically used as the top-level categorization in a sidebar.
-#[derive(Clone, PartialEq, Props)]
+/// Props for the SidebarSection component
+#[define_props]
 pub struct SidebarSectionProps {
-    /// Unique identifier for this section
+    #[default("".to_string())]
     pub id: String,
 
-    /// Primary title (e.g., "Components")
+    #[default("".to_string())]
     pub title: String,
 
-    /// Secondary title (e.g., "组件" for Chinese)
-    #[props(default)]
     pub secondary_title: Option<String>,
 
-    /// Whether the section is expanded by default
-    #[props(default)]
+    #[default(false)]
     pub default_expanded: bool,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    /// Child elements (shown when expanded)
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
 }
 
-impl Default for SidebarSectionProps {
-    fn default() -> Self {
-        Self {
-            id: String::default(),
-            title: String::default(),
-            secondary_title: None,
-            default_expanded: false,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
-/// Sidebar Section component
+/// A collapsible section within a sidebar containing nested items.
 #[component]
 pub fn SidebarSection(props: SidebarSectionProps) -> Element {
-    let mut is_expanded = use_signal(|| props.default_expanded);
+    let is_expanded = use_signal(|| props.default_expanded);
 
-    let expanded_attr = if is_expanded() { "true" } else { "false" };
+    let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let section_classes = ClassesBuilder::new()
-        .add(SidebarClass::Section)
-        .add_raw(&props.class)
+        .add_typed(SidebarClass::Section)
+        .add(&props.class)
         .build();
 
+    let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
-        .add(SidebarClass::SectionArrow)
-        .add_if(SidebarClass::SectionArrowRotated, move || is_expanded())
+        .add_typed(SidebarClass::SectionArrow)
+        .add_typed_if(SidebarClass::SectionArrowRotated, {
+            is_expanded_for_arrow.get()
+        })
         .build();
+
+    let header_class = SidebarClass::SectionHeader.class_name();
+    let title_group_class = SidebarClass::SectionTitleGroup.class_name();
+    let title_primary_class = SidebarClass::SectionTitlePrimary.class_name();
+    let title_secondary_class = SidebarClass::SectionTitleSecondary.class_name();
+    let children_class = SidebarClass::SectionChildren.class_name();
+    let aria_hidden_val = (!is_expanded.get()).to_string();
+
+    let is_expanded_for_click = is_expanded.clone();
+    let handle_click = move |_| {
+        is_expanded_for_click.set(!is_expanded_for_click.get());
+    };
 
     rsx! {
-        div {
-            class: "{section_classes}",
-            "data-id": "{props.id}",
+        div { class: section_classes, "data-id": props.id,
 
             // Section header (clickable to toggle) - wrapped with Glow
             Glow {
@@ -206,28 +125,20 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
                 color: GlowColor::Primary,
                 intensity: GlowIntensity::Dim,
                 div {
-                    class: "{SidebarClass::SectionHeader.as_class()}",
-                    onclick: move |_| { is_expanded.toggle(); },
+                    class: header_class,
+                    onclick: handle_click,
                     aria_expanded: expanded_attr,
 
-                    div {
-                        class: "{SidebarClass::SectionTitleGroup.as_class()}",
+                    div { class: title_group_class,
 
-                        span {
-                            class: "{SidebarClass::SectionTitlePrimary.as_class()}",
-                            "{props.title}"
-                        }
+                        span { class: title_primary_class, "{props.title}" }
 
                         if let Some(secondary) = &props.secondary_title {
-                            span {
-                                class: "{SidebarClass::SectionTitleSecondary.as_class()}",
-                                "{secondary}"
-                            }
+                            span { class: title_secondary_class, "{secondary}" }
                         }
                     }
 
-                    div {
-                        class: "{arrow_classes}",
+                    div { class: arrow_classes,
                         Icon { icon: MdiIcon::ChevronDown }
                     }
                 }
@@ -235,73 +146,70 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
 
             // Children container (visible when expanded)
             div {
-                class: "{SidebarClass::SectionChildren.as_class()}",
+                class: children_class,
                 "data-expanded": expanded_attr,
-                aria_hidden: "{!is_expanded()}",
+                aria_hidden: aria_hidden_val,
 
-                { props.children }
+                {props.children}
             }
         }
     }
 }
 
-/// Sidebar Item - Clickable navigation item
-///
-/// A clickable navigation item that can have optional nested items.
-/// Can be used as a leaf node or as a parent for nested items.
-#[derive(Clone, PartialEq, Props)]
+/// Props for the SidebarItem component
+#[define_props]
 pub struct SidebarItemProps {
-    /// Unique identifier for this item
+    #[default("".to_string())]
     pub id: String,
 
-    /// Primary label (e.g., "Basic")
-    #[props(default)]
+    #[default("".to_string())]
     pub label: String,
 
-    /// Secondary label (e.g., "基础" for Chinese)
-    #[props(default)]
     pub secondary_label: Option<String>,
 
-    /// Whether this item is expanded by default (when it has items)
-    #[props(default)]
+    #[default(false)]
     pub default_expanded: bool,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    /// Header content (optional, overrides label rendering)
-    /// If provided, this will be rendered in the item header instead of labels
     pub content: Option<Element>,
 
-    /// Nested items (optional, rendered in the children container when provided)
-    #[props(default)]
     pub items: Option<Element>,
 }
 
-/// Sidebar Item component
+/// A sidebar item with optional nested children and expand/collapse support.
 #[component]
 pub fn SidebarItem(props: SidebarItemProps) -> Element {
     // Check if nested items are provided
     let has_items = props.items.is_some();
     let mut is_expanded = use_signal(|| props.default_expanded);
 
-    let expanded_attr = if is_expanded() { "true" } else { "false" };
+    let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let item_classes = ClassesBuilder::new()
-        .add(SidebarClass::Item)
-        .add_raw(&props.class)
+        .add_typed(SidebarClass::Item)
+        .add(&props.class)
         .build();
 
+    let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
-        .add(SidebarClass::ItemArrow)
-        .add_if(SidebarClass::ItemArrowRotated, move || is_expanded())
+        .add_typed(SidebarClass::ItemArrow)
+        .add_typed_if(SidebarClass::ItemArrowRotated, {
+            is_expanded_for_arrow.get()
+        })
         .build();
+
+    let header_class = SidebarClass::ItemHeader.class_name();
+    let content_class = SidebarClass::ItemContent.class_name();
+    let secondary_class = SidebarClass::ItemSecondary.class_name();
+    let item_children_class = SidebarClass::ItemChildren.class_name();
+    let aria_hidden_val = (!is_expanded.get()).to_string();
+
+    let is_expanded_for_click = is_expanded.clone();
 
     rsx! {
-        div {
-            class: "{item_classes}",
-            "data-id": "{props.id}",
+        div { class: {item_classes}, "data-id": props.id,
 
             // Item header (always visible)
             // Make entire header clickable when it has nested items
@@ -310,107 +218,93 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
                 color: GlowColor::Primary,
                 intensity: GlowIntensity::Dim,
                 div {
-                    class: "{SidebarClass::ItemHeader.as_class()}",
-                    "data-has-children": "{has_items}",
+                    class: {header_class},
+                    "data-has-children": has_items,
 
                     // Add onclick handler to entire header for expand/collapse
                     // When has children, clicking anywhere on the header toggles
                     onclick: move |_| {
                         if has_items {
-                            is_expanded.toggle();
+                            is_expanded_for_click.set(!is_expanded_for_click.get());
                         }
                     },
 
-                // Custom content slot - user provides Link or other content
-                // If content is provided, use it; otherwise render labels
-                div {
-                    class: "{SidebarClass::ItemContent.as_class()}",
-                    if let Some(content) = &props.content {
-                        { content }
-                    } else {
-                        { props.label }
-                        if let Some(secondary) = &props.secondary_label {
-                            span { class: "{SidebarClass::ItemSecondary.as_class()}", "{secondary}" }
+                    // Custom content slot - user provides Link or other content
+                    // If content is provided, use it; otherwise render labels
+                    div { class: {content_class},
+                        if let Some(content) = &props.content {
+                            {content.clone()}
+                        } else {
+                            "{props.label}"
+                            if let Some(secondary) = &props.secondary_label {
+                                span { class: {secondary_class}, "{secondary}" }
+                            }
+                        }
+                    }
+
+                    // Expand/collapse arrow (only if has items)
+                    // Visual indicator only - onclick is on the parent header
+                    {
+                        if has_items {
+                            rsx! {
+                                div { class: arrow_classes.clone(), aria_expanded: expanded_attr,
+                                    Icon { icon: MdiIcon::ChevronRight }
+                                }
+                            }
+                        } else {
+                            VNode::empty()
                         }
                     }
                 }
-
-                // Expand/collapse arrow (only if has items)
-                // Visual indicator only - onclick is on the parent header
-                if has_items {
-                    div {
-                        class: "{arrow_classes}",
-                        aria_expanded: expanded_attr,
-                        Icon { icon: MdiIcon::ChevronRight }
-                    }
-                }
-                }
             }
+
             if let Some(items) = &props.items {
                 div {
-                    class: "{SidebarClass::ItemChildren.as_class()}",
+                    class: item_children_class,
                     "data-expanded": expanded_attr,
-                    aria_hidden: "{!is_expanded()}",
+                    aria_hidden: aria_hidden_val,
 
                     // Render nested items
-                    { items }
+                    {items.clone()}
                 }
             }
         }
     }
 }
 
-/// Sidebar Leaf - Terminal navigation item without children
-///
-/// A simplified item component for leaf nodes (no children).
-/// More ergonomic than SidebarItem when you don't need nesting.
-#[derive(Clone, PartialEq, Props)]
+/// Props for the SidebarLeaf component
+#[define_props]
 pub struct SidebarLeafProps {
-    /// Unique identifier for this item
+    #[default("".to_string())]
     pub id: String,
 
-    /// Secondary label (e.g., "基础" for Chinese)
-    #[props(default)]
     pub secondary_label: Option<String>,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default("".to_string())]
     pub class: String,
 
-    /// Content (typically a Link component)
-    #[props(default)]
+    #[default(VNode::empty())]
     pub children: Element,
 }
 
-impl Default for SidebarLeafProps {
-    fn default() -> Self {
-        Self {
-            id: String::default(),
-            secondary_label: None,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
-/// Sidebar Leaf component
+/// A terminal leaf node in the sidebar with no nested children.
 #[component]
 pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
     let leaf_classes = ClassesBuilder::new()
-        .add(SidebarClass::Leaf)
-        .add_raw(&props.class)
+        .add_typed(SidebarClass::Leaf)
+        .add(&props.class)
         .build();
 
-    rsx! {
-        div {
-            class: "{leaf_classes}",
-            "data-id": "{props.id}",
+    let leaf_content_class = SidebarClass::LeafContent.class_name();
+    let secondary_class = SidebarClass::ItemSecondary.class_name();
 
-            div {
-                class: "{SidebarClass::LeafContent.as_class()}",
-                { props.children }
+    rsx! {
+        div { class: leaf_classes, "data-id": props.id,
+
+            div { class: leaf_content_class,
+                {props.children}
                 if let Some(secondary) = &props.secondary_label {
-                    span { class: "{SidebarClass::ItemSecondary.as_class()}", "{secondary}" }
+                    span { class: secondary_class, "{secondary}" }
                 }
             }
         }

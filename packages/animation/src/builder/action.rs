@@ -1,32 +1,28 @@
 //! Animation action types
 
-use wasm_bindgen::JsCast;
-use web_sys::HtmlElement;
+use tairitsu_vdom::Platform;
 
-use super::{
-    super::style::{CssProperty, StyleBuilder},
-    value::DynamicValue,
-};
-use crate::{context::AnimationContext, state::AnimationState as StructAnimationState};
+use super::{super::style::CssProperty, value::DynamicValue};
+use crate::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
 
 /// Enhanced animation action that can be applied to an element
 ///
 /// Actions can be either CSS styles or utility classes,
 /// supporting static, dynamic, and stateful dynamic values.
-pub enum AnimationAction {
+pub enum AnimationAction<P: Platform> {
     /// CSS style property with value
-    Style(CssProperty, DynamicValue),
+    Style(CssProperty, DynamicValue<P>),
     /// Utility class (from palette package)
     Class(String),
 }
 
-impl Clone for AnimationAction {
+impl<P: Platform> Clone for AnimationAction<P> {
     fn clone(&self) -> Self {
         match self {
             AnimationAction::Class(class) => AnimationAction::Class(class.clone()),
             AnimationAction::Style(prop, value) => match value {
                 DynamicValue::Static(s) => {
-                    AnimationAction::Style(*prop, DynamicValue::Static(s.clone()))
+                    AnimationAction::Style(*prop, DynamicValue::static_value(s.clone()))
                 }
                 DynamicValue::Dynamic(_) => {
                     AnimationAction::Style(*prop, DynamicValue::static_value(""))
@@ -39,7 +35,7 @@ impl Clone for AnimationAction {
     }
 }
 
-impl AnimationAction {
+impl<P: Platform> AnimationAction<P> {
     /// Create a style action with a static value
     pub fn style_static(property: CssProperty, value: impl Into<String>) -> Self {
         Self::Style(property, DynamicValue::static_value(value))
@@ -48,7 +44,7 @@ impl AnimationAction {
     /// Create a style action with a dynamic value
     pub fn style_dynamic<F>(property: CssProperty, f: F) -> Self
     where
-        F: Fn(&AnimationContext) -> String + 'static,
+        F: Fn(&AnimationContext<P>) -> String + 'static,
     {
         Self::Style(property, DynamicValue::dynamic(f))
     }
@@ -56,7 +52,7 @@ impl AnimationAction {
     /// Create a style action with a stateful dynamic value
     pub fn style_stateful_dynamic<F>(property: CssProperty, f: F) -> Self
     where
-        F: Fn(&AnimationContext, &mut StructAnimationState) -> String + 'static,
+        F: Fn(&AnimationContext<P>, &mut StructAnimationState) -> String + 'static,
     {
         Self::Style(property, DynamicValue::stateful_dynamic(f))
     }
@@ -67,35 +63,26 @@ impl AnimationAction {
     }
 }
 
-/// Apply actions to an element
-pub fn apply_actions(
-    element: &HtmlElement,
-    actions: &[AnimationAction],
-    ctx: &AnimationContext,
+/// Apply actions to an element handle via Platform
+pub fn apply_actions<P: Platform>(
+    platform: &std::rc::Rc<std::cell::RefCell<P>>,
+    element: &P::Element,
+    actions: &[AnimationAction<P>],
+    ctx: &AnimationContext<P>,
     state: &mut StructAnimationState,
 ) {
-    let builder = StyleBuilder::new(element);
-    let mut has_style = false;
-
     for action in actions {
         match action {
             AnimationAction::Style(prop, value) => {
-                has_style = true;
                 let value_str = value.evaluate(ctx, state);
-                builder.clone().add(*prop, &value_str);
+                platform
+                    .borrow_mut()
+                    .set_style(element, prop.as_str(), &value_str);
             }
             AnimationAction::Class(class) => {
-                let _ = element.class_list().add_1(class);
+                // Use set_attribute to add class (simplified approach)
+                platform.borrow_mut().set_attribute(element, "class", class);
             }
         }
     }
-
-    if has_style {
-        builder.apply();
-    }
-}
-
-/// Get HtmlElement from JsValue
-pub fn get_html_element(js_value: &wasm_bindgen::JsValue) -> Option<HtmlElement> {
-    js_value.clone().dyn_into::<HtmlElement>().ok()
 }

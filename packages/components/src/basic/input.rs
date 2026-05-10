@@ -1,15 +1,18 @@
 // hi-components/src/basic/input.rs
 // Input component with Arknights + FUI styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (input-vars.scss)
+// - Custom: Runtime overrides via text_color, border_color, animation_id
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, InputClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
     styled::StyledComponent,
 };
 
-/// Input 组件的类型包装器（用于实现 StyledComponent）
 pub struct InputComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -20,156 +23,180 @@ pub enum InputSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum InputStatus {
+    #[default]
+    Default,
+    Error,
+    Success,
+}
+
+impl IntoAttrValue for InputSize {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            InputSize::Small => "small".to_string(),
+            InputSize::Medium => "medium".to_string(),
+            InputSize::Large => "large".to_string(),
+        })
+    }
+}
+
+#[define_props]
 pub struct InputProps {
-    #[props(default)]
     pub size: InputSize,
 
-    #[props(default)]
     pub disabled: bool,
 
-    #[props(default)]
     pub readonly: bool,
 
-    #[props(default)]
     pub placeholder: Option<String>,
 
-    #[props(default)]
     pub value: Option<String>,
 
-    #[props(default)]
     pub input_type: Option<String>,
 
-    #[props(default)]
     pub autofocus: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub prefix_icon: Option<Element>,
 
-    #[props(default)]
     pub suffix_icon: Option<Element>,
 
     pub oninput: Option<EventHandler<String>>,
 
-    #[props(default)]
     pub onfocus: Option<EventHandler<FocusEvent>>,
 
-    #[props(default)]
     pub onblur: Option<EventHandler<FocusEvent>>,
 
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
 
-    /// Enable glow effect (Win10-style blur and mouse-following highlight)
-    #[props(default = true)]
+    #[default(true)]
     pub glow: bool,
 
-    /// Glow blur intensity (requires glow: true)
-    #[props(default)]
     pub glow_blur: GlowBlur,
 
-    /// Glow intensity (requires glow: true)
-    #[props(default)]
     pub glow_intensity: GlowIntensity,
 
-    /// Glow color mode (requires glow: true)
-    /// Uses Ghost glow color (black/white based on theme)
-    #[props(default)]
     pub glow_color: GlowColor,
+
+    pub text_color: Option<String>,
+
+    pub placeholder_color: Option<String>,
+
+    pub border_color: Option<String>,
+
+    pub background_color: Option<String>,
+
+    pub animation_id: Option<String>,
+
+    pub css_vars: Option<Vec<(&'static str, String)>>,
+
+    pub status: InputStatus,
 }
 
-impl Default for InputProps {
-    fn default() -> Self {
-        Self {
-            size: Default::default(),
-            disabled: false,
-            readonly: false,
-            placeholder: None,
-            value: None,
-            input_type: None,
-            autofocus: false,
-            class: String::default(),
-            prefix_icon: None,
-            suffix_icon: None,
-            oninput: None,
-            onfocus: None,
-            onblur: None,
-            onkeydown: None,
-            glow: true,
-            glow_blur: Default::default(),
-            glow_intensity: Default::default(),
-            glow_color: GlowColor::Ghost,
-        }
-    }
-}
-
-/// Input component with Arknights + FUI styling
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Input;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Input {
-///             placeholder: "Enter your name",
-///             value: "Hello",
-///         }
-///     }
-/// }
-/// ```
+///
+///
+///
+///
+///
+///
+///
 #[component]
 pub fn Input(props: InputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(InputClass::InputWrapper)
-        .add(match props.size {
+        .add_typed(InputClass::InputWrapper)
+        .add_typed(match props.size {
             InputSize::Small => InputClass::InputSm,
             InputSize::Medium => InputClass::InputMd,
             InputSize::Large => InputClass::InputLg,
         })
-        .add_raw(&props.class)
+        .add(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add(InputClass::Input)
-        .add_if(InputClass::InputDisabled, || props.disabled)
+        .add_typed(InputClass::Input)
+        .add_typed_if(InputClass::InputDisabled, props.disabled)
+        .add_typed_if(
+            InputClass::InputError,
+            matches!(props.status, InputStatus::Error),
+        )
+        .add_typed_if(
+            InputClass::InputSuccess,
+            matches!(props.status, InputStatus::Success),
+        )
         .build();
 
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
+    }
+
+    if let Some(color) = &props.placeholder_color {
+        css_vars_string.push_str(&format!("--hi-input-placeholder-color:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-input-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-border-color:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-input-bg:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-bg:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
+
     let input_content = rsx! {
-        div { class: "{wrapper_classes}",
+        div {
+            class: wrapper_classes,
+            style: style_attr,
+            "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
-                span { class: "{InputClass::InputPrefix.as_class()}", { icon } }
+                span { class: InputClass::InputPrefix.class_name(), {icon} }
             }
 
             input {
-                class: "{input_classes}",
+                class: input_classes,
                 r#type: props.input_type.unwrap_or("text".to_string()),
                 autofocus: props.autofocus,
                 disabled: props.disabled,
                 readonly: props.readonly,
-                placeholder: props.placeholder,
+                placeholder: props.placeholder.clone(),
                 value: props.value,
-                oninput: move |e| {
+                "aria-invalid": if matches!(props.status, InputStatus::Error) { Some("true".to_string()) } else { None },
+                "aria-label": props.placeholder.clone(),
+                oninput: move |e: InputEvent| {
                     if let Some(handler) = props.oninput.as_ref() {
-                        handler.call(e.data.value());
+                        handler.call(e.data.clone());
                     }
                 },
-                onfocus: move |e| {
+                onfocus: move |e: FocusEvent| {
                     if let Some(handler) = props.onfocus.as_ref() {
                         handler.call(e);
                     }
                 },
-                onblur: move |e| {
+                onblur: move |e: FocusEvent| {
                     if let Some(handler) = props.onblur.as_ref() {
                         handler.call(e);
                     }
                 },
-                onkeydown: move |e| {
+                onkeydown: move |e: KeyboardEvent| {
                     if let Some(handler) = props.onkeydown.as_ref() {
                         handler.call(e);
                     }
@@ -177,19 +204,18 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: "{InputClass::InputSuffix.as_class()}", { icon } }
+                span { class: InputClass::InputSuffix.class_name(), {icon} }
             }
         }
     };
 
-    // Wrap with glow if enabled
     if props.glow {
         rsx! {
             Glow {
                 blur: props.glow_blur,
                 color: props.glow_color,
                 intensity: props.glow_intensity,
-                { input_content }
+                {input_content}
             }
         }
     } else {

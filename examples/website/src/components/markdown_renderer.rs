@@ -1,366 +1,461 @@
-// website/src/components/markdown_renderer.rs
-// Markdown to HTML component using pulldown-cmark
-// Supports custom code blocks like ```_hikari_component
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use dioxus::prelude::*;
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+pub fn render_markdown(content: &str) -> VNode {
+    if content.trim().is_empty() {
+        return VNode::default();
+    }
 
-use _components::{ColumnDef, Table};
-use crate::components::registry::{parse_component_path, render_component, ComponentType};
+    let blocks = parse_blocks(content);
+    VNode::Element(
+        VElement::new("div")
+            .class("hi-markdown-content")
+            .children(blocks),
+    )
+}
 
-/// Render markdown content to Dioxus elements
-pub fn render_markdown(markdown: &str) -> Element {
-    let elements = parse_markdown(markdown);
+fn txt(s: &str) -> VNode {
+    VNode::Text(VText::new(s))
+}
 
-    rsx! {
-        div {
-            class: "hi-markdown-content",
-            for element in elements {
-                {element}
+fn parse_inline(text: &str) -> Vec<VNode> {
+    let mut nodes: Vec<VNode> = Vec::new();
+    let mut remaining = text;
+    let mut buf = String::new();
+
+    while let Some(pos) = find_first_inline_marker(remaining) {
+        buf.push_str(&remaining[..pos]);
+        if !buf.is_empty() {
+            nodes.push(txt(&buf));
+            buf.clear();
+        }
+
+        let marker = &remaining[pos..];
+
+        if marker
+            .starts_with("![")
+            .then(|| marker.get(2..).unwrap_or("").starts_with("["))
+            == Some(true)
+        {
+            if let Some(end) = remaining[pos..].find("](") {
+                let alt = &remaining[pos + 2..pos + end];
+                let rest = &remaining[pos + end + 2..];
+                if let Some(close) = rest.find(')') {
+                    let url = &rest[..close];
+                    nodes.push(VNode::Element(
+                        VElement::new("img").attr("src", url).attr("alt", alt),
+                    ));
+                    remaining = &rest[close + 1..];
+                    continue;
+                }
+            }
+            buf.push_str("!");
+        }
+
+        if marker.starts_with('[') {
+            if let Some(end) = remaining[pos..].find("](") {
+                let link_text = &remaining[pos + 1..pos + end];
+                let rest = &remaining[pos + end + 2..];
+                if let Some(close) = rest.find(')') {
+                    let url = &rest[..close];
+                    let inner = parse_inline(link_text);
+                    let mut el = VElement::new("a").attr("href", url);
+                    for node in inner {
+                        el = el.child(node);
+                    }
+                    nodes.push(VNode::Element(el));
+                    remaining = &rest[close + 1..];
+                    continue;
+                }
+            }
+            buf.push('[');
+            remaining = &remaining[pos + 1..];
+            continue;
+        }
+
+        if marker.starts_with("**") || marker.starts_with("__") {
+            let delim_len = 2;
+            if let Some(end) = remaining[pos + delim_len..].find(&remaining[pos..pos + delim_len]) {
+                let inner_text = &remaining[pos + delim_len..pos + delim_len + end];
+                let mut el = VElement::new("strong");
+                for node in parse_inline(inner_text) {
+                    el = el.child(node);
+                }
+                nodes.push(VNode::Element(el));
+                remaining = &remaining[pos + delim_len * 2 + end..];
+                continue;
             }
         }
-    }
-}
 
-/// Parse markdown and return a list of Dioxus elements
-fn parse_markdown(markdown: &str) -> Vec<Element> {
-    let mut elements = Vec::new();
-    let mut in_code_block = false;
-    let mut code_language = String::new();
-    let mut code_content = String::new();
-    let mut in_list = false;
-    let mut list_items = Vec::new();
-    let mut heading_level: Option<u32> = None;
-    let mut heading_text = String::new();
-
-    // Table parsing state
-    let mut in_table = false;
-    let mut in_table_head = false;
-    let mut in_table_row = false;
-    let mut in_table_cell = false;
-    let mut table_headers: Vec<String> = Vec::new();
-    let mut table_rows: Vec<Vec<String>> = Vec::new();
-    let mut current_row: Vec<String> = Vec::new();
-    let mut current_cell = String::new();
-
-    let parser = Parser::new_ext(markdown, Options::all());
-
-    for event in parser {
-        match event {
-            Event::Start(tag) => match tag {
-                Tag::Paragraph => {}
-                Tag::Heading { level, .. } => {
-                    heading_level = Some(match level {
-                        HeadingLevel::H1 => 1,
-                        HeadingLevel::H2 => 2,
-                        HeadingLevel::H3 => 3,
-                        HeadingLevel::H4 => 4,
-                        HeadingLevel::H5 => 5,
-                        HeadingLevel::H6 => 6,
-                    });
-                    heading_text.clear();
+        if marker.starts_with('*') || marker.starts_with('_') {
+            let delim_len = 1;
+            if let Some(end) = remaining[pos + delim_len..].find(&remaining[pos..pos + delim_len]) {
+                let inner_text = &remaining[pos + delim_len..pos + delim_len + end];
+                let mut el = VElement::new("em");
+                for node in parse_inline(inner_text) {
+                    el = el.child(node);
                 }
-                Tag::BlockQuote(_) => {}
-                Tag::CodeBlock(kind) => {
-                    in_code_block = true;
-                    code_language = extract_language(&kind);
-                }
-                Tag::List(_) => {
-                    in_list = true;
-                    list_items.clear();
-                }
-                Tag::Item => {}
-                Tag::Link {
-                    link_type: _,
-                    dest_url: _,
-                    title: _,
-                    id: _,
-                } => {}
-                Tag::Image {
-                    link_type: _,
-                    dest_url: _,
-                    title: _,
-                    id: _,
-                } => {}
-                Tag::Emphasis => {}
-                Tag::Strong => {}
-                Tag::Strikethrough => {}
-                Tag::Table(_alignment) => {
-                    in_table = true;
-                    table_headers.clear();
-                    table_rows.clear();
-                }
-                Tag::TableHead => {
-                    in_table_head = true;
-                    current_row.clear();
-                }
-                Tag::TableRow => {
-                    in_table_row = true;
-                    current_row.clear();
-                }
-                Tag::TableCell => {
-                    in_table_cell = true;
-                    current_cell.clear();
-                }
-                _ => {}
-            },
-
-            Event::End(tag_end) => match tag_end {
-                TagEnd::Paragraph => {}
-                TagEnd::Heading(_) => {
-                    if let Some(level) = heading_level {
-                        elements.push(render_heading(level, &heading_text));
-                    }
-                    heading_level = None;
-                    heading_text.clear();
-                }
-                TagEnd::BlockQuote(_) => {}
-                TagEnd::CodeBlock => {
-                    if in_code_block {
-                        in_code_block = false;
-                        let component_type = parse_code_block(&code_language, &code_content);
-                        elements.push(render_code_block(component_type));
-                        code_language.clear();
-                        code_content.clear();
-                    }
-                }
-                TagEnd::List(_) => {
-                    in_list = false;
-                    elements.push(render_list(list_items.clone()));
-                    list_items.clear();
-                }
-                TagEnd::Item => {}
-                TagEnd::Link => {}
-                TagEnd::Image => {}
-                TagEnd::Emphasis => {}
-                TagEnd::Strong => {}
-                TagEnd::Strikethrough => {}
-                TagEnd::Table => {
-                    if in_table {
-                        in_table = false;
-                        elements.push(render_table(table_headers.clone(), table_rows.clone()));
-                        table_headers.clear();
-                        table_rows.clear();
-                    }
-                }
-                TagEnd::TableHead => {
-                    in_table_head = false;
-                    table_headers = current_row.clone();
-                    current_row.clear();
-                }
-                TagEnd::TableRow => {
-                    in_table_row = false;
-                    if !current_row.is_empty() {
-                        table_rows.push(current_row.clone());
-                    }
-                    current_row.clear();
-                }
-                TagEnd::TableCell => {
-                    in_table_cell = false;
-                    current_row.push(current_cell.trim().to_string());
-                    current_cell.clear();
-                }
-                _ => {}
-            },
-
-            Event::Text(text) => {
-                if in_code_block {
-                    code_content.push_str(&text);
-                } else if in_table_cell {
-                    current_cell.push_str(&text);
-                } else if in_list {
-                    list_items.push(text.to_string());
-                } else if heading_level.is_some() {
-                    heading_text.push_str(&text);
-                } else {
-                    elements.push(render_text(&text));
-                }
+                nodes.push(VNode::Element(el));
+                remaining = &remaining[pos + delim_len * 2 + end..];
+                continue;
             }
-
-            Event::Code(text) => {
-                if in_table_cell {
-                    current_cell.push_str(&format!("`{}`", text));
-                } else {
-                    elements.push(render_inline_code(&text));
-                }
-            }
-
-            Event::SoftBreak => {}
-            Event::HardBreak => {}
-            Event::Rule => {
-                elements.push(render_horizontal_rule());
-            }
-
-            Event::Html(html) => {
-                elements.push(render_html(&html));
-            }
-
-            Event::FootnoteReference(_) => {}
-            Event::TaskListMarker(_) => {}
-            Event::InlineMath(_) => {}
-            Event::DisplayMath(_) => {}
-            Event::InlineHtml(_) => {}
         }
+
+        if marker.starts_with('`') {
+            let backtick_len = count_backticks(remaining[pos..].chars());
+            if backtick_len >= 1 {
+                let closing = &remaining[pos + backtick_len..];
+                if let Some(end) = closing.find(&remaining[pos..pos + backtick_len]) {
+                    let code_text = &closing[..end];
+                    nodes.push(VNode::Element(VElement::new("code").child(txt(code_text))));
+                    remaining = &closing[end + backtick_len..];
+                    continue;
+                }
+            }
+        }
+
+        let ch = remaining.chars().next().unwrap_or(' ');
+        buf.push(ch);
+        remaining = &remaining[ch.len_utf8()..];
     }
 
-    elements
-}
-
-/// Extract language from code block info
-fn extract_language(kind: &pulldown_cmark::CodeBlockKind) -> String {
-    match kind {
-        pulldown_cmark::CodeBlockKind::Fenced(info) => info.to_string(),
-        _ => String::new(),
+    buf.push_str(remaining);
+    if !buf.is_empty() {
+        nodes.push(txt(&buf));
     }
+
+    if nodes.is_empty() {
+        nodes.push(txt(""));
+    }
+    nodes
 }
 
-/// Parse code block and determine its type
-fn parse_code_block(language: &str, content: &str) -> ComponentType {
-    if language.starts_with("_inner_hikari") || language.starts_with("_hikari_component") {
-        let path = content.trim();
+fn find_first_inline_marker(s: &str) -> Option<usize> {
+    let mut earliest: Option<usize> = None;
+    let mut i = 0;
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
 
-        if let Some(ct) = parse_component_path(path) {
-            ct
+    while i < len {
+        let ch = chars[i];
+
+        if ch == '\\' && i + 1 < len {
+            i += 2;
+            continue;
+        }
+
+        match ch {
+            '[' | '*' | '_' | '`' => {
+                if earliest.is_none() {
+                    earliest = Some(i);
+                }
+                break;
+            }
+            '!' => {
+                if i + 1 < len && chars[i + 1] == '[' && earliest.is_none() {
+                    earliest = Some(i);
+                }
+                break;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+
+    earliest
+}
+
+fn count_backticks(chars: std::str::Chars<'_>) -> usize {
+    let mut count = 0;
+    for ch in chars {
+        if ch == '`' {
+            count += 1;
         } else {
-            ComponentType::Code(content.to_string())
+            break;
         }
+    }
+    count
+}
+
+fn parse_blocks(content: &str) -> Vec<VNode> {
+    let mut nodes: Vec<VNode> = Vec::new();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut i = 0;
+    let len = lines.len();
+
+    while i < len {
+        let line = lines[i];
+
+        if line.trim().is_empty() {
+            i += 1;
+            continue;
+        }
+
+        if let Some(heading_level) = parse_atx_heading(line) {
+            let text = line[heading_level..].trim();
+            let tag = format!("h{}", heading_level);
+            let mut el = VElement::new(&tag);
+            for node in parse_inline(text) {
+                el = el.child(node);
+            }
+            nodes.push(VNode::Element(el));
+            i += 1;
+            continue;
+        }
+
+        if is_horizontal_rule(line) {
+            nodes.push(VNode::Element(VElement::new("hr")));
+            i += 1;
+            continue;
+        }
+
+        if line.trim_start().starts_with("```") {
+            let (block, consumed) = parse_code_block(&lines, i);
+            nodes.push(block);
+            i += consumed;
+            continue;
+        }
+
+        if is_table_row(line) && i + 1 < len && is_table_separator(&lines[i + 1]) {
+            let (table, consumed) = parse_table(&lines, i);
+            nodes.push(table);
+            i += consumed;
+            continue;
+        }
+
+        if is_unordered_list_item(line) {
+            let (list, consumed) = parse_unordered_list(&lines, i);
+            nodes.push(list);
+            i += consumed;
+            continue;
+        }
+
+        if is_ordered_list_item(line) {
+            let (list, consumed) = parse_ordered_list(&lines, i);
+            nodes.push(list);
+            i += consumed;
+            continue;
+        }
+
+        let mut paragraph_lines: Vec<&str> = Vec::new();
+        while i < len && !lines[i].trim().is_empty() && !is_block_start(lines[i]) {
+            paragraph_lines.push(lines[i]);
+            i += 1;
+        }
+        if !paragraph_lines.is_empty() {
+            let text = paragraph_lines.join("\n");
+            let mut el = VElement::new("p");
+            for node in parse_inline(&text) {
+                el = el.child(node);
+            }
+            nodes.push(VNode::Element(el));
+        }
+    }
+
+    nodes
+}
+
+fn is_block_start(line: &str) -> bool {
+    let trimmed = line.trim();
+    parse_atx_heading(trimmed).is_some()
+        || is_horizontal_rule(trimmed)
+        || trimmed.starts_with("```")
+        || is_unordered_list_item(trimmed)
+        || is_ordered_list_item(trimmed)
+}
+
+fn parse_atx_heading(line: &str) -> Option<usize> {
+    let trimmed = line.trim_start();
+    let mut count = 0;
+    for ch in trimmed.chars() {
+        if ch == '#' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    if (1..=6).contains(&count) && trimmed.chars().nth(count) == Some(' ') {
+        Some(count)
     } else {
-        ComponentType::Code(content.to_string())
+        None
     }
 }
 
-/// Render a heading element
-fn render_heading(level: u32, text: &str) -> Element {
-    let size = match level {
-        1 => "hi-text-3xl",
-        2 => "hi-text-2xl",
-        3 => "hi-text-xl",
-        _ => "hi-text-lg",
+fn is_horizontal_rule(line: &str) -> bool {
+    let trimmed = line.trim();
+    if trimmed.len() < 3 {
+        return false;
+    }
+    let first = match trimmed.chars().next() {
+        Some(ch) => ch,
+        None => return false,
+    };
+    if first != '-' && first != '*' && first != '_' {
+        return false;
+    }
+    trimmed
+        .chars()
+        .all(|ch| ch == first || ch == ' ' || ch == '\t')
+}
+
+fn is_unordered_list_item(line: &str) -> bool {
+    let trimmed = line.trim_start();
+    trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ")
+}
+
+fn is_ordered_list_item(line: &str) -> bool {
+    let trimmed = line.trim_start();
+    let mut pos = 0;
+    for ch in trimmed.chars() {
+        if ch.is_ascii_digit() {
+            pos += 1;
+        } else {
+            break;
+        }
+    }
+    pos > 0 && trimmed.len() > pos + 1 && &trimmed[pos..pos + 2] == ". "
+}
+
+fn parse_unordered_list(lines: &[&str], start: usize) -> (VNode, usize) {
+    let mut items: Vec<VNode> = Vec::new();
+    let mut i = start;
+
+    while i < lines.len() && is_unordered_list_item(lines[i]) {
+        let text = lines[i].trim_start();
+        let content = &text[2..];
+        let mut el = VElement::new("li");
+        for node in parse_inline(content) {
+            el = el.child(node);
+        }
+        items.push(VNode::Element(el));
+        i += 1;
+    }
+
+    let el = VElement::new("ul").children(items);
+    (VNode::Element(el), i - start)
+}
+
+fn parse_ordered_list(lines: &[&str], start: usize) -> (VNode, usize) {
+    let mut items: Vec<VNode> = Vec::new();
+    let mut i = start;
+
+    while i < lines.len() && is_ordered_list_item(lines[i]) {
+        let text = lines[i].trim_start();
+        let dot_pos = match text.find(". ") {
+            Some(pos) => pos,
+            None => continue,
+        };
+        let content = &text[dot_pos + 2..];
+        let mut el = VElement::new("li");
+        for node in parse_inline(content) {
+            el = el.child(node);
+        }
+        items.push(VNode::Element(el));
+        i += 1;
+    }
+
+    let el = VElement::new("ol").children(items);
+    (VNode::Element(el), i - start)
+}
+
+fn parse_code_block(lines: &[&str], start: usize) -> (VNode, usize) {
+    let first_line = lines[start].trim_start();
+    let lang = first_line.trim_start_matches('`').trim();
+
+    let mut code_lines: Vec<&str> = Vec::new();
+    let mut i = start + 1;
+
+    while i < lines.len() {
+        if lines[i].trim_start().starts_with("```") {
+            i += 1;
+            break;
+        }
+        code_lines.push(lines[i]);
+        i += 1;
+    }
+
+    let code_text = code_lines.join("\n");
+    let class = if lang.is_empty() {
+        "hi-code-block".to_string()
+    } else {
+        format!("hi-code-block language-{}", lang)
     };
 
-    rsx! {
-        div {
-            class: size,
-            "{text}"
-        }
-    }
+    let code_el = VElement::new("code").class(&*class).child(txt(&code_text));
+    let pre_el = VElement::new("pre").child(VNode::Element(code_el));
+    (VNode::Element(pre_el), i - start)
 }
 
-/// Render plain text
-fn render_text(text: &str) -> Element {
-    rsx! {
-        p {
-            class: "hi-text-base",
-            "{text}"
-        }
-    }
+fn is_table_row(line: &str) -> bool {
+    let trimmed = line.trim();
+    trimmed.starts_with('|') && trimmed.contains('|') && trimmed.len() > 2
 }
 
-/// Render inline code
-fn render_inline_code(code: &str) -> Element {
-    rsx! {
-        code {
-            class: "hi-inline-code",
-            "{code}"
-        }
+fn is_table_separator(line: &str) -> bool {
+    let trimmed = line.trim();
+    if !trimmed.starts_with('|') || !trimmed.ends_with('|') {
+        return false;
     }
+    let inner = trimmed.trim_start_matches('|').trim_end_matches('|');
+    let cells: Vec<&str> = inner.split('|').collect();
+    if cells.is_empty() {
+        return false;
+    }
+    cells.iter().all(|cell| {
+        let cell = cell.trim();
+        cell.is_empty() || cell.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')
+    })
 }
 
-/// Render a code block
-fn render_code_block(block_type: ComponentType) -> Element {
-    match block_type {
-        ComponentType::Layer(ref layer, ref name, ref component_id) => {
-            rsx! {
-                div {
-                    class: "hi-component-demo",
-                    {render_component(ComponentType::Layer(layer.clone(), name.clone(), component_id.clone()))}
+fn parse_table(lines: &[&str], start: usize) -> (VNode, usize) {
+    let header_line = lines[start];
+    let _sep_line = lines[start + 1];
+
+    let headers = parse_table_cells(header_line);
+
+    let mut body_rows: Vec<VNode> = Vec::new();
+    let mut i = start + 2;
+
+    while i < lines.len() && is_table_row(lines[i]) && !is_table_separator(lines[i]) {
+        let cells = parse_table_cells(lines[i]);
+        let row_nodes: Vec<VNode> = cells
+            .iter()
+            .map(|cell| {
+                let mut el = VElement::new("td");
+                for node in parse_inline(cell) {
+                    el = el.child(node);
                 }
-            }
-        }
-        ComponentType::Demo(ref category, ref name, ref component_id) => {
-            rsx! {
-                div {
-                    class: "hi-component-demo",
-                    {render_component(ComponentType::Demo(category.clone(), name.clone(), component_id.clone()))}
-                }
-            }
-        }
-        ComponentType::Code(ref content) => {
-            rsx! {
-                {render_component(ComponentType::Code(content.clone()))}
-            }
-        }
+                VNode::Element(el)
+            })
+            .collect();
+        body_rows.push(VNode::Element(VElement::new("tr").children(row_nodes)));
+        i += 1;
     }
-}
 
-/// Render a list
-fn render_list(items: Vec<String>) -> Element {
-    rsx! {
-        ul {
-            class: "hi-list",
-            for item in items {
-                li {
-                    class: "hi-list-item",
-                    "{item}"
-                }
-            }
-        }
-    }
-}
-
-/// Render a horizontal rule
-fn render_horizontal_rule() -> Element {
-    rsx! {
-        hr {
-            class: "hi-hr"
-        }
-    }
-}
-
-/// Render HTML content
-fn render_html(html: &str) -> Element {
-    rsx! {
-        div {
-            class: "hi-html-content",
-            dangerous_inner_html: html.to_string()
-        }
-    }
-}
-
-/// MarkdownRenderer component
-#[component]
-pub fn MarkdownRenderer(
-    #[props(into)] content: String,
-    #[props(default)] class: String,
-) -> Element {
-    let markdown_content = content.clone();
-
-    rsx! {
-        div {
-            class: format!("hi-markdown {}", class),
-            {render_markdown(&markdown_content)}
-        }
-    }
-}
-
-/// Render a table using the component library's Table component
-fn render_table(headers: Vec<String>, rows: Vec<Vec<String>>) -> Element {
-    let columns: Vec<ColumnDef> = headers
+    let header_nodes: Vec<VNode> = headers
         .iter()
-        .enumerate()
-        .map(|(i, header)| ColumnDef::new(format!("col_{}", i), header.clone()))
+        .map(|cell| {
+            let mut el = VElement::new("th");
+            for node in parse_inline(cell) {
+                el = el.child(node);
+            }
+            VNode::Element(el)
+        })
         .collect();
 
-    rsx! {
-        div {
-            class: "hi-markdown-table",
-            Table {
-                columns: columns,
-                data: rows,
-                bordered: true,
-                striped: false,
-                hoverable: true,
-            }
-        }
-    }
+    let thead = VNode::Element(
+        VElement::new("thead").child(VNode::Element(VElement::new("tr").children(header_nodes))),
+    );
+    let tbody = VNode::Element(VElement::new("tbody").children(body_rows));
+
+    let table = VElement::new("table").child(thead).child(tbody);
+    (VNode::Element(table), i - start)
+}
+
+fn parse_table_cells(line: &str) -> Vec<String> {
+    let trimmed = line.trim();
+    let inner = trimmed.trim_start_matches('|').trim_end_matches('|');
+    inner
+        .split('|')
+        .map(|cell| cell.trim().to_string())
+        .collect()
 }

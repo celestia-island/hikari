@@ -1,40 +1,39 @@
 // hi-components/src/basic/switch.rs
 // Switch component with Glow effect and content variants
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, SwitchClass};
+use hikari_palette::classes::{ClassesBuilder, SwitchClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct SwitchProps {
     pub checked: bool,
 
-    pub on_change: EventHandler<bool>,
+    pub on_change: Option<EventHandler<bool>>,
 
-    #[props(default)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
+    #[default(SwitchSize::Medium)]
     pub size: SwitchSize,
 
-    #[props(default)]
+    #[default(String::new())]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
+    #[default(SwitchVariant::Default)]
     pub variant: SwitchVariant,
 
-    #[props(default)]
     pub checked_content: Option<SwitchContent>,
 
-    #[props(default)]
     pub unchecked_content: Option<SwitchContent>,
 
-    #[props(default)]
+    #[default(SwitchColor::Primary)]
     pub color: SwitchColor,
+
+    #[default(false)]
+    pub glow: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -99,21 +98,15 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let switch_classes = ClassesBuilder::new()
-        .add(SwitchClass::Switch)
-        .add(size_class)
-        .add_if(SwitchClass::Checked, || props.checked)
-        .add_if(SwitchClass::Disabled, || props.disabled)
-        .add_raw(variant_class)
-        .add_raw(color_class)
-        .add_raw(&props.class)
+        .add_typed(SwitchClass::Switch)
+        .add_typed(size_class)
+        .add_typed_if(SwitchClass::Checked, props.checked)
+        .add_typed_if(SwitchClass::Disabled, props.disabled)
+        .add(variant_class)
+        .add(color_class)
+        .add_typed_if(SwitchClass::Glow, props.glow)
+        .add(&props.class)
         .build();
-
-    let handle_click = move |e: MouseEvent| {
-        if !props.disabled {
-            e.stop_propagation();
-            props.on_change.call(!props.checked);
-        }
-    };
 
     let thumb_content = if props.checked {
         props.checked_content.clone()
@@ -128,45 +121,89 @@ pub fn Switch(props: SwitchProps) -> Element {
         Some(SwitchContent::Icon(icon)) => {
             let icon_svg = match icon {
                 SwitchIcon::Check => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round", stroke_linejoin: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
+                        stroke_linejoin: "round",
                         path { d: "M20 6L9 17l-5-5" }
                     }
                 },
                 SwitchIcon::Close => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M18 6L6 18M6 6l12 12" }
                     }
                 },
                 SwitchIcon::Plus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M12 5v14M5 12h14" }
                     }
                 },
                 SwitchIcon::Minus => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "3",
+                        stroke_linecap: "round",
                         path { d: "M5 12h14" }
                     }
                 },
                 SwitchIcon::Custom(path) => rsx! {
-                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round",
+                    svg {
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "2",
+                        stroke_linecap: "round",
+                        stroke_linejoin: "round",
                         path { d: "{path}" }
                     }
                 },
             };
-            rsx! { span { class: "hi-switch-thumb-icon", {icon_svg} } }
+            rsx! {
+                span { class: "hi-switch-thumb-icon", {icon_svg} }
+            }
         }
         Some(SwitchContent::Image(src)) => rsx! {
-            img { class: "hi-switch-thumb-image", src: "{src}", alt: "" }
+            img { class: "hi-switch-thumb-image", src, alt: "" }
         },
-        None => rsx! { div { class: "hi-switch-thumb-dot" } },
+        None => rsx! {
+            div { class: "hi-switch-thumb-dot" }
+        },
     };
 
     rsx! {
         label {
             class: "hi-switch-label",
-            onclick: handle_click,
+            onclick: move |e: MouseEvent| {
+                if !props.disabled {
+                    e.stop_propagation();
+                    if let Some(callback) = props.on_change.as_ref() {
+                        callback.call(!props.checked);
+                    }
+                }
+            },
 
-            div { class: "{switch_classes}",
+            div {
+                class: switch_classes,
+                role: "switch",
+                "aria-checked": props.checked.to_string(),
+                tabindex: "0",
+                "aria-disabled": props.disabled.to_string(),
+
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }
                 }

@@ -1,200 +1,139 @@
 // hi-components/src/basic/card.rs
 // Card component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{CardClass, ClassesBuilder, UtilityClass};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use crate::style_builder::StyleStringBuilder;
+use crate::{prelude::*, styled::StyledComponent};
+use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
+use tairitsu_vdom::{get_bounding_client_rect, DomHandle};
 
-use crate::styled::StyledComponent;
-
-/// Card 组件的类型包装器（用于实现 StyledComponent）
 pub struct CardComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardProps {
-    #[props(default)]
     pub hoverable: bool,
 
-    #[props(default)]
     pub bordered: bool,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub title: Option<String>,
 
-    #[props(default)]
     pub extra: Option<Element>,
 
-    #[props(default)]
     pub children: Element,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 
-    /// Enable glow effect (mouse-following spotlight)
-    /// Cards use the subtle Thirty intensity — barely perceptible ambient glow
-    /// suited for large surfaces (vs Seventy for interactive elements like buttons)
-    #[props(default = true)]
     pub glow: bool,
 }
 
-impl Default for CardProps {
-    fn default() -> Self {
-        Self {
-            hoverable: false,
-            bordered: false,
-            class: String::default(),
-            title: None,
-            extra: None,
-            children: VNode::empty(),
-            onclick: None,
-            glow: true,
-        }
-    }
-}
-
-/// Card component with Arknights + FUI styling
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Card;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Card {
-///             title: "Card Title",
-///             hoverable: true,
-///             div { "Card content" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Card(props: CardProps) -> Element {
     let card_classes = ClassesBuilder::new()
-        .add(CardClass::Card)
-        .add_if(CardClass::CardHoverable, || props.hoverable)
-        .add_if(CardClass::CardBordered, || props.bordered)
-        .add_raw(&props.class)
+        .add_typed(CardClass::Card)
+        .add_typed_if(CardClass::CardHoverable, props.hoverable)
+        .add_typed_if(CardClass::CardBordered, props.bordered)
+        .add(&props.class)
         .build();
 
-    let content = rsx! {
-        // Glow overlay (background layer)
-        // Cards always use the subtle (Dim) intensity for a soft, elegant look
-        if props.glow {
-            div {
-                class: "hi-card-glow hi-glow-dim",
-                style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
-            }
+    let has_title = props.title.is_some();
+    let has_extra = props.extra.is_some();
+
+    // Glow effect state
+    let glow_style = use_signal(|| {
+        StyleStringBuilder::new()
+            .add_var("glow-x", "50%")
+            .add_var("glow-y", "50%")
+            .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
+            .build()
+    });
+
+    // Mouse tracking handler for glow effect
+    let glow_style_clone = glow_style.clone();
+    let mousemove_handler = move |event: MouseEvent| {
+        if props.glow
+            && let Some(target) = event.target
+        {
+            let rect = get_bounding_client_rect(DomHandle::from_raw(target));
+            let pct_x = if rect.width > 0.0 {
+                (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0)
+            } else {
+                50.0
+            };
+            let pct_y = if rect.height > 0.0 {
+                (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0)
+            } else {
+                50.0
+            };
+            let new_style = StyleStringBuilder::new()
+                .add_var("glow-x", &format!("{}%", pct_x))
+                .add_var("glow-y", &format!("{}%", pct_y))
+                .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
+                .build();
+            glow_style_clone.set(new_style);
         }
-
-        if props.title.is_some() || props.extra.is_some() {
-            div { class: "{CardClass::CardHeader.as_class()}",
-
-                if let Some(title) = props.title {
-                    div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
-                }
-
-                if let Some(extra) = props.extra {
-                    div { class: "{CardClass::CardExtra.as_class()}", {extra} }
-                }
-            }
-        }
-
-        div { class: "{CardClass::CardBody.as_class()}", {props.children} }
     };
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        rsx! {
+    // Build the card content as a fragment
+    let glow_overlay = if props.glow {
+        Some(rsx! {
             div {
-                class: "{card_classes}",
-                onclick: move |e| {
-                    if let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
-                },
-                onmousemove: move |event: Event<MouseData>| {
-                    if let Some(web_event) = event.downcast::<web_sys::MouseEvent>() {
-                        let client_x = web_event.client_x() as f64;
-                        let client_y = web_event.client_y() as f64;
-
-                        // Find the card by traversing up from target
-                        let mut target: Option<web_sys::EventTarget> = web_event.target();
-
-                        while let Some(current) = target {
-                            let current_el = current.dyn_ref::<web_sys::Element>();
-
-                            if let Some(el) = current_el {
-                                if el.class_list().contains("hi-card") {
-                                    // Found the card
-                                    if let Some(card_el) = el.dyn_ref::<web_sys::HtmlElement>() {
-                                        let rect = card_el.get_bounding_client_rect();
-                                        let relative_x = client_x - rect.left();
-                                        let relative_y = client_y - rect.top();
-                                        let width = rect.width();
-                                        let height = rect.height();
-
-                                        if width > 0.0 && height > 0.0 {
-                                            let percent_x = ((relative_x / width) * 100.0)
-                                                .clamp(0.0, 100.0);
-                                            let percent_y = ((relative_y / height) * 100.0)
-                                                .clamp(0.0, 100.0);
-                                            let glow_el = card_el
-                                                .query_selector(".hi-card-glow")
-                                                .ok()
-                                                .flatten();
-                                            if let Some(glow_el) = glow_el {
-                                                glow_el
-                                                    .dyn_ref::<web_sys::HtmlElement>()
-                                                    .and_then(|style_el| {
-                                                        style_el
-                                                            .style()
-                                                            .set_property("--glow-x", &format!("{:.1}%", percent_x))
-                                                            .ok()
-                                                    });
-                                                glow_el
-                                                    .dyn_ref::<web_sys::HtmlElement>()
-                                                    .and_then(|style_el| {
-                                                        style_el
-                                                            .style()
-                                                            .set_property("--glow-y", &format!("{:.1}%", percent_y))
-                                                            .ok()
-                                                    });
-                                            }
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            let node = current.dyn_ref::<web_sys::Node>();
-                            target = node
-                                .and_then(|n| n.parent_node())
-                                .and_then(|n| n.dyn_into::<web_sys::EventTarget>().ok());
-                        }
-                    }
-                },
-                {content}
+                class: "hi-card-glow hi-glow-dim",
+                style: "{glow_style}",
             }
+        })
+    } else {
+        None
+    };
+
+    // Build title element
+    let title_el = props.title.as_ref().map(|title| {
+        rsx! {
+            div { class: CardClass::CardTitle.class_name(), "{title}" }
         }
-    }
+    });
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
+    // Build extra element
+    let extra_el = props.extra.as_ref().map(|extra| {
         rsx! {
-            div {
-                class: "{card_classes}",
-                onclick: move |e| {
-                    if let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
-                },
-                {content}
+            div { class: CardClass::CardExtra.class_name(), {extra.clone()} }
+        }
+    });
+
+    let header = if has_title || has_extra {
+        Some(rsx! {
+            div { class: CardClass::CardHeader.class_name(),
+                {title_el.unwrap_or_else(VNode::empty)}
+                {extra_el.unwrap_or_else(VNode::empty)}
             }
+        })
+    } else {
+        None
+    };
+
+    let body = rsx! {
+        div { class: CardClass::CardBody.class_name(), {props.children} }
+    };
+
+    let content = VNode::Fragment(vec![
+        glow_overlay.unwrap_or_else(VNode::empty),
+        header.unwrap_or_else(VNode::empty),
+        body,
+    ]);
+
+    rsx! {
+        div {
+            class: card_classes,
+            onmousemove: mousemove_handler,
+            onclick: move |e| {
+                if let Some(handler) = props.onclick.as_ref() {
+                    handler.call(e);
+                }
+            },
+            {content}
         }
     }
 }
@@ -213,71 +152,83 @@ impl StyledComponent for CardComponent {
 // CardHeader - Optional header with title, subtitle, and actions
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardHeaderProps {
-    #[props(default)]
     pub title: Option<String>,
 
-    #[props(default)]
     pub subtitle: Option<String>,
 
-    #[props(default)]
     pub avatar: Option<Element>,
 
-    #[props(default)]
     pub action: Option<Element>,
 
-    #[props(default)]
     pub class: String,
 }
 
-/// Card header component
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::CardHeader;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardHeader {
-///             title: Some("Title".to_string()),
-///             subtitle: Some("Subtitle".to_string()),
-///             action: Some(rsx! {
-///                 button { "Action" }
-///             })
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardHeader(props: CardHeaderProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardHeader)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardHeader)
+        .add(&props.class)
         .build();
 
+    let has_avatar = props.avatar.is_some();
+    let has_title = props.title.is_some();
+    let has_subtitle = props.subtitle.is_some();
+    let has_action = props.action.is_some();
+
+    // Build conditional sections
+    let avatar_el = if has_avatar {
+        let avatar = props.avatar.clone().unwrap();
+        Some(rsx! {
+            div { class: "hi-card-header-avatar", {avatar} }
+        })
+    } else {
+        None
+    };
+
+    let title_el = if has_title {
+        let title = props.title.clone().unwrap();
+        Some(rsx! {
+            div { class: CardClass::CardTitle.class_name(), "{title}" }
+        })
+    } else {
+        None
+    };
+
+    let subtitle_el = if has_subtitle {
+        let subtitle = props.subtitle.clone().unwrap();
+        Some(rsx! {
+            div { class: CardClass::CardSubtitle.class_name(), "{subtitle}" }
+        })
+    } else {
+        None
+    };
+
+    let action_el = if has_action {
+        let action = props.action.clone().unwrap();
+        Some(rsx! {
+            div { class: "hi-card-header-action", {action} }
+        })
+    } else {
+        None
+    };
+
     rsx! {
-        div { class: "{classes}",
+        div { class: classes,
             // Left section: avatar + title/subtitle
             div { class: "hi-card-header-left",
-                if let Some(avatar) = props.avatar {
-                    div { class: "hi-card-header-avatar", {avatar} }
-                }
+                {avatar_el.unwrap_or_else(VNode::empty)}
                 div {
-                    if let Some(title) = props.title {
-                        div { class: "{CardClass::CardTitle.as_class()}", "{title}" }
-                    }
-                    if let Some(subtitle) = props.subtitle {
-                        div { class: "{CardClass::CardSubtitle.as_class()}", "{subtitle}" }
-                    }
+                    {title_el.unwrap_or_else(VNode::empty)}
+                    {subtitle_el.unwrap_or_else(VNode::empty)}
                 }
             }
             // Right section: action buttons
-            if let Some(action) = props.action {
-                div { class: "hi-card-header-action", {action} }
-            }
+            {action_el.unwrap_or_else(VNode::empty)}
         }
     }
 }
@@ -286,40 +237,25 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
 // CardContent - Main content area
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardContentProps {
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 }
 
-/// Card content component
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::CardContent;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardContent {
-///             div { "Content goes here" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardContent(props: CardContentProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardBody)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardBody)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div { class: "{classes}", {props.children} }
+        div { class: classes, {props.children} }
     }
 }
 
@@ -327,46 +263,28 @@ pub fn CardContent(props: CardContentProps) -> Element {
 // CardActions - Footer with action buttons
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardActionsProps {
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 
-    /// If true, disable the default spacing between buttons
-    #[props(default)]
     pub disable_spacing: bool,
 }
 
-/// Card actions component (footer with buttons)
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::CardActions;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardActions {
-///             button { "Cancel" }
-///             button { "Confirm" }
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardActions(props: CardActionsProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardActions)
-        .add_if(CardClass::CardActionsNoSpacing, || props.disable_spacing)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardActions)
+        .add_typed_if(CardClass::CardActionsNoSpacing, props.disable_spacing)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div { class: "{classes}", {props.children} }
+        div { class: classes, {props.children} }
     }
 }
 
@@ -374,38 +292,20 @@ pub fn CardActions(props: CardActionsProps) -> Element {
 // CardMedia - Optional media container (images/videos)
 // ============================================
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct CardMediaProps {
     pub src: String,
 
-    #[props(default)]
     pub alt: String,
 
-    #[props(default)]
     pub height: Option<String>,
 
-    #[props(default)]
     pub class: String,
 }
 
-/// Card media component for images/videos
 ///
-/// # Examples
 ///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::CardMedia;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         CardMedia {
-///             src: "/images/photo.jpg".to_string(),
-///             alt: "Description".to_string(),
-///             height: Some("200px".to_string())
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn CardMedia(props: CardMediaProps) -> Element {
     let style = if let Some(height) = props.height {
@@ -415,16 +315,16 @@ pub fn CardMedia(props: CardMediaProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add(CardClass::CardMedia)
-        .add_raw(&props.class)
+        .add_typed(CardClass::CardMedia)
+        .add(&props.class)
         .build();
 
     rsx! {
         img {
-            class: "{classes}",
-            src: "{props.src}",
-            alt: "{props.alt}",
-            style: "{style}",
+            class: classes,
+            src: props.src,
+            alt: props.alt,
+            style,
         }
     }
 }

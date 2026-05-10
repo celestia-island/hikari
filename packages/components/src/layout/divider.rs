@@ -1,9 +1,9 @@
 // hi-components/src/layout/divider.rs
 // Divider component for visual separation
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DividerClass};
+use hikari_palette::classes::{ClassesBuilder, DividerClass};
+
+use crate::{prelude::*, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -20,54 +20,29 @@ pub enum DividerType {
     Dotted,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`Divider`] component.
+#[define_props]
 pub struct DividerProps {
-    /// Divider text (for labeled dividers)
-    #[props(default)]
+    #[default]
     pub text: Option<String>,
 
-    /// Divider orientation
-    #[props(default)]
+    #[default]
     pub orientation: DividerOrientation,
 
-    /// Divider line style
-    #[props(default)]
+    #[default]
     pub divider_type: DividerType,
 
-    /// Text alignment for horizontal dividers with text (default: center)
-    #[props(default = "center".to_string())]
+    #[default("center".to_string())]
     pub text_align: String,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
+    #[default]
     pub rtl: Option<bool>,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-/// Divider component for visual separation
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Divider, DividerOrientation, DividerType};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Divider {}
-///         Divider {
-///             text: "Section Title".to_string(),
-///         }
-///         Divider {
-///             orientation: DividerOrientation::Vertical,
-///             divider_type: DividerType::Dashed,
-///         }
-///     }
-/// }
-/// ```
+/// A visual divider line that separates content sections, with optional centered text label.
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -85,14 +60,14 @@ pub fn Divider(props: DividerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(DividerClass::Divider)
-        .add(orientation_class)
-        .add(type_class)
-        .add_if(DividerClass::WithText, || props.text.is_some())
-        .add_raw(&props.class);
+        .add_typed(DividerClass::Divider)
+        .add_typed(orientation_class)
+        .add_typed(type_class)
+        .add_typed_if(DividerClass::WithText, props.text.is_some())
+        .add(&props.class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-divider-rtl");
+        builder = builder.add_typed(DividerClass::Rtl);
     }
 
     let divider_classes = builder.build();
@@ -116,13 +91,13 @@ pub fn Divider(props: DividerProps) -> Element {
             _ => "text-align: center;",
         }
     } else {
-        ""
+        {
+            ""
+        }
     };
 
     rsx! {
-        div {
-            class: "{divider_classes}",
-            style: "{text_align_style}",
+        div { class: divider_classes, style: text_align_style,
             if let Some(label) = props.text {
                 span { class: "hi-divider-text", "{label}" }
             }
@@ -130,7 +105,6 @@ pub fn Divider(props: DividerProps) -> Element {
     }
 }
 
-/// Divider component's type wrapper for StyledComponent
 pub struct DividerComponent;
 
 impl crate::styled::StyledComponent for DividerComponent {

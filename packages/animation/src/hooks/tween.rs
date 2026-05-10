@@ -1,8 +1,8 @@
-//! Tween hook for Dioxus
+//! Tween hook
+//!
+//! Provides `UseTween` for imperative tween control within components.
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
-
-use dioxus::prelude::*;
 
 use crate::{
     core::{AnimationEngine, AnimationOptions, Tween, TweenId},
@@ -32,7 +32,7 @@ impl UseTween {
 
     pub fn tween_with_config(&self, mut options: AnimationOptions) -> Tween {
         if let Some(ctx) = try_use_animation_config() {
-            let cfg = ctx.config.read();
+            let cfg = ctx.get();
             if cfg.duration_scale != 1.0 {
                 options.duration =
                     Duration::from_millis(cfg.scale_duration(options.duration.as_millis() as u64));
@@ -82,9 +82,9 @@ impl UseTween {
 }
 
 pub fn use_animation_engine() -> AnimationEngine {
-    use_hook(AnimationEngine::new)
+    AnimationEngine::new()
 }
 
 pub fn use_tween() -> UseTween {
-    use_hook(UseTween::new)
+    UseTween::new()
 }

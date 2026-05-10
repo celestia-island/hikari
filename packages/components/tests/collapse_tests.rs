@@ -1,20 +1,28 @@
-// hi-components/tests/collapse_tests.rs
-// Collapse component unit tests
-
 #[cfg(test)]
 mod tests {
-
-    use dioxus::prelude::*;
     use hikari_components::data::CollapseProps;
+    use hikari_components::prelude::*;
+
+    #[test]
+    fn test_collapse_renders() {
+        let _props = CollapseProps {
+            expanded: true,
+            duration: 300,
+            animated: true,
+            class: "test-collapse".to_string(),
+            children: VNode::empty(),
+            on_expand: None,
+        };
+    }
 
     #[test]
     fn test_collapse_props_default() {
         let props = CollapseProps::default();
-
         assert!(!props.expanded);
         assert_eq!(props.duration, 200);
         assert!(props.animated);
-        assert_eq!(props.class, String::new());
+        assert!(props.class.is_empty());
+        assert!(props.on_expand.is_none());
     }
 
     #[test]
@@ -23,7 +31,6 @@ mod tests {
             expanded: true,
             ..Default::default()
         };
-
         assert!(props.expanded);
     }
 
@@ -33,7 +40,6 @@ mod tests {
             duration: 500,
             ..Default::default()
         };
-
         assert_eq!(props.duration, 500);
     }
 
@@ -43,7 +49,6 @@ mod tests {
             animated: false,
             ..Default::default()
         };
-
         assert!(!props.animated);
     }
 
@@ -53,24 +58,73 @@ mod tests {
             class: "custom-collapse".to_string(),
             ..Default::default()
         };
-
         assert_eq!(props.class, "custom-collapse");
     }
 
     #[test]
     fn test_collapse_props_with_children() {
-        let children = rsx! {
-            div { "Collapse content" }
-        };
+        let children = VNode::empty();
 
-        let props = CollapseProps {
-            children: children.clone(),
+        let _props = CollapseProps {
+            children,
             ..Default::default()
         };
-        let _ = props; // Suppress unused warning
+    }
 
-        // Verify children exists by checking that it renders
-        // Note: In Dioxus 0.7, VNode is opaque - we verify through rendering
-        // Test passes if props can be constructed with children
+    #[test]
+    fn test_collapse_props_clone() {
+        let props = CollapseProps {
+            expanded: true,
+            duration: 300,
+            animated: true,
+            class: "test-class".to_string(),
+            on_expand: None,
+            children: VNode::empty(),
+        };
+
+        let cloned = props.clone();
+        assert!(cloned.expanded);
+        assert_eq!(cloned.duration, 300);
+        assert!(cloned.animated);
+        assert_eq!(cloned.class, "test-class");
+        assert!(cloned.on_expand.is_none());
+    }
+
+    #[test]
+    fn test_collapse_props_partial_eq() {
+        let props1 = CollapseProps {
+            expanded: false,
+            duration: 200,
+            animated: true,
+            class: "test".to_string(),
+            on_expand: None,
+            children: VNode::empty(),
+        };
+
+        let props2 = CollapseProps {
+            expanded: false,
+            duration: 200,
+            animated: true,
+            class: "test".to_string(),
+            on_expand: None,
+            children: VNode::empty(),
+        };
+
+        assert_eq!(props1, props2);
+    }
+
+    #[test]
+    fn test_collapse_props_not_equal() {
+        let props1 = CollapseProps {
+            expanded: false,
+            ..Default::default()
+        };
+
+        let props2 = CollapseProps {
+            expanded: true,
+            ..Default::default()
+        };
+
+        assert_ne!(props1, props2);
     }
 }

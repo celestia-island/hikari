@@ -1,28 +1,10 @@
-//! Build script for website
+//! Build script for website.
 //!
-//! This script:
-//! 1. Generates bulk import mod.rs files using include! macros
-//! 2. Copies index.html to public/
-//! 3. Sets up development environment
-//! 4. Creates language-specific document directories (en, zh-chs, zh-cht)
-//!
-//! # IMPORTANT: Path Configuration
-//!
-//! Filesystem paths used here MUST match those defined in `src/paths.rs`:
-//! - `public/assets` → assets_fs
-//! - `public/styles` → styles_fs
-//!
-//! HTML paths in `index.html` must also match paths in `src/paths.rs`:
-//! - `/assets/*` → assets_mount
-//! - `/styles/*` → styles_mount
+//! It keeps website-local source assets ready for tairitsu-packager by
+//! checking the staged `public/` directory and optionally running auxiliary
+//! generation scripts when they exist.
 
 use std::{path::{Path, absolute as path_absolute}, process::Command};
-
-/// Filesystem paths (MUST match src/paths.rs::STATIC_PATHS)
-const PUBLIC_DIR: &str = "public";
-
-/// Language directory mappings: (source_dir, target_dir)
-const LANG_DIRS: &[(&str, &str)] = &[("en-US", "en"), ("zh-CHS", "zh-chs"), ("zh-CHT", "zh-cht")];
 
 fn main() {
     println!("cargo:warning=🏗️  website build starting...");
@@ -96,96 +78,24 @@ fn main() {
         workspace_root
     );
 
-    // Create public directory paths (using lexical paths)
-    let root_public_dir = workspace_root.join("public");
-    let images_dir = root_public_dir.join("images");
-
-    println!("cargo:warning=📂 Root public dir: {:?}", root_public_dir);
-
-    // Ensure root public/images directory exists
-    if let Err(e) = std::fs::create_dir_all(&images_dir) {
-        println!("cargo:warning=⚠️  Failed to create public/images/: {}", e);
-    }
-
-    // Copy index.html to root public/
-    let index_src = manifest_path.join("index.html");
-    let index_dst = root_public_dir.join("index.html");
+    let staged_public_dir = manifest_path.join("public");
+    let css_bundle_path = staged_public_dir.join("styles/bundle.css");
 
     println!(
-        "cargo:warning=📄 Copying: {:?} -> {:?}",
-        index_src, index_dst
+        "cargo:warning=📂 Website staged public dir: {:?}",
+        staged_public_dir
     );
-
-    if index_src.exists() {
-        match std::fs::copy(&index_src, &index_dst) {
-            Ok(bytes) => {
-                println!(
-                    "cargo:warning=📄 Copied index.html to public/ ({} bytes)",
-                    bytes
-                );
-                // Verify it actually exists
-                if index_dst.exists() {
-                    println!(
-                        "cargo:warning=✅ Verification: index.html exists at {:?}",
-                        index_dst
-                    );
-                } else {
-                    println!(
-                        "cargo:warning=❌ ERROR: index.html NOT found at {:?}",
-                        index_dst
-                    );
-                }
-            }
-            Err(e) => println!("cargo:warning=⚠️  Failed to copy index.html: {}", e),
-        }
-    } else {
-        println!("cargo:warning=⚠️  index.html not found at {:?}", index_src);
-    }
-
-    // Copy logo.png to root public/images/
-    let logo_src = workspace_root.join("docs/logo.png");
-    let logo_dst = images_dir.join("logo.png");
-
-    println!(
-        "cargo:warning=🖼️  Copying: {:?} -> {:?}",
-        logo_src, logo_dst
-    );
-
-    if logo_src.exists() {
-        match std::fs::copy(&logo_src, &logo_dst) {
-            Ok(bytes) => {
-                println!(
-                    "cargo:warning=🖼️  Copied logo.png to public/images/ ({} bytes)",
-                    bytes
-                );
-                if logo_dst.exists() {
-                    println!(
-                        "cargo:warning=✅ Verification: logo.png exists at {:?}",
-                        logo_dst
-                    );
-                } else {
-                    println!(
-                        "cargo:warning=❌ ERROR: logo.png NOT found at {:?}",
-                        logo_dst
-                    );
-                }
-            }
-            Err(e) => println!("cargo:warning=⚠️  Failed to copy logo.png: {}", e),
-        }
-    } else {
-        println!(
-            "cargo:warning=⚠️  logo.png not found at {:?} (optional)",
-            logo_src
-        );
-    }
-
-    // Check CSS bundle
-    let css_bundle_path = root_public_dir.join("styles/bundle.css");
-
     println!(
         "cargo:warning=🎨 Checking CSS bundle at {:?}",
         css_bundle_path
     );
+
+    if let Err(e) = std::fs::create_dir_all(staged_public_dir.join("styles")) {
+        println!(
+            "cargo:warning=⚠️  Failed to create staged public/styles directory: {}",
+            e
+        );
+    }
 
     if css_bundle_path.exists() {
         if let Ok(metadata) = css_bundle_path.metadata() {
@@ -202,124 +112,15 @@ fn main() {
             "cargo:warning=⚠️  CSS bundle not found at {:?}",
             css_bundle_path
         );
-        println!("cargo:warning=⚠️  Run 'just build-dev' to generate it");
-    }
-
-    // Copy docs directory to public/docs/ (both workspace root and local)
-    let docs_src = workspace_root.join("docs");
-    let docs_dst = root_public_dir.join("docs");
-    let local_docs_dst = manifest_path.join("public/docs");
-
-    println!(
-        "cargo:warning=📄 Copying docs: {:?} -> {:?}",
-        docs_src, docs_dst
-    );
-
-    if docs_src.exists() {
-        // Copy to workspace root public/docs/
-        if docs_dst.exists() {
-            if let Err(e) = std::fs::remove_dir_all(&docs_dst) {
-                println!("cargo:warning=⚠️  Failed to remove old docs: {}", e);
-            }
-        }
-        if let Err(e) = copy_dir_all(&docs_src, &docs_dst) {
-            println!("cargo:warning=⚠️  Failed to copy docs: {}", e);
-        } else {
-            println!("cargo:warning=✅ Copied docs to public/docs/");
-
-            // Create language-specific directories (en, zh-chs, zh-cht) from original dirs (en-US, zh-CHS, zh-CHT)
-            for (src_dir, target_dir) in LANG_DIRS {
-                let src_path = docs_dst.join(src_dir);
-                let target_path = docs_dst.join(target_dir);
-
-                if src_path.exists() {
-                    // Remove existing target if exists
-                    if target_path.exists() {
-                        if let Err(e) = std::fs::remove_dir_all(&target_path) {
-                            println!(
-                                "cargo:warning=⚠️  Failed to remove old {}: {}",
-                                target_dir, e
-                            );
-                        }
-                    }
-
-                    // Copy source to target
-                    if let Err(e) = copy_dir_all(&src_path, &target_path) {
-                        println!(
-                            "cargo:warning=⚠️  Failed to create {} directory: {}",
-                            target_dir, e
-                        );
-                    } else {
-                        println!(
-                            "cargo:warning=✅ Created language directory: {}",
-                            target_dir
-                        );
-                    }
-                } else {
-                    println!(
-                        "cargo:warning=⚠️  Source language directory not found: {}",
-                        src_dir
-                    );
-                }
-            }
-        }
-
-        // Also copy to local public/docs/ for server running from examples/website
         println!(
-            "cargo:warning=📄 Copying docs to local: {:?}",
-            local_docs_dst
-        );
-        if local_docs_dst.exists() {
-            if let Err(e) = std::fs::remove_dir_all(&local_docs_dst) {
-                println!("cargo:warning=⚠️  Failed to remove old local docs: {}", e);
-            }
-        }
-        if let Err(e) = copy_dir_all(&docs_src, &local_docs_dst) {
-            println!("cargo:warning=⚠️  Failed to copy docs to local: {}", e);
-        } else {
-            println!("cargo:warning=✅ Copied docs to local public/docs/");
-
-            // Also create language-specific directories in local
-            for (src_dir, target_dir) in LANG_DIRS {
-                let src_path = local_docs_dst.join(src_dir);
-                let target_path = local_docs_dst.join(target_dir);
-
-                if src_path.exists() {
-                    if target_path.exists() {
-                        if let Err(e) = std::fs::remove_dir_all(&target_path) {
-                            println!(
-                                "cargo:warning=⚠️  Failed to remove old local {}: {}",
-                                target_dir, e
-                            );
-                        }
-                    }
-
-                    if let Err(e) = copy_dir_all(&src_path, &target_path) {
-                        println!(
-                            "cargo:warning=⚠️  Failed to create local {} directory: {}",
-                            target_dir, e
-                        );
-                    } else {
-                        println!(
-                            "cargo:warning=✅ Created local language directory: {}",
-                            target_dir
-                        );
-                    }
-                }
-            }
-        }
-    } else {
-        println!(
-            "cargo:warning=⚠️  docs directory not found at {:?}",
-            docs_src
+            "cargo:warning=⚠️  Run 'tairitsu build' or 'just dev' to generate it"
         );
     }
 
     println!("cargo:warning=✅ website build completed!");
 
     // Tell cargo to rerun build.rs if these files change
-    println!("cargo:rerun-if-changed=index.html");
-    println!("cargo:rerun-if-changed=../../docs/logo.png");
+    println!("cargo:rerun-if-changed=public");
     println!("cargo:rerun-if-changed=../../scripts/generate_bulk_imports.py");
     println!("cargo:rerun-if-changed=src/components");
     println!("cargo:rerun-if-changed=src/pages");
@@ -339,24 +140,4 @@ fn get_workspace_root() -> std::path::PathBuf {
     } else {
         workspace_root
     }
-}
-
-/// Recursively copy a directory
-fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
-    std::fs::create_dir_all(dst)?;
-
-    for entry in std::fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
-
-        if ty.is_dir() {
-            copy_dir_all(&src_path, &dst_path)?;
-        } else {
-            std::fs::copy(&src_path, &dst_path)?;
-        }
-    }
-
-    Ok(())
 }

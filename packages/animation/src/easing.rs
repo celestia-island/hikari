@@ -443,11 +443,7 @@ pub fn slide_out(t: f64) -> f64 {
 /// # Returns
 /// Flip in value (0.0 for t < 0.5, 1.0 otherwise)
 pub fn flip_in(t: f64) -> f64 {
-    if t < 0.5 {
-        0.0
-    } else {
-        1.0
-    }
+    if t < 0.5 { 0.0 } else { 1.0 }
 }
 
 /// Flip out transition
@@ -458,9 +454,5 @@ pub fn flip_in(t: f64) -> f64 {
 /// # Returns
 /// Flip out value (1.0 for t < 0.5, 0.0 otherwise)
 pub fn flip_out(t: f64) -> f64 {
-    if t < 0.5 {
-        1.0
-    } else {
-        0.0
-    }
+    if t < 0.5 { 1.0 } else { 0.0 }
 }

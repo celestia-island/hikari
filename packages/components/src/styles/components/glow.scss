@@ -5,24 +5,34 @@
 // ============================================
 // Hikari Glow Component - Single Glow Color System
 // ============================================
+//
+// Glow states are controlled by CSS variables updated via mouse events:
+// - --glow-x, --glow-y: Position of glow center (percentage, 0-100%)
+// - --glow-intensity-scale: Visibility level (0 = hidden, 0.5 = hover, 1.0 = active)
+// - --glow-opacity: Direct opacity control (overrides calculated value)
+// - --hi-glow-color: Glow color
+//
+// CSS provides:
+// 1. Base structure (::before pseudo-element)
+// 2. Intensity classes (dim/soft/bright) for base opacity multiplier
+// 3. Smooth transitions for position and opacity
+// 4. Fallback :hover and :active states
 
 // Base glow wrapper styles
 .hi-glow-wrapper,
 .hi-glow-wrapper-block {
   position: relative;
 
-  // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 2;
-    border-radius: inherit;
+    border-radius: var(--hi-glow-radius, inherit);
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 
-    // Use radial-gradient for acrylic spotlight effect
     background: radial-gradient(
       circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
@@ -30,12 +40,10 @@
     );
   }
 
-  // Show glow on hover with intensity-based opacity
   &:hover::before {
     opacity: var(--glow-opacity, 0.15);
   }
 
-  // Ensure children (links, buttons) are always clickable
   > * {
     pointer-events: auto;
     position: relative;
@@ -44,8 +52,50 @@
 }
 
 // ============================================
+// Glow Blur Levels (Backdrop Blur Effect)
+// ============================================
+
+// These classes control the backdrop blur intensity for the glow effect
+// None: No blur (default, for crisp glow edges)
+.hi-glow-blur-none {
+  // No additional blur effect
+}
+
+// Light: Subtle blur (2px) for soft glow edges
+.hi-glow-blur-light {
+  &::before {
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}
+
+// Medium: Medium blur (4px) for balanced glow effect
+.hi-glow-blur-medium {
+  &::before {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+// Heavy: Heavy blur (8px) for intense glow diffusion
+.hi-glow-blur-heavy {
+  &::before {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+// ============================================
 // Glow Intensity Levels (Opacity & Spread)
 // ============================================
+
+// These classes define the BASE opacity for different glow intensities
+// The actual visibility is controlled by --glow-intensity-scale (0 = hidden, 1 = full intensity)
+// IMPORTANT: --glow-base-opacity must be defined on the parent, not on ::before
+//
+// Opacity calculation: base-opacity * intensity-scale
+// - Hover (0.5): subtle glow
+// - Active (1.0): intense glow (2x hover)
 
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
 // Very low opacity + wide spread for an almost imperceptible ambient glow
@@ -86,13 +136,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; // 防止在 flex 容器中收缩
-  align-self: flex-start; // 防止在 flex 容器中被 stretch 拉伸
-
-  // Use standard radius to match Button/Input
-  border-radius: vars.$hikari-radius-fui-sm;
-
-  // FIX: Prevent button overflow: hidden from clipping glow overlay
+  flex-shrink: 0;
+  align-self: flex-start;
   overflow: visible;
 }
 
@@ -101,35 +146,138 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-radius: vars.$hikari-radius-fui-md;
   overflow: visible;
 }
 
 // ============================================
-// Button Hover Enhancement
+// Radius Matching
+// ============================================
+// Glow wrapper must match its child's border-radius.
+// Since CSS cannot "inherit upward", we set radius on common child types.
+// Components set their own --hi-*-radius tokens in button-vars.scss etc.
+
+.hi-glow-wrapper > .hi-button { border-radius: var(--hi-button-radius, var(--hi-radius-md, 8px)); }
+.hi-glow-wrapper > .hi-input,
+.hi-glow-wrapper > .hi-textarea,
+.hi-glow-wrapper > .hi-search,
+.hi-glow-wrapper > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
+.hi-glow-wrapper > li { border-radius: var(--hi-glow-radius, var(--hi-radius-sm, 4px)); }
+
+.hi-glow-wrapper-block > .hi-input,
+.hi-glow-wrapper-block > .hi-textarea,
+.hi-glow-wrapper-block > .hi-search,
+.hi-glow-wrapper-block > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
+
+// ============================================
+// Button Enhancement
 // ============================================
 
-// Remove transform translateY from button hover when wrapped in glow
+// When button is wrapped in glow, let the button handle its own hover effects
+// The glow wrapper adds the mouse-following spotlight effect on top
 .hi-glow-wrapper .hi-button:hover {
   transform: none;
 }
 
-// Focus glow enhancement (uses glow overlay)
+// Combine button outline with glow effect
 .hi-glow-wrapper .hi-button:focus-visible {
   box-shadow:
     0 0 0 2px currentColor,
     0 0 12px var(--hi-glow-color);
 }
 
-// Active glow enhancement
+// Let button handle its own active state
 .hi-glow-wrapper .hi-button:active:not(:disabled) {
   box-shadow:
     0 0 4px currentColor,
-    inset 0 1px 0 var(--hi-white-10, rgba(255,255,255, 0.1));
+    inset 0 1px 0 var(--hi-white-10, rgba(255,255,255,0.1));
   transform: translateY(0) scale(0.98);
+}
+
+.hi-glow-wrapper .hi-button:focus-visible {
+  // Combine button outline with glow effect
+  outline-offset: 2px;
+}
+
+.hi-glow-wrapper .hi-button:active:not(:disabled) {
+  // Let button handle its own active state
 }
 
 // Input hover enhancement
 .hi-glow-wrapper .hi-input-wrapper:hover {
   // No hover effect - handled by glow overlay
+}
+
+// ============================================
+// Glow Animation Presets
+// ============================================
+//
+// These presets add continuous animation effects to the glow component.
+// They are activated by adding the corresponding class to the wrapper.
+//
+// Note: Preset animations pause during mouse interaction to maintain performance.
+
+// Pulse animation - heartbeat-like pulsing glow
+@keyframes glow-pulse {
+  0%, 100% {
+    --glow-intensity-scale: 0.5;
+  }
+  50% {
+    --glow-intensity-scale: 1.0;
+  }
+}
+
+.hi-glow-wrapper.pulse::before {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+// Breathe animation - slow, smooth intensity variation
+@keyframes glow-breathe {
+  0%, 100% {
+    --glow-intensity-scale: 0.3;
+  }
+  50% {
+    --glow-intensity-scale: 1.0;
+  }
+}
+
+.hi-glow-wrapper.breathe::before {
+  animation: glow-breathe 4s ease-in-out infinite;
+}
+
+// Shimmer animation - moving light spot across the element
+@keyframes glow-shimmer {
+  0% {
+    --glow-x: 20%;
+    --glow-y: 50%;
+  }
+  25% {
+    --glow-x: 50%;
+    --glow-y: 80%;
+  }
+  50% {
+    --glow-x: 80%;
+    --glow-y: 50%;
+  }
+  75% {
+    --glow-x: 50%;
+    --glow-y: 20%;
+  }
+  100% {
+    --glow-x: 20%;
+    --glow-y: 50%;
+  }
+}
+
+.hi-glow-wrapper.shimmer::before {
+  animation: glow-shimmer 3s linear infinite;
+}
+
+// Pause preset animations during mouse interaction
+.hi-glow-wrapper.pulse:has(:hover)::before,
+.hi-glow-wrapper.pulse:has(:active)::before,
+.hi-glow-wrapper.breathe:has(:hover)::before,
+.hi-glow-wrapper.breathe:has(:active)::before,
+.hi-glow-wrapper.shimmer:has(:hover)::before,
+.hi-glow-wrapper.shimmer:has(:active)::before {
+  animation-play-state: paused;
 }

@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Section;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Section {
@@ -16,39 +16,22 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, SectionClass};
 
-/// Section component - Content section with optional header
-///
-/// Provides a semantic section element with optional title and description.
-/// Perfect for grouping related content.
-///
-/// # Features
-/// - Optional title and description
-/// - Semantic HTML5 section element
-/// - Responsive spacing
-/// - Clean typography
+use crate::prelude::*;
+
+/// A content section with an optional title and description header.
 #[component]
 pub fn Section(
-    /// Section content
     children: Element,
 
-    /// Section title (optional)
-    #[props(optional)]
-    title: Option<String>,
+    #[props(optional)] title: Option<String>,
 
-    /// Section description/subtitle (optional)
-    #[props(optional)]
-    description: Option<String>,
+    #[props(optional)] description: Option<String>,
 
-    /// Section size (default: md)
-    #[props(default = "md".to_string())]
-    size: String,
+    #[props(default = "md".to_string())] size: String,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let size_class = match size.as_str() {
         "sm" => SectionClass::SectionSm,
@@ -57,66 +40,42 @@ pub fn Section(
     };
 
     let section_classes = ClassesBuilder::new()
-        .add(SectionClass::Section)
-        .add(size_class)
-        .add_raw(&class)
+        .add_typed(SectionClass::Section)
+        .add_typed(size_class)
+        .add(&class)
         .build();
 
     let section_classes_str = section_classes.as_str();
 
     rsx! {
-        section {
-            class: "{section_classes_str}",
+        section { class: section_classes_str,
 
             // Optional header
             if title.is_some() || description.is_some() {
-                div {
-                    class: "{SectionClass::SectionHeader.as_class()}",
+                div { class: SectionClass::SectionHeader.class_name(),
                     if let Some(t) = title {
-                        h2 {
-                            class: "{SectionClass::SectionTitle.as_class()}",
-                            "{t}"
-                        }
+                        h2 { class: SectionClass::SectionTitle.class_name(), "{t}" }
                     }
                     if let Some(d) = description {
-                        p {
-                            class: "{SectionClass::SectionDescription.as_class()}",
-                            "{d}"
-                        }
+                        p { class: SectionClass::SectionDescription.class_name(), "{d}" }
                     }
                 }
             }
 
             // Section content
-            div {
-                class: "{SectionClass::SectionBody.as_class()}",
-                { children }
-            }
+            div { class: SectionClass::SectionBody.class_name(), {children} }
         }
     }
 }
 
-/// Spacer component - Vertical or horizontal spacing
-///
-/// Provides consistent spacing within layouts.
-///
-/// # Features
-/// - Vertical or horizontal orientation
-/// - Multiple size presets
-/// - Zero-height component
+/// An invisible spacer element for adding vertical or horizontal gaps.
 #[component]
 pub fn Spacer(
-    /// Spacer orientation (default: vertical)
-    #[props(default = "vertical".to_string())]
-    orientation: String,
+    #[props(default = "vertical".to_string())] orientation: String,
 
-    /// Spacer size (xs/sm/md/lg/xl, default: md)
-    #[props(default = "md".to_string())]
-    size: String,
+    #[props(default = "md".to_string())] size: String,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let size_value = match size.as_str() {
         "xs" => "0.5rem",
@@ -133,16 +92,66 @@ pub fn Spacer(
     };
 
     let classes = ClassesBuilder::new()
-        .add(SectionClass::Spacer)
-        .add_raw(&class)
+        .add_typed(SectionClass::Spacer)
+        .add(&class)
         .build();
 
     let classes_str = classes.as_str();
 
     rsx! {
-        div {
-            class: "{classes_str}",
-            style: style,
-        }
+        div { class: classes_str, style }
+    }
+}
+
+pub struct SectionComponent;
+
+impl crate::styled::StyledComponent for SectionComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-section {
+  margin-bottom: 2rem;
+}
+
+.hi-section-sm {
+  margin-bottom: 1rem;
+}
+
+.hi-section-md {
+  margin-bottom: 2rem;
+}
+
+.hi-section-lg {
+  margin-bottom: 3rem;
+}
+
+.hi-section-header {
+  margin-bottom: 1rem;
+}
+
+.hi-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.hi-section-description {
+  font-size: 0.875rem;
+  color: var(--hi-color-text-secondary);
+  margin: 0;
+}
+
+.hi-section-body {
+  /* Content styles */
+}
+
+.hi-spacer {
+  display: block;
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "section"
     }
 }

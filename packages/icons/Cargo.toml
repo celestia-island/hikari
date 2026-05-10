@@ -1,32 +1,37 @@
 [package]
 name = "hikari-icons"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Lucide icon integration for the Hikari design system"
+repository.workspace = true
 
 [features]
 default = []
-dynamic-fetch = []
+dioxus = []
+tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
+dynamic-fetch = ["dep:web-sys", "dep:reqwest"]
 dynamic-fetch-warnings = []
 
 [build-dependencies]
 hikari-builder = { path = "../builder" }
+anyhow = "^1"
 
 [dependencies]
-# MCP / network and protocols
-dioxus = { workspace = true }
+# Tairitsu framework (optional)
+tairitsu-vdom = { path = "../../../tairitsu/packages/vdom", optional = true }
+tairitsu-hooks = { path = "../../../tairitsu/packages/hooks", optional = true }
+tairitsu-macros = { path = "../../../tairitsu/packages/macros", optional = true }
 
-# Styling
-hikari-animation = { path = "../animation" }
+# Hikari design system
+hikari-animation = { path = "../animation", default-features = false }
 
 # Data serialization
 serde.workspace = true
 ron.workspace = true
 
-# WASM dependencies (only for web target)
+# WASM dependencies for dynamic icon fetching
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { workspace = true }
-web-sys = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-reqwest = { version = "^0.12", features = ["json"] }
-once_cell = "^1"
-ron = "^0.8"
+web-sys = { version = "0.3", features = ["console"], optional = true }
+reqwest = { version = "^0.12", features = ["json"], optional = true }

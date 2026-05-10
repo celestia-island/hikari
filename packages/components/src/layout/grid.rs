@@ -5,7 +5,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::{Grid, Col};
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Grid {
@@ -17,35 +17,21 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use palette::{classes::components::*, ClassesBuilder};
+use hikari_palette::{ClassesBuilder, classes::components::*};
 
-/// Grid component - 12-column responsive grid container
+use crate::{prelude::*, theme::use_layout_direction};
+
 ///
-/// Provides a flexible grid system based on CSS Grid.
 ///
-/// # Features
-/// - 12-column grid system
-/// - Responsive gutters
-/// - Automatic wrapping
-/// - Gap control
 #[component]
 pub fn Grid(
-    /// Grid columns content
     children: Element,
 
-    /// Number of columns (default: 12)
-    #[props(default = 12)]
-    columns: u8,
+    #[props(default = 12)] columns: u8,
 
-    /// Gap between grid items (default: md)
-    #[props(default = "md".to_string())]
-    gap: String,
+    #[props(default = "md".to_string())] gap: String,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let gap_class = match gap.as_str() {
         "sm" => GridClass::GapSm,
@@ -54,113 +40,93 @@ pub fn Grid(
     };
 
     let classes = ClassesBuilder::new()
-        .add(GridClass::Grid)
-        .add(gap_class)
-        .add_raw(&class)
+        .add_typed(GridClass::Grid)
+        .add_typed(gap_class)
+        .add(&class)
         .build();
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
             style: format!("grid-template-columns: repeat({columns}, minmax(0, 1fr));"),
-            { children }
+            {children}
         }
     }
 }
 
-/// Col component - Grid column component
 ///
-/// Defines column span within a Grid.
 ///
-/// # Features
-/// - Responsive column spans
-/// - Auto-width option
-/// - Offset support
 #[component]
 pub fn Col(
-    /// Column content
     children: Element,
 
-    /// Column span (1-12, default: auto)
-    #[props(default)]
-    span: Option<u8>,
+    #[props(default)] span: Option<u8>,
 
-    /// Offset by N columns
-    #[props(default)]
-    offset: Option<u8>,
+    #[props(default)] span_sm: Option<u8>,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] span_md: Option<u8>,
+
+    #[props(default)] span_lg: Option<u8>,
+
+    #[props(default)] offset: Option<u8>,
+
+    #[props(default)] class: String,
 ) -> Element {
-    let style = if let Some(s) = span {
-        format!("grid-column: span {s};")
+    // Build responsive grid-column style
+    let mut style_parts = Vec::new();
+
+    // Base span (mobile first)
+    let base_span = span_sm.or(span).unwrap_or(12);
+    style_parts.push(format!("grid-column: span {base_span};"));
+
+    // Responsive spans using media query simulation via CSS custom properties
+    // We'll use a CSS approach with inline styles
+    let md_span = span_md.or(span).unwrap_or(base_span);
+    let lg_span = span_lg.or(span_md).or(span).unwrap_or(md_span);
+
+    // Build the style with responsive behavior using CSS grid-column
+    let style = if let Some(o) = offset {
+        format!("grid-column: {} / span {};", o + 1, base_span)
     } else {
-        "grid-column: auto;".to_string()
+        format!("grid-column: span {base_span};")
     };
 
-    let style = if let Some(o) = offset {
-        format!("{}grid-column-start: {};", style, o + 1)
-    } else {
-        style
-    };
+    // Add responsive classes for different breakpoints
+    let responsive_class = format!(
+        "col-responsive col-span-{} md:col-span-{} lg:col-span-{}",
+        base_span, md_span, lg_span
+    );
 
     let classes = ClassesBuilder::new()
-        .add(GridClass::Col)
-        .add_raw(&class)
+        .add_typed(GridClass::Col)
+        .add(&responsive_class)
+        .add(&class)
         .build();
 
     rsx! {
-        div {
-            class: "{classes}",
-            style: style,
-            { children }
-        }
+        div { class: classes, style, {children} }
     }
 }
 
-/// Row component - Flexbox row for horizontal layouts
 ///
-/// Simple flex row container for horizontal layouts.
 ///
-/// # Features
-/// - Flexbox horizontal layout
-/// - Responsive wrapping
-/// - Gap control
-/// - Alignment options
-/// - RTL support
 #[component]
 pub fn Row(
-    /// Row content
     children: Element,
 
-    /// Gap between items (default: md)
-    #[props(default = "md".to_string())]
-    gap: String,
+    #[props(default = "md".to_string())] gap: String,
 
-    /// Wrap content (default: true)
-    #[props(default = true)]
-    wrap: bool,
+    #[props(default = true)] wrap: bool,
 
-    /// Horizontal alignment (default: start)
-    #[props(default = "start".to_string())]
-    justify: String,
+    #[props(default = "start".to_string())] justify: String,
 
-    /// Vertical alignment (default: center)
-    #[props(default = "center".to_string())]
-    align: String,
+    #[props(default = "center".to_string())] align: String,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
-    /// Custom inline styles
-    #[props(default)]
-    style: String,
+    #[props(default)] style: String,
 ) -> Element {
     let layout_direction = use_layout_direction();
     let is_rtl = rtl.unwrap_or_else(|| layout_direction.is_rtl());
@@ -199,16 +165,100 @@ pub fn Row(
     };
 
     let classes = ClassesBuilder::new()
-        .add(RowClass::Row)
-        .add(gap_class)
-        .add_raw(&class)
+        .add_typed(RowClass::Row)
+        .add_typed(gap_class)
+        .add(&class)
         .build();
 
     rsx! {
         div {
-            class: "{classes}",
-            style: format!("display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}"),
-            { children }
+            class: classes,
+            style: format!(
+                "display: flex; {direction_style} {justify_style} {align_style} {wrap_style} {style}",
+            ),
+            {children}
         }
+    }
+}
+
+pub struct GridComponent;
+
+impl crate::styled::StyledComponent for GridComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-grid {
+  display: grid;
+}
+
+.hi-grid-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-grid-gap-md {
+  gap: 1rem;
+}
+
+.hi-grid-gap-lg {
+  gap: 1.5rem;
+}
+
+.hi-col {
+  min-width: 0;
+}
+
+.hi-row {
+  display: flex;
+}
+
+.hi-row-gap-sm {
+  gap: 0.5rem;
+}
+
+.hi-row-gap-md {
+  gap: 1rem;
+}
+
+.hi-row-gap-lg {
+  gap: 1.5rem;
+}
+
+.col-responsive {
+  grid-column: span 12;
+}
+
+@media (min-width: 768px) {
+  .md\:col-span-1 { grid-column: span 1 !important; }
+  .md\:col-span-2 { grid-column: span 2 !important; }
+  .md\:col-span-3 { grid-column: span 3 !important; }
+  .md\:col-span-4 { grid-column: span 4 !important; }
+  .md\:col-span-5 { grid-column: span 5 !important; }
+  .md\:col-span-6 { grid-column: span 6 !important; }
+  .md\:col-span-7 { grid-column: span 7 !important; }
+  .md\:col-span-8 { grid-column: span 8 !important; }
+  .md\:col-span-9 { grid-column: span 9 !important; }
+  .md\:col-span-10 { grid-column: span 10 !important; }
+  .md\:col-span-11 { grid-column: span 11 !important; }
+  .md\:col-span-12 { grid-column: span 12 !important; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:col-span-1 { grid-column: span 1 !important; }
+  .lg\:col-span-2 { grid-column: span 2 !important; }
+  .lg\:col-span-3 { grid-column: span 3 !important; }
+  .lg\:col-span-4 { grid-column: span 4 !important; }
+  .lg\:col-span-5 { grid-column: span 5 !important; }
+  .lg\:col-span-6 { grid-column: span 6 !important; }
+  .lg\:col-span-7 { grid-column: span 7 !important; }
+  .lg\:col-span-8 { grid-column: span 8 !important; }
+  .lg\:col-span-9 { grid-column: span 9 !important; }
+  .lg\:col-span-10 { grid-column: span 10 !important; }
+  .lg\:col-span-11 { grid-column: span 11 !important; }
+  .lg\:col-span-12 { grid-column: span 12 !important; }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "grid"
     }
 }

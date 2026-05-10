@@ -1,15 +1,14 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
+#![expect(clippy::needless_update)]
 
-use crate::styled::StyledComponent;
+use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 
-/// Steps component type wrapper (for StyledComponent)
+use crate::{prelude::*, styled::StyledComponent};
+
 pub struct StepsComponent;
 
-/// Step item status
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepStatus {
     #[default]
@@ -19,7 +18,17 @@ pub enum StepStatus {
     Error,
 }
 
-/// Steps component direction
+impl IntoAttrValue for StepStatus {
+    fn into_attr_value(self) -> Option<String> {
+        Some(match self {
+            StepStatus::Wait => "wait".to_string(),
+            StepStatus::Process => "process".to_string(),
+            StepStatus::Finish => "finish".to_string(),
+            StepStatus::Error => "error".to_string(),
+        })
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum StepsDirection {
     #[default]
@@ -27,78 +36,62 @@ pub enum StepsDirection {
     Vertical,
 }
 
-#[derive(Clone, PartialEq, Props)]
-pub struct StepItemProps {
-    /// Step title
+/// Data for a single step, including title, description, icon, and status.
+#[define_props]
+#[derive(Debug)]
+pub struct StepData {
     pub title: String,
 
-    /// Step description (optional)
-    #[props(default)]
+    #[default]
     pub description: Option<String>,
 
-    /// Step icon (optional)
-    #[props(default)]
+    #[default]
     pub icon: Option<String>,
 
-    /// Step status
-    #[props(default)]
+    #[default]
     pub status: StepStatus,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+impl IntoAttrValue for StepData {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.title)
+    }
+}
+
+/// Props for the [`Steps`] component.
+#[define_props]
 pub struct StepsProps {
-    /// Current step index (0-based)
-    #[props(default = 0)]
+    #[default(0)]
     pub current: usize,
 
-    /// Direction of steps
-    #[props(default)]
+    #[default]
     pub direction: StepsDirection,
 
-    /// Step items
-    pub steps: Vec<StepItemProps>,
+    pub steps: Vec<StepData>,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Additional inline style
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    /// Callback when step changes (clickable)
-    #[props(default)]
-    pub on_change: Option<EventHandler<usize>>,
+    #[default]
+    pub on_change: Option<Callback<usize, ()>>,
 }
 
-/// Steps component with Arknights + FUI styling
-///
-/// A steps wizard component that displays progress through a series of steps.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Steps;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Steps {
-///             current: 1,
-///             direction: StepsDirection::Horizontal,
-///             steps: vec![
-///                 StepItemProps { title: "Step 1".to_string() },
-///                 StepItemProps { title: "Step 2".to_string() },
-///                 StepItemProps { title: "Step 3".to_string() },
-///             ],
-///         }
-///     }
-/// }
-/// ```
+/// Internal data structure for step items
+struct StepItemData {
+    index: usize,
+    step: StepData,
+    step_classes: String,
+    is_clickable: bool,
+    step_status: StepStatus,
+}
+
+/// A multi-step navigation bar showing progress with titles and descriptions.
 #[component]
 pub fn Steps(props: StepsProps) -> Element {
     let direction_class = match props.direction {
@@ -107,9 +100,9 @@ pub fn Steps(props: StepsProps) -> Element {
     };
 
     let wrapper_classes = ClassesBuilder::new()
-        .add(StepsClass::Wrapper)
-        .add(direction_class)
-        .add_raw(&props.class)
+        .add_typed(StepsClass::Wrapper)
+        .add_typed(direction_class)
+        .add(&props.class)
         .build();
 
     let step_items: Vec<_> = props
@@ -133,72 +126,162 @@ pub fn Steps(props: StepsProps) -> Element {
             };
 
             let step_classes = ClassesBuilder::new()
-                .add(StepsClass::Item)
-                .add(status_class)
-                .add_raw(&step.class)
+                .add_typed(StepsClass::Item)
+                .add_typed(status_class)
+                .add(&step.class)
                 .build();
 
             let is_clickable = props.on_change.is_some();
 
-            (index, step, step_classes, is_clickable, step_status)
+            StepItemData {
+                index,
+                step: step.clone(),
+                step_classes,
+                is_clickable,
+                step_status,
+            }
+        })
+        .collect();
+
+    let icon_class = StepsClass::Icon.class_name().to_string();
+    let number_class = StepsClass::Number.class_name().to_string();
+    let content_class = StepsClass::Content.class_name().to_string();
+    let title_class = StepsClass::Title.class_name().to_string();
+    let description_class = StepsClass::Description.class_name().to_string();
+
+    let step_elements: Vec<Element> = step_items
+        .into_iter()
+        .map(|item| {
+            rsx! {
+                StepItem {
+                    index: item.index,
+                    step: item.step,
+                    step_classes: item.step_classes,
+                    is_clickable: item.is_clickable,
+                    step_status: item.step_status,
+                    icon_class: icon_class.clone(),
+                    number_class: number_class.clone(),
+                    content_class: content_class.clone(),
+                    title_class: title_class.clone(),
+                    description_class: description_class.clone(),
+                    on_change: props.on_change.clone(),
+                }
+            }
         })
         .collect();
 
     rsx! {
-        div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+        div { class: wrapper_classes, style: props.style, ..step_elements }
+    }
+}
 
-            for (index, step, step_classes, is_clickable, step_status) in step_items {
-                div {
-                    class: "{step_classes}",
-                    onclick: move |_e| {
-                        if is_clickable
-                            && let Some(handler) = props.on_change.as_ref() {
-                                handler.call(index);
-                            }
-                    },
+/// Internal component for rendering individual step items
+#[define_props]
+#[derive(Debug)]
+struct StepItemProps {
+    #[default]
+    index: usize,
 
-                    // Step indicator
-                    div {
-                        class: "{StepsClass::Icon.as_class()}",
+    #[default]
+    step: StepData,
 
-                        if step_status == StepStatus::Wait {
-                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
-                        } else if step_status == StepStatus::Process {
-                            span { class: "{StepsClass::Number.as_class()}", "{index + 1}" }
-                        } else if step_status == StepStatus::Finish {
-                            svg {
-                                class: "{StepsClass::Number.as_class()}",
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                polyline { points: "20 6 9 17 4 12" }
-                            }
-                        } else {
-                            svg {
-                                class: "{StepsClass::Number.as_class()}",
-                                view_box: "0 0 24 24",
-                                fill: "none",
-                                stroke: "currentColor",
-                                stroke_width: "2",
-                                circle { cx: "12", cy: "12", r: "10" }
-                                line { x1: "12", y1: "8", x2: "12", y2: "12" }
-                                line { x1: "12", y1: "16", x2: "12.01", y2: "16" }
-                            }
-                        }
-                    }
+    #[default]
+    step_classes: String,
 
-                    // Step content
-                    div {
-                        class: "{StepsClass::Content.as_class()}",
-                        div { class: "{StepsClass::Title.as_class()}", "{step.title}" }
-                        if let Some(ref desc) = step.description {
-                            div { class: "{StepsClass::Description.as_class()}", "{desc}" }
-                        }
-                    }
+    #[default]
+    is_clickable: bool,
+
+    #[default]
+    step_status: StepStatus,
+
+    #[default]
+    icon_class: String,
+    #[props(default)]
+    number_class: String,
+    #[props(default)]
+    content_class: String,
+    #[props(default)]
+    title_class: String,
+    #[props(default)]
+    description_class: String,
+    #[props(default)]
+    on_change: Option<Callback<usize, ()>>,
+}
+
+#[component]
+fn StepItem(props: StepItemProps) -> Element {
+    let step_number = props.index + 1;
+    let step_title = props.step.title.clone();
+    let step_description = props.step.description.clone();
+    let index = props.index;
+    let is_clickable = props.is_clickable;
+    let on_change = props.on_change.clone();
+
+    let icon_el = match props.step_status {
+        StepStatus::Wait => rsx! {
+            span { class: props.number_class, "{step_number}" }
+        },
+        StepStatus::Process => rsx! {
+            span { class: props.number_class, "{step_number}" }
+        },
+        StepStatus::Finish => rsx! {
+            svg {
+                class: props.number_class,
+                view_box: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                polyline { points: "20 6 9 17 4 12" }
+            }
+        },
+        StepStatus::Error => rsx! {
+            svg {
+                class: props.number_class,
+                view_box: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                stroke_width: "2",
+                circle { cx: "12", cy: "12", r: "10" }
+                line {
+                    x1: "12",
+                    y1: "8",
+                    x2: "12",
+                    y2: "12",
                 }
+                line {
+                    x1: "12",
+                    y1: "16",
+                    x2: "12.01",
+                    y2: "16",
+                }
+            }
+        },
+    };
+
+    let desc_el = if let Some(ref desc) = step_description {
+        rsx! {
+            div { class: props.description_class, "{desc}" }
+        }
+    } else {
+        VNode::empty()
+    };
+
+    rsx! {
+        div {
+            class: props.step_classes,
+            onclick: move |_e| {
+                if is_clickable && let Some(handler) = on_change.as_ref() {
+                    handler.call(index);
+                }
+            },
+
+            // Step indicator
+            div { class: props.icon_class, {icon_el} }
+
+            // Step content
+            div { class: props.content_class,
+                div { class: props.title_class, step_title }
+                {desc_el}
             }
         }
     }

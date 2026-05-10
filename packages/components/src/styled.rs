@@ -6,92 +6,52 @@
 
 use std::collections::HashMap;
 
-/// Style registry for managing component styles
-///
-/// Central registry that stores CSS styles for all registered
-/// components and can generate a CSS bundle.
-///
-/// # Example
-///
-/// ```rust
-/// use hikari_components::StyleRegistry;
-///
-/// let mut registry = StyleRegistry::default();
-/// registry.register("my-component", ".my-component { color: red; }");
-/// let css = registry.css_bundle();
-/// ```
+// TODO: Re-export type-safe CSS value types when tairitsu_css_values is available
+// pub use tairitsu_css_values::{CssBinOp, CssExpression, CssLength, LengthUnit};
+
+/// Registry for managing component CSS styles
 #[derive(Default, Clone)]
 pub struct StyleRegistry {
     styles: HashMap<&'static str, &'static str>,
 }
 
 impl StyleRegistry {
-    /// Register a single component's styles
-    ///
-    /// # Arguments
-    /// * `name` - Component identifier
-    /// * `css` - CSS styles for the component
+    /// Registers a component's CSS styles with the given name
     pub fn register(&mut self, name: &'static str, css: &'static str) {
         self.styles.insert(name, css);
     }
 
-    /// Get aggregated CSS bundle (all registered components)
-    ///
-    /// # Returns
-    /// CSS bundle with all registered component styles
+    /// Returns all registered CSS as a single bundled string
     pub fn css_bundle(&self) -> String {
         self.styles.values().copied().collect::<Vec<_>>().join("\n")
     }
 
-    /// Get CSS for a single component
-    ///
-    /// # Arguments
-    /// * `name` - Component identifier
-    ///
-    /// # Returns
-    /// CSS styles for the component, if registered
+    /// Gets the CSS for a component by name
     pub fn get(&self, name: &str) -> Option<&'static str> {
         self.styles.get(name).copied()
     }
 
-    /// Get all registered styles
-    ///
-    /// # Returns
-    /// Clone of the complete style registry
+    /// Returns a clone of all registered styles
     pub fn get_all(&self) -> HashMap<&'static str, &'static str> {
         self.styles.clone()
     }
 
-    /// Check if component is registered
-    ///
-    /// # Arguments
-    /// * `name` - Component identifier
-    ///
-    /// # Returns
-    /// true if component is registered
+    /// Checks if a component is registered
     pub fn has(&self, name: &str) -> bool {
         self.styles.contains_key(name)
     }
 
-    /// Get count of registered components
-    ///
-    /// # Returns
-    /// Number of registered components
+    /// Returns the number of registered components
     pub fn len(&self) -> usize {
         self.styles.len()
     }
 
-    /// Check if registry is empty
-    ///
-    /// # Returns
-    /// true if no components are registered
+    /// Returns true if no components are registered
     pub fn is_empty(&self) -> bool {
         self.styles.is_empty()
     }
 
-    /// Batch register: basic components
-    ///
-    /// Registers all basic UI components.
+    /// Registers all basic components
     #[cfg(feature = "basic")]
     pub fn register_basic_components(&mut self) {
         use crate::basic::{
@@ -108,7 +68,6 @@ impl StyleRegistry {
         InputComponent::register(self);
         CardComponent::register(self);
         BadgeComponent::register(self);
-        DividerComponent::register(self);
         CheckboxComponent::register(self);
         RadioGroupComponent::register(self);
         SelectComponent::register(self);
@@ -119,17 +78,15 @@ impl StyleRegistry {
         FileUploadComponent::register(self);
         FormFieldComponent::register(self);
         DatePickerComponent::register(self);
+        DividerComponent::register(self);
     }
 
-    /// No-op if basic feature is disabled
     #[cfg(not(feature = "basic"))]
     pub fn register_basic_components(&mut self) {
         // No-op
     }
 
-    /// Batch register: data components
-    ///
-    /// Registers all data display components.
+    /// Registers all data components
     #[cfg(feature = "data")]
     pub fn register_data_components(&mut self) {
         use crate::data::{
@@ -149,23 +106,21 @@ impl StyleRegistry {
         SelectionComponent::register(self);
     }
 
-    /// No-op if data feature is disabled
     #[cfg(not(feature = "data"))]
     pub fn register_data_components(&mut self) {
         // No-op
     }
 
-    /// Batch register: feedback components
-    ///
-    /// Registers all feedback and notification components.
+    /// Registers all feedback components
     #[cfg(feature = "feedback")]
     pub fn register_feedback_components(&mut self) {
         use crate::feedback::{
-            alert::AlertComponent, drawer::DrawerComponent, modal::ModalComponent,
-            popover::PopoverComponent, progress::ProgressComponent, spin::SpinComponent,
-            toast::ToastComponent, tooltip::TooltipComponent,
+            alert::AlertComponent, drawer::DrawerComponent, glow::GlowComponent,
+            modal::ModalComponent, popover::PopoverComponent, progress::ProgressComponent,
+            spin::SpinComponent, toast::ToastComponent, tooltip::TooltipComponent,
         };
         AlertComponent::register(self);
+        GlowComponent::register(self);
         ToastComponent::register(self);
         TooltipComponent::register(self);
         ModalComponent::register(self);
@@ -175,15 +130,12 @@ impl StyleRegistry {
         SpinComponent::register(self);
     }
 
-    /// No-op if feedback feature is disabled
     #[cfg(not(feature = "feedback"))]
     pub fn register_feedback_components(&mut self) {
         // No-op
     }
 
-    /// Batch register: navigation components
-    ///
-    /// Registers all navigation and routing components.
+    /// Registers all navigation components
     #[cfg(feature = "navigation")]
     pub fn register_navigation_components(&mut self) {
         use crate::navigation::{
@@ -196,15 +148,12 @@ impl StyleRegistry {
         StepsComponent::register(self);
     }
 
-    /// No-op if navigation feature is disabled
     #[cfg(not(feature = "navigation"))]
     pub fn register_navigation_components(&mut self) {
         // No-op
     }
 
-    /// Batch register: display components
-    ///
-    /// Registers all display components.
+    /// Registers all display components
     #[cfg(feature = "display")]
     pub fn register_display_components(&mut self) {
         use crate::display::{
@@ -217,15 +166,12 @@ impl StyleRegistry {
         QRCodeComponent::register(self);
     }
 
-    /// No-op if display feature is disabled
     #[cfg(not(feature = "display"))]
     pub fn register_display_components(&mut self) {
         // No-op
     }
 
-    /// Batch register: entry components
-    ///
-    /// Registers all advanced entry components.
+    /// Registers all entry components
     #[cfg(feature = "entry")]
     pub fn register_entry_components(&mut self) {
         use crate::entry::{
@@ -239,15 +185,12 @@ impl StyleRegistry {
         TransferComponent::register(self);
     }
 
-    /// No-op if entry feature is disabled
     #[cfg(not(feature = "entry"))]
     pub fn register_entry_components(&mut self) {
         // No-op
     }
 
-    /// Auto-register based on enabled features
-    ///
-    /// Registers all components for enabled features.
+    /// Registers all available components based on feature flags
     pub fn register_available(&mut self) {
         #[cfg(feature = "basic")]
         self.register_basic_components();
@@ -268,9 +211,7 @@ impl StyleRegistry {
         self.register_entry_components();
     }
 
-    /// Batch register: all components
-    ///
-    /// Registers all available components.
+    /// Registers all components regardless of feature flags
     pub fn register_all(&mut self) {
         self.register_basic_components();
         self.register_data_components();
@@ -281,44 +222,16 @@ impl StyleRegistry {
     }
 }
 
-/// Styled component trait
-///
-/// All styled components should implement this trait
-/// to provide their CSS styles.
-///
-/// # Example
-///
-/// ```rust
-/// struct MyComponent;
-///
-/// impl StyledComponent for MyComponent {
-///     fn styles() -> &'static str {
-///         ".my-component { color: red; }"
-///     }
-///
-///     fn name() -> &'static str {
-///         "my-component"
-///     }
-/// }
-/// ```
+/// Trait for components that provide their own CSS styles
 pub trait StyledComponent: Sized {
-    /// Get the component's CSS styles
-    ///
-    /// # Returns
-    /// CSS styles string
+    /// Returns the CSS styles for this component
     fn styles() -> &'static str;
 
-    /// Register the component to the style registry
-    ///
-    /// # Arguments
-    /// * `registry` - Style registry to register with
+    /// Registers this component's styles with the registry
     fn register(registry: &mut StyleRegistry) {
         registry.register(Self::name(), Self::styles());
     }
 
-    /// Component name
-    ///
-    /// # Returns
-    /// Default type name in lowercase
+    /// Returns the name of this component
     fn name() -> &'static str;
 }

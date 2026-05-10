@@ -1,10 +1,9 @@
 // hi-components/src/basic/textarea.rs
 // Textarea component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, InputClass};
+use hikari_palette::classes::{ClassesBuilder, InputClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextareaSize {
@@ -14,81 +13,50 @@ pub enum TextareaSize {
     Large,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum TextareaStatus {
+    #[default]
+    Default,
+    Error,
+    Success,
+}
+
+#[define_props]
 pub struct TextareaProps {
-    /// Current value
-    #[props(default)]
+    #[default]
     pub value: String,
 
-    /// Callback when value changes
-    #[props(default)]
+    #[default]
     pub oninput: Option<EventHandler<String>>,
 
-    /// Placeholder text
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    /// Whether textarea is disabled
-    #[props(default)]
+    #[default]
     pub disabled: bool,
 
-    /// Whether textarea is readonly
-    #[props(default)]
+    #[default]
     pub readonly: bool,
 
-    /// Number of rows
-    #[props(default = 3)]
+    #[default(3)]
     pub rows: u32,
 
-    /// Textarea size
-    #[props(default)]
+    #[default]
     pub size: TextareaSize,
 
-    /// Maximum character count
-    #[props(default)]
+    #[default]
     pub maxlength: Option<u32>,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
+
+    pub status: TextareaStatus,
 }
 
-impl Default for TextareaProps {
-    fn default() -> Self {
-        Self {
-            value: String::default(),
-            oninput: None,
-            placeholder: None,
-            disabled: false,
-            readonly: false,
-            rows: 3,
-            size: Default::default(),
-            maxlength: None,
-            class: String::default(),
-        }
-    }
-}
-
-/// Textarea component with resize support
 ///
-/// A multi-line text input with configurable size.
 ///
-/// # Examples
 ///
-/// ## Basic Usage
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Textarea;
 ///
-/// fn app() -> Element {
-///     rsx! {
-///         Textarea {
-///             placeholder: "Enter your message",
-///             rows: 4,
-///         }
-///     }
-/// }
-/// ```
 #[component]
 pub fn Textarea(props: TextareaProps) -> Element {
     let size_class = match props.size {
@@ -98,31 +66,40 @@ pub fn Textarea(props: TextareaProps) -> Element {
     };
 
     let textarea_classes = ClassesBuilder::new()
-        .add(InputClass::Input)
-        .add(size_class)
-        .add_if(InputClass::InputDisabled, || props.disabled)
-        .add_raw(&props.class)
+        .add_typed(InputClass::Input)
+        .add_typed(size_class)
+        .add_typed_if(InputClass::InputDisabled, props.disabled)
+        .add_typed_if(
+            InputClass::InputError,
+            matches!(props.status, TextareaStatus::Error),
+        )
+        .add_typed_if(
+            InputClass::InputSuccess,
+            matches!(props.status, TextareaStatus::Success),
+        )
+        .add(&props.class)
         .build();
 
     rsx! {
         textarea {
-            class: "{textarea_classes}",
+            class: textarea_classes,
             disabled: props.disabled,
             readonly: props.readonly,
-            placeholder: props.placeholder.unwrap_or_default(),
+            placeholder: props.placeholder.clone().unwrap_or_default(),
             value: "{props.value}",
             rows: props.rows,
             maxlength: props.maxlength.unwrap_or(0),
-            oninput: move |e| {
+            "aria-invalid": if matches!(props.status, TextareaStatus::Error) { Some("true".to_string()) } else { None },
+            "aria-label": props.placeholder.clone(),
+            oninput: move |e: InputEvent| {
                 if let Some(handler) = props.oninput.as_ref() {
-                    handler.call(e.value());
+                    handler.call(e.data.clone());
                 }
-            }
+            },
         }
     }
 }
 
-/// Textarea component's type wrapper for StyledComponent
 pub struct TextareaComponent;
 
 impl StyledComponent for TextareaComponent {

@@ -1,13 +1,8 @@
-//! Layout utility classes
-//!
-//! Position, overflow, and other layout properties.
+//! Layout utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Position property
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Position {
     Static,
     Relative,
@@ -16,74 +11,70 @@ pub enum Position {
     Sticky,
 }
 
-impl UtilityClass for Position {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Position {
+    fn class_name(&self) -> &'static str {
         match self {
-            Position::Static => "static",
-            Position::Relative => "relative",
-            Position::Absolute => "absolute",
-            Position::Fixed => "fixed",
-            Position::Sticky => "sticky",
+            Self::Static => "hi-static",
+            Self::Relative => "hi-relative",
+            Self::Absolute => "hi-absolute",
+            Self::Fixed => "hi-fixed",
+            Self::Sticky => "hi-sticky",
         }
     }
 }
 
-/// Overflow utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Overflow {
     Hidden,
     Auto,
     Scroll,
 }
 
-impl UtilityClass for Overflow {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for Overflow {
+    fn class_name(&self) -> &'static str {
         match self {
-            Overflow::Hidden => "overflow-hidden",
-            Overflow::Auto => "overflow-auto",
-            Overflow::Scroll => "overflow-scroll",
+            Self::Hidden => "hi-overflow-hidden",
+            Self::Auto => "hi-overflow-auto",
+            Self::Scroll => "hi-overflow-scroll",
         }
     }
 }
 
-/// Overflow X utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OverflowX {
     Hidden,
     Auto,
     Scroll,
 }
 
-impl UtilityClass for OverflowX {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for OverflowX {
+    fn class_name(&self) -> &'static str {
         match self {
-            OverflowX::Hidden => "overflow-x-hidden",
-            OverflowX::Auto => "overflow-x-auto",
-            OverflowX::Scroll => "overflow-x-scroll",
+            Self::Hidden => "hi-overflow-x-hidden",
+            Self::Auto => "hi-overflow-x-auto",
+            Self::Scroll => "hi-overflow-x-scroll",
         }
     }
 }
 
-/// Overflow Y utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OverflowY {
     Hidden,
     Auto,
     Scroll,
 }
 
-impl UtilityClass for OverflowY {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for OverflowY {
+    fn class_name(&self) -> &'static str {
         match self {
-            OverflowY::Hidden => "overflow-y-hidden",
-            OverflowY::Auto => "overflow-y-auto",
-            OverflowY::Scroll => "overflow-y-scroll",
+            Self::Hidden => "hi-overflow-y-hidden",
+            Self::Auto => "hi-overflow-y-auto",
+            Self::Scroll => "hi-overflow-y-scroll",
         }
     }
 }
 
-/// Z-index utilities
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZIndex {
     Z0,
     Z10,
@@ -94,16 +85,16 @@ pub enum ZIndex {
     Auto,
 }
 
-impl UtilityClass for ZIndex {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for ZIndex {
+    fn class_name(&self) -> &'static str {
         match self {
-            ZIndex::Z0 => "z-0",
-            ZIndex::Z10 => "z-10",
-            ZIndex::Z20 => "z-20",
-            ZIndex::Z30 => "z-30",
-            ZIndex::Z40 => "z-40",
-            ZIndex::Z50 => "z-50",
-            ZIndex::Auto => "z-auto",
+            Self::Z0 => "hi-z-0",
+            Self::Z10 => "hi-z-10",
+            Self::Z20 => "hi-z-20",
+            Self::Z30 => "hi-z-30",
+            Self::Z40 => "hi-z-40",
+            Self::Z50 => "hi-z-50",
+            Self::Auto => "hi-z-auto",
         }
     }
 }

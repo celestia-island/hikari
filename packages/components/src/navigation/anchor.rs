@@ -4,7 +4,7 @@
 //!
 //! ```rust
 //! use hikari_components::navigation::Anchor;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     div { id: "content",
@@ -22,94 +22,68 @@
 //! }
 //! ```
 
-use dioxus::prelude::*;
-use palette::classes::{
-    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
-};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::closure::Closure;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::JsCast;
+use hikari_palette::classes::{TypedClass, AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding};
 
-/// Anchor item configuration
+use crate::platform;
+use crate::prelude::*;
+use tairitsu_hooks::ReactiveSignal;
+
+/// A single anchor link target with an href and display title.
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
-    /// Link href (e.g., "#section1")
     pub href: String,
-    /// Display title
     pub title: String,
 }
 
-/// Anchor component - In-page navigation with smooth scrolling
-///
-/// Provides a navigation sidebar that links to sections on the same page.
-///
-/// # Features
-/// - Smooth scrolling to sections
-/// - Active section highlighting
-/// - Click to scroll
-/// - Customizable position
+/// In-page navigation with smooth scrolling to anchor targets.
 #[component]
 pub fn Anchor(
-    /// Anchor items (href + title pairs)
     items: Vec<AnchorItem>,
 
-    /// Fixed position (right or left)
-    #[props(default = "right".to_string())]
-    position: String,
+    #[props(default = "right".to_string())] position: String,
 
-    /// Offset from top (default: 20px)
-    #[props(default = 20)]
-    offset: i32,
+    #[props(default = 20)] offset: i32,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 
-    /// Anchor content (page sections)
     children: Element,
 ) -> Element {
     let mut active_anchor = use_signal(String::new);
 
     // Build anchor links
-    let anchor_links = items.iter().map(|item| {
-        let href = item.href.clone();
-        let title = item.title.clone();
-        let is_active = active_anchor() == href;
+    let anchor_links: Vec<Element> = items
+        .iter()
+        .map(|item| {
+            let href = item.href.clone();
+            let title = item.title.clone();
+            let active_anchor_for_click = active_anchor.clone();
+            let active_anchor_for_check = active_anchor.clone();
+            let is_active = active_anchor_for_check.read() == href;
+            let btn_class = ClassesBuilder::new()
+                .add_typed(AnchorClass::Link)
+                .add_typed_if(AnchorClass::Active, is_active)
+                .build();
 
-        rsx! {
-            button {
-                class: ClassesBuilder::new()
-                    .add(AnchorClass::Link)
-                    .add_if(AnchorClass::Active, || is_active)
-                    .build(),
-                onclick: move |_| {
-                    active_anchor.set(href.clone());
+            rsx! {
+                button {
+                    class: btn_class,
+                    onclick: move |_| {
+                        active_anchor_for_click.set(href.clone());
 
-                    // Remove '#' from href
-                    #[cfg(target_arch = "wasm32")]
-                    let target_id = href.trim_start_matches('#');
-
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        use web_sys::window;
-                        if let Some(window) = window() {
-                            if let Some(document) = window.document() {
-                                if let Some(element) = document.get_element_by_id(target_id) {
-                                    let rect = element.get_bounding_client_rect();
-                                    let scroll_options = web_sys::ScrollToOptions::new();
-                                    scroll_options.set_top(rect.top() - offset as f64 - window.scroll_y().unwrap_or(0.0));
-                                    scroll_options.set_behavior(web_sys::ScrollBehavior::Smooth);
-                                    window.scroll_to_with_scroll_to_options(&scroll_options);
-                                }
-                            }
+                        let target_id = href.trim_start_matches('#');
+                        if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                            let scroll_y = platform::get_scroll_y();
+                            platform::scroll_to_with_options(
+                                rect.y - offset as f64 - scroll_y,
+                                "smooth",
+                            );
                         }
-                    }
-                },
-                "{title}"
+                    },
+                    "{title}"
+                }
             }
-        }
-    });
+        })
+        .collect();
 
     // Position class
     let position_class = match position.as_str() {
@@ -118,64 +92,45 @@ pub fn Anchor(
     };
 
     let anchor_classes = ClassesBuilder::new()
-        .add(Display::Flex)
-        .add(FlexDirection::Column)
-        .add(Gap::Gap2)
-        .add(Padding::P3)
-        .add(position_class)
-        .add_raw(&class)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Column)
+        .add_typed(Gap::Gap2)
+        .add_typed(Padding::P3)
+        .add_typed(position_class)
+        .add(&class)
         .build();
 
+    let wrapper_class = AnchorClass::Wrapper.class_name();
     rsx! {
-        div { class: "{AnchorClass::Wrapper.as_class()}",
-            div { class: "{anchor_classes}",
-                {anchor_links}
-            }
-            { children }
+        div { class: wrapper_class,
+            div { class: anchor_classes, ..anchor_links }
+            {children}
         }
     }
 }
 
-/// Scroll spy effect - Automatically highlight active section on scroll
-///
-/// This effect monitors scroll position and updates active anchor.
-/// Call this in a component that uses Anchor.
-#[cfg(target_arch = "wasm32")]
-pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
-    let active_anchor = use_signal(|| String::new());
+pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
+    let active_anchor = use_signal(String::new);
+    let active_anchor_for_effect = active_anchor.clone();
 
     use_effect(move || {
         let items = anchor_items.clone();
-        let mut anchor = active_anchor.clone();
+        let anchor = active_anchor_for_effect.clone();
 
-        let listener = Closure::wrap(Box::new(move |_event: web_sys::Event| {
-            if let Some(window) = web_sys::window() {
-                if let Some(document) = window.document() {
-                    let scroll_y = window.scroll_y().unwrap_or(0.0);
+        platform::on_scroll(move || {
+            let scroll_y = platform::get_scroll_y();
 
-                    // Find which section is currently visible
-                    for item in &items {
-                        let target_id = item.href.trim_start_matches('#');
-                        if let Some(element) = document.get_element_by_id(target_id) {
-                            let rect = element.get_bounding_client_rect();
-                            // Check if element is in viewport
-                            if rect.top() <= scroll_y + 100.0 && rect.bottom() >= scroll_y {
-                                anchor.set(item.href.clone());
-                            }
-                        }
+            for item in &items {
+                let target_id = item.href.trim_start_matches('#');
+                if let Some(rect) = platform::get_element_rect_by_id(target_id) {
+                    let top = rect.y;
+                    let bottom = rect.y + rect.height;
+                    if top <= scroll_y + 100.0 && bottom >= scroll_y {
+                        anchor.set(item.href.clone());
                     }
                 }
             }
-        }) as Box<dyn FnMut(_)>);
-
-        if let Some(window) = web_sys::window() {
-            window
-                .add_event_listener_with_callback("scroll", listener.as_ref().unchecked_ref())
-                .ok();
-        }
-
-        // Cleanup listener on unmount
-        listener.forget();
+        });
     });
 
     active_anchor

@@ -3,38 +3,31 @@
 
 use std::rc::Rc;
 
-use dioxus::prelude::*;
-use palette::classes::{CellClass, ClassesBuilder};
+use hikari_palette::classes::CellClass;
+use tairitsu_style::ClassesBuilder;
 
 use super::column::ColumnDef;
+use crate::prelude::*;
 
-/// Cell component props
 #[derive(Clone, Props, Default)]
 pub struct CellProps {
-    /// Cell content
     #[props(default)]
     pub value: String,
 
-    /// Column configuration
     pub column: ColumnDef,
 
-    /// Row index
     #[props(default)]
     pub row_index: usize,
 
-    /// Column index
     #[props(default)]
     pub col_index: usize,
 
-    /// Custom CSS classes
     #[props(default)]
     pub class: String,
 
-    /// Custom rendering callback
     #[props(default)]
     pub render: Option<CellRenderer>,
 
-    /// Editable flag
     #[props(default)]
     pub editable: bool,
 }
@@ -64,38 +57,9 @@ impl std::fmt::Debug for CellProps {
     }
 }
 
-/// Cell component for table data display
+/// Table cell component
 ///
-/// Renders individual table cells with support for:
-/// - Custom cell rendering callbacks
-/// - Column alignment
-/// - Hover effects
-/// - Editable flag support
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Cell, ColumnDef, ColumnAlign};
-///
-/// fn app() -> Element {
-///     let column = ColumnDef {
-///         column_key: "name".to_string(),
-///         title: "Name".to_string(),
-///         align: ColumnAlign::Left,
-///         ..Default::default()
-///     };
-///
-///     rsx! {
-///         Cell {
-///             column: column.clone(),
-///             value: "Arknights".to_string(),
-///             row_index: 0,
-///             col_index: 0,
-///         }
-///     }
-/// }
-/// ```
+/// Renders a single table cell with support for custom rendering and alignment.
 #[component]
 pub fn Cell(props: CellProps) -> Element {
     let align_class = match props.column.align {
@@ -105,11 +69,11 @@ pub fn Cell(props: CellProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add(CellClass::Cell)
-        .add(align_class)
-        .add(CellClass::CellHover)
-        .add_if(CellClass::CellEditable, || props.editable)
-        .add_raw(&props.class)
+        .add_typed(CellClass::Cell)
+        .add_typed(align_class)
+        .add_typed(CellClass::CellHover)
+        .add_typed_if(CellClass::CellEditable, props.editable)
+        .add(&props.class)
         .build();
 
     // Use custom render callback if provided
@@ -117,10 +81,10 @@ pub fn Cell(props: CellProps) -> Element {
         let element = render_fn(&props.value, props.row_index, props.col_index);
         return rsx! {
             td {
-                class: "{classes}",
+                class: classes,
                 "data-row-index": "{props.row_index}",
                 "data-col-index": "{props.col_index}",
-                "data-key": "{props.column.column_key}",
+                "data-key": props.column.column_key,
                 {element}
             }
         };
@@ -130,34 +94,22 @@ pub fn Cell(props: CellProps) -> Element {
     let value = props.value.clone();
     rsx! {
         td {
-            class: "{classes}",
+            class: classes,
             "data-row-index": "{props.row_index}",
             "data-col-index": "{props.col_index}",
-            "data-key": "{props.column.column_key}",
+            "data-key": props.column.column_key,
             "data-editable": "{props.editable}",
 
-            { value }
+            "{value}"
         }
     }
 }
 
-/// Custom cell renderer type
 pub type CellRenderer = Rc<dyn Fn(&str, usize, usize) -> Element>;
 
-/// Helper to create a cell renderer
+/// Creates a cell renderer from a closure
 ///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::cell::create_cell_renderer;
-///
-/// let renderer = create_cell_renderer(|value, row, col| {
-///     rsx! {
-///         strong { "{value}" }
-///     }
-/// });
-/// ```
+/// This function wraps a closure in an Rc for use as a cell renderer.
 pub fn create_cell_renderer<F>(f: F) -> CellRenderer
 where
     F: Fn(&str, usize, usize) -> Element + 'static,
@@ -228,7 +180,9 @@ mod tests {
     #[test]
     fn test_cell_props_clone() {
         let render = create_cell_renderer(|_, _, _| {
-            rsx! { span { "rendered" } }
+            rsx! {
+                span { "rendered" }
+            }
         });
         let props = CellProps {
             value: "test".to_string(),
@@ -244,7 +198,9 @@ mod tests {
     #[test]
     fn test_cell_props_partial_eq() {
         let render = create_cell_renderer(|_, _, _| {
-            rsx! { span { "rendered" } }
+            rsx! {
+                span { "rendered" }
+            }
         });
 
         let props1 = CellProps {
@@ -320,7 +276,9 @@ mod tests {
     #[test]
     fn test_cell_renderer_creation() {
         let renderer = create_cell_renderer(|_, _, _| {
-            rsx! { span { "test" } }
+            rsx! {
+                span { "test" }
+            }
         });
         assert!(Rc::strong_count(&renderer) > 0);
     }

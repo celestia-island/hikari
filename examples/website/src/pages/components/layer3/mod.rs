@@ -1,7 +1,17 @@
-// website/src/pages/components/layer3/mod.rs
-// Layer 3 components - All migrated to Markdown
+pub mod editor;
+pub mod media;
+pub mod user_guide;
+pub mod visualization;
+pub mod zoom_controls;
 
-pub mod overview;
+use tairitsu_vdom::VNode;
 
-pub use overview::Layer3Overview;
-
+pub fn render_all() -> Vec<VNode> {
+    vec![
+        media::render(),
+        editor::render(),
+        visualization::render(),
+        user_guide::render(),
+        zoom_controls::render(),
+    ]
+}

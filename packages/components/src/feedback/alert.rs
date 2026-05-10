@@ -1,13 +1,15 @@
 // hi-components/src/feedback/alert.rs
 // Alert component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use icons::{Icon, MdiIcon};
-use palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
+#![expect(clippy::needless_update)]
+
+use hikari_icons::{Icon, MdiIcon};
+use hikari_palette::classes::{TypedClass, AlertClass, ClassesBuilder};
 
 use crate::{
     basic::{IconButton, IconButtonSize, IconButtonVariant},
     feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
     styled::StyledComponent,
 };
 
@@ -22,27 +24,23 @@ pub enum AlertVariant {
     Error,
 }
 
-#[derive(Clone, PartialEq, Props, Default)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum AlertSize {
+    #[default]
+    Md,
+    Sm,
+    Lg,
+}
+
+#[define_props]
 pub struct AlertProps {
-    #[props(default)]
     pub variant: AlertVariant,
-
-    #[props(default)]
+    pub size: AlertSize,
     pub title: Option<String>,
-
-    #[props(default)]
     pub description: Option<String>,
-
-    #[props(default)]
     pub closable: bool,
-
-    #[props(default)]
     pub icon: Option<Element>,
-
-    #[props(default)]
     pub class: String,
-
-    #[props(default)]
     pub on_close: Option<EventHandler<MouseEvent>>,
 }
 
@@ -55,6 +53,12 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Error => AlertClass::AlertError,
     };
 
+    let size_class = match props.size {
+        AlertSize::Sm => AlertClass::Sm,
+        AlertSize::Md => AlertClass::Md,
+        AlertSize::Lg => AlertClass::Lg,
+    };
+
     let glow_color = match props.variant {
         AlertVariant::Info => GlowColor::Info,
         AlertVariant::Success => GlowColor::Success,
@@ -63,71 +67,88 @@ pub fn Alert(props: AlertProps) -> Element {
     };
 
     let alert_classes = ClassesBuilder::new()
-        .add(AlertClass::Alert)
-        .add(variant_class)
-        .add_raw(&props.class)
+        .add_typed(AlertClass::Alert)
+        .add_typed(variant_class)
+        .add_typed(size_class)
+        .add(&props.class)
         .build();
 
     let default_icon: Option<Element> = match props.variant {
         AlertVariant::Info => Some(rsx! {
             Icon {
                 icon: MdiIcon::Information,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-primary)",
+                color: "var(--hi-color-primary)".to_string(),
             }
         }),
         AlertVariant::Success => Some(rsx! {
             Icon {
                 icon: MdiIcon::Check,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-success)",
+                color: "var(--hi-color-success)".to_string(),
             }
         }),
         AlertVariant::Warning => Some(rsx! {
             Icon {
                 icon: MdiIcon::AlertTriangle,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-warning)",
+                color: "var(--hi-color-warning)".to_string(),
             }
         }),
         AlertVariant::Error => Some(rsx! {
             Icon {
                 icon: MdiIcon::Alert,
-                class: AlertClass::AlertIcon.as_class().to_string(),
+                class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
-                color: "var(--hi-color-danger)",
+                color: "var(--hi-color-danger)".to_string(),
             }
         }),
     };
 
     let icon = props.icon.as_ref().or(default_icon.as_ref());
 
+    let icon_wrapper_class = AlertClass::AlertIconWrapper.class_name();
+    let content_class = AlertClass::AlertContent.class_name();
+    let title_class = AlertClass::AlertTitle.class_name();
+    let description_class = AlertClass::AlertDescription.class_name();
+
+    // Pre-compute onclick handler for closable button
+    let on_close_handler = props.on_close.clone();
+
+    let aria_role = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "alert",
+        AlertVariant::Info | AlertVariant::Success => "status",
+    };
+
+    let aria_live = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "assertive",
+        AlertVariant::Info | AlertVariant::Success => "polite",
+    };
+
     rsx! {
         Glow {
-            class: "hi-alert-glow-wrapper",
+            class: "hi-alert-glow-wrapper".to_string(),
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            div {
-                class: "{alert_classes}",
+            block: true,
+            div { class: alert_classes, role: "{aria_role}", "aria-live": "{aria_live}",
 
-                if let Some(icon_element) = icon {
-                    div { class: "{AlertClass::AlertIconWrapper.as_class()}",
-                        { icon_element }
-                    }
+                if icon.is_some() {
+                    div { class: icon_wrapper_class, {icon.unwrap().clone()} }
                 }
 
-                div { class: "{AlertClass::AlertContent.as_class()}",
+                div { class: content_class,
 
-                    if let Some(title) = props.title {
-                        div { class: "{AlertClass::AlertTitle.as_class()}", "{title}" }
+                    if props.title.is_some() {
+                        div { class: title_class, "{props.title.as_ref().unwrap()}" }
                     }
 
-                    if let Some(description) = props.description {
-                        div { class: "{AlertClass::AlertDescription.as_class()}", "{description}" }
+                    if props.description.is_some() {
+                        div { class: description_class, "{props.description.as_ref().unwrap()}" }
                     }
                 }
 
@@ -138,11 +159,13 @@ pub fn Alert(props: AlertProps) -> Element {
                         variant: IconButtonVariant::Ghost,
                         class: "hi-alert-close".to_string(),
                         glow: false,
-                        onclick: move |e| {
-                            if let Some(handler) = props.on_close.as_ref() {
-                                handler.call(e);
-                            }
-                        },
+                        onclick: Some(
+                            EventHandler::new(move |e| {
+                                if let Some(handler) = on_close_handler.as_ref() {
+                                    handler(e);
+                                }
+                            }),
+                        ),
                     }
                 }
             }

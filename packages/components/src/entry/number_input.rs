@@ -1,40 +1,38 @@
-// packages/components/src/entry/number_input.rs
-// NumberInput component with Arknights + FUI styling
+use hikari_palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, Display, NumberInputClass};
-
-use crate::styled::StyledComponent;
+use crate::{feedback::GlowIntensity, prelude::*, styled::StyledComponent};
 
 pub struct NumberInputComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct NumberInputProps {
-    #[props(default = 0)]
+    #[default(0)]
     pub value: i64,
 
+    #[default(EventHandler::new(|_| {}))]
     pub on_change: EventHandler<i64>,
 
-    #[props(default)]
     pub min: Option<i64>,
 
-    #[props(default)]
     pub max: Option<i64>,
 
-    #[props(default = 1)]
+    #[default(1)]
     pub step: i64,
 
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    #[props(default)]
     pub size: NumberInputSize,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub style: String,
+
+    #[default(true)]
+    pub glow: bool,
+
+    #[default(GlowIntensity::Soft)]
+    pub glow_intensity: GlowIntensity,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -45,22 +43,46 @@ pub enum NumberInputSize {
     Large,
 }
 
+impl NumberInputSize {
+    fn size_class(self) -> &'static str {
+        match self {
+            NumberInputSize::Small => "hi-number-input-sm",
+            NumberInputSize::Medium => "hi-number-input-md",
+            NumberInputSize::Large => "hi-number-input-lg",
+        }
+    }
+}
+
 #[component]
 pub fn NumberInput(props: NumberInputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(Display::InlineFlex)
-        .add(NumberInputClass::Wrapper)
-        .add_raw(&props.class)
+        .add_typed(Display::InlineFlex)
+        .add_typed(NumberInputClass::Wrapper)
+        .add(&props.class)
         .build();
+
+    let size_class = props.size.size_class();
 
     let decrement_disabled = props.min.is_some_and(|min| props.value <= min);
     let increment_disabled = props.max.is_some_and(|max| props.value >= max);
 
-    let size_class = match props.size {
-        NumberInputSize::Small => "hi-number-input-sm",
-        NumberInputSize::Medium => "hi-number-input-md",
-        NumberInputSize::Large => "hi-number-input-lg",
-    };
+    let disabled_for_dec = props.disabled;
+    let min_for_dec = props.min;
+    let value_for_dec = props.value;
+    let step_for_dec = props.step;
+    let on_change_for_dec = props.on_change.clone();
+
+    let disabled_for_inc = props.disabled;
+    let max_for_inc = props.max;
+    let value_for_inc = props.value;
+    let step_for_inc = props.step;
+    let on_change_for_inc = props.on_change.clone();
+
+    let value_for_input = props.value;
+    let disabled_for_input = props.disabled;
+    let min_for_input = props.min;
+    let max_for_input = props.max;
+    let on_change_for_input = props.on_change.clone();
 
     rsx! {
         div {
@@ -72,13 +94,13 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
                 r#type: "button",
                 disabled: props.disabled || decrement_disabled,
                 onclick: move |_| {
-                    if !props.disabled {
-                        let new_value = if let Some(min) = props.min {
-                            (props.value - props.step).max(min)
+                    if !disabled_for_dec {
+                        let new_value = if let Some(min) = min_for_dec {
+                            (value_for_dec - step_for_dec).max(min)
                         } else {
-                            props.value - props.step
+                            value_for_dec - step_for_dec
                         };
-                        props.on_change.call(new_value);
+                        on_change_for_dec.call(new_value);
                     }
                 },
                 svg {
@@ -96,17 +118,17 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
             input {
                 class: "hi-number-input-input",
                 r#type: "text",
-                value: "{props.value}",
-                disabled: props.disabled,
-                oninput: move |e| {
-                    if let Ok(val) = e.value().parse::<i64>() {
-                        let constrained_val = match (props.min, props.max) {
+                value: "{value_for_input}",
+                disabled: disabled_for_input,
+                oninput: move |e: InputEvent| {
+                    if let Ok(val) = e.data.parse::<i64>() {
+                        let constrained_val = match (min_for_input, max_for_input) {
                             (Some(min), Some(max)) => val.clamp(min, max),
                             (Some(min), None) => val.max(min),
                             (None, Some(max)) => val.min(max),
                             (None, None) => val,
                         };
-                        props.on_change.call(constrained_val);
+                        on_change_for_input.call(constrained_val);
                     }
                 }
             }
@@ -116,13 +138,13 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
                 r#type: "button",
                 disabled: props.disabled || increment_disabled,
                 onclick: move |_| {
-                    if !props.disabled {
-                        let new_value = if let Some(max) = props.max {
-                            (props.value + props.step).min(max)
+                    if !disabled_for_inc {
+                        let new_value = if let Some(max) = max_for_inc {
+                            (value_for_inc + step_for_inc).min(max)
                         } else {
-                            props.value + props.step
+                            value_for_inc + step_for_inc
                         };
-                        props.on_change.call(new_value);
+                        on_change_for_inc.call(new_value);
                     }
                 },
                 svg {
@@ -143,173 +165,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
 
 impl StyledComponent for NumberInputComponent {
     fn styles() -> &'static str {
-        r#"
-.hi-number-input-wrapper {
-    display: inline-flex;
-    align-items: stretch;
-    border-radius: 8px;
-    border: 1px solid var(--hi-color-border, #d9d9d9);
-    background-color: var(--hi-color-surface, #fff);
-    overflow: hidden;
-    transition: all 0.2s ease;
-}
-
-.hi-number-input-wrapper:focus-within {
-    border-color: var(--hi-color-primary, #1890ff);
-    box-shadow: 0 0 0 2px var(--hi-color-primary-glow, rgba(24, 144, 255, 0.2));
-}
-
-.hi-number-input-sm {
-    height: 24px;
-    font-size: 12px;
-}
-
-.hi-number-input-md {
-    height: 32px;
-    font-size: 14px;
-}
-
-.hi-number-input-lg {
-    height: 40px;
-    font-size: 16px;
-}
-
-.hi-number-input-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 32px;
-    padding: 0;
-    background-color: var(--hi-color-background, #fafafa);
-    border: none;
-    color: var(--hi-color-text-secondary, #666);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    outline: none;
-}
-
-.hi-number-input-btn-decrement {
-    border-right: 1px solid var(--hi-color-border, #d9d9d9);
-    border-radius: 7px 0 0 7px;
-}
-
-.hi-number-input-btn-increment {
-    border-left: 1px solid var(--hi-color-border, #d9d9d9);
-    border-radius: 0 7px 7px 0;
-}
-
-.hi-number-input-btn:hover:not(:disabled) {
-    color: var(--hi-color-primary, #1890ff);
-    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.1));
-}
-
-.hi-number-input-btn:active:not(:disabled) {
-    transform: scale(0.9);
-    background-color: var(--hi-color-primary, #1890ff);
-    color: #fff;
-}
-
-.hi-number-input-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    color: var(--hi-color-text-disabled, #bfbfbf);
-    background-color: transparent;
-}
-
-.hi-number-input-btn:focus-visible {
-    box-shadow: inset 0 0 0 2px var(--hi-color-primary, #1890ff);
-}
-
-.hi-number-input-btn svg {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-}
-
-.hi-number-input-sm .hi-number-input-btn {
-    width: 24px;
-}
-
-.hi-number-input-sm .hi-number-input-btn svg {
-    width: 12px;
-    height: 12px;
-}
-
-.hi-number-input-lg .hi-number-input-btn {
-    width: 40px;
-}
-
-.hi-number-input-lg .hi-number-input-btn svg {
-    width: 16px;
-    height: 16px;
-}
-
-.hi-number-input-input {
-    flex: 1;
-    min-width: 48px;
-    height: 100%;
-    padding: 0 8px;
-    border: none;
-    background-color: transparent;
-    color: var(--hi-color-text-primary, #333);
-    font-size: inherit;
-    text-align: center;
-    outline: none;
-    font-weight: 500;
-}
-
-.hi-number-input-input::-webkit-outer-spin-button,
-.hi-number-input-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.hi-number-input-input[type=number] {
-    -moz-appearance: textfield;
-}
-
-.hi-number-input-input:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.hi-number-input-input::placeholder {
-    color: var(--hi-color-text-secondary, #999);
-}
-
-[data-theme="dark"] .hi-number-input-wrapper {
-    background-color: var(--hi-surface, #1a1a1a);
-    border-color: var(--hi-border, #333);
-}
-
-[data-theme="dark"] .hi-number-input-btn {
-    background-color: var(--hi-surface-hover, #252525);
-    color: var(--hi-text-secondary, #aaa);
-}
-
-[data-theme="dark"] .hi-number-input-btn:hover:not(:disabled) {
-    background-color: var(--hi-color-primary-glow, rgba(24, 144, 255, 0.15));
-    color: var(--hi-color-primary, #40a9ff);
-}
-
-[data-theme="dark"] .hi-number-input-btn:active:not(:disabled) {
-    background-color: var(--hi-color-primary, #1890ff);
-    color: #fff;
-}
-
-[data-theme="dark"] .hi-number-input-btn-decrement {
-    border-right-color: var(--hi-border, #333);
-}
-
-[data-theme="dark"] .hi-number-input-btn-increment {
-    border-left-color: var(--hi-border, #333);
-}
-
-[data-theme="dark"] .hi-number-input-input {
-    color: var(--hi-text-primary, #e0e0e0);
-}
-"#
+        include_str!(concat!(env!("OUT_DIR"), "/styles/number_input.css"))
     }
 
     fn name() -> &'static str {

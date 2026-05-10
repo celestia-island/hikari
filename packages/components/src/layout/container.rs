@@ -1,9 +1,9 @@
 // hi-components/src/layout/container.rs
 // Container component for responsive content wrapping
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, ContainerClass};
+use hikari_palette::classes::{ClassesBuilder, ContainerClass};
+
+use crate::{prelude::*, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ContainerSize {
@@ -14,30 +14,25 @@ pub enum ContainerSize {
     Xl,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the [`Container`] component.
+#[define_props]
 pub struct ContainerProps {
-    /// Container content
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    /// Container size preset
-    #[props(default)]
+    #[default]
     pub size: ContainerSize,
 
-    /// Custom max-width
-    #[props(default)]
+    #[default]
     pub max_width: Option<String>,
 
-    /// Center content
-    #[props(default = false)]
+    #[default(false)]
     pub center: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
+    #[default]
     pub rtl: Option<bool>,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
@@ -52,23 +47,7 @@ impl ContainerSize {
     }
 }
 
-/// Container component for responsive content wrapping
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Container, ContainerSize};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Container {
-///             size: ContainerSize::Medium,
-///             h1 { "Hello Hikari!" }
-///         }
-///     }
-/// }
-/// ```
+/// A responsive container that wraps content with a configurable max-width and optional centering.
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -82,15 +61,15 @@ pub fn Container(props: ContainerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(ContainerClass::Container)
-        .add(size_class)
-        .add_if(ContainerClass::Centered, || props.center);
+        .add_typed(ContainerClass::Container)
+        .add_typed(size_class)
+        .add_typed_if(ContainerClass::Centered, props.center);
 
     if is_rtl {
-        builder = builder.add_raw("hi-container-rtl");
+        builder = builder.add_typed(ContainerClass::Rtl);
     }
 
-    let container_classes = builder.add_raw(&props.class).build();
+    let container_classes = builder.add(&props.class).build();
 
     let max_width = props
         .max_width
@@ -99,19 +78,20 @@ pub fn Container(props: ContainerProps) -> Element {
     let center_style = if props.center {
         "margin-inline-start: auto; margin-inline-end: auto;"
     } else {
-        ""
+        {
+            ""
+        }
     };
 
     rsx! {
         div {
-            class: "{container_classes}",
+            class: container_classes,
             style: "max-width: {max_width}; {center_style}",
-            { props.children }
+            {props.children}
         }
     }
 }
 
-/// Container component's type wrapper for StyledComponent
 pub struct ContainerComponent;
 
 impl crate::styled::StyledComponent for ContainerComponent {

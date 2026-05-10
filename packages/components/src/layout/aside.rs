@@ -7,7 +7,7 @@
 //!
 //! ```rust
 //! use hikari_components::layout::Aside;
-//! use dioxus::prelude::*;
+//! use crate::prelude::*;
 //!
 //! rsx! {
 //!     Aside {
@@ -25,61 +25,33 @@
 //! }
 //! ```
 
-use crate::theme::use_layout_direction;
-use dioxus::prelude::*;
-use palette::{classes::components::*, ClassesBuilder, UtilityClass};
+use hikari_palette::{classes::components::*, ClassesBuilder, TypedClass};
 
-/// Aside component - Modern sidebar navigation panel
+use crate::{prelude::*, theme::use_layout_direction};
+
 ///
-/// # Design Features
-/// - Clean, minimal design with subtle shadows
-/// - Smooth slide-in/out animation on mobile
-/// - Refined padding and spacing
-/// - Optional close button on mobile
-/// - Proper border for visual separation
 ///
-/// # Responsive Behavior
-/// - Desktop (≥1024px): Static positioning, always visible
-/// - Mobile (<1024px): Fixed positioning, slides in from left
 #[component]
 pub fn Aside(
-    /// Sidebar content
     children: Element,
 
-    /// Header content (optional)
-    #[props(optional)]
-    header: Option<Element>,
+    #[props(optional)] header: Option<Element>,
 
-    /// Footer content (optional)
-    #[props(optional)]
-    footer: Option<Element>,
+    #[props(optional)] footer: Option<Element>,
 
-    /// Width preset (sm: 200px, md: 250px, lg: 300px, default: md)
-    #[props(default = "md".to_string())]
-    width: String,
+    #[props(default = "md".to_string())] width: String,
 
-    /// Background variant (default, white, light)
-    #[props(default = "white".to_string())]
-    variant: String,
+    #[props(default = "white".to_string())] variant: String,
 
-    /// Whether to be collapsible on mobile
-    #[props(default = true)]
-    collapsible: bool,
+    #[props(default = true)] collapsible: bool,
 
-    /// Initial open state for mobile
-    #[props(default = false)]
-    initial_open: bool,
+    #[props(default = false)] initial_open: bool,
 
-    /// Override RTL behavior (default: follow theme direction)
-    #[props(default)]
-    rtl: Option<bool>,
+    #[props(default)] rtl: Option<bool>,
 
-    /// Callback when close button is clicked (mobile)
-    on_close: EventHandler,
+    #[props(default)] on_close: Option<EventHandler<MouseEvent>>,
 
-    /// Custom CSS classes
-    #[props(default)]
-    class: String,
+    #[props(default)] class: String,
 ) -> Element {
     let is_open = use_signal(|| initial_open);
     let layout_direction = use_layout_direction();
@@ -97,40 +69,98 @@ pub fn Aside(
     };
 
     let mut builder = ClassesBuilder::new()
-        .add(AsideClass::Aside)
-        .add(AsideClass::Drawer)
-        .add(width_class)
-        .add(variant_class);
+        .add_typed(AsideClass::Aside)
+        .add_typed(AsideClass::Drawer)
+        .add_typed(width_class)
+        .add_typed(variant_class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-aside-rtl");
+        builder = builder.add_typed(AsideClass::Rtl);
     }
 
-    if *is_open.read() {
-        builder = builder.add(AsideClass::DrawerOpen);
+    if is_open.read() {
+        builder = builder.add_typed(AsideClass::DrawerOpen);
     }
 
-    let classes = builder.add_raw(&class).build();
-    let content_class = AsideClass::Content.as_class();
+    let classes = builder.add(&class).build();
+    let content_class = AsideClass::Content.class_name();
     let header_class = "hi-layout-aside-header".to_string();
     let footer_class = "hi-layout-aside-footer".to_string();
 
     rsx! {
-        aside {
-            class: "{classes}",
+        aside { class: classes,
 
             if let Some(header_content) = header {
-                div { class: "{header_class}", {header_content} }
+                div { class: header_class, {header_content} }
             }
 
-            div {
-                class: "{content_class}",
-                { children }
-            }
+            div { class: content_class, {children} }
 
             if let Some(footer_content) = footer {
-                div { class: "{footer_class}", {footer_content} }
+                div { class: footer_class, {footer_content} }
             }
         }
+    }
+}
+
+pub struct AsideComponent;
+
+impl crate::styled::StyledComponent for AsideComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-aside {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: transparent;
+  border-right: 1px solid var(--hi-color-border);
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+}
+
+.hi-aside-sm {
+  width: 200px;
+}
+
+.hi-aside-md {
+  width: 260px;
+}
+
+.hi-aside-lg {
+  width: 320px;
+}
+
+.hi-aside-light {
+  background: var(--hi-surface);
+}
+
+.hi-aside-dark {
+  background: var(--hi-card-bg);
+}
+
+.hi-aside-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 0 0.5rem;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+.hi-aside-rtl {
+  direction: rtl;
+}
+
+@media print {
+  .hi-aside {
+    display: none;
+  }
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "aside"
     }
 }

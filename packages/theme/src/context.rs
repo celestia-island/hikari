@@ -21,8 +21,7 @@
 //! # }
 //! ```
 
-use dioxus::prelude::*;
-use palette::*;
+use crate::prelude::*;
 
 /// Layout direction for RTL/LTR support
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -95,19 +94,20 @@ impl Default for ThemeContext {
 ///
 /// Panics if called outside of a ThemeProvider.
 pub fn use_theme() -> ThemeContext {
-    use_context()
+    let ctx = use_context::<ThemeContext>().expect("ThemeContext not found");
+    ctx.get().clone()
 }
 
 /// Hook to try to access theme context
 ///
 /// Returns None if called outside of a ThemeProvider.
 pub fn try_use_theme() -> Option<ThemeContext> {
-    try_consume_context()
+    use_context::<ThemeContext>().map(|ctx| ctx.get().clone())
 }
 
 /// Hook to get layout direction, with fallback to LTR if no ThemeProvider
 pub fn use_layout_direction() -> LayoutDirection {
-    try_consume_context::<ThemeContext>()
-        .map(|ctx| ctx.direction)
+    use_context::<ThemeContext>()
+        .map(|ctx| ctx.get().direction)
         .unwrap_or_default()
 }

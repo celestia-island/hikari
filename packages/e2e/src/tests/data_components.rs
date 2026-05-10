@@ -20,7 +20,7 @@ impl DataComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/table", base_url);
+        let test_url = format!("{}/#/components/layer2/table", base_url);
 
         driver
             .goto(&test_url)
@@ -80,7 +80,7 @@ impl DataComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/tree", base_url);
+        let test_url = format!("{}/#/components/layer2/tree", base_url);
 
         driver
             .goto(&test_url)
@@ -140,7 +140,7 @@ impl DataComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/pagination", base_url);
+        let test_url = format!("{}/#/components/layer2/pagination", base_url);
 
         driver
             .goto(&test_url)
@@ -203,7 +203,7 @@ impl DataComponentsTests {
 
         let base_url = std::env::var("WEBSITE_BASE_URL")
             .unwrap_or_else(|_| "http://localhost:3000".to_string());
-        let test_url = format!("{}/components/layer2/dropdown", base_url);
+        let test_url = format!("{}/#/components/layer2/dropdown", base_url);
 
         driver
             .goto(&test_url)

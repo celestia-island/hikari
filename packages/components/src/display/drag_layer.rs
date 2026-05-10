@@ -1,76 +1,127 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
+use hikari_palette::classes::{TypedClass, ClassesBuilder, DragLayerClass};
 
-use crate::styled::StyledComponent;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-/// DragLayer component type wrapper (for StyledComponent)
+use tairitsu_hooks::ReactiveSignal;
+
+use crate::{platform, prelude::*, styled::StyledComponent};
+
 pub struct DragLayerComponent;
 
-/// Drag item data
-#[derive(Clone, PartialEq, Debug)]
-#[derive(Default)]
+struct DragPreviewAnimState {
+    start_ts: Option<f64>,
+    stopped: bool,
+}
+
+const DRAG_PREVIEW_ANIM_MS: f64 = 150.0;
+
+fn drag_preview_anim_tick(
+    state: Rc<RefCell<DragPreviewAnimState>>,
+    progress_signal: ReactiveSignal<f64>,
+) {
+    platform::request_animation_frame_with_timestamp(move |ts| {
+        let mut s = state.borrow_mut();
+        if s.stopped {
+            return;
+        }
+        let start = s.start_ts.unwrap_or(ts);
+        if s.start_ts.is_none() {
+            s.start_ts = Some(ts);
+        }
+        let elapsed = ts - start;
+        let progress = (elapsed / DRAG_PREVIEW_ANIM_MS).min(1.0);
+        drop(s);
+
+        let eased = 1.0 - (1.0 - progress).powi(2);
+        progress_signal.set(eased);
+
+        if progress < 1.0 {
+            drag_preview_anim_tick(state.clone(), progress_signal.clone());
+        }
+    });
+}
+
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragItem {
-    /// Unique identifier
     pub id: String,
-    /// Display label
     pub label: String,
-    /// Item type
     pub item_type: String,
 }
 
-
-/// DragLayer component props
-#[derive(Clone, PartialEq, Props)]
+/// Props for the DragLayer component.
+#[define_props]
 pub struct DragLayerProps {
-    /// Currently dragging item (if any)
-    #[props(default)]
+    #[default]
     pub drag_item: Option<DragItem>,
 
-    /// Current drag position (x, y)
-    #[props(default)]
+    #[default]
     pub position: (i32, i32),
 
-    /// Whether dragging is active
-    #[props(default)]
+    #[default]
     pub is_dragging: bool,
 
-    /// Show drop zones
-    #[props(default)]
+    #[default]
     pub show_drop_zones: bool,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-/// DragLayer component for drag and drop visualization
-///
-/// A layer that displays drag preview and drop zones during drag operations.
+/// A drag overlay layer that shows a drag preview and optional drop zones.
 #[component]
 pub fn DragLayer(props: DragLayerProps) -> Element {
     if !props.is_dragging {
-        return rsx! {};
+        return VNode::empty();
     }
 
     let (x, y) = props.position;
 
     let container_classes = ClassesBuilder::new()
-        .add(DragLayerClass::Container)
-        .add_raw(&props.class)
+        .add_typed(DragLayerClass::Container)
+        .add(&props.class)
         .build();
 
+    let progress_signal = use_signal(|| 0.0_f64);
+
+    {
+        let prog_clone = progress_signal.clone();
+        use_effect(move || {
+            let state = Rc::new(RefCell::new(DragPreviewAnimState {
+                start_ts: None,
+                stopped: false,
+            }));
+            let s_ref = state.clone();
+            let prog_sig = prog_clone.clone();
+            platform::request_animation_frame_with_timestamp(move |ts| {
+                let mut s = s_ref.borrow_mut();
+                if s.stopped {
+                    return;
+                }
+                s.start_ts = Some(ts);
+                drop(s);
+                drag_preview_anim_tick(s_ref, prog_sig);
+            });
+        });
+    }
+
+    let progress = progress_signal.get();
+    let scale = 0.9 + 0.1 * progress;
+    let preview_style = format!(
+        "left: {x}px; top: {y}px; opacity: {progress:.2}; transform: translate(-50%, -50%) scale({scale:.3});"
+    );
+
     rsx! {
-        div {
-            class: "{container_classes}",
+        div { class: container_classes,
 
             // Drop zone overlay
             if props.show_drop_zones {
-                div { class: "{DragLayerClass::DropZoneOverlay.as_class()}",
+                div { class: DragLayerClass::DropZoneOverlay.class_name(),
                     div {
-                        class: "{DragLayerClass::DropZone.as_class()}",
+                        class: DragLayerClass::DropZone.class_name(),
                         style: "top: 50%; left: 50%; transform: translate(-50%, -50%);",
                         "Drop here"
                     }
@@ -80,16 +131,12 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
             // Drag preview
             if let Some(ref item) = props.drag_item {
                 div {
-                    class: "{DragLayerClass::DragPreview.as_class()}",
-                    style: "left: {x}px; top: {y}px;",
+                    class: DragLayerClass::DragPreview.class_name(),
+                    style: preview_style,
 
-                    div { class: "{DragLayerClass::DragPreviewContent.as_class()}",
-                        span { class: "{DragLayerClass::DragPreviewLabel.as_class()}",
-                            "{item.label}"
-                        }
-                        span { class: "{DragLayerClass::DragPreviewType.as_class()}",
-                            "{item.item_type}"
-                        }
+                    div { class: DragLayerClass::DragPreviewContent.class_name(),
+                        span { class: DragLayerClass::DragPreviewLabel.class_name(), "{item.label}" }
+                        span { class: DragLayerClass::DragPreviewType.class_name(), "{item.item_type}" }
                     }
                 }
             }
@@ -138,20 +185,7 @@ impl StyledComponent for DragLayerComponent {
 
 .hi-drag-layer-drag-preview {
     position: fixed;
-    transform: translate(-50%, -50%);
     pointer-events: none;
-    animation: hi-drag-preview-fade-in 0.15s ease;
-}
-
-@keyframes hi-drag-preview-fade-in {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
 }
 
 .hi-drag-layer-drag-preview-content {

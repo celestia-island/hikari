@@ -1,73 +1,59 @@
 // packages/components/src/basic/date_picker.rs
 // DatePicker component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, DatePickerClass};
+use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// DatePicker component type wrapper (for StyledComponent)
 pub struct DatePickerComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct DatePickerProps {
-    /// Current date value
-    #[props(default)]
+    #[default]
     pub value: Option<String>,
 
-    /// Minimum date (optional)
-    #[props(default)]
+    #[default]
     pub min: Option<String>,
 
-    /// Maximum date (optional)
-    #[props(default)]
+    #[default]
     pub max: Option<String>,
 
-    /// Date format (default: YYYY-MM-DD)
-    #[props(default = "YYYY-MM-DD".to_string())]
+    #[default("YYYY-MM-DD".to_string())]
     pub format: String,
 
-    /// Placeholder text
-    #[props(default)]
+    #[default]
     pub placeholder: Option<String>,
 
-    /// Whether the input is disabled
-    #[props(default = false)]
+    #[default(false)]
     pub disabled: bool,
 
-    /// Whether the input is readonly
-    #[props(default = false)]
+    #[default(false)]
     pub readonly: bool,
 
-    /// Additional CSS class
-    #[props(default)]
+    #[default]
     pub class: String,
 
-    /// Additional inline style
-    #[props(default)]
+    #[default]
     pub style: String,
 
-    /// Callback when date changes
     pub on_change: Option<EventHandler<String>>,
 
-    /// Callback on focus
-    #[props(default)]
+    #[default]
     pub on_focus: Option<EventHandler<FocusEvent>>,
 
-    /// Callback on blur
-    #[props(default)]
+    #[default]
     pub on_blur: Option<EventHandler<FocusEvent>>,
 }
 
 #[component]
 pub fn DatePicker(props: DatePickerProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add(DatePickerClass::DatePickerWrapper)
-        .add_raw(&props.class)
+        .add_typed(DatePickerClass::DatePickerWrapper)
+        .add(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add(DatePickerClass::DatePicker)
+        .add_typed(DatePickerClass::DatePicker)
         .build();
 
     let disabled_class = if props.disabled {
@@ -79,13 +65,11 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
     let display_value = props.value.clone().unwrap_or_default();
 
     rsx! {
-        div {
-            class: "{wrapper_classes}",
-            style: "{props.style}",
+        div { class: wrapper_classes, style: props.style,
 
             input {
-                class: "{input_classes}",
-                class: "{disabled_class}",
+                class: input_classes,
+                class: disabled_class,
                 r#type: "date",
                 value: display_value,
                 min: props.min,
@@ -93,17 +77,17 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
                 disabled: props.disabled,
                 readonly: props.readonly,
                 placeholder: props.placeholder,
-                onchange: move |e| {
+                onchange: move |e: ChangeEvent| {
                     if let Some(handler) = props.on_change.as_ref() {
-                        handler.call(e.data.value());
+                        handler.call(e.value.clone());
                     }
                 },
-                onfocus: move |e| {
+                onfocus: move |e: FocusEvent| {
                     if let Some(handler) = props.on_focus.as_ref() {
                         handler.call(e);
                     }
                 },
-                onblur: move |e| {
+                onblur: move |e: FocusEvent| {
                     if let Some(handler) = props.on_blur.as_ref() {
                         handler.call(e);
                     }
@@ -117,10 +101,32 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
                 fill: "none",
                 stroke: "currentColor",
                 stroke_width: "2",
-                rect { x: "3", y: "4", width: "18", height: "18", rx: "2", ry: "2" }
-                line { x1: "16", y1: "2", x2: "16", y2: "6" }
-                line { x1: "8", y1: "2", x2: "8", y2: "6" }
-                line { x1: "3", y1: "10", x2: "21", y2: "10" }
+                rect {
+                    x: "3",
+                    y: "4",
+                    width: "18",
+                    height: "18",
+                    rx: "2",
+                    ry: "2",
+                }
+                line {
+                    x1: "16",
+                    y1: "2",
+                    x2: "16",
+                    y2: "6",
+                }
+                line {
+                    x1: "8",
+                    y1: "2",
+                    x2: "8",
+                    y2: "6",
+                }
+                line {
+                    x1: "3",
+                    y1: "10",
+                    x2: "21",
+                    y2: "10",
+                }
             }
         }
     }

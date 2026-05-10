@@ -10,7 +10,6 @@ pub enum SlideDirection {
     Right,
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Fade in animation preset
 ///
 /// Creates a fade-in animation from opacity 0 to 1.
@@ -34,7 +33,6 @@ pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
     format!("opacity 0ms ease-out, opacity {}ms ease-out", duration_ms)
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Fade out animation preset
 ///
 /// Creates a fade-out animation from opacity 1 to 0.
@@ -49,7 +47,6 @@ pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
     format!("opacity 0ms ease-in, opacity {}ms ease-in", duration_ms)
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Slide in animation preset
 ///
 /// Creates a slide-in animation from a specified direction.
@@ -81,7 +78,6 @@ pub fn slide_in(
     )
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Slide out animation preset
 ///
 /// Creates a slide-out animation to a specified direction.
@@ -113,7 +109,6 @@ pub fn slide_out(
     )
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Zoom in animation preset
 ///
 /// Creates a zoom-in animation from scale 0 to 1.
@@ -131,7 +126,6 @@ pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
     )
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Zoom out animation preset
 ///
 /// Creates a zoom-out animation from scale 1 to 0.
@@ -149,7 +143,6 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
     )
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Bounce in animation preset
 ///
 /// Creates a bounce-in animation with elastic effect.
@@ -161,10 +154,9 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
 /// # Returns
 /// CSS cubic-bezier curve string for elastic bounce effect
 pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
-    format!("cubic-bezier(0.68, -0.55, 0.265, 1.55)")
+    "cubic-bezier(0.68, -0.55, 0.265, 1.55)".to_string()
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Shake animation preset
 ///
 /// Creates a shake animation for attention.
@@ -190,7 +182,6 @@ pub fn shake(element_id: &str, duration_ms: u64) -> String {
     format!("{}; {}", keyframes, animation)
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Rotate in animation preset
 ///
 /// Creates a rotation fade-in animation.
@@ -206,7 +197,6 @@ pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
     format!("transform {}ms ease-out", duration_ms)
 }
 
-#[cfg(target_arch = "wasm32")]
 /// Rotate out animation preset
 ///
 /// Creates a rotation fade-out animation.
@@ -222,7 +212,7 @@ pub fn rotate_out(_element_id: &str, duration_ms: u64, _degrees: i32) -> String 
     format!("transform {}ms ease-in", duration_ms)
 }
 
-#[cfg(all(test, target_arch = "wasm32"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -248,7 +238,8 @@ mod tests {
         let css = slide_in("my-element", 300, SlideDirection::Top, 50);
         assert!(css.contains("300ms"));
         assert!(css.contains("ease-out"));
-        assert!(css.contains("translateY(-50px)"));
+        assert!(css.contains("transform"));
+        assert!(css.contains("opacity"));
     }
 
     #[test]

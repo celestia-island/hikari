@@ -1,52 +1,33 @@
 // hi-components/src/layout/footer.rs
 // Footer component for application footer
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, components::Footer as FooterClass};
+use hikari_palette::classes::{ClassesBuilder, components::Footer as FooterClass};
 
-#[derive(Clone, PartialEq, Props)]
+use crate::prelude::*;
+
+/// Props for the [`Footer`] component.
+#[define_props]
 pub struct FooterProps {
-    /// Footer content
-    #[props(default)]
+    #[default]
     pub children: Element,
 
-    /// Additional CSS classes
-    #[props(default)]
+    #[default]
     pub class: String,
 }
 
-/// Footer component for application footer
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::Footer;
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Footer {
-///             "© 2026 Hikari. All rights reserved."
-///         }
-///     }
-/// }
-/// ```
+/// Application footer rendered as an HTML `<footer>` element with themed styling.
 #[component]
 pub fn Footer(props: FooterProps) -> Element {
     let footer_classes = ClassesBuilder::new()
-        .add(FooterClass::Footer)
-        .add_raw(&props.class)
+        .add_typed(FooterClass::Footer)
+        .add(&props.class)
         .build();
 
     rsx! {
-        footer {
-            class: "{footer_classes}",
-            { props.children }
-        }
+        footer { class: footer_classes, {props.children} }
     }
 }
 
-/// Footer component's type wrapper for StyledComponent
 pub struct FooterComponent;
 
 impl crate::styled::StyledComponent for FooterComponent {

@@ -1,44 +1,14 @@
 // packages/components/src/display/timeline.rs
 // Timeline component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{ClassesBuilder, TimelineClass, UtilityClass};
+use hikari_palette::classes::{ClassesBuilder, TimelineClass, TypedClass};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::MouseEvent;
 
-/// Timeline component type wrapper (for StyledComponent)
 pub struct TimelineComponent;
 
-/// Timeline component with Arknights + FUI styling
-///
-/// A vertical timeline for displaying a series of events in chronological order.
-/// Supports custom icons, colors, and positioning.
-///
-/// # Examples
-///
-/// ```rust
-/// use dioxus::prelude::*;
-/// use hikari_components::{Timeline, TimelineItem, TimelinePosition};
-///
-/// fn app() -> Element {
-///     rsx! {
-///         Timeline {
-///             TimelineItem {
-///                 position: TimelinePosition::Left,
-///                 time: "2024-01-01",
-///                 title: "Project Started",
-///                 "Initial project setup and planning"
-///             }
-///             TimelineItem {
-///                 position: TimelinePosition::Right,
-///                 time: "2024-02-15",
-///                 title: "First Milestone",
-///                 "Completed core features"
-///             }
-///         }
-///     }
-/// }
-/// ```
+/// Timeline position determining item placement
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TimelinePosition {
     #[default]
@@ -47,39 +17,18 @@ pub enum TimelinePosition {
     Right,
 }
 
-#[derive(Clone, PartialEq, Props)]
+/// Props for the Timeline component.
+#[define_props]
 pub struct TimelineProps {
-    /// Position of timeline items
-    #[props(default)]
     pub position: TimelinePosition,
-
-    /// Show connecting line between items
-    #[props(default = true)]
+    #[default(true)]
     pub line: bool,
-
-    /// Additional CSS classes
-    #[props(default)]
     pub class: String,
-
-    /// Additional CSS styles
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
 }
 
-impl Default for TimelineProps {
-    fn default() -> Self {
-        Self {
-            position: Default::default(),
-            line: true,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
+/// A vertical timeline component for displaying a sequence of events.
 #[component]
 pub fn Timeline(props: TimelineProps) -> Element {
     let position_class = match props.position {
@@ -89,75 +38,36 @@ pub fn Timeline(props: TimelineProps) -> Element {
     };
 
     let timeline_classes = ClassesBuilder::new()
-        .add(TimelineClass::Timeline)
-        .add(position_class)
-        .add_if(TimelineClass::NoLine, || !props.line)
-        .add_raw(&props.class)
+        .add_typed(TimelineClass::Timeline)
+        .add_typed(position_class)
+        .add_typed_if(TimelineClass::NoLine, !props.line)
+        .add(&props.class)
         .build();
 
     rsx! {
-        div {
-            class: "{timeline_classes}",
-            style: "{props.style}",
-            {props.children}
-        }
+        div { class: timeline_classes, style: props.style, {props.children} }
     }
 }
 
-/// Individual timeline item
-#[derive(Clone, PartialEq, Props)]
+/// Props for the TimelineItem component.
+#[define_props]
 pub struct TimelineItemProps {
-    /// Position of this item
-    #[props(default)]
     pub position: TimelinePosition,
-
-    /// Time/date label
-    #[props(default)]
     pub time: String,
-
-    /// Title of the timeline event
-    #[props(default)]
     pub title: String,
-
-    /// Icon for the timeline dot
-    #[props(default)]
+    pub description: String,
     pub icon: Option<Element>,
-
-    /// Color of the timeline dot
-    #[props(default)]
     pub color: String,
-
-    /// Whether this is the last item (hide line after it)
-    #[props(default)]
     pub last: bool,
-
-    /// Additional CSS classes
-    #[props(default)]
+    #[default(false)]
+    pub expanded: bool,
+    pub extra: Option<Element>,
     pub class: String,
-
-    /// Additional CSS styles
-    #[props(default)]
     pub style: String,
-
     pub children: Element,
 }
 
-impl Default for TimelineItemProps {
-    fn default() -> Self {
-        Self {
-            position: Default::default(),
-            time: String::default(),
-            title: String::default(),
-            icon: Some(VNode::empty()),
-            color: String::default(),
-            last: false,
-            class: String::default(),
-            style: String::default(),
-            children: VNode::empty(),
-        }
-    }
-}
-
+/// A single item within a timeline with expandable description.
 #[component]
 pub fn TimelineItem(props: TimelineItemProps) -> Element {
     let position_class = match props.position {
@@ -166,11 +76,25 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
         TimelinePosition::Right => TimelineClass::Right,
     };
 
+    let mut expanded = use_signal(|| props.expanded);
+    let has_description = !props.description.is_empty() || props.extra.is_some();
+
+    let toggle_expanded = {
+        let expanded = expanded.clone();
+        move |_: MouseEvent| {
+            if has_description {
+                expanded.set(!expanded.get());
+            }
+        }
+    };
+
+    let is_expanded = expanded.get();
+
     let item_classes = ClassesBuilder::new()
-        .add(TimelineClass::Item)
-        .add(position_class)
-        .add_if(TimelineClass::Last, || props.last)
-        .add_raw(&props.class)
+        .add_typed(TimelineClass::Item)
+        .add_typed(position_class)
+        .add_typed_if(TimelineClass::Last, props.last)
+        .add(&props.class)
         .build();
 
     let dot_style = if props.color.is_empty() {
@@ -182,33 +106,54 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
         )
     };
 
+    let header_classes = ClassesBuilder::new()
+        .add("hi-timeline-header")
+        .add_if("hi-timeline-header-clickable", has_description)
+        .build();
+
+    let description_classes = format!(
+        "hi-timeline-description {}",
+        if is_expanded {
+            "hi-timeline-description-expanded"
+        } else {
+            "hi-timeline-description-collapsed"
+        }
+    );
+
     rsx! {
-        div {
-            class: "{item_classes}",
-            style: "{props.style}",
+        div { class: item_classes, style: props.style,
 
             // Timeline dot
-            div {
-                class: "{TimelineClass::Dot.as_class()}",
-                style: "{dot_style}",
-                {props.icon}
+            div { class: TimelineClass::Dot.class_name(), style: dot_style,
+                if let Some(icon) = props.icon {
+                    {icon}
+                }
             }
 
             // Timeline content
-            div {
-                class: "{TimelineClass::Content.as_class()}",
+            div { class: TimelineClass::Content.class_name(),
 
-                if !props.time.is_empty() {
-                    div {
-                        class: "{TimelineClass::Time.as_class()}",
-                        "{props.time}"
+                div { class: header_classes, onclick: toggle_expanded,
+
+                    if !props.time.is_empty() {
+                        div { class: TimelineClass::Time.class_name(), "{props.time}" }
+                    }
+
+                    if !props.title.is_empty() {
+                        div { class: TimelineClass::Title.class_name(), "{props.title}" }
                     }
                 }
 
-                if !props.title.is_empty() {
-                    div {
-                        class: "{TimelineClass::Title.as_class()}",
-                        "{props.title}"
+                if has_description {
+                    div { class: description_classes,
+
+                        if !props.description.is_empty() {
+                            div { class: "hi-timeline-description-text", "{props.description}" }
+                        }
+
+                        if let Some(extra) = props.extra {
+                            div { class: "hi-timeline-extra", { extra } }
+                        }
                     }
                 }
 
@@ -286,7 +231,7 @@ impl StyledComponent for TimelineComponent {
     background-color: var(--hi-color-primary);
     border: 3px solid var(--hi-color-bg-container);
     box-shadow: 0 0 0 2px var(--hi-color-primary),
-                0 0 8px var(--hi-color-primary-glow);
+                0 0 8px var(--hi-glow-button-primary);
     flex-shrink: 0;
     z-index: 1;
     transition: all 0.3s ease;
@@ -295,7 +240,7 @@ impl StyledComponent for TimelineComponent {
 .hi-timeline-dot:hover {
     transform: scale(1.2);
     box-shadow: 0 0 0 2px var(--hi-color-primary),
-                0 0 16px var(--hi-color-primary-glow);
+                0 0 16px var(--hi-glow-button-primary);
 }
 
 .hi-timeline-content {
@@ -310,7 +255,7 @@ impl StyledComponent for TimelineComponent {
 .hi-timeline-content:hover {
     border-color: var(--hi-color-primary);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
-                0 0 8px var(--hi-color-primary-glow);
+                0 0 8px var(--hi-glow-button-primary);
 }
 
 .hi-timeline-time {
@@ -325,6 +270,41 @@ impl StyledComponent for TimelineComponent {
     font-weight: 600;
     color: var(--hi-color-text-primary);
     margin-bottom: 0.5rem;
+}
+
+.hi-timeline-header {
+    cursor: default;
+}
+
+.hi-timeline-header-clickable {
+    cursor: pointer;
+}
+
+.hi-timeline-description {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.hi-timeline-description-expanded {
+    max-height: 500px;
+    opacity: 1;
+    padding-top: 0.5rem;
+}
+
+.hi-timeline-description-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+}
+
+.hi-timeline-description-text {
+    font-size: 0.875rem;
+    color: var(--hi-color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.hi-timeline-extra {
+    margin-top: 0.5rem;
 }
 
 .hi-timeline-last::after {

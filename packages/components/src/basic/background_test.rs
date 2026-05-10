@@ -6,10 +6,9 @@ mod tests {
 
 use super::*;
 
-    #[cfg(target_arch = "wasm32")]
     #[test]
     fn test_background_animation_setup() {
-        use dioxus::prelude::*;
+        use crate::prelude::*;
         use hikari_theme::ThemeProvider;
         
         // Test that Background component can be created without panicking
@@ -30,7 +29,7 @@ use super::*;
     #[test]
     fn test_background_props() {
         let props = BackgroundProps {
-            children: dioxus::prelude::VNode::empty(),
+            children: VNode::empty(),
         };
         
         // Just verify we can create props

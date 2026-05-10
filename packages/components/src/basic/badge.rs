@@ -1,12 +1,10 @@
 // hi-components/src/basic/badge.rs
 // Badge component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{BadgeClass, ClassesBuilder, Display};
+use hikari_palette::classes::{BadgeClass, ClassesBuilder, Display};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Badge 组件的类型包装器（用于实现 StyledComponent）
 pub struct BadgeComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -21,41 +19,27 @@ pub enum BadgeVariant {
     Info,
 }
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BadgeProps {
-    #[props(default)]
+    #[default]
     pub variant: BadgeVariant,
 
-    #[props(default)]
+    #[default]
     pub dot: bool,
 
-    #[props(default)]
+    #[default]
     pub count: Option<i32>,
 
-    #[props(default)]
+    #[default]
     pub max: Option<i32>,
 
-    #[props(default)]
+    #[default]
     pub show_zero: bool,
 
-    #[props(default)]
+    #[default]
     pub class: String,
 
     pub children: Element,
-}
-
-impl Default for BadgeProps {
-    fn default() -> Self {
-        Self {
-            variant: Default::default(),
-            dot: false,
-            count: None,
-            max: None,
-            show_zero: false,
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]
@@ -90,27 +74,27 @@ pub fn Badge(props: BadgeProps) -> Element {
 
     if is_standalone {
         let mut builder = ClassesBuilder::new()
-            .add(BadgeClass::Badge)
-            .add(Display::InlineFlex);
+            .add_typed(BadgeClass::Badge)
+            .add_typed(Display::InlineFlex);
 
         if let Some(vc) = variant_class {
-            builder = builder.add(vc);
+            builder = builder.add_typed(vc);
         }
 
-        let badge_classes = builder.add_raw(&props.class).build();
+        let badge_classes = builder.add(&props.class).build();
 
         rsx! {
-            span { class: "{badge_classes}",
+            span { class: badge_classes,
                 {props.children}
             }
         }
     } else {
         let mut builder = ClassesBuilder::new()
-            .add(BadgeClass::Badge)
-            .add(BadgeClass::Dot);
+            .add_typed(BadgeClass::Badge)
+            .add_typed(BadgeClass::Dot);
 
         if let Some(vc) = variant_class {
-            builder = builder.add(vc);
+            builder = builder.add_typed(vc);
         }
 
         let badge_classes = builder.build();
@@ -120,11 +104,11 @@ pub fn Badge(props: BadgeProps) -> Element {
 
                 {props.children}
 
-                span { class: "{badge_classes}",
+                span { class: badge_classes,
 
                     if props.dot {
                         span { class: "hi-badge-dot-inner" }
-                    } else if let Some(count) = display_count {
+                    } else if let Some(count) = display_count.clone() {
                         "{count}"
                     }
                 }

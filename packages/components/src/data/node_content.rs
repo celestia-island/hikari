@@ -1,31 +1,36 @@
 // hi-components/src/data/node_content.rs
 // TreeNodeContent component - content wrapper for tree nodes
 
-use dioxus::prelude::*;
+use crate::prelude::*;
 
-/// Content wrapper for tree nodes
 #[derive(Clone, PartialEq, Props)]
 pub struct TreeNodeContentProps {
-    /// Indentation level (0-based)
     pub level: usize,
 
-    /// Whether the node is disabled
     #[props(default)]
     pub disabled: bool,
 
-    /// Custom classes
     #[props(default)]
     pub class: String,
 
-    /// Click handler
-    #[props(default)]
-    pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: EventHandler<MouseEvent>,
 
-    /// Child elements (arrow, icon, label)
-    children: Element,
+    #[props(default)]
+    pub children: Element,
 }
 
-/// TreeNodeContent - Wraps the visual content of a tree node with proper indentation
+impl Default for TreeNodeContentProps {
+    fn default() -> Self {
+        Self {
+            level: 0,
+            disabled: false,
+            class: String::new(),
+            onclick: EventHandler::new(|_| {}),
+            children: VNode::empty(),
+        }
+    }
+}
+
 #[component]
 pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
     let indentation_style = format!("padding-left: {}px;", props.level * 24);
@@ -44,15 +49,14 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
 
     rsx! {
         div {
-            class: "{full_class}",
-            style: "{indentation_style}",
+            class: full_class,
+            style: indentation_style,
             onclick: move |e| {
-                if !props.disabled
-                    && let Some(handler) = props.onclick.as_ref() {
-                        handler.call(e);
-                    }
+                if !props.disabled {
+                    props.onclick.call(e);
+                }
             },
-            { props.children }
+            {props.children}
         }
     }
 }

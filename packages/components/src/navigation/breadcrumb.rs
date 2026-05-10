@@ -1,77 +1,50 @@
 // hi-components/src/navigation/breadcrumb.rs
 // Breadcrumb component with Arknights + FUI styling
 
-use dioxus::prelude::*;
-use palette::classes::{components::BreadcrumbClass, ClassesBuilder, Display, FlexDirection, Gap};
+use hikari_palette::classes::{
+    ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass,
+};
 
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BreadcrumbComponent;
 
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BreadcrumbItemProps {
-    #[props(default)]
     pub item_key: String,
 
-    #[props(default)]
     pub href: Option<String>,
 
-    #[props(default)]
     pub children: Element,
 
-    #[props(default)]
     pub class: String,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
 }
 
-impl Default for BreadcrumbItemProps {
-    fn default() -> Self {
-        Self {
-            item_key: String::default(),
-            href: None,
-            children: VNode::empty(),
-            class: String::default(),
-            onclick: None,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Props)]
+#[define_props]
 pub struct BreadcrumbProps {
-    #[props(default)]
+    #[default("/".to_string())]
     pub separator: String,
 
-    #[props(default)]
     pub class: String,
 
-    #[props(default)]
     pub children: Element,
-}
-
-impl Default for BreadcrumbProps {
-    fn default() -> Self {
-        Self {
-            separator: "/".to_string(),
-            class: String::default(),
-            children: VNode::empty(),
-        }
-    }
 }
 
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(BreadcrumbClass::Breadcrumb)
-        .add(Display::Flex)
-        .add(FlexDirection::Row)
-        .add(Gap::Gap2)
-        .add_raw(&props.class)
+        .add_typed(BreadcrumbClass::Breadcrumb)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Row)
+        .add_typed(Gap::Gap2)
+        .add(&props.class)
         .build();
 
     rsx! {
         nav {
-            class: "{classes}",
+            class: classes,
             "aria-label": "Breadcrumb",
 
             { props.children }
@@ -92,21 +65,21 @@ impl StyledComponent for BreadcrumbComponent {
 #[component]
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add(BreadcrumbClass::BreadcrumbItem)
-        .add(Display::Flex)
-        .add(FlexDirection::Row)
-        .add(Gap::Gap2)
-        .add_raw(&props.class)
+        .add_typed(BreadcrumbClass::BreadcrumbItem)
+        .add_typed(Display::Flex)
+        .add_typed(FlexDirection::Row)
+        .add_typed(Gap::Gap2)
+        .add(&props.class)
         .build();
 
     rsx! {
         div {
-            class: "{classes}",
+            class: classes,
 
             if let Some(href) = props.href {
                 a {
                     class: "hi-breadcrumb-link",
-                    href: "{href}",
+                    href: href,
                     onclick: move |e| {
                         if let Some(handler) = props.onclick.as_ref() {
                             handler.call(e);

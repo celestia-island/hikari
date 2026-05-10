@@ -45,12 +45,16 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    background-color: var(--hi-color-border, #bfbfbf);
-    border-radius: 4px;
+    background-color: var(--hi-color-border, #d1d5db);
+    border: 1.5px solid transparent;
+    border-radius: 9999px;
     transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                border-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
                 filter var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     vertical-align: middle;
     z-index: 1;
+    box-sizing: border-box;
 }
 
 .hi-switch-track {
@@ -58,7 +62,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 2px;
+    padding: 3px;
     box-sizing: border-box;
 }
 
@@ -75,22 +79,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
-    border-radius: 2px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    background-color: var(--hi-surface, #FFFFFF);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
-                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.hi-switch-sm .hi-switch-thumb { width: 16px; height: 16px; }
-.hi-switch-md .hi-switch-thumb { width: 22px; height: 22px; }
-.hi-switch-lg .hi-switch-thumb { width: 28px; height: 28px; }
+.hi-switch-sm .hi-switch-thumb { width: 14px; height: 14px; }
+.hi-switch-md .hi-switch-thumb { width: 20px; height: 20px; }
+.hi-switch-lg .hi-switch-thumb { width: 26px; height: 26px; }
 
 .hi-switch-text-variant .hi-switch-thumb { padding: 0 4px; }
-.hi-switch-sm.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 20px; }
-.hi-switch-md.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 26px; }
-.hi-switch-lg.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 32px; }
+.hi-switch-sm.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 18px; }
+.hi-switch-md.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 24px; }
+.hi-switch-lg.hi-switch-text-variant .hi-switch-thumb { width: auto; min-width: 30px; }
 
 .hi-switch-checked .hi-switch-track {
     justify-content: flex-end;
@@ -102,14 +108,27 @@
 
 .hi-switch-text-variant.hi-switch-checked .hi-switch-thumb { transform: translateX(0); }
 
-// Default checked state - Success color
+// Default checked state - Success color with FUI glow
 .hi-switch-checked {
     background-color: var(--hi-success, #10B981);
+    border-color: var(--hi-success, #10B981);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
 }
 
-// Hover effect handled by glow wrapper
+.hi-switch-checked .hi-switch-thumb {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 4px rgba(16, 185, 129, 0.25);
+}
+
+// Hover with FUI brightness + glow boost
 .hi-switch-checked:hover:not(.hi-switch-disabled) {
-    filter: brightness(1.05);
+    filter: brightness(1.06);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.35), inset 0 0 4px rgba(255, 255, 255, 0.18);
+}
+
+// Unchecked hover - subtle border glow (FUI style)
+.hi-switch:hover:not(.hi-switch-disabled):not(.hi-switch-checked) {
+    border-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    box-shadow: 0 0 8px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
 }
 
 .hi-switch-disabled {
@@ -117,12 +136,32 @@
     pointer-events: none;
 }
 
-// Color variants
-.hi-switch-color-primary.hi-switch-checked { background-color: var(--hi-color-primary, #1890ff); }
-.hi-switch-color-secondary.hi-switch-checked { background-color: var(--hi-secondary, #4B5CC4); }
-.hi-switch-color-danger.hi-switch-checked { background-color: var(--hi-danger, #EF4444); }
-.hi-switch-color-warning.hi-switch-checked { background-color: var(--hi-warning, #FBBF24); }
-.hi-switch-color-info.hi-switch-checked { background-color: var(--hi-info, #065279); }
+// Color variants with FUI glow
+.hi-switch-color-primary.hi-switch-checked {
+    background-color: var(--hi-color-primary, #1890ff);
+    border-color: var(--hi-color-primary, #1890ff);
+    box-shadow: 0 0 6px rgba(24, 144, 255, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
+}
+.hi-switch-color-secondary.hi-switch-checked {
+    background-color: var(--hi-secondary, #4B5CC4);
+    border-color: var(--hi-secondary, #4B5CC4);
+    box-shadow: 0 0 6px rgba(75, 92, 196, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
+}
+.hi-switch-color-danger.hi-switch-checked {
+    background-color: var(--hi-danger, #EF4444);
+    border-color: var(--hi-danger, #EF4444);
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
+}
+.hi-switch-color-warning.hi-switch-checked {
+    background-color: var(--hi-warning, #FBBF24);
+    border-color: var(--hi-warning, #FBBF24);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
+}
+.hi-switch-color-info.hi-switch-checked {
+    background-color: var(--hi-info, #065279);
+    border-color: var(--hi-info, #065279);
+    box-shadow: 0 0 6px rgba(6, 82, 121, 0.25), inset 0 0 3px rgba(255, 255, 255, 0.12);
+}
 
 .hi-switch-color-primary .hi-switch-thumb-dot { background-color: var(--hi-color-primary, #1890ff); }
 .hi-switch-color-secondary .hi-switch-thumb-dot { background-color: var(--hi-secondary, #4B5CC4); }
@@ -215,7 +254,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 2px;
+    border-radius: 50%;
 }
 
 // Label text
@@ -225,105 +264,104 @@
     line-height: 1.5;
 }
 
-// Dark theme
+// Dark theme - all using CSS variables for consistency
 [data-theme="dark"] .hi-switch,
 [data-theme="tairitsu"] .hi-switch {
-    background-color: var(--hi-surface-hover, #333);
+    background-color: rgba(240, 240, 245, 0.12);
 }
 
 [data-theme="dark"] .hi-switch-thumb,
 [data-theme="tairitsu"] .hi-switch-thumb {
-    background-color: #2a2a2a;
+    background-color: var(--hi-background, #161823);
 }
 
 [data-theme="dark"] .hi-switch-thumb-dot,
 [data-theme="tairitsu"] .hi-switch-thumb-dot {
-    background-color: #666;
+    background-color: var(--hi-text-disabled, #6B7280);
 }
 
 [data-theme="dark"] .hi-switch-checked,
 [data-theme="tairitsu"] .hi-switch-checked {
-    background-color: var(--hi-success, #10B981);
+    background-color: var(--hi-success, #0EB840);
 }
 
 // Color variants in dark theme
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked { background-color: var(--hi-color-primary, #1890ff); }
+[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked { background-color: var(--hi-primary, #144A74); }
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked { background-color: var(--hi-secondary, #4B5CC4); }
+[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked { background-color: var(--hi-secondary, #FFC773); }
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked { background-color: var(--hi-danger, #EF4444); }
+[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked { background-color: var(--hi-danger, #FF4C00); }
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked { background-color: var(--hi-warning, #FBBF24); }
+[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked { background-color: var(--hi-warning, #FFF143); }
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked,
-[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked { background-color: var(--hi-info, #065279); }
+[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked { background-color: var(--hi-info, #144A74); }
 
 // Thumb dot colors in dark theme for checked state
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-success, #10B981); }
+[data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-success, #0EB840); }
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-color-primary, #1890ff); }
+[data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-primary, #144A74); }
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-secondary, #4B5CC4); }
+[data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-secondary, #FFC773); }
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-danger, #EF4444); }
+[data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-danger, #FF4C00); }
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-warning, #FBBF24); }
+[data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-warning, #FFF143); }
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot,
-[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-info, #065279); }
+[data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-dot { background-color: var(--hi-info, #144A74); }
 
+// Thumb text/icon in dark theme - unchecked state
 [data-theme="dark"] .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-thumb-icon {
-    color: #666;
+    color: var(--hi-text-disabled, #6B7280);
 }
 
+// Thumb text/icon in dark theme - checked state
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-success, #10B981);
+    color: var(--hi-success, #0EB840);
 }
 
+// Dark theme checked text/icon per color variant
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-primary.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-color-primary, #1890ff);
+    color: var(--hi-primary, #144A74);
 }
-
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-secondary.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-secondary, #4B5CC4);
+    color: var(--hi-secondary, #FFC773);
 }
-
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-danger.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-danger, #EF4444);
+    color: var(--hi-danger, #FF4C00);
 }
-
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-warning.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-warning, #FBBF24);
+    color: var(--hi-warning, #FFF143);
 }
-
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="dark"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-icon,
 [data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-text,
 [data-theme="tairitsu"] .hi-switch-color-info.hi-switch-checked .hi-switch-thumb-icon {
-    color: var(--hi-info, #065279);
+    color: var(--hi-info, #144A74);
 }
 
 [data-theme="dark"] .hi-switch-text,
 [data-theme="tairitsu"] .hi-switch-text {
-    color: var(--hi-text-primary, #e0e0e0);
+    color: var(--hi-text-primary, #F0F0F5);
 }
 
 // Focus state for accessibility

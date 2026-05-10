@@ -1,13 +1,8 @@
-//! Color utility classes
-//!
-//! Text color, background color, and other color utilities.
+//! Color utility classes.
 
-use serde::{Deserialize, Serialize};
+use tairitsu_style::TypedClass;
 
-use super::UtilityClass;
-
-/// Text color utilities - 语义化颜色，支持主题切换
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextColor {
     White,
     Black,
@@ -17,21 +12,20 @@ pub enum TextColor {
     Accent,
 }
 
-impl UtilityClass for TextColor {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for TextColor {
+    fn class_name(&self) -> &'static str {
         match self {
-            TextColor::White => "text-white",
-            TextColor::Black => "text-black",
-            TextColor::Primary => "text-primary",
-            TextColor::Secondary => "text-secondary",
-            TextColor::Muted => "text-muted",
-            TextColor::Accent => "text-accent",
+            Self::White => "hi-text-white",
+            Self::Black => "hi-text-black",
+            Self::Primary => "hi-text-primary",
+            Self::Secondary => "hi-text-secondary",
+            Self::Muted => "hi-text-muted",
+            Self::Accent => "hi-text-accent",
         }
     }
 }
 
-/// Background color utilities - 语义化背景色，支持主题切换
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BgColor {
     White,
     Black,
@@ -42,30 +36,29 @@ pub enum BgColor {
     Accent,
 }
 
-impl UtilityClass for BgColor {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for BgColor {
+    fn class_name(&self) -> &'static str {
         match self {
-            BgColor::White => "bg-white",
-            BgColor::Black => "bg-black",
-            BgColor::Transparent => "bg-transparent",
-            BgColor::Surface => "bg-surface",
-            BgColor::Primary => "bg-primary",
-            BgColor::Secondary => "bg-secondary",
-            BgColor::Accent => "bg-accent",
+            Self::White => "hi-bg-white",
+            Self::Black => "hi-bg-black",
+            Self::Transparent => "hi-bg-transparent",
+            Self::Surface => "hi-bg-surface",
+            Self::Primary => "hi-bg-primary",
+            Self::Secondary => "hi-bg-secondary",
+            Self::Accent => "hi-bg-accent",
         }
     }
 }
 
-/// Border color utilities - 语义化边框色，支持主题切换
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BorderColor {
     Transparent,
 }
 
-impl UtilityClass for BorderColor {
-    fn as_suffix(&self) -> &'static str {
+impl TypedClass for BorderColor {
+    fn class_name(&self) -> &'static str {
         match self {
-            BorderColor::Transparent => "border-transparent",
+            Self::Transparent => "hi-border-transparent",
         }
     }
 }

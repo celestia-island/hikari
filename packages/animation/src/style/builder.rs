@@ -1,40 +1,50 @@
-//! Style and attribute builders
+//! Style and attribute builders for DOM manipulation
+//!
+//! Note: These builders are maintained for backward compatibility.
+//! New code should use the Platform trait directly or the
+//! AnimationBuilder for complex animations.
 
-use web_sys::HtmlElement;
+use std::cell::RefCell;
+use std::rc::Rc;
+use tairitsu_vdom::Platform;
 
-use super::{CssProperty, Property};
+use super::{CssProperty, Property, StyleStringBuilder};
 
 /// Builder for applying multiple CSS properties atomically
 ///
-/// Provides a fluent interface for setting multiple styles at once.
+/// Provides a fluent interface for setting multiple styles at once
+/// using the Platform trait.
 ///
 /// # Example
 ///
 /// ```ignore
-/// StyleBuilder::new(&element)
+/// StyleBuilder::new(&platform, &element)
 ///     .add(CssProperty::Position, "relative")
 ///     .add(CssProperty::Top, "0")
 ///     .add(CssProperty::Left, "0")
 ///     .apply();
 /// ```
-pub struct StyleBuilder<'a> {
-    element: &'a HtmlElement,
+pub struct StyleBuilder<'a, P: Platform> {
+    platform: &'a Rc<RefCell<P>>,
+    element: &'a P::Element,
     properties: Vec<(Property, String)>,
 }
 
-impl<'a> Clone for StyleBuilder<'a> {
+impl<'a, P: Platform> Clone for StyleBuilder<'a, P> {
     fn clone(&self) -> Self {
         Self {
+            platform: self.platform,
             element: self.element,
             properties: self.properties.clone(),
         }
     }
 }
 
-impl<'a> StyleBuilder<'a> {
+impl<'a, P: Platform> StyleBuilder<'a, P> {
     /// Create a new StyleBuilder for the given element
-    pub fn new(element: &'a HtmlElement) -> Self {
+    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
+            platform,
             element,
             properties: Vec::new(),
         }
@@ -72,66 +82,39 @@ impl<'a> StyleBuilder<'a> {
 
     /// Apply all accumulated properties to the element
     ///
-    /// **Optimized**: Uses CSSOM batch updates to minimize reflows.
-    /// All properties are set in a single pass to reduce DOM access.
+    /// **Optimized**: Uses batch updates to minimize DOM access.
+    /// All properties are set in a single pass.
     pub fn apply(self) {
         if self.properties.is_empty() {
             return;
         }
 
-        let style = self.element.style();
-
         // Batch update all properties to minimize DOM access
         for (property, value) in self.properties {
-            let _ = style.set_property(property.as_str(), &value);
+            self.platform
+                .borrow_mut()
+                .set_style(self.element, property.as_str(), &value);
         }
-    }
-
-    /// Apply only changed properties, skipping duplicates
-    ///
-    /// **Performance optimization**: Compares with current element styles
-    /// and only updates properties that have actually changed.
-    ///
-    /// Returns number of properties actually updated.
-    pub fn apply_smart(self) -> usize {
-        if self.properties.is_empty() {
-            return 0;
-        }
-
-        let style = self.element.style();
-
-        let mut updated = 0;
-        for (property, value) in self.properties {
-            let property_name = property.as_str();
-
-            // Get current value
-            let current_value = style.get_property_value(property_name).unwrap_or_default();
-
-            // Only update if value changed
-            if current_value != value && style.set_property(property_name, &value).is_ok() {
-                updated += 1;
-            }
-        }
-
-        updated
     }
 
     /// Build the style as a CSS string (for Dioxus style attribute)
+    ///
+    /// Uses the tairitsu_style::StyleStringBuilder internally.
     ///
     /// # Example
     ///
     /// ```ignore
     /// let style = StyleBuilder::build_string(|builder| {
     ///     builder.add(CssProperty::Width, "100px")
-    ///           .add(CssProperty::Height, "50px")
+    ///            .add(CssProperty::Height, "50px")
     /// });
-    /// // Returns: "width:100px;height:50px;"
+    /// // Returns: "width:100px;height:50px"
     /// ```
     pub fn build_string<F>(f: F) -> String
     where
         F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
     {
-        f(StyleStringBuilder(Vec::new())).build()
+        f(StyleStringBuilder::new()).build()
     }
 
     /// Build the style as a clean CSS string (without trailing semicolons)
@@ -139,119 +122,7 @@ impl<'a> StyleBuilder<'a> {
     where
         F: FnOnce(StyleStringBuilder) -> StyleStringBuilder,
     {
-        f(StyleStringBuilder(Vec::new())).build_clean()
-    }
-}
-
-/// Style entry for storing CSS properties
-#[derive(Debug, Clone)]
-enum StyleEntry {
-    Known(CssProperty, String),
-    Custom(String, String), // (property_name, value)
-}
-
-impl StyleEntry {
-    /// Get the CSS style string for this entry (property: value format)
-    fn as_style_string(&self) -> String {
-        match self {
-            StyleEntry::Known(prop, value) => format!("{}:{}", prop.as_str(), value),
-            StyleEntry::Custom(prop, value) => format!("{}:{}", prop, value),
-        }
-    }
-}
-
-/// String-based style builder for Dioxus components
-///
-/// This version doesn't require an HtmlElement and is used for
-/// generating style strings for `style` attribute.
-///
-/// # Example
-///
-/// ```ignore
-/// use animation::style::StyleStringBuilder;
-/// use animation::style::CssProperty;
-///
-/// let style = StyleStringBuilder::new()
-///     .add(CssProperty::Width, "100px")
-///     .add_px(CssProperty::Height, 50)
-///     .add_custom("--glow-x", "50px")
-///     .build_clean();
-/// // Returns: "width:100px;height:50px;--glow-x:50px"
-/// ```
-pub struct StyleStringBuilder(Vec<StyleEntry>);
-
-impl Default for StyleStringBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl StyleStringBuilder {
-    /// Create a new style string builder
-    pub fn new() -> Self {
-        Self(Vec::new())
-    }
-
-    /// Add a CSS property
-    pub fn add(mut self, property: CssProperty, value: &str) -> Self {
-        self.0.push(StyleEntry::Known(property, value.to_string()));
-        self
-    }
-
-    /// Add a CSS property with pixel value
-    pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
-        self.0
-            .push(StyleEntry::Known(property, format!("{}px", pixels)));
-        self
-    }
-
-    /// Add a custom CSS property (e.g., CSS variables like --my-var)
-    ///
-    /// # Arguments
-    ///
-    /// * `property` - Custom property name (e.g., "--glow-x")
-    /// * `value` - Property value
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let style = StyleStringBuilder::new()
-    ///     .add_custom("--glow-x", "100px")
-    ///     .add_custom("--glow-y", "200px")
-    ///     .build_clean();
-    /// // Returns: "--glow-x:100px;--glow-y:200px"
-    /// ```
-    pub fn add_custom(mut self, property: &str, value: &str) -> Self {
-        self.0
-            .push(StyleEntry::Custom(property.to_string(), value.to_string()));
-        self
-    }
-
-    /// Add a raw style string
-    pub fn add_raw(mut self, style: &str) -> Self {
-        self.0.push(StyleEntry::Known(
-            CssProperty::Display,
-            format!("{};", style),
-        ));
-        self
-    }
-
-    /// Build final style string (with trailing semicolons)
-    pub fn build(self) -> String {
-        self.0
-            .iter()
-            .map(|entry| entry.as_style_string())
-            .collect::<Vec<_>>()
-            .join(";")
-    }
-
-    /// Build final style string without trailing semicolons
-    pub fn build_clean(self) -> String {
-        self.0
-            .iter()
-            .map(|entry| entry.as_style_string())
-            .collect::<Vec<_>>()
-            .join(";")
+        f(StyleStringBuilder::new()).build_clean()
     }
 }
 
@@ -270,30 +141,33 @@ enum AttributeValue {
 /// # Example
 ///
 /// ```ignore
-/// AttributeBuilder::new(&element)
+/// AttributeBuilder::new(&platform, &element)
 ///     .add("data-id", "123")
 ///     .add("aria-label", "Close button")
 ///     .add_bool("disabled", true)
 ///     .apply();
 /// ```
-pub struct AttributeBuilder<'a> {
-    element: &'a HtmlElement,
+pub struct AttributeBuilder<'a, P: Platform> {
+    platform: &'a Rc<RefCell<P>>,
+    element: &'a P::Element,
     attributes: Vec<(String, AttributeValue)>,
 }
 
-impl<'a> Clone for AttributeBuilder<'a> {
+impl<'a, P: Platform> Clone for AttributeBuilder<'a, P> {
     fn clone(&self) -> Self {
         Self {
+            platform: self.platform,
             element: self.element,
             attributes: self.attributes.clone(),
         }
     }
 }
 
-impl<'a> AttributeBuilder<'a> {
+impl<'a, P: Platform> AttributeBuilder<'a, P> {
     /// Create a new AttributeBuilder for given element
-    pub fn new(element: &'a HtmlElement) -> Self {
+    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
+            platform,
             element,
             attributes: Vec::new(),
         }
@@ -304,7 +178,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add("data-id", "123")
     ///     .add("aria-label", "Close");
     /// ```
@@ -319,7 +193,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add_bool("disabled", true)
     ///     .add_bool("checked", false);
     /// ```
@@ -334,7 +208,7 @@ impl<'a> AttributeBuilder<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// AttributeBuilder::new(&element)
+    /// AttributeBuilder::new(&platform, &element)
     ///     .add_data("custom-scrollbar", "wrapper")
     ///     .add_data("id", "123");
     /// ```
@@ -353,13 +227,19 @@ impl<'a> AttributeBuilder<'a> {
         for (name, value) in self.attributes {
             match value {
                 AttributeValue::String(v) => {
-                    let _ = self.element.set_attribute(&name, &v);
+                    self.platform
+                        .borrow_mut()
+                        .set_attribute(self.element, &name, &v);
                 }
                 AttributeValue::Bool(v) => {
                     if v {
-                        let _ = self.element.set_attribute(&name, "");
+                        self.platform
+                            .borrow_mut()
+                            .set_attribute(self.element, &name, "");
                     } else {
-                        let _ = self.element.remove_attribute(&name);
+                        self.platform
+                            .borrow_mut()
+                            .remove_attribute(self.element, &name);
                     }
                 }
             }

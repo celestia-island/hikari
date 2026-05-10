@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+description = "Internationalization support for the Hikari design system"
+repository.workspace = true
 
 [lib]
 doctest = false
@@ -13,10 +15,11 @@ doctest = false
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
-yuuka = { workspace = true }
-
-# Dioxus frontend framework
-dioxus.workspace = true
 
 # For TOML parsing
 toml = "^0.8"
+
+# Tairitsu i18n (re-exported from tairitsu-web)
+tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = false, features = [
+  "i18n",
+] }

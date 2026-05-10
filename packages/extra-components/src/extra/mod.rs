@@ -1,23 +1,22 @@
-//! Extra utility components
+//! Extra utility components - Framework Agnostic Data Models
 //!
-//! Provides specialized components that extend to base Hikari library
-//! with advanced functionality for complex use cases.
+//! ## Migration Notice
 //!
-//! ## Components
+//! This module now provides pure Rust data structures instead of Dioxus components.
+//! All components have been converted to state models that can be used with any framework.
 //!
-//! - [`Collapsible`] - Collapsible content sections
-//! - [`DragLayer`] - Drag and drop layer management
-//! - [`DraggableCard`] - Draggable Card wrapper
-//! - [`CollapsibleCard`] - Collapsible Card wrapper
-//! - [`ZoomControls`] - Zoom controls for interactive content
-//! - [`VideoPlayer`] - Video player with custom controls
-//! - [`RichTextEditor`] - Rich text editor with toolbar
-//! - [`AudioWaveform`] - Audio player with waveform visualization
-//! - [`NodeGraph`] - Plugin-based visual node editor
-//! - [`CodeHighlighter`] - Code display with syntax highlighting
-//! - [`UserGuide`] - Step-by-step user onboarding guide
-//! - [`Timeline`] - Event timeline with milestones
+//! ## Modules
 //!
+//! - [`audio_waveform`] - Audio waveform visualization state
+//! - [`code_highlighter`] - Code highlighter state
+//! - [`collapsible`] - Collapsible panel state
+//! - [`drag_layer`] - Drag and drop state management
+//! - [`zoom_controls`] - Zoom controls state
+//! - [`timeline`] - Timeline event model
+//! - [`user_guide`] - User onboarding guide state
+//! - [`rich_text_editor`] - Rich text editor state with formatting commands
+//! - [`video_player`] - Video player state with playback controls
+
 pub mod audio_waveform;
 pub mod code_highlighter;
 pub mod collapsible;
@@ -39,5 +38,18 @@ pub use draggable_card::*;
 pub use rich_text_editor::*;
 pub use timeline::*;
 pub use user_guide::*;
-pub use video_player::*;
+pub use video_player::PlaybackChangeEvent as VideoPlaybackChangeEvent;
+pub use video_player::{PlaybackStatus, TimeUpdateEvent, VideoPlayerState, VIDEO_PLAYER_STYLES};
 pub use zoom_controls::*;
+
+pub use audio_waveform::render_audio_waveform;
+pub use code_highlighter::render_code_highlighter;
+pub use collapsible::render_collapsible;
+pub use collapsible_card::render_collapsible_card;
+pub use drag_layer::render_drag_layer;
+pub use draggable_card::render_draggable_card;
+pub use rich_text_editor::render_rich_text_editor;
+pub use timeline::render_timeline;
+pub use user_guide::render_user_guide;
+pub use video_player::render_video_player;
+pub use zoom_controls::render_zoom_controls;

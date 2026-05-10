@@ -188,7 +188,7 @@ hikari-components/
 - Изоляция стилей на уровне компонентов
 - Интеграция CSS-переменных
 
-### 6. Система сборки (hikari-builder)
+### 6. Система сборки (hikari-icons (build))
 
 Генерация кода во время компиляции и компиляция SCSS.
 
@@ -215,15 +215,14 @@ hikari-components/
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("Сборка не удалась");
+    tairitsu-icons build system::build().expect("Сборка не удалась");
 }
 ```
 
 **Сгенерированные файлы**:
-- `packages/builder/src/generated/components.rs` - Константы компонентов
 - `public/styles/bundle.css` - Скомпилированный CSS
 
-### 7. Сервис рендеринга (hikari-render-service)
+### 7. Сервис рендеринга (tairitsu-packager)
 
 Серверный рендеринг и раздача статических ресурсов.
 
@@ -402,11 +401,11 @@ hikari-extra-components
   ├── hikari-theme
   └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
   ├── hikari-components
   └── axum
 
-hikari-builder
+hikari-icons (build)
   └── grass (SCSS-компилятор)
 ```
 

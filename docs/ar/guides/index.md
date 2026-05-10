@@ -113,8 +113,6 @@ hikari/
 │   ├── hikari-icons/            # نظام الأيقونات
 │   ├── hikari-components/       # مكتبة المكونات
 │   ├── hikari-extra-components/ # مكتبة المكونات الإضافية
-│   ├── hikari-builder/          # نظام البناء
-│   └── hikari-render-service/   # خدمة SSR
 │
 └── examples/
     ├── website/                 # الموقع الرسمي

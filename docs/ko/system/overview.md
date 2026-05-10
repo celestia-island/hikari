@@ -188,7 +188,7 @@ hikari-components/
 - 컴포넌트 레벨 스타일 격리
 - CSS 변수 통합
 
-### 6. 빌드 시스템 (hikari-builder)
+### 6. 빌드 시스템 (hikari-icons (build))
 
 컴파일 시간 코드 생성 및 SCSS 컴파일입니다.
 
@@ -215,15 +215,14 @@ hikari-components/
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("빌드 실패");
+    tairitsu-icons build system::build().expect("빌드 실패");
 }
 ```
 
 **생성된 파일**:
-- `packages/builder/src/generated/components.rs` - 컴포넌트 상수
 - `public/styles/bundle.css` - 컴파일된 CSS
 
-### 7. 렌더 서비스 (hikari-render-service)
+### 7. 렌더 서비스 (tairitsu-packager)
 
 서버 사이드 렌더링 및 정적 에셋 제공입니다.
 
@@ -402,11 +401,11 @@ hikari-extra-components
   ├── hikari-theme
   └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
   ├── hikari-components
   └── axum
 
-hikari-builder
+hikari-icons (build)
   └── grass (SCSS 컴파일러)
 ```
 

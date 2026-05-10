@@ -113,8 +113,6 @@ hikari/
  │   ├── hikari-icons/            # 图标系统
  │   ├── hikari-components/       # 基础组件库
  │   ├── hikari-extra-components/ # 高级组件库
- │   ├── hikari-builder/          # 构建系统
- │   └── hikari-render-service/   # SSR 服务
  │
  └── examples/
      ├── website/                 # 官方网站

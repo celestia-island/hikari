@@ -1,56 +1,38 @@
-//! Build script for hikari-icons
-//!
-//! Generates selected MDI icons at build time.
+#[path = "build/mod.rs"]
+mod build_icons;
 
 use std::path::PathBuf;
 
-use hikari_builder::icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
+use build_icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
 
 fn main() {
-    println!("cargo:warning=🎨 hikari-icons: Building icons...");
-
-    // Check if dynamic-fetch feature is enabled
     let is_dynamic = std::env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok();
 
     if is_dynamic {
-        println!("cargo:warning=🌐 Dynamic icon fetching enabled");
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
     } else {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    // Find workspace root
     let workspace_root = find_workspace_root();
 
-    // Build icons using the builder's icon module
     match build_icons(&workspace_root) {
-        Ok(()) => {
-            println!("cargo:warning=✅ Icons built successfully");
-        }
+        Ok(()) => {}
         Err(e) => {
-            eprintln!("❌ BUILD ERROR: Failed to build icons");
-            eprintln!("   Error: {}", e);
-            eprintln!();
+            eprintln!("Failed to build icons: {}", e);
             eprintln!(
-                "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+                "Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
             );
             std::process::exit(1);
         }
     }
 
-    // Track for rebuild
-    println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");
-    println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_styles.json");
+    println!("cargo:rerun-if-changed=icons/mdi");
 }
 
 fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
-    // Try auto-discovery first
     let icon_selection = if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
         if !usage.icons.is_empty() {
-            println!(
-                "cargo:warning=🔍 Auto-discovered {} icons",
-                usage.icons.len()
-            );
             IconSelection::ByName(auto_discovery::generate_selection(&usage))
         } else {
             get_default_icon_selection()
@@ -65,7 +47,7 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
         output_file: "src/generated/mdi_selected.rs".into(),
     };
 
-    hikari_builder::icons::build_selected_icons(&config)
+    build_icons::build_selected_icons(&config)
 }
 
 fn find_workspace_root() -> PathBuf {

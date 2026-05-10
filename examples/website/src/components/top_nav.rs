@@ -1,4 +1,4 @@
-use hikari_i18n::{t, translate_or_key};
+use tairitsu_web::{t, i18n::translate_or_key};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {

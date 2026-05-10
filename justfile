@@ -112,12 +112,12 @@ clippy:
 clean:
     @echo "  →  Cleaning..."
     @cargo clean 2>/dev/null || true
-    @rm -rf examples/website/dist packages/builder/src/generated public 2>/dev/null || true
+    @rm -rf examples/website/dist packages/icons/src/generated public 2>/dev/null || true
     @echo "  ✓  Clean completed"
 
 [windows]
 clean:
-    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
+    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/icons/src/generated) { Remove-Item -Recurse -Force packages/icons/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
 
 # ============================================================================
 # E2E Testing
@@ -157,7 +157,7 @@ update:
 
 # Generate SCSS bundle manually
 generate-scss:
-    @cargo build --manifest-path packages/builder/Cargo.toml
+    @echo "  →  Use 'just build-website' or 'tairitsu build' to compile SCSS"
 
 # ============================================================================
 # Browser Debug & E2E (Python framework, powered by Tairitsu MCP)

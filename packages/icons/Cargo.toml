@@ -9,14 +9,15 @@ repository.workspace = true
 
 [features]
 default = []
-dioxus = []
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
 dynamic-fetch = ["dep:web-sys", "dep:reqwest"]
 dynamic-fetch-warnings = []
 
 [build-dependencies]
-hikari-builder = { path = "../builder" }
 anyhow = "^1"
+serde = { workspace = true, features = ["derive"] }
+quick-xml = { version = "0.35", features = ["serialize"] }
+regex = "^1"
 
 [dependencies]
 # Tairitsu framework (optional)

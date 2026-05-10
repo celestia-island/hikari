@@ -109,8 +109,6 @@ fn app() -> Node {
 | `hikari-components` | 40+ UI components in three layers |
 | `hikari-extra-components` | Node graph system, advanced components |
 | `hikari-icons` | MDI icon integration with SVG AST rendering |
-| `hikari-builder` | Build-time code generation for CSS/SVG |
-| `hikari-i18n` | 9-language internationalization with RTL |
 
 ## Documentation
 

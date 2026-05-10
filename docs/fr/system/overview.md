@@ -188,7 +188,7 @@ hikari-components/
 - Isolation de style au niveau du composant
 - Intégration des variables CSS
 
-### 6. Système de Build (hikari-builder)
+### 6. Système de Build (hikari-icons (build))
 
 Génération de code à la compilation et compilation SCSS.
 
@@ -215,15 +215,14 @@ Génération de code à la compilation et compilation SCSS.
 ```rust
 // build.rs
 fn main() {
-    hikari_builder::build().expect("Échec du build");
+    tairitsu-icons build system::build().expect("Échec du build");
 }
 ```
 
 **Fichiers Générés**:
-- `packages/builder/src/generated/components.rs` - Constantes de composants
 - `public/styles/bundle.css` - CSS compilé
 
-### 7. Service de Rendu (hikari-render-service)
+### 7. Service de Rendu (tairitsu-packager)
 
 Rendu côté serveur et service d'assets statiques.
 
@@ -402,11 +401,11 @@ hikari-extra-components
   ├── hikari-theme
   └── hikari-animation
 
-hikari-render-service
+tairitsu-packager
   ├── hikari-components
   └── axum
 
-hikari-builder
+hikari-icons (build)
   └── grass (compilateur SCSS)
 ```
 

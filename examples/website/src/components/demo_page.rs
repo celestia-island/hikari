@@ -6,7 +6,7 @@
 //   DemoRow    — centered flex row for component showcase
 //   ApiTable   — API property reference table
 
-use hikari_i18n::t;
+use tairitsu_web::t;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {

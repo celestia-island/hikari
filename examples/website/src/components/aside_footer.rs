@@ -389,8 +389,8 @@ pub fn render(
                     .attr("type", "button")
                     .attr("role", "switch")
                     .attr("aria-checked", "false")
-                    .attr("aria-label", &hikari_i18n::t!("label.toggle_dark_mode"))
-                    .attr("title", hikari_i18n::t!("label.toggle_theme"))
+                    .attr("aria-label", &tairitsu_web::t!("label.toggle_dark_mode"))
+                    .attr("title", tairitsu_web::t!("label.toggle_theme"))
                     .on_event("click", theme_on_click)
                     .child(VNode::Element(
                         VElement::new("span")

@@ -56,9 +56,9 @@ pub fn Typography(props: TypographyProps) -> Element {
         _ => "span",
     };
 
-    let mut classes = format!("{variant_class}");
+    let mut classes = variant_class.to_string();
     if !props.class.is_empty() {
-        classes.push_str(" ");
+        classes.push(' ');
         classes.push_str(&props.class);
     }
 

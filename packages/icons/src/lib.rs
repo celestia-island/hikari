@@ -25,28 +25,17 @@
 pub mod generated;
 pub mod mdi_minimal;
 
-#[cfg(feature = "dioxus")]
-use dioxus::prelude::*;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
 
-// Re-export MDI icon enum
 pub use mdi_minimal::MdiIcon;
 
-// Re-export icon data types
 pub use generated::mdi_selected::{IconData, PathData, SvgElem, get};
 
-// StyleStringBuilder for building styles
-#[cfg(feature = "dioxus")]
-pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
-
-/// Default SVG fallback icon
-#[allow(dead_code)]
 const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
 
-/// Icon reference wrapper
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub struct IconRef(pub MdiIcon);
 
@@ -57,13 +46,11 @@ impl From<MdiIcon> for IconRef {
 }
 
 impl IconRef {
-    /// Get the icon name as a string
     pub fn name(&self) -> String {
         self.0.to_string()
     }
 }
 
-/// Build SVG string from IconData
 #[macro_export]
 macro_rules! build_svg {
     ($icon_data:expr) => {{
@@ -97,54 +84,6 @@ macro_rules! build_svg {
         svg
     }};
 }
-
-// ============================================================================
-// Dioxus Icon Component
-// ============================================================================
-
-#[cfg(feature = "dioxus")]
-#[component]
-pub fn Icon(
-    #[props(into)] icon: IconRef,
-    #[props(default)] class: String,
-    #[props(default = 24)] size: u32,
-    #[props(default)] color: String,
-) -> Element {
-    let icon_data_opt = get(&icon.name());
-
-    let final_svg = if let Some(icon_data) = icon_data_opt {
-        use_memo(move || build_svg!(icon_data))
-    } else {
-        use_memo(|| String::from(DEFAULT_SVG))
-    };
-
-    let full_style = if color.is_empty() {
-        StyleStringBuilder::new()
-            .add_px(CssProperty::Width, size)
-            .add_px(CssProperty::Height, size)
-            .build_clean()
-    } else {
-        StyleStringBuilder::new()
-            .add_px(CssProperty::Width, size)
-            .add_px(CssProperty::Height, size)
-            .add(CssProperty::Color, &color)
-            .build_clean()
-    };
-
-    let full_class = format!("hikari-icon {class}");
-
-    rsx! {
-        div {
-            class: full_class,
-            style: "{full_style}",
-            dangerous_inner_html: "{final_svg}",
-        }
-    }
-}
-
-// ============================================================================
-// Tairitsu Icon Component
-// ============================================================================
 
 #[cfg(feature = "tairitsu")]
 #[define_props]
@@ -192,11 +131,7 @@ pub fn Icon(props: IconProps) -> Element {
     }
 }
 
-// ============================================================================
-// MDI Icon Shortcuts
-// ============================================================================
-
-#[cfg(any(feature = "dioxus", feature = "tairitsu"))]
+#[cfg(feature = "tairitsu")]
 #[allow(non_snake_case)]
 pub mod mdi {
     use super::*;
@@ -204,18 +139,11 @@ pub mod mdi {
     macro_rules! icon_shortcut {
         ($name:ident, $icon:expr) => {
             pub fn $name(class: String) -> Element {
-                #[cfg(feature = "dioxus")]
-                {
-                    rsx! { Icon { icon: $icon, class } }
-                }
-                #[cfg(all(not(feature = "dioxus"), feature = "tairitsu"))]
-                {
-                    Icon(IconProps {
-                        icon: $icon,
-                        class,
-                        ..Default::default()
-                    })
-                }
+                Icon(IconProps {
+                    icon: $icon,
+                    class,
+                    ..Default::default()
+                })
             }
         };
     }

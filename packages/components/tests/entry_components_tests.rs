@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
     use hikari_components::entry::{
-        AutoComplete, AutoCompleteProps,
+        AutoCompleteProps,
         Cascader, CascaderProps, CascaderOption, CascaderSize,
         NumberInput, NumberInputProps, NumberInputSize,
-        Search, SearchProps,
+        SearchProps,
         Transfer, TransferProps, TransferItem, SelectChangeEvent,
     };
 

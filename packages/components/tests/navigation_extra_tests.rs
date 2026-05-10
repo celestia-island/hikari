@@ -24,7 +24,7 @@ mod tests {
 
     #[test]
     fn test_anchor_with_items() {
-        let items = vec![
+        let items = [
             AnchorItem { href: "#intro".to_string(), title: "Intro".to_string() },
             AnchorItem { href: "#body".to_string(), title: "Body".to_string() },
             AnchorItem { href: "#conclusion".to_string(), title: "Conclusion".to_string() },

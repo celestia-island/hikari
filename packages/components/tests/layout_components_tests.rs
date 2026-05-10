@@ -13,7 +13,7 @@ mod tests {
         Section, SectionProps,
         Spacer, SpacerProps,
         Header, HeaderProps,
-        Aside, AsideProps,
+        AsideProps,
         Content, ContentProps,
         ScrollbarContainer, ScrollbarContainerProps,
     };

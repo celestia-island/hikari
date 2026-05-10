@@ -32,7 +32,6 @@ pub enum DrawerSize {
 }
 
 /// Props for the [`Drawer`] component, controlling placement, size, mask behavior, and content.
-
 struct DrawerAnimState {
     start_ts: Option<f64>,
     stopped: bool,

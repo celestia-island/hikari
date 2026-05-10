@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::prelude::*;
     use hikari_components::production::{
         VideoPlayer, VideoPlayerProps,
         AudioPlayer, AudioPlayerProps, AudioPlayerSize,

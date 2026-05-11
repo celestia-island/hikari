@@ -1,6 +1,6 @@
 FROM rust:1.85-slim AS builder
 
-WORKDIR /hikari
+WORKDIR /build
 
 RUN apt-get update && apt-get install -y \
     pkg-config \
@@ -8,19 +8,22 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     git \
     python3 \
-    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 RUN rustup target add wasm32-wasip2
 
-COPY . .
+COPY hikari /build/hikari
+COPY tairitsu /build/tairitsu
 
-RUN git clone --depth 1 https://github.com/celestia-island/tairitsu.git /tairitsu
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install beautifulsoup4 lxml
 
-RUN pip3 install --break-system-packages beautifulsoup4 lxml
+WORKDIR /build/hikari
 
 RUN python3 scripts/build/compile_scss.py
-RUN cd examples/website && cargo run --manifest-path /tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
+RUN cd examples/website && cargo run --manifest-path /build/tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
 
 FROM debian:bookworm-slim
 
@@ -33,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /hikari
 
-COPY --from=builder /hikari/public /hikari/public
+COPY --from=builder /build/hikari/public /hikari/public
 
 USER hikari
 

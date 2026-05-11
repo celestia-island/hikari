@@ -93,10 +93,10 @@ run: dev
 # Code quality
 # ============================================================================
 
-# Format code with rustfmt
+# Format code with rustfmt (nightly to match CI)
 fmt:
     @echo "  →  Formatting code..."
-    @cargo fmt --all
+    @cargo +nightly fmt --all -- --unstable-features
 
 # Run Clippy checks
 clippy:

@@ -333,12 +333,12 @@
   transition: opacity 0.3s ease-in-out;
 
   background: radial-gradient(
-    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    circle at var(--hi-glow-x, 50%) var(--hi-glow-y, 50%),
     var(--hi-card-glow) 0%,
-    transparent calc(var(--glow-spread, 1.5) * 100%)
+    transparent calc(var(--hi-glow-spread, 1.5) * 100%)
   );
 }
 
 .hi-card:hover .hi-card-glow {
-  opacity: var(--glow-opacity, 0.15);
+  opacity: var(--hi-glow-opacity, 0.15);
 }

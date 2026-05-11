@@ -27,7 +27,7 @@
     height: 100%;
     border-radius: 100px;
     background-color: var(--hi-color-primary, #1890ff);
-    transition: width var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease);
+    transition: width var(--hi-duration-normal, 0.3s) var(--hi-ease-smooth, ease);
 }
 
 .hi-progress-text {
@@ -95,13 +95,13 @@
 
 .hi-progress-circle-trail {
     stroke: var(--hi-color-background, #f5f5f5);
-    transition: stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: stroke var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
 }
 
 .hi-progress-circle-path {
     stroke: var(--hi-color-primary, #1890ff);
-    transition: stroke-dashoffset var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease),
-                stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    transition: stroke-dashoffset var(--hi-duration-normal, 0.3s) var(--hi-ease-smooth, ease),
+                stroke var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
     stroke-linecap: round;
 }
 

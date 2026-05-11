@@ -8,7 +8,7 @@
 use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
     prelude::*,
     styled::StyledComponent,
 };
@@ -130,36 +130,25 @@ pub fn Input(props: InputProps) -> Element {
         )
         .build();
 
-    let mut css_vars_string = String::new();
-
-    // 设置 glow radius 变量，让 Glow wrapper 可以读取
-    css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
-
-    if let Some(color) = &props.text_color {
-        css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
-    }
-
-    if let Some(color) = &props.placeholder_color {
-        css_vars_string.push_str(&format!("--hi-input-placeholder-color:{};", color));
-    }
-
-    if let Some(color) = &props.border_color {
-        css_vars_string.push_str(&format!("--hi-input-border-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-input-wrapper-border-color:{};", color));
-    }
-
-    if let Some(color) = &props.background_color {
-        css_vars_string.push_str(&format!("--hi-input-bg:{};", color));
-        css_vars_string.push_str(&format!("--hi-input-wrapper-bg:{};", color));
-    }
-
-    if let Some(vars) = &props.css_vars {
-        for (name, value) in vars {
-            css_vars_string.push_str(&format!("{}:{};", name, value));
-        }
-    }
-
-    let style_attr = Some(css_vars_string);
+    let style_attr = crate::utils::build_css_vars_style(
+        "--hi-input-radius",
+        &[
+            crate::utils::CssVarEntry::new(&props.text_color, &["--hi-input-text-color"]),
+            crate::utils::CssVarEntry::new(
+                &props.placeholder_color,
+                &["--hi-input-placeholder-color"],
+            ),
+            crate::utils::CssVarEntry::new(
+                &props.border_color,
+                &["--hi-input-border-color", "--hi-input-wrapper-border-color"],
+            ),
+            crate::utils::CssVarEntry::new(
+                &props.background_color,
+                &["--hi-input-bg", "--hi-input-wrapper-bg"],
+            ),
+        ],
+        &props.css_vars,
+    );
 
     let input_content = rsx! {
         div {
@@ -209,17 +198,14 @@ pub fn Input(props: InputProps) -> Element {
         }
     };
 
-    if props.glow {
-        rsx! {
-            Glow {
-                blur: props.glow_blur,
-                color: props.glow_color,
-                intensity: props.glow_intensity,
-                {input_content}
-            }
+    rsx! {
+        ConditionalGlow {
+            glow: props.glow,
+            blur: props.glow_blur,
+            color: props.glow_color,
+            intensity: props.glow_intensity,
+            {input_content}
         }
-    } else {
-        input_content
     }
 }
 

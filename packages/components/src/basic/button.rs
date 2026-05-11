@@ -8,7 +8,7 @@
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
     prelude::*,
     styled::StyledComponent,
 };
@@ -139,37 +139,25 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonAnimation::IconRotate => Some("icon-rotate"),
     };
 
-    let mut css_vars_string = String::new();
-
-    // 设置 glow radius 变量，让 Glow wrapper 可以读取
-    css_vars_string.push_str("--hi-glow-radius:var(--hi-button-radius);");
-
-    if let Some(color) = &props.icon_color {
-        css_vars_string.push_str(&format!("--hi-button-icon-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-icon-color-active:{};", color));
-    }
-
-    if let Some(color) = &props.text_color {
-        css_vars_string.push_str(&format!("--hi-button-text-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-text-color-active:{};", color));
-    }
-
-    if let Some(color) = &props.background_color {
-        css_vars_string.push_str(&format!("--hi-button-bg:{};", color));
-    }
-
-    if let Some(color) = &props.border_color {
-        css_vars_string.push_str(&format!("--hi-button-border-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-button-border-color-focus:{};", color));
-    }
-
-    if let Some(vars) = &props.css_vars {
-        for (name, value) in vars {
-            css_vars_string.push_str(&format!("{}:{};", name, value));
-        }
-    }
-
-    let style_attr = Some(css_vars_string);
+    let style_attr = crate::utils::build_css_vars_style(
+        "--hi-button-radius",
+        &[
+            crate::utils::CssVarEntry::new(
+                &props.icon_color,
+                &["--hi-button-icon-color", "--hi-button-icon-color-active"],
+            ),
+            crate::utils::CssVarEntry::new(
+                &props.text_color,
+                &["--hi-button-text-color", "--hi-button-text-color-active"],
+            ),
+            crate::utils::CssVarEntry::new(&props.background_color, &["--hi-button-bg"]),
+            crate::utils::CssVarEntry::new(
+                &props.border_color,
+                &["--hi-button-border-color", "--hi-button-border-color-focus"],
+            ),
+        ],
+        &props.css_vars,
+    );
 
     let button_content = rsx! {
         button {
@@ -200,30 +188,27 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     };
 
-    if props.glow {
-        let glow_color = if let Some(color) = props.glow_color {
-            color
-        } else {
-            match props.variant {
-                ButtonVariant::Ghost => GlowColor::Ghost,
-                ButtonVariant::Borderless => GlowColor::Ghost,
-                ButtonVariant::Primary => GlowColor::Primary,
-                ButtonVariant::Secondary => GlowColor::Secondary,
-                ButtonVariant::Danger => GlowColor::Danger,
-                ButtonVariant::Success => GlowColor::Success,
-            }
-        };
-
-        rsx! {
-            Glow {
-                blur: props.glow_blur,
-                color: glow_color,
-                intensity: props.glow_intensity,
-                {button_content}
-            }
-        }
+    let glow_color = if let Some(color) = props.glow_color {
+        color
     } else {
-        button_content
+        match props.variant {
+            ButtonVariant::Ghost => GlowColor::Ghost,
+            ButtonVariant::Borderless => GlowColor::Ghost,
+            ButtonVariant::Primary => GlowColor::Primary,
+            ButtonVariant::Secondary => GlowColor::Secondary,
+            ButtonVariant::Danger => GlowColor::Danger,
+            ButtonVariant::Success => GlowColor::Success,
+        }
+    };
+
+    rsx! {
+        ConditionalGlow {
+            glow: props.glow,
+            blur: props.glow_blur,
+            color: glow_color,
+            intensity: props.glow_intensity,
+            {button_content}
+        }
     }
 }
 

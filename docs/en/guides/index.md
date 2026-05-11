@@ -1,6 +1,6 @@
 # Hikari UI Framework
 
-> A modern Rust UI framework built on Dioxus + Grass + Axum
+> A modern Rust UI framework built on Tairitsu + Grass + Axum
 >
 > **Design Style**: Arknights flat design + FUI sci-fi aesthetics + Traditional Chinese colors
 >
@@ -48,13 +48,12 @@ Add to `Cargo.toml`:
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-dioxus = "0.5"
+tairitsu = "0.5"
 ```
 
 ### Basic Usage
 
 ```rust
-use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -132,7 +131,6 @@ hikari/
 ### Theme Switching
 
 ```rust
-use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -186,7 +184,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](../../en-US/guides/CONT
 
 ## Acknowledgments
 
-- [Dioxus](https://dioxuslabs.com/) - Powerful Rust UI framework
+- **Tairitsu** - Powerful Rust UI framework
 - [Grass](https://github.com/kaj/kaj) - Pure Rust SCSS compiler
 - [Element Plus](https://element-plus.org/) - Excellent component library design reference
 - [Material UI](https://mui.com/) - Modern UI design inspiration

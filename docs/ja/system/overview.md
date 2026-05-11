@@ -122,15 +122,15 @@ AnimationBuilder::new(&elements)
 - アイコン列挙型定義
 - SVGコンテンツ生成
 - アイコンサイズバリアント
-- Lucide Icons統合
+- Material Design Icons統合
 
 **主な機能**:
 ```rust
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **アイコンソース**:
-- Lucide Icons (1000種類以上のアイコン)
+- Material Design Icons (7000種類以上のアイコン)
 - 拡張可能なカスタムアイコン
 - 複数サイズサポート
 

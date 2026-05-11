@@ -408,3 +408,44 @@ impl crate::styled::StyledComponent for GlowComponent {
         "glow"
     }
 }
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub struct GlowConfig {
+    pub glow: bool,
+    pub blur: GlowBlur,
+    pub color: GlowColor,
+    pub intensity: GlowIntensity,
+}
+
+#[define_props]
+pub struct ConditionalGlowProps {
+    pub glow: bool,
+
+    pub children: Element,
+
+    pub blur: GlowBlur,
+
+    pub color: GlowColor,
+
+    pub intensity: GlowIntensity,
+
+    #[default(false)]
+    pub block: bool,
+}
+
+#[component]
+pub fn ConditionalGlow(props: ConditionalGlowProps) -> Element {
+    if props.glow {
+        rsx! {
+            Glow {
+                blur: props.blur,
+                color: props.color,
+                intensity: props.intensity,
+                block: props.block,
+                {props.children}
+            }
+        }
+    } else {
+        props.children
+    }
+}

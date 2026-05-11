@@ -1,12 +1,12 @@
 # Icons 图标系统
 
-图标管理和渲染系统，集成 Lucide Icons。
+图标管理和渲染系统，集成 Material Design Icons (MDI)。
 
 ## 概述
 
 `hikari-icons` 提供：
 
-- **1000+ 图标** - Lucide Icons 完整集合
+- **1000+ 图标** - Material Design Icons (MDI) 完整集合
 - **类型安全** - 枚举类型的图标名称
 - **SVG 渲染** - 客户端和服务器端渲染
 - **运行时加载** - 按需加载图标 SVG
@@ -16,12 +16,11 @@
 ### 基础用法
 
 ```rust
-use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Magnify,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -31,29 +30,29 @@ rsx! {
 ### 可用图标
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // 导航
     Home,
     Menu,
-    Search,
-    Settings,
+    Magnify,
+    Cog,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // 操作
-    Edit,
-    Trash,
+    Pencil,
+    Delete,
     Check,
-    X,
+    Close,
     Plus,
     Minus,
 
     // 状态
-    AlertCircle,
-    CheckCircle,
-    Info,
-    AlertTriangle,
+    AlertCircleOutline,
+    CheckCircleOutline,
+    InformationOutline,
+    AlertOutline,
 
     // ... 1000+ 图标
 }
@@ -63,7 +62,7 @@ pub enum LucideIcon {
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `icon` | `LucideIcon` | - | 图标类型 |
+| `icon` | `MdiIcon` | - | 图标类型 |
 | `size` | `u32` | `24` | 图标尺寸 |
 | `color` | `&str` | - | 颜色 |
 
@@ -98,7 +97,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: LucideIcon,
+    icon: MdiIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -106,10 +105,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### LucideIcon
+### MdiIcon
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // 1000+ 图标变体
 }
 ```

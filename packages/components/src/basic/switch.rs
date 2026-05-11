@@ -185,13 +185,16 @@ pub fn Switch(props: SwitchProps) -> Element {
         },
     };
 
+    let on_change_click = props.on_change.clone();
+    let on_change_kb = props.on_change.clone();
+
     rsx! {
         label {
             class: "hi-switch-label",
             onclick: move |e: MouseEvent| {
                 if !props.disabled {
                     e.stop_propagation();
-                    if let Some(callback) = props.on_change.as_ref() {
+                    if let Some(callback) = on_change_click.as_ref() {
                         callback.call(!props.checked);
                     }
                 }
@@ -203,6 +206,19 @@ pub fn Switch(props: SwitchProps) -> Element {
                 "aria-checked": props.checked.to_string(),
                 tabindex: "0",
                 "aria-disabled": props.disabled.to_string(),
+                onkeydown: move |e: KeyboardEvent| {
+                    if !props.disabled {
+                        match e.get_key() {
+                            Key::Space | Key::Enter => {
+                                e.prevent_default();
+                                if let Some(callback) = on_change_kb.as_ref() {
+                                    callback.call(!props.checked);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                },
 
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }

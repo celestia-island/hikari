@@ -219,24 +219,55 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
         .build();
 
     let menu_context_for_click = menu_context.clone();
+    let menu_context_for_kb = menu_context.clone();
+    let onclick_for_click = props.onclick.clone();
+    let onclick_for_kb = props.onclick.clone();
     let item_content = rsx! {
         li {
             class: item_classes,
             role: "menuitem",
             "data-key": props.item_key,
+            tabindex: "-1",
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
-                    if let Some(handler) = props.onclick.as_ref() {
+                    if let Some(handler) = onclick_for_click.as_ref() {
                         handler.call(e);
                     }
-                    // Request close if in popover mode
                     if let Some(ctx) = &menu_context_for_click {
                         let ctx_val = ctx.get();
                         if let Some(close_cb) = &ctx_val.request_close {
                             close_cb.call(());
                         }
                     }
+                }
+            },
+            onkeydown: move |e: KeyboardEvent| {
+                if props.disabled {
+                    return;
+                }
+                match e.get_key() {
+                    Key::Enter | Key::Space => {
+                        e.prevent_default();
+                        if let Some(handler) = onclick_for_kb.as_ref() {
+                            handler.call(MouseEvent::default());
+                        }
+                        if let Some(ctx) = &menu_context_for_kb {
+                            let ctx_val = ctx.get();
+                            if let Some(close_cb) = &ctx_val.request_close {
+                                close_cb.call(());
+                            }
+                        }
+                    }
+                    Key::Escape => {
+                        if let Some(ctx) = &menu_context_for_kb {
+                            let ctx_val = ctx.get();
+                            if let Some(close_cb) = &ctx_val.request_close {
+                                close_cb.call(());
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             },
 
@@ -301,13 +332,44 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     });
 
     let is_open_for_click = is_open.clone();
+    let is_open_for_kb = is_open.clone();
     let title_content = rsx! {
         div {
             class: "{props.height.as_str()} hi-menu-submenu-title",
+            role: "menuitem",
+            "aria-expanded": is_open.read(),
+            tabindex: "-1",
             aria_disabled: props.disabled.to_string(),
             onclick: move |_e| {
                 if !props.disabled {
                     is_open_for_click.set(!is_open_for_click.get());
+                }
+            },
+            onkeydown: move |e: KeyboardEvent| {
+                if props.disabled {
+                    return;
+                }
+                match e.get_key() {
+                    Key::Enter | Key::Space => {
+                        e.prevent_default();
+                        is_open_for_kb.set(!is_open_for_kb.get());
+                    }
+                    Key::ArrowRight => {
+                        e.prevent_default();
+                        if !is_open_for_kb.get() {
+                            is_open_for_kb.set(true);
+                        }
+                    }
+                    Key::ArrowLeft => {
+                        e.prevent_default();
+                        if is_open_for_kb.get() {
+                            is_open_for_kb.set(false);
+                        }
+                    }
+                    Key::Escape => {
+                        is_open_for_kb.set(false);
+                    }
+                    _ => {}
                 }
             },
 

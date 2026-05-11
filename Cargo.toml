@@ -48,7 +48,7 @@ uuid = { version = "^1", features = [
 # =================================================================
 # Async runtime
 # =================================================================
-tokio = { version = "^1", features = ["full"] }
+tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time"] }
 
 # =================================================================
 # Logging and tracing
@@ -63,8 +63,7 @@ axum = { version = "^0.8", features = ["macros", "ws"] }
 axum-extra = { version = "^0.12", features = ["typed-header"] }
 tower = { version = "^0.5", features = ["full"] }
 tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
-gloo = "^0.11"
-gloo-net = "^0.6"
+
 
 # =================================================================
 # Data serialization and processing

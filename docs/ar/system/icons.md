@@ -1,12 +1,12 @@
 # نظام الأيقونات
 
-نظام إدارة وعرض الأيقونات، متكامل مع Lucide Icons.
+نظام إدارة وعرض الأيقونات، متكامل مع Material Design Icons (MDI).
 
 ## نظرة عامة
 
 يوفر `hikari-icons`:
 
-- **أكثر من 1000 أيقونة** - مجموعة Lucide Icons الكاملة
+- **أكثر من 1000 أيقونة** - مجموعة Material Design Icons (MDI) الكاملة
 - **آمن للنوع** - أسماء أيقونات قائمة على التعداد
 - **عرض SVG** - عرض من جانب العميل والخادم
 - **تحميل وقت التشغيل** - تحميل SVG للأيقونات عند الطلب
@@ -16,12 +16,11 @@
 ### الاستخدام الأساسي
 
 ```rust
-use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Magnify,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -31,29 +30,29 @@ rsx! {
 ### الأيقونات المتاحة
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // التنقل
     Home,
     Menu,
-    Search,
-    Settings,
+    Magnify,
+    Cog,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // الإجراءات
-    Edit,
-    Trash,
+    Pencil,
+    Delete,
     Check,
-    X,
+    Close,
     Plus,
     Minus,
 
     // الحالة
-    AlertCircle,
-    CheckCircle,
-    Info,
-    AlertTriangle,
+    AlertCircleOutline,
+    CheckCircleOutline,
+    InformationOutline,
+    AlertOutline,
 
     // ... أكثر من 1000 أيقونة
 }
@@ -63,7 +62,7 @@ pub enum LucideIcon {
 
 | الخاصية | النوع | الافتراضي | الوصف |
 |---------|-------|-----------|-------|
-| `icon` | `LucideIcon` | - | نوع الأيقونة |
+| `icon` | `MdiIcon` | - | نوع الأيقونة |
 | `size` | `u32` | `24` | حجم الأيقونة |
 | `color` | `&str` | - | اللون |
 
@@ -98,7 +97,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: LucideIcon,
+    icon: MdiIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -106,10 +105,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### LucideIcon
+### MdiIcon
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // أكثر من 1000 نوع أيقونة
 }
 ```

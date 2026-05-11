@@ -51,6 +51,7 @@ pub struct TabsProps {
 pub struct TabsContext {
     pub active_key: ReactiveSignal<String>,
     pub on_change: Option<EventHandler<String>>,
+    pub tab_keys: ReactiveSignal<Vec<String>>,
 }
 
 /// Tabs component with modern, premium styling
@@ -71,7 +72,6 @@ pub struct TabsContext {
 ///
 /// ## Basic Tabs
 /// ```rust
-/// use dioxus::prelude::*;
 /// use hikari_components::{Tabs, TabPane};
 ///
 /// fn app() -> Element {
@@ -95,7 +95,6 @@ pub struct TabsContext {
 ///
 /// ## Tabs with Icons
 /// ```rust
-/// use dioxus::prelude::*;
 /// use hikari_components::{Tabs, TabPane};
 ///
 /// fn app() -> Element {
@@ -190,9 +189,11 @@ pub fn Tabs(props: TabsProps) -> Element {
 
     let on_change = props.on_change.clone();
 
+    let tab_keys_signal = use_signal(Vec::<String>::new);
     let _ctx = use_context_provider(move || TabsContext {
         active_key,
         on_change,
+        tab_keys: tab_keys_signal,
     });
 
     let position_class = match props.tab_position {
@@ -245,9 +246,23 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     let ctx = ctx.get();
     let active_key = ctx.active_key.clone();
     let on_change = ctx.on_change.clone();
+    let tab_keys = ctx.tab_keys.clone();
 
     let item_key = props.item_key.clone();
     let is_active = *active_key.read() == item_key;
+
+    {
+        let tab_keys = tab_keys.clone();
+        let key_clone = item_key.clone();
+        use_effect(move || {
+            let mut keys = tab_keys.write();
+            if !keys.contains(&key_clone) {
+                keys.push(key_clone.clone());
+            }
+        });
+    }
+
+    let tabindex_val = if is_active { "0" } else { "-1" };
 
     let tab_classes = ClassesBuilder::new()
         .add_typed(TabsClass::TabsTab)
@@ -267,11 +282,68 @@ pub fn TabPane(props: TabPaneProps) -> Element {
     let aria_hidden_val = (!is_active).to_string();
 
     let item_key_for_click = item_key.clone();
+    let active_key_for_click = active_key.clone();
+    let on_change_for_click = on_change.clone();
     let onclick_handler = move |_| {
         if !props.disabled {
-            active_key.set(item_key_for_click.clone());
-            if let Some(handler) = on_change.as_ref() {
+            active_key_for_click.set(item_key_for_click.clone());
+            if let Some(handler) = on_change_for_click.as_ref() {
                 handler.call(item_key_for_click.clone());
+            }
+        }
+    };
+
+    let item_key_for_kb = item_key.clone();
+    let active_key_for_kb = active_key.clone();
+    let on_change_for_kb = on_change.clone();
+    let onkeydown_handler = move |e: KeyboardEvent| {
+        if props.disabled {
+            return;
+        }
+        let keys = tab_keys.read();
+        let current_idx = keys.iter().position(|k| k == &item_key_for_kb);
+        let Some(idx) = current_idx else { return };
+        let total = keys.len();
+        if total == 0 {
+            return;
+        }
+
+        let next_key = match e.get_key() {
+            Key::ArrowRight | Key::ArrowDown => {
+                e.prevent_default();
+                let next = (idx + 1) % total;
+                keys.get(next).cloned()
+            }
+            Key::ArrowLeft | Key::ArrowUp => {
+                e.prevent_default();
+                let next = (idx + total - 1) % total;
+                keys.get(next).cloned()
+            }
+            Key::Other(s) if s == "Home" => {
+                e.prevent_default();
+                keys.first().cloned()
+            }
+            Key::Other(s) if s == "End" => {
+                e.prevent_default();
+                keys.last().cloned()
+            }
+            Key::Enter | Key::Space => {
+                e.prevent_default();
+                if !is_active {
+                    active_key_for_kb.set(item_key_for_kb.clone());
+                    if let Some(handler) = on_change_for_kb.as_ref() {
+                        handler.call(item_key_for_kb.clone());
+                    }
+                }
+                None
+            }
+            _ => None,
+        };
+
+        if let Some(key) = next_key {
+            active_key_for_kb.set(key.clone());
+            if let Some(handler) = on_change_for_kb.as_ref() {
+                handler.call(key);
             }
         }
     };
@@ -283,7 +355,9 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "data-key": item_key.clone(),
             "aria-selected": is_active,
             "aria-disabled": props.disabled,
+            tabindex: tabindex_val,
             onclick: onclick_handler,
+            onkeydown: onkeydown_handler,
 
             if let Some(icon) = props.icon {
                 span { class: tab_icon_class, {icon} }

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::basic::badge::{Badge, BadgeProps};
-    use hikari_components::basic::button::{Button, ButtonProps};
+    use hikari_components::basic::badge::{Badge, BadgeProps, BadgeVariant};
+    use hikari_components::basic::button::{Button, ButtonProps, ButtonVariant};
     use hikari_components::basic::canvas::{Canvas, CanvasProps};
     use hikari_components::basic::card::{Card, CardProps};
     use hikari_components::basic::checkbox::{Checkbox, CheckboxProps};
@@ -17,15 +17,101 @@ mod tests {
     use hikari_components::basic::textarea::{Textarea, TextareaProps};
     use hikari_components::portal::{PortalContext, PortalEntry};
     use hikari_components::prelude::*;
+    use tairitsu_vdom::vnode::VNode;
 
-    #[test]
-    fn test_button_renders() {
-        let _ = Button(ButtonProps::default());
+    fn find_elements_by_tag<'a>(node: &'a VNode, tag: &str) -> Vec<&'a tairitsu_vdom::vnode::VElement> {
+        let mut results = Vec::new();
+        find_elements_recursive(node, tag, &mut results);
+        results
+    }
+
+    fn find_elements_recursive<'a>(
+        node: &'a VNode,
+        tag: &str,
+        results: &mut Vec<&'a tairitsu_vdom::vnode::VElement>,
+    ) {
+        match node {
+            VNode::Element(el) => {
+                if el.tag == tag {
+                    results.push(el);
+                }
+                for child in &el.children {
+                    find_elements_recursive(child, tag, results);
+                }
+            }
+            VNode::Fragment(children) => {
+                for child in children {
+                    find_elements_recursive(child, tag, results);
+                }
+            }
+            VNode::Text(_) => {}
+        }
+    }
+
+    fn count_elements(node: &VNode) -> usize {
+        match node {
+            VNode::Element(el) => {
+                1 + el.children.iter().map(count_elements).sum::<usize>()
+            }
+            VNode::Fragment(children) => children.iter().map(count_elements).sum(),
+            VNode::Text(_) => 1,
+        }
     }
 
     #[test]
-    fn test_input_renders() {
-        let _ = Input(InputProps::default());
+    fn test_button_renders_with_inner_button_tag() {
+        let node = Button(ButtonProps::default());
+        let buttons = find_elements_by_tag(&node, "button");
+        assert!(!buttons.is_empty(), "Button component should render a <button> element");
+    }
+
+    #[test]
+    fn test_button_variant_props() {
+        assert_eq!(ButtonVariant::default(), ButtonVariant::Primary);
+        let props = ButtonProps {
+            variant: ButtonVariant::Danger,
+            ..Default::default()
+        };
+        let node = Button(props);
+        assert!(count_elements(&node) > 0, "Should produce at least one element");
+    }
+
+    #[test]
+    fn test_button_with_class_propagates() {
+        let node = Button(ButtonProps {
+            class: "custom-btn".to_string(),
+            ..Default::default()
+        });
+        let buttons = find_elements_by_tag(&node, "button");
+        assert!(!buttons.is_empty());
+        let btn = &buttons[0];
+        assert!(
+            btn.class.to_string().contains("custom-btn"),
+            "Custom class should propagate to <button>, got: {:?}", btn.class
+        );
+    }
+
+    #[test]
+    fn test_input_renders_with_inner_input_tag() {
+        let node = Input(InputProps::default());
+        let inputs = find_elements_by_tag(&node, "input");
+        assert!(!inputs.is_empty(), "Input component should render an <input> element");
+    }
+
+    #[test]
+    fn test_input_with_placeholder() {
+        let node = Input(InputProps {
+            placeholder: Some("Type here".to_string()),
+            ..Default::default()
+        });
+        let inputs = find_elements_by_tag(&node, "input");
+        assert!(!inputs.is_empty());
+        let input = &inputs[0];
+        assert_eq!(
+            input.attributes.get("placeholder").map(|s| s.as_str()),
+            Some("Type here"),
+            "Placeholder should be set on <input>"
+        );
     }
 
     #[test]
@@ -44,8 +130,17 @@ mod tests {
     }
 
     #[test]
-    fn test_badge_renders() {
-        let _ = Badge(BadgeProps::default());
+    fn test_badge_renders_non_empty() {
+        let node = Badge(BadgeProps::default());
+        assert!(count_elements(&node) > 0, "Badge should render at least one element");
+    }
+
+    #[test]
+    fn test_badge_variant_props() {
+        let _ = Badge(BadgeProps {
+            variant: BadgeVariant::Success,
+            ..Default::default()
+        });
     }
 
     #[test]
@@ -87,8 +182,10 @@ mod tests {
     }
 
     #[test]
-    fn test_textarea_renders() {
-        let _ = Textarea(TextareaProps::default());
+    fn test_textarea_renders_with_inner_textarea_tag() {
+        let node = Textarea(TextareaProps::default());
+        let textareas = find_elements_by_tag(&node, "textarea");
+        assert!(!textareas.is_empty(), "Textarea component should render a <textarea> element");
     }
 
     #[test]
@@ -97,7 +194,13 @@ mod tests {
     }
 
     #[test]
-    fn test_canvas_renders() {
-        let _ = Canvas(CanvasProps::default());
+    fn test_canvas_renders_with_inner_canvas_tag() {
+        let node = Canvas(CanvasProps {
+            width: Some(400),
+            height: Some(300),
+            ..Default::default()
+        });
+        let canvases = find_elements_by_tag(&node, "canvas");
+        assert!(!canvases.is_empty(), "Canvas component should render a <canvas> element");
     }
 }

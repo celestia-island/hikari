@@ -6,16 +6,14 @@ Comprehensive UI component library with Arknights-style design and FUI (Future U
 
 ```toml
 [dependencies]
-hikari-components = "0.1.0"
-hikari-theme = "0.1.0"
-hikari-palette = "0.1.0"
-dioxus = "0.7"
+hikari-components = "0.1"
+hikari-theme = "0.1"
+hikari-palette = "0.1"
 ```
 
 ## Quick Start
 
 ```rust
-use dioxus::prelude::*;
 use hikari_components::*;
 use hikari_theme::ThemeProvider;
 

@@ -1,13 +1,16 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::layout::{
-        Align, AsideProps, Col, ColProps, Container, ContainerProps, ContainerSize, Content,
-        ContentProps, Direction, Divider, DividerOrientation, DividerProps, DividerType, FlexBox,
-        FlexBoxProps, FlexGap, Footer, FooterProps, Grid, GridProps, Header, HeaderProps, Justify,
-        Row, RowProps, ScrollbarContainer, ScrollbarContainerProps, Section, SectionProps, Space,
-        SpaceDirection, SpaceProps, Spacer, SpacerProps, Wrap,
+
+    use hikari_components::{
+        layout::{
+            Align, AsideProps, Col, ColProps, Container, ContainerProps, ContainerSize, Content,
+            ContentProps, Direction, Divider, DividerOrientation, DividerProps, DividerType,
+            FlexBox, FlexBoxProps, FlexGap, Footer, FooterProps, Grid, GridProps, Header,
+            HeaderProps, Justify, Row, RowProps, ScrollbarContainer, ScrollbarContainerProps,
+            Section, SectionProps, Space, SpaceDirection, SpaceProps, Spacer, SpacerProps, Wrap,
+        },
+        prelude::*,
     };
-    use hikari_components::prelude::*;
 
     // ── Divider ────────────────────────────────────────────────
 

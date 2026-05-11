@@ -36,7 +36,6 @@
 ### الاستخدام الأساسي
 
 ```rust
-use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 rsx! {

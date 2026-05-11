@@ -5,10 +5,7 @@ use anyhow::{Context, Result};
 use futures::StreamExt;
 use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{
-    browser::{Browser, BrowserConfig},
-    page::Page,
-};
+use chromiumoxide::{browser::{Browser, BrowserConfig}, page::Page};
 use clap::Parser;
 use tracing::{error, info, warn};
 

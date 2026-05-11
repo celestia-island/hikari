@@ -3,9 +3,9 @@
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TypedClass, ZoomControlsClass};
+use tairitsu_vdom::events::KeyboardEvent;
 
 use crate::{prelude::*, styled::StyledComponent};
-use tairitsu_vdom::events::KeyboardEvent;
 
 pub struct ZoomControlsComponent;
 

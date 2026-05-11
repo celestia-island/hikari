@@ -1,6 +1,7 @@
-use crate::components::demo_page::render_demo_page;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::demo_page::render_demo_page;
 
 pub fn render() -> VNode {
     render_demo_page("page-demos-video", "Video & Audio Demo", "Demonstrates the full functionality of Layer 3 video player and audio waveform components.",

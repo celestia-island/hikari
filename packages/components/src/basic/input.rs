@@ -8,7 +8,7 @@
 use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
 use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
     prelude::*,
     styled::StyledComponent,
 };
@@ -130,36 +130,25 @@ pub fn Input(props: InputProps) -> Element {
         )
         .build();
 
-    let mut css_vars_string = String::new();
-
-    // 设置 glow radius 变量，让 Glow wrapper 可以读取
-    css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
-
-    if let Some(color) = &props.text_color {
-        css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
-    }
-
-    if let Some(color) = &props.placeholder_color {
-        css_vars_string.push_str(&format!("--hi-input-placeholder-color:{};", color));
-    }
-
-    if let Some(color) = &props.border_color {
-        css_vars_string.push_str(&format!("--hi-input-border-color:{};", color));
-        css_vars_string.push_str(&format!("--hi-input-wrapper-border-color:{};", color));
-    }
-
-    if let Some(color) = &props.background_color {
-        css_vars_string.push_str(&format!("--hi-input-bg:{};", color));
-        css_vars_string.push_str(&format!("--hi-input-wrapper-bg:{};", color));
-    }
-
-    if let Some(vars) = &props.css_vars {
-        for (name, value) in vars {
-            css_vars_string.push_str(&format!("{}:{};", name, value));
-        }
-    }
-
-    let style_attr = Some(css_vars_string);
+    let style_attr = crate::utils::build_css_vars_style(
+        "--hi-input-radius",
+        &[
+            crate::utils::CssVarEntry::new(&props.text_color, &["--hi-input-text-color"]),
+            crate::utils::CssVarEntry::new(
+                &props.placeholder_color,
+                &["--hi-input-placeholder-color"],
+            ),
+            crate::utils::CssVarEntry::new(
+                &props.border_color,
+                &["--hi-input-border-color", "--hi-input-wrapper-border-color"],
+            ),
+            crate::utils::CssVarEntry::new(
+                &props.background_color,
+                &["--hi-input-bg", "--hi-input-wrapper-bg"],
+            ),
+        ],
+        &props.css_vars,
+    );
 
     let input_content = rsx! {
         div {
@@ -209,17 +198,59 @@ pub fn Input(props: InputProps) -> Element {
         }
     };
 
-    if props.glow {
-        rsx! {
-            Glow {
-                blur: props.glow_blur,
-                color: props.glow_color,
-                intensity: props.glow_intensity,
-                {input_content}
-            }
+    rsx! {
+        ConditionalGlow {
+            glow: props.glow,
+            blur: props.glow_blur,
+            color: props.glow_color,
+            intensity: props.glow_intensity,
+            {input_content}
         }
-    } else {
-        input_content
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::styled::StyledComponent;
+
+    #[test]
+    fn test_input_size_default() {
+        assert_eq!(InputSize::default(), InputSize::Medium);
+    }
+
+    #[test]
+    fn test_input_size_distinct() {
+        assert_ne!(InputSize::Small, InputSize::Medium);
+        assert_ne!(InputSize::Medium, InputSize::Large);
+        assert_ne!(InputSize::Small, InputSize::Large);
+    }
+
+    #[test]
+    fn test_input_status_default() {
+        assert_eq!(InputStatus::default(), InputStatus::Default);
+    }
+
+    #[test]
+    fn test_input_status_distinct() {
+        assert_ne!(InputStatus::Default, InputStatus::Error);
+        assert_ne!(InputStatus::Error, InputStatus::Success);
+        assert_ne!(InputStatus::Default, InputStatus::Success);
+    }
+
+    #[test]
+    fn test_input_size_into_attr() {
+        assert_eq!(InputSize::Small.into_attr_value().as_deref(), Some("small"));
+        assert_eq!(
+            InputSize::Medium.into_attr_value().as_deref(),
+            Some("medium")
+        );
+        assert_eq!(InputSize::Large.into_attr_value().as_deref(), Some("large"));
+    }
+
+    #[test]
+    fn test_input_component_name() {
+        assert_eq!(InputComponent::name(), "input");
     }
 }
 

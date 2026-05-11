@@ -2,10 +2,7 @@
 // Visual quality and interactive behavior testing
 
 use anyhow::Result;
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::{path::PathBuf, time::{Duration, Instant}};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};

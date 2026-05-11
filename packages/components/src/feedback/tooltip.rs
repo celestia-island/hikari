@@ -3,10 +3,12 @@
 
 use hikari_palette::classes::{ClassesBuilder, TooltipClass, TypedClass};
 
-use crate::portal::{PortalEntry, TriggerPlacement};
 use crate::{
     platform,
-    portal::provider::{generate_portal_id, use_portal},
+    portal::{
+        PortalEntry, TriggerPlacement,
+        provider::{generate_portal_id, use_portal},
+    },
     prelude::*,
     styled::StyledComponent,
 };

@@ -2,7 +2,7 @@
 
 Hikari (光) 是一個現代化的 Rust UI 框架，基於以下技術構建：
 
-- **Dioxus 0.7** - 響應式 UI 框架
+- **Tairitsu** - 響應式 UI 框架
 - **Grass** - SCSS 編譯器
 - **Axum** - 服務端渲染支援
 

@@ -185,13 +185,16 @@ pub fn Switch(props: SwitchProps) -> Element {
         },
     };
 
+    let on_change_click = props.on_change.clone();
+    let on_change_kb = props.on_change.clone();
+
     rsx! {
         label {
             class: "hi-switch-label",
             onclick: move |e: MouseEvent| {
                 if !props.disabled {
                     e.stop_propagation();
-                    if let Some(callback) = props.on_change.as_ref() {
+                    if let Some(callback) = on_change_click.as_ref() {
                         callback.call(!props.checked);
                     }
                 }
@@ -203,6 +206,19 @@ pub fn Switch(props: SwitchProps) -> Element {
                 "aria-checked": props.checked.to_string(),
                 tabindex: "0",
                 "aria-disabled": props.disabled.to_string(),
+                onkeydown: move |e: KeyboardEvent| {
+                    if !props.disabled {
+                        match e.get_key() {
+                            Key::Space | Key::Enter => {
+                                e.prevent_default();
+                                if let Some(callback) = on_change_kb.as_ref() {
+                                    callback.call(!props.checked);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                },
 
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }
@@ -410,5 +426,64 @@ impl StyledComponent for SwitchComponent {
 
     fn name() -> &'static str {
         "switch"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_switch_size_default() {
+        assert_eq!(SwitchSize::default(), SwitchSize::Medium);
+    }
+
+    #[test]
+    fn test_switch_size_distinct() {
+        assert_ne!(SwitchSize::Small, SwitchSize::Medium);
+        assert_ne!(SwitchSize::Medium, SwitchSize::Large);
+        assert_ne!(SwitchSize::Small, SwitchSize::Large);
+    }
+
+    #[test]
+    fn test_switch_variant_default() {
+        assert_eq!(SwitchVariant::default(), SwitchVariant::Default);
+    }
+
+    #[test]
+    fn test_switch_variant_distinct() {
+        assert_ne!(SwitchVariant::Default, SwitchVariant::Text);
+        assert_ne!(SwitchVariant::Text, SwitchVariant::Icon);
+        assert_ne!(SwitchVariant::Icon, SwitchVariant::Custom);
+    }
+
+    #[test]
+    fn test_switch_color_default() {
+        assert_eq!(SwitchColor::default(), SwitchColor::Primary);
+    }
+
+    #[test]
+    fn test_switch_icon_default() {
+        assert_eq!(SwitchIcon::default(), SwitchIcon::Check);
+    }
+
+    #[test]
+    fn test_switch_content_variants() {
+        let text = SwitchContent::Text("ON".to_string());
+        let icon = SwitchContent::Icon(SwitchIcon::Check);
+        let img = SwitchContent::Image("check.png".to_string());
+
+        assert_ne!(text, icon);
+        assert_ne!(icon, img);
+
+        assert!(matches!(text, SwitchContent::Text(_)));
+        assert!(matches!(icon, SwitchContent::Icon(_)));
+        assert!(matches!(img, SwitchContent::Image(_)));
+    }
+
+    #[test]
+    fn test_switch_icon_custom() {
+        let custom = SwitchIcon::Custom("M4 12l8 8");
+        assert!(matches!(custom, SwitchIcon::Custom(_)));
     }
 }

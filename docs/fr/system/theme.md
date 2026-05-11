@@ -36,7 +36,6 @@ Fournit le contexte de thème pour l'application entière.
 ### Utilisation de Base
 
 ```rust
-use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 rsx! {

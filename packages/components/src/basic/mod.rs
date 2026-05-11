@@ -45,6 +45,7 @@ pub mod input;
 pub mod input_wrapper;
 pub mod link;
 pub mod radio_group;
+#[allow(clippy::needless_update)]
 pub mod select;
 pub mod slider;
 pub mod switch;

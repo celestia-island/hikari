@@ -1,7 +1,8 @@
 //! Components overview page — cards for each component across all layers.
 
-use crate::components::demo_page::render_demo_page;
 use tairitsu_vdom::{VElement, VNode, VText};
+
+use crate::components::demo_page::render_demo_page;
 
 struct ComponentEntry {
     icon: &'static str,

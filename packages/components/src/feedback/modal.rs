@@ -3,12 +3,13 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use tairitsu_hooks::ReactiveSignal;
+
 use crate::{
     portal::{PortalEntry, use_portal},
     prelude::*,
     styled::StyledComponent,
 };
-use tairitsu_hooks::ReactiveSignal;
 
 static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 

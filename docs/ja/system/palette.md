@@ -379,7 +379,6 @@ let darker = darken(color, 0.3);
 ### ThemeProviderとの使用
 
 ```rust
-use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 use hikari_palette::themes;
 

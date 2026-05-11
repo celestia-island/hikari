@@ -6,9 +6,9 @@
 // Stubs are provided in platform/wit.rs for environments without WIT support.
 
 use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
+use tairitsu_vdom::events::MouseEvent;
 
 use crate::{platform, prelude::*, styled::StyledComponent};
-use tairitsu_vdom::events::MouseEvent;
 
 pub struct VideoPlayerComponent;
 

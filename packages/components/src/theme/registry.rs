@@ -1,35 +1,38 @@
 //! Theme registry for managing registered themes
 
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap, sync::{OnceLock, RwLock}};
 
 use hikari_palette::*;
 
 type ThemeRegistry = HashMap<String, Palette>;
 
-static THEME_REGISTRY: once_cell::sync::Lazy<RwLock<ThemeRegistry>> =
-    once_cell::sync::Lazy::new(|| {
-        let mut registry = ThemeRegistry::new();
+fn init_registry() -> RwLock<ThemeRegistry> {
+    let mut registry = ThemeRegistry::new();
+    registry.insert("hikari".to_string(), Hikari::palette());
+    registry.insert("tairitsu".to_string(), Tairitsu::palette());
+    RwLock::new(registry)
+}
 
-        registry.insert("hikari".to_string(), Hikari::palette());
-        registry.insert("tairitsu".to_string(), Tairitsu::palette());
+static THEME_REGISTRY: OnceLock<RwLock<ThemeRegistry>> = OnceLock::new();
 
-        RwLock::new(registry)
-    });
+fn registry() -> &'static RwLock<ThemeRegistry> {
+    THEME_REGISTRY.get_or_init(init_registry)
+}
 
 /// Registers a custom theme with the given name
 pub fn register_theme(name: &str, palette: Palette) {
-    let mut registry = THEME_REGISTRY
+    let mut reg = registry()
         .write()
         .expect("Failed to acquire write lock on theme registry - rwlock poisoned");
-    registry.insert(name.to_string(), palette);
+    reg.insert(name.to_string(), palette);
 }
 
 /// Gets a registered theme by name
 pub fn get_registered_theme(name: &str) -> Option<Palette> {
-    let registry = THEME_REGISTRY
+    let reg = registry()
         .read()
         .expect("Failed to acquire read lock on theme registry - rwlock poisoned");
-    registry.get(name).cloned()
+    reg.get(name).cloned()
 }
 
 /// Returns the default theme name

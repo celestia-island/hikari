@@ -22,10 +22,12 @@
 - [x] 删除冗余 easing 包装函数 — 44 个零值包装函数移除，保留 8 个有实质逻辑的
 - [x] 统一 Avatar props — 从 `#[props(default)]` 迁移到 `#[define_props]`
 - [x] NodeState/Node 语义区分 — 重命名为 `NodePlacement`（持久化）和 `NodeView`（渲染时）
-- [x] 统一 CSS 变量命名 — 18 个非 `--hi-` 前缀变量已全部迁移到 `--hi-`
+- [x] 统一 CSS 变量命名 — `index.scss` 改为 `--hi-color-*` 规范 + `--hi-*` 别名，与 ThemeProvider 一致
 - [x] `just fmt` 与 CI 统一 — 使用 `cargo +nightly fmt --unstable-features`
 - [x] CI 添加 `cargo audit` + `cargo deny` — 新增 `.github/workflows/security.yml`
-- [x] MDI 图标获取加入 CI 缓存 — fmt/clippy/test 均添加 `actions/cache` 步骤
+- [x] MDI 图标获取加入 CI 缓存 — fmt/clippy/test/publish 均添加 `actions/cache` 步骤
+- [x] justfile 硬编码路径 — 改用 `env_var_or_default` + `justfile_directory()` 动态解析
+- [x] 移除悬空依赖 `once_cell` — 替换为 `std::sync::OnceLock`
 
 ### 🟢 轻微 (P3)
 

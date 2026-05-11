@@ -22,7 +22,7 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 py := if os_family() == "windows" { "python" } else { "python3" }
 
 # External packager from sibling repository (tairitsu)
-tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
+tairitsu_packager_manifest := env_var_or_default("TAIRITSU_PACKAGER", justfile_directory() / ".." / "tairitsu" / "packages" / "packager" / "Cargo.toml")
 website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================

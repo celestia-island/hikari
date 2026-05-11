@@ -212,6 +212,65 @@ pub fn Button(props: ButtonProps) -> Element {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::styled::StyledComponent;
+
+    #[test]
+    fn test_button_variant_default() {
+        assert_eq!(ButtonVariant::default(), ButtonVariant::Primary);
+    }
+
+    #[test]
+    fn test_button_variant_distinct() {
+        let variants = [
+            ButtonVariant::Primary,
+            ButtonVariant::Secondary,
+            ButtonVariant::Ghost,
+            ButtonVariant::Borderless,
+            ButtonVariant::Danger,
+            ButtonVariant::Success,
+        ];
+        for (i, a) in variants.iter().enumerate() {
+            for (j, b) in variants.iter().enumerate() {
+                if i != j {
+                    assert_ne!(a, b);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_button_size_default() {
+        assert_eq!(ButtonSize::default(), ButtonSize::Medium);
+    }
+
+    #[test]
+    fn test_button_width_default() {
+        assert_eq!(ButtonWidth::default(), ButtonWidth::Auto);
+    }
+
+    #[test]
+    fn test_button_animation_default() {
+        assert_eq!(ButtonAnimation::default(), ButtonAnimation::None);
+    }
+
+    #[test]
+    fn test_button_component_name() {
+        assert_eq!(ButtonComponent::name(), "button");
+    }
+
+    #[test]
+    fn test_button_animation_values() {
+        assert_eq!(ButtonAnimation::None as u8, 0);
+        assert_eq!(ButtonAnimation::Scale as u8, 1);
+        assert_eq!(ButtonAnimation::ScaleElevate as u8, 2);
+        assert_eq!(ButtonAnimation::Ripple as u8, 3);
+        assert_eq!(ButtonAnimation::IconRotate as u8, 4);
+    }
+}
+
 impl StyledComponent for ButtonComponent {
     fn styles() -> &'static str {
         include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))

@@ -1,39 +1,16 @@
-// Test file for Background component animation
-// Run this with: cargo test --package hikari-components test_background_animation -- --nocapture
-
 #[cfg(test)]
 mod tests {
-
-use super::*;
+    use super::*;
+    use crate::styled::StyledComponent;
 
     #[test]
-    fn test_background_animation_setup() {
-        use crate::prelude::*;
-        use hikari_theme::ThemeProvider;
-        
-        // Test that Background component can be created without panicking
-        let test_app = rsx! {
-            ThemeProvider { palette: "hikari" }
-                Background {
-                    h1 { "Test Content" }
-                }
-            }
-        };
-        
-        // This test just verifies the component can be instantiated
-        // In a real WASM environment, we would test the animation itself
-        assert!(true);
-        println!("✅ Background component creation test passed");
+    fn test_background_component_name() {
+        assert_eq!(BackgroundComponent::name(), "background");
     }
-    
+
     #[test]
-    fn test_background_props() {
-        let props = BackgroundProps {
-            children: VNode::empty(),
-        };
-        
-        // Just verify we can create props
-        assert!(true);
-        println!("✅ BackgroundProps creation test passed");
+    fn test_background_styles_loaded() {
+        let styles = BackgroundComponent::styles();
+        assert!(!styles.is_empty());
     }
 }

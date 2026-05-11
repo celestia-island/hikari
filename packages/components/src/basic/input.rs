@@ -209,6 +209,51 @@ pub fn Input(props: InputProps) -> Element {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::styled::StyledComponent;
+
+    #[test]
+    fn test_input_size_default() {
+        assert_eq!(InputSize::default(), InputSize::Medium);
+    }
+
+    #[test]
+    fn test_input_size_distinct() {
+        assert_ne!(InputSize::Small, InputSize::Medium);
+        assert_ne!(InputSize::Medium, InputSize::Large);
+        assert_ne!(InputSize::Small, InputSize::Large);
+    }
+
+    #[test]
+    fn test_input_status_default() {
+        assert_eq!(InputStatus::default(), InputStatus::Default);
+    }
+
+    #[test]
+    fn test_input_status_distinct() {
+        assert_ne!(InputStatus::Default, InputStatus::Error);
+        assert_ne!(InputStatus::Error, InputStatus::Success);
+        assert_ne!(InputStatus::Default, InputStatus::Success);
+    }
+
+    #[test]
+    fn test_input_size_into_attr() {
+        assert_eq!(InputSize::Small.into_attr_value().as_deref(), Some("small"));
+        assert_eq!(
+            InputSize::Medium.into_attr_value().as_deref(),
+            Some("medium")
+        );
+        assert_eq!(InputSize::Large.into_attr_value().as_deref(), Some("large"));
+    }
+
+    #[test]
+    fn test_input_component_name() {
+        assert_eq!(InputComponent::name(), "input");
+    }
+}
+
 impl StyledComponent for InputComponent {
     fn styles() -> &'static str {
         include_str!(concat!(env!("OUT_DIR"), "/styles/input.css"))

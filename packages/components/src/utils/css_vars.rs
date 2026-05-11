@@ -44,3 +44,55 @@ pub fn build_css_vars_style(
     }
     Some(s)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_css_var_entry_new_none() {
+        let entry = CssVarEntry::new(&None, &["--test"]);
+        assert!(entry.value.is_none());
+        assert_eq!(entry.var_names, &["--test"]);
+    }
+
+    #[test]
+    fn test_css_var_entry_new_some() {
+        let entry = CssVarEntry::new(&Some("#fff".to_string()), &["--a", "--b"]);
+        assert_eq!(entry.value.as_deref(), Some("#fff"));
+        assert_eq!(entry.var_names, &["--a", "--b"]);
+    }
+
+    #[test]
+    fn test_build_css_vars_empty() {
+        let result = build_css_vars_style("--hi-radius", &[], &None);
+        assert!(result.is_some());
+        let s = result.unwrap();
+        assert!(s.contains("--hi-glow-radius:var(--hi-radius)"));
+    }
+
+    #[test]
+    fn test_build_css_vars_with_entries() {
+        let entries = vec![CssVarEntry::new(
+            &Some("#ff0".to_string()),
+            &["--color-1", "--color-2"],
+        )];
+        let result = build_css_vars_style("--hi-btn-radius", &entries, &None).unwrap();
+        assert!(result.contains("--color-1:#ff0;"));
+        assert!(result.contains("--color-2:#ff0;"));
+    }
+
+    #[test]
+    fn test_build_css_vars_skips_none() {
+        let entries = vec![CssVarEntry::new(&None, &["--skip-me"])];
+        let result = build_css_vars_style("--hi-radius", &entries, &None).unwrap();
+        assert!(!result.contains("--skip-me"));
+    }
+
+    #[test]
+    fn test_build_css_vars_user_vars() {
+        let user = vec![("--custom", "42px".to_string())];
+        let result = build_css_vars_style("--hi-radius", &[], &Some(user)).unwrap();
+        assert!(result.contains("--custom:42px;"));
+    }
+}

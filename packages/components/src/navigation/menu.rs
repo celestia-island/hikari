@@ -420,3 +420,47 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::styled::StyledComponent;
+
+    #[test]
+    fn test_menu_mode_default() {
+        assert_eq!(MenuMode::default(), MenuMode::Vertical);
+    }
+
+    #[test]
+    fn test_menu_mode_distinct() {
+        assert_ne!(MenuMode::Vertical, MenuMode::Horizontal);
+    }
+
+    #[test]
+    fn test_menu_item_height_default() {
+        assert_eq!(MenuItemHeight::default(), MenuItemHeight::Default);
+    }
+
+    #[test]
+    fn test_menu_item_height_as_str() {
+        assert_eq!(MenuItemHeight::Default.as_str(), "hi-menu-height-default");
+        assert_eq!(MenuItemHeight::Compact.as_str(), "hi-menu-height-compact");
+        assert_eq!(
+            MenuItemHeight::ExtraCompact.as_str(),
+            "hi-menu-height-extra-compact"
+        );
+    }
+
+    #[test]
+    fn test_menu_context_default() {
+        let ctx = MenuContext::default();
+        assert!(!ctx.in_popover());
+        assert!(!ctx.glow_enabled());
+        assert!(ctx.request_close.is_none());
+    }
+
+    #[test]
+    fn test_menu_component_name() {
+        assert_eq!(MenuComponent::name(), "menu");
+    }
+}

@@ -380,3 +380,36 @@ pub fn TabPane(props: TabPaneProps) -> Element {
 
     VNode::Fragment(vec![tab_el, tabpane_el])
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::styled::StyledComponent;
+
+    #[test]
+    fn test_tab_position_default() {
+        assert_eq!(TabPosition::default(), TabPosition::Top);
+    }
+
+    #[test]
+    fn test_tab_position_distinct() {
+        let positions = [
+            TabPosition::Top,
+            TabPosition::Right,
+            TabPosition::Bottom,
+            TabPosition::Left,
+        ];
+        for (i, a) in positions.iter().enumerate() {
+            for (j, b) in positions.iter().enumerate() {
+                if i != j {
+                    assert_ne!(a, b);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_tabs_component_name() {
+        assert_eq!(TabsComponent::name(), "tabs");
+    }
+}

@@ -428,3 +428,62 @@ impl StyledComponent for SwitchComponent {
         "switch"
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_switch_size_default() {
+        assert_eq!(SwitchSize::default(), SwitchSize::Medium);
+    }
+
+    #[test]
+    fn test_switch_size_distinct() {
+        assert_ne!(SwitchSize::Small, SwitchSize::Medium);
+        assert_ne!(SwitchSize::Medium, SwitchSize::Large);
+        assert_ne!(SwitchSize::Small, SwitchSize::Large);
+    }
+
+    #[test]
+    fn test_switch_variant_default() {
+        assert_eq!(SwitchVariant::default(), SwitchVariant::Default);
+    }
+
+    #[test]
+    fn test_switch_variant_distinct() {
+        assert_ne!(SwitchVariant::Default, SwitchVariant::Text);
+        assert_ne!(SwitchVariant::Text, SwitchVariant::Icon);
+        assert_ne!(SwitchVariant::Icon, SwitchVariant::Custom);
+    }
+
+    #[test]
+    fn test_switch_color_default() {
+        assert_eq!(SwitchColor::default(), SwitchColor::Primary);
+    }
+
+    #[test]
+    fn test_switch_icon_default() {
+        assert_eq!(SwitchIcon::default(), SwitchIcon::Check);
+    }
+
+    #[test]
+    fn test_switch_content_variants() {
+        let text = SwitchContent::Text("ON".to_string());
+        let icon = SwitchContent::Icon(SwitchIcon::Check);
+        let img = SwitchContent::Image("check.png".to_string());
+
+        assert_ne!(text, icon);
+        assert_ne!(icon, img);
+
+        assert!(matches!(text, SwitchContent::Text(_)));
+        assert!(matches!(icon, SwitchContent::Icon(_)));
+        assert!(matches!(img, SwitchContent::Image(_)));
+    }
+
+    #[test]
+    fn test_switch_icon_custom() {
+        let custom = SwitchIcon::Custom("M4 12l8 8");
+        assert!(matches!(custom, SwitchIcon::Custom(_)));
+    }
+}

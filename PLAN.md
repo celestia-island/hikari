@@ -35,7 +35,7 @@
 - [x] 清理悬空依赖 `gloo`/`gloo-net`
 - [x] `tokio` features `"full"` → `"rt", "rt-multi-thread", "macros", "time"`
 - [x] Docker 重构 — 多阶段构建、非 root 用户、`debian:bookworm-slim`
-- [ ] 组件测试从"仅验证不 panic"升级为"验证输出结构和属性"
+- [x] 组件测试从"仅验证不 panic"升级为"验证输出结构和属性"
 - [x] `README.md` 版本号 → `0.1.8`
 
 ---
@@ -98,3 +98,4 @@
 - [x] CI MDI icons cache
 - [x] Docker 多阶段构建 + 非 root 用户
 - [x] 删除 node-graph-demo (Dioxus dependency)
+- [x] 组件测试升级: background panic-only → structural; 新增 Button/Input/Switch/Tabs/Menu/CssVars 测试

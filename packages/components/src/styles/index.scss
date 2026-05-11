@@ -9,8 +9,8 @@
 // ============================================
 
 // Use @use with as * to make variables available to all imported files
-@use '../../../theme/styles/variables.scss' as *;
-@use '../../../theme/styles/mixins.scss' as *;
+@use 'variables.scss' as *;
+@use 'mixins.scss' as *;
 
 // ============================================
 // Theme Base Styles (before components)

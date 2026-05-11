@@ -3,16 +3,9 @@
 
 use std::collections::HashMap;
 
-use tairitsu_vdom::svg::SafeSvg;
-use tairitsu_vdom::{VElement, VNode, VText};
+use tairitsu_vdom::{VElement, VNode, VText, svg::SafeSvg};
 
-use crate::node_graph::{
-    connection::{Connection, ConnectionId, ConnectionLine},
-    history::{HistoryAction, HistoryState},
-    minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap},
-    node::{NodeView, NodeId, NodePlacement, NodeType, PortPosition},
-    serialization::SerializedNodeGraph,
-};
+use crate::node_graph::{ connection::{Connection, ConnectionId, ConnectionLine}, history::{HistoryAction, HistoryState}, minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap}, node::{NodeView, NodeId, NodePlacement, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
 
 /// Node graph state
 ///

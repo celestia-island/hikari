@@ -25,10 +25,9 @@
 use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, TypedClass,
 };
-
-use crate::platform;
-use crate::prelude::*;
 use tairitsu_hooks::ReactiveSignal;
+
+use crate::{platform, prelude::*};
 
 /// A single anchor link target with an href and display title.
 #[derive(Clone, Debug, PartialEq, Props)]

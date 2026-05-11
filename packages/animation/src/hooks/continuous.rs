@@ -3,8 +3,7 @@
 //! Provides `use_timeout` and `use_interval` for timed callbacks.
 //! Uses tairitsu's Platform trait for cross-platform timer support.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> impl Fn() {
     let fired = Rc::new(RefCell::new(false));

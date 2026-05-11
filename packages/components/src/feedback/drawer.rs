@@ -1,11 +1,9 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component with Arknights + FUI styling
 
+use std::{cell::RefCell, rc::Rc};
+
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, TypedClass};
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use tairitsu_hooks::ReactiveSignal;
 
 use crate::{platform, prelude::*, styled::StyledComponent};

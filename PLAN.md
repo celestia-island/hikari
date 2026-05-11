@@ -58,7 +58,7 @@
 - [x] `docs/*/guides/index.md` — Dioxus → Tairitsu (9 locales)
 - [x] All en-only guide docs (ARCHITECTURE, CONTRIBUTING, i18n, dependency_style, static_assets_guide, layer-component-plan, etc.)
 - [x] `docs/en/design/custom.md` — dioxus::prelude → tairitsu_vdom::prelude
-- [ ] `examples/website/public/docs/` — stale pre-built copies, regenerate
+- [x] `examples/website/public/docs/` — stale pre-built copies, regenerated
 
 ## Priority 3: TOML Loader Upstream
 
@@ -76,7 +76,7 @@
 
 ### Tasks
 
-- [ ] **创建 `.github/workflows/visual-regression.yml`**
+- [x] **创建 `.github/workflows/visual-regression.yml`**
   - 触发: `push` to `master`/`dev` + `pull_request`，路径过滤器 `packages/**` `docs/**`
   - 步骤:
     1. `actions/checkout` (hikari)
@@ -89,7 +89,7 @@
     8. 上传 artifact: `target/visual-diff/` (含 HTML 报告 + diff PNG)
   - 失败条件: `compare` 返回非零（diff 超过 tolerance）
 
-- [ ] **创建初始 baseline 截图集**
+- [x] **创建初始 baseline 截图集**
   - `tests/visual/baseline/` 目录，覆盖核心路由：
     - `/` (首页 hero)
     - `/components` (组件列表)
@@ -98,13 +98,13 @@
     - `/documentation` / `/documentation/getting-started`
   - 使用 `just baseline init` 生成
 
-- [ ] **baseline 更新流程**
+- [x] **baseline 更新流程**
   - PR 中如需更新 baseline: `just baseline accept --name <component>.png`
   - CI 不自动更新 baseline，必须人工 review 后 commit
 
 ## Priority 5: Website Docs Regeneration
 
-- [ ] `examples/website/public/docs/` — 陈旧预构建副本，需重新生成
+- [x] `examples/website/public/docs/` — 陈旧预构建副本，已重新生成
   - 运行 `just build-website` 重新构建所有本地化文档
   - 确认 9 个语言目录 (ar-SA, en-US, es-ES, fr-FR, ja-JP, ko-KR, ru-RU, zh-CN, zh-TW) 内容与 `docs/*/` 源一致
 

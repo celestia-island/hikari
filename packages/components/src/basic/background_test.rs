@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::styled::StyledComponent;
+
+use super::*;
+use crate::styled::StyledComponent;
 
     #[test]
     fn test_background_component_name() {

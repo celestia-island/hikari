@@ -5,8 +5,7 @@
 //! references and [`ScrollbarHost`] for event / observer registration so the
 //! caller can provide a concrete Platform-backed implementation.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use tairitsu_vdom::dom_ops::{self, DomHandle};
 

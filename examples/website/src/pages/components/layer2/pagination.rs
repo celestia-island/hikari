@@ -1,6 +1,7 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
+
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 
 fn txt(s: &str) -> VNode {
     VNode::Text(VText::new(s))

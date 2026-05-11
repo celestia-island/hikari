@@ -1,7 +1,8 @@
 //! Dynamic value types for animation system
 
-use super::super::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
 use tairitsu_vdom::Platform;
+
+use super::super::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
 
 /// Simple callback type for dynamic values
 pub type AnimationCallback<P> = dyn Fn(&AnimationContext<P>) -> String + 'static;

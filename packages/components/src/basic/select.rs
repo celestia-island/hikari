@@ -3,11 +3,11 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
-use crate::platform;
 use crate::{
     feedback::{
         ConditionalGlow, ConditionalGlowProps, Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps,
     },
+    platform,
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
         use_portal,

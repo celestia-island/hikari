@@ -11,6 +11,7 @@
 //! Content retrieval uses `platform::get_inner_html` / `platform::set_content_editable`.
 
 use serde::{Deserialize, Serialize};
+
 use tairitsu_vdom::{VElement, VNode, VText};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

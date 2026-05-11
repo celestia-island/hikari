@@ -3,8 +3,7 @@
 //! Provides `use_animated_value` for simple animated state and
 //! `use_transition` for enter/exit transitions with configurable duration.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::provider::try_use_animation_config;
 

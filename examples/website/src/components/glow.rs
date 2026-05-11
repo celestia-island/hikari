@@ -1,4 +1,4 @@
-use tairitsu_vdom::{get_bounding_client_rect, set_style, VElement, VNode};
+use tairitsu_vdom::{VElement, VNode, get_bounding_client_rect, set_style};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum GlowIntensity {

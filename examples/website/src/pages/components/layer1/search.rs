@@ -1,9 +1,8 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
-use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
-use crate::components::icon_utils::icon_el;
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row}, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}, icon_utils::icon_el};
 
 fn make_search(placeholder: &str, extra_class: &str, icon: bool, clearable: bool, value: &str) -> VNode {
     let mut classes = "hi-search".to_string();

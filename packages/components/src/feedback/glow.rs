@@ -27,10 +27,10 @@
 //     .build();
 // ```
 
-use crate::prelude::*;
-use crate::style_builder::StyleStringBuilder;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
+
+use crate::{prelude::*, style_builder::StyleStringBuilder};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {

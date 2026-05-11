@@ -3,10 +3,7 @@
 
 use anyhow::Result;
 use serde_json;
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::{path::PathBuf, time::{Duration, Instant}};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};

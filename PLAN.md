@@ -62,10 +62,53 @@
 
 ## Priority 3: TOML Loader Upstream
 
-- [ ] Extract `load_toml_flat` into tairitsu-packager as `fmt` subcommand
-- [ ] After upstream: remove inlined loader from website
+- [x] Upstream 已完成 — `tairitsu-web/src/i18n/loader.rs` 已有 `load_toml_flat` + `pub use` 导出
+- [ ] **下个 tairitsu-web 版本发布后**，删除 `examples/website/src/i18n_init.rs` 中的内联 `load_toml_flat` + `flatten_toml_table`，改为 `use tairitsu_web::i18n::load_toml_flat;`
 
-## Priority 4: Example Cleanup
+## Priority 4: Visual Regression CI
+
+现有基础设施：
+- `scripts/e2e/cli.py` — 纯 Python E2E 框架（capture/batch/compare/baseline/run 子命令）
+- `tairitsu/packages/packager/src/visual_diff/` — Rust 像素级对比（`DiffConfig` + `compare_images` + `run_visual_diff` + HTML 报告生成）
+- `justfile` 已有 `capture`/`batch`/`compare`/`baseline`/`e2e-run` recipes
+- Docker: `base-selenium.Dockerfile` + `docker-compose.yml` 提供浏览器环境
+- 缺少：CI workflow 串联这些步骤
+
+### Tasks
+
+- [ ] **创建 `.github/workflows/visual-regression.yml`**
+  - 触发: `push` to `master`/`dev` + `pull_request`，路径过滤器 `packages/**` `docs/**`
+  - 步骤:
+    1. `actions/checkout` (hikari)
+    2. `actions/checkout` tairitsu 到 `../tairitsu` (tairitsu 提供 packager + visual_diff)
+    3. 安装 Rust stable + Python 3 + `pip install -r scripts/e2e/requirements.txt`
+    4. `just build-website` — 构建 website 静态文件
+    5. 后台启动 `python3 -m http.server 3000 --directory public/`
+    6. `just batch --url http://localhost:3000 --output target/screenshots`
+    7. `just compare --baseline-dir tests/visual/baseline --candidate-dir target/screenshots`
+    8. 上传 artifact: `target/visual-diff/` (含 HTML 报告 + diff PNG)
+  - 失败条件: `compare` 返回非零（diff 超过 tolerance）
+
+- [ ] **创建初始 baseline 截图集**
+  - `tests/visual/baseline/` 目录，覆盖核心路由：
+    - `/` (首页 hero)
+    - `/components` (组件列表)
+    - `/components/button` / `/components/input` / `/components/select`
+    - `/system/palette` / `/system/theme`
+    - `/documentation` / `/documentation/getting-started`
+  - 使用 `just baseline init` 生成
+
+- [ ] **baseline 更新流程**
+  - PR 中如需更新 baseline: `just baseline accept --name <component>.png`
+  - CI 不自动更新 baseline，必须人工 review 后 commit
+
+## Priority 5: Website Docs Regeneration
+
+- [ ] `examples/website/public/docs/` — 陈旧预构建副本，需重新生成
+  - 运行 `just build-website` 重新构建所有本地化文档
+  - 确认 9 个语言目录 (ar-SA, en-US, es-ES, fr-FR, ja-JP, ko-KR, ru-RU, zh-CN, zh-TW) 内容与 `docs/*/` 源一致
+
+## Priority 6: Example Cleanup
 
 - [x] Remove `examples/node-graph-demo/` (Dioxus dependency, removed)
 - [x] Remove `examples/menu_dynamic_level.rs`

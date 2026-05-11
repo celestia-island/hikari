@@ -22,7 +22,9 @@ fn main() {
             Ok(()) => {}
             Err(e) => {
                 eprintln!("Failed to build icons: {}", e);
-                eprintln!("Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons");
+                eprintln!(
+                    "Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+                );
                 std::process::exit(1);
             }
         },
@@ -35,7 +37,10 @@ fn main() {
     println!("cargo:rerun-if-changed=icons/mdi");
 }
 
-fn build_icons(workspace_root: &std::path::Path, output_file: &std::path::Path) -> anyhow::Result<()> {
+fn build_icons(
+    workspace_root: &std::path::Path,
+    output_file: &std::path::Path,
+) -> anyhow::Result<()> {
     let icon_selection = if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
         if !usage.icons.is_empty() {
             IconSelection::ByName(auto_discovery::generate_selection(&usage))

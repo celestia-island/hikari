@@ -12,29 +12,28 @@ fn main() -> Result<()> {
     let out_dir = env::var("OUT_DIR")?;
     let styles_out_dir = Path::new(&out_dir).join("styles");
 
-    // Create output directory
     fs::create_dir_all(&styles_out_dir)?;
-
-    println!("🔨 Auto-discovering and compiling SCSS files...");
 
     let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
     let manifest_dir = Path::new(&manifest_dir_str);
     let components_dir = manifest_dir.join("src/styles/components");
 
-    // Auto-discover all .scss files in components directory
     let scss_files = discover_scss_files(&components_dir);
 
     if scss_files.is_empty() {
-        println!("⚠️  No SCSS files found in {}", components_dir.display());
+        println!("No SCSS files found in {}", components_dir.display());
         return Ok(());
     }
 
-    println!("   Found {} SCSS file(s)", scss_files.len());
-
-    // Create compiler with load_paths to support theme variable/mixin imports
-    // Components SCSS files use @use '../../../../theme/styles/variables.scss' as vars;
-    // We need to add the theme styles directory to load_paths
     let theme_styles_dir = manifest_dir.join("../theme/styles");
+
+    if !theme_styles_dir.exists() {
+        println!("Theme styles directory not found, skipping SCSS compilation");
+        return Ok(());
+    }
+
+    println!("Compiling {} SCSS file(s)...", scss_files.len());
+
     let components_styles_dir = manifest_dir.join("src/styles");
 
     let compiler = ScssCompiler::with_options(CompilerOptions {

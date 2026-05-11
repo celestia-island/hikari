@@ -1,5 +1,45 @@
 # Hikari 0.1.0 Post-Release Plan
 
+> 下方 "体系健康检查" 部分来自 2026-05-11 对 tairitsu + hikari 整体栈的全面审计。
+> 原 Post-Release Plan 事项保留在底部。
+
+---
+
+## 体系健康检查 (2026-05-11)
+
+> 审查范围: tairitsu (v0.4.5) + hikari (v0.1.8) 作为完整技术栈
+> 详见 tairitsu/PLAN.md 中的完整报告，此处仅列出 hikari 相关条目
+
+### 🔴 严重 (P0)
+
+- [ ] **重写全部文档** — 66 处引用 Dioxus/Lucide，全部替换为 Tairitsu vdom/hooks/macros 和 MDI (`docs/**/*.md`)
+- [ ] **补齐键盘无障碍** — Switch (`switch.rs:188-214`)、Tabs (`tabs.rs:270`)、Menu (`menu.rs:224-227`) 有 ARIA 角色但无键盘事件处理器
+
+### 🟡 中等 (P1-P2)
+
+- [ ] 消除 CSS 变量覆盖重复代码 — `button.rs:142-171`、`input.rs:133-162` 等 5+ 组件中的相同模式
+- [ ] 封装 `ConditionalGlow` 组件 — 替换 5 处 `if props.glow { Glow { ... } } else { ... }`
+- [ ] 删除 55 个冗余 easing 包装函数 (`animation/src/easing.rs`)
+- [ ] 统一 Avatar 的 props 定义 — 从 `#[props()]` 迁移到 `#[define_props]` (`avatar.rs:80`)
+- [ ] 合并 `NodeState` 和 `Node` 或明确区分语义 (`extra-components/src/node.rs`)
+- [ ] 统一 CSS 变量命名 — 全量迁移到 `--hi-` 或 `--hi-color-`
+- [ ] `just fmt` 与 CI 统一 — 都使用 nightly + `--unstable-features`
+- [ ] CI 添加 `cargo audit` + `cargo deny`
+- [ ] MDI 图标获取加入 CI 缓存
+
+### 🟢 轻微 (P3)
+
+- [ ] 回退 SVG 添加 `fill="currentColor"` (`icons/src/lib.rs:41`)
+- [ ] 删除空模块 `components/src/hooks/` 声明
+- [ ] `NodePlugin::handle_input` 当前为空操作 (`extra-components/src/node.rs:137`)
+- [ ] 清理悬空依赖: `once_cell`、`gloo`、`gloo-net`、`chrono`
+- [ ] `tokio` features 从 `"full"` 缩减到实际需要的
+- [ ] Docker 重构: 多阶段构建、相对路径、非 root 用户、添加 `.dockerignore`
+- [ ] 组件测试从"仅验证不 panic"升级为"验证输出结构和属性"
+- [ ] `README.md:63` 版本号 `0.1.0` → `0.1.8`
+
+---
+
 ## Priority 1: Dioxus Legacy Cleanup
 
 ### Package READMEs

@@ -4,9 +4,7 @@
 //! freeze / unfreeze / seek / step — enabling deterministic E2E visual testing
 //! of animation states at arbitrary progress points.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::time::Duration;
+use std::{cell::RefCell, collections::HashMap, time::Duration};
 
 use slotmap::Key;
 

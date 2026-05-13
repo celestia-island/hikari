@@ -1,16 +1,14 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
+use std::{cell::RefCell, rc::Rc};
+
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use tairitsu_hooks::ReactiveSignal;
+use tairitsu_vdom::events::MouseEvent;
 
 use crate::{basic::IconButton, platform, prelude::*, styled::StyledComponent};
-use tairitsu_vdom::events::MouseEvent;
 
 pub struct UserGuideComponent;
 

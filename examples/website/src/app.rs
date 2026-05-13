@@ -6,19 +6,11 @@
 //! The layout mirrors the old Dioxus-era structure:
 //!   Layout (hi-layout) → Header → Body (hi-layout-body) → Aside + Main
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use tairitsu_vdom::{VElement, VNode};
 
-use crate::{
-    components::{self, portal::PortalJs},
-    pages::{
-        animations, components as comp_pages, demos as demo_pages, home, interactive, not_found,
-        system as sys_pages,
-    },
-    theme,
-};
+use crate::{components::{portal::PortalJs, self}, pages::{animations, components as comp_pages, demos as demo_pages, home, interactive, not_found, system as sys_pages}, theme};
 
 pub fn render() -> VNode {
     let mut content: Vec<VNode> = Vec::new();

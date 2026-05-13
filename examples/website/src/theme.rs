@@ -4,7 +4,7 @@
 //! generating CSS variables for Hikari/Tairitsu themes.
 
 use hikari_components::{ComponentPalette, Style, ThemePalette};
-use hikari_palette::{get_palette, Hikari};
+use hikari_palette::{Hikari, get_palette};
 
 /// Get CSS variables Style for the specified theme
 pub fn get_theme_style(theme_name: &str) -> Style {

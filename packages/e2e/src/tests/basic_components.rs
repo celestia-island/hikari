@@ -2,10 +2,7 @@
 // E2E tests for Layer 1 basic components
 
 use anyhow::Result;
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::{path::PathBuf, time::{Duration, Instant}};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};

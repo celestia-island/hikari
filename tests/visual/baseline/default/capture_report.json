@@ -1,0 +1,182 @@
+{
+  "total": 29,
+  "captured": 29,
+  "failed": 0,
+  "output_dir": "/mnt/sdb1/hikari/tests/visual/baseline/default",
+  "results": {
+    "home": {
+      "route": "/",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/home.png",
+      "size_bytes": 385903,
+      "success": true
+    },
+    "components_overview": {
+      "route": "/components/",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/components_overview.png",
+      "size_bytes": 403811,
+      "success": true
+    },
+    "components_layer1": {
+      "route": "/components/layer1/",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/components_layer1.png",
+      "size_bytes": 30322,
+      "success": true
+    },
+    "components_layer2": {
+      "route": "/components/layer2/",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/components_layer2.png",
+      "size_bytes": 29299,
+      "success": true
+    },
+    "components_layer3": {
+      "route": "/components/layer3/",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/components_layer3.png",
+      "size_bytes": 22900,
+      "success": true
+    },
+    "button": {
+      "route": "/components/layer1/button/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/button.png",
+      "size_bytes": 434924,
+      "success": true
+    },
+    "form_input": {
+      "route": "/components/layer1/form/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/form_input.png",
+      "size_bytes": 402801,
+      "success": true
+    },
+    "switch": {
+      "route": "/components/layer1/switch/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/switch.png",
+      "size_bytes": 407024,
+      "success": true
+    },
+    "avatar": {
+      "route": "/components/layer1/avatar/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/avatar.png",
+      "size_bytes": 411083,
+      "success": true
+    },
+    "tag": {
+      "route": "/components/layer1/tag/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/tag.png",
+      "size_bytes": 416674,
+      "success": true
+    },
+    "search": {
+      "route": "/components/layer1/search/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/search.png",
+      "size_bytes": 398644,
+      "success": true
+    },
+    "empty": {
+      "route": "/components/layer1/empty/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/empty.png",
+      "size_bytes": 393970,
+      "success": true
+    },
+    "feedback": {
+      "route": "/components/layer1/feedback/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/feedback.png",
+      "size_bytes": 361918,
+      "success": true
+    },
+    "table": {
+      "route": "/components/layer2/table/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/table.png",
+      "size_bytes": 342356,
+      "success": true
+    },
+    "navigation": {
+      "route": "/components/layer2/navigation/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/navigation.png",
+      "size_bytes": 406030,
+      "success": true
+    },
+    "timeline": {
+      "route": "/components/layer2/timeline/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/timeline.png",
+      "size_bytes": 442810,
+      "success": true
+    },
+    "form_layer2": {
+      "route": "/components/layer2/form/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/form_layer2.png",
+      "size_bytes": 430358,
+      "success": true
+    },
+    "editor": {
+      "route": "/components/layer3/editor/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/editor.png",
+      "size_bytes": 322561,
+      "success": true
+    },
+    "media": {
+      "route": "/components/layer3/media/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/media.png",
+      "size_bytes": 470154,
+      "success": true
+    },
+    "user_guide": {
+      "route": "/components/layer3/user-guide/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/user_guide.png",
+      "size_bytes": 489804,
+      "success": true
+    },
+    "visualization": {
+      "route": "/components/layer3/visualization/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/visualization.png",
+      "size_bytes": 433799,
+      "success": true
+    },
+    "palette": {
+      "route": "/system/palette/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/palette.png",
+      "size_bytes": 335999,
+      "success": true
+    },
+    "icons": {
+      "route": "/system/icons/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/icons.png",
+      "size_bytes": 385402,
+      "success": true
+    },
+    "css_utilities": {
+      "route": "/system/css/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/css_utilities.png",
+      "size_bytes": 404657,
+      "success": true
+    },
+    "i18n": {
+      "route": "/system/i18n/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/i18n.png",
+      "size_bytes": 327187,
+      "success": true
+    },
+    "animations_system": {
+      "route": "/system/animations/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/animations_system.png",
+      "size_bytes": 391504,
+      "success": true
+    },
+    "animations_demo": {
+      "route": "/animations/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/animations_demo.png",
+      "size_bytes": 402326,
+      "success": true
+    },
+    "interactive": {
+      "route": "/interactive/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/interactive.png",
+      "size_bytes": 387078,
+      "success": true
+    },
+    "dashboard": {
+      "route": "/demos/dashboard/index.html",
+      "path": "/mnt/sdb1/hikari/tests/visual/baseline/default/dashboard.png",
+      "size_bytes": 345111,
+      "success": true
+    }
+  }
+}

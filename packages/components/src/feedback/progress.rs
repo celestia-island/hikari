@@ -2,8 +2,7 @@
 // Progress component with Arknights + FUI styling
 // Active pulse: RAF-driven (migrated from CSS @keyframes)
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
 use tairitsu_hooks::ReactiveSignal;

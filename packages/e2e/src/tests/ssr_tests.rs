@@ -18,17 +18,14 @@
 //    the browser's JavaScript engine entirely. This is the definitive SSR content test.
 
 use anyhow::Result;
+use std::{path::PathBuf, time::{Duration, Instant}};
+
 use reqwest;
 use scraper::{Html, Selector};
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
-use crate::html_assertions::HtmlAssertions;
-use crate::Test;
+use crate::{Test, html_assertions::HtmlAssertions};
 
 /// SSR-specific test result with additional metadata
 #[derive(Debug, Clone)]

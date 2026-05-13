@@ -1,6 +1,6 @@
 # Framework UI Hikari
 
-> Un framework UI moderne en Rust basé sur Dioxus + Grass + Axum
+> Un framework UI moderne en Rust basé sur Tairitsu + Grass + Axum
 >
 > **Style de Design**: Design plat Arknights + esthétique FUI sci-fi + couleurs traditionnelles chinoises
 >
@@ -48,13 +48,12 @@ Ajouter à `Cargo.toml`:
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-dioxus = "0.5"
+tairitsu = "0.5"
 ```
 
 ### Utilisation de Base
 
 ```rust
-use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -132,7 +131,6 @@ hikari/
 ### Changement de Thème
 
 ```rust
-use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -186,7 +184,7 @@ Les contributions sont les bienvenues ! Veuillez lire [CONTRIBUTING.md](../../en
 
 ## Remerciements
 
-- [Dioxus](https://dioxuslabs.com/) - Framework UI Rust puissant
+- **Tairitsu** - Framework UI Rust puissant
 - [Grass](https://github.com/kaj/kaj) - Compilateur SCSS pur en Rust
 - [Element Plus](https://element-plus.org/) - Excellente référence de design de bibliothèque de composants
 - [Material UI](https://mui.com/) - Inspiration de design UI moderne

@@ -1,12 +1,12 @@
 # Système d'icônes
 
-Système de gestion et de rendu d'icônes, intégré avec Lucide Icons.
+Système de gestion et de rendu d'icônes, intégré avec Material Design Icons (MDI).
 
 ## Aperçu
 
 `hikari-icons` fournit :
 
-- **1000+ Icônes** - Collection complète Lucide Icons
+- **1000+ Icônes** - Collection complète Material Design Icons (MDI)
 - **Sécurité de type** - Noms d'icônes basés sur des énumérations
 - **Rendu SVG** - Rendu côté client et côté serveur
 - **Chargement à l'exécution** - Chargement SVG d'icônes à la demande
@@ -16,12 +16,11 @@ Système de gestion et de rendu d'icônes, intégré avec Lucide Icons.
 ### Utilisation de base
 
 ```rust
-use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Magnify,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -31,29 +30,29 @@ rsx! {
 ### Icônes disponibles
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // Navigation
     Home,
     Menu,
-    Search,
-    Settings,
+    Magnify,
+    Cog,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // Actions
-    Edit,
-    Trash,
+    Pencil,
+    Delete,
     Check,
-    X,
+    Close,
     Plus,
     Minus,
 
     // Statut
-    AlertCircle,
-    CheckCircle,
-    Info,
-    AlertTriangle,
+    AlertCircleOutline,
+    CheckCircleOutline,
+    InformationOutline,
+    AlertOutline,
 
     // ... 1000+ icônes
 }
@@ -63,7 +62,7 @@ pub enum LucideIcon {
 
 | Propriété | Type | Défaut | Description |
 |----------|------|--------|-------------|
-| `icon` | `LucideIcon` | - | Type d'icône |
+| `icon` | `MdiIcon` | - | Type d'icône |
 | `size` | `u32` | `24` | Taille de l'icône |
 | `color` | `&str` | - | Couleur |
 
@@ -98,7 +97,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: LucideIcon,
+    icon: MdiIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -106,10 +105,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### LucideIcon
+### MdiIcon
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // 1000+ variantes d'icônes
 }
 ```

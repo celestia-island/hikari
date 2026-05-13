@@ -13,7 +13,7 @@ This demo showcases:
 
 ## Running the Demo
 
-This demo uses **Axum + WASM** architecture (similar to quotation-sheet-generator).
+This demo uses **Axum + WASM** architecture.
 
 ### Quick Start
 
@@ -45,7 +45,7 @@ just run-server
 
 ### Architecture
 
-- **Client**: Dioxus WASM compiled to `dist/assets/`
+- **Client**: Tairitsu WASM compiled to `dist/assets/`
 - **Server**: Axum serves static files and handles SPA routing
 - **Routes**:
   - `/assets/*` - Static files (WASM, JS, CSS)

@@ -6,9 +6,8 @@
 
 #![allow(unused_imports)]
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
 use tairitsu_vdom::Platform;
 
 use super::style::CssProperty;

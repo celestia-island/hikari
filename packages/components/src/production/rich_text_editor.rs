@@ -6,9 +6,9 @@
 // environments without WIT support.
 
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
+use tairitsu_vdom::events::InputEvent;
 
 use crate::{platform, prelude::*, styled::StyledComponent};
-use tairitsu_vdom::events::InputEvent;
 
 pub struct RichTextEditorComponent;
 

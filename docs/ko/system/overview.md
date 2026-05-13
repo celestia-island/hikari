@@ -122,15 +122,15 @@ AnimationBuilder::new(&elements)
 - 아이콘 열거형 정의
 - SVG 콘텐츠 생성
 - 아이콘 크기 변형
-- Lucide Icons 통합
+- Material Design Icons 통합
 
 **핵심 기능**:
 ```rust
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **아이콘 소스**:
-- Lucide Icons (1000+ 아이콘)
+- Material Design Icons (7000+ 아이콘)
 - 확장 가능한 커스텀 아이콘
 - 다중 크기 지원
 

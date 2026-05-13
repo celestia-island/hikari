@@ -111,24 +111,24 @@ mod tests {
     #[test]
     fn test_style_string_builder_add_custom() {
         let style = StyleStringBuilder::new()
-            .add_custom("--glow-x", "100px")
-            .add_custom("--glow-y", "200px")
+            .add_custom("--hi-glow-x", "100px")
+            .add_custom("--hi-glow-y", "200px")
             .build_clean();
 
-        assert!(style.contains("--glow-x:100px"));
-        assert!(style.contains("--glow-y:200px"));
+        assert!(style.contains("--hi-glow-x:100px"));
+        assert!(style.contains("--hi-glow-y:200px"));
     }
 
     #[test]
     fn test_style_string_builder_mixed() {
         let style = StyleStringBuilder::new()
             .add(CssProperty::Position, "relative")
-            .add_custom("--glow-x", "50px")
+            .add_custom("--hi-glow-x", "50px")
             .add_px(CssProperty::Height, 100)
             .build_clean();
 
         assert!(style.contains("position:relative"));
-        assert!(style.contains("--glow-x:50px"));
+        assert!(style.contains("--hi-glow-x:50px"));
         assert!(style.contains("height:100px"));
     }
 }

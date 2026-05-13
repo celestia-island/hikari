@@ -122,15 +122,15 @@ Gestion et rendu des icônes.
 - Définitions d'enum d'icônes
 - Génération de contenu SVG
 - Variantes de taille d'icônes
-- Intégration Lucide Icons
+- Intégration Material Design Icons
 
 **Fonctionnalités Principales**:
 ```rust
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **Sources d'Icônes**:
-- Lucide Icons (plus de 1000 icônes)
+- Material Design Icons (plus de 7000 icônes)
 - Icônes personnalisées extensibles
 - Support de multiples tailles
 

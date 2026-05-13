@@ -1,7 +1,7 @@
 // NumberInput Component Styles
 // All colors use CSS variables for theme consistency
 
-@use '../../../../theme/styles/variables.scss' as vars;
+@use 'variables' as vars;
 
 .hi-number-input-wrapper {
     display: inline-flex;

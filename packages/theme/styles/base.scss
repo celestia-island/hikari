@@ -397,7 +397,7 @@ textarea {
 // ============================================
 
 @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="tairitsu"]) {
+    :root:not([data-theme="tairitsu"]):not([data-theme="arknights"]) {
         // 暗黑模式背景色
         --hi-color-background: #000000;
         --hi-color-surface: #1E293B;
@@ -425,6 +425,114 @@ textarea {
         // 暗黑模式Card背景色（黑色半透明）
         --hi-card-bg-light: rgba(0, 0, 0, 0.95);
     }
+}
+
+
+// ============================================
+// Arknights 主题（暗黑工业风）
+// ============================================
+
+[data-theme="arknights"] {
+    // 基础颜色
+    --hi-color-background: #0D1117;
+    --hi-color-surface: #161B22;
+    --hi-color-border: #30363D;
+
+    // 文字颜色
+    --hi-color-text-primary: #E6EDF3;
+    --hi-color-text-secondary: #8B949E;
+
+    // 主题色
+    --hi-color-primary: #00B4D8;
+    --hi-color-secondary: #FFD700;
+    --hi-color-accent: #FFD700;
+    --hi-color-success: #3FB950;
+    --hi-color-warning: #D29922;
+    --hi-color-danger: #F85149;
+    --hi-color-info: #00B4D8;
+
+    // 主题色上的文字颜色
+    --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-success: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-danger: #ffffff;
+    --hi-color-text-on-info: rgba(0, 0, 0, 0.9);
+
+    // 按钮颜色
+    --hi-button-primary: var(--hi-color-primary);
+    --hi-button-primary-hover: rgba(0, 180, 216, 0.85);
+    --hi-button-primary-light: rgba(0, 180, 216, 0.6);
+    --hi-button-primary-dark: #0091AD;
+
+    --hi-button-secondary: var(--hi-color-secondary);
+    --hi-button-secondary-hover: rgba(255, 215, 0, 0.85);
+    --hi-button-secondary-light: rgba(255, 215, 0, 0.6);
+    --hi-button-secondary-dark: #B5960A;
+
+    --hi-button-success: var(--hi-color-success);
+    --hi-button-success-hover: rgba(63, 185, 80, 0.85);
+    --hi-button-success-light: rgba(63, 185, 80, 0.6);
+    --hi-button-success-dark: #2EA043;
+
+    --hi-button-danger: var(--hi-color-danger);
+    --hi-button-danger-hover: rgba(248, 81, 73, 0.85);
+    --hi-button-danger-light: rgba(248, 81, 73, 0.6);
+    --hi-button-danger-dark: #DA3633;
+
+    --hi-button-warning: var(--hi-color-warning);
+    --hi-button-warning-hover: rgba(210, 153, 34, 0.85);
+    --hi-button-warning-light: rgba(210, 153, 34, 0.6);
+    --hi-button-warning-dark: #BB8009;
+
+    --hi-button-info: var(--hi-color-info);
+    --hi-button-info-hover: rgba(0, 180, 216, 0.85);
+    --hi-button-info-light: rgba(0, 180, 216, 0.6);
+    --hi-button-info-dark: #0091AD;
+
+    // Ghost 按钮（暗黑模式使用白色）
+    --hi-ghost-text: var(--hi-color-white-100);
+    --hi-ghost-border: var(--hi-color-white-50);
+    --hi-ghost-glow: var(--hi-glow-white-50);
+
+    // 发光颜色
+    --hi-glow-button-primary: rgba(0, 180, 216, 0.8);
+    --hi-glow-button-secondary: rgba(255, 215, 0, 0.8);
+    --hi-glow-button-success: rgba(63, 185, 80, 0.8);
+    --hi-glow-button-danger: rgba(248, 81, 73, 0.8);
+    --hi-glow-button-warning: rgba(210, 153, 34, 0.8);
+    --hi-glow-button-info: rgba(0, 180, 216, 0.8);
+
+    // 发光特效（cyan glow for arknights）
+    --hi-glow-color: rgba(0, 180, 216, 0.5);
+    --hi-glow-sm: 0 0 8px var(--hi-glow-color);
+    --hi-glow-md: 0 0 16px var(--hi-glow-color);
+    --hi-glow-lg: 0 0 24px var(--hi-glow-color);
+    --hi-glow-focus: 0 0 20px var(--hi-glow-color);
+
+    // 边框发光
+    --hi-border-glow: rgba(0, 180, 216, 0.6);
+
+    // 简化变量
+    --hi-primary: var(--hi-color-primary);
+    --hi-secondary: var(--hi-color-secondary);
+    --hi-success: var(--hi-color-success);
+    --hi-danger: var(--hi-color-danger);
+    --hi-warning: var(--hi-color-warning);
+    --hi-info: var(--hi-color-info);
+
+    --hi-surface: var(--hi-color-surface);
+    --hi-card-bg: var(--hi-color-surface);
+    --hi-card-bg-light: rgba(13, 17, 23, 0.95);
+
+    // Overlay
+    --hi-overlay-color: rgba(0, 0, 0, 0.7);
+
+    // 滚动条
+    --hi-scrollbar-thumb-hover: var(--hi-glow-color);
+
+    // 文字颜色
+    --hi-color-text-inverted: #0D1117;
 }
 
 

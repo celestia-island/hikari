@@ -5,6 +5,9 @@
 //!
 //! Built on Tairitsu framework.
 
+// Builder pattern API
+pub mod builder;
+
 // Core modules
 pub mod basic;
 pub mod data;
@@ -66,3 +69,5 @@ pub use tairitsu_hooks::{
 };
 
 pub use tairitsu_macros::{component, rsx};
+
+pub use builder::ButtonBuilder;

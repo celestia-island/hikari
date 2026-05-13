@@ -76,20 +76,18 @@ Neutral   → 边框、分隔线、滚动条
 
 ### P1 — 高优先级
 
-#### H-6: Builder Pattern API
-Demo 的 `ui.rs` 使用 `.text().glow().build()` 风格，库仅提供 rsx! / 函数调用。
-建议并行提供：
-```rust
-Button::builder()
-    .variant(Primary)
-    .label("Click")
-    .glow(GlowConfig::soft(teal))
-    .on_click(|_| { ... })
-    .build();
-```
+### ✅ H-6: Builder Pattern API (2026-05-14)
 
-#### H-7: 更多内置主题
-README 提到 arknights/fresh 但未实现。至少提供 3-4 套预设。
+- 新增 `packages/components/src/builder.rs` — `ButtonBuilder`
+- 流式 API: `ButtonBuilder::new().label("Click").variant(Primary).glow(true).build()`
+- `build()` 直接调用 `Button(ButtonProps { ... })` 复用现有组件
+
+### ✅ H-7: 更多内置主题 — arknights (2026-05-14)
+
+- 新增 "arknights" 深色工业风主题（Primary #00B4D8, Accent #FFD700）
+- `packages/palette/src/themes.rs` 注册 Arknights 调色板
+- `foundation.scss`/`base.scss` 添加 `[data-theme="arknights"]` CSS 变量覆盖
+- ThemeProvider 识别 `initial_palette: "arknights"`
 
 ### P3 — 低优先级
 

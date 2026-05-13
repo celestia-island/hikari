@@ -193,3 +193,29 @@
   --hi-border-color: rgba(0, 0, 0, 0.1);
   --hi-border-color-disabled: rgba(0, 0, 0, 0.05);
 }
+
+// ============================================
+// Arknights Theme Overrides
+// ============================================
+
+[data-theme="arknights"] {
+  --hi-color-text-primary: #E6EDF3;
+  --hi-color-text-secondary: #8B949E;
+  --hi-color-text-disabled: rgba(139, 148, 158, 0.3);
+  
+  --hi-icon-color: #E6EDF3;
+  --hi-icon-color-secondary: #8B949E;
+  --hi-icon-color-disabled: rgba(139, 148, 158, 0.3);
+  
+  --hi-bg-surface: rgba(22, 27, 34, 0.9);
+  --hi-bg-surface-dark: rgba(13, 17, 23, 0.95);
+  --hi-bg-overlay: rgba(0, 0, 0, 0.7);
+  --hi-bg-transparent: transparent;
+  
+  --hi-border-color: #30363D;
+  --hi-border-color-focus: #00B4D8;
+  --hi-border-color-disabled: rgba(48, 54, 61, 0.5);
+  
+  --hi-shadow-color: rgba(0, 0, 0, 0.3);
+  --hi-glow-color: rgba(0, 180, 216, 0.5);
+}

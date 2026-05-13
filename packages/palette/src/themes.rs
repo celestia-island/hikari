@@ -228,6 +228,38 @@ impl Default for Tairitsu {
     }
 }
 
+/// Arknights theme - Dark industrial theme inspired by the game Arknights
+///
+/// Features cyan/ice blue primary with gold accents on a deep navy background,
+/// evoking the tactical industrial aesthetic of the game.
+#[derive(Debug, Clone)]
+pub struct Arknights;
+
+impl Arknights {
+    pub fn palette() -> Palette {
+        Palette {
+            mode: ThemeMode::Dark,
+            primary: Color::from_rgb(0, 180, 216),   // #00B4D8 cyan/ice blue
+            secondary: Color::from_rgb(255, 215, 0),  // #FFD700 gold
+            accent: Color::from_rgb(255, 215, 0),     // #FFD700 gold
+            success: Color::from_rgb(63, 185, 80),    // #3FB950
+            warning: Color::from_rgb(210, 153, 34),   // #D29922
+            danger: Color::from_rgb(248, 81, 73),     // #F85149
+            background: Color::from_rgb(13, 17, 23),  // #0D1117 very dark navy
+            surface: Color::from_rgb(22, 27, 34),     // #161B22
+            border: Color::from_rgb(48, 54, 61),      // #30363D
+            text_primary: Color::from_rgb(230, 237, 243),   // #E6EDF3
+            text_secondary: Color::from_rgb(139, 148, 158),  // #8B949E
+        }
+    }
+}
+
+impl Default for Arknights {
+    fn default() -> Self {
+        Self
+    }
+}
+
 /// Theme registry for dynamically managing palettes
 ///
 /// Allows registration and retrieval of custom palettes by name.
@@ -241,6 +273,7 @@ impl ThemeRegistry {
         let mut palettes = HashMap::new();
         palettes.insert("hikari".to_string(), Hikari::palette());
         palettes.insert("tairitsu".to_string(), Tairitsu::palette());
+        palettes.insert("arknights".to_string(), Arknights::palette());
 
         Self {
             palettes: RwLock::new(palettes),

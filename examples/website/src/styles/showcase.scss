@@ -1,0 +1,25 @@
+// demo-app/src/styles/showcase.scss
+// Component showcase page styles
+// NOTE: Most styles moved to pages.scss to avoid duplication
+// Only keeping unique styles here
+
+// Unique row helper (not in pages.scss)
+.showcase-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+// Unique demo card grid (different from pages.scss)
+.demo-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+// Unique demo description (different color context)
+.demo-description {
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+}

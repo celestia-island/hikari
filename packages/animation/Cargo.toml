@@ -1,0 +1,51 @@
+[package]
+name = "hikari-animation"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Animation hooks, easing functions and transition utilities for the Hikari design system"
+repository.workspace = true
+
+[dependencies]
+# Core dependencies
+slotmap = "1.0"
+anyhow = "1"
+
+# Color utilities (local package)
+hikari-palette = { path = "../palette" }
+
+# Tairitsu framework integration
+tairitsu-vdom = "^0.4"
+tairitsu-hooks = "^0.4"
+tairitsu-style = "^0.4"
+tairitsu-web = { version = "^0.4", default-features = false, features = [
+    "vdom",
+    "hooks",
+    "macros",
+    "style",
+    "wit-bindings",
+    "browser",
+] }
+
+# Legacy WASM dependencies (optional, for backward compatibility)
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", features = [
+    "Window",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "console",
+    "DomRect",
+    "MouseEvent",
+    "CssStyleDeclaration",
+    "Performance",
+    "MediaQueryList",
+    "DomTokenList",
+], optional = true }
+js-sys = { version = "0.3", optional = true }
+
+[features]
+default = []
+legacy = ["wasm-bindgen", "web-sys", "js-sys"]
+debug = ["wasm-bindgen", "js-sys"]

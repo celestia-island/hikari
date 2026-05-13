@@ -1,0 +1,33 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Background Component - Gradient Animation
+// ============================================
+
+.hi-background {
+  // Fixed positioning - covers entire viewport, ignores scroll
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  // Behind all content
+  z-index: -1;
+
+  // Click-through - does not block interactions
+  pointer-events: none;
+
+  // Dynamic gradient with rotating center and breathing colors
+  // Updated by JS animation loop
+  background: radial-gradient(
+    circle at var(--bg-center-x, 50%) var(--bg-center-y, 50%),
+    var(--bg-color-1, rgba(245, 245, 245, 0.9)) 0%,
+    var(--bg-color-2, rgba(255, 182, 193, 0.7)) 100%
+  );
+
+  // Smooth transition for color changes
+  transition: background 0.1s ease-out;
+}

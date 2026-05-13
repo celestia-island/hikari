@@ -1,0 +1,24 @@
+[package]
+name = "hikari-palette"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Traditional Chinese color system with 500+ named colors for the Hikari design system"
+repository.workspace = true
+
+[lib]
+doctest = false
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+tairitsu-style = "^0.4"
+yuuka = "0.6"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+wit-bindgen = "0.50"
+
+[features]
+chinese-names = []
+

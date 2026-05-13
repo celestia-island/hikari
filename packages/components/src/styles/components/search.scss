@@ -1,0 +1,160 @@
+// Search Component Styles
+// Uses InputWrapper for layout, only search-specific styles here
+
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Search Wrapper
+// ============================================
+
+.hi-search-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.hi-search-input-wrapper {
+  position: relative;
+  width: 100%;
+
+  // Search input wrapper should take full width
+  .hi-input-wrapper {
+    width: 100%;
+  }
+}
+
+// ============================================
+// Input Container
+// ============================================
+
+.hi-search-input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 48px;
+
+  input {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    width: 100%;
+    min-width: 48px;
+    height: 100%;
+    padding: 0 vars.$hikari-spacing-xs;
+    margin: 0;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: var(--hi-color-text-primary);
+    font-size: vars.$hikari-font-size-sm;
+    text-align: left;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+
+    &:focus {
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
+
+    &::placeholder {
+      color: var(--hi-color-text-secondary);
+      opacity: 0.6;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    // Remove search cancel button
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+  }
+}
+
+// ============================================
+// Loading Spinner
+// ============================================
+
+.hi-search-spinner {
+  animation: hi-search-spin 1s linear infinite;
+}
+
+@keyframes hi-search-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================
+// Suggestions Dropdown (Portal-based)
+// ============================================
+
+.hi-search-suggestions-dropdown {
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-lg;
+  box-shadow: 0 6px 16px var(--hi-color-black-10);
+  padding: 4px;
+  min-width: 200px;
+}
+
+.hi-search-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: vars.$hikari-spacing-xs;
+  padding: vars.$hikari-spacing-xs vars.$hikari-spacing-sm;
+  border-radius: vars.$hikari-radius-fui-md;
+  cursor: pointer;
+  transition: all vars.$hikari-transition-fast;
+  font-size: vars.$hikari-font-size-sm;
+  color: var(--hi-color-text-primary);
+
+  &:hover {
+    background-color: var(--hi-color-black-5);
+  }
+}
+
+.hi-search-suggestion-icon {
+  flex-shrink: 0;
+  color: var(--hi-color-text-secondary);
+}
+
+// ============================================
+// Dark Theme Support
+// ============================================
+
+[data-theme="dark"] .hi-search-suggestions-dropdown,
+[data-theme="tairitsu"] .hi-search-suggestions-dropdown {
+  background-color: var(--hi-surface);
+  border-color: var(--hi-border);
+}
+
+[data-theme="dark"] .hi-search-suggestion-item,
+[data-theme="tairitsu"] .hi-search-suggestion-item {
+  color: var(--hi-text-primary);
+
+  &:hover {
+    background-color: var(--hi-color-white-5);
+  }
+}
+
+[data-theme="dark"] .hi-search-suggestion-icon,
+[data-theme="tairitsu"] .hi-search-suggestion-icon {
+  color: var(--hi-text-secondary);
+}

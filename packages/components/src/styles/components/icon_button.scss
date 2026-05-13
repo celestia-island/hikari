@@ -1,0 +1,171 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+@use './icon-button-vars.scss' as icon-button-vars;
+
+// ============================================
+// Hikari IconButton Component - FUI Styling
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (icon-button-vars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
+//
+// NOTE: Hover effects are handled by Glow wrapper, not here
+// ============================================
+
+.hi-icon-button {
+  // Layer2 variables are defined in icon-button-vars.scss
+
+  // Layout
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 0;
+  gap: 0;
+
+  // Size - use CSS variables
+  width: var(--hi-icon-button-size);
+  height: var(--hi-icon-button-size);
+  min-width: var(--hi-icon-button-size);
+  max-width: var(--hi-icon-button-size);
+  min-height: var(--hi-icon-button-size);
+  max-height: var(--hi-icon-button-size);
+
+  // Allow glow effect to show
+  overflow: visible;
+
+  // Remove default button styling
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  // Background - use CSS variables
+  background: var(--hi-icon-button-bg);
+  border: none;
+  border-radius: var(--hi-icon-button-radius);
+
+  // Typography
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  font-weight: 400;
+  color: var(--hi-icon-button-icon-color);
+
+  // Transitions - use CSS variables
+  transition: var(--hi-icon-button-transition);
+
+  // No transform - controlled by AnimationBuilder via Glow wrapper
+
+  // Cursor
+  cursor: pointer;
+
+  // Focus state - only outline, no color changes
+  &:focus-visible {
+    outline: 2px solid var(--hi-icon-button-border-color-focus);
+    outline-offset: 2px;
+    color: var(--hi-icon-button-icon-color);
+    
+    .hi-icon-button-icon {
+      color: var(--hi-icon-button-icon-color);
+    }
+  }
+
+  // Disabled state
+  &:disabled {
+    background: var(--hi-icon-button-bg-disabled);
+    color: var(--hi-icon-button-icon-color-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // No active state - controlled by AnimationBuilder via Glow wrapper
+
+  // ============================================
+  // Size Variants - Variables defined in icon-button-vars.scss
+  // ============================================
+
+  &.hi-icon-button-16,
+  &.hi-icon-button-24,
+  &.hi-icon-button-32,
+  &.hi-icon-button-36,
+  &.hi-icon-button-40 {
+    // Size variables are already set by the classes in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Variant: Ghost (default - transparent)
+  // ============================================
+
+  &.hi-icon-button-ghost,
+  &.hi-icon-button-borderless {
+    // Variables defined in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Variant: Primary (solid primary color)
+  // ============================================
+
+  &.hi-icon-button-primary {
+    // Variables defined in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Variant: Secondary (solid secondary color)
+  // ============================================
+
+  &.hi-icon-button-secondary {
+    // Variables defined in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Variant: Danger (solid danger color)
+  // ============================================
+
+  &.hi-icon-button-danger {
+    // Variables defined in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Variant: Success (solid success color)
+  // ============================================
+
+  &.hi-icon-button-success {
+    // Variables defined in icon-button-vars.scss
+  }
+
+  // ============================================
+  // Icon Styles - Use CSS Variables
+  // ============================================
+
+  .hi-icon-button-icon {
+    width: var(--hi-icon-button-icon-size);
+    height: var(--hi-icon-button-icon-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    color: var(--hi-icon-button-icon-color);
+
+    svg {
+      width: var(--hi-icon-button-icon-size);
+      height: var(--hi-icon-button-icon-size);
+      display: block;
+      fill: currentColor;
+    }
+  }
+
+  // Active state for icon
+  &:active:not(:disabled) .hi-icon-button-icon {
+    color: var(--hi-icon-button-icon-color-active);
+  }
+
+  // Disabled state for icon
+  &:disabled .hi-icon-button-icon {
+    color: var(--hi-icon-button-icon-color-disabled);
+  }
+
+  .hi-icon-button-disabled {
+    opacity: 0.3;
+  }
+}

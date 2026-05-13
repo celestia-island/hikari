@@ -1,0 +1,224 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Badge Component
+// Features: Glowing variants, pulse animations, smooth transitions
+// ============================================
+
+// ============================================
+// Base Badge Styles (Standalone labels)
+// ============================================
+
+.hi-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.625rem;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--hi-color-text-inverted, #ffffff);
+  border-radius: vars.$hikari-radius-fui-sm;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, var(--hi-color-gray-100), var(--hi-color-gray-50));
+  box-shadow: 0 0 8px var(--hi-color-gray-30);
+  position: relative;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+// ============================================
+// Color Variants - 使用调色板上下文颜色
+// ============================================
+
+// Primary (牡丹粉红)
+.hi-badge-primary {
+  background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
+  border-color: var(--hi-button-primary-hover);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-primary),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-primary);
+}
+
+// Secondary (苍翠)
+.hi-badge-secondary {
+  background: linear-gradient(135deg, var(--hi-button-secondary), var(--hi-button-secondary-dark));
+  border-color: var(--hi-button-secondary-hover);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-secondary),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-secondary);
+}
+
+// Success (葱倩)
+.hi-badge-success {
+  background: linear-gradient(135deg, var(--hi-button-success), var(--hi-button-success-dark));
+  border-color: var(--hi-button-success-light);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-success),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-success);
+}
+
+// Warning (鹅黄)
+.hi-badge-warning {
+  background: linear-gradient(135deg, var(--hi-button-warning), var(--hi-button-warning-dark));
+  border-color: var(--hi-button-warning-light);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-warning),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-warning);
+}
+
+// Danger (朱红)
+.hi-badge-danger {
+  background: linear-gradient(135deg, var(--hi-button-danger), var(--hi-button-danger-dark));
+  border-color: var(--hi-button-danger-light);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-danger),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-danger);
+}
+
+// Info (青色)
+.hi-badge-info {
+  background: linear-gradient(135deg, var(--hi-button-info), var(--hi-button-info-dark));
+  border-color: var(--hi-button-info-light);
+  box-shadow:
+    0 0 8px var(--hi-glow-button-info),
+    inset 0 0 4px var(--hi-color-white-10);
+  color: var(--hi-color-text-on-info);
+}
+
+// ============================================
+// Positioning (for count/dot badges on children)
+// ============================================
+
+.hi-badge-wrapper {
+  position: relative;
+  display: inline-block;
+
+  .hi-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transform: translate(30%, 30%);
+    z-index: 10;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 0.3rem;
+    font-size: 0.625rem;
+    border-radius: 9px;
+  }
+}
+
+// ============================================
+// Dot Variant (Small indicator)
+// ============================================
+
+.hi-badge-dot {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 0 !important;
+
+  .hi-badge-dot-inner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+}
+
+// Dot variant colors
+.hi-badge-dot.hi-badge-primary .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-primary-light), var(--hi-button-primary));
+  box-shadow: 0 0 6px var(--hi-glow-button-primary);
+}
+
+.hi-badge-dot.hi-badge-secondary .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-secondary-light), var(--hi-button-secondary));
+  box-shadow: 0 0 6px var(--hi-glow-button-secondary);
+}
+
+.hi-badge-dot.hi-badge-success .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-success-light), var(--hi-button-success));
+  box-shadow: 0 0 6px var(--hi-glow-button-success);
+}
+
+.hi-badge-dot.hi-badge-warning .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-warning-light), var(--hi-button-warning));
+  box-shadow: 0 0 6px var(--hi-glow-button-warning);
+}
+
+.hi-badge-dot.hi-badge-danger .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-danger-light), var(--hi-button-danger));
+  box-shadow: 0 0 6px var(--hi-glow-button-danger);
+}
+
+.hi-badge-dot.hi-badge-info .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-button-info-light), var(--hi-button-info));
+  box-shadow: 0 0 6px var(--hi-glow-button-info);
+}
+
+.hi-badge-dot .hi-badge-dot-inner {
+  background: radial-gradient(circle, var(--hi-color-gray-100), var(--hi-color-gray-50));
+  box-shadow: 0 0 4px var(--hi-color-gray-30);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-badge-sm {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  border-radius: 3px;
+}
+
+.hi-badge-lg {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: vars.$hikari-radius-fui-md;
+}
+
+// ============================================
+// Status Badge (for Avatar integration)
+// ============================================
+
+.hi-badge-status {
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--hi-color-surface);
+
+  &.hi-badge-online {
+    background: var(--hi-button-success);
+    box-shadow: 0 0 6px var(--hi-glow-button-success);
+  }
+
+  &.hi-badge-offline {
+    background: var(--hi-color-gray-100);
+    box-shadow: 0 0 4px var(--hi-color-gray-30);
+  }
+
+  &.hi-badge-away {
+    background: var(--hi-button-warning);
+    box-shadow: 0 0 6px var(--hi-glow-button-warning);
+  }
+
+  &.hi-badge-busy {
+    background: var(--hi-button-danger);
+    box-shadow: 0 0 6px var(--hi-glow-button-danger);
+  }
+}

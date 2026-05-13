@@ -1,0 +1,116 @@
+// Spin Component Styles
+// Loading spinner indicator
+
+// Base spin container
+.hi-spin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+// Size variants
+.hi-spin-sm {
+    font-size: 12px;
+
+    .hi-spin-spinner {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+.hi-spin-md {
+    font-size: 14px;
+
+    .hi-spin-spinner {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.hi-spin-lg {
+    font-size: 16px;
+
+    .hi-spin-spinner {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+// Spinner element
+.hi-spin-spinner {
+    display: inline-block;
+    border: 2px solid var(--hi-border, rgba(0, 0, 0, 0.1));
+    border-top-color: var(--hi-color-primary, #1890ff);
+    border-radius: 50%;
+    animation: hi-spin-rotate 0.6s linear infinite;
+}
+
+@keyframes hi-spin-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.hi-spin-stopped .hi-spin-spinner {
+    animation: none;
+    border-top-color: var(--hi-border, rgba(0, 0, 0, 0.1));
+}
+
+// Tip text (optional description text below spinner)
+.hi-spin-tip {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--hi-text-secondary, #666);
+    text-align: center;
+}
+
+// Dark theme adjustments
+[data-theme="dark"] .hi-spin-spinner,
+[data-theme="tairitsu"] .hi-spin-spinner {
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: var(--hi-color-primary, #1890ff);
+}
+
+[data-theme="dark"] .hi-spin-stopped .hi-spin-spinner,
+[data-theme="tairitsu"] .hi-spin-stopped .hi-spin-spinner {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .hi-spin-tip,
+[data-theme="tairitsu"] .hi-spin-tip {
+    color: var(--hi-text-secondary, #b0b0b0);
+}
+
+// Accessibility: respect prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+    .hi-spin-spinner {
+        animation-duration: 2s;
+    }
+}
+
+// Nested spin (for wrapping content)
+.hi-spin-nested {
+    position: relative;
+
+    .hi-spin-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+    }
+
+    &.hi-spin-spinning > *:not(.hi-spin-spinner) {
+        opacity: 0.5;
+        pointer-events: none;
+        user-select: none;
+    }
+}
+
+// Blur effect when spinning (optional)
+.hi-spin-blur {
+    &.hi-spin-spinning > *:not(.hi-spin-spinner) {
+        filter: blur(2px);
+    }
+}

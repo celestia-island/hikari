@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  hikari-screenshot:
+    build:
+      context: .
+      dockerfile: docker/screenshot-selenium.Dockerfile
+    container_name: hikari-screenshot
+    image: hikari/screenshot:selenium
+    network_mode: host
+    # Mount local target directory to capture screenshots
+    volumes:
+      - ./target/e2e_screenshots:/tmp/e2e_screenshots
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+      - CHROME_BIN=/usr/bin/google-chrome
+    command: ["/usr/local/bin/hikari-screenshot"]

@@ -1,0 +1,161 @@
+// Pagination Jump Modal Styles
+// Modal that appears above ellipsis for quick page navigation
+
+// ============================================
+// Overlay
+// ============================================
+
+.hi-pagination-jump-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: pagination-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes pagination-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// ============================================
+// Modal Content
+// ============================================
+
+.hi-pagination-jump-modal-content {
+  background: var(--hi-card-bg, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: var(--hi-radius-fui-md, 8px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  min-width: 280px;
+  max-width: 400px;
+  animation: pagination-modal-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pagination-modal-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// ============================================
+// Header
+// ============================================
+
+.hi-pagination-jump-modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--hi-color-border, #e5e7eb);
+  font-family: var(--hi-font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #1f2937);
+}
+
+// ============================================
+// Body
+// ============================================
+
+.hi-pagination-jump-modal-body {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hi-pagination-jump-modal-input {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  font-family: var(--hi-font-family-mono, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--hi-color-text-primary, #1f2937);
+  background: var(--hi-card-bg, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: var(--hi-radius-fui-sm, 4px);
+  outline: none;
+  transition:
+    border-color 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+
+  &:focus {
+    border-color: var(--hi-color-primary, #00A0E9);
+    box-shadow:
+      0 0 0 3px rgba(0, 160, 233, 0.1),
+      0 0 0 1px var(--hi-color-primary, #00A0E9);
+  }
+
+  &::placeholder {
+    color: var(--hi-color-text-secondary, #6b7280);
+    opacity: 0.7;
+  }
+}
+
+.hi-pagination-jump-modal-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--hi-radius-fui-sm, 4px);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.15s ease-out,
+    transform 0.1s ease-out,
+    border-color 0.15s ease-out;
+
+  &:hover:not(:disabled) {
+    background: rgba(0, 160, 233, 0.1);
+    border-color: var(--hi-color-primary, #00A0E9);
+    transform: scale(1.05);
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(0, 160, 233, 0.15);
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================
+// Footer
+// ============================================
+
+.hi-pagination-jump-modal-footer {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--hi-color-border, #e5e7eb);
+  font-family: var(--hi-font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--hi-color-text-secondary, #6b7280);
+  text-align: center;
+}

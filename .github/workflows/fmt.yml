@@ -1,0 +1,33 @@
+name: Format
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fmt.yml'
+      - 'packages/**/*'
+      - 'examples/**/*'
+      - 'Cargo.toml'
+  push:
+    branches: [master, dev]
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch MDI icons
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Generate icon modules
+        run: cargo build -p hikari-icons
+
+      - name: Setup toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Run fmt
+        run: cargo +nightly fmt --all -- --check --unstable-features

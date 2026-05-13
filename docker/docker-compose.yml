@@ -1,0 +1,34 @@
+services:
+  # Hikari Website
+  website:
+    build:
+      context: /mnt/sdb1/hikari
+      dockerfile: docker/website.Dockerfile
+    container_name: hikari-website
+    ports:
+      - "3000:3000"
+    environment:
+      - RUST_BACKTRACE=1
+      - RUST_LOG=info
+    command: cargo run --bin website --features server
+    networks:
+      - hikari-network
+
+  # Chrome Standalone (for E2E testing)
+  chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: hikari-chrome
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+    environment:
+      - SE_NODE_SESSION_TIMEOUT=120
+    shm_size: 2gb
+    networks:
+      - hikari-network
+    volumes:
+      - /dev/shm:/dev/shm
+
+networks:
+  hikari-network:
+    driver: bridge

@@ -1,0 +1,174 @@
+// Slider Component Styles
+// Uses CSS variables for animation control via AnimationBuilder
+// All colors now use theme-consistent CSS variables
+
+@use '../../../../theme/styles/variables.scss' as vars;
+
+.hi-slider {
+    position: relative;
+    width: 100%;
+    height: 12px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.hi-slider-sm {
+    height: 10px;
+}
+
+.hi-slider-lg {
+    height: 16px;
+}
+
+// Rail (background track)
+.hi-slider-rail {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5));
+    border-radius: vars.$hikari-radius-full;
+    transition: background-color vars.$hikari-transition-fast ease;
+}
+
+// Filled track
+.hi-slider-track {
+    position: absolute;
+    height: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(90deg,
+        var(--hi-color-primary, var(--hi-primary, #FFC0CB)),
+        var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85))
+    );
+    border-radius: vars.$hikari-radius-full;
+    transition:
+        width vars.$hikari-transition-fast linear,
+        background-color vars.$hikari-transition-fast ease;
+}
+
+// Drag handle / thumb
+.hi-slider-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--hi-surface, #FFFFFF);
+    border: 2px solid var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    border-radius: 50%;
+    box-shadow:
+        var(--hi-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05)),
+        0 0 4px rgba(255, 179, 167, 0.2);
+    transition:
+        transform vars.$hikari-transition-fast ease,
+        box-shadow vars.$hikari-transition-fast ease,
+        background-color vars.$hikari-transition-fast ease,
+        border-color vars.$hikari-transition-fast ease;
+    z-index: 1;
+
+    &:hover {
+        transform: translate(-50%, -50%) scale(1.2);
+        box-shadow:
+            var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1)),
+            0 0 8px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.3));
+    }
+
+    &:active {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow:
+            0 0 12px var(--hi-glow-primary-md, 0 0 16px rgba(255, 179, 167, 0.5)),
+            var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+        border-color: var(--hi-button-primary-dark, #FF9AA9);
+    }
+}
+
+// Hidden native input
+.hi-slider-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+}
+
+// Disabled state
+.hi-slider-disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+
+    .hi-slider-track {
+        background-color: var(--hi-text-disabled, rgba(80, 97, 109, 0.35));
+    }
+
+    .hi-slider-handle {
+        background-color: var(--hi-text-disabled, rgba(80, 97, 109, 0.35));
+        border-color: var(--hi-text-disabled, rgba(80, 97, 109, 0.35));
+        cursor: not-allowed;
+
+        &:hover {
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: var(--hi-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+        }
+    }
+}
+
+// Focus ring for accessibility
+.hi-slider:focus-within .hi-slider-handle {
+    box-shadow:
+        0 0 0 3px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.3)),
+        0 0 4px rgba(255, 179, 167, 0.2);
+}
+
+// Dark theme (Tairitsu)
+[data-theme="tairitsu"] .hi-slider-rail {
+    background-color: rgba(240, 240, 245, 0.08);
+}
+
+[data-theme="tairitsu"] .hi-slider-track {
+    background: linear-gradient(90deg,
+        var(--hi-primary, #144A74),
+        rgba(20, 74, 116, 0.7)
+    );
+}
+
+[data-theme="tairitsu"] .hi-slider-handle {
+    background-color: var(--hi-background, #161823);
+    border-color: var(--hi-primary, #144A74);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.3),
+        0 0 4px rgba(20, 74, 116, 0.25);
+
+    &:hover {
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.3),
+            0 0 10px rgba(20, 74, 116, 0.35);
+    }
+
+    &:active {
+        box-shadow:
+            0 0 16px rgba(20, 74, 116, 0.45),
+            0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+}
+
+[data-theme="tairitsu"] .hi-slider-disabled .hi-slider-track {
+    background-color: var(--hi-text-disabled, #6B7280);
+}
+
+[data-theme="tairitsu"] .hi-slider-disabled .hi-slider-handle {
+    background-color: var(--hi-text-disabled, #6B7280);
+    border-color: var(--hi-text-disabled, #6B7280);
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .hi-slider-track,
+    .hi-slider-handle,
+    .hi-slider-rail {
+        transition: none;
+    }
+}

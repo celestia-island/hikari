@@ -1,0 +1,60 @@
+// Virtual scroll component styles
+// Virtual scrolling for large tree datasets
+
+.hi-virtual-scroll {
+  position: relative;
+  overflow: hidden;
+  height: var(--hi-virtual-scroll-height, 400px);
+}
+
+.hi-virtual-scroll-content {
+  position: relative;
+  width: 100%;
+}
+
+.hi-virtual-scroll-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--hi-color-background-light, #f9fafb);
+  }
+
+  &.hi-virtual-scroll-item-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.hi-virtual-scroll-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--hi-color-text-secondary, #666666);
+  font-size: 14px;
+}
+
+.hi-virtual-scroll-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  color: var(--hi-color-text-placeholder, #999999);
+  font-size: 14px;
+}
+
+.hi-virtual-scroll-placeholder {
+  height: 32px;
+  border: 1px dashed var(--hi-color-border, #e5e7eb);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hi-color-text-placeholder, #999999);
+  font-size: 14px;
+}

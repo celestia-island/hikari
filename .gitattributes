@@ -1,0 +1,22 @@
+# Linguist configuration
+# Exclude HTML files from source code statistics
+
+*.html linguist-generated
+*.htm linguist-generated
+
+# Exclude generated files
+package-lock.json linguist-generated
+yarn.lock linguist-generated
+pnpm-lock.yaml linguist-generated
+Cargo.lock linguist-generated
+
+# Exclude dist/build directories
+dist/** linguist-generated
+build/** linguist-generated
+target/** linguist-generated
+
+# Exclude generated code
+generated/** linguist-generated
+
+# Exclude documentation output
+docs/**/output/** linguist-generated

@@ -28,7 +28,7 @@
     -moz-appearance: none;
 
     background-color: var(--hi-input-bg);
-    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
 
     font-family: vars.$hikari-font-family-sans;

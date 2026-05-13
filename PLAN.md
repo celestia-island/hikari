@@ -44,35 +44,37 @@ Neutral   → 边框、分隔线、滚动条
 
 ## 待办（按优先级）
 
-### P0 — 阻塞性
+### ✅ H-4: 修正 README 示例代码 (2026-05-14)
 
-#### H-2: Light Theme 组件样式完整性审计
+- `ThemeProvider { palette: "arknights" }` → `ThemeProvider { initial_palette: "hikari" }`
+- `use tairitsu_vdom::Node` → `use tairitsu_vdom::VNode`
+- `<Button variant={ButtonVariant::Primary}>` → `<Button variant: Primary { ... }>`
+- Import 改为 `use hikari_components::prelude::*`
 
-当前状态：`data-theme="hikari"` 为 light theme，CSS 变量覆盖体系完善。
-但需要逐一验证所有 40+ 组件在 light 背景下的可见性和美观度。
+### ✅ H-2: Light Theme SCSS 关键问题修复 (2026-05-14)
 
-审计清单：
-- [ ] Button (Primary/Secondary/Ghost/Danger/Success)
-- [ ] Input / Textarea / Select
-- [ ] Table / Tree
-- [ ] Menu / Tabs / Breadcrumb
-- [ ] Modal / Drawer / Popover / Tooltip
-- [ ] Alert / Toast / Progress / Spin
-- [ ] Card / Badge / Tag
-- [ ] Layout (Header/Aside/Content/Footer)
+修复了审计发现的 10 个问题（4 critical + 2 high + 4 moderate）：
+
+| 问题 | 修复 |
+|------|------|
+| `--hi-panel-header-bg` 未定义，fallback 为暗灰色 | 改为 `var(--hi-color-surface-secondary, rgba(245,245,245,0.9))` |
+| `--hi-glow-color` 默认白色在 light 主题不可见 | 改为 `rgba(123,207,166,0.5)` (primary tint) |
+| transfer/cascader border fallback 为 `rgba(255,255,255,0.1)` | 改为 `rgba(0,0,0,0.1)` |
+| transfer `--hi-button-bg` fallback 为暗灰色 | 改为 `var(--hi-color-surface, rgba(255,255,255,0.9))` |
+
+### ✅ H-5: 动画预设迁入 Library (2026-05-14)
+
+- 从 `examples/website/src/styles/animations.scss` 提取 20+ 动画预设
+- 新建 `packages/components/src/styles/animations.scss`（423 行）
+- 类名从 `hikari-anim--` 统一为 `hi-anim--`（与库命名一致）
+- 在 `index.scss` 中添加 `@import`
+- 包含：hover、focus、press、continuous、neon、tech、transition 7 大类动画
+
+---
+
+## 待办（按优先级）
 
 ### P1 — 高优先级
-
-#### H-4: 修正 README 示例代码
-- `ThemeProvider { palette: "arknights" }` → 实际 `initial_palette: "tairitsu"`
-- `<Button variant={Primary}>` → 实际 rsx! 语法不同
-- 添加 light/dark 主题切换示例
-
-#### H-5: 动画预设从 Demo CSS 迁入 Library
-Demo 的 `styles/animations.scss` 有 20+ 动画预设（HoverGlow, NeonFlicker 等）困在 demo CSS 中。
-应迁入 `hikari-animation` 或 `hikari-components::styles`。
-
-### P2 — 中优先级
 
 #### H-6: Builder Pattern API
 Demo 的 `ui.rs` 使用 `.text().glow().build()` 风格，库仅提供 rsx! / 函数调用。

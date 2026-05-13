@@ -1,0 +1,423 @@
+// Hikari Animation System
+// Integrates with hikari-animation package for component animations
+
+// ── Configuration ─────────────────────────────────────────────────────────────
+
+$animation-duration-fast: 100ms;
+$animation-duration-normal: 200ms;
+$animation-duration-slow: 300ms;
+$animation-easing-default: ease-out;
+$animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+// ── Hover Animations ───────────────────────────────────────────────────────────
+
+// Hover Scale - Subtle grow effect on hover
+.hi-anim--hover-scale {
+  transition: transform $animation-duration-normal $animation-easing-default;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Hover Glow - Glow intensifies on hover
+.hi-anim--hover-glow {
+  --glow-intensity: 0.3;
+  --glow-spread: 10px;
+  transition: box-shadow $animation-duration-slow $animation-easing-default;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: var(--glow-intensity);
+    filter: blur(var(--glow-spread));
+    transition: all $animation-duration-slow $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    --glow-intensity: 0.6;
+    --glow-spread: 20px;
+  }
+}
+
+// Hover Lift - Element lifts up with shadow on hover
+.hi-anim--hover-lift {
+  transition:
+    transform 250ms $animation-easing-bounce,
+    box-shadow 250ms $animation-easing-default;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px var(--hi-shadow-lg);
+  }
+}
+
+// Hover Shine - Sweeping light effect on hover
+.hi-anim--hover-shine {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--hi-color-white-alpha-20),
+      transparent
+    );
+    transition: left 600ms $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:hover::after {
+    left: 150%;
+  }
+}
+
+// ── Focus Animations ───────────────────────────────────────────────────────────
+
+// Focus Pulse - Subtle pulse animation when focused
+@keyframes focus-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px var(--hi-color-success-alpha-30);
+  }
+  50% {
+    box-shadow: 0 0 0 5px var(--hi-color-success-alpha-10);
+  }
+}
+
+.hi-anim--focus-pulse {
+  &:focus {
+    animation: focus-pulse 2s ease-in-out infinite;
+  }
+}
+
+// Focus Glow - Blue glow appears on focus
+.hi-anim--focus-glow {
+  transition: box-shadow $animation-duration-normal $animation-easing-default;
+
+  &:focus {
+    box-shadow: 0 0 0 3px var(--hi-color-success-alpha-50);
+    outline: none;
+  }
+}
+
+// Focus Border - Border animates on focus
+.hi-anim--focus-border {
+  position: relative;
+  transition: border-color $animation-duration-normal $animation-easing-default;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid transparent;
+    border-radius: inherit;
+    transition: border-color $animation-duration-normal $animation-easing-default;
+    pointer-events: none;
+  }
+
+  &:focus::after {
+    border-color: var(--hi-color-success-alpha-50);
+  }
+}
+
+// ── State Transition Animations ───────────────────────────────────────────────
+
+// Press Scale - Shrink on press (active state)
+.hi-anim--press-scale {
+  transition: transform $animation-duration-fast $animation-easing-default;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Press Glow - Glow intensifies on press
+.hi-anim--press-glow {
+  --press-glow-opacity: 0;
+  transition: box-shadow $animation-duration-fast $animation-easing-default;
+
+  &:active {
+    box-shadow: 0 0 20px var(--hi-color-danger-alpha-40);
+  }
+}
+
+// ── Continuous Animations ─────────────────────────────────────────────────────
+
+// Breathing - Subtle breathe effect
+@keyframes breathing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.95;
+  }
+}
+
+.hi-anim--breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+// Pulse - Continuous pulse animation
+.hi-anim--pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+// Shimmer - Continuous shimmer effect
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.hi-anim--shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--hi-color-white-alpha-10) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+// ── Neon Effect Animations ──────────────────────────────────────────────────────
+
+// Neon Flicker - Random opacity flicker
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 7px rgba(255, 0, 255, 0.7),
+                 0 0 10px var(--hi-color-magenta-alpha-50),
+                 0 0 21px var(--hi-color-magenta-alpha-30),
+                 0 0 42px var(--hi-color-magenta-alpha-20);
+  }
+  20%, 24%, 55% {
+    opacity: 0.4;
+    text-shadow: none;
+  }
+}
+
+.hi-anim--neon-flicker {
+  animation: neon-flicker 1.5s infinite alternate;
+  color: #ff00ff;
+  font-weight: bold;
+}
+
+// Neon Buzz - Rapid small displacement
+@keyframes neon-buzz {
+  0% { transform: translate(0); }
+  10% { transform: translate(-1px, 1px); }
+  20% { transform: translate(1px, -1px); }
+  30% { transform: translate(-1px, 0); }
+  40% { transform: translate(1px, 1px); }
+  50% { transform: translate(-1px, -1px); }
+  60% { transform: translate(1px, 0); }
+  70% { transform: translate(0, 1px); }
+  80% { transform: translate(-1px, -1px); }
+  90% { transform: translate(1px, 1px); }
+  100% { transform: translate(0); }
+}
+
+.hi-anim--neon-buzz {
+  animation: neon-buzz 0.15s linear infinite;
+  color: #00ffff;
+  text-shadow: 0 0 5px var(--hi-color-cyan-alpha-70),
+               0 0 10px var(--hi-color-cyan-alpha-50);
+}
+
+// Neon Scanline - Moving scanline overlay
+@keyframes neon-scanline {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+.hi-anim--neon-scanline {
+  position: relative;
+  color: #00ff41;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--hi-color-green-alpha-8) 2px,
+      var(--hi-color-green-alpha-8) 4px
+    );
+    background-size: 100% 8px;
+    animation: neon-scanline 2s linear infinite;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+}
+
+// ── Tech Effect Animations ──────────────────────────────────────────────────────
+
+// Tech Glitch - Random horizontal displacement with color shift
+@keyframes tech-glitch {
+  0%, 100% {
+    transform: translate(0);
+    clip-path: inset(0 0 0 0);
+    filter: none;
+  }
+  5% {
+    transform: translate(-3px, 1px);
+    filter: hue-rotate(90deg);
+  }
+  10% {
+    transform: translate(2px, -1px);
+    clip-path: inset(20% 0 60% 0);
+  }
+  15% {
+    transform: translate(0);
+    filter: none;
+    clip-path: inset(0 0 0 0);
+  }
+  50% {
+    transform: translate(3px, -2px);
+    filter: hue-rotate(-90deg);
+  }
+  55% {
+    transform: translate(-2px, 1px);
+    clip-path: inset(60% 0 10% 0);
+  }
+  60% {
+    transform: translate(0);
+    filter: none;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.hi-anim--tech-glitch {
+  animation: tech-glitch 0.8s steps(1) infinite;
+}
+
+// Tech Typing - Cursor blink with text reveal
+@keyframes tech-typing-cursor {
+  0%, 100% { border-right-color: currentColor; }
+  50% { border-right-color: transparent; }
+}
+
+.hi-anim--tech-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid currentColor;
+  animation: tech-typing-cursor 1s step-end infinite;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  width: fit-content;
+}
+
+// Tech Data Flow - Streaming particles effect
+@keyframes tech-data-flow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+.hi-anim--tech-data-flow {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    background: repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      rgba(0, 191, 255, 0.06) 1px,
+      transparent 2px,
+      transparent 20px
+    );
+    animation: tech-data-flow 2s linear infinite;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '01';
+    position: absolute;
+    top: -2em;
+    right: 1em;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.75em;
+    color: rgba(0, 191, 255, 0.3);
+    animation: tech-data-flow 3s linear infinite;
+    pointer-events: none;
+  }
+}
+
+// ── Transition Effect Animations ────────────────────────────────────────────────
+
+// Fade Slide In - Fade in while sliding from below
+@keyframes transition-fade-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hi-anim--transition-fade-slide-in {
+  animation: transition-fade-slide-in 0.8s ease-out both;
+}
+
+// Scale Blur In - Scale up from small while clearing blur
+@keyframes transition-scale-blur-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.hi-anim--transition-scale-blur-in {
+  animation: transition-scale-blur-in 1s ease-out both;
+}
+
+// Rotate Zoom In - Rotate while zooming in
+@keyframes transition-rotate-zoom-in {
+  0% {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.hi-anim--transition-rotate-zoom-in {
+  animation: transition-rotate-zoom-in 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

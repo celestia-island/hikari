@@ -81,20 +81,21 @@ just dev        # Start dev server (website demo)
 
 ```rust
 use tairitsu_macros::rsx;
-use tairitsu_vdom::Node;
+use tairitsu_vdom::VNode;
 use hikari_theme::ThemeProvider;
-use hikari_components::Button;
+use hikari_components::prelude::*;
 
-fn app() -> Node {
+fn app() -> VNode {
     rsx! {
-        <ThemeProvider palette="arknights".to_string()>
+        ThemeProvider {
+            initial_palette: "hikari",
             <div class="container">
                 <h1>"Welcome to Hikari"</h1>
-                <Button variant={ButtonVariant::Primary}>
+                <Button variant: Primary {
                     "Get Started"
-                </Button>
+                }
             </div>
-        </ThemeProvider>
+        }
     }
 }
 ```

@@ -145,4 +145,6 @@ chrono = { workspace = true }
 
 [build-dependencies]
 tairitsu-packager = { version = "^0.4", default-features = false }
+hikari-theme = { version = "^0.1", path = "../theme" }
 anyhow = "^1"
+serde_json = "^1"

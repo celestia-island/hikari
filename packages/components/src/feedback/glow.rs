@@ -156,6 +156,8 @@ pub struct GlowProps {
     pub preset: GlowPreset,
     pub class: String,
     pub block: bool,
+    #[default("inherit".to_string())]
+    pub radius: String,
     #[default("100".to_string())]
     pub transition_duration: String,
 }
@@ -227,6 +229,7 @@ pub fn Glow(props: GlowProps) -> Element {
             .add_var("hi-glow-color", glow_color)
             .add_var("glow-opacity", &base_opacity.to_string())
             .add_var("glow-intensity-scale", "0")
+            .add_var("glow-radius", &props.radius)
             .build()
     });
 

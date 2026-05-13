@@ -157,7 +157,8 @@
 
 // Background Color - 语义化背景色，支持主题切换
 .hi-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
-.hi-bg-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
+.hi-bg-secondary { background-color: var(--hi-color-secondary, #519A73); }
+.hi-bg-surface-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
 .hi-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
 .hi-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
 .hi-bg-black { background-color: var(--hi-color-background, #000000); }

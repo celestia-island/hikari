@@ -28,7 +28,8 @@ fn main() -> Result<()> {
     let theme_styles_dir = manifest_dir.join("../theme/styles");
 
     if !theme_styles_dir.exists() {
-        println!("Theme styles directory not found, skipping SCSS compilation");
+        println!("Theme styles directory not found, generating empty CSS stubs");
+        write_empty_stubs(&scss_files, &styles_out_dir)?;
         return Ok(());
     }
 
@@ -93,5 +94,17 @@ fn compile_scss(
     fs::write(&output_path, css_content)?;
 
     println!("   ✓ Compiled: {} -> {}", relative_path, css_name);
+    Ok(())
+}
+
+fn write_empty_stubs(scss_files: &[std::path::PathBuf], output_dir: &Path) -> Result<()> {
+    for scss_path in scss_files {
+        let css_name = scss_path
+            .file_name()
+            .ok_or_else(|| anyhow::anyhow!("Failed to get filename from path: {:?}", scss_path))?
+            .to_string_lossy()
+            .replace(".scss", ".css");
+        fs::write(output_dir.join(&css_name), "")?;
+    }
     Ok(())
 }

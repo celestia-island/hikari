@@ -1,7 +1,7 @@
 // Hikari Radio Component Styles
 // Use theme variables with namespace to avoid conflicts
-@use '../../../../theme/styles/variables.scss' as vars;
-@use '../../../../theme/styles/mixins.scss' as mix;
+@use 'variables' as vars;
+@use 'mixins' as mix;
 
 // ============================================
 // Hikari Radio Component

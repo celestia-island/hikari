@@ -219,7 +219,7 @@ AnimationBuilder::new()
 ### 主题切换按钮
 
 ```rust
-use dioxus::prelude::*;
+use tairitsu_vdom::prelude::*;
 use hikari_components::{Button, ButtonVariant};
 use hikari_animation::{AnimationBuilder, Easing};
 

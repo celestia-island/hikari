@@ -1,6 +1,7 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 
 pub fn render() -> VNode {
     render_demo_page("page-component-tree", "Tree", "Hierarchical tree view with expand/collapse, selection, and optional checkboxes.", rsx! [

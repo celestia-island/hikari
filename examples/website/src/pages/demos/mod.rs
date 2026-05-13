@@ -1,9 +1,9 @@
-use tairitsu_vdom::VNode;
-
 pub mod dashboard_demo;
 pub mod form_demo;
 pub mod showcase;
 pub mod video_demo;
+
+use tairitsu_vdom::VNode;
 
 pub fn render_showcase() -> VNode {
     showcase::render_showcase()

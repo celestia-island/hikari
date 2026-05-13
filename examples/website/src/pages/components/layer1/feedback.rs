@@ -1,12 +1,9 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
-use crate::components::icon_utils::icon_el;
-use hikari_components::prelude::*;
-use hikari_components::{
-    Progress, ProgressStatus, Skeleton, SkeletonVariant, Spin, SpinSize, SpinTip,
-};
+use hikari_components::{Progress, ProgressStatus, Skeleton, SkeletonVariant, Spin, SpinSize, SpinTip, prelude::*};
 use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
+
+use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page}, icon_utils::icon_el};
 
 fn alert_node(class: &str, icon: MdiIcon, text: &str, role: &str, live: &str) -> VNode {
     VNode::Element(

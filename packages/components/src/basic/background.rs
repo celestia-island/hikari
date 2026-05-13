@@ -4,12 +4,13 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use crate::style_builder::StyleStringBuilder;
-use crate::theme::ThemeContext;
-use crate::{platform, prelude::*, styled::StyledComponent};
-use hikari_palette::classes::BackgroundClass;
-use hikari_palette::{TypedClass, 墨色, 月白, 粉红, 靛蓝};
+use hikari_palette::{TypedClass, classes::BackgroundClass, 墨色, 月白, 粉红, 靛蓝};
 use tairitsu_hooks::ReactiveSignal;
+
+use crate::{
+    platform, prelude::*, style_builder::StyleStringBuilder, styled::StyledComponent,
+    theme::ThemeContext,
+};
 
 pub struct BackgroundComponent;
 

@@ -138,7 +138,7 @@ pub const MAX_SIZE: usize = 100;  // SCREAMING_SNAKE_CASE
 pub const 石青: ChineseColor = ChineseColor { };  // Chinese (for palette)
 ```
 
-### Dioxus Component Style
+### Tairitsu Component Style
 
 Components should follow these patterns:
 

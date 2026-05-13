@@ -389,10 +389,9 @@ let custom_theme = Palette {
 
 ## 使用示例
 
-### 在 Dioxus 组件中使用
+### 在 Tairitsu 组件中使用
 
 ```rust
-use dioxus::prelude::*;
 use hikari_palette::{ClassesBuilder, classes::*};
 
 #[component]

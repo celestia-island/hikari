@@ -1,12 +1,12 @@
 # Icons 시스템
 
-아이콘 관리 및 렌더링 시스템으로, Lucide Icons와 통합되어 있습니다.
+아이콘 관리 및 렌더링 시스템으로, Material Design Icons (MDI)와 통합되어 있습니다.
 
 ## 개요
 
 `hikari-icons`가 제공하는 기능:
 
-- **1000개 이상의 아이콘** - Lucide Icons 전체 컬렉션
+- **1000개 이상의 아이콘** - Material Design Icons (MDI) 전체 컬렉션
 - **타입 안전** - Enum 기반 아이콘 이름
 - **SVG 렌더링** - 클라이언트 및 서버 사이드 렌더링
 - **런타임 로딩** - 온디맨드 아이콘 SVG 로딩
@@ -16,12 +16,11 @@
 ### 기본 사용법
 
 ```rust
-use dioxus::prelude::*;
-use hikari_icons::{Icon, LucideIcon};
+use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
     Icon {
-        icon: LucideIcon::Search,
+        icon: MdiIcon::Magnify,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -31,29 +30,29 @@ rsx! {
 ### 사용 가능한 아이콘
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // 내비게이션
     Home,
     Menu,
-    Search,
-    Settings,
+    Magnify,
+    Cog,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // 액션
-    Edit,
-    Trash,
+    Pencil,
+    Delete,
     Check,
-    X,
+    Close,
     Plus,
     Minus,
 
     // 상태
-    AlertCircle,
-    CheckCircle,
-    Info,
-    AlertTriangle,
+    AlertCircleOutline,
+    CheckCircleOutline,
+    InformationOutline,
+    AlertOutline,
 
     // ... 1000개 이상의 아이콘
 }
@@ -63,7 +62,7 @@ pub enum LucideIcon {
 
 | 속성 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
-| `icon` | `LucideIcon` | - | 아이콘 타입 |
+| `icon` | `MdiIcon` | - | 아이콘 타입 |
 | `size` | `u32` | `24` | 아이콘 크기 |
 | `color` | `&str` | - | 색상 |
 
@@ -98,7 +97,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: LucideIcon,
+    icon: MdiIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -106,10 +105,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### LucideIcon
+### MdiIcon
 
 ```rust
-pub enum LucideIcon {
+pub enum MdiIcon {
     // 1000개 이상의 아이콘 변형
 }
 ```

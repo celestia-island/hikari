@@ -1,16 +1,14 @@
 // packages/components/src/display/skeleton.rs
 // Skeleton component with Arknights + FUI styling
 
+use std::{cell::RefCell, rc::Rc};
+
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
     components::SkeletonDisplayClass,
 };
-use tairitsu_vdom::IntoAttrValue;
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use tairitsu_hooks::ReactiveSignal;
+use tairitsu_vdom::IntoAttrValue;
 
 use crate::{platform, prelude::*, styled::StyledComponent};
 

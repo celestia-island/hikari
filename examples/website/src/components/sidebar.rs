@@ -1,11 +1,10 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use tairitsu_web::t;
-use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
-use hikari_icons::generated::mdi_selected::get;
-use hikari_icons::MdiIcon;
+use hikari_icons::{MdiIcon, generated::mdi_selected::get};
 use tairitsu_vdom::{VElement, VNode, VText};
+
+use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 
 struct NavItem {
     label_key: &'static str,

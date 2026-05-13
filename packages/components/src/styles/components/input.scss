@@ -375,10 +375,10 @@
     pointer-events: none;
     z-index: 1;
     border-radius: inherit;
-    opacity: var(--spotlight-opacity, 0);
+    opacity: var(--hi-spotlight-opacity, 0);
 
     background-image: radial-gradient(
-      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+      circle at var(--hi-spotlight-x, 50%) var(--hi-spotlight-y, 50%),
       var(--hi-color-primary) 0%,
       transparent 70%
     );

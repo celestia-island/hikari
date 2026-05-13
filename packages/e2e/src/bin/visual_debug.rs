@@ -1,20 +1,12 @@
 use anyhow::{Context, Result};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{
-    browser::{Browser, BrowserConfig},
-    cdp::browser_protocol::page::CaptureScreenshotFormat,
-};
+use chromiumoxide::{browser::{Browser, BrowserConfig}, cdp::browser_protocol::page::CaptureScreenshotFormat};
 use clap::{Parser, Subcommand};
-use tracing::{info, warn, error};
-
-use tairitsu_browser_test::{
-    browser::{Platform, detect_platform, CHROME_VERSION},
-    BrowserCache, BrowserDownloader,
-};
+use tracing::{error, info, warn};
+use tairitsu_browser_test::{BrowserCache, BrowserDownloader, browser::{CHROME_VERSION, Platform, detect_platform}};
 
 const SCREENSHOT_DIR: &str = "/tmp/e2e_screenshots";
 

@@ -281,7 +281,7 @@
     height: 20px;
     background: transparent;
     pointer-events: none;
-    opacity: var(--fade-top-opacity, 0); // Controlled by JS
+    opacity: var(--hi-fade-top-opacity, 0); // Controlled by JS
     // DISABLED - migrated to JS animation
 
     // transition: opacity 0.2s ease;
@@ -297,7 +297,7 @@
     height: 20px;
     background: linear-gradient(to top, var(--hi-surface), transparent);
     pointer-events: none;
-    opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
+    opacity: var(--hi-fade-bottom-opacity, 0); // Controlled by JS
     // DISABLED - migrated to JS animation
 
     // transition: opacity 0.2s ease;
@@ -327,9 +327,9 @@
 // Menu item
 .hi-aside-menu-item {
   // Glow effect variables (fixed position for aside)
-  --glow-x: 50%;
-  --glow-y: 50%;
-  --glow-intensity: 1.0;
+  --hi-glow-x: 50%;
+  --hi-glow-y: 50%;
+  --hi-glow-intensity: 1.0;
 
   // Layout
   display: flex;
@@ -379,9 +379,9 @@
 
     // Radial gradient for spotlight effect (same as Glow component)
     background: radial-gradient(
-      circle at var(--glow-x, 50%) var(--glow-y, 50%),
+      circle at var(--hi-glow-x, 50%) var(--hi-glow-y, 50%),
       var(--hi-color-secondary) 0%,
-      transparent calc(150% * var(--glow-intensity, 1.0))
+      transparent calc(150% * var(--hi-glow-intensity, 1.0))
     );
   }
 

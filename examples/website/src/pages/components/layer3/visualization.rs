@@ -1,7 +1,8 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 
 pub fn render() -> VNode {
     render_demo_page("page-component-visualization", "Visualization", "Charts, graphs, and data visualization primitives for representing data visually.", rsx! [

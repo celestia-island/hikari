@@ -1,0 +1,31 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// ============================================
+// Hikari Container Component
+// ============================================
+
+.hi-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+// Responsive max-widths
+.hi-container-sm {
+  max-width: 640px;
+}
+
+.hi-container-lg {
+  max-width: 1024px;
+}
+
+.hi-container-xl {
+  max-width: 1280px;
+}
+
+.hi-container-xxl {
+  max-width: 1536px;
+}

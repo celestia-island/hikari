@@ -1,0 +1,390 @@
+// hikari-extra-components/styles/components/collapsible.scss
+// Collapsible panel styles with Arknights design + FUI glow
+
+@use '../../../hikari-theme/styles/mixins.scss' as *;
+
+// ============================================
+// Collapsible Container
+// ============================================
+
+.hi-collapsible {
+    width: 100%;
+    background-color: var(--hi-color-surface);
+    border: 1px solid var(--hi-color-border);
+    border-radius: $hikari-radius-lg;
+    overflow: hidden;
+    transition: all $hikari-transition-base;
+
+    // Arknights clean design with subtle glow
+    &:hover {
+        border-color: var(--hi-color-primary);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    }
+}
+
+// ============================================
+// Collapsible Header
+// ============================================
+
+.hi-collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $hikari-spacing-md;
+    padding: $hikari-spacing-md $hikari-spacing-lg;
+    cursor: pointer;
+    user-select: none;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--hi-color-border);
+    transition: all $hikari-transition-base;
+
+    // Hover effect
+    &:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+
+        .hi-collapsible-icon {
+            color: var(--hi-color-primary);
+            transform: scale(1.1);
+        }
+
+        .hi-collapsible-title {
+            color: var(--hi-color-text-primary);
+        }
+    }
+
+    // Active state
+    &:active {
+        transform: scale(0.99);
+    }
+}
+
+.hi-collapsible-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-md;
+    flex: 1;
+}
+
+.hi-collapsible-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--hi-color-text-secondary);
+    transition: all $hikari-transition-base;
+    flex-shrink: 0;
+
+    // Rotation animation when collapsed
+    .hi-collapsible:not(.hi-collapsible-expanded) & {
+        transform: rotate(-90deg);
+    }
+
+    // FUI glow on hover
+    .hi-collapsible-header:hover & {
+        filter: drop-shadow(0 0 8px currentColor);
+    }
+}
+
+.hi-collapsible-title {
+    font-size: $hikari-font-size-base;
+    font-weight: 600;
+    color: var(--hi-color-text-primary);
+    transition: color $hikari-transition-fast;
+}
+
+.hi-collapsible-subtitle {
+    font-size: $hikari-font-size-sm;
+    color: var(--hi-color-text-secondary);
+    font-weight: 400;
+    margin-top: 2px;
+}
+
+.hi-collapsible-actions {
+    display: flex;
+    align-items: center;
+    gap: $hikari-spacing-sm;
+
+    // Prevent click from triggering toggle
+    > * {
+        cursor: default;
+    }
+}
+
+// ============================================
+// Collapsible Content
+// ============================================
+
+.hi-collapsible-content {
+    overflow: hidden;
+    transition:
+        max-height $hikari-transition-slow cubic-bezier(0.4, 0, 0.2, 1),
+        opacity $hikari-transition-base;
+
+    // Collapsed state
+    .hi-collapsible:not(.hi-collapsible-expanded) & {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    // Expanded state
+    .hi-collapsible.hi-collapsible-expanded & {
+        max-height: 2000px;
+        opacity: 1;
+    }
+}
+
+.hi-collapsible-body {
+    padding: $hikari-spacing-lg;
+
+    // Add scrollbar when content overflows
+    @include scrollbar;
+}
+
+// ============================================
+// Collapsible Variants
+// ============================================
+
+// Bordered variant
+.hi-collapsible-bordered {
+    border-radius: 0;
+
+    &:first-child {
+        border-top-left-radius: $hikari-radius-lg;
+        border-top-right-radius: $hikari-radius-lg;
+    }
+
+    &:last-child {
+        border-bottom-left-radius: $hikari-radius-lg;
+        border-bottom-right-radius: $hikari-radius-lg;
+    }
+
+    &:not(:last-child) {
+        border-bottom: none;
+    }
+}
+
+// Ghost variant (minimal styling)
+.hi-collapsible-ghost {
+    background-color: transparent;
+    border: none;
+
+    .hi-collapsible-header {
+        background-color: transparent;
+        border-bottom: none;
+        border-radius: $hikari-radius-md;
+
+        &:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+    }
+
+    .hi-collapsible-body {
+        padding: $hikari-spacing-md $hikari-spacing-lg;
+    }
+}
+
+// FUI variant (enhanced glow)
+.hi-collapsible-fui {
+    position: relative;
+    overflow: hidden;
+
+    // Animated gradient border
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+            90deg,
+            var(--hi-color-primary),
+            var(--hi-color-secondary),
+            var(--hi-color-accent),
+            var(--hi-color-primary)
+        );
+        background-size: 300% 100%;
+        animation: hikari-gradient-shift 3s ease infinite;
+        opacity: 0;
+        transition: opacity $hikari-transition-base;
+    }
+
+    &:hover::before {
+        opacity: 1;
+    }
+
+    .hi-collapsible-header {
+        background: linear-gradient(
+             135deg,
+             rgba(139, 92, 246, 0.05) 0%,
+             rgba(59, 130, 246, 0.05) 100%
+        );
+    }
+}
+
+// ============================================
+// Collapsible Sizes
+// ============================================
+
+.hi-collapsible-sm {
+    .hi-collapsible-header {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+    }
+
+    .hi-collapsible-title {
+        font-size: $hikari-font-size-sm;
+    }
+
+    .hi-collapsible-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .hi-collapsible-body {
+        padding: $hikari-spacing-md;
+    }
+}
+
+.hi-collapsible-lg {
+    .hi-collapsible-header {
+        padding: $hikari-spacing-lg $hikari-spacing-xl;
+    }
+
+    .hi-collapsible-title {
+        font-size: $hikari-font-size-lg;
+    }
+
+    .hi-collapsible-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .hi-collapsible-body {
+        padding: $hikari-spacing-xl;
+    }
+}
+
+// ============================================
+// Collapsible States
+// ============================================
+
+// Disabled state
+.hi-collapsible-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+
+    .hi-collapsible-header {
+        cursor: not-allowed;
+    }
+}
+
+// Loading state
+.hi-collapsible-loading {
+    position: relative;
+
+    .hi-collapsible-icon {
+        animation: hi-spin 1s linear infinite;
+    }
+}
+
+// Error state
+.hi-collapsible-error {
+    border-color: var(--hi-color-danger);
+
+    .hi-collapsible-icon {
+        color: var(--hi-color-danger);
+    }
+
+    .hi-collapsible-title {
+        color: var(--hi-color-danger);
+    }
+}
+
+// Success state
+.hi-collapsible-success {
+    border-color: var(--hi-color-success);
+
+    .hi-collapsible-icon {
+        color: var(--hi-color-success);
+    }
+}
+
+// ============================================
+// Accordion Group
+// ============================================
+
+.hi-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: $hikari-spacing-sm;
+
+    // Only one collapsible can be expanded at a time
+    &.hi-accordion-mutual-exclusive {
+        .hi-collapsible:not(.hi-collapsible-expanded) {
+            .hi-collapsible-content {
+                display: none;
+            }
+        }
+    }
+}
+
+// ============================================
+// Animation Variants
+// ============================================
+
+// Fade animation
+.hi-collapsible-fade {
+    .hi-collapsible-content {
+        transition: opacity $hikari-transition-base;
+    }
+
+    &.hi-collapsible-expanded .hi-collapsible-content {
+        opacity: 1;
+    }
+
+    &:not(.hi-collapsible-expanded) .hi-collapsible-content {
+        opacity: 0;
+        display: none;
+    }
+}
+
+// Slide animation (default is in the base styles)
+.hi-collapsible-slide {
+    // This is the default behavior
+}
+
+// Scale animation
+.hi-collapsible-scale {
+    .hi-collapsible-content {
+        transform-origin: top;
+        transition:
+            max-height $hikari-transition-slow,
+            opacity $hikari-transition-base,
+            transform $hikari-transition-base;
+    }
+
+    &:not(.hi-collapsible-expanded) .hi-collapsible-content {
+        transform: scaleY(0);
+    }
+
+    &.hi-collapsible-expanded .hi-collapsible-content {
+        transform: scaleY(1);
+    }
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+
+@include mobile {
+    .hi-collapsible-header {
+        padding: $hikari-spacing-sm $hikari-spacing-md;
+    }
+
+    .hi-collapsible-body {
+        padding: $hikari-spacing-md;
+    }
+
+    .hi-collapsible-title {
+        font-size: $hikari-font-size-sm;
+    }
+}

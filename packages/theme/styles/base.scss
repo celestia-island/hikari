@@ -1,0 +1,598 @@
+// hikari-theme/styles/base.scss
+// 基础样式（使用 hikari-palette）
+
+// Layer1 - Foundation Layer
+@use './foundation.scss' as *;
+
+@use './variables.scss' as *;
+@use './mixins.scss' as *;
+
+// ============================================
+// CSS 自定义属性（Hikari Light Theme）
+// ============================================
+
+// ============================================
+// 默认变量（被 ThemeProvider 覆盖）
+// ============================================
+
+:root {
+    // 默认浅色主题（作为 fallback）— matching legacy computed styles
+    --hi-color-background: #ffffff;
+    --hi-color-surface: rgba(255, 255, 255, 0.7);
+    --hi-color-border: #C4D8DA;
+
+    // 文字颜色 — slate gray like legacy
+    --hi-color-text-primary: #50616D;
+    --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
+
+    // 主题色（通过 CSS 变量引用）
+    --hi-color-primary: #FFC0CB;  // pink (matching legacy)
+    --hi-color-secondary: #519A73;  // 苍翠
+    --hi-color-accent: #F7B500;  // 姜黄
+    --hi-color-success: #0EB840;  // 葱倩
+    --hi-color-warning: #EED677;  // 鹅黄
+    --hi-color-danger: #FF4C00;  // 朱红
+    --hi-color-info: #6ABED6;  // 蓝色
+
+    // 黑色透明度变体
+    --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
+    --hi-color-black-50: rgba(0, 0, 0, 0.5);
+    --hi-color-black-30: rgba(0, 0, 0, 0.3);
+    --hi-color-black-20: rgba(0, 0, 0, 0.2);
+    --hi-color-black-10: rgba(0, 0, 0, 0.1);
+    --hi-color-black-5: rgba(0, 0, 0, 0.05);
+
+    // ============================================
+    // 2. 透明度变体（用于叠加、发光、阴影）
+    // ============================================
+
+    // 白色透明度（用于暗黑模式发光）
+    --hi-color-white-100: rgba(255, 255, 255, 1.0);
+    --hi-color-white-95: rgba(255, 255, 255, 0.95);
+    --hi-color-white-90: rgba(255, 255, 255, 0.9);
+    --hi-color-white-70: rgba(255, 255, 255, 0.7);
+    --hi-color-white-50: rgba(255, 255, 255, 0.5);
+    --hi-color-white-30: rgba(255, 255, 255, 0.3);
+    --hi-color-white-20: rgba(255, 255, 255, 0.2);
+    --hi-color-white-15: rgba(255, 255, 255, 0.15);
+    --hi-color-white-10: rgba(255, 255, 255, 0.1);
+    --hi-color-white-8: rgba(255, 255, 255, 0.08);
+    --hi-color-white-5: rgba(255, 255, 255, 0.05);
+
+    // 黑色透明度（用于阴影、发光）
+    --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
+    --hi-color-black-50: rgba(0, 0, 0, 0.5);
+    --hi-color-black-30: rgba(0, 0, 0, 0.3);
+    --hi-color-black-20: rgba(0, 0, 0, 0.2);
+    --hi-color-black-10: rgba(0, 0, 0, 0.1);
+    --hi-color-black-5: rgba(0, 0, 0, 0.05);
+
+    // 灰色透明度（用于滚动条、边框）
+    --hi-color-gray-100: rgba(128, 128, 128, 1.0);
+    --hi-color-gray-50: rgba(128, 128, 128, 0.5);
+    --hi-color-gray-40: rgba(128, 128, 128, 0.4);
+    --hi-color-gray-30: rgba(128, 128, 128, 0.3);
+    --hi-color-gray-20: rgba(128, 128, 128, 0.2);
+    --hi-color-gray-15: rgba(128, 128, 128, 0.15);
+
+    // 紫色透明度（用于发光特效，基于中国传统色"紫色" RGB: 141, 75, 187）
+    --hi-color-purple-60: rgba(141, 75, 187, 0.6);
+    --hi-color-purple-50: rgba(141, 75, 187, 0.5);
+    --hi-color-purple-40: rgba(141, 75, 187, 0.4);
+
+    // 简化变量名（向后兼容）
+    --hi-white-100: var(--hi-color-white-100);
+    --hi-white-50: var(--hi-color-white-50);
+    --hi-white-30: var(--hi-color-white-30);
+    --hi-white-20: var(--hi-color-white-20);
+    --hi-white-15: var(--hi-color-white-15);
+    --hi-white-10: var(--hi-color-white-10);
+    --hi-white-8: var(--hi-color-white-8);
+    --hi-white-5: var(--hi-color-white-5);
+
+    // 边框发光（白色半透明）
+    --hi-border-light: rgba(255, 255, 255, 0.2);
+
+    // ============================================
+    // 3. 文字颜色（基于基础色计算）
+    // ============================================
+
+    // 通用文字颜色
+    --hi-color-text-primary: #50616D;
+    --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
+
+    // 主题色上的文字颜色（根据亮度动态计算，反色原则）
+    // primary: pink (0.8) → dark
+    // secondary: 苍翠 (0.501) → dark
+    // success: 葱倩 (0.469) → white
+    // warning: 鹅黄 (0.825) → dark
+    // danger: 朱红 (0.474) → white
+    --hi-color-text-on-primary: #ffffff;
+    --hi-color-text-on-secondary: #ffffff;
+    --hi-color-text-on-success: var(--hi-color-white-100);
+    --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-danger: var(--hi-color-white-100);
+    --hi-color-text-on-info: rgba(0, 0, 0, 0.9);
+
+    // ============================================
+    // 4. 按钮颜色（基于基础色）
+    // ============================================
+
+    // Primary 按钮渐变（基于 --hi-color-primary pink）
+    --hi-button-primary: var(--hi-color-primary);
+    --hi-button-primary-hover: rgba(255, 192, 203, 0.85);
+    --hi-button-primary-light: #FFE4E9;
+    --hi-button-primary-dark: #FF9AA9;
+
+    // Secondary 按钮渐变（基于 --hi-color-secondary 苍翠）
+    --hi-button-secondary: var(--hi-color-secondary);
+    --hi-button-secondary-hover: rgba(81, 154, 115, 0.8);
+    --hi-button-secondary-light: #6BB38C;
+    --hi-button-secondary-dark: #3D7657;
+
+    // Success 按钮渐变（基于 --hi-color-success 葱倩）
+    --hi-button-success: var(--hi-color-success);
+    --hi-button-success-hover: rgba(14, 184, 64, 0.8);
+    --hi-button-success-light: #3DC86E;
+    --hi-button-success-dark: #0A8F33;
+
+    // Danger 按钮渐变（基于 --hi-color-danger 朱红）
+    --hi-button-danger: var(--hi-color-danger);
+    --hi-button-danger-hover: rgba(255, 76, 0, 0.8);
+    --hi-button-danger-light: #FF7A33;
+    --hi-button-danger-dark: #CC3D00;
+
+    // Warning 按钮渐变（基于 --hi-color-warning）
+    --hi-button-warning: var(--hi-color-warning);
+    --hi-button-warning-hover: rgba(238, 214, 119, 0.8);
+    --hi-button-warning-light: rgba(238, 214, 119, 0.6);
+    --hi-button-warning-dark: rgba(189, 169, 83, 0.8);
+
+    // Info 按钮渐变（基于 --hi-color-info）
+    --hi-button-info: var(--hi-color-info);
+    --hi-button-info-hover: rgba(106, 190, 214, 0.8);
+    --hi-button-info-light: rgba(106, 190, 214, 0.6);
+    --hi-button-info-dark: rgba(75, 133, 150, 0.8);
+
+    // ============================================
+    // 简化变量名（向后兼容）
+    // ============================================
+
+    // 基础主题色
+    --hi-primary: var(--hi-color-primary);
+    --hi-primary-light: var(--hi-color-white-30);
+
+    --hi-secondary: var(--hi-color-secondary);
+    --hi-secondary-light: var(--hi-color-white-30);
+
+    --hi-success: var(--hi-color-success);
+    --hi-success-light: var(--hi-color-white-30);
+
+    --hi-danger: var(--hi-color-danger);
+    --hi-danger-light: var(--hi-color-white-30);
+
+    --hi-warning: var(--hi-color-warning);
+    --hi-warning-light: var(--hi-color-white-30);
+
+    --hi-info: var(--hi-color-info);
+    --hi-info-light: var(--hi-color-white-30);
+
+    // 背景色
+    --hi-surface: var(--hi-color-surface);
+    --hi-card-bg: var(--hi-color-surface);
+    --hi-card-bg-light: rgba(255, 255, 255, 0.95);
+
+    // Overlay遮罩色（反色）- 使用调色板变量，95%透明度
+    --hi-overlay-color: rgba(0, 0, 0, 0.5);
+
+    // 滚动条颜色
+    --hi-scrollbar-thumb-hover: var(--hi-glow-color);
+
+    // 文字颜色
+    --hi-color-text-inverted: #ffffff;
+
+    // ============================================
+    // 5. Ghost 按钮颜色（基于文字色）
+    // ============================================
+
+    // Ghost 文字和边框（白天模式使用 slate gray）
+    --hi-ghost-text: #50616D;
+    --hi-ghost-border: var(--hi-color-gray-30);
+    --hi-ghost-glow: var(--hi-glow-gray-50);
+
+    // Ghost 按钮在暗黑模式使用纯白色
+    --hi-ghost-text-dark: var(--hi-color-white-100);
+    --hi-ghost-border-dark: var(--hi-color-white-50);
+    --hi-ghost-glow-dark: var(--hi-glow-white-50);
+
+    // ============================================
+    // 6. 发光特效颜色（Glow 系统由 JS 注入）
+    // ============================================
+
+    // 基础黑白灰 glow（由 JS 选择使用）
+    --hi-glow-white-90: rgba(255, 255, 255, 0.9);
+    --hi-glow-white-70: rgba(255, 255, 255, 0.7);
+    --hi-glow-white-50: rgba(255, 255, 255, 0.5);
+    --hi-glow-white-30: rgba(255, 255, 255, 0.3);
+    --hi-glow-white-20: rgba(255, 255, 255, 0.2);
+    --hi-glow-black-90: rgba(0, 0, 0, 0.9);
+    --hi-glow-black-70: rgba(0, 0, 0, 0.7);
+    --hi-glow-black-50: rgba(0, 0, 0, 0.5);
+    --hi-glow-black-30: rgba(0, 0, 0, 0.3);
+    --hi-glow-black-20: rgba(0, 0, 0, 0.2);
+    --hi-glow-black-10: rgba(0, 0, 0, 0.1);
+    --hi-glow-gray-70: rgba(128, 128, 128, 0.7);
+    --hi-glow-gray-50: rgba(128, 128, 128, 0.5);
+    --hi-glow-gray-30: rgba(128, 128, 128, 0.3);
+    --hi-glow-gray-20: rgba(128, 128, 128, 0.2);
+
+    // 默认 glow 颜色（由 JS 注入实际值）
+    --hi-glow-color: var(--hi-glow-white-50);
+
+    // Glow 按钮颜色（基于主题色，用于按钮 glow 效果）
+    --hi-glow-button-primary: rgba(255, 192, 203, 0.6);
+    --hi-glow-button-secondary: rgba(6, 82, 121, 0.6);
+    --hi-glow-button-success: rgba(92, 191, 145, 0.6);
+    --hi-glow-button-danger: rgba(232, 90, 79, 0.6);
+    --hi-glow-button-warning: rgba(238, 214, 119, 0.6);
+    --hi-glow-button-info: rgba(106, 190, 214, 0.6);
+
+    // Glow 尺寸预设
+    --hi-glow-sm: 0 0 8px var(--hi-glow-color);
+    --hi-glow-md: 0 0 16px var(--hi-glow-color);
+    --hi-glow-lg: 0 0 24px var(--hi-glow-color);
+    --hi-glow-focus: 0 0 20px var(--hi-glow-color);
+
+    // 边框发光
+    --hi-border-glow: rgba(141, 75, 187, 0.6);
+    --hi-border-glow-width: 1px;
+
+    // ============================================
+    // 7. 阴影效果（使用黑色透明度）
+    // ============================================
+
+    --hi-shadow-sm: 0 1px 2px 0 var(--hi-color-black-5);
+    --hi-shadow-md: 0 4px 6px -1px var(--hi-color-black-10);
+    --hi-shadow-lg: 0 10px 15px -3px var(--hi-color-black-10);
+    --hi-shadow-xl: 0 20px 25px -5px var(--hi-color-black-10);
+
+
+
+// ============================================
+// 全局重置
+// ============================================
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+
+    // Hide native scrollbar (using custom scrollbar component)
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+body {
+    font-family: $hikari-font-family-sans;
+    font-size: $hikari-font-size-base;
+    line-height: 1.5;
+    color: var(--hi-color-text-primary, #262626);
+    background-color: var(--hi-color-background, #ffffff);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// ============================================
+// 排版样式 - 使用主题变量
+// ============================================
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: $hikari-spacing-md;
+    color: var(--hi-color-text-primary);
+}
+
+h1 {
+    font-size: $hikari-font-size-3xl;
+}
+
+h2 {
+    font-size: $hikari-font-size-2xl;
+}
+
+h3 {
+    font-size: $hikari-font-size-xl;
+}
+
+h4 {
+    font-size: $hikari-font-size-lg;
+}
+
+h5 {
+    font-size: $hikari-font-size-base;
+}
+
+h6 {
+    font-size: $hikari-font-size-sm;
+}
+
+p, span, div, label {
+    color: var(--hi-color-text-primary, #262626);
+}
+
+a {
+    color: var(--hi-color-text-primary, #262626);
+    text-decoration: none;
+    transition: color $hikari-transition-fast;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+
+code {
+    font-family: $hikari-font-family-mono;
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    background-color: var(--hi-color-border);
+    border-radius: $hikari-radius-sm;
+}
+
+pre {
+    font-family: $hikari-font-family-mono;
+    font-size: $hikari-font-size-sm;
+    padding: $hikari-spacing-md;
+    background-color: var(--hi-color-background);
+    border: 1px solid var(--hi-color-border);
+    border-radius: $hikari-radius-md;
+    overflow-x: auto;
+
+    @include scrollbar-hidden;
+}
+
+// ============================================
+// 列表样式
+// ============================================
+
+ul, ol {
+    list-style: none;
+}
+
+li {
+    // No global margin - components control their own spacing
+}
+
+// ============================================
+// 表单元素
+// ============================================
+
+input,
+textarea,
+select {
+    @include input-base;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+}
+
+// ============================================
+// 暗黑模式特殊处理
+// ============================================
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="tairitsu"]) {
+        // 暗黑模式背景色
+        --hi-color-background: #000000;
+        --hi-color-surface: #1E293B;
+
+        // 暗黑模式文字色
+        --hi-color-text-primary: rgba(255, 255, 255, 0.9);
+        --hi-color-text-secondary: rgba(255, 255, 255, 0.6);
+
+        // 暗黑模式 Ghost 按钮使用纯白色
+        --hi-ghost-text: var(--hi-color-white-100);
+        --hi-ghost-border: var(--hi-color-white-50);
+        --hi-ghost-glow: var(--hi-glow-white-50);
+
+        // 暗黑模式按钮 glow 颜色（更高的不透明度以在深色背景上显示）
+        --hi-glow-button-primary: rgba(255, 179, 167, 0.8);
+        --hi-glow-button-secondary: rgba(6, 82, 121, 0.8);
+        --hi-glow-button-success: rgba(92, 191, 145, 0.8);
+        --hi-glow-button-danger: rgba(232, 90, 79, 0.8);
+        --hi-glow-button-warning: rgba(238, 214, 119, 0.8);
+        --hi-glow-button-info: rgba(106, 190, 214, 0.8);
+
+        // 暗黑模式Overlay遮罩色（淡白色）- 使用调色板变量，95%透明度
+        --hi-overlay-color: rgba(255, 255, 255, 0.5);
+
+        // 暗黑模式Card背景色（黑色半透明）
+        --hi-card-bg-light: rgba(0, 0, 0, 0.95);
+    }
+}
+
+
+select {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: $hikari-spacing-xs;
+    font-weight: 500;
+    color: var(--hi-color-text-secondary);
+}
+
+// ============================================
+// 按钮样式
+// ============================================
+
+button {
+    @include button-base;
+}
+
+// ============================================
+// 图片样式
+// ============================================
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+// ============================================
+// 表格样式
+// ============================================
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $hikari-spacing-md;
+}
+
+th,
+td {
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    text-align: left;
+    border-bottom: 1px solid var(--hi-color-border);
+}
+
+th {
+    font-weight: 600;
+    color: var(--hi-color-text-secondary);
+}
+
+// ============================================
+// 分隔线样式
+// ============================================
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--hi-color-border);
+    margin: $hikari-spacing-lg 0;
+}
+
+// ============================================
+// 容器样式
+// ============================================
+
+.hi-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 $hikari-spacing-md;
+}
+
+.hi-container-fluid {
+    width: 100%;
+    padding: 0 $hikari-spacing-md;
+}
+
+.hi-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 (-$hikari-spacing-sm);
+
+    > * {
+        margin: 0 $hikari-spacing-sm;
+    }
+}
+
+.hi-col {
+    flex: 1 1 0%;
+}
+
+// ============================================
+// 工具类
+// ============================================
+
+.hi-text-center {
+    text-align: center;
+}
+
+.hi-text-left {
+    text-align: left;
+}
+
+.hi-text-right {
+    text-align: right;
+}
+
+.hi-text-muted {
+    color: var(--hi-color-text-secondary);
+}
+
+.hi-text-primary {
+    color: var(--hi-color-primary);
+}
+
+.hi-text-success {
+    color: var(--hi-color-success);
+}
+
+.hi-text-warning {
+    color: var(--hi-color-warning);
+}
+
+.hi-text-danger {
+    color: var(--hi-color-danger);
+}
+
+// SVG 图标默认颜色继承
+// Note: 不强制设置 fill/stroke，避免覆盖 stroke-only 图标（如 Lucide/Feather）
+// 各组件/图标应自行声明 fill 或 stroke
+svg {
+    color: inherit;
+}
+
+.hi-mt-1 { margin-top: $hikari-spacing-xs; }
+.hi-mt-2 { margin-top: $hikari-spacing-sm; }
+.hi-mt-3 { margin-top: $hikari-spacing-md; }
+.hi-mt-4 { margin-top: $hikari-spacing-lg; }
+.hi-mt-5 { margin-top: $hikari-spacing-xl; }
+
+.hi-mb-1 { margin-bottom: $hikari-spacing-xs; }
+.hi-mb-2 { margin-bottom: $hikari-spacing-sm; }
+.hi-mb-3 { margin-bottom: $hikari-spacing-md; }
+.hi-mb-4 { margin-bottom: $hikari-spacing-lg; }
+.hi-mb-5 { margin-bottom: $hikari-spacing-xl; }
+
+.hi-p-1 { padding: $hikari-spacing-xs; }
+.hi-p-2 { padding: $hikari-spacing-sm; }
+.hi-p-3 { padding: $hikari-spacing-md; }
+.hi-p-4 { padding: $hikari-spacing-lg; }
+.hi-p-5 { padding: $hikari-spacing-xl; }
+
+.hi-hidden {
+    display: none;
+}
+
+.hi-visible {
+    visibility: visible;
+}
+
+.hi-invisible {
+    visibility: hidden;
+}

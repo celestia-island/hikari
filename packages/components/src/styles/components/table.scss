@@ -1,0 +1,331 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Table Component - FUI Styling
+// ============================================
+
+// ============================================
+// Table Wrapper
+// ============================================
+
+.hi-table-wrapper {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: vars.$hikari-radius-fui-md;
+}
+
+// ============================================
+// Base Table Element
+// ============================================
+
+.hi-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: auto;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: vars.$hikari-font-size-sm;
+  color: var(--hi-color-text-primary);
+  background: var(--hi-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-md;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+// ============================================
+// Size Variants
+// ============================================
+
+.hi-table-sm {
+  .hi-table-header-cell,
+  .hi-table-cell {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.hi-table-md {
+  .hi-table-header-cell,
+  .hi-table-cell {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+.hi-table-lg {
+  .hi-table-header-cell,
+  .hi-table-cell {
+    padding: 0.875rem 1rem;
+    font-size: 0.9375rem;
+  }
+}
+
+// ============================================
+// Table Bordered
+// ============================================
+
+.hi-table-bordered,
+.hi-table--bordered {
+  .hi-table-header-cell,
+  .hi-table-cell {
+    border: 1px solid var(--hi-color-border);
+  }
+}
+
+// ============================================
+// Table Striped (Zebra) - FUI subtle alternation
+// ============================================
+
+.hi-table-striped,
+.hi-table--striped {
+  // Target explicit .hi-table-row class
+  .hi-table-row:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .hi-table-row:nth-child(even):hover {
+    background: var(--hi-color-surface-secondary);
+  }
+
+  // Also target bare <tr> elements (for raw HTML / demo usage)
+  tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  tr:nth-child(even):hover {
+    background: var(--hi-color-surface-secondary);
+  }
+}
+
+[data-theme="dark"] .hi-table-striped,
+[data-theme="dark"] .hi-table--striped,
+[data-theme="tairitsu"] .hi-table-striped,
+[data-theme="tairitsu"] .hi-table--striped {
+  .hi-table-row:nth-child(even),
+  tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .hi-table-row:nth-child(even):hover,
+  tr:nth-child(even):hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+// ============================================
+// Table Hover
+// ============================================
+
+.hi-table-hover {
+  .hi-table-row:hover {
+    background: var(--hi-color-surface-secondary);
+  }
+}
+
+// ============================================
+// Table Header Row
+// ============================================
+
+.hi-table-header-row {
+  display: table-row;
+}
+
+// ============================================
+// Table Header Cell
+// ============================================
+
+.hi-table-header-cell {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: vars.$hikari-font-size-sm;
+  color: var(--hi-color-text-primary);
+  background: var(--hi-color-surface-secondary);
+  border-bottom: 2px solid var(--hi-color-border);
+  white-space: nowrap;
+}
+
+// ============================================
+// Table Body
+// ============================================
+
+.hi-table-body {
+  display: table-row-group;
+}
+
+// ============================================
+// Table Row
+// ============================================
+
+.hi-table-row {
+  display: table-row;
+  transition: background 0.15s ease;
+}
+
+// ============================================
+// Table Cell
+// ============================================
+
+.hi-table-cell {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  color: var(--hi-color-text-primary);
+  border-bottom: 1px solid var(--hi-color-border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+// ============================================
+// Text Alignment
+// ============================================
+
+.hi-text-left {
+  text-align: left;
+}
+
+.hi-text-center {
+  text-align: center;
+}
+
+.hi-text-right {
+  text-align: right;
+}
+
+// ============================================
+// Empty State
+// ============================================
+
+.hi-table-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--hi-color-text-secondary);
+}
+
+.hi-table-empty-content {
+  font-size: vars.$hikari-font-size-sm;
+}
+
+// ============================================
+// Sortable - with FUI arrow indicators
+// ============================================
+
+.hi-table-sortable {
+  cursor: pointer;
+  user-select: none;
+  
+  &:hover {
+    background: var(--hi-color-surface);
+  }
+
+  // Default sort arrow (unsorted, shows bidirectional hint)
+  &::after {
+    content: '';
+    display: inline-block;
+    margin-left: 6px;
+    vertical-align: middle;
+    border: solid 4px transparent;
+    width: 0; height: 0;
+    opacity: 0.4;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+}
+
+.hi-table-sort-asc {
+  color: var(--hi-color-primary);
+  background: var(--hi-color-surface);
+
+  &::after {
+    border-bottom-color: var(--hi-color-primary);
+    border-top-width: 0;
+    transform: translateY(2px);
+    opacity: 1;
+  }
+}
+
+.hi-table-sort-desc {
+  color: var(--hi-color-primary);
+  background: var(--hi-color-surface);
+
+  &::after {
+    border-top-color: var(--hi-color-primary);
+    border-bottom-width: 0;
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+.hi-table-sort-icon {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary);
+}
+
+.hi-table-sort-active {
+  color: var(--hi-color-primary);
+  background: var(--hi-color-surface);
+}
+
+// ============================================
+// Table Hover (BEM alias)
+// ============================================
+
+.hi-table-hover,
+.hi-table--hover {
+  .hi-table-row:hover {
+    background: var(--hi-color-surface-secondary);
+  }
+}
+
+[data-theme="dark"] .hi-table-hover,
+[data-theme="tairitsu"] .hi-table-hover,
+[data-theme="dark"] .hi-table--hover,
+[data-theme="tairitsu"] .hi-table--hover {
+  .hi-table-row:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+// ============================================
+// Pagination (inline with table demos)
+// ============================================
+
+.hi-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: inline-flex;
+  }
+}
+
+.hi-pagination-item,
+.hi-pagination-prev,
+.hi-pagination-next {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: vars.$hikari-radius-fui-sm;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hi-pagination-item:not(.hi-button--disabled):hover {
+  background: var(--hi-color-surface-secondary);
+}
+
+.hi-pagination-prev.hi-button--disabled,
+.hi-pagination-next.hi-button--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

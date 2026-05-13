@@ -1,0 +1,20 @@
+// hikari-extra-components/styles/components/index.scss
+// Extra component styles entry point
+
+// Graph components
+@import './node_graph.scss';
+
+// Panel components
+@import './collapsible.scss';
+
+// Interaction components
+@import './drag_layer.scss';
+@import './zoom_controls.scss';
+@import './user_guide.scss';
+
+// Media components
+@import './audio_waveform.scss';
+@import './video_player.scss';
+
+// Editor components
+@import './rich_text_editor.scss';

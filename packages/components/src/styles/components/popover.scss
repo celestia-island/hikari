@@ -1,0 +1,199 @@
+// Popover Component Styles
+// Floating content container with FUI acrylic treatment,
+// directional arrow, and smooth entrance animation
+
+@use '../../../../theme/styles/variables.scss' as vars;
+
+// Base popover container
+.hi-popover {
+    position: absolute;
+    z-index: var(--hi-z-dropdown, 1000);
+    background: var(--hi-surface, rgba(255, 255, 255, 0.85));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--hi-color-border, var(--hi-border, #C4D8DA));
+    border-radius: vars.$hikari-radius-lg;
+    box-shadow:
+        var(--hi-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)),
+        0 0 1px rgba(255, 179, 167, 0.2);
+    padding: 12px 16px;
+    min-width: 180px;
+    max-width: 350px;
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+    transform-origin: top center;
+    transition:
+        opacity vars.$hikari-transition-base,
+        transform vars.$hikari-transition-base,
+        visibility 0s linear vars.$hikari-duration-normal;
+    visibility: hidden;
+    pointer-events: none;
+
+    &.is-visible,
+    &[aria-hidden="false"] {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+            opacity vars.$hikari-transition-base,
+            transform vars.$hikari-transition-base;
+    }
+}
+
+// Position variants (adjust transform origin)
+.hi-popover[data-placement="top"] {
+    transform-origin: bottom center;
+
+    &.is-visible,
+    &[aria-hidden="false"] {
+        // entrance from below
+    }
+}
+
+.hi-popover[data-placement="bottom"] {
+    transform-origin: top center;
+    transform: scale(0.95) translateY(4px);
+
+    &.is-visible,
+    &[aria-hidden="false"] {
+        transform: scale(1) translateY(0);
+    }
+}
+
+.hi-popover[data-placement="left"] {
+    transform-origin: right center;
+    transform: scale(0.95) translateX(-4px);
+
+    &.is-visible,
+    &[aria-hidden="false"] {
+        transform: scale(1) translateX(0);
+    }
+}
+
+.hi-popover[data-placement="right"] {
+    transform-origin: left center;
+    transform: scale(0.95) translateX(4px);
+
+    &.is-visible,
+    &[aria-hidden="false"] {
+        transform: scale(1) translateX(0);
+    }
+}
+
+// Popover title
+.hi-popover-title {
+    font-size: vars.$hikari-font-size-sm;
+    font-weight: 600;
+    color: var(--hi-text-primary, #50616D);
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--hi-color-border, rgba(196, 216, 218, 0.4));
+    letter-spacing: 0.01em;
+}
+
+// Popover content
+.hi-popover-content {
+    font-size: vars.$hikari-font-size-sm;
+    color: var(--hi-text-secondary, rgba(80, 97, 109, 0.65));
+    line-height: 1.6;
+
+    > *:first-child {
+        margin-top: 0;
+    }
+
+    > *:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Arrow / pointer indicator
+.hi-popover-arrow {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: inherit;
+    background-color: var(--hi-surface, rgba(255, 255, 255, 0.85));
+    backdrop-filter: inherit;
+    -webkit-backdrop-filter: inherit;
+    border: 1px solid var(--hi-color-border, var(--hi-border, #C4D8DA));
+    rotate: 45deg;
+    z-index: -1;
+}
+
+// Arrow positioning by placement
+.hi-popover[data-placement="top"] .hi-popover-arrow {
+    bottom: -5px;
+    left: calc(50% - 5px);
+    border-top: none;
+    border-left: none;
+}
+
+.hi-popover[data-placement="bottom"] .hi-popover-arrow {
+    top: -5px;
+    left: calc(50% - 5px);
+    border-bottom: none;
+    border-right: none;
+}
+
+.hi-popover[data-placement="left"] .hi-popover-arrow {
+    right: -5px;
+    top: calc(50% - 5px);
+    border-bottom: none;
+    border-left: none;
+}
+
+.hi-popover[data-placement="right"] .hi-popover-arrow {
+    left: -5px;
+    top: calc(50% - 5px);
+    border-top: none;
+    border-right: none;
+}
+
+// Dark theme (Tairitsu)
+[data-theme="tairitsu"] .hi-popover {
+    background: var(--hi-surface, rgba(32, 35, 54, 0.85));
+    border-color: var(--hi-border, #303448);
+    box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.4),
+        0 0 1px rgba(20, 74, 116, 0.3);
+}
+
+[data-theme="tairitsu"] .hi-popover-title {
+    color: var(--hi-text-primary, #F0F0F5);
+    border-bottom-color: rgba(48, 52, 72, 0.6);
+}
+
+[data-theme="tairitsu"] .hi-popover-content {
+    color: var(--hi-text-secondary, #B3B8C7);
+}
+
+[data-theme="tairitsu"] .hi-popover-arrow {
+    background-color: var(--hi-surface, rgba(32, 35, 54, 0.85));
+    border-color: var(--hi-border, #303448);
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+    .hi-popover {
+        border-width: 2px;
+        border-color: var(--hi-text-primary, #000);
+    }
+
+    .hi-popover-title {
+        border-bottom-width: 2px;
+    }
+}
+
+// Accessibility: respect prefers-reduced-motion
+@media (prefers-reduced-motion: reduce) {
+    .hi-popover {
+        transition: opacity 0.1s ease;
+        transform: none !important;
+    }
+
+    .hi-popover.is-visible,
+    .hi-popover[aria-hidden="false"] {
+        transform: none !important;
+    }
+}

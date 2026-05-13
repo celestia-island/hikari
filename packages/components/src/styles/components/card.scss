@@ -1,0 +1,344 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+@use './card-vars.scss' as card-vars;
+
+// ============================================
+// Hikari Card Component
+// Features: Elevated shadows, hover accent bar, smooth transitions
+// Three-layer CSS variable system:
+// - Layer1: Foundation variables (foundation.scss)
+// - Layer2: Component variables (card-vars.scss)
+// - Custom: Runtime overrides via AnimationBuilder
+// ============================================
+
+// ============================================
+// Icon color inheritance for theme support
+// ============================================
+
+.hi-card,
+.hi-card-header,
+.hi-card-body,
+.hi-card-footer {
+  svg {
+    color: inherit;
+  }
+}
+
+// ============================================
+// Base Card Styles
+// ============================================
+
+.hi-card {
+  // Layer2 variables are defined in card-vars.scss
+
+  // Layout
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  // Spacing
+  margin: 0;
+
+  // Appearance - use CSS variables
+  border-radius: var(--hi-card-radius);
+  border: var(--hi-card-border-width) var(--hi-card-border-style) var(--hi-card-border-color);
+
+  // Background - use CSS variables
+  background: var(--hi-card-bg);
+  backdrop-filter: var(--hi-card-blur);
+
+  // Shadow - use CSS variables
+  box-shadow: var(--hi-card-shadow);
+
+  // Position
+  position: relative;
+  overflow: visible;
+
+  // Transitions - use CSS variables
+  transition: var(--hi-card-transition);
+}
+
+// ============================================
+// Card Header
+// ============================================
+
+.hi-card-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hi-card-padding-header);
+  border-bottom: 1px solid var(--hi-card-divider-color);
+  background: var(--hi-card-bg-header);
+}
+
+// Left section (avatar + title/subtitle)
+.hi-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--hi-card-gap);
+  flex: 1;
+}
+
+// Avatar container
+.hi-card-header-avatar {
+  flex-shrink: 0;
+}
+
+// Right section (action buttons)
+.hi-card-header-action {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+
+  button,
+  .hi-icon-button {
+    background: transparent;
+  }
+
+  .hi-card-extra {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Title - use CSS variables
+.hi-card-title {
+  margin: 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: var(--hi-card-title-font-size);
+  font-weight: var(--hi-card-title-font-weight);
+  color: var(--hi-card-title-color);
+  letter-spacing: 0.02em;
+}
+
+// Subtitle - use CSS variables
+.hi-card-subtitle {
+  margin: 0.25rem 0 0 0;
+  font-family: vars.$hikari-font-family-sans;
+  font-size: var(--hi-card-subtitle-font-size);
+  font-weight: 400;
+  color: var(--hi-card-subtitle-color);
+}
+
+// ============================================
+// Card Body
+// ============================================
+
+.hi-card-body {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: var(--hi-card-padding-body);
+  color: var(--hi-card-body-color);
+  font-size: var(--hi-card-body-font-size);
+  line-height: var(--hi-card-body-line-height);
+}
+
+// ============================================
+// Card Footer
+// ============================================
+
+.hi-card-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hi-card-padding-footer);
+  border-top: 1px solid var(--hi-card-divider-color);
+  background: var(--hi-card-bg-footer);
+
+  .hi-card-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ============================================
+// Card Media (images/videos)
+// ============================================
+
+.hi-card-media {
+  width: 100%;
+  object-fit: cover;
+  border-bottom: 1px solid var(--hi-card-divider-color);
+  display: block;
+}
+
+// ============================================
+// Card Actions (MUI-style footer)
+// ============================================
+
+.hi-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+
+  &.hi-card-actions-no-spacing {
+    gap: 0;
+  }
+}
+
+// ============================================
+// Cover Image
+// ============================================
+
+.hi-card-cover {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--hi-card-divider-color);
+}
+
+// ============================================
+// Hoverable Card
+// ============================================
+
+.hi-card-hoverable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--hi-card-border-color-hover);
+    box-shadow: var(--hi-card-shadow-hover);
+  }
+}
+
+// ============================================
+// Loading State
+// ============================================
+
+.hi-card-loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--hi-white-10, rgba(255, 255, 255, 0.1)),
+      transparent
+    );
+  }
+}
+
+// ============================================
+// Card Variants - Variables defined in card-vars.scss
+// ============================================
+
+.hi-card-bordered {
+  // Variables defined in card-vars.scss
+}
+
+.hi-card-flat {
+  // Variables defined in card-vars.scss
+  box-shadow: none;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ============================================
+// Size Variants - Variables defined in card-vars.scss
+// ============================================
+
+.hi-card-sm,
+.hi-card-md,
+.hi-card-lg {
+  // Size variables are already set by the classes in card-vars.scss
+  
+  .hi-card-cover {
+    height: 150px;
+  }
+}
+
+.hi-card-md .hi-card-cover {
+  height: 200px;
+}
+
+.hi-card-lg .hi-card-cover {
+  height: 280px;
+}
+
+// ============================================
+// Grid Layout for Multiple Cards
+// ============================================
+
+.hi-card-grid {
+  display: grid;
+  gap: 1rem;
+
+  &.hi-card-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  &.hi-card-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  &.hi-card-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    &.hi-card-grid-2,
+    &.hi-card-grid-3,
+    &.hi-card-grid-4 {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+.hi-card-animate-in {
+  // Animation handled by JS
+}
+
+// Staggered animation for card grids
+.hi-card-stagger {
+  .hi-card {
+    opacity: 0;
+  }
+}
+
+// ============================================
+// Glow Effect (Mouse-following spotlight)
+// ============================================
+
+.hi-card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+
+  background: radial-gradient(
+    circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    var(--hi-card-glow) 0%,
+    transparent calc(var(--glow-spread, 1.5) * 100%)
+  );
+}
+
+.hi-card:hover .hi-card-glow {
+  opacity: var(--glow-opacity, 0.15);
+}

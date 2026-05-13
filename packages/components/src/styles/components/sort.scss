@@ -1,0 +1,56 @@
+// Sort component styles
+// Column sort with direction indicator
+
+.hi-sort-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--hi-color-background-light, #f9fafb);
+  }
+}
+
+.hi-sort-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--hi-color-text-secondary, #666666);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.hi-sort-trigger:hover .hi-sort-icon {
+  color: var(--hi-color-primary, #00a0e9);
+}
+
+.hi-sort-asc .hi-sort-icon {
+  transform: rotate(0deg);
+  color: var(--hi-color-primary, #00a0e9);
+}
+
+.hi-sort-desc .hi-sort-icon {
+  transform: rotate(180deg);
+  color: var(--hi-color-primary, #00a0e9);
+}
+
+.hi-sort-clear-btn {
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  color: var(--hi-color-text-placeholder, #999999);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--hi-color-primary, #00a0e9);
+    background: var(--hi-color-background-light, #f9fafb);
+  }
+}

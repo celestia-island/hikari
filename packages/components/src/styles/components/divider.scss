@@ -1,0 +1,88 @@
+// hi-components/src/styles/components/divider.scss
+// Divider component styles with Arknights + FUI styling
+
+.hi-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  margin: 1rem 0;
+  position: relative;
+
+  &.hi-divider-horizontal {
+    flex-direction: row;
+  }
+
+  &.hi-divider-vertical {
+    flex-direction: column;
+    width: 1px;
+    height: 100%;
+    margin: 0 1rem;
+  }
+}
+
+.hi-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+  transition: background-color 0.2s ease;
+}
+
+  .hi-divider-with-text {
+    .hi-divider-text {
+      padding: 0 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
+      white-space: nowrap;
+    }
+
+  .hi-divider-line:first-child {
+    margin-right: 0;
+  }
+
+  .hi-divider-line:last-child {
+    margin-left: 0;
+  }
+}
+
+// Theme-specific colors
+[data-theme="hikari"] {
+  .hi-divider-line {
+    background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+  }
+
+  .hi-divider-text {
+    color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
+  }
+}
+
+[data-theme="tairitsu"] {
+  .hi-divider-line {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .hi-divider-text {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+// Hover effect (subtle)
+.hi-divider:hover {
+  .hi-divider-line {
+    opacity: 0.8;
+  }
+}
+
+// FUI effect - subtle glow
+.hi-divider-with-text {
+  .hi-divider-text {
+    text-shadow: 0 0 10px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
+  }
+}
+
+[data-theme="tairitsu"] .hi-divider-with-text {
+  .hi-divider-text {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+}

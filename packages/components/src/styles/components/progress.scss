@@ -1,0 +1,165 @@
+// Progress Component Styles
+// Uses Layer2 palette for better contrast and visual consistency
+
+.hi-progress-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hi-progress-outer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.hi-progress-inner {
+    flex: 1;
+    background-color: var(--hi-color-background, #f5f5f5);
+    border-radius: 100px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.hi-progress-bg {
+    height: 100%;
+    border-radius: 100px;
+    background-color: var(--hi-color-primary, #1890ff);
+    transition: width var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease);
+}
+
+.hi-progress-text {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--hi-color-text-primary, #333);
+    min-width: 40px;
+    text-align: right;
+}
+
+// Normal state - primary color
+.hi-progress-normal .hi-progress-bg {
+    background-color: var(--hi-color-primary, #1890ff);
+}
+
+// Active state - animated gradient
+.hi-progress-active .hi-progress-bg {
+    background: linear-gradient(
+        90deg,
+        var(--hi-color-primary, #1890ff) 0%,
+        var(--hi-button-primary-light, #40a9ff) 50%,
+        var(--hi-color-primary, #1890ff) 100%
+    );
+    background-size: 200% 100%;
+    animation: hi-progress-active 2s linear infinite;
+}
+
+@keyframes hi-progress-active {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+// Success state - use --hi-success (葱倩 green)
+.hi-progress-success .hi-progress-bg {
+    background-color: var(--hi-success, #10B981);
+    box-shadow: var(--hi-glow-success-sm, 0 0 8px rgba(14, 184, 64, 0.3));
+}
+
+.hi-progress-success .hi-progress-text {
+    color: var(--hi-success, #10B981);
+}
+
+// Exception state - use --hi-danger (朱红) with better contrast
+.hi-progress-exception .hi-progress-bg {
+    background-color: var(--hi-danger, #EF4444);
+    box-shadow: var(--hi-glow-danger-sm, 0 0 8px rgba(255, 76, 0, 0.3));
+}
+
+.hi-progress-exception .hi-progress-text {
+    color: var(--hi-danger, #EF4444);
+}
+
+// Circular progress
+.hi-progress-circle-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hi-progress-circle {
+    display: block;
+    transform: rotate(-90deg);
+}
+
+.hi-progress-circle-trail {
+    stroke: var(--hi-color-background, #f5f5f5);
+    transition: stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+}
+
+.hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
+    transition: stroke-dashoffset var(--hikari-duration-normal, 0.3s) var(--hikari-ease-smooth, ease),
+                stroke var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
+    stroke-linecap: round;
+}
+
+.hi-progress-active .hi-progress-circle-path {
+    stroke: var(--hi-color-primary, #1890ff);
+}
+
+.hi-progress-success .hi-progress-circle-path {
+    stroke: var(--hi-success, #10B981);
+}
+
+.hi-progress-exception .hi-progress-circle-path {
+    stroke: var(--hi-danger, #EF4444);
+}
+
+.hi-progress-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--hi-color-text-primary, #333);
+}
+
+// Dark theme adjustments
+[data-theme="dark"] .hi-progress-inner,
+[data-theme="tairitsu"] .hi-progress-inner {
+    background-color: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-circle-trail,
+[data-theme="tairitsu"] .hi-progress-circle-trail {
+    stroke: var(--hi-surface-hover, #252525);
+}
+
+[data-theme="dark"] .hi-progress-text,
+[data-theme="tairitsu"] .hi-progress-text {
+    color: var(--hi-text-primary, #e0e0e0);
+}
+
+[data-theme="dark"] .hi-progress-circle-text,
+[data-theme="tairitsu"] .hi-progress-circle-text {
+    color: var(--hi-text-primary, #e0e0e0);
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+    .hi-progress-inner {
+        border: 1px solid var(--hi-color-border, #d9d9d9);
+    }
+    
+    .hi-progress-exception .hi-progress-bg {
+        background-color: #DC2626;
+    }
+    
+    .hi-progress-exception .hi-progress-text {
+        color: #DC2626;
+        font-weight: 600;
+    }
+}

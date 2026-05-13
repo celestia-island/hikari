@@ -1,0 +1,88 @@
+[workspace]
+members = [
+    "packages/palette",
+    "packages/theme",
+    "packages/animation",
+    "packages/components",
+    "packages/extra-components",
+    "packages/icons",
+]
+
+resolver = "2"
+
+exclude = [
+    "examples/*",
+    "examples/demo",
+    "packages/e2e",  # E2E testing package - not needed for wasm builds
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["langyo <langyo.china@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/celestia-island/hikari"
+
+[workspace.dependencies]
+# =================================================================
+# Basic language and tools
+# =================================================================
+anyhow = "^1"
+thiserror = "^2"
+futures = "^0.3"
+yuuka = "^0.6"
+
+# =================================================================
+# Data and serialization
+# =================================================================
+chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+serde = { version = "^1", features = ["derive"] }
+serde_json = { version = "^1" }
+uuid = { version = "^1", features = [
+    "v7",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde",
+] }
+
+# =================================================================
+# Async runtime
+# =================================================================
+tokio = { version = "^1", features = ["full"] }
+
+# =================================================================
+# Logging and tracing
+# =================================================================
+log = "0.4"
+tracing = "0.1"
+
+# =================================================================
+# Server-side dependencies (for SSR)
+# =================================================================
+axum = { version = "^0.8", features = ["macros", "ws"] }
+axum-extra = { version = "^0.12", features = ["typed-header"] }
+tower = { version = "^0.5", features = ["full"] }
+tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
+gloo = "^0.11"
+gloo-net = "^0.6"
+
+# =================================================================
+# Data serialization and processing
+# =================================================================
+ron = "^0.8"
+once_cell = "^1"
+quick-xml = "^0.30"
+reqwest = { version = "^0.12", features = ["json"] }
+
+# =================================================================
+# Profile settings
+# =================================================================
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true

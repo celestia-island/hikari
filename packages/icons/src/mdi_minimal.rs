@@ -1,0 +1,346 @@
+// Minimal Material Design Icons enum for Hikari
+//
+// This contains only the icons actually used by application
+// to avoid WASM size limitations.
+
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+
+#[cfg(feature = "tairitsu")]
+use tairitsu_vdom::IntoAttrValue;
+
+/// Material Design Icons - minimal set for Hikari
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub enum MdiIcon {
+    // Navigation
+    ChevronLeft,
+    ChevronRight,
+    ChevronUp,
+    ChevronDown,
+    ChevronDoubleRight,
+    ArrowRight,
+    ArrowUp,
+    Menu,
+    Close,
+
+    // Actions
+    Magnify,
+    MagnifyPlus,
+    Cog,
+    Check,
+    GestureTap,
+    Translate,
+    Microphone,
+
+    // Media / Playback
+    Play,
+    Pause,
+    Stop,
+    VolumeHigh,
+    VolumeMute,
+    Fullscreen,
+    FullscreenExit,
+
+    // Text Formatting
+    FormatBold,
+    FormatItalic,
+    FormatUnderline,
+    FormatAlignLeft,
+    FormatAlignCenter,
+    FormatAlignRight,
+    FormatListNumbered,
+    FormatListBulleted,
+
+    // Status / Feedback
+    Alert,
+    AlertTriangle,
+    Information,
+    Help,
+    Bell,
+    BellOutline,
+    Mail,
+    Chat,
+    MessageSquare,
+    DotsHorizontal,
+
+    // Feature Icons
+    Palette,
+    AutoFix,
+    LightningBolt,
+    Package,
+
+    // Layout
+    Home,
+    Image,
+    ViewColumn,
+    ViewDashboard,
+    CubeOutline,
+
+    // Content
+    Account,
+    User,
+    Book,
+    Star,
+    Heart,
+    Calendar,
+    ClockOutline,
+    TextBoxEdit,
+    TextBox,
+    CreditCard,
+    Graph,
+    Cursor,
+
+    // Form
+    Tag,
+    Pencil,
+    Circle,
+    CheckboxMarked,
+    CheckboxMarkedCircle,
+    ToggleSwitch,
+    Minus,
+    Plus,
+
+    // Data
+    Table,
+    Tree,
+    SourceBranch,
+
+    // UI
+    Layers,
+    List,
+    Upload,
+    Panel,
+    Maximize2,
+    ChevronsUpDown,
+    Tune,
+
+    // Animation
+    Pulse,
+    Loading,
+
+    // Code
+    Code,
+    FileEdit,
+    Music,
+
+    // Other
+    TrophyAward,
+    Marker,
+    SwapHorizontal,
+    ArrowExpandHorizontal,
+    ChartTimeline,
+    BookOpen,
+
+    // Theme
+    MoonWaningCrescent,
+    WhiteBalanceSunny,
+}
+
+impl std::fmt::Display for MdiIcon {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MdiIcon::ChevronLeft => write!(f, "chevron-left"),
+            MdiIcon::ChevronRight => write!(f, "chevron-right"),
+            MdiIcon::ChevronUp => write!(f, "chevron-up"),
+            MdiIcon::ChevronDown => write!(f, "chevron-down"),
+            MdiIcon::ChevronDoubleRight => write!(f, "chevron-double-right"),
+            MdiIcon::ArrowRight => write!(f, "arrow-right"),
+            MdiIcon::ArrowUp => write!(f, "arrow-up"),
+            MdiIcon::Menu => write!(f, "menu"),
+            MdiIcon::Close => write!(f, "close"),
+            MdiIcon::Magnify => write!(f, "magnify"),
+            MdiIcon::Cog => write!(f, "cog"),
+            MdiIcon::Check => write!(f, "check"),
+            MdiIcon::GestureTap => write!(f, "gesture-tap"),
+            MdiIcon::Translate => write!(f, "translate"),
+            MdiIcon::Microphone => write!(f, "microphone"),
+            MdiIcon::Play => write!(f, "play"),
+            MdiIcon::Pause => write!(f, "pause"),
+            MdiIcon::Stop => write!(f, "stop"),
+            MdiIcon::VolumeHigh => write!(f, "volume-high"),
+            MdiIcon::VolumeMute => write!(f, "volume-mute"),
+            MdiIcon::Fullscreen => write!(f, "fullscreen"),
+            MdiIcon::FullscreenExit => write!(f, "fullscreen-exit"),
+            MdiIcon::FormatBold => write!(f, "format-bold"),
+            MdiIcon::FormatItalic => write!(f, "format-italic"),
+            MdiIcon::FormatUnderline => write!(f, "format-underline"),
+            MdiIcon::FormatAlignLeft => write!(f, "format-align-left"),
+            MdiIcon::FormatAlignCenter => write!(f, "format-align-center"),
+            MdiIcon::FormatAlignRight => write!(f, "format-align-right"),
+            MdiIcon::FormatListNumbered => write!(f, "format-list-numbered"),
+            MdiIcon::FormatListBulleted => write!(f, "format-list-bulleted"),
+            MdiIcon::Alert => write!(f, "alert"),
+            MdiIcon::AlertTriangle => write!(f, "alert-outline"),
+            MdiIcon::Information => write!(f, "information"),
+            MdiIcon::Help => write!(f, "help"),
+            MdiIcon::Bell => write!(f, "bell"),
+            MdiIcon::BellOutline => write!(f, "bell-outline"),
+            MdiIcon::Mail => write!(f, "mail"),
+            MdiIcon::Chat => write!(f, "chat"),
+            MdiIcon::MessageSquare => write!(f, "message-reply"),
+            MdiIcon::DotsHorizontal => write!(f, "dots-horizontal"),
+            MdiIcon::Palette => write!(f, "palette"),
+            MdiIcon::AutoFix => write!(f, "auto-fix"),
+            MdiIcon::LightningBolt => write!(f, "lightning-bolt"),
+            MdiIcon::Package => write!(f, "package"),
+            MdiIcon::Home => write!(f, "home"),
+            MdiIcon::Image => write!(f, "image"),
+            MdiIcon::ViewColumn => write!(f, "view-column"),
+            MdiIcon::ViewDashboard => write!(f, "view-dashboard"),
+            MdiIcon::CubeOutline => write!(f, "cube-outline"),
+            MdiIcon::Account => write!(f, "account"),
+            MdiIcon::User => write!(f, "account"),
+            MdiIcon::Book => write!(f, "book"),
+            MdiIcon::Star => write!(f, "star"),
+            MdiIcon::Heart => write!(f, "heart"),
+            MdiIcon::Calendar => write!(f, "calendar"),
+            MdiIcon::ClockOutline => write!(f, "clock-outline"),
+            MdiIcon::TextBoxEdit => write!(f, "text-box-edit"),
+            MdiIcon::TextBox => write!(f, "text-box"),
+            MdiIcon::CreditCard => write!(f, "credit-card"),
+            MdiIcon::Graph => write!(f, "graph"),
+            MdiIcon::Cursor => write!(f, "cursor-default"),
+            MdiIcon::Tag => write!(f, "tag"),
+            MdiIcon::Pencil => write!(f, "pencil"),
+            MdiIcon::Circle => write!(f, "circle"),
+            MdiIcon::CheckboxMarked => write!(f, "checkbox-marked"),
+            MdiIcon::CheckboxMarkedCircle => write!(f, "checkbox-marked-circle"),
+            MdiIcon::ToggleSwitch => write!(f, "toggle-switch"),
+            MdiIcon::Minus => write!(f, "minus"),
+            MdiIcon::Plus => write!(f, "plus"),
+            MdiIcon::Table => write!(f, "table"),
+            MdiIcon::Tree => write!(f, "tree"),
+            MdiIcon::SourceBranch => write!(f, "source-branch"),
+            MdiIcon::Layers => write!(f, "layers"),
+            MdiIcon::List => write!(f, "format-list-bulleted"),
+            MdiIcon::Upload => write!(f, "upload"),
+            MdiIcon::Panel => write!(f, "dock-window"),
+            MdiIcon::Maximize2 => write!(f, "arrow-expand"),
+            MdiIcon::ChevronsUpDown => write!(f, "chevron-triple-up"),
+            MdiIcon::Tune => write!(f, "tune"),
+            MdiIcon::Pulse => write!(f, "pulse"),
+            MdiIcon::Loading => write!(f, "loading"),
+            MdiIcon::Code => write!(f, "code-braces"),
+            MdiIcon::FileEdit => write!(f, "file-edit"),
+            MdiIcon::Music => write!(f, "music"),
+            MdiIcon::TrophyAward => write!(f, "trophy-award"),
+            MdiIcon::Marker => write!(f, "marker"),
+            MdiIcon::SwapHorizontal => write!(f, "swap-horizontal"),
+            MdiIcon::ArrowExpandHorizontal => write!(f, "arrow-expand-horizontal"),
+            MdiIcon::ChartTimeline => write!(f, "chart-timeline"),
+            MdiIcon::BookOpen => write!(f, "book-open"),
+            MdiIcon::MagnifyPlus => write!(f, "magnify-plus"),
+            MdiIcon::MoonWaningCrescent => write!(f, "moon-waning-crescent"),
+            MdiIcon::WhiteBalanceSunny => write!(f, "white-balance-sunny"),
+        }
+    }
+}
+
+impl std::convert::From<&str> for MdiIcon {
+    fn from(s: &str) -> Self {
+        match s {
+            "chevron-left" => MdiIcon::ChevronLeft,
+            "chevron-right" => MdiIcon::ChevronRight,
+            "chevron-up" => MdiIcon::ChevronUp,
+            "chevron-down" => MdiIcon::ChevronDown,
+            "chevron-double-right" => MdiIcon::ChevronDoubleRight,
+            "arrow-right" => MdiIcon::ArrowRight,
+            "arrow-up" => MdiIcon::ArrowUp,
+            "menu" => MdiIcon::Menu,
+            "close" => MdiIcon::Close,
+            "magnify" => MdiIcon::Magnify,
+            "cog" => MdiIcon::Cog,
+            "check" => MdiIcon::Check,
+            "gesture-tap" => MdiIcon::GestureTap,
+            "translate" => MdiIcon::Translate,
+            "microphone" => MdiIcon::Microphone,
+            "play" => MdiIcon::Play,
+            "pause" => MdiIcon::Pause,
+            "stop" => MdiIcon::Stop,
+            "volume-high" => MdiIcon::VolumeHigh,
+            "volume-mute" => MdiIcon::VolumeMute,
+            "fullscreen" => MdiIcon::Fullscreen,
+            "fullscreen-exit" => MdiIcon::FullscreenExit,
+            "format-bold" => MdiIcon::FormatBold,
+            "format-italic" => MdiIcon::FormatItalic,
+            "format-underline" => MdiIcon::FormatUnderline,
+            "format-align-left" => MdiIcon::FormatAlignLeft,
+            "format-align-center" => MdiIcon::FormatAlignCenter,
+            "format-align-right" => MdiIcon::FormatAlignRight,
+            "format-list-numbered" => MdiIcon::FormatListNumbered,
+            "format-list-bulleted" => MdiIcon::FormatListBulleted,
+            "alert" => MdiIcon::Alert,
+            "alert-outline" => MdiIcon::AlertTriangle,
+            "information" => MdiIcon::Information,
+            "help" => MdiIcon::Help,
+            "bell" => MdiIcon::Bell,
+            "bell-outline" => MdiIcon::BellOutline,
+            "mail" => MdiIcon::Mail,
+            "chat" => MdiIcon::Chat,
+            "message-reply" => MdiIcon::MessageSquare,
+            "dots-horizontal" => MdiIcon::DotsHorizontal,
+            "palette" => MdiIcon::Palette,
+            "auto-fix" => MdiIcon::AutoFix,
+            "lightning-bolt" => MdiIcon::LightningBolt,
+            "package" => MdiIcon::Package,
+            "home" => MdiIcon::Home,
+            "image" => MdiIcon::Image,
+            "view-column" => MdiIcon::ViewColumn,
+            "view-dashboard" => MdiIcon::ViewDashboard,
+            "cube-outline" => MdiIcon::CubeOutline,
+            "account" => MdiIcon::Account,
+            "user" => MdiIcon::User,
+            "book" => MdiIcon::Book,
+            "star" => MdiIcon::Star,
+            "heart" => MdiIcon::Heart,
+            "calendar" => MdiIcon::Calendar,
+            "clock-outline" => MdiIcon::ClockOutline,
+            "text-box-edit" => MdiIcon::TextBoxEdit,
+            "text-box" => MdiIcon::TextBox,
+            "credit-card" => MdiIcon::CreditCard,
+            "graph" => MdiIcon::Graph,
+            "cursor-default" => MdiIcon::Cursor,
+            "tag" => MdiIcon::Tag,
+            "pencil" => MdiIcon::Pencil,
+            "circle" => MdiIcon::Circle,
+            "checkbox-marked" => MdiIcon::CheckboxMarked,
+            "checkbox-marked-circle" => MdiIcon::CheckboxMarkedCircle,
+            "toggle-switch" => MdiIcon::ToggleSwitch,
+            "minus" => MdiIcon::Minus,
+            "plus" => MdiIcon::Plus,
+            "table" => MdiIcon::Table,
+            "tree" => MdiIcon::Tree,
+            "source-branch" => MdiIcon::SourceBranch,
+            "layers" => MdiIcon::Layers,
+            "upload" => MdiIcon::Upload,
+            "dock-window" => MdiIcon::Panel,
+            "arrow-expand" => MdiIcon::Maximize2,
+            "chevron-triple-up" => MdiIcon::ChevronsUpDown,
+            "tune" => MdiIcon::Tune,
+            "pulse" => MdiIcon::Pulse,
+            "loading" => MdiIcon::Loading,
+            "code-braces" => MdiIcon::Code,
+            "file-edit" => MdiIcon::FileEdit,
+            "music" => MdiIcon::Music,
+            "trophy-award" => MdiIcon::TrophyAward,
+            "marker" => MdiIcon::Marker,
+            "swap-horizontal" => MdiIcon::SwapHorizontal,
+            "arrow-expand-horizontal" => MdiIcon::ArrowExpandHorizontal,
+            "chart-timeline" => MdiIcon::ChartTimeline,
+            "book-open" => MdiIcon::BookOpen,
+            "magnify-plus" => MdiIcon::MagnifyPlus,
+            "moon-waning-crescent" => MdiIcon::MoonWaningCrescent,
+            "white-balance-sunny" => MdiIcon::WhiteBalanceSunny,
+            _ => MdiIcon::Alert, // Default fallback
+        }
+    }
+}
+
+// Implement IntoAttrValue so MdiIcon can be used as HTML attributes
+#[cfg(feature = "tairitsu")]
+impl IntoAttrValue for MdiIcon {
+    fn into_attr_value(self) -> Option<String> {
+        Some(self.to_string())
+    }
+}

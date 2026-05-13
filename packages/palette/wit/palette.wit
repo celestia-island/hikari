@@ -1,0 +1,91 @@
+package hikari:palette;
+
+interface color {
+    enum color-category {
+        red, yellow, green, blue, cyan, white, black, gray, purple, orange,
+    }
+
+    record color {
+        r: u8,
+        g: u8,
+        b: u8,
+        category: color-category,
+    }
+
+    record hsl {
+        h: f64,
+        s: f64,
+        l: f64,
+    }
+
+    color-from-rgb: func(r: u8, g: u8, b: u8) -> color;
+    color-hex: func(c: color) -> string;
+    color-rgba: func(c: color, alpha: f64) -> string;
+    color-brightness: func(c: color) -> f64;
+    color-is-dark: func(c: color) -> bool;
+    color-is-light: func(c: color) -> bool;
+    color-to-hsl: func(c: color) -> hsl;
+    color-adjust-saturation: func(c: color, factor: f64) -> color;
+    color-adjust-lightness: func(c: color, factor: f64) -> color;
+    color-contrast-rgba: func(c: color, alpha: f64) -> string;
+}
+
+interface color-math {
+    use color.{color, hsl};
+
+    blend-colors: func(c1: color, c2: color, ratio: f64) -> color;
+    average-colors: func(colors: list<tuple<color, f64>>) -> color;
+    adjust-saturation-hex: func(hex: string, factor: f64) -> string;
+    adjust-lightness-hex: func(hex: string, factor: f64) -> string;
+    hsl-to-rgb: func(h: hsl) -> tuple<u8, u8, u8>;
+}
+
+interface gradient {
+    use color.{color};
+
+    record gradient-stop {
+        position: f64,
+        color: color,
+    }
+
+    gradient-sample: func(stops: list<gradient-stop>, position: f64) -> color;
+}
+
+interface theme {
+    use color.{color};
+
+    enum theme-mode { light, dark }
+
+    record palette {
+        mode: theme-mode,
+        primary: color,
+        secondary: color,
+        accent: color,
+        success: color,
+        warning: color,
+        danger: color,
+        background: color,
+        surface: color,
+        border: color,
+        text-primary: color,
+        text-secondary: color,
+    }
+
+    light-theme: func() -> palette;
+    dark-theme: func() -> palette;
+    default-theme: func() -> palette;
+    palette-button-glow-color: func(p: palette, c: color) -> string;
+    palette-ghost-text-color: func(p: palette, alpha: f64) -> string;
+}
+
+interface version {
+    get-version: func() -> string;
+}
+
+world palette {
+    export version;
+    export color;
+    export color-math;
+    export gradient;
+    export theme;
+}

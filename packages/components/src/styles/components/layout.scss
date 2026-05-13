@@ -1,0 +1,565 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Layout Component
+// Features: Ambient patterns, grid effects, acrylic materials
+// ============================================
+
+// ============================================
+// Base Layout Container
+// ============================================
+
+.hi-layout {
+  // Full viewport layout
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  // Transparent to let body gradient show through
+  position: relative;
+  background: transparent;
+  overflow: hidden;
+
+  // Hide native scrollbar (using custom scrollbar component)
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  // Ensure content stays above background (but not .hi-background which needs position:fixed)
+  > *:not(.hi-background) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+// DISABLED - migrated to JS animation
+// @keyframes layout-ambient-move {
+//   0%, 100% {
+//     transform: translate(0, 0) scale(1);
+//   }
+//   25% {
+//     transform: translate(5%, 5%) scale(1.05);
+//   }
+//   50% {
+//     transform: translate(0, 10%) scale(1.1);
+//   }
+//   75% {
+//     transform: translate(-5%, 5%) scale(1.05);
+//   }
+// }
+
+// ============================================
+// Layout Header Area
+// ============================================
+
+.hi-layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  // Simple background only
+  background: var(--hi-card-bg);
+
+  // Transition for scroll state
+  // DISABLED - migrated to JS animation
+
+  // transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+  // Scrolled state (applied via JS)
+  &.hi-layout-header-scrolled {
+    background: var(--hi-card-bg);
+    box-shadow: 0 8px 16px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)), 0 0 30px var(--hi-primary);
+  }
+}
+
+// ============================================
+// Layout Content Area (Main)
+// ============================================
+
+// Layout Body - contains Aside and Main side by side
+.hi-layout-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px); // Subtract header height
+  overflow: clip;
+  position: relative;
+}
+
+.hi-layout-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  // Content padding - 减小间距
+  padding: 0;
+
+  // Transparent to let body gradient show through
+  background: transparent;
+
+  // Responsive padding
+  @include mix.mobile {
+    padding: vars.$hikari-spacing-md;
+  }
+
+  @include mix.tablet {
+    padding: vars.$hikari-spacing-lg;
+  }
+
+  @include mix.desktop {
+    padding: vars.$hikari-spacing-xl;
+  }
+}
+
+// ============================================
+// Layout with Sidebar
+// ============================================
+
+.hi-layout-has-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+
+  // Aside is now inside hi-layout-body
+  .hi-layout-body > aside,
+  .hi-layout-body > .hi-aside {
+    width: 260px;
+    flex-shrink: 0;
+    height: 100%;
+  }
+
+  .hi-layout-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; // Prevent flex overflow
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+}
+
+// ============================================
+// Layout Aside (Sidebar)
+// ============================================
+
+.hi-layout-aside {
+  // No outer padding - padding should be inside scrollable content
+  padding: 0;
+
+  // Vertical flex layout: content + footer
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  // Sticky header in sidebar
+  .hi-layout-aside-header {
+    padding: 0.75rem 0.5rem;
+    margin-bottom: vars.$hikari-spacing-md;
+    flex-shrink: 0;
+  }
+
+  // Scrollable content area
+  .hi-layout-aside-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    // Padding inside scrollable area (no left padding)
+    padding: vars.$hikari-spacing-md vars.$hikari-spacing-md
+      vars.$hikari-spacing-md 0;
+
+    // Position relative for gradient overlays
+    position: relative;
+
+    // Gradient fade indicators (positioned absolutely, controlled by JS)
+    &::before {
+      content: '';
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: transparent;
+      pointer-events: none;
+      opacity: var(--fade-top-opacity, 0); // Controlled by JS
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity 0.2s ease;
+      z-index: 10;
+    }
+
+    &::after {
+      content: '';
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: transparent;
+      pointer-events: none;
+      opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity 0.2s ease;
+      z-index: 10;
+    }
+
+    // Hide scrollbar when content doesn't need scrolling
+    &.scrollbar-hidden {
+      &::-webkit-scrollbar {
+        display: none;
+      }
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+  }
+
+  // Footer in sidebar - positioned at bottom
+  .hi-layout-aside-footer {
+    flex-shrink: 0;
+  }
+}
+
+// ============================================
+// Layout Footer
+// ============================================
+
+.hi-layout-footer {
+  // Simple background only
+  background: var(--hi-card-bg);
+
+  // Padding
+  padding: vars.$hikari-spacing-lg;
+
+  // Content styling
+  color: var(--hi-color-text-secondary);
+  font-size: vars.$hikari-font-size-sm;
+  text-align: center;
+
+  // Responsive
+  @include mix.mobile {
+    padding: vars.$hikari-spacing-md vars.$hikari-spacing-sm;
+    font-size: vars.$hikari-font-size-xs;
+  }
+}
+
+// ============================================
+// Container Variants
+// ============================================
+
+// Fluid container (full width)
+.hi-layout-fluid {
+  max-width: 100%;
+}
+
+// Fixed container with max width
+.hi-layout-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 vars.$hikari-spacing-lg;
+
+  // Ensure container is above background
+  position: relative;
+  z-index: 1;
+
+  @include mix.mobile {
+    padding: 0 vars.$hikari-spacing-md;
+  }
+
+  @include mix.tablet {
+    max-width: 960px;
+  }
+
+  @include mix.desktop {
+    max-width: 1200px;
+  }
+
+  // Wide variant
+  &.hi-layout-container-wide {
+    max-width: 1400px;
+  }
+
+  // Narrow variant
+  &.hi-layout-container-narrow {
+    max-width: 800px;
+  }
+}
+
+// ============================================
+// Layout Background Variants
+// ============================================
+
+// Default dark theme (transparent - let Background component handle it)
+.hi-layout-dark {
+  background-color: transparent;
+}
+
+// Light theme (transparent - let Background component handle it)
+.hi-layout-light {
+  background-color: transparent;
+
+  &::before {
+    display: none;
+  }
+
+  .hi-layout-content {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+// Transparent layout (no background)
+.hi-layout-transparent {
+  background-color: transparent;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+
+  .hi-layout-content {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+// ============================================
+// Responsive Layout Modifiers
+// ============================================
+
+// Hide sidebar on mobile
+.hi-layout-mobile-sidebar-hidden {
+  @include mix.mobile {
+    .hi-layout-aside {
+      display: none;
+    }
+  }
+}
+
+// Overlay sidebar on mobile (drawer behavior)
+.hi-layout-mobile-sidebar-overlay {
+  @include mix.mobile {
+    .hi-layout-aside {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 200;
+      width: 80%;
+      max-width: 300px;
+      transform: translateX(-100%);
+      // DISABLED - migrated to JS animation
+
+      // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+
+      &.hi-layout-aside-open {
+        transform: translateX(0);
+      }
+    }
+
+    // Overlay backdrop
+    &::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--hi-black-20, rgba(0, 0, 0, 0.2));
+      backdrop-filter: blur(4px);
+      z-index: 199;
+      opacity: 0;
+      pointer-events: none;
+      // DISABLED - migrated to JS animation
+
+      // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
+    }
+
+    &.hi-layout-overlay-open::before {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+// ============================================
+// Animation Classes
+// ============================================
+
+// Fade in animation for layout content
+.hi-layout-animate-in {
+  // DISABLED - migrated to JS animation
+
+  // animation: layout-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+// DISABLED - migrated to JS animation
+// @keyframes layout-fade-in {
+//   from {
+//     opacity: 0;
+//     transform: translateY(20px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
+
+// Slide in from left (for sidebar)
+.hi-layout-slide-in-left {
+  // DISABLED - migrated to JS animation
+
+  // animation: layout-slide-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
+}
+
+// DISABLED - migrated to JS animation
+// @keyframes layout-slide-left {
+//   from {
+//     opacity: 0;
+//     transform: translateX(-30px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateX(0);
+//   }
+// }
+
+// ============================================
+// Layout Transitions
+// ============================================
+
+// Smooth transition when sidebar collapses/expands
+.hi-layout-sidebar-transition {
+  .hi-layout-aside {
+    // DISABLED - migrated to JS animation
+    // transition: width vars.$hikari-duration-normal vars.$hikari-ease-smooth,
+  }
+
+  .hi-layout-aside-content {
+    // DISABLED - migrated to JS animation
+    // transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
+  }
+}
+
+// ============================================
+// Utility Classes
+// ============================================
+
+// Full height layout
+.hi-layout-full-height {
+  min-height: 100vh;
+}
+
+// Centered content layout
+.hi-layout-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Horizontal layout (left-to-right)
+.hi-layout-horizontal {
+  flex-direction: row;
+}
+
+// Scrollable layout
+.hi-layout-scrollable {
+  overflow-y: auto;
+  @include mix.scrollbar-hidden;
+}
+
+// No scroll layout
+.hi-layout-no-scroll {
+  overflow: hidden;
+}
+
+// ============================================
+// Responsive Grid Column Classes
+// ============================================
+
+// Generate col-span classes for 1-12
+@for $i from 1 through 12 {
+  .col-span-#{$i} {
+    grid-column: span #{$i};
+  }
+}
+
+// Responsive breakpoints
+@media (min-width: 768px) {
+  @for $i from 1 through 12 {
+    .md\:col-span-#{$i} {
+      grid-column: span #{$i} !important;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  @for $i from 1 through 12 {
+    .lg\:col-span-#{$i} {
+      grid-column: span #{$i} !important;
+    }
+  }
+}
+
+// ============================================
+// Print Styles
+// ============================================
+
+@media print {
+  .hi-layout {
+    background: white;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  .hi-layout-header,
+  .hi-layout-footer,
+  .hi-layout-aside {
+    display: none;
+  }
+
+  .hi-layout-content {
+    background: white;
+    box-shadow: none;
+  }
+}
+
+// ============================================
+// Dropdown Portal Styles
+// ============================================
+
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+  z-index: 10000;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.dropdown-overlay-dimmed {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown {
+  background-color: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: vars.$hikari-radius-fui-lg;
+  box-shadow: 0 4px 16px var(--hi-color-black-15);
+  box-sizing: border-box;
+  overflow: hidden;
+}

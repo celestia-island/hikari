@@ -1,0 +1,34 @@
+[
+    {
+        "action": "check",
+        "url": "http://localhost:3000",
+        "wait_ms": 10000
+    },
+    {
+        "action": "screenshot",
+        "url": "http://localhost:3000",
+        "output": "home.png",
+        "wait_ms": 10000,
+        "full_page": true
+    },
+    {
+        "action": "screenshot",
+        "url": "http://localhost:3000/components",
+        "output": "components.png",
+        "wait_ms": 10000,
+        "full_page": true
+    },
+    {
+        "action": "screenshot",
+        "url": "http://localhost:3000/components/layer1/basic",
+        "output": "layer1_basic.png",
+        "wait_ms": 10000,
+        "full_page": true
+    },
+    {
+        "action": "script",
+        "url": "http://localhost:3000",
+        "script": "(function() { return { title: document.title, elements: document.querySelectorAll('*').length }; })()",
+        "wait_ms": 8000
+    }
+]

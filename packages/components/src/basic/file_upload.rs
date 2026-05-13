@@ -1,0 +1,331 @@
+// packages/components/src/basic/file_upload.rs
+// FileUpload component with Arknights + FUI styling
+
+use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
+
+use crate::{prelude::*, styled::StyledComponent};
+
+pub struct FileUploadComponent;
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum FileUploadStatus {
+    #[default]
+    Idle,
+    Dragging,
+    Uploading,
+    Success,
+    Error,
+}
+
+#[define_props]
+pub struct FileUploadProps {
+    #[default(false)]
+    pub multiple: bool,
+
+    #[default]
+    pub accept: String,
+
+    #[default(10485760)] // 10MB default
+    pub max_size: usize,
+
+    #[default(true)]
+    pub show_preview: bool,
+
+    #[default("Click or drag file to upload".to_string())]
+    pub upload_text: String,
+
+    #[default]
+    pub class: String,
+
+    #[default]
+    pub style: String,
+
+    #[default]
+    pub on_files: Option<EventHandler<Vec<String>>>,
+
+    #[default]
+    pub on_error: Option<EventHandler<String>>,
+}
+
+#[component]
+pub fn FileUpload(props: FileUploadProps) -> Element {
+    let upload_status = use_signal(|| FileUploadStatus::Idle);
+
+    let files = use_signal(Vec::<String>::new);
+
+    let wrapper_classes = ClassesBuilder::new()
+        .add_typed(FileUploadClass::FileUploadWrapper)
+        .add(&props.class)
+        .build();
+
+    let status_class = match upload_status.get() {
+        FileUploadStatus::Dragging => Some(FileUploadClass::Dragging),
+        FileUploadStatus::Uploading => Some(FileUploadClass::Uploading),
+        FileUploadStatus::Success => Some(FileUploadClass::Success),
+        FileUploadStatus::Error => Some(FileUploadClass::Error),
+        _ => None,
+    };
+
+    let mut drag_builder = ClassesBuilder::new().add_typed(FileUploadClass::FileUpload);
+    if let Some(class) = status_class {
+        drag_builder = drag_builder.add_typed(class);
+    }
+    let drag_classes = drag_builder.build();
+
+    let on_files_for_drop = props.on_files.clone();
+    let on_files_for_change = props.on_files.clone();
+    let on_error_for_drop = props.on_error.clone();
+    let on_error_for_change = props.on_error.clone();
+
+    let upload_status_for_drag_over = upload_status.clone();
+    let on_drag_over = move |e: DragEvent| {
+        e.prevent_default();
+        upload_status_for_drag_over.set(FileUploadStatus::Dragging);
+    };
+
+    let upload_status_for_drag_leave = upload_status.clone();
+    let on_drag_leave = move |_: DragEvent| {
+        upload_status_for_drag_leave.set(FileUploadStatus::Idle);
+    };
+
+    let upload_status_for_drop = upload_status.clone();
+    let files_for_drop = files.clone();
+    let max_size_for_drop = props.max_size;
+    let on_drop = move |e: DragEvent| {
+        e.prevent_default();
+        upload_status_for_drop.set(FileUploadStatus::Idle);
+
+        if let Some(data_transfer) = &e.data_transfer {
+            let file_list = &data_transfer.files;
+
+            let mut selected_files = Vec::new();
+            let mut errors = Vec::new();
+
+            for file_name in file_list {
+                if file_name.len() > max_size_for_drop {
+                    errors.push(format!(
+                        "File '{}' exceeds maximum size of {} bytes",
+                        file_name, max_size_for_drop
+                    ));
+                } else {
+                    selected_files.push(file_name.clone());
+                }
+            }
+
+            if !errors.is_empty() && on_error_for_drop.is_some() {
+                for error in errors {
+                    if let Some(handler) = on_error_for_drop.as_ref() {
+                        handler.call(error);
+                    }
+                }
+            }
+
+            if !selected_files.is_empty() {
+                files_for_drop.set(selected_files.clone());
+
+                if let Some(handler) = on_files_for_drop.as_ref() {
+                    handler.call(selected_files);
+                }
+
+                upload_status_for_drop.set(FileUploadStatus::Success);
+            }
+        }
+    };
+
+    let upload_status_for_change = upload_status.clone();
+    let files_for_change = files.clone();
+    let max_size_for_change = props.max_size;
+    let on_change = move |e: ChangeEvent| {
+        let file_value = e.value;
+        if file_value.is_empty() {
+            return;
+        }
+
+        let selected_files: Vec<String> = file_value
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        let mut accepted_files = Vec::new();
+        let mut errors = Vec::new();
+
+        for file_name in &selected_files {
+            if file_name.len() > max_size_for_change {
+                errors.push(format!(
+                    "File '{}' exceeds maximum size of {} bytes",
+                    file_name, max_size_for_change
+                ));
+            } else {
+                accepted_files.push(file_name.clone());
+            }
+        }
+
+        if !errors.is_empty() && on_error_for_change.is_some() {
+            for error in errors {
+                if let Some(handler) = on_error_for_change.as_ref() {
+                    handler.call(error);
+                }
+            }
+        }
+
+        if !accepted_files.is_empty() {
+            files_for_change.set(accepted_files.clone());
+
+            if let Some(handler) = on_files_for_change.as_ref() {
+                handler.call(accepted_files);
+            }
+
+            upload_status_for_change.set(FileUploadStatus::Success);
+        }
+    };
+
+    rsx! {
+        div { class: wrapper_classes, style: props.style,
+
+            div {
+                class: drag_classes,
+                ondragover: on_drag_over,
+                ondragleave: on_drag_leave,
+                ondrop: on_drop,
+
+                // File input (positioned over div)
+                input {
+                    r#type: "file",
+                    multiple: props.multiple,
+                    accept: props.accept,
+                    style: "position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;",
+                    onchange: on_change,
+                }
+
+                // Upload area
+                div {
+                    class: "hi-file-upload-area",
+                    style: "pointer-events: none;",
+
+                    svg {
+                        class: "hi-file-upload-icon",
+                        view_box: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        stroke_width: "2",
+                        path { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }
+                        polyline { points: "17 8 12 3 7 8" }
+                        line {
+                            x1: "12",
+                            y1: "3",
+                            x2: "12",
+                            y2: "15",
+                        }
+                    }
+
+                    p { class: "hi-file-upload-text", "{props.upload_text}" }
+
+                    if props.show_preview && !files.get().is_empty() {
+                        div { class: "hi-file-upload-preview",
+                            for file in files.get().iter() {
+                                div { class: "hi-file-upload-file", "{file}" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl StyledComponent for FileUploadComponent {
+    fn styles() -> &'static str {
+        r#"
+.hi-file-upload-wrapper {
+    width: 100%;
+}
+
+.hi-file-upload {
+    border: 2px dashed var(--hi-color-border);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: var(--hi-color-background);
+    cursor: pointer;
+    position: relative;
+}
+
+.hi-file-upload-dragging {
+    border-color: var(--hi-color-primary);
+    background-color: rgba(var(--hi-color-primary-rgb), 0.05);
+    transform: scale(1.02);
+}
+
+.hi-file-upload-uploading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.hi-file-upload-success {
+    border-color: var(--hi-color-success);
+    background-color: rgba(var(--hi-color-success-rgb), 0.05);
+}
+
+.hi-file-upload-error {
+    border-color: var(--hi-color-error);
+    background-color: rgba(var(--hi-color-error-rgb), 0.05);
+}
+
+.hi-file-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.hi-file-upload-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--hi-color-text-secondary);
+    transition: all 0.3s ease;
+}
+
+.hi-file-upload-dragging .hi-file-upload-icon {
+    color: var(--hi-color-primary);
+    transform: translateY(-4px);
+}
+
+.hi-file-upload-text {
+    font-size: 0.875rem;
+    color: var(--hi-color-text-primary);
+    margin: 0;
+}
+
+.hi-file-upload-preview {
+    margin-top: 1rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.hi-file-upload-file {
+    padding: 0.5rem 1rem;
+    background-color: var(--hi-color-surface);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: var(--hi-color-text-primary);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hi-file-upload-success .hi-file-upload-file {
+    color: var(--hi-color-success);
+}
+"#
+    }
+
+    fn name() -> &'static str {
+        "file_upload"
+    }
+}

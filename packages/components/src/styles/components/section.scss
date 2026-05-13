@@ -1,0 +1,56 @@
+// Use theme variables with namespace to avoid conflicts
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
+
+// ============================================
+// Hikari Section Component
+// ============================================
+
+.hi-section {
+  // Base spacing
+  margin-bottom: 2rem;
+}
+
+// Section size variants
+.hi-section-sm {
+  margin-bottom: 1rem;
+}
+
+.hi-section-md {
+  margin-bottom: 2rem;
+}
+
+.hi-section-lg {
+  margin-bottom: 3rem;
+}
+
+// Section header
+.hi-section-header {
+  margin-bottom: 1rem;
+}
+
+.hi-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.hi-section-description {
+  font-size: 0.875rem;
+  color: var(--hi-color-text-secondary);
+  margin: 0;
+}
+
+// Section body
+.hi-section-body {
+  // Content styles
+}
+
+// ============================================
+// Hikari Spacer Component
+// ============================================
+
+.hi-spacer {
+  display: block;
+}

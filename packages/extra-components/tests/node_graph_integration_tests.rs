@@ -9,7 +9,7 @@ mod tests {
     use hikari_extra_components::{
         connection::Connection,
         history::{HistoryAction, HistoryState, SerializedNodeState},
-        node::NodePlacement,
+        node::NodeState,
         registry::list_all_plugins,
         serialization::SerializedNodeGraph,
     };
@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_serialized_node_state_conversion() {
-        let node_state = NodePlacement {
+        let node_state = NodeState {
             id: "node1".to_string(),
             position: (100.0, 200.0),
             size: (250.0, 180.0),
@@ -222,7 +222,7 @@ mod tests {
         assert_eq!(serialized.size, (250.0, 180.0));
         assert!(serialized.minimized);
 
-        let converted: NodePlacement = serialized.into();
+        let converted: NodeState = serialized.into();
         assert_eq!(converted.id, "node1");
         assert_eq!(converted.position, (100.0, 200.0));
         assert_eq!(converted.size, (250.0, 180.0));
@@ -245,7 +245,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -306,7 +306,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -331,7 +331,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -341,7 +341,7 @@ mod tests {
         );
         nodes.insert(
             "node2".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node2".to_string(),
                 position: (300.0, 200.0),
                 size: (150.0, 100.0),
@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_node_state_default() {
-        let state = NodePlacement::new("".to_string());
+        let state = NodeState::new("".to_string());
 
         assert!(state.id.is_empty());
         assert_eq!(state.position, (0.0, 0.0));

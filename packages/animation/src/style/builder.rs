@@ -4,8 +4,8 @@
 //! New code should use the Platform trait directly or the
 //! AnimationBuilder for complex animations.
 
-use std::{cell::RefCell, rc::Rc};
-
+use std::cell::RefCell;
+use std::rc::Rc;
 use tairitsu_vdom::Platform;
 
 use super::{CssProperty, Property, StyleStringBuilder};

@@ -12,7 +12,7 @@ In `[dependencies]`, dependencies are grouped by function/semantics with blank l
 4. **Logging and tracing**: Logging and distributed tracing, such as `tracing`, `tracing-subscriber`, etc.
 5. **Async / concurrency runtime**: Runtime and async utilities, such as `tokio` and related crates (`tokio-stream`, `tokio-tungstenite`, etc.).
 6. **File system and paths**: Paths, directory traversal, and temporary files, such as `dirs`, `walkdir`, `tempfile`, etc.
-7. **MCP / network and protocols**: MCP protocol stack and network-related libraries, such as `jsonrpc-core`, `axum`, `gloo-net`, `wasm-bindgen-futures`, `tairitsu-vdom`, etc.
+7. **MCP / network and protocols**: MCP protocol stack and network-related libraries, such as `jsonrpc-core`, `axum`, `gloo-net`, `wasm-bindgen-futures`, `dioxus`, etc.
 
 When adding new dependencies, place the crate in the group closest to its primary use; if there are multiple uses, prioritize the "semantically more core" category in the project context. For example:
 
@@ -100,7 +100,7 @@ jsonrpc-core = "^18"
 axum = { version = "^0.8", features = ["ws", "macros"] }
 gloo-net = { version = "^0.6", features = ["websocket"] }
 wasm-bindgen-futures = "^0.4"
-tairitsu-vdom = { version = "^0.7", features = ["web"] }
+dioxus = { version = "^0.7", features = ["web"] }
 ```
 
 > Note: The focus of the above example is **grouping and version writing**; specific version numbers should be adjusted according to the latest stable version of actual dependencies, but should always comply with the above caret rules.

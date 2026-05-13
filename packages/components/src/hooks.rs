@@ -9,9 +9,9 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
+use crate::platform::{inner_width as platform_inner_width, on_resize};
+use crate::prelude::*;
 use tairitsu_hooks::ReactiveSignal;
-
-use crate::{platform::{inner_width as platform_inner_width, on_resize}, prelude::*};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {

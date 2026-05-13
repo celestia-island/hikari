@@ -1,7 +1,7 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row}, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 fn btn(class: &str, label: &str, color: GlowColor) -> VNode {
     glow_wrap(

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use tairitsu_web::i18n::{load_toml_flat, provide_i18n, Language};
-
+use tairitsu_web::i18n::{provide_i18n, Language};
 use crate::hooks;
 
 pub fn init() {
@@ -55,4 +54,39 @@ pub fn init() {
     );
 
     provide_i18n(initial_lang, translations);
+}
+
+fn load_toml_flat(toml_content: &str) -> anyhow::Result<HashMap<String, String>> {
+    let value: toml::Value = toml::from_str(toml_content)?;
+    let mut map = HashMap::new();
+    if let Some(table) = value.as_table() {
+        flatten_toml_table(table, String::new(), &mut map);
+    }
+    Ok(map)
+}
+
+fn flatten_toml_table(
+    table: &toml::map::Map<String, toml::Value>,
+    prefix: String,
+    output: &mut HashMap<String, String>,
+) {
+    for (key, value) in table {
+        let full_key = if prefix.is_empty() {
+            key.clone()
+        } else {
+            format!("{}.{}", prefix, key)
+        };
+
+        match value {
+            toml::Value::String(s) => {
+                output.insert(full_key, s.clone());
+            }
+            toml::Value::Table(nested) => {
+                flatten_toml_table(nested, full_key, output);
+            }
+            _ => {
+                output.insert(full_key, value.to_string());
+            }
+        }
+    }
 }

@@ -11,7 +11,7 @@ mod tests {
     use hikari_extra_components::{
         connection::Connection,
         history::{HistoryAction, HistoryState, SerializedNodeState},
-        node::NodePlacement,
+        node::NodeState,
         node_graph::NodePlugin,
         plugins::{ConstantNode, InputNode, OutputNode, ProcessorNode},
         registry::list_all_plugins,
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_serialized_node_state_conversion() {
-        let node_state = NodePlacement::new("node1".to_string());
+        let node_state = NodeState::new("node1".to_string());
 
         let serialized = SerializedNodeState::from(node_state.clone());
         assert_eq!(serialized.id, "node1");
@@ -198,7 +198,7 @@ mod tests {
         assert_eq!(serialized.size, (200.0, 150.0));
         assert!(!serialized.minimized);
 
-        let converted: NodePlacement = serialized.into();
+        let converted: NodeState = serialized.into();
         assert_eq!(converted.id, "node1");
         assert_eq!(converted.position, (0.0, 0.0));
         assert_eq!(converted.size, (200.0, 150.0));
@@ -218,7 +218,7 @@ mod tests {
     #[test]
     fn test_serialized_node_graph_from_state() {
         let mut nodes = HashMap::new();
-        nodes.insert("node1".to_string(), NodePlacement::new("node1".to_string()));
+        nodes.insert("node1".to_string(), NodeState::new("node1".to_string()));
 
         let connections = vec![Connection::new("node1", "out", "node2", "in")];
 
@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_node_state_new() {
-        let state = NodePlacement::new("node1".to_string());
+        let state = NodeState::new("node1".to_string());
 
         assert_eq!(state.id, "node1");
         assert_eq!(state.position, (0.0, 0.0));

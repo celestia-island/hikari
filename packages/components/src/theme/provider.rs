@@ -66,15 +66,13 @@
 //! ```
 
 use hikari_palette::*;
-use tairitsu_hooks::ReactiveSignal;
 
-use crate::{
-    prelude::*,
-    theme::{
-        css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
-        registry::{get_default_theme, get_registered_theme},
-    },
+use crate::prelude::*;
+use crate::theme::{
+    css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
+    registry::{get_default_theme, get_registered_theme},
 };
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum LayoutDirection {

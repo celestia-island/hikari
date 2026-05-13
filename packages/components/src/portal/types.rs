@@ -1,13 +1,12 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use tairitsu_hooks::ReactiveSignal;
-
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
     prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 

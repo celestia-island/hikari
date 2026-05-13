@@ -1,7 +1,7 @@
+use crate::components::demo_page::render_demo_page;
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::{demo_page::render_demo_page, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 fn make_num_input(value: &str, step: &str, min: &str, max: &str, extra_class: &str) -> VNode {
     let mut classes = "hi-number-input-wrapper".to_string();

@@ -6,13 +6,14 @@ Theme system for Hikari UI applications with Arknights-inspired aesthetics and F
 
 ```toml
 [dependencies]
-hikari-theme = "0.1"
-hikari-palette = "0.1"
+hikari-theme = "0.1.0"
+hikari-palette = "0.1.0"
 ```
 
 ## Quick Start
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn app() -> Element {
@@ -33,7 +34,7 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 ## Features
 
-- **ThemeProvider Component** - Context-based theme management
+- **ThemeProvider Component** - Context-based theme management for Dioxus apps
 - **CSS Variables System** - Dynamic theming via CSS custom properties
 - **Multiple Built-in Themes** - Hikari (light), Tairitsu (dark), Arknights, Fresh
 - **SCSS Mixins & Utilities** - Reusable styling helpers

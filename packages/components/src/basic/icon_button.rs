@@ -11,7 +11,7 @@ use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
 
 use crate::{
-    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
     prelude::*,
     styled::StyledComponent,
 };
@@ -140,21 +140,31 @@ pub fn IconButton(props: IconButtonProps) -> Element {
         .add_typed_if(ButtonClass::IconButtonDisabled, props.disabled)
         .build();
 
-    let style_attr = crate::utils::build_css_vars_style(
-        "--hi-icon-button-radius",
-        &[
-            crate::utils::CssVarEntry::new(
-                &props.icon_color,
-                &[
-                    "--hi-icon-button-icon-color",
-                    "--hi-icon-button-icon-color-active",
-                ],
-            ),
-            crate::utils::CssVarEntry::new(&props.background_color, &["--hi-icon-button-bg"]),
-            crate::utils::CssVarEntry::new(&props.border_radius, &["--hi-icon-button-radius"]),
-        ],
-        &props.css_vars,
-    );
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-icon-button-radius);");
+
+    if let Some(color) = &props.icon_color {
+        css_vars_string.push_str(&format!("--hi-icon-button-icon-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-icon-button-icon-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-icon-button-bg:{};", color));
+    }
+
+    if let Some(radius) = &props.border_radius {
+        css_vars_string.push_str(&format!("--hi-icon-button-radius:{};", radius));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
 
     let glow_color = match props.variant {
         IconButtonVariant::Ghost => props.glow_color,
@@ -186,14 +196,17 @@ pub fn IconButton(props: IconButtonProps) -> Element {
         }
     };
 
-    rsx! {
-        ConditionalGlow {
-            glow: props.glow,
-            blur: props.glow_blur,
-            color: glow_color,
-            intensity: props.glow_intensity,
-            {button_content}
+    if props.glow {
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: glow_color,
+                intensity: props.glow_intensity,
+                {button_content}
+            }
         }
+    } else {
+        button_content
     }
 }
 

@@ -29,7 +29,9 @@ public/
 # Generated CSS files are in public/ directory which is already ignored
 # packages/*/styles/
 
-# Generated Rust code
+# Generated Rust code (except mod.rs)
+packages/*/src/generated/*.rs
+!packages/*/src/generated/mod.rs
 packages/*/generated/
 
 # Node.js

@@ -8,7 +8,7 @@
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
 use crate::{
-    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
     prelude::*,
     styled::StyledComponent,
 };
@@ -139,25 +139,37 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonAnimation::IconRotate => Some("icon-rotate"),
     };
 
-    let style_attr = crate::utils::build_css_vars_style(
-        "--hi-button-radius",
-        &[
-            crate::utils::CssVarEntry::new(
-                &props.icon_color,
-                &["--hi-button-icon-color", "--hi-button-icon-color-active"],
-            ),
-            crate::utils::CssVarEntry::new(
-                &props.text_color,
-                &["--hi-button-text-color", "--hi-button-text-color-active"],
-            ),
-            crate::utils::CssVarEntry::new(&props.background_color, &["--hi-button-bg"]),
-            crate::utils::CssVarEntry::new(
-                &props.border_color,
-                &["--hi-button-border-color", "--hi-button-border-color-focus"],
-            ),
-        ],
-        &props.css_vars,
-    );
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-button-radius);");
+
+    if let Some(color) = &props.icon_color {
+        css_vars_string.push_str(&format!("--hi-button-icon-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-icon-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-button-text-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-text-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-button-bg:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-button-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-border-color-focus:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
 
     let button_content = rsx! {
         button {
@@ -188,86 +200,30 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     };
 
-    let glow_color = if let Some(color) = props.glow_color {
-        color
-    } else {
-        match props.variant {
-            ButtonVariant::Ghost => GlowColor::Ghost,
-            ButtonVariant::Borderless => GlowColor::Ghost,
-            ButtonVariant::Primary => GlowColor::Primary,
-            ButtonVariant::Secondary => GlowColor::Secondary,
-            ButtonVariant::Danger => GlowColor::Danger,
-            ButtonVariant::Success => GlowColor::Success,
-        }
-    };
+    if props.glow {
+        let glow_color = if let Some(color) = props.glow_color {
+            color
+        } else {
+            match props.variant {
+                ButtonVariant::Ghost => GlowColor::Ghost,
+                ButtonVariant::Borderless => GlowColor::Ghost,
+                ButtonVariant::Primary => GlowColor::Primary,
+                ButtonVariant::Secondary => GlowColor::Secondary,
+                ButtonVariant::Danger => GlowColor::Danger,
+                ButtonVariant::Success => GlowColor::Success,
+            }
+        };
 
-    rsx! {
-        ConditionalGlow {
-            glow: props.glow,
-            blur: props.glow_blur,
-            color: glow_color,
-            intensity: props.glow_intensity,
-            {button_content}
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::styled::StyledComponent;
-
-    #[test]
-    fn test_button_variant_default() {
-        assert_eq!(ButtonVariant::default(), ButtonVariant::Primary);
-    }
-
-    #[test]
-    fn test_button_variant_distinct() {
-        let variants = [
-            ButtonVariant::Primary,
-            ButtonVariant::Secondary,
-            ButtonVariant::Ghost,
-            ButtonVariant::Borderless,
-            ButtonVariant::Danger,
-            ButtonVariant::Success,
-        ];
-        for (i, a) in variants.iter().enumerate() {
-            for (j, b) in variants.iter().enumerate() {
-                if i != j {
-                    assert_ne!(a, b);
-                }
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: glow_color,
+                intensity: props.glow_intensity,
+                {button_content}
             }
         }
-    }
-
-    #[test]
-    fn test_button_size_default() {
-        assert_eq!(ButtonSize::default(), ButtonSize::Medium);
-    }
-
-    #[test]
-    fn test_button_width_default() {
-        assert_eq!(ButtonWidth::default(), ButtonWidth::Auto);
-    }
-
-    #[test]
-    fn test_button_animation_default() {
-        assert_eq!(ButtonAnimation::default(), ButtonAnimation::None);
-    }
-
-    #[test]
-    fn test_button_component_name() {
-        assert_eq!(ButtonComponent::name(), "button");
-    }
-
-    #[test]
-    fn test_button_animation_values() {
-        assert_eq!(ButtonAnimation::None as u8, 0);
-        assert_eq!(ButtonAnimation::Scale as u8, 1);
-        assert_eq!(ButtonAnimation::ScaleElevate as u8, 2);
-        assert_eq!(ButtonAnimation::Ripple as u8, 3);
-        assert_eq!(ButtonAnimation::IconRotate as u8, 4);
+    } else {
+        button_content
     }
 }
 

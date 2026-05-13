@@ -2,7 +2,7 @@
 // Uses CSS variables for animation control via AnimationBuilder
 // All colors now use theme-consistent CSS variables
 
-@use 'variables' as vars;
+@use '../../../../theme/styles/variables.scss' as vars;
 
 .hi-slider {
     position: relative;

@@ -1,6 +1,6 @@
 # إطار عمل هيكاري واجهة المستخدم
 
-> إطار عمل حديث لواجهة المستخدم مبني بلغة Rust باستخدام Tairitsu + Grass + Axum
+> إطار عمل حديث لواجهة المستخدم مبني بلغة Rust باستخدام Dioxus + Grass + Axum
 >
 > **نمط التصميم**: تصميم مسطح على طراز Arknights + جماليات FUI الخيالية العلمية + الألوان الصينية التقليدية
 >
@@ -48,12 +48,13 @@
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-tairitsu = "0.5"
+dioxus = "0.5"
 ```
 
 ### الاستخدام الأساسي
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -131,6 +132,7 @@ hikari/
 ### تبديل السمات
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -184,7 +186,7 @@ AnimationBuilder::new(&elements)
 
 ## شكر وتقدير
 
-- **Tairitsu** - إطار عمل Rust قوي لواجهة المستخدم
+- [Dioxus](https://dioxuslabs.com/) - إطار عمل Rust قوي لواجهة المستخدم
 - [Grass](https://github.com/kaj/kaj) - مترجم SCSS نقي بلغة Rust
 - [Element Plus](https://element-plus.org/) - مرجع تصميم مكتبة مكونات ممتازة
 - [Material UI](https://mui.com/) - إلهام تصميم واجهة مستخدم حديثة

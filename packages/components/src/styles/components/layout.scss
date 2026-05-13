@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Layout Component
@@ -189,7 +189,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--hi-fade-top-opacity, 0); // Controlled by JS
+      opacity: var(--fade-top-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;
@@ -205,7 +205,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--hi-fade-bottom-opacity, 0); // Controlled by JS
+      opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;

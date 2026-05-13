@@ -5,13 +5,12 @@
 
 use std::sync::atomic::Ordering;
 
-use tairitsu_hooks::ReactiveSignal;
-
 use super::render::{PortalRender, PortalRenderProps};
 use crate::{
     portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
     prelude::*,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 #[derive(Clone)]
 pub struct PortalContext {

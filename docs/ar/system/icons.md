@@ -1,12 +1,12 @@
 # نظام الأيقونات
 
-نظام إدارة وعرض الأيقونات، متكامل مع Material Design Icons (MDI).
+نظام إدارة وعرض الأيقونات، متكامل مع Lucide Icons.
 
 ## نظرة عامة
 
 يوفر `hikari-icons`:
 
-- **أكثر من 1000 أيقونة** - مجموعة Material Design Icons (MDI) الكاملة
+- **أكثر من 1000 أيقونة** - مجموعة Lucide Icons الكاملة
 - **آمن للنوع** - أسماء أيقونات قائمة على التعداد
 - **عرض SVG** - عرض من جانب العميل والخادم
 - **تحميل وقت التشغيل** - تحميل SVG للأيقونات عند الطلب
@@ -16,11 +16,12 @@
 ### الاستخدام الأساسي
 
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use dioxus::prelude::*;
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Magnify,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -30,29 +31,29 @@ rsx! {
 ### الأيقونات المتاحة
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // التنقل
     Home,
     Menu,
-    Magnify,
-    Cog,
+    Search,
+    Settings,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // الإجراءات
-    Pencil,
-    Delete,
+    Edit,
+    Trash,
     Check,
-    Close,
+    X,
     Plus,
     Minus,
 
     // الحالة
-    AlertCircleOutline,
-    CheckCircleOutline,
-    InformationOutline,
-    AlertOutline,
+    AlertCircle,
+    CheckCircle,
+    Info,
+    AlertTriangle,
 
     // ... أكثر من 1000 أيقونة
 }
@@ -62,7 +63,7 @@ pub enum MdiIcon {
 
 | الخاصية | النوع | الافتراضي | الوصف |
 |---------|-------|-----------|-------|
-| `icon` | `MdiIcon` | - | نوع الأيقونة |
+| `icon` | `LucideIcon` | - | نوع الأيقونة |
 | `size` | `u32` | `24` | حجم الأيقونة |
 | `color` | `&str` | - | اللون |
 
@@ -97,7 +98,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: MdiIcon,
+    icon: LucideIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -105,10 +106,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### MdiIcon
+### LucideIcon
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // أكثر من 1000 نوع أيقونة
 }
 ```

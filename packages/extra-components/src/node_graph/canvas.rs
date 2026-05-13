@@ -3,9 +3,16 @@
 
 use std::collections::HashMap;
 
-use tairitsu_vdom::{VElement, VNode, VText, svg::SafeSvg};
+use tairitsu_vdom::svg::SafeSvg;
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use crate::node_graph::{ connection::{Connection, ConnectionId, ConnectionLine}, history::{HistoryAction, HistoryState}, minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap}, node::{NodeView, NodeId, NodePlacement, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
+use crate::node_graph::{
+    connection::{Connection, ConnectionId, ConnectionLine},
+    history::{HistoryAction, HistoryState},
+    minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap},
+    node::{Node, NodeId, NodeState, NodeType, PortPosition},
+    serialization::SerializedNodeGraph,
+};
 
 /// Node graph state
 ///
@@ -13,7 +20,7 @@ use crate::node_graph::{ connection::{Connection, ConnectionId, ConnectionLine},
 /// Now a pure state model that can be used with any framework.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeGraphState {
-    pub nodes: HashMap<String, NodePlacement>,
+    pub nodes: HashMap<String, NodeState>,
     pub connections: Vec<Connection>,
     pub selected_node: Option<String>,
     pub selected_connection: Option<ConnectionId>,
@@ -40,22 +47,22 @@ impl NodeGraphState {
     }
 
     /// Add a node to the graph
-    pub fn add_node(&mut self, state: NodePlacement) {
+    pub fn add_node(&mut self, state: NodeState) {
         self.nodes.insert(state.id.clone(), state);
     }
 
     /// Remove a node from the graph
-    pub fn remove_node(&mut self, id: &str) -> Option<NodePlacement> {
+    pub fn remove_node(&mut self, id: &str) -> Option<NodeState> {
         self.nodes.remove(id)
     }
 
     /// Get a node by ID
-    pub fn get_node(&self, id: &str) -> Option<&NodePlacement> {
+    pub fn get_node(&self, id: &str) -> Option<&NodeState> {
         self.nodes.get(id)
     }
 
     /// Get a mutable node by ID
-    pub fn get_node_mut(&mut self, id: &str) -> Option<&mut NodePlacement> {
+    pub fn get_node_mut(&mut self, id: &str) -> Option<&mut NodeState> {
         self.nodes.get_mut(id)
     }
 
@@ -183,7 +190,7 @@ impl NodeGraphState {
                 id,
                 state: node_state,
             } => {
-                let mut ns = NodePlacement::new(id.clone());
+                let mut ns = NodeState::new(id.clone());
                 ns.position = node_state.position;
                 ns.size = node_state.size;
                 ns.minimized = node_state.minimized;
@@ -236,7 +243,7 @@ impl NodeGraphState {
                 node_type,
                 position,
             } => {
-                let ns = NodePlacement::new(id.clone()).with_position(position.0, position.1);
+                let ns = NodeState::new(id.clone()).with_position(position.0, position.1);
                 self.nodes.insert(id.clone(), ns);
                 Some(NodeGraphEvent::NodeAdded {
                     id,
@@ -478,7 +485,7 @@ pub fn render_node_graph_canvas_with_history(
 
     let mut nodes_children: Vec<VNode> = Vec::new();
     for node_state in state.nodes.values() {
-        let node = NodeView::from(node_state.clone());
+        let node = Node::from(node_state.clone());
         nodes_children.push(crate::node_graph::node::render_node(&node));
     }
 
@@ -643,7 +650,7 @@ mod tests {
     #[test]
     fn test_add_remove_node() {
         let mut state = NodeGraphState::new();
-        let node = NodePlacement::new("node1".to_string());
+        let node = NodeState::new("node1".to_string());
 
         state.add_node(node.clone());
         assert_eq!(state.nodes.len(), 1);
@@ -657,7 +664,7 @@ mod tests {
     #[test]
     fn test_update_node_position() {
         let mut state = NodeGraphState::new();
-        state.add_node(NodePlacement::new("node1".to_string()));
+        state.add_node(NodeState::new("node1".to_string()));
 
         assert!(state.update_node_position("node1", 100.0, 200.0));
         assert_eq!(state.get_node("node1").unwrap().position, (100.0, 200.0));
@@ -666,8 +673,8 @@ mod tests {
     #[test]
     fn test_select_node() {
         let mut state = NodeGraphState::new();
-        state.add_node(NodePlacement::new("node1".to_string()));
-        state.add_node(NodePlacement::new("node2".to_string()));
+        state.add_node(NodeState::new("node1".to_string()));
+        state.add_node(NodeState::new("node2".to_string()));
 
         state.select_node(Some("node1".to_string()));
         assert_eq!(state.selected_node, Some("node1".to_string()));
@@ -721,7 +728,7 @@ mod tests {
     #[test]
     fn test_calculate_port_position() {
         let mut state = NodeGraphState::new();
-        let node = NodePlacement::new("node1".to_string())
+        let node = NodeState::new("node1".to_string())
             .with_position(100.0, 100.0)
             .with_size(200.0, 150.0);
         state.add_node(node);

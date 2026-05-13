@@ -6,8 +6,8 @@
 //! - State persistence across page navigation
 //! - Clean state isolation between examples
 
-use std::{collections::HashMap, sync::{Arc, OnceLock, RwLock}};
-
+use std::collections::HashMap;
+use std::sync::{Arc, OnceLock, RwLock};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode, VText};
 

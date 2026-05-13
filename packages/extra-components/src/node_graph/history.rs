@@ -15,8 +15,8 @@ pub struct SerializedNodeState {
     pub minimized: bool,
 }
 
-impl From<crate::node_graph::NodePlacement> for SerializedNodeState {
-    fn from(state: crate::node_graph::NodePlacement) -> Self {
+impl From<crate::node_graph::NodeState> for SerializedNodeState {
+    fn from(state: crate::node_graph::NodeState) -> Self {
         Self {
             id: state.id,
             position: state.position,
@@ -26,7 +26,7 @@ impl From<crate::node_graph::NodePlacement> for SerializedNodeState {
     }
 }
 
-impl From<SerializedNodeState> for crate::node_graph::NodePlacement {
+impl From<SerializedNodeState> for crate::node_graph::NodeState {
     fn from(state: SerializedNodeState) -> Self {
         Self {
             id: state.id,

@@ -36,6 +36,7 @@
 ### 기본 사용법
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 rsx! {

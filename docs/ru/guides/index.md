@@ -1,6 +1,6 @@
 # Hikari UI Framework
 
-> Современный UI-фреймворк на Rust, построенный на Tairitsu + Grass + Axum
+> Современный UI-фреймворк на Rust, построенный на Dioxus + Grass + Axum
 >
 > **Стиль дизайна**: Плоский дизайн Arknights + Sci-Fi эстетика FUI + Традиционные китайские цвета
 >
@@ -48,12 +48,13 @@ Hikari — это современный UI-фреймворк, разработ
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-tairitsu = "0.5"
+dioxus = "0.5"
 ```
 
 ### Базовое использование
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -131,6 +132,7 @@ hikari/
 ### Переключение темы
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -184,7 +186,7 @@ AnimationBuilder::new(&elements)
 
 ## Благодарности
 
-- **Tairitsu** - Мощный Rust UI-фреймворк
+- [Dioxus](https://dioxuslabs.com/) - Мощный Rust UI-фреймворк
 - [Grass](https://github.com/kaj/kaj) - Чистый Rust SCSS-компилятор
 - [Element Plus](https://element-plus.org/) - Отличный справочник по дизайну библиотеки компонентов
 - [Material UI](https://mui.com/) - Вдохновение современным UI-дизайном

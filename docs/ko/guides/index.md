@@ -1,6 +1,6 @@
 # Hikari UI 프레임워크
 
-> Tairitsu + Grass + Axum 기반의 현대적인 Rust UI 프레임워크
+> Dioxus + Grass + Axum 기반의 현대적인 Rust UI 프레임워크
 >
 > **디자인 스타일**: 아크나이츠 플랫 디자인 + FUI SF 미학 + 전통 중국 색채
 >
@@ -48,12 +48,13 @@ Hikari는 Rust 생태계를 위해 설계된 현대적인 UI 프레임워크로,
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-tairitsu = "0.5"
+dioxus = "0.5"
 ```
 
 ### 기본 사용법
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -131,6 +132,7 @@ hikari/
 ### 테마 전환
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -184,7 +186,7 @@ AnimationBuilder::new(&elements)
 
 ## 감사의 말
 
-- **Tairitsu** - 강력한 Rust UI 프레임워크
+- [Dioxus](https://dioxuslabs.com/) - 강력한 Rust UI 프레임워크
 - [Grass](https://github.com/kaj/kaj) - 순수 Rust SCSS 컴파일러
 - [Element Plus](https://element-plus.org/) - 훌륭한 컴포넌트 라이브러리 디자인 참조
 - [Material UI](https://mui.com/) - 현대적인 UI 디자인 영감

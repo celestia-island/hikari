@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 @use './input-vars.scss' as input-vars;
 
 // ============================================
@@ -375,10 +375,10 @@
     pointer-events: none;
     z-index: 1;
     border-radius: inherit;
-    opacity: var(--hi-spotlight-opacity, 0);
+    opacity: var(--spotlight-opacity, 0);
 
     background-image: radial-gradient(
-      circle at var(--hi-spotlight-x, 50%) var(--hi-spotlight-y, 50%),
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
       var(--hi-color-primary) 0%,
       transparent 70%
     );

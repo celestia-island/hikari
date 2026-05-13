@@ -8,7 +8,7 @@ use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone)]
 pub struct RadioContext {
-    pub name: String,
+    pub name: &'static str,
     pub selected_value: ReactiveSignal<String>,
     pub on_change: EventHandler<String>,
     pub disabled: bool,
@@ -96,7 +96,7 @@ pub enum RadioDirection {
 pub fn RadioGroup(props: RadioGroupProps) -> Element {
     let selected_value = use_signal(|| props.value.clone());
 
-    let name = props.name.clone();
+    let name: &'static str = Box::leak(props.name.clone().into_boxed_str());
     let disabled = props.disabled;
     let on_change = props
         .on_change

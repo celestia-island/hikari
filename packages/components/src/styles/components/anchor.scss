@@ -1,7 +1,7 @@
 // Anchor component styles
 // In-page navigation with smooth scrolling, FUI design system
 
-@use 'variables' as vars;
+@use '../../../../theme/styles/variables.scss' as vars;
 
 .hi-anchor-wrapper {
     position: relative;

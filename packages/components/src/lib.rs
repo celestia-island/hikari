@@ -11,6 +11,7 @@ pub mod data;
 pub mod display;
 pub mod entry;
 pub mod feedback;
+pub mod hooks;
 pub mod layout;
 pub mod navigation;
 pub mod platform;

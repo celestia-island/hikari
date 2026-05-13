@@ -550,7 +550,7 @@ rsx! {
 
 ### 路由系统
 
-Website 使用 Tairitsu 的 Routable derive 宏。
+Website 使用 Dioxus 0.7 的 Routable derive 宏。
 
 **App 组件结构**：
 ```rust

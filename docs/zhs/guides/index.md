@@ -1,6 +1,6 @@
 # Hikari UI 框架
 
-> 一个基于 Tairitsu + Grass + Axum 的现代化 Rust UI 框架
+> 一个基于 Dioxus + Grass + Axum 的现代化 Rust UI 框架
 >
 > **设计风格**: Arknights 平面设计 + FUI 科幻感 + 中国传统色
 >
@@ -48,12 +48,13 @@ Hikari 是一个为 Rust 生态系统设计的现代化 UI 框架，结合了传
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-tairitsu = "0.5"
+dioxus = "0.5"
 ```
 
 ### 基础使用
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -131,6 +132,7 @@ hikari/
 ### 主题切换
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -184,7 +186,7 @@ AnimationBuilder::new(&elements)
 
 ## 致谢
 
-- **Tairitsu** - 强大的 Rust UI 框架
+- [Dioxus](https://dioxuslabs.com/) - 强大的 Rust UI 框架
 - [Grass](https://github.com/kaj/kaj) - 纯 Rust SCSS 编译器
 - [Element Plus](https://element-plus.org/) - 优秀的组件库设计参考
 - [Material UI](https://mui.com/) - 现代化 UI 设计灵感

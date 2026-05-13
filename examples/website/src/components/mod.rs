@@ -17,8 +17,8 @@ pub mod page_layout;
 pub mod portal;
 pub mod sidebar;
 pub mod top_nav;
+
 pub mod registry;
 
 pub use sidebar::render as sidebar;
 pub use top_nav::render as top_nav;
-

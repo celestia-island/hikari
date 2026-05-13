@@ -1,6 +1,6 @@
 # Hikari UI Framework
 
-> Un framework UI moderno para Rust construido sobre Tairitsu + Grass + Axum
+> Un framework UI moderno para Rust construido sobre Dioxus + Grass + Axum
 >
 > **Estilo de Diseño**: Diseño plano de Arknights + Estética sci-fi FUI + Colores tradicionales chinos
 >
@@ -48,12 +48,13 @@ Añadir a `Cargo.toml`:
 hikari-components = "0.1"
 hikari-palette = "0.1"
 hikari-theme = "0.1"
-tairitsu = "0.5"
+dioxus = "0.5"
 ```
 
 ### Uso Básico
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::{ThemeProvider, Button};
 use hikari_theme::ThemeProvider;
 
@@ -131,6 +132,7 @@ hikari/
 ### Cambio de Tema
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
@@ -184,7 +186,7 @@ AnimationBuilder::new(&elements)
 
 ## Agradecimientos
 
-- **Tairitsu** - Potente framework UI para Rust
+- [Dioxus](https://dioxuslabs.com/) - Potente framework UI para Rust
 - [Grass](https://github.com/kaj/kaj) - Compilador SCSS puro en Rust
 - [Element Plus](https://element-plus.org/) - Excelente referencia de diseño de biblioteca de componentes
 - [Material UI](https://mui.com/) - Inspiración de diseño UI moderno

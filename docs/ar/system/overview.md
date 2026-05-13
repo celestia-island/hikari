@@ -122,15 +122,15 @@ AnimationBuilder::new(&elements)
 - تعريفات تعداد الأيقونات
 - توليد محتوى SVG
 - متغيرات حجم الأيقونات
-- تكامل Material Design Icons
+- تكامل Lucide Icons
 
 **الميزات الأساسية**:
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Search,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **مصادر الأيقونات**:
-- Material Design Icons (أكثر من 7000 أيقونة)
+- Lucide Icons (أكثر من 1000 أيقونة)
 - أيقونات مخصصة قابلة للتوسعة
 - دعم أحجام متعددة
 

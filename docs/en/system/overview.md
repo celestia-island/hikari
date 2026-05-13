@@ -122,15 +122,15 @@ Icon management and rendering system.
 - Icon enum definitions
 - SVG content generation
 - Icon size variants
-- Material Design Icons integration
+- Lucide Icons integration
 
 **Core Features**:
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Search,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **Icon Sources**:
-- Material Design Icons (7000+ icons)
+- Lucide Icons (1000+ icons)
 - Extensible custom icons
 - Multiple size support
 

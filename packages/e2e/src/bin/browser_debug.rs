@@ -3,7 +3,10 @@ use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{browser::{Browser, BrowserConfig}, cdp::browser_protocol::page::CaptureScreenshotFormat};
+use chromiumoxide::{
+    browser::{Browser, BrowserConfig},
+    cdp::browser_protocol::page::CaptureScreenshotFormat,
+};
 use clap::{Parser, Subcommand};
 use tracing::{info, warn};
 

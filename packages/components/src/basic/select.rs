@@ -3,11 +3,9 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
+use crate::platform;
 use crate::{
-    feedback::{
-        ConditionalGlow, ConditionalGlowProps, Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps,
-    },
-    platform,
+    feedback::{Glow, GlowProps},
     portal::{
         PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
         use_portal,
@@ -133,27 +131,6 @@ pub fn Select(props: SelectProps) -> Element {
     let portal_add = portal.add_entry.clone();
     let internal_value_for_click = internal_value.clone();
     let dropdown_id_for_click2 = dropdown_id.clone();
-
-    let portal_remove_for_kb = portal.remove_entry.clone();
-    let dropdown_id_for_kb = dropdown_id.clone();
-    let handle_keydown = move |e: KeyboardEvent| {
-        if props.disabled {
-            return;
-        }
-        match e.get_key() {
-            Key::Escape => {
-                let id = dropdown_id_for_kb.get();
-                if !id.is_empty() {
-                    portal_remove_for_kb.call(id);
-                }
-            }
-            Key::ArrowDown | Key::ArrowUp => {
-                e.prevent_default();
-            }
-            _ => {}
-        }
-    };
-
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -276,19 +253,32 @@ pub fn Select(props: SelectProps) -> Element {
 
     rsx! {
         div { class: wrapper_classes,
-            ConditionalGlow {
-                glow: props.glow,
-                block: true,
-                blur: GlowBlur::Light,
-                color: GlowColor::Primary,
-                intensity: GlowIntensity::Soft,
+            if props.glow {
+                Glow {
+                    block: true,
+                    blur: crate::GlowBlur::Light,
+                    intensity: crate::GlowIntensity::Soft,
+                    color: crate::GlowColor::Primary,
+                    div { class: trigger_classes, onclick: handle_trigger_click,
+                        role: "combobox",
+                        "aria-expanded": "{aria_expanded}",
+                        "aria-haspopup": "listbox",
 
+                        span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                            "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                        }
+
+                        span {
+                            class: "hi-select-arrow",
+                            dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                        }
+                    }
+                }
+            } else {
                 div { class: trigger_classes, onclick: handle_trigger_click,
                     role: "combobox",
-                    tabindex: "0",
                     "aria-expanded": "{aria_expanded}",
                     "aria-haspopup": "listbox",
-                    onkeydown: handle_keydown,
 
                     span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
                         "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"

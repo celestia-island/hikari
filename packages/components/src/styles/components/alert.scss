@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Alert Component

@@ -5,10 +5,8 @@
 
 use std::cell::RefCell;
 
-use hikari_palette::{
-    color_math::{adjust_lightness_hex, adjust_saturation_hex},
-    月白, 粉红,
-};
+use hikari_palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
+use hikari_palette::{月白, 粉红};
 
 /// Background render context (carries render parameters)
 #[derive(Clone, Debug)]

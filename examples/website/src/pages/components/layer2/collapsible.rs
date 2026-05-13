@@ -1,7 +1,6 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
 
 pub fn render() -> VNode {
     render_demo_page("page-component-collapsible", "Collapsible", "Accordion and collapse panels with expand/collapse animation.", rsx! [

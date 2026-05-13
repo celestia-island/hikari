@@ -2,10 +2,9 @@
 
 pub mod palette;
 
+use crate::components::demo_page::{render_demo_page, render_demo_block, render_demo_row};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::demo_page::{render_demo_page, render_demo_block, render_demo_row};
 
 fn render_overview() -> VNode {
     render_demo_page(

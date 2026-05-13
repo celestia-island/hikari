@@ -1,15 +1,15 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Glow Component - Single Glow Color System
 // ============================================
 //
 // Glow states are controlled by CSS variables updated via mouse events:
-// - --hi-glow-x, --hi-glow-y: Position of glow center (percentage, 0-100%)
-// - --hi-glow-intensity-scale: Visibility level (0 = hidden, 0.5 = hover, 1.0 = active)
-// - --hi-glow-opacity: Direct opacity control (overrides calculated value)
+// - --glow-x, --glow-y: Position of glow center (percentage, 0-100%)
+// - --glow-intensity-scale: Visibility level (0 = hidden, 0.5 = hover, 1.0 = active)
+// - --glow-opacity: Direct opacity control (overrides calculated value)
 // - --hi-glow-color: Glow color
 //
 // CSS provides:
@@ -34,14 +34,14 @@
     transition: opacity 0.3s ease-in-out;
 
     background: radial-gradient(
-      circle at var(--hi-glow-x, 50%) var(--hi-glow-y, 50%),
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
-      transparent calc(var(--hi-glow-spread, 1.5) * 100%)
+      transparent calc(var(--glow-spread, 1.5) * 100%)
     );
   }
 
   &:hover::before {
-    opacity: var(--hi-glow-opacity, 0.15);
+    opacity: var(--glow-opacity, 0.15);
   }
 
   > * {
@@ -90,7 +90,7 @@
 // ============================================
 
 // These classes define the BASE opacity for different glow intensities
-// The actual visibility is controlled by --hi-glow-intensity-scale (0 = hidden, 1 = full intensity)
+// The actual visibility is controlled by --glow-intensity-scale (0 = hidden, 1 = full intensity)
 // IMPORTANT: --glow-base-opacity must be defined on the parent, not on ::before
 //
 // Opacity calculation: base-opacity * intensity-scale
@@ -100,35 +100,35 @@
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
 // Very low opacity + wide spread for an almost imperceptible ambient glow
 .hi-glow-dim {
-  --hi-glow-opacity: 0.07;
-  --hi-glow-spread: 2.4;
+  --glow-opacity: 0.07;
+  --glow-spread: 2.4;
 
   &::before {
-    --hi-glow-opacity: 0.07;
-    --hi-glow-spread: 2.4;
+    --glow-opacity: 0.07;
+    --glow-spread: 2.4;
   }
 }
 
 // 70% intensity (medium, default for interactive elements: buttons, inputs)
 // Balanced opacity + moderate spread for clear but non-distracting feedback
 .hi-glow-soft {
-  --hi-glow-opacity: 0.15;
-  --hi-glow-spread: 1.6;
+  --glow-opacity: 0.15;
+  --glow-spread: 1.6;
 
   &::before {
-    --hi-glow-opacity: 0.15;
-    --hi-glow-spread: 1.6;
+    --glow-opacity: 0.15;
+    --glow-spread: 1.6;
   }
 }
 
 // 100% intensity (intense, for emphasis: active states, focus rings)
 .hi-glow-bright {
-  --hi-glow-opacity: 0.30;
-  --hi-glow-spread: 1.3;
+  --glow-opacity: 0.30;
+  --glow-spread: 1.3;
 
   &::before {
-    --hi-glow-opacity: 0.30;
-    --hi-glow-spread: 1.3;
+    --glow-opacity: 0.30;
+    --glow-spread: 1.3;
   }
 }
 
@@ -219,10 +219,10 @@
 // Pulse animation - heartbeat-like pulsing glow
 @keyframes glow-pulse {
   0%, 100% {
-    --hi-glow-intensity-scale: 0.5;
+    --glow-intensity-scale: 0.5;
   }
   50% {
-    --hi-glow-intensity-scale: 1.0;
+    --glow-intensity-scale: 1.0;
   }
 }
 
@@ -233,10 +233,10 @@
 // Breathe animation - slow, smooth intensity variation
 @keyframes glow-breathe {
   0%, 100% {
-    --hi-glow-intensity-scale: 0.3;
+    --glow-intensity-scale: 0.3;
   }
   50% {
-    --hi-glow-intensity-scale: 1.0;
+    --glow-intensity-scale: 1.0;
   }
 }
 
@@ -247,24 +247,24 @@
 // Shimmer animation - moving light spot across the element
 @keyframes glow-shimmer {
   0% {
-    --hi-glow-x: 20%;
-    --hi-glow-y: 50%;
+    --glow-x: 20%;
+    --glow-y: 50%;
   }
   25% {
-    --hi-glow-x: 50%;
-    --hi-glow-y: 80%;
+    --glow-x: 50%;
+    --glow-y: 80%;
   }
   50% {
-    --hi-glow-x: 80%;
-    --hi-glow-y: 50%;
+    --glow-x: 80%;
+    --glow-y: 50%;
   }
   75% {
-    --hi-glow-x: 50%;
-    --hi-glow-y: 20%;
+    --glow-x: 50%;
+    --glow-y: 20%;
   }
   100% {
-    --hi-glow-x: 20%;
-    --hi-glow-y: 50%;
+    --glow-x: 20%;
+    --glow-y: 50%;
   }
 }
 

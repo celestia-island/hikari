@@ -1,7 +1,8 @@
 // hi-components/src/data/selection.rs
 // Selection component with Arknights + FUI styling
 
-use hikari_palette::{TypedClass, classes::SelectionClassNew};
+use hikari_palette::TypedClass;
+use hikari_palette::classes::SelectionClassNew;
 use tairitsu_style::ClassesBuilder;
 
 use crate::{prelude::*, styled::StyledComponent};

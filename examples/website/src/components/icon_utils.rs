@@ -1,4 +1,5 @@
-use hikari_icons::{MdiIcon, generated::mdi_selected::get};
+use hikari_icons::generated::mdi_selected::get;
+use hikari_icons::MdiIcon;
 use tairitsu_vdom::{VElement, VNode};
 
 pub fn icon_el(icon: MdiIcon, size: u32) -> VNode {

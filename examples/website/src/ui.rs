@@ -3,9 +3,9 @@
 //! This module provides VElement builders for common UI components
 //! that integrate seamlessly with the hikari-animation system.
 
+use crate::animation::{animation_attrs, AnimationId};
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_vdom::{VElement, VNode};
-
-use crate::{animation::{AnimationId, animation_attrs}, components::glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 /// Button component with animation support
 pub struct Button {

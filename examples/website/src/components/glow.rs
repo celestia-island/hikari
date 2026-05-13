@@ -1,4 +1,4 @@
-use tairitsu_vdom::{VElement, VNode, get_bounding_client_rect, set_style};
+use tairitsu_vdom::{get_bounding_client_rect, set_style, VElement, VNode};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum GlowIntensity {
@@ -66,7 +66,7 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
     let radius = config.radius;
 
     let init_vars =
-        format!("--hi-glow-x:50%;--hi-glow-y:50%;--hi-glow-color:{color_var};--hi-glow-radius:{radius};");
+        format!("--glow-x:50%;--glow-y:50%;--hi-glow-color:{color_var};--hi-glow-radius:{radius};");
 
     let block_class = if config.block {
         " hi-glow-wrapper-block"
@@ -89,8 +89,8 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
                 if rect.width > 0.0 && rect.height > 0.0 {
                     let px = (me.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
                     let py = (me.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                    set_style(h, "--hi-glow-x", &format!("{:.1}%", px));
-                    set_style(h, "--hi-glow-y", &format!("{:.1}%", py));
+                    set_style(h, "--glow-x", &format!("{:.1}%", px));
+                    set_style(h, "--glow-y", &format!("{:.1}%", py));
                 }
             }
         }
@@ -101,8 +101,8 @@ pub fn glow_wrap(children: VNode, config: GlowConfig) -> VNode {
             let elem = me.current_target.or(me.target);
             if let Some(target) = elem {
                 let h = tairitsu_vdom::DomHandle::from_raw(target);
-                set_style(h, "--hi-glow-x", "50%");
-                set_style(h, "--hi-glow-y", "50%");
+                set_style(h, "--glow-x", "50%");
+                set_style(h, "--glow-y", "50%");
             }
         }
     };

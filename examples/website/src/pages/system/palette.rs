@@ -1,9 +1,8 @@
 //! Color palette showcase page — renders all primary theme colors using hikari-palette.
 
-use hikari_palette::{Hikari, Tairitsu, default_theme};
-use tairitsu_vdom::{VElement, VNode, VText};
-
 use crate::components::demo_page::render_demo_page;
+use hikari_palette::{default_theme, Hikari, Tairitsu};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {
     VNode::Text(VText::new(s))

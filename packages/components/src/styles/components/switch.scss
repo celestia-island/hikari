@@ -37,8 +37,8 @@
 
 // Very subtle glow for switch - preserves background colors while keeping mouse-follow effect
 .hi-switch-label .hi-switch-glow.hi-glow-dim::before {
-    --hi-glow-opacity: 0.015;
-    --hi-glow-spread: 2.5;
+    --glow-opacity: 0.015;
+    --glow-spread: 2.5;
 }
 
 .hi-switch {
@@ -48,10 +48,10 @@
     background-color: var(--hi-color-border, #d1d5db);
     border: 1.5px solid transparent;
     border-radius: 9999px;
-    transition: background-color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease),
-                border-color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease),
-                box-shadow var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease),
-                filter var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
+    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                border-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                filter var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     vertical-align: middle;
     z-index: 1;
     box-sizing: border-box;
@@ -82,9 +82,9 @@
     background-color: var(--hi-surface, #FFFFFF);
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: transform var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease),
-                background-color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease),
-                box-shadow var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
+    transition: transform var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease),
+                box-shadow var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
     flex-shrink: 0;
     box-sizing: border-box;
 }
@@ -186,7 +186,7 @@
     height: 8px;
     background-color: var(--hi-color-border, #bfbfbf);
     border-radius: 50%;
-    transition: background-color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
+    transition: background-color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
 }
 
 .hi-switch-sm .hi-switch-thumb-dot { width: 6px; height: 6px; }
@@ -210,7 +210,7 @@
     color: var(--hi-color-border, #bfbfbf);
     white-space: nowrap;
     line-height: 1;
-    transition: color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
+    transition: color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
 }
 
 .hi-switch-sm .hi-switch-thumb-text { font-size: 9px; }
@@ -226,7 +226,7 @@
     align-items: center;
     justify-content: center;
     color: var(--hi-color-border, #bfbfbf);
-    transition: color var(--hi-duration-fast, 0.2s) var(--hi-ease-smooth, ease);
+    transition: color var(--hikari-duration-fast, 0.2s) var(--hikari-ease-smooth, ease);
 }
 
 .hi-switch-sm .hi-switch-thumb-icon svg { width: 10px; height: 10px; }

@@ -1,12 +1,12 @@
 # Icons System
 
-Icon management and rendering system, integrated with Material Design Icons (MDI).
+Icon management and rendering system, integrated with Lucide Icons.
 
 ## Overview
 
 `hikari-icons` provides:
 
-- **1000+ Icons** - Complete Material Design Icons (MDI) collection
+- **1000+ Icons** - Complete Lucide Icons collection
 - **Type Safe** - Enum-based icon names
 - **SVG Rendering** - Client-side and server-side rendering
 - **Runtime Loading** - On-demand icon SVG loading
@@ -16,11 +16,12 @@ Icon management and rendering system, integrated with Material Design Icons (MDI
 ### Basic Usage
 
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use dioxus::prelude::*;
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Magnify,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -30,29 +31,29 @@ rsx! {
 ### Available Icons
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // Navigation
     Home,
     Menu,
-    Magnify,
-    Cog,
+    Search,
+    Settings,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // Actions
-    Pencil,
-    Delete,
+    Edit,
+    Trash,
     Check,
-    Close,
+    X,
     Plus,
     Minus,
 
     // Status
-    AlertCircleOutline,
-    CheckCircleOutline,
-    InformationOutline,
-    AlertOutline,
+    AlertCircle,
+    CheckCircle,
+    Info,
+    AlertTriangle,
 
     // ... 1000+ icons
 }
@@ -62,7 +63,7 @@ pub enum MdiIcon {
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `icon` | `MdiIcon` | - | Icon type |
+| `icon` | `LucideIcon` | - | Icon type |
 | `size` | `u32` | `24` | Icon size |
 | `color` | `&str` | - | Color |
 
@@ -97,7 +98,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: MdiIcon,
+    icon: LucideIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -105,10 +106,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### MdiIcon
+### LucideIcon
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // 1000+ icon variants
 }
 ```

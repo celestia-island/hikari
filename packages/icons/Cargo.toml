@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Material Design Icons (MDI) integration for the Hikari design system"
+description = "Lucide icon integration for the Hikari design system"
 repository.workspace = true
 
 [features]
@@ -26,7 +26,7 @@ tairitsu-hooks = { version = "^0.4", optional = true }
 tairitsu-macros = { version = "^0.4", optional = true }
 
 # Hikari design system
-hikari-animation = { version = "^0.1", path = "../animation", default-features = false }
+hikari-animation = { path = "../animation", default-features = false }
 
 # Data serialization
 serde.workspace = true

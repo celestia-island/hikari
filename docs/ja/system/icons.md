@@ -1,12 +1,12 @@
 # アイコンシステム
 
-アイコン管理およびレンダリングシステム。Material Design Icons (MDI)と統合されています。
+アイコン管理およびレンダリングシステム。Lucide Iconsと統合されています。
 
 ## 概要
 
 `hikari-icons`は以下を提供します：
 
-- **1000以上のアイコン** - 完全なMaterial Design Icons (MDI)コレクション
+- **1000以上のアイコン** - 完全なLucide Iconsコレクション
 - **タイプセーフ** - 列挙型ベースのアイコン名
 - **SVGレンダリング** - クライアントサイドおよびサーバーサイドレンダリング
 - **ランタイム読み込み** - オンデマンドでのアイコンSVG読み込み
@@ -16,11 +16,12 @@
 ### 基本的な使い方
 
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use dioxus::prelude::*;
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Magnify,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -30,29 +31,29 @@ rsx! {
 ### 利用可能なアイコン
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // ナビゲーション
     Home,
     Menu,
-    Magnify,
-    Cog,
+    Search,
+    Settings,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // アクション
-    Pencil,
-    Delete,
+    Edit,
+    Trash,
     Check,
-    Close,
+    X,
     Plus,
     Minus,
 
     // ステータス
-    AlertCircleOutline,
-    CheckCircleOutline,
-    InformationOutline,
-    AlertOutline,
+    AlertCircle,
+    CheckCircle,
+    Info,
+    AlertTriangle,
 
     // ... 1000以上のアイコン
 }
@@ -62,7 +63,7 @@ pub enum MdiIcon {
 
 | プロパティ | 型 | デフォルト値 | 説明 |
 |----------|------|---------|-------------|
-| `icon` | `MdiIcon` | - | アイコンタイプ |
+| `icon` | `LucideIcon` | - | アイコンタイプ |
 | `size` | `u32` | `24` | アイコンサイズ |
 | `color` | `&str` | - | 色 |
 
@@ -97,7 +98,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: MdiIcon,
+    icon: LucideIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -105,10 +106,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### MdiIcon
+### LucideIcon
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // 1000以上のアイコンバリアント
 }
 ```

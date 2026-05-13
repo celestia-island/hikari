@@ -7,9 +7,9 @@
 // or highlight.js. For built-in Rust-based highlighting, consider
 // integrating with syntect.
 
+use crate::platform;
+use crate::{prelude::*, styled::StyledComponent};
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
-
-use crate::{platform, prelude::*, styled::StyledComponent};
 
 // Copy text to clipboard using platform layer
 fn copy_to_clipboard(text: &str) -> bool {

@@ -122,15 +122,15 @@ AnimationBuilder::new(&elements)
 - 图标枚举定义
 - SVG 内容生成
 - 图标尺寸变体
-- Material Design Icons 集成
+- Lucide Icons 集成
 
 **核心功能**:
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Search,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **图标源**:
-- Material Design Icons（7000+ 图标）
+- Lucide Icons（1000+ 图标）
 - 可扩展的自定义图标
 - 多种尺寸支持
 

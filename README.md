@@ -60,9 +60,9 @@ The result is a component framework where host-guest communication (DOM, events,
 
 ```toml
 [dependencies]
-hikari-palette = "0.1.10"
-hikari-theme = "0.1.10"
-hikari-components = "0.1.10"
+hikari-palette = "0.1.0"
+hikari-theme = "0.1.0"
+hikari-components = "0.1.0"
 ```
 
 ### Build & Run

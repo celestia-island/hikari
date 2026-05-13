@@ -1,7 +1,8 @@
 // hi-components/src/data/sort.rs
 // Sort component with Arknights + FUI styling
 
-use hikari_palette::{TypedClass, classes::SortClass};
+use hikari_palette::TypedClass;
+use hikari_palette::classes::SortClass;
 use tairitsu_style::ClassesBuilder;
 
 pub use super::column::ColumnDef;

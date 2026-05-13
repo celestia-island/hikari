@@ -1,9 +1,11 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component with Arknights + FUI styling
 
-use std::{cell::RefCell, rc::Rc};
-
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
+
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use tairitsu_hooks::ReactiveSignal;
 
 use crate::{platform, prelude::*, styled::StyledComponent};

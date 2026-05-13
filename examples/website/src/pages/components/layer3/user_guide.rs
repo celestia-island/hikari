@@ -1,8 +1,8 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page}, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 pub fn render() -> VNode {
     render_demo_page("page-component-user-guide", "User Guide", "Step-by-step interactive guide for onboarding users and feature discovery.", rsx! [

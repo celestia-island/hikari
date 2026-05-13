@@ -1,7 +1,8 @@
 // node_graph/plugins/processor.rs
 // Processor node plugin - performs data transformations
 
-use std::{collections::HashMap, sync::Mutex};
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 use crate::node_graph::{
     node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},

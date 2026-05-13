@@ -27,10 +27,10 @@
 //     .build();
 // ```
 
+use crate::prelude::*;
+use crate::style_builder::StyleStringBuilder;
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
-
-use crate::{prelude::*, style_builder::StyleStringBuilder};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum GlowBlur {
@@ -406,46 +406,5 @@ impl crate::styled::StyledComponent for GlowComponent {
 
     fn name() -> &'static str {
         "glow"
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub struct GlowConfig {
-    pub glow: bool,
-    pub blur: GlowBlur,
-    pub color: GlowColor,
-    pub intensity: GlowIntensity,
-}
-
-#[define_props]
-pub struct ConditionalGlowProps {
-    pub glow: bool,
-
-    pub children: Element,
-
-    pub blur: GlowBlur,
-
-    pub color: GlowColor,
-
-    pub intensity: GlowIntensity,
-
-    #[default(false)]
-    pub block: bool,
-}
-
-#[component]
-pub fn ConditionalGlow(props: ConditionalGlowProps) -> Element {
-    if props.glow {
-        rsx! {
-            Glow {
-                blur: props.blur,
-                color: props.color,
-                intensity: props.intensity,
-                block: props.block,
-                {props.children}
-            }
-        }
-    } else {
-        props.children
     }
 }

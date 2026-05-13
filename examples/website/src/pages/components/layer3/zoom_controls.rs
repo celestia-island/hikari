@@ -1,7 +1,7 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
+use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page}, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 pub fn render() -> VNode {
     render_demo_page("page-component-zoom-controls", "Zoom Controls", "Zoom in, zoom out, and reset controls for canvas viewers, maps, and image previews.", rsx! [

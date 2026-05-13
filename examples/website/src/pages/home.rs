@@ -1,7 +1,6 @@
 use tairitsu_web::t;
-use tairitsu_vdom::{VElement, VNode, VText};
-
 use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
+use tairitsu_vdom::{VElement, VNode, VText};
 
 fn txt(s: &str) -> VNode {
     VNode::Text(VText::new(s))

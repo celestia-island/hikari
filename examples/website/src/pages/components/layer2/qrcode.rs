@@ -1,7 +1,6 @@
+use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
-
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page, render_demo_row};
 
 fn make_qr_svg(size: u32) -> VNode {
     let size_s = size.to_string();

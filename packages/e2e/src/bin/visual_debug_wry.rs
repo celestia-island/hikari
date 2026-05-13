@@ -5,11 +5,16 @@
 
 use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose};
-use serde_json::json;
-use std::{fs, path::{Path, PathBuf}, time::Instant};
-
 use clap::{Parser, Subcommand};
-use hikari_e2e::debug_client::{ DebugClient, ScreenshotRequest, BatchOp, ReadyResponse, ViewportResponse, ErrorsResponse, PerformanceMetrics, NetworkResponse, A11yNode, };
+use hikari_e2e::debug_client::{
+    DebugClient, ScreenshotRequest, BatchOp,
+    ReadyResponse, ViewportResponse, ErrorsResponse,
+    PerformanceMetrics, NetworkResponse, A11yNode,
+};
+use serde_json::json;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 const DEFAULT_DEV_PORT: u16 = 3000;
 const DEFAULT_DEBUG_PORT: u16 = 3001;

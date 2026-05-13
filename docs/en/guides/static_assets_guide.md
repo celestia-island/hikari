@@ -21,12 +21,12 @@ This serves files from `./dist` directory at URL path `/static`.
 use hikari_render_service::HikariRenderServicePlugin;
 
 let plugin = HikariRenderServicePlugin::new()
-    .icon_assets("./packages/icons/dist/mdi/icons", "/static/icons")
+    .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
     .build()
     .unwrap();
 ```
 
-This serves icon SVG files from `./packages/icons/dist/mdi/icons` at `/static/icons`.
+This serves icon SVG files from `./packages/icons/dist/lucide/icons` at `/static/icons`.
 
 ## Advanced Usage
 
@@ -39,7 +39,7 @@ let plugin = HikariRenderServicePlugin::new()
     // Main static assets (HTML, CSS, WASM, JS)
     .static_assets("./dist", "/static")
     // Icon assets
-    .icon_assets("./packages/icons/dist/mdi/icons", "/static/icons")
+    .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
     // Tailwind CSS bundle
     .static_assets("./packages/theme/styles", "/styles")
     .build()
@@ -49,7 +49,7 @@ let plugin = HikariRenderServicePlugin::new()
 URL mappings:
 
 - `./dist/index.html` → `http://localhost:3000/static/index.html`
-- `./packages/icons/dist/mdi/icons/chevron-down.svg` → `http://localhost:3000/static/icons/chevron-down.svg`
+- `./packages/icons/dist/lucide/icons/chevron-down.svg` → `http://localhost:3000/static/icons/chevron-down.svg`
 - `./packages/theme/styles/tailwind-bundle.css` → `http://localhost:3000/styles/tailwind-bundle.css`
 
 ### Custom Mount Paths
@@ -82,7 +82,7 @@ let plugin = HikariRenderServicePlugin::new()
     .unwrap();
 ```
 
-## Complete Example with Tairitsu SSR
+## Complete Example with Dioxus SSR
 
 ```rust,no_run
 use hikari_render_service::HikariRenderServicePlugin;
@@ -101,8 +101,8 @@ async fn main() -> anyhow::Result<()> {
         .component_style_registry(style_registry)
         // Static assets (HTML, CSS, WASM, JS)
         .static_assets("./examples/website/dist", "/static")
-        // Icon assets (MDI SVG files)
-        .icon_assets("./packages/icons/dist/mdi/icons", "/static/icons")
+        // Icon assets (Lucide SVG files)
+        .icon_assets("./packages/icons/dist/lucide/icons", "/static/icons")
         // Custom routes
         .add_route("/api/health", get(health_check))
         .build()?;
@@ -127,7 +127,7 @@ async fn health_check() -> &'static str {
 | `./dist/assets/app.js` | `/static/assets/app.js` | JavaScript |
 | `./dist/assets/app_bg.wasm` | `/static/assets/app_bg.wasm` | WASM |
 | `./dist/styles/bundle.css` | `/static/styles/bundle.css` | CSS |
-| `./packages/icons/dist/mdi/icons/menu.svg` | `/static/icons/menu.svg` | Icon SVG |
+| `./packages/icons/dist/lucide/icons/menu.svg` | `/static/icons/menu.svg` | Icon SVG |
 
 ## Client-Side Usage
 

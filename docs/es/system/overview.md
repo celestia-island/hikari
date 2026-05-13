@@ -122,15 +122,15 @@ Sistema de gestión y renderizado de iconos.
 - Definiciones de enum de iconos
 - Generación de contenido SVG
 - Variantes de tamaño de icono
-- Integración de Material Design Icons
+- Integración de Lucide Icons
 
 **Características Principales**:
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Search,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **Fuentes de Iconos**:
-- Material Design Icons (más de 7000 iconos)
+- Lucide Icons (más de 1000 iconos)
 - Iconos personalizados extensibles
 - Soporte de múltiples tamaños
 

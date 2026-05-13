@@ -23,9 +23,8 @@
 //! );
 //! ```
 
-use std::sync::atomic::{AtomicU64, Ordering};
-
 use hikari_components::style_builder::{CssProperty, StyleStringBuilder};
+use std::sync::atomic::{AtomicU64, Ordering};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 /// Global counter for generating unique portal IDs

@@ -18,7 +18,7 @@ This document provides an overview of the Hikari project architecture, including
 
 ## Overview
 
-Hikari is a modular Rust UI framework built around Tairitsu, following a workspace-based architecture. The project is organized into several focused packages, each with a specific responsibility:
+Hikari is a modular Rust UI framework built around Dioxus, following a workspace-based architecture. The project is organized into several focused packages, each with a specific responsibility:
 
 ```
 hikari/
@@ -190,7 +190,7 @@ pub use static_files::*;
 
 ### Frontend
 
-- **Tairitsu**: React-like UI framework for Rust
+- **Dioxus 0.7**: React-like UI framework for Rust
   - Virtual DOM
   - Component-based architecture
   - Hooks for state management
@@ -264,7 +264,7 @@ let app = HikariSsrPlugin::new()
 
 ### 2. Component Pattern
 
-Tairitsu components follow React-like patterns:
+Dioxus components follow React-like patterns:
 
 ```rust
 #[component]
@@ -592,7 +592,7 @@ examples/
 
 ## Architectural Decisions
 
-### Why Tairitsu?
+### Why Dioxus?
 
 - **Rust Native**: No JavaScript required for logic
 - **Type Safety**: Compile-time guarantees

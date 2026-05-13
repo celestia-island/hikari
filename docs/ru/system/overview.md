@@ -122,15 +122,15 @@ AnimationBuilder::new(&elements)
 - Определения перечислений иконок
 - Генерация SVG-контента
 - Варианты размеров иконок
-- Интеграция с Material Design Icons
+- Интеграция с Lucide Icons
 
 **Основные возможности**:
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Search,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-primary)"
     }
@@ -138,7 +138,7 @@ rsx! {
 ```
 
 **Источники иконок**:
-- Material Design Icons (более 7000 иконок)
+- Lucide Icons (более 1000 иконок)
 - Расширяемые пользовательские иконки
 - Поддержка нескольких размеров
 

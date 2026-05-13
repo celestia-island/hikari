@@ -2,7 +2,6 @@
 // Helper utilities for SSR testing
 
 use anyhow::Result;
-
 use scraper::{Html, Selector};
 use thirtyfour::WebDriver;
 

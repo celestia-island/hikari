@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Sidebar Component - Multi-level Navigation
@@ -68,7 +68,7 @@
   transition: all vars.$hikari-duration-fast ease;
 
   // Hover state is handled by Glow component
-  // The Glow wrapper already handles mouse events and updates --hi-glow-intensity-scale
+  // The Glow wrapper already handles mouse events and updates --glow-intensity-scale
   // We just need to ensure the glow is visible when hovering
 }
 
@@ -76,7 +76,7 @@
 .hi-glow-wrapper:has(.hi-sidebar-section-header) {
   &:hover,
   &[data-glow-hover="true"] {
-    --hi-glow-intensity-scale: 0.5;
+    --glow-intensity-scale: 0.5;
   }
 }
 
@@ -195,7 +195,7 @@
 .hi-glow-wrapper:has(.hi-sidebar-item-header) {
   &:hover,
   &[data-glow-hover="true"] {
-    --hi-glow-intensity-scale: 0.5;
+    --glow-intensity-scale: 0.5;
   }
 }
 

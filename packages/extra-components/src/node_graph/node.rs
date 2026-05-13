@@ -32,12 +32,9 @@ impl NodeType {
     }
 }
 
-/// Minimal node state for serialization and undo/redo history.
-///
-/// Contains only the fields that can change at runtime (position, size, selection).
-/// Use [`NodeView`] for rendering, which adds title, type, ports, and custom data.
+/// Node state
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodePlacement {
+pub struct NodeState {
     pub id: NodeId,
     pub position: (f64, f64),
     pub size: (f64, f64),
@@ -45,7 +42,7 @@ pub struct NodePlacement {
     pub minimized: bool,
 }
 
-impl NodePlacement {
+impl NodeState {
     pub fn new(id: NodeId) -> Self {
         Self {
             id,
@@ -137,9 +134,7 @@ pub trait NodePlugin: Send + Sync {
     }
 
     /// Handle input port data
-    ///
-    /// Default implementation does nothing. Override in plugins that process input.
-    fn handle_input(&self, _port_id: PortId, _data: crate::node_graph::value::NodeValue) {}
+    fn handle_input(&self, port_id: PortId, data: crate::node_graph::value::NodeValue);
 
     /// Get output port data
     fn get_output(&self, port_id: PortId) -> Option<crate::node_graph::value::NodeValue>;
@@ -181,7 +176,7 @@ pub trait NodePlugin: Send + Sync {
 /// This is the data model that frameworks can use to render nodes.
 /// Previously a Dioxus component, now framework-agnostic.
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodeView {
+pub struct Node {
     pub id: NodeId,
     pub title: String,
     pub position: (f64, f64),
@@ -193,7 +188,7 @@ pub struct NodeView {
     pub custom_data: HashMap<String, String>,
 }
 
-impl NodeView {
+impl Node {
     pub fn new(id: NodeId, title: String) -> Self {
         Self {
             id,
@@ -272,8 +267,8 @@ impl NodeView {
     }
 }
 
-impl From<NodePlacement> for NodeView {
-    fn from(state: NodePlacement) -> Self {
+impl From<NodeState> for Node {
+    fn from(state: NodeState) -> Self {
         let id = state.id.clone();
         Self {
             id,
@@ -291,7 +286,7 @@ impl From<NodePlacement> for NodeView {
 
 use super::port::{Port, PortType};
 
-pub fn render_node(node: &NodeView) -> VNode {
+pub fn render_node(node: &Node) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 
     let mut header = VElement::new("div")
@@ -377,7 +372,7 @@ mod tests {
 
     #[test]
     fn test_node_state_new() {
-        let state = NodePlacement::new("node1".to_string());
+        let state = NodeState::new("node1".to_string());
         assert_eq!(state.id, "node1");
         assert_eq!(state.position, (0.0, 0.0));
         assert_eq!(state.size, (200.0, 150.0));
@@ -387,7 +382,7 @@ mod tests {
 
     #[test]
     fn test_node_state_builder() {
-        let state = NodePlacement::new("node1".to_string())
+        let state = NodeState::new("node1".to_string())
             .with_position(100.0, 200.0)
             .with_size(300.0, 400.0)
             .with_selected(true)
@@ -401,7 +396,7 @@ mod tests {
 
     #[test]
     fn test_node_new() {
-        let node = NodeView::new("node1".to_string(), "My Node".to_string());
+        let node = Node::new("node1".to_string(), "My Node".to_string());
         assert_eq!(node.id, "node1");
         assert_eq!(node.title, "My Node");
         assert_eq!(node.position, (0.0, 0.0));
@@ -410,7 +405,7 @@ mod tests {
 
     #[test]
     fn test_node_builder() {
-        let node = NodeView::new("node1".to_string(), "My Node".to_string())
+        let node = Node::new("node1".to_string(), "My Node".to_string())
             .with_position(50.0, 50.0)
             .with_type("custom".to_string())
             .add_port(NodePort::new(
@@ -428,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_effective_height() {
-        let mut node = NodeView::new("node1".to_string(), "Node".to_string());
+        let mut node = Node::new("node1".to_string(), "Node".to_string());
         node.ports = vec![
             NodePort::new(
                 "p1".to_string(),
@@ -461,11 +456,11 @@ mod tests {
 
     #[test]
     fn test_from_node_state() {
-        let state = NodePlacement::new("node1".to_string())
+        let state = NodeState::new("node1".to_string())
             .with_position(10.0, 20.0)
             .with_selected(true);
 
-        let node: NodeView = state.into();
+        let node: Node = state.into();
         assert_eq!(node.id, "node1");
         assert_eq!(node.position, (10.0, 20.0));
         assert!(node.selected);

@@ -1,12 +1,12 @@
 # Sistema de Iconos
 
-Sistema de gestión y renderizado de iconos, integrado con Material Design Icons (MDI).
+Sistema de gestión y renderizado de iconos, integrado con Lucide Icons.
 
 ## Descripción General
 
 `hikari-icons` proporciona:
 
-- **1000+ Iconos** - Colección completa de Material Design Icons (MDI)
+- **1000+ Iconos** - Colección completa de Lucide Icons
 - **Seguridad de Tipos** - Nombres de iconos basados en enum
 - **Renderizado SVG** - Renderizado del lado del cliente y del servidor
 - **Carga en Tiempo de Ejecución** - Carga de SVG de iconos bajo demanda
@@ -16,11 +16,12 @@ Sistema de gestión y renderizado de iconos, integrado con Material Design Icons
 ### Uso Básico
 
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use dioxus::prelude::*;
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Magnify,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -30,29 +31,29 @@ rsx! {
 ### Iconos Disponibles
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // Navegación
     Home,
     Menu,
-    Magnify,
-    Cog,
+    Search,
+    Settings,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // Acciones
-    Pencil,
-    Delete,
+    Edit,
+    Trash,
     Check,
-    Close,
+    X,
     Plus,
     Minus,
 
     // Estado
-    AlertCircleOutline,
-    CheckCircleOutline,
-    InformationOutline,
-    AlertOutline,
+    AlertCircle,
+    CheckCircle,
+    Info,
+    AlertTriangle,
 
     // ... 1000+ iconos
 }
@@ -62,7 +63,7 @@ pub enum MdiIcon {
 
 | Propiedad | Tipo | Por Defecto | Descripción |
 |-----------|------|-------------|-------------|
-| `icon` | `MdiIcon` | - | Tipo de icono |
+| `icon` | `LucideIcon` | - | Tipo de icono |
 | `size` | `u32` | `24` | Tamaño del icono |
 | `color` | `&str` | - | Color |
 
@@ -97,7 +98,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: MdiIcon,
+    icon: LucideIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -105,10 +106,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### MdiIcon
+### LucideIcon
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // 1000+ variantes de iconos
 }
 ```

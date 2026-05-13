@@ -9,8 +9,8 @@
 // ============================================
 
 // Use @use with as * to make variables available to all imported files
-@use 'variables.scss' as *;
-@use 'mixins.scss' as *;
+@use '../../../theme/styles/variables.scss' as *;
+@use '../../../theme/styles/mixins.scss' as *;
 
 // ============================================
 // Theme Base Styles (before components)
@@ -348,40 +348,33 @@
 // actual theme colors via inline styles at runtime.
 
  :root {
-  // Theme Colors (canonical --hi-color-* names, matching ThemeProvider base.scss)
-  --hi-color-primary: #FFC0CB;
-  --hi-color-secondary: #519A73;
-  --hi-color-accent: #F7B500;
-  --hi-color-success: #0EB840;
-  --hi-color-warning: #EED677;
-  --hi-color-danger: #FF4C00;
-  --hi-color-info: #6ABED6;
+  // Theme Colors (matching legacy hikari computed styles)
+  --hi-primary: #FFC0CB;     // pink
+  --hi-secondary: #519A73;   // 苍翠
+  --hi-accent: #F7B500;      // 姜黄
+  --hi-success: #0EB840;     // 葱倩
+  --hi-warning: #EED677;     // 鹅黄
+  --hi-danger: #FF4C00;      // 朱红
+  --hi-info: #6ABED6;        // 蓝色
 
-  // Surface & Background Colors
-  --hi-color-background: #ffffff;
-  --hi-color-surface: rgba(255, 255, 255, 0.7);
-  --hi-color-border: #C4D8DA;
+  // Surface & Background Colors (matching legacy computed values)
+  --hi-background: #ffffff;
+  --hi-surface: rgba(255, 255, 255, 0.7);
+  --hi-border: #C4D8DA;
 
   // Text Colors (matching legacy — slate gray not near-black)
-  --hi-color-text-primary: #50616D;
-  --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
-  --hi-color-text-disabled: rgba(80, 97, 109, 0.35);
-  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%));
+  --hi-text-primary: #50616D;
+  --hi-text-secondary: rgba(80, 97, 109, 0.65);
+  --hi-text-disabled: rgba(80, 97, 109, 0.35);
 
-  // Short aliases (--hi-* → canonical --hi-color-*)
-  --hi-primary: var(--hi-color-primary);
-  --hi-secondary: var(--hi-color-secondary);
-  --hi-accent: var(--hi-color-accent);
-  --hi-success: var(--hi-color-success);
-  --hi-warning: var(--hi-color-warning);
-  --hi-danger: var(--hi-color-danger);
-  --hi-info: var(--hi-color-info);
-  --hi-background: var(--hi-color-background);
-  --hi-surface: var(--hi-color-surface);
-  --hi-border: var(--hi-color-border);
-  --hi-text-primary: var(--hi-color-text-primary);
-  --hi-text-secondary: var(--hi-color-text-secondary);
-  --hi-text-disabled: var(--hi-color-text-disabled);
+  // Aliases for components (with color- prefix for consistency)
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
+  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%));
   --hi-secondary-bg: rgba(255, 255, 255, 0.5);
   --hi-tertiary-bg: rgba(240, 240, 244, 0.5);
 
@@ -491,40 +484,33 @@
 
 // Dark theme specific overrides — must stay in sync with Tairitsu::palette() in hikari-palette
 [data-theme="tairitsu"] {
-  // Theme Colors (canonical --hi-color-* names)
-  --hi-color-primary: #144A74;
-  --hi-color-secondary: #FFC773;
-  --hi-color-accent: #FFC773;
-  --hi-color-success: #0EB840;
-  --hi-color-warning: #FFF143;
-  --hi-color-danger: #FF4C00;
-  --hi-color-info: #144A74;
+  // Theme Colors
+  --hi-primary: #144A74;     // 鷃蓝
+  --hi-secondary: #FFC773;   // 姜黄
+  --hi-accent: #FFC773;      // 姜黄
+  --hi-success: #0EB840;     // 葱倩
+  --hi-warning: #FFF143;     // 鹅黄
+  --hi-danger: #FF4C00;      // 朱红
+  --hi-info: #144A74;        // 鷃蓝
 
   // Surface & Background Colors
-  --hi-color-background: #161823;
-  --hi-color-surface: rgba(32, 35, 54, 0.7);
-  --hi-color-border: #303448;
+  --hi-background: #161823;  // 漆黑 — 深邃夜空底色
+  --hi-surface: rgba(32, 35, 54, 0.7);  // 比 background 稍亮
+  --hi-border: #303448;      // 比 surface 稍亮
 
   // Text Colors
-  --hi-color-text-primary: #F0F0F5;
-  --hi-color-text-secondary: #B3B8C7;
-  --hi-color-text-disabled: #6B7280;
-  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #10101c 0%, #161823 100%));
+  --hi-text-primary: #F0F0F5;    // 近白，主文本
+  --hi-text-secondary: #B3B8C7;  // 柔白偏蓝，次要文本
+  --hi-text-disabled: #6B7280;
 
-  // Short aliases (--hi-* → canonical --hi-color-*)
-  --hi-primary: var(--hi-color-primary);
-  --hi-secondary: var(--hi-color-secondary);
-  --hi-accent: var(--hi-color-accent);
-  --hi-success: var(--hi-color-success);
-  --hi-warning: var(--hi-color-warning);
-  --hi-danger: var(--hi-color-danger);
-  --hi-info: var(--hi-color-info);
-  --hi-background: var(--hi-color-background);
-  --hi-surface: var(--hi-color-surface);
-  --hi-border: var(--hi-color-border);
-  --hi-text-primary: var(--hi-color-text-primary);
-  --hi-text-secondary: var(--hi-color-text-secondary);
-  --hi-text-disabled: var(--hi-color-text-disabled);
+  // Aliases for components (with color- prefix for consistency)
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
+  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #10101c 0%, #161823 100%));
 
   // Scrollbar Colors
   --hi-scrollbar-track-dark: rgba(255,255, 255, 0.08);

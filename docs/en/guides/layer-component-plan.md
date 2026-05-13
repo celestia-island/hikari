@@ -550,7 +550,7 @@ rsx! {
 
 ### Routing System
 
-Website uses Tairitsu's Routable derive macro.
+Website uses Dioxus 0.7's Routable derive macro.
 
 **App component structure**:
 ```rust

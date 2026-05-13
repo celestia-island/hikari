@@ -2,9 +2,9 @@
 // Timeline component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, TimelineClass, TypedClass};
-use tairitsu_vdom::events::MouseEvent;
 
 use crate::{prelude::*, styled::StyledComponent};
+use tairitsu_vdom::events::MouseEvent;
 
 pub struct TimelineComponent;
 

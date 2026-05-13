@@ -4,11 +4,12 @@
 //   press, scroll, evaluate, console, dom, dom/computed, viewport, resize, errors,
 //   drag, a11y, batch, network, performance, websocket, source-map
 
-use anyhow::{Context, Result, bail};
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path, time::Duration};
-
+use anyhow::{bail, Context, Result};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+use std::time::Duration;
 
 pub const DEFAULT_DEBUG_PORT: u16 = 3001;
 const DEFAULT_VIEWPORT_W: u32 = 1280;

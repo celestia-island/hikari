@@ -4,7 +4,7 @@
 // for the Hikari website.
 
 use hikari_e2e::{SsrTestHelper, SsrTests};
-use thirtyfour::{WebDriver, prelude::*};
+use thirtyfour::{prelude::*, WebDriver};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

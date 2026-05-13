@@ -1,12 +1,12 @@
 # Система иконок
 
-Система управления и рендеринга иконок, интегрированная с Material Design Icons (MDI).
+Система управления и рендеринга иконок, интегрированная с Lucide Icons.
 
 ## Обзор
 
 `hikari-icons` предоставляет:
 
-- **1000+ Иконок** - Полная коллекция Material Design Icons (MDI)
+- **1000+ Иконок** - Полная коллекция Lucide Icons
 - **Типобезопасность** - Имена иконок на основе перечислений
 - **SVG рендеринг** - Клиентский и серверный рендеринг
 - **Загрузка во время выполнения** - Загрузка SVG иконок по требованию
@@ -16,11 +16,12 @@
 ### Базовое использование
 
 ```rust
-use hikari_icons::{Icon, MdiIcon};
+use dioxus::prelude::*;
+use hikari_icons::{Icon, LucideIcon};
 
 rsx! {
     Icon {
-        icon: MdiIcon::Magnify,
+        icon: LucideIcon::Search,
         size: 24,
         color: "var(--hi-color-primary)"
     }
@@ -30,29 +31,29 @@ rsx! {
 ### Доступные иконки
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // Навигация
     Home,
     Menu,
-    Magnify,
-    Cog,
+    Search,
+    Settings,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
 
     // Действия
-    Pencil,
-    Delete,
+    Edit,
+    Trash,
     Check,
-    Close,
+    X,
     Plus,
     Minus,
 
     // Статус
-    AlertCircleOutline,
-    CheckCircleOutline,
-    InformationOutline,
-    AlertOutline,
+    AlertCircle,
+    CheckCircle,
+    Info,
+    AlertTriangle,
 
     // ... 1000+ иконок
 }
@@ -62,7 +63,7 @@ pub enum MdiIcon {
 
 | Свойство | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
-| `icon` | `MdiIcon` | - | Тип иконки |
+| `icon` | `LucideIcon` | - | Тип иконки |
 | `size` | `u32` | `24` | Размер иконки |
 | `color` | `&str` | - | Цвет |
 
@@ -97,7 +98,7 @@ fn render_icon(name: &str) -> String {
 ```rust
 #[component]
 pub fn Icon(
-    icon: MdiIcon,
+    icon: LucideIcon,
     size: Option<u32>,
     color: Option<&str>,
     class: Option<String>,
@@ -105,10 +106,10 @@ pub fn Icon(
 ) -> Element
 ```
 
-### MdiIcon
+### LucideIcon
 
 ```rust
-pub enum MdiIcon {
+pub enum LucideIcon {
     // 1000+ вариантов иконок
 }
 ```

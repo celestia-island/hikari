@@ -6,15 +6,16 @@
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass, TypedClass,
 };
+use tairitsu_hooks::ReactiveSignal;
 
 use super::provider::use_portal;
-use crate::platform::{
-    element_closest, element_from_point, inner_height, inner_width, log, request_animation_frame,
-    set_timeout,
-};
 use crate::{
     feedback::PopoverPlacement,
     modal::{MaskMode, ModalPosition, ModalSize},
+    platform::{
+        element_closest, element_from_point, inner_height, inner_width, log,
+        request_animation_frame, set_timeout,
+    },
     portal::{
         positioning::calculate_position,
         types::{
@@ -24,7 +25,6 @@ use crate::{
     },
     prelude::*,
 };
-use tairitsu_hooks::ReactiveSignal;
 
 fn use_animated_portal_entry(
     id: String,

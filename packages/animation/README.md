@@ -1,12 +1,12 @@
 # hikari-animation
 
-High-performance, declarative animation system for Dioxus with dynamic values, complex timelines, and smooth transitions.
+High-performance, declarative animation system for Tairitsu with dynamic values, complex timelines, and smooth transitions.
 
 ## Installation
 
 ```toml
 [dependencies]
-hikari-animation = "0.1.0"
+hikari-animation = "0.1"
 ```
 
 **Note**: This crate is designed for **WASM targets only** (`target_arch = "wasm32"`).
@@ -38,24 +38,21 @@ The `Glow` component provides a mouse-following glow effect with **component-iso
 
 ### Component-Isolated Features
 
-- ✅ **No Global Side Effects**: Does not use `MutationObserver` to monitor global DOM
-- ✅ **Reactive State**: Uses Dioxus hooks (`use_node_ref`, `use_effect`)
-- ✅ **Automatic Cleanup**: Dioxus automatically handles cleanup on unmount
-- ✅ **High Performance**: Direct CSS variable updates without re-render
+- **No Global Side Effects**: Does not use `MutationObserver` to monitor global DOM
+- **Reactive State**: Uses Tairitsu hooks (`use_ref`, `use_effect`)
+- **Automatic Cleanup**: Tairitsu automatically handles cleanup on unmount
+- **High Performance**: Direct CSS variable updates without re-render
 
 ### Usage
 
 ```rust
-use dioxus::prelude::*;
 use hikari_animation::Glow;
 
 rsx! {
     Glow {
         color: "rgba(255, 255, 255, 0.3)",
         intensity: 0.5,
-        Card {
-            "Card with glow effect"
-        }
+        // children go here
     }
 }
 ```
@@ -73,15 +70,6 @@ rsx! {
 - **Percentage-based Positioning**: Mouse position is calculated as percentage relative to element
 - **CSS Hover for Visibility**: Glow shows/hides via CSS `:hover` pseudo-class, no JavaScript needed
 
-### Internal Implementation
-
-The Glow component uses:
-- `use_node_ref` for direct DOM access
-- `use_effect` to initialize CSS variables on mount
-- `onmousemove` handler for mouse tracking with `getBoundingClientRect()`
-- Direct CSS variable updates via `element.set_attribute("style", ...)`
-- CSS variables (`--glow-x`, `--glow-y`, `--glow-color`, `--glow-intensity`) for dynamic updates
-
 ## Documentation
 
 For complete API documentation, easing functions, and performance tips, see [docs.rs](https://docs.rs/hikari-animation)
@@ -92,7 +80,7 @@ For complete API documentation, easing functions, and performance tips, see [doc
 - **Dynamic Value Computation** - Calculate animation values at runtime from context
 - **Multi-Element Control** - Animate multiple DOM elements simultaneously
 - **Debounced Updates** - Throttle animation updates for performance
-- **30+ Easing Functions** - Natural motion with ease-in-out, bounce, elastic, and more
+- **8+ Easing Functions** - Natural motion with bezier, bounce, elastic, overshoot and more
 - **Timeline Control** - Sequence and coordinate complex animations
 - **Mouse Spotlight Effects** - Create interactive mouse-following animations
 - **Component-Isolated Glow** - Glow component with no global side effects

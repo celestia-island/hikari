@@ -189,7 +189,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--fade-top-opacity, 0); // Controlled by JS
+      opacity: var(--hi-fade-top-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;
@@ -205,7 +205,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
+      opacity: var(--hi-fade-bottom-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;

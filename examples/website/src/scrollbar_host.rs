@@ -2,13 +2,11 @@
 
 #![cfg(target_family = "wasm")]
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use hikari_components::scripts::scrollbar_container::ScrollbarHost;
 use tairitsu_vdom::{DomHandle, EventData, Platform};
-use tairitsu_web::WitPlatform;
-use tairitsu_web::wit_platform::WitElement;
+use tairitsu_web::{WitPlatform, wit_platform::WitElement};
 
 thread_local! {
     static DRAG_STATE: RefCell<DragState> = RefCell::new(DragState::None);

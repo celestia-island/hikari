@@ -1,12 +1,7 @@
-use std::cell::{Cell, RefCell};
-use std::rc::Rc;
+use std::{cell::{Cell, RefCell}, rc::Rc};
 
-use hikari_icons::generated::mdi_selected::get;
-use hikari_icons::MdiIcon;
-use tairitsu_vdom::{
-    get_bounding_client_rect, set_attribute, set_style, DomHandle, EventData,
-    MouseEvent, VElement, VNode, VText,
-};
+use hikari_icons::{MdiIcon, generated::mdi_selected::get};
+use tairitsu_vdom::{DomHandle, EventData, MouseEvent, VElement, VNode, VText, get_bounding_client_rect, set_attribute, set_style};
 use tairitsu_web::wit_platform::WitElement;
 
 use crate::{hooks, theme};

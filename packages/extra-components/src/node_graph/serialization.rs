@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::{connection::Connection, node::NodeState, value::NodeValue};
+use super::{connection::Connection, node::NodePlacement, value::NodeValue};
 
 /// Graph metadata - extensible key-value storage
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -60,7 +60,7 @@ impl SerializedNodeGraph {
     }
 
     /// Create from node graph state
-    pub fn from_state(nodes: &HashMap<String, NodeState>, connections: &[Connection]) -> Self {
+    pub fn from_state(nodes: &HashMap<String, NodePlacement>, connections: &[Connection]) -> Self {
         let mut serialized = Self::new();
 
         // Serialize nodes
@@ -101,13 +101,13 @@ impl SerializedNodeGraph {
     }
 
     /// Convert to node graph state
-    pub fn to_state(&self) -> Result<(HashMap<String, NodeState>, Vec<Connection>), String> {
+    pub fn to_state(&self) -> Result<(HashMap<String, NodePlacement>, Vec<Connection>), String> {
         let mut nodes = HashMap::new();
         let mut connections = Vec::new();
 
         // Deserialize nodes
         for serialized_node in &self.nodes {
-            let node_state = NodeState {
+            let node_state = NodePlacement {
                 id: serialized_node.id.clone(),
                 position: serialized_node.position,
                 size: serialized_node.size,
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_from_and_to_state() {
         let mut nodes = HashMap::new();
-        nodes.insert("node1".to_string(), NodeState::new("node1".to_string()));
+        nodes.insert("node1".to_string(), NodePlacement::new("node1".to_string()));
 
         let connections = vec![Connection::new("node1", "out", "node2", "in")];
 

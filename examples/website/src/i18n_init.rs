@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use tairitsu_web::i18n::{provide_i18n, Language};
+
 use crate::hooks;
 
 pub fn init() {

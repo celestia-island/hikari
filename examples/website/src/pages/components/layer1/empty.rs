@@ -1,9 +1,9 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
-use crate::components::icon_utils::icon_el;
 use hikari_icons::MdiIcon;
 use tairitsu_web::t;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page}, icon_utils::icon_el};
 
 pub fn render() -> VNode {
     let no_data = t!("empty.no_data");

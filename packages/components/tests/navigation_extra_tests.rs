@@ -1,9 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use hikari_components::navigation::{
-        AnchorItem, SidebarItemProps, SidebarLeafProps, SidebarProps, SidebarSectionProps,
+
+    use hikari_components::{
+        navigation::{
+            AnchorItem, SidebarItemProps, SidebarLeafProps, SidebarProps, SidebarSectionProps,
+        },
+        prelude::*,
     };
-    use hikari_components::prelude::*;
     use tairitsu_macros::rsx;
 
     // ── Anchor ─────────────────────────────────────────────────

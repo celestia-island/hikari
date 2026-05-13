@@ -22,7 +22,7 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 py := if os_family() == "windows" { "python" } else { "python3" }
 
 # External packager from sibling repository (tairitsu)
-tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
+tairitsu_packager_manifest := env_var_or_default("TAIRITSU_PACKAGER", justfile_directory() / ".." / "tairitsu" / "packages" / "packager" / "Cargo.toml")
 website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================
@@ -93,10 +93,10 @@ run: dev
 # Code quality
 # ============================================================================
 
-# Format code with rustfmt
+# Format code with rustfmt (nightly to match CI)
 fmt:
     @echo "  →  Formatting code..."
-    @cargo fmt --all
+    @cargo +nightly fmt --all -- --unstable-features
 
 # Run Clippy checks
 clippy:
@@ -216,6 +216,69 @@ baseline action="list" name="" image="" route="" suite="default":
 # Run a JSON test suite (replaces main hikari-e2e binary)
 e2e-run suite="" url="http://localhost:3000" output="e2e_output" html="":
     @{{py}} scripts/e2e/cli.py run "{{suite}}" --url "{{url}}" --output "{{output}}" {{if html != "" { "--html" } else { "" }}}
+
+# ============================================================================
+# Visual Regression CI (Playwright-based, for GitHub Actions)
+# ============================================================================
+#
+# CI-friendly visual regression using Playwright (no tairitsu-debug needed):
+#   just vr-capture           - Capture baseline/candidate screenshots
+#   just vr-compare           - Compare candidates vs baselines
+#   just vr-baseline-init     - Promote current screenshots as baselines
+#   just vr-baseline-accept   - Accept a specific candidate as new baseline
+#   just vr-run               - Full pipeline: capture + compare
+#
+# Baselines live in tests/visual/baseline/default/
+# ============================================================================
+
+vr-install:
+    @{{py}} -m pip install Pillow playwright requests --quiet 2>/dev/null
+    @{{py}} -m playwright install chromium --with-deps 2>/dev/null || echo "Playwright install may need sudo"
+
+# Capture screenshots for all baseline routes (Playwright, no tairitsu-debug)
+vr-capture url="http://localhost:3000" output="target/screenshots" wait="10":
+    @{{py}} scripts/visual-ci/capture_ci.py --url "{{url}}" --output "{{output}}" --wait {{wait}}
+
+# Compare candidate screenshots against baselines
+vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" threshold="30":
+    @{{py}} scripts/visual-ci/compare_ci.py \
+        --baseline-dir "{{baseline_dir}}" \
+        --candidate-dir "{{candidate_dir}}" \
+        --output "{{output}}" \
+        --threshold {{threshold}}
+
+# Initialize baseline directory structure
+vr-baseline-init:
+    @mkdir -p tests/visual/baseline/default
+    @touch tests/visual/baseline/default/.gitkeep
+    @echo "  \u2713 Baseline dir ready: tests/visual/baseline/default/"
+
+# Promote current screenshots as baselines
+vr-baseline-accept-all candidate_dir="target/screenshots":
+    @{{py}} -c "
+import shutil, glob, time
+from pathlib import Path
+src = Path('{{candidate_dir}}')
+dst = Path('tests/visual/baseline/default')
+dst.mkdir(parents=True, exist_ok=True)
+for f in sorted(src.glob('*.png')):
+    if f.name != 'capture_report.json':
+        shutil.copy2(f, dst / f.name)
+        print(f'  \u2713 {f.name}')
+print(f'Done. {len(list(dst.glob(\"*.png\")))} baselines in {dst}')
+"
+
+# Accept a single candidate image as new baseline
+vr-baseline-accept name="" image="" route="":
+    @{{py}} scripts/e2e/cli.py baseline accept --name "{{name}}" --image "{{image}}" --route "{{route}}"
+
+# Full visual regression pipeline: capture + compare
+vr-run url="http://localhost:3000" threshold="30":
+    @just vr-capture --url "{{url}}"
+    @just vr-compare --threshold {{threshold}}
+    @echo ""
+    @echo "  \u2564\u2500 Visual Regression Results \u2500\u2567"
+    @cat target/visual-diff/result.json 2>/dev/null || echo "  No results yet — run vr-capture first"
 
 # Interactive session from commands JSON file
 interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":

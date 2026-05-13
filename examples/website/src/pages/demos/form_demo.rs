@@ -1,7 +1,7 @@
-use crate::components::demo_page::{render_api_table, render_demo_block, render_demo_page};
-use crate::components::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;
+
+use crate::components::{demo_page::{render_api_table, render_demo_block, render_demo_page}, glow::{GlowColor, GlowConfig, GlowIntensity, glow_wrap}};
 
 fn glow_input(placeholder: &str, type_: &str, id: &str, required: bool) -> VNode {
     glow_wrap(

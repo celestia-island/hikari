@@ -3,9 +3,10 @@
 //! Supports standard Markdown elements and custom `_hikari_component` code blocks
 //! for embedding interactive components.
 
-use crate::reactive::{button_counter, interactive_input, switch};
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use tairitsu_vdom::{VElement, VNode, VText};
+
+use crate::reactive::{button_counter, interactive_input, switch};
 
 /// Component types that can be embedded in markdown via `_hikari_component` code blocks.
 #[derive(Debug, Clone, PartialEq)]

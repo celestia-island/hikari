@@ -17,17 +17,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch MDI icons
-        run: python3 scripts/icons/fetch_mdi_icons.py
-
-      - name: Generate icon modules
-        run: cargo build -p hikari-icons
-
       - name: Setup toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           components: rustfmt
+
+      - name: Cache MDI icons
+        id: mdi-cache
+        uses: actions/cache@v4
+        with:
+          path: packages/icons/src/generated
+          key: mdi-icons-${{ hashFiles('scripts/icons/fetch_mdi_icons.py') }}
+
+      - name: Fetch MDI icons
+        if: steps.mdi-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Generate icon modules
+        run: cargo build -p hikari-icons
 
       - name: Run fmt
         run: cargo +nightly fmt --all -- --check --unstable-features

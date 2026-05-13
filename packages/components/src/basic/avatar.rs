@@ -76,30 +76,28 @@ pub enum AvatarFallbackMode {
     None,
 }
 
+#[define_props]
+pub struct AvatarProps {
+    pub src: Option<String>,
+    #[default("Avatar".to_string())]
+    pub alt: String,
+    pub size: AvatarSize,
+    pub variant: AvatarVariant,
+    pub fallback: Option<String>,
+    pub fallback_mode: AvatarFallbackMode,
+    pub class: String,
+}
+
 #[component]
-pub fn Avatar(
-    #[props(default)] src: Option<String>,
-
-    #[props(default = "Avatar".to_string())] alt: String,
-
-    #[props(default = AvatarSize::Md)] size: AvatarSize,
-
-    #[props(default = AvatarVariant::Circular)] variant: AvatarVariant,
-
-    #[props(default)] fallback: Option<String>,
-
-    #[props(default)] fallback_mode: AvatarFallbackMode,
-
-    #[props(default)] class: String,
-) -> Element {
-    let size_px = size.pixels();
-    let icon_size = size.icon_size();
-    let font_size = size.font_size();
+pub fn Avatar(props: AvatarProps) -> Element {
+    let size_px = props.size.pixels();
+    let icon_size = props.size.icon_size();
+    let font_size = props.size.font_size();
 
     let container_style = StyleStringBuilder::new()
         .add_px(CssProperty::Width, size_px)
         .add_px(CssProperty::Height, size_px)
-        .add(CssProperty::BorderRadius, variant.as_str())
+        .add(CssProperty::BorderRadius, props.variant.as_str())
         .add(CssProperty::Display, "flex")
         .add(CssProperty::AlignItems, "center")
         .add(CssProperty::JustifyContent, "center")
@@ -114,21 +112,22 @@ pub fn Avatar(
 
     let base_class = ClassesBuilder::new()
         .add_typed(AvatarClass::Avatar)
-        .add(&class)
+        .add(&props.class)
         .build();
 
-    let fallback_text = fallback.clone().unwrap_or_else(|| {
-        alt.chars()
+    let fallback_text = props.fallback.clone().unwrap_or_else(|| {
+        props
+            .alt
+            .chars()
             .find(|c| c.is_alphabetic() || c.is_numeric())
             .map(|c| c.to_uppercase().to_string())
             .unwrap_or_else(|| "?".to_string())
     });
 
-    // Pre-compute conditions outside of rsx!
-    let has_src = src.is_some();
-    let is_icon_mode = fallback_mode == AvatarFallbackMode::Icon;
-    let is_initial_mode = fallback_mode == AvatarFallbackMode::Initial;
-    let src_val = src.clone();
+    let has_src = props.src.is_some();
+    let is_icon_mode = props.fallback_mode == AvatarFallbackMode::Icon;
+    let is_initial_mode = props.fallback_mode == AvatarFallbackMode::Initial;
+    let src_val = props.src.clone();
 
     // Build fallback content outside rsx!
     let fallback_content = if is_icon_mode {
@@ -158,7 +157,7 @@ pub fn Avatar(
             img {
                 class: AvatarClass::AvatarImg.class_name(),
                 src: src_val.unwrap_or_default(),
-                alt: alt.clone(),
+                alt: props.alt.clone(),
                 style: img_style,
             }
         }

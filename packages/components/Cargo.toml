@@ -122,9 +122,9 @@ auto_complete = []
 
 [dependencies]
 # Hikari design system
-hikari-palette = { path = "../palette" }
-hikari-theme = { path = "../theme" }
-hikari-icons = { path = "../icons", default-features = false, features = [
+hikari-palette = { version = "^0.1", path = "../palette" }
+hikari-theme = { version = "^0.1", path = "../theme" }
+hikari-icons = { version = "^0.1", path = "../icons", default-features = false, features = [
     "tairitsu",
 ] }
 

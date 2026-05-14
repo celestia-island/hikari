@@ -202,11 +202,11 @@
 // Mixins
 // ============================================
 
-@mixin arknights-border {
+@mixin flat-border {
     border: 1px solid var(--hi-color-white-10);
 }
 
-@mixin arknights-glow {
+@mixin glow-effect {
     box-shadow: 0 0 20px var(--hi-color-secondary);
 }
 
@@ -214,7 +214,7 @@
 // Mixins
 // ============================================
 
-@mixin fui-glow {
+@mixin theme-glow {
     box-shadow: 0 0 10px var(--hi-color-purple-50);
 }
 

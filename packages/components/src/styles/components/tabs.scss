@@ -408,7 +408,7 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+      background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
       box-shadow:
         0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
         inset 0 0 8px rgba(255, 255, 255, 0.1);
@@ -439,7 +439,7 @@
     margin: 0.25rem;
 
     &.hi-tab-active {
-      background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+      background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
       border-color: var(--hi-color-primary);
       box-shadow:
         0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),

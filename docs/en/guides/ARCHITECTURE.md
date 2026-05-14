@@ -287,7 +287,7 @@ Theme and state management:
 
 ```rust
 rsx! {
-    ThemeProvider { palette: "arknights".to_string(),
+    ThemeProvider { palette: "hikari".to_string(),
         // All children have access to theme
         Button { "Themed Button" }
     }

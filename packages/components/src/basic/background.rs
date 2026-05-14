@@ -4,7 +4,7 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use hikari_palette::{TypedClass, classes::BackgroundClass, 墨色, 月白, 粉红, 靛蓝};
+use hikari_palette::{TypedClass, classes::BackgroundClass, 墨色, 精白, 粉红, 靛蓝};
 use tairitsu_hooks::ReactiveSignal;
 
 use crate::{
@@ -88,7 +88,7 @@ where
 
         let (color1, color2) = match theme_name.as_str() {
             "tairitsu" => (墨色, 靛蓝),
-            _ => (月白, 粉红),
+            _ => (精白, 粉红),
         };
 
         let breathing_progress = (current_time / 4000.0) % 2.0;

@@ -180,9 +180,9 @@
   .hi-carousel-arrow:hover,
   .hi-carousel-dot-active,
   .hi-carousel-pause:hover {
-    background-color: #1a237e;
+    background-color: var(--hi-color-primary);
     color: rgba(255, 255, 255, 0.95);
-    border-color: #1a237e;
+    border-color: var(--hi-color-primary);
     box-shadow: 0 4px 12px rgba(26, 35, 126, 0.4);
   }
 
@@ -192,8 +192,8 @@
   }
 
   .hi-carousel-dot-active {
-    background-color: #1a237e;
-    border-color: #1a237e;
+    background-color: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
     box-shadow:
       0 0 12px rgba(26, 35, 126, 0.5),
       0 0 24px rgba(26, 35, 126, 0.3);

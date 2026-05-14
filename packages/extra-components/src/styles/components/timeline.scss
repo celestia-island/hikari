@@ -279,7 +279,7 @@
   }
 
   .hi-timeline-dot-in-progress {
-    border-color: #1a237e;
+    border-color: var(--hi-color-primary);
     background-color: rgba(26, 35, 126, 0.2);
     box-shadow: 0 0 20px rgba(26, 35, 126, 0.4);
   }
@@ -296,7 +296,7 @@
   }
 
   .hi-timeline-in-progress .hi-timeline-title {
-    color: #1a237e;
+    color: var(--hi-color-primary);
   }
 }
 

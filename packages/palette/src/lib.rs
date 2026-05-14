@@ -23,7 +23,7 @@
 //! ### Basic Color Usage
 //!
 //! ```rust,no_run
-//! use hikari_palette::{石青, 朱砂, 藤黄, 月白};
+//! use hikari_palette::{粉红, 苍翠, 姜黄, 精白};
 //!
 //! # fn main() {
 //! #     let primary = 石青;

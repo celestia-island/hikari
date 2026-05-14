@@ -7,7 +7,7 @@ use std::cell::RefCell;
 
 use hikari_palette::{
     color_math::{adjust_lightness_hex, adjust_saturation_hex},
-    月白, 粉红,
+    精白, 粉红,
 };
 
 /// Background render context (carries render parameters)
@@ -52,7 +52,7 @@ pub fn get_theme_colors() -> (String, String) {
             return cached.colors.clone();
         }
         // Cache miss or theme changed
-        (月白.hex(), 粉红.hex())
+        (精白.hex(), 粉红.hex())
     });
 
     // Update cache if needed

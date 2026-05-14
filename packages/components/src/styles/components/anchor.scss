@@ -62,13 +62,13 @@
         width: 3px;
         height: 16px;
         border-radius: 0 2px 2px 0;
-        background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
         transition: transform vars.$hikari-transition-fast;
     }
 
     &:hover {
         background: var(--hi-button-primary-light, #FFE4E9);
-        color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
 
         &::before {
             transform: translateY(-50%) scaleY(1);
@@ -76,7 +76,7 @@
     }
 
     &:focus-visible {
-        outline: 2px solid var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        outline: 2px solid var(--hi-color-primary, var(--hi-primary, #FFB3A7));
         outline-offset: -2px;
     }
 
@@ -88,7 +88,7 @@
 
 // Active state - filled with primary color
 .hi-anchor-active {
-    background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     color: var(--hi-badge-text, #FFFFFF);
     font-weight: 600;
 
@@ -108,7 +108,7 @@
 // Ink line variant (minimal active indicator)
 .hi-anchor-ink .hi-anchor-active {
     background: transparent;
-    color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     font-weight: 600;
 
     &::before {

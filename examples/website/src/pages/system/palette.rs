@@ -92,7 +92,7 @@ pub fn render() -> VNode {
     render_demo_page(
         "page-system-palette",
         "Color Palette",
-        "500+ traditional Chinese colors powering three official themes.",
+        "660+ named colors powering two official themes.",
         VNode::Fragment(vec![
             theme_section("Hikari Theme (Light)", &hikari),
             theme_section("Tairitsu Theme (Dark)", &tairitsu),

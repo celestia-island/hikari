@@ -22,6 +22,7 @@ mod i18n_init;
 mod js;
 mod markdown;
 mod pages;
+mod platform_init;
 mod reactive;
 mod routing;
 mod scrollbar_host;
@@ -33,6 +34,7 @@ use tairitsu_web::WitPlatform;
 fn run_app() {
     i18n_init::init();
     let platform = WitPlatform::new().expect("WitPlatform init failed");
+    platform_init::register(&platform);
     let vnode = app::render();
     let _ = platform.mount_vnode_to_app(vnode);
 

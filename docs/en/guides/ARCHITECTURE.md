@@ -101,7 +101,7 @@ hikari-theme   hikari-components
 
 **Responsibilities**:
 - Define color data structures
-- Provide 500+ traditional Chinese colors
+- Provide 660+ traditional Chinese colors
 - Generate pre-defined palettes
 - Serialize/deserialize colors
 

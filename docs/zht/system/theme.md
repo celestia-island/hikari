@@ -155,21 +155,21 @@ packages/theme/src/generated/
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* 為不支援 CSS 變數的瀏覽器提供回退 */
 .my-component {
-    background-color: #00A0E9; /* 回退值 */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* 回退值 */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### 與 Palette 整合
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("主色: {}", hikari_palette.primary.hex);
+println!("主色: {}", hikari_palette.primary.hex());
 ```
 
 ### 與 Animation 整合
@@ -538,12 +538,12 @@ rsx! {
 ### 扁平風格
 
 - **淺色主題 (hikari)**：
-  - 主色: 石青 (#00A0E9)
+  - 主色：粉红 (#FFB3A7)
   - 背景: 白色
   - 文字: 深色
 
 - **深色主題 (tairitsu)**：
-  - 主色: 靛藍 (#1a237e)
+  - 主色: 鷃藍 (#144A74)
   - 背景: 深色
   - 文字: 淺色
 

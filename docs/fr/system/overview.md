@@ -9,18 +9,18 @@ Le framework Hikari adopte une conception modulaire, composé de plusieurs packa
 Implémentation Rust du système de couleurs traditionnelles chinoises.
 
 **Responsabilités**:
-- Fournit plus de 500 définitions de couleurs traditionnelles chinoises
+- Fournit plus de 660 définitions de couleurs traditionnelles chinoises
 - Gestion des palettes de thèmes
 - Générateur de classes utilitaires
 - Opacité et mélange de couleurs
 
 **Fonctionnalités Principales**:
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
 // Utiliser des couleurs traditionnelles
-let red = ChineseColor::Cinnabar;
-let blue = ChineseColor::Azurite;
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // Gestion de l'opacité
 let semi_red = opacity(red, 0.5);
@@ -59,14 +59,14 @@ rsx! {
 
 **Thèmes Supportés**:
 - **Hikari (Clair)** - Thème clair
-  - Primaire: Azurite (#00A0E9)
-  - Secondaire: Vermillon (#E94B35)
-  - Accent: Jaune Vigne (#F8B62D)
+  - Primaire: Pink (#FFB3A7)
+  - Secondaire: Vermillon (#519A73)
+  - Accent: Jaune Vigne (#FFC773)
 
 - **Tairitsu** - Thème sombre
-  - Primaire: Indigo (#1a237e)
-  - Secondaire: Vermillon (#E94B35)
-  - Accent: Jaune Oie (#FFF176)
+  - Primaire: Duck Blue (#144A74)
+  - Secondaire: Vermillon (#519A73)
+  - Accent: Jaune Oie (#FFC773)
 
 ### 3. Système d'Animation (hikari-animation)
 
@@ -492,8 +492,8 @@ Chaque module dispose de tests unitaires complets:
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::Cinnabar;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```

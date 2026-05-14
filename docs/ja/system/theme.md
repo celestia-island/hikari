@@ -155,21 +155,21 @@ packages/theme/src/generated/
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* CSS変数をサポートしないブラウザ用のフォールバックを提供 */
 .my-component {
-    background-color: #00A0E9; /* フォールバック値 */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* フォールバック値 */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### Paletteとの統合
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("プライマリ: {}", hikari_palette.primary.hex);
+println!("プライマリ: {}", hikari_palette.primary.hex());
 ```
 
 ### Animationとの統合
@@ -535,15 +535,15 @@ rsx! {
 
 ## デザイン哲学
 
-### アークナイツスタイル
+### フラットデザイン
 
 - **ライトテーマ (hikari)**:
-  - プライマリ: 藍銅 (#00A0E9)
+  - プライマリ: ピンク (#FFB3A7)
   - 背景: 白
   - テキスト: 暗色
 
 - **ダークテーマ (tairitsu)**:
-  - プライマリ: インディゴ (#1a237e)
+  - プライマリ: 鴇藍 (#144A74)
   - 背景: 暗色
   - テキスト: 明色
 

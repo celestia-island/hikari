@@ -155,21 +155,21 @@ packages/theme/src/generated/
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* CSS 변수를 지원하지 않는 브라우저를 위한 폴백 */
 .my-component {
-    background-color: #00A0E9; /* 폴백 값 */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* 폴백 값 */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### 팔레트와의 통합
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("주요 색상: {}", hikari_palette.primary.hex);
+println!("주요 색상: {}", hikari_palette.primary.hex());
 ```
 
 ### 애니메이션과의 통합
@@ -535,15 +535,15 @@ rsx! {
 
 ## 디자인 철학
 
-### 아크나이츠 스타일
+### 플랫 디자인
 
 - **라이트 테마 (hikari)**:
-  - 주요: 석청 (#00A0E9)
+  - 주요: 분홍 (#FFB3A7)
   - 배경: 흰색
   - 텍스트: 어두운색
 
 - **다크 테마 (tairitsu)**:
-  - 주요: 인디고 (#1a237e)
+  - 주요: 연합청 (#144A74)
   - 배경: 어두운색
   - 텍스트: 밝은색
 

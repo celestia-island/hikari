@@ -155,21 +155,21 @@ Définies sous `:root` ou `[data-theme]`:
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* Fournir un fallback pour les navigateurs ne supportant pas les variables CSS */
 .my-component {
-    background-color: #00A0E9; /* Valeur de fallback */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* Valeur de fallback */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### Intégration avec Palette
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("Primaire: {}", hikari_palette.primary.hex);
+println!("Primaire: {}", hikari_palette.primary.hex());
 ```
 
 ### Intégration avec Animation
@@ -538,12 +538,12 @@ rsx! {
 ### Style 
 
 - **Thème clair (hikari)**:
-  - Primaire: Azurite (#00A0E9)
+  - Primaire: Pink (#FFB3A7)
   - Fond: Blanc
   - Texte: Sombre
 
 - **Thème sombre (tairitsu)**:
-  - Primaire: Indigo (#1a237e)
+  - Primaire: Duck Blue (#144A74)
   - Fond: Sombre
   - Texte: Clair
 

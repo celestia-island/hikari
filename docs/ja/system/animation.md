@@ -478,7 +478,7 @@ spotlight::init_selector(".hi-button");
 spotlight::Config {
     size: 200,              // スポットライトサイズ（px）
     opacity: 0.15,          // 不透明度（0-1）
-    color: "#00A0E9",       // 光の色
+    color: "#FFB3A7",       // 光の色
     blur: 20,              // ぼかし半径（px）
     transition: "150ms"     // トランジション速度
 }.init();
@@ -578,7 +578,7 @@ CssProperty::Filter
 
 ```rust
 // 単一プロパティを設定
-builder.add_style("element", CssProperty::Color, "#00A0E9");
+builder.add_style("element", CssProperty::Color, "#FFB3A7");
 
 // トランスフォームを設定
 builder.add_style("element", CssProperty::Transform, "translate(10px, 20px)");

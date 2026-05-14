@@ -13,7 +13,7 @@ Hikari es un framework UI moderno diseñado para el ecosistema Rust, que combina
 ## Características Principales
 
 ### 🎨 Sistema de Colores Tradicionales Chinos
-- **500+ Colores Tradicionales**: Paleta completa de colores tradicionales chinos
+- **660+ Colores Tradicionales**: Paleta completa de colores tradicionales chinos
 - **Sistema de Temas**: Temas integrados Hikari (claro) y Tairitsu (oscuro)
 - **Seguridad de Tipos**: Valores de color verificados en tiempo de compilación
 
@@ -98,8 +98,8 @@ trunk build --release
 
 ### Colores Tradicionales Chinos
 - Primario: 石青 (Cian/Azul), 朱砂 (Bermellón/Rojo), 藤黄 (Gambuja/Amarillo)
-- Neutro: 月白 (Blanco Claro), 墨色 (Negro Tinta), 缟色 (Gris Claro)
-- Funcional: 葱倩 (Éxito), 鹅黄 (Advertencia), 朱砂 (Peligro)
+- Neutro: 精白 (Blanco Puro), 墨色 (Negro Tinta), 缟色 (Gris Claro)
+- Funcional: 葱倩 (Éxito), 杏黄 (Advertencia), 朱红 (Peligro)
 
 ## Estructura del Proyecto
 

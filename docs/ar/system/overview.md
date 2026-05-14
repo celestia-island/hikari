@@ -9,18 +9,18 @@
 تنفيذ Rust لنظام الألوان الصينية التقليدية.
 
 **المسؤوليات**:
-- يوفر أكثر من 500 تعريف لون صيني تقليدي
+- يوفر أكثر من 660 تعريف لون صيني تقليدي
 - إدارة لوحات السمات
 - مولد فئات الأدوات
 - العتامة ومزج الألوان
 
 **الميزات الأساسية**:
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
 // استخدام الألوان التقليدية
-let red = ChineseColor::Cinnabar;
-let blue = ChineseColor::Azurite;
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // معالجة العتامة
 let semi_red = opacity(red, 0.5);
@@ -59,14 +59,14 @@ rsx! {
 
 **السمات المدعومة**:
 - **هيكاري (فاتح)** - سمة فاتحة
-  - الأساسي: الأزوريت (#00A0E9)
-  - الثانوي: القرمزي (#E94B35)
-  - التمييز: الأصفر الكرمة (#F8B62D)
+  - الأساسي: الوردي (#FFB3A7)
+  - الثانوي: القرمزي (#519A73)
+  - التمييز: الأصفر الكرمة (#FFC773)
 
 - **تايريتسو** - سمة داكنة
-  - الأساسي: النيلي (#1a237e)
-  - الثانوي: القرمزي (#E94B35)
-  - التمييز: الأصفر الإوز (#FFF176)
+  - الأساسي: أزرق البط (#144A74)
+  - الثانوي: القرمزي (#519A73)
+  - التمييز: الأصفر الإوز (#FFC773)
 
 ### 3. نظام الرسوم المتحركة (hikari-animation)
 
@@ -492,8 +492,8 @@ pub fn fade_in(
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::Cinnabar;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```

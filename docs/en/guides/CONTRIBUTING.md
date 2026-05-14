@@ -135,7 +135,7 @@ pub fn render_button() { }  // snake_case
 
 pub const MAX_SIZE: usize = 100;  // SCREAMING_SNAKE_CASE
 
-pub const 石青: ChineseColor = ChineseColor { };  // Chinese (for palette)
+pub const 石青: Color = Color { };  // Chinese (for palette)
 ```
 
 ### Tairitsu Component Style

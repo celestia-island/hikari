@@ -694,8 +694,9 @@ pub fn signal_button_counter(initial: u32) -> VNode {
 }
 
 pub fn signal_input(placeholder: &str) -> VNode {
-    let value = Signal::new(String::new());
-    let value_display = value.clone();
+    let keystrokes = Signal::new(0i32);
+    let keystrokes_inc = keystrokes.clone();
+    let keystrokes_display = keystrokes.clone();
 
     rsx! {
         div { class: "hi-signal-input-demo",
@@ -703,10 +704,14 @@ pub fn signal_input(placeholder: &str) -> VNode {
                 class: "hi-input hi-interactive-input",
                 r#type: "text",
                 placeholder: placeholder,
+                on_input: move |_e| {
+                    let v = keystrokes_inc.get();
+                    keystrokes_inc.set(v + 1);
+                },
             }
             div { class: "hi-input-display",
-                "Typed: "
-                {value_display}
+                "Keystrokes: "
+                {keystrokes_display}
             }
         }
     }

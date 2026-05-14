@@ -257,7 +257,7 @@ let button = Button::new()
                 // Glow Effects
                 h3 { "Glow Effects" }
                 p { class: "preset-demo-subtitle",
-                    "FUI-inspired glow animations: pulse, breathe, and shimmer."
+                    "Glow animations: pulse, breathe, and shimmer."
                 }
                 div { class: "preset-demo-controls",
                     button {

@@ -5,7 +5,7 @@ use crate::core::{
     {EasingFunction, PlaybackMode},
 };
 
-/// Color configuration for FUI animations
+/// Color configuration for glow animations
 #[derive(Debug, Clone)]
 pub struct FUIColors {
     /// Primary color (RGB)
@@ -26,7 +26,7 @@ impl Default for FUIColors {
     }
 }
 
-/// FUI glow effect animations
+/// Glow effect animations
 ///
 /// Provides glowing, breathing, and shimmer effects suitable for
 /// futuristic interfaces and status indicators.
@@ -168,7 +168,7 @@ impl GlowAnimation {
     }
 }
 
-/// FUI neon effect animations
+/// Neon effect animations
 ///
 /// Provides neon-style glowing, flickering, and scanline effects
 /// for retro-futuristic interfaces.
@@ -306,7 +306,7 @@ impl NeonAnimation {
     }
 }
 
-/// FUI technology effect animations
+/// technology effect animations
 ///
 /// Provides glitch, typing, data flow, and HUD scan effects
 /// for technology-themed interfaces.

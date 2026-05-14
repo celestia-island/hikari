@@ -1,5 +1,5 @@
 // packages/components/src/display/empty.rs
-// Empty state component with Arknights + FUI styling
+// Empty state component 
 
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,

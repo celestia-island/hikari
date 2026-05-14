@@ -1,5 +1,5 @@
 // hi-components/src/entry/cascader.rs
-// Cascader component with Arknights + FUI styling
+// Cascader component 
 
 #![expect(clippy::needless_update)]
 

@@ -1,5 +1,5 @@
 // packages/components/src/display/calendar.rs
-// Calendar component with Arknights + FUI styling
+// Calendar component 
 
 use chrono::{Datelike, Local};
 

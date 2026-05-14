@@ -1,5 +1,5 @@
 // packages/components/src/entry/auto_complete.rs
-// AutoComplete component with Arknights + FUI styling
+// AutoComplete component 
 
 use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 

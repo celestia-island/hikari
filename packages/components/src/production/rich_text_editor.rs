@@ -1,5 +1,5 @@
 // packages/components/src/production/rich_text_editor.rs
-// Rich text editor component with Arknights + FUI styling
+// Rich text editor component 
 //
 // Platform API: Uses tairitsu WIT bindings for contenteditable, execCommand,
 // and inner HTML retrieval. Stubs are provided in platform/wit.rs for

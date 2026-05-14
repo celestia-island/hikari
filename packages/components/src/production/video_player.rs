@@ -1,5 +1,5 @@
 // packages/components/src/production/video_player.rs
-// Video player component with Arknights + FUI styling
+// Video player component 
 //
 // Platform API: Uses tairitsu WIT bindings for video playback control
 // (play, pause, seek, mute, volume) via html-media-element interface.

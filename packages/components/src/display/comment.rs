@@ -1,5 +1,5 @@
 // packages/components/src/display/comment.rs
-// Comment component with Arknights + FUI styling
+// Comment component 
 
 use hikari_palette::classes::{ClassesBuilder, CommentClass, TypedClass};
 

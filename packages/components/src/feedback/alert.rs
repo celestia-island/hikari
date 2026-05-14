@@ -1,5 +1,5 @@
 // hi-components/src/feedback/alert.rs
-// Alert component with Arknights + FUI styling
+// Alert component 
 
 #![expect(clippy::needless_update)]
 

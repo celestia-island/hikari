@@ -1,5 +1,5 @@
 // packages/components/src/basic/file_upload.rs
-// FileUpload component with Arknights + FUI styling
+// FileUpload component 
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 

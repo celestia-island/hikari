@@ -1,5 +1,5 @@
 // hi-components/src/basic/radio_group.rs
-// RadioGroup component with Arknights + FUI styling
+// RadioGroup component 
 
 use hikari_palette::classes::{ClassesBuilder, RadioClass};
 use tairitsu_hooks::ReactiveSignal;

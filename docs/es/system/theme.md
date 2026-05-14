@@ -535,7 +535,7 @@ rsx! {
 
 ## Filosofía de Diseño
 
-### Estilo Arknights
+### Estilo 
 
 - **Tema claro (hikari)**:
   - Primario: Azurita (#00A0E9)
@@ -547,7 +547,7 @@ rsx! {
   - Fondo: Oscuro
   - Texto: Claro
 
-### Elementos FUI
+### Elementos 
 
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias)

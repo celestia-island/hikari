@@ -1,5 +1,5 @@
 // hi-components/src/basic/card.rs
-// Card component with Arknights + FUI styling
+// Card component 
 
 use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
 use tairitsu_vdom::{DomHandle, get_bounding_client_rect};

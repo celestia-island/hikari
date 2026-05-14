@@ -8,13 +8,13 @@
 // 1. Color System
 // ============================================
 
-// Text Colors (Light theme defaults — matching legacy hikari)
+// Text Colors (Light theme defaults)
 :root {
-  --hi-color-text-primary: rgba(0, 0, 0, 0.9);
-  --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
-  --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
+  --hi-color-text-primary: #262626;
+  --hi-color-text-secondary: rgba(38, 38, 38, 0.6);
+  --hi-color-text-disabled: rgba(38, 38, 38, 0.3);
   --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
-  --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
+  --hi-color-text-on-secondary: #ffffff;
 
   // Icon Colors
   --hi-icon-color: var(--hi-color-text-primary);
@@ -167,9 +167,9 @@
 // ============================================
 
 [data-theme="dark"] {
-  --hi-color-text-primary: #ffffff;
-  --hi-color-text-secondary: rgba(255, 255, 255, 0.7);
-  --hi-color-text-disabled: rgba(255, 255, 255, 0.3);
+  --hi-color-text-primary: #F0F0F2;
+  --hi-color-text-secondary: rgba(240, 240, 242, 0.7);
+  --hi-color-text-disabled: rgba(240, 240, 242, 0.3);
   
   --hi-bg-surface: rgba(30, 30, 30, 0.8);
   --hi-bg-surface-dark: rgba(20, 20, 20, 0.9);
@@ -183,9 +183,9 @@
 // ============================================
 
 [data-theme="light"] {
-  --hi-color-text-primary: rgba(0, 0, 0, 0.9);
-  --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
-  --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
+  --hi-color-text-primary: #262626;
+  --hi-color-text-secondary: rgba(38, 38, 38, 0.6);
+  --hi-color-text-disabled: rgba(38, 38, 38, 0.3);
   
   --hi-bg-surface: rgba(255, 255, 255, 0.9);
   --hi-bg-surface-dark: rgba(245, 245, 245, 0.95);

@@ -1,5 +1,5 @@
 // hi-components/src/basic/button.rs
-// Button component with Arknights + FUI styling
+// Button component 
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (button-vars.scss)

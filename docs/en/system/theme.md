@@ -535,7 +535,7 @@ rsx! {
 
 ## Design Philosophy
 
-### Arknights Style
+###  Style
 
 - **Light theme (hikari)**:
   - Primary: Azurite (#00A0E9)
@@ -547,7 +547,7 @@ rsx! {
   - Background: Dark
   - Text: Light
 
-### FUI Elements
+###  Elements
 
 - Subtle glow effects
 - Dynamic indicators (breathing lights)

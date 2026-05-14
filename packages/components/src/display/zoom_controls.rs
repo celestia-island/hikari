@@ -1,5 +1,5 @@
 // packages/components/src/display/zoom_controls.rs
-// ZoomControls component with Arknights + FUI styling
+// ZoomControls component 
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TypedClass, ZoomControlsClass};

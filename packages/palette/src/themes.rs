@@ -2,7 +2,7 @@
 //!
 //! This module provides the two official theme palettes:
 //! - **Hikari** - Light theme (光) - Pink + White
-//! - **Tairitsu** - Dark theme (tairitsu) - Deep Blue + Black
+//! - **Tairitsu** - Dark theme (対立) - Deep Blue + Black
 
 use std::{collections::HashMap, sync::RwLock};
 
@@ -175,17 +175,17 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 牡丹粉红, // 牡丹粉红 (238, 162, 164)
-            secondary: 苍翠,   // 苍翠 (81, 154, 115) - 与粉红互补
-            accent: 姜黄,      // 黄色系
-            success: 葱倩,     // 绿色系
-            warning: 鹅黄,     // 黄色系
-            danger: 朱红,      // 红色系
-            background: 月白,  // 白色 (214, 236, 240)
-            surface: 素,       // 浅灰 (236, 241, 245)
-            border: 素,        // 浅灰
-            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15), // 90% opacity black (no alpha)
-            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4), // 60% opacity black (no alpha)
+            primary: 粉红,                                        // 粉红 (255, 179, 167)
+            secondary: 苍翠,                                      // 苍翠 (81, 154, 115)
+            accent: 姜黄,                                         // 姜黄 (255, 199, 115)
+            success: 葱倩,                                        // 葱倩 (14, 184, 64)
+            warning: 杏黄,                                        // 杏黄 (255, 166, 49)
+            danger: 朱红,                                         // 朱红 (255, 76, 0)
+            background: 精白,                                     // 纯白 (255, 255, 255)
+            surface: 精白,                                        // 纯白 (255, 255, 255)
+            border: Color::from_rgb(196, 216, 218),               // #C4D8DA 浅蓝灰
+            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15),
+            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4),
         }
     }
 }
@@ -208,16 +208,16 @@ impl Tairitsu {
         Palette {
             mode: ThemeMode::Dark,
             primary: 鷃蓝,                                         // 鷃蓝 (20, 74, 116)
-            secondary: 姜黄,                      // 姜黄 (255, 199, 115) - 与深蓝互补
-            accent: 姜黄,                         // 黄色系
-            success: 葱倩,                        // 绿色系
-            warning: 鹅黄,                        // 黄色系
-            danger: 朱红,                         // 红色系
-            background: 漆黑,                     // (22, 24, 35) 深邃夜空底色
-            surface: Color::from_rgb(32, 35, 54), // 比 background 稍亮，卡片/面板底色
-            border: Color::from_rgb(48, 52, 72),  // 比 surface 稍亮，边框色
-            text_primary: Color::from_rgb_float(0.94, 0.94, 0.96), // 近白，主文本
-            text_secondary: Color::from_rgb_float(0.70, 0.72, 0.78), // 柔白偏蓝，次要文本
+            secondary: 姜黄,                                       // 姜黄 (255, 199, 115)
+            accent: 姜黄,                                          // 姜黄 (255, 199, 115)
+            success: 葱倩,                                         // 葱倩 (14, 184, 64)
+            warning: 杏黄,                                         // 杏黄 (255, 166, 49)
+            danger: 朱红,                                          // 朱红 (255, 76, 0)
+            background: 漆黑,                                      // (22, 24, 35)
+            surface: Color::from_rgb(32, 35, 54),
+            border: Color::from_rgb(48, 52, 72),
+            text_primary: Color::from_rgb_float(0.94, 0.94, 0.96),
+            text_secondary: Color::from_rgb_float(0.70, 0.72, 0.78),
         }
     }
 }
@@ -398,8 +398,8 @@ mod tests {
     fn test_hikari_theme() {
         let palette = Hikari::palette();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.primary, 牡丹粉红);
-        assert_eq!(palette.background, 月白);
+        assert_eq!(palette.primary, 粉红);
+        assert_eq!(palette.background, 精白);
         assert_eq!(
             palette.text_primary,
             Color::from_rgb_float(0.15, 0.15, 0.15)
@@ -428,7 +428,7 @@ mod tests {
     fn test_default_is_hikari() {
         let palette = default_theme();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.background, 月白);
+        assert_eq!(palette.background, 精白);
     }
 
     #[test]
@@ -454,11 +454,11 @@ mod tests {
             secondary: 石青,
             accent: 姜黄,
             success: 葱倩,
-            warning: 鹅黄,
+            warning: 杏黄,
             danger: 朱红,
-            background: 月白,
-            surface: 素,
-            border: 素,
+            background: 精白,
+            surface: 精白,
+            border: Color::from_rgb(196, 216, 218),
             text_primary: 墨色,
             text_secondary: 黛,
         };
@@ -483,8 +483,8 @@ fn test_palette_button_glow() {
     let hikari = Hikari::palette();
     let tairitsu = Tairitsu::palette();
 
-    // hikari Primary (牡丹粉红 - brightness 0.73) should get black glow
-    // Contrast: |0.73 - 0.0| = 0.73 > 0.7, alpha = 0.7
+    // hikari Primary (粉红 - brightness 0.786) should get black glow
+    // Contrast: |0.786 - 0.0| = 0.786 > 0.7, alpha = 0.7
     let hikari_primary_glow = hikari.button_glow_color(&hikari.primary);
     assert_eq!(hikari_primary_glow, "rgba(0, 0, 0, 0.7)");
 

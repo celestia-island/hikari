@@ -1,35 +1,22 @@
 //! # Hikari Palette
 //!
-//! Comprehensive color palette system featuring 500+ traditional Chinese colors with rich historical context and modern type-safe Rust constants.
+//! Color palette system with 660+ named colors as type-safe Rust constants.
 //!
 //! ## Overview
 //!
 //! `hikari-palette` provides:
 //!
-//! - **500+ Traditional Chinese Colors** - Authentic historical colors from Chinese art, culture, and nature
-//! - **Rich Metadata** - Each color includes hex, RGB, CMYK values, and historical notes
-//! - **Type-Safe Constants** - Use Chinese identifiers directly in your Rust code
-//! - **Pre-defined Palettes** - Ready-to-use color schemes for different design systems
-//! - **Utility Classes** - Type-safe Tailwind-like utility class system
-//!
-//! ## Design Philosophy
-//!
-//! This crate uses **"Scheme C-Plus"** - Chinese constant names with English API design:
-//!
-//! ```rust
-//! // Chinese constant names (cultural authenticity)
-//! let primary = 石青;
-//! let secondary = 朱砂;
-//!
-//! // English API (interoperability)
-//! println!("{}: {}", primary.name, primary.hex);
-//! ```
+//! - **660+ Named Colors** — Comprehensive color library organized by hue
+//! - **Type-Safe Constants** — Named identifiers directly in your Rust code
+//! - **Pre-defined Palettes** — Hikari (light) and Tairitsu (dark) theme palettes
+//! - **Utility Classes** — Type-safe Tailwind-like utility class system
+//! - **Color Math** — HSL conversion, gradient, blending utilities
 //!
 //! ## Modules
 //!
-//! - [`colors`] - Individual color definitions (500+ traditional colors)
-//! - [`themes`] - Theme palettes (Hikari, Tairitsu, Arknights, Fresh)
-//! - [`classes`] - Type-safe utility class system with hierarchical enums
+//! - [`colors`] — Individual color definitions (660+ colors)
+//! - [`themes`] — Theme palettes (Hikari, Tairitsu)
+//! - [`classes`] — Type-safe utility class system with hierarchical enums
 //!
 //! ## Quick Start
 //!
@@ -51,17 +38,14 @@
 //! ### Using Pre-defined Palettes
 //!
 //! ```rust,no_run
-//! use hikari_palette::{primary_palette, fui_dark_palette, arknights_palette};
+//! use hikari_palette::{light_theme, dark_theme};
 //!
-//! // Primary theme (default)
-//! let palette = primary_palette();
-//! println!("Primary: {}", palette.primary.hex);
+//! // Hikari light theme (default)
+//! let palette = light_theme();
+//! println!("Primary: {}", palette.primary.hex());
 //!
-//! // FUI Dark theme
-//! let dark = fui_dark_palette();
-//!
-//! // Arknights theme
-//! let arknights = arknights_palette();
+//! // Tairitsu dark theme
+//! let dark = dark_theme();
 //! ```
 //!
 //! ### Utility Classes
@@ -94,42 +78,8 @@
 //!
 //! | Theme | Description | Primary Color | Secondary Color |
 //! |-------|-------------|---------------|-----------------|
-//! | `primary_palette()` | Default Hikari theme | 石青 (#1759A8) | 朱砂 (#FF4C00) |
-//! | `fui_dark_palette()` | FUI Dark sci-fi | 靛蓝 (#1A237E) | 朱砂 (#FF4C00) |
-//! | `arknights_palette()` | Arknights-inspired | 石青 (#1759A8) | 朱砂 (#FF4C00) |
-//! | `fresh_palette()` | Light, fresh | 月白 (#D6ECF0) | 葱倩 (#5CBF91) |
-//!
-//! ## Historical Context
-//!
-//! Many colors include historical notes:
-//!
-//! ```rust,no_run
-//! use hikari_palette::{石青};
-//!
-//! if let Some(note) = 石青.historical_note {
-//!     println!("{}", note);
-//!     // Output: 中国画传统颜料，源于蓝铜矿石
-//! }
-//! ```
-//!
-//! ## Color Reference
-//!
-//! ### Primary Colors
-//!
-//! | Color Name | Chinese | Hex | Usage |
-//! |------------|---------|-----|-------|
-//! | Stone Cyan | 石青 | #1759A8 | Primary brand color |
-//! | Cinnabar | 朱砂 | #FF4C00 | Secondary accent |
-//! | Vine Yellow | 藤黄 | #FFB800 | Highlights |
-//! | Indigo | 靛蓝 | #1A237E | Deep accents |
-//!
-//! ### Functional Colors
-//!
-//! | Color Name | Chinese | Hex | Usage |
-//! |------------|---------|-----|-------|
-//! | Scallion Green | 葱倩 | #5CBF91 | Success states |
-//! | Goosling Yellow | 鹅黄 | #FBC02D | Warnings |
-//! | Cinnabar | 朱砂 | #FF4C00 | Error, danger |
+//! | `light_theme()` | Hikari light theme | 粉红 (#FFB3A7) | 苍翠 (#519A73) |
+//! | `dark_theme()` | Tairitsu dark theme | 鷃蓝 (#144A74) | 姜黄 (#FFC773) |
 //!
 //! ## Integration with Other Crates
 //!
@@ -139,13 +89,13 @@
 //! - **hikari-components** - Components inherit colors from theme
 //!
 //! ```rust,no_run
-//! use hikari_palette::primary_palette;
+//! use hikari_palette::light_theme;
 //! use hikari_theme::ThemeProvider;
 //!
-//! // In your Dioxus app
+//! // In your app
 //! rsx! {
-//!     ThemeProvider { palette: "primary".to_string(),
-//!         // Uses colors from primary_palette()
+//!     ThemeProvider { palette: "hikari".to_string(),
+//!         // Uses colors from light_theme()
 //!     }
 //! }
 //! ```

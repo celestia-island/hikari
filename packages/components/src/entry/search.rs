@@ -1,5 +1,5 @@
 // packages/components/src/entry/search.rs
-// Search component with Arknights + FUI styling
+// Search component 
 // Features: Embedded icons/buttons, unified input styling, Glow effects
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
 

@@ -1,5 +1,5 @@
 // packages/components/src/navigation/steps.rs
-// Steps component with Arknights + FUI styling
+// Steps component 
 
 #![expect(clippy::needless_update)]
 

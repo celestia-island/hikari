@@ -1,5 +1,5 @@
 // packages/components/src/display/timeline.rs
-// Timeline component with Arknights + FUI styling
+// Timeline component 
 
 use hikari_palette::classes::{ClassesBuilder, TimelineClass, TypedClass};
 use tairitsu_vdom::events::MouseEvent;

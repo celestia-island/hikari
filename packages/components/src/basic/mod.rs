@@ -1,7 +1,7 @@
 //! Basic components module
 //!
-//! Provides fundamental UI components with Arknights-style design
-//! and FUI aesthetics.
+//! Provides fundamental UI components with flat design
+//! and glow effect aesthetics.
 //!
 //! ## Components
 //!

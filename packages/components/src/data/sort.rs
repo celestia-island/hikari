@@ -1,5 +1,5 @@
 // hi-components/src/data/sort.rs
-// Sort component with Arknights + FUI styling
+// Sort component 
 
 use hikari_palette::{TypedClass, classes::SortClass};
 use tairitsu_style::ClassesBuilder;

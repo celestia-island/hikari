@@ -1,5 +1,5 @@
 // hi-components/src/feedback/toast.rs
-// Toast component with Arknights + FUI styling
+// Toast component 
 
 #![expect(clippy::needless_update)]
 

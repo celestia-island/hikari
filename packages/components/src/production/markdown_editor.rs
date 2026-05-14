@@ -1,5 +1,5 @@
 // packages/components/src/production/markdown_editor.rs
-// MarkdownEditor component with Arknights + FUI styling
+// MarkdownEditor component 
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};

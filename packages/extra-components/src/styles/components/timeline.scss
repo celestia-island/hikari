@@ -1,5 +1,5 @@
 // styles/components/timeline.scss
-// Timeline component with Arknights + FUI styling
+// Timeline component with 
 
 .hi-timeline {
   display: flex;
@@ -227,7 +227,7 @@
   }
 }
 
-// FUI effects
+// glow effects
 .hi-timeline-dot-in-progress {
   box-shadow: 0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.3));
 }

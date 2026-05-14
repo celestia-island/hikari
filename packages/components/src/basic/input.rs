@@ -1,5 +1,5 @@
 // hi-components/src/basic/input.rs
-// Input component with Arknights + FUI styling
+// Input component 
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (input-vars.scss)

@@ -1,5 +1,5 @@
 // hi-components/src/navigation/breadcrumb.rs
-// Breadcrumb component with Arknights + FUI styling
+// Breadcrumb component 
 
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass,

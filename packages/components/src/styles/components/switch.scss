@@ -108,7 +108,7 @@
 
 .hi-switch-text-variant.hi-switch-checked .hi-switch-thumb { transform: translateX(0); }
 
-// Default checked state - Success color with FUI glow
+// Default checked state - Success color with glow
 .hi-switch-checked {
     background-color: var(--hi-success, #10B981);
     border-color: var(--hi-success, #10B981);
@@ -119,13 +119,13 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 4px rgba(16, 185, 129, 0.25);
 }
 
-// Hover with FUI brightness + glow boost
+// Hover with  brightness + glow boost
 .hi-switch-checked:hover:not(.hi-switch-disabled) {
     filter: brightness(1.06);
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.35), inset 0 0 4px rgba(255, 255, 255, 0.18);
 }
 
-// Unchecked hover - subtle border glow (FUI style)
+// Unchecked hover - subtle border glow ( style)
 .hi-switch:hover:not(.hi-switch-disabled):not(.hi-switch-checked) {
     border-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
     box-shadow: 0 0 8px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
@@ -136,7 +136,7 @@
     pointer-events: none;
 }
 
-// Color variants with FUI glow
+// Color variants with glow
 .hi-switch-color-primary.hi-switch-checked {
     background-color: var(--hi-color-primary, #1890ff);
     border-color: var(--hi-color-primary, #1890ff);

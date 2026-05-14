@@ -10,9 +10,9 @@ Hikari (光) is a modern Rust UI framework built with:
 
 Hikari combines:
 
-- **Arknights Aesthetics** - Clean lines, high contrast
-- **FUI (Future User Interface)** - Glow effects, dynamic indicators
-- **Traditional Chinese Colors** - 500+ authentic color names
+- **Flat Design** - Clean lines, high contrast
+- **Glow Effects** - Subtle luminous touches
+- **Named Color Palette** - 660+ colors as type-safe constants
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ fn App() -> Element {
 
 ## Features
 
-- 🎨 500+ Traditional Chinese Colors
+- 🎨 660+ Named Colors
 - 🌙 Light & Dark Themes
 - 🔧 Type-safe Utility Classes
 - ✨ Smooth Animations

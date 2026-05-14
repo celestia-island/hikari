@@ -1,7 +1,7 @@
 //! hi-components/src/feedback/mod.rs
 //! Feedback components: Alert, Toast, Tooltip, Glow, Popover, Drawer, Spin, Progress
 //!
-//! Arknights + FUI styling:
+//! 
 //! - Shimmer animations
 //! - Status-based visual feedback
 //! - Gradient backgrounds with acrylic effect

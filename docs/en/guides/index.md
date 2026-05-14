@@ -2,7 +2,7 @@
 
 > A modern Rust UI framework built on Tairitsu + Grass + Axum
 >
-> **Design Style**: Arknights flat design + FUI sci-fi aesthetics + Traditional Chinese colors
+> **Design Style**:  flat design +  sci-fi aesthetics + Traditional Chinese colors
 >
 > **Name Origin**: "Hikari" (Light) from the rhythm game Arcaea
 
@@ -86,12 +86,12 @@ trunk build --release
 
 ## Design Philosophy
 
-### Arknights Flat Design
+###  Flat Design
 - Clean lines and clear information hierarchy
 - High contrast for readability
 - Minimalist yet refined design
 
-### FUI Sci-Fi Aesthetics
+###  Sci-Fi Aesthetics
 - Subtle glow effects
 - Dynamic indicators (breathing lights, pulse animations)
 - Fine borders and geometric patterns

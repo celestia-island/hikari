@@ -1,5 +1,5 @@
 // packages/components/src/production/code_highlight.rs
-// Code highlighting component with Arknights + FUI styling
+// Code highlighting component 
 //
 // NOTE: This component provides a styled code display with line numbers
 // and copy functionality. The `language-{lang}` class is added to the code

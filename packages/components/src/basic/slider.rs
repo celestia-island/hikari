@@ -1,5 +1,5 @@
 // hi-components/src/basic/slider.rs
-// Slider component with Arknights + FUI styling
+// Slider component 
 
 use hikari_palette::classes::{ClassesBuilder, SliderClass};
 

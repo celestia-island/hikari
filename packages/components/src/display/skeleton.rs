@@ -1,5 +1,5 @@
 // packages/components/src/display/skeleton.rs
-// Skeleton component with Arknights + FUI styling
+// Skeleton component 
 
 use std::{cell::RefCell, rc::Rc};
 

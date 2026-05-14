@@ -1,5 +1,5 @@
 // hi-components/src/styles/components/divider.scss
-// Divider component styles with Arknights + FUI styling
+// Divider component styles 
 
 .hi-divider {
   display: flex;
@@ -74,7 +74,7 @@
   }
 }
 
-// FUI effect - subtle glow
+//  effect - subtle glow
 .hi-divider-with-text {
   .hi-divider-text {
     text-shadow: 0 0 10px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));

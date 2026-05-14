@@ -1,5 +1,5 @@
 // packages/components/src/basic/date_picker.rs
-// DatePicker component with Arknights + FUI styling
+// DatePicker component 
 
 use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 

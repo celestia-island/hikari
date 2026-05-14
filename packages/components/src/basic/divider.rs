@@ -1,5 +1,5 @@
 // hi-components/src/basic/divider.rs
-// Divider component with Arknights + FUI styling
+// Divider component 
 
 use hikari_palette::classes::{ClassesBuilder, Display};
 

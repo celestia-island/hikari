@@ -1,5 +1,5 @@
 // packages/components/src/display/user_guide.rs
-// UserGuide component with Arknights + FUI styling
+// UserGuide component 
 
 use std::{cell::RefCell, rc::Rc};
 

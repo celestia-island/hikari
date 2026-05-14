@@ -1,5 +1,5 @@
 // hi-components/src/data/table.rs
-// Table component with Arknights + FUI styling
+// Table component 
 
 use std::collections::HashMap;
 

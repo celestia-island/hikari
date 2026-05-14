@@ -1,5 +1,5 @@
 // hikari-extra-components/styles/components/collapsible.scss
-// Collapsible panel styles with Arknights design + FUI glow
+// Collapsible panel styles with 
 
 @use '../../../hikari-theme/styles/mixins.scss' as *;
 
@@ -15,7 +15,7 @@
     overflow: hidden;
     transition: all $hikari-transition-base;
 
-    // Arknights clean design with subtle glow
+    //  clean design with subtle glow
     &:hover {
         border-color: var(--hi-color-primary);
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
@@ -77,7 +77,7 @@
         transform: rotate(-90deg);
     }
 
-    // FUI glow on hover
+    // glow on hover
     .hi-collapsible-header:hover & {
         filter: drop-shadow(0 0 8px currentColor);
     }
@@ -181,7 +181,7 @@
     }
 }
 
-// FUI variant (enhanced glow)
+//  variant (enhanced glow)
 .hi-collapsible-fui {
     position: relative;
     overflow: hidden;

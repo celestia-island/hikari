@@ -1,7 +1,7 @@
 //! # Hikari Theme System
 //!
-//! Theme system for Hikari UI applications with Arknights-inspired aesthetics
-//! and FUI (Future User Interface) design principles.
+//! Theme system for Hikari UI applications with flat design
+//! and glow effect aesthetics.
 //!
 //! ## Architecture
 //!
@@ -15,17 +15,16 @@
 //!
 //! The theme system includes two built-in theme palettes:
 //!
-//! - **Hikari (光)** - Light theme inspired by traditional Chinese colors
-//!   - Primary: 石青 (Cyan/Blue)
-//!   - Secondary: 朱砂 (Vermilion/Red)
-//!   - Accent: 藤黄 (Gamboge/Yellow)
-//!   - Background: 月白 (Light White)
+//! - **Hikari (光)** - Light theme
+//!   - Primary: 粉红 (Pink)
+//!   - Secondary: 苍翠 (Green)
+//!   - Accent: 姜黄 (Gold)
+//!   - Background: White
 //!
-//! - **Tairitsu** - Dark theme with high contrast
-//!   - Primary: 靛蓝 (Indigo/Dark Blue)
-//!   - Secondary: 朱砂 (Vermilion/Red)
-//!   - Accent: 鹅黄 (Goose Yellow)
-//!   - Background: 墨色 (Ink Black)
+//! - **Tairitsu (対立)** - Dark theme with high contrast
+//!   - Primary: 鷃蓝 (Navy Blue)
+//!   - Secondary: 姜黄 (Gold)
+//!   - Background: 漆黑 (Deep Black)
 //!
 //! ## Quick Start
 //!
@@ -146,21 +145,15 @@
 //!
 //! The Hikari theme system follows these design principles:
 //!
-//! 1. **Arknights Aesthetics**
+//! 1. **Flat Design Aesthetics**
 //!    - Clean lines and clear information hierarchy
 //!    - High contrast for readability
 //!    - Minimalist yet refined design
 //!
-//! 2. **FUI (Future User Interface)**
+//! 2. **Glow Effects**
 //!    - Subtle glow effects (box-shadow, text-shadow)
 //!    - Dynamic indicators (breathing lights, pulse animations)
 //!    - Fine borders (1px semi-transparent)
-//!    - Geometric patterns (hexagons, grids)
-//!
-//! 3. **Traditional Chinese Colors**
-//!    - Authentic color names and values
-//!    - Culturally significant color combinations
-//!    - Harmony between traditional and modern design
 //!
 //! ## Integration with Components
 //!
@@ -185,9 +178,9 @@
 //!
 //! ```css
 //! .hi-theme-provider[data-theme="hikari"] {
-//!     --hi-primary: #00A0E9;
-//!     --hi-secondary: #E94B35;
-//!     --hi-accent: #F8B62D;
+//!     --hi-primary: #FFB3A7;
+//!     --hi-secondary: #519A73;
+//!     --hi-accent: #FFC773;
 //!     /* ... more variables */
 //! }
 //! ```

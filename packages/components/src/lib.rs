@@ -1,7 +1,7 @@
 //! # Hikari Components Library
 //!
-//! Comprehensive UI component library with Arknights-style design
-//! and FUI (Future User Interface) aesthetics.
+//! Comprehensive UI component library with flat design
+//! and glow effect aesthetics.
 //!
 //! Built on Tairitsu framework.
 

@@ -1,5 +1,5 @@
 // hi-components/src/basic/badge.rs
-// Badge component with Arknights + FUI styling
+// Badge component 
 
 use hikari_palette::classes::{BadgeClass, ClassesBuilder, Display};
 

@@ -1,5 +1,5 @@
 // hi-components/src/entry/transfer.rs
-// Transfer component with Arknights + FUI styling
+// Transfer component 
 
 #![expect(clippy::needless_update)]
 

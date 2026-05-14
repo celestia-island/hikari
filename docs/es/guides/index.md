@@ -2,7 +2,7 @@
 
 > Un framework UI moderno para Rust construido sobre Tairitsu + Grass + Axum
 >
-> **Estilo de Diseño**: Diseño plano de Arknights + Estética sci-fi FUI + Colores tradicionales chinos
+> **Estilo de Diseño**: Diseño plano de  + Estética sci-fi  + Colores tradicionales chinos
 >
 > **Origen del Nombre**: "Hikari" (Luz) del juego de ritmo Arcaea
 
@@ -86,12 +86,12 @@ trunk build --release
 
 ## Filosofía de Diseño
 
-### Diseño Plano de Arknights
+### Diseño Plano de 
 - Líneas limpias y jerarquía de información clara
 - Alto contraste para legibilidad
 - Diseño minimalista pero refinado
 
-### Estética Sci-Fi FUI
+### Estética Sci-Fi 
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias, animaciones de pulso)
 - Bordes finos y patrones geométricos

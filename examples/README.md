@@ -61,9 +61,9 @@ examples/
 
 All examples use the Hikari design system:
 
-- **Arknights-inspired** clean, flat design
-- **FUI elements** with subtle glows and futuristic touches
-- **Chinese traditional colors** from the Hikari palette
+- **Flat design** with clean lines and high contrast
+- **Glow effects** with subtle luminous touches
+- **Themed color palettes** from the Hikari palette system
 - **Responsive layouts** that work on all screen sizes
 
 ## License

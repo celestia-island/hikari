@@ -1,5 +1,5 @@
 // hi-components/src/basic/checkbox.rs
-// Checkbox component with Arknights + FUI styling
+// Checkbox component 
 
 use hikari_palette::classes::{CheckboxClass, ClassesBuilder};
 

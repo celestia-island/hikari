@@ -1,5 +1,5 @@
 // hi-components/src/navigation/stepper.rs
-// Stepper component with Arknights + FUI styling
+// Stepper component 
 
 use hikari_palette::classes::{ClassesBuilder, StepperClass, TypedClass};
 

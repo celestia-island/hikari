@@ -1,6 +1,6 @@
 # hikari-theme
 
-Theme system for Hikari UI applications with Arknights-inspired aesthetics and FUI design principles.
+Theme system for Hikari UI applications with glow effects and flat design aesthetics.
 
 ## Installation
 
@@ -35,7 +35,7 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 - **ThemeProvider Component** - Context-based theme management
 - **CSS Variables System** - Dynamic theming via CSS custom properties
-- **Multiple Built-in Themes** - Hikari (light), Tairitsu (dark), Arknights, Fresh
+- **Built-in Themes** - Hikari (light) and Tairitsu (dark)
 - **SCSS Mixins & Utilities** - Reusable styling helpers
 - **Nested Theme Support** - Local theme override capability
 
@@ -43,10 +43,8 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 | Theme | Type | Primary Color | Secondary Color |
 |-------|------|---------------|-----------------|
-| `hikari` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion/Red) |
-| `tairitsu` | Dark | 靛蓝 (Indigo) | 朱砂 (Vermilion) |
-| `arknights` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion) |
-| `fresh` | Light | 月白 (Light White) | 葱倩 (Green) |
+| `hikari` | Light | 粉红 (Pink) | 苍翠 (Green) |
+| `tairitsu` | Dark | 鷃蓝 (Navy Blue) | 姜黄 (Gold) |
 
 ## License
 

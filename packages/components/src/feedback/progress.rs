@@ -1,5 +1,5 @@
 // packages/components/src/feedback/progress.rs
-// Progress component with Arknights + FUI styling
+// Progress component 
 // Active pulse: RAF-driven (migrated from CSS @keyframes)
 
 use std::{cell::RefCell, rc::Rc};

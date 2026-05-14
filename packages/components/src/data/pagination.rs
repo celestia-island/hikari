@@ -1,5 +1,5 @@
 // hi-components/src/data/pagination.rs
-// Pagination component with Arknights + FUI styling
+// Pagination component 
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::PaginationClass;

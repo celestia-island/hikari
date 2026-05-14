@@ -1,5 +1,5 @@
 // packages/components/src/display/drag_layer.rs
-// DragLayer component with Arknights + FUI styling
+// DragLayer component 
 
 use std::{cell::RefCell, rc::Rc};
 

@@ -16,10 +16,10 @@ anyhow = "1"
 hikari-palette = { version = "^0.1", path = "../palette" }
 
 # Tairitsu framework integration
-tairitsu-vdom = "^0.4"
-tairitsu-hooks = "^0.4"
-tairitsu-style = "^0.4"
-tairitsu-web = { version = "^0.4", default-features = false, features = [
+tairitsu-vdom = "^0.5"
+tairitsu-hooks = "^0.5"
+tairitsu-style = "^0.5"
+tairitsu-web = { version = "^0.5", default-features = false, features = [
     "vdom",
     "hooks",
     "macros",

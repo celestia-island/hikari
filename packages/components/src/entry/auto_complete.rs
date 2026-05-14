@@ -172,7 +172,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             input {
                 class: input_classes,
                 r#type: "text",
-                value: "{props.value}",
+                value: {props.value.clone()},
                 placeholder: props.placeholder,
                 disabled: props.disabled,
                 oninput: handle_input,
@@ -214,7 +214,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                                     }
                                 }
                             },
-                            "{options_arr[index]}"
+                            {options_arr[index].clone()}
                         }
                     }
                 }

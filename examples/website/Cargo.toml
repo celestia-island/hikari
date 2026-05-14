@@ -291,3 +291,4 @@ tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
 tairitsu-web = { path = "../../../tairitsu/packages/web" }
+tairitsu-packager = { path = "../../../tairitsu/packages/packager" }

@@ -84,3 +84,11 @@ strip = true
 [profile.dev]
 opt-level = 0
 debug = true
+
+[patch.crates-io]
+tairitsu-vdom = { path = "../tairitsu/packages/vdom" }
+tairitsu-hooks = { path = "../tairitsu/packages/hooks" }
+tairitsu-macros = { path = "../tairitsu/packages/macros" }
+tairitsu-style = { path = "../tairitsu/packages/style" }
+tairitsu-web = { path = "../tairitsu/packages/web" }
+tairitsu-packager = { path = "../tairitsu/packages/packager" }

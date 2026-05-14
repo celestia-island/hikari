@@ -9,7 +9,7 @@
 use std::{collections::HashMap, sync::{Arc, OnceLock, RwLock}};
 
 use tairitsu_macros::rsx;
-use tairitsu_vdom::{VElement, VNode, VText};
+use tairitsu_vdom::{Signal, VElement, VNode, VText};
 
 /// Global reactive state manager shared across all component instances.
 static REACTIVE_STATE: OnceLock<Arc<RwLock<ReactiveState>>> = OnceLock::new();
@@ -627,3 +627,87 @@ const JS_BRIDGE_CODE: &str = r#"
     setTimeout(init, 200);
 })();
 "#;
+
+pub fn signal_switch(checked: bool, label: &str) -> VNode {
+    let state = Signal::new(checked);
+    let state_toggle = state.clone();
+    let state_display = state.clone();
+
+    rsx! {
+        div { class: "hi-signal-switch-demo",
+            label { {label} }
+            div {
+                class: "hi-switch hi-switch-md hi-interactive-switch",
+                button {
+                    class: "hi-button hi-button-primary",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        let v = state_toggle.get();
+                        state_toggle.set(!v);
+                    },
+                    {state_display}
+                }
+            }
+        }
+    }
+}
+
+pub fn signal_button_counter(initial: u32) -> VNode {
+    let count = Signal::new(initial);
+    let count_inc = count.clone();
+    let count_dec = count.clone();
+    let count_reset = count.clone();
+
+    rsx! {
+        div { class: "hi-signal-counter-demo",
+            div { class: "hi-reactive-counter-controls",
+                button {
+                    class: "hi-button hi-button-secondary",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        let v = count_dec.get();
+                        count_dec.set(v - 1);
+                    },
+                    "-1"
+                }
+                span { class: "hi-reactive-counter-value", {count} }
+                button {
+                    class: "hi-button hi-button-primary",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        let v = count_inc.get();
+                        count_inc.set(v + 1);
+                    },
+                    "+1"
+                }
+                button {
+                    class: "hi-button hi-button-ghost",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        count_reset.set(0);
+                    },
+                    "Reset"
+                }
+            }
+        }
+    }
+}
+
+pub fn signal_input(placeholder: &str) -> VNode {
+    let value = Signal::new(String::new());
+    let value_display = value.clone();
+
+    rsx! {
+        div { class: "hi-signal-input-demo",
+            input {
+                class: "hi-input hi-interactive-input",
+                r#type: "text",
+                placeholder: placeholder,
+            }
+            div { class: "hi-input-display",
+                "Typed: "
+                {value_display}
+            }
+        }
+    }
+}

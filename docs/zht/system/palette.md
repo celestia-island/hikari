@@ -1,6 +1,6 @@
 # Palette 調色板系統
 
-中國傳統色彩系統實作，包含 500+ 歷史顏色。
+中國傳統色彩系統實作，包含 660+ 歷史顏色。
 
 ## 目錄
 
@@ -15,7 +15,7 @@
 
 `hikari-palette` 提供：
 
-- **500+ 顏色** - 完整的中國傳統色彩定義
+- **660+ 顏色** - 完整的中國傳統色彩定義
 - **型別安全** - 編譯時期顏色值檢查
 - **工具類** - 型別安全的 Tailwind 風格工具類建構器
 - **主題調色板** - 預配置的主題色彩方案
@@ -33,16 +33,16 @@
 ### 基礎用法
 
 ```rust
-use hikari_palette::ChineseColor;
+use hikari_palette::Color;
 
 // 使用枚舉變體訪問顏色
-let red = ChineseColor::朱砂;
-let blue = ChineseColor::石青;
-let yellow = ChineseColor::藤黃;
+let red = Color::苍翠;
+let blue = Color::粉红;
+let yellow = Color::薑黃;
 
-println!("Red: {}", red.hex());  // #E94B35
-println!("Blue: {}", blue.hex()); // #00A0E9
-println!("Yellow: {}", yellow.hex()); // #F8B62D
+println!("Red: {}", red.hex());  // #519A73
+println!("Blue: {}", blue.hex()); // #FFB3A7
+println!("Yellow: {}", yellow.hex()); // #FFC773
 ```
 
 ### 可用顏色分類
@@ -51,52 +51,52 @@ println!("Yellow: {}", yellow.hex()); // #F8B62D
 
 ```rust
 // 傳統紅色
-ChineseColor::朱砂      // #E94B35 - 朱砂紅
-ChineseColor::朱紅      // #FF4C00 - 鮮紅橙
-ChineseColor::緋紅      // #FF3030 - 深緋紅
-ChineseColor::桃紅      // #F6BEC8 - 桃花粉紅
-ChineseColor::玫瑰紅    // #C21F30 - 玫瑰紅
+Color::苍翠      // #519A73 - 蒼翠
+Color::朱紅      // #FF4C00 - 鮮紅橙
+Color::緋紅      // #FF3030 - 深緋紅
+Color::桃紅      // #F6BEC8 - 桃花粉紅
+Color::玫瑰紅    // #C21F30 - 玫瑰紅
 ```
 
 #### 藍色系（藍色系）
 
 ```rust
 // 傳統藍色
-ChineseColor::石青      // #00A0E9 - 石青藍
-ChineseColor::靛藍      // #1a237e - 靛藍
-ChineseColor::青色      // #00CED1 - 青色
-ChineseColor::天藍      // #87CEEB - 天藍
-ChineseColor::綠松石    // #40E0D0 - 綠松石
+Color::粉红      // #FFB3A7 - 粉紅
+Color::鷃藍      // #144A74 - 鷃藍
+Color::青色      // #00CED1 - 青色
+Color::天藍      // #87CEEB - 天藍
+Color::綠松石    // #40E0D0 - 綠松石
 ```
 
 #### 黃色系（黃色系）
 
 ```rust
 // 傳統黃色
-ChineseColor::藤黃      // #F8B62D - 藤黃
-ChineseColor::鵝黃      // #FFF176 - 鵝黃
-ChineseColor::金色      // #FFD700 - 金色
-ChineseColor::琥珀      // #FFBF00 - 琥珀
+Color::薑黃      // #FFC773 - 薑黃
+Color::薑黃      // #FFC773 - 薑黃
+Color::金色      // #FFD700 - 金色
+Color::琥珀      // #FFBF00 - 琥珀
 ```
 
 #### 綠色系（綠色系）
 
 ```rust
 // 傳統綠色
-ChineseColor::葱倩      // #4CAF50 - 葱倩綠
-ChineseColor::竹青      // #789262 - 竹青
-ChineseColor::玉色      // #A0E6DA - 玉色
-ChineseColor::翡翠      // #50C878 - 翡翠綠
+Color::葱倩      // #4CAF50 - 葱倩綠
+Color::竹青      // #789262 - 竹青
+Color::玉色      // #A0E6DA - 玉色
+Color::翡翠      // #50C878 - 翡翠綠
 ```
 
 #### 中性色系（中性色系）
 
 ```rust
 // 傳統中性色
-ChineseColor::墨色      // #1A1A2E - 墨黑
-ChineseColor::月白      // #F5F5F5 - 月白
-ChineseColor::縞色      // #E0E0E0 - 縞色
-ChineseColor::灰色      // #808080 - 灰色
+Color::墨色      // #1A1A2E - 墨黑
+Color::精白      // #F5F5F5 - 月白
+Color::縞色      // #E0E0E0 - 縞色
+Color::灰色      // #808080 - 灰色
 ```
 
 ### 顏色屬性
@@ -104,10 +104,10 @@ ChineseColor::灰色      // #808080 - 灰色
 每個顏色都提供：
 
 ```rust
-let color = ChineseColor::石青;
+let color = Color::粉红;
 
 // 獲取十六進位值
-let hex = color.hex();  // "#00A0E9"
+let hex = color.hex();  // "#FFB3A7"
 
 // 獲取 RGB 值
 let rgb = color.rgb();  // (0, 160, 233)
@@ -255,11 +255,11 @@ use hikari_palette::themes;
 
 let hikari = themes::Hikari::palette();
 
-println!("Primary: {}", hikari.primary.hex);   // #00A0E9
-println!("Secondary: {}", hikari.secondary.hex); // #E94B35
-println!("Accent: {}", hikari.accent.hex);     // #F8B62D
-println!("Background: {}", hikari.background.hex); // #FFFFFF
-println!("Surface: {}", hikari.surface.hex);   // #F5F5F5
+println!("Primary: {}", hikari.primary.hex());   // #FFB3A7
+println!("Secondary: {}", hikari.secondary.hex()); // #519A73
+println!("Accent: {}", hikari.accent.hex());     // #FFC773
+println!("Background: {}", hikari.background.hex()); // #FFFFFF
+println!("Surface: {}", hikari.surface.hex());   // #F5F5F5
 ```
 
 **色彩方案**:
@@ -276,11 +276,11 @@ use hikari_palette::themes;
 
 let tairitsu = themes::Tairitsu::palette();
 
-println!("Primary: {}", tairitsu.primary.hex);   // #1a237e
-println!("Secondary: {}", tairitsu.secondary.hex); // #E94B35
-println!("Accent: {}", tairitsu.accent.hex);     // #FFF176
-println!("Background: {}", tairitsu.background.hex); // #0D1117
-println!("Surface: {}", tairitsu.surface.hex);   // #161B22
+println!("Primary: {}", tairitsu.primary.hex());   // #144A74
+println!("Secondary: {}", tairitsu.secondary.hex()); // #519A73
+println!("Accent: {}", tairitsu.accent.hex());     // #FFC773
+println!("Background: {}", tairitsu.background.hex()); // #161823
+println!("Surface: {}", tairitsu.surface.hex());   // rgb(32,35,54)
 ```
 
 **色彩方案**:
@@ -293,17 +293,17 @@ println!("Surface: {}", tairitsu.surface.hex);   // #161B22
 ### 自訂主題
 
 ```rust
-use hikari_palette::{ThemePalette, ChineseColor};
+use hikari_palette::{ThemePalette, Color};
 
 let custom = ThemePalette {
-    primary: ChineseColor::緋紅,
-    secondary: ChineseColor::藤黃,
-    accent: ChineseColor::石青,
-    background: ChineseColor::墨色,
-    surface: ChineseColor::月白,
-    success: ChineseColor::葱倩,
-    warning: ChineseColor::鵝黃,
-    danger: ChineseColor::朱砂,
+    primary: Color::緋紅,
+    secondary: Color::薑黃,
+    accent: Color::粉红,
+    background: Color::墨色,
+    surface: Color::精白,
+    success: Color::葱倩,
+    warning: Color::薑黃,
+    danger: Color::苍翠,
 };
 ```
 
@@ -311,17 +311,17 @@ let custom = ThemePalette {
 
 ```rust
 pub struct ThemePalette {
-    pub primary: ChineseColor,
-    pub secondary: ChineseColor,
-    pub accent: ChineseColor,
-    pub background: ChineseColor,
-    pub surface: ChineseColor,
-    pub success: ChineseColor,
-    pub warning: ChineseColor,
-    pub danger: ChineseColor,
-    pub text_primary: ChineseColor,
-    pub text_secondary: ChineseColor,
-    pub border: ChineseColor,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
+    pub border: Color,
 }
 ```
 
@@ -332,9 +332,9 @@ pub struct ThemePalette {
 ### Opacity 函數
 
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
-let color = ChineseColor::石青;
+let color = Color::粉红;
 let semi_blue = opacity(color, 0.5);
 
 // 輸出: "rgba(0, 160, 233, 0.5)"
@@ -343,10 +343,10 @@ let semi_blue = opacity(color, 0.5);
 ### Blend 混合函數
 
 ```rust
-use hikari_palette::{ChineseColor, blend};
+use hikari_palette::{Color, blend};
 
-let color1 = ChineseColor::石青;
-let color2 = ChineseColor::朱砂;
+let color1 = Color::粉红;
+let color2 = Color::苍翠;
 let blended = blend(color1, color2, 0.5);
 
 // 混合 50% 的每個顏色
@@ -355,9 +355,9 @@ let blended = blend(color1, color2, 0.5);
 ### Lighten 提亮
 
 ```rust
-use hikari_palette::{ChineseColor, lighten};
+use hikari_palette::{Color, lighten};
 
-let color = ChineseColor::墨色;
+let color = Color::墨色;
 let lighter = lighten(color, 0.2);
 
 // 提亮 20%
@@ -366,9 +366,9 @@ let lighter = lighten(color, 0.2);
 ### Darken 變暗
 
 ```rust
-use hikari_palette::{ChineseColor, darken};
+use hikari_palette::{Color, darken};
 
-let color = ChineseColor::月白;
+let color = Color::精白;
 let darker = darken(color, 0.3);
 
 // 變暗 30%
@@ -389,7 +389,7 @@ fn App() -> Element {
     rsx! {
         ThemeProvider { palette: "hikari".to_string() }
             div {
-                style: "color: {hikari.primary.hex}",
+                style: "color: {hikari.primary.hex()}",
                 "主題文字"
             }
         }
@@ -401,12 +401,12 @@ fn App() -> Element {
 
 ```rust
 use hikari_components::Button;
-use hikari_palette::ChineseColor;
+use hikari_palette::Color;
 
 rsx! {
     Button {
         variant: "primary",
-        style: format!("background: {}", ChineseColor::石青.hex()),
+        style: format!("background: {}", Color::粉红.hex()),
         "自訂按鈕"
     }
 }
@@ -434,10 +434,10 @@ rsx! {
 
 ## API 參考
 
-### ChineseColor
+### Color
 
 ```rust
-pub enum ChineseColor {
+pub enum Color {
     // Red series
     朱砂,      // Cinnabar
     朱紅,     // Vermilion
@@ -462,10 +462,10 @@ pub enum ChineseColor {
     月白,       // Moon White
     縞色,        // Light Gray
 
-    // ... 500+ more colors
+    // ... 660+ more colors
 }
 
-impl ChineseColor {
+impl Color {
     pub fn hex(&self) -> String;
     pub fn rgb(&self) -> (u8, u8, u8);
     pub fn name(&self) -> &'static str;
@@ -491,27 +491,27 @@ impl ClassesBuilder {
 
 ```rust
 pub struct ThemePalette {
-    pub primary: ChineseColor,
-    pub secondary: ChineseColor,
-    pub accent: ChineseColor,
-    pub background: ChineseColor,
-    pub surface: ChineseColor,
-    pub success: ChineseColor,
-    pub warning: ChineseColor,
-    pub danger: ChineseColor,
-    pub text_primary: ChineseColor,
-    pub text_secondary: ChineseColor,
-    pub border: ChineseColor,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
+    pub border: Color,
 }
 ```
 
 ### Color Utilities
 
 ```rust
-pub fn opacity(color: ChineseColor, alpha: f64) -> String;
-pub fn blend(color1: ChineseColor, color2: ChineseColor, factor: f64) -> String;
-pub fn lighten(color: ChineseColor, amount: f64) -> String;
-pub fn darken(color: ChineseColor, amount: f64) -> String;
+pub fn opacity(color: Color, alpha: f64) -> String;
+pub fn blend(color1: Color, color2: Color, factor: f64) -> String;
+pub fn lighten(color: Color, amount: f64) -> String;
+pub fn darken(color: Color, amount: f64) -> String;
 ```
 
 ## 設計理念
@@ -540,10 +540,10 @@ pub fn darken(color: ChineseColor, amount: f64) -> String;
 
 ```rust
 // ✅ 好 - 型別安全
-let color = ChineseColor::石青;
+let color = Color::粉红;
 
 // ❌ 避免 - 基於字串
-let color = "#00A0E9";
+let color = "#FFB3A7";
 ```
 
 ### 2. 利用主題調色板
@@ -554,7 +554,7 @@ let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
 // ❌ 避免 - 硬編碼顏色
-let primary = "#00A0E9";
+let primary = "#FFB3A7";
 ```
 
 ### 3. 使用工具類
@@ -578,8 +578,8 @@ let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
 // ❌ 避免 - 直接引用顏色
-let button_color = ChineseColor::石青;
-let error_color = ChineseColor::朱砂;
+let button_color = Color::粉红;
+let error_color = Color::苍翠;
 ```
 
 ## 相關系統

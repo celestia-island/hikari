@@ -43,10 +43,10 @@ The result is a component framework where host-guest communication (DOM, events,
 - **WASI-native runtime** — runs inside Tairitsu's component container, not on raw `wasm-bindgen`
 - **40+ UI components** — three-layer architecture (basic → data → production)
 - **Type-safe SCSS** — compile-time class hashing via `include_scss!` macro
-- **Glow effect system** — Arknights-inspired flat design with FUI sci-fi aesthetics
+- **Glow effect system** — Subtle glow effects with flat design aesthetics
 - **Animation engine** — GSAP-inspired state machine with `prefers-reduced-motion` support
 - **9-language i18n** — including RTL support, powered by `tairitsu-web`
-- **Chinese traditional color palette** — 500+ historical colors as type-safe constants
+- **Color palette** — 660+ named colors as type-safe constants
 
 ## Quick Start
 
@@ -81,20 +81,22 @@ just dev        # Start dev server (website demo)
 
 ```rust
 use tairitsu_macros::rsx;
-use tairitsu_vdom::Node;
+use tairitsu_vdom::VNode;
 use hikari_theme::ThemeProvider;
-use hikari_components::Button;
+use hikari_components::prelude::*;
 
-fn app() -> Node {
+fn app() -> VNode {
     rsx! {
-        <ThemeProvider palette="arknights".to_string()>
+        ThemeProvider {
+            initial_palette: "hikari",
+
             <div class="container">
                 <h1>"Welcome to Hikari"</h1>
-                <Button variant={ButtonVariant::Primary}>
+                <Button variant: Primary {
                     "Get Started"
-                </Button>
+                }
             </div>
-        </ThemeProvider>
+        }
     }
 }
 ```
@@ -103,7 +105,7 @@ fn app() -> Node {
 
 | Package | Description |
 | --- | --- |
-| `hikari-palette` | 500+ traditional Chinese colors with type-safe constants |
+| `hikari-palette` | 660+ named colors with type-safe constants |
 | `hikari-theme` | Theme provider, CSS variables, SCSS mixins |
 | `hikari-animation` | State machine animation engine, easing, lifecycle hooks |
 | `hikari-components` | 40+ UI components in three layers |

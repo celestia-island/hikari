@@ -10,7 +10,8 @@
 //! When the WIT interface adds this capability, this module can be updated
 //! to use it.
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use tairitsu_vdom::Platform;
 

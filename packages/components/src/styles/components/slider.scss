@@ -39,7 +39,7 @@
     top: 50%;
     transform: translateY(-50%);
     background: linear-gradient(90deg,
-        var(--hi-color-primary, var(--hi-primary, #FFC0CB)),
+        var(--hi-color-primary, var(--hi-primary, #FFB3A7)),
         var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85))
     );
     border-radius: vars.$hikari-radius-full;
@@ -56,7 +56,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     background-color: var(--hi-surface, #FFFFFF);
-    border: 2px solid var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    border: 2px solid var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     border-radius: 50%;
     box-shadow:
         var(--hi-shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05)),

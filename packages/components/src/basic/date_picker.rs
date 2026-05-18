@@ -1,9 +1,10 @@
 // packages/components/src/basic/date_picker.rs
-// DatePicker component with Arknights + FUI styling
+// DatePicker component
 
 use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DatePickerComponent;
 

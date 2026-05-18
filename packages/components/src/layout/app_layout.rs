@@ -34,11 +34,11 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{
-    AppLayoutClass, ClassesBuilder, TypedClass, components::Layout as LayoutClass,
-};
+use hikari_palette::classes::components::Layout as LayoutClass;
+use hikari_palette::classes::{AppLayoutClass, ClassesBuilder, TypedClass};
 
-use crate::{basic::Background, prelude::*};
+use crate::basic::Background;
+use crate::prelude::*;
 
 ///
 ///

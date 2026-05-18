@@ -499,7 +499,7 @@ spotlight::init_selector(".hi-button");
 spotlight::Config {
     size: 200,              // Tamaño del spotlight en px
     opacity: 0.15,          // Opacidad (0-1)
-    color: "#00A0E9",       // Color del brillo
+    color: "#FFB3A7",       // Color del brillo
     blur: 20,              // Radio de desenfoque en px
     transition: "150ms"     // Velocidad de transición
 }.init();
@@ -599,7 +599,7 @@ CssProperty::Filter
 
 ```rust
 // Establecer propiedad individual
-builder.add_style("element", CssProperty::Color, "#00A0E9");
+builder.add_style("element", CssProperty::Color, "#FFB3A7");
 
 // Establecer transformación
 builder.add_style("element", CssProperty::Transform, "translate(10px, 20px)");

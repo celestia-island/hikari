@@ -1,9 +1,10 @@
 // hi-components/src/navigation/tabs.rs
-// Tabs component with Arknights + FUI styling
+// Tabs component
 
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TabsComponent;
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
@@ -240,7 +241,8 @@ impl StyledComponent for TabsComponent {
 /// Tab pane component
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{ClassesBuilder, TypedClass, components::TabsClass};
+    use hikari_palette::classes::components::TabsClass;
+    use hikari_palette::classes::{ClassesBuilder, TypedClass};
 
     let ctx = use_context::<TabsContext>().expect("TabsContext not found");
     let ctx = ctx.get();

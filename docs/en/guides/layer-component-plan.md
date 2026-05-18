@@ -534,7 +534,7 @@ Hikari uses Material Design Icons (MDI) instead of Lucide Icons.
 **Reasons**:
 - MDI provides a richer icon set (7000+ icons)
 - Consistent with Material Design specifications
-- Better suited for Arknights + FUI design style
+- Better suited for  +  design style
 
 **Usage**:
 ```rust

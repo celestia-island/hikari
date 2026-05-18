@@ -3,7 +3,7 @@
 @use 'mixins' as mix;
 
 // ============================================
-// Hikari Select Component — Custom FUI Dropdown
+// Hikari Select Component — Custom  Dropdown
 // Portal-based: trigger + overlay dropdown
 // ============================================
 
@@ -23,7 +23,7 @@
   user-select: none;
   position: relative;
 
-  // Appearance — FUI translucent panel feel
+  // Appearance —  translucent panel feel
   background: transparent;
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
@@ -165,7 +165,7 @@
   overflow: hidden;
   width: 100%;
 
-  // Subtle FUI top accent line
+  // Subtle  top accent line
   &::before {
     content: '';
     position: absolute;

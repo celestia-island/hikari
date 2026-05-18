@@ -1,33 +1,77 @@
 # Descripción General de la Arquitectura del Sistema
 
-El framework Hikari adopta un diseño modular, consistiendo en múltiples paquetes independientes, cada uno responsable de dominios funcionales específicos.
+El framework Hikari adopta un diseño modular, construido sobre el runtime Tairitsu, compuesto por 6 paquetes independientes.
+
+## Resumen de Paquetes
+
+| Paquete | Descripción |
+|---|---|
+| hikari-palette | Sistema de colores tradicionales chinos (660+), gestión de paletas de tema |
+| hikari-animation | Sistema de animación declarativa, funciones de easing, interpolación, control de línea de tiempo |
+| hikari-icons | Integración de Material Design Icons (7000+), generación SVG |
+| hikari-theme | Contexto de tema, generación de variables CSS, cambio de tema |
+| hikari-components | Biblioteca de componentes UI principales (40+ componentes) |
+| hikari-extra-components | Componentes avanzados (editor de nodos, texto enriquecido, etc.) |
+
+## Arquitectura en Capas
+
+```
+┌─────────────────────────────────────┐
+│     Capa de Aplicación (examples/)   │
+├─────────────────────────────────────┤
+│  Capa de Componentes (components, extra)│
+├─────────────────────────────────────┤
+│ Capa de Sistema (theme, animation, icons)│
+├─────────────────────────────────────┤
+│   Capa de Fundación (palette)        │
+└─────────────────────────────────────┘
+```
+
+## Dependencias de Paquetes
+
+```
+hikari-palette ◄──── hikari-animation
+      ▲                    │
+      │                    ▼
+      ├──────────── hikari-icons
+      │
+      ├─── hikari-theme
+      │
+      ├─── hikari-components ◄── hikari-theme, hikari-icons
+      │
+      └─── hikari-extra-components ◄── hikari-theme, hikari-icons
+```
+
+## Dependencias Externas
+
+Todos los paquetes se basan en el framework **Tairitsu** (tairitsu-vdom, tairitsu-hooks, tairitsu-style, tairitsu-web) como runtime de UI reactiva / WASM.
 
 ## Sistemas Principales
 
-### 1. Sistema Palette (hikari-palette)
+### 1. Sistema de Paleta (hikari-palette)
 
 Implementación en Rust del sistema de colores tradicionales chinos.
 
 **Responsabilidades**:
-- Proporciona más de 500 definiciones de colores tradicionales chinos
+- Proporciona más de 660 definiciones de colores tradicionales chinos
 - Gestión de paletas de tema
-- Generador de clases de utilidad
+- Generador de clases utilitarias
 - Opacidad y mezcla de colores
 
 **Características Principales**:
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
 // Usar colores tradicionales
-let red = ChineseColor::Cinnabar;
-let blue = ChineseColor::Azurite;
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // Manejo de opacidad
 let semi_red = opacity(red, 0.5);
 
-// Sistema de tema
+// Sistema de temas
 let theme = Hikari::default();
-println!("Primario: {}", theme.primary.hex());
+println!("Primary: {}", theme.primary.hex());
 ```
 
 **Filosofía de Diseño**:
@@ -35,13 +79,13 @@ println!("Primario: {}", theme.primary.hex());
 - **Seguridad de Tipos**: Verificación de valores de color en tiempo de compilación
 - **Alto Rendimiento**: Abstracciones de costo cero
 
-### 2. Sistema Theme (hikari-theme)
+### 2. Sistema de Temas (hikari-theme)
 
 Contexto de tema y sistema de inyección de estilos.
 
 **Responsabilidades**:
 - Componente proveedor de tema
-- Gestión de contexto de tema
+- Gestión del contexto de tema
 - Generación de variables CSS
 - Cambio de tema
 
@@ -59,21 +103,21 @@ rsx! {
 
 **Temas Soportados**:
 - **Hikari (Claro)** - Tema claro
-  - Primario: Azurita (#00A0E9)
-  - Secundario: Bermellón (#E94B35)
-  - Acento: Amarillo Vid (#F8B62D)
+  - Primario: Rosa (#FFB3A7)
+  - Secundario: Verde Oscuro (#519A73)
+  - Acento: Cúrcuma (#FFC773)
 
 - **Tairitsu** - Tema oscuro
-  - Primario: Índigo (#1a237e)
-  - Secundario: Bermellón (#E94B35)
-  - Acento: Amarillo Ganso (#FFF176)
+  - Primario: Azul Pato (#144A74)
+  - Secundario: Verde Oscuro (#519A73)
+  - Acento: Cúrcuma (#FFC773)
 
-### 3. Sistema Animation (hikari-animation)
+### 3. Sistema de Animación (hikari-animation)
 
 Sistema de animación declarativa de alto rendimiento.
 
 **Responsabilidades**:
-- Constructor de animación
+- Constructor de animaciones
 - Contexto de animación
 - Funciones de easing
 - Animaciones predefinidas
@@ -98,15 +142,15 @@ AnimationBuilder::new(&elements)
     .apply_with_transition("150ms", "ease-out");
 ```
 
-**Componentes de Arquitectura**:
-- **builder** - API del constructor de animación
+**Componentes de la Arquitectura**:
+- **builder** - API del constructor de animaciones
 - **context** - Contexto de animación en tiempo de ejecución
 - **style** - Operaciones CSS con seguridad de tipos
 - **easing** - Más de 30 funciones de easing
 - **tween** - Sistema de interpolación
 - **timeline** - Control de línea de tiempo
 - **presets** - Animaciones predefinidas (fade, slide, scale)
-- **spotlight** - Efecto de spotlight
+- **spotlight** - Efecto de foco
 
 **Características de Rendimiento**:
 - Optimización WASM
@@ -114,15 +158,15 @@ AnimationBuilder::new(&elements)
 - Integración con requestAnimationFrame
 - Reflujos y repintados minimizados
 
-### 4. Sistema Icon (hikari-icons)
+### 4. Sistema de Iconos (hikari-icons)
 
 Sistema de gestión y renderizado de iconos.
 
 **Responsabilidades**:
 - Definiciones de enum de iconos
 - Generación de contenido SVG
-- Variantes de tamaño de icono
-- Integración de Material Design Icons
+- Variantes de tamaño de iconos
+- Integración con Material Design Icons
 
 **Características Principales**:
 ```rust
@@ -172,23 +216,23 @@ Biblioteca completa de componentes UI.
 **Diseño Modular**:
 ```
 hikari-components/
-  ├── basic/          # Componentes básicos
-  ├── feedback/       # Componentes de retroalimentación
-  ├── navigation/     # Componentes de navegación
-  ├── layout/         # Componentes de diseño
-  ├── data/           # Componentes de datos
-  ├── hooks.rs        # React hooks
-  ├── styled.rs       # Traits de estilo
-  └── theme_provider.rs  # Provider de tema
+ ├── basic/          # Componentes básicos
+ ├── feedback/       # Componentes de retroalimentación
+ ├── navigation/     # Componentes de navegación
+ ├── layout/         # Componentes de diseño
+ ├── data/           # Componentes de datos
+ ├── hooks.rs        # React hooks
+ ├── styled.rs       # Rasgos de estilo
+ └── theme_provider.rs  # Proveedor de tema
 ```
 
 **Sistema de Estilos**:
 - Fuente SCSS
-- Clases de utilidad con seguridad de tipos
-- Aislamiento de estilo a nivel de componente
-- Integración de variables CSS
+- Clases utilitarias con seguridad de tipos
+- Aislamiento de estilos a nivel de componente
+- Integración con variables CSS
 
-### 6. Sistema Build (hikari-icons (build))
+### 6. Sistema de Construcción de Iconos
 
 Generación de código en tiempo de compilación y compilación SCSS.
 
@@ -198,7 +242,7 @@ Generación de código en tiempo de compilación y compilación SCSS.
 - Generación de código
 - Empaquetado de recursos
 
-**Proceso de Compilación**:
+**Proceso de Construcción**:
 ```
 1. Encontrar directorio raíz del workspace
    ↓
@@ -215,22 +259,22 @@ Generación de código en tiempo de compilación y compilación SCSS.
 ```rust
 // build.rs
 fn main() {
-    tairitsu-icons build system::build().expect("Error de compilación");
+    tairitsu-icons build system::build().expect("Build failed");
 }
 ```
 
 **Archivos Generados**:
 - `public/styles/bundle.css` - CSS compilado
 
-### 7. Servicio Render (tairitsu-packager)
+### 7. Servicio de Renderizado (tairitsu-packager)
 
-Renderizado del lado del servidor y servicio de assets estáticos.
+Renderizado del lado del servidor y servicio de recursos estáticos.
 
 **Responsabilidades**:
 - Renderizado de plantillas HTML
 - Registro de estilos
-- Constructor de router
-- Servicio de assets estáticos
+- Constructor de rutas
+- Servicio de recursos estáticos
 - Integración con Axum
 
 **Características Principales**:
@@ -244,28 +288,28 @@ let app = HikariRenderServicePlugin::new()
     .build()?;
 ```
 
-**Módulos de Arquitectura**:
+**Módulos de la Arquitectura**:
 - **html** - Servicio HTML
 - **registry** - Registro de estilos
-- **router** - Constructor de router
+- **router** - Constructor de rutas
 - **static_files** - Servicio de archivos estáticos
 - **styles_service** - Inyección de estilos
 - **plugin** - Sistema de plugins
 
 ### 8. Biblioteca de Componentes Extra (hikari-extra-components)
 
-Componentes UI avanzados para escenarios de interacción complejos.
+Componentes UI avanzados para escenarios de interacción compleja.
 
 **Responsabilidades**:
-- Componentes de utilidad avanzados
-- Interacciones de arrastre y zoom
+- Componentes utilitarios avanzados
+- Interacciones de arrastrar y zoom
 - Paneles colapsables
-- Integración de animación
+- Integración de animaciones
 
 **Componentes Principales**:
 
 1. **Collapsible** - Panel colapsable
-   - Animación de deslizamiento entrada/salida izquierda/derecha
+   - Animación de deslizamiento hacia adentro/afuera izquierda/derecha
    - Ancho configurable
    - Callback de estado expandido
 
@@ -285,10 +329,10 @@ use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
 
 // Panel colapsable
 Collapsible {
-    title: "Configuración".to_string(),
+    title: "Settings".to_string(),
     expanded: true,
     position: CollapsiblePosition::Right,
-    div { "Contenido" }
+    div { "Content" }
 }
 
 // Capa de arrastre
@@ -300,7 +344,7 @@ DragLayer {
         max_x: Some(500.0),
         ..Default::default()
     },
-    div { "Arrástrame" }
+    div { "Drag me" }
 }
 
 // Controles de zoom
@@ -314,10 +358,10 @@ ZoomControls {
 
 ### 1. Diseño Modular
 
-Cada paquete es independiente y se puede usar por separado:
+Cada paquete es independiente y puede usarse por separado:
 
 ```toml
-# Usar solo palette
+# Usar solo la paleta
 [dependencies]
 hikari-palette = "0.1"
 
@@ -326,7 +370,7 @@ hikari-palette = "0.1"
 hikari-components = "0.1"
 hikari-theme = "0.1"
 
-# Usar sistema de animación
+# Usar el sistema de animación
 [dependencies]
 hikari-animation = "0.1"
 ```
@@ -337,52 +381,52 @@ hikari-animation = "0.1"
 ┌─────────────────────────────────────┐
 │     Capa de Aplicación (examples/)   │
 ├─────────────────────────────────────┤
-│   Capa de Componentes (hikari-components)│
+│  Capa de Componentes (hikari-components)│
 ├─────────────────────────────────────┤
 │ Capa de Sistema (theme, animation, icons)│
 ├─────────────────────────────────────┤
-│  Capa de Fundación (palette, builder) │
+│   Capa de Fundación (palette, builder) │
 └─────────────────────────────────────┘
 ```
 
 ### 3. Flujo de Datos Unidireccional
 
 ```
-Acción del Usuario → Manejador de Eventos → Actualización de Estado → Re-renderizado UI
+Acción del Usuario → Manejador de Eventos → Actualización de Estado → Re-renderizado de UI
 ```
 
 ### 4. Seguridad de Tipos
 
-Todas las APIs son seguras en tipos:
+Todas las APIs tienen seguridad de tipos:
 - Verificación en tiempo de compilación
-- Autocompletado IDE
-- Seguridad de refactorización
+- Autocompletado en IDE
+- Seguridad en refactorización
 
 ### 5. Rendimiento Primero
 
 - Optimización WASM
-- Scroll virtual
+- Desplazamiento virtual
 - Debouncing/throttling
 - Manipulación DOM minimizada
 
-## Proceso de Compilación
+## Proceso de Construcción
 
-### Modo Desarrollo
+### Modo de Desarrollo
 ```bash
 cargo run
 ```
 
-### Compilación de Producción
+### Construcción de Producción
 ```bash
 # 1. Compilar código Rust
 cargo build --release
 
-# 2. El sistema de compilación compila SCSS automáticamente
+# 2. El sistema de construcción compila SCSS automáticamente
 # 3. Generar bundle CSS
-# 4. Empaquetar assets estáticos
+# 4. Empaquetar recursos estáticos
 ```
 
-### Compilación WASM
+### Construcción WASM
 ```bash
 trunk build --release
 ```
@@ -411,7 +455,7 @@ hikari-icons (build)
 
 ## Extensibilidad
 
-### Añadir Componentes Personalizados
+### Agregar Componentes Personalizados
 
 ```rust
 use hikari_components::{StyledComponent, StyleRegistry};
@@ -425,7 +469,7 @@ impl StyledComponent for MyComponent {
 }
 ```
 
-### Añadir Temas Personalizados
+### Agregar Temas Personalizados
 
 ```rust
 use hikari_palette::ThemePalette;
@@ -443,7 +487,7 @@ impl CustomTheme {
 }
 ```
 
-### Añadir Presets de Animación Personalizados
+### Agregar Animaciones Predefinidas Personalizadas
 
 ```rust
 use hikari_animation::{AnimationBuilder, AnimationContext};
@@ -464,48 +508,48 @@ pub fn fade_in(
 
 ### 1. Optimización CSS
 - SCSS compilado a CSS optimizado
-- Eliminar estilos no usados (tree-shaking)
-- Minificar CSS de producción
+- Eliminación de estilos no utilizados (tree-shaking)
+- Minificación de CSS de producción
 
 ### 2. Optimización WASM
-- Optimización `wasm-opt`
-- Carga perezosa de módulos WASM
+- Optimización con `wasm-opt`
+- Carga diferida de módulos WASM
 - Optimización de memoria lineal
 
 ### 3. Optimización en Tiempo de Ejecución
-- Scroll virtual (listas de datos grandes)
+- Desplazamiento virtual (listas de datos grandes)
 - Actualizaciones de animación con debounce
 - requestAnimationFrame
 
-### 4. Optimización de Compilación
+### 4. Optimización de Construcción
 - Compilación paralela
 - Compilación incremental
 - Caché de binarios
 
-## Estrategia de Testing
+## Estrategia de Pruebas
 
-### Tests Unitarios
-Cada módulo tiene tests unitarios completos:
+### Pruebas Unitarias
+Cada módulo tiene pruebas unitarias completas:
 
 ```rust
 #[cfg(test)]
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::Cinnabar;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```
 
-### Tests de Integración
-Las aplicaciones de ejemplo en `examples/` sirven como tests de integración
+### Pruebas de Integración
+Las aplicaciones de ejemplo en `examples/` sirven como pruebas de integración
 
-### Tests de Regresión Visual
-Usar Percy o herramientas similares para tests de snapshot UI
+### Pruebas de Regresión Visual
+Usar Percy o herramientas similares para pruebas de instantáneas de UI
 
-## Siguientes Pasos
+## Próximos Pasos
 
-- Leer [Documentación de Componentes](../components/) para componentes específicos
-- Ver [Documentación API](https://docs.rs/hikari-components) para detalles de API
-- Explorar [Código de Ejemplo](../../examples/) para aprender mejores prácticas
+- Leer la [Documentación de Componentes](../components/) para componentes específicos
+- Ver la [Documentación de API](https://docs.rs/hikari-components) para detalles de la API
+- Explorar el [Código de Ejemplo](../../examples/) para aprender las mejores prácticas

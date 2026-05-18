@@ -6,7 +6,7 @@
 //! - Color interpolation and blending
 //! - Gradient color stops
 
-use crate::Color;
+use crate::colors::Color;
 
 /// HSL color representation
 ///

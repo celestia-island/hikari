@@ -3,7 +3,7 @@
 @use 'mixins' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Transfer Component - FUI Styling Component Component Component Component
+// Hikari // Hikari // Hikari // Hikari // Hikari Transfer Component -  Styling Component Component Component Component
 
 // ============================================
 // Base Transfer Styles
@@ -28,7 +28,7 @@
     max-width: 280px;
     height: 300px;
     background: var(--hi-card-bg);
-    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
     overflow: hidden;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
@@ -43,8 +43,8 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 0.75rem;
-    background: var(--hi-panel-header-bg, rgba(55, 55, 55, 0.9));
-    border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    background: var(--hi-panel-header-bg, var(--hi-color-surface-secondary, rgba(245, 245, 245, 0.9)));
+    border-bottom: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
 }
 
 .hi-transfer-panel-checkbox {
@@ -75,7 +75,7 @@
 
 .hi-transfer-panel-search {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border-bottom: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
 }
 
 .hi-transfer-panel-input {
@@ -85,7 +85,7 @@
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-input-text, #F8FAFC);
     background: var(--hi-input-bg);
-    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
     border-radius: vars.$hikari-radius-fui-sm;
     transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
@@ -209,8 +209,8 @@
     width: 2.5rem;
     height: 2.5rem;
     padding: 0;
-    background: var(--hi-button-bg, rgba(55, 55, 55, 0.9));
-    border: 1px solid var(--hi-button-border, rgba(255, 255, 255, 0.1));
+    background: var(--hi-button-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.9)));
+    border: 1px solid var(--hi-button-border, rgba(0, 0, 0, 0.1));
     border-radius: vars.$hikari-radius-fui-sm;
     color: var(--hi-color-text-primary);
     cursor: pointer;

@@ -1,13 +1,16 @@
 // packages/components/src/feedback/progress.rs
-// Progress component with Arknights + FUI styling
+// Progress component
 // Active pulse: RAF-driven (migrated from CSS @keyframes)
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct ProgressComponent;
 

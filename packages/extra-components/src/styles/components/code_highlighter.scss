@@ -1,5 +1,5 @@
 // hi-extra-components/src/styles/components/code_highlighter.scss
-// CodeHighlighter component styles with Arknights + FUI styling
+// CodeHighlighter component styles with 
 
 .hi-code-highlighter {
   display: flex;
@@ -132,7 +132,7 @@
   }
 }
 
-// FUI effect - subtle glow
+//  effect - subtle glow
 .hi-code-highlighter-language-label {
   box-shadow: 0 0 10px rgba(0, 160, 233, 0.2);
 }
@@ -183,7 +183,7 @@
   }
 
   .hi-code-highlighter-language-label {
-    background-color: #1a237e;
+    background-color: var(--hi-color-primary);
   }
 
   .hi-code-highlighter-line-numbers {

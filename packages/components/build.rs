@@ -1,5 +1,7 @@
+use std::path::Path;
+use std::{env, fs};
+
 use anyhow::Result;
-use std::{env, fs, path::Path};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");

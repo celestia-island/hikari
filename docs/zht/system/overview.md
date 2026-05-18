@@ -1,51 +1,95 @@
 # 系統架構概覽
 
-Hikari 框架採用模組化設計，由多個獨立的套件組成，每個套件負責特定的功能領域。
+Hikari 框架採用模組化設計，基於 Tairitsu 執行時期構建，由 6 個獨立套件組成。
+
+## 套件概覽
+
+| 套件 | 說明 |
+|---|---|
+| hikari-palette | 中國傳統色彩系統（660+ 顏色），主題色板管理 |
+| hikari-animation | 宣告式動畫系統，緩動函數、插值、時間線控制 |
+| hikari-icons | Material Design Icons（7000+）整合，SVG 生成 |
+| hikari-theme | 主題上下文、CSS 變數生成、主題切換 |
+| hikari-components | 核心 UI 元件庫（40+ 元件） |
+| hikari-extra-components | 進階元件（節點編輯器、富文本等） |
+
+## 分層架構
+
+```
+┌─────────────────────────────────────┐
+│      應用層 (examples/)              │
+├─────────────────────────────────────┤
+│   元件層 (components, extra)         │
+├─────────────────────────────────────┤
+│  系統層 (theme, animation, icons)    │
+├─────────────────────────────────────┤
+│   基礎層 (palette)                   │
+└─────────────────────────────────────┘
+```
+
+## 套件依賴關係
+
+```
+hikari-palette ◄──── hikari-animation
+      ▲                    │
+      │                    ▼
+      ├──────────── hikari-icons
+      │
+      ├─── hikari-theme
+      │
+      ├─── hikari-components ◄── hikari-theme, hikari-icons
+      │
+      └─── hikari-extra-components ◄── hikari-theme, hikari-icons
+```
+
+## 外部依賴
+
+所有套件基於 **Tairitsu** 框架（tairitsu-vdom、tairitsu-hooks、tairitsu-style、tairitsu-web）作為響應式 UI / WASM 執行時期。
 
 ## 核心系統
 
-### 1. 調色板系統 (hikari-palette)
+### 1. 色彩系統 (hikari-palette)
 
 中國傳統色彩系統的 Rust 實作。
 
-**職責**:
-- 提供 500+ 中國傳統顏色定義
-- 主題調色板管理
-- 工具類生成器
-- 透明度和顏色混合
+**職責**：
+- 提供 660+ 傳統中國色彩定義
+- 主題色板管理
+- 工具類別生成器
+- 透明度與色彩混合
 
-**核心功能**:
+**核心功能**：
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
-// 使用傳統顏色
-let red = ChineseColor::朱砂;
-let blue = ChineseColor::石青;
+// 使用傳統色彩
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // 透明度處理
 let semi_red = opacity(red, 0.5);
 
 // 主題系統
 let theme = Hikari::default();
-println!("主色: {}", theme.primary.hex());
+println!("Primary: {}", theme.primary.hex());
 ```
 
-**設計理念**:
-- **文化自信**: 使用傳統顏色名稱
-- **型別安全**: 編譯時檢查顏色值
-- **高效能**: 零成本抽象
+**設計理念**：
+- **文化自信**：使用傳統色彩名稱
+- **型別安全**：編譯時期色彩值檢查
+- **高效能**：零成本抽象
 
 ### 2. 主題系統 (hikari-theme)
 
-主題上下文和樣式注入系統。
+主題上下文與樣式注入系統。
 
-**職責**:
-- 主題提供者元件
+**職責**：
+- 主題供應者元件
 - 主題上下文管理
 - CSS 變數生成
 - 主題切換
 
-**核心功能**:
+**核心功能**：
 ```rust
 use hikari_theme::ThemeProvider;
 
@@ -57,28 +101,28 @@ rsx! {
 }
 ```
 
-**支援的主題**:
-- **Hikari (光)** - 淺色主題
-  - 主色: 石青 (#00A0E9)
-  - 次色: 朱砂 (#E94B35)
-  - 強調色: 藤黃 (#F8B62D)
+**支援的主題**：
+- **Hikari（亮色）** - 亮色主題
+  - 主色：粉紅 (#FFB3A7)
+  - 副色：蒼翠 (#519A73)
+  - 強調色：薑黃 (#FFC773)
 
-- **Tairitsu** - 深色主題
-  - 主色: 靛藍 (#1a237e)
-  - 次色: 朱砂 (#E94B35)
-  - 強調色: 鵝黃 (#FFF176)
+- **Tairitsu** - 暗色主題
+  - 主色：鷃藍 (#144A74)
+  - 副色：蒼翠 (#519A73)
+  - 強調色：薑黃 (#FFC773)
 
 ### 3. 動畫系統 (hikari-animation)
 
-高效能的宣告式動畫系統。
+高效能宣告式動畫系統。
 
-**職責**:
+**職責**：
 - 動畫建構器
 - 動畫上下文
 - 緩動函數
 - 預設動畫
 
-**核心功能**:
+**核心功能**：
 ```rust
 use hikari_animation::{AnimationBuilder, AnimationContext};
 use hikari_animation::style::CssProperty;
@@ -98,33 +142,33 @@ AnimationBuilder::new(&elements)
     .apply_with_transition("150ms", "ease-out");
 ```
 
-**架構元件**:
+**架構元件**：
 - **builder** - 動畫建構器 API
 - **context** - 執行時期動畫上下文
 - **style** - 型別安全的 CSS 操作
 - **easing** - 30+ 緩動函數
 - **tween** - 插值系統
 - **timeline** - 時間線控制
-- **presets** - 預設動畫（淡入、滑動、縮放）
+- **presets** - 預設動畫（淡入淡出、滑動、縮放）
 - **spotlight** - 聚光燈效果
 
-**效能特性**:
-- WASM 優化
+**效能特性**：
+- WASM 最佳化
 - 防抖更新
 - requestAnimationFrame 整合
-- 最小化重排重繪
+- 最小化重排與重繪
 
 ### 4. 圖示系統 (hikari-icons)
 
-圖示管理和渲染系統。
+圖示管理與渲染系統。
 
-**職責**:
+**職責**：
 - 圖示列舉定義
 - SVG 內容生成
 - 圖示尺寸變體
 - Material Design Icons 整合
 
-**核心功能**:
+**核心功能**：
 ```rust
 use hikari_icons::{Icon, MdiIcon};
 
@@ -137,68 +181,68 @@ rsx! {
 }
 ```
 
-**圖示來源**:
+**圖示來源**：
 - Material Design Icons（7000+ 圖示）
-- 可擴展的自訂圖示
+- 可擴充的自訂圖示
 - 多種尺寸支援
 
 ### 5. 元件庫 (hikari-components)
 
 完整的 UI 元件庫。
 
-**職責**:
+**職責**：
 - 基礎 UI 元件
-- 版面配置元件
+- 佈局元件
 - 樣式註冊表
-- 響應式 hooks
+- 響應式鉤子
 
-**元件分類**:
+**元件分類**：
 
-1. **基礎元件** (feature: "basic")
-   - Button, Input, Card, Badge
+1. **基礎元件**（功能特性："basic"）
+   - Button、Input、Card、Badge
 
-2. **反饋元件** (feature: "feedback")
-   - Alert, Toast, Tooltip, Spotlight
+2. **回饋元件**（功能特性："feedback"）
+   - Alert、Toast、Tooltip、Spotlight
 
-3. **導航元件** (feature: "navigation")
-   - Menu, Tabs, Breadcrumb
+3. **導航元件**（功能特性："navigation"）
+   - Menu、Tabs、Breadcrumb
 
-4. **版面配置元件** (always available)
-   - Layout, Header, Aside, Content, Footer
+4. **佈局元件**（始終可用）
+   - Layout、Header、Aside、Content、Footer
 
-5. **資料元件** (feature: "data")
-   - Table, Tree, Pagination
+5. **資料元件**（功能特性："data"）
+   - Table、Tree、Pagination
 
-**模組化設計**:
+**模組化設計**：
 ```
 hikari-components/
  ├── basic/          # 基礎元件
- ├── feedback/       # 反饋元件
+ ├── feedback/       # 回饋元件
  ├── navigation/     # 導航元件
- ├── layout/         # 版面配置元件
+ ├── layout/         # 佈局元件
  ├── data/           # 資料元件
- ├── hooks.rs        # React hooks
- ├── styled.rs       # 樣式 traits
- └── theme_provider.rs  # 主題提供者
+ ├── hooks.rs        # React 鉤子
+ ├── styled.rs       # 樣式特徵
+ └── theme_provider.rs  # 主題供應者
 ```
 
-**樣式系統**:
+**樣式系統**：
 - SCSS 原始碼
-- 型別安全的工具類
-- 元件級樣式隔離
+- 型別安全的工具類別
+- 元件級別樣式隔離
 - CSS 變數整合
 
-### 6. 建置系統 (hikari-icons (build))
+### 6. 圖示建置系統
 
-編譯時期程式碼生成和 SCSS 編譯。
+編譯時期程式碼生成與 SCSS 編譯。
 
-**職責**:
+**職責**：
 - SCSS 編譯（使用 Grass）
-- 元件發現
+- 元件探索
 - 程式碼生成
 - 資源打包
 
-**建置流程**:
+**建置流程**：
 ```
 1. 尋找工作區根目錄
    ↓
@@ -208,10 +252,10 @@ hikari-components/
    ↓
 4. 編譯 SCSS Bundle
    ↓
-5. 輸出到 public/
+5. 輸出至 public/
 ```
 
-**使用方式**:
+**使用方式**：
 ```rust
 // build.rs
 fn main() {
@@ -219,21 +263,21 @@ fn main() {
 }
 ```
 
-**生成檔案**:
+**生成檔案**：
 - `public/styles/bundle.css` - 編譯後的 CSS
 
 ### 7. 渲染服務 (tairitsu-packager)
 
-伺服器端渲染和靜態資源服務。
+伺服器端渲染與靜態資源服務。
 
-**職責**:
+**職責**：
 - HTML 模板渲染
 - 樣式註冊表
 - 路由建構器
 - 靜態資源服務
 - Axum 整合
 
-**核心功能**:
+**核心功能**：
 ```rust
 use hikari_render_service::HikariRenderServicePlugin;
 
@@ -244,54 +288,54 @@ let app = HikariRenderServicePlugin::new()
     .build()?;
 ```
 
-**架構模組**:
+**架構模組**：
 - **html** - HTML 服務
 - **registry** - 樣式註冊表
 - **router** - 路由建構器
 - **static_files** - 靜態檔案服務
 - **styles_service** - 樣式注入
-- **plugin** - 插件系統
+- **plugin** - 外掛系統
 
 ### 8. 進階元件庫 (hikari-extra-components)
 
-進階 UI 元件，提供複雜互動場景的專用功能。
+用於複雜互動場景的進階 UI 元件。
 
-**職責**:
+**職責**：
 - 進階工具元件
-- 拖曳和縮放互動
-- 可折疊面板
+- 拖曳與縮放互動
+- 可摺疊面板
 - 動畫整合
 
-**核心元件**:
+**核心元件**：
 
-1. **Collapsible** - 可折疊面板
+1. **Collapsible** - 可摺疊面板
    - 左右滑入/滑出動畫
-   - 可配置寬度
-   - 展開狀態回調
+   - 可設定寬度
+   - 展開狀態回呼
 
-2. **DragLayer** - 拖曳層
+2. **DragLayer** - 拖曳圖層
    - 邊界約束
-   - 拖曳事件回調
+   - 拖曳事件回呼
    - 自訂 z-index
 
 3. **ZoomControls** - 縮放控制
    - 鍵盤快捷鍵支援
-   - 可配置縮放範圍
+   - 可設定縮放範圍
    - 多種定位選項
 
-**核心功能**:
+**核心功能**：
 ```rust
 use hikari_extra_components::{Collapsible, DragLayer, ZoomControls};
 
-// 可折疊面板
+// 可摺疊面板
 Collapsible {
-    title: "設定".to_string(),
+    title: "Settings".to_string(),
     expanded: true,
     position: CollapsiblePosition::Right,
-    div { "內容" }
+    div { "Content" }
 }
 
-// 拖曳層
+// 拖曳圖層
 DragLayer {
     initial_x: 100.0,
     initial_y: 100.0,
@@ -300,7 +344,7 @@ DragLayer {
         max_x: Some(500.0),
         ..Default::default()
     },
-    div { "拖曳我" }
+    div { "Drag me" }
 }
 
 // 縮放控制
@@ -317,11 +361,11 @@ ZoomControls {
 每個套件都是獨立的，可以單獨使用：
 
 ```toml
-# 只使用調色板
+# 僅使用色彩系統
 [dependencies]
 hikari-palette = "0.1"
 
-# 使用元件和主題
+# 使用元件與主題
 [dependencies]
 hikari-components = "0.1"
 hikari-theme = "0.1"
@@ -337,30 +381,30 @@ hikari-animation = "0.1"
 ┌─────────────────────────────────────┐
 │      應用層 (examples/)              │
 ├─────────────────────────────────────┤
-│    元件層 (hikari-components)       │
+│    元件層 (hikari-components)        │
 ├─────────────────────────────────────┤
-│  系統層 (theme, animation, icons)   │
+│  系統層 (theme, animation, icons)    │
 ├─────────────────────────────────────┤
-│   基礎層 (palette, builder)         │
+│   基礎層 (palette, builder)          │
 └─────────────────────────────────────┘
 ```
 
 ### 3. 單向資料流
 
 ```
-使用者操作 → 事件處理 → 狀態更新 → UI 重新渲染
+使用者操作 → 事件處理器 → 狀態更新 → UI 重新渲染
 ```
 
 ### 4. 型別安全
 
 所有 API 都是型別安全的：
-- 編譯時檢查
-- IDE 自動完成
-- 重構安全
+- 編譯時期檢查
+- IDE 自動補全
+- 重構安全性
 
 ### 5. 效能優先
 
-- WASM 優化
+- WASM 最佳化
 - 虛擬滾動
 - 防抖/節流
 - 最小化 DOM 操作
@@ -387,7 +431,7 @@ cargo build --release
 trunk build --release
 ```
 
-## 相依性
+## 依賴關係
 
 ```
 hikari-components
@@ -406,10 +450,10 @@ tairitsu-packager
   └── axum
 
 hikari-icons (build)
-  └── grass (SCSS compiler)
+  └── grass (SCSS 編譯器)
 ```
 
-## 擴展性
+## 擴充性
 
 ### 新增自訂元件
 
@@ -460,27 +504,27 @@ pub fn fade_in(
 }
 ```
 
-## 效能優化
+## 效能最佳化
 
-### 1. CSS 優化
-- SCSS 編譯為優化的 CSS
+### 1. CSS 最佳化
+- SCSS 編譯為最佳化的 CSS
 - 移除未使用的樣式（tree-shaking）
 - 壓縮生產環境 CSS
 
-### 2. WASM 優化
-- `wasm-opt` 優化
-- 懶載入 WASM 模組
-- 線性記憶體優化
+### 2. WASM 最佳化
+- `wasm-opt` 最佳化
+- 延遲載入 WASM 模組
+- 線性記憶體最佳化
 
-### 3. 執行時期優化
-- 虛擬滾動（大型資料列表）
+### 3. 執行時期最佳化
+- 虛擬滾動（大數據列表）
 - 防抖動畫更新
 - requestAnimationFrame
 
-### 4. 建置優化
+### 4. 建置最佳化
 - 平行編譯
 - 增量編譯
-- 二進制快取
+- 二進位快取
 
 ## 測試策略
 
@@ -492,20 +536,20 @@ pub fn fade_in(
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::朱砂;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```
 
 ### 整合測試
-`examples/` 中的範例應用程式作為整合測試
+`examples/` 中的範例應用作為整合測試
 
 ### 視覺回歸測試
 使用 Percy 或類似工具進行 UI 快照測試
 
 ## 下一步
 
-- 閱讀 [元件文件](../components/) 了解具體元件
-- 檢視 [API 文件](https://docs.rs/hikari-components) 了解 API 詳情
-- 瀏覽 [範例程式碼](../../examples/) 學習最佳實踐
+- 閱讀[元件文件](../components/)了解特定元件
+- 檢視 [API 文件](https://docs.rs/hikari-components)了解 API 詳情
+- 瀏覽[範例程式碼](../../examples/)學習最佳實踐

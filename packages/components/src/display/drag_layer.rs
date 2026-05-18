@@ -1,12 +1,15 @@
 // packages/components/src/display/drag_layer.rs
-// DragLayer component with Arknights + FUI styling
+// DragLayer component
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DragLayerComponent;
 
@@ -133,8 +136,8 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                     style: preview_style,
 
                     div { class: DragLayerClass::DragPreviewContent.class_name(),
-                        span { class: DragLayerClass::DragPreviewLabel.class_name(), "{item.label}" }
-                        span { class: DragLayerClass::DragPreviewType.class_name(), "{item.item_type}" }
+                        span { class: DragLayerClass::DragPreviewLabel.class_name(), {item.label.clone()} }
+                        span { class: DragLayerClass::DragPreviewType.class_name(), {item.item_type.clone()} }
                     }
                 }
             }

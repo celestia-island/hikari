@@ -157,7 +157,8 @@
 
 // Background Color - 语义化背景色，支持主题切换
 .hi-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
-.hi-bg-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
+.hi-bg-secondary { background-color: var(--hi-color-secondary, #519A73); }
+.hi-bg-surface-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
 .hi-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
 .hi-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
 .hi-bg-black { background-color: var(--hi-color-background, #000000); }
@@ -349,11 +350,11 @@
 
  :root {
   // Theme Colors (canonical --hi-color-* names, matching ThemeProvider base.scss)
-  --hi-color-primary: #FFC0CB;
+  --hi-color-primary: #FFB3A7;
   --hi-color-secondary: #519A73;
-  --hi-color-accent: #F7B500;
+  --hi-color-accent: #FFC773;
   --hi-color-success: #0EB840;
-  --hi-color-warning: #EED677;
+  --hi-color-warning: #FFA631;
   --hi-color-danger: #FF4C00;
   --hi-color-info: #6ABED6;
 
@@ -362,10 +363,10 @@
   --hi-color-surface: rgba(255, 255, 255, 0.7);
   --hi-color-border: #C4D8DA;
 
-  // Text Colors (matching legacy — slate gray not near-black)
-  --hi-color-text-primary: #50616D;
-  --hi-color-text-secondary: rgba(80, 97, 109, 0.65);
-  --hi-color-text-disabled: rgba(80, 97, 109, 0.35);
+  // Text Colors
+  --hi-color-text-primary: #262626;
+  --hi-color-text-secondary: rgba(38, 38, 38, 0.6);
+  --hi-color-text-disabled: rgba(38, 38, 38, 0.3);
   --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%));
 
   // Short aliases (--hi-* → canonical --hi-color-*)
@@ -387,16 +388,16 @@
 
   // Component-specific Colors (light theme defaults)
   --hi-button-bg: var(--hi-surface);
-  --hi-button-bg-hover: rgba(255, 192, 203, 0.8);
-  --hi-button-text: #50616D;
+  --hi-button-bg-hover: rgba(255, 179, 167, 0.8);
+  --hi-button-text: #262626;
   --hi-button-border: var(--hi-border);
 
   --hi-input-bg: var(--hi-surface);
   --hi-input-bg-focus: #FFFFFF;
   --hi-input-border: var(--hi-border);
   --hi-input-border-focus: var(--hi-primary);
-  --hi-input-text: #50616D;
-  --hi-input-placeholder: rgba(80, 97, 109, 0.4);
+  --hi-input-text: #262626;
+  --hi-input-placeholder: rgba(38, 38, 38, 0.4);
 
   --hi-card-bg: var(--hi-surface);
   --hi-card-border: var(--hi-border);
@@ -409,11 +410,11 @@
   --hi-badge-bg-success: var(--hi-success);
 
 
-  // Button Variant Colors (matching legacy visual output)
+  // Button Variant Colors
   --hi-button-primary: var(--hi-primary);
-  --hi-button-primary-hover: rgba(255, 192, 203, 0.85);
-  --hi-button-primary-light: #FFE4E9;
-  --hi-button-primary-dark: #FF9AA9;
+  --hi-button-primary-hover: rgba(255, 179, 167, 0.85);
+  --hi-button-primary-light: #FFD4CC;
+  --hi-button-primary-dark: #FF8A78;
 
   --hi-button-secondary: var(--hi-secondary);
   --hi-button-secondary-hover: rgba(81, 154, 115, 0.8);
@@ -432,7 +433,7 @@
 
   // Button icon colors
   --hi-button-icon-on-dark: #ffffff;
-  --hi-button-icon-on-light: #50616D;
+  --hi-button-icon-on-light: #262626;
   --hi-badge-bg-warning: var(--hi-warning);
   --hi-badge-bg-danger: var(--hi-danger);
   --hi-badge-text: #FFFFFF;
@@ -460,14 +461,14 @@
   --hi-glow-primary-md: 0 0 16px rgba(255, 179, 167, 0.5);
   --hi-glow-primary-lg: 0 0 24px rgba(255, 179, 167, 0.4);
 
-  --hi-glow-danger-sm: 0 0 8px rgba(232, 90, 79, 0.3);
-  --hi-glow-danger-md: 0 0 16px rgba(232, 90, 79, 0.5);
+  --hi-glow-danger-sm: 0 0 8px rgba(255, 76, 0, 0.3);
+  --hi-glow-danger-md: 0 0 16px rgba(255, 76, 0, 0.5);
 
-  --hi-glow-success-sm: 0 0 8px rgba(92, 191, 145, 0.3);
-  --hi-glow-success-md: 0 0 16px rgba(92, 191, 145, 0.5);
+  --hi-glow-success-sm: 0 0 8px rgba(14, 184, 64, 0.3);
+  --hi-glow-success-md: 0 0 16px rgba(14, 184, 64, 0.5);
 
-  --hi-glow-warning-sm: 0 0 8px rgba(238, 214, 119, 0.3);
-  --hi-glow-warning-md: 0 0 16px rgba(238, 214, 119, 0.5);
+  --hi-glow-warning-sm: 0 0 8px rgba(255, 166, 49, 0.3);
+  --hi-glow-warning-md: 0 0 16px rgba(255, 166, 49, 0.5);
 
   // Common Values
   --hi-white-5: rgba(255, 255, 255, 0.05);
@@ -496,7 +497,7 @@
   --hi-color-secondary: #FFC773;
   --hi-color-accent: #FFC773;
   --hi-color-success: #0EB840;
-  --hi-color-warning: #FFF143;
+  --hi-color-warning: #FFA631;
   --hi-color-danger: #FF4C00;
   --hi-color-info: #144A74;
 
@@ -555,6 +556,7 @@
 // 2. Basic Components
 // ============================================
 
+@import 'animations.scss';
 @import './components/background.scss';
 @import './components/avatar.scss';
 @import './components/button.scss';

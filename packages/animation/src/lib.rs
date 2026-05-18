@@ -49,9 +49,10 @@ pub mod timeline;
 pub mod tween;
 
 // Pure Rust exports
+pub use core::*;
+
 pub use breathing::*;
 pub use config::AnimationConfig;
-pub use core::*;
 pub use debug::AnimationDebugProvider;
 pub use easing::*;
 pub use error::*;

@@ -1,17 +1,15 @@
 // hi-components/src/portal/provider.rs
 // PortalProvider and PortalContext
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use std::sync::atomic::Ordering;
 
 use tairitsu_hooks::ReactiveSignal;
 
 use super::render::{PortalRender, PortalRenderProps};
-use crate::{
-    portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
-    prelude::*,
-};
+use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
+use crate::prelude::*;
 
 #[derive(Clone)]
 pub struct PortalContext {

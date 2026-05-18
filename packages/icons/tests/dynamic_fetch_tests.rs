@@ -5,7 +5,8 @@
 #[cfg(test)]
 mod tests {
 
-    use std::{collections::HashMap, sync::OnceLock};
+    use std::collections::HashMap;
+    use std::sync::OnceLock;
 
     /// Test icon name validation (kebab-case)
     #[test]

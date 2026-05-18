@@ -114,7 +114,7 @@
     &:hover {
         box-shadow:
             var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1)),
-            0 0 0 2px var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+            0 0 0 2px var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     }
 
     &:active {
@@ -156,7 +156,7 @@
 }
 
 .hi-avatar-status-away {
-    background-color: var(--hi-accent, #F7B500);
+    background-color: var(--hi-accent, #FFC773);
 }
 
 // Group / stack variant

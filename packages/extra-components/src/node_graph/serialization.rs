@@ -1,10 +1,13 @@
 // node_graph/serialization.rs
 // Serialization and deserialization for node graph
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::{connection::Connection, node::NodePlacement, value::NodeValue};
+use serde::{Deserialize, Serialize};
+
+use super::connection::Connection;
+use super::node::NodePlacement;
+use super::value::NodeValue;
 
 /// Graph metadata - extensible key-value storage
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

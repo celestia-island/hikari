@@ -1,11 +1,12 @@
 // packages/components/src/display/tag.rs
-// Tag component with Arknights + FUI styling
+// Tag component
 
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, TypedClass,
 };
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TagComponent;
 

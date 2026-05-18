@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, DividerClass};
 
-use crate::{prelude::*, theme::use_layout_direction};
+use crate::prelude::*;
+use crate::theme::use_layout_direction;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {

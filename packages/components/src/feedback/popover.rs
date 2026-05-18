@@ -3,12 +3,10 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, PopoverClass, Position};
 
-use crate::{
-    platform,
-    portal::{PortalEntry, generate_portal_id, use_portal},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::platform;
+use crate::portal::{PortalEntry, generate_portal_id, use_portal};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum PopoverPlacement {

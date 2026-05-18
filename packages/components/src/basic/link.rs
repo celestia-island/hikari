@@ -1,7 +1,8 @@
 // hi-components/src/basic/link.rs
 // Link component — styled anchor with hover underline
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[define_props]
 pub struct LinkProps {

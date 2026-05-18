@@ -82,7 +82,7 @@ pages/components/layer1/switch#slider
 | `Primary` | 主色（藍色） |
 | `Secondary` | 次要色（寶藍） |
 | `Danger` | 危險（朱紅） |
-| `Warning` | 警告（鵝黃） |
+| `Warning` | 警告（杏黃） |
 | `Info` | 資訊（靛藍） |
 
 ### SwitchContent

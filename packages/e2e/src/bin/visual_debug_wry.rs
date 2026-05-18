@@ -156,11 +156,11 @@ async fn do_analyze(image: &Path, focus: Option<&String>) -> Result<()> {
              1. Layout issues (misalignment, overflow, spacing) \
              2. Visual hierarchy and contrast \
              3. Component-specific bugs in the focused area \
-             4. FUI (Future UI) polish: glow effects, modern feel \
+             4. Glow effect polish: glow effects, modern feel \
              Return findings as JSON array with fields: severity, category, element, description, suggestion.",
             f
         ),
-        None => "Analyze this UI screenshot for visual quality. Check layout, spacing, colors, typography, component alignment, and overall FUI polish. Return findings as JSON array with severity/category/element/description/suggestion.".into(),
+        None => "Analyze this UI screenshot for visual quality. Check layout, spacing, colors, typography, component alignment, and overall UI polish. Return findings as JSON array with severity/category/element/description/suggestion.".into(),
     };
 
     let data = fs::read(image)?;
@@ -255,7 +255,7 @@ async fn do_inspect(client: &DebugClient, route: Option<&String>, selector: Opti
             }
 
             if let Some(shadow) = client.computed_style_one(sel, "box-shadow").await? {
-                println!("\n  FUI Glow check: box-shadow = {}", shadow);
+                println!("\n  Glow check: box-shadow = {}", shadow);
                 if shadow != "none" && !shadow.is_empty() {
                     println!("  ✅ Glow DETECTED");
                 } else {

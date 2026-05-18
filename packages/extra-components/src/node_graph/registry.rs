@@ -1,10 +1,8 @@
 // node_graph/registry.rs
 // Node registry for plugin-based node system
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use crate::node_graph::node::{NodePlugin, NodeType};
 

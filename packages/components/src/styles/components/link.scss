@@ -5,14 +5,14 @@
 // ============================================
 // Hikari Link Component
 // Styled anchor with full state coverage,
-// size variants, icon support, and FUI glow
+// size variants, icon support, and glow
 // ============================================
 
 .hi-link {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
@@ -73,7 +73,7 @@
 
 // Color variants
 .hi-link-default {
-    color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
 
     &:hover {
         color: var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85));
@@ -138,10 +138,10 @@
 
 // Ghost variant (subtle, no underline until hover)
 .hi-link-ghost {
-    color: var(--hi-text-primary, #50616D);
+    color: var(--hi-text-primary, #262626);
 
     &:hover {
-        color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
         text-decoration: underline;
         text-underline-offset: 3px;
     }

@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, SwitchClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[define_props]
 pub struct SwitchProps {

@@ -155,21 +155,21 @@ Definidas bajo `:root` o `[data-theme]`:
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* Proporcionar fallback para navegadores que no soportan variables CSS */
 .my-component {
-    background-color: #00A0E9; /* Valor de fallback */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* Valor de fallback */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### Integración con Palette
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("Primario: {}", hikari_palette.primary.hex);
+println!("Primario: {}", hikari_palette.primary.hex());
 ```
 
 ### Integración con Animation
@@ -535,19 +535,19 @@ rsx! {
 
 ## Filosofía de Diseño
 
-### Estilo Arknights
+### Estilo 
 
 - **Tema claro (hikari)**:
-  - Primario: Azurita (#00A0E9)
+  - Primario: Rosa (#FFB3A7)
   - Fondo: Blanco
   - Texto: Oscuro
 
 - **Tema oscuro (tairitsu)**:
-  - Primario: Índigo (#1a237e)
+  - Primario: Azul pato (#144A74)
   - Fondo: Oscuro
   - Texto: Claro
 
-### Elementos FUI
+### Elementos 
 
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias)

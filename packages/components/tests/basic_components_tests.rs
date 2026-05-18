@@ -1,27 +1,23 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_components::{
-        basic::{
-            badge::{Badge, BadgeProps, BadgeVariant},
-            button::{Button, ButtonProps, ButtonVariant},
-            canvas::{Canvas, CanvasProps},
-            card::{Card, CardProps},
-            checkbox::{Checkbox, CheckboxProps},
-            date_picker::{DatePicker, DatePickerProps},
-            divider::{Divider, DividerProps},
-            file_upload::{FileUpload, FileUploadProps},
-            image::{Image, ImageProps},
-            input::{Input, InputProps},
-            radio_group::{RadioGroup, RadioGroupProps},
-            select::{Select, SelectProps},
-            slider::{Slider, SliderProps},
-            switch::{Switch, SwitchProps},
-            textarea::{Textarea, TextareaProps},
-        },
-        portal::{PortalContext, PortalEntry},
-        prelude::*,
-    };
+    use hikari_components::basic::badge::{Badge, BadgeProps, BadgeVariant};
+    use hikari_components::basic::button::{Button, ButtonProps, ButtonVariant};
+    use hikari_components::basic::canvas::{Canvas, CanvasProps};
+    use hikari_components::basic::card::{Card, CardProps};
+    use hikari_components::basic::checkbox::{Checkbox, CheckboxProps};
+    use hikari_components::basic::date_picker::{DatePicker, DatePickerProps};
+    use hikari_components::basic::divider::{Divider, DividerProps};
+    use hikari_components::basic::file_upload::{FileUpload, FileUploadProps};
+    use hikari_components::basic::image::{Image, ImageProps};
+    use hikari_components::basic::input::{Input, InputProps};
+    use hikari_components::basic::radio_group::{RadioGroup, RadioGroupProps};
+    use hikari_components::basic::select::{Select, SelectProps};
+    use hikari_components::basic::slider::{Slider, SliderProps};
+    use hikari_components::basic::switch::{Switch, SwitchProps};
+    use hikari_components::basic::textarea::{Textarea, TextareaProps};
+    use hikari_components::portal::{PortalContext, PortalEntry};
+    use hikari_components::prelude::*;
     use tairitsu_vdom::vnode::VNode;
 
     fn find_elements_by_tag<'a>(
@@ -53,6 +49,7 @@ mod tests {
                 }
             }
             VNode::Text(_) => {}
+            VNode::DynamicText(_) => {}
         }
     }
 
@@ -61,6 +58,7 @@ mod tests {
             VNode::Element(el) => 1 + el.children.iter().map(count_elements).sum::<usize>(),
             VNode::Fragment(children) => children.iter().map(count_elements).sum(),
             VNode::Text(_) => 1,
+            VNode::DynamicText(_) => 1,
         }
     }
 

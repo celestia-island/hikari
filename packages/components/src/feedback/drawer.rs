@@ -1,12 +1,15 @@
 // hi-components/src/feedback/drawer.rs
-// Drawer component with Arknights + FUI styling
+// Drawer component
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, TypedClass};
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {

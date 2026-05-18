@@ -21,8 +21,7 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
-# External packager from sibling repository (tairitsu)
-tairitsu_packager_manifest := env_var_or_default("TAIRITSU_PACKAGER", justfile_directory() / ".." / "tairitsu" / "packages" / "packager" / "Cargo.toml")
+# External packager (tairitsu CLI via cargo install tairitsu-packager)
 website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================
@@ -36,14 +35,13 @@ default:
 # Infrastructure setup
 # ============================================================================
 
-# Check that tairitsu-packager is available from sibling repository
+# Check that tairitsu CLI is available in PATH
 check-tairitsu-packager:
-    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{tairitsu_packager_manifest}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] Missing tairitsu-packager: {p}'), sys.exit(1))"
+    @tairitsu --version > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
 
-# Fetch MDI icons (optional - tairitsu will also handle this)
+# Fetch MDI icons (download SVGs from GitHub)
 fetch-icons:
-    @echo "  →  Fetching MDI icons..."
-    @{{py}} scripts/icons/fetch_mdi_icons.py 2>&1 | grep -E "(OK:|ERROR:|WARNING:)" || true
+    @{{py}} scripts/icons/fetch_mdi_icons.py
 
 # ============================================================================
 # Build tasks
@@ -108,16 +106,9 @@ clippy:
 # ============================================================================
 
 # Clean build artifacts
-[linux]
 clean:
     @echo "  →  Cleaning..."
-    @cargo clean 2>/dev/null || true
-    @rm -rf examples/website/dist packages/icons/src/generated public 2>/dev/null || true
-    @echo "  ✓  Clean completed"
-
-[windows]
-clean:
-    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/icons/src/generated) { Remove-Item -Recurse -Force packages/icons/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
+    @{{py}} scripts/clean.py
 
 # ============================================================================
 # E2E Testing
@@ -235,50 +226,37 @@ vr-install:
     @{{py}} -m pip install Pillow playwright requests --quiet 2>/dev/null
     @{{py}} -m playwright install chromium --with-deps 2>/dev/null || echo "Playwright install may need sudo"
 
-# Capture screenshots for all baseline routes (Playwright, no tairitsu-debug)
-vr-capture url="http://localhost:3000" output="target/screenshots" wait="10":
-    @{{py}} scripts/visual-ci/capture_ci.py --url "{{url}}" --output "{{output}}" --wait {{wait}}
+# Capture screenshots via tairitsu debug API (requires `just dev --debug` running)
+vr-capture debug_url="http://localhost:3001" site_url="http://localhost:3000" output="target/screenshots" wait="3":
+    @{{py}} scripts/visual-ci/capture_debug_api.py --debug-url "{{debug_url}}" --site-url "{{site_url}}" --output "{{output}}" --wait {{wait}}
 
-# Compare candidate screenshots against baselines
-vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" threshold="30":
-    @{{py}} scripts/visual-ci/compare_ci.py \
+# Compare candidate screenshots against baselines (via tairitsu visual-diff)
+vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" tolerance="0.01":
+    @tairitsu visual-diff \
+        --actual-dir "{{candidate_dir}}" \
         --baseline-dir "{{baseline_dir}}" \
-        --candidate-dir "{{candidate_dir}}" \
-        --output "{{output}}" \
-        --threshold {{threshold}}
+        --output-dir "{{output}}" \
+        --tolerance {{tolerance}}
 
 # Initialize baseline directory structure
 vr-baseline-init:
-    @mkdir -p tests/visual/baseline/default
-    @touch tests/visual/baseline/default/.gitkeep
-    @echo "  \u2713 Baseline dir ready: tests/visual/baseline/default/"
+    @{{py}} scripts/visual-ci/baseline.py init
 
 # Promote current screenshots as baselines
 vr-baseline-accept-all candidate_dir="target/screenshots":
-    @{{py}} -c "
-import shutil, glob, time
-from pathlib import Path
-src = Path('{{candidate_dir}}')
-dst = Path('tests/visual/baseline/default')
-dst.mkdir(parents=True, exist_ok=True)
-for f in sorted(src.glob('*.png')):
-    if f.name != 'capture_report.json':
-        shutil.copy2(f, dst / f.name)
-        print(f'  \u2713 {f.name}')
-print(f'Done. {len(list(dst.glob(\"*.png\")))} baselines in {dst}')
-"
+    @{{py}} scripts/visual-ci/baseline.py accept-all --candidate-dir "{{candidate_dir}}"
 
 # Accept a single candidate image as new baseline
-vr-baseline-accept name="" image="" route="":
-    @{{py}} scripts/e2e/cli.py baseline accept --name "{{name}}" --image "{{image}}" --route "{{route}}"
+vr-baseline-accept name="" candidate_dir="target/screenshots":
+    @{{py}} scripts/visual-ci/baseline.py accept --name "{{name}}" --candidate-dir "{{candidate_dir}}"
 
-# Full visual regression pipeline: capture + compare
-vr-run url="http://localhost:3000" threshold="30":
-    @just vr-capture --url "{{url}}"
-    @just vr-compare --threshold {{threshold}}
+# Full visual regression pipeline: capture + compare (requires `just dev --debug`)
+vr-run tolerance="0.01":
+    @just vr-capture
+    @just vr-compare --tolerance {{tolerance}}
     @echo ""
     @echo "  \u2564\u2500 Visual Regression Results \u2500\u2567"
-    @cat target/visual-diff/result.json 2>/dev/null || echo "  No results yet — run vr-capture first"
+    @cat target/visual-diff/report.json 2>/dev/null || echo "  No results yet — run vr-capture first"
 
 # Interactive session from commands JSON file
 interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":

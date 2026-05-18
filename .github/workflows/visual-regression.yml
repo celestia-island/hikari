@@ -38,7 +38,7 @@ jobs:
 
       - name: Fetch MDI icons
         if: steps.mdi-cache.outputs.cache-hit != 'true'
-        run: bash scripts/icons/fetch_mdi_icons.sh
+        run: python3 scripts/icons/fetch_mdi_icons.py
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -75,7 +75,7 @@ jobs:
             -d '{"width": 1920, "height": 1080}'
 
       - name: Capture screenshots
-        run: bash scripts/visual-ci/capture_debug_api.sh http://localhost:3001 http://localhost:3000 target/screenshots 3
+        run: python3 scripts/visual-ci/capture_debug_api.py --debug-url http://localhost:3001 --site-url http://localhost:3000 --output target/screenshots --wait 3
 
       - name: Run visual comparison
         if: always()

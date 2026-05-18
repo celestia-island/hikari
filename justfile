@@ -39,10 +39,9 @@ default:
 check-tairitsu-packager:
     @tairitsu --version > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
 
-# Fetch MDI icons (optional - tairitsu will also handle this)
+# Fetch MDI icons (download SVGs from GitHub)
 fetch-icons:
-    @echo "  →  Fetching MDI icons..."
-    @{{py}} scripts/icons/fetch_mdi_icons.py 2>&1 | grep -E "(OK:|ERROR:|WARNING:)" || true
+    @bash scripts/icons/fetch_mdi_icons.sh
 
 # ============================================================================
 # Build tasks

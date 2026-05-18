@@ -71,12 +71,12 @@ jobs:
         id: mdi-cache
         uses: actions/cache@v4
         with:
-          path: packages/icons/src/generated
-          key: mdi-icons-${{ hashFiles('scripts/icons/fetch_mdi_icons.py') }}
+          path: icons/mdi
+          key: mdi-icons-v1
 
       - name: Fetch MDI icons
         if: steps.mdi-cache.outputs.cache-hit != 'true'
-        run: python3 scripts/icons/fetch_mdi_icons.py
+        run: bash scripts/icons/fetch_mdi_icons.sh
 
       - uses: dtolnay/rust-toolchain@stable
 

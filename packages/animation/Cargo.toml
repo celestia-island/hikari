@@ -13,7 +13,7 @@ slotmap = "1.0"
 anyhow = "1"
 
 # Color utilities (local package)
-hikari-palette = { version = "^0.1", path = "../palette" }
+hikari-palette = { version = "^0.2", path = "../palette" }
 
 # Tairitsu framework integration
 tairitsu-vdom = "^0.5"

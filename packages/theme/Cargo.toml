@@ -16,7 +16,7 @@ scss = []          # SCSS compilation
 
 [dependencies]
 # Hikari palette
-hikari-palette = { version = "^0.1", path = "../palette" }
+hikari-palette = { version = "^0.2", path = "../palette" }
 
 # Tairitsu framework (for theme context)
 tairitsu-vdom = "^0.5"

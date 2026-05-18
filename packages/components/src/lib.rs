@@ -65,6 +65,4 @@ pub use theme::{
     register_theme, use_layout_direction, use_theme,
 };
 
-pub use tairitsu_macros::{component, rsx};
-
 pub use builder::ButtonBuilder;

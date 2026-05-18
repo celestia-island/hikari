@@ -12,9 +12,9 @@ doctest = false
 
 [dependencies]
 # Workspace dependencies
-hikari-palette = { version = "^0.1", path = "../palette" }
-hikari-theme = { version = "^0.1", path = "../theme" }
-hikari-icons = { version = "^0.1", path = "../icons" }
+hikari-palette = { version = "^0.2", path = "../palette" }
+hikari-theme = { version = "^0.2", path = "../theme" }
+hikari-icons = { version = "^0.2", path = "../icons" }
 
 # Serialization
 serde = { version = "^1", features = ["derive"] }

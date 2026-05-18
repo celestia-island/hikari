@@ -116,11 +116,11 @@ pub use themes::*;
 #[cfg(target_family = "wasm")]
 mod wasm_export {
 
-    pub use classes::*;
-    pub use color_math::*;
-    pub use colors::*;
+    pub use crate::classes::*;
+    pub use crate::color_math::*;
+    pub use crate::colors::*;
     pub use tairitsu_style::{ClassesBuilder, TypedClass};
-    pub use themes::*;
+    pub use crate::themes::*;
 
     wit_bindgen::generate!({
         path: "wit",

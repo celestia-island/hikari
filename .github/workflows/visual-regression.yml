@@ -21,20 +21,13 @@ jobs:
   visual-regression:
     name: Visual Regression Test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout hikari
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Checkout tairitsu (sibling)
-        uses: actions/checkout@v4
-        with:
-          repository: tairitsu/tairitsu
-          path: ../tairitsu
-          ref: master
 
       - name: Cache MDI icons
         id: mdi-cache
@@ -50,48 +43,48 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Python 3
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
-
-      - name: Install Python dependencies
-        run: |
-          pip install Pillow requests playwright
-          playwright install chromium --with-deps
 
       - name: Install just
         uses: extractions/setup-just@v3
 
-      - name: Build website
-        run: just build-website
+      - name: Install tairitsu CLI
+        run: cargo install tairitsu-packager --locked
 
-      - name: Start HTTP server
+      - name: Start dev server with debug API
         run: |
-          cd public && python3 -m http.server 3000 &
-          echo "Server PID: $!"
-          sleep 2
-          curl -sf http://localhost:3000/ > /dev/null && echo "Server ready" || echo "Server failed"
+          cd examples/website && tairitsu --manifest-path Cargo.toml dev --debug --tty &
+          echo "Waiting for debug API..."
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+              echo "Debug API ready (took ~$((i * 5))s)"
+              break
+            fi
+            if [ "$i" -eq 90 ]; then
+              echo "::error::Debug API did not become ready in time"
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Set viewport to 1920x1080
+        run: |
+          curl -sf -X POST http://localhost:3001/resize \
+            -H 'Content-Type: application/json' \
+            -d '{"width": 1920, "height": 1080}'
 
       - name: Capture screenshots
-        run: |
-          python3 scripts/visual-ci/capture_ci.py \
-            --url http://localhost:3000 \
-            --output target/screenshots \
-            --wait 10
+        run: bash scripts/visual-ci/capture_debug_api.sh http://localhost:3001 http://localhost:3000 target/screenshots 3
 
       - name: Run visual comparison
         if: always()
         run: |
-          python3 scripts/visual-ci/compare_ci.py \
+          tairitsu visual-diff \
+            --actual-dir target/screenshots \
             --baseline-dir tests/visual/baseline/default \
-            --candidate-dir target/screenshots \
-            --output target/visual-diff \
-            --threshold 30 \
-            --max-diff-ratio 0.01
+            --output-dir target/visual-diff \
+            --tolerance 0.01
         continue-on-error: true
 
       - name: Upload diff artifacts
@@ -107,18 +100,18 @@ jobs:
       - name: Check results
         if: always()
         run: |
-          if [ -f target/visual-diff/result.json ]; then
-            python3 -c "
-            import json, sys
-            with open('target/visual-diff/result.json') as f:
-                r = json.load(f)
-            print(f\"Total: {r['total']}, Passed: {r['passed']}, Failed: {r['failed']}\")
-            for name, info in r.get('results', {}).items():
-                if not info.get('passed', False):
-                    print(f\"  FAIL: {name} ({info.get('diff_pct', '?')}% diff)\")
-            sys.exit(0 if r.get('all_passed', False) else 1)
-            "
+          if [ -f target/visual-diff/report.json ]; then
+            passed=$(jq '.passed' target/visual-diff/report.json)
+            failed=$(jq '.failed' target/visual-diff/report.json)
+            total=$(jq '.total' target/visual-diff/report.json)
+            echo "Total: $total, Passed: $passed, Failed: $failed"
+            if [ "$failed" -gt 0 ]; then exit 1; fi
           else
-            echo "::warning::No result.json found — possibly no baselines yet"
+            echo "::warning::No report.json found — possibly no baselines yet"
             exit 0
           fi
+
+      - name: Shutdown dev server
+        if: always()
+        run: |
+          cd examples/website && tairitsu --manifest-path Cargo.toml --shutdown || true

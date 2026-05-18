@@ -21,8 +21,7 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
-# External packager from sibling repository (tairitsu)
-tairitsu_packager_manifest := env_var_or_default("TAIRITSU_PACKAGER", justfile_directory() / ".." / "tairitsu" / "packages" / "packager" / "Cargo.toml")
+# External packager (tairitsu CLI via cargo install tairitsu-packager)
 website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================
@@ -36,9 +35,9 @@ default:
 # Infrastructure setup
 # ============================================================================
 
-# Check that tairitsu-packager is available from sibling repository
+# Check that tairitsu CLI is available in PATH
 check-tairitsu-packager:
-    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{tairitsu_packager_manifest}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] Missing tairitsu-packager: {p}'), sys.exit(1))"
+    @tairitsu --version > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
 
 # Fetch MDI icons (optional - tairitsu will also handle this)
 fetch-icons:
@@ -235,17 +234,17 @@ vr-install:
     @{{py}} -m pip install Pillow playwright requests --quiet 2>/dev/null
     @{{py}} -m playwright install chromium --with-deps 2>/dev/null || echo "Playwright install may need sudo"
 
-# Capture screenshots for all baseline routes (Playwright, no tairitsu-debug)
-vr-capture url="http://localhost:3000" output="target/screenshots" wait="10":
-    @{{py}} scripts/visual-ci/capture_ci.py --url "{{url}}" --output "{{output}}" --wait {{wait}}
+# Capture screenshots via tairitsu debug API (requires `just dev --debug` running)
+vr-capture debug_url="http://localhost:3001" site_url="http://localhost:3000" output="target/screenshots" wait="3":
+    @bash scripts/visual-ci/capture_debug_api.sh "{{debug_url}}" "{{site_url}}" "{{output}}" {{wait}}
 
-# Compare candidate screenshots against baselines
-vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" threshold="30":
-    @{{py}} scripts/visual-ci/compare_ci.py \
+# Compare candidate screenshots against baselines (via tairitsu visual-diff)
+vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" tolerance="0.01":
+    @tairitsu visual-diff \
+        --actual-dir "{{candidate_dir}}" \
         --baseline-dir "{{baseline_dir}}" \
-        --candidate-dir "{{candidate_dir}}" \
-        --output "{{output}}" \
-        --threshold {{threshold}}
+        --output-dir "{{output}}" \
+        --tolerance {{tolerance}}
 
 # Initialize baseline directory structure
 vr-baseline-init:
@@ -255,30 +254,19 @@ vr-baseline-init:
 
 # Promote current screenshots as baselines
 vr-baseline-accept-all candidate_dir="target/screenshots":
-    @{{py}} -c "
-import shutil, glob, time
-from pathlib import Path
-src = Path('{{candidate_dir}}')
-dst = Path('tests/visual/baseline/default')
-dst.mkdir(parents=True, exist_ok=True)
-for f in sorted(src.glob('*.png')):
-    if f.name != 'capture_report.json':
-        shutil.copy2(f, dst / f.name)
-        print(f'  \u2713 {f.name}')
-print(f'Done. {len(list(dst.glob(\"*.png\")))} baselines in {dst}')
-"
+    @bash -c 'dst="tests/visual/baseline/default" && mkdir -p "$$dst" && for f in {{candidate_dir}}/*.png; do cp "$$f" "$$dst/" && echo "  \u2713 $$(basename $$f)"; done && echo "Done. $$(ls $$dst/*.png 2>/dev/null | wc -l) baselines in $$dst"'
 
 # Accept a single candidate image as new baseline
 vr-baseline-accept name="" image="" route="":
-    @{{py}} scripts/e2e/cli.py baseline accept --name "{{name}}" --image "{{image}}" --route "{{route}}"
+    @bash -c 'cp "{{candidate_dir}}/{{name}}.png" "tests/visual/baseline/default/{{name}}.png" && echo "  \u2713 {{name}} accepted"'
 
-# Full visual regression pipeline: capture + compare
-vr-run url="http://localhost:3000" threshold="30":
-    @just vr-capture --url "{{url}}"
-    @just vr-compare --threshold {{threshold}}
+# Full visual regression pipeline: capture + compare (requires `just dev --debug`)
+vr-run tolerance="0.01":
+    @just vr-capture
+    @just vr-compare --tolerance {{tolerance}}
     @echo ""
     @echo "  \u2564\u2500 Visual Regression Results \u2500\u2567"
-    @cat target/visual-diff/result.json 2>/dev/null || echo "  No results yet — run vr-capture first"
+    @cat target/visual-diff/report.json 2>/dev/null || echo "  No results yet — run vr-capture first"
 
 # Interactive session from commands JSON file
 interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":

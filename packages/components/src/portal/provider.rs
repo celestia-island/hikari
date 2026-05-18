@@ -1,7 +1,7 @@
 // hi-components/src/portal/provider.rs
 // PortalProvider and PortalContext
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use std::sync::atomic::Ordering;
 

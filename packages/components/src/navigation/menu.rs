@@ -1,7 +1,7 @@
 // hi-components/src/navigation/menu.rs
 // Menu component
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 

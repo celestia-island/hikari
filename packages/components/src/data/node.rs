@@ -1,7 +1,7 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::TreeNodeClass;
 use tairitsu_hooks::ReactiveSignal;

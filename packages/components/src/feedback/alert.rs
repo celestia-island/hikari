@@ -1,7 +1,7 @@
 // hi-components/src/feedback/alert.rs
 // Alert component
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, TypedClass};

@@ -1,7 +1,7 @@
 // packages/components/src/navigation/steps.rs
 // Steps component
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 

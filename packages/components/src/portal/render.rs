@@ -1,7 +1,7 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass, TypedClass,

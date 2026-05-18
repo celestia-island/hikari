@@ -20,6 +20,7 @@ where
     guard.as_ref().map(f)
 }
 
+#[allow(clippy::type_complexity)]
 pub struct HikariPlatform {
     pub inner_width: Box<dyn Fn() -> i32 + Send + Sync>,
     pub inner_height: Box<dyn Fn() -> i32 + Send + Sync>,

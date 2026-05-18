@@ -1,7 +1,7 @@
 // hi-components/src/data/drag.rs
 // Drag and drop component for tree node reordering
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::DragDropTreeClass;
 use tairitsu_hooks::ReactiveSignal;

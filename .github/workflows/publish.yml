@@ -82,12 +82,16 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: rustc --version && cargo --version
+      - name: Strip examples from workspace to avoid git-dep conflicts
+        run: |
+          pip install tomlkit
+          python3 -c "
+          import tomlkit
+          with open('Cargo.toml') as f: d = tomlkit.load(f)
+          d['workspace']['members'] = [m for m in d['workspace']['members'] if not m.startswith('examples/')]
+          with open('Cargo.toml', 'w') as f: tomlkit.dump(d, f)
+          "
+
       - run: cargo login ${{ secrets.CRATES_IO_API_TOKEN }}
 
-      - run: cargo publish -p hikari-palette         --allow-dirty -v
-      - run: cargo publish -p hikari-animation        --allow-dirty -v
-      - run: cargo publish -p hikari-theme            --allow-dirty -v
-      - run: cargo publish -p hikari-icons            --allow-dirty -v
-      - run: cargo publish -p hikari-components       --allow-dirty -v
-      - run: cargo publish -p hikari-extra-components --allow-dirty -v
+      - run: python3 scripts/publish_crates.py

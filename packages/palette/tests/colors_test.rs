@@ -1,7 +1,8 @@
 // hikari-palette/tests/colors_test.rs
 // 中国传统色库单元测试
 
-use hikari_palette::*;
+use hikari_palette::colors::*;
+use hikari_palette::themes::{self, ThemeMode, default_theme};
 
 #[test]
 fn test_color_properties() {

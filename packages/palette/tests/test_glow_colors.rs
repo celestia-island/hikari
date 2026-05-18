@@ -1,4 +1,4 @@
-use hikari_palette::*;
+use hikari_palette::themes::{Hikari, Tairitsu};
 
 #[test]
 fn test_hikari_glow_colors_are_contrast() {

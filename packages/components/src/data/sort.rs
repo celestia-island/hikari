@@ -1,9 +1,8 @@
 // hi-components/src/data/sort.rs
 // Sort component
 
-use hikari_palette::TypedClass;
 use hikari_palette::classes::SortClass;
-use tairitsu_style::ClassesBuilder;
+use tairitsu_style::{ClassesBuilder, TypedClass};
 
 pub use super::column::ColumnDef;
 use crate::prelude::*;

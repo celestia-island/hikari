@@ -76,7 +76,7 @@ jobs:
 
       - name: Fetch MDI icons
         if: steps.mdi-cache.outputs.cache-hit != 'true'
-        run: bash scripts/icons/fetch_mdi_icons.sh
+        run: python3 scripts/icons/fetch_mdi_icons.py
 
       - uses: dtolnay/rust-toolchain@stable
 

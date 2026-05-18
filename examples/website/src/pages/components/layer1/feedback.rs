@@ -1,5 +1,5 @@
 use hikari_components::{Progress, ProgressStatus, Skeleton, SkeletonVariant, Spin, SpinSize, SpinTip, prelude::*};
-use hikari_icons::MdiIcon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
 

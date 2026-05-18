@@ -5,8 +5,9 @@
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
 use hikari_palette::classes::BackgroundClass;
-use hikari_palette::{TypedClass, 墨色, 粉红, 精白, 靛蓝};
+use hikari_palette::colors::{墨色, 粉红, 精白, 靛蓝};
 use tairitsu_hooks::ReactiveSignal;
+use tairitsu_style::TypedClass;
 
 use crate::platform;
 use crate::prelude::*;

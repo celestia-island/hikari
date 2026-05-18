@@ -26,7 +26,7 @@
 //! ```
 
 use hikari_palette::classes::components::*;
-use hikari_palette::{ClassesBuilder, TypedClass};
+use tairitsu_style::{ClassesBuilder, TypedClass};
 
 use crate::prelude::*;
 use crate::theme::use_layout_direction;

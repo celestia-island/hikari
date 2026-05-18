@@ -106,20 +106,14 @@ pub mod classes;
 pub mod color_math;
 pub mod colors;
 pub mod themes;
-
-pub use classes::*;
-pub use color_math::*;
-pub use colors::*;
-pub use tairitsu_style::{ClassesBuilder, TypedClass};
-pub use themes::*;
-
 #[cfg(target_family = "wasm")]
 mod wasm_export {
+
+    pub use tairitsu_style::{ClassesBuilder, TypedClass};
 
     pub use crate::classes::*;
     pub use crate::color_math::*;
     pub use crate::colors::*;
-    pub use tairitsu_style::{ClassesBuilder, TypedClass};
     pub use crate::themes::*;
 
     wit_bindgen::generate!({

@@ -65,7 +65,7 @@
 //! }
 //! ```
 
-use hikari_palette::*;
+use hikari_palette::themes::Hikari;
 use tairitsu_hooks::ReactiveSignal;
 
 use crate::prelude::*;
@@ -260,7 +260,7 @@ pub fn use_layout_direction() -> LayoutDirection {
 
 #[cfg(test)]
 mod tests {
-    use hikari_palette::{Hikari, Tairitsu};
+    use hikari_palette::themes::{Hikari, Tairitsu};
 
     use super::*;
     use crate::theme::css::{PaletteOverrides, ThemePalette};

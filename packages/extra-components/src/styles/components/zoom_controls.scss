@@ -1,5 +1,5 @@
 // hikari-extra-components/styles/components/zoom_controls.scss
-// Zoom controls styles with Arknights design + FUI glow
+// Zoom controls styles with 
 
 @use '../../../hikari-theme/styles/mixins.scss' as *;
 
@@ -19,7 +19,7 @@
     backdrop-filter: blur(8px);
     transition: all $hikari-transition-base;
 
-    // FUI glow on hover
+    // glow on hover
     &:hover {
         border-color: var(--hi-color-primary);
         box-shadow:
@@ -53,7 +53,7 @@
     transition: all $hikari-transition-fast;
     user-select: none;
 
-    // FUI glow effect on hover
+    // glow effect on hover
     &:hover:not(:disabled) {
         background-color: rgba(59, 130, 246, 0.1);
         border-color: var(--hi-color-primary);
@@ -79,7 +79,7 @@
         border-color: var(--hi-color-primary);
         color: var(--hi-color-text-primary);
 
-        // Enhanced FUI glow
+        // Enhanced glow
         box-shadow:
             0 0 20px rgba(59, 130, 246, 0.5),
             inset 0 0 10px rgba(255, 255, 255, 0.1);
@@ -112,7 +112,7 @@
     user-select: none;
     transition: all $hikari-transition-fast;
 
-    // FUI glow
+    // glow
     &.hi-zoom-display-active {
         border-color: var(--hi-color-accent);
         color: var(--hi-color-accent);
@@ -174,7 +174,7 @@
         cursor: grab;
         transition: all $hikari-transition-fast;
 
-        // FUI glow
+        // glow
         box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 
         &:hover {
@@ -266,7 +266,7 @@
         border-color: var(--hi-color-primary);
         color: var(--hi-color-text-primary);
 
-        // FUI glow
+        // glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     }
 }
@@ -425,7 +425,7 @@
     }
 }
 
-// FUI variant (enhanced glow effects)
+//  variant (enhanced glow effects)
 .hi-zoom-controls-fui {
     position: relative;
     overflow: hidden;
@@ -485,7 +485,7 @@
         transition: opacity $hikari-transition-fast;
         z-index: 100;
 
-        // FUI glow
+        // glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 

@@ -4,7 +4,7 @@ use hikari_palette::*;
 fn test_hikari_glow_colors_are_contrast() {
     let hikari = Hikari::palette();
 
-    // Primary (牡丹粉红, brightness ~0.725) → black glow for contrast
+    // Primary (粉红, brightness ~0.786) → black glow for contrast
     let primary_glow = hikari.button_glow_color(&hikari.primary);
     assert_eq!(primary_glow, "rgba(0, 0, 0, 0.7)");
 

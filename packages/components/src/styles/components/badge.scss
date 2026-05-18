@@ -36,7 +36,7 @@
 // Color Variants - 使用调色板上下文颜色
 // ============================================
 
-// Primary (牡丹粉红)
+// Primary (粉红)
 .hi-badge-primary {
   background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
   border-color: var(--hi-button-primary-hover);
@@ -66,7 +66,7 @@
   color: var(--hi-color-text-on-success);
 }
 
-// Warning (鹅黄)
+// Warning (杏黄)
 .hi-badge-warning {
   background: linear-gradient(135deg, var(--hi-button-warning), var(--hi-button-warning-dark));
   border-color: var(--hi-button-warning-light);

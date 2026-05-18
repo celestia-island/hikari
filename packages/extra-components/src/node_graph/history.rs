@@ -1,8 +1,9 @@
 // node_graph/history.rs
 // History management for undo/redo operations
 
-use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
+
+use serde::{Deserialize, Serialize};
 
 pub type HistoryId = usize;
 

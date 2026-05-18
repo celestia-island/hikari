@@ -1,9 +1,10 @@
 // packages/components/src/entry/auto_complete.rs
-// AutoComplete component with Arknights + FUI styling
+// AutoComplete component
 
 use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 /// Style provider for the AutoComplete component.
 pub struct AutoCompleteComponent;
@@ -172,7 +173,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             input {
                 class: input_classes,
                 r#type: "text",
-                value: "{props.value}",
+                value: {props.value.clone()},
                 placeholder: props.placeholder,
                 disabled: props.disabled,
                 oninput: handle_input,
@@ -214,7 +215,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                                     }
                                 }
                             },
-                            "{options_arr[index]}"
+                            {options_arr[index].clone()}
                         }
                     }
                 }

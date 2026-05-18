@@ -7,11 +7,10 @@
 //!
 //! - `"hikari"` - Light theme (光)
 //! - `"tairitsu"` - Dark theme (tairitsu)
+//! - `"arknights"` - Dark industrial theme (Arknights-inspired)
 
-use crate::{
-    context::{LayoutDirection, ThemeContext},
-    prelude::*,
-};
+use crate::context::{LayoutDirection, ThemeContext};
+use crate::prelude::*;
 
 /// Theme Provider Props
 #[derive(Debug, Clone)]
@@ -63,6 +62,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
     let colors = match palette_name {
         "hikari" => themes::Hikari::palette(),
         "tairitsu" => themes::Tairitsu::palette(),
+        "arknights" => themes::Arknights::palette(),
         _ => themes::Hikari::palette(),
     };
 

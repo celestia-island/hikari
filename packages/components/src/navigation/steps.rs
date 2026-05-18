@@ -1,11 +1,12 @@
 // packages/components/src/navigation/steps.rs
-// Steps component with Arknights + FUI styling
+// Steps component
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct StepsComponent;
 

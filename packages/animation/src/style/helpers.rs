@@ -3,7 +3,8 @@
 //! Note: These functions are maintained for backward compatibility.
 //! New code should use the Platform trait directly.
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use tairitsu_vdom::Platform;
 

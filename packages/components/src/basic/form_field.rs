@@ -1,9 +1,10 @@
 // packages/components/src/basic/form_field.rs
-// FormField component with Arknights + FUI styling
+// FormField component
 
 use hikari_palette::classes::{ClassesBuilder, FormFieldClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct FormFieldComponent;
 

@@ -122,17 +122,17 @@ auto_complete = []
 
 [dependencies]
 # Hikari design system
-hikari-palette = { version = "^0.1", path = "../palette" }
-hikari-theme = { version = "^0.1", path = "../theme" }
-hikari-icons = { version = "^0.1", path = "../icons", default-features = false, features = [
+hikari-palette = { version = "^0.2", path = "../palette" }
+hikari-theme = { version = "^0.2", path = "../theme" }
+hikari-icons = { version = "^0.2", path = "../icons", default-features = false, features = [
     "tairitsu",
 ] }
 
 # Tairitsu framework (replaces Dioxus)
-tairitsu-vdom = "^0.4"
-tairitsu-hooks = "^0.4"
-tairitsu-macros = "^0.4"
-tairitsu-style = "^0.4"
+tairitsu-vdom = "^0.5"
+tairitsu-hooks = "^0.5"
+tairitsu-macros = "^0.5"
+tairitsu-style = "^0.5"
 
 # QR code generation
 qrcode = "0.14"
@@ -141,6 +141,6 @@ qrcode = "0.14"
 chrono = { workspace = true }
 
 [build-dependencies]
-tairitsu-packager = { version = "^0.4", default-features = false }
+tairitsu-packager = { version = "^0.5", default-features = false }
 anyhow = "^1"
 serde_json = "^1"

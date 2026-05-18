@@ -9,18 +9,18 @@ Hikariフレームワークはモジュラーデesignを採用し、それぞれ
 伝統的な中国色彩システムのRust実装。
 
 **責任**:
-- 500種類以上の伝統的な中国色定義を提供
+- 660種類以上の伝統的な中国色定義を提供
 - テーマパレット管理
 - ユーティリティクラスジェネレーター
 - 不透明度と色ブレンド
 
 **主な機能**:
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
 // 伝統色を使用
-let red = ChineseColor::Cinnabar;
-let blue = ChineseColor::Azurite;
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // 不透明度処理
 let semi_red = opacity(red, 0.5);
@@ -59,14 +59,14 @@ rsx! {
 
 **サポートテーマ**:
 - **Hikari (ライト)** - ライトテーマ
-  - プライマリ: 藍銅 (#00A0E9)
-  - セカンダリ: 朱砂 (#E94B35)
-  - アクセント: 藤黄 (#F8B62D)
+  - プライマリ: ピンク (#FFB3A7)
+  - セカンダリ: 蒼翠 (#519A73)
+  - アクセント: 姜黄 (#FFC773)
 
 - **Tairitsu** - ダークテーマ
-  - プライマリ: インディゴ (#1a237e)
-  - セカンダリ: 朱砂 (#E94B35)
-  - アクセント: 鹅黄 (#FFF176)
+  - プライマリ: 鴇藍 (#144A74)
+  - セカンダリ: 蒼翠 (#519A73)
+  - アクセント: 姜黄 (#FFC773)
 
 ### 3. Animation System (hikari-animation)
 
@@ -492,8 +492,8 @@ pub fn fade_in(
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::Cinnabar;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```

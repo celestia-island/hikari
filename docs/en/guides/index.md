@@ -2,7 +2,7 @@
 
 > A modern Rust UI framework built on Tairitsu + Grass + Axum
 >
-> **Design Style**: Arknights flat design + FUI sci-fi aesthetics + Traditional Chinese colors
+> **Design Style**:  flat design +  sci-fi aesthetics + Traditional Chinese colors
 >
 > **Name Origin**: "Hikari" (Light) from the rhythm game Arcaea
 
@@ -13,7 +13,7 @@ Hikari is a modern UI framework designed for the Rust ecosystem, combining tradi
 ## Core Features
 
 ### 🎨 Traditional Chinese Color System
-- **500+ Traditional Colors**: Complete traditional Chinese color palette
+- **660+ Traditional Colors**: Complete traditional Chinese color palette
 - **Theme System**: Built-in Hikari (light) and Tairitsu (dark) themes
 - **Type-Safe**: Compile-time checked color values
 
@@ -86,20 +86,20 @@ trunk build --release
 
 ## Design Philosophy
 
-### Arknights Flat Design
+###  Flat Design
 - Clean lines and clear information hierarchy
 - High contrast for readability
 - Minimalist yet refined design
 
-### FUI Sci-Fi Aesthetics
+###  Sci-Fi Aesthetics
 - Subtle glow effects
 - Dynamic indicators (breathing lights, pulse animations)
 - Fine borders and geometric patterns
 
 ### Traditional Chinese Colors
 - Primary: 石青 (Cyan/Blue), 朱砂 (Vermilion/Red), 藤黄 (Gamboge/Yellow)
-- Neutral: 月白 (Light White), 墨色 (Ink Black), 缟色 (Light Gray)
-- Functional: 葱倩 (Success), 鹅黄 (Warning), 朱砂 (Danger)
+- Neutral: 精白 (Pure White), 墨色 (Ink Black), 缟色 (Light Gray)
+- Functional: 葱倩 (Success), 杏黄 (Warning), 朱红 (Danger)
 
 ## Project Structure
 

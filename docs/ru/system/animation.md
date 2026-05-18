@@ -499,7 +499,7 @@ spotlight::init_selector(".hi-button");
 spotlight::Config {
     size: 200,              // Размер прожектора в px
     opacity: 0.15,          // Прозрачность (0-1)
-    color: "#00A0E9",       // Цвет свечения
+    color: "#FFB3A7",       // Цвет свечения
     blur: 20,              // Радиус размытия в px
     transition: "150ms"     // Скорость перехода
 }.init();
@@ -599,7 +599,7 @@ CssProperty::Filter
 
 ```rust
 // Установка одного свойства
-builder.add_style("element", CssProperty::Color, "#00A0E9");
+builder.add_style("element", CssProperty::Color, "#FFB3A7");
 
 // Установка трансформации
 builder.add_style("element", CssProperty::Transform, "translate(10px, 20px)");

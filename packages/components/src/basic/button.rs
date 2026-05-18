@@ -1,5 +1,5 @@
 // hi-components/src/basic/button.rs
-// Button component with Arknights + FUI styling
+// Button component
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (button-vars.scss)
@@ -7,11 +7,9 @@
 
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
-use crate::{
-    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonAnimation {
@@ -212,6 +210,16 @@ pub fn Button(props: ButtonProps) -> Element {
     }
 }
 
+impl StyledComponent for ButtonComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
+    }
+
+    fn name() -> &'static str {
+        "button"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -268,15 +276,5 @@ mod tests {
         assert_eq!(ButtonAnimation::ScaleElevate as u8, 2);
         assert_eq!(ButtonAnimation::Ripple as u8, 3);
         assert_eq!(ButtonAnimation::IconRotate as u8, 4);
-    }
-}
-
-impl StyledComponent for ButtonComponent {
-    fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
-    }
-
-    fn name() -> &'static str {
-        "button"
     }
 }

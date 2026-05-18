@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use tairitsu_web::t;
-use hikari_icons::{MdiIcon, generated::mdi_selected::get};
+use hikari_icons::{MdiIcon, get};
 use tairitsu_vdom::{VElement, VNode, VText};
 
 use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};

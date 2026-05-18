@@ -1,5 +1,5 @@
 // styles/components/stepper.scss
-// Stepper component with Arknights + FUI styling
+// Stepper component 
 // All colors now use CSS variables for theme consistency
 
 @use 'variables' as vars;
@@ -68,10 +68,10 @@
     color: var(--hi-text-secondary, rgba(80, 97, 109, 0.65));
 }
 
-// Active state with FUI glow
+// Active state with glow
 .hi-step-active .hi-step-number {
-    background-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
-    border-color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+    background-color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
+    border-color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     color: var(--hi-badge-text, #FFFFFF);
     box-shadow:
         var(--hi-glow-primary-md, 0 0 16px rgba(255, 179, 167, 0.5)),
@@ -125,7 +125,7 @@
     padding-bottom: 0;
 }
 
-// FUI effects - active pulse animation
+//  effects - active pulse animation
 .hi-step-active .hi-step-number {
     animation: hi-stepper-pulse 2s ease-in-out infinite;
 }

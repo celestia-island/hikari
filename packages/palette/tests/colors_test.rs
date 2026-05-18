@@ -28,7 +28,7 @@ fn test_all_colors_are_unique() {
 fn test_palette_default() {
     let palette = default_theme();
     assert_eq!(palette.mode, ThemeMode::Light);
-    assert_eq!(palette.primary.hex(), 牡丹粉红.hex());
+    assert_eq!(palette.primary.hex(), 粉红.hex());
     assert_eq!(palette.secondary.hex(), 苍翠.hex());
     assert_eq!(palette.success.hex(), 葱倩.hex());
 }
@@ -41,9 +41,9 @@ fn test_themes() {
     assert_eq!(hikari.mode, ThemeMode::Light);
     assert_eq!(tairitsu.mode, ThemeMode::Dark);
 
-    assert_eq!(hikari.background.hex(), 月白.hex());
+    assert_eq!(hikari.background.hex(), 精白.hex());
     assert_eq!(tairitsu.background.hex(), 漆黑.hex());
 
-    assert_eq!(hikari.primary.hex(), 牡丹粉红.hex());
+    assert_eq!(hikari.primary.hex(), 粉红.hex());
     assert_eq!(tairitsu.primary.hex(), 鷃蓝.hex());
 }

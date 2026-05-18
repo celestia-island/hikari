@@ -29,27 +29,17 @@ pub mod user_guide;
 pub mod video_player;
 pub mod zoom_controls;
 
-pub use audio_waveform::*;
-pub use code_highlighter::*;
-pub use collapsible::*;
-pub use collapsible_card::*;
-pub use drag_layer::*;
-pub use draggable_card::*;
-pub use rich_text_editor::*;
-pub use timeline::*;
-pub use user_guide::*;
-pub use video_player::PlaybackChangeEvent as VideoPlaybackChangeEvent;
-pub use video_player::{PlaybackStatus, TimeUpdateEvent, VIDEO_PLAYER_STYLES, VideoPlayerState};
-pub use zoom_controls::*;
-
-pub use audio_waveform::render_audio_waveform;
-pub use code_highlighter::render_code_highlighter;
-pub use collapsible::render_collapsible;
-pub use collapsible_card::render_collapsible_card;
-pub use drag_layer::render_drag_layer;
-pub use draggable_card::render_draggable_card;
-pub use rich_text_editor::render_rich_text_editor;
-pub use timeline::render_timeline;
-pub use user_guide::render_user_guide;
-pub use video_player::render_video_player;
-pub use zoom_controls::render_zoom_controls;
+pub use audio_waveform::{render_audio_waveform, *};
+pub use code_highlighter::{render_code_highlighter, *};
+pub use collapsible::{render_collapsible, *};
+pub use collapsible_card::{render_collapsible_card, *};
+pub use drag_layer::{render_drag_layer, *};
+pub use draggable_card::{render_draggable_card, *};
+pub use rich_text_editor::{render_rich_text_editor, *};
+pub use timeline::{render_timeline, *};
+pub use user_guide::{render_user_guide, *};
+pub use video_player::{
+    PlaybackChangeEvent as VideoPlaybackChangeEvent, PlaybackStatus, TimeUpdateEvent,
+    VIDEO_PLAYER_STYLES, VideoPlayerState, render_video_player,
+};
+pub use zoom_controls::{render_zoom_controls, *};

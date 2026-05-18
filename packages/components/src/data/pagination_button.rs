@@ -4,12 +4,10 @@
 use hikari_palette::classes::PaginationClass;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{
-    basic::{Arrow, ArrowDirection},
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::basic::{Arrow, ArrowDirection};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct PaginationButtonComponent;
 

@@ -1,5 +1,5 @@
 // Popover Component Styles
-// Floating content container with FUI acrylic treatment,
+// Floating content container with  acrylic treatment,
 // directional arrow, and smooth entrance animation
 
 @use 'variables' as vars;
@@ -85,7 +85,7 @@
 .hi-popover-title {
     font-size: vars.$hikari-font-size-sm;
     font-weight: 600;
-    color: var(--hi-text-primary, #50616D);
+    color: var(--hi-text-primary, #262626);
     margin-bottom: 8px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--hi-color-border, rgba(196, 216, 218, 0.4));

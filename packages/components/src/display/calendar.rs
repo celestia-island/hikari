@@ -1,11 +1,11 @@
 // packages/components/src/display/calendar.rs
-// Calendar component with Arknights + FUI styling
+// Calendar component
 
 use chrono::{Datelike, Local};
-
 use hikari_palette::classes::{CalendarClass, ClassesBuilder, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 fn get_current_date() -> (i32, u32) {
     let now = Local::now();

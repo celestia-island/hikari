@@ -9,18 +9,18 @@ The Hikari framework adopts a modular design, consisting of multiple independent
 Rust implementation of the traditional Chinese color system.
 
 **Responsibilities**:
-- Provides 500+ traditional Chinese color definitions
+- Provides 660+ traditional Chinese color definitions
 - Theme palette management
 - Utility class generator
 - Opacity and color blending
 
 **Core Features**:
 ```rust
-use hikari_palette::{ChineseColor, opacity};
+use hikari_palette::{Color, opacity};
 
 // Use traditional colors
-let red = ChineseColor::Cinnabar;
-let blue = ChineseColor::Azurite;
+let red = Color::Cinnabar;
+let blue = Color::Azurite;
 
 // Opacity handling
 let semi_red = opacity(red, 0.5);
@@ -59,14 +59,14 @@ rsx! {
 
 **Supported Themes**:
 - **Hikari (Light)** - Light theme
-  - Primary: Azurite (#00A0E9)
-  - Secondary: Cinnabar (#E94B35)
-  - Accent: Vine Yellow (#F8B62D)
+  - Primary: Pink (#FFB3A7)
+  - Secondary: Dark Green (#519A73)
+  - Accent: Turmeric (#FFC773)
 
 - **Tairitsu** - Dark theme
-  - Primary: Indigo (#1a237e)
-  - Secondary: Cinnabar (#E94B35)
-  - Accent: Goose Yellow (#FFF176)
+  - Primary: Duck Blue (#144A74)
+  - Secondary: Dark Green (#519A73)
+  - Accent: Turmeric (#FFC773)
 
 ### 3. Animation System (hikari-animation)
 
@@ -492,8 +492,8 @@ Each module has complete unit tests:
 mod tests {
     #[test]
     fn test_color_conversion() {
-        let color = ChineseColor::Cinnabar;
-        assert_eq!(color.hex(), "#E94B35");
+        let color = Color::Cinnabar;
+        assert_eq!(color.hex(), "#519A73");
     }
 }
 ```

@@ -1,7 +1,8 @@
 // hi-components/src/basic/typography.rs
 // Typography component — unified text rendering for headings, body, code, etc.
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextVariant {

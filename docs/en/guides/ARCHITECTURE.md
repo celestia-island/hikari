@@ -101,7 +101,7 @@ hikari-theme   hikari-components
 
 **Responsibilities**:
 - Define color data structures
-- Provide 500+ traditional Chinese colors
+- Provide 660+ traditional Chinese colors
 - Generate pre-defined palettes
 - Serialize/deserialize colors
 
@@ -287,7 +287,7 @@ Theme and state management:
 
 ```rust
 rsx! {
-    ThemeProvider { palette: "arknights".to_string(),
+    ThemeProvider { palette: "hikari".to_string(),
         // All children have access to theme
         Button { "Themed Button" }
     }

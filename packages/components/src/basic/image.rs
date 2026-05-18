@@ -3,10 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, ImageClass, TypedClass};
 
-use crate::{
-    prelude::*,
-    style_builder::{CssProperty, StyleStringBuilder},
-};
+use crate::prelude::*;
+use crate::style_builder::{CssProperty, StyleStringBuilder};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ImageFit {

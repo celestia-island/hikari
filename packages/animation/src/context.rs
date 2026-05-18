@@ -6,7 +6,8 @@
 //! This module uses the tairitsu-vdom Platform trait for cross-platform
 //! browser API access, working consistently in both WASM and server environments.
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use tairitsu_vdom::{DomRect, Platform};
 

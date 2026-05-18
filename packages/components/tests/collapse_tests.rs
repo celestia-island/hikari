@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_components::{data::CollapseProps, prelude::*};
+    use hikari_components::data::CollapseProps;
+    use hikari_components::prelude::*;
 
     #[test]
     fn test_collapse_renders() {

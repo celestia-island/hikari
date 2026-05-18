@@ -1,8 +1,10 @@
 // hikari-theme/build.rs
 // SCSS bundle build script using tairitsu-packager
 
+use std::path::Path;
+use std::{env, fs};
+
 use anyhow::Result;
-use std::{env, fs, path::Path};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=styles");

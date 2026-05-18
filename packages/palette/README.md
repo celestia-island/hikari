@@ -1,6 +1,6 @@
 # hikari-palette
 
-500+ traditional Chinese colors with type-safe Rust constants and rich historical context.
+Color palette system with 660+ named colors as type-safe Rust constants.
 
 ## Installation
 
@@ -30,11 +30,11 @@ For complete API documentation and examples, see [docs.rs](https://docs.rs/hikar
 
 ## Features
 
-- **500+ Traditional Chinese Colors** - Authentic historical colors
-- **Rich Metadata** - Hex, RGB, CMYK values, and historical notes
-- **Type-Safe Constants** - Chinese identifiers in Rust code
-- **Pre-defined Palettes** - Ready-to-use theme color schemes
-- **Utility Classes** - Type-safe Tailwind-like class system
+- **660+ Named Colors** — Comprehensive color library
+- **Type-Safe Constants** — Named identifiers in Rust code
+- **Pre-defined Palettes** — Hikari (light) and Tairitsu (dark) theme palettes
+- **Utility Classes** — Type-safe Tailwind-like class system
+- **Color Math** — HSL conversion, gradient, blending utilities
 
 ## License
 

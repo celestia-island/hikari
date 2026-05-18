@@ -16,9 +16,11 @@
 //! }
 //! ```
 
-use hikari_palette::{ClassesBuilder, classes::*};
+use hikari_palette::ClassesBuilder;
+use hikari_palette::classes::*;
 
-use crate::{prelude::*, theme::use_layout_direction};
+use crate::prelude::*;
+use crate::theme::use_layout_direction;
 
 ///
 ///

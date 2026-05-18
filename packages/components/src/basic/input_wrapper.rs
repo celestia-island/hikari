@@ -11,12 +11,10 @@
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, TypedClass};
 
-use crate::{
-    basic::{IconButton, IconButtonProps},
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::basic::{IconButton, IconButtonProps};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct InputWrapperComponent;
 

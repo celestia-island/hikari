@@ -1,9 +1,10 @@
 // hi-components/src/basic/textarea.rs
-// Textarea component with Arknights + FUI styling
+// Textarea component
 
 use hikari_palette::classes::{ClassesBuilder, InputClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextareaSize {

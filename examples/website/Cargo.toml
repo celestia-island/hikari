@@ -23,10 +23,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Tairitsu framework packages
-tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
-tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
-tairitsu-macros = { path = "../../../tairitsu/packages/macros" }
-tairitsu-web = { path = "../../../tairitsu/packages/web", default-features = false, features = [
+tairitsu-vdom = "^0.5"
+tairitsu-hooks = "^0.5"
+tairitsu-macros = "^0.5"
+tairitsu-web = { version = "^0.5", default-features = false, features = [
   "vdom",
   "hooks",
   "macros",

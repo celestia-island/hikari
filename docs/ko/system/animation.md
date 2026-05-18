@@ -499,7 +499,7 @@ spotlight::init_selector(".hi-button");
 spotlight::Config {
     size: 200,              // 스포트라이트 크기 (px)
     opacity: 0.15,          // 불투명도 (0-1)
-    color: "#00A0E9",       // 글로우 색상
+    color: "#FFB3A7",       // 글로우 색상
     blur: 20,              // 블러 반경 (px)
     transition: "150ms"     // 트랜지션 속도
 }.init();
@@ -599,7 +599,7 @@ CssProperty::Filter
 
 ```rust
 // 단일 속성 설정
-builder.add_style("element", CssProperty::Color, "#00A0E9");
+builder.add_style("element", CssProperty::Color, "#FFB3A7");
 
 // Transform 설정
 builder.add_style("element", CssProperty::Transform, "translate(10px, 20px)");

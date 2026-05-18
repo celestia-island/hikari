@@ -155,11 +155,11 @@
     }
     
     .hi-progress-exception .hi-progress-bg {
-        background-color: #DC2626;
+        background-color: var(--hi-color-danger);
     }
     
     .hi-progress-exception .hi-progress-text {
-        color: #DC2626;
+        color: var(--hi-color-danger);
         font-weight: 600;
     }
 }

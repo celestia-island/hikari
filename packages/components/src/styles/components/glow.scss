@@ -139,6 +139,7 @@
   flex-shrink: 0;
   align-self: flex-start;
   overflow: visible;
+  border-radius: var(--hi-glow-radius, inherit);
 }
 
 // Block variant for wrapping block-level elements (like Card)
@@ -147,6 +148,7 @@
   flex-direction: column;
   width: 100%;
   overflow: visible;
+  border-radius: var(--hi-glow-radius, inherit);
 }
 
 // ============================================

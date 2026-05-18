@@ -418,7 +418,7 @@ spotlight::init_selector(".hi-button");
 spotlight::Config {
     size: 200,              // حجم البقعة بالبكسل
     opacity: 0.15,          // الشفافية (0-1)
-    color: "#00A0E9",       // لون التوهج
+    color: "#FFB3A7",       // لون التوهج
     blur: 20,              // نصف قطر الضبابية بالبكسل
     transition: "150ms"     // سرعة الانتقال
 }.init();
@@ -508,7 +508,7 @@ CssProperty::Filter
 
 ```rust
 // تعيين خاصية واحدة
-builder.add_style("element", CssProperty::Color, "#00A0E9");
+builder.add_style("element", CssProperty::Color, "#FFB3A7");
 
 // تعيين التحويل
 builder.add_style("element", CssProperty::Transform, "translate(10px, 20px)");

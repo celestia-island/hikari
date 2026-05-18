@@ -42,18 +42,17 @@
 //!     .start_continuous_animation();
 //! ```
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 use tairitsu_vdom::Platform;
 
-use super::{
-    super::{
-        context::AnimationContext, state::AnimationDataStore as StructAnimationState,
-        style::CssProperty,
-    },
-    action::AnimationAction,
-    value::DynamicValue,
-};
+use super::super::context::AnimationContext;
+use super::super::state::AnimationDataStore as StructAnimationState;
+use super::super::style::CssProperty;
+use super::action::AnimationAction;
+use super::value::DynamicValue;
 
 /// Enhanced builder for creating complex animations
 ///

@@ -1,16 +1,14 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_components::{
-        display::{
-            Calendar, CalendarProps, Carousel, CarouselIndicatorPosition, CarouselIndicatorType,
-            CarouselProps, Comment, CommentProps, Empty, EmptyProps, QRCode, QRCodeProps, Skeleton,
-            SkeletonCard, SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps,
-            SkeletonVariant, Tag, TagProps, TagVariant, Timeline, TimelineItem, TimelineItemProps,
-            TimelinePosition, TimelineProps,
-        },
-        prelude::*,
+    use hikari_components::display::{
+        Calendar, CalendarProps, Carousel, CarouselIndicatorPosition, CarouselIndicatorType,
+        CarouselProps, Comment, CommentProps, Empty, EmptyProps, QRCode, QRCodeProps, Skeleton,
+        SkeletonCard, SkeletonCardProps, SkeletonProps, SkeletonSize, SkeletonTableProps,
+        SkeletonVariant, Tag, TagProps, TagVariant, Timeline, TimelineItem, TimelineItemProps,
+        TimelinePosition, TimelineProps,
     };
+    use hikari_components::prelude::*;
 
     // ── Calendar ────────────────────────────────────────────────
 

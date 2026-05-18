@@ -1,6 +1,6 @@
 # Palette 调色板系统
 
-中国传统色彩系统的 Rust 实现，提供 500+ 传统颜色定义、类型安全的工具类系统和主题色板管理。
+中国传统色彩系统的 Rust 实现，提供 660+ 传统颜色定义、类型安全的工具类系统和主题色板管理。
 
 ## 目录
 
@@ -16,7 +16,7 @@
 
 `hikari-palette` 是 Hikari UI 框架的色彩基础，提供：
 
-- **500+ 中国传统颜色**：完整的历史色彩定义，包含 hex、RGB、CMYK 值
+- **660+ 中国传统颜色**：完整的历史色彩定义，包含 hex、RGB、CMYK 值
 - **类型安全的工具类**：编译时检查的 CSS 类名，避免拼写错误
 - **预定义主题色板**：Hikari（浅色）和 Tairitsu（深色）主题
 - **透明度支持**：颜色混合和透明度处理
@@ -26,7 +26,7 @@
 
 ### Colors 颜色定义
 
-提供 500+ 中国传统颜色的完整定义，按色系组织：
+提供 660+ 中国传统颜色的完整定义，按色系组织：
 
 - **红色系 (28色)**：朱砂、绯红、胭脂、丹等
 - **黄色系 (28色)**：藤黄、鹅黄、栀子、杏黄等
@@ -50,8 +50,8 @@
 
 预定义的主题配置：
 
-- **Hikari（光）**：浅色主题，主色石青、次色朱砂、强调色藤黄
-- **Tairitsu**：深色主题，主色靛蓝、次色朱砂、强调色鹅黄
+- **Hikari（光）**：浅色主题，主色粉红、次色苍翠、强调色姜黄
+- **Tairitsu**：深色主题，主色鷃蓝、次色姜黄、强调色姜黄
 
 ## Colors 颜色定义
 
@@ -66,7 +66,7 @@ let blue = 石青;
 let yellow = 藤黄;
 
 // 获取颜色值
-println!("朱砂: {}", red.hex);  // #E94B35
+println!("朱砂: {}", red.hex());  // #519A73
 println!("RGB: {:?}", red.rgb); // (233, 75, 53)
 println!("名称: {}", red.name);  // 朱砂
 ```
@@ -76,7 +76,7 @@ println!("名称: {}", red.name);  // 朱砂
 每个颜色包含完整的元数据：
 
 ```rust
-pub struct ChineseColor {
+pub struct Color {
     /// 颜色名称（中文）
     pub name: &'static str,
     /// 英文别名
@@ -303,27 +303,27 @@ let classes = ClassesBuilder::new()
 ```rust
 pub struct Palette {
     /// 主色
-    pub primary: ChineseColor,
+    pub primary: Color,
     /// 次色
-    pub secondary: ChineseColor,
+    pub secondary: Color,
     /// 强调色
-    pub accent: ChineseColor,
+    pub accent: Color,
     /// 成功色
-    pub success: ChineseColor,
+    pub success: Color,
     /// 警告色
-    pub warning: ChineseColor,
+    pub warning: Color,
     /// 危险色
-    pub danger: ChineseColor,
+    pub danger: Color,
     /// 背景色
-    pub background: ChineseColor,
+    pub background: Color,
     /// 表面色
-    pub surface: ChineseColor,
+    pub surface: Color,
     /// 边框色
-    pub border: ChineseColor,
+    pub border: Color,
     /// 主文本色
-    pub text_primary: ChineseColor,
+    pub text_primary: Color,
     /// 次文本色
-    pub text_secondary: ChineseColor,
+    pub text_secondary: Color,
 }
 ```
 
@@ -336,14 +336,14 @@ use hikari_palette::themes::Hikari;
 
 let theme = Hikari::palette();
 
-// 主色：石青 (#1759A8)
-println!("主色: {}", theme.primary.hex);
+// 主色：粉红 (#FFB3A7)
+println!("主色: {}", theme.primary.hex());
 
-// 次色：朱砂 (#E94B35)
-println!("次色: {}", theme.secondary.hex);
+// 次色：苍翠 (#519A73)
+println!("次色: {}", theme.secondary.hex());
 
-// 强调色：藤黄 (#F8B62D)
-println!("强调色: {}", theme.accent.hex);
+// 强调色：姜黄 (#FFC773)
+println!("强调色: {}", theme.accent.hex());
 ```
 
 ### Tairitsu 主题
@@ -355,14 +355,14 @@ use hikari_palette::themes::Tairitsu;
 
 let theme = Tairitsu::palette();
 
-// 主色：靛蓝 (#1a237e)
-println!("主色: {}", theme.primary.hex);
+// 主色：鷃蓝 (#144A74)
+println!("主色: {}", theme.primary.hex());
 
-// 次色：朱砂 (#E94B35)
-println!("次色: {}", theme.secondary.hex);
+// 次色：苍翠 (#519A73)
+println!("次色: {}", theme.secondary.hex());
 
-// 强调色：鹅黄 (#FFF176)
-println!("强调色: {}", theme.accent.hex);
+// 强调色：姜黄 (#FFC773)
+println!("强调色: {}", theme.accent.hex());
 ```
 
 ### 自定义主题
@@ -370,20 +370,20 @@ println!("强调色: {}", theme.accent.hex);
 创建自定义主题配置：
 
 ```rust
-use hikari_palette::{ChineseColor, Palette};
+use hikari_palette::{Color, Palette};
 
 let custom_theme = Palette {
-    primary: ChineseColor::石青,
-    secondary: ChineseColor::朱砂,
-    accent: ChineseColor::藤黄,
-    success: ChineseColor::葱倩,
-    warning: ChineseColor::鹅黄,
-    danger: ChineseColor::朱砂,
-    background: ChineseColor::月白,
-    surface: ChineseColor::缟色,
-    border: ChineseColor::银色,
-    text_primary: ChineseColor::墨色,
-    text_secondary: ChineseColor::苍色,
+    primary: Color::粉红,
+    secondary: Color::苍翠,
+    accent: Color::姜黄,
+    success: Color::葱倩,
+    warning: Color::杏黄,
+    danger: Color::苍翠,
+    background: Color::精白,
+    surface: Color::缟色,
+    border: Color::银色,
+    text_primary: Color::墨色,
+    text_secondary: Color::苍色,
 };
 ```
 
@@ -478,12 +478,12 @@ let card_classes = ClassesBuilder::new()
 
 ### 类型定义
 
-#### `ChineseColor`
+#### `Color`
 
 单个中国传统颜色的定义。
 
 ```rust
-pub struct ChineseColor {
+pub struct Color {
     pub name: &'static str,
     pub english: &'static str,
     pub hex: &'static str,
@@ -499,17 +499,17 @@ pub struct ChineseColor {
 
 ```rust
 pub struct Palette {
-    pub primary: ChineseColor,
-    pub secondary: ChineseColor,
-    pub accent: ChineseColor,
-    pub success: ChineseColor,
-    pub warning: ChineseColor,
-    pub danger: ChineseColor,
-    pub background: ChineseColor,
-    pub surface: ChineseColor,
-    pub border: ChineseColor,
-    pub text_primary: ChineseColor,
-    pub text_secondary: ChineseColor,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
 }
 ```
 
@@ -551,7 +551,7 @@ pub trait UtilityClass {
 为颜色添加透明度。
 
 ```rust
-pub fn opacity(color: ChineseColor, alpha: f64) -> String
+pub fn opacity(color: Color, alpha: f64) -> String
 ```
 
 #### `rgba`
@@ -559,7 +559,7 @@ pub fn opacity(color: ChineseColor, alpha: f64) -> String
 转换颜色为 RGBA 字符串。
 
 ```rust
-pub fn rgba(color: ChineseColor, alpha: f64) -> String
+pub fn rgba(color: Color, alpha: f64) -> String
 ```
 
 ### 主题实现

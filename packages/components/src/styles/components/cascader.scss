@@ -3,7 +3,7 @@
 @use 'mixins' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Cascader Component - FUI Styling Component Component Component Component
+// Hikari // Hikari // Hikari // Hikari // Hikari Cascader Component -  Styling Component Component Component Component
 
 // ============================================
 // Base Cascader Styles
@@ -28,13 +28,13 @@
     -moz-appearance: none;
 
     background-color: var(--hi-input-bg);
-    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
 
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-base;
     font-weight: 400;
-    color: var(--hi-input-text, var(--hi-text-primary, #50616D));
+    color: var(--hi-input-text, var(--hi-text-primary, #262626));
     line-height: 1.5;
 
     cursor: pointer;
@@ -44,7 +44,7 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
     &:hover {
-        border-color: var(--hi-input-border-hover, var(--hi-color-primary, var(--hi-primary, #FFC0CB)));
+        border-color: var(--hi-input-border-hover, var(--hi-color-primary, var(--hi-primary, #FFB3A7)));
         --hi-glow-transparent: false;
         --hi-glow-bg-color: var(--hi-color-surface);
         box-shadow: 0 0 8px var(--hi-glow-color);
@@ -52,7 +52,7 @@
 
     &:focus {
         outline: none;
-        border-color: var(--hi-input-border-focus, var(--hi-color-primary, var(--hi-primary, #FFC0CB)));
+        border-color: var(--hi-input-border-focus, var(--hi-color-primary, var(--hi-primary, #FFB3A7)));
         background-color: var(--hi-input-bg-focus, #FFFFFF);
         box-shadow:
             0 0 0 3px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)),
@@ -92,7 +92,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--hi-input-text, var(--hi-text-primary, #50616D));
+    color: var(--hi-input-text, var(--hi-text-primary, #262626));
 
     @include mix.text-ellipsis;
 }
@@ -236,11 +236,11 @@
             0 0 8px var(--hi-glow-color),
             inset 0 0 6px var(--hi-glow-color);
 
-        color: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
     }
 
     &.hi-cascader-menu-item-selected {
-        background: var(--hi-color-primary, var(--hi-primary, #FFC0CB));
+        background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
         color: var(--hi-badge-text, #FFFFFF);
         font-weight: 500;
         box-shadow:

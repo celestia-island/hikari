@@ -140,7 +140,7 @@
         border-radius: 3px;
 
         &:hover {
-            background: var(--hi-text-secondary, #666);
+            background: var(--hi-color-border, rgba(0, 0, 0, 0.35));
         }
     }
 }

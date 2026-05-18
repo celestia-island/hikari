@@ -5,16 +5,15 @@
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via icon_color, animation_id
 
-#![expect(clippy::needless_update)]
+#![allow(clippy::needless_update)]
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
+use hikari_palette::classes::ClassesBuilder;
+use hikari_palette::classes::components::ButtonClass;
 
-use crate::{
-    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonSize {

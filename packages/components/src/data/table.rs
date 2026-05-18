@@ -1,16 +1,16 @@
 // hi-components/src/data/table.rs
-// Table component with Arknights + FUI styling
+// Table component
 
 use std::collections::HashMap;
 
-use hikari_palette::{TypedClass, classes::TableClass};
+use hikari_palette::TypedClass;
+use hikari_palette::classes::TableClass;
 use tairitsu_style::ClassesBuilder;
 
-pub use super::{
-    column::{ColumnAlign, ColumnDef},
-    sort::{SortConfig, SortDirection},
-};
-use crate::{prelude::*, styled::StyledComponent};
+pub use super::column::{ColumnAlign, ColumnDef};
+pub use super::sort::{SortConfig, SortDirection};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub type TableFilters = HashMap<String, Vec<String>>;
 

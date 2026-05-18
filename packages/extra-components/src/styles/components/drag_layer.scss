@@ -1,5 +1,5 @@
 // hikari-extra-components/styles/components/drag_layer.scss
-// Drag layer styles with Arknights design + FUI glow
+// Drag layer styles with 
 
 @use '../../../hikari-theme/styles/mixins.scss' as *;
 
@@ -28,7 +28,7 @@
         opacity $hikari-transition-fast,
         transform $hikari-transition-fast;
 
-    // Arknights clean design with FUI glow
+    // 
     background-color: var(--hi-color-surface);
     border: 2px solid var(--hi-color-primary);
     border-radius: $hikari-radius-md;
@@ -188,7 +188,7 @@
         border-color: var(--hi-color-primary);
         color: var(--hi-color-primary);
 
-        // FUI glow
+        // glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 
@@ -275,7 +275,7 @@
     transition: all $hikari-transition-fast;
     z-index: 100;
 
-    // FUI glow
+    // glow
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
 
     // Horizontal line

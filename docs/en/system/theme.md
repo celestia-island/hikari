@@ -155,21 +155,21 @@ Defined under `:root` or `[data-theme]`:
 
 ```css
 [data-theme="hikari"] {
-    --hi-color-primary: #00A0E9;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #F8B62D;
+    --hi-color-primary: #FFB3A7;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
     --hi-color-background: #FFFFFF;
-    --hi-color-surface: #F5F5F5;
+    --hi-color-surface: #FFFFFF;
     --hi-color-text-primary: #1A1A2E;
     --hi-color-text-secondary: #666666;
 }
 
 [data-theme="tairitsu"] {
-    --hi-color-primary: #1a237e;
-    --hi-color-secondary: #E94B35;
-    --hi-color-accent: #FFF176;
-    --hi-color-background: #0D1117;
-    --hi-color-surface: #161B22;
+    --hi-color-primary: #144A74;
+    --hi-color-secondary: #519A73;
+    --hi-color-accent: #FFC773;
+    --hi-color-background: #161823;
+    --hi-color-surface: rgb(32,35,54);
     --hi-color-text-primary: #C9D1D9;
     --hi-color-text-secondary: #8B949E;
 }
@@ -465,8 +465,8 @@ rsx! {
 ```css
 /* Provide fallback for browsers that don't support CSS variables */
 .my-component {
-    background-color: #00A0E9; /* Fallback value */
-    background-color: var(--hi-color-primary, #00A0E9);
+    background-color: #FFB3A7; /* Fallback value */
+    background-color: var(--hi-color-primary, #FFB3A7);
 }
 ```
 
@@ -500,10 +500,10 @@ impl Default for ThemeContext {
 ### Integration with Palette
 
 ```rust
-use hikari_palette::{ChineseColor, themes};
+use hikari_palette::{Color, themes};
 
 let hikari_palette = themes::Hikari::palette();
-println!("Primary: {}", hikari_palette.primary.hex);
+println!("Primary: {}", hikari_palette.primary.hex());
 ```
 
 ### Integration with Animation
@@ -535,19 +535,19 @@ rsx! {
 
 ## Design Philosophy
 
-### Arknights Style
+###  Style
 
 - **Light theme (hikari)**:
-  - Primary: Azurite (#00A0E9)
+  - Primary: Pink (#FFB3A7)
   - Background: White
   - Text: Dark
 
 - **Dark theme (tairitsu)**:
-  - Primary: Indigo (#1a237e)
+  - Primary: Duck Blue (#144A74)
   - Background: Dark
   - Text: Light
 
-### FUI Elements
+###  Elements
 
 - Subtle glow effects
 - Dynamic indicators (breathing lights)

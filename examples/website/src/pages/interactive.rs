@@ -3,9 +3,54 @@
 //! Demonstrates the reactive state management system with live interactive examples.
 
 use tairitsu_macros::rsx;
-use tairitsu_vdom::VNode;
+use tairitsu_vdom::{Signal, VNode};
 
-use crate::{components::demo_page::render_demo_page, reactive::{button_counter, interactive_input, switch}};
+use crate::{components::demo_page::render_demo_page, reactive::{button_counter, interactive_input, signal_button_counter, signal_input, signal_switch, switch}};
+
+fn render_reactive_counter() -> VNode {
+    let count = Signal::new(0i32);
+    let count_display = count.clone();
+    let count_increment = count.clone();
+    let count_decrement = count.clone();
+    let count_reset = count.clone();
+
+    rsx! {
+        div { class: "hi-reactive-counter-demo",
+            h3 { "Signal-Driven Counter (DynamicText)" }
+            p { "This counter uses Tairitsu's Signal + DynamicText system. "
+                "The count display updates via create_effect, bypassing VDOM diff." }
+            div { class: "hi-reactive-counter-controls",
+                button {
+                    class: "hi-button hi-button-secondary",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        let v = count_decrement.get();
+                        count_decrement.set(v - 1);
+                    },
+                    "-1"
+                }
+                span { class: "hi-reactive-counter-value", {count_display} }
+                button {
+                    class: "hi-button hi-button-primary",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        let v = count_increment.get();
+                        count_increment.set(v + 1);
+                    },
+                    "+1"
+                }
+                button {
+                    class: "hi-button hi-button-ghost",
+                    r#type: "button",
+                    onclick: move |_e| {
+                        count_reset.set(0);
+                    },
+                    "Reset"
+                }
+            }
+        }
+    }
+}
 
 fn render_switches() -> VNode {
     rsx! {
@@ -35,7 +80,31 @@ pub fn render() -> VNode {
     render_demo_page("page-interactive", "Interactive Examples", "Live reactive component demonstrations with state persistence.",
         rsx! {
             div { class: "page-section",
-                h2 { "Switch Component" }
+                h2 { "Reactive Signal Counter" }
+                p {
+                    "A counter powered by Tairitsu's Signal system and DynamicText VNodes. "
+                    "The displayed number updates directly via create_effect — no VDOM diff involved."
+                }
+                {render_reactive_counter()}
+            }
+
+            div { class: "page-section",
+                h2 { "Signal-Driven Components" }
+                p {
+                    "These components use Tairitsu's Signal<T> for state instead of JS bridge. "
+                    "Each Signal automatically creates DynamicText/DynamicAttr VNodes — "
+                    "updates bypass VDOM diff entirely."
+                }
+                h3 { "Signal Switch" }
+                {signal_switch(false, "Toggle me (Signal)")}
+                h3 { "Signal Counter" }
+                {signal_button_counter(0)}
+                h3 { "Signal Input" }
+                {signal_input("Type here (Signal)...")}
+            }
+
+            div { class: "page-section",
+                h2 { "Switch Component (JS Bridge)" }
                 p {
                     "A boolean toggle control that maintains its state across page navigation. "
                     "Try toggling the switches below and then navigate away and back - the state will be preserved!"

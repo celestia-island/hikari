@@ -2,7 +2,8 @@
 
 // Re-export tairitsu core types
 // Re-export hikari palette
-pub use hikari_palette::{classes, color_math, colors, themes};
+pub use hikari_palette::themes::Palette;
+pub use hikari_palette::{classes, color_math, colors};
 // Re-export tairitsu hooks
 pub use tairitsu_hooks::{
     Context, UseRef, provide_context, use_context, use_effect, use_ref, use_signal, use_state,

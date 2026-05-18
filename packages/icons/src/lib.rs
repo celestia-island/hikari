@@ -105,7 +105,7 @@ pub struct IconProps {
 pub fn Icon(props: IconProps) -> Element {
     let icon_ref = IconRef(props.icon);
     let icon_name = icon_ref.name();
-    let icon_data_opt = get(&icon_name);
+    let icon_data_opt = mdi_selected_data::get(&icon_name);
 
     let final_svg = if let Some(icon_data) = icon_data_opt {
         build_svg!(icon_data)

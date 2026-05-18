@@ -41,7 +41,7 @@ check-tairitsu-packager:
 
 # Fetch MDI icons (download SVGs from GitHub)
 fetch-icons:
-    @bash scripts/icons/fetch_mdi_icons.sh
+    @{{py}} scripts/icons/fetch_mdi_icons.py
 
 # ============================================================================
 # Build tasks
@@ -106,16 +106,9 @@ clippy:
 # ============================================================================
 
 # Clean build artifacts
-[linux]
 clean:
     @echo "  →  Cleaning..."
-    @cargo clean 2>/dev/null || true
-    @rm -rf examples/website/dist packages/icons/src/generated public 2>/dev/null || true
-    @echo "  ✓  Clean completed"
-
-[windows]
-clean:
-    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/icons/src/generated) { Remove-Item -Recurse -Force packages/icons/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
+    @{{py}} scripts/clean.py
 
 # ============================================================================
 # E2E Testing
@@ -235,7 +228,7 @@ vr-install:
 
 # Capture screenshots via tairitsu debug API (requires `just dev --debug` running)
 vr-capture debug_url="http://localhost:3001" site_url="http://localhost:3000" output="target/screenshots" wait="3":
-    @bash scripts/visual-ci/capture_debug_api.sh "{{debug_url}}" "{{site_url}}" "{{output}}" {{wait}}
+    @{{py}} scripts/visual-ci/capture_debug_api.py --debug-url "{{debug_url}}" --site-url "{{site_url}}" --output "{{output}}" --wait {{wait}}
 
 # Compare candidate screenshots against baselines (via tairitsu visual-diff)
 vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" tolerance="0.01":
@@ -247,17 +240,15 @@ vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/sc
 
 # Initialize baseline directory structure
 vr-baseline-init:
-    @mkdir -p tests/visual/baseline/default
-    @touch tests/visual/baseline/default/.gitkeep
-    @echo "  \u2713 Baseline dir ready: tests/visual/baseline/default/"
+    @{{py}} scripts/visual-ci/baseline.py init
 
 # Promote current screenshots as baselines
 vr-baseline-accept-all candidate_dir="target/screenshots":
-    @bash -c 'dst="tests/visual/baseline/default" && mkdir -p "$$dst" && for f in {{candidate_dir}}/*.png; do cp "$$f" "$$dst/" && echo "  \u2713 $$(basename $$f)"; done && echo "Done. $$(ls $$dst/*.png 2>/dev/null | wc -l) baselines in $$dst"'
+    @{{py}} scripts/visual-ci/baseline.py accept-all --candidate-dir "{{candidate_dir}}"
 
 # Accept a single candidate image as new baseline
-vr-baseline-accept name="" image="" route="":
-    @bash -c 'cp "{{candidate_dir}}/{{name}}.png" "tests/visual/baseline/default/{{name}}.png" && echo "  \u2713 {{name}} accepted"'
+vr-baseline-accept name="" candidate_dir="target/screenshots":
+    @{{py}} scripts/visual-ci/baseline.py accept --name "{{name}}" --candidate-dir "{{candidate_dir}}"
 
 # Full visual regression pipeline: capture + compare (requires `just dev --debug`)
 vr-run tolerance="0.01":

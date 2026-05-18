@@ -1,9 +1,10 @@
 // hi-components/src/navigation/stepper.rs
-// Stepper component 
+// Stepper component
 
 use hikari_palette::classes::{ClassesBuilder, StepperClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct StepperComponent;
 

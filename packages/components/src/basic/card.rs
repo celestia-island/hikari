@@ -1,10 +1,12 @@
 // hi-components/src/basic/card.rs
-// Card component 
+// Card component
 
 use hikari_palette::classes::{CardClass, ClassesBuilder, TypedClass};
 use tairitsu_vdom::{DomHandle, get_bounding_client_rect};
 
-use crate::{prelude::*, style_builder::StyleStringBuilder, styled::StyledComponent};
+use crate::prelude::*;
+use crate::style_builder::StyleStringBuilder;
+use crate::styled::StyledComponent;
 
 pub struct CardComponent;
 

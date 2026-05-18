@@ -1,11 +1,12 @@
 // packages/components/src/navigation/steps.rs
-// Steps component 
+// Steps component
 
 #![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct StepsComponent;
 

@@ -2,8 +2,10 @@
 
 use tairitsu_vdom::Platform;
 
-use super::{super::style::CssProperty, value::DynamicValue};
-use crate::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
+use super::super::style::CssProperty;
+use super::value::DynamicValue;
+use crate::context::AnimationContext;
+use crate::state::AnimationDataStore as StructAnimationState;
 
 /// Enhanced animation action that can be applied to an element
 ///

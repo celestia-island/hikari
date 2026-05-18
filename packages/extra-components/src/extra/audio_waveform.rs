@@ -16,7 +16,6 @@
 //! or generated synthetically via `AudioWaveformState::generate_synth_waveform()`.
 
 use serde::{Deserialize, Serialize};
-
 use tairitsu_vdom::{VElement, VNode, VText};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]

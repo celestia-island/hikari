@@ -1,16 +1,19 @@
 // packages/components/src/display/skeleton.rs
-// Skeleton component 
+// Skeleton component
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
+use hikari_palette::classes::components::SkeletonDisplayClass;
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
-    components::SkeletonDisplayClass,
 };
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_vdom::IntoAttrValue;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SkeletonComponent;
 

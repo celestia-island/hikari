@@ -1,9 +1,10 @@
 // packages/components/src/entry/auto_complete.rs
-// AutoComplete component 
+// AutoComplete component
 
 use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 /// Style provider for the AutoComplete component.
 pub struct AutoCompleteComponent;

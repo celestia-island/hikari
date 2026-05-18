@@ -8,15 +8,13 @@ mod tests {
 
     use std::collections::HashMap;
 
-    use hikari_extra_components::{
-        connection::Connection,
-        history::{HistoryAction, HistoryState, SerializedNodeState},
-        node::NodePlacement,
-        node_graph::NodePlugin,
-        plugins::{ConstantNode, InputNode, OutputNode, ProcessorNode},
-        registry::list_all_plugins,
-        serialization::SerializedNodeGraph,
-    };
+    use hikari_extra_components::connection::Connection;
+    use hikari_extra_components::history::{HistoryAction, HistoryState, SerializedNodeState};
+    use hikari_extra_components::node::NodePlacement;
+    use hikari_extra_components::node_graph::NodePlugin;
+    use hikari_extra_components::plugins::{ConstantNode, InputNode, OutputNode, ProcessorNode};
+    use hikari_extra_components::registry::list_all_plugins;
+    use hikari_extra_components::serialization::SerializedNodeGraph;
 
     #[test]
     fn test_history_state_initialization() {

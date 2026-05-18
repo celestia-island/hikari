@@ -1,10 +1,11 @@
 // packages/components/src/display/timeline.rs
-// Timeline component 
+// Timeline component
 
 use hikari_palette::classes::{ClassesBuilder, TimelineClass, TypedClass};
 use tairitsu_vdom::events::MouseEvent;
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TimelineComponent;
 

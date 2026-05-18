@@ -9,10 +9,8 @@
 //! - `"tairitsu"` - Dark theme (tairitsu)
 //! - `"arknights"` - Dark industrial theme (Arknights-inspired)
 
-use crate::{
-    context::{LayoutDirection, ThemeContext},
-    prelude::*,
-};
+use crate::context::{LayoutDirection, ThemeContext};
+use crate::prelude::*;
 
 /// Theme Provider Props
 #[derive(Debug, Clone)]

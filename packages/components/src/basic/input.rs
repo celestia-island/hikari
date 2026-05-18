@@ -1,5 +1,5 @@
 // hi-components/src/basic/input.rs
-// Input component 
+// Input component
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (input-vars.scss)
@@ -7,11 +7,9 @@
 
 use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
-use crate::{
-    feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct InputComponent;
 

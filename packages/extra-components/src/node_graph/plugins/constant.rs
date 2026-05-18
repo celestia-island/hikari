@@ -1,10 +1,8 @@
 // node_graph/plugins/constant.rs
 // Constant node plugin - provides static values
 
-use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
-    value::NodeValue,
-};
+use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Constant node plugin
 ///

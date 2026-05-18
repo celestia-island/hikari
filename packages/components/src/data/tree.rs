@@ -4,11 +4,9 @@
 use hikari_palette::classes::TreeClassNew;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{
-    data::node::{TreeNode, TreeNodeData, TreeNodeProps},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::data::node::{TreeNode, TreeNodeData, TreeNodeProps};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TreeComponent;
 

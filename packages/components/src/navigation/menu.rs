@@ -1,18 +1,16 @@
 // hi-components/src/navigation/menu.rs
-// Menu component 
+// Menu component
 
 #![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
-use crate::{
-    GlowBlur, GlowColor, GlowIntensity,
-    basic::{Arrow, ArrowDirection},
-    feedback::Glow,
-    prelude::*,
-    style_builder::{CssProperty, StyleStringBuilder},
-    styled::StyledComponent,
-};
+use crate::basic::{Arrow, ArrowDirection};
+use crate::feedback::Glow;
+use crate::prelude::*;
+use crate::style_builder::{CssProperty, StyleStringBuilder};
+use crate::styled::StyledComponent;
+use crate::{GlowBlur, GlowColor, GlowIntensity};
 
 #[derive(Clone, Default)]
 pub struct MenuContext {

@@ -3,10 +3,8 @@
 
 use tairitsu_vdom::{VElement, VNode};
 
-use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
-    value::NodeValue,
-};
+use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Input node plugin
 ///

@@ -1,18 +1,16 @@
 // hi-components/src/data/pagination.rs
-// Pagination component 
+// Pagination component
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::PaginationClass;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{
-    basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
-    feedback::{
-        Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
-    },
-    prelude::*,
-    styled::StyledComponent,
+use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
+use crate::feedback::{
+    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
 };
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct PaginationComponent;
 

@@ -110,10 +110,8 @@ pub mod themes;
 pub use classes::*;
 pub use color_math::*;
 pub use colors::*;
+pub use tairitsu_style::{ClassesBuilder, TypedClass};
 pub use themes::*;
-
-pub use tairitsu_style::ClassesBuilder;
-pub use tairitsu_style::TypedClass;
 
 #[cfg(target_family = "wasm")]
 mod wasm_export {

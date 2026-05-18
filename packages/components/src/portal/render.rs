@@ -9,22 +9,18 @@ use hikari_palette::classes::{
 use tairitsu_hooks::ReactiveSignal;
 
 use super::provider::use_portal;
-use crate::{
-    feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition, ModalSize},
-    platform::{
-        element_closest, element_from_point, inner_height, inner_width, log,
-        request_animation_frame, set_timeout,
-    },
-    portal::{
-        positioning::calculate_position,
-        types::{
-            ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-            ToastPosition, TriggerPlacement,
-        },
-    },
-    prelude::*,
+use crate::feedback::PopoverPlacement;
+use crate::modal::{MaskMode, ModalPosition, ModalSize};
+use crate::platform::{
+    element_closest, element_from_point, inner_height, inner_width, log, request_animation_frame,
+    set_timeout,
 };
+use crate::portal::positioning::calculate_position;
+use crate::portal::types::{
+    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
+    TriggerPlacement,
+};
+use crate::prelude::*;
 
 fn use_animated_portal_entry(
     id: String,

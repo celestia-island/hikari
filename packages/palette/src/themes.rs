@@ -4,7 +4,8 @@
 //! - **Hikari** - Light theme (光) - Pink + White
 //! - **Tairitsu** - Dark theme (対立) - Deep Blue + Black
 
-use std::{collections::HashMap, sync::RwLock};
+use std::collections::HashMap;
+use std::sync::RwLock;
 
 use super::colors::*;
 
@@ -175,15 +176,15 @@ impl Hikari {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 粉红,                                        // 粉红 (255, 179, 167)
-            secondary: 苍翠,                                      // 苍翠 (81, 154, 115)
-            accent: 姜黄,                                         // 姜黄 (255, 199, 115)
-            success: 葱倩,                                        // 葱倩 (14, 184, 64)
-            warning: 杏黄,                                        // 杏黄 (255, 166, 49)
-            danger: 朱红,                                         // 朱红 (255, 76, 0)
-            background: 精白,                                     // 纯白 (255, 255, 255)
-            surface: 精白,                                        // 纯白 (255, 255, 255)
-            border: Color::from_rgb(196, 216, 218),               // #C4D8DA 浅蓝灰
+            primary: 粉红,                          // 粉红 (255, 179, 167)
+            secondary: 苍翠,                        // 苍翠 (81, 154, 115)
+            accent: 姜黄,                           // 姜黄 (255, 199, 115)
+            success: 葱倩,                          // 葱倩 (14, 184, 64)
+            warning: 杏黄,                          // 杏黄 (255, 166, 49)
+            danger: 朱红,                           // 朱红 (255, 76, 0)
+            background: 精白,                       // 纯白 (255, 255, 255)
+            surface: 精白,                          // 纯白 (255, 255, 255)
+            border: Color::from_rgb(196, 216, 218), // #C4D8DA 浅蓝灰
             text_primary: Color::from_rgb_float(0.15, 0.15, 0.15),
             text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4),
         }
@@ -207,13 +208,13 @@ impl Tairitsu {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 鷃蓝,                                         // 鷃蓝 (20, 74, 116)
-            secondary: 姜黄,                                       // 姜黄 (255, 199, 115)
-            accent: 姜黄,                                          // 姜黄 (255, 199, 115)
-            success: 葱倩,                                         // 葱倩 (14, 184, 64)
-            warning: 杏黄,                                         // 杏黄 (255, 166, 49)
-            danger: 朱红,                                          // 朱红 (255, 76, 0)
-            background: 漆黑,                                      // (22, 24, 35)
+            primary: 鷃蓝,    // 鷃蓝 (20, 74, 116)
+            secondary: 姜黄,  // 姜黄 (255, 199, 115)
+            accent: 姜黄,     // 姜黄 (255, 199, 115)
+            success: 葱倩,    // 葱倩 (14, 184, 64)
+            warning: 杏黄,    // 杏黄 (255, 166, 49)
+            danger: 朱红,     // 朱红 (255, 76, 0)
+            background: 漆黑, // (22, 24, 35)
             surface: Color::from_rgb(32, 35, 54),
             border: Color::from_rgb(48, 52, 72),
             text_primary: Color::from_rgb_float(0.94, 0.94, 0.96),

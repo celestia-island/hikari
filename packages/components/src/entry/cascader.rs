@@ -1,12 +1,13 @@
 // hi-components/src/entry/cascader.rs
-// Cascader component 
+// Cascader component
 
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 /// Style provider for the Cascader component.
 pub struct CascaderComponent;

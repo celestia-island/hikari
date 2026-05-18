@@ -7,7 +7,8 @@ use hikari_palette::classes::DragDropTreeClass;
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DragComponent;
 

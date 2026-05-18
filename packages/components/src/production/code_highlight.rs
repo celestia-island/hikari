@@ -1,5 +1,5 @@
 // packages/components/src/production/code_highlight.rs
-// Code highlighting component 
+// Code highlighting component
 //
 // NOTE: This component provides a styled code display with line numbers
 // and copy functionality. The `language-{lang}` class is added to the code
@@ -9,7 +9,9 @@
 
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 // Copy text to clipboard using platform layer
 fn copy_to_clipboard(text: &str) -> bool {

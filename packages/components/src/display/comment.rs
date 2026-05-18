@@ -1,9 +1,10 @@
 // packages/components/src/display/comment.rs
-// Comment component 
+// Comment component
 
 use hikari_palette::classes::{ClassesBuilder, CommentClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct CommentComponent;
 

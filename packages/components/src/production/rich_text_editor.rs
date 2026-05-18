@@ -1,5 +1,5 @@
 // packages/components/src/production/rich_text_editor.rs
-// Rich text editor component 
+// Rich text editor component
 //
 // Platform API: Uses tairitsu WIT bindings for contenteditable, execCommand,
 // and inner HTML retrieval. Stubs are provided in platform/wit.rs for
@@ -8,7 +8,9 @@
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 use tairitsu_vdom::events::InputEvent;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct RichTextEditorComponent;
 

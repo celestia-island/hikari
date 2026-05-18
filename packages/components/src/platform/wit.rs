@@ -111,7 +111,9 @@ pub fn now_timestamp() -> f64 {
 }
 
 pub fn element_from_point(x: i32, y: i32) -> Option<()> {
-    super::with_platform(|p| (p.element_from_point)(x, y)).flatten().map(|_| ())
+    super::with_platform(|p| (p.element_from_point)(x, y))
+        .flatten()
+        .map(|_| ())
 }
 
 pub fn get_target_element_from_event(client_x: i32, client_y: i32) -> Option<()> {
@@ -121,7 +123,9 @@ pub fn get_target_element_from_event(client_x: i32, client_y: i32) -> Option<()>
 }
 
 pub fn element_closest<T>(_element: &T, selector: &str) -> Option<()> {
-    super::with_platform(|p| (p.element_closest)(0, selector)).flatten().map(|_| ())
+    super::with_platform(|p| (p.element_closest)(0, selector))
+        .flatten()
+        .map(|_| ())
 }
 
 pub fn get_bounding_client_rect<T>(_element: &T) -> Option<DomRect> {
@@ -133,7 +137,9 @@ pub fn get_scroll_top_from_point(x: i32, y: i32) -> f64 {
 }
 
 pub fn query_selector(selector: &str) -> Option<()> {
-    super::with_platform(|p| (p.query_selector)(selector)).flatten().map(|_| ())
+    super::with_platform(|p| (p.query_selector)(selector))
+        .flatten()
+        .map(|_| ())
 }
 
 pub fn query_selector_all(selector: &str) -> Vec<()> {
@@ -145,7 +151,9 @@ pub fn query_selector_all(selector: &str) -> Vec<()> {
 }
 
 pub fn get_element_by_id(id: &str) -> Option<()> {
-    super::with_platform(|p| (p.get_element_by_id)(id)).flatten().map(|_| ())
+    super::with_platform(|p| (p.get_element_by_id)(id))
+        .flatten()
+        .map(|_| ())
 }
 
 pub fn get_element_rect_by_id(id: &str) -> Option<DomRect> {
@@ -190,8 +198,10 @@ pub fn draw_qrcode_on_canvas_by_id(
     color: &str,
     background: &str,
 ) -> bool {
-    super::with_platform(|p| (p.draw_qrcode_on_canvas)(canvas_id, matrix, modules, color, background))
-        .unwrap_or(false)
+    super::with_platform(|p| {
+        (p.draw_qrcode_on_canvas)(canvas_id, matrix, modules, color, background)
+    })
+    .unwrap_or(false)
 }
 
 pub fn get_bounding_rect_by_class_impl<T>(class: &str, _element: &T) -> Option<DomRect> {
@@ -275,7 +285,8 @@ pub fn create_analyser_node(audio_context: u64) -> u64 {
 }
 
 pub fn create_media_element_source(audio_context: u64, element_handle: u64) -> u64 {
-    super::with_platform(|p| (p.create_media_element_source)(audio_context, element_handle)).unwrap_or(0)
+    super::with_platform(|p| (p.create_media_element_source)(audio_context, element_handle))
+        .unwrap_or(0)
 }
 
 pub fn analyser_node_get_frequency_data(analyser: u64) -> Vec<f32> {

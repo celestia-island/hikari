@@ -10,11 +10,9 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SidebarClass, TypedClass};
 
-use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SidebarComponent;
 

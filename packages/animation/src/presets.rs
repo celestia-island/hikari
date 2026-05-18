@@ -1,8 +1,7 @@
 use std::time::Duration;
 
 use crate::core::{
-    {AnimationEngine, AnimationOptions, PropertyTarget, Tween, TweenId},
-    {EasingFunction, PlaybackMode},
+    AnimationEngine, AnimationOptions, EasingFunction, PlaybackMode, PropertyTarget, Tween, TweenId,
 };
 
 /// Color configuration for glow animations

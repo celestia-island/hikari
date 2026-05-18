@@ -547,9 +547,8 @@ mod impl_;
 #[cfg(test)]
 mod tests;
 
-use serde::{Deserialize, Serialize};
-
 pub use chinese::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ColorCategory {

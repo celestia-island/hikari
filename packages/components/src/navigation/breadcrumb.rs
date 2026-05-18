@@ -1,11 +1,11 @@
 // hi-components/src/navigation/breadcrumb.rs
-// Breadcrumb component 
+// Breadcrumb component
 
-use hikari_palette::classes::{
-    ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass,
-};
+use hikari_palette::classes::components::BreadcrumbClass;
+use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct BreadcrumbComponent;
 

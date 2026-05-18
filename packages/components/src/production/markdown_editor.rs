@@ -1,10 +1,11 @@
 // packages/components/src/production/markdown_editor.rs
-// MarkdownEditor component 
+// MarkdownEditor component
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 /// Marker struct providing the styled CSS for the markdown editor component.
 pub struct MarkdownEditorComponent;

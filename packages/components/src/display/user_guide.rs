@@ -1,14 +1,18 @@
 // packages/components/src/display/user_guide.rs
-// UserGuide component 
+// UserGuide component
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_vdom::events::MouseEvent;
 
-use crate::{basic::IconButton, platform, prelude::*, styled::StyledComponent};
+use crate::basic::IconButton;
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct UserGuideComponent;
 

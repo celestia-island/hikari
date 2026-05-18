@@ -8,11 +8,13 @@
 //! - Element handle-based target element monitoring
 //! - Animation state callbacks (onComplete, onError, onCancel)
 
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
+use std::rc::Rc;
 
 use tairitsu_vdom::Platform;
 
-use super::{builder::AnimationBuilder, state::AnimationDataStore as AnimationState};
+use super::builder::AnimationBuilder;
+use super::state::AnimationDataStore as AnimationState;
 
 /// Element handle type (u64 for WIT bindings)
 pub type ElementHandle = u64;

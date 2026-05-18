@@ -15,8 +15,6 @@ pub use effects::*;
 pub use layout::*;
 pub use sizing::*;
 pub use spacing::*;
+pub use tairitsu_style::{ClassesBuilder, TypedClass};
 pub use transitions::*;
 pub use typography::*;
-
-pub use tairitsu_style::ClassesBuilder;
-pub use tairitsu_style::TypedClass;

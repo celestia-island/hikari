@@ -3,18 +3,16 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
-use crate::{
-    feedback::{
-        ConditionalGlow, ConditionalGlowProps, Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps,
-    },
-    platform,
-    portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
-    },
-    prelude::*,
-    styled::StyledComponent,
+use crate::feedback::{
+    ConditionalGlow, ConditionalGlowProps, Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps,
 };
+use crate::platform;
+use crate::portal::{
+    PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+    use_portal,
+};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SelectComponent;
 

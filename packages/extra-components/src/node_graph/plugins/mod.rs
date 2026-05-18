@@ -13,10 +13,8 @@ pub use input_node::*;
 pub use output_node::*;
 pub use processor::*;
 
-use crate::node_graph::{
-    node::NodeType,
-    registry::{RegistryEntry, register_node_plugin},
-};
+use crate::node_graph::node::NodeType;
+use crate::node_graph::registry::{RegistryEntry, register_node_plugin};
 
 /// Register all default node plugins
 pub fn register_default_plugins() {

@@ -1,17 +1,15 @@
 // hi-components/src/feedback/toast.rs
-// Toast component 
+// Toast component
 
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, ToastClass, TypedClass};
 
-use crate::{
-    basic::{IconButton, IconButtonSize, IconButtonVariant},
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct ToastComponent;
 

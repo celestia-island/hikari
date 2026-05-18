@@ -1,12 +1,15 @@
 // packages/components/src/display/drag_layer.rs
-// DragLayer component 
+// DragLayer component
 
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DragLayerComponent;
 

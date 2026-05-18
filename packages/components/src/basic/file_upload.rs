@@ -1,9 +1,10 @@
 // packages/components/src/basic/file_upload.rs
-// FileUpload component 
+// FileUpload component
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct FileUploadComponent;
 

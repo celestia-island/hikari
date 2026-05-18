@@ -7,10 +7,8 @@ use hikari_palette::classes::TreeNodeClass;
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{
-    data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel},
-    prelude::*,
-};
+use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {

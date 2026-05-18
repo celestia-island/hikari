@@ -1,5 +1,8 @@
+use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
+
 use anyhow::{Context, Result};
-use std::{collections::HashSet, fs, path::Path};
 
 #[derive(Debug, Clone)]
 pub struct IconUsage {

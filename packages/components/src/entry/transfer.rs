@@ -1,12 +1,13 @@
 // hi-components/src/entry/transfer.rs
-// Transfer component 
+// Transfer component
 
 #![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, TypedClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 /// Style provider for the Transfer component.
 pub struct TransferComponent;

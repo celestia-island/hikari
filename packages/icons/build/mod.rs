@@ -1,13 +1,11 @@
 pub mod auto_discovery;
 mod svg_parser;
 
-use anyhow::{Context, Result, anyhow};
-use std::{
-    collections::HashSet,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::collections::HashSet;
+use std::fs;
+use std::path::{Path, PathBuf};
 
+use anyhow::{Context, Result, anyhow};
 pub use svg_parser::SvgIcon;
 
 #[derive(Clone, Debug)]

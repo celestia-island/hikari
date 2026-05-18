@@ -1,9 +1,10 @@
 // hi-components/src/basic/divider.rs
-// Divider component 
+// Divider component
 
 use hikari_palette::classes::{ClassesBuilder, Display};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DividerComponent;
 

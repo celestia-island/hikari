@@ -4,7 +4,8 @@
 use hikari_palette::classes::CollapseClass;
 use tairitsu_style::ClassesBuilder;
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct CollapseComponent;
 

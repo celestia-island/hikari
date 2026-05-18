@@ -1,5 +1,5 @@
 // packages/components/src/production/video_player.rs
-// Video player component 
+// Video player component
 //
 // Platform API: Uses tairitsu WIT bindings for video playback control
 // (play, pause, seek, mute, volume) via html-media-element interface.
@@ -8,7 +8,9 @@
 use hikari_palette::classes::{ClassesBuilder, VideoPlayerClass};
 use tairitsu_vdom::events::MouseEvent;
 
-use crate::{platform, prelude::*, styled::StyledComponent};
+use crate::platform;
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct VideoPlayerComponent;
 

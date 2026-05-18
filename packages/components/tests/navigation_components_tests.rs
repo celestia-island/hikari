@@ -1,15 +1,13 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_components::{
-        navigation::{
-            self, AnchorItem, BreadcrumbItemProps, BreadcrumbProps, MenuItemHeight, MenuItemProps,
-            MenuMode, MenuProps, SidebarLeafProps, SidebarProps, SidebarSectionProps, StepData,
-            StepperDirection, StepperProps, StepsDirection, StepsProps, SubMenuProps, TabPaneProps,
-            TabPosition, TabsProps,
-        },
-        prelude::*,
+    use hikari_components::navigation::{
+        self, AnchorItem, BreadcrumbItemProps, BreadcrumbProps, MenuItemHeight, MenuItemProps,
+        MenuMode, MenuProps, SidebarLeafProps, SidebarProps, SidebarSectionProps, StepData,
+        StepperDirection, StepperProps, StepsDirection, StepsProps, SubMenuProps, TabPaneProps,
+        TabPosition, TabsProps,
     };
+    use hikari_components::prelude::*;
 
     #[test]
     fn test_menu_renders() {

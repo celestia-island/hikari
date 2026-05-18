@@ -31,7 +31,8 @@ pub struct HikariPlatform {
     pub on_scroll: Box<dyn Fn(Box<dyn FnMut(f64, f64)>) + Send + Sync>,
     pub prefers_dark_mode: Box<dyn Fn() -> bool + Send + Sync>,
     pub request_animation_frame: Box<dyn Fn(Box<dyn FnOnce(f64)>) -> u32 + Send + Sync>,
-    pub request_animation_frame_with_timestamp: Box<dyn Fn(Box<dyn FnOnce(f64)>) -> i32 + Send + Sync>,
+    pub request_animation_frame_with_timestamp:
+        Box<dyn Fn(Box<dyn FnOnce(f64)>) -> i32 + Send + Sync>,
 
     pub copy_to_clipboard: Box<dyn Fn(&str) -> bool + Send + Sync>,
 
@@ -52,10 +53,12 @@ pub struct HikariPlatform {
     pub observe_resize: Box<dyn Fn(u64, u64) + Send + Sync>,
     pub disconnect_resize: Box<dyn Fn(u64) + Send + Sync>,
     pub create_mutation_observer: Box<dyn Fn(Box<dyn FnMut()>) -> u64 + Send + Sync>,
-    pub observe_mutations_element: Box<dyn Fn(u64, u64, bool, bool, bool, Option<bool>) + Send + Sync>,
+    pub observe_mutations_element:
+        Box<dyn Fn(u64, u64, bool, bool, bool, Option<bool>) + Send + Sync>,
     pub disconnect_mutation: Box<dyn Fn(u64) + Send + Sync>,
 
-    pub draw_qrcode_on_canvas: Box<dyn Fn(&str, &[Vec<bool>], usize, &str, &str) -> bool + Send + Sync>,
+    pub draw_qrcode_on_canvas:
+        Box<dyn Fn(&str, &[Vec<bool>], usize, &str, &str) -> bool + Send + Sync>,
 
     pub get_contenteditable_state: Box<dyn Fn(u64) -> Option<ContentEditableState> + Send + Sync>,
     pub set_content_editable: Box<dyn Fn(u64, bool) + Send + Sync>,

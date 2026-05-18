@@ -1,7 +1,8 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component
 
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::Icon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
 use crate::prelude::*;

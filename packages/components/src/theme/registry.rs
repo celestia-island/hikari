@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::{OnceLock, RwLock};
 
-use hikari_palette::*;
+use hikari_palette::themes::{Hikari, Palette, Tairitsu};
 
 type ThemeRegistry = HashMap<String, Palette>;
 

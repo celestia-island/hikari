@@ -4,7 +4,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::Icon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_vdom::events::MouseEvent;

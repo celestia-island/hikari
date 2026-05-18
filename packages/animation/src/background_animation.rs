@@ -6,7 +6,7 @@
 use std::cell::RefCell;
 
 use hikari_palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
-use hikari_palette::{粉红, 精白};
+use hikari_palette::colors::{粉红, 精白};
 
 /// Background render context (carries render parameters)
 #[derive(Clone, Debug)]

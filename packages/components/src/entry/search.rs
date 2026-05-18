@@ -5,7 +5,8 @@
 
 #![allow(clippy::needless_update)]
 
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::Icon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 
 use crate::basic::{InputWrapper, InputWrapperItem, InputWrapperSize};

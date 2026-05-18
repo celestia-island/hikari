@@ -1,6 +1,6 @@
 //! CSS variable generation for themes
 
-use hikari_palette::*;
+use hikari_palette::themes::{Palette, ThemeMode};
 
 #[derive(Clone, Default)]
 pub struct PaletteOverrides {

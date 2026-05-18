@@ -23,7 +23,7 @@ fn main() {
             Err(e) => {
                 eprintln!("Failed to build icons: {}", e);
                 eprintln!(
-                    "Solution: Run 'bash scripts/icons/fetch_mdi_icons.sh' to download icons"
+                    "Solution: Run 'just fetch-icons' or 'python3 scripts/icons/fetch_mdi_icons.py' to download icons"
                 );
                 std::process::exit(1);
             }

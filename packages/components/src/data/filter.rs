@@ -1,9 +1,8 @@
 // hi-components/src/data/filter.rs
 // Filter component
 
-use hikari_palette::TypedClass;
 use hikari_palette::classes::FilterClass;
-use tairitsu_style::ClassesBuilder;
+use tairitsu_style::{ClassesBuilder, TypedClass};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;

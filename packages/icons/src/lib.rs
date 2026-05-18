@@ -24,19 +24,17 @@
 
 pub mod mdi_minimal;
 
-pub use mdi_minimal::MdiIcon;
-#[cfg(feature = "tairitsu")]
-use tairitsu_macros::{define_props, rsx};
-#[cfg(feature = "tairitsu")]
-use tairitsu_vdom::VNode as Element;
-
 #[allow(non_camel_case_types, non_snake_case, dead_code)]
 mod mdi_selected_data {
 
     include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
 }
 
-pub use mdi_selected_data::{IconData, PathData, SvgElem, get};
+use mdi_minimal::MdiIcon;
+#[cfg(feature = "tairitsu")]
+use tairitsu_macros::{define_props, rsx};
+#[cfg(feature = "tairitsu")]
+use tairitsu_vdom::VNode as Element;
 
 const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
 
@@ -107,7 +105,7 @@ pub struct IconProps {
 pub fn Icon(props: IconProps) -> Element {
     let icon_ref = IconRef(props.icon);
     let icon_name = icon_ref.name();
-    let icon_data_opt = get(&icon_name);
+    let icon_data_opt = mdi_selected_data::get(&icon_name);
 
     let final_svg = if let Some(icon_data) = icon_data_opt {
         build_svg!(icon_data)

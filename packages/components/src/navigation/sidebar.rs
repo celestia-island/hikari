@@ -7,7 +7,8 @@
 // - Fully customizable through props and classes
 // - Styles via SCSS with CSS variables for theming
 
-use hikari_icons::{Icon, MdiIcon};
+use hikari_icons::Icon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, SidebarClass, TypedClass};
 
 use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};

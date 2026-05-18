@@ -115,6 +115,13 @@ pub use themes::*;
 
 #[cfg(target_family = "wasm")]
 mod wasm_export {
+
+    pub use classes::*;
+    pub use color_math::*;
+    pub use colors::*;
+    pub use tairitsu_style::{ClassesBuilder, TypedClass};
+    pub use themes::*;
+
     wit_bindgen::generate!({
         path: "wit",
         world: "palette",

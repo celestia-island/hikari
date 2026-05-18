@@ -3,9 +3,9 @@
 //! Demonstrates the reactive state management system with live interactive examples.
 
 use tairitsu_macros::rsx;
-use tairitsu_vdom::{VNode, Signal};
+use tairitsu_vdom::{Signal, VNode};
 
-use crate::{components::demo_page::render_demo_page, reactive::{button_counter, interactive_input, switch, signal_button_counter, signal_switch, signal_input}};
+use crate::{components::demo_page::render_demo_page, reactive::{button_counter, interactive_input, signal_button_counter, signal_input, signal_switch, switch}};
 
 fn render_reactive_counter() -> VNode {
     let count = Signal::new(0i32);

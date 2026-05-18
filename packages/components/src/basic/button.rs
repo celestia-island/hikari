@@ -210,6 +210,16 @@ pub fn Button(props: ButtonProps) -> Element {
     }
 }
 
+impl StyledComponent for ButtonComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
+    }
+
+    fn name() -> &'static str {
+        "button"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,15 +276,5 @@ mod tests {
         assert_eq!(ButtonAnimation::ScaleElevate as u8, 2);
         assert_eq!(ButtonAnimation::Ripple as u8, 3);
         assert_eq!(ButtonAnimation::IconRotate as u8, 4);
-    }
-}
-
-impl StyledComponent for ButtonComponent {
-    fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
-    }
-
-    fn name() -> &'static str {
-        "button"
     }
 }

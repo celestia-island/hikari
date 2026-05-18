@@ -240,17 +240,17 @@ impl Arknights {
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: Color::from_rgb(0, 180, 216),   // #00B4D8 cyan/ice blue
-            secondary: Color::from_rgb(255, 215, 0),  // #FFD700 gold
-            accent: Color::from_rgb(255, 215, 0),     // #FFD700 gold
-            success: Color::from_rgb(63, 185, 80),    // #3FB950
-            warning: Color::from_rgb(210, 153, 34),   // #D29922
-            danger: Color::from_rgb(248, 81, 73),     // #F85149
-            background: Color::from_rgb(13, 17, 23),  // #0D1117 very dark navy
-            surface: Color::from_rgb(22, 27, 34),     // #161B22
-            border: Color::from_rgb(48, 54, 61),      // #30363D
-            text_primary: Color::from_rgb(230, 237, 243),   // #E6EDF3
-            text_secondary: Color::from_rgb(139, 148, 158),  // #8B949E
+            primary: Color::from_rgb(0, 180, 216), // #00B4D8 cyan/ice blue
+            secondary: Color::from_rgb(255, 215, 0), // #FFD700 gold
+            accent: Color::from_rgb(255, 215, 0),  // #FFD700 gold
+            success: Color::from_rgb(63, 185, 80), // #3FB950
+            warning: Color::from_rgb(210, 153, 34), // #D29922
+            danger: Color::from_rgb(248, 81, 73),  // #F85149
+            background: Color::from_rgb(13, 17, 23), // #0D1117 very dark navy
+            surface: Color::from_rgb(22, 27, 34),  // #161B22
+            border: Color::from_rgb(48, 54, 61),   // #30363D
+            text_primary: Color::from_rgb(230, 237, 243), // #E6EDF3
+            text_secondary: Color::from_rgb(139, 148, 158), // #8B949E
         }
     }
 }

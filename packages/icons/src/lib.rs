@@ -32,6 +32,7 @@ use tairitsu_vdom::VNode as Element;
 
 #[allow(non_camel_case_types, non_snake_case, dead_code)]
 mod mdi_selected_data {
+
     include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
 }
 

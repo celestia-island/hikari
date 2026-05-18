@@ -43,6 +43,7 @@ pub use styled::{StyleRegistry, StyledComponent};
 // Theme system
 pub mod theme;
 // Portal system
+pub use builder::ButtonBuilder;
 pub use portal::{
     PortalEntry, PortalMaskMode, PortalPositionStrategy, PortalProvider, TriggerPlacement,
     generate_portal_id, use_portal,
@@ -64,5 +65,3 @@ pub use theme::{
     ThemePalette, ThemeProvider, get_default_theme, get_registered_theme, prefers_dark_mode,
     register_theme, use_layout_direction, use_theme,
 };
-
-pub use builder::ButtonBuilder;

@@ -207,6 +207,16 @@ pub fn Input(props: InputProps) -> Element {
     }
 }
 
+impl StyledComponent for InputComponent {
+    fn styles() -> &'static str {
+        include_str!(concat!(env!("OUT_DIR"), "/styles/input.css"))
+    }
+
+    fn name() -> &'static str {
+        "input"
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,15 +259,5 @@ mod tests {
     #[test]
     fn test_input_component_name() {
         assert_eq!(InputComponent::name(), "input");
-    }
-}
-
-impl StyledComponent for InputComponent {
-    fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/input.css"))
-    }
-
-    fn name() -> &'static str {
-        "input"
     }
 }

@@ -1,5 +1,4 @@
 use tairitsu_vdom::{VElement, VNode, get_bounding_client_rect, set_style};
-
 pub use hikari_components::feedback::glow::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct GlowConfig {

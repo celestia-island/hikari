@@ -5,38 +5,11 @@
 // Re-export tairitsu core types
 // Re-export tairitsu hooks
 pub use tairitsu_hooks::{
-    AnimationConfig,
-    AnimationDirection,
-    AnimationState,
-    // Interaction state machine for animated components
-    ButtonStateMachine,
-    // Context type from tairitsu
-    Context,
-    EasingFunction,
-    InteractionCallback,
-    InteractionEvent,
-    InteractionState,
-    // Memo type
-    Memo,
-    UseRef,
-    provide_context,
-    // Dioxus compatibility alias
-    provide_context as use_context_provider,
-    use_animation,
-    use_callback,
-    use_context,
-    // consume_context is use_context in tairitsu
-    use_context as consume_context,
-    // try_consume_context is use_context (returns Option)
-    use_context as try_consume_context,
-    use_effect,
-    use_interaction_state,
-    // Dioxus compatibility
-    use_memo,
-    use_ref,
-    use_signal,
-    use_simple_animation,
-    use_state,
+    AnimationConfig, AnimationDirection, AnimationState, ButtonStateMachine, Context,
+    EasingFunction, InteractionCallback, InteractionEvent, InteractionState, Memo, UseRef,
+    provide_context, provide_context as use_context_provider, use_animation, use_callback,
+    use_context, use_context as consume_context, use_context as try_consume_context, use_effect,
+    use_interaction_state, use_memo, use_ref, use_signal, use_simple_animation, use_state,
 };
 pub use tairitsu_macros::component as derive_props;
 // Re-export tairitsu macros

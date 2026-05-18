@@ -1,8 +1,8 @@
+mod wit;
+
 use std::sync::Mutex;
 
 use tairitsu_vdom::platform::DomRect;
-
-mod wit;
 pub use wit::*;
 
 static PLATFORM: Mutex<Option<HikariPlatform>> = Mutex::new(None);

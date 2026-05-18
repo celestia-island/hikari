@@ -1,9 +1,8 @@
-use crate::basic::button::{
-    ButtonAnimation, ButtonProps, ButtonSize, ButtonVariant, ButtonWidth,
-};
+use tairitsu_vdom::{EventHandler, MouseEvent, VText};
+
+use crate::basic::button::{ButtonAnimation, ButtonProps, ButtonSize, ButtonVariant, ButtonWidth};
 use crate::feedback::glow::{GlowBlur, GlowColor, GlowIntensity};
 use crate::prelude::*;
-use tairitsu_vdom::{EventHandler, MouseEvent, VText};
 
 pub struct ButtonBuilder {
     label: Option<String>,

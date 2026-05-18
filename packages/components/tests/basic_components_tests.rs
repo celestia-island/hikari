@@ -49,6 +49,7 @@ mod tests {
                 }
             }
             VNode::Text(_) => {}
+            VNode::DynamicText(_) => {}
         }
     }
 
@@ -57,6 +58,7 @@ mod tests {
             VNode::Element(el) => 1 + el.children.iter().map(count_elements).sum::<usize>(),
             VNode::Fragment(children) => children.iter().map(count_elements).sum(),
             VNode::Text(_) => 1,
+            VNode::DynamicText(_) => 1,
         }
     }
 

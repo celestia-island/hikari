@@ -1,4 +1,4 @@
-use hikari_icons::MdiIcon;
+use hikari_icons::mdi_minimal::MdiIcon;
 use tairitsu_web::t;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::VNode;

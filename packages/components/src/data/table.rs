@@ -3,9 +3,8 @@
 
 use std::collections::HashMap;
 
-use hikari_palette::TypedClass;
 use hikari_palette::classes::TableClass;
-use tairitsu_style::ClassesBuilder;
+use tairitsu_style::{ClassesBuilder, TypedClass};
 
 pub use super::column::{ColumnAlign, ColumnDef};
 pub use super::sort::{SortConfig, SortDirection};

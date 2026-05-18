@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
 
-    use hikari_palette::*;
+    use hikari_palette::colors::靛蓝;
 
     #[test]
     fn test_indigo_is_dark() {

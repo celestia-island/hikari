@@ -17,8 +17,8 @@
 //! }
 //! ```
 
-use hikari_palette::ClassesBuilder;
 use hikari_palette::classes::components::*;
+use tairitsu_style::ClassesBuilder;
 
 use crate::prelude::*;
 use crate::theme::use_layout_direction;

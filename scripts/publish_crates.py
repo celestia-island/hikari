@@ -122,6 +122,21 @@ def wait_for_crate(name, version):
     return False
 
 
+def check_crate_version_exists(name, version):
+    """Check if a specific version of a crate exists on crates.io."""
+    url = f"https://crates.io/api/v1/crates/{name}/versions"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "hikari-ci-publish"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            for v in data.get("versions", []):
+                if v.get("num") == version:
+                    return True
+    except (urllib.error.URLError, json.JSONDecodeError):
+        pass
+    return False
+
+
 def publish_package(name, version):
     print(f"\n{'=' * 60}")
     print(f"  Publishing {name} v{version}")
@@ -131,10 +146,19 @@ def publish_package(name, version):
     rc = run_streaming(f"cargo publish -p {name} --allow-dirty -v")
 
     if rc != 0:
-        print(f"  NOTE: cargo publish exited with code {rc}, checking if version already exists...")
-        sys.stdout.flush()
+        already_exists = check_crate_version_exists(name, version)
+        if already_exists:
+            print(f"  {name} v{version} already exists on crates.io, skipping...")
+            sys.stdout.flush()
+        else:
+            print(
+                f"  FATAL: {name} v{version} publish failed and version not on crates.io",
+                file=sys.stderr,
+            )
+            sys.exit(1)
     else:
         print(f"  {name} v{version} upload succeeded")
+        sys.stdout.flush()
 
     wait_for_crate(name, version)
 

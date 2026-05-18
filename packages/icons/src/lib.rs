@@ -30,7 +30,8 @@ mod mdi_selected_data {
     include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
 }
 
-use mdi_minimal::MdiIcon;
+pub use mdi_minimal::MdiIcon;
+pub use mdi_selected_data::get;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]

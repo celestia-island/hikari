@@ -24,14 +24,9 @@
 
 pub mod mdi_minimal;
 
-#[allow(non_camel_case_types, non_snake_case, dead_code)]
-mod mdi_selected_data {
-
-    include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
-}
-
+pub mod generated;
 pub use mdi_minimal::MdiIcon;
-pub use mdi_selected_data::get;
+pub use generated::get;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
@@ -106,7 +101,7 @@ pub struct IconProps {
 pub fn Icon(props: IconProps) -> Element {
     let icon_ref = IconRef(props.icon);
     let icon_name = icon_ref.name();
-    let icon_data_opt = mdi_selected_data::get(&icon_name);
+    let icon_data_opt = generated::get(&icon_name);
 
     let final_svg = if let Some(icon_data) = icon_data_opt {
         build_svg!(icon_data)

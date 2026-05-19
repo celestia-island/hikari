@@ -170,16 +170,17 @@ Bibliothèque complète de composants UI.
    - Table, Tree, Pagination
 
 **Conception Modulaire**:
-```
-hikari-components/
- ├── basic/          # Composants de base
- ├── feedback/       # Composants de feedback
- ├── navigation/     # Composants de navigation
- ├── layout/         # Composants de layout
- ├── data/           # Composants de données
- ├── hooks.rs        # Hooks React
- ├── styled.rs       # Traits de style
- └── theme_provider.rs  # Fournisseur de thème
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/ — Composants de base"]
+  root --> feedback["feedback/ — Feedback"]
+  root --> navigation["navigation/ — Navigation"]
+  root --> layout["layout/ — Layout"]
+  root --> data["data/ — Données"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **Système de Styles**:
@@ -199,16 +200,12 @@ Génération de code à la compilation et compilation SCSS.
 - Bundling de ressources
 
 **Processus de Build**:
-```
-1. Trouver le répertoire racine du workspace
-   ↓
-2. Scanner les fichiers SCSS
-   ↓
-3. Générer les constantes Rust
-   ↓
-4. Compiler le bundle SCSS
-   ↓
-5. Sortie vers public/
+```mermaid
+graph TD
+  A["1. Trouver le répertoire racine du workspace"] --> B["2. Scanner les fichiers SCSS"]
+  B --> C["3. Générer les constantes Rust"]
+  C --> D["4. Compiler le bundle SCSS"]
+  D --> E["5. Sortie vers public/"]
 ```
 
 **Utilisation**:
@@ -333,22 +330,29 @@ hikari-animation = "0.1"
 
 ### 2. Architecture en Couches
 
-```
-┌─────────────────────────────────────┐
-│     Couche Application (examples/)   │
-├─────────────────────────────────────┤
-│   Couche Composants (hikari-components)│
-├─────────────────────────────────────┤
-│ Couche Système (theme, animation, icons)│
-├─────────────────────────────────────┤
-│  Couche Fondation (palette, builder) │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["Architecture en Couches"]:1
+    columns 1
+    app["Couche Application (examples/)"]
+    comp["Couche Composants (hikari-components)"]
+    sys["Couche Système (theme, animation, icons)"]
+    found["Couche Fondation (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. Flux de Données Unidirectionnel
 
-```
-Action Utilisateur → Gestionnaire d'Événement → Mise à jour d'État → Re-rendu UI
+```mermaid
+graph TD
+  UA["Action Utilisateur"] --> EH["Gestionnaire d'Événement"]
+  EH --> SU["Mise à jour d'État"]
+  SU --> UR["Re-rendu UI"]
 ```
 
 ### 4. Sécurité de Type
@@ -389,24 +393,21 @@ trunk build --release
 
 ## Dépendances
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (compilateur SCSS)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (compilateur SCSS)"]
 ```
 
 ## Extensibilité

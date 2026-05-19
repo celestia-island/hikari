@@ -138,11 +138,11 @@ let tailwind_classes = tailwind::TAILWIND_CLASSES;
 
 ### 파일 위치
 
-```
-packages/theme/src/generated/
-├── mod.rs           # 모듈 진입점
-├── tailwind.rs      # Tailwind CSS 생성 콘텐츠
-└── ...              # 기타 생성된 콘텐츠
+```mermaid
+graph LR
+  root["generated/"] --> mod["mod.rs"]
+  root --> tw["tailwind.rs"]
+  root --> other["..."]
 ```
 
 ## CSS 변수 시스템

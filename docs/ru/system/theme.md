@@ -138,11 +138,11 @@ let tailwind_classes = tailwind::TAILWIND_CLASSES;
 
 ### Расположение файлов
 
-```
-packages/theme/src/generated/
-├── mod.rs           # Точка входа модуля
-├── tailwind.rs      # Сгенерированное содержимое Tailwind CSS
-└── ...              # Другой сгенерированный контент
+```mermaid
+graph LR
+  root["generated/"] --> mod["mod.rs"]
+  root --> tw["tailwind.rs"]
+  root --> other["..."]
 ```
 
 ## Система CSS-переменных

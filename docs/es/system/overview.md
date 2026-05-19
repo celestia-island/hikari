@@ -15,31 +15,35 @@ El framework Hikari adopta un diseño modular, construido sobre el runtime Tairi
 
 ## Arquitectura en Capas
 
-```
-┌─────────────────────────────────────┐
-│     Capa de Aplicación (examples/)   │
-├─────────────────────────────────────┤
-│  Capa de Componentes (components, extra)│
-├─────────────────────────────────────┤
-│ Capa de Sistema (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   Capa de Fundación (palette)        │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["Arquitectura en Capas"]:1
+    columns 1
+    app["Capa de Aplicación (examples/)"]
+    comp["Capa de Componentes (components, extra)"]
+    sys["Capa de Sistema (theme, animation, icons)"]
+    found["Capa de Fundación (palette)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ## Dependencias de Paquetes
 
-```
-hikari-palette ◄──── hikari-animation
-      ▲                    │
-      │                    ▼
-      ├──────────── hikari-icons
-      │
-      ├─── hikari-theme
-      │
-      ├─── hikari-components ◄── hikari-theme, hikari-icons
-      │
-      └─── hikari-extra-components ◄── hikari-theme, hikari-icons
+```mermaid
+graph BT
+  hikari-animation --> hikari-palette
+  hikari-icons --> hikari-palette
+  hikari-theme --> hikari-palette
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-icons
+  hikari-extra-components --> hikari-palette
+  hikari-extra-components --> hikari-theme
+  hikari-extra-components --> hikari-icons
 ```
 
 ## Dependencias Externas
@@ -214,16 +218,17 @@ Biblioteca completa de componentes UI.
    - Table, Tree, Pagination
 
 **Diseño Modular**:
-```
-hikari-components/
- ├── basic/          # Componentes básicos
- ├── feedback/       # Componentes de retroalimentación
- ├── navigation/     # Componentes de navegación
- ├── layout/         # Componentes de diseño
- ├── data/           # Componentes de datos
- ├── hooks.rs        # React hooks
- ├── styled.rs       # Rasgos de estilo
- └── theme_provider.rs  # Proveedor de tema
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/ — Componentes básicos"]
+  root --> feedback["feedback/ — Retroalimentación"]
+  root --> navigation["navigation/ — Navegación"]
+  root --> layout["layout/ — Diseño"]
+  root --> data["data/ — Datos"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **Sistema de Estilos**:
@@ -243,16 +248,12 @@ Generación de código en tiempo de compilación y compilación SCSS.
 - Empaquetado de recursos
 
 **Proceso de Construcción**:
-```
-1. Encontrar directorio raíz del workspace
-   ↓
-2. Escanear archivos SCSS
-   ↓
-3. Generar constantes Rust
-   ↓
-4. Compilar bundle SCSS
-   ↓
-5. Salida a public/
+```mermaid
+graph TD
+  A["1. Encontrar directorio raíz del workspace"] --> B["2. Escanear archivos SCSS"]
+  B --> C["3. Generar constantes Rust"]
+  C --> D["4. Compilar bundle SCSS"]
+  D --> E["5. Salida a public/"]
 ```
 
 **Uso**:
@@ -377,22 +378,29 @@ hikari-animation = "0.1"
 
 ### 2. Arquitectura en Capas
 
-```
-┌─────────────────────────────────────┐
-│     Capa de Aplicación (examples/)   │
-├─────────────────────────────────────┤
-│  Capa de Componentes (hikari-components)│
-├─────────────────────────────────────┤
-│ Capa de Sistema (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   Capa de Fundación (palette, builder) │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["Arquitectura en Capas"]:1
+    columns 1
+    app["Capa de Aplicación (examples/)"]
+    comp["Capa de Componentes (hikari-components)"]
+    sys["Capa de Sistema (theme, animation, icons)"]
+    found["Capa de Fundación (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. Flujo de Datos Unidireccional
 
-```
-Acción del Usuario → Manejador de Eventos → Actualización de Estado → Re-renderizado de UI
+```mermaid
+graph TD
+  UA["Acción del Usuario"] --> EH["Manejador de Eventos"]
+  EH --> SU["Actualización de Estado"]
+  SU --> UR["Re-renderizado de UI"]
 ```
 
 ### 4. Seguridad de Tipos
@@ -433,24 +441,21 @@ trunk build --release
 
 ## Dependencias
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (compilador SCSS)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (compilador SCSS)"]
 ```
 
 ## Extensibilidad

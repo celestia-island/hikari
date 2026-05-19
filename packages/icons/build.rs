@@ -1,173 +1,64 @@
 //! Build script for hikari-icons.
 //!
-//! Reads the compressed icon archive (`resources/mdi_icons.dat`) and generates
-//! Rust source code into `OUT_DIR`. The .dat file is produced by
-//! `scripts/icons/pack_mdi_data.py` and committed to git, so no network
-//! access is needed at build time.
+//! hikari-icons is a pure abstraction layer — it does not bundle icon data.
+//! Instead, it expects `tairitsu-packager` to pre-generate a Rust source file
+//! containing `impl_icons!(...)` macro invocations.
 //!
-//! To update icons:
-//!   1. `just fetch-icons` — download SVGs to `icons/mdi/`
-//!   2. `python3 scripts/icons/pack_mdi_data.py` — regenerate .dat
-//!   3. Commit the updated `resources/mdi_icons.dat`
+//! Workflow:
+//!   1. `tairitsu check --icons` downloads/caches icon data from CDN
+//!   2. During `tairitsu build`, the packager generates the icon data file
+//!      and sets `TAIRITSU_ICONS_RS` env var pointing to it
+//!   3. This build script copies that file to `OUT_DIR` for `lib.rs` to `include!`
+//!
+//! To build without tairitsu-packager (e.g., for testing):
+//!   1. Generate `impl_icons!` calls manually using the icons.txt manifest
+//!   2. Place the file somewhere and set `TAIRITSU_ICONS_RS=<path>`
+//!   3. Or run `cargo build` in a tairitsu-packager managed project
 
+use std::env;
 use std::fs;
-use std::io::Read;
-use std::path::Path;
 
 fn main() {
-    let out_dir = std::env::var("OUT_DIR").unwrap();
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let dat_path = Path::new(&manifest_dir).join("resources/mdi_icons.dat");
+    let out_dir = env::var("OUT_DIR").unwrap();
 
-    println!("cargo:rerun-if-changed=resources/mdi_icons.dat");
-
-    if is_dynamic_fetch() {
+    if env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
     } else {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    let compressed = fs::read(&dat_path).unwrap_or_else(|e| {
-        panic!("Failed to read {}: {}. Run `python3 scripts/icons/pack_mdi_data.py` to generate it.",
-               dat_path.display(), e)
-    });
-
-    let raw = decompress_gzip(&compressed);
-    let icons = parse_dat(&raw);
-
-    generate_rust(&icons, &Path::new(&out_dir).join("mdi_generated.rs"));
-}
-
-fn is_dynamic_fetch() -> bool {
-    std::env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok()
-}
-
-fn decompress_gzip(data: &[u8]) -> Vec<u8> {
-    let mut decoder = flate2::read::GzDecoder::new(data);
-    let mut buf = Vec::with_capacity(data.len() * 3);
-    decoder.read_to_end(&mut buf).expect("Failed to decompress mdi_icons.dat");
-    buf
-}
-
-struct Icon {
-    name: String,
-    view_box: [f32; 4],
-    path_d: String,
-}
-
-fn parse_dat(raw: &[u8]) -> Vec<Icon> {
-    assert!(raw.len() >= 6, "Invalid .dat: too short");
-    assert!(&raw[0..4] == b"MDI1", "Invalid .dat: bad magic");
-
-    let count = u16::from_le_bytes([raw[4], raw[5]]) as usize;
-    let mut icons = Vec::with_capacity(count);
-    let mut off = 6usize;
-
-    for _ in 0..count {
-        let name_len = raw[off] as usize;
-        off += 1;
-        let name = std::str::from_utf8(&raw[off..off + name_len])
-            .expect("Invalid icon name")
-            .to_string();
-        off += name_len;
-
-        let view_box = [
-            f32::from_le_bytes([raw[off], raw[off + 1], raw[off + 2], raw[off + 3]]),
-            f32::from_le_bytes([raw[off + 4], raw[off + 5], raw[off + 6], raw[off + 7]]),
-            f32::from_le_bytes([raw[off + 8], raw[off + 9], raw[off + 10], raw[off + 11]]),
-            f32::from_le_bytes([raw[off + 12], raw[off + 13], raw[off + 14], raw[off + 15]]),
-        ];
-        off += 16;
-
-        let path_len = u16::from_le_bytes([raw[off], raw[off + 1]]) as usize;
-        off += 2;
-        let path_d = std::str::from_utf8(&raw[off..off + path_len])
-            .expect("Invalid path data")
-            .to_string();
-        off += path_len;
-
-        icons.push(Icon {
-            name,
-            view_box,
-            path_d,
-        });
+    match env::var("TAIRITSU_ICONS_RS") {
+        Ok(path) => {
+            fs::copy(&path, format!("{}/mdi_generated.rs", out_dir)).unwrap_or_else(|e| {
+                panic!(
+                    "Failed to copy {} to OUT_DIR: {}. \
+                     Ensure the file is readable.",
+                    path, e
+                )
+            });
+            println!("cargo:rerun-if-env-changed=TAIRITSU_ICONS_RS");
+        }
+        Err(_) => {
+            panic!(
+                "\n\
+                 ╔══════════════════════════════════════════════════════════╗\n\
+                 ║  hikari-icons: icon data not found                     ║\n\
+                 ╠══════════════════════════════════════════════════════════╣\n\
+                 ║                                                          ║\n\
+                 ║  hikari-icons is a pure abstraction layer and does NOT   ║\n\
+                 ║  bundle icon path data. It requires pre-built icon       ║\n\
+                 ║  data generated by tairitsu-packager.                    ║\n\
+                 ║                                                          ║\n\
+                 ║  To resolve this:                                        ║\n\
+                 ║    tairitsu check --icons                                ║\n\
+                 ║    tairitsu check --icons --offline  (CI / offline)      ║\n\
+                 ║                                                          ║\n\
+                 ║  Or manually generate icon data and set:                 ║\n\
+                 ║    TAIRITSU_ICONS_RS=<path-to-generated.rs>              ║\n\
+                 ║                                                          ║\n\
+                 ╚══════════════════════════════════════════════════════════╝\n\
+            "
+            );
+        }
     }
-
-    icons
-}
-
-fn generate_rust(icons: &[Icon], output: &Path) {
-    let mut seen_names = std::collections::HashSet::new();
-    let mut seen_consts = std::collections::HashSet::new();
-    let icons: Vec<&Icon> = icons
-        .iter()
-        .filter(|icon| {
-            let const_name = icon.name.replace('-', "_").to_uppercase();
-            seen_names.insert(icon.name.clone()) && seen_consts.insert(const_name)
-        })
-        .collect();
-    let mut code = String::new();
-
-    code.push_str("// @generated by hikari-icons build.rs from resources/mdi_icons.dat\n");
-    code.push_str("// DO NOT EDIT — regenerate with: python3 scripts/icons/pack_mdi_data.py\n");
-    code.push_str("#[allow(dead_code, non_upper_case_globals, unused_imports)]\n\n");
-
-    code.push_str("#[derive(Copy, Clone, Debug)]\npub struct PathData {\n");
-    code.push_str("    pub d: Option<&'static str>,\n");
-    code.push_str("    pub fill: Option<&'static str>,\n");
-    code.push_str("    pub stroke: Option<&'static str>,\n");
-    code.push_str("    pub stroke_width: Option<&'static str>,\n");
-    code.push_str("    pub stroke_linecap: Option<&'static str>,\n");
-    code.push_str("    pub stroke_linejoin: Option<&'static str>,\n");
-    code.push_str("    pub transform: Option<&'static str>,\n");
-    code.push_str("}\n\n");
-
-    code.push_str("#[derive(Copy, Clone, Debug)]\npub struct SvgElem {\n");
-    code.push_str("    pub tag: &'static str,\n");
-    code.push_str("    pub attributes: &'static [(&'static str, &'static str)],\n");
-    code.push_str("}\n\n");
-
-    code.push_str("#[derive(Copy, Clone, Debug)]\npub struct IconData {\n");
-    code.push_str("    pub view_box: Option<&'static str>,\n");
-    code.push_str("    pub width: Option<&'static str>,\n");
-    code.push_str("    pub height: Option<&'static str>,\n");
-    code.push_str("    pub path: Option<&'static str>,\n");
-    code.push_str("    pub paths: &'static [PathData],\n");
-    code.push_str("    pub elements: &'static [SvgElem],\n");
-    code.push_str("}\n\n");
-
-    code.push_str("pub mod data {\n    use super::IconData;\n\n");
-
-    for icon in &icons {
-        let const_name = icon.name.replace('-', "_").to_uppercase();
-        let vb = format!(
-            "{:.0} {:.0} {:.0} {:.0}",
-            icon.view_box[0], icon.view_box[1], icon.view_box[2], icon.view_box[3]
-        );
-        code.push_str(&format!(
-            "    pub const {}: IconData = IconData {{\n",
-            const_name
-        ));
-        code.push_str(&format!("        view_box: Some(\"{}\"),\n", vb));
-        code.push_str("        width: Some(\"24\"),\n");
-        code.push_str("        height: Some(\"24\"),\n");
-        code.push_str(&format!("        path: Some(\"{}\"),\n", icon.path_d));
-        code.push_str("        paths: &[],\n");
-        code.push_str("        elements: &[],\n");
-        code.push_str("    };\n");
-    }
-
-    code.push_str("}\n\n");
-
-    code.push_str("pub fn get(name: &str) -> Option<&'static IconData> {\n    match name {\n");
-    for icon in &icons {
-        let const_name = icon.name.replace('-', "_").to_uppercase();
-        code.push_str(&format!(
-            "        \"{}\" => Some(&data::{}),\n",
-            icon.name, const_name
-        ));
-    }
-    code.push_str("        _ => None,\n    }\n}\n");
-
-    fs::write(output, code).expect("Failed to write generated icon data");
 }

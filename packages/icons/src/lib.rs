@@ -24,15 +24,17 @@
 
 pub mod mdi_minimal;
 
-pub mod generated;
 pub use mdi_minimal::MdiIcon;
-pub use generated::get;
+
+mod mdi_generated {
+    include!(concat!(env!("OUT_DIR"), "/mdi_generated.rs"));
+}
+
+pub use mdi_generated::{get, IconData, PathData, SvgElem};
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
-
-const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub struct IconRef(pub MdiIcon);
@@ -101,12 +103,12 @@ pub struct IconProps {
 pub fn Icon(props: IconProps) -> Element {
     let icon_ref = IconRef(props.icon);
     let icon_name = icon_ref.name();
-    let icon_data_opt = generated::get(&icon_name);
+    let icon_data_opt = mdi_generated::get(&icon_name);
 
     let final_svg = if let Some(icon_data) = icon_data_opt {
         build_svg!(icon_data)
     } else {
-        String::from(DEFAULT_SVG)
+        String::from(r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#)
     };
 
     let full_style = if props.color.is_empty() {

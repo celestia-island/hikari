@@ -170,16 +170,17 @@ Complete UI component library.
    - Table, Tree, Pagination
 
 **Modular Design**:
-```
-hikari-components/
- ├── basic/          # Basic components
- ├── feedback/       # Feedback components
- ├── navigation/     # Navigation components
- ├── layout/         # Layout components
- ├── data/           # Data components
- ├── hooks.rs        # React hooks
- ├── styled.rs       # Style traits
- └── theme_provider.rs  # Theme provider
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/"]
+  root --> feedback["feedback/"]
+  root --> navigation["navigation/"]
+  root --> layout["layout/"]
+  root --> data["data/"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **Style System**:
@@ -199,16 +200,12 @@ Compile-time code generation and SCSS compilation.
 - Resource bundling
 
 **Build Process**:
-```
-1. Find workspace root directory
-   ↓
-2. Scan SCSS files
-   ↓
-3. Generate Rust constants
-   ↓
-4. Compile SCSS Bundle
-   ↓
-5. Output to public/
+```mermaid
+graph TD
+  A["1. Find workspace root directory"] --> B["2. Scan SCSS files"]
+  B --> C["3. Generate Rust constants"]
+  C --> D["4. Compile SCSS Bundle"]
+  D --> E["5. Output to public/"]
 ```
 
 **Usage**:
@@ -333,22 +330,29 @@ hikari-animation = "0.1"
 
 ### 2. Layered Architecture
 
-```
-┌─────────────────────────────────────┐
-│      Application Layer (examples/)   │
-├─────────────────────────────────────┤
-│    Component Layer (hikari-components)│
-├─────────────────────────────────────┤
-│  System Layer (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   Foundation Layer (palette, builder) │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["Layered Architecture"]:1
+    columns 1
+    app["Application Layer (examples/)"]
+    comp["Component Layer (hikari-components)"]
+    sys["System Layer (theme, animation, icons)"]
+    found["Foundation Layer (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. Unidirectional Data Flow
 
-```
-User Action → Event Handler → State Update → UI Re-render
+```mermaid
+graph TD
+  UA["User Action"] --> EH["Event Handler"]
+  EH --> SU["State Update"]
+  SU ->> UR["UI Re-render"]
 ```
 
 ### 4. Type Safety
@@ -389,24 +393,21 @@ trunk build --release
 
 ## Dependencies
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (SCSS compiler)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (SCSS compiler)"]
 ```
 
 ## Extensibility

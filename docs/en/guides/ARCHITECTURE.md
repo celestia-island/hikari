@@ -20,16 +20,16 @@ This document provides an overview of the Hikari project architecture, including
 
 Hikari is a modular Rust UI framework built around Tairitsu, following a workspace-based architecture. The project is organized into several focused packages, each with a specific responsibility:
 
-```
-hikari/
-├── packages/
-│   ├── hikari-palette/          # Foundation: Color system
-│   ├── hikari-theme/            # Foundation: Theme management
-│   ├── hikari-components/       # UI: Basic components
-│   ├── hikari-extra-components/ # UI: Advanced components
-│   └── hikari-ssr/              # Server: SSR integration
-│
-└── examples/                    # Demonstrations
+```mermaid
+graph LR
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/ — Demonstrations"]
+  packages --> palette["hikari-palette/ — Color system"]
+  packages --> theme["hikari-theme/ — Theme management"]
+  packages --> components["hikari-components/ — Basic components"]
+  packages --> extra["hikari-extra-components/ — Advanced components"]
+  packages --> ssr["hikari-ssr/ — SSR integration"]
 ```
 
 ### Design Philosophy
@@ -56,12 +56,10 @@ Each package handles a specific aspect of the framework:
 
 Packages depend on abstractions, not concrete implementations:
 
-```
-hikari-components
-    ↓ depends on
-hikari-theme
-    ↓ depends on
-hikari-palette
+```mermaid
+graph TD
+  hikari-components --> hikari-theme
+  hikari-theme --> hikari-palette
 ```
 
 This creates a clear dependency hierarchy and prevents circular dependencies.
@@ -79,19 +77,13 @@ Hikari is designed as a library, not a framework:
 
 ### Dependency Graph
 
-```
-hikari-ssr (independent)
-    │
-    │
-hikari-palette (foundation)
-    │
-    ├─────────────┐
-    │             │
-hikari-theme   hikari-components
-    │             │
-    └──────┬──────┘
-           │
-    hikari-extra-components
+```mermaid
+graph BT
+  hikari-theme --> hikari-palette
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-extra-components --> hikari-components
+  hikari-extra-components --> hikari-theme
 ```
 
 ### Package Responsibilities
@@ -304,17 +296,18 @@ rsx! {
 
 Component organization:
 
-```
-data/
-├── mod.rs          # Public exports
-├── table.rs        # Core table
-├── column.rs       # Column module
-├── cell.rs         # Cell module
-├── header.rs       # Header module
-├── pagination.rs   # Pagination module
-├── sort.rs         # Sorting module
-├── filter.rs       # Filtering module
-└── selection.rs    # Selection module
+```mermaid
+graph LR
+  root["data/"]
+  root --> mod["mod.rs — Public exports"]
+  root --> table["table.rs — Core table"]
+  root --> column["column.rs"]
+  root --> cell["cell.rs"]
+  root --> header["header.rs"]
+  root --> pagination["pagination.rs"]
+  root --> sort["sort.rs"]
+  root --> filter["filter.rs"]
+  root --> selection["selection.rs"]
 ```
 
 **Benefits**:
@@ -349,61 +342,49 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
 ### Component Data Flow
 
-```
-User Interaction
-       ↓
-   Event Handler
-       ↓
-  State Update
-       ↓
-  Re-render
-       ↓
-   DOM Update
+```mermaid
+graph TD
+  UI["User Interaction"] --> EH["Event Handler"]
+  EH --> SU["State Update"]
+  SU --> RR["Re-render"]
+  RR --> DU["DOM Update"]
 ```
 
 ### Theme Data Flow
 
-```
-ThemeProvider
-       ↓
-  CSS Variables
-       ↓
-  Component Styles
-       ↓
-  Visual Output
+```mermaid
+graph TD
+  TP["ThemeProvider"] --> CV["CSS Variables"]
+  CV --> CS["Component Styles"]
+  CS --> VO["Visual Output"]
 ```
 
 ### SSR Data Flow
 
-```
-HTTP Request
-       ↓
-   Axum Router
-       ↓
-   Handler
-       ↓
-  State Access
-       ↓
-HTTP Response
+```mermaid
+graph TD
+  REQ["HTTP Request"] --> AR["Axum Router"]
+  AR --> H["Handler"]
+  H --> SA["State Access"]
+  SA --> RESP["HTTP Response"]
 ```
 
 ## Component Architecture
 
 ### Component Hierarchy
 
-```
-ThemeProvider (root)
-    │
-    ├─ App
-    │   ├─ Layout
-    │   │   ├─ Header
-    │   │   ├─ Sidebar
-    │   │   └─ Content
-    │   │       ├─ Table
-    │   │       └─ Tree
-    │   └─ Footer
-    │
-    └─ ToastContainer
+```mermaid
+graph TD
+  TP["ThemeProvider (root)"]
+  TP --> App
+  App --> Layout
+  App --> Footer
+  Layout --> Header
+  Layout --> Sidebar
+  Layout --> Content
+  Content --> Table
+  Content --> Tree
+  TP --> TC["ToastContainer"]
 ```
 
 ### Component Lifecycle
@@ -422,25 +403,23 @@ ThemeProvider (root)
 
 ### Theme Structure
 
-```
-Theme (ThemeProvider)
-    │
-    ├─ Palette (hikari-palette)
-    │   ├─ Primary Color
-    │   ├─ Secondary Color
-    │   ├─ Accent Color
-    │   └─ Functional Colors
-    │
-    ├─ CSS Variables
-    │   ├─ Color Variables
-    │   ├─ Typography Variables
-    │   ├─ Spacing Variables
-    │   └─ Effect Variables
-    │
-    └─ SCSS Mixins
-        ├─ Layout Mixins
-        ├─ Typography Mixins
-        └─ Component Mixins
+```mermaid
+graph TD
+  Theme["Theme (ThemeProvider)"]
+  Theme --> Palette["Palette (hikari-palette)"]
+  Theme --> CSS["CSS Variables"]
+  Theme --> SCSS["SCSS Mixins"]
+  Palette --> PC["Primary Color"]
+  Palette --> SC["Secondary Color"]
+  Palette --> AC["Accent Color"]
+  Palette --> FC["Functional Colors"]
+  CSS --> CV["Color Variables"]
+  CSS --> TV["Typography Variables"]
+  CSS --> SV["Spacing Variables"]
+  CSS --> EV["Effect Variables"]
+  SCSS --> LM["Layout Mixins"]
+  SCSS --> TM["Typography Mixins"]
+  SCSS --> CM["Component Mixins"]
 ```
 
 ### Theme Application
@@ -534,13 +513,14 @@ async fn test_theme_provider() {
 
 Example applications serve as integration tests:
 
-```
-examples/
-├── website/         # Full integration test
-├── table-demo/      # Table component test
-├── tree-demo/       # Tree component test
-├── node-graph-demo/ # Node graph test
-└── ssr-demo/        # SSR integration test
+```mermaid
+graph LR
+  root["examples/"]
+  root --> website["website/ — Full integration test"]
+  root --> tabledemo["table-demo/ — Table test"]
+  root --> treedemo["tree-demo/ — Tree test"]
+  root --> nodegraph["node-graph-demo/ — Node graph test"]
+  root --> ssrdemo["ssr-demo/ — SSR integration test"]
 ```
 
 ## Future Roadmap

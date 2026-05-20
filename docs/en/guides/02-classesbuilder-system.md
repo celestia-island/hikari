@@ -614,31 +614,27 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 
 ### 完整架构
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     hikari-animation                        │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ re-export from tairitsu_style:                      │   │
-│  │ - StyleStringBuilder (内联样式构建器)                 │   │
-│  │ - CssProperty (403 W3C CSS 属性)                    │   │
-│  │ - Property                                           │   │
-│  └─────────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ hikari-specific (web-sys integration):              │   │
-│  │ - StyleBuilder (HtmlElement-based)                   │   │
-│  │ - AttributeBuilder                                   │   │
-│  │ - set_style, get_style, etc.                        │   │
-│  └─────────────────────────────────────────────────────┘   │
-│└─────────────────────────────────────────────────────────────┘
-│
-│                     hikari-palette                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ hikari component class system (RETAINED):           │   │
-│  │ - ClassesBuilder (accepts impl UtilityClass)         │   │
-│  │ - UtilityClass trait (hi- prefix)                    │   │
-│  │ - 18 component class enums (Button, Table, etc.)     │   │
-│  └─────────────────────────────────────────────────────┘   │
-│└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+  subgraph anim["hikari-animation"]
+    subgraph reexport["re-export from tairitsu_style"]
+      R1["StyleStringBuilder (内联样式构建器)"]
+      R2["CssProperty (403 W3C CSS 属性)"]
+      R3["Property"]
+    end
+    subgraph specific["hikari-specific (web-sys integration)"]
+      S1["StyleBuilder (HtmlElement-based)"]
+      S2["AttributeBuilder"]
+      S3["set_style, get_style, etc."]
+    end
+  end
+  subgraph palette["hikari-palette"]
+    subgraph classsys["hikari component class system (RETAINED)"]
+      C1["ClassesBuilder (accepts impl UtilityClass)"]
+      C2["UtilityClass trait (hi- prefix)"]
+      C3["18 component class enums (Button, Table, etc.)"]
+    end
+  end
 ```
 
 ### 最佳实践

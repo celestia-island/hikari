@@ -170,16 +170,17 @@ rsx! {
    - Table, Tree, Pagination
 
 **Модульный дизайн**:
-```
-hikari-components/
- ├── basic/          # Базовые компоненты
- ├── feedback/       # Компоненты обратной связи
- ├── navigation/     # Навигационные компоненты
- ├── layout/         # Компоненты раскладки
- ├── data/           # Компоненты данных
- ├── hooks.rs        # React-хуки
- ├── styled.rs       # Трейты стилей
- └── theme_provider.rs  # Провайдер темы
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/ — Базовые компоненты"]
+  root --> feedback["feedback/ — Обратная связь"]
+  root --> navigation["navigation/ — Навигация"]
+  root --> layout["layout/ — Раскладка"]
+  root --> data["data/ — Данные"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **Система стилей**:
@@ -199,16 +200,12 @@ hikari-components/
 - Сборка ресурсов
 
 **Процесс сборки**:
-```
-1. Найти корневую директорию workspace
-   ↓
-2. Сканировать SCSS-файлы
-   ↓
-3. Сгенерировать Rust-константы
-   ↓
-4. Скомпилировать SCSS-бандл
-   ↓
-5. Вывести в public/
+```mermaid
+graph TD
+  A["1. Найти корневую директорию workspace"] --> B["2. Сканировать SCSS-файлы"]
+  B --> C["3. Сгенерировать Rust-константы"]
+  C --> D["4. Скомпилировать SCSS-бандл"]
+  D --> E["5. Вывести в public/"]
 ```
 
 **Использование**:
@@ -333,22 +330,29 @@ hikari-animation = "0.1"
 
 ### 2. Многослойная архитектура
 
-```
-┌─────────────────────────────────────┐
-│      Слой приложения (examples/)    │
-├─────────────────────────────────────┤
-│    Слой компонентов (hikari-components)│
-├─────────────────────────────────────┤
-│  Слой систем (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   Слой основы (palette, builder)    │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["Многослойная архитектура"]:1
+    columns 1
+    app["Слой приложения (examples/)"]
+    comp["Слой компонентов (hikari-components)"]
+    sys["Слой систем (theme, animation, icons)"]
+    found["Слой основы (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. Однонаправленный поток данных
 
-```
-Действие пользователя → Обработчик событий → Обновление состояния → Перерисовка UI
+```mermaid
+graph TD
+  UA["Действие пользователя"] --> EH["Обработчик событий"]
+  EH --> SU["Обновление состояния"]
+  SU --> UR["Перерисовка UI"]
 ```
 
 ### 4. Типобезопасность
@@ -389,24 +393,21 @@ trunk build --release
 
 ## Зависимости
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (SCSS-компилятор)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (SCSS-компилятор)"]
 ```
 
 ## Расширяемость

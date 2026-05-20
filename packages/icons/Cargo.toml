@@ -14,10 +14,6 @@ dynamic-fetch = ["dep:web-sys", "dep:reqwest"]
 dynamic-fetch-warnings = []
 
 [build-dependencies]
-anyhow = "^1"
-serde = { workspace = true, features = ["derive"] }
-quick-xml = { version = "0.35", features = ["serialize"] }
-regex = "^1"
 
 [dependencies]
 # Tairitsu framework (optional)

@@ -103,21 +103,21 @@ trunk build --release
 
 ## Project Structure
 
-```
-hikari/
- ├── packages/
- │   ├── hikari-palette/          # Traditional Chinese color palette
- │   ├── hikari-theme/            # Theme system
- │   ├── hikari-animation/        # Animation system
- │   ├── hikari-icons/            # Icon system
- │   ├── hikari-components/       # Component library
- │   ├── hikari-extra-components/ # Extra components library
- │
- └── examples/
-     ├── website/                 # Official website
-     ├── table-demo/              # Table component demo
-     ├── tree-demo/               # Tree component demo
-     └── node-graph-demo/         # Node graph demo
+```mermaid
+graph LR
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## Documentation

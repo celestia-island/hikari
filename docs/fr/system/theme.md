@@ -138,11 +138,11 @@ Le module `generated/mod.rs` contient:
 
 ### Emplacements des Fichiers
 
-```
-packages/theme/src/generated/
-├── mod.rs           # Point d'entrée du module
-├── tailwind.rs      # Contenu Tailwind CSS généré
-└── ...              # Autre contenu généré
+```mermaid
+graph LR
+  root["generated/"] --> mod["mod.rs"]
+  root --> tw["tailwind.rs"]
+  root --> other["..."]
 ```
 
 ## Système de Variables CSS

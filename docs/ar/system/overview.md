@@ -170,16 +170,17 @@ rsx! {
    - جدول، شجرة، ترقيم الصفحات
 
 **التصميم المعياري**:
-```
-hikari-components/
-├── basic/          # المكونات الأساسية
-├── feedback/       # مكونات التغذية الراجعة
-├── navigation/     # مكونات التنقل
-├── layout/         # مكونات التخطيط
-├── data/           # مكونات البيانات
-├── hooks.rs        # خطافات React
-├── styled.rs       # سمات الأنماط
-└── theme_provider.rs  # مزود السمة
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/"]
+  root --> feedback["feedback/"]
+  root --> navigation["navigation/"]
+  root --> layout["layout/"]
+  root --> data["data/"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **نظام الأنماط**:
@@ -199,16 +200,12 @@ hikari-components/
 - تجميع الموارد
 
 **عملية البناء**:
-```
-1. البحث عن دليل جذر مساحة العمل
-   ↓
-2. فحص ملفات SCSS
-   ↓
-3. توليد ثوابت Rust
-   ↓
-4. تجميع حزمة SCSS
-   ↓
-5. الإخراج إلى public/
+```mermaid
+graph TD
+  A["1. البحث عن دليل جذر مساحة العمل"] --> B["2. فحص ملفات SCSS"]
+  B --> C["3. توليد ثوابت Rust"]
+  C --> D["4. تجميع حزمة SCSS"]
+  D --> E["5. الإخراج إلى public/"]
 ```
 
 **الاستخدام**:
@@ -333,22 +330,29 @@ hikari-animation = "0.1"
 
 ### 2. البنية الطبقية
 
-```
-┌─────────────────────────────────────┐
-│      طبقة التطبيق (examples/)        │
-├─────────────────────────────────────┤
-│    طبقة المكونات (hikari-components)  │
-├─────────────────────────────────────┤
-│  طبقة النظام (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   طبقة الأساس (palette, builder)     │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["البنية الطبقية"]:1
+    columns 1
+    app["طبقة التطبيق (examples/)"]
+    comp["طبقة المكونات (hikari-components)"]
+    sys["طبقة النظام (theme, animation, icons)"]
+    found["طبقة الأساس (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. تدفق البيانات أحادي الاتجاه
 
-```
-إجراء المستخدم ← معالج الحدث ← تحديث الحالة ← إعادة عرض واجهة المستخدم
+```mermaid
+graph TD
+  UA["إجراء المستخدم"] --> EH["معالج الحدث"]
+  EH --> SU["تحديث الحالة"]
+  SU --> UR["إعادة عرض واجهة المستخدم"]
 ```
 
 ### 4. أمان الأنواع
@@ -389,24 +393,21 @@ trunk build --release
 
 ## التبعيات
 
-```
-hikari-components
-├── hikari-palette
-├── hikari-theme
-├── hikari-animation
-└── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-├── hikari-palette
-├── hikari-theme
-└── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-├── hikari-components
-└── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-└── grass (مترجم SCSS)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (مترجم SCSS)"]
 ```
 
 ## القابلية للتوسعة

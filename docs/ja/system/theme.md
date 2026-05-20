@@ -138,11 +138,11 @@ let tailwind_classes = tailwind::TAILWIND_CLASSES;
 
 ### ファイルの場所
 
-```
-packages/theme/src/generated/
-├── mod.rs           # モジュールエントリ
-├── tailwind.rs      # Tailwind CSS 生成コンテンツ
-└── ...              # その他の生成コンテンツ
+```mermaid
+graph LR
+  root["generated/"] --> mod["mod.rs"]
+  root --> tw["tailwind.rs"]
+  root --> other["..."]
 ```
 
 ## CSS変数システム

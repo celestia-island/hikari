@@ -170,16 +170,17 @@ rsx! {
    - Table, Tree, Pagination
 
 **モジュラーデザイン**:
-```
-hikari-components/
-├── basic/          # 基本コンポーネント
-├── feedback/       # フィードバックコンポーネント
-├── navigation/     # ナビゲーションコンポーネント
-├── layout/         # レイアウトコンポーネント
-├── data/           # データコンポーネント
-├── hooks.rs        # Reactフック
-├── styled.rs       # スタイルトレイト
-└── theme_provider.rs  # テーマプロバイダー
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/ — 基本コンポーネント"]
+  root --> feedback["feedback/ — フィードバック"]
+  root --> navigation["navigation/ — ナビゲーション"]
+  root --> layout["layout/ — レイアウト"]
+  root --> data["data/ — データ"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **スタイルシステム**:
@@ -199,16 +200,12 @@ hikari-components/
 - リソースバンドル
 
 **ビルドプロセス**:
-```
-1. ワークスペースルートディレクトリを検索
-   ↓
-2. SCSSファイルをスキャン
-   ↓
-3. Rust定数を生成
-   ↓
-4. SCSSバンドルをコンパイル
-   ↓
-5. public/に出力
+```mermaid
+graph TD
+  A["1. ワークスペースルートディレクトリを検索"] --> B["2. SCSSファイルをスキャン"]
+  B --> C["3. Rust定数を生成"]
+  C --> D["4. SCSSバンドルをコンパイル"]
+  D --> E["5. public/に出力"]
 ```
 
 **使用方法**:
@@ -333,22 +330,29 @@ hikari-animation = "0.1"
 
 ### 2. 階層アーキテクチャ
 
-```
-┌─────────────────────────────────────┐
-│      アプリケーション層 (examples/)   │
-├─────────────────────────────────────┤
-│    コンポーネント層 (hikari-components)│
-├─────────────────────────────────────┤
-│  システム層 (theme, animation, icons)│
-├─────────────────────────────────────┤
-│   基盤層 (palette, builder) │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["階層アーキテクチャ"]:1
+    columns 1
+    app["アプリケーション層 (examples/)"]
+    comp["コンポーネント層 (hikari-components)"]
+    sys["システム層 (theme, animation, icons)"]
+    found["基盤層 (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. 単方向データフロー
 
-```
-ユーザーアクション → イベントハンドラー → 状態更新 → UI再レンダリング
+```mermaid
+graph TD
+  UA["ユーザーアクション"] --> EH["イベントハンドラー"]
+  EH --> SU["状態更新"]
+  SU --> UR["UI再レンダリング"]
 ```
 
 ### 4. 型安全性
@@ -389,24 +393,21 @@ trunk build --release
 
 ## 依存関係
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (SCSSコンパイラ)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (SCSSコンパイラ)"]
 ```
 
 ## 拡張性

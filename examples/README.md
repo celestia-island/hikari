@@ -50,11 +50,12 @@ cargo build --release --bins
 
 ## Project Structure
 
-```
-examples/
-├── website/            # Comprehensive component showcase
-├── node-graph-demo/    # Interactive node graph (needs migration)
-└── README.md
+```mermaid
+graph LR
+  root["examples/"]
+  root --> website["website/ — Component showcase"]
+  root --> nodegraph["node-graph-demo/ — Node graph"]
+  root --> readme["README.md"]
 ```
 
 ## Design System

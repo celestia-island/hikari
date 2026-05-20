@@ -103,21 +103,21 @@ trunk build --release
 
 ## هيكل المشروع
 
-```
-hikari/
-├── packages/
-│   ├── hikari-palette/          # لوحة الألوان الصينية التقليدية
-│   ├── hikari-theme/            # نظام السمات
-│   ├── hikari-animation/        # نظام الرسوم المتحركة
-│   ├── hikari-icons/            # نظام الأيقونات
-│   ├── hikari-components/       # مكتبة المكونات
-│   ├── hikari-extra-components/ # مكتبة المكونات الإضافية
-│
-└── examples/
-    ├── website/                 # الموقع الرسمي
-    ├── table-demo/              # عرض توضيحي للجدول
-    ├── tree-demo/               # عرض توضيحي للشجرة
-    └── node-graph-demo/         # عرض توضيحي للرسم البياني
+```mermaid
+graph LR
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## التوثيق

@@ -15,31 +15,35 @@ Hikari 框架採用模組化設計，基於 Tairitsu 執行時期構建，由 6 
 
 ## 分層架構
 
-```
-┌─────────────────────────────────────┐
-│      應用層 (examples/)              │
-├─────────────────────────────────────┤
-│   元件層 (components, extra)         │
-├─────────────────────────────────────┤
-│  系統層 (theme, animation, icons)    │
-├─────────────────────────────────────┤
-│   基礎層 (palette)                   │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["分層架構"]:1
+    columns 1
+    app["應用層 (examples/)"]
+    comp["元件層 (components, extra)"]
+    sys["系統層 (theme, animation, icons)"]
+    found["基礎層 (palette)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ## 套件依賴關係
 
-```
-hikari-palette ◄──── hikari-animation
-      ▲                    │
-      │                    ▼
-      ├──────────── hikari-icons
-      │
-      ├─── hikari-theme
-      │
-      ├─── hikari-components ◄── hikari-theme, hikari-icons
-      │
-      └─── hikari-extra-components ◄── hikari-theme, hikari-icons
+```mermaid
+graph BT
+  hikari-animation --> hikari-palette
+  hikari-icons --> hikari-palette
+  hikari-theme --> hikari-palette
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-icons
+  hikari-extra-components --> hikari-palette
+  hikari-extra-components --> hikari-theme
+  hikari-extra-components --> hikari-icons
 ```
 
 ## 外部依賴
@@ -214,16 +218,17 @@ rsx! {
    - Table、Tree、Pagination
 
 **模組化設計**：
-```
-hikari-components/
- ├── basic/          # 基礎元件
- ├── feedback/       # 回饋元件
- ├── navigation/     # 導航元件
- ├── layout/         # 佈局元件
- ├── data/           # 資料元件
- ├── hooks.rs        # React 鉤子
- ├── styled.rs       # 樣式特徵
- └── theme_provider.rs  # 主題供應者
+```mermaid
+graph LR
+  root["hikari-components/"]
+  root --> basic["basic/ — 基礎元件"]
+  root --> feedback["feedback/ — 回饋元件"]
+  root --> navigation["navigation/ — 導航元件"]
+  root --> layout["layout/ — 佈局元件"]
+  root --> data["data/ — 資料元件"]
+  root --> hooks["hooks.rs"]
+  root --> styled["styled.rs"]
+  root --> tp["theme_provider.rs"]
 ```
 
 **樣式系統**：
@@ -243,16 +248,12 @@ hikari-components/
 - 資源打包
 
 **建置流程**：
-```
-1. 尋找工作區根目錄
-   ↓
-2. 掃描 SCSS 檔案
-   ↓
-3. 生成 Rust 常數
-   ↓
-4. 編譯 SCSS Bundle
-   ↓
-5. 輸出至 public/
+```mermaid
+graph TD
+  A["1. 尋找工作區根目錄"] --> B["2. 掃描 SCSS 檔案"]
+  B --> C["3. 生成 Rust 常數"]
+  C --> D["4. 編譯 SCSS Bundle"]
+  D --> E["5. 輸出至 public/"]
 ```
 
 **使用方式**：
@@ -377,22 +378,29 @@ hikari-animation = "0.1"
 
 ### 2. 分層架構
 
-```
-┌─────────────────────────────────────┐
-│      應用層 (examples/)              │
-├─────────────────────────────────────┤
-│    元件層 (hikari-components)        │
-├─────────────────────────────────────┤
-│  系統層 (theme, animation, icons)    │
-├─────────────────────────────────────┤
-│   基礎層 (palette, builder)          │
-└─────────────────────────────────────┘
+```mermaid
+block-beta
+  columns 1
+  block:layer["分層架構"]:1
+    columns 1
+    app["應用層 (examples/)"]
+    comp["元件層 (hikari-components)"]
+    sys["系統層 (theme, animation, icons)"]
+    found["基礎層 (palette, builder)"]
+  end
+  style app fill:#e1f5fe
+  style comp fill:#b3e5fc
+  style sys fill:#81d4fa
+  style found fill:#4fc3f7
 ```
 
 ### 3. 單向資料流
 
-```
-使用者操作 → 事件處理器 → 狀態更新 → UI 重新渲染
+```mermaid
+graph TD
+  UA["使用者操作"] --> EH["事件處理器"]
+  EH --> SU["狀態更新"]
+  SU --> UR["UI 重新渲染"]
 ```
 
 ### 4. 型別安全
@@ -433,24 +441,21 @@ trunk build --release
 
 ## 依賴關係
 
-```
-hikari-components
-  ├── hikari-palette
-  ├── hikari-theme
-  ├── hikari-animation
-  └── hikari-icons
+```mermaid
+graph BT
+  hikari-components --> hikari-palette
+  hikari-components --> hikari-theme
+  hikari-components --> hikari-animation
+  hikari-components --> hikari-icons
 
-hikari-extra-components
-  ├── hikari-palette
-  ├── hikari-theme
-  └── hikari-animation
+  hikari-extra-components --> hikari-palette2[hikari-palette]
+  hikari-extra-components --> hikari-theme2[hikari-theme]
+  hikari-extra-components --> hikari-animation2[hikari-animation]
 
-tairitsu-packager
-  ├── hikari-components
-  └── axum
+  tairitsu-packager --> hikari-components2[hikari-components]
+  tairitsu-packager --> axum
 
-hikari-icons (build)
-  └── grass (SCSS 編譯器)
+  hikari-icons-build["hikari-icons (build)"] --> grass["grass (SCSS 編譯器)"]
 ```
 
 ## 擴充性

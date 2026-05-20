@@ -138,11 +138,11 @@ let tailwind_classes = tailwind::TAILWIND_CLASSES;
 
 ### مواقع الملفات
 
-```
-packages/theme/src/generated/
-├── mod.rs           # مدخل الوحدة
-├── tailwind.rs      # محتوى Tailwind CSS المولد
-└── ...              # محتوى مولد آخر
+```mermaid
+graph LR
+  root["generated/"] --> mod["mod.rs"]
+  root --> tw["tailwind.rs"]
+  root --> other["..."]
 ```
 
 ## نظام متغيرات CSS

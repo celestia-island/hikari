@@ -4,7 +4,7 @@
 #![allow(clippy::needless_update)]
 
 use hikari_icons::Icon;
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, ToastClass, TypedClass};
 
 use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
@@ -88,7 +88,7 @@ pub fn Toast(props: ToastProps) -> Element {
         },
         ToastVariant::Warning => rsx! {
             Icon {
-                icon: MdiIcon::AlertTriangle,
+                icon: MdiIcon::Alert,
                 class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),

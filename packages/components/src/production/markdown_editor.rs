@@ -2,7 +2,7 @@
 // MarkdownEditor component
 
 use hikari_icons::Icon;
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
 use crate::prelude::*;
@@ -280,7 +280,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         class: MarkdownEditorClass::ToolbarButton.class_name(),
                         onclick: insert_code,
                         title: "Code Block",
-                        Icon { icon: MdiIcon::Code, size: 18 }
+                        Icon { icon: MdiIcon::CodeBraces, size: 18 }
                     }
                     button {
                         class: MarkdownEditorClass::ToolbarButton.class_name(),

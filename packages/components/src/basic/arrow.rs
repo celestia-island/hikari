@@ -1,7 +1,7 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_icons::{Icon, IconProps};
 use hikari_palette::classes::ClassesBuilder;
 use hikari_palette::classes::components::ArrowClass;

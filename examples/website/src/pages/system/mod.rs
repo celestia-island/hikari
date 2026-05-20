@@ -103,7 +103,7 @@ fn render_css() -> VNode {
 
 fn render_icons() -> VNode {
     use crate::components::icon_utils::icon_el;
-    use hikari_icons::mdi_minimal::MdiIcon;
+    use hikari_icons::MdiIcon;
 
     render_demo_page(
         "page-system-icons",

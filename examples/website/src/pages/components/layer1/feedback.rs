@@ -1,5 +1,5 @@
 use hikari_components::{Progress, ProgressStatus, Skeleton, SkeletonVariant, Spin, SpinSize, SpinTip, prelude::*};
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use tairitsu_macros::rsx;
 use tairitsu_vdom::{VElement, VNode};
 
@@ -54,7 +54,7 @@ pub fn render() -> VNode {
                         {alert_node("hi-alert hi-alert--info", MdiIcon::Information, "This is an informational alert for general notices.", "status", "polite")}
                         {alert_node("hi-alert hi-alert--success", MdiIcon::Check, "Operation completed successfully.", "status", "polite")}
                         {alert_node("hi-alert hi-alert--danger", MdiIcon::Close, "An error occurred. Please try again later.", "alert", "assertive")}
-                        {alert_node("hi-alert hi-alert--warning", MdiIcon::AlertTriangle, "Warning: Your session will expire in 5 minutes.", "alert", "assertive")}
+                        {alert_node("hi-alert hi-alert--warning", MdiIcon::Alert, "Warning: Your session will expire in 5 minutes.", "alert", "assertive")}
                     }
                 }
             )}

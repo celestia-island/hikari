@@ -18,11 +18,6 @@ scss = []          # SCSS compilation
 # Hikari palette
 hikari-palette = { version = "^0.2", path = "../palette" }
 
-# Tairitsu framework (for theme context)
-tairitsu-vdom = "^0.5"
-tairitsu-hooks = "^0.5"
-tairitsu-macros = "^0.5"
-
 [build-dependencies]
 tairitsu-packager = { version = "^0.5", default-features = false }
 anyhow = "^1"

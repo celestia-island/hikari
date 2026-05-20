@@ -47,6 +47,8 @@ packages/*/theme/tailwind/
 packages/icons/dist/lucide/
 packages/icons/assets/lucide_svgs.json
 packages/icons/assets/lucide_manifest.json
+packages/icons/src/mdi_data.rs
+packages/icons/src/mdi_enum.rs
 
 # Bulk SVG downloads (build-time intermediate files fetched from CDN)
 /icons/

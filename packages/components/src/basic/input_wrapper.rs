@@ -8,7 +8,7 @@
 // 3. Multiple icons should use consistent spacing (4px gap)
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, TypedClass};
 
 use crate::basic::{IconButton, IconButtonProps};

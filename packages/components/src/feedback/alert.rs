@@ -4,7 +4,7 @@
 #![allow(clippy::needless_update)]
 
 use hikari_icons::Icon;
-use hikari_icons::mdi_minimal::MdiIcon;
+use hikari_icons::MdiIcon;
 use hikari_palette::classes::{AlertClass, ClassesBuilder, TypedClass};
 
 use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
@@ -91,7 +91,7 @@ pub fn Alert(props: AlertProps) -> Element {
         }),
         AlertVariant::Warning => Some(rsx! {
             Icon {
-                icon: MdiIcon::AlertTriangle,
+                icon: MdiIcon::Alert,
                 class: AlertClass::AlertIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-warning)".to_string(),

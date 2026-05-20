@@ -129,6 +129,7 @@ fn gen_data(icons: &[Icon], dest: &Path) {
     let mut f = fs::File::create(dest).unwrap();
     writeln!(f, "// @generated ({} icons) — DO NOT EDIT", icons.len()).unwrap();
     writeln!(f).unwrap();
+    writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "static ENTRIES: &[(&str, &str)] = &[").unwrap();
     for icon in icons {
         writeln!(f, "    (\"{}\",", icon.kebab).unwrap();
@@ -136,6 +137,7 @@ fn gen_data(icons: &[Icon], dest: &Path) {
     }
     writeln!(f, "];").unwrap();
     writeln!(f).unwrap();
+    writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "pub fn get(name: &str) -> Option<&'static str> {{").unwrap();
     writeln!(f, "    ENTRIES").unwrap();
     writeln!(f, "        .binary_search_by_key(&name, |(k, _)| k)").unwrap();
@@ -162,11 +164,21 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f).unwrap();
 
     // Display impl: MdiIcon -> kebab-case string
+    writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "impl std::fmt::Display for MdiIcon {{").unwrap();
-    writeln!(f, "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{").unwrap();
+    writeln!(
+        f,
+        "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{"
+    )
+    .unwrap();
     writeln!(f, "        let name: &str = match self {{").unwrap();
     for icon in icons {
-        writeln!(f, "            MdiIcon::{} => \"{}\",", icon.pascal, icon.kebab).unwrap();
+        writeln!(
+            f,
+            "            MdiIcon::{} => \"{}\",",
+            icon.pascal, icon.kebab
+        )
+        .unwrap();
     }
     writeln!(f, "        }};").unwrap();
     writeln!(f, "        write!(f, \"{{}}\", name)").unwrap();
@@ -175,11 +187,17 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f).unwrap();
 
     // From<&str> impl: kebab-case string -> MdiIcon
+    writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "impl std::convert::From<&str> for MdiIcon {{").unwrap();
     writeln!(f, "    fn from(s: &str) -> Self {{").unwrap();
     writeln!(f, "        match s {{").unwrap();
     for icon in icons {
-        writeln!(f, "            \"{}\" => MdiIcon::{},", icon.kebab, icon.pascal).unwrap();
+        writeln!(
+            f,
+            "            \"{}\" => MdiIcon::{},",
+            icon.kebab, icon.pascal
+        )
+        .unwrap();
     }
     writeln!(f, "            _ => MdiIcon::Help,").unwrap();
     writeln!(f, "        }}").unwrap();
@@ -200,7 +218,11 @@ fn write_stub_data(dest: &Path) {
     let _ = fs::create_dir_all(dest.parent().unwrap());
     let mut f = fs::File::create(dest).unwrap();
     writeln!(f, "// stub").unwrap();
-    writeln!(f, "pub fn get(_name: &str) -> Option<&'static str> {{ None }}").unwrap();
+    writeln!(
+        f,
+        "pub fn get(_name: &str) -> Option<&'static str> {{ None }}"
+    )
+    .unwrap();
 }
 
 fn write_stub_enum(dest: &Path) {

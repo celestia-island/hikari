@@ -7,6 +7,14 @@ license.workspace = true
 description = "Material Design Icons (MDI) integration for the Hikari design system"
 repository.workspace = true
 
+include = [
+    "build.rs",
+    "src/**/*.rs",
+    "tests/**/*.rs",
+    "icons.txt",
+    "README.md",
+]
+
 [features]
 default = []
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]

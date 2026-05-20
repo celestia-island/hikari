@@ -82,6 +82,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Generate icon data
+        run: cargo build -p hikari-icons
+
       - name: Strip examples from workspace to avoid git-dep conflicts
         run: |
           pip install tomlkit

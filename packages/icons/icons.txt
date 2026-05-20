@@ -84,7 +84,6 @@ tree
 trophy-award
 tune
 upload
-user
 view-column
 view-dashboard
 volume-high

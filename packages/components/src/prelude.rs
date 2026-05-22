@@ -37,7 +37,7 @@ pub fn empty_vnode() -> VNode {
 
 // Re-export styled components
 // Re-export IconProps from hikari-icons for convenience
-pub use hikari_icons::IconProps;
+pub use hikari_icons::{IconProps, IconRenderMode};
 
 // Add ArrowProps from basic module
 pub use crate::basic::ArrowProps;

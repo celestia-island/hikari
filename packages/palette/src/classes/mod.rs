@@ -20,5 +20,5 @@ pub use transitions::*;
 pub use typography::*;
 
 pub mod generated {
-    include!(concat!(env!("OUT_DIR"), "/classes_generated.rs"));
+    include!(concat!(env!("OUT_DIR"), "/classes/generated.rs"));
 }

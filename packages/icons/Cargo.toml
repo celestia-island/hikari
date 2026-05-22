@@ -12,6 +12,7 @@ include = [
     "src/**/*.rs",
     "tests/**/*.rs",
     "icons.txt",
+    "icon_data.dat",
     "README.md",
 ]
 

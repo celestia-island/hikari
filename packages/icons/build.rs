@@ -1,12 +1,13 @@
-use std::io::Write;
+use std::collections::HashMap;
+use std::io::{BufRead, Write};
 use std::path::Path;
 use std::{env, fs};
 
+const ICONS_DIR: &str = "icons";
+
 fn main() {
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_data = Path::new(&out_dir).join("mdi_data.rs");
-    let dest_enum = Path::new(&out_dir).join("mdi_enum.rs");
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     if env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
@@ -14,27 +15,34 @@ fn main() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    let workspace = find_workspace(&manifest_dir);
-    let svg_dir = workspace.join("icons/mdi");
+    let icons_out = Path::new(&out_dir).join(ICONS_DIR);
+    fs::create_dir_all(&icons_out).unwrap();
 
-    if !svg_dir.exists() {
-        write_stub_data(&dest_data);
-        write_stub_enum(&dest_enum);
+    let md_dir = Path::new(&manifest_dir);
+    let data_sets = discover_data_sets(md_dir);
+
+    if data_sets.is_empty() {
+        eprintln!("hikari-icons: no icon data found — generating stubs");
+        write_stubs(&icons_out);
         return;
     }
 
-    let icons = read_icons(&svg_dir);
+    let mut manifest_modules = Vec::new();
 
-    if icons.is_empty() {
-        write_stub_data(&dest_data);
-        write_stub_enum(&dest_enum);
-        return;
+    for (set_name, icons) in &data_sets {
+        let dest_enum = icons_out.join(format!("{}_enum.rs", set_name));
+        let dest_data = icons_out.join(format!("{}_data.rs", set_name));
+
+        gen_enum(set_name, icons, &dest_enum);
+        gen_data(set_name, icons, &dest_data);
+
+        let pascal_type = format!("{}Icon", snake_to_pascal(set_name));
+        manifest_modules.push((*set_name, pascal_type));
+
+        eprintln!("hikari-icons: {} icons for set '{}'", icons.len(), set_name);
     }
 
-    gen_data(&icons, &dest_data);
-    gen_enum(&icons, &dest_enum);
-
-    eprintln!("hikari-icons: {} icons generated", icons.len());
+    gen_manifest(&manifest_modules, &icons_out.join("manifest.rs"));
 }
 
 struct Icon {
@@ -43,21 +51,71 @@ struct Icon {
     path_d: String,
 }
 
-fn find_workspace(manifest_dir: &str) -> std::path::PathBuf {
-    let mut result = Path::new(manifest_dir).parent().unwrap().to_path_buf();
-    let mut p = Path::new(manifest_dir);
-    while let Some(parent) = p.parent() {
-        let cargo = parent.join("Cargo.toml");
-        if cargo.exists()
-            && let Ok(content) = fs::read_to_string(&cargo)
-            && content.contains("[workspace]")
-        {
-            result = parent.to_path_buf();
-            break;
+fn discover_data_sets(dir: &Path) -> HashMap<&'static str, Vec<Icon>> {
+    let mut sets = HashMap::new();
+
+    let dat_path = dir.join("icon_data.dat");
+    if dat_path.exists() {
+        println!("cargo:rerun-if-changed=icon_data.dat");
+        let icons = read_tab_separated(&dat_path);
+        if !icons.is_empty() {
+            sets.insert("mdi", icons);
         }
-        p = parent;
     }
-    result
+
+    for entry in fs::read_dir(dir).unwrap_or_else(|_| panic!("Failed to read {}", dir.display())) {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let path = entry.path();
+        let fname = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+
+        if fname == "icon_data.dat" || !fname.ends_with("_data.dat") {
+            continue;
+        }
+
+        let set_name = &fname[..fname.len() - "_data.dat".len()];
+        if sets.contains_key(set_name) {
+            continue;
+        }
+
+        println!("cargo:rerun-if-changed={}", fname);
+        let icons = read_tab_separated(&path);
+        if !icons.is_empty() {
+            sets.insert(Box::leak(set_name.to_string().into_boxed_str()), icons);
+        }
+    }
+
+    sets
+}
+
+fn read_tab_separated(path: &Path) -> Vec<Icon> {
+    let file = match fs::File::open(path) {
+        Ok(f) => f,
+        Err(_) => return Vec::new(),
+    };
+    let mut icons = Vec::new();
+    for line in std::io::BufReader::new(file).lines() {
+        let line = match line {
+            Ok(l) => l,
+            Err(_) => continue,
+        };
+        let (name, path_d) = match line.split_once('\t') {
+            Some(pair) => pair,
+            None => continue,
+        };
+        icons.push(Icon {
+            kebab: name.to_string(),
+            pascal: kebab_to_pascal(name),
+            path_d: path_d.to_string(),
+        });
+    }
+    icons.sort_by(|a, b| a.kebab.cmp(&b.kebab));
+    icons
 }
 
 fn kebab_to_pascal(s: &str) -> String {
@@ -72,72 +130,32 @@ fn kebab_to_pascal(s: &str) -> String {
         .collect()
 }
 
-fn read_icons(svg_dir: &Path) -> Vec<Icon> {
-    let mut icons: Vec<Icon> = Vec::new();
-    let mut names: Vec<String> = fs::read_dir(svg_dir)
-        .unwrap_or_else(|e| panic!("cannot read {}: {}", svg_dir.display(), e))
-        .filter_map(|e| e.ok())
-        .filter_map(|e| {
-            let name = e.file_name().to_string_lossy().into_owned();
-            if name.ends_with(".svg") {
-                Some(name[..name.len() - 4].to_string())
-            } else {
-                None
+fn snake_to_pascal(s: &str) -> String {
+    s.split('_')
+        .map(|part| {
+            let mut chars = part.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
             }
         })
-        .collect();
-    names.sort();
-
-    for name in &names {
-        let svg = match fs::read_to_string(svg_dir.join(format!("{name}.svg"))) {
-            Ok(s) => s,
-            Err(_) => continue,
-        };
-        let d = match extract_path_d(&svg) {
-            Some(d) => d,
-            None => continue,
-        };
-        icons.push(Icon {
-            kebab: name.clone(),
-            pascal: kebab_to_pascal(name),
-            path_d: d,
-        });
-    }
-    icons
+        .collect()
 }
 
-fn gen_data(icons: &[Icon], dest: &Path) {
+fn gen_enum(set_name: &str, icons: &[Icon], dest: &Path) {
+    let type_name = format!("{}Icon", snake_to_pascal(set_name));
+    let _ = fs::create_dir_all(dest.parent().unwrap());
     let mut f = fs::File::create(dest).unwrap();
-    writeln!(f, "// @generated ({} icons) — DO NOT EDIT", icons.len()).unwrap();
-    writeln!(f).unwrap();
-    writeln!(f, "#[rustfmt::skip]").unwrap();
-    writeln!(f, "static ENTRIES: &[(&str, &str)] = &[").unwrap();
-    for icon in icons {
-        writeln!(f, "    (\"{}\",", icon.kebab).unwrap();
-        writeln!(f, "     \"{}\"),", icon.path_d).unwrap();
-    }
-    writeln!(f, "];").unwrap();
-    writeln!(f).unwrap();
-    writeln!(f, "#[rustfmt::skip]").unwrap();
-    writeln!(f, "pub fn get(name: &str) -> Option<&'static str> {{").unwrap();
-    writeln!(f, "    ENTRIES").unwrap();
-    writeln!(f, "        .binary_search_by_key(&name, |(k, _)| k)").unwrap();
-    writeln!(f, "        .ok()").unwrap();
-    writeln!(f, "        .map(|i| ENTRIES[i].1)").unwrap();
-    writeln!(f, "}}").unwrap();
-}
 
-fn gen_enum(icons: &[Icon], dest: &Path) {
-    let mut f = fs::File::create(dest).unwrap();
     writeln!(f, "// @generated ({} variants) — DO NOT EDIT", icons.len()).unwrap();
     writeln!(f).unwrap();
     writeln!(f, "#[cfg(feature = \"tairitsu\")]").unwrap();
     writeln!(f, "use tairitsu_vdom::IntoAttrValue;").unwrap();
     writeln!(f).unwrap();
-    writeln!(f, "/// Full MDI icon enum ({} variants)", icons.len()).unwrap();
+    writeln!(f, "/// {} icon enum ({} variants)", snake_to_pascal(set_name), icons.len()).unwrap();
     writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
     writeln!(f, "#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]").unwrap();
-    writeln!(f, "pub enum MdiIcon {{").unwrap();
+    writeln!(f, "pub enum {} {{", type_name).unwrap();
     for icon in icons {
         writeln!(f, "    {},", icon.pascal).unwrap();
     }
@@ -145,20 +163,11 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f).unwrap();
 
     writeln!(f, "#[rustfmt::skip]").unwrap();
-    writeln!(f, "impl std::fmt::Display for MdiIcon {{").unwrap();
-    writeln!(
-        f,
-        "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{"
-    )
-    .unwrap();
+    writeln!(f, "impl std::fmt::Display for {} {{", type_name).unwrap();
+    writeln!(f, "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{").unwrap();
     writeln!(f, "        let name: &str = match self {{").unwrap();
     for icon in icons {
-        writeln!(
-            f,
-            "            MdiIcon::{} => \"{}\",",
-            icon.pascal, icon.kebab
-        )
-        .unwrap();
+        writeln!(f, "            {}::{} => \"{}\",", type_name, icon.pascal, icon.kebab).unwrap();
     }
     writeln!(f, "        }};").unwrap();
     writeln!(f, "        write!(f, \"{{}}\", name)").unwrap();
@@ -167,57 +176,116 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f).unwrap();
 
     writeln!(f, "#[rustfmt::skip]").unwrap();
-    writeln!(f, "impl std::convert::From<&str> for MdiIcon {{").unwrap();
+    writeln!(f, "impl std::convert::From<&str> for {} {{", type_name).unwrap();
     writeln!(f, "    fn from(s: &str) -> Self {{").unwrap();
     writeln!(f, "        match s {{").unwrap();
     for icon in icons {
-        writeln!(
-            f,
-            "            \"{}\" => MdiIcon::{},",
-            icon.kebab, icon.pascal
-        )
-        .unwrap();
+        writeln!(f, "            \"{}\" => {}::{},", icon.kebab, type_name, icon.pascal).unwrap();
     }
-    writeln!(f, "            _ => MdiIcon::Help,").unwrap();
+    if set_name == "mdi" {
+        writeln!(f, "            _ => {}::Help,", type_name).unwrap();
+    } else {
+        let first = icons.first().map(|i| i.pascal.as_str()).unwrap_or("Unknown");
+        writeln!(f, "            _ => {}::{},", type_name, first).unwrap();
+    }
     writeln!(f, "        }}").unwrap();
     writeln!(f, "    }}").unwrap();
     writeln!(f, "}}").unwrap();
     writeln!(f).unwrap();
 
     writeln!(f, "#[cfg(feature = \"tairitsu\")]").unwrap();
-    writeln!(f, "impl IntoAttrValue for MdiIcon {{").unwrap();
+    writeln!(f, "impl IntoAttrValue for {} {{", type_name).unwrap();
     writeln!(f, "    fn into_attr_value(self) -> Option<String> {{").unwrap();
     writeln!(f, "        Some(self.to_string())").unwrap();
     writeln!(f, "    }}").unwrap();
     writeln!(f, "}}").unwrap();
 }
 
-fn write_stub_data(dest: &Path) {
+fn gen_data(set_name: &str, icons: &[Icon], dest: &Path) {
     let _ = fs::create_dir_all(dest.parent().unwrap());
     let mut f = fs::File::create(dest).unwrap();
-    writeln!(f, "// stub").unwrap();
-    writeln!(
-        f,
-        "pub fn get(_name: &str) -> Option<&'static str> {{ None }}"
-    )
-    .unwrap();
+    let entries_name = format!("{}_ENTRIES", set_name.to_uppercase());
+
+    writeln!(f, "// @generated ({} icons) — DO NOT EDIT", icons.len()).unwrap();
+    writeln!(f).unwrap();
+    writeln!(f, "#[rustfmt::skip]").unwrap();
+    writeln!(f, "static {entries_name}: &[(&str, &str)] = &[").unwrap();
+    for icon in icons {
+        writeln!(f, "    (\"{}\",", icon.kebab).unwrap();
+        writeln!(f, "     \"{}\"),", icon.path_d).unwrap();
+    }
+    writeln!(f, "];").unwrap();
+    writeln!(f).unwrap();
+
+    writeln!(f, "#[rustfmt::skip]").unwrap();
+    writeln!(f, "pub fn get(name: &str) -> Option<&'static str> {{").unwrap();
+    writeln!(f, "    {entries_name}").unwrap();
+    writeln!(f, "        .binary_search_by_key(&name, |(k, _)| k)").unwrap();
+    writeln!(f, "        .ok()").unwrap();
+    writeln!(f, "        .map(|i| {entries_name}[i].1)").unwrap();
+    writeln!(f, "}}").unwrap();
 }
 
-fn write_stub_enum(dest: &Path) {
+fn gen_manifest(modules: &[(&str, String)], dest: &Path) {
     let _ = fs::create_dir_all(dest.parent().unwrap());
     let mut f = fs::File::create(dest).unwrap();
-    writeln!(f, "// stub").unwrap();
+
+    writeln!(f, "// @generated manifest — DO NOT EDIT").unwrap();
+    writeln!(f).unwrap();
+
+    for (set_name, type_name) in modules {
+        writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
+        writeln!(f, "#[rustfmt::skip]").unwrap();
+        writeln!(f, "pub mod {}_enum {{ include!(concat!(env!(\"OUT_DIR\"), \"/{}/{}_enum.rs\")); }}", set_name, ICONS_DIR, set_name).unwrap();
+        writeln!(f).unwrap();
+        writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
+        writeln!(f, "#[rustfmt::skip]").unwrap();
+        writeln!(f, "pub mod {}_data {{ include!(concat!(env!(\"OUT_DIR\"), \"/{}/{}_data.rs\")); }}", set_name, ICONS_DIR, set_name).unwrap();
+        writeln!(f).unwrap();
+        writeln!(f, "pub use {}_enum::{};", set_name, type_name).unwrap();
+        writeln!(f).unwrap();
+    }
+
+    writeln!(f, "pub fn get_icon_path(set: &str, name: &str) -> Option<&'static str> {{").unwrap();
+    writeln!(f, "    match set {{").unwrap();
+    for (set_name, _) in modules {
+        writeln!(f, "        \"{}\" => {}_data::get(name),", set_name, set_name).unwrap();
+    }
+    writeln!(f, "        _ => None,").unwrap();
+    writeln!(f, "    }}").unwrap();
+    writeln!(f, "}}").unwrap();
+}
+
+fn write_stubs(icons_out: &Path) {
+    fs::create_dir_all(icons_out).unwrap();
+
+    let dest_data = icons_out.join("mdi_data.rs");
+    let mut f = fs::File::create(&dest_data).unwrap();
+    writeln!(f, "pub fn get(_name: &str) -> Option<&'static str> {{ None }}").unwrap();
+
+    let dest_enum = icons_out.join("mdi_enum.rs");
+    let mut f = fs::File::create(&dest_enum).unwrap();
     writeln!(f, "#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]").unwrap();
     writeln!(f, "pub enum MdiIcon {{ Help }}").unwrap();
     writeln!(f, "impl std::fmt::Display for MdiIcon {{").unwrap();
     writeln!(f, "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{ write!(f, \"help\") }}").unwrap();
     writeln!(f, "}}").unwrap();
-}
 
-fn extract_path_d(svg: &str) -> Option<String> {
-    let start = svg.find("<path")?;
-    let rest = &svg[start..];
-    let d_start = rest.find("d=\"")? + 3;
-    let d_end = rest[d_start..].find('"')?;
-    Some(rest[d_start..d_start + d_end].to_string())
+    let dest_manifest = icons_out.join("manifest.rs");
+    let mut f = fs::File::create(&dest_manifest).unwrap();
+    writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
+    writeln!(f, "#[rustfmt::skip]").unwrap();
+    writeln!(f, "pub mod mdi_enum {{ include!(concat!(env!(\"OUT_DIR\"), \"/{}/mdi_enum.rs\")); }}", ICONS_DIR).unwrap();
+    writeln!(f).unwrap();
+    writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
+    writeln!(f, "#[rustfmt::skip]").unwrap();
+    writeln!(f, "pub mod mdi_data {{ include!(concat!(env!(\"OUT_DIR\"), \"/{}/mdi_data.rs\")); }}", ICONS_DIR).unwrap();
+    writeln!(f).unwrap();
+    writeln!(f, "pub use mdi_enum::MdiIcon;").unwrap();
+    writeln!(f).unwrap();
+    writeln!(f, "pub fn get_icon_path(set: &str, name: &str) -> Option<&'static str> {{").unwrap();
+    writeln!(f, "    let _ = set;").unwrap();
+    writeln!(f, "    let _ = name;").unwrap();
+    writeln!(f, "    None").unwrap();
+    writeln!(f, "}}").unwrap();
 }

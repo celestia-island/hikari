@@ -31,7 +31,9 @@ fn main() {
         collect_from_dir(scss_dir, &mut all_classes);
     }
 
-    let dest = Path::new(&out_dir).join("classes_generated.rs");
+    let classes_dir = Path::new(&out_dir).join("classes");
+    fs::create_dir_all(&classes_dir).unwrap();
+    let dest = classes_dir.join("generated.rs");
     generate(&all_classes, &dest);
 
     eprintln!(
@@ -92,6 +94,7 @@ fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
 fn extract_classes(scss: &str, prefix: &str, hikari_prefix: &str) -> Vec<String> {
     let mut seen = BTreeSet::new();
     let mut classes = Vec::new();
+    let re = regex_lite::Regex::new(r"\.((?:hi-|hikari-)[a-zA-Z][a-zA-Z0-9_-]*)").unwrap();
 
     for line in scss.lines() {
         let trimmed = line.trim();
@@ -99,10 +102,7 @@ fn extract_classes(scss: &str, prefix: &str, hikari_prefix: &str) -> Vec<String>
             continue;
         }
 
-        for m in regex_lite::Regex::new(r"\.((?:hi-|hikari-)[a-zA-Z][a-zA-Z0-9_-]*)")
-            .unwrap()
-            .find_iter(trimmed)
-        {
+        for m in re.find_iter(trimmed) {
             let class = m.as_str()[1..].to_string();
             if !class.starts_with(prefix) && !class.starts_with(hikari_prefix) {
                 continue;

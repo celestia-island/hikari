@@ -18,3 +18,7 @@ pub use spacing::*;
 pub use tairitsu_style::{ClassesBuilder, TypedClass};
 pub use transitions::*;
 pub use typography::*;
+
+pub mod generated {
+    include!(concat!(env!("OUT_DIR"), "/classes_generated.rs"));
+}

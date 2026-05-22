@@ -16,6 +16,9 @@ serde = { workspace = true, features = ["derive"] }
 tairitsu-style = "^0.5"
 yuuka = "0.6"
 
+[build-dependencies]
+regex-lite = "0.1"
+
 [target.'cfg(target_family = "wasm")'.dependencies]
 wit-bindgen = "0.50"
 

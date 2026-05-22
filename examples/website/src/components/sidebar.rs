@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use tairitsu_web::t;
-use hikari_icons::{MdiIcon, get};
+use hikari_icons::MdiIcon;
 use tairitsu_vdom::{VElement, VNode, VText};
 
 use super::glow::{glow_wrap, GlowColor, GlowConfig, GlowIntensity};
@@ -42,7 +42,7 @@ const NAV_CATEGORIES: &[NavCategory] = &[
                 label_key: "sidebar.components.layer1",
                 href: "/components/layer1",
                 items: &[
-                    NavItem { label_key: "sidebar.items.button", icon: MdiIcon::Cursor, href: "/components/layer1/button" },
+                    NavItem { label_key: "sidebar.items.button", icon: MdiIcon::CursorDefaultClick, href: "/components/layer1/button" },
                     NavItem { label_key: "sidebar.items.form", icon: MdiIcon::TextBoxEdit, href: "/components/layer1/form" },
                     NavItem { label_key: "sidebar.items.number_input", icon: MdiIcon::FormatListNumbered, href: "/components/layer1/number-input" },
                     NavItem { label_key: "sidebar.items.search", icon: MdiIcon::Magnify, href: "/components/layer1/search" },
@@ -121,18 +121,12 @@ fn txt(s: &str) -> VNode {
 }
 
 fn icon_el(icon: MdiIcon) -> VNode {
-    let icon_name = icon.to_string();
-    let svg_str = get(&icon_name)
-        .map(|data| {
-            format!(
-                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="14" height="14"><path fill="currentColor" d="{}"/></svg>"#,
-                data.view_box.as_deref().unwrap_or("0 0 24 24"),
-                data.path.as_deref().unwrap_or("")
-            )
-        })
-        .unwrap_or_else(|| String::from(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
-        ));
+    let path_data = hikari_icons::get(&icon.to_string()).unwrap_or(
+        "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
+    );
+    let svg_str = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="{path_data}"/></svg>"#,
+    );
     VNode::Element(
         VElement::new("span")
             .class("hi-menu-item-icon hikari-icon")

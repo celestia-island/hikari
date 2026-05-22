@@ -17,8 +17,18 @@
 //! let svg = build_svg_from_path(path_d, 24);
 //! ```
 
-pub mod mdi_data;
-pub mod mdi_enum;
+#[allow(non_camel_case_types)]
+#[rustfmt::skip]
+mod mdi_data {
+    include!(concat!(env!("OUT_DIR"), "/mdi_data.rs"));
+}
+
+#[allow(non_camel_case_types)]
+#[rustfmt::skip]
+mod mdi_enum {
+    include!(concat!(env!("OUT_DIR"), "/mdi_enum.rs"));
+}
+
 pub use mdi_data::get;
 pub use mdi_enum::MdiIcon;
 

@@ -1,12 +1,12 @@
-use std::env;
-use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::{env, fs};
 
 fn main() {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let dest_data = Path::new(&manifest_dir).join("src/mdi_data.rs");
-    let dest_enum = Path::new(&manifest_dir).join("src/mdi_enum.rs");
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let dest_data = Path::new(&out_dir).join("mdi_data.rs");
+    let dest_enum = Path::new(&out_dir).join("mdi_enum.rs");
 
     if env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
@@ -14,44 +14,25 @@ fn main() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    let need_data = !dest_data.exists();
-    let need_enum = !dest_enum.exists();
-
-    if !need_data && !need_enum {
-        return;
-    }
-
     let workspace = find_workspace(&manifest_dir);
     let svg_dir = workspace.join("icons/mdi");
 
     if !svg_dir.exists() {
-        if need_data {
-            write_stub_data(&dest_data);
-        }
-        if need_enum {
-            write_stub_enum(&dest_enum);
-        }
+        write_stub_data(&dest_data);
+        write_stub_enum(&dest_enum);
         return;
     }
 
     let icons = read_icons(&svg_dir);
 
     if icons.is_empty() {
-        if need_data {
-            write_stub_data(&dest_data);
-        }
-        if need_enum {
-            write_stub_enum(&dest_enum);
-        }
+        write_stub_data(&dest_data);
+        write_stub_enum(&dest_enum);
         return;
     }
 
-    if need_data {
-        gen_data(&icons, &dest_data);
-    }
-    if need_enum {
-        gen_enum(&icons, &dest_enum);
-    }
+    gen_data(&icons, &dest_data);
+    gen_enum(&icons, &dest_enum);
 
     eprintln!("hikari-icons: {} icons generated", icons.len());
 }
@@ -149,12 +130,12 @@ fn gen_data(icons: &[Icon], dest: &Path) {
 fn gen_enum(icons: &[Icon], dest: &Path) {
     let mut f = fs::File::create(dest).unwrap();
     writeln!(f, "// @generated ({} variants) — DO NOT EDIT", icons.len()).unwrap();
-    writeln!(f, "#![allow(non_camel_case_types)]").unwrap();
     writeln!(f).unwrap();
     writeln!(f, "#[cfg(feature = \"tairitsu\")]").unwrap();
     writeln!(f, "use tairitsu_vdom::IntoAttrValue;").unwrap();
     writeln!(f).unwrap();
     writeln!(f, "/// Full MDI icon enum ({} variants)", icons.len()).unwrap();
+    writeln!(f, "#[allow(non_camel_case_types)]").unwrap();
     writeln!(f, "#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]").unwrap();
     writeln!(f, "pub enum MdiIcon {{").unwrap();
     for icon in icons {
@@ -163,7 +144,6 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f, "}}").unwrap();
     writeln!(f).unwrap();
 
-    // Display impl: MdiIcon -> kebab-case string
     writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "impl std::fmt::Display for MdiIcon {{").unwrap();
     writeln!(
@@ -186,7 +166,6 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f, "}}").unwrap();
     writeln!(f).unwrap();
 
-    // From<&str> impl: kebab-case string -> MdiIcon
     writeln!(f, "#[rustfmt::skip]").unwrap();
     writeln!(f, "impl std::convert::From<&str> for MdiIcon {{").unwrap();
     writeln!(f, "    fn from(s: &str) -> Self {{").unwrap();
@@ -205,7 +184,6 @@ fn gen_enum(icons: &[Icon], dest: &Path) {
     writeln!(f, "}}").unwrap();
     writeln!(f).unwrap();
 
-    // IntoAttrValue for tairitsu
     writeln!(f, "#[cfg(feature = \"tairitsu\")]").unwrap();
     writeln!(f, "impl IntoAttrValue for MdiIcon {{").unwrap();
     writeln!(f, "    fn into_attr_value(self) -> Option<String> {{").unwrap();

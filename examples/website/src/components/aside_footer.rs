@@ -1,6 +1,6 @@
 use std::{cell::{Cell, RefCell}, rc::Rc};
 
-use hikari_icons::{MdiIcon, get};
+use hikari_icons::MdiIcon;
 use tairitsu_vdom::{DomHandle, EventData, MouseEvent, VElement, VNode, VText, get_bounding_client_rect, set_attribute, set_style};
 use tairitsu_web::wit_platform::WitElement;
 
@@ -148,17 +148,12 @@ fn viewport_size() -> (f64, f64) {
 }
 
 fn build_icon_svg(icon: MdiIcon) -> String {
-    get(icon.to_string().as_str())
-        .map(|data| {
-            format!(
-                r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{}" width="18" height="18"><path fill="currentColor" d="{}"/></svg>"#,
-                data.view_box.as_deref().unwrap_or("0 0 24 24"),
-                data.path.as_deref().unwrap_or("")
-            )
-        })
-        .unwrap_or_else(|| String::from(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#
-        ))
+    let path_data = hikari_icons::get(&icon.to_string()).unwrap_or(
+        "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z",
+    );
+    format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="{path_data}"/></svg>"#,
+    )
 }
 
 pub fn render(

@@ -1,8 +1,6 @@
 // hi-components/src/data/drag.rs
 // Drag and drop component for tree node reordering
 
-#![allow(clippy::needless_update)]
-
 use hikari_palette::classes::DragDropTreeClass;
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_style::ClassesBuilder;
@@ -160,9 +158,15 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
     let disabled = props.node.disabled;
     let node_title = props.node.title.clone();
 
-    let is_dragging = props.dragged_key.as_ref().unwrap().read().as_ref() == Some(&item_key_1);
+    let is_dragging = props
+        .dragged_key
+        .as_ref()
+        .is_some_and(|s| s.read().as_ref() == Some(&item_key_1));
 
-    let is_drag_over = props.drag_over_key.as_ref().unwrap().read().as_ref() == Some(&item_key_1);
+    let is_drag_over = props
+        .drag_over_key
+        .as_ref()
+        .is_some_and(|s| s.read().as_ref() == Some(&item_key_1));
 
     let drag_node_classes = ClassesBuilder::new()
         .add_typed(DragDropTreeClass::DragNode)
@@ -171,10 +175,14 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         .add_typed_if(DragDropTreeClass::NodeDisabled, disabled)
         .build();
 
-    let dragged_key_for_start = props.dragged_key.clone().unwrap();
+    let dragged_key_for_start = props.dragged_key.clone();
     let allow_drag_for_start = props.allow_drag.clone();
     let ondragstart = move |mut e: DragEvent| {
         e.prevent_default();
+
+        let Some(signal) = dragged_key_for_start.as_ref() else {
+            return;
+        };
 
         let key = item_key_2.clone();
         let can_drag = if let Some(handler) = allow_drag_for_start.as_ref() {
@@ -185,7 +193,7 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         };
 
         if can_drag {
-            dragged_key_for_start.set(Some(key.clone()));
+            signal.set(Some(key.clone()));
 
             if let Some(ref mut data_transfer) = e.data_transfer {
                 data_transfer.set_data("text/plain", &key);
@@ -194,45 +202,70 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
         }
     };
 
-    let dragged_key_for_end = props.dragged_key.clone().unwrap();
-    let drag_over_key_for_end = props.drag_over_key.clone().unwrap();
-    let drop_target_for_end = props.drop_target.clone().unwrap();
+    let dragged_key_for_end = props.dragged_key.clone();
+    let drag_over_key_for_end = props.drag_over_key.clone();
+    let drop_target_for_end = props.drop_target.clone();
     let ondragend = move |_: DragEvent| {
-        dragged_key_for_end.set(None);
-        drag_over_key_for_end.set(None);
-        drop_target_for_end.set(None);
+        if let Some(signal) = dragged_key_for_end.as_ref() {
+            signal.set(None);
+        }
+        if let Some(signal) = drag_over_key_for_end.as_ref() {
+            signal.set(None);
+        }
+        if let Some(signal) = drop_target_for_end.as_ref() {
+            signal.set(None);
+        }
     };
 
-    let dragged_key_for_over = props.dragged_key.clone().unwrap();
-    let drag_over_key_for_over = props.drag_over_key.clone().unwrap();
+    let dragged_key_for_over = props.dragged_key.clone();
+    let drag_over_key_for_over = props.drag_over_key.clone();
     let ondragover = move |mut e: DragEvent| {
         e.prevent_default();
         e.stop_propagation();
 
-        if dragged_key_for_over.read().is_some() && props.drop_allowed {
+        let Some(dragged_signal) = dragged_key_for_over.as_ref() else {
+            return;
+        };
+        let Some(over_signal) = drag_over_key_for_over.as_ref() else {
+            return;
+        };
+
+        if dragged_signal.read().is_some() && props.drop_allowed {
             if let Some(ref mut data_transfer) = e.data_transfer {
                 data_transfer.drop_effect = "move".to_string();
             }
             let key = item_key_3.clone();
-            drag_over_key_for_over.set(Some(key));
+            over_signal.set(Some(key));
         }
     };
 
-    let drag_over_key_for_leave = props.drag_over_key.clone().unwrap();
+    let drag_over_key_for_leave = props.drag_over_key.clone();
     let ondragleave = move |_: DragEvent| {
-        drag_over_key_for_leave.set(None);
+        if let Some(signal) = drag_over_key_for_leave.as_ref() {
+            signal.set(None);
+        }
     };
 
-    let dragged_key_for_drop = props.dragged_key.clone().unwrap();
-    let drag_over_key_for_drop = props.drag_over_key.clone().unwrap();
-    let drop_target_for_drop = props.drop_target.clone().unwrap();
+    let dragged_key_for_drop = props.dragged_key.clone();
+    let drag_over_key_for_drop = props.drag_over_key.clone();
+    let drop_target_for_drop = props.drop_target.clone();
     let allow_drop_for_drop = props.allow_drop.clone();
     let on_drop_for_drop = props.on_drop.clone();
     let ondrop = move |e: DragEvent| {
         e.prevent_default();
         e.stop_propagation();
 
-        if let Some(dragged) = dragged_key_for_drop.read().clone() {
+        let Some(dragged_signal) = dragged_key_for_drop.as_ref() else {
+            return;
+        };
+        let Some(over_signal) = drag_over_key_for_drop.as_ref() else {
+            return;
+        };
+        let Some(target_signal) = drop_target_for_drop.as_ref() else {
+            return;
+        };
+
+        if let Some(dragged) = dragged_signal.read().clone() {
             let position = DropPosition::Inside;
             let key = item_key_4.clone();
 
@@ -260,8 +293,8 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
                 }
             }
 
-            drag_over_key_for_drop.set(None);
-            drop_target_for_drop.set(None);
+            over_signal.set(None);
+            target_signal.set(None);
         }
     };
 
@@ -303,9 +336,9 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
                             drop_allowed: props.drop_allowed,
                             allow_drag: props.allow_drag.clone(),
                             allow_drop: props.allow_drop.clone(),
-                            dragged_key: Some(props.dragged_key.clone().unwrap()),
-                            drop_target: Some(props.drop_target.clone().unwrap()),
-                            drag_over_key: Some(props.drag_over_key.clone().unwrap()),
+                            dragged_key: props.dragged_key.clone(),
+                            drop_target: props.drop_target.clone(),
+                            drag_over_key: props.drag_over_key.clone(),
                             on_drop: props.on_drop.clone(),
                         }
                     }

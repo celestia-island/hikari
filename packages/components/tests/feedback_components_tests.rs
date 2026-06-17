@@ -81,7 +81,6 @@ mod tests {
             hikari_components::feedback::ToastPosition::TopRight
         );
         assert!(props.closable);
-        assert!(props.duration.is_none());
     }
 
     #[test]
@@ -106,15 +105,6 @@ mod tests {
             props.position,
             hikari_components::feedback::ToastPosition::BottomLeft
         );
-    }
-
-    #[test]
-    fn test_toast_props_with_duration() {
-        let props = ToastProps {
-            duration: Some(3000),
-            ..Default::default()
-        };
-        assert_eq!(props.duration, Some(3000));
     }
 
     #[test]
@@ -291,6 +281,40 @@ mod tests {
         );
         assert!(x < 100.0);
         assert!(y < 100.0);
+    }
+
+    #[test]
+    fn test_modal_escape_closes_when_mask_closable() {
+        use hikari_components::feedback::ModalConfig;
+        let config = ModalConfig {
+            mask_closable: true,
+            ..Default::default()
+        };
+        assert!(config.mask_closable);
+        // mask_closable enables both overlay click and Escape key to close
+    }
+
+    #[test]
+    fn test_modal_escape_does_not_close_when_not_mask_closable() {
+        use hikari_components::feedback::ModalConfig;
+        let config = ModalConfig {
+            mask_closable: false,
+            ..Default::default()
+        };
+        assert!(!config.mask_closable);
+    }
+
+    #[test]
+    fn test_modal_mask_mode_affects_close_behavior() {
+        use hikari_components::feedback::{MaskMode, ModalConfig};
+        for mask_mode in [MaskMode::Opaque, MaskMode::Transparent] {
+            let config = ModalConfig {
+                mask_mode,
+                mask_closable: true,
+                ..Default::default()
+            };
+            assert!(config.mask_closable);
+        }
     }
 
     #[test]

@@ -70,9 +70,9 @@ mod tests {
 
         for i in 0..5 {
             let action = HistoryAction::NodeAdd {
-                id: format!("node{}", i),
+                id: format!("node{i}"),
                 node_type: "constant".to_string(),
-                position: (100.0 * i as f64, 100.0 * i as f64),
+                position: (100.0 * f64::from(i), 100.0 * f64::from(i)),
             };
             history.push(action);
         }
@@ -316,7 +316,7 @@ mod tests {
         let connections = vec![];
         let serialized = SerializedNodeGraph::from_state(&nodes, &connections);
 
-        let (restored_nodes, restored_connections) = serialized.to_state().unwrap();
+        let (restored_nodes, restored_connections) = serialized.to_state();
 
         assert_eq!(restored_nodes.len(), 1);
         assert_eq!(restored_connections.len(), 0);
@@ -354,7 +354,7 @@ mod tests {
         let json = serialized.to_json().unwrap();
 
         let deserialized_graph = SerializedNodeGraph::from_json(&json).unwrap();
-        let (restored_nodes, _) = deserialized_graph.to_state().unwrap();
+        let (restored_nodes, _) = deserialized_graph.to_state();
 
         assert_eq!(restored_nodes.len(), 2);
         let node1 = restored_nodes.get("node1").unwrap();

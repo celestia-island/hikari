@@ -24,6 +24,7 @@ mod markdown;
 mod pages;
 mod platform_init;
 mod reactive;
+mod router;
 mod routing;
 mod scrollbar_host;
 mod theme;

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, time::Duration};
@@ -137,7 +137,7 @@ impl VisualDebugger {
                 "--window-size=1920,1080",
             ])
             .build()
-            .map_err(|e| anyhow::anyhow!("Failed to build browser config: {}", e))?;
+            .map_err(|e| anyhow!("Failed to build browser config: {}", e))?;
 
         let (browser, mut handler) = Browser::launch(config)
             .await
@@ -194,7 +194,7 @@ impl VisualDebugger {
             }
         }
 
-        Err(anyhow::anyhow!(
+        Err(anyhow!(
             "No Chrome/Chromium found. Run `visual-debug install` first or set CHROME_BIN env."
         ))
     }
@@ -431,7 +431,7 @@ async fn cmd_capture(
     debugger.shutdown().await?;
 
     let passed = results.iter().filter(|r| r.success).count();
-    let _failed = results.len() - passed;
+    let _ = results.len() - passed;
 
     info!("=== Capture Complete ===");
     info!("Passed: {}/{}", passed, results.len());
@@ -522,7 +522,6 @@ async fn cmd_batch(
         println!("\n{:<25} {:<40} {:>8}", "Name", "Path", "Duration");
         println!("{}", "-".repeat(80));
         for r in &results {
-            let _s = if r.success { "OK" } else { "FAIL" };
             println!("{:<25} {:<40} {:>7}ms", r.name, 
                 if r.output_path.is_empty() {"(none)".to_string()} else {r.output_path.replace("/tmp/e2e_screenshots/", "")},
                 r.duration_ms);

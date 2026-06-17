@@ -1,8 +1,6 @@
 // hi-components/src/navigation/menu.rs
 // Menu component
 
-#![allow(clippy::needless_update)]
-
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
 use crate::basic::{Arrow, ArrowDirection};
@@ -10,7 +8,7 @@ use crate::feedback::Glow;
 use crate::prelude::*;
 use crate::style_builder::{CssProperty, StyleStringBuilder};
 use crate::styled::StyledComponent;
-use crate::{GlowBlur, GlowColor, GlowIntensity};
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 #[derive(Clone, Default)]
 pub struct MenuContext {
@@ -20,10 +18,12 @@ pub struct MenuContext {
 }
 
 impl MenuContext {
+    #[must_use]
     pub fn in_popover(&self) -> bool {
         self.in_popover
     }
 
+    #[must_use]
     pub fn glow_enabled(&self) -> bool {
         self.glow_enabled
     }
@@ -45,6 +45,7 @@ pub enum MenuItemHeight {
 }
 
 impl MenuItemHeight {
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             MenuItemHeight::Default => "hi-menu-height-default",
@@ -154,9 +155,6 @@ pub struct MenuProps {
 ///
 #[component]
 pub fn Menu(props: MenuProps) -> Element {
-    let _active_key = use_signal(|| props.default_active.clone());
-    let mut _open_submenus = use_signal(Vec::<String>::new);
-
     let mode_class = match props.mode {
         MenuMode::Vertical => MenuClass::Vertical,
         MenuMode::Horizontal => MenuClass::Horizontal,
@@ -201,7 +199,7 @@ impl StyledComponent for MenuComponent {
 
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    let menu_context = try_consume_context::<MenuContext>();
+    let menu_context = use_context::<MenuContext>();
     let should_glow = match &menu_context {
         Some(ctx) => {
             let ctx_val = ctx.get();

@@ -7,7 +7,6 @@ mod tests {
     use hikari_components::basic::card::{Card, CardProps};
     use hikari_components::basic::checkbox::{Checkbox, CheckboxProps};
     use hikari_components::basic::date_picker::{DatePicker, DatePickerProps};
-    use hikari_components::basic::divider::{Divider, DividerProps};
     use hikari_components::basic::file_upload::{FileUpload, FileUploadProps};
     use hikari_components::basic::image::{Image, ImageProps};
     use hikari_components::basic::input::{Input, InputProps};
@@ -16,6 +15,7 @@ mod tests {
     use hikari_components::basic::slider::{Slider, SliderProps};
     use hikari_components::basic::switch::{Switch, SwitchProps};
     use hikari_components::basic::textarea::{Textarea, TextareaProps};
+    use hikari_components::layout::{Divider, DividerProps};
     use hikari_components::portal::{PortalContext, PortalEntry};
     use hikari_components::prelude::*;
     use tairitsu_vdom::vnode::VNode;

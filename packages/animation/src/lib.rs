@@ -7,17 +7,17 @@
 //!
 //! The animation system is built on several core components:
 //!
-//! - **[`config`]** - Global animation configuration (enabled, duration_scale, reduced_motion)
-//! - **[`builder`]** - Fluent builder API for creating animations with static and dynamic values
-//! - **[`context`]** - Runtime context providing element dimensions, mouse position, and other state
-//! - **[`style`]** - Type-safe CSS property manipulation with [`StyleStringBuilder`]
-//! - **[`easing`]** - Easing functions for natural motion (ease-in-out, bounce, elastic, etc.)
-//! - **[`tween`]** - Interpolation system for smooth value transitions
-//! - **[`timeline`]** - Timeline-based animation sequencing
-//! - **[`presets`]** - Pre-built animation presets (fade, slide, scale, etc.)
-//! - **[`events`]** - Animation event system
-//! - **[`timer`]** - High-precision timer for frame-based animations
-//! - **[`core`]** - Core animation primitives and utilities
+//! - [`mod@config`] - Global animation configuration (enabled, duration_scale, reduced_motion)
+//! - [`mod@builder`] - Fluent builder API for creating animations with static and dynamic values
+//! - [`mod@context`] - Runtime context providing element dimensions, mouse position, and other state
+//! - [`mod@style`] - Type-safe CSS property manipulation with [`StyleStringBuilder`]
+//! - [`mod@easing`] - Easing functions for natural motion (ease-in-out, bounce, elastic, etc.)
+//! - [`mod@tween`] - Interpolation system for smooth value transitions
+//! - [`mod@timeline`] - Timeline-based animation sequencing
+//! - [`mod@presets`] - Pre-built animation presets (fade, slide, scale, etc.)
+//! - [`mod@events`] - Animation event system
+//! - [`mod@timer`] - High-precision timer for frame-based animations
+//! - [`mod@core`] - Core animation primitives and utilities
 //!
 //! ## Features
 //!

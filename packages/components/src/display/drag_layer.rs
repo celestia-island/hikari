@@ -1,50 +1,15 @@
 // packages/components/src/display/drag_layer.rs
 // DragLayer component
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
-use tairitsu_hooks::ReactiveSignal;
 
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::anim_helpers::run_ease_out;
 
 pub struct DragLayerComponent;
 
-struct DragPreviewAnimState {
-    start_ts: Option<f64>,
-    stopped: bool,
-}
-
 const DRAG_PREVIEW_ANIM_MS: f64 = 150.0;
-
-fn drag_preview_anim_tick(
-    state: Rc<RefCell<DragPreviewAnimState>>,
-    progress_signal: ReactiveSignal<f64>,
-) {
-    platform::request_animation_frame_with_timestamp(move |ts| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let start = s.start_ts.unwrap_or(ts);
-        if s.start_ts.is_none() {
-            s.start_ts = Some(ts);
-        }
-        let elapsed = ts - start;
-        let progress = (elapsed / DRAG_PREVIEW_ANIM_MS).min(1.0);
-        drop(s);
-
-        let eased = 1.0 - (1.0 - progress).powi(2);
-        progress_signal.set(eased);
-
-        if progress < 1.0 {
-            drag_preview_anim_tick(state.clone(), progress_signal.clone());
-        }
-    });
-}
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragItem {
@@ -89,23 +54,9 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
     let progress_signal = use_signal(|| 0.0_f64);
 
     {
-        let prog_clone = progress_signal.clone();
+        let sig = progress_signal.clone();
         use_effect(move || {
-            let state = Rc::new(RefCell::new(DragPreviewAnimState {
-                start_ts: None,
-                stopped: false,
-            }));
-            let s_ref = state.clone();
-            let prog_sig = prog_clone.clone();
-            platform::request_animation_frame_with_timestamp(move |ts| {
-                let mut s = s_ref.borrow_mut();
-                if s.stopped {
-                    return;
-                }
-                s.start_ts = Some(ts);
-                drop(s);
-                drag_preview_anim_tick(s_ref, prog_sig);
-            });
+            run_ease_out(DRAG_PREVIEW_ANIM_MS, 2, sig.clone());
         });
     }
 

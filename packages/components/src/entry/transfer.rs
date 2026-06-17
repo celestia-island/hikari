@@ -1,10 +1,7 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component
 
-#![allow(clippy::needless_update)]
-
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, TypedClass};
 
 use crate::prelude::*;

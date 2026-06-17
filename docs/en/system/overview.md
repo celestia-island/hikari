@@ -50,7 +50,7 @@ Theme context and style injection system.
 use hikari_theme::ThemeProvider;
 
 rsx! {
-    ThemeProvider { palette: "hikari" } {
+    ThemeProvider { initial_palette: "hikari" } {
         // Application content
         App {}
     }

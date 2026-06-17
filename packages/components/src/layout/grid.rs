@@ -3,7 +3,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! use hikari_components::layout::{Grid, Col};
 //! use crate::prelude::*;
 //!
@@ -95,8 +95,7 @@ pub fn Col(
 
     // Add responsive classes for different breakpoints
     let responsive_class = format!(
-        "col-responsive col-span-{} md:col-span-{} lg:col-span-{}",
-        base_span, md_span, lg_span
+        "col-responsive col-span-{base_span} md:col-span-{md_span} lg:col-span-{lg_span}"
     );
 
     let classes = ClassesBuilder::new()

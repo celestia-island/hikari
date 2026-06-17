@@ -1,8 +1,7 @@
 // hi-components/src/basic/arrow.rs
 // Arrow indicator component with rotation support
 
-use hikari_icons::MdiIcon;
-use hikari_icons::{Icon, IconProps};
+use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::ClassesBuilder;
 use hikari_palette::classes::components::ArrowClass;
 
@@ -31,11 +30,6 @@ impl IntoAttrValue for ArrowDirection {
     }
 }
 
-///
-///
-///
-///
-///
 #[component]
 pub fn Arrow(
     #[props(default)] direction: ArrowDirection,

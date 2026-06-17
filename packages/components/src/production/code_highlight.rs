@@ -13,6 +13,8 @@ use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
+const COPY_FEEDBACK_TIMEOUT_MS: i32 = 2000;
+
 // Copy text to clipboard using platform layer
 fn copy_to_clipboard(text: &str) -> bool {
     platform::copy_to_clipboard(text)
@@ -93,7 +95,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         let base = copy_classes.clone();
         let copied_state = copied.read();
         if copied_state {
-            format!("{} copied hi-code-highlight-copy-copied", base)
+            format!("{base} copied hi-code-highlight-copy-copied")
         } else {
             base
         }
@@ -101,7 +103,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
     let button_text = if copied.read() { "已复制" } else { "复制" };
 
-    let language_class = format!("language-{}", language);
+    let language_class = format!("language-{language}");
 
     // Pre-compute line number elements outside rsx! using VElement builder
     let line_number_nodes: Vec<VNode> = (1..=line_count)
@@ -135,7 +137,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                                         move || {
                                             copied_signal.set(false);
                                         },
-                                        2000,
+                                        COPY_FEEDBACK_TIMEOUT_MS,
                                     );
                                 }
                             }

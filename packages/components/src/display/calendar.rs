@@ -129,7 +129,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
             let is_selected = day == sel_day;
             let day_cell_cls = day_cell_class;
             let inner_class = if is_selected {
-                format!("{} {}", day_class, selected_day_class)
+                format!("{day_class} {selected_day_class}")
             } else {
                 day_class.to_string()
             };

@@ -1,10 +1,7 @@
 // hi-components/src/entry/cascader.rs
 // Cascader component
 
-#![allow(clippy::needless_update)]
-
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{CascaderClass, ClassesBuilder, TypedClass};
 
 use crate::prelude::*;
@@ -127,8 +124,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
 
         let has_children = find_option_by_path(&options_for_select, &new_values)
             .and_then(|opt| opt.children.as_ref())
-            .map(|c| !c.is_empty())
-            .unwrap_or(false);
+            .is_some_and(|c| !c.is_empty());
 
         if !has_children {
             is_open_for_select.set(false);
@@ -167,11 +163,6 @@ pub fn Cascader(props: CascaderProps) -> Element {
             .map(|opt| opt.label.clone())
             .collect::<Vec<_>>()
             .join(" / ")
-    };
-
-    let is_open_for_close = is_open.clone();
-    let _close_dropdown = move |_: Event| {
-        is_open_for_close.set(false);
     };
 
     let is_open_for_classes = is_open.clone();
@@ -260,8 +251,7 @@ fn CascaderMenus(
                 let has_children = opt
                     .children
                     .as_ref()
-                    .map(|c| !c.is_empty())
-                    .unwrap_or(false);
+                    .is_some_and(|c| !c.is_empty());
                 let is_selected = selected_at_level.as_ref() == Some(&opt_value);
                 let handler_for_item = on_select.clone();
 

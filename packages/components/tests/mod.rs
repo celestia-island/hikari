@@ -1,6 +1,12 @@
 mod basic_components_tests;
+mod collapse_tests;
+mod data_components_tests;
 mod display_components_tests;
 mod entry_components_tests;
+mod feedback_components_tests;
+mod feedback_layer2_tests;
+mod feedback_remaining_tests;
 mod layout_components_tests;
+mod navigation_components_tests;
 mod navigation_extra_tests;
 mod production_components_tests;

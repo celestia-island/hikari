@@ -43,7 +43,7 @@ impl<'a, P: Platform> Clone for StyleBuilder<'a, P> {
 
 impl<'a, P: Platform> StyleBuilder<'a, P> {
     /// Create a new StyleBuilder for the given element
-    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
+    pub const fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
             platform,
             element,
@@ -52,6 +52,7 @@ impl<'a, P: Platform> StyleBuilder<'a, P> {
     }
 
     /// Add a CSS property to be set
+    #[must_use]
     pub fn add(mut self, property: CssProperty, value: &str) -> Self {
         self.properties
             .push((Property::Known(property), value.to_string()));
@@ -59,6 +60,7 @@ impl<'a, P: Platform> StyleBuilder<'a, P> {
     }
 
     /// Add a custom CSS property (e.g., CSS variables like --my-var)
+    #[must_use]
     pub fn add_custom(mut self, property: &str, value: &str) -> Self {
         self.properties
             .push((Property::Custom(property.to_string()), value.to_string()));
@@ -66,13 +68,15 @@ impl<'a, P: Platform> StyleBuilder<'a, P> {
     }
 
     /// Add a CSS property with pixel value
+    #[must_use]
     pub fn add_px(mut self, property: CssProperty, pixels: u32) -> Self {
         self.properties
-            .push((Property::Known(property), format!("{}px", pixels)));
+            .push((Property::Known(property), format!("{pixels}px")));
         self
     }
 
     /// Add multiple CSS properties at once
+    #[must_use]
     pub fn add_all(mut self, properties: &[(CssProperty, &str)]) -> Self {
         for &(property, value) in properties {
             self.properties
@@ -166,7 +170,7 @@ impl<'a, P: Platform> Clone for AttributeBuilder<'a, P> {
 
 impl<'a, P: Platform> AttributeBuilder<'a, P> {
     /// Create a new AttributeBuilder for given element
-    pub fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
+    pub const fn new(platform: &'a Rc<RefCell<P>>, element: &'a P::Element) -> Self {
         Self {
             platform,
             element,
@@ -183,6 +187,7 @@ impl<'a, P: Platform> AttributeBuilder<'a, P> {
     ///     .add("data-id", "123")
     ///     .add("aria-label", "Close");
     /// ```
+    #[must_use]
     pub fn add(mut self, name: &str, value: &str) -> Self {
         self.attributes
             .push((name.to_string(), AttributeValue::String(value.to_string())));
@@ -198,6 +203,7 @@ impl<'a, P: Platform> AttributeBuilder<'a, P> {
     ///     .add_bool("disabled", true)
     ///     .add_bool("checked", false);
     /// ```
+    #[must_use]
     pub fn add_bool(mut self, name: &str, value: bool) -> Self {
         self.attributes
             .push((name.to_string(), AttributeValue::Bool(value)));
@@ -213,8 +219,9 @@ impl<'a, P: Platform> AttributeBuilder<'a, P> {
     ///     .add_data("custom-scrollbar", "wrapper")
     ///     .add_data("id", "123");
     /// ```
+    #[must_use]
     pub fn add_data(self, name: &str, value: &str) -> Self {
-        self.add(&format!("data-{}", name), value)
+        self.add(&format!("data-{name}"), value)
     }
 
     /// Apply all accumulated attributes to element

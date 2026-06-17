@@ -7,15 +7,7 @@ use crate::platform;
 use crate::portal::{PortalEntry, generate_portal_id, use_portal};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum PopoverPlacement {
-    #[default]
-    Bottom,
-    Top,
-    Left,
-    Right,
-}
+use crate::utils::portal_types::PopoverPlacement;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum PopoverAbsolutePosition {
@@ -45,6 +37,7 @@ impl IntoAttrValue for PopoverPositioning {
 }
 
 impl PopoverPositioning {
+    #[must_use]
     pub fn default_relative() -> Self {
         PopoverPositioning::Relative {
             preferred: vec![

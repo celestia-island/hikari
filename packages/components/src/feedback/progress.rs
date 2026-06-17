@@ -2,23 +2,15 @@
 // Progress component
 // Active pulse: RAF-driven (migrated from CSS @keyframes)
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
-use tairitsu_hooks::ReactiveSignal;
 
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::anim_helpers::run_phase_loop;
 
 pub struct ProgressComponent;
 
-struct PulseState {
-    phase: f64,
-    last_ts: Option<f64>,
-    stopped: bool,
-}
+const PULSE_PERIOD_MS: f64 = 2000.0;
 
 #[define_props]
 pub struct ProgressProps {
@@ -73,26 +65,13 @@ pub fn Progress(props: ProgressProps) -> Element {
     let is_active = props.status == ProgressStatus::Active;
 
     {
-        let op_clone = opacity_signal.clone();
+        let sig = opacity_signal.clone();
         use_effect(move || {
             if !is_active {
                 return;
             }
-            let state = Rc::new(RefCell::new(PulseState {
-                phase: 0.0,
-                last_ts: None,
-                stopped: false,
-            }));
-            let s_ref = state.clone();
-            let op_sig = op_clone.clone();
-            platform::request_animation_frame_with_timestamp(move |ts| {
-                let mut s = s_ref.borrow_mut();
-                if s.stopped {
-                    return;
-                }
-                s.last_ts = Some(ts);
-                drop(s);
-                pulse_loop(s_ref.clone(), op_sig.clone());
+            run_phase_loop(PULSE_PERIOD_MS, sig.clone(), |phase| {
+                1.0 - 0.3 * (2.0 * std::f64::consts::PI * phase).sin().max(0.0)
             });
         });
     }
@@ -283,23 +262,4 @@ impl StyledComponent for ProgressComponent {
     fn name() -> &'static str {
         "progress"
     }
-}
-
-const PULSE_PERIOD_MS: f64 = 2000.0;
-
-fn pulse_loop(state: Rc<RefCell<PulseState>>, opacity_signal: ReactiveSignal<f64>) {
-    platform::request_animation_frame_with_timestamp(move |ts| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let prev = s.last_ts.unwrap_or(ts);
-        let delta = ts - prev;
-        s.last_ts = Some(ts);
-        s.phase = (s.phase + delta / PULSE_PERIOD_MS) % 1.0;
-        let opacity = 1.0 - 0.3 * (2.0 * std::f64::consts::PI * s.phase).sin().max(0.0);
-        drop(s);
-        opacity_signal.set(opacity);
-        pulse_loop(state.clone(), opacity_signal.clone());
-    });
 }

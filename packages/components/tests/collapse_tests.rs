@@ -6,7 +6,7 @@ mod tests {
 
     #[test]
     fn test_collapse_renders() {
-        let _props = CollapseProps {
+        let _ = CollapseProps {
             expanded: true,
             duration: 300,
             animated: true,
@@ -66,7 +66,7 @@ mod tests {
     fn test_collapse_props_with_children() {
         let children = VNode::empty();
 
-        let _props = CollapseProps {
+        let _ = CollapseProps {
             children,
             ..Default::default()
         };

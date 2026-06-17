@@ -230,7 +230,7 @@ async fn do_batch(client: &DebugClient, out: &Path, routes_opt: Option<&String>,
 async fn do_inspect(client: &DebugClient, route: Option<&String>, selector: Option<&String>, computed: bool) -> Result<()> {
     let url = route.as_deref().map_or("/", |v| v);
     println!("Navigating to {} ...", url);
-    let _nav = client.navigate_hydrated(url).await?;
+    client.navigate_hydrated(url).await?;
 
     if let Some(sel) = selector {
         let dom = client.dom_query(sel).await?;

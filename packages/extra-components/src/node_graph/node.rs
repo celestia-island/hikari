@@ -16,6 +16,7 @@ pub struct NodeType {
 }
 
 impl NodeType {
+    #[must_use]
     pub fn new(category: &str, name: &str) -> Self {
         Self {
             category: category.to_string(),
@@ -23,6 +24,7 @@ impl NodeType {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> String {
         if self.category.is_empty() && self.name.is_empty() {
             String::new()
@@ -46,7 +48,8 @@ pub struct NodePlacement {
 }
 
 impl NodePlacement {
-    pub fn new(id: NodeId) -> Self {
+    #[must_use]
+    pub const fn new(id: NodeId) -> Self {
         Self {
             id,
             position: (0.0, 0.0),
@@ -56,29 +59,33 @@ impl NodePlacement {
         }
     }
 
-    pub fn with_position(mut self, x: f64, y: f64) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
-    pub fn with_size(mut self, width: f64, height: f64) -> Self {
+    #[must_use]
+    pub const fn with_size(mut self, width: f64, height: f64) -> Self {
         self.size = (width, height);
         self
     }
 
-    pub fn with_selected(mut self, selected: bool) -> Self {
+    #[must_use]
+    pub const fn with_selected(mut self, selected: bool) -> Self {
         self.selected = selected;
         self
     }
 
-    pub fn with_minimized(mut self, minimized: bool) -> Self {
+    #[must_use]
+    pub const fn with_minimized(mut self, minimized: bool) -> Self {
         self.minimized = minimized;
         self
     }
 }
 
 /// Node port
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NodePort {
     pub port_id: PortId,
     pub port_type: String,
@@ -87,7 +94,13 @@ pub struct NodePort {
 }
 
 impl NodePort {
-    pub fn new(port_id: PortId, port_type: String, label: String, position: PortPosition) -> Self {
+    #[must_use]
+    pub const fn new(
+        port_id: PortId,
+        port_type: String,
+        label: String,
+        position: PortPosition,
+    ) -> Self {
         Self {
             port_id,
             port_type,
@@ -97,7 +110,7 @@ impl NodePort {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Copy)]
+#[derive(Clone, Debug, PartialEq, Eq, Copy)]
 pub enum PortPosition {
     Top,
     Bottom,
@@ -106,12 +119,13 @@ pub enum PortPosition {
 }
 
 impl PortPosition {
-    pub fn name(&self) -> &'static str {
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
         match self {
-            PortPosition::Top => "top",
-            PortPosition::Bottom => "bottom",
-            PortPosition::Left => "left",
-            PortPosition::Right => "right",
+            Self::Top => "top",
+            Self::Bottom => "bottom",
+            Self::Left => "left",
+            Self::Right => "right",
         }
     }
 }
@@ -128,7 +142,7 @@ pub trait NodePlugin: Send + Sync {
 
     /// Get display label for the node
     fn label(&self) -> String {
-        self.node_type().name.clone()
+        self.node_type().name
     }
 
     /// Get display value (for constant nodes, etc.)
@@ -151,13 +165,13 @@ pub trait NodePlugin: Send + Sync {
 
     /// Render the node body as a VNode
     fn render_body(&self) -> VNode {
-        let type_name = self.node_type().name.clone();
+        let type_name = self.node_type().name;
         let mut body = VElement::new("div")
             .class("hi-node-body")
             .attr("data-node-type", &type_name);
 
         if let Some(value) = self.display_value() {
-            let value_class = format!("hi-node-{}-value", type_name);
+            let value_class = format!("hi-node-{type_name}-value");
             body = body.child(VNode::Element(
                 VElement::new("div")
                     .class(value_class)
@@ -194,6 +208,7 @@ pub struct NodeView {
 }
 
 impl NodeView {
+    #[must_use]
     pub fn new(id: NodeId, title: String) -> Self {
         Self {
             id,
@@ -208,41 +223,48 @@ impl NodeView {
         }
     }
 
-    pub fn with_position(mut self, x: f64, y: f64) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
-    pub fn with_size(mut self, width: f64, height: f64) -> Self {
+    #[must_use]
+    pub const fn with_size(mut self, width: f64, height: f64) -> Self {
         self.size = (width, height);
         self
     }
 
+    #[must_use]
     pub fn with_type(mut self, node_type: String) -> Self {
         self.node_type = node_type;
         self
     }
 
+    #[must_use]
     pub fn add_port(mut self, port: NodePort) -> Self {
         self.ports.push(port);
         self
     }
 
+    #[must_use]
     pub fn with_custom_data(mut self, key: String, value: String) -> Self {
         self.custom_data.insert(key, value);
         self
     }
 
     /// Calculate height based on minimization state
-    pub fn effective_height(&self) -> f64 {
+    #[must_use]
+    pub const fn effective_height(&self) -> f64 {
         if self.minimized {
             40.0
         } else {
-            150.0 + self.ports.len() as f64 * 30.0
+            (self.ports.len() as f64).mul_add(30.0, 150.0)
         }
     }
 
     /// Get the CSS position style string
+    #[must_use]
     pub fn position_style(&self) -> String {
         format!(
             "position: absolute; left: {}px; top: {}px; width: {}px; height: {}px;",
@@ -254,6 +276,7 @@ impl NodeView {
     }
 
     /// Get CSS classes for the node
+    #[must_use]
     pub fn class_string(&self) -> String {
         format!(
             "hi-node-graph-node hi-node-{} {} {}",
@@ -291,6 +314,7 @@ impl From<NodePlacement> for NodeView {
 
 use super::port::{Port, PortType};
 
+#[must_use]
 pub fn render_node(node: &NodeView) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 

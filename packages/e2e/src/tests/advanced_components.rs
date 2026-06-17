@@ -1,7 +1,7 @@
 // hikari-e2e/src/tests/advanced_components.rs
 // E2E tests for Layer 3 advanced components
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::time::{Duration, Instant};
 
 use thirtyfour::{By, WebDriver};
@@ -33,7 +33,7 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -42,7 +42,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("VideoPlayer element not found: {}", e);
-                anyhow::anyhow!("VideoPlayer element not found: {}", e)
+                anyhow!("VideoPlayer element not found: {}", e)
             })?;
 
         info!("VideoPlayer element found");
@@ -50,9 +50,9 @@ impl AdvancedComponentsTests {
         let class_attr = video_player
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get video player attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get video player attributes: {}", e))?;
         let class_attr = class_attr
-            .ok_or_else(|| anyhow::anyhow!("No class attribute found for video player"))?;
+            .ok_or_else(|| anyhow!("No class attribute found for video player"))?;
 
         if !class_attr.contains("hi-video-player") {
             return Ok(TestResult::failure(
@@ -83,7 +83,7 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -92,7 +92,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("AudioWaveform element not found: {}", e);
-                anyhow::anyhow!("AudioWaveform element not found: {}", e)
+                anyhow!("AudioWaveform element not found: {}", e)
             })?;
 
         info!("AudioWaveform element found");
@@ -100,9 +100,9 @@ impl AdvancedComponentsTests {
         let class_attr = audio_waveform
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get audio waveform attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get audio waveform attributes: {}", e))?;
         let class_attr = class_attr
-            .ok_or_else(|| anyhow::anyhow!("No class attribute found for audio waveform"))?;
+            .ok_or_else(|| anyhow!("No class attribute found for audio waveform"))?;
 
         if !class_attr.contains("hi-audio-waveform") {
             return Ok(TestResult::failure(
@@ -133,7 +133,7 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -142,7 +142,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("RichTextEditor element not found: {}", e);
-                anyhow::anyhow!("RichTextEditor element not found: {}", e)
+                anyhow!("RichTextEditor element not found: {}", e)
             })?;
 
         info!("RichTextEditor element found");
@@ -150,9 +150,9 @@ impl AdvancedComponentsTests {
         let class_attr = rich_text_editor
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get rich text editor attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get rich text editor attributes: {}", e))?;
         let class_attr = class_attr
-            .ok_or_else(|| anyhow::anyhow!("No class attribute found for rich text editor"))?;
+            .ok_or_else(|| anyhow!("No class attribute found for rich text editor"))?;
 
         if !class_attr.contains("hi-rich-text-editor") {
             return Ok(TestResult::failure(
@@ -183,13 +183,13 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let drag_layer = driver.find(By::Css(".hi-drag-layer")).await.map_err(|e| {
             warn!("DragLayer element not found: {}", e);
-            anyhow::anyhow!("DragLayer element not found: {}", e)
+            anyhow!("DragLayer element not found: {}", e)
         })?;
 
         info!("DragLayer element found");
@@ -197,15 +197,15 @@ impl AdvancedComponentsTests {
         drag_layer
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click drag layer: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click drag layer: {}", e))?;
         info!("DragLayer clicked successfully");
 
         let class_attr = drag_layer
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get drag layer attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get drag layer attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for drag layer"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for drag layer"))?;
 
         if !class_attr.contains("hi-drag-layer") {
             return Ok(TestResult::failure(
@@ -236,13 +236,13 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let collapsible = driver.find(By::Css(".hi-collapsible")).await.map_err(|e| {
             warn!("Collapsible element not found: {}", e);
-            anyhow::anyhow!("Collapsible element not found: {}", e)
+            anyhow!("Collapsible element not found: {}", e)
         })?;
 
         info!("Collapsible element found");
@@ -250,7 +250,7 @@ impl AdvancedComponentsTests {
         collapsible
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click collapsible: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click collapsible: {}", e))?;
         info!("Collapsible clicked successfully");
 
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -258,9 +258,9 @@ impl AdvancedComponentsTests {
         let class_attr = collapsible
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get collapsible attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get collapsible attributes: {}", e))?;
         let class_attr = class_attr
-            .ok_or_else(|| anyhow::anyhow!("No class attribute found for collapsible"))?;
+            .ok_or_else(|| anyhow!("No class attribute found for collapsible"))?;
 
         if !class_attr.contains("hi-collapsible") {
             return Ok(TestResult::failure(
@@ -291,7 +291,7 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -300,7 +300,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("ZoomControls element not found: {}", e);
-                anyhow::anyhow!("ZoomControls element not found: {}", e)
+                anyhow!("ZoomControls element not found: {}", e)
             })?;
 
         info!("ZoomControls element found");
@@ -308,9 +308,9 @@ impl AdvancedComponentsTests {
         let class_attr = zoom_controls
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get zoom controls attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get zoom controls attributes: {}", e))?;
         let class_attr = class_attr
-            .ok_or_else(|| anyhow::anyhow!("No class attribute found for zoom controls"))?;
+            .ok_or_else(|| anyhow!("No class attribute found for zoom controls"))?;
 
         if !class_attr.contains("hi-zoom-controls") {
             return Ok(TestResult::failure(
@@ -341,7 +341,7 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -352,13 +352,13 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Start Guide button not found: {}", e);
-                anyhow::anyhow!("Start Guide button not found: {}", e)
+                anyhow!("Start Guide button not found: {}", e)
             })?;
 
         start_button
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click Start Guide button: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click Start Guide button: {}", e))?;
         info!("Start Guide button clicked");
 
         tokio::time::sleep(Duration::from_millis(300)).await;
@@ -366,7 +366,7 @@ impl AdvancedComponentsTests {
         // Verify UserGuide element exists
         let user_guide = driver.find(By::Css(".hi-user-guide")).await.map_err(|e| {
             warn!("UserGuide element not found: {}", e);
-            anyhow::anyhow!("UserGuide element not found: {}", e)
+            anyhow!("UserGuide element not found: {}", e)
         })?;
 
         info!("UserGuide element found");
@@ -374,9 +374,9 @@ impl AdvancedComponentsTests {
         let class_attr = user_guide
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get user guide attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get user guide attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for user guide"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for user guide"))?;
 
         if !class_attr.contains("hi-user-guide") {
             return Ok(TestResult::failure(
@@ -386,20 +386,20 @@ impl AdvancedComponentsTests {
         }
 
         // Check for guide content elements
-        let _guide_content = driver
+        let _ = driver
             .find(By::Css(".hi-user-guide-content"))
             .await
             .map_err(|e| {
                 warn!("UserGuide content not found: {}", e);
-                anyhow::anyhow!("UserGuide content not found: {}", e)
+                anyhow!("UserGuide content not found: {}", e)
             })?;
 
         info!("UserGuide content found");
 
         // Verify progress badge exists
-        let _progress_badge = driver.find(By::Css(".hi-badge")).await.map_err(|e| {
+        let _ = driver.find(By::Css(".hi-badge")).await.map_err(|e| {
             warn!("Progress badge not found: {}", e);
-            anyhow::anyhow!("Progress badge not found: {}", e)
+            anyhow!("Progress badge not found: {}", e)
         })?;
 
         info!("Progress badge found");
@@ -410,13 +410,13 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Next button not found: {}", e);
-                anyhow::anyhow!("Next button not found: {}", e)
+                anyhow!("Next button not found: {}", e)
             })?;
 
         next_button
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click Next button: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click Next button: {}", e))?;
         info!("Next button clicked");
 
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -427,13 +427,13 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Skip button not found: {}", e);
-                anyhow::anyhow!("Skip button not found: {}", e)
+                anyhow!("Skip button not found: {}", e)
             })?;
 
         skip_button
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click Skip button: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click Skip button: {}", e))?;
         info!("Skip button clicked");
 
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -461,14 +461,14 @@ impl AdvancedComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Verify Timeline element exists
         let timeline = driver.find(By::Css(".hi-timeline")).await.map_err(|e| {
             warn!("Timeline element not found: {}", e);
-            anyhow::anyhow!("Timeline element not found: {}", e)
+            anyhow!("Timeline element not found: {}", e)
         })?;
 
         info!("Timeline element found");
@@ -476,9 +476,9 @@ impl AdvancedComponentsTests {
         let class_attr = timeline
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get timeline attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get timeline attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for timeline"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for timeline"))?;
 
         if !class_attr.contains("hi-timeline") {
             return Ok(TestResult::failure(
@@ -493,7 +493,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Timeline items not found: {}", e);
-                anyhow::anyhow!("Timeline items not found: {}", e)
+                anyhow!("Timeline items not found: {}", e)
             })?;
 
         info!("Found {} timeline items", timeline_items.len());
@@ -514,7 +514,7 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Timeline dots not found: {}", e);
-                anyhow::anyhow!("Timeline dots not found: {}", e)
+                anyhow!("Timeline dots not found: {}", e)
             })?;
 
         info!("Found {} timeline dots", timeline_dots.len());
@@ -536,13 +536,13 @@ impl AdvancedComponentsTests {
             .await
             .map_err(|e| {
                 warn!("Timeline header not found: {}", e);
-                anyhow::anyhow!("Timeline header not found: {}", e)
+                anyhow!("Timeline header not found: {}", e)
             })?;
 
         timeline_header
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click timeline header: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click timeline header: {}", e))?;
         info!("Timeline header clicked");
 
         tokio::time::sleep(Duration::from_millis(200)).await;

@@ -1,55 +1,19 @@
 // packages/components/src/display/skeleton.rs
 // Skeleton component
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use hikari_palette::classes::components::SkeletonDisplayClass;
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
 };
-use tairitsu_hooks::ReactiveSignal;
 use tairitsu_vdom::IntoAttrValue;
 
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::anim_helpers::run_dual_phase_loop;
 
 pub struct SkeletonComponent;
 
-struct SkeletonAnimState {
-    phase: f64,
-    last_ts: Option<f64>,
-    stopped: bool,
-}
-
 const SKELETON_PERIOD_MS: f64 = 1500.0;
-
-fn skeleton_anim_loop(
-    state: Rc<RefCell<SkeletonAnimState>>,
-    bg_pos_signal: ReactiveSignal<f64>,
-    opacity_signal: ReactiveSignal<f64>,
-) {
-    platform::request_animation_frame_with_timestamp(move |ts| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let prev = s.last_ts.unwrap_or(ts);
-        let delta = ts - prev;
-        s.last_ts = Some(ts);
-        s.phase = (s.phase + delta / SKELETON_PERIOD_MS) % 1.0;
-        let phase = s.phase;
-        drop(s);
-
-        let pos = 200.0 - 400.0 * phase;
-        let op = 1.0 - 0.3 * (std::f64::consts::PI * phase).sin();
-        bg_pos_signal.set(pos);
-        opacity_signal.set(op);
-
-        skeleton_anim_loop(state.clone(), bg_pos_signal.clone(), opacity_signal.clone());
-    });
-}
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SkeletonVariant {
@@ -111,10 +75,10 @@ pub struct SkeletonProps {
 pub fn Skeleton(props: SkeletonProps) -> Element {
     let mut style = props.style.clone();
     if let Some(w) = &props.width {
-        style = format!("{} width: {};", style, w);
+        style = format!("{style} width: {w};");
     }
     if let Some(h) = &props.height {
-        style = format!("{} height: {};", style, h);
+        style = format!("{style} height: {h};");
     }
 
     let mut builder = ClassesBuilder::new()
@@ -158,30 +122,20 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
     let opacity_signal = use_signal(|| 1.0_f64);
 
     {
-        let bp_clone = bg_pos_signal.clone();
-        let op_clone = opacity_signal.clone();
         let is_animated = props.animation;
+        let bp_sig = bg_pos_signal.clone();
+        let op_sig = opacity_signal.clone();
         use_effect(move || {
             if !is_animated {
                 return;
             }
-            let state = Rc::new(RefCell::new(SkeletonAnimState {
-                phase: 0.0,
-                last_ts: None,
-                stopped: false,
-            }));
-            let s_ref = state.clone();
-            let bp_sig = bp_clone.clone();
-            let op_sig = op_clone.clone();
-            platform::request_animation_frame_with_timestamp(move |ts| {
-                let mut s = s_ref.borrow_mut();
-                if s.stopped {
-                    return;
-                }
-                s.last_ts = Some(ts);
-                drop(s);
-                skeleton_anim_loop(s_ref.clone(), bp_sig.clone(), op_sig.clone());
-            });
+            run_dual_phase_loop(
+                SKELETON_PERIOD_MS,
+                bp_sig.clone(),
+                op_sig.clone(),
+                |phase| 200.0 - 400.0 * phase,
+                |phase| 1.0 - 0.3 * (std::f64::consts::PI * phase).sin(),
+            );
         });
     }
 
@@ -193,8 +147,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         String::new()
     };
 
-    if props.rows.is_some() && props.rows.unwrap() > 1 {
-        let rows = props.rows.unwrap();
+    if let Some(rows) = props.rows.filter(|&r| r > 1) {
         let anim = anim_style.clone();
         let row_styles: Vec<String> = (0..rows)
             .map(|i| {

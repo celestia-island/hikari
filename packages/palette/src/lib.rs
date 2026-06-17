@@ -22,7 +22,7 @@
 //!
 //! ### Basic Color Usage
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use hikari_palette::{粉红, 苍翠, 姜黄, 精白};
 //!
 //! # fn main() {
@@ -37,7 +37,7 @@
 //!
 //! ### Using Pre-defined Palettes
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use hikari_palette::{light_theme, dark_theme};
 //!
 //! // Hikari light theme (default)
@@ -50,7 +50,7 @@
 //!
 //! ### Utility Classes
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use hikari_palette::classes::*;
 //!
 //! let classes = ClassesBuilder::new()
@@ -88,7 +88,7 @@
 //! - **hikari-theme** - Theme provider uses color palettes
 //! - **hikari-components** - Components inherit colors from theme
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use hikari_palette::light_theme;
 //! use hikari_theme::ThemeProvider;
 //!

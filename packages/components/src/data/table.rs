@@ -71,7 +71,7 @@ pub struct TableProps {
 pub fn Table(props: TableProps) -> Element {
     // First filter data, then sort it
     let filtered_data = filter_data(&props.data, &props.columns, &props.filters);
-    let sorted_data = use_sortable_data(
+    let sorted_data = sort_data(
         &filtered_data,
         &props.columns,
         &props.sort_column,
@@ -294,18 +294,18 @@ fn sort_data(
     sort_direction: SortDirection,
 ) -> Vec<Vec<String>> {
     // Find the column index for the sort key
-    let column_index = columns.iter().position(|col| col.column_key == sort_column);
+    let Some(col_idx) = columns.iter().position(|col| col.column_key == sort_column) else {
+        return data.to_vec();
+    };
 
-    if sort_direction == SortDirection::None || column_index.is_none() {
+    if sort_direction == SortDirection::None {
         return data.to_vec();
     }
 
-    let col_idx = column_index.unwrap();
-
     let mut sorted_data = data.to_vec();
     sorted_data.sort_by(|a, b| {
-        let a_val = a.get(col_idx).map(String::as_str).unwrap_or("");
-        let b_val = b.get(col_idx).map(String::as_str).unwrap_or("");
+        let a_val = a.get(col_idx).map_or("", String::as_str);
+        let b_val = b.get(col_idx).map_or("", String::as_str);
 
         // Try numeric comparison first
         let a_num = a_val.parse::<f64>();
@@ -329,15 +329,6 @@ fn sort_data(
     }
 
     sorted_data
-}
-
-fn use_sortable_data(
-    data: &[Vec<String>],
-    columns: &[ColumnDef],
-    sort_column: &str,
-    sort_direction: SortDirection,
-) -> Vec<Vec<String>> {
-    sort_data(data, columns, sort_column, sort_direction)
 }
 
 fn filter_data(

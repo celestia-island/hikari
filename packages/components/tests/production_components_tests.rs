@@ -83,8 +83,8 @@ mod tests {
     #[test]
     fn test_audio_player_size_variants() {
         assert_eq!(AudioPlayerSize::default(), AudioPlayerSize::Medium);
-        let _small = AudioPlayerSize::Small;
-        let _large = AudioPlayerSize::Large;
+        let _ = AudioPlayerSize::Small;
+        let _ = AudioPlayerSize::Large;
     }
 
     #[test]
@@ -201,10 +201,10 @@ mod tests {
         assert_eq!(MarkdownEditorMode::default(), MarkdownEditorMode::Edit);
         assert_eq!(MarkdownEditorSize::default(), MarkdownEditorSize::Medium);
 
-        let _preview = MarkdownEditorMode::Preview;
-        let _split = MarkdownEditorMode::Split;
-        let _sm = MarkdownEditorSize::Small;
-        let _lg = MarkdownEditorSize::Large;
+        let _ = MarkdownEditorMode::Preview;
+        let _ = MarkdownEditorMode::Split;
+        let _ = MarkdownEditorSize::Small;
+        let _ = MarkdownEditorSize::Large;
     }
 
     #[test]

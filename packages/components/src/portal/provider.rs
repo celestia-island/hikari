@@ -1,7 +1,7 @@
-// hi-components/src/portal/provider.rs
-// PortalProvider and PortalContext
-
-#![allow(clippy::needless_update)]
+//! Portal provider module
+//!
+//! Provides the [`PortalProvider`] component which manages portal-based rendering
+//! for modals, dropdowns, toasts, popovers, and tooltips.
 
 use std::sync::atomic::Ordering;
 
@@ -82,9 +82,22 @@ pub fn PortalProvider(children: Element) -> Element {
     }
 }
 
+/// Hook to access the current portal context.
+///
+/// # Panics
+/// Panics if no `PortalProvider` ancestor is present in the component tree.
+#[track_caller]
+#[must_use]
 pub fn use_portal() -> PortalContext {
-    let ctx = use_context::<PortalContext>().expect("PortalContext not found");
-    ctx.get().clone()
+    try_use_portal().expect("use_portal() requires a PortalProvider ancestor")
+}
+
+/// Non-panicking variant of [`use_portal`].
+///
+/// Returns `None` if no `PortalProvider` ancestor is present.
+#[must_use]
+pub fn try_use_portal() -> Option<PortalContext> {
+    use_context::<PortalContext>().map(|ctx| ctx.get().clone())
 }
 
 pub fn generate_portal_id() -> String {

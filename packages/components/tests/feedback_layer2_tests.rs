@@ -5,21 +5,18 @@ mod tests {
     #[test]
     fn test_glow_props_default() {
         let props = GlowProps::default();
-        assert_eq!(props.blur, hikari_components::feedback::GlowBlur::Medium);
-        assert_eq!(props.color, hikari_components::feedback::GlowColor::Ghost);
-        assert_eq!(
-            props.intensity,
-            hikari_components::feedback::GlowIntensity::Soft
-        );
+        assert_eq!(props.blur, hikari_components::GlowBlur::Medium);
+        assert_eq!(props.color, hikari_components::GlowColor::Ghost);
+        assert_eq!(props.intensity, hikari_components::GlowIntensity::Soft);
         assert!(!props.block);
         assert!(props.active_intensity.is_none());
-        assert_eq!(props.preset, hikari_components::feedback::GlowPreset::None);
+        assert_eq!(props.preset, hikari_components::GlowPreset::None);
         assert_eq!(props.transition_duration, "100");
     }
 
     #[test]
     fn test_glow_blur_variants() {
-        use hikari_components::feedback::GlowBlur;
+        use hikari_components::GlowBlur;
         let blurs = [
             GlowBlur::None,
             GlowBlur::Light,
@@ -37,7 +34,7 @@ mod tests {
 
     #[test]
     fn test_glow_color_variants() {
-        use hikari_components::feedback::GlowColor;
+        use hikari_components::GlowColor;
         let colors = [
             GlowColor::Ghost,
             GlowColor::Primary,
@@ -58,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_glow_intensity_variants() {
-        use hikari_components::feedback::GlowIntensity;
+        use hikari_components::GlowIntensity;
         let intensities = [
             GlowIntensity::Dim,
             GlowIntensity::Soft,
@@ -75,7 +72,7 @@ mod tests {
 
     #[test]
     fn test_glow_preset_variants() {
-        use hikari_components::feedback::GlowPreset;
+        use hikari_components::GlowPreset;
         let presets = [
             GlowPreset::None,
             GlowPreset::Pulse,
@@ -94,12 +91,12 @@ mod tests {
     #[test]
     fn test_glow_with_active_intensity() {
         let props = GlowProps {
-            active_intensity: Some(hikari_components::feedback::GlowIntensity::Bright),
+            active_intensity: Some(hikari_components::GlowIntensity::Bright),
             ..Default::default()
         };
         assert_eq!(
             props.active_intensity,
-            Some(hikari_components::feedback::GlowIntensity::Bright)
+            Some(hikari_components::GlowIntensity::Bright)
         );
     }
 
@@ -123,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_glow_blur_display() {
-        use hikari_components::feedback::GlowBlur;
+        use hikari_components::GlowBlur;
         use tairitsu_vdom::IntoAttrValue;
         assert_eq!(GlowBlur::None.into_attr_value(), Some("none".to_string()));
         assert_eq!(GlowBlur::Light.into_attr_value(), Some("light".to_string()));
@@ -136,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_glow_color_display() {
-        use hikari_components::feedback::GlowColor;
+        use hikari_components::GlowColor;
         use tairitsu_vdom::IntoAttrValue;
         assert_eq!(
             GlowColor::Ghost.into_attr_value(),
@@ -154,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_glow_preset_display() {
-        use hikari_components::feedback::GlowPreset;
+        use hikari_components::GlowPreset;
         use tairitsu_vdom::IntoAttrValue;
         assert_eq!(GlowPreset::None.into_attr_value(), None);
         assert_eq!(
@@ -182,8 +179,8 @@ mod tests {
     #[test]
     fn test_portal_positioning_strategies() {
         use hikari_components::portal::PortalPositionStrategy;
-        let _fixed = PortalPositionStrategy::Fixed(100.0, 200.0);
-        let _trigger = PortalPositionStrategy::TriggerBased {
+        let _ = PortalPositionStrategy::Fixed(100.0, 200.0);
+        let _ = PortalPositionStrategy::TriggerBased {
             placement: hikari_components::portal::TriggerPlacement::Bottom,
         };
     }

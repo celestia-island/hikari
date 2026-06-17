@@ -34,7 +34,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 Before contributing, ensure you have:
 
-- **Rust 1.52+**: Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.82+**: Install from [rustup.rs](https://rustup.rs/)
 - **Python 3.11+**: For development tooling
 - **Just**: Install with `cargo install just`
 - **Git**: For version control

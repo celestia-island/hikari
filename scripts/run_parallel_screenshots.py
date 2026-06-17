@@ -6,6 +6,7 @@ Distributes routes across multiple containers to utilize multiple CPU cores.
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -73,14 +74,14 @@ def run_container(container_id, start_idx, end_idx, project_root):
 
     cmd = (
         f"docker run --rm "
-        f"--name hikari-screenshot-{container_id} "
+        f"--name hikari-screenshot-{shlex.quote(str(container_id))} "
         f"--network host "
-        f"-v '{project_root}/target/e2e_screenshots:/tmp/e2e_screenshots' "
-        f"-v '{project_root}/examples/website/public:/public:ro' "
+        f"-v {shlex.quote(str(project_root))}/target/e2e_screenshots:/tmp/e2e_screenshots "
+        f"-v {shlex.quote(str(project_root))}/examples/website/public:/public:ro "
         f"{IMAGE_NAME} "
         f"/usr/local/bin/hikari-screenshot "
         f"--start {start_idx} --end {end_idx} "
-        f"> '{log_file}' 2>&1"
+        f"> {shlex.quote(str(log_file))} 2>&1"
     )
 
     result = run_command(cmd, check=False)

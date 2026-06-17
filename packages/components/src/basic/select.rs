@@ -3,9 +3,7 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
-use crate::feedback::{
-    ConditionalGlow, ConditionalGlowProps, Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps,
-};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps, Glow, GlowProps};
 use crate::platform;
 use crate::portal::{
     PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
@@ -13,6 +11,7 @@ use crate::portal::{
 };
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct SelectComponent;
 
@@ -289,7 +288,7 @@ pub fn Select(props: SelectProps) -> Element {
                     onkeydown: handle_keydown,
 
                     span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
-                        "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                        "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"Select...\".to_string()) }}"
                     }
 
                     span {

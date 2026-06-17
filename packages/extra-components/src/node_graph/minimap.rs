@@ -27,6 +27,9 @@ pub struct NodeGraphMinimap {
 
     /// Whether the minimap is visible
     pub visible: bool,
+
+    /// Canvas dimensions for proper scaling
+    pub canvas_size: (f64, f64),
 }
 
 /// A node as displayed in the minimap
@@ -47,7 +50,8 @@ pub struct MinimapConnection {
 
 impl NodeGraphMinimap {
     /// Create a new minimap state
-    pub fn new(width: f64, height: f64) -> Self {
+    #[must_use]
+    pub const fn new(width: f64, height: f64) -> Self {
         Self {
             width,
             height,
@@ -56,11 +60,12 @@ impl NodeGraphMinimap {
             nodes: Vec::new(),
             connections: Vec::new(),
             visible: true,
+            canvas_size: (1200.0, 800.0),
         }
     }
 
     /// Update the view state (zoom and pan from main canvas)
-    pub fn update_view(&mut self, zoom: f64, pan: (f64, f64)) {
+    pub const fn update_view(&mut self, zoom: f64, pan: (f64, f64)) {
         self.zoom = zoom;
         self.pan = pan;
     }
@@ -76,6 +81,7 @@ impl NodeGraphMinimap {
     }
 
     /// Calculate the viewport rectangle in minimap coordinates
+    #[must_use]
     pub fn viewport_rect(&self, canvas_width: f64, canvas_height: f64) -> (f64, f64, f64, f64) {
         // The viewport represents what's visible in the main canvas
         // Map canvas coordinates to minimap coordinates
@@ -93,6 +99,7 @@ impl NodeGraphMinimap {
     }
 
     /// Convert a click position in minimap to canvas pan coordinates
+    #[must_use]
     pub fn click_to_pan(
         &self,
         click_x: f64,
@@ -104,13 +111,14 @@ impl NodeGraphMinimap {
         let total_width = canvas_width * self.zoom;
         let total_height = canvas_height * self.zoom;
 
-        let new_pan_x = (click_x / self.width) * total_width - total_width / 2.0;
-        let new_pan_y = (click_y / self.height) * total_height - total_height / 2.0;
+        let new_pan_x = (click_x / self.width).mul_add(total_width, -(total_width / 2.0));
+        let new_pan_y = (click_y / self.height).mul_add(total_height, -(total_height / 2.0));
 
         (new_pan_x, new_pan_y)
     }
 
     /// Get the CSS style string for the minimap container
+    #[must_use]
     pub fn container_style(&self) -> String {
         format!(
             "position: absolute; bottom: 10px; right: 10px; width: {}px; height: {}px;",
@@ -119,11 +127,11 @@ impl NodeGraphMinimap {
     }
 
     /// Get the CSS style string for the viewport indicator
+    #[must_use]
     pub fn viewport_style(&self, canvas_width: f64, canvas_height: f64) -> String {
         let (x, y, w, h) = self.viewport_rect(canvas_width, canvas_height);
         format!(
-            "position: absolute; left: {}px; top: {}px; width: {}px; height: {}px; border: 1px solid var(--hi-color-primary);",
-            x, y, w, h
+            "position: absolute; left: {x}px; top: {y}px; width: {w}px; height: {h}px; border: 1px solid var(--hi-color-primary);"
         )
     }
 }
@@ -131,6 +139,7 @@ impl NodeGraphMinimap {
 use tairitsu_vdom::svg::SafeSvg;
 use tairitsu_vdom::{VElement, VNode};
 
+#[must_use]
 pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
     if !minimap.visible {
         return VNode::Element(
@@ -138,8 +147,8 @@ pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
         );
     }
 
-    let canvas_w = 1200.0;
-    let canvas_h = 800.0;
+    let canvas_w = minimap.canvas_size.0;
+    let canvas_h = minimap.canvas_size.1;
     let scale_x = minimap.width / canvas_w;
     let scale_y = minimap.height / canvas_h;
 
@@ -180,8 +189,7 @@ pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
 
     let (vp_x, vp_y, vp_w, vp_h) = minimap.viewport_rect(canvas_w, canvas_h);
     svg_parts.push_str(&format!(
-        r#"<rect x="{}" y="{}" width="{}" height="{}" fill="none" stroke="var(--hi-color-primary, #EEA2A4)" stroke-width="1.5" rx="1"/>"#,
-        vp_x, vp_y, vp_w, vp_h,
+        r#"<rect x="{vp_x}" y="{vp_y}" width="{vp_w}" height="{vp_h}" fill="none" stroke="var(--hi-color-primary, #EEA2A4)" stroke-width="1.5" rx="1"/>"#,
     ));
 
     svg_parts.push_str("</svg>");

@@ -106,7 +106,7 @@ impl Animator {
     }
 
     fn set_width(&self, w: f64) {
-        dom_ops::set_style(self.track, "width", &format!("{}px", w));
+        dom_ops::set_style(self.track, "width", &format!("{w}px"));
     }
 
     fn begin_scroll_hover(&self) {
@@ -192,14 +192,14 @@ fn update_thumb_with_state(
     preserve_scrolling_class: bool,
 ) {
     let st = dom_ops::get_scroll_top(content);
-    let sh = dom_ops::get_scroll_height(content) as f64;
-    let ch = dom_ops::get_client_height(content) as f64;
-    let th = dom_ops::get_client_height(track) as f64;
+    let sh = f64::from(dom_ops::get_scroll_height(content));
+    let ch = f64::from(dom_ops::get_client_height(content));
+    let th = f64::from(dom_ops::get_client_height(track));
 
     let ideal = if sh > ch { (ch / sh) * ch } else { 0.0 };
-    dom_ops::set_style(thumb, "height", &format!("{}px", ideal));
+    dom_ops::set_style(thumb, "height", &format!("{ideal}px"));
 
-    let actual = dom_ops::get_client_height(thumb) as f64;
+    let actual = f64::from(dom_ops::get_client_height(thumb));
     let movable = th - actual;
     let max = sh - ch;
     let top = if max > 0.0 && movable > 0.0 {
@@ -207,7 +207,7 @@ fn update_thumb_with_state(
     } else {
         0.0
     };
-    dom_ops::set_style(thumb, "top", &format!("{}px", top));
+    dom_ops::set_style(thumb, "top", &format!("{top}px"));
 
     // Preserve scrollbar-scrolling animation class when in scroll-hover state
     if ideal > 0.0 && ideal < ch {
@@ -322,7 +322,7 @@ fn build_dom(container: DomHandle, saved_scroll: i32) -> Option<ScrollbarElement
     dom_ops::append_child(container, wrapper);
 
     if saved_scroll > 0 {
-        dom_ops::set_scroll_top(content, saved_scroll as f64);
+        dom_ops::set_scroll_top(content, f64::from(saved_scroll));
     }
 
     Some(ScrollbarElements {
@@ -403,10 +403,9 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
             let cy = client_y - tr.y;
             let th_el = dom_ops::query_selector_on(track, ".custom-scrollbar-thumb");
             let th_h = th_el
-                .map(|e| dom_ops::get_client_height(e) as f64)
-                .unwrap_or(20.0);
-            let sh = dom_ops::get_scroll_height(clk_content) as f64;
-            let ch = dom_ops::get_client_height(clk_content) as f64;
+                .map_or(20.0, |e| f64::from(dom_ops::get_client_height(e)));
+            let sh = f64::from(dom_ops::get_scroll_height(clk_content));
+            let ch = f64::from(dom_ops::get_client_height(clk_content));
             let max = (sh - ch).max(0.0);
             let r = ((cy - th_h / 8.0) / tr.height).clamp(0.0, 1.0);
             dom_ops::set_scroll_top(clk_content, r * max);
@@ -421,8 +420,8 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
     let da0 = d_anim.clone();
     let on_down: Rc<RefCell<dyn FnMut(f64)>> = Rc::new(RefCell::new(move |start_y: f64| {
         let start_scroll = dom_ops::get_scroll_top(content);
-        let thumb_h = dom_ops::get_client_height(thumb) as f64;
-        let track_h = dom_ops::get_client_height(track) as f64;
+        let thumb_h = f64::from(dom_ops::get_client_height(thumb));
+        let track_h = f64::from(dom_ops::get_client_height(track));
         *ds0.borrow_mut() = Some(DragState {
             start_y,
             start_scroll_top: start_scroll,
@@ -435,8 +434,8 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
     let on_move: Rc<RefCell<dyn FnMut(f64)>> = Rc::new(RefCell::new(move |current_y: f64| {
         if let Some(ds) = ds1.borrow().as_ref() {
             let dy = current_y - ds.start_y;
-            let sh = dom_ops::get_scroll_height(content) as f64;
-            let ch = dom_ops::get_client_height(content) as f64;
+            let sh = f64::from(dom_ops::get_scroll_height(content));
+            let ch = f64::from(dom_ops::get_client_height(content));
             let max = sh - ch;
             let delta = if ds.movable > 0.0 {
                 (dy / ds.movable) * max
@@ -463,8 +462,7 @@ fn setup_one(host: &dyn ScrollbarHost, container: DomHandle) {
 
 fn save_scroll(container: DomHandle) -> i32 {
     dom_ops::query_selector_on(container, ".custom-scrollbar-content")
-        .map(|c| dom_ops::get_scroll_top(c) as i32)
-        .unwrap_or(0)
+        .map_or(0, |c| dom_ops::get_scroll_top(c) as i32)
 }
 
 fn cleanup(container: DomHandle) {

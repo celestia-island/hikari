@@ -6,7 +6,7 @@ use crate::styled::StyledComponent;
 
 #[define_props]
 pub struct LinkProps {
-    #[default]
+    #[default = "#"]
     pub href: String,
 
     #[default]

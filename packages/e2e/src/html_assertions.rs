@@ -1,6 +1,7 @@
 // hikari-e2e/src/html_assertions.rs
 // HTML assertion utilities for E2E testing
 
+use anyhow::{anyhow, bail, Result};
 use scraper::{Html, Selector};
 
 /// HTML assertion helper for validating rendered component output
@@ -17,34 +18,33 @@ impl HtmlAssertions {
     }
 
     /// Create from a string slice (convenience method)
-    #[allow(clippy::should_implement_trait)]
-    pub fn from_str(html: &str) -> Self {
+    pub fn from_html_str(html: &str) -> Self {
         Self::new(html.to_string())
     }
 
     /// Parse selector helper
-    fn parse_selector(&self, selector: &str) -> anyhow::Result<Selector> {
+    fn parse_selector(&self, selector: &str) -> Result<Selector> {
         Selector::parse(selector)
-            .map_err(|e| anyhow::anyhow!("Invalid CSS selector '{}': {}", selector, e))
+            .map_err(|e| anyhow!("Invalid CSS selector '{}': {}", selector, e))
     }
 
     /// Assert that an element with the given CSS selector exists
-    pub fn assert_exists(&self, selector: &str) -> anyhow::Result<&Self> {
+    pub fn assert_exists(&self, selector: &str) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         if self.parsed.select(&sel).next().is_none() {
-            anyhow::bail!("Element not found: {}\n\nHTML:\n{}", selector, self.html);
+            bail!("Element not found: {}\n\nHTML:\n{}", selector, self.html);
         }
 
         Ok(self)
     }
 
     /// Assert that an element with the given CSS selector does NOT exist
-    pub fn assert_not_exists(&self, selector: &str) -> anyhow::Result<&Self> {
+    pub fn assert_not_exists(&self, selector: &str) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         if self.parsed.select(&sel).next().is_some() {
-            anyhow::bail!(
+            bail!(
                 "Element should not exist but found: {}\n\nHTML:\n{}",
                 selector,
                 self.html
@@ -55,19 +55,19 @@ impl HtmlAssertions {
     }
 
     /// Assert that an element has a specific class
-    pub fn assert_has_class(&self, selector: &str, class_name: &str) -> anyhow::Result<&Self> {
+    pub fn assert_has_class(&self, selector: &str, class_name: &str) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         let element = self
             .parsed
             .select(&sel)
             .next()
-            .ok_or_else(|| anyhow::anyhow!("Element not found: {}", selector))?;
+            .ok_or_else(|| anyhow!("Element not found: {}", selector))?;
 
         let class_attr = element.value().attr("class").unwrap_or("");
 
         if !class_attr.split_whitespace().any(|c| c == class_name) {
-            anyhow::bail!(
+            bail!(
                 "Element '{}' does not have class '{}'. Classes: '{}'\n\nHTML:\n{}",
                 selector,
                 class_name,
@@ -85,21 +85,21 @@ impl HtmlAssertions {
         selector: &str,
         attr: &str,
         expected: &str,
-    ) -> anyhow::Result<&Self> {
+    ) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         let element = self
             .parsed
             .select(&sel)
             .next()
-            .ok_or_else(|| anyhow::anyhow!("Element not found: {}", selector))?;
+            .ok_or_else(|| anyhow!("Element not found: {}", selector))?;
 
         let actual = element.value().attr(attr).ok_or_else(|| {
-            anyhow::anyhow!("Element '{}' does not have attribute '{}'", selector, attr)
+            anyhow!("Element '{}' does not have attribute '{}'", selector, attr)
         })?;
 
         if actual != expected {
-            anyhow::bail!(
+            bail!(
                 "Attribute '{}' on element '{}' has value '{}', expected '{}'\n\nHTML:\n{}",
                 attr,
                 selector,
@@ -121,19 +121,19 @@ impl From<&str> for HtmlAssertions {
 
 impl HtmlAssertions {
     /// Assert that an element contains specific text content
-    pub fn assert_text_contains(&self, selector: &str, text: &str) -> anyhow::Result<&Self> {
+    pub fn assert_text_contains(&self, selector: &str, text: &str) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         let element = self
             .parsed
             .select(&sel)
             .next()
-            .ok_or_else(|| anyhow::anyhow!("Element not found: {}", selector))?;
+            .ok_or_else(|| anyhow!("Element not found: {}", selector))?;
 
         let actual = element.text().collect::<String>();
 
         if !actual.contains(text) {
-            anyhow::bail!(
+            bail!(
                 "Element '{}' does not contain text '{}'. Actual text: '{}'\n\nHTML:\n{}",
                 selector,
                 text,
@@ -146,19 +146,19 @@ impl HtmlAssertions {
     }
 
     /// Assert that an element has exact text content
-    pub fn assert_text_eq(&self, selector: &str, expected: &str) -> anyhow::Result<&Self> {
+    pub fn assert_text_eq(&self, selector: &str, expected: &str) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         let element = self
             .parsed
             .select(&sel)
             .next()
-            .ok_or_else(|| anyhow::anyhow!("Element not found: {}", selector))?;
+            .ok_or_else(|| anyhow!("Element not found: {}", selector))?;
 
         let actual = element.text().collect::<String>();
 
         if actual.trim() != expected {
-            anyhow::bail!(
+            bail!(
                 "Element '{}' has text '{}', expected '{}'\n\nHTML:\n{}",
                 selector,
                 actual.trim(),
@@ -171,13 +171,13 @@ impl HtmlAssertions {
     }
 
     /// Assert that multiple elements exist with the given selector
-    pub fn assert_count(&self, selector: &str, expected_count: usize) -> anyhow::Result<&Self> {
+    pub fn assert_count(&self, selector: &str, expected_count: usize) -> Result<&Self> {
         let sel = self.parse_selector(selector)?;
 
         let actual_count = self.parsed.select(&sel).count();
 
         if actual_count != expected_count {
-            anyhow::bail!(
+            bail!(
                 "Expected {} elements matching '{}', found {}\n\nHTML:\n{}",
                 expected_count,
                 selector,
@@ -190,7 +190,7 @@ impl HtmlAssertions {
     }
 
     /// Assert data-theme attribute equals expected value
-    pub fn assert_theme(&self, expected_theme: &str) -> anyhow::Result<&Self> {
+    pub fn assert_theme(&self, expected_theme: &str) -> Result<&Self> {
         self.assert_attr_eq("[data-theme]", "data-theme", expected_theme)
     }
 
@@ -212,14 +212,14 @@ mod tests {
     #[test]
     fn test_assert_exists() {
         let html = r#"<div class="hi-button">Click me</div>"#;
-        let assertions = HtmlAssertions::from_str(html);
+        let assertions = HtmlAssertions::from_html_str(html);
         assertions.assert_exists(".hi-button").unwrap();
     }
 
     #[test]
     fn test_assert_has_class() {
         let html = r#"<button class="hi-button hi-button-primary">Click</button>"#;
-        let assertions = HtmlAssertions::from_str(html);
+        let assertions = HtmlAssertions::from_html_str(html);
         assertions
             .assert_has_class(".hi-button", "hi-button-primary")
             .unwrap();
@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn test_assert_text_contains() {
         let html = r#"<div class="hi-card">Hello World</div>"#;
-        let assertions = HtmlAssertions::from_str(html);
+        let assertions = HtmlAssertions::from_html_str(html);
         assertions
             .assert_text_contains(".hi-card", "World")
             .unwrap();
@@ -237,7 +237,7 @@ mod tests {
     #[test]
     fn test_assert_attr_eq() {
         let html = r#"<input type="text" placeholder="Enter text" />"#;
-        let assertions = HtmlAssertions::from_str(html);
+        let assertions = HtmlAssertions::from_html_str(html);
         assertions
             .assert_attr_eq("input", "placeholder", "Enter text")
             .unwrap();

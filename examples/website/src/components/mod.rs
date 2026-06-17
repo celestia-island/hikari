@@ -11,7 +11,6 @@ pub mod doc_components;
 pub mod dynamic_markdown;
 pub mod demo_page;
 pub mod glow;
-pub mod layout;
 pub mod markdown_renderer;
 pub mod page_layout;
 pub mod portal;

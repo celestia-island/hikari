@@ -17,6 +17,7 @@ pub enum AvatarSize {
 }
 
 impl AvatarSize {
+    #[must_use]
     pub fn pixels(&self) -> u32 {
         match self {
             AvatarSize::Xs => 24,
@@ -27,6 +28,7 @@ impl AvatarSize {
         }
     }
 
+    #[must_use]
     pub fn icon_size(&self) -> u32 {
         match self {
             AvatarSize::Xs => 14,
@@ -37,6 +39,7 @@ impl AvatarSize {
         }
     }
 
+    #[must_use]
     pub fn font_size(&self) -> &'static str {
         match self {
             AvatarSize::Xs => "0.625rem",
@@ -57,6 +60,7 @@ pub enum AvatarVariant {
 }
 
 impl AvatarVariant {
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             AvatarVariant::Circular => "50%",
@@ -113,19 +117,17 @@ pub fn Avatar(props: AvatarProps) -> Element {
         .add(&props.class)
         .build();
 
-    let fallback_text = props.fallback.clone().unwrap_or_else(|| {
+    let fallback_text = props.fallback.unwrap_or_else(|| {
         props
             .alt
             .chars()
-            .find(|c| c.is_alphabetic() || c.is_numeric())
-            .map(|c| c.to_uppercase().to_string())
-            .unwrap_or_else(|| "?".to_string())
+            .find(|c| c.is_alphabetic() || c.is_numeric()).map_or_else(|| "?".to_string(), |c| c.to_uppercase().to_string())
     });
 
     let has_src = props.src.is_some();
     let is_icon_mode = props.fallback_mode == AvatarFallbackMode::Icon;
     let is_initial_mode = props.fallback_mode == AvatarFallbackMode::Initial;
-    let src_val = props.src.clone();
+    let src_val = props.src;
 
     // Build fallback content outside rsx!
     let fallback_content = if is_icon_mode {

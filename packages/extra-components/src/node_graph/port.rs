@@ -11,19 +11,22 @@ pub enum PortType {
 }
 
 impl PortType {
-    pub fn as_str(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
         match self {
-            PortType::Input => "input",
-            PortType::Output => "output",
+            Self::Input => "input",
+            Self::Output => "output",
         }
     }
 
-    pub fn is_input(&self) -> bool {
-        matches!(self, PortType::Input)
+    #[must_use]
+    pub const fn is_input(&self) -> bool {
+        matches!(self, Self::Input)
     }
 
-    pub fn is_output(&self) -> bool {
-        matches!(self, PortType::Output)
+    #[must_use]
+    pub const fn is_output(&self) -> bool {
+        matches!(self, Self::Output)
     }
 }
 
@@ -50,6 +53,7 @@ pub struct Port {
 
 impl Port {
     /// Create a new port
+    #[must_use]
     pub fn new(port_id: PortId, port_type: PortType, label: String) -> Self {
         Self {
             port_id,
@@ -64,38 +68,44 @@ impl Port {
     }
 
     /// Set the position
-    pub fn with_position(mut self, x: f64, y: f64) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
     /// Set disabled state
-    pub fn with_disabled(mut self, disabled: bool) -> Self {
+    #[must_use]
+    pub const fn with_disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
 
     /// Set connected state
-    pub fn with_connected(mut self, connected: bool) -> Self {
+    #[must_use]
+    pub const fn with_connected(mut self, connected: bool) -> Self {
         self.connected = connected;
         self
     }
 
     /// Set data type
+    #[must_use]
     pub fn with_data_type(mut self, data_type: String) -> Self {
         self.data_type = data_type;
         self
     }
 
+    #[must_use]
     pub fn with_port_position_name(mut self, name: &str) -> Self {
         self.port_position_name = Some(name.to_string());
         self
     }
 
     /// Get the CSS class string
+    #[must_use]
     pub fn class_string(&self) -> String {
         let pos_class = match &self.port_position_name {
-            Some(name) => format!("hi-node-port-{}", name),
+            Some(name) => format!("hi-node-port-{name}"),
             None => String::new(),
         };
         format!(
@@ -116,13 +126,14 @@ impl Port {
     }
 
     /// Get the CSS style string for positioning
+    #[must_use]
     pub fn position_style(&self) -> String {
         format!("left: {}px; top: {}px;", self.position.0, self.position.1)
     }
 }
 
 /// Events related to ports
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum PortEvent {
     /// Connection requested (from_port, to_port)
     ConnectRequested(PortId, PortId),
@@ -134,6 +145,7 @@ pub enum PortEvent {
 
 use tairitsu_vdom::{VElement, VNode, VText};
 
+#[must_use]
 pub fn render_port(port: &Port) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 

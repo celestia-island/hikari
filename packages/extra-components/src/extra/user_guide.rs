@@ -19,7 +19,7 @@ pub enum GuidePosition {
 }
 
 /// A single step in the user guide
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GuideStep {
     /// Step ID
     pub id: String,
@@ -72,7 +72,8 @@ impl GuideStep {
     }
 
     /// Set completed status
-    pub fn with_completed(mut self, completed: bool) -> Self {
+    #[must_use]
+    pub const fn with_completed(mut self, completed: bool) -> Self {
         self.completed = completed;
         self
     }
@@ -94,7 +95,7 @@ impl GuideStep {
 /// );
 /// state.visible = true;
 /// ```
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct UserGuideState {
     /// Guide title
     pub title: String,
@@ -126,6 +127,7 @@ pub struct UserGuideState {
 
 impl UserGuideState {
     /// Create a new user guide state
+    #[must_use]
     pub fn new(title: String, description: String) -> Self {
         Self {
             title,
@@ -141,19 +143,22 @@ impl UserGuideState {
     }
 
     /// Set the position
-    pub fn with_position(mut self, position: GuidePosition) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, position: GuidePosition) -> Self {
         self.position = position;
         self
     }
 
     /// Set whether to allow skip
-    pub fn with_allow_skip(mut self, allow: bool) -> Self {
+    #[must_use]
+    pub const fn with_allow_skip(mut self, allow: bool) -> Self {
         self.allow_skip = allow;
         self
     }
 
     /// Set whether to allow close
-    pub fn with_allow_close(mut self, allow: bool) -> Self {
+    #[must_use]
+    pub const fn with_allow_close(mut self, allow: bool) -> Self {
         self.allow_close = allow;
         self
     }
@@ -170,43 +175,48 @@ impl UserGuideState {
     }
 
     /// Show the guide
-    pub fn show(&mut self) {
+    pub const fn show(&mut self) {
         self.visible = true;
         self.current_step = 0;
     }
 
     /// Hide the guide
-    pub fn hide(&mut self) {
+    pub const fn hide(&mut self) {
         self.visible = false;
     }
 
     /// Get the current step
+    #[must_use]
     pub fn current_step(&self) -> Option<&GuideStep> {
         self.steps.get(self.current_step)
     }
 
     /// Check if can go to previous step
-    pub fn can_previous(&self) -> bool {
+    #[must_use]
+    pub const fn can_previous(&self) -> bool {
         self.current_step > 0
     }
 
     /// Check if can go to next step (or finish)
-    pub fn can_next(&self) -> bool {
+    #[must_use]
+    pub const fn can_next(&self) -> bool {
         self.current_step < self.steps.len().saturating_sub(1) || self.is_last_step()
     }
 
     /// Check if on last step
-    pub fn is_last_step(&self) -> bool {
+    #[must_use]
+    pub const fn is_last_step(&self) -> bool {
         self.current_step >= self.steps.len().saturating_sub(1)
     }
 
     /// Check if on first step
-    pub fn is_first_step(&self) -> bool {
+    #[must_use]
+    pub const fn is_first_step(&self) -> bool {
         self.current_step == 0
     }
 
     /// Go to previous step
-    pub fn previous(&mut self) -> bool {
+    pub const fn previous(&mut self) -> bool {
         if self.can_previous() {
             self.current_step -= 1;
             true
@@ -216,7 +226,7 @@ impl UserGuideState {
     }
 
     /// Go to next step, or hide if on last step
-    pub fn advance(&mut self) -> bool {
+    pub const fn advance(&mut self) -> bool {
         if self.is_last_step() {
             self.hide();
             false
@@ -229,16 +239,19 @@ impl UserGuideState {
     }
 
     /// Get progress count (current step number)
-    pub fn progress_count(&self) -> usize {
+    #[must_use]
+    pub const fn progress_count(&self) -> usize {
         self.current_step + 1
     }
 
     /// Get total steps count
-    pub fn total_steps(&self) -> usize {
+    #[must_use]
+    pub const fn total_steps(&self) -> usize {
         self.steps.len()
     }
 
     /// Get progress as percentage
+    #[must_use]
     pub fn progress_percent(&self) -> f64 {
         if self.steps.is_empty() {
             0.0
@@ -248,7 +261,8 @@ impl UserGuideState {
     }
 
     /// Get the position class name
-    pub fn position_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn position_class(&self) -> &'static str {
         match self.position {
             GuidePosition::Center => "hi-user-guide-position-center",
             GuidePosition::TopLeft => "hi-user-guide-position-top-left",
@@ -259,6 +273,7 @@ impl UserGuideState {
     }
 }
 
+#[must_use]
 pub fn render_user_guide(state: &UserGuideState) -> VNode {
     use tairitsu_vdom::{VElement, VText};
 
@@ -385,7 +400,7 @@ pub fn render_user_guide(state: &UserGuideState) -> VNode {
 }
 
 /// Events emitted by the user guide
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum UserGuideEvent {
     /// Guide was dismissed
     Dismissed,

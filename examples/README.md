@@ -21,12 +21,6 @@ Comprehensive demo of all Hikari components with sidebar navigation.
 just serve
 ```
 
-### 2. [node-graph-demo](./node-graph-demo/) - Interactive Node Graph
-
-Interactive node graph editor with connections, zoom, pan, and minimap.
-
-**Note**: This example still depends on Dioxus and needs migration to Tairitsu.
-
 ## Development
 
 ### Running Examples
@@ -54,7 +48,6 @@ cargo build --release --bins
 graph LR
   root["examples/"]
   root --> website["website/ — Component showcase"]
-  root --> nodegraph["node-graph-demo/ — Node graph"]
   root --> readme["README.md"]
 ```
 

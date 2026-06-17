@@ -51,13 +51,13 @@ pub fn Space(props: SpaceProps) -> Element {
 
     let style = match props.direction {
         SpaceDirection::Horizontal => {
-            format!("width: {}px;", size_px)
+            format!("width: {size_px}px;")
         }
         SpaceDirection::Vertical => {
-            format!("height: {}px;", size_px)
+            format!("height: {size_px}px;")
         }
         SpaceDirection::Both => {
-            format!("width: {}px; height: {}px;", size_px, size_px)
+            format!("width: {size_px}px; height: {size_px}px;")
         }
     };
 

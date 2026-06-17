@@ -1,54 +1,18 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
-use tairitsu_hooks::ReactiveSignal;
 use tairitsu_vdom::events::MouseEvent;
 
 use crate::basic::IconButton;
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::anim_helpers::run_ease_out;
 
 pub struct UserGuideComponent;
 
-struct UserGuideAnimState {
-    start_ts: Option<f64>,
-    stopped: bool,
-}
-
 const USER_GUIDE_ANIM_MS: f64 = 300.0;
-
-fn user_guide_anim_tick(
-    state: Rc<RefCell<UserGuideAnimState>>,
-    progress_signal: ReactiveSignal<f64>,
-) {
-    platform::request_animation_frame_with_timestamp(move |ts| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let start = s.start_ts.unwrap_or(ts);
-        if s.start_ts.is_none() {
-            s.start_ts = Some(ts);
-        }
-        let elapsed = ts - start;
-        let progress = (elapsed / USER_GUIDE_ANIM_MS).min(1.0);
-        drop(s);
-
-        let eased = 1.0 - (1.0 - progress).powi(3);
-        progress_signal.set(eased);
-
-        if progress < 1.0 {
-            user_guide_anim_tick(state.clone(), progress_signal.clone());
-        }
-    });
-}
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct GuideStep {
@@ -135,23 +99,9 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let progress_signal = use_signal(|| 0.0_f64);
 
     {
-        let prog_clone = progress_signal.clone();
+        let sig = progress_signal.clone();
         use_effect(move || {
-            let state = Rc::new(RefCell::new(UserGuideAnimState {
-                start_ts: None,
-                stopped: false,
-            }));
-            let s_ref = state.clone();
-            let prog_sig = prog_clone.clone();
-            platform::request_animation_frame_with_timestamp(move |ts| {
-                let mut s = s_ref.borrow_mut();
-                if s.stopped {
-                    return;
-                }
-                s.start_ts = Some(ts);
-                drop(s);
-                user_guide_anim_tick(s_ref, prog_sig);
-            });
+            run_ease_out(USER_GUIDE_ANIM_MS, 3, sig.clone());
         });
     }
 
@@ -164,7 +114,6 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let handle_next = {
         let on_step_change = props.on_step_change.clone();
         let on_finish = props.on_finish.clone();
-        let _total = total_steps;
         move |_| {
             if is_last_step {
                 if let Some(handler) = on_finish.as_ref() {

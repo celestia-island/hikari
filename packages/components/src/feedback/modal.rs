@@ -8,42 +8,11 @@ use tairitsu_hooks::ReactiveSignal;
 use crate::portal::{PortalEntry, use_portal};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::portal_types::{MaskMode, ModalPosition, ModalSize};
 
 static MODAL_ID_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub struct ModalComponent;
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ModalPosition {
-    #[default]
-    Center,
-
-    TopLeft,
-    Top,
-    TopRight,
-    Right,
-    BottomRight,
-    Bottom,
-    BottomLeft,
-    Left,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum MaskMode {
-    #[default]
-    Opaque,
-
-    Transparent,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum ModalSize {
-    #[default]
-    Md,
-    Sm,
-    Lg,
-    Xl,
-}
 
 #[derive(Clone, PartialEq)]
 pub struct ModalConfig {
@@ -70,6 +39,7 @@ impl Default for ModalConfig {
     }
 }
 
+#[must_use]
 pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     let portal = use_portal();
     let config = use_signal(|| initial_config);
@@ -123,6 +93,7 @@ pub struct ModalController {
     pub close: Callback<()>,
 }
 
+#[must_use]
 pub fn calculate_position(
     position: ModalPosition,
     mouse_x: Option<f64>,
@@ -161,9 +132,13 @@ pub fn calculate_position(
     }
 
     match position {
-        ModalPosition::Center => (
+        ModalPosition::Center => clamp_pos(
             (window_width - modal_width) / 2.0,
             (window_height - modal_height) / 2.0,
+            modal_width,
+            modal_height,
+            window_width,
+            window_height,
         ),
         ModalPosition::TopLeft => {
             let (mx, my) = mouse_pos(mouse_x, mouse_y, window_width, window_height);

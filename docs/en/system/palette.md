@@ -36,22 +36,22 @@ All color definitions feature:
 use hikari_palette::Color;
 
 // Access colors using enum variants
-let red = Color::苍翠;
-let blue = Color::粉红;
+let green = Color::苍翠;
+let pink = Color::粉红;
 let yellow = Color::姜黄;
 
-println!("Red: {}", red.hex());  // #519A73
-println!("Blue: {}", blue.hex()); // #FFB3A7
-println!("Yellow: {}", yellow.hex()); // #FFC773
+println!("Green (苍翠): {}", green.hex());  // #519A73
+println!("Pink (粉红): {}", pink.hex()); // #FFB3A7
+println!("Yellow (姜黄): {}", yellow.hex()); // #FFC773
 ```
 
 ### Available Color Categories
 
-#### Red Series (红色系)
+#### Green Series (绿色系)
 
 ```rust
-// Traditional red colors
-Color::苍翠      // 苍翠 #519A73 - Vermilion
+// Traditional green colors
+Color::苍翠      // 苍翠 #519A73 - Verdant green
 Color::Vermilion     // 朱红 #FF4C00 - Bright red-orange
 Color::Crimson       // 绯红 #FF3030 - Deep crimson
 Color::PeachBlossom  // 桃红 #F6BEC8 - Peach pink
@@ -62,7 +62,7 @@ Color::RoseRed       // 玫瑰红 #C21F30 - Rose red
 
 ```rust
 // Traditional blue colors
-Color::粉红       // 鷃蓝 #144A74 - Azurite blue
+Color::IndigoBlue // 靛蓝 #144A74 - Indigo blue
 Color::鷃蓝        // 鷃蓝 #144A74 - Indigo blue
 Color::Cyan          // 青色 #00CED1 - Cyan
 Color::SkyBlue       // 天蓝 #87CEEB - Sky blue
@@ -387,7 +387,7 @@ fn App() -> Element {
     let hikari = themes::Hikari::palette();
 
     rsx! {
-        ThemeProvider { palette: "hikari".to_string() }
+        ThemeProvider { initial_palette: "hikari".to_string() }
             div {
                 style: "color: {hikari.primary.hex()}",
                 "Themed text"

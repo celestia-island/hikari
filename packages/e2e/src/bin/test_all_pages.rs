@@ -1,12 +1,13 @@
 // hikari-e2e/src/bin/test_all_pages.rs
 // Binary to test all 34 pages for basic quality
 
+use anyhow::{bail, Result};
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
 use thirtyfour::{WebDriver, prelude::*};
 use tracing::{error, info};
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
@@ -53,14 +54,14 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
                 }
-                anyhow::bail!("All pages tests failed with {} checks", total_failed);
+                bail!("All pages tests failed with {} checks", total_failed);
             } else {
                 info!("\n✅ All pages quality checks passed!");
             }
         }
         Err(e) => {
             error!("All pages tests failed: {}", e);
-            anyhow::bail!("All pages tests failed: {}", e);
+            bail!("All pages tests failed: {}", e);
         }
     }
 

@@ -23,38 +23,26 @@ mod generated {
     include!(concat!(env!("OUT_DIR"), "/icons/manifest.rs"));
 }
 
-pub use generated::MdiIcon;
-pub use generated::get_icon_path;
+pub use generated::{MdiIcon, get_icon_path};
 
+#[must_use]
 pub fn get(name: &str) -> Option<&'static str> {
     generated::get_icon_path("mdi", name)
 }
 
+#[must_use]
 pub fn get_from(set: &str, name: &str) -> Option<&'static str> {
     generated::get_icon_path(set, name)
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-pub struct IconRef(pub MdiIcon);
-
-impl From<MdiIcon> for IconRef {
-    fn from(icon: MdiIcon) -> Self {
-        IconRef(icon)
-    }
-}
-
-impl IconRef {
-    pub fn name(&self) -> String {
-        self.0.to_string()
-    }
-}
-
+#[must_use]
 pub fn build_svg_from_path(path_d: &str, size: u32, view_box: &str) -> String {
     format!(
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{view_box}" width="{size}" height="{size}"><path fill="currentColor" d="{path_d}"/></svg>"#
     )
 }
 
+#[must_use]
 pub fn build_svg_default(path_d: &str, size: u32) -> String {
     build_svg_from_path(path_d, size, "0 0 24 24")
 }
@@ -69,7 +57,7 @@ pub enum IconRenderMode {
 }
 
 #[cfg(feature = "tairitsu")]
-use tairitsu_macros::{define_props, rsx};
+use tairitsu_macros::{component, define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
 
@@ -89,7 +77,7 @@ pub struct IconProps {
 }
 
 #[cfg(feature = "tairitsu")]
-#[allow(non_snake_case)]
+#[component]
 pub fn Icon(props: IconProps) -> Element {
     match props.render_mode {
         IconRenderMode::SvgInline => render_svg_inline(&props),
@@ -139,6 +127,7 @@ fn render_font_glyph(props: &IconProps) -> Element {
     }
 }
 
+#[must_use]
 pub fn font_family_for_icon(_icon: MdiIcon) -> &'static str {
     "Material Design Icons"
 }
@@ -153,12 +142,12 @@ fn build_icon_style(size: u32, color: &str) -> String {
 }
 
 #[cfg(feature = "tairitsu")]
-#[allow(non_snake_case)]
 pub mod mdi {
     use super::*;
 
     macro_rules! icon_shortcut {
         ($name:ident, $icon:expr) => {
+            #[component]
             pub fn $name(class: String) -> Element {
                 Icon(IconProps {
                     icon: $icon,
@@ -187,8 +176,6 @@ pub mod mdi {
     icon_shortcut!(ChevronRight, MdiIcon::ChevronRight);
     icon_shortcut!(ChevronUp, MdiIcon::ChevronUp);
     icon_shortcut!(ChevronDown, MdiIcon::ChevronDown);
-    icon_shortcut!(User, MdiIcon::Account);
-    icon_shortcut!(X, MdiIcon::Close);
     icon_shortcut!(Award, MdiIcon::TrophyAward);
     icon_shortcut!(Book, MdiIcon::Book);
     icon_shortcut!(Badge, MdiIcon::Alert);

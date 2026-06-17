@@ -105,8 +105,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
             for file_name in file_list {
                 if file_name.len() > max_size_for_drop {
                     errors.push(format!(
-                        "File '{}' exceeds maximum size of {} bytes",
-                        file_name, max_size_for_drop
+                        "File '{file_name}' exceeds maximum size of {max_size_for_drop} bytes"
                     ));
                 } else {
                     selected_files.push(file_name.clone());
@@ -154,8 +153,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         for file_name in &selected_files {
             if file_name.len() > max_size_for_change {
                 errors.push(format!(
-                    "File '{}' exceeds maximum size of {} bytes",
-                    file_name, max_size_for_change
+                    "File '{file_name}' exceeds maximum size of {max_size_for_change} bytes"
                 ));
             } else {
                 accepted_files.push(file_name.clone());

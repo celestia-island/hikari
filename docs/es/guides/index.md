@@ -60,7 +60,7 @@ use hikari_theme::ThemeProvider;
 #[component]
 fn App() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari" } {
+        ThemeProvider { initial_palette: "hikari" } {
             div { class: "hi-flex hi-flex-col hi-gap-4" {
                 Button { label: "Haz Clic" }
                 Button { label: "Botón Primario", variant: "primary" }
@@ -137,7 +137,7 @@ fn App() -> Element {
     let mut theme = use_signal(|| "hikari".to_string());
 
     rsx! {
-        ThemeProvider { palette: "{theme}" } {
+        ThemeProvider { initial_palette: "{theme}" } {
             button {
                 onclick: move |_| {
                     theme.set(if *theme() == "hikari" {

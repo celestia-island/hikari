@@ -30,27 +30,27 @@ pub enum TableClass {
 impl TypedClass for TableClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TableClass::Table => "hi-table",
-            TableClass::TableSm => "hi-table-sm",
-            TableClass::TableMd => "hi-table-md",
-            TableClass::TableLg => "hi-table-lg",
-            TableClass::TableBordered => "hi-table-bordered",
-            TableClass::TableStriped => "hi-table-striped",
-            TableClass::TableHover => "hi-table-hover",
-            TableClass::TableWrapper => "hi-table-wrapper",
-            TableClass::TableHeaderCell => "hi-table-header-cell",
-            TableClass::TableCell => "hi-table-cell",
-            TableClass::TableHeaderRow => "hi-table-header-row",
-            TableClass::TableBody => "hi-table-body",
-            TableClass::TableRow => "hi-table-row",
-            TableClass::TableEmpty => "hi-table-empty",
-            TableClass::TableEmptyContent => "hi-table-empty-content",
-            TableClass::TableSortable => "hi-table-sortable",
-            TableClass::TableSortIcon => "hi-table-sort-icon",
-            TableClass::TableSortActive => "hi-table-sort-active",
-            TableClass::TextLeft => "hi-text-left",
-            TableClass::TextCenter => "hi-text-center",
-            TableClass::TextRight => "hi-text-right",
+            Self::Table => "hi-table",
+            Self::TableSm => "hi-table-sm",
+            Self::TableMd => "hi-table-md",
+            Self::TableLg => "hi-table-lg",
+            Self::TableBordered => "hi-table-bordered",
+            Self::TableStriped => "hi-table-striped",
+            Self::TableHover => "hi-table-hover",
+            Self::TableWrapper => "hi-table-wrapper",
+            Self::TableHeaderCell => "hi-table-header-cell",
+            Self::TableCell => "hi-table-cell",
+            Self::TableHeaderRow => "hi-table-header-row",
+            Self::TableBody => "hi-table-body",
+            Self::TableRow => "hi-table-row",
+            Self::TableEmpty => "hi-table-empty",
+            Self::TableEmptyContent => "hi-table-empty-content",
+            Self::TableSortable => "hi-table-sortable",
+            Self::TableSortIcon => "hi-table-sort-icon",
+            Self::TableSortActive => "hi-table-sort-active",
+            Self::TextLeft => "hi-text-left",
+            Self::TextCenter => "hi-text-center",
+            Self::TextRight => "hi-text-right",
         }
     }
 }
@@ -70,14 +70,14 @@ pub enum TableHeaderClass {
 impl TypedClass for TableHeaderClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TableHeaderClass::TableHeader => "hi-table-header",
-            TableHeaderClass::HeaderRow => "hi-header-row",
-            TableHeaderClass::HeaderCell => "hi-header-cell",
-            TableHeaderClass::HeaderCellActive => "hi-header-cell-active",
-            TableHeaderClass::HeaderCellContent => "hi-header-cell-content",
-            TableHeaderClass::SortIndicator => "hi-sort-indicator",
-            TableHeaderClass::FilterIcon => "hi-filter-icon",
-            TableHeaderClass::ResizeHandle => "hi-resize-handle",
+            Self::TableHeader => "hi-table-header",
+            Self::HeaderRow => "hi-header-row",
+            Self::HeaderCell => "hi-header-cell",
+            Self::HeaderCellActive => "hi-header-cell-active",
+            Self::HeaderCellContent => "hi-header-cell-content",
+            Self::SortIndicator => "hi-sort-indicator",
+            Self::FilterIcon => "hi-filter-icon",
+            Self::ResizeHandle => "hi-resize-handle",
         }
     }
 }
@@ -95,12 +95,12 @@ pub enum CellClass {
 impl TypedClass for CellClass {
     fn class_name(&self) -> &'static str {
         match self {
-            CellClass::Cell => "hi-cell",
-            CellClass::CellHover => "hi-cell-hover",
-            CellClass::CellEditable => "hi-cell-editable",
-            CellClass::AlignLeft => "hi-align-left",
-            CellClass::AlignCenter => "hi-align-center",
-            CellClass::AlignRight => "hi-align-right",
+            Self::Cell => "hi-cell",
+            Self::CellHover => "hi-cell-hover",
+            Self::CellEditable => "hi-cell-editable",
+            Self::AlignLeft => "hi-align-left",
+            Self::AlignCenter => "hi-align-center",
+            Self::AlignRight => "hi-align-right",
         }
     }
 }
@@ -122,16 +122,16 @@ pub enum SortClass {
 impl TypedClass for SortClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SortClass::Sort => "hi-sort",
-            SortClass::SortButton => "hi-sort-button",
-            SortClass::SortActive => "hi-sort-active",
-            SortClass::SortClear => "hi-sort-clear",
-            SortClass::SortTitle => "hi-sort-title",
-            SortClass::SortIndicator => "hi-sort-indicator",
-            SortClass::SortClearText => "hi-sort-clear-text",
-            SortClass::SortClearIcon => "hi-sort-clear-icon",
-            SortClass::Asc => "hi-sort-asc",
-            SortClass::Desc => "hi-sort-desc",
+            Self::Sort => "hi-sort",
+            Self::SortButton => "hi-sort-button",
+            Self::SortActive => "hi-sort-active",
+            Self::SortClear => "hi-sort-clear",
+            Self::SortTitle => "hi-sort-title",
+            Self::SortIndicator => "hi-sort-indicator",
+            Self::SortClearText => "hi-sort-clear-text",
+            Self::SortClearIcon => "hi-sort-clear-icon",
+            Self::Asc => "hi-sort-asc",
+            Self::Desc => "hi-sort-desc",
         }
     }
 }
@@ -154,17 +154,17 @@ pub enum PaginationClass {
 impl TypedClass for PaginationClass {
     fn class_name(&self) -> &'static str {
         match self {
-            PaginationClass::Pagination => "hi-pagination",
-            PaginationClass::PaginationTotal => "hi-pagination-total",
-            PaginationClass::PaginationSizer => "hi-pagination-sizer",
-            PaginationClass::PaginationPages => "hi-pagination-pages",
-            PaginationClass::PaginationPrev => "hi-pagination-prev",
-            PaginationClass::PaginationNext => "hi-pagination-next",
-            PaginationClass::PaginationEllipsis => "hi-pagination-ellipsis",
-            PaginationClass::PaginationItem => "hi-pagination-item",
-            PaginationClass::PaginationActive => "hi-pagination-active",
-            PaginationClass::PaginationJump => "hi-pagination-jump",
-            PaginationClass::PaginationJumpLabel => "hi-pagination-jump-label",
+            Self::Pagination => "hi-pagination",
+            Self::PaginationTotal => "hi-pagination-total",
+            Self::PaginationSizer => "hi-pagination-sizer",
+            Self::PaginationPages => "hi-pagination-pages",
+            Self::PaginationPrev => "hi-pagination-prev",
+            Self::PaginationNext => "hi-pagination-next",
+            Self::PaginationEllipsis => "hi-pagination-ellipsis",
+            Self::PaginationItem => "hi-pagination-item",
+            Self::PaginationActive => "hi-pagination-active",
+            Self::PaginationJump => "hi-pagination-jump",
+            Self::PaginationJumpLabel => "hi-pagination-jump-label",
         }
     }
 }
@@ -193,23 +193,23 @@ pub enum FilterClass {
 impl TypedClass for FilterClass {
     fn class_name(&self) -> &'static str {
         match self {
-            FilterClass::Filter => "hi-filter",
-            FilterClass::FilterContainer => "hi-filter-container",
-            FilterClass::FilterTrigger => "hi-filter-trigger",
-            FilterClass::FilterActive => "hi-filter-active",
-            FilterClass::FilterIcon => "hi-filter-icon",
-            FilterClass::FilterBadge => "hi-filter-badge",
-            FilterClass::FilterDropdownIcon => "hi-filter-dropdown-icon",
-            FilterClass::FilterDropdown => "hi-filter-dropdown",
-            FilterClass::FilterHeader => "hi-filter-header",
-            FilterClass::FilterTitle => "hi-filter-title",
-            FilterClass::FilterClearBtn => "hi-filter-clear-btn",
-            FilterClass::FilterOptions => "hi-filter-options",
-            FilterClass::FilterOption => "hi-filter-option",
-            FilterClass::FilterCheckbox => "hi-filter-checkbox",
-            FilterClass::FilterLabel => "hi-filter-label",
-            FilterClass::FilterFooter => "hi-filter-footer",
-            FilterClass::FilterHint => "hi-filter-hint",
+            Self::Filter => "hi-filter",
+            Self::FilterContainer => "hi-filter-container",
+            Self::FilterTrigger => "hi-filter-trigger",
+            Self::FilterActive => "hi-filter-active",
+            Self::FilterIcon => "hi-filter-icon",
+            Self::FilterBadge => "hi-filter-badge",
+            Self::FilterDropdownIcon => "hi-filter-dropdown-icon",
+            Self::FilterDropdown => "hi-filter-dropdown",
+            Self::FilterHeader => "hi-filter-header",
+            Self::FilterTitle => "hi-filter-title",
+            Self::FilterClearBtn => "hi-filter-clear-btn",
+            Self::FilterOptions => "hi-filter-options",
+            Self::FilterOption => "hi-filter-option",
+            Self::FilterCheckbox => "hi-filter-checkbox",
+            Self::FilterLabel => "hi-filter-label",
+            Self::FilterFooter => "hi-filter-footer",
+            Self::FilterHint => "hi-filter-hint",
         }
     }
 }
@@ -223,8 +223,8 @@ pub enum SelectionClass {
 impl TypedClass for SelectionClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SelectionClass::Selection => "hi-selection",
-            SelectionClass::RowSelection => "hi-row-selection",
+            Self::Selection => "hi-selection",
+            Self::RowSelection => "hi-row-selection",
         }
     }
 }
@@ -250,20 +250,20 @@ pub enum SelectionClassNew {
 impl TypedClass for SelectionClassNew {
     fn class_name(&self) -> &'static str {
         match self {
-            SelectionClassNew::SelectionColumn => "hi-selection-column",
-            SelectionClassNew::SelectionFixed => "hi-selection-fixed",
-            SelectionClassNew::SelectionHeader => "hi-selection-header",
-            SelectionClassNew::SelectionAll => "hi-selection-all",
-            SelectionClassNew::SelectionCheckbox => "hi-selection-checkbox",
-            SelectionClassNew::SelectionRow => "hi-selection-row",
-            SelectionClassNew::SelectionItem => "hi-selection-item",
-            SelectionClassNew::RowSelection => "hi-row-selection",
-            SelectionClassNew::RowSelectionLabel => "hi-row-selection-label",
-            SelectionClassNew::RowSelectionInput => "hi-row-selection-input",
-            SelectionClassNew::RowSelectionCustom => "hi-row-selection-custom",
-            SelectionClassNew::RowSelectionChecked => "hi-row-selection-checked",
-            SelectionClassNew::RowSelectionRadioDot => "hi-row-selection-radio-dot",
-            SelectionClassNew::RadioGroup => "hi-selection-radio-group",
+            Self::SelectionColumn => "hi-selection-column",
+            Self::SelectionFixed => "hi-selection-fixed",
+            Self::SelectionHeader => "hi-selection-header",
+            Self::SelectionAll => "hi-selection-all",
+            Self::SelectionCheckbox => "hi-selection-checkbox",
+            Self::SelectionRow => "hi-selection-row",
+            Self::SelectionItem => "hi-selection-item",
+            Self::RowSelection => "hi-row-selection",
+            Self::RowSelectionLabel => "hi-row-selection-label",
+            Self::RowSelectionInput => "hi-row-selection-input",
+            Self::RowSelectionCustom => "hi-row-selection-custom",
+            Self::RowSelectionChecked => "hi-row-selection-checked",
+            Self::RowSelectionRadioDot => "hi-row-selection-radio-dot",
+            Self::RadioGroup => "hi-selection-radio-group",
         }
     }
 }
@@ -298,12 +298,12 @@ pub enum TreeClass {
 impl TypedClass for TreeClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TreeClass::DragNode => "hi-drag-node",
-            TreeClass::VirtualTree => "hi-virtual-tree",
-            TreeClass::NodeDisabled => "hi-tree-node-disabled",
-            TreeClass::Dragging => "hi-dragging",
-            TreeClass::DragOver => "hi-drag-over",
-            TreeClass::ShowLine => "hi-tree-show-line",
+            Self::DragNode => "hi-drag-node",
+            Self::VirtualTree => "hi-virtual-tree",
+            Self::NodeDisabled => "hi-tree-node-disabled",
+            Self::Dragging => "hi-dragging",
+            Self::DragOver => "hi-drag-over",
+            Self::ShowLine => "hi-tree-show-line",
         }
     }
 }
@@ -317,8 +317,8 @@ pub enum TreeClassNew {
 impl TypedClass for TreeClassNew {
     fn class_name(&self) -> &'static str {
         match self {
-            TreeClassNew::TreeContainer => "hi-tree-container",
-            TreeClassNew::Tree => "hi-tree",
+            Self::TreeContainer => "hi-tree-container",
+            Self::Tree => "hi-tree",
         }
     }
 }
@@ -353,18 +353,18 @@ pub enum DragDropTreeClass {
 impl TypedClass for DragDropTreeClass {
     fn class_name(&self) -> &'static str {
         match self {
-            DragDropTreeClass::DragDropTree => "hi-drag-drop-tree",
-            DragDropTreeClass::DragNode => "hi-drag-node",
-            DragDropTreeClass::Dragging => "hi-drag-node-dragging",
-            DragDropTreeClass::DragOver => "hi-drag-node-drag-over",
-            DragDropTreeClass::NodeDisabled => "hi-drag-node-disabled",
-            DragDropTreeClass::DropIndicator => "hi-drop-indicator",
-            DragDropTreeClass::DragHandle => "hi-drag-handle",
-            DragDropTreeClass::DragHandleIcon => "hi-drag-handle-icon",
-            DragDropTreeClass::NodeContent => "hi-node-content",
-            DragDropTreeClass::DragGhost => "hi-drag-ghost",
-            DragDropTreeClass::DropLine => "hi-drop-line",
-            DragDropTreeClass::NodeChildren => "hi-node-children",
+            Self::DragDropTree => "hi-drag-drop-tree",
+            Self::DragNode => "hi-drag-node",
+            Self::Dragging => "hi-drag-node-dragging",
+            Self::DragOver => "hi-drag-node-drag-over",
+            Self::NodeDisabled => "hi-drag-node-disabled",
+            Self::DropIndicator => "hi-drop-indicator",
+            Self::DragHandle => "hi-drag-handle",
+            Self::DragHandleIcon => "hi-drag-handle-icon",
+            Self::NodeContent => "hi-node-content",
+            Self::DragGhost => "hi-drag-ghost",
+            Self::DropLine => "hi-drop-line",
+            Self::NodeChildren => "hi-node-children",
         }
     }
 }
@@ -379,9 +379,9 @@ pub enum VirtualScrollClass {
 impl TypedClass for VirtualScrollClass {
     fn class_name(&self) -> &'static str {
         match self {
-            VirtualScrollClass::VirtualTree => "hi-virtual-tree",
-            VirtualScrollClass::NodeDisabled => "hi-tree-node-disabled",
-            VirtualScrollClass::Viewport => "hi-virtual-tree-viewport",
+            Self::VirtualTree => "hi-virtual-tree",
+            Self::NodeDisabled => "hi-tree-node-disabled",
+            Self::Viewport => "hi-virtual-tree-viewport",
         }
     }
 }
@@ -403,16 +403,16 @@ pub enum TreeNodeClass {
 impl TypedClass for TreeNodeClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TreeNodeClass::TreeNode => "hi-tree-node",
-            TreeNodeClass::TreeNodeSelected => "hi-tree-node-selected",
-            TreeNodeClass::TreeNodeDisabled => "hi-tree-node-disabled",
-            TreeNodeClass::TreeNodeParent => "hi-tree-node-parent",
-            TreeNodeClass::NodeContent => "hi-tree-node-content",
-            TreeNodeClass::NodeIcon => "hi-tree-node-icon",
-            TreeNodeClass::NodeArrow => "hi-tree-node-arrow",
-            TreeNodeClass::NodeArrowPlaceholder => "hi-tree-node-arrow-placeholder",
-            TreeNodeClass::NodeArrowExpanded => "hi-tree-node-arrow-expanded",
-            TreeNodeClass::NodeDisabled => "hi-tree-node-disabled",
+            Self::TreeNode => "hi-tree-node",
+            Self::TreeNodeSelected => "hi-tree-node-selected",
+            Self::TreeNodeDisabled => "hi-tree-node-disabled",
+            Self::TreeNodeParent => "hi-tree-node-parent",
+            Self::NodeContent => "hi-tree-node-content",
+            Self::NodeIcon => "hi-tree-node-icon",
+            Self::NodeArrow => "hi-tree-node-arrow",
+            Self::NodeArrowPlaceholder => "hi-tree-node-arrow-placeholder",
+            Self::NodeArrowExpanded => "hi-tree-node-arrow-expanded",
+            Self::NodeDisabled => "hi-tree-node-disabled",
         }
     }
 }
@@ -435,17 +435,17 @@ pub enum CollapseClass {
 impl TypedClass for CollapseClass {
     fn class_name(&self) -> &'static str {
         match self {
-            CollapseClass::CollapseContent => "hi-collapse-content",
-            CollapseClass::Expanded => "hi-collapse-expanded",
-            CollapseClass::Collapsed => "hi-collapse-collapsed",
-            CollapseClass::TreeNodeChildren => "hi-tree-node-children",
-            CollapseClass::TreeExpanded => "hi-tree-expanded",
-            CollapseClass::TreeCollapsed => "hi-tree-collapsed",
-            CollapseClass::Collapse => "hi-collapse",
-            CollapseClass::Header => "hi-collapse-header",
-            CollapseClass::Arrow => "hi-collapse-arrow",
-            CollapseClass::HeaderContent => "hi-collapse-header-content",
-            CollapseClass::Inner => "hi-collapse-inner",
+            Self::CollapseContent => "hi-collapse-content",
+            Self::Expanded => "hi-collapse-expanded",
+            Self::Collapsed => "hi-collapse-collapsed",
+            Self::TreeNodeChildren => "hi-tree-node-children",
+            Self::TreeExpanded => "hi-tree-expanded",
+            Self::TreeCollapsed => "hi-tree-collapsed",
+            Self::Collapse => "hi-collapse",
+            Self::Header => "hi-collapse-header",
+            Self::Arrow => "hi-collapse-arrow",
+            Self::HeaderContent => "hi-collapse-header-content",
+            Self::Inner => "hi-collapse-inner",
         }
     }
 }

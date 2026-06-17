@@ -71,12 +71,14 @@ impl AudioWaveformState {
         }
     }
 
-    pub fn with_color(mut self, color: WaveformColor) -> Self {
+    #[must_use]
+    pub const fn with_color(mut self, color: WaveformColor) -> Self {
         self.waveform_color = color;
         self
     }
 
-    pub fn with_show_controls(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_controls(mut self, show: bool) -> Self {
         self.show_controls = show;
         self
     }
@@ -86,22 +88,25 @@ impl AudioWaveformState {
         self
     }
 
-    pub fn with_volume(mut self, volume: f64) -> Self {
+    #[must_use]
+    pub const fn with_volume(mut self, volume: f64) -> Self {
         self.volume = volume.clamp(0.0, 1.0);
         self
     }
 
-    pub fn with_bar_count(mut self, count: usize) -> Self {
+    #[must_use]
+    pub const fn with_bar_count(mut self, count: usize) -> Self {
         self.bar_count = count;
         self
     }
 
-    pub fn with_fft_size(mut self, size: usize) -> Self {
+    #[must_use]
+    pub const fn with_fft_size(mut self, size: usize) -> Self {
         self.fft_size = size;
         self
     }
 
-    pub fn toggle_playback(&mut self) -> bool {
+    pub const fn toggle_playback(&mut self) -> bool {
         self.is_playing = !self.is_playing;
         self.playback_state = if self.is_playing {
             PlaybackState::Playing
@@ -111,27 +116,27 @@ impl AudioWaveformState {
         self.is_playing
     }
 
-    pub fn play(&mut self) {
+    pub const fn play(&mut self) {
         self.is_playing = true;
         self.playback_state = PlaybackState::Playing;
     }
 
-    pub fn pause(&mut self) {
+    pub const fn pause(&mut self) {
         self.is_playing = false;
         self.playback_state = PlaybackState::Paused;
     }
 
-    pub fn stop(&mut self) {
+    pub const fn stop(&mut self) {
         self.is_playing = false;
         self.playback_state = PlaybackState::Stopped;
         self.current_time = 0.0;
     }
 
-    pub fn set_current_time(&mut self, time: f64) {
+    pub const fn set_current_time(&mut self, time: f64) {
         self.current_time = time.max(0.0);
     }
 
-    pub fn set_duration(&mut self, duration: f64) {
+    pub const fn set_duration(&mut self, duration: f64) {
         self.duration = duration.max(0.0);
     }
 
@@ -140,6 +145,7 @@ impl AudioWaveformState {
         self.is_loaded = true;
     }
 
+    #[must_use]
     pub fn progress_percent(&self) -> f64 {
         if self.duration <= 0.0 {
             0.0
@@ -150,11 +156,12 @@ impl AudioWaveformState {
 
     pub fn generate_synth_waveform(&mut self) {
         let data: Vec<f32> = (0..self.bar_count)
-            .map(|i| 0.2 + (i as f32 * 0.8).sin().abs() * 0.8)
+            .map(|i| (i as f32 * 0.8).sin().abs().mul_add(0.8, 0.2))
             .collect();
         self.set_waveform_data(data);
     }
 
+    #[must_use]
     pub fn waveform_bars(&self) -> Vec<(usize, f32)> {
         if !self.is_loaded {
             return Vec::new();
@@ -166,13 +173,15 @@ impl AudioWaveformState {
             .collect()
     }
 
+    #[must_use]
     pub fn bar_style(&self, amplitude: f32) -> String {
-        let height = 20.0 + amplitude * 80.0;
-        let opacity = 0.3 + amplitude * 0.7;
-        format!("height: {}px; opacity: {};", height, opacity)
+        let height = amplitude.mul_add(80.0, 20.0);
+        let opacity = amplitude.mul_add(0.7, 0.3);
+        format!("height: {height}px; opacity: {opacity};")
     }
 
-    pub fn color_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn color_class(&self) -> &'static str {
         match self.waveform_color {
             WaveformColor::Primary => "hi-waveform-Primary",
             WaveformColor::Success => "hi-waveform-Success",
@@ -181,6 +190,7 @@ impl AudioWaveformState {
         }
     }
 
+    #[must_use]
     pub fn class_string(&self) -> String {
         let base = format!("hi-audio-waveform {}", self.color_class());
         if self.class.is_empty() {
@@ -190,10 +200,12 @@ impl AudioWaveformState {
         }
     }
 
+    #[must_use]
     pub fn formatted_current_time(&self) -> String {
         format_time(self.current_time)
     }
 
+    #[must_use]
     pub fn formatted_duration(&self) -> String {
         format_time(self.duration)
     }
@@ -210,7 +222,7 @@ pub struct WaveformReadyEvent {
     pub data: Vec<f32>,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct PlaybackChangeEvent {
     pub is_playing: bool,
     pub state: PlaybackState,
@@ -219,9 +231,10 @@ pub struct PlaybackChangeEvent {
 fn format_time(seconds: f64) -> String {
     let mins = (seconds / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
-    format!("{:02}:{:02}", mins, secs)
+    format!("{mins:02}:{secs:02}")
 }
 
+#[must_use]
 pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
     let mut container_children: Vec<VNode> = Vec::new();
 
@@ -250,8 +263,8 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
         let placeholder_count = state.bar_count.min(20);
         let placeholder_bars: Vec<VNode> = (0..placeholder_count)
             .map(|i| {
-                let h = 20.0 + (i as f32 * 0.8).sin().abs() * 40.0;
-                let style = format!("height: {}px; opacity: 0.3;", h);
+                let h = (i as f32 * 0.8).sin().abs().mul_add(40.0, 20.0);
+                let style = format!("height: {h}px; opacity: 0.3;");
                 VNode::Element(
                     VElement::new("div")
                         .class("hi-waveform-bar hi-waveform-bar--placeholder")
@@ -295,7 +308,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-audio-progress-bar")
-                            .attr("style", format!("width: {};", progress_width)),
+                            .attr("style", format!("width: {progress_width};")),
                     )),
             ))
             .child(VNode::Element(

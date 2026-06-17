@@ -33,7 +33,8 @@ impl Default for BreathingConfig {
 }
 
 impl BreathingConfig {
-    pub fn new(duration_ms: u64, saturation_range: f64, lightness_range: f64) -> Self {
+    #[must_use]
+    pub const fn new(duration_ms: u64, saturation_range: f64, lightness_range: f64) -> Self {
         Self {
             duration_ms,
             saturation_range,
@@ -42,6 +43,7 @@ impl BreathingConfig {
         }
     }
 
+    #[must_use]
     pub fn with_easing(mut self, easing: EasingFunction) -> Self {
         self.easing = easing;
         self
@@ -58,11 +60,13 @@ pub struct BreathingState {
 }
 
 impl BreathingState {
+    #[must_use]
     pub fn from_progress(progress: f64, config: &BreathingConfig) -> Self {
         let eased_progress = config.easing.apply(progress);
 
-        let saturation_factor = 1.0 + (eased_progress - 0.5) * 2.0 * config.saturation_range;
-        let lightness_factor = 1.0 + (eased_progress - 0.5) * 2.0 * config.lightness_range;
+        let saturation_factor =
+            ((eased_progress - 0.5) * 2.0).mul_add(config.saturation_range, 1.0);
+        let lightness_factor = ((eased_progress - 0.5) * 2.0).mul_add(config.lightness_range, 1.0);
 
         Self {
             current_saturation_factor: saturation_factor,
@@ -78,13 +82,13 @@ impl BreathingState {
 ///
 /// # Returns
 /// AnimationOptions configured for breathing
+#[must_use]
 pub fn breathing_options(config: BreathingConfig) -> AnimationOptions {
     AnimationOptions {
         duration: Duration::from_millis(config.duration_ms),
         easing: config.easing,
         playback: PlaybackMode::Yoyo,
         repeat: None,
-        yoyo: true,
         ..Default::default()
     }
 }

@@ -13,9 +13,16 @@
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::Duration;
 
 use tairitsu_vdom::Platform;
+
+static NEXT_TIMER_ID: AtomicI32 = AtomicI32::new(1);
+
+fn allocate_timer_id() -> i32 {
+    NEXT_TIMER_ID.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -23,12 +30,14 @@ pub struct TimerId(i32);
 
 impl TimerId {
     /// Create a new timer ID from raw value
-    pub fn new(id: i32) -> Self {
+    #[must_use]
+    pub const fn new(id: i32) -> Self {
         Self(id)
     }
 
     /// Get raw timer ID
-    pub fn as_i32(&self) -> i32 {
+    #[must_use]
+    pub const fn as_i32(&self) -> i32 {
         self.0
     }
 }
@@ -39,12 +48,14 @@ pub struct FrameId(u32);
 
 impl FrameId {
     /// Create a new frame ID from raw value
-    pub fn new(id: u32) -> Self {
+    #[must_use]
+    pub const fn new(id: u32) -> Self {
         Self(id)
     }
 
     /// Get raw frame ID
-    pub fn as_u32(&self) -> u32 {
+    #[must_use]
+    pub const fn as_u32(&self) -> u32 {
         self.0
     }
 }
@@ -81,12 +92,16 @@ pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 /// ```
 pub struct TimerManager<P: Platform> {
     platform: Rc<RefCell<P>>,
+    interval_registry: Rc<RefCell<std::collections::HashMap<i32, bool>>>,
 }
 
 impl<P: Platform> TimerManager<P> {
     /// Create a new timer manager with the given platform
     pub fn new(platform: Rc<RefCell<P>>) -> Self {
-        Self { platform }
+        Self {
+            platform,
+            interval_registry: Rc::new(RefCell::new(std::collections::HashMap::new())),
+        }
     }
 
     /// Schedule a one-shot callback
@@ -99,10 +114,10 @@ impl<P: Platform> TimerManager<P> {
     /// Timer ID that can be used to cancel the timer
     pub fn set_timeout(&self, callback: TimerCallback, delay: Duration) -> TimerId {
         let callback_clone = callback.clone();
-        let handle = self
-            .platform
-            .borrow_mut()
-            .set_timeout(Box::new(move || callback_clone()), delay.as_millis() as i32);
+        let handle = self.platform.borrow_mut().set_timeout(
+            Box::new(move || callback_clone()),
+            delay.as_millis().min(i32::MAX as u128) as i32,
+        );
         TimerId(handle)
     }
 
@@ -126,30 +141,52 @@ impl<P: Platform> TimerManager<P> {
     /// Note: This implementation re-schedules the callback after each execution.
     /// For true interval behavior, consider using platform-specific interval APIs.
     pub fn set_interval(&self, callback: TimerCallback, interval: Duration) -> TimerId {
-        let callback_clone = callback.clone();
-        let platform = Rc::clone(&self.platform);
+        let interval_id = allocate_timer_id();
+        self.interval_registry
+            .borrow_mut()
+            .insert(interval_id, true);
 
-        self.set_timeout(
-            Rc::new(move || {
-                callback_clone();
-                // Re-schedule
-                let callback_clone2 = callback_clone.clone();
-                let platform_clone = Rc::clone(&platform);
-                let manager = TimerManager {
-                    platform: platform_clone,
-                };
-                manager.set_timeout(callback_clone2, interval);
-            }),
-            interval,
-        )
+        let registry = Rc::clone(&self.interval_registry);
+        let platform = Rc::clone(&self.platform);
+        let interval_ms = interval.as_millis().min(i32::MAX as u128) as i32;
+
+        fn do_schedule<P: Platform>(
+            platform: Rc<RefCell<P>>,
+            registry: Rc<RefCell<std::collections::HashMap<i32, bool>>>,
+            interval_id: i32,
+            callback: TimerCallback,
+            interval_ms: i32,
+        ) {
+            let reg = registry;
+            let plat = platform.clone();
+            let cb = callback.clone();
+
+            platform.borrow_mut().set_timeout(
+                Box::new(move || {
+                    let active = reg.borrow().get(&interval_id).copied().unwrap_or(false);
+                    if !active {
+                        return;
+                    }
+                    cb();
+                    do_schedule(
+                        plat.clone(),
+                        reg.clone(),
+                        interval_id,
+                        callback.clone(),
+                        interval_ms,
+                    );
+                }),
+                interval_ms,
+            );
+        }
+
+        do_schedule(platform, registry, interval_id, callback, interval_ms);
+        TimerId(interval_id)
     }
 
     /// Cancel a scheduled interval
-    ///
-    /// # Arguments
-    /// * `id` - Timer ID returned by `set_interval`
     pub fn clear_interval(&self, id: TimerId) {
-        self.clear_timeout(id);
+        self.interval_registry.borrow_mut().remove(&id.0);
     }
 
     /// Schedule a requestAnimationFrame callback
@@ -206,6 +243,7 @@ impl<P: Platform> Clone for TimerManager<P> {
     fn clone(&self) -> Self {
         Self {
             platform: Rc::clone(&self.platform),
+            interval_registry: Rc::clone(&self.interval_registry),
         }
     }
 }
@@ -299,4 +337,65 @@ pub fn throttle<P: Platform + 'static>(
         drop(state_ref);
         callback();
     }))) as _
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn timer_id_new_and_as_i32() {
+        let id = TimerId::new(42);
+        assert_eq!(id.as_i32(), 42);
+    }
+
+    #[test]
+    fn timer_id_equality() {
+        assert_eq!(TimerId::new(1), TimerId::new(1));
+        assert_ne!(TimerId::new(1), TimerId::new(2));
+    }
+
+    #[test]
+    fn timer_id_copy() {
+        let a = TimerId::new(10);
+        let b = a;
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn timer_id_hash_consistency() {
+        use std::collections::HashSet;
+        let mut set = HashSet::new();
+        set.insert(TimerId::new(1));
+        assert!(set.contains(&TimerId::new(1)));
+        assert!(!set.contains(&TimerId::new(2)));
+    }
+
+    #[test]
+    fn frame_id_new_and_as_u32() {
+        let id = FrameId::new(99);
+        assert_eq!(id.as_u32(), 99);
+    }
+
+    #[test]
+    fn frame_id_equality() {
+        assert_eq!(FrameId::new(5), FrameId::new(5));
+        assert_ne!(FrameId::new(5), FrameId::new(6));
+    }
+
+    #[test]
+    fn frame_id_copy() {
+        let a = FrameId::new(7);
+        let b = a;
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn frame_id_hash_consistency() {
+        use std::collections::HashSet;
+        let mut set = HashSet::new();
+        set.insert(FrameId::new(3));
+        assert!(set.contains(&FrameId::new(3)));
+        assert!(!set.contains(&FrameId::new(4)));
+    }
 }

@@ -17,14 +17,14 @@ pub enum Header {
 impl TypedClass for Header {
     fn class_name(&self) -> &'static str {
         match self {
-            Header::Header => "hi-header",
-            Header::Sticky => "hi-header-sticky",
-            Header::Md => "hi-header-md",
-            Header::Transparent => "hi-header-transparent",
-            Header::Left => "hi-header-left",
-            Header::Right => "hi-header-right",
-            Header::Toggle => "hi-header-toggle",
-            Header::Rtl => "hi-header-rtl",
+            Self::Header => "hi-header",
+            Self::Sticky => "hi-header-sticky",
+            Self::Md => "hi-header-md",
+            Self::Transparent => "hi-header-transparent",
+            Self::Left => "hi-header-left",
+            Self::Right => "hi-header-right",
+            Self::Toggle => "hi-header-toggle",
+            Self::Rtl => "hi-header-rtl",
         }
     }
 }

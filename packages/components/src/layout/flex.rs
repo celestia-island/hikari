@@ -174,16 +174,16 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
 
     let mut style = props.style.clone();
     if let Some(min_w) = &props.min_width {
-        style = format!("{} min-width: {};", style, min_w);
+        style = format!("{style} min-width: {min_w};");
     }
     if let Some(min_h) = &props.min_height {
-        style = format!("{} min-height: {};", style, min_h);
+        style = format!("{style} min-height: {min_h};");
     }
     if let Some(max_w) = &props.max_width {
-        style = format!("{} max-width: {};", style, max_w);
+        style = format!("{style} max-width: {max_w};");
     }
     if let Some(max_h) = &props.max_height {
-        style = format!("{} max-height: {};", style, max_h);
+        style = format!("{style} max-height: {max_h};");
     }
 
     rsx! {

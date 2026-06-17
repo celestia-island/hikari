@@ -23,7 +23,7 @@ pub fn Canvas(
     let class_str = if class.is_empty() {
         "hi-canvas".to_string()
     } else {
-        format!("hi-canvas {}", class)
+        format!("hi-canvas {class}")
     };
 
     rsx! {

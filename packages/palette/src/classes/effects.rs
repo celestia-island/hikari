@@ -103,3 +103,94 @@ impl TypedClass for UserSelect {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn border_radius_all_variants() {
+        assert_eq!(BorderRadius::None.class_name(), "hi-rounded-none");
+        assert_eq!(BorderRadius::Sm.class_name(), "hi-rounded-sm");
+        assert_eq!(BorderRadius::Rounded.class_name(), "hi-rounded");
+        assert_eq!(BorderRadius::Lg.class_name(), "hi-rounded-lg");
+        assert_eq!(BorderRadius::Xl.class_name(), "hi-rounded-xl");
+        assert_eq!(BorderRadius::Full.class_name(), "hi-rounded-full");
+    }
+
+    #[test]
+    fn border_radius_copy_equality() {
+        let a = BorderRadius::Lg;
+        let b = a;
+        assert_eq!(a, b);
+        assert_ne!(BorderRadius::None, BorderRadius::Full);
+    }
+
+    #[test]
+    fn shadow_all_variants() {
+        assert_eq!(Shadow::Md.class_name(), "hi-shadow-md");
+        assert_eq!(Shadow::Lg.class_name(), "hi-shadow-lg");
+    }
+
+    #[test]
+    fn opacity_all_variants() {
+        assert_eq!(Opacity::O0.class_name(), "hi-opacity-0");
+        assert_eq!(Opacity::O50.class_name(), "hi-opacity-50");
+        assert_eq!(Opacity::O100.class_name(), "hi-opacity-100");
+    }
+
+    #[test]
+    fn cursor_all_variants() {
+        assert_eq!(Cursor::Pointer.class_name(), "hi-cursor-pointer");
+        assert_eq!(Cursor::NotAllowed.class_name(), "hi-cursor-not-allowed");
+    }
+
+    #[test]
+    fn pointer_events_all_variants() {
+        assert_eq!(PointerEvents::None.class_name(), "hi-pointer-events-none");
+        assert_eq!(PointerEvents::Auto.class_name(), "hi-pointer-events-auto");
+    }
+
+    #[test]
+    fn user_select_all_variants() {
+        assert_eq!(UserSelect::None.class_name(), "hi-select-none");
+        assert_eq!(UserSelect::Text.class_name(), "hi-select-text");
+        assert_eq!(UserSelect::All.class_name(), "hi-select-all");
+    }
+
+    #[test]
+    fn none_collision_check() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(BorderRadius::None)
+            .add_typed(PointerEvents::None)
+            .add_typed(UserSelect::None)
+            .build();
+        assert_eq!(
+            classes,
+            "hi-rounded-none hi-pointer-events-none hi-select-none"
+        );
+    }
+
+    #[test]
+    fn combo_card_effect() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(BorderRadius::Lg)
+            .add_typed(Shadow::Md)
+            .add_typed(Cursor::Pointer)
+            .build();
+        assert_eq!(classes, "hi-rounded-lg hi-shadow-md hi-cursor-pointer");
+    }
+
+    #[test]
+    fn combo_disabled_state() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Opacity::O50)
+            .add_typed(Cursor::NotAllowed)
+            .add_typed(PointerEvents::None)
+            .build();
+        assert_eq!(
+            classes,
+            "hi-opacity-50 hi-cursor-not-allowed hi-pointer-events-none"
+        );
+    }
+}

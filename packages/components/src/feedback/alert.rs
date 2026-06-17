@@ -1,16 +1,14 @@
 // hi-components/src/feedback/alert.rs
 // Alert component
 
-#![allow(clippy::needless_update)]
-
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, TypedClass};
 
 use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
-use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::feedback::Glow;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct AlertComponent;
 
@@ -127,6 +125,8 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Info | AlertVariant::Success => "polite",
     };
 
+    let icon_clone = icon.cloned();
+
     rsx! {
         Glow {
             class: "hi-alert-glow-wrapper".to_string(),
@@ -136,18 +136,18 @@ pub fn Alert(props: AlertProps) -> Element {
             block: true,
             div { class: alert_classes, role: "{aria_role}", "aria-live": "{aria_live}",
 
-                if icon.is_some() {
-                    div { class: icon_wrapper_class, {icon.unwrap().clone()} }
+                if let Some(icon_node) = icon_clone {
+                    div { class: icon_wrapper_class, {icon_node} }
                 }
 
                 div { class: content_class,
 
-                    if props.title.is_some() {
-                        div { class: title_class, "{props.title.as_ref().unwrap()}" }
+                    if let Some(title) = props.title.as_ref() {
+                        div { class: title_class, "{title}" }
                     }
 
-                    if props.description.is_some() {
-                        div { class: description_class, "{props.description.as_ref().unwrap()}" }
+                    if let Some(desc) = props.description.as_ref() {
+                        div { class: description_class, "{desc}" }
                     }
                 }
 

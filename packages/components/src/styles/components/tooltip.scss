@@ -27,7 +27,7 @@
 .hi-tooltip {
   // Layout
   position: fixed;
-  z-index: 10000;
+  z-index: var(--hi-z-index-tooltip, 1070);
 
   // Spacing
   padding: 0.5rem 0.75rem;

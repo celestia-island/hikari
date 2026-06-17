@@ -360,3 +360,217 @@ impl TypedClass for SpaceBetween {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn padding_all_variants() {
+        assert_eq!(Padding::P0.class_name(), "hi-p-0");
+        assert_eq!(Padding::P1.class_name(), "hi-p-1");
+        assert_eq!(Padding::P2.class_name(), "hi-p-2");
+        assert_eq!(Padding::P3.class_name(), "hi-p-3");
+        assert_eq!(Padding::P4.class_name(), "hi-p-4");
+        assert_eq!(Padding::P5.class_name(), "hi-p-5");
+        assert_eq!(Padding::P6.class_name(), "hi-p-6");
+        assert_eq!(Padding::P8.class_name(), "hi-p-8");
+        assert_eq!(Padding::P10.class_name(), "hi-p-10");
+        assert_eq!(Padding::P12.class_name(), "hi-p-12");
+    }
+
+    #[test]
+    fn padding_x_all_variants() {
+        assert_eq!(PaddingX::Px1.class_name(), "hi-px-1");
+        assert_eq!(PaddingX::Px2.class_name(), "hi-px-2");
+        assert_eq!(PaddingX::Px3.class_name(), "hi-px-3");
+        assert_eq!(PaddingX::Px4.class_name(), "hi-px-4");
+        assert_eq!(PaddingX::Px6.class_name(), "hi-px-6");
+    }
+
+    #[test]
+    fn padding_y_all_variants() {
+        assert_eq!(PaddingY::Py1.class_name(), "hi-py-1");
+        assert_eq!(PaddingY::Py2.class_name(), "hi-py-2");
+        assert_eq!(PaddingY::Py3.class_name(), "hi-py-3");
+        assert_eq!(PaddingY::Py4.class_name(), "hi-py-4");
+    }
+
+    #[test]
+    fn margin_all_variants() {
+        assert_eq!(Margin::M0.class_name(), "hi-m-0");
+        assert_eq!(Margin::M1.class_name(), "hi-m-1");
+        assert_eq!(Margin::M2.class_name(), "hi-m-2");
+        assert_eq!(Margin::M3.class_name(), "hi-m-3");
+        assert_eq!(Margin::M4.class_name(), "hi-m-4");
+        assert_eq!(Margin::M5.class_name(), "hi-m-5");
+        assert_eq!(Margin::M6.class_name(), "hi-m-6");
+        assert_eq!(Margin::M8.class_name(), "hi-m-8");
+        assert_eq!(Margin::Auto.class_name(), "hi-m-auto");
+    }
+
+    #[test]
+    fn margin_x_all_variants() {
+        assert_eq!(MarginX::MxAuto.class_name(), "hi-mx-auto");
+        let a = MarginX::MxAuto;
+        let b = a;
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn margin_y_all_variants() {
+        assert_eq!(MarginY::MyAuto.class_name(), "hi-my-auto");
+    }
+
+    #[test]
+    fn margin_top_all_variants() {
+        assert_eq!(MarginTop::Mt0.class_name(), "hi-mt-0");
+        assert_eq!(MarginTop::Mt1.class_name(), "hi-mt-1");
+        assert_eq!(MarginTop::Mt2.class_name(), "hi-mt-2");
+        assert_eq!(MarginTop::Mt3.class_name(), "hi-mt-3");
+        assert_eq!(MarginTop::Mt4.class_name(), "hi-mt-4");
+        assert_eq!(MarginTop::Mt5.class_name(), "hi-mt-5");
+        assert_eq!(MarginTop::Mt6.class_name(), "hi-mt-6");
+        assert_eq!(MarginTop::Mt8.class_name(), "hi-mt-8");
+    }
+
+    #[test]
+    fn margin_bottom_all_variants() {
+        assert_eq!(MarginBottom::Mb0.class_name(), "hi-mb-0");
+        assert_eq!(MarginBottom::Mb1.class_name(), "hi-mb-1");
+        assert_eq!(MarginBottom::Mb2.class_name(), "hi-mb-2");
+        assert_eq!(MarginBottom::Mb3.class_name(), "hi-mb-3");
+        assert_eq!(MarginBottom::Mb4.class_name(), "hi-mb-4");
+        assert_eq!(MarginBottom::Mb5.class_name(), "hi-mb-5");
+        assert_eq!(MarginBottom::Mb6.class_name(), "hi-mb-6");
+        assert_eq!(MarginBottom::Mb8.class_name(), "hi-mb-8");
+    }
+
+    #[test]
+    fn margin_left_all_variants() {
+        assert_eq!(MarginLeft::Ml0.class_name(), "hi-ml-0");
+        assert_eq!(MarginLeft::Ml1.class_name(), "hi-ml-1");
+        assert_eq!(MarginLeft::Ml2.class_name(), "hi-ml-2");
+        assert_eq!(MarginLeft::Ml3.class_name(), "hi-ml-3");
+        assert_eq!(MarginLeft::Ml4.class_name(), "hi-ml-4");
+        assert_eq!(MarginLeft::Ml5.class_name(), "hi-ml-5");
+        assert_eq!(MarginLeft::Ml6.class_name(), "hi-ml-6");
+        assert_eq!(MarginLeft::Ml8.class_name(), "hi-ml-8");
+    }
+
+    #[test]
+    fn margin_right_all_variants() {
+        assert_eq!(MarginRight::Mr0.class_name(), "hi-mr-0");
+        assert_eq!(MarginRight::Mr1.class_name(), "hi-mr-1");
+        assert_eq!(MarginRight::Mr2.class_name(), "hi-mr-2");
+        assert_eq!(MarginRight::Mr3.class_name(), "hi-mr-3");
+        assert_eq!(MarginRight::Mr4.class_name(), "hi-mr-4");
+        assert_eq!(MarginRight::Mr5.class_name(), "hi-mr-5");
+        assert_eq!(MarginRight::Mr6.class_name(), "hi-mr-6");
+        assert_eq!(MarginRight::Mr8.class_name(), "hi-mr-8");
+    }
+
+    #[test]
+    fn padding_top_all_variants() {
+        assert_eq!(PaddingTop::Pt0.class_name(), "hi-pt-0");
+        assert_eq!(PaddingTop::Pt1.class_name(), "hi-pt-1");
+        assert_eq!(PaddingTop::Pt2.class_name(), "hi-pt-2");
+        assert_eq!(PaddingTop::Pt3.class_name(), "hi-pt-3");
+        assert_eq!(PaddingTop::Pt4.class_name(), "hi-pt-4");
+        assert_eq!(PaddingTop::Pt5.class_name(), "hi-pt-5");
+        assert_eq!(PaddingTop::Pt6.class_name(), "hi-pt-6");
+        assert_eq!(PaddingTop::Pt8.class_name(), "hi-pt-8");
+    }
+
+    #[test]
+    fn padding_bottom_all_variants() {
+        assert_eq!(PaddingBottom::Pb0.class_name(), "hi-pb-0");
+        assert_eq!(PaddingBottom::Pb1.class_name(), "hi-pb-1");
+        assert_eq!(PaddingBottom::Pb2.class_name(), "hi-pb-2");
+        assert_eq!(PaddingBottom::Pb3.class_name(), "hi-pb-3");
+        assert_eq!(PaddingBottom::Pb4.class_name(), "hi-pb-4");
+        assert_eq!(PaddingBottom::Pb5.class_name(), "hi-pb-5");
+        assert_eq!(PaddingBottom::Pb6.class_name(), "hi-pb-6");
+        assert_eq!(PaddingBottom::Pb8.class_name(), "hi-pb-8");
+    }
+
+    #[test]
+    fn padding_left_all_variants() {
+        assert_eq!(PaddingLeft::Pl0.class_name(), "hi-pl-0");
+        assert_eq!(PaddingLeft::Pl1.class_name(), "hi-pl-1");
+        assert_eq!(PaddingLeft::Pl2.class_name(), "hi-pl-2");
+        assert_eq!(PaddingLeft::Pl3.class_name(), "hi-pl-3");
+        assert_eq!(PaddingLeft::Pl4.class_name(), "hi-pl-4");
+        assert_eq!(PaddingLeft::Pl5.class_name(), "hi-pl-5");
+        assert_eq!(PaddingLeft::Pl6.class_name(), "hi-pl-6");
+        assert_eq!(PaddingLeft::Pl8.class_name(), "hi-pl-8");
+    }
+
+    #[test]
+    fn padding_right_all_variants() {
+        assert_eq!(PaddingRight::Pr0.class_name(), "hi-pr-0");
+        assert_eq!(PaddingRight::Pr1.class_name(), "hi-pr-1");
+        assert_eq!(PaddingRight::Pr2.class_name(), "hi-pr-2");
+        assert_eq!(PaddingRight::Pr3.class_name(), "hi-pr-3");
+        assert_eq!(PaddingRight::Pr4.class_name(), "hi-pr-4");
+        assert_eq!(PaddingRight::Pr5.class_name(), "hi-pr-5");
+        assert_eq!(PaddingRight::Pr6.class_name(), "hi-pr-6");
+        assert_eq!(PaddingRight::Pr8.class_name(), "hi-pr-8");
+    }
+
+    #[test]
+    fn space_between_all_variants() {
+        assert_eq!(SpaceBetween::SpaceY2.class_name(), "hi-space-y-2");
+        assert_eq!(SpaceBetween::SpaceY4.class_name(), "hi-space-y-4");
+        assert_eq!(SpaceBetween::SpaceY6.class_name(), "hi-space-y-6");
+    }
+
+    #[test]
+    fn cross_enum_collision_auto() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Margin::Auto)
+            .add_typed(MarginX::MxAuto)
+            .add_typed(MarginY::MyAuto)
+            .build();
+        assert_eq!(classes, "hi-m-auto hi-mx-auto hi-my-auto");
+    }
+
+    #[test]
+    fn cross_enum_collision_same_values() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Padding::P4)
+            .add_typed(Margin::M4)
+            .add_typed(MarginTop::Mt4)
+            .add_typed(MarginBottom::Mb4)
+            .add_typed(MarginLeft::Ml4)
+            .add_typed(MarginRight::Mr4)
+            .add_typed(PaddingTop::Pt4)
+            .add_typed(PaddingBottom::Pb4)
+            .add_typed(PaddingLeft::Pl4)
+            .add_typed(PaddingRight::Pr4)
+            .build();
+        assert_eq!(
+            classes,
+            "hi-p-4 hi-m-4 hi-mt-4 hi-mb-4 hi-ml-4 hi-mr-4 hi-pt-4 hi-pb-4 hi-pl-4 hi-pr-4"
+        );
+    }
+
+    #[test]
+    fn combo_button_padding() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(PaddingX::Px4)
+            .add_typed(PaddingY::Py2)
+            .build();
+        assert_eq!(classes, "hi-px-4 hi-py-2");
+    }
+
+    #[test]
+    fn combo_card_spacing() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Padding::P6)
+            .add_typed(MarginBottom::Mb4)
+            .add_typed(SpaceBetween::SpaceY4)
+            .build();
+        assert_eq!(classes, "hi-p-6 hi-mb-4 hi-space-y-4");
+    }
+}

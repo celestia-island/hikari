@@ -98,7 +98,7 @@ println!("Primary: {}", theme.primary.hex());
 use hikari_theme::ThemeProvider;
 
 rsx! {
-    ThemeProvider { palette: "hikari" } {
+    ThemeProvider { initial_palette: "hikari" } {
         // 애플리케이션 콘텐츠
         App {}
     }

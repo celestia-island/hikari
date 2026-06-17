@@ -28,10 +28,12 @@ impl UseTransition {
         }
     }
 
+    #[must_use]
     pub fn is_visible(&self) -> bool {
         *self.is_visible.borrow()
     }
 
+    #[must_use]
     pub fn is_animating(&self) -> bool {
         *self.is_animating.borrow()
     }
@@ -74,20 +76,20 @@ impl UseTransition {
     }
 }
 
+#[must_use]
 pub fn use_transition(duration_ms: u64) -> UseTransition {
     UseTransition::new(duration_ms)
 }
 
+#[must_use]
 pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
-    let scaled_duration = if let Some(ctx) = try_use_animation_config() {
+    let scaled_duration = try_use_animation_config().map_or(duration_ms, |ctx| {
         let cfg = ctx.get();
         if cfg.duration_scale != 1.0 {
-            (duration_ms as f64 * cfg.duration_scale as f64) as u64
+            (duration_ms as f64 * f64::from(cfg.duration_scale)) as u64
         } else {
             duration_ms
         }
-    } else {
-        duration_ms
-    };
+    });
     UseTransition::new(scaled_duration)
 }

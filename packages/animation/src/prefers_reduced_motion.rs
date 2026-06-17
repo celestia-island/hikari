@@ -21,9 +21,7 @@ use tairitsu_vdom::Platform;
 /// does not expose the matchMedia API.
 ///
 /// When available, this should use: `window.matchMedia("(prefers-reduced-motion: reduce)").matches()`
-pub fn prefers_reduced_motion<P: Platform>(_platform: &Rc<RefCell<P>>) -> bool {
-    // Default implementation: no reduced motion preference detected
-    // TODO: Update when WIT interface adds matchMedia support
+pub const fn prefers_reduced_motion<P: Platform>(_platform: &Rc<RefCell<P>>) -> bool {
     false
 }
 
@@ -40,8 +38,6 @@ pub fn watch_prefers_reduced_motion<P: Platform>(
     _platform: &Rc<RefCell<P>>,
     _callback: impl Fn(bool) + 'static,
 ) {
-    // Default implementation: no-op
-    // TODO: Update when WIT interface adds MediaQueryList event listener support
 }
 
 /// Check if reduced motion should be applied

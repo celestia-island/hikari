@@ -17,7 +17,7 @@ use hikari_theme::ThemeProvider;
 
 fn app() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari".to_string(),
+        ThemeProvider { initial_initial_palette: "hikari".to_string(),
             div { class: "container",
                 h1 { "Welcome to Hikari" }
                 div { "Your app content" }

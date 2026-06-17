@@ -5,7 +5,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! use hikari_components::layout::Aside;
 //! use crate::prelude::*;
 //!

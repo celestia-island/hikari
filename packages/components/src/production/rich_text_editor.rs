@@ -11,6 +11,7 @@ use tairitsu_vdom::events::InputEvent;
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::sanitize_html;
 
 pub struct RichTextEditorComponent;
 
@@ -60,7 +61,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
     };
 
     let exec_format = move |command: &str| {
-        platform::exec_command(command, None);
+        let _ = platform::exec_command(command, None);
     };
 
     let on_change = {
@@ -144,7 +145,7 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
                 class: editor_classes,
                 contenteditable: "true",
                 "data-placeholder": "{props.placeholder}",
-                dangerous_inner_html: "{content.get()}",
+                dangerous_inner_html: sanitize_html(&content.get()),
                 oninput: on_change,
             }
         }

@@ -19,6 +19,7 @@ pub enum SortDirection {
 }
 
 impl SortDirection {
+    #[must_use]
     pub fn toggle(&self) -> Self {
         match self {
             SortDirection::None => SortDirection::Ascending,
@@ -27,6 +28,7 @@ impl SortDirection {
         }
     }
 
+    #[must_use]
     pub fn icon(&self) -> &'static str {
         match self {
             SortDirection::None => "⇅",
@@ -35,6 +37,7 @@ impl SortDirection {
         }
     }
 
+    #[must_use]
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",

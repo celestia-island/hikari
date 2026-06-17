@@ -7,13 +7,15 @@
 
 use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct InputComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum InputSize {
     Small,
     #[default]
@@ -22,6 +24,7 @@ pub enum InputSize {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum InputStatus {
     #[default]
     Default,
@@ -93,16 +96,6 @@ pub struct InputProps {
     pub status: InputStatus,
 }
 
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
 #[component]
 pub fn Input(props: InputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
@@ -167,7 +160,6 @@ pub fn Input(props: InputProps) -> Element {
                 placeholder: props.placeholder.clone(),
                 value: props.value,
                 "aria-invalid": if matches!(props.status, InputStatus::Error) { Some("true".to_string()) } else { None },
-                "aria-label": props.placeholder.clone(),
                 oninput: move |e: InputEvent| {
                     if let Some(handler) = props.oninput.as_ref() {
                         handler.call(e.data.clone());

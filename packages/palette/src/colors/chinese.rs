@@ -949,7 +949,7 @@ pub const 紫色: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (141, 75, 187),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 紫酱: Color = Color {
@@ -958,7 +958,7 @@ pub const 紫酱: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (129, 84, 99),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 酱紫: Color = Color {
@@ -967,7 +967,7 @@ pub const 酱紫: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (129, 84, 118),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 紫檀: Color = Color {
@@ -976,7 +976,7 @@ pub const 紫檀: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (76, 34, 27),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 绀青绀紫: Color = Color {
@@ -994,7 +994,7 @@ pub const 紫棠: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (86, 0, 79),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 青莲: Color = Color {
@@ -1003,7 +1003,7 @@ pub const 青莲: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (128, 29, 174),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 群青: Color = Color {
@@ -1021,7 +1021,7 @@ pub const 雪青: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (176, 164, 227),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 丁香色: Color = Color {
@@ -1030,7 +1030,7 @@ pub const 丁香色: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (204, 164, 227),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 藕色: Color = Color {
@@ -1039,7 +1039,7 @@ pub const 藕色: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (237, 209, 216),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 pub const 藕荷色: Color = Color {
@@ -1048,7 +1048,7 @@ pub const 藕荷色: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (228, 198, 208),
-    category: ColorCategory::Blue,
+    category: ColorCategory::Purple,
 };
 
 // ─── 苍色系 (6 colors) ───
@@ -1279,7 +1279,7 @@ pub const 灰色: Color = Color {
     #[cfg(not(feature = "chinese-names"))]
     name: (),
     rgb: (128, 128, 128),
-    category: ColorCategory::White,
+    category: ColorCategory::Gray,
 };
 
 pub const 牙色: Color = Color {

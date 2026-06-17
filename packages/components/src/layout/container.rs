@@ -38,6 +38,7 @@ pub struct ContainerProps {
 }
 
 impl ContainerSize {
+    #[must_use]
     pub fn max_width(&self) -> &'static str {
         match self {
             ContainerSize::Small => "640px",

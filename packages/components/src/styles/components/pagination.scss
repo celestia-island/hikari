@@ -3,7 +3,7 @@
 @use 'mixins' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Pagination Component -  Styling Component Component Component Component
+// Hikari Pagination Component - Styling
 
 // ============================================
 // Base Pagination Styles
@@ -682,36 +682,13 @@
 @include mix.mobile {
   .pagination {
     @include pagination-compact;
+  }
 }
 
 @include mix.tablet {
   .pagination {
     .hi-pagination-size-selector,
     .hi-pagination-total {
-      display: flex;
-    }
-
-    .hi-pagination-jumper {
-      display: none;
-    }
-  }
-}
-
-@include mix.desktop {
-  .pagination {
-    .hi-pagination-size-selector,
-    .hi-pagination-total,
-    .hi-pagination-jumper {
-      display: flex;
-    }
-  }
-}
-}
-
-@include mix.tablet {
-  .pagination {
-    .hi-pagination-size-selector,
-.hi-pagination-total {
       display: flex;
     }
 

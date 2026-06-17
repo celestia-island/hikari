@@ -6,6 +6,8 @@ authors.workspace = true
 license.workspace = true
 description = "Material Design Icons (MDI) integration for the Hikari design system"
 repository.workspace = true
+keywords = ["icons", "mdi", "material-design", "design-system", "ui"]
+categories = ["gui", "wasm"]
 
 include = [
     "build.rs",
@@ -18,26 +20,16 @@ include = [
 
 [features]
 default = []
-tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
-dynamic-fetch = ["dep:web-sys", "dep:reqwest"]
-dynamic-fetch-warnings = []
-
-[build-dependencies]
+tairitsu = ["tairitsu-vdom", "tairitsu-macros"]
+dynamic-fetch = ["dep:reqwest", "dep:ron"]
 
 [dependencies]
-# Tairitsu framework (optional)
 tairitsu-vdom = { version = "^0.5", optional = true }
-tairitsu-hooks = { version = "^0.5", optional = true }
+anyhow = { workspace = true }
 tairitsu-macros = { version = "^0.5", optional = true }
 
-# Hikari design system
-hikari-animation = { version = "^0.2", path = "../animation", default-features = false }
-
-# Data serialization
 serde.workspace = true
-ron.workspace = true
+ron = { version = "^0.8", optional = true }
 
-# WASM dependencies for dynamic icon fetching
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { version = "0.3", features = ["console"], optional = true }
 reqwest = { version = "^0.12", features = ["json"], optional = true }

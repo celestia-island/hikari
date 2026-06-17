@@ -6,13 +6,11 @@ authors.workspace = true
 license.workspace = true
 description = "Theme system with SCSS/CSS variable generation for the Hikari design system"
 repository.workspace = true
+keywords = ["theme", "scss", "css-variables", "design-system", "ui"]
+categories = ["gui", "wasm"]
 
 [lib]
-doctest = false
-
-[features]
-default = ["scss"]
-scss = []          # SCSS compilation
+doctest = true
 
 [dependencies]
 # Hikari palette

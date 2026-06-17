@@ -66,12 +66,12 @@ mod tests {
             CarouselIndicatorType::Dots
         );
 
-        let _top = CarouselIndicatorPosition::Top;
-        let _left = CarouselIndicatorPosition::Left;
-        let _right = CarouselIndicatorPosition::Right;
+        let _ = CarouselIndicatorPosition::Top;
+        let _ = CarouselIndicatorPosition::Left;
+        let _ = CarouselIndicatorPosition::Right;
 
-        let _line = CarouselIndicatorType::Line;
-        let _hidden = CarouselIndicatorType::Hidden;
+        let _ = CarouselIndicatorType::Line;
+        let _ = CarouselIndicatorType::Hidden;
     }
 
     #[test]
@@ -101,8 +101,8 @@ mod tests {
     fn test_timeline_position_variants() {
         assert_eq!(TimelinePosition::default(), TimelinePosition::Alternate);
 
-        let _left = TimelinePosition::Left;
-        let _right = TimelinePosition::Right;
+        let _ = TimelinePosition::Left;
+        let _ = TimelinePosition::Right;
     }
 
     #[test]
@@ -151,12 +151,12 @@ mod tests {
         assert_eq!(SkeletonVariant::default(), SkeletonVariant::Text);
         assert_eq!(SkeletonSize::default(), SkeletonSize::Medium);
 
-        let _circular = SkeletonVariant::Circular;
-        let _rectangular = SkeletonVariant::Rectangular;
-        let _rounded = SkeletonVariant::Rounded;
+        let _ = SkeletonVariant::Circular;
+        let _ = SkeletonVariant::Rectangular;
+        let _ = SkeletonVariant::Rounded;
 
-        let _small = SkeletonSize::Small;
-        let _large = SkeletonSize::Large;
+        let _ = SkeletonSize::Small;
+        let _ = SkeletonSize::Large;
     }
 
     #[test]
@@ -255,11 +255,11 @@ mod tests {
     fn test_tag_variant_variants() {
         assert_eq!(TagVariant::default(), TagVariant::Default);
 
-        let _primary = TagVariant::Primary;
-        let _success = TagVariant::Success;
-        let _warning = TagVariant::Warning;
-        let _danger = TagVariant::Danger;
-        let _info = TagVariant::Info;
+        let _ = TagVariant::Primary;
+        let _ = TagVariant::Success;
+        let _ = TagVariant::Warning;
+        let _ = TagVariant::Danger;
+        let _ = TagVariant::Info;
     }
 
     #[test]

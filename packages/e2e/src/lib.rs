@@ -9,11 +9,12 @@ pub mod tests;
 pub use html_assertions::HtmlAssertions;
 pub use ssr_helpers::{SsrTestHelper, SsrValidationResult};
 pub use tests::{Test, advanced_components::AdvancedComponentsTests, basic_components::{BasicComponentsTests, TestResult, TestStatus}, data_components::DataComponentsTests, form_components::FormComponentsTests, interactive_test::{InteractionStep, InteractiveTestResult, InteractiveTests, TestStep, VisualAnalysis, analyze_test_step, compare_visuals}, ssr_tests::{SsrTestResult, SsrTestStatus, SsrTests}, visual_quality::{VisualCheck, VisualCheckType, VisualQualityTest, VisualQualityTests}};
+use anyhow::Result;
 use thirtyfour::WebDriver;
 use tracing::{error, info};
 
 /// Run all E2E test suites
-pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>> {
+pub async fn run_all_tests(driver: &WebDriver) -> Result<Vec<TestResult>> {
     println!("Running all Hikari E2E tests...\n");
 
     let mut results = vec![];
@@ -86,7 +87,7 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
 /// Run interactive tests with multi-step operations and screenshots
 pub async fn run_interactive_tests(
     driver: &WebDriver,
-) -> anyhow::Result<Vec<InteractiveTestResult>> {
+) -> Result<Vec<InteractiveTestResult>> {
     println!("Running Hikari Interactive E2E tests...\n");
 
     let results = tests::interactive_test::InteractiveTests
@@ -128,7 +129,7 @@ pub async fn run_interactive_tests(
 }
 
 /// Run SSR (Server-Side Rendering) tests
-pub fn run_ssr_tests() -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
+pub fn run_ssr_tests() -> Result<Vec<tests::ssr_tests::SsrTestResult>> {
     println!("Running Hikari SSR E2E tests...\n");
 
     let results = tests::ssr_tests::SsrTests::run_all();
@@ -170,7 +171,7 @@ pub fn run_ssr_tests() -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
 /// Run SSR E2E tests with WebDriver (requires browser automation)
 pub async fn run_ssr_e2e_tests(
     driver: &WebDriver,
-) -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
+) -> Result<Vec<tests::ssr_tests::SsrTestResult>> {
     println!("Running Hikari SSR E2E tests with WebDriver...\n");
 
     let ssr_tests = tests::ssr_tests::SsrTests;

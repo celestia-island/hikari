@@ -4,23 +4,25 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Traditional Chinese color system with 500+ named colors for the Hikari design system"
+description = "Traditional Chinese color system with 660+ named colors for the Hikari design system"
 repository.workspace = true
+keywords = ["color", "palette", "design-system", "ui", "chinese"]
+categories = ["gui", "wasm"]
 
 [lib]
-doctest = false
+doctest = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 tairitsu-style = "^0.5"
-yuuka = "0.6"
+anyhow = { workspace = true }
 
 [build-dependencies]
-regex-lite = "0.1"
+regex-lite = "^0.1"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-wit-bindgen = "0.50"
+wit-bindgen = "^0.50"
 
 [features]
 chinese-names = []

@@ -42,7 +42,7 @@
     .hi-input-wrapper-item .hi-glow-wrapper,
     .hi-input-wrapper-item .hi-glow-wrapper .hi-button,
     .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button {
-      color: var(--hi-color-text-secondary) !important;
+      color: var(--hi-color-text-secondary);
     }
 
     .hi-input-wrapper-item .hi-icon-button-icon,
@@ -50,7 +50,7 @@
     .hi-input-wrapper-item .hi-glow-wrapper .hikari-icon,
     .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button-icon,
     .hi-input-wrapper-item .hikari-icon {
-      color: var(--hi-color-text-secondary) !important;
+      color: var(--hi-color-text-secondary);
     }
   }
 }
@@ -226,11 +226,11 @@
 
   // Focus-visible state - keep default color (same as non-focused state)
   &:focus-visible {
-    color: var(--hi-color-text-secondary) !important;
+    color: var(--hi-text-secondary);
 
     .hi-icon-button-icon,
     .hikari-icon {
-      color: var(--hi-color-text-secondary) !important;
+      color: var(--hi-text-secondary);
     }
   }
 
@@ -247,6 +247,8 @@
   }
 }
 
+// ============================================
+// Dark Theme Support
 // ============================================
 // Dark Theme Support
 // ============================================

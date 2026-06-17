@@ -57,6 +57,7 @@ pub struct AnimationRegistry {
 
 impl AnimationRegistry {
     /// Create a new animation registry
+    #[must_use]
     pub fn new() -> Self {
         Self {
             animations: HashMap::new(),
@@ -70,6 +71,7 @@ impl AnimationRegistry {
     /// # Arguments
     ///
     /// * `timeout_ms` - Default timeout in milliseconds (None = no timeout)
+    #[must_use]
     pub fn new_with_timeout(timeout_ms: Option<u64>) -> Self {
         Self {
             animations: HashMap::new(),
@@ -143,7 +145,7 @@ impl AnimationRegistry {
     /// Note: In WIT environment, we can't directly check if an element is still in DOM
     /// This would need to be tracked separately or added to the WIT interface
     /// For now, we always return true (assuming element is valid)
-    fn is_target_valid(&self, _entry: &AnimationEntry) -> bool {
+    const fn is_target_valid(&self, _entry: &AnimationEntry) -> bool {
         // WIT bindings don't provide a way to check if an element is still in DOM
         // This would need to be tracked separately
         true
@@ -155,7 +157,7 @@ impl AnimationRegistry {
     ///
     /// * `id` - Animation ID to stop
     /// * `reason` - Reason for stopping (for callback invocation)
-    pub fn stop_animation(&mut self, id: &str, reason: &str) -> bool {
+    pub fn stop_animation(&mut self, id: &str, _reason: &str) -> bool {
         if let Some(entry) = self.animations.remove(id) {
             // Collect callbacks to call
             let callbacks_to_call: Vec<_> = entry
@@ -180,7 +182,6 @@ impl AnimationRegistry {
                 cb();
             }
 
-            eprintln!("🛑 Animation {} stopped: {}", id, reason);
             true
         } else {
             false
@@ -192,10 +193,10 @@ impl AnimationRegistry {
     /// # Arguments
     ///
     /// * `reason` - Reason for stopping (for callback invocation)
-    pub fn stop_all(&mut self, reason: &str) {
+    pub fn stop_all(&mut self, _reason: &str) {
         let animations: Vec<(String, AnimationEntry)> = self.animations.drain().collect();
 
-        for (id, entry) in animations {
+        for (_id, entry) in animations {
             // Collect callbacks to call
             let callbacks_to_call: Vec<_> = entry
                 .callbacks
@@ -218,8 +219,6 @@ impl AnimationRegistry {
             for cb in callbacks_to_call {
                 cb();
             }
-
-            eprintln!("🛑 Animation {} stopped: {}", id, reason);
         }
     }
 
@@ -241,7 +240,11 @@ impl AnimationRegistry {
         }
 
         if !to_remove.is_empty() {
-            eprintln!("🧹 Cleaned up {} invalid animations", to_remove.len());
+            #[cfg(debug_assertions)]
+            eprintln!(
+                "[ANIMATION] Cleaned up {} invalid animations",
+                to_remove.len()
+            );
         }
 
         to_remove.len()
@@ -271,21 +274,25 @@ impl AnimationRegistry {
     }
 
     /// Get count of active animations
+    #[must_use]
     pub fn active_count(&self) -> usize {
         self.animations.len()
     }
 
     /// Check if any animations are active
+    #[must_use]
     pub fn has_active(&self) -> bool {
         !self.animations.is_empty()
     }
 
     /// Get all active animation IDs
+    #[must_use]
     pub fn active_ids(&self) -> Vec<String> {
         self.animations.keys().cloned().collect()
     }
 
     /// Get animation info (for debugging)
+    #[must_use]
     pub fn get_animation_info(&self, id: &str) -> Option<(std::time::Duration, usize)> {
         self.animations.get(id).map(|entry| {
             let duration = std::time::Instant::now().duration_since(entry.created_at);
@@ -314,6 +321,7 @@ pub struct AnimationManager {
 
 impl AnimationManager {
     /// Create a new animation manager
+    #[must_use]
     pub fn new() -> Self {
         Self {
             registry: AnimationRegistry::new(),
@@ -326,6 +334,7 @@ impl AnimationManager {
     /// # Arguments
     ///
     /// * `timeout_ms` - Default timeout in milliseconds
+    #[must_use]
     pub fn new_with_timeout(timeout_ms: Option<u64>) -> Self {
         Self {
             registry: AnimationRegistry::new_with_timeout(timeout_ms),
@@ -425,16 +434,19 @@ impl AnimationManager {
     }
 
     /// Get count of managed animations
-    pub fn managed_count(&self) -> usize {
+    #[must_use]
+    pub const fn managed_count(&self) -> usize {
         self.component_ids.len()
     }
 
     /// Get active animation IDs
-    pub fn managed_ids(&self) -> Vec<String> {
-        self.component_ids.clone()
+    #[must_use]
+    pub fn managed_ids(&self) -> &[String] {
+        &self.component_ids
     }
 
     /// Get animation info (for debugging)
+    #[must_use]
     pub fn get_animation_info(&self, id: &str) -> Option<(std::time::Duration, usize)> {
         self.registry.get_animation_info(id)
     }

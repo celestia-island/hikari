@@ -27,9 +27,10 @@ graph LR
   root --> examples["examples/ — Demonstrations"]
   packages --> palette["hikari-palette/ — Color system"]
   packages --> theme["hikari-theme/ — Theme management"]
+  packages --> animation["hikari-animation/ — Animation engine"]
   packages --> components["hikari-components/ — Basic components"]
   packages --> extra["hikari-extra-components/ — Advanced components"]
-  packages --> ssr["hikari-ssr/ — SSR integration"]
+  packages --> icons["hikari-icons/ — Icon system"]
 ```
 
 ### Design Philosophy
@@ -50,7 +51,8 @@ Each package handles a specific aspect of the framework:
 - **hikari-theme**: Theme management and CSS variables (depends on palette)
 - **hikari-components**: UI components (depends on palette and theme)
 - **hikari-extra-components**: Advanced components (depends on components)
-- **hikari-ssr**: Server-side rendering (no dependencies on other packages)
+- **hikari-animation**: Animation engine, easing, state machine (depends on tairitsu)
+- **hikari-icons**: MDI icon integration (depends on animation)
 
 ### 2. Dependency Inversion
 
@@ -59,6 +61,9 @@ Packages depend on abstractions, not concrete implementations:
 ```mermaid
 graph TD
   hikari-components --> hikari-theme
+  hikari-components --> hikari-icons
+  hikari-components --> hikari-animation
+  hikari-icons --> hikari-animation
   hikari-theme --> hikari-palette
 ```
 
@@ -82,6 +87,9 @@ graph BT
   hikari-theme --> hikari-palette
   hikari-components --> hikari-palette
   hikari-components --> hikari-theme
+  hikari-components --> hikari-icons
+  hikari-components --> hikari-animation
+  hikari-icons --> hikari-animation
   hikari-extra-components --> hikari-components
   hikari-extra-components --> hikari-theme
 ```
@@ -124,17 +132,26 @@ pub use provider::*;
 ```
 
 #### hikari-components
-**Purpose**: Basic UI components
+**Purpose**: Core UI component library (rendered components)
 
 **Responsibilities**:
 - Basic components (Button, Input, Card, Badge)
-- Feedback components (Alert, Toast, Tooltip)
+- Feedback components (Alert, Toast, Tooltip, Modal, Drawer)
 - Navigation components (Menu, Tabs, Breadcrumb)
-- Data components (Table, Tree with sub-modules)
+- Data components (Table, Tree, Pagination)
+- Display components (Tag, Skeleton, Calendar, Timeline, UserGuide, ZoomControls)
+- Layout components (Header, Aside, Grid, Flex)
+- Entry components (NumberInput, Search, Cascader, Transfer)
+- Production components (AudioPlayer, VideoPlayer, CodeHighlight, RichTextEditor)
+- Theme provider and portal system
+
+**Design approach**: Tairitsu `rsx!` macro-based rendered components with reactive hooks (`use_signal`, `use_effect`), `StyledComponent` trait for CSS embedding, and typed CSS class enums from `hikari-palette`.
 
 **Dependencies**:
-- `hikari-palette` (for color types)
+- `hikari-palette` (for color types and utility classes)
 - `hikari-theme` (for theming)
+- `hikari-icons` (for MDI icon components)
+- `hikari-animation` (for animation hooks)
 
 **Exports**:
 ```rust
@@ -142,40 +159,71 @@ pub use basic::*;
 pub use feedback::*;
 pub use navigation::*;
 pub use data::*;
+pub use display::*;
+pub use layout::*;
+pub use entry::*;
+pub use production::*;
 ```
 
 #### hikari-extra-components
-**Purpose**: Advanced UI components
+**Purpose**: Framework-agnostic data models for advanced UI scenarios
 
 **Responsibilities**:
-- Advanced utilities (DragLayer, Collapsible, ZoomControls)
-- Rich media components (RichTextEditor, AudioWaveform, VideoPlayer)
+- Pure state models for advanced components (DragLayerState, TimelineState, ZoomControlsState, UserGuideState, etc.)
+- Node graph system (NodeGraphState, Connection, Port, minimap, history, plugins)
+- Rich media state models (RichTextEditorState, VideoPlayerState, AudioWaveformState, CodeHighlighterState)
+- Event types and builder patterns for all state models
+
+**Design approach**: Pure Rust structs with `serde` support — no rendering framework dependency. These models can be used with any frontend framework (Tairitsu, Dioxus, Yew, Leptos) or in SSR/testing contexts without pulling in a DOM library.
 
 **Dependencies**:
-- `hikari-components` (uses basic components)
-- `hikari-theme` (for theming)
+- `hikari-components` (reuses types like `sanitize_html`)
+- `hikari-theme` (for theme integration)
+- `hikari-palette` (for color types)
+- `serde` (for serialization)
 
 **Exports**:
 ```rust
 pub use extra::*;
+pub use node_graph::*;
 ```
 
-#### hikari-ssr
-**Purpose**: Server-side rendering integration
+> **Note:** Some types share names across `hikari-components` and `hikari-extra-components` (e.g., `TimelinePosition`, `GuideStep`). The `components` versions are rendered Dioxus-style components with `Element` children and event handlers; the `extra-components` versions are pure data structs with `String` fields and `serde` derives. Import with explicit module paths to disambiguate.
+
+#### hikari-animation
+**Purpose**: Animation engine and presets
 
 **Responsibilities**:
-- SSR plugin builder
-- Router construction
-- Static asset serving
-- State management
+- State machine animation engine
+- Easing functions (30+)
+- Tween interpolation and timelines
+- Animation presets (glow, neon, tech, transitions)
 
-**Dependencies**: None (independent package)
+**Dependencies**:
+- `tairitsu-vdom` (for Platform trait)
 
 **Exports**:
 ```rust
-pub use plugin::HikariSsrPlugin;
-pub use router::build_router;
-pub use static_files::*;
+pub use presets::*;
+pub use core::{AnimationEngine, Tween, TweenId};
+pub use easing::EasingFunction;
+```
+
+#### hikari-icons
+**Purpose**: Material Design Icons integration
+
+**Responsibilities**:
+- MDI icon fetching and caching
+- SVG AST rendering
+- Icon name validation
+
+**Dependencies**:
+- `hikari-animation` (for icon animations)
+
+**Exports**:
+```rust
+pub use Icon;
+pub use IconSize;
 ```
 
 ## Technology Stack
@@ -188,9 +236,9 @@ pub use static_files::*;
   - Hooks for state management
   - WebAssembly compilation
 
-- **wasm-bindgen**: JavaScript interoperability
-  - Bridge between Rust and JavaScript
-  - Browser API access
+- **WASI (wasm32-wasip2)**: WebAssembly System Interface
+  - Native WASM Component Model runtime
+  - Type-safe WIT bindings instead of JS glue
 
 ### Styling
 
@@ -204,7 +252,7 @@ pub use static_files::*;
   - Nesting and inheritance
   - Functions and operations
 
-### Server
+### Server (for SSR in examples)
 
 - **Axum 0.8**: Web framework
   - Tower-based middleware
@@ -279,7 +327,7 @@ Theme and state management:
 
 ```rust
 rsx! {
-    ThemeProvider { palette: "hikari".to_string(),
+    ThemeProvider { initial_palette: "hikari",
         // All children have access to theme
         Button { "Themed Button" }
     }
@@ -359,7 +407,7 @@ graph TD
   CS --> VO["Visual Output"]
 ```
 
-### SSR Data Flow
+### SSR Data Flow (examples/website)
 
 ```mermaid
 graph TD
@@ -435,11 +483,12 @@ graph TD
 ```toml
 [workspace]
 members = [
-    "packages/hikari-palette",
-    "packages/hikari-theme",
-    "packages/hikari-components",
-    "packages/hikari-extra-components",
-    "packages/hikari-ssr",
+    "packages/palette",
+    "packages/theme",
+    "packages/animation",
+    "packages/components",
+    "packages/extra-components",
+    "packages/icons",
 ]
 ```
 
@@ -470,7 +519,7 @@ strip = true
 build:        # Build all packages
 test:         # Run tests
 fmt:          # Format code
-lint:         # Run linter
+clippy:       # Run linter
 dev:          # Start dev server
 ```
 
@@ -531,13 +580,13 @@ graph LR
 - [x] Feedback components (Alert, Toast, Tooltip)
 - [x] Navigation components (Menu, Tabs, Breadcrumb)
 - [x] Data components (Table, Tree)
-- [ ] Comprehensive component testing
-- [ ] Component documentation
+- [x] Comprehensive component testing (275+ tests)
+- [x] Component documentation
 
 ### Phase 5: hikari-extra-components
 
-- [ ] Node graph system
-- [ ] Advanced utilities
+- [x] Node graph system (with serialization, history, plugins)
+- [x] Advanced utilities (DragLayer, Collapsible, ZoomControls)
 - [ ] Performance optimization
 - [ ] Use case examples
 
@@ -545,7 +594,7 @@ graph LR
 
 - [ ] Complete demo-app
 - [ ] Individual component demos
-- [ ] SSR full example
+- [x] SSR in example website
 - [ ] Performance benchmarks
 
 ### Phase 7: Documentation
@@ -558,7 +607,7 @@ graph LR
 ### Phase 8: Ecosystem
 
 - [ ] CLI tooling
-- [] Starter templates
+- [ ] Starter templates
 - [ ] VS Code extension
 - [ ] Community components
 
@@ -571,6 +620,59 @@ graph LR
 - **Performance**: Best-in-class WASM performance
 
 ## Architectural Decisions
+
+### Dual-Layer Package Architecture: components vs extra-components
+
+Hikari intentionally splits its component offerings into two packages with complementary responsibilities:
+
+```mermaid
+graph LR
+    subgraph "hikari-components"
+        RC["Rendered Components<br/>(rsx! + hooks + StyledComponent)"]
+    end
+    subgraph "hikari-extra-components"
+        DM["Data Models<br/>(pure structs + serde + builder)"]
+    end
+    RC -->|reads state from| DM
+    DM -->|feeds into| RC
+```
+
+**Why two packages?**
+
+| Concern | `hikari-components` | `hikari-extra-components` |
+|---------|---------------------|---------------------------|
+| **Rendering** | `rsx!` macro, reactive hooks | None (framework-agnostic) |
+| **State management** | `use_signal()`, `use_effect()` | Plain mutable struct fields |
+| **Event handling** | `EventHandler<T>` closures | `data-action` attributes + external wiring |
+| **CSS embedding** | `StyledComponent` trait | `pub const *_STYLES: &str` |
+| **Serialization** | Not required | `serde` derives on all state types |
+| **DOM dependency** | Requires Tairitsu framework | None |
+| **Use case** | Live UI rendering in Tairitsu apps | SSR, testing, state persistence, non-Tairitsu frameworks |
+
+**Overlapping component domains** (e.g., Timeline, DragLayer, UserGuide, ZoomControls, VideoPlayer, RichTextEditor, CodeHighlight) exist in both packages by design:
+
+- The `components` version provides a **ready-to-use rendered component** with animations, keyboard handling, icon integration, and `StyledComponent` CSS.
+- The `extra-components` version provides a **pure state model** with builder pattern, `serde` serialization, mutation methods, and unit tests — but no rendering.
+
+**When to use which:**
+- **Tairitsu application**: Use `hikari-components` for rendered UI; optionally use `hikari-extra-components` for state persistence, undo/redo, or serialization.
+- **Non-Tairitsu application**: Use `hikari-extra-components` data models and implement your own rendering.
+- **Testing**: Use `hikari-extra-components` for unit testing state logic without a DOM.
+- **SSR**: Use both — data models for server-side state, rendered components for client hydration.
+
+**Type name disambiguation:**
+
+Some types exist in both packages (e.g., `TimelinePosition`, `GuideStep`). Import with explicit paths:
+
+```rust,ignore
+use hikari_extra_components::extra::TimelineState;     // pure data model
+use hikari_components::display::Timeline;              // rendered component
+
+use hikari_extra_components::extra::ZoomControlsState; // pure state
+use hikari_components::display::ZoomControls;          // rendered component
+```
+
+**CSS class naming:** The two packages use different CSS class names for the same conceptual elements. This is intentional — `components` uses typed class enums from `hikari-palette` (e.g., `ZoomControlsClass::Button`), while `extra-components` uses hardcoded strings or computed methods. When both packages are used together, each renders with its own class set.
 
 ### Why Tairitsu?
 

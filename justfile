@@ -37,12 +37,16 @@ default:
 
 # Check that tairitsu CLI is available in PATH
 check-tairitsu-packager:
-    @tairitsu --version > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
+    @tairitsu --help > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
 
 # Fetch MDI icons (download SVGs from GitHub) and pack into .dat
 fetch-icons:
     @{{py}} scripts/icons/fetch_mdi_icons.py
     @{{py}} scripts/icons/pack_mdi_data.py
+
+# Sync markdown docs from root docs/ to website public/docs/
+sync-docs:
+    @{{py}} scripts/sync_docs.py
 
 # ============================================================================
 # Build tasks
@@ -59,7 +63,7 @@ build: fetch-icons
     @cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
-build-website: (check-tairitsu-packager)
+build-website: sync-docs (check-tairitsu-packager)
     @echo "  ╭──────────────────────────────────────────────────╮"
     @echo "  │  Building website with tairitsu-packager         │"
     @echo "  ╰──────────────────────────────────────────────────╯"
@@ -76,17 +80,7 @@ build-website: (check-tairitsu-packager)
 dev *FLAGS="": (check-tairitsu-packager)
     cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch {{FLAGS}}
 
-# Alias for dev
 serve: dev
-
-# Development mode with file watching
-watch:
-    @just dev
-
-watch-dev:
-    @just dev
-
-run: dev
 
 # ============================================================================
 # Code quality
@@ -139,6 +133,26 @@ test-verbose:
     @cargo test --workspace -- --nocapture
 
 # ============================================================================
+# Coverage (requires nightly + cargo-llvm-cov)
+# ============================================================================
+
+# Generate coverage report (HTML + lcov)
+coverage:
+    @echo "  →  Generating coverage report..."
+    @cargo llvm-cov --workspace --lcov --output-path lcov.info
+    @cargo llvm-cov --workspace --html
+    @echo "  ✓  HTML report → target/llvm-cov/html/index.html"
+    @echo "  ✓  lcov info   → lcov.info"
+
+# Show coverage summary only (fast)
+coverage-summary:
+    @cargo llvm-cov --workspace --summary-only
+
+# Clean coverage artifacts
+coverage-clean:
+    @cargo llvm-cov clean --workspace
+
+# ============================================================================
 # Utilities
 # ============================================================================
 
@@ -146,10 +160,6 @@ test-verbose:
 update:
     @echo "  →  Updating dependencies..."
     @cargo update
-
-# Generate SCSS bundle manually
-generate-scss:
-    @echo "  →  Use 'just build-website' or 'tairitsu build' to compile SCSS"
 
 # ============================================================================
 # Browser Debug & E2E (Python framework, powered by Tairitsu MCP)
@@ -259,76 +269,22 @@ vr-run tolerance="0.01":
     @echo "  \u2564\u2500 Visual Regression Results \u2500\u2567"
     @cat target/visual-diff/report.json 2>/dev/null || echo "  No results yet — run vr-capture first"
 
+# Full visual regression: capture + compare all component pages
+vr-full: (check-tairitsu-packager)
+    @echo "  →  Running full component visual regression..."
+    @{{py}} scripts/e2e/cli.py run tests/visual/full_component_coverage.json --url http://localhost:3000 --output target/visual-full --baseline-dir tests/visual/baseline
+
+# Initialize baselines for all component pages (requires dev server)
+vr-init-baselines:
+    @{{py}} scripts/e2e/baseline_init.py --url http://localhost:3000 --debug-port 3001
+
+# Dry-run: show missing baselines without capturing
+vr-missing:
+    @{{py}} scripts/e2e/baseline_init.py --dry-run
+
 # Interactive session from commands JSON file
 interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":
     @{{py}} scripts/e2e/cli.py interactive --input "{{input}}" --output-dir "{{output-dir}}"
-
-# --- Backward-compatible aliases (old names → new Python implementation) ---
-
-build-debug:
-    @echo "  ℹ️  build-debug is now unnecessary — the E2E framework is pure Python."
-    @echo "     Run 'just e2e-install' to ensure dependencies are installed."
-
-browser-install:
-    @echo "  ℹ️  browser-install not needed — tairitsu-debug is built into the dev server."
-    @echo "     Start with 'just dev --daemon' and use 'just health' to verify."
-
-# Aliases for old recipe names
-visual-capture url="http://localhost:3000" output="/tmp/e2e_screenshots" filter="":
-    @just capture --route "/" --output "{{output}}/home.png"
-    @just batch --url "{{url}}" --output "{{output}}" {{if filter != "" { "--routes " + filter } else { "" }}}
-
-visual-batch url="http://localhost:3000" output="/tmp/e2e_screenshots":
-    @just batch --url "{{url}}" --output "{{output}}" --report "{{output}}/report.json"
-
-visual-inspect route="/" url="http://localhost:3000" output="inspect.png":
-    @just inspect --route "{{route}}" --output "{{output}}"
-
-visual-pipeline: health batch
-    @echo ""
-    @echo "  ╔══════════════════════════════════════════╗"
-    @echo "  ║  Screenshots saved to ./screenshots       ║"
-    @echo "  ║  Ready for AI visual analysis              ║"
-    @echo "  ╚══════════════════════════════════════════╝"
-
-build-debug-wry: build-debug
-
-wry-health debug_port="3001":
-    @just health {{debug_port}}
-
-wry-capture route="/" debug_port="3001" output="":
-    @{{py}} scripts/e2e/cli.py capture --route "{{route}}" {{if output != "" { "--output " + output } else { "" } }} --debug-port {{debug_port}}
-
-wry-batch debug_port="3001" output="" routes="":
-    @{{py}} scripts/e2e/cli.py batch --debug-port {{debug_port}} --output "{{if output != "" { output } else { "./screenshots" } }}" {{if routes != "" { "--routes " + routes } else { "" }}}
-
-wry-inspect route="/" selector="" debug_port="3001":
-    @{{py}} scripts/e2e/cli.py inspect --route "{{route}}" --debug-port {{debug_port}}
-
-wry-interactive route="/" debug_port="3001":
-    @{{py}} scripts/e2e/cli.py interactive --debug-port {{debug_port}}
-
-wry-pipeline debug_port="3001": wry-health wry-batch
-    @echo "  ✓  Screenshots saved to ./screenshots/"
-    @echo "  ✓  Ready for AI vision analysis"
-
-debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
-    @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}
-
-debug-check url="http://localhost:3000" wait="10":
-    @{{py}} scripts/dev/browser_debug.py check --url "{{url}}" --wait {{wait}}
-
-debug-script url="http://localhost:3000" script="return document.title;" wait="10":
-    @{{py}} scripts/dev/browser_debug.py script --url "{{url}}" --script '{{script}}' --wait {{wait}}
-
-debug-interactive input="scripts/dev/commands/example_commands.json":
-    @{{py}} scripts/dev/browser_debug.py interactive --input "{{input}}" --output-dir scripts/dev/screenshots
-
-debug-visual-check:
-    @{{py}} scripts/dev/browser_debug.py interactive --input "scripts/dev/commands/example_commands.json" --output-dir scripts/dev/screenshots
-
-debug-session route="/":
-    @{{py}} scripts/dev/browser_debug.py screenshot --url "http://localhost:3000{{route}}" --output "debug.png" --wait 10
 
 debug-chrome-up:
     @docker compose -f docker/docker-compose.debug.yml up -d chrome-debug

@@ -104,8 +104,24 @@ pub struct I18nKeys {
     pub descriptions: DescriptionKeys,
 }
 
-static KEYS_EN: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+macro_rules! i18n_lang {
+    ($name:ident => {
+        components: { $($ck:ident: $cv:expr),+ $(,)? },
+        pages: { $($pk:ident: $pv:expr),+ $(,)? },
+        labels: { $($lk:ident: $lv:expr),+ $(,)? },
+        descriptions: { $($dk:ident: $dv:expr),+ $(,)? },
+    }) => {
+        static $name: I18nKeys = I18nKeys {
+            components: ComponentKeys { $($ck: $cv),+ },
+            pages: PageKeys { $($pk: $pv),+ },
+            labels: LabelKeys { $($lk: $lv),+ },
+            descriptions: DescriptionKeys { $($dk: $dv),+ },
+        };
+    }
+}
+
+i18n_lang!(KEYS_EN => {
+    components: {
         button: "Button",
         input: "Input",
         card: "Card",
@@ -138,7 +154,7 @@ static KEYS_EN: I18nKeys = I18nKeys {
         data: "Data",
         user_guide: "User Guide",
     },
-    pages: PageKeys {
+    pages: {
         home: "Home",
         components: "Components",
         system: "System",
@@ -152,7 +168,7 @@ static KEYS_EN: I18nKeys = I18nKeys {
         i18n: "i18n",
         not_found: "Not Found",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "Explore Components",
         layer_base: "Layer 1 \u{2014} Base Components",
         layer_composed: "Layer 2 \u{2014} Composed Components",
@@ -170,7 +186,7 @@ static KEYS_EN: I18nKeys = I18nKeys {
         loading: "Loading...",
         no_data: "No data",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "Primary action trigger with variants: primary, secondary, danger, ghost.",
         input: "Text entry field with validation states and placeholder support.",
         card: "Container for grouping related content with optional header and footer.",
@@ -192,10 +208,10 @@ static KEYS_EN: I18nKeys = I18nKeys {
         visualization: "Charts, graphs, and data visualisation primitives.",
         zoom_controls: "Zoom in, zoom out, and reset controls for canvas or viewer.",
     },
-};
+});
 
-static KEYS_ZH_CN: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_ZH_CN => {
+    components: {
         button: "按钮",
         input: "输入框",
         card: "卡片",
@@ -228,7 +244,7 @@ static KEYS_ZH_CN: I18nKeys = I18nKeys {
         data: "数据",
         user_guide: "使用指南",
     },
-    pages: PageKeys {
+    pages: {
         home: "首页",
         components: "组件",
         system: "系统",
@@ -242,7 +258,7 @@ static KEYS_ZH_CN: I18nKeys = I18nKeys {
         i18n: "国际化",
         not_found: "页面未找到",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "浏览组件",
         layer_base: "第一层 \u{2014} 基础组件",
         layer_composed: "第二层 \u{2014} 组合组件",
@@ -260,7 +276,7 @@ static KEYS_ZH_CN: I18nKeys = I18nKeys {
         loading: "加载中...",
         no_data: "暂无数据",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "主要操作触发器，支持主要、次要、危险、幽灵等变体。",
         input: "文本输入字段，支持验证状态和占位符。",
         card: "用于分组相关内容的容器，支持可选的头部和底部。",
@@ -282,10 +298,10 @@ static KEYS_ZH_CN: I18nKeys = I18nKeys {
         visualization: "图表、图形和数据可视化基础组件。",
         zoom_controls: "画布或查看器的放大、缩小和重置控件。",
     },
-};
+});
 
-static KEYS_ZH_TW: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_ZH_TW => {
+    components: {
         button: "按鈕",
         input: "輸入框",
         card: "卡片",
@@ -318,7 +334,7 @@ static KEYS_ZH_TW: I18nKeys = I18nKeys {
         data: "資料",
         user_guide: "使用指南",
     },
-    pages: PageKeys {
+    pages: {
         home: "首頁",
         components: "元件",
         system: "系統",
@@ -332,7 +348,7 @@ static KEYS_ZH_TW: I18nKeys = I18nKeys {
         i18n: "國際化",
         not_found: "頁面未找到",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "瀏覽元件",
         layer_base: "第一層 \u{2014} 基礎元件",
         layer_composed: "第二層 \u{2014} 組合元件",
@@ -350,7 +366,7 @@ static KEYS_ZH_TW: I18nKeys = I18nKeys {
         loading: "載入中...",
         no_data: "暫無資料",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "主要操作觸發器，支援主要、次要、危險、幽靈等變體。",
         input: "文字輸入欄位，支援驗證狀態和佔位符。",
         card: "用於分組相關內容的容器，支援可選的頭部和底部。",
@@ -372,10 +388,10 @@ static KEYS_ZH_TW: I18nKeys = I18nKeys {
         visualization: "圖表、圖形和資料視覺化基礎元件。",
         zoom_controls: "畫布或檢視器的放大、縮小和重置控制項。",
     },
-};
+});
 
-static KEYS_JA: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_JA => {
+    components: {
         button: "ボタン",
         input: "入力",
         card: "カード",
@@ -408,7 +424,7 @@ static KEYS_JA: I18nKeys = I18nKeys {
         data: "データ",
         user_guide: "ユーザーガイド",
     },
-    pages: PageKeys {
+    pages: {
         home: "ホーム",
         components: "コンポーネント",
         system: "システム",
@@ -422,7 +438,7 @@ static KEYS_JA: I18nKeys = I18nKeys {
         i18n: "国際化",
         not_found: "ページが見つかりません",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "コンポーネントを見る",
         layer_base: "レイヤー 1 \u{2014} 基本コンポーネント",
         layer_composed: "レイヤー 2 \u{2014} 組み合わせコンポーネント",
@@ -440,7 +456,7 @@ static KEYS_JA: I18nKeys = I18nKeys {
         loading: "読み込み中...",
         no_data: "データなし",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "プライマリ、セカンダリ、デンジャー、ゴーストなどのバリエーションを持つアクションボタン。",
         input: "検証状態とプレースホルダーをサポートするテキスト入力フィールド。",
         card: "関連するコンテンツをグループ化するコンテナ。",
@@ -462,10 +478,10 @@ static KEYS_JA: I18nKeys = I18nKeys {
         visualization: "チャート、グラフ、データ可視化プリミティブ。",
         zoom_controls: "キャンバスやビューアのズームイン、ズームアウト、リセットコントロール。",
     },
-};
+});
 
-static KEYS_KO: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_KO => {
+    components: {
         button: "버튼",
         input: "입력",
         card: "카드",
@@ -498,7 +514,7 @@ static KEYS_KO: I18nKeys = I18nKeys {
         data: "데이터",
         user_guide: "사용자 가이드",
     },
-    pages: PageKeys {
+    pages: {
         home: "홈",
         components: "컴포넌트",
         system: "시스템",
@@ -512,7 +528,7 @@ static KEYS_KO: I18nKeys = I18nKeys {
         i18n: "국제화",
         not_found: "페이지를 찾을 수 없습니다",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "컴포넌트 살펴보기",
         layer_base: "레이어 1 \u{2014} 기본 컴포넌트",
         layer_composed: "레이어 2 \u{2014} 조합 컴포넌트",
@@ -530,7 +546,7 @@ static KEYS_KO: I18nKeys = I18nKeys {
         loading: "로딩 중...",
         no_data: "데이터 없음",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "기본, 보조, 위험, 고스트 등의 변형을 지원하는 작업 버튼.",
         input: "유효성 검사 상태와 플레이스홀더를 지원하는 텍스트 입력 필드.",
         card: "관련 콘텐츠를 그룹화하는 컨테이너.",
@@ -552,10 +568,10 @@ static KEYS_KO: I18nKeys = I18nKeys {
         visualization: "차트, 그래프 및 데이터 시각화 프리미티브.",
         zoom_controls: "캔버스나 뷰어의 확대, 축소, 초기화 컨트롤.",
     },
-};
+});
 
-static KEYS_FR: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_FR => {
+    components: {
         button: "Bouton",
         input: "Champ de saisie",
         card: "Carte",
@@ -588,7 +604,7 @@ static KEYS_FR: I18nKeys = I18nKeys {
         data: "Données",
         user_guide: "Guide utilisateur",
     },
-    pages: PageKeys {
+    pages: {
         home: "Accueil",
         components: "Composants",
         system: "Système",
@@ -602,7 +618,7 @@ static KEYS_FR: I18nKeys = I18nKeys {
         i18n: "i18n",
         not_found: "Page introuvable",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "Explorer les composants",
         layer_base: "Couche 1 \u{2014} Composants de base",
         layer_composed: "Couche 2 \u{2014} Composants composés",
@@ -620,23 +636,19 @@ static KEYS_FR: I18nKeys = I18nKeys {
         loading: "Chargement...",
         no_data: "Aucune donnée",
     },
-    descriptions: DescriptionKeys {
-        button:
-            "Déclencheur d'action principal avec variantes : primaire, secondaire, danger, fantôme.",
+    descriptions: {
+        button: "Déclencheur d'action principal avec variantes : primaire, secondaire, danger, fantôme.",
         input: "Champ de saisie texte avec états de validation et support d'espace réservé.",
-        card:
-            "Conteneur pour regrouper du contenu associé avec en-tête et pied de page optionnels.",
+        card: "Conteneur pour regrouper du contenu associé avec en-tête et pied de page optionnels.",
         switch: "Contrôle de basculement booléen.",
         avatar: "Représentation utilisateur avec image et repli par initiales.",
         tag: "Étiquette compacte pour la catégorisation ou l'affichage de statut.",
         search: "Champ de recherche avec filtrage instantané.",
         navigation: "Onglets, fil d'Ariane, étapes et composants de menu.",
         form: "Constructeur de formulaire avec validation, mise en page et gestion de soumission.",
-        feedback:
-            "Notifications toast, alertes, barres de progression et indicateurs de chargement.",
+        feedback: "Notifications toast, alertes, barres de progression et indicateurs de chargement.",
         cascader: "Sélecteur multi-niveaux hiérarchique.",
-        transfer:
-            "Widget de transfert à double panneau pour déplacer des éléments entre des listes.",
+        transfer: "Widget de transfert à double panneau pour déplacer des éléments entre des listes.",
         collapsible: "Panneaux accordéon/réductibles avec animation.",
         timeline: "Affichage chronologique des événements.",
         tree: "Vue arborescente hiérarchique avec expansion/réduction.",
@@ -646,10 +658,10 @@ static KEYS_FR: I18nKeys = I18nKeys {
         visualization: "Graphiques et primitives de visualisation de données.",
         zoom_controls: "Contrôles d'agrandissement, de réduction et de réinitialisation.",
     },
-};
+});
 
-static KEYS_DE: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_DE => {
+    components: {
         button: "Schaltfläche",
         input: "Eingabefeld",
         card: "Karte",
@@ -682,7 +694,7 @@ static KEYS_DE: I18nKeys = I18nKeys {
         data: "Daten",
         user_guide: "Benutzerhandbuch",
     },
-    pages: PageKeys {
+    pages: {
         home: "Startseite",
         components: "Komponenten",
         system: "System",
@@ -696,7 +708,7 @@ static KEYS_DE: I18nKeys = I18nKeys {
         i18n: "i18n",
         not_found: "Seite nicht gefunden",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "Komponenten erkunden",
         layer_base: "Ebene 1 \u{2014} Basiskomponenten",
         layer_composed: "Ebene 2 \u{2014} Zusammengesetzte Komponenten",
@@ -714,7 +726,7 @@ static KEYS_DE: I18nKeys = I18nKeys {
         loading: "Laden...",
         no_data: "Keine Daten",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "Primäre Auslöser mit Varianten: primär, sekundär, Gefahr, Geist.",
         input: "Texteingabefeld mit Validierungsstatus und Platzhalter-Unterstützung.",
         card: "Container zum Gruppieren verwandter Inhalte mit optionalem Kopf- und Fußzeile.",
@@ -736,10 +748,10 @@ static KEYS_DE: I18nKeys = I18nKeys {
         visualization: "Diagramme, Grafiken und Datenvisualisierungs-Primitive.",
         zoom_controls: "Vergrößerungs-, Verkleinerungs- und Zurücksetzungssteuerungen.",
     },
-};
+});
 
-static KEYS_ES: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_ES => {
+    components: {
         button: "Botón",
         input: "Entrada",
         card: "Tarjeta",
@@ -772,7 +784,7 @@ static KEYS_ES: I18nKeys = I18nKeys {
         data: "Datos",
         user_guide: "Guía de usuario",
     },
-    pages: PageKeys {
+    pages: {
         home: "Inicio",
         components: "Componentes",
         system: "Sistema",
@@ -786,7 +798,7 @@ static KEYS_ES: I18nKeys = I18nKeys {
         i18n: "i18n",
         not_found: "Página no encontrada",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "Explorar componentes",
         layer_base: "Capa 1 \u{2014} Componentes base",
         layer_composed: "Capa 2 \u{2014} Componentes compuestos",
@@ -804,7 +816,7 @@ static KEYS_ES: I18nKeys = I18nKeys {
         loading: "Cargando...",
         no_data: "Sin datos",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "Desencadenador de acción principal con variantes: primario, secundario, peligro, fantasma.",
         input: "Campo de entrada de texto con estados de validación y soporte de marcador de posición.",
         card: "Contenedor para agrupar contenido relacionado con encabezado y pie de página opcionales.",
@@ -826,10 +838,10 @@ static KEYS_ES: I18nKeys = I18nKeys {
         visualization: "Gráficos y primitivas de visualización de datos.",
         zoom_controls: "Controles de acercamiento, alejamiento y restablecimiento.",
     },
-};
+});
 
-static KEYS_AR: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_AR => {
+    components: {
         button: "زر",
         input: "حقل إدخال",
         card: "بطاقة",
@@ -862,7 +874,7 @@ static KEYS_AR: I18nKeys = I18nKeys {
         data: "بيانات",
         user_guide: "دليل المستخدم",
     },
-    pages: PageKeys {
+    pages: {
         home: "الرئيسية",
         components: "المكونات",
         system: "النظام",
@@ -876,7 +888,7 @@ static KEYS_AR: I18nKeys = I18nKeys {
         i18n: "التدويل",
         not_found: "الصفحة غير موجودة",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "استكشاف المكونات",
         layer_base: "الطبقة 1 \u{2014} مكونات أساسية",
         layer_composed: "الطبقة 2 \u{2014} مكونات مركبة",
@@ -894,7 +906,7 @@ static KEYS_AR: I18nKeys = I18nKeys {
         loading: "جارٍ التحميل...",
         no_data: "لا توجد بيانات",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "زر الإجراء الأساسي مع أشكال: أساسي، ثانوي، خطر، شبح.",
         input: "حقل إدخال نصي مع حالات التحقق ودعم العنصر النائب.",
         card: "حاوية لتجميع المحتوى ذي الصلة مع رأس وتذييل اختياريين.",
@@ -916,10 +928,10 @@ static KEYS_AR: I18nKeys = I18nKeys {
         visualization: "الرسوم البيانية وعناصر تصور البيانات.",
         zoom_controls: "عناصر التحكم بالتكبير والتصغير وإعادة التعيين.",
     },
-};
+});
 
-static KEYS_RU: I18nKeys = I18nKeys {
-    components: ComponentKeys {
+i18n_lang!(KEYS_RU => {
+    components: {
         button: "Кнопка",
         input: "Поле ввода",
         card: "Карточка",
@@ -952,7 +964,7 @@ static KEYS_RU: I18nKeys = I18nKeys {
         data: "Данные",
         user_guide: "Руководство пользователя",
     },
-    pages: PageKeys {
+    pages: {
         home: "Главная",
         components: "Компоненты",
         system: "Система",
@@ -966,7 +978,7 @@ static KEYS_RU: I18nKeys = I18nKeys {
         i18n: "i18n",
         not_found: "Страница не найдена",
     },
-    labels: LabelKeys {
+    labels: {
         explore_components: "Исследовать компоненты",
         layer_base: "Слой 1 \u{2014} Базовые компоненты",
         layer_composed: "Слой 2 \u{2014} Составные компоненты",
@@ -984,7 +996,7 @@ static KEYS_RU: I18nKeys = I18nKeys {
         loading: "Загрузка...",
         no_data: "Нет данных",
     },
-    descriptions: DescriptionKeys {
+    descriptions: {
         button: "Кнопка основного действия с вариантами: основной, вторичный, опасный, призрачный.",
         input: "Текстовое поле ввода с состояниями валидации и поддержкой плейсхолдера.",
         card: "Контейнер для группировки связанного контента с опциональным верхом и низом.",
@@ -1006,7 +1018,7 @@ static KEYS_RU: I18nKeys = I18nKeys {
         visualization: "Диаграммы, графики и примитивы визуализации данных.",
         zoom_controls: "Управление масштабированием, уменьшением и сбросом.",
     },
-};
+});
 
 pub fn detect_language() -> Language {
     #[cfg(target_arch = "wasm32")]

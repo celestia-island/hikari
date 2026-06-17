@@ -408,7 +408,6 @@ fn is_table_separator(line: &str) -> bool {
 
 fn parse_table(lines: &[&str], start: usize) -> (VNode, usize) {
     let header_line = lines[start];
-    let _sep_line = lines[start + 1];
 
     let headers = parse_table_cells(header_line);
 

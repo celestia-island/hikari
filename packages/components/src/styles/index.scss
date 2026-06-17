@@ -17,7 +17,7 @@
 // ============================================
 
 // Import theme base styles with CSS variables for hikari and tairitsu themes
-@import '../../../theme/styles/base.scss';
+@use '../../../theme/styles/base.scss';
 
 // ============================================
 // Utility Classes (Tailwind-compatible)
@@ -211,6 +211,52 @@
 .hi-z-50 { z-index: 50; }
 
 // ============================================
+// Accessibility Utility Classes
+// ============================================
+
+.hi-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hi-skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--hi-color-primary);
+  color: var(--hi-color-text-inverted, #fff);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 0.25rem 0;
+
+  &:focus {
+    top: 0;
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.hi-focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.hi-sr-only {
+  @extend .hi-visually-hidden;
+}
+
+// ============================================
 // Animation Utility Classes (通用动画)
 // ============================================
 
@@ -317,20 +363,6 @@
 
 // ============================================
 // Additional utility classes not yet in palette:
-
-// Max-width constraints for images
-.hi-max-w-logo {
-  max-width: 160px;
-}
-
-// Object-fit utilities for images
-.hi-object-contain {
-  object-fit: contain;
-}
-
-.hi-object-cover {
-  object-fit: cover;
-}
 
 // ============================================
 // CSS Variables (Default Fallback Values)
@@ -451,12 +483,8 @@
   --hi-opacity-90: 0.9;
   --hi-opacity-100: 1;
 
-  // Shadow & Glow Effects (matching legacy — variable-driven)
-  --hi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --hi-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --hi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --hi-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-
+  // Shadow definitions are in foundation.scss — do not redefine here
+  // to avoid cascade conflicts.
   --hi-glow-primary-sm: 0 0 8px rgba(255, 179, 167, 0.3);
   --hi-glow-primary-md: 0 0 16px rgba(255, 179, 167, 0.5);
   --hi-glow-primary-lg: 0 0 24px rgba(255, 179, 167, 0.4);
@@ -470,17 +498,8 @@
   --hi-glow-warning-sm: 0 0 8px rgba(255, 166, 49, 0.3);
   --hi-glow-warning-md: 0 0 16px rgba(255, 166, 49, 0.5);
 
-  // Common Values
-  --hi-white-5: rgba(255, 255, 255, 0.05);
-  --hi-white-8: rgba(255, 255, 255, 0.08);
-  --hi-white-10: rgba(255, 255, 255, 0.1);
-  --hi-white-15: rgba(255, 255, 255, 0.15);
-  --hi-white-20: rgba(255, 255, 255, 0.2);
-  --hi-white-30: rgba(255, 255, 255, 0.3);
-
-  --hi-black-10: rgba(0, 0, 0, 0.1);
-  --hi-black-20: rgba(0, 0, 0, 0.2);
-  --hi-black-30: rgba(0, 0, 0, 0.3);
+  // White/black color aliases are defined in base.scss
+  // — do not redefine here to avoid cascade conflicts.
 
   // Scrollbar Colors
   --hi-scrollbar-track-dark: rgba(74, 66, 102, 0.25);  // 黛 with 25% opacity
@@ -544,95 +563,91 @@
   --hi-card-bg: rgba(240, 240, 245, 0.06);
 }
 
-// ============================================
-// Global Transitions
-// ============================================
-
-* {
-  transition: all 0.3s $hikari-ease-smooth;
-}
+// No global `* { transition: all }` — it causes performance issues
+// and unwanted animations on all elements. Apply transitions
+// at the component level instead.
 
 // ============================================
 // 2. Basic Components
 // ============================================
 
-@import 'animations.scss';
-@import './components/background.scss';
-@import './components/avatar.scss';
-@import './components/button.scss';
-@import './components/icon_button.scss';
-@import './components/input.scss';
-@import './components/select.scss';
-@import './components/card.scss';
-@import './components/image.scss';
-@import './components/badge.scss';
-@import './components/checkbox.scss';
-@import './components/radio.scss';
-@import './components/divider.scss';
-@import './components/icon.scss';
-@import './components/arrow.scss';
-@import './components/switch.scss';
-@import './components/slider.scss';
-@import './components/number_input.scss';
-@import './components/search.scss';
-@import './components/input_wrapper.scss';
+@use 'animations.scss';
+@use './components/background.scss';
+@use './components/avatar.scss';
+@use './components/button.scss';
+@use './components/icon_button.scss';
+@use './components/input.scss';
+@use './components/select.scss';
+@use './components/card.scss';
+@use './components/image.scss';
+@use './components/badge.scss';
+@use './components/checkbox.scss';
+@use './components/radio.scss';
+@use './components/divider.scss';
+@use './components/icon.scss';
+@use './components/arrow.scss';
+@use './components/switch.scss';
+@use './components/slider.scss';
+@use './components/number_input.scss';
+@use './components/search.scss';
+@use './components/input_wrapper.scss';
 
 // ============================================
 // Feedback Components
 // ============================================
 
-@import './components/glow.scss';
-@import './components/alert.scss';
-@import './components/toast.scss';
-@import './components/tooltip.scss';
-@import './components/progress.scss';
-@import './components/skeleton.scss';
-@import './components/spin.scss';
-@import './components/drawer.scss';
-@import './components/popover.scss';
+@use './components/glow.scss';
+@use './components/alert.scss';
+@use './components/toast.scss';
+@use './components/tooltip.scss';
+@use './components/progress.scss';
+@use './components/skeleton.scss';
+@use './components/spin.scss';
+@use './components/drawer.scss';
+@use './components/popover.scss';
 
-@import './components/modal.scss';
+@use './components/modal.scss';
 
 // ============================================
 // Navigation Components
 // ============================================
 
-@import './components/menu.scss';
-@import './components/tabs.scss';
-@import './components/breadcrumb.scss';
-@import './components/sidebar.scss';
+@use './components/menu.scss';
+@use './components/tabs.scss';
+@use './components/breadcrumb.scss';
+@use './components/sidebar.scss';
 
 // ============================================
 // Layout Components
 // ============================================
 
-@import './components/layout.scss';
-@import './components/header.scss';
-@import './components/aside.scss';
-@import './components/container.scss';
-@import './components/grid.scss';
-@import './components/section.scss';
-@import './components/scrollbar_container.scss';
-@import './components/table.scss';
-@import './components/tree.scss';
-@import './components/pagination.scss';
-@import './components/carousel.scss';
-@import './components/code_block.scss';
-@import './components/markdown_renderer.scss';
+@use './components/layout.scss';
+@use './components/header.scss';
+@use './components/aside.scss';
+@use './components/container.scss';
+@use './components/grid.scss';
+@use './components/section.scss';
+@use './components/scrollbar_container.scss';
+@use './components/table.scss';
+@use './components/tree.scss';
+@use './components/pagination.scss';
+@use './components/carousel.scss';
+@use './components/code_block.scss';
+@use './components/markdown_renderer.scss';
 
 // ============================================
 // Additional Components
 // ============================================
 
-@import './components/anchor.scss';
-@import './components/cascader.scss';
-@import './components/collapse.scss';
-@import './components/drag.scss';
-@import './components/filter.scss';
-@import './components/flex.scss';
-@import './components/pagination_jump_modal.scss';
-@import './components/selection.scss';
-@import './components/sort.scss';
-@import './components/stepper.scss';
-@import './components/transfer.scss';
-@import './components/virtual-scroll.scss';
+@use './components/anchor.scss';
+@use './components/cascader.scss';
+@use './components/collapse.scss';
+@use './components/drag.scss';
+@use './components/filter.scss';
+@use './components/flex.scss';
+@use './components/pagination_jump_modal.scss';
+@use './components/selection.scss';
+@use './components/sort.scss';
+@use './components/stepper.scss';
+@use './components/transfer.scss';
+@use './components/virtual-scroll.scss';

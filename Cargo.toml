@@ -22,7 +22,7 @@ exclude = [
 version = "0.1.0"
 edition = "2024"
 authors = ["Hikari Contributors"]
-license = "MIT OR Apache-2.0"
+license = "SySL-1.0"
 
 [workspace.dependencies]
 # =================================================================

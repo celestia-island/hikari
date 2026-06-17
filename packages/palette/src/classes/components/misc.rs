@@ -17,14 +17,14 @@ pub enum ArrowClass {
 impl TypedClass for ArrowClass {
     fn class_name(&self) -> &'static str {
         match self {
-            ArrowClass::Arrow => "hi-arrow",
-            ArrowClass::ArrowRight => "hi-arrow-right",
-            ArrowClass::ArrowLeft => "hi-arrow-left",
-            ArrowClass::ArrowUp => "hi-arrow-up",
-            ArrowClass::ArrowDown => "hi-arrow-down",
-            ArrowClass::Size14 => "hi-arrow-14",
-            ArrowClass::Size16 => "hi-arrow-16",
-            ArrowClass::Size20 => "hi-arrow-20",
+            Self::Arrow => "hi-arrow",
+            Self::ArrowRight => "hi-arrow-right",
+            Self::ArrowLeft => "hi-arrow-left",
+            Self::ArrowUp => "hi-arrow-up",
+            Self::ArrowDown => "hi-arrow-down",
+            Self::Size14 => "hi-arrow-14",
+            Self::Size16 => "hi-arrow-16",
+            Self::Size20 => "hi-arrow-20",
         }
     }
 }
@@ -37,7 +37,7 @@ pub enum PortalClass {
 impl TypedClass for PortalClass {
     fn class_name(&self) -> &'static str {
         match self {
-            PortalClass::PortalRoot => "hi-portal-root",
+            Self::PortalRoot => "hi-portal-root",
         }
     }
 }
@@ -50,7 +50,7 @@ pub enum BackgroundClass {
 impl TypedClass for BackgroundClass {
     fn class_name(&self) -> &'static str {
         match self {
-            BackgroundClass::Background => "hi-background",
+            Self::Background => "hi-background",
         }
     }
 }

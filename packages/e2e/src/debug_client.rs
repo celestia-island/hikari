@@ -426,14 +426,16 @@ pub struct SourceMapResponse {
 impl DebugClient {
     pub fn new(port: u16) -> Self {
         Self {
-            http: Client::builder().timeout(Duration::from_secs(30)).build().unwrap(),
+            http: Client::builder().timeout(Duration::from_secs(30)).build()
+                .expect("Failed to build HTTP client for debug connection"),
             base_url: format!("http://127.0.0.1:{}", port),
         }
     }
 
     pub fn with_base_url(base_url: impl Into<String>) -> Self {
         Self {
-            http: Client::builder().timeout(Duration::from_secs(30)).build().unwrap(),
+            http: Client::builder().timeout(Duration::from_secs(30)).build()
+                .expect("Failed to build HTTP client for debug connection"),
             base_url: base_url.into(),
         }
     }

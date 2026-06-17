@@ -99,7 +99,7 @@ impl<P: Platform> AnimationContext<P> {
     }
 
     /// Set the mouse position (typically called from event handlers)
-    pub fn set_mouse_position(&mut self, x: f64, y: f64) {
+    pub const fn set_mouse_position(&mut self, x: f64, y: f64) {
         self.mouse_pos = Some((x, y));
     }
 
@@ -114,7 +114,7 @@ impl<P: Platform> AnimationContext<P> {
     ///
     /// Note: This returns the bounding rect width, which includes padding
     /// but not borders or margins.
-    pub fn element_width(&self) -> f64 {
+    pub const fn element_width(&self) -> f64 {
         self.bounding_rect.width
     }
 
@@ -122,54 +122,54 @@ impl<P: Platform> AnimationContext<P> {
     ///
     /// Note: This returns the bounding rect height, which includes padding
     /// but not borders or margins.
-    pub fn element_height(&self) -> f64 {
+    pub const fn element_height(&self) -> f64 {
         self.bounding_rect.height
     }
 
     /// Get element client width (approximated)
-    pub fn client_width(&self) -> f64 {
+    pub const fn client_width(&self) -> f64 {
         self.bounding_rect.width
     }
 
     /// Get element client height (approximated)
-    pub fn client_height(&self) -> f64 {
+    pub const fn client_height(&self) -> f64 {
         self.bounding_rect.height
     }
 
     /// Get element scroll width (approximated as element width)
-    pub fn scroll_width(&self) -> f64 {
+    pub const fn scroll_width(&self) -> f64 {
         self.bounding_rect.width
     }
 
     /// Get element scroll height (approximated as element height)
-    pub fn scroll_height(&self) -> f64 {
+    pub const fn scroll_height(&self) -> f64 {
         self.bounding_rect.height
     }
 
     /// Get element bounding rectangle
-    pub fn bounding_rect(&self) -> DomRect {
+    pub const fn bounding_rect(&self) -> DomRect {
         self.bounding_rect
     }
 
     // ===== Element Position =====
 
     /// Get element offset left relative to offset parent (approximated)
-    pub fn offset_left(&self) -> f64 {
+    pub const fn offset_left(&self) -> f64 {
         self.bounding_rect.x
     }
 
     /// Get element offset top relative to offset parent (approximated)
-    pub fn offset_top(&self) -> f64 {
+    pub const fn offset_top(&self) -> f64 {
         self.bounding_rect.y
     }
 
     /// Get element's left position relative to viewport
-    pub fn viewport_left(&self) -> f64 {
+    pub const fn viewport_left(&self) -> f64 {
         self.bounding_rect.x
     }
 
     /// Get element's top position relative to viewport
-    pub fn viewport_top(&self) -> f64 {
+    pub const fn viewport_top(&self) -> f64 {
         self.bounding_rect.y
     }
 
@@ -187,12 +187,12 @@ impl<P: Platform> AnimationContext<P> {
 
     /// Get mouse X position relative to viewport
     pub fn mouse_x_viewport(&self) -> f64 {
-        self.mouse_pos.map(|(x, _)| x).unwrap_or(0.0)
+        self.mouse_pos.map_or(0.0, |(x, _)| x)
     }
 
     /// Get mouse Y position relative to viewport
     pub fn mouse_y_viewport(&self) -> f64 {
-        self.mouse_pos.map(|(_, y)| y).unwrap_or(0.0)
+        self.mouse_pos.map_or(0.0, |(_, y)| y)
     }
 
     /// Get mouse X position relative to element
@@ -228,26 +228,26 @@ impl<P: Platform> AnimationContext<P> {
     // ===== Scroll Position =====
 
     /// Get element scroll X position (not directly available via WIT, returns 0.0)
-    pub fn scroll_x(&self) -> f64 {
+    pub const fn scroll_x(&self) -> f64 {
         // WIT bindings don't provide direct scroll position access
         // This would need to be tracked separately or added to the WIT interface
         0.0
     }
 
     /// Get element scroll Y position (not directly available via WIT, returns 0.0)
-    pub fn scroll_y(&self) -> f64 {
+    pub const fn scroll_y(&self) -> f64 {
         // WIT bindings don't provide direct scroll position access
         // This would need to be tracked separately or added to the WIT interface
         0.0
     }
 
     /// Get document scroll X position (not directly available via WIT, returns 0.0)
-    pub fn document_scroll_x(&self) -> f64 {
+    pub const fn document_scroll_x(&self) -> f64 {
         0.0
     }
 
     /// Get document scroll Y position (not directly available via WIT, returns 0.0)
-    pub fn document_scroll_y(&self) -> f64 {
+    pub const fn document_scroll_y(&self) -> f64 {
         0.0
     }
 
@@ -285,28 +285,28 @@ impl<P: Platform> AnimationContext<P> {
 
     /// Get window inner width
     pub fn window_width(&self) -> f64 {
-        self.platform.borrow().inner_width() as f64
+        f64::from(self.platform.borrow().inner_width())
     }
 
     /// Get window inner height
     pub fn window_height(&self) -> f64 {
-        self.platform.borrow().inner_height() as f64
+        f64::from(self.platform.borrow().inner_height())
     }
 
     // ===== Time =====
 
     /// Get current timestamp in milliseconds
-    pub fn now(&self) -> f64 {
+    pub const fn now(&self) -> f64 {
         self.current_time
     }
 
     /// Get previous frame timestamp in milliseconds
-    pub fn previous_time(&self) -> f64 {
+    pub const fn previous_time(&self) -> f64 {
         self.previous_time
     }
 
     /// Get delta time between frames in milliseconds
-    pub fn delta_time(&self) -> f64 {
+    pub const fn delta_time(&self) -> f64 {
         self.delta_time
     }
 
@@ -332,7 +332,7 @@ impl<P: Platform> AnimationContext<P> {
         let center_y = self.element_height() / 2.0;
         let dx = self.mouse_x() - center_x;
         let dy = self.mouse_y() - center_y;
-        (dx * dx + dy * dy).sqrt()
+        dx.hypot(dy)
     }
 
     /// Calculate angle from element center to mouse (in radians)
@@ -343,17 +343,13 @@ impl<P: Platform> AnimationContext<P> {
     }
 
     /// Check if mouse is inside element
-    pub fn is_mouse_inside(&self) -> f64 {
+    pub fn is_mouse_inside(&self) -> bool {
         let x = self.mouse_x();
         let y = self.mouse_y();
         let width = self.element_width();
         let height = self.element_height();
 
-        if x >= 0.0 && x <= width && y >= 0.0 && y <= height {
-            1.0
-        } else {
-            0.0
-        }
+        x >= 0.0 && x <= width && y >= 0.0 && y <= height
     }
 
     /// Refresh the cached bounding rect from the platform
@@ -362,25 +358,5 @@ impl<P: Platform> AnimationContext<P> {
             .platform
             .borrow_mut()
             .get_bounding_client_rect(&self.element);
-    }
-}
-
-// ============================================================================
-// Legacy Compatibility Layer (Deprecated)
-// ============================================================================
-
-#[deprecated(note = "Use AnimationContext::new with platform instead")]
-#[doc(hidden)]
-#[derive(Default)]
-pub struct AnimationContextLegacy {
-    _private: (),
-}
-
-#[deprecated(note = "Use AnimationContext::new with platform instead")]
-#[doc(hidden)]
-#[allow(deprecated)]
-impl AnimationContextLegacy {
-    pub fn new() -> Self {
-        Self::default()
     }
 }

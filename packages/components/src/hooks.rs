@@ -9,9 +9,10 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-use tairitsu_hooks::ReactiveSignal;
+use tairitsu_hooks::{ReactiveSignal, use_effect, use_memo, use_ref, use_signal};
+use tairitsu_vdom::Signal;
 
-use crate::{platform::{inner_width as platform_inner_width, on_resize}, prelude::*};
+use crate::platform::{inner_width as platform_inner_width, on_resize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Breakpoint {
@@ -21,6 +22,7 @@ pub enum Breakpoint {
 }
 
 impl Breakpoint {
+    #[must_use]
     pub fn min_width(&self) -> u32 {
         match self {
             Breakpoint::Mobile => 0,
@@ -29,6 +31,7 @@ impl Breakpoint {
         }
     }
 
+    #[must_use]
     pub fn max_width(&self) -> Option<u32> {
         match self {
             Breakpoint::Mobile => Some(640),
@@ -46,14 +49,17 @@ pub enum ScreenSize {
 }
 
 impl ScreenSize {
+    #[must_use]
     pub fn is_mobile(&self) -> bool {
         matches!(self, ScreenSize::Mobile)
     }
 
+    #[must_use]
     pub fn is_tablet_or_larger(&self) -> bool {
         matches!(self, ScreenSize::Tablet | ScreenSize::Desktop)
     }
 
+    #[must_use]
     pub fn is_desktop_or_larger(&self) -> bool {
         matches!(self, ScreenSize::Desktop)
     }
@@ -61,23 +67,37 @@ impl ScreenSize {
 
 pub fn use_screen_size() -> ReactiveSignal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
+    let cleanup_gen = use_ref(0u64);
 
-    let screen_size_clone = screen_size.clone();
-    use_effect(move || {
-        let screen_size = screen_size_clone.clone();
-        on_resize(move || {
-            screen_size.set(get_screen_size_from_window());
-        });
+    use_effect({
+        let screen_size = screen_size.clone();
+        let generation = cleanup_gen.clone();
+        move || {
+            let ss = screen_size.clone();
+            let gen_ref = generation.clone();
+            let my_gen = {
+                let mut g = generation.current_mut();
+                *g += 1;
+                *g
+            };
+            on_resize(move || {
+                if *gen_ref.current() == my_gen {
+                    ss.set(get_screen_size_from_window());
+                }
+            });
+        }
     });
 
     screen_size
 }
 
+#[must_use]
 pub fn use_is_mobile() -> Signal<bool> {
     let screen_size = use_screen_size();
     use_memo(move || screen_size.read().is_mobile()).value()
 }
 
+#[must_use]
 pub fn use_is_desktop() -> Signal<bool> {
     let screen_size = use_screen_size();
     use_memo(move || screen_size.read().is_desktop_or_larger()).value()
@@ -85,22 +105,37 @@ pub fn use_is_desktop() -> Signal<bool> {
 
 fn get_screen_size_from_window() -> ScreenSize {
     let width = platform_inner_width() as u32;
-    match width {
-        0..=640 => ScreenSize::Mobile,
-        641..=1023 => ScreenSize::Tablet,
-        1024.. => ScreenSize::Desktop,
+    if width < Breakpoint::Tablet.min_width() {
+        ScreenSize::Mobile
+    } else if width < Breakpoint::Desktop.min_width() {
+        ScreenSize::Tablet
+    } else {
+        ScreenSize::Desktop
     }
 }
 
+#[must_use]
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> ReactiveSignal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
+    let cleanup_gen = use_ref(0u64);
 
-    let matches_clone = matches.clone();
-    use_effect(move || {
-        let matches = matches_clone.clone();
-        on_resize(move || {
-            matches.set(check_media_query(min_width, max_width));
-        });
+    use_effect({
+        let matches = matches.clone();
+        let generation = cleanup_gen.clone();
+        move || {
+            let m = matches.clone();
+            let gen_ref = generation.clone();
+            let my_gen = {
+                let mut g = generation.current_mut();
+                *g += 1;
+                *g
+            };
+            on_resize(move || {
+                if *gen_ref.current() == my_gen {
+                    m.set(check_media_query(min_width, max_width));
+                }
+            });
+        }
     });
 
     matches

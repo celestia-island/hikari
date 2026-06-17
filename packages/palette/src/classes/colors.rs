@@ -62,3 +62,90 @@ impl TypedClass for BorderColor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn text_color_all_variants() {
+        assert_eq!(TextColor::White.class_name(), "hi-text-white");
+        assert_eq!(TextColor::Black.class_name(), "hi-text-black");
+        assert_eq!(TextColor::Primary.class_name(), "hi-text-primary");
+        assert_eq!(TextColor::Secondary.class_name(), "hi-text-secondary");
+        assert_eq!(TextColor::Muted.class_name(), "hi-text-muted");
+        assert_eq!(TextColor::Accent.class_name(), "hi-text-accent");
+    }
+
+    #[test]
+    fn text_color_copy_equality() {
+        let a = TextColor::Primary;
+        let b = a;
+        assert_eq!(a, b);
+        assert_eq!(a, TextColor::Primary);
+        assert_ne!(TextColor::White, TextColor::Black);
+    }
+
+    #[test]
+    fn bg_color_all_variants() {
+        assert_eq!(BgColor::White.class_name(), "hi-bg-white");
+        assert_eq!(BgColor::Black.class_name(), "hi-bg-black");
+        assert_eq!(BgColor::Transparent.class_name(), "hi-bg-transparent");
+        assert_eq!(BgColor::Surface.class_name(), "hi-bg-surface");
+        assert_eq!(BgColor::Primary.class_name(), "hi-bg-primary");
+        assert_eq!(BgColor::Secondary.class_name(), "hi-bg-secondary");
+        assert_eq!(BgColor::Accent.class_name(), "hi-bg-accent");
+    }
+
+    #[test]
+    fn bg_color_copy_equality() {
+        let a = BgColor::Surface;
+        let b = a;
+        assert_eq!(a, b);
+        assert_ne!(BgColor::Transparent, BgColor::White);
+    }
+
+    #[test]
+    fn border_color_all_variants() {
+        assert_eq!(
+            BorderColor::Transparent.class_name(),
+            "hi-border-transparent"
+        );
+        let a = BorderColor::Transparent;
+        let b = a;
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn cross_enum_collision_check() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(TextColor::White)
+            .add_typed(BgColor::White)
+            .add_typed(TextColor::Black)
+            .add_typed(BgColor::Black)
+            .add_typed(TextColor::Primary)
+            .add_typed(BgColor::Primary)
+            .add_typed(TextColor::Secondary)
+            .add_typed(BgColor::Secondary)
+            .add_typed(TextColor::Accent)
+            .add_typed(BgColor::Accent)
+            .add_typed(BgColor::Transparent)
+            .add_typed(BorderColor::Transparent)
+            .build();
+        assert_eq!(
+            classes,
+            "hi-text-white hi-bg-white hi-text-black hi-bg-black \
+             hi-text-primary hi-bg-primary hi-text-secondary hi-bg-secondary \
+             hi-text-accent hi-bg-accent hi-bg-transparent hi-border-transparent"
+        );
+    }
+
+    #[test]
+    fn combo_text_and_bg() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(TextColor::Muted)
+            .add_typed(BgColor::Surface)
+            .build();
+        assert_eq!(classes, "hi-text-muted hi-bg-surface");
+    }
+}

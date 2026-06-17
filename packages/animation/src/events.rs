@@ -10,7 +10,7 @@ use std::rc::Rc;
 use tairitsu_vdom::{EventData, MouseEvent, Platform};
 
 /// Trigger mode for event-driven animations
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TriggerMode {
     /// Trigger on every event occurrence
     Continuous,
@@ -19,7 +19,7 @@ pub enum TriggerMode {
 }
 
 /// DOM event types that can trigger animations
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum AnimationEventType {
     /// Mouse enters the element
     MouseEnter,
@@ -59,6 +59,7 @@ impl Default for AnimationTrigger {
 
 impl AnimationTrigger {
     /// Create a new trigger with default settings
+    #[must_use]
     pub fn new(event: AnimationEventType) -> Self {
         Self {
             event,
@@ -67,13 +68,15 @@ impl AnimationTrigger {
     }
 
     /// Set trigger mode
-    pub fn with_mode(mut self, mode: TriggerMode) -> Self {
+    #[must_use]
+    pub const fn with_mode(mut self, mode: TriggerMode) -> Self {
         self.mode = mode;
         self
     }
 
     /// Set debounce delay
-    pub fn with_debounce(mut self, debounce_ms: u32) -> Self {
+    #[must_use]
+    pub const fn with_debounce(mut self, debounce_ms: u32) -> Self {
         self.debounce_ms = debounce_ms;
         self
     }
@@ -117,7 +120,7 @@ pub struct EventDrivenAnimation<'a, P: Platform> {
 
 impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     /// Create a new event-driven animation
-    pub fn new(
+    pub const fn new(
         platform: Rc<RefCell<P>>,
         elements: &'a HashMap<String, P::Element>,
         element: P::Element,
@@ -295,7 +298,7 @@ impl<'a, P: Platform> EventDrivenAnimation<'a, P> {
     /// Build and apply the animation system
     ///
     /// This method finalizes the builder and sets up all event listeners.
-    pub fn build(&mut self) {
+    pub const fn build(&mut self) {
         // Event listeners are now managed by the platform
         // No explicit cleanup needed in this version
     }

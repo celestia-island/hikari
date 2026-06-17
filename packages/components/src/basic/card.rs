@@ -61,18 +61,18 @@ pub fn Card(props: CardProps) -> Element {
         {
             let rect = get_bounding_client_rect(DomHandle::from_raw(target));
             let pct_x = if rect.width > 0.0 {
-                (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0)
+                (f64::from(event.offset_x) / rect.width * 100.0).clamp(0.0, 100.0)
             } else {
                 50.0
             };
             let pct_y = if rect.height > 0.0 {
-                (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0)
+                (f64::from(event.offset_y) / rect.height * 100.0).clamp(0.0, 100.0)
             } else {
                 50.0
             };
             let new_style = StyleStringBuilder::new()
-                .add_var("glow-x", &format!("{}%", pct_x))
-                .add_var("glow-y", &format!("{}%", pct_y))
+                .add_var("glow-x", &format!("{pct_x}%"))
+                .add_var("glow-y", &format!("{pct_y}%"))
                 .add_var("hi-glow-color", "var(--hi-glow-button-primary)")
                 .build();
             glow_style_clone.set(new_style);
@@ -177,47 +177,29 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
         .add(&props.class)
         .build();
 
-    let has_avatar = props.avatar.is_some();
-    let has_title = props.title.is_some();
-    let has_subtitle = props.subtitle.is_some();
-    let has_action = props.action.is_some();
-
-    // Build conditional sections
-    let avatar_el = if has_avatar {
-        let avatar = props.avatar.clone().unwrap();
-        Some(rsx! {
+    let avatar_el = props.avatar.clone().map(|avatar| {
+        rsx! {
             div { class: "hi-card-header-avatar", {avatar} }
-        })
-    } else {
-        None
-    };
+        }
+    });
 
-    let title_el = if has_title {
-        let title = props.title.clone().unwrap();
-        Some(rsx! {
+    let title_el = props.title.clone().map(|title| {
+        rsx! {
             div { class: CardClass::CardTitle.class_name(), "{title}" }
-        })
-    } else {
-        None
-    };
+        }
+    });
 
-    let subtitle_el = if has_subtitle {
-        let subtitle = props.subtitle.clone().unwrap();
-        Some(rsx! {
+    let subtitle_el = props.subtitle.clone().map(|subtitle| {
+        rsx! {
             div { class: CardClass::CardSubtitle.class_name(), "{subtitle}" }
-        })
-    } else {
-        None
-    };
+        }
+    });
 
-    let action_el = if has_action {
-        let action = props.action.clone().unwrap();
-        Some(rsx! {
+    let action_el = props.action.clone().map(|action| {
+        rsx! {
             div { class: "hi-card-header-action", {action} }
-        })
-    } else {
-        None
-    };
+        }
+    });
 
     rsx! {
         div { class: classes,
@@ -311,7 +293,7 @@ pub struct CardMediaProps {
 #[component]
 pub fn CardMedia(props: CardMediaProps) -> Element {
     let style = if let Some(height) = props.height {
-        format!("height: {}", height)
+        format!("height: {height}")
     } else {
         String::new()
     };

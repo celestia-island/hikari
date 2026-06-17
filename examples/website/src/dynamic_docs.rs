@@ -151,21 +151,25 @@ pub fn render_doc_not_found(doc_path: &str, language: &str) -> VNode {
 ///
 /// The URL path to fetch the markdown content.
 pub fn build_doc_url(doc_path: &str, language: &str) -> String {
-    format!("/docs/{}/{}.md", language, doc_path)
+    let bcp47 = LANG_TO_BCP47.get(language).map(|s| s.as_str()).unwrap_or(language);
+    format!("/docs/{}/{}.md", bcp47, doc_path)
 }
 
-/// Build the fallback documentation URL (defaults to en).
-///
-/// # Arguments
-///
-/// * `doc_path` - The documentation path (e.g., "components/layer1/button")
-///
-/// # Returns
-///
-/// The URL path to fetch the fallback markdown content.
 pub fn build_fallback_doc_url(doc_path: &str) -> String {
-    format!("/docs/{}/{}.md", DEFAULT_LANGUAGE, doc_path)
+    format!("/docs/{}/{}.md", "en-US", doc_path)
 }
+
+static LANG_TO_BCP47: &[(&str, &str)] = &[
+    ("en", "en-US"),
+    ("zhs", "zh-CHS"),
+    ("zht", "zh-CHT"),
+    ("ja", "ja-JP"),
+    ("ko", "ko-KR"),
+    ("fr", "fr-FR"),
+    ("es", "es-ES"),
+    ("ru", "ru-RU"),
+    ("ar", "ar-SA"),
+];
 
 /// JavaScript module for dynamic documentation loading.
 ///
@@ -179,25 +183,26 @@ pub fn doc_loader_js() -> String {
 
     const DOC_CACHE = new Map();
     const DEFAULT_LANG = 'en';
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    const CACHE_DURATION = 5 * 60 * 1000;
 
-    /**
-     * Fetch markdown content from the docs directory
-     * @param {string} docPath - Documentation path (e.g., "components/layer1/button")
-     * @param {string} language - Language code (e.g., "en", "zhs")
-     * @returns {Promise<string|null>} - Markdown content or null if not found
-     */
+    const LANG_TO_BCP47 = {
+        'en': 'en-US', 'zhs': 'zh-CHS', 'zht': 'zh-CHT',
+        'ja': 'ja-JP', 'ko': 'ko-KR', 'fr': 'fr-FR',
+        'es': 'es-ES', 'ru': 'ru-RU', 'ar': 'ar-SA',
+    };
+
+    function toBcp47(lang) {
+        return LANG_TO_BCP47[lang] || lang;
+    }
+
     async function fetchDocContent(docPath, language) {
-        const url = `/docs/${language}/${docPath}.md`;
-
+        const url = `/docs/${toBcp47(language)}/${docPath}.md`;
         try {
             const response = await fetch(url);
-            if (response.ok) {
-                return await response.text();
-            }
+            if (response.ok) return await response.text();
             return null;
         } catch (error) {
-            console.warn(`Failed to fetch doc from ${url}:`, error);
+            console.warn('Failed to fetch doc from ' + url + ':', error);
             return null;
         }
     }
@@ -424,11 +429,11 @@ mod tests {
     fn test_build_doc_url() {
         assert_eq!(
             build_doc_url("components/layer1/button", "en"),
-            "/docs/en/components/layer1/button.md"
+            "/docs/en-US/components/layer1/button.md"
         );
         assert_eq!(
             build_doc_url("system/palette", "zhs"),
-            "/docs/zhs/system/palette.md"
+            "/docs/zh-CHS/system/palette.md"
         );
     }
 
@@ -436,7 +441,7 @@ mod tests {
     fn test_build_fallback_doc_url() {
         assert_eq!(
             build_fallback_doc_url("components/layer1/button"),
-            "/docs/en/components/layer1/button.md"
+            "/docs/en-US/components/layer1/button.md"
         );
     }
 

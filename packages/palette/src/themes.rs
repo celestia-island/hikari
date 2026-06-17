@@ -7,6 +7,8 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
+use anyhow::{Result, anyhow, bail};
+
 use super::colors::*;
 
 /// Theme mode enumeration
@@ -28,16 +30,27 @@ pub enum ThemeMode {
 pub struct Palette {
     /// Theme mode (light or dark)
     pub mode: ThemeMode,
+    /// Primary accent color (CTA buttons, links, active states)
     pub primary: Color,
+    /// Secondary accent color (badges, secondary buttons, hover highlights)
     pub secondary: Color,
+    /// Additional accent color
     pub accent: Color,
+    /// Semantic color for success states
     pub success: Color,
+    /// Semantic color for warning states
     pub warning: Color,
+    /// Semantic color for error/danger states
     pub danger: Color,
+    /// Page background color
     pub background: Color,
+    /// Surface/card background color
     pub surface: Color,
+    /// Border and divider color
     pub border: Color,
+    /// Primary text color
     pub text_primary: Color,
+    /// Secondary/muted text color
     pub text_secondary: Color,
 }
 
@@ -62,6 +75,7 @@ impl Palette {
     /// let contrast = palette.button_glow_color(&palette.primary);
     /// // e.g., "rgba(0, 0, 0, 0.7)" for pink, "rgba(255, 255, 255, 0.6)" for indigo
     /// ```
+    #[must_use]
     pub fn button_glow_color(&self, color: &Color) -> String {
         // Use the color's glow contrast method (theme-independent)
         // Dynamic opacity based on contrast between button and glow color
@@ -86,12 +100,36 @@ impl Palette {
     /// let text_color = tairitsu.ghost_text_color(0.9);
     /// // "rgba(255, 255, 255, 0.9)"
     /// ```
-    pub fn ghost_text_color(&self, alpha: f64) -> String {
+    /// Get theme-appropriate ghost color (black for light, white for dark)
+    fn ghost_rgba(&self, alpha: f64) -> String {
         let color = match self.mode {
             ThemeMode::Light => Color::from_rgb(0, 0, 0),
             ThemeMode::Dark => Color::from_rgb(255, 255, 255),
         };
         color.rgba(alpha)
+    }
+
+    /// Get contrast color for ghost buttons (text color and border)
+    ///
+    /// Returns rgba string for 90% opacity
+    ///
+    /// # Examples
+    /// ```
+    /// use hikari_palette::*;
+    ///
+    /// let hikari = Hikari::palette();
+    /// // hikari is light mode, ghost uses black text
+    /// let text_color = hikari.ghost_text_color(0.9);
+    /// // "rgba(0, 0, 0, 0.9)"
+    ///
+    /// let tairitsu = Tairitsu::palette();
+    /// // tairitsu is dark mode, ghost uses white text
+    /// let text_color = tairitsu.ghost_text_color(0.9);
+    /// // "rgba(255, 255, 255, 0.9)"
+    /// ```
+    #[must_use]
+    pub fn ghost_text_color(&self, alpha: f64) -> String {
+        self.ghost_rgba(alpha)
     }
 
     /// Get ghost border color (low opacity)
@@ -104,12 +142,9 @@ impl Palette {
     /// let border = palette.ghost_border_color(0.2);
     /// // "rgba(0, 0, 0, 0.2)"
     /// ```
+    #[must_use]
     pub fn ghost_border_color(&self, alpha: f64) -> String {
-        let color = match self.mode {
-            ThemeMode::Light => Color::from_rgb(0, 0, 0),
-            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
-        };
-        color.rgba(alpha)
+        self.ghost_rgba(alpha)
     }
 
     /// Get glow color for ghost buttons
@@ -126,12 +161,9 @@ impl Palette {
     /// let glow = tairitsu.ghost_glow_color(0.8);
     /// // "rgba(255, 255, 255, 0.8)"
     /// ```
+    #[must_use]
     pub fn ghost_glow_color(&self, alpha: f64) -> String {
-        let color = match self.mode {
-            ThemeMode::Light => Color::from_rgb(0, 0, 0),
-            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
-        };
-        color.rgba(alpha)
+        self.ghost_rgba(alpha)
     }
 
     /// Get focus brightness filter value for a button variant color
@@ -155,6 +187,7 @@ impl Palette {
     /// let secondary_brightness = tairitsu.focus_brightness_filter(&tairitsu.secondary);
     /// // "1.2" (secondary is dark, should brighten on focus)
     /// ```
+    #[must_use]
     pub fn focus_brightness_filter(&self, color: &Color) -> String {
         let brightness = color.brightness();
         if brightness < 0.4 {
@@ -173,6 +206,8 @@ impl Palette {
 pub struct Hikari;
 
 impl Hikari {
+    /// Returns the Hikari light theme palette.
+    #[must_use]
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
@@ -205,6 +240,8 @@ impl Default for Hikari {
 pub struct Tairitsu;
 
 impl Tairitsu {
+    /// Returns the Tairitsu dark theme palette.
+    #[must_use]
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
@@ -237,7 +274,9 @@ impl Default for Tairitsu {
 pub struct Arknights;
 
 impl Arknights {
-    pub fn palette() -> Palette {
+    /// Returns the Arknights dark industrial theme palette.
+    #[must_use]
+    pub const fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
             primary: Color::from_rgb(0, 180, 216), // #00B4D8 cyan/ice blue
@@ -270,6 +309,7 @@ pub struct ThemeRegistry {
 
 impl ThemeRegistry {
     /// Create a new theme registry
+    #[must_use]
     pub fn new() -> Self {
         let mut palettes = HashMap::new();
         palettes.insert("hikari".to_string(), Hikari::palette());
@@ -290,14 +330,14 @@ impl ThemeRegistry {
     /// # Returns
     /// * `Ok(())` if successfully registered
     /// * `Err(String)` if a palette with this name already exists
-    pub fn register(&self, name: &str, palette: Palette) -> Result<(), String> {
+    pub fn register(&self, name: &str, palette: Palette) -> Result<()> {
         let mut palettes = self
             .palettes
             .write()
-            .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
+            .map_err(|e| anyhow!("Failed to acquire write lock: {e}"))?;
 
         if palettes.contains_key(name) {
-            return Err(format!("Palette '{}' already registered", name));
+            bail!("Palette '{name}' already registered");
         }
 
         palettes.insert(name.to_string(), palette);
@@ -328,14 +368,14 @@ impl ThemeRegistry {
     /// # Returns
     /// * `Ok(())` if successfully updated
     /// * `Err(String)` if palette not found or lock failed
-    pub fn update(&self, name: &str, palette: Palette) -> Result<(), String> {
+    pub fn update(&self, name: &str, palette: Palette) -> Result<()> {
         let mut palettes = self
             .palettes
             .write()
-            .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
+            .map_err(|e| anyhow!("Failed to acquire write lock: {e}"))?;
 
         if !palettes.contains_key(name) {
-            return Err(format!("Palette '{}' not found", name));
+            bail!("Palette '{name}' not found");
         }
 
         palettes.insert(name.to_string(), palette);
@@ -367,26 +407,30 @@ pub fn registry() -> &'static ThemeRegistry {
 }
 
 /// Get a palette by name from the global registry
+#[must_use]
 pub fn get_palette(name: &str) -> Option<Palette> {
     registry().get(name)
 }
 
 /// Register a palette in the global registry
-pub fn register_palette(name: &str, palette: Palette) -> Result<(), String> {
+pub fn register_palette(name: &str, palette: Palette) -> Result<()> {
     registry().register(name, palette)
 }
 
 /// Get the default theme (Hikari light theme)
+#[must_use]
 pub fn default_theme() -> Palette {
     Hikari::palette()
 }
 
 /// Get the light theme (Hikari)
+#[must_use]
 pub fn light_theme() -> Palette {
     Hikari::palette()
 }
 
 /// Get the dark theme (Tairitsu)
+#[must_use]
 pub fn dark_theme() -> Palette {
     Tairitsu::palette()
 }

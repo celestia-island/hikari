@@ -1,4 +1,4 @@
-// Display components module
+//! Display components module
 //!
 //! Provides data display components with flat design
 //! and glow effect aesthetics.

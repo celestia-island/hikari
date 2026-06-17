@@ -65,8 +65,8 @@ mod tests {
     #[test]
     fn test_cascader_size_variants() {
         assert_eq!(CascaderSize::default(), CascaderSize::Md);
-        let _sm = CascaderSize::Sm;
-        let _lg = CascaderSize::Lg;
+        let _ = CascaderSize::Sm;
+        let _ = CascaderSize::Lg;
     }
 
     #[test]
@@ -117,8 +117,8 @@ mod tests {
     #[test]
     fn test_number_input_size_variants() {
         assert_eq!(NumberInputSize::default(), NumberInputSize::Medium);
-        let _small = NumberInputSize::Small;
-        let _large = NumberInputSize::Large;
+        let _ = NumberInputSize::Small;
+        let _ = NumberInputSize::Large;
     }
 
     #[test]

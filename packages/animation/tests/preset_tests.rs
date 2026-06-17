@@ -28,11 +28,11 @@ fn test_transition_presets_compile() {
 
     let zoom_in_css = zoom_in("my-element", 300);
     assert!(zoom_in_css.contains("300ms"));
-    assert!(zoom_in_css.contains("ease-out-back"));
+    assert!(zoom_in_css.contains("cubic-bezier"));
 
     let zoom_out_css = zoom_out("my-element", 300);
     assert!(zoom_out_css.contains("300ms"));
-    assert!(zoom_out_css.contains("ease-in-back"));
+    assert!(zoom_out_css.contains("cubic-bezier"));
 
     let bounce_css = bounce_in("my-element", 300);
     assert!(bounce_css.contains("cubic-bezier"));

@@ -39,7 +39,7 @@ Fournit le contexte de thème pour l'application entière.
 use hikari_theme::ThemeProvider;
 
 rsx! {
-    ThemeProvider { palette: "hikari".to_string() }
+    ThemeProvider { initial_palette: "hikari".to_string() }
         // Contenu de l'application
         App {}
     }
@@ -54,7 +54,7 @@ fn App() -> Element {
     let mut theme = use_signal(|| "hikari".to_string());
 
     rsx! {
-        ThemeProvider { palette: theme() }
+        ThemeProvider { initial_palette: theme() }
             div {
                 button {
                     onclick: move |_| {
@@ -109,7 +109,7 @@ pub struct ThemeContext {
 impl Default for ThemeContext {
     fn default() -> Self {
         ThemeContext {
-            palette: "hikari".to_string(),
+            initial_palette: "hikari".to_string(),
             colors: themes::Hikari::palette(),
         }
     }
@@ -278,7 +278,7 @@ fn ThemeSwitcher() -> Element {
     let mut theme = use_signal(|| "hikari".to_string());
 
     rsx! {
-        ThemeProvider { palette: theme() }
+        ThemeProvider { initial_palette: theme() }
             div {
                 button {
                     onclick: move |_| theme.set("hikari".to_string()),
@@ -321,7 +321,7 @@ fn PersistentTheme() -> Element {
     });
 
     rsx! {
-        ThemeProvider { palette: theme() }
+        ThemeProvider { initial_palette: theme() }
             // Contenu de l'application
         }
     }
@@ -363,7 +363,7 @@ fn SystemTheme() -> Element {
     });
 
     rsx! {
-        ThemeProvider { palette: theme() }
+        ThemeProvider { initial_palette: theme() }
             // Contenu de l'application
         }
     }
@@ -415,7 +415,7 @@ rsx! {
 #[component]
 fn App() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari".to_string() }
+        ThemeProvider { initial_palette: "hikari".to_string() }
             Router {}
         }
     }
@@ -425,8 +425,8 @@ fn App() -> Element {
 #[component]
 fn BadExample() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari".to_string() }
-            ThemeProvider { palette: "tairitsu".to_string() }
+        ThemeProvider { initial_palette: "hikari".to_string() }
+            ThemeProvider { initial_palette: "tairitsu".to_string() }
                 // Le thème interne remplacera l'externe
             }
         }
@@ -524,7 +524,7 @@ Tous les composants héritent automatiquement du thème fourni par ThemeProvider
 
 ```rust
 rsx! {
-    ThemeProvider { palette: "hikari".to_string() }
+    ThemeProvider { initial_palette: "hikari".to_string() }
         // Tous les composants utilisent automatiquement le thème hikari
         Button { label: "Bouton" }
         Card { "Carte" }

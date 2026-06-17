@@ -122,26 +122,31 @@ impl ColumnDef {
         self
     }
 
+    #[must_use]
     pub fn align(mut self, align: ColumnAlign) -> Self {
         self.align = align;
         self
     }
 
+    #[must_use]
     pub fn fixed(mut self, fixed: bool) -> Self {
         self.fixed = fixed;
         self
     }
 
+    #[must_use]
     pub fn sortable(mut self, sortable: bool) -> Self {
         self.sortable = sortable;
         self
     }
 
+    #[must_use]
     pub fn filterable(mut self, filterable: bool) -> Self {
         self.filterable = filterable;
         self
     }
 
+    #[must_use]
     pub fn resizable(mut self, resizable: bool) -> Self {
         self.resizable = resizable;
         self
@@ -152,6 +157,7 @@ impl ColumnDef {
         self
     }
 
+    #[must_use]
     pub fn align_class(&self) -> &'static str {
         match self.align {
             ColumnAlign::Left => "hi-align-left",
@@ -160,10 +166,12 @@ impl ColumnDef {
         }
     }
 
+    #[must_use]
     pub fn fixed_class(&self) -> &'static str {
         if self.fixed { "hi-column-fixed" } else { "" }
     }
 
+    #[must_use]
     pub fn sortable_class(&self) -> &'static str {
         if self.sortable {
             "hi-column-sortable"
@@ -172,6 +180,7 @@ impl ColumnDef {
         }
     }
 
+    #[must_use]
     pub fn resizable_class(&self) -> &'static str {
         if self.resizable {
             "hi-column-resizable"
@@ -180,6 +189,7 @@ impl ColumnDef {
         }
     }
 
+    #[must_use]
     pub fn build_classes(&self) -> String {
         format!(
             "{} {} {} {}",
@@ -193,23 +203,25 @@ impl ColumnDef {
         .join(" ")
     }
 
+    #[must_use]
     pub fn has_width_constraints(&self) -> bool {
         self.width.is_some() || self.min_width.is_some() || self.max_width.is_some()
     }
 
+    #[must_use]
     pub fn width_styles(&self) -> String {
         let mut styles = Vec::new();
 
         if let Some(width) = &self.width {
-            styles.push(format!("width: {}", width));
+            styles.push(format!("width: {width}"));
         }
 
         if let Some(min_width) = &self.min_width {
-            styles.push(format!("min-width: {}", min_width));
+            styles.push(format!("min-width: {min_width}"));
         }
 
         if let Some(max_width) = &self.max_width {
-            styles.push(format!("max-width: {}", max_width));
+            styles.push(format!("max-width: {max_width}"));
         }
 
         if styles.is_empty() {

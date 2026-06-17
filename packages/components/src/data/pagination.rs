@@ -1,17 +1,16 @@
 // hi-components/src/data/pagination.rs
 // Pagination component
 
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::PaginationClass;
 use tairitsu_style::ClassesBuilder;
 
 use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
-use crate::feedback::{
-    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
-};
+use crate::feedback::{Glow, Popover, PopoverPositioning};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::utils::portal_types::PopoverPlacement;
 
 pub struct PaginationComponent;
 
@@ -69,8 +68,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
         (total_items.saturating_sub(1) / current_size.get()) + 1
     };
 
-    let _start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
-    let _end = (current_page.get() * current_size.get()).min(total_items);
+    let start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
+    let end = (current_page.get() * current_size.get()).min(total_items);
 
     // Handler for prev button
     let current_page_for_prev = current_page.clone();
@@ -308,7 +307,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
                                 && v <= total_pages * 2 {
-                                    jump_to_for_input.set(val.to_string());
+                                    jump_to_for_input.set(val.clone());
                                 }
                         })),
                         glow: true,
@@ -377,7 +376,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
                                 && v <= total_pages * 2 {
-                                    jump_to_for_input.set(val.to_string());
+                                    jump_to_for_input.set(val.clone());
                                 }
                         })),
                         glow: true,
@@ -414,7 +413,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
             if props.show_total {
                 div { class: total_classes,
-                    "{_start}-{_end} of {total_items}"
+                    "{start}-{end} of {total_items}"
                 }
             }
 

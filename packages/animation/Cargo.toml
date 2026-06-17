@@ -6,11 +6,14 @@ authors.workspace = true
 license.workspace = true
 description = "Animation hooks, easing functions and transition utilities for the Hikari design system"
 repository.workspace = true
+keywords = ["animation", "easing", "tween", "state-machine", "design-system"]
+categories = ["gui", "wasm"]
 
 [dependencies]
 # Core dependencies
-slotmap = "1.0"
-anyhow = "1"
+slotmap = "^1.0"
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 
 # Color utilities (local package)
 hikari-palette = { version = "^0.2", path = "../palette" }
@@ -29,8 +32,8 @@ tairitsu-web = { version = "^0.5", default-features = false, features = [
 ] }
 
 # Legacy WASM dependencies (optional, for backward compatibility)
-wasm-bindgen = { version = "0.2", optional = true }
-web-sys = { version = "0.3", features = [
+wasm-bindgen = { version = "^0.2", optional = true }
+web-sys = { version = "^0.3", features = [
     "Window",
     "Document",
     "Element",
@@ -43,7 +46,7 @@ web-sys = { version = "0.3", features = [
     "MediaQueryList",
     "DomTokenList",
 ], optional = true }
-js-sys = { version = "0.3", optional = true }
+js-sys = { version = "^0.3", optional = true }
 
 [features]
 default = []

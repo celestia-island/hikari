@@ -1,15 +1,11 @@
 // hi-components/src/feedback/drawer.rs
 // Drawer component
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, TypedClass};
-use tairitsu_hooks::ReactiveSignal;
 
-use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::anim_helpers::run_ease_out;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {
@@ -28,36 +24,7 @@ pub enum DrawerSize {
     Large,
 }
 
-/// Props for the [`Drawer`] component, controlling placement, size, mask behavior, and content.
-struct DrawerAnimState {
-    start_ts: Option<f64>,
-    stopped: bool,
-}
-
 const DRAWER_ANIM_DURATION_MS: f64 = 300.0;
-
-fn drawer_anim_tick(state: Rc<RefCell<DrawerAnimState>>, progress_signal: ReactiveSignal<f64>) {
-    platform::request_animation_frame_with_timestamp(move |ts| {
-        let mut s = state.borrow_mut();
-        if s.stopped {
-            return;
-        }
-        let start = s.start_ts.unwrap_or(ts);
-        if s.start_ts.is_none() {
-            s.start_ts = Some(ts);
-        }
-        let elapsed = ts - start;
-        let progress = (elapsed / DRAWER_ANIM_DURATION_MS).min(1.0);
-        drop(s);
-
-        let eased = 1.0 - (1.0 - progress).powi(3);
-        progress_signal.set(eased);
-
-        if progress < 1.0 {
-            drawer_anim_tick(state.clone(), progress_signal.clone());
-        }
-    });
-}
 
 #[define_props]
 pub struct DrawerProps {
@@ -115,21 +82,7 @@ pub fn Drawer(props: DrawerProps) -> Element {
     if props.open && !prev_open {
         prev_open_signal.set(true);
         progress_signal.set(0.0);
-        let prog_sig = progress_signal.clone();
-        let state = Rc::new(RefCell::new(DrawerAnimState {
-            start_ts: None,
-            stopped: false,
-        }));
-        let s_ref = state.clone();
-        platform::request_animation_frame_with_timestamp(move |ts| {
-            let mut s = s_ref.borrow_mut();
-            if s.stopped {
-                return;
-            }
-            s.start_ts = Some(ts);
-            drop(s);
-            drawer_anim_tick(s_ref, prog_sig);
-        });
+        run_ease_out(DRAWER_ANIM_DURATION_MS, 3, progress_signal.clone());
     }
     if !props.open && prev_open {
         prev_open_signal.set(false);

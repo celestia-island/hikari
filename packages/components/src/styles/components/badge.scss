@@ -123,12 +123,12 @@
 // ============================================
 
 .hi-badge-dot {
-  width: 8px !important;
-  height: 8px !important;
-  min-width: 8px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  font-size: 0 !important;
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
 
   .hi-badge-dot-inner {
     display: block;
@@ -195,11 +195,11 @@
 // ============================================
 
 .hi-badge-status {
-  width: 10px !important;
-  height: 10px !important;
-  min-width: 10px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  padding: 0;
+  border-radius: 50%;
   border: 2px solid var(--hi-color-surface);
 
   &.hi-badge-online {

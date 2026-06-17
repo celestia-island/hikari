@@ -7,32 +7,25 @@ use super::value::DynamicValue;
 use crate::context::AnimationContext;
 use crate::state::AnimationDataStore as StructAnimationState;
 
-/// Enhanced animation action that can be applied to an element
-///
-/// Actions can be either CSS styles or utility classes,
-/// supporting static, dynamic, and stateful dynamic values.
 pub enum AnimationAction<P: Platform> {
-    /// CSS style property with value
     Style(CssProperty, DynamicValue<P>),
-    /// Utility class (from palette package)
     Class(String),
+}
+
+impl<P: Platform> std::fmt::Debug for AnimationAction<P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Style(prop, _) => f.debug_tuple("Style").field(prop).finish(),
+            Self::Class(c) => f.debug_tuple("Class").field(c).finish(),
+        }
+    }
 }
 
 impl<P: Platform> Clone for AnimationAction<P> {
     fn clone(&self) -> Self {
         match self {
-            AnimationAction::Class(class) => AnimationAction::Class(class.clone()),
-            AnimationAction::Style(prop, value) => match value {
-                DynamicValue::Static(s) => {
-                    AnimationAction::Style(*prop, DynamicValue::static_value(s.clone()))
-                }
-                DynamicValue::Dynamic(_) => {
-                    AnimationAction::Style(*prop, DynamicValue::static_value(""))
-                }
-                DynamicValue::StatefulDynamic(_) => {
-                    AnimationAction::Style(*prop, DynamicValue::static_value(""))
-                }
-            },
+            Self::Style(p, v) => Self::Style(*p, v.clone()),
+            Self::Class(c) => Self::Class(c.clone()),
         }
     }
 }
@@ -73,18 +66,31 @@ pub fn apply_actions<P: Platform>(
     ctx: &AnimationContext<P>,
     state: &mut StructAnimationState,
 ) {
+    let mut class_parts: Vec<String> = Vec::new();
+    let mut pending_style_actions: Vec<(&CssProperty, &DynamicValue<P>)> = Vec::new();
+
     for action in actions {
         match action {
             AnimationAction::Style(prop, value) => {
-                let value_str = value.evaluate(ctx, state);
-                platform
-                    .borrow_mut()
-                    .set_style(element, prop.as_str(), &value_str);
+                pending_style_actions.push((prop, value));
             }
             AnimationAction::Class(class) => {
-                // Use set_attribute to add class (simplified approach)
-                platform.borrow_mut().set_attribute(element, "class", class);
+                class_parts.push(class.clone());
             }
         }
+    }
+
+    if !class_parts.is_empty() {
+        let class_str = class_parts.join(" ");
+        platform
+            .borrow_mut()
+            .set_attribute(element, "class", &class_str);
+    }
+
+    for (prop, value) in pending_style_actions {
+        let value_str = value.evaluate(ctx, state);
+        platform
+            .borrow_mut()
+            .set_style(element, prop.as_str(), &value_str);
     }
 }

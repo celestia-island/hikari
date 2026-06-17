@@ -387,7 +387,7 @@ fn App() -> Element {
     let hikari = themes::Hikari::palette();
 
     rsx! {
-        ThemeProvider { palette: "hikari".to_string() }
+        ThemeProvider { initial_palette: "hikari".to_string() }
             div {
                 style: "color: {hikari.primary.hex()}",
                 "Texte thématique"

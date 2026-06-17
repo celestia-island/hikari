@@ -41,7 +41,8 @@ impl Default for GlobalAnimationManager {
 }
 
 impl GlobalAnimationManager {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self
     }
 
@@ -127,6 +128,7 @@ impl GlobalAnimationManager {
         });
     }
 
+    #[must_use]
     pub fn get_state() -> AnimationDebugState {
         MANAGER.with(|m| {
             let mgr = m.borrow();
@@ -169,25 +171,20 @@ impl GlobalAnimationManager {
         });
     }
 
+    #[must_use]
     pub fn is_test_mode() -> bool {
         MANAGER.with(|m| m.borrow().test_mode)
     }
 
+    #[must_use]
     pub fn is_frozen() -> bool {
         MANAGER.with(|m| m.borrow().frozen)
     }
 
+    #[must_use]
     pub fn engine_count() -> usize {
         MANAGER.with(|m| m.borrow().engines.len())
     }
-}
-
-// Legacy compatibility
-pub fn init_global_animation_manager() {}
-
-pub fn global_animation_manager() -> &'static GlobalAnimationManager {
-    static MANAGER: GlobalAnimationManager = GlobalAnimationManager;
-    &MANAGER
 }
 
 #[derive(Debug, Clone)]

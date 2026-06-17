@@ -70,14 +70,14 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
         result
     });
 
-    let total_height = flattened_items.read().len() as f64 * props.item_height as f64;
+    let total_height = flattened_items.read().len() as f64 * f64::from(props.item_height);
 
     let flattened_for_range = flattened_items.clone();
     let scroll_for_range = scroll_position.clone();
     let range = use_memo(move || {
         let scroll = scroll_for_range.get();
-        let start = (scroll / props.item_height as f64).floor() as usize;
-        let visible_count = (container_height / props.item_height as f64).ceil() as usize;
+        let start = (scroll / f64::from(props.item_height)).floor() as usize;
+        let visible_count = (container_height / f64::from(props.item_height)).ceil() as usize;
         let end =
             (start + visible_count + props.overscan as usize).min(flattened_for_range.read().len());
         let start = start.saturating_sub(props.overscan as usize);

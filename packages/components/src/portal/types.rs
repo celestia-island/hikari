@@ -3,13 +3,14 @@
 
 use tairitsu_hooks::ReactiveSignal;
 
-use crate::feedback::PopoverPlacement;
-use crate::modal::{MaskMode, ModalPosition, ModalSize};
 use crate::prelude::*;
+pub use crate::utils::portal_types::{MaskMode, ModalPosition, ModalSize, PopoverPlacement};
 
-pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+pub(crate) static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
 
 #[derive(Clone, Copy, PartialEq, Debug)]
+#[non_exhaustive]
 pub enum PortalPositionStrategy {
     Fixed(f64, f64),
     TriggerBased { placement: TriggerPlacement },
@@ -25,6 +26,7 @@ impl Default for PortalPositionStrategy {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum TriggerPlacement {
     #[default]
     Bottom,
@@ -99,6 +101,7 @@ pub enum PortalEntry {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum PortalMaskMode {
     #[default]
     Dimmed,
@@ -106,6 +109,7 @@ pub enum PortalMaskMode {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum ToastPosition {
     TopLeft,
     TopCenter,

@@ -49,7 +49,7 @@ pub fn Slider(props: SliderProps) -> Element {
         .build();
 
     let percent = if props.max > props.min {
-        ((props.value - props.min) as f64 / (props.max - props.min) as f64 * 100.0)
+        (f64::from(props.value - props.min) / f64::from(props.max - props.min) * 100.0)
             .clamp(0.0, 100.0)
     } else {
         0.0

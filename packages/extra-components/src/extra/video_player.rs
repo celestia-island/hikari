@@ -71,17 +71,20 @@ impl VideoPlayerState {
         self
     }
 
-    pub fn with_show_controls(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_controls(mut self, show: bool) -> Self {
         self.show_controls = show;
         self
     }
 
-    pub fn with_autoplay(mut self, autoplay: bool) -> Self {
+    #[must_use]
+    pub const fn with_autoplay(mut self, autoplay: bool) -> Self {
         self.autoplay = autoplay;
         self
     }
 
-    pub fn with_loop(mut self, loop_playback: bool) -> Self {
+    #[must_use]
+    pub const fn with_loop(mut self, loop_playback: bool) -> Self {
         self.loop_playback = loop_playback;
         self
     }
@@ -91,22 +94,23 @@ impl VideoPlayerState {
         self
     }
 
-    pub fn with_volume(mut self, volume: f64) -> Self {
+    #[must_use]
+    pub const fn with_volume(mut self, volume: f64) -> Self {
         self.volume = volume.clamp(0.0, 1.0);
         self
     }
 
-    pub fn play(&mut self) {
+    pub const fn play(&mut self) {
         self.is_playing = true;
         self.playback_status = PlaybackStatus::Playing;
     }
 
-    pub fn pause(&mut self) {
+    pub const fn pause(&mut self) {
         self.is_playing = false;
         self.playback_status = PlaybackStatus::Paused;
     }
 
-    pub fn toggle_playback(&mut self) -> bool {
+    pub const fn toggle_playback(&mut self) -> bool {
         if self.is_playing {
             self.pause();
         } else {
@@ -115,41 +119,42 @@ impl VideoPlayerState {
         self.is_playing
     }
 
-    pub fn toggle_mute(&mut self) -> bool {
+    pub const fn toggle_mute(&mut self) -> bool {
         self.is_muted = !self.is_muted;
         self.is_muted
     }
 
-    pub fn set_volume(&mut self, volume: f64) {
+    pub const fn set_volume(&mut self, volume: f64) {
         self.volume = volume.clamp(0.0, 1.0);
     }
 
-    pub fn seek(&mut self, time: f64) {
+    pub const fn seek(&mut self, time: f64) {
         self.current_time = time.max(0.0);
     }
 
-    pub fn set_current_time(&mut self, time: f64) {
+    pub const fn set_current_time(&mut self, time: f64) {
         self.current_time = time.max(0.0);
     }
 
-    pub fn set_duration(&mut self, duration: f64) {
+    pub const fn set_duration(&mut self, duration: f64) {
         self.duration = duration.max(0.0);
     }
 
-    pub fn set_ended(&mut self) {
+    pub const fn set_ended(&mut self) {
         self.is_playing = false;
         self.playback_status = PlaybackStatus::Ended;
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+    pub const fn set_fullscreen(&mut self, fullscreen: bool) {
         self.is_fullscreen = fullscreen;
     }
 
-    pub fn toggle_fullscreen(&mut self) -> bool {
+    pub const fn toggle_fullscreen(&mut self) -> bool {
         self.is_fullscreen = !self.is_fullscreen;
         self.is_fullscreen
     }
 
+    #[must_use]
     pub fn progress_percent(&self) -> f64 {
         if self.duration <= 0.0 {
             0.0
@@ -158,14 +163,17 @@ impl VideoPlayerState {
         }
     }
 
+    #[must_use]
     pub fn formatted_current_time(&self) -> String {
         format_time(self.current_time)
     }
 
+    #[must_use]
     pub fn formatted_duration(&self) -> String {
         format_time(self.duration)
     }
 
+    #[must_use]
     pub fn formatted_progress(&self) -> String {
         format!(
             "{} / {}",
@@ -174,6 +182,7 @@ impl VideoPlayerState {
         )
     }
 
+    #[must_use]
     pub fn class_string(&self) -> String {
         let base = "hi-video-player";
         if self.class.is_empty() {
@@ -190,7 +199,7 @@ impl Default for VideoPlayerState {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct PlaybackChangeEvent {
     pub is_playing: bool,
     pub status: PlaybackStatus,
@@ -205,9 +214,10 @@ pub struct TimeUpdateEvent {
 fn format_time(seconds: f64) -> String {
     let mins = (seconds / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
-    format!("{:02}:{:02}", mins, secs)
+    format!("{mins:02}:{secs:02}")
 }
 
+#[must_use]
 pub fn render_video_player(state: &VideoPlayerState) -> VNode {
     let mut container_children: Vec<VNode> = Vec::new();
 

@@ -35,6 +35,7 @@ struct ThemeCache {
 /// For theme-aware behavior, use the Platform-based variant instead.
 ///
 /// Returns: (color1, color2) as hex strings
+#[must_use]
 pub fn get_theme_colors() -> (String, String) {
     thread_local! {
         static THEME_CACHE: RefCell<Option<ThemeCache>> = const { RefCell::new(None) };
@@ -70,6 +71,7 @@ pub fn get_theme_colors() -> (String, String) {
 /// Calculate background animation context for a given timestamp
 ///
 /// Returns render context with rotating center position and breathing color effects.
+#[must_use]
 pub fn calculate_background_context(timestamp: f64) -> BackgroundRenderContext {
     // Get theme colors (cached)
     let (color1, color2) = get_theme_colors();

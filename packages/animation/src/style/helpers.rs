@@ -114,7 +114,7 @@ pub fn remove_style<P: Platform>(
 /// ```ignore
 /// let width = get_style(&platform, &element, CssProperty::Width);
 /// ```
-pub fn get_style<P: Platform>(
+pub const fn get_style<P: Platform>(
     _platform: &Rc<RefCell<P>>,
     _element: &P::Element,
     _property: CssProperty,

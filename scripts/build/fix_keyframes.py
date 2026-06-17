@@ -58,8 +58,15 @@ def fix_keyframes_in_file(file_path: Path) -> int:
             brace_count = 0
             while i < len(lines):
                 inner_line = lines[i]
-                brace_count += inner_line.count('{')
-                brace_count -= inner_line.count('}')
+                stripped = inner_line
+                # Strip comments before counting braces
+                stripped = re.sub(r'/\*.*?\*/', '', stripped)
+                stripped = re.sub(r'//.*$', '', stripped)
+                # Remove string content to avoid false brace matching
+                stripped = re.sub(r'"[^"]*"', '', stripped)
+                stripped = re.sub(r"'[^']*'", '', stripped)
+                brace_count += stripped.count('{')
+                brace_count -= stripped.count('}')
 
                 if not inner_line.strip().startswith('//'):
                     new_lines.append('// ' + inner_line)

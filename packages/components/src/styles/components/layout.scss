@@ -547,7 +547,7 @@
   right: 0;
   bottom: 0;
   pointer-events: auto;
-  z-index: 10000;
+  z-index: var(--hi-z-index-dropdown, 1000);
   transition: opacity 0.2s ease-in-out;
 }
 

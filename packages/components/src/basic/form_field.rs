@@ -64,12 +64,10 @@ pub fn FormField(props: FormFieldProps) -> Element {
     let full_classes = if status_class.is_empty() {
         wrapper_classes.clone()
     } else {
-        format!("{} {}", wrapper_classes, status_class)
+        format!("{wrapper_classes} {status_class}")
     };
 
     let has_label = !props.label.is_empty();
-    let has_help = props.help_text.is_some();
-    let has_error = props.error_message.is_some();
 
     let label_el = if has_label {
         let required_marker = if props.required {
@@ -89,22 +87,26 @@ pub fn FormField(props: FormFieldProps) -> Element {
         None
     };
 
-    let help_el = if has_help {
+    let help_el = if let Some(help) = props.help_text.as_ref() {
         Some(rsx! {
-            div { class: "hi-form-field-help", "{props.help_text.as_ref().unwrap()}" }
+            div { class: "hi-form-field-help", "{help}" }
         })
-    } else if props.show_status && has_error {
-        Some(rsx! {
-            div { class: "hi-form-field-error-msg", "{props.error_message.as_ref().unwrap()}" }
-        })
-    } else if props.show_status && props.status == FormFieldStatus::Success {
-        Some(rsx! {
-            div { class: "hi-form-field-success-msg", "Valid" }
-        })
-    } else if props.show_status && props.status == FormFieldStatus::Warning {
-        Some(rsx! {
-            div { class: "hi-form-field-warning-msg", "Warning" }
-        })
+    } else if props.show_status {
+        if let Some(err) = props.error_message.as_ref() {
+            Some(rsx! {
+                div { class: "hi-form-field-error-msg", "{err}" }
+            })
+        } else if props.status == FormFieldStatus::Success {
+            Some(rsx! {
+                div { class: "hi-form-field-success-msg", "Valid" }
+            })
+        } else if props.status == FormFieldStatus::Warning {
+            Some(rsx! {
+                div { class: "hi-form-field-warning-msg", "Warning" }
+            })
+        } else {
+            None
+        }
     } else {
         None
     };

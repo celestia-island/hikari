@@ -225,6 +225,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
     /// The animation will automatically update with delta time for smooth motion.
     ///
     /// Returns a stop function that should be called to clean up animation.
+    #[must_use]
     pub fn start_continuous_animation(self) -> Box<dyn FnOnce()> {
         self.start_animation_loop()
     }
@@ -240,12 +241,13 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
     /// - Batch style updates to minimize reflows
     ///
     /// Returns a stop function that should be called to clean up animation.
+    #[must_use]
     pub fn start_animation_loop(self) -> Box<dyn FnOnce()> {
         let platform = Rc::clone(&self.platform);
         let platform_for_stop = platform.clone();
         let elements = self.elements.clone();
         let actions = self.actions;
-        let mut state = self.initial_state;
+        let state = Rc::new(RefCell::new(self.initial_state));
 
         let should_stop = Rc::new(RefCell::new(false));
         let should_stop_clone = should_stop.clone();
@@ -257,36 +259,34 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
 
         let raf_id = Rc::new(RefCell::new(None::<u32>));
 
-        // Simplified animation loop - just schedule frames without complex recursion
-        let initial_callback = Box::new({
+        // Define the per-frame animation work as a shared function
+        let animate_frame = {
             let platform = platform.clone();
-            let elements = elements.clone();
-            let actions = actions.clone();
             let should_stop = should_stop.clone();
-            let timing = timing.clone();
-            let cached_values = cached_values.clone();
-            let raf_id = raf_id.clone();
 
-            move |timestamp: f64| {
+            move |current_time: f64| {
                 if *should_stop.borrow() {
                     return;
                 }
 
-                let current_time = timestamp;
-                let mut timing_ref = timing.borrow_mut();
-                timing_ref.1 = current_time;
-                timing_ref.2 = current_time;
-                drop(timing_ref);
+                let previous_time = {
+                    let mut timing_ref = timing.borrow_mut();
+                    let prev = timing_ref.0;
+                    timing_ref.1 = current_time;
+                    timing_ref.2 = current_time - prev;
+                    timing_ref.0 = current_time;
+                    prev
+                };
 
                 let mut cached_ref = cached_values.borrow_mut();
-                let mut needs_update = false;
+                let mut state_ref = state.borrow_mut();
 
                 for (element_name, element_handle) in &elements {
                     if let Some(element_actions) = actions.get(element_name) {
                         let ctx = AnimationContext::new_with_timing(
                             platform.clone(),
                             element_handle.clone(),
-                            0.0,
+                            previous_time,
                             current_time,
                         );
 
@@ -300,23 +300,21 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                                     DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
                                 )
                             {
-                                let new_value = value.evaluate(&ctx, &mut state);
+                                let new_value = value.evaluate(&ctx, &mut state_ref);
 
                                 if let Some(old_value) = element_cache.get(prop) {
                                     if old_value != &new_value {
                                         new_styles.push((*prop, new_value.clone()));
                                         element_cache.insert(*prop, new_value);
-                                        needs_update = true;
                                     }
                                 } else {
                                     new_styles.push((*prop, new_value.clone()));
                                     element_cache.insert(*prop, new_value);
-                                    needs_update = true;
                                 }
                             }
                         }
 
-                        if needs_update && !new_styles.is_empty() {
+                        if !new_styles.is_empty() {
                             for (prop, value_str) in &new_styles {
                                 platform.borrow_mut().set_style(
                                     element_handle,
@@ -324,46 +322,64 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                                     value_str,
                                 );
                             }
-                            needs_update = false;
                         }
                     }
                 }
-                drop(cached_ref);
-
-                // Request next frame
-                if !*should_stop.borrow() {
-                    let platform_clone = platform.clone();
-                    let should_stop = should_stop.clone();
-                    let callback = Box::new(move |_ts: f64| {
-                        // Simplified: just request another frame
-                        if !*should_stop.borrow() {
-                            let platform = platform_clone.clone();
-                            let _should_stop = should_stop.clone();
-                            let inner_callback = Box::new(move |_inner_ts: f64| {
-                                // Continue the loop
-                            });
-                            let id = platform
-                                .borrow_mut()
-                                .request_animation_frame(inner_callback);
-                            // Note: We're not tracking RAF IDs properly in this simplified version
-                            let _ = id;
-                        }
-                    });
-                    let id = platform.borrow_mut().request_animation_frame(callback);
-                    *raf_id.borrow_mut() = Some(id);
-                }
             }
-        });
+        };
 
-        let id = platform
-            .borrow_mut()
-            .request_animation_frame(initial_callback);
-        *raf_id.borrow_mut() = Some(id);
+        // Recursive frame scheduler
+        type Scheduler = Rc<RefCell<Option<Box<dyn FnMut(f64)>>>>;
+        let scheduler: Scheduler = Rc::new(RefCell::new(None));
+
+        let scheduler_for_schedule = scheduler.clone();
+        let scheduler_for_start = scheduler.clone();
+        let scheduler_for_stop = scheduler.clone();
+
+        let platform_for_start = platform.clone();
+        let raf_id_for_start = raf_id.clone();
+        let raf_id_for_stop = raf_id.clone();
+        let schedule_next = move |current_time: f64| {
+            animate_frame(current_time);
+
+            if !*should_stop.borrow() {
+                let sched = scheduler_for_schedule.clone();
+                let cb = Box::new(move |ts: f64| {
+                    let mut s = sched.borrow_mut();
+                    if let Some(ref mut scheduler_fn) = *s {
+                        scheduler_fn(ts);
+                    }
+                });
+                let id = platform.borrow_mut().request_animation_frame(cb);
+                *raf_id.borrow_mut() = Some(id);
+            }
+        };
+
+        *scheduler.borrow_mut() = Some(Box::new(schedule_next));
+
+        // Start first frame
+        {
+            let mut s = scheduler_for_start.borrow_mut();
+            if let Some(ref mut _f) = *s {
+                let cb = {
+                    let cell = scheduler_for_start.clone();
+                    Box::new(move |ts: f64| {
+                        let mut g = cell.borrow_mut();
+                        if let Some(ref mut fn_ptr) = *g {
+                            fn_ptr(ts);
+                        }
+                    })
+                };
+                let id = platform_for_start.borrow_mut().request_animation_frame(cb);
+                *raf_id_for_start.borrow_mut() = Some(id);
+            }
+        }
 
         Box::new(move || {
             *should_stop_clone.borrow_mut() = true;
-            // Cancel any pending RAF
-            if let Some(id) = raf_id.take() {
+            // Clear scheduler to break the Rc self-reference cycle
+            *scheduler_for_stop.borrow_mut() = None;
+            if let Some(id) = raf_id_for_stop.take() {
                 platform_for_stop.borrow_mut().cancel_animation_frame(id);
             }
         })
@@ -406,7 +422,7 @@ impl<'a, P: Platform> AnimationBuilder<'a, P> {
                 self.platform.borrow_mut().set_style(
                     element_handle,
                     "transition",
-                    &format!("all {} {}", duration, easing),
+                    &format!("all {duration} {easing}"),
                 );
             }
         }

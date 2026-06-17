@@ -17,6 +17,7 @@ pub enum ImageFit {
 }
 
 impl ImageFit {
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             ImageFit::Contain => "contain",
@@ -89,8 +90,7 @@ pub fn Image(
         "width: 100%; position: relative; display: inline-block;".to_string()
     } else if let (Some(w), Some(h)) = (width, height) {
         format!(
-            "width: {}px; height: {}px; position: relative; display: inline-block;",
-            w, h
+            "width: {w}px; height: {h}px; position: relative; display: inline-block;"
         )
     } else {
         "position: relative; display: inline-block;".to_string()

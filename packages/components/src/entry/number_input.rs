@@ -1,8 +1,8 @@
 use hikari_palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
-use crate::feedback::GlowIntensity;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::GlowIntensity;
 
 pub struct NumberInputComponent;
 

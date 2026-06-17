@@ -557,7 +557,7 @@ Website uses Tairitsu's Routable derive macro.
 #[component]
 pub fn App() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari".to_string(),
+        ThemeProvider { initial_palette: "hikari".to_string(),
             PortalProvider {
                 Router::<Route> {}
             }

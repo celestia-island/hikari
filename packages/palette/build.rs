@@ -1,25 +1,27 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 fn main() {
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let out_dir = env::var("OUT_DIR").unwrap();
+    let manifest_dir =
+        env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set by Cargo");
+    let out_dir = env::var("OUT_DIR").expect("OUT_DIR must be set by Cargo");
+
+    let workspace_root = env::var("CARGO_WORKSPACE_DIR").map_or_else(|_| {
+            Path::new(&manifest_dir)
+                .parent()
+                .expect("palette package should be under workspace root")
+                .to_path_buf()
+        }, PathBuf::from);
 
     let scss_dirs = vec![
-        Path::new(&manifest_dir)
-            .parent()
-            .unwrap()
+        workspace_root
             .join("components")
             .join("src")
             .join("styles")
             .join("components"),
-        Path::new(&manifest_dir)
-            .parent()
-            .unwrap()
-            .join("theme")
-            .join("styles"),
+        workspace_root.join("theme").join("styles"),
     ];
 
     let mut all_classes: BTreeMap<String, Vec<String>> = BTreeMap::new();
@@ -32,38 +34,37 @@ fn main() {
     }
 
     let classes_dir = Path::new(&out_dir).join("classes");
-    fs::create_dir_all(&classes_dir).unwrap();
+    fs::create_dir_all(&classes_dir)
+        .expect("Failed to create output directory for generated classes");
     let dest = classes_dir.join("generated.rs");
     generate(&all_classes, &dest);
 
-    eprintln!(
-        "hikari-palette: {} component groups, {} classes generated from SCSS",
+    println!(
+        "cargo:warning=hikari-palette: {} component groups, {} classes generated",
         all_classes.len(),
-        all_classes.values().map(|v| v.len()).sum::<usize>()
+        all_classes.values().map(Vec::len).sum::<usize>()
     );
 }
 
 fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return,
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
     };
 
     let mut files: Vec<_> = entries
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| {
             e.path()
                 .extension()
                 .and_then(|s| s.to_str())
-                .map(|s| s == "scss")
-                .unwrap_or(false)
+                .is_some_and(|s| s == "scss")
         })
         .filter(|e| {
             let name = e.file_name().to_string_lossy().into_owned();
             !name.starts_with('_') && !name.ends_with("-vars.scss")
         })
         .collect();
-    files.sort_by_key(|e| e.file_name());
+    files.sort_by_key(std::fs::DirEntry::file_name);
 
     for entry in files {
         let path = entry.path();
@@ -73,14 +74,13 @@ fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
             .unwrap_or("")
             .to_string();
 
-        let content = match fs::read_to_string(&path) {
-            Ok(c) => c,
-            Err(_) => continue,
+        let Ok(content) = fs::read_to_string(&path) else {
+            continue;
         };
 
         let group_name = stem.replace('-', "_");
-        let prefix = format!("hi-{}-", stem);
-        let hikari_prefix = format!("hikari-{}-", stem);
+        let prefix = format!("hi-{stem}-");
+        let hikari_prefix = format!("hikari-{stem}-");
 
         let classes = extract_classes(&content, &prefix, &hikari_prefix);
         if classes.is_empty() {
@@ -94,7 +94,8 @@ fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
 fn extract_classes(scss: &str, prefix: &str, hikari_prefix: &str) -> Vec<String> {
     let mut seen = BTreeSet::new();
     let mut classes = Vec::new();
-    let re = regex_lite::Regex::new(r"\.((?:hi-|hikari-)[a-zA-Z][a-zA-Z0-9_-]*)").unwrap();
+    let re = regex_lite::Regex::new(r"\.((?:hi-|hikari-)[a-zA-Z][a-zA-Z0-9_-]*)")
+        .expect("regex pattern is statically validated");
 
     for line in scss.lines() {
         let trimmed = line.trim();
@@ -126,22 +127,21 @@ fn class_to_variant(class: &str) -> String {
         .filter(|p| !p.is_empty())
         .map(|part| {
             let mut c = part.chars();
-            match c.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().to_string() + c.as_str(),
-            }
+            c.next().map_or_else(String::new, |first| {
+                first.to_uppercase().to_string() + c.as_str()
+            })
         })
         .collect()
 }
 
 fn generate(all_classes: &BTreeMap<String, Vec<String>>, dest: &Path) {
-    let mut f = fs::File::create(dest).unwrap();
+    let mut f = fs::File::create(dest).expect("Failed to create generated classes file");
 
     writeln!(
         f,
         "// @generated — DO NOT EDIT\n// Generated by hikari-palette build.rs from SCSS sources\n"
     )
-    .unwrap();
+    .expect("Failed to write generated file header");
 
     for (group, classes) in all_classes {
         let enum_name = to_pascal(group.as_str());
@@ -159,35 +159,44 @@ fn generate(all_classes: &BTreeMap<String, Vec<String>>, dest: &Path) {
             continue;
         }
 
-        writeln!(f, "/// Auto-generated from SCSS").unwrap();
-        writeln!(f, "#[derive(Debug, Clone, Copy, PartialEq, Eq)]").unwrap();
-        writeln!(f, "pub enum {} {{", enum_name).unwrap();
+        writeln!(f, "/// Auto-generated from SCSS").expect("Failed to write enum doc comment");
+        writeln!(f, "#[derive(Debug, Clone, Copy, PartialEq, Eq)]")
+            .expect("Failed to write derive macro");
+        writeln!(f, "pub enum {enum_name} {{")
+            .unwrap_or_else(|e| panic!("Failed to write enum declaration for {enum_name}: {e}"));
 
         for (variant, class) in &deduped {
-            writeln!(f, "    /// `{}`", class).unwrap();
-            writeln!(f, "    {},", variant).unwrap();
+            writeln!(f, "    /// `{class}`")
+                .unwrap_or_else(|e| panic!("Failed to write variant {variant}: {e}"));
+            writeln!(f, "    {variant},")
+                .unwrap_or_else(|e| panic!("Failed to write variant {variant}: {e}"));
         }
 
-        writeln!(f, "}}").unwrap();
-        writeln!(f).unwrap();
+        writeln!(f, "}}").unwrap_or_else(|e| panic!("Failed to close enum {enum_name}: {e}"));
+        writeln!(f).expect("Failed to write blank line");
 
-        writeln!(f, "impl tairitsu_style::TypedClass for {} {{", enum_name).unwrap();
-        writeln!(f, "    fn class_name(&self) -> &'static str {{").unwrap();
-        writeln!(f, "        match self {{").unwrap();
+        writeln!(f, "impl tairitsu_style::TypedClass for {enum_name} {{")
+            .unwrap_or_else(|e| panic!("Failed to write impl block for {enum_name}: {e}"));
+        writeln!(f, "    fn class_name(&self) -> &'static str {{")
+            .expect("Failed to write class_name fn");
+        writeln!(f, "        match self {{").expect("Failed to write match");
 
         for (variant, class) in &deduped {
             writeln!(
                 f,
-                "            {}::{} => \"{}\",",
-                enum_name, variant, class
+                "            {enum_name}::{variant} => \"{class}\","
             )
-            .unwrap();
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Failed to write match arm {enum_name}::{variant}: {e}"
+                )
+            });
         }
 
-        writeln!(f, "        }}").unwrap();
-        writeln!(f, "    }}").unwrap();
-        writeln!(f, "}}").unwrap();
-        writeln!(f).unwrap();
+        writeln!(f, "        }}").expect("Failed to close match");
+        writeln!(f, "    }}").expect("Failed to close class_name fn");
+        writeln!(f, "}}").unwrap_or_else(|e| panic!("Failed to close impl for {enum_name}: {e}"));
+        writeln!(f).expect("Failed to write blank line");
     }
 }
 

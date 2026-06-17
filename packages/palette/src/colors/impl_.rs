@@ -1,10 +1,12 @@
 use super::{Color, ColorCategory};
 
 impl Color {
+    #[must_use]
     pub fn hex(&self) -> String {
         format!("#{:02X}{:02X}{:02X}", self.rgb.0, self.rgb.1, self.rgb.2)
     }
 
+    #[must_use]
     pub fn rgba(&self, alpha: f64) -> String {
         format!(
             "rgba({}, {}, {}, {})",
@@ -12,6 +14,7 @@ impl Color {
         )
     }
 
+    #[must_use]
     pub const fn from_rgb(r: u8, g: u8, b: u8) -> Self {
         Self {
             #[cfg(feature = "chinese-names")]
@@ -19,10 +22,11 @@ impl Color {
             #[cfg(not(feature = "chinese-names"))]
             name: (),
             rgb: (r, g, b),
-            category: ColorCategory::Gray,
+            category: ColorCategory::Custom,
         }
     }
 
+    #[must_use]
     pub fn from_rgb_float(r: f64, g: f64, b: f64) -> Self {
         let r = (r.clamp(0.0, 1.0) * 255.0).round() as u8;
         let g = (g.clamp(0.0, 1.0) * 255.0).round() as u8;
@@ -30,43 +34,53 @@ impl Color {
         Self::from_rgb(r, g, b)
     }
 
+    #[must_use]
     pub fn rgba_u8(&self, alpha: u8) -> String {
+        let alpha_f = f64::from(alpha) / 255.0;
         format!(
-            "rgba({}, {}, {}, {})",
-            self.rgb.0, self.rgb.1, self.rgb.2, alpha
+            "rgba({}, {}, {}, {:.3})",
+            self.rgb.0, self.rgb.1, self.rgb.2, alpha_f
         )
     }
 
+    #[must_use]
     pub const fn r(&self) -> u8 {
         self.rgb.0
     }
+    #[must_use]
     pub const fn g(&self) -> u8 {
         self.rgb.1
     }
+    #[must_use]
     pub const fn b(&self) -> u8 {
         self.rgb.2
     }
 
+    #[must_use]
     pub fn brightness(&self) -> f64 {
-        let r = self.rgb.0 as f64 / 255.0;
-        let g = self.rgb.1 as f64 / 255.0;
-        let b = self.rgb.2 as f64 / 255.0;
+        let r = f64::from(self.rgb.0) / 255.0;
+        let g = f64::from(self.rgb.1) / 255.0;
+        let b = f64::from(self.rgb.2) / 255.0;
 
-        0.299 * r + 0.587 * g + 0.114 * b
+        0.114f64.mul_add(b, 0.587f64.mul_add(g, 0.299 * r))
     }
 
+    #[must_use]
     pub fn is_dark(&self) -> bool {
         self.brightness() < 0.5
     }
 
+    #[must_use]
     pub fn is_light(&self) -> bool {
         self.brightness() >= 0.5
     }
 
+    #[must_use]
     pub fn is_dark_for_glow(&self) -> bool {
         self.brightness() < 0.4
     }
 
+    #[must_use]
     pub fn contrast(&self, alpha: f64) -> (u8, u8, u8, f64) {
         if self.is_dark() {
             (255, 255, 255, alpha)
@@ -75,11 +89,13 @@ impl Color {
         }
     }
 
+    #[must_use]
     pub fn contrast_rgba(&self, alpha: f64) -> String {
         let (r, g, b, a) = self.contrast(alpha);
-        format!("rgba({}, {}, {}, {})", r, g, b, a)
+        format!("rgba({r}, {g}, {b}, {a})")
     }
 
+    #[must_use]
     pub fn glow_contrast(&self, alpha: f64) -> (u8, u8, u8, f64) {
         if self.is_dark_for_glow() {
             (255, 255, 255, alpha)
@@ -88,11 +104,13 @@ impl Color {
         }
     }
 
+    #[must_use]
     pub fn glow_contrast_rgba(&self, alpha: f64) -> String {
         let (r, g, b, a) = self.glow_contrast(alpha);
-        format!("rgba({}, {}, {}, {})", r, g, b, a)
+        format!("rgba({r}, {g}, {b}, {a})")
     }
 
+    #[must_use]
     pub fn glow_contrast_dynamic(&self) -> (u8, u8, u8, f64) {
         let brightness = self.brightness();
 
@@ -117,8 +135,9 @@ impl Color {
         (r, g, b, alpha)
     }
 
+    #[must_use]
     pub fn glow_contrast_dynamic_rgba(&self) -> String {
         let (r, g, b, a) = self.glow_contrast_dynamic();
-        format!("rgba({}, {}, {}, {})", r, g, b, a)
+        format!("rgba({r}, {g}, {b}, {a})")
     }
 }

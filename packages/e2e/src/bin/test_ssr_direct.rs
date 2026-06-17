@@ -1,6 +1,6 @@
 // Direct SSR test - doesn't require server or WebDriver
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::fs;
 
 use tracing::info;
@@ -28,7 +28,7 @@ fn main() -> Result<()> {
 
     if wasm_bytes.len() < 100 {
         info!("WARNING: File is smaller than expected, may be corrupted");
-        return Err(anyhow::anyhow!(
+        return Err(anyhow!(
             "WASM file too small ({} bytes)",
             wasm_bytes.len()
         ));

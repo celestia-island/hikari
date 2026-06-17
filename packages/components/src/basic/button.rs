@@ -7,9 +7,10 @@
 
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps, GlowBlur, GlowColor, GlowIntensity};
+use crate::feedback::{ConditionalGlow, ConditionalGlowProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonAnimation {
@@ -25,6 +26,7 @@ pub struct ButtonComponent;
 
 /// Button variant determining visual style
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum ButtonVariant {
     #[default]
     Primary,
@@ -37,6 +39,7 @@ pub enum ButtonVariant {
 
 /// Button size preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum ButtonSize {
     #[default]
     Medium,
@@ -46,6 +49,7 @@ pub enum ButtonSize {
 
 /// Button width preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[non_exhaustive]
 pub enum ButtonWidth {
     #[default]
     Auto,

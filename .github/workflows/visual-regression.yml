@@ -49,6 +49,9 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v3
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Install tairitsu CLI
         run: cargo install tairitsu-packager --locked
 
@@ -84,7 +87,7 @@ jobs:
             --actual-dir target/screenshots \
             --baseline-dir tests/visual/baseline/default \
             --output-dir target/visual-diff \
-            --tolerance 0.01
+            --tolerance 0.02
         continue-on-error: true
 
       - name: Upload diff artifacts

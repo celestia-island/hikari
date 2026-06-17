@@ -1,5 +1,4 @@
-// hi-components/src/navigation/mod.rs
-// Navigation components: Menu, Tabs, Breadcrumb, Sidebar, Steps, Anchor, Stepper
+//! Navigation components: Menu, Tabs, Breadcrumb, Sidebar, Steps, Anchor, Stepper
 
 pub mod anchor;
 pub mod breadcrumb;

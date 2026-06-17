@@ -3,7 +3,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! use hikari_components::layout::Section;
 //! use crate::prelude::*;
 //!

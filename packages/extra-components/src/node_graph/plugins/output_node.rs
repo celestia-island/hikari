@@ -14,8 +14,9 @@ pub struct OutputNode {
 }
 
 impl OutputNode {
+    #[must_use]
     pub fn new(name: &str, output_type: &str) -> Self {
-        let input_port_id = format!("{}_input", name);
+        let input_port_id = format!("{name}_input");
         Self {
             node_type: NodeType::new("output", name),
             input_port_id,
@@ -24,14 +25,17 @@ impl OutputNode {
         }
     }
 
+    #[must_use]
     pub fn numeric(name: &str) -> Self {
         Self::new(name, "number")
     }
 
+    #[must_use]
     pub fn string(name: &str) -> Self {
         Self::new(name, "text")
     }
 
+    #[must_use]
     pub fn boolean(name: &str) -> Self {
         Self::new(name, "boolean")
     }
@@ -41,13 +45,12 @@ impl OutputNode {
     }
 
     pub fn current_value(&self) -> NodeValue {
-        self.current_value.lock().unwrap().clone()
+        self.current_value
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 }
-
-// Safety: OutputNode uses Mutex for interior mutability, which is Send + Sync
-unsafe impl Send for OutputNode {}
-unsafe impl Sync for OutputNode {}
 
 impl NodePlugin for OutputNode {
     fn node_type(&self) -> NodeType {
@@ -59,7 +62,12 @@ impl NodePlugin for OutputNode {
     }
 
     fn display_value(&self) -> Option<String> {
-        Some(self.current_value.lock().unwrap().to_display_string())
+        Some(
+            self.current_value
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .to_display_string(),
+        )
     }
 
     fn default_ports(&self) -> Vec<NodePort> {
@@ -72,7 +80,7 @@ impl NodePlugin for OutputNode {
     }
 
     fn handle_input(&self, _port_id: PortId, data: NodeValue) {
-        *self.current_value.lock().unwrap() = data;
+        *self.current_value.lock().unwrap_or_else(|e| e.into_inner()) = data;
     }
 
     fn get_output(&self, _port_id: PortId) -> Option<NodeValue> {

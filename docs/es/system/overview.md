@@ -98,7 +98,7 @@ Contexto de tema y sistema de inyección de estilos.
 use hikari_theme::ThemeProvider;
 
 rsx! {
-    ThemeProvider { palette: "hikari" } {
+    ThemeProvider { initial_palette: "hikari" } {
         // Contenido de la aplicación
         App {}
     }

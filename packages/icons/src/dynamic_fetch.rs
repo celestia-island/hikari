@@ -8,6 +8,9 @@ use std::{
     sync::{Arc, OnceLock, RwLock},
 };
 
+#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+use anyhow::{Context, Result, anyhow, bail};
+
 /// Icon route for dynamic fetching
 /// Set by build.rs at compile time via cargo:rustc-env
 /// Defaults to "/static/dynamic-icons" if not set
@@ -32,19 +35,19 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         let cache = match cache.read() {
             Ok(guard) => guard,
             Err(e) => {
-                web_sys::console::error_1(&format!("❌ Icon cache poisoned: {}", e).into());
+                web_sys::console::error_1(&format!("[ICON] Icon cache poisoned: {}", e).into());
                 return None;
             }
         };
         if let Some(cached) = cache.get(icon_name) {
-            web_sys::console::log_1(&format!("✅ Icon '{}' from cache", icon_name).into());
+            web_sys::console::log_1(&format!("[ICON] Icon '{}' from cache", icon_name).into());
             return Some(cached.clone());
         }
     }
 
     // Fetch from server
     let url = format!("{}?name={}", ICON_ROUTE, icon_name);
-    web_sys::console::log_1(&format!("🔄 Fetching icon '{}' from: {}", icon_name, url).into());
+    web_sys::console::log_1(&format!("[ICON] Fetching icon '{}' from: {}", icon_name, url).into());
 
     match reqwest::get(&url).await {
         Ok(response) if response.status().is_success() => {
@@ -61,7 +64,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                                     Ok(guard) => guard,
                                     Err(e) => {
                                         web_sys::console::error_1(
-                                            &format!("❌ Icon cache poisoned: {}", e).into(),
+                                            &format!("[ICON] Icon cache poisoned: {}", e).into(),
                                         );
                                         return Some(svg);
                                     }
@@ -69,13 +72,13 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                                 cache.insert(icon_name.to_string(), svg.clone());
                             }
                             web_sys::console::log_1(
-                                &format!("✅ Icon '{}' fetched and cached", icon_name).into(),
+                                &format!("[ICON] Icon '{}' fetched and cached", icon_name).into(),
                             );
                             Some(svg)
                         }
                         Err(e) => {
                             web_sys::console::error_1(
-                                &format!("❌ Failed to parse RON for '{}': {}", icon_name, e)
+                                &format!("[ICON] Failed to parse RON for '{}': {}", icon_name, e)
                                     .into(),
                             );
                             None
@@ -84,8 +87,11 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                 }
                 Err(e) => {
                     web_sys::console::error_1(
-                        &format!("❌ Failed to read RON response for '{}': {}", icon_name, e)
-                            .into(),
+                        &format!(
+                            "[ICON] Failed to read RON response for '{}': {}",
+                            icon_name, e
+                        )
+                        .into(),
                     );
                     None
                 }
@@ -94,7 +100,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         Ok(response) => {
             web_sys::console::warn_1(
                 &format!(
-                    "⚠️  Server returned {} for icon '{}'",
+                    "[ICON] Server returned {} for icon '{}'",
                     response.status(),
                     icon_name
                 )
@@ -104,7 +110,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         }
         Err(e) => {
             web_sys::console::error_1(
-                &format!("❌ Failed to fetch icon '{}': {}", icon_name, e).into(),
+                &format!("[ICON] Failed to fetch icon '{}': {}", icon_name, e).into(),
             );
             None
         }
@@ -113,15 +119,11 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
 
 /// Parse RON safely and reconstruct SVG
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
-fn parse_safe_ron(ron_data: &str) -> Result<String, String> {
-    // Deserialize RON to SafeIconData
-    let icon_data: SafeIconData =
-        ron::de::from_str(ron_data).map_err(|e| format!("RON parse error: {}", e))?;
+fn parse_safe_ron(ron_data: &str) -> Result<String> {
+    let icon_data: SafeIconData = ron::de::from_str(ron_data).with_context(|| "RON parse error")?;
 
-    // Validate all fields
     validate_icon_data(&icon_data)?;
 
-    // Reconstruct SVG safely
     reconstruct_svg(&icon_data)
 }
 
@@ -149,32 +151,24 @@ struct SafePathData {
 
 /// Validate icon data to prevent injection
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
-fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
-    // Validate view_box (format: "0 0 24 24")
+fn validate_icon_data(data: &SafeIconData) -> Result<()> {
     if let Some(ref vb) = data.view_box {
         let parts: Vec<&str> = vb.split_whitespace().collect();
         if parts.len() != 4 {
-            return Err(format!(
-                "Invalid viewBox: must have 4 numbers, got {}",
-                parts.len()
-            ));
+            bail!("Invalid viewBox: must have 4 numbers, got {}", parts.len());
         }
         for part in &parts {
             part.parse::<f32>()
-                .map_err(|_| format!("Invalid viewBox number: {}", part))?;
+                .with_context(|| format!("Invalid viewBox number: {}", part))?;
         }
     }
 
-    // Validate paths
     if data.paths.is_empty() {
-        return Err("Icon must have at least one path".to_string());
+        bail!("Icon must have at least one path");
     }
 
-    // Validate each path
     for (_i, path) in data.paths.iter().enumerate() {
-        // Validate d attribute (SVG path data)
         if let Some(ref d) = path.d {
-            // Basic validation: only allow SVG path commands
             let allowed_commands = [
                 'M', 'm', 'L', 'l', 'H', 'h', 'V', 'v', 'C', 'c', 'S', 's', 'Q', 'q', 'T', 't',
                 'A', 'a', 'Z', 'z',
@@ -182,37 +176,29 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
 
             for (j, c) in d.chars().enumerate() {
                 if j > 1000 {
-                    return Err(format!("Path too long: {} characters", j));
+                    bail!("Path too long: {} characters", j);
                 }
-                if c.is_ascii_alphabetic() {
-                    if !allowed_commands.contains(&c) {
-                        return Err(format!(
-                            "Invalid SVG path command '{}' at position {}",
-                            c, j
-                        ));
-                    }
+                if c.is_ascii_alphabetic() && !allowed_commands.contains(&c) {
+                    bail!("Invalid SVG path command '{}' at position {}", c, j);
                 }
             }
         }
 
-        // Validate fill (color or none)
         if let Some(ref fill) = path.fill {
             if !is_safe_color(fill) {
-                return Err(format!("Invalid fill color: {}", fill));
+                bail!("Invalid fill color: {}", fill);
             }
         }
 
-        // Validate stroke (color or none)
         if let Some(ref stroke) = path.stroke {
             if !is_safe_color(stroke) {
-                return Err(format!("Invalid stroke color: {}", stroke));
+                bail!("Invalid stroke color: {}", stroke);
             }
         }
 
-        // Validate stroke_width (number)
         if let Some(ref sw) = path.stroke_width {
             sw.parse::<f32>()
-                .map_err(|_| format!("Invalid stroke_width: {}", sw))?;
+                .with_context(|| format!("Invalid stroke_width: {}", sw))?;
         }
     }
 
@@ -236,7 +222,7 @@ fn is_safe_color(color: &str) -> bool {
 
 /// Reconstruct SVG from safe data
 #[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
-fn reconstruct_svg(data: &SafeIconData) -> Result<String, String> {
+fn reconstruct_svg(data: &SafeIconData) -> Result<String> {
     let mut svg = String::from(r#"<svg xmlns="http://www.w3.org/2000/svg""#);
 
     if let Some(ref vb) = data.view_box {

@@ -25,7 +25,7 @@ pub enum TimelineStatus {
 }
 
 /// A single item in the timeline
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TimelineItem {
     /// Item ID
     pub id: String,
@@ -86,19 +86,22 @@ impl TimelineItem {
     }
 
     /// Set the status
-    pub fn with_status(mut self, status: TimelineStatus) -> Self {
+    #[must_use]
+    pub const fn with_status(mut self, status: TimelineStatus) -> Self {
         self.status = status;
         self
     }
 
     /// Set whether expanded
-    pub fn with_expanded(mut self, expanded: bool) -> Self {
+    #[must_use]
+    pub const fn with_expanded(mut self, expanded: bool) -> Self {
         self.expanded = expanded;
         self
     }
 
     /// Get the status class name
-    pub fn status_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn status_class(&self) -> &'static str {
         match self.status {
             TimelineStatus::Pending => "hi-timeline-pending",
             TimelineStatus::InProgress => "hi-timeline-in-progress",
@@ -108,7 +111,8 @@ impl TimelineItem {
     }
 
     /// Get the dot status class name
-    pub fn dot_status_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn dot_status_class(&self) -> &'static str {
         match self.status {
             TimelineStatus::Pending => "hi-timeline-dot-pending",
             TimelineStatus::InProgress => "hi-timeline-dot-in-progress",
@@ -134,7 +138,7 @@ impl TimelineItem {
 ///         .with_icon("🚀")
 /// );
 /// ```
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TimelineState {
     /// Timeline items
     pub items: Vec<TimelineItem>,
@@ -151,6 +155,7 @@ pub struct TimelineState {
 
 impl TimelineState {
     /// Create a new timeline state
+    #[must_use]
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
@@ -161,13 +166,15 @@ impl TimelineState {
     }
 
     /// Set the position
-    pub fn with_position(mut self, position: TimelinePosition) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, position: TimelinePosition) -> Self {
         self.position = position;
         self
     }
 
     /// Set whether to show line
-    pub fn with_show_line(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_line(mut self, show: bool) -> Self {
         self.show_line = show;
         self
     }
@@ -204,7 +211,8 @@ impl TimelineState {
     }
 
     /// Get the position class name
-    pub fn position_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn position_class(&self) -> &'static str {
         match self.position {
             TimelinePosition::Left => "hi-timeline-left",
             TimelinePosition::Center => "hi-timeline-center",
@@ -213,6 +221,7 @@ impl TimelineState {
     }
 
     /// Get the CSS class string
+    #[must_use]
     pub fn class_string(&self) -> String {
         let base = if self.class.is_empty() {
             self.position_class().to_string()
@@ -221,7 +230,7 @@ impl TimelineState {
         };
 
         if self.show_line {
-            format!("{} hi-timeline-line", base)
+            format!("{base} hi-timeline-line")
         } else {
             base
         }
@@ -234,6 +243,7 @@ impl Default for TimelineState {
     }
 }
 
+#[must_use]
 pub fn render_timeline(state: &TimelineState) -> tairitsu_vdom::VNode {
     use tairitsu_vdom::{VElement, VNode, VText};
 

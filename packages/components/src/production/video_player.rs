@@ -48,7 +48,7 @@ pub struct VideoPlayerProps {
 fn format_video_time(seconds: f64) -> String {
     let mins = (seconds / 60.0) as u32;
     let secs = (seconds % 60.0) as u32;
-    format!("{:02}:{:02}", mins, secs)
+    format!("{mins:02}:{secs:02}")
 }
 
 #[component]

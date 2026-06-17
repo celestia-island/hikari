@@ -666,7 +666,7 @@ pub fn signal_button_counter(initial: u32) -> VNode {
                     r#type: "button",
                     onclick: move |_e| {
                         let v = count_dec.get();
-                        count_dec.set(v - 1);
+                        count_dec.set(v.saturating_sub(1));
                     },
                     "-1"
                 }

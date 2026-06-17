@@ -46,8 +46,7 @@ pub struct TooltipProps {
 pub fn Tooltip(props: TooltipProps) -> Element {
     let portal = use_portal();
     let tooltip_id = use_signal(generate_portal_id);
-    #[allow(unused_mut)]
-    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let wrapper_classes = ClassesBuilder::new()
         .add_typed(TooltipClass::TooltipWrapper)

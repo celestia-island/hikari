@@ -64,6 +64,7 @@ pub struct ZoomControlsState {
 
 impl ZoomControlsState {
     /// Create new zoom controls state with default values
+    #[must_use]
     pub fn new() -> Self {
         Self {
             zoom: 1.0,
@@ -78,13 +79,15 @@ impl ZoomControlsState {
     }
 
     /// Set the zoom level
-    pub fn with_zoom(mut self, zoom: f64) -> Self {
+    #[must_use]
+    pub const fn with_zoom(mut self, zoom: f64) -> Self {
         self.zoom = zoom.clamp(self.min_zoom, self.max_zoom);
         self
     }
 
     /// Set zoom bounds
-    pub fn with_bounds(mut self, min: f64, max: f64) -> Self {
+    #[must_use]
+    pub const fn with_bounds(mut self, min: f64, max: f64) -> Self {
         self.min_zoom = min;
         self.max_zoom = max;
         self.zoom = self.zoom.clamp(min, max);
@@ -92,13 +95,15 @@ impl ZoomControlsState {
     }
 
     /// Set zoom step size
-    pub fn with_step(mut self, step: f64) -> Self {
+    #[must_use]
+    pub const fn with_step(mut self, step: f64) -> Self {
         self.zoom_step = step;
         self
     }
 
     /// Set the position
-    pub fn with_position(mut self, position: ZoomPosition) -> Self {
+    #[must_use]
+    pub const fn with_position(mut self, position: ZoomPosition) -> Self {
         self.position = position;
         self
     }
@@ -110,16 +115,19 @@ impl ZoomControlsState {
     }
 
     /// Get zoom as percentage
+    #[must_use]
     pub fn zoom_percent(&self) -> i32 {
         (self.zoom * 100.0).round() as i32
     }
 
     /// Check if can zoom in
+    #[must_use]
     pub fn can_zoom_in(&self) -> bool {
         self.zoom < self.max_zoom
     }
 
     /// Check if can zoom out
+    #[must_use]
     pub fn can_zoom_out(&self) -> bool {
         self.zoom > self.min_zoom
     }
@@ -159,15 +167,15 @@ impl ZoomControlsState {
     /// Returns the new zoom level if changed, None otherwise
     pub fn handle_key(&mut self, key: &str, modifiers_has_control: bool) -> Option<f64> {
         match key {
-            "+" | "=" if !modifiers_has_control => {
+            "+" | "=" if modifiers_has_control => {
                 self.zoom_in();
                 Some(self.zoom)
             }
-            "-" | "_" if !modifiers_has_control => {
+            "-" | "_" if modifiers_has_control => {
                 self.zoom_out();
                 Some(self.zoom)
             }
-            "0" if !modifiers_has_control => {
+            "0" if modifiers_has_control => {
                 self.reset();
                 Some(self.zoom)
             }
@@ -176,7 +184,8 @@ impl ZoomControlsState {
     }
 
     /// Get the CSS position class name
-    pub fn position_class(&self) -> &'static str {
+    #[must_use]
+    pub const fn position_class(&self) -> &'static str {
         match self.position {
             ZoomPosition::TopRight => "hi-zoom-top-right",
             ZoomPosition::TopLeft => "hi-zoom-top-left",
@@ -186,6 +195,7 @@ impl ZoomControlsState {
     }
 
     /// Get the CSS class string
+    #[must_use]
     pub fn class_string(&self) -> String {
         if self.class.is_empty() {
             format!("hi-zoom-controls {}", self.position_class())
@@ -206,6 +216,7 @@ impl Default for ZoomControlsState {
 /// Produces a container with zoom-out, display, zoom-in, reset, and optional fit buttons.
 /// Event listeners (onclick) are **not** attached — the caller must wire up interactions
 /// through platform-specific APIs and then call the state mutation methods.
+#[must_use]
 pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
     let mut children: Vec<VNode> = Vec::with_capacity(5);
 
@@ -373,27 +384,24 @@ mod tests {
     fn test_keyboard_shortcuts() {
         let mut state = ZoomControlsState::new();
 
-        // Plus key
-        let zoom = state.handle_key("+", false).unwrap();
+        let zoom = state.handle_key("+", true).unwrap();
         assert!((zoom - 1.1).abs() < 0.001);
 
-        let zoom = state.handle_key("=", false).unwrap();
+        let zoom = state.handle_key("=", true).unwrap();
         assert!((zoom - 1.2).abs() < 0.001);
 
-        // Minus key
-        let zoom = state.handle_key("-", false).unwrap();
+        let zoom = state.handle_key("-", true).unwrap();
         assert!((zoom - 1.1).abs() < 0.001);
 
-        let zoom = state.handle_key("_", false).unwrap();
+        let zoom = state.handle_key("_", true).unwrap();
         assert!((zoom - 1.0).abs() < 0.001);
 
-        // Zero key resets
         state.set_zoom(1.5);
-        let zoom = state.handle_key("0", false).unwrap();
+        let zoom = state.handle_key("0", true).unwrap();
         assert!((zoom - 1.0).abs() < 0.001);
 
-        // Unknown key returns None
-        assert_eq!(state.handle_key("a", false), None);
+        assert_eq!(state.handle_key("a", true), None);
+        assert_eq!(state.handle_key("+", false), None);
     }
 
     #[test]

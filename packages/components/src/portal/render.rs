@@ -1,24 +1,20 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
-#![allow(clippy::needless_update)]
-
 use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass, TypedClass,
 };
 use tairitsu_hooks::ReactiveSignal;
 
 use super::provider::use_portal;
-use crate::feedback::PopoverPlacement;
-use crate::modal::{MaskMode, ModalPosition, ModalSize};
 use crate::platform::{
     element_closest, element_from_point, inner_height, inner_width, log, request_animation_frame,
     set_timeout,
 };
 use crate::portal::positioning::calculate_position;
 use crate::portal::types::{
-    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
-    TriggerPlacement,
+    MaskMode, ModalAnimationState, ModalPosition, ModalSize, PopoverPlacement, PortalEntry,
+    PortalMaskMode, PortalPositionStrategy, ToastPosition, TriggerPlacement,
 };
 use crate::prelude::*;
 
@@ -38,8 +34,7 @@ fn use_animated_portal_entry(
     let close_callback = {
         let anim_state = internal_animation_state.clone();
         Callback::new(move |_| {
-            log(&format!("{} close triggered", name));
-            let _ = name;
+            log(&format!("{name} close triggered"));
             anim_state.set(ModalAnimationState::Disappearing);
         })
     };
@@ -48,7 +43,7 @@ fn use_animated_portal_entry(
         let anim_state = internal_animation_state.clone();
         use_memo(move || {
             let state = anim_state.read();
-            log(&format!("{} use_memo triggered, state: {:?}", name, state));
+            log(&format!("{name} use_memo triggered, state: {state:?}"));
             let (opacity, scale) = match state {
                 ModalAnimationState::Appearing => ("0".to_string(), "0.95".to_string()),
                 ModalAnimationState::Visible => ("1".to_string(), "1".to_string()),
@@ -66,28 +61,25 @@ fn use_animated_portal_entry(
         use_effect(move || {
             let state = anim_state_for_effect.get();
             log(&format!(
-                "{} use_effect triggered, state: {:?}",
-                name, state
+                "{name} use_effect triggered, state: {state:?}"
             ));
             if state == ModalAnimationState::Appearing {
                 let anim_state = anim_state_for_effect.clone();
                 request_animation_frame(move || {
                     anim_state.set(ModalAnimationState::Visible);
                     log(&format!(
-                        "{} set to visible via requestAnimationFrame",
-                        name
+                        "{name} set to visible via requestAnimationFrame"
                     ));
                 });
             } else if state == ModalAnimationState::Disappearing {
                 let id = id_for_timeout.clone();
                 log(&format!(
-                    "{} setTimeout scheduled for removing entry: {}",
-                    name, id
+                    "{name} setTimeout scheduled for removing entry: {id}"
                 ));
                 let remove = remove_entry_for_timeout.clone();
                 set_timeout(
                     move || {
-                        log(&format!("{} removing entry after timeout: {}", name, id));
+                        log(&format!("{name} removing entry after timeout: {id}"));
                         remove.call(id);
                     },
                     200,
@@ -251,11 +243,23 @@ fn ModalPortalEntry(
     #[props(default)] children: Element,
     #[props(default)] animation_state: ModalAnimationState,
 ) -> Element {
-    let _internal_animation_state = use_signal(|| animation_state);
-    let (_, button_close, computed_opacity_scale) =
+    let (anim_state, button_close, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), animation_state, "Modal");
 
     let button_close_for_overlay = button_close.clone();
+
+    // Escape key and focus trap callback
+    let on_keydown = {
+        let mc = mask_closable;
+        let anim = anim_state.clone();
+        move |e: KeyboardEvent| {
+            if mc && e.get_key() == Key::Escape {
+                e.prevent_default();
+                e.stop_propagation();
+                anim.set(ModalAnimationState::Disappearing);
+            }
+        }
+    };
 
     let overlay_classes = if mask_mode == MaskMode::Transparent {
         ClassesBuilder::new()
@@ -281,10 +285,9 @@ fn ModalPortalEntry(
     let modal_style = use_memo(move || {
         let (opacity, scale) = computed_opacity_scale.read().clone();
         let style = format!(
-            "opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
-            opacity, scale
+            "opacity: {opacity}; transform: scale({scale}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;"
         );
-        log(&format!("Modal style computed: {}", style));
+        log(&format!("Modal style computed: {style}"));
         style
     });
 
@@ -296,9 +299,9 @@ fn ModalPortalEntry(
 
     let body_classes = ClassesBuilder::new().add_typed(ModalClass::Body).build();
 
-    let title_el = if title.is_some() {
+    let title_el = if let Some(title_text) = title.as_ref() {
         rsx! {
-            h3 { class: title_classes, id: "hi-modal-title-{id}", "{title.as_ref().unwrap().clone()}" }
+            h3 { class: title_classes, id: "hi-modal-title-{id}", "{title_text.clone()}" }
         }
     } else {
         VNode::empty()
@@ -332,27 +335,29 @@ fn ModalPortalEntry(
     };
 
     let overlay_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {}; pointer-events: auto;",
-        z_index
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {z_index}; pointer-events: auto;"
     );
 
     rsx! {
         div {
             class: overlay_classes,
             style: overlay_style,
+            tabindex: "0",
             onclick: move |e: MouseEvent| {
-                if mask_closable && mask_mode == MaskMode::Opaque {
+                if mask_closable {
                     e.stop_propagation();
                     button_close_for_overlay.call(e);
                 }
             },
+            onkeydown: on_keydown,
 
             div {
                 class: modal_classes,
                 style: modal_style.read(),
                 role: "dialog",
                 "aria-modal": "true",
-                "aria-labelledby": if title.is_some() { format!("hi-modal-title-{}", id) } else { String::new() },
+                "aria-labelledby": if title.is_some() { format!("hi-modal-title-{id}") } else { String::new() },
+                tabindex: "-1",
                 onclick: |e: MouseEvent| {
                     e.stop_propagation();
                 },
@@ -378,7 +383,6 @@ fn DropdownPortalEntry(
     #[props(default)] trigger_rect: Option<(f64, f64, f64, f64)>,
     #[props(default)] close_on_select: bool,
 ) -> Element {
-    let _internal_animation_state = use_signal(|| ModalAnimationState::Appearing);
     let (_, close_dropdown, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Dropdown");
 
@@ -386,19 +390,19 @@ fn DropdownPortalEntry(
     let close_dropdown_for_overlay = close_dropdown.clone();
     let close_dropdown_for_content = close_dropdown.clone();
 
-    let viewport_width = use_signal(|| inner_width() as f64);
-    let viewport_height = use_signal(|| inner_height() as f64);
+    let viewport_width = use_signal(|| f64::from(inner_width()));
+    let viewport_height = use_signal(|| f64::from(inner_height()));
 
     // Use trigger_rect width if available, otherwise default to 200.0
     let element_width =
-        use_signal(move || trigger_rect.map(|(_, _, width, _)| width).unwrap_or(200.0));
+        use_signal(move || trigger_rect.map_or(200.0, |(_, _, width, _)| width));
 
-    let _position_style = use_memo(move || {
+    let position_style = use_memo(move || {
         let viewport_w = viewport_width.read();
         let viewport_h = viewport_height.read();
         let elem_w = element_width.read();
 
-        let (placement, _trigger_x, trigger_y) = match &strategy {
+        let (placement, _, trigger_y) = match &strategy {
             PortalPositionStrategy::TriggerBased { placement } => {
                 if let Some((rect_x, rect_y, _, _)) = trigger_rect {
                     (Some(*placement), Some(rect_x), Some(rect_y))
@@ -417,7 +421,7 @@ fn DropdownPortalEntry(
                 | TriggerPlacement::BottomLeft
                 | TriggerPlacement::BottomRight,
             ) => {
-                format!("position: fixed; left: {}px; top: {}px;", x, y)
+                format!("position: fixed; left: {x}px; top: {y}px;")
             }
             Some(
                 TriggerPlacement::Top | TriggerPlacement::TopLeft | TriggerPlacement::TopRight,
@@ -425,29 +429,28 @@ fn DropdownPortalEntry(
                 if let Some(ty) = trigger_y {
                     let bottom_offset = viewport_h - ty;
                     format!(
-                        "position: fixed; left: {}px; bottom: {}px;",
-                        x, bottom_offset
+                        "position: fixed; left: {x}px; bottom: {bottom_offset}px;"
                     )
                 } else {
-                    format!("position: fixed; left: {}px; bottom: {}px;", x, y)
+                    format!("position: fixed; left: {x}px; bottom: {y}px;")
                 }
             }
             Some(
                 TriggerPlacement::Left | TriggerPlacement::LeftTop | TriggerPlacement::LeftBottom,
             ) => {
-                format!("position: fixed; left: {}px; top: {}px;", x, y)
+                format!("position: fixed; left: {x}px; top: {y}px;")
             }
             Some(
                 TriggerPlacement::Right
                 | TriggerPlacement::RightTop
                 | TriggerPlacement::RightBottom,
             ) => {
-                format!("position: fixed; left: {}px; top: {}px;", x, y)
+                format!("position: fixed; left: {x}px; top: {y}px;")
             }
             Some(TriggerPlacement::Center) => {
-                format!("position: fixed; left: {}px; top: {}px;", x, y)
+                format!("position: fixed; left: {x}px; top: {y}px;")
             }
-            None => format!("position: fixed; left: {}px; top: {}px;", x, y),
+            None => format!("position: fixed; left: {x}px; top: {y}px;"),
         }
     });
 
@@ -469,12 +472,11 @@ fn DropdownPortalEntry(
     });
 
     let overlay_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {};",
-        z_index
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {z_index};"
     );
 
     let content_style = use_memo(move || {
-        let pos = _position_style.read();
+        let pos = position_style.read();
         let (opacity, scale) = computed_opacity_scale.read().clone();
 
         let transform_origin = match &strategy {
@@ -491,10 +493,9 @@ fn DropdownPortalEntry(
         };
 
         let style = format!(
-            "{} transform-origin: {}; opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
-            pos, transform_origin, opacity, scale
+            "{pos} transform-origin: {transform_origin}; opacity: {opacity}; transform: scale({scale}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;"
         );
-        log(&format!("Dropdown style computed: {}", style));
+        log(&format!("Dropdown style computed: {style}"));
         style
     });
 
@@ -572,19 +573,17 @@ fn PopoverPortalEntry(
     #[props(default)] close_requested: Option<ReactiveSignal<bool>>,
     #[props(default)] children: Element,
 ) -> Element {
-    let (mut animation_state, close_popover, computed_opacity_scale) =
+    let (animation_state, close_popover, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
-    // Create a default signal if none provided
     let close_requested_signal = close_requested.unwrap_or_else(|| use_signal(|| false));
 
-    // Clone for use_effect
     let on_close_for_effect = on_close.clone();
     {
         use_effect(move || {
             if close_requested_signal.get() {
                 let current_state = animation_state.read();
-                if current_state == ModalAnimationState::Visible {
+                if current_state != ModalAnimationState::Disappearing {
                     animation_state.set(ModalAnimationState::Disappearing);
                     if let Some(handler) = on_close_for_effect.as_ref() {
                         handler.call(());
@@ -594,7 +593,7 @@ fn PopoverPortalEntry(
         });
     }
 
-    let viewport_height = use_signal(|| inner_height() as f64);
+    let viewport_height = use_signal(|| f64::from(inner_height()));
 
     let position_state = use_signal(|| {
         struct PlacementParams {
@@ -666,7 +665,7 @@ fn PopoverPortalEntry(
         }
 
         fn get_viewport_width() -> f64 {
-            inner_width() as f64
+            f64::from(inner_width())
         }
 
         const PADDING: f64 = 16.0;
@@ -720,7 +719,7 @@ fn PopoverPortalEntry(
     }) {
         let (position_style, transform_origin, translate_transform) = match placement {
             PopoverPlacement::Bottom => (
-                format!("position: fixed; left: {}px; top: {}px;", x, y),
+                format!("position: fixed; left: {x}px; top: {y}px;"),
                 "top center",
                 "translateX(-50%)",
             ),
@@ -734,12 +733,12 @@ fn PopoverPortalEntry(
                 "translateX(-50%)",
             ),
             PopoverPlacement::Left => (
-                format!("position: fixed; left: {}px; top: {}px;", x, y),
+                format!("position: fixed; left: {x}px; top: {y}px;"),
                 "right center",
                 "translateX(-100%) translateY(-50%)",
             ),
             PopoverPlacement::Right => (
-                format!("position: fixed; left: {}px; top: {}px;", x, y),
+                format!("position: fixed; left: {x}px; top: {y}px;"),
                 "left center",
                 "translateY(-50%)",
             ),
@@ -776,8 +775,7 @@ fn PopoverPortalEntry(
     };
 
     let backdrop_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;",
-        backdrop_z_index
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;"
     );
 
     let backdrop = if close_on_click_outside {
@@ -801,9 +799,9 @@ fn PopoverPortalEntry(
         .build();
 
     // Build title element outside rsx!
-    let title_el = if title.is_some() {
+    let title_el = if let Some(title_text) = title.as_ref() {
         rsx! {
-            div { class: title_classes, "{title.as_ref().unwrap().clone()}" }
+            div { class: title_classes, "{title_text.clone()}" }
         }
     } else {
         VNode::empty()
@@ -856,8 +854,8 @@ fn TooltipPortalEntry(
     #[props(default)] content: String,
     #[props(default)] arrow: bool,
 ) -> Element {
-    let viewport_width = use_signal(|| inner_width() as f64);
-    let viewport_height = use_signal(|| inner_height() as f64);
+    let viewport_width = use_signal(|| f64::from(inner_width()));
+    let viewport_height = use_signal(|| f64::from(inner_height()));
 
     let tooltip_width = use_signal(|| 120.0);
     let tooltip_height = use_signal(|| 40.0);
@@ -894,8 +892,7 @@ fn TooltipPortalEntry(
             let y_clamped = y.clamp(8.0, vh - th - 8.0);
 
             format!(
-                "position: fixed; left: {}px; top: {}px;",
-                x_clamped, y_clamped
+                "position: fixed; left: {x_clamped}px; top: {y_clamped}px;"
             )
         } else {
             String::new()

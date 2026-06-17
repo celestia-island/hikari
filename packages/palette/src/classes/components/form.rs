@@ -11,8 +11,8 @@ pub enum Input {
 impl TypedClass for Input {
     fn class_name(&self) -> &'static str {
         match self {
-            Input::Input => "hi-input",
-            Input::Wrapper => "hi-input-wrapper",
+            Self::Input => "hi-input",
+            Self::Wrapper => "hi-input-wrapper",
         }
     }
 }
@@ -34,16 +34,16 @@ pub enum InputClass {
 impl TypedClass for InputClass {
     fn class_name(&self) -> &'static str {
         match self {
-            InputClass::Input => "hi-input",
-            InputClass::InputWrapper => "hi-input-wrapper",
-            InputClass::InputSm => "hi-input-sm",
-            InputClass::InputMd => "hi-input-md",
-            InputClass::InputLg => "hi-input-lg",
-            InputClass::InputDisabled => "hi-input-disabled",
-            InputClass::InputPrefix => "hi-input-prefix",
-            InputClass::InputSuffix => "hi-input-suffix",
-            InputClass::InputError => "hi-input-error",
-            InputClass::InputSuccess => "hi-input-success",
+            Self::Input => "hi-input",
+            Self::InputWrapper => "hi-input-wrapper",
+            Self::InputSm => "hi-input-sm",
+            Self::InputMd => "hi-input-md",
+            Self::InputLg => "hi-input-lg",
+            Self::InputDisabled => "hi-input-disabled",
+            Self::InputPrefix => "hi-input-prefix",
+            Self::InputSuffix => "hi-input-suffix",
+            Self::InputError => "hi-input-error",
+            Self::InputSuccess => "hi-input-success",
         }
     }
 }
@@ -65,16 +65,16 @@ pub enum CheckboxClass {
 impl TypedClass for CheckboxClass {
     fn class_name(&self) -> &'static str {
         match self {
-            CheckboxClass::Checkbox => "hi-checkbox",
-            CheckboxClass::Sm => "hi-checkbox-sm",
-            CheckboxClass::Md => "hi-checkbox-md",
-            CheckboxClass::Lg => "hi-checkbox-lg",
-            CheckboxClass::Checked => "hi-checkbox-checked",
-            CheckboxClass::Disabled => "hi-checkbox-disabled",
-            CheckboxClass::Label => "hi-checkbox-label",
-            CheckboxClass::Input => "hi-checkbox-input",
-            CheckboxClass::Icon => "hi-checkbox-icon",
-            CheckboxClass::Text => "hi-checkbox-text",
+            Self::Checkbox => "hi-checkbox",
+            Self::Sm => "hi-checkbox-sm",
+            Self::Md => "hi-checkbox-md",
+            Self::Lg => "hi-checkbox-lg",
+            Self::Checked => "hi-checkbox-checked",
+            Self::Disabled => "hi-checkbox-disabled",
+            Self::Label => "hi-checkbox-label",
+            Self::Input => "hi-checkbox-input",
+            Self::Icon => "hi-checkbox-icon",
+            Self::Text => "hi-checkbox-text",
         }
     }
 }
@@ -93,13 +93,13 @@ pub enum RadioClass {
 impl TypedClass for RadioClass {
     fn class_name(&self) -> &'static str {
         match self {
-            RadioClass::RadioGroup => "hi-radio-group",
-            RadioClass::RadioGroupVertical => "hi-radio-group-vertical",
-            RadioClass::RadioGroupHorizontal => "hi-radio-group-horizontal",
-            RadioClass::Label => "hi-radio-label",
-            RadioClass::Indicator => "hi-radio-indicator",
-            RadioClass::Dot => "hi-radio-dot",
-            RadioClass::Text => "hi-radio-text",
+            Self::RadioGroup => "hi-radio-group",
+            Self::RadioGroupVertical => "hi-radio-group-vertical",
+            Self::RadioGroupHorizontal => "hi-radio-group-horizontal",
+            Self::Label => "hi-radio-label",
+            Self::Indicator => "hi-radio-indicator",
+            Self::Dot => "hi-radio-dot",
+            Self::Text => "hi-radio-text",
         }
     }
 }
@@ -131,26 +131,26 @@ pub enum SwitchClass {
 impl TypedClass for SwitchClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SwitchClass::Switch => "hi-switch",
-            SwitchClass::Sm => "hi-switch-sm",
-            SwitchClass::Md => "hi-switch-md",
-            SwitchClass::Lg => "hi-switch-lg",
-            SwitchClass::Checked => "hi-switch-checked",
-            SwitchClass::Disabled => "hi-switch-disabled",
-            SwitchClass::TextVariant => "hi-switch-text-variant",
-            SwitchClass::IconVariant => "hi-switch-icon-variant",
-            SwitchClass::CustomVariant => "hi-switch-custom-variant",
-            SwitchClass::ColorPrimary => "hi-switch-color-primary",
-            SwitchClass::ColorSecondary => "hi-switch-color-secondary",
-            SwitchClass::Glow => "hi-switch-glow",
-            SwitchClass::ThumbText => "hi-switch-thumb-text",
-            SwitchClass::ThumbIcon => "hi-switch-thumb-icon",
-            SwitchClass::ThumbImage => "hi-switch-thumb-image",
-            SwitchClass::ThumbDot => "hi-switch-thumb-dot",
-            SwitchClass::Label => "hi-switch-label",
-            SwitchClass::Track => "hi-switch-track",
-            SwitchClass::Thumb => "hi-switch-thumb",
-            SwitchClass::SwitchText => "hi-switch-text",
+            Self::Switch => "hi-switch",
+            Self::Sm => "hi-switch-sm",
+            Self::Md => "hi-switch-md",
+            Self::Lg => "hi-switch-lg",
+            Self::Checked => "hi-switch-checked",
+            Self::Disabled => "hi-switch-disabled",
+            Self::TextVariant => "hi-switch-text-variant",
+            Self::IconVariant => "hi-switch-icon-variant",
+            Self::CustomVariant => "hi-switch-custom-variant",
+            Self::ColorPrimary => "hi-switch-color-primary",
+            Self::ColorSecondary => "hi-switch-color-secondary",
+            Self::Glow => "hi-switch-glow",
+            Self::ThumbText => "hi-switch-thumb-text",
+            Self::ThumbIcon => "hi-switch-thumb-icon",
+            Self::ThumbImage => "hi-switch-thumb-image",
+            Self::ThumbDot => "hi-switch-thumb-dot",
+            Self::Label => "hi-switch-label",
+            Self::Track => "hi-switch-track",
+            Self::Thumb => "hi-switch-thumb",
+            Self::SwitchText => "hi-switch-text",
         }
     }
 }
@@ -171,15 +171,15 @@ pub enum SliderClass {
 impl TypedClass for SliderClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SliderClass::Slider => "hi-slider",
-            SliderClass::Sm => "hi-slider-sm",
-            SliderClass::Md => "hi-slider-md",
-            SliderClass::Lg => "hi-slider-lg",
-            SliderClass::Disabled => "hi-slider-disabled",
-            SliderClass::Rail => "hi-slider-rail",
-            SliderClass::Track => "hi-slider-track",
-            SliderClass::Handle => "hi-slider-handle",
-            SliderClass::Input => "hi-slider-input",
+            Self::Slider => "hi-slider",
+            Self::Sm => "hi-slider-sm",
+            Self::Md => "hi-slider-md",
+            Self::Lg => "hi-slider-lg",
+            Self::Disabled => "hi-slider-disabled",
+            Self::Rail => "hi-slider-rail",
+            Self::Track => "hi-slider-track",
+            Self::Handle => "hi-slider-handle",
+            Self::Input => "hi-slider-input",
         }
     }
 }
@@ -204,19 +204,19 @@ pub enum SelectClass {
 impl TypedClass for SelectClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SelectClass::SelectTrigger => "hi-select-trigger",
-            SelectClass::Sm => "hi-select-sm",
-            SelectClass::Md => "hi-select-md",
-            SelectClass::Lg => "hi-select-lg",
-            SelectClass::Disabled => "hi-select-disabled",
-            SelectClass::Open => "hi-select-open",
-            SelectClass::Select => "hi-select",
-            SelectClass::Dropdown => "hi-select-dropdown",
-            SelectClass::Option => "hi-select-option",
-            SelectClass::OptionSelected => "hi-select-option-selected",
-            SelectClass::Value => "hi-select-value",
-            SelectClass::Placeholder => "hi-select-placeholder",
-            SelectClass::Arrow => "hi-select-arrow",
+            Self::SelectTrigger => "hi-select-trigger",
+            Self::Sm => "hi-select-sm",
+            Self::Md => "hi-select-md",
+            Self::Lg => "hi-select-lg",
+            Self::Disabled => "hi-select-disabled",
+            Self::Open => "hi-select-open",
+            Self::Select => "hi-select",
+            Self::Dropdown => "hi-select-dropdown",
+            Self::Option => "hi-select-option",
+            Self::OptionSelected => "hi-select-option-selected",
+            Self::Value => "hi-select-value",
+            Self::Placeholder => "hi-select-placeholder",
+            Self::Arrow => "hi-select-arrow",
         }
     }
 }
@@ -232,10 +232,10 @@ pub enum DatePickerClass {
 impl TypedClass for DatePickerClass {
     fn class_name(&self) -> &'static str {
         match self {
-            DatePickerClass::DatePickerWrapper => "hi-date-picker-wrapper",
-            DatePickerClass::DatePicker => "hi-date-picker",
-            DatePickerClass::Disabled => "hi-date-picker-disabled",
-            DatePickerClass::Icon => "hi-date-picker-icon",
+            Self::DatePickerWrapper => "hi-date-picker-wrapper",
+            Self::DatePicker => "hi-date-picker",
+            Self::Disabled => "hi-date-picker-disabled",
+            Self::Icon => "hi-date-picker-icon",
         }
     }
 }
@@ -259,18 +259,18 @@ pub enum FileUploadClass {
 impl TypedClass for FileUploadClass {
     fn class_name(&self) -> &'static str {
         match self {
-            FileUploadClass::FileUploadWrapper => "hi-file-upload-wrapper",
-            FileUploadClass::FileUpload => "hi-file-upload",
-            FileUploadClass::Idle => "hi-file-upload-idle",
-            FileUploadClass::Dragging => "hi-file-upload-dragging",
-            FileUploadClass::Uploading => "hi-file-upload-uploading",
-            FileUploadClass::Success => "hi-file-upload-success",
-            FileUploadClass::Error => "hi-file-upload-error",
-            FileUploadClass::Area => "hi-file-upload-area",
-            FileUploadClass::Icon => "hi-file-upload-icon",
-            FileUploadClass::Text => "hi-file-upload-text",
-            FileUploadClass::Preview => "hi-file-upload-preview",
-            FileUploadClass::File => "hi-file-upload-file",
+            Self::FileUploadWrapper => "hi-file-upload-wrapper",
+            Self::FileUpload => "hi-file-upload",
+            Self::Idle => "hi-file-upload-idle",
+            Self::Dragging => "hi-file-upload-dragging",
+            Self::Uploading => "hi-file-upload-uploading",
+            Self::Success => "hi-file-upload-success",
+            Self::Error => "hi-file-upload-error",
+            Self::Area => "hi-file-upload-area",
+            Self::Icon => "hi-file-upload-icon",
+            Self::Text => "hi-file-upload-text",
+            Self::Preview => "hi-file-upload-preview",
+            Self::File => "hi-file-upload-file",
         }
     }
 }
@@ -292,16 +292,16 @@ pub enum FormFieldClass {
 impl TypedClass for FormFieldClass {
     fn class_name(&self) -> &'static str {
         match self {
-            FormFieldClass::FormField => "hi-form-field",
-            FormFieldClass::Error => "hi-form-field-error",
-            FormFieldClass::Warning => "hi-form-field-warning",
-            FormFieldClass::Success => "hi-form-field-success",
-            FormFieldClass::Required => "hi-form-field-required",
-            FormFieldClass::Label => "hi-form-field-label",
-            FormFieldClass::Help => "hi-form-field-help",
-            FormFieldClass::ErrorMsg => "hi-form-field-error-msg",
-            FormFieldClass::SuccessMsg => "hi-form-field-success-msg",
-            FormFieldClass::WarningMsg => "hi-form-field-warning-msg",
+            Self::FormField => "hi-form-field",
+            Self::Error => "hi-form-field-error",
+            Self::Warning => "hi-form-field-warning",
+            Self::Success => "hi-form-field-success",
+            Self::Required => "hi-form-field-required",
+            Self::Label => "hi-form-field-label",
+            Self::Help => "hi-form-field-help",
+            Self::ErrorMsg => "hi-form-field-error-msg",
+            Self::SuccessMsg => "hi-form-field-success-msg",
+            Self::WarningMsg => "hi-form-field-warning-msg",
         }
     }
 }
@@ -320,13 +320,13 @@ pub enum AutoCompleteClass {
 impl TypedClass for AutoCompleteClass {
     fn class_name(&self) -> &'static str {
         match self {
-            AutoCompleteClass::Wrapper => "hi-autocomplete-wrapper",
-            AutoCompleteClass::Input => "hi-autocomplete-input",
-            AutoCompleteClass::Clear => "hi-autocomplete-clear",
-            AutoCompleteClass::Dropdown => "hi-autocomplete-dropdown",
-            AutoCompleteClass::Show => "hi-autocomplete-show",
-            AutoCompleteClass::Option => "hi-autocomplete-option",
-            AutoCompleteClass::OptionFocused => "hi-autocomplete-option-focused",
+            Self::Wrapper => "hi-autocomplete-wrapper",
+            Self::Input => "hi-autocomplete-input",
+            Self::Clear => "hi-autocomplete-clear",
+            Self::Dropdown => "hi-autocomplete-dropdown",
+            Self::Show => "hi-autocomplete-show",
+            Self::Option => "hi-autocomplete-option",
+            Self::OptionFocused => "hi-autocomplete-option-focused",
         }
     }
 }
@@ -356,24 +356,24 @@ pub enum CascaderClass {
 impl TypedClass for CascaderClass {
     fn class_name(&self) -> &'static str {
         match self {
-            CascaderClass::Wrapper => "hi-cascader-wrapper",
-            CascaderClass::Cascader => "hi-cascader",
-            CascaderClass::Sm => "hi-cascader-sm",
-            CascaderClass::Md => "hi-cascader-md",
-            CascaderClass::Lg => "hi-cascader-lg",
-            CascaderClass::Disabled => "hi-cascader-disabled",
-            CascaderClass::Open => "hi-cascader-open",
-            CascaderClass::Display => "hi-cascader-display",
-            CascaderClass::Text => "hi-cascader-text",
-            CascaderClass::Clear => "hi-cascader-clear",
-            CascaderClass::Arrow => "hi-cascader-arrow",
-            CascaderClass::Dropdown => "hi-cascader-dropdown",
-            CascaderClass::Menu => "hi-cascader-menu",
-            CascaderClass::MenuList => "hi-cascader-menu-list",
-            CascaderClass::MenuItem => "hi-cascader-menu-item",
-            CascaderClass::MenuItemSelected => "hi-cascader-menu-item-selected",
-            CascaderClass::MenuItemDisabled => "hi-cascader-menu-item-disabled",
-            CascaderClass::MenuItemArrow => "hi-cascader-menu-item-arrow",
+            Self::Wrapper => "hi-cascader-wrapper",
+            Self::Cascader => "hi-cascader",
+            Self::Sm => "hi-cascader-sm",
+            Self::Md => "hi-cascader-md",
+            Self::Lg => "hi-cascader-lg",
+            Self::Disabled => "hi-cascader-disabled",
+            Self::Open => "hi-cascader-open",
+            Self::Display => "hi-cascader-display",
+            Self::Text => "hi-cascader-text",
+            Self::Clear => "hi-cascader-clear",
+            Self::Arrow => "hi-cascader-arrow",
+            Self::Dropdown => "hi-cascader-dropdown",
+            Self::Menu => "hi-cascader-menu",
+            Self::MenuList => "hi-cascader-menu-list",
+            Self::MenuItem => "hi-cascader-menu-item",
+            Self::MenuItemSelected => "hi-cascader-menu-item-selected",
+            Self::MenuItemDisabled => "hi-cascader-menu-item-disabled",
+            Self::MenuItemArrow => "hi-cascader-menu-item-arrow",
         }
     }
 }
@@ -394,15 +394,15 @@ pub enum NumberInputClass {
 impl TypedClass for NumberInputClass {
     fn class_name(&self) -> &'static str {
         match self {
-            NumberInputClass::Wrapper => "hi-number-input-wrapper",
-            NumberInputClass::Button => "hi-number-input-button",
-            NumberInputClass::Input => "hi-number-input-input",
-            NumberInputClass::Sm => "hi-number-input-sm",
-            NumberInputClass::Md => "hi-number-input-md",
-            NumberInputClass::Lg => "hi-number-input-lg",
-            NumberInputClass::Btn => "hi-number-input-btn",
-            NumberInputClass::BtnDecrement => "hi-number-input-btn-decrement",
-            NumberInputClass::BtnIncrement => "hi-number-input-btn-increment",
+            Self::Wrapper => "hi-number-input-wrapper",
+            Self::Button => "hi-number-input-button",
+            Self::Input => "hi-number-input-input",
+            Self::Sm => "hi-number-input-sm",
+            Self::Md => "hi-number-input-md",
+            Self::Lg => "hi-number-input-lg",
+            Self::Btn => "hi-number-input-btn",
+            Self::BtnDecrement => "hi-number-input-btn-decrement",
+            Self::BtnIncrement => "hi-number-input-btn-increment",
         }
     }
 }
@@ -423,15 +423,15 @@ pub enum SearchClass {
 impl TypedClass for SearchClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SearchClass::Wrapper => "hi-search-wrapper",
-            SearchClass::Input => "hi-search-input",
-            SearchClass::Clear => "hi-search-clear",
-            SearchClass::Loading => "hi-search-loading",
-            SearchClass::InputContainer => "hi-search-input-container",
-            SearchClass::SuggestionsDropdown => "hi-search-suggestions-dropdown",
-            SearchClass::SuggestionItem => "hi-search-suggestion-item",
-            SearchClass::SuggestionIcon => "hi-search-suggestion-icon",
-            SearchClass::InputWrapper => "hi-search-input-wrapper",
+            Self::Wrapper => "hi-search-wrapper",
+            Self::Input => "hi-search-input",
+            Self::Clear => "hi-search-clear",
+            Self::Loading => "hi-search-loading",
+            Self::InputContainer => "hi-search-input-container",
+            Self::SuggestionsDropdown => "hi-search-suggestions-dropdown",
+            Self::SuggestionItem => "hi-search-suggestion-item",
+            Self::SuggestionIcon => "hi-search-suggestion-icon",
+            Self::InputWrapper => "hi-search-input-wrapper",
         }
     }
 }
@@ -452,15 +452,15 @@ pub enum InputWrapperClass {
 impl TypedClass for InputWrapperClass {
     fn class_name(&self) -> &'static str {
         match self {
-            InputWrapperClass::Wrapper => "hi-input-wrapper",
-            InputWrapperClass::SizeSm => "hi-input-wrapper-sm",
-            InputWrapperClass::SizeMd => "hi-input-wrapper-md",
-            InputWrapperClass::SizeLg => "hi-input-wrapper-lg",
-            InputWrapperClass::Disabled => "hi-input-wrapper-disabled",
-            InputWrapperClass::LeftSection => "hi-input-wrapper-left",
-            InputWrapperClass::RightSection => "hi-input-wrapper-right",
-            InputWrapperClass::InputSection => "hi-input-wrapper-input",
-            InputWrapperClass::SideItem => "hi-input-wrapper-item",
+            Self::Wrapper => "hi-input-wrapper",
+            Self::SizeSm => "hi-input-wrapper-sm",
+            Self::SizeMd => "hi-input-wrapper-md",
+            Self::SizeLg => "hi-input-wrapper-lg",
+            Self::Disabled => "hi-input-wrapper-disabled",
+            Self::LeftSection => "hi-input-wrapper-left",
+            Self::RightSection => "hi-input-wrapper-right",
+            Self::InputSection => "hi-input-wrapper-input",
+            Self::SideItem => "hi-input-wrapper-item",
         }
     }
 }
@@ -489,23 +489,23 @@ pub enum TransferClass {
 impl TypedClass for TransferClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TransferClass::Transfer => "hi-transfer",
-            TransferClass::Operations => "hi-transfer-operations",
-            TransferClass::Operation => "hi-transfer-operation",
-            TransferClass::Panel => "hi-transfer-panel",
-            TransferClass::PanelHeader => "hi-transfer-panel-header",
-            TransferClass::PanelCheckbox => "hi-transfer-panel-checkbox",
-            TransferClass::PanelTitle => "hi-transfer-panel-title",
-            TransferClass::PanelCount => "hi-transfer-panel-count",
-            TransferClass::PanelSearch => "hi-transfer-panel-search",
-            TransferClass::PanelInput => "hi-transfer-panel-input",
-            TransferClass::PanelList => "hi-transfer-panel-list",
-            TransferClass::PanelItem => "hi-transfer-panel-item",
-            TransferClass::PanelItemSelected => "hi-transfer-panel-item-selected",
-            TransferClass::PanelItemDisabled => "hi-transfer-panel-item-disabled",
-            TransferClass::PanelEmpty => "hi-transfer-panel-empty",
-            TransferClass::ItemCheckbox => "hi-transfer-item-checkbox",
-            TransferClass::ItemLabel => "hi-transfer-item-label",
+            Self::Transfer => "hi-transfer",
+            Self::Operations => "hi-transfer-operations",
+            Self::Operation => "hi-transfer-operation",
+            Self::Panel => "hi-transfer-panel",
+            Self::PanelHeader => "hi-transfer-panel-header",
+            Self::PanelCheckbox => "hi-transfer-panel-checkbox",
+            Self::PanelTitle => "hi-transfer-panel-title",
+            Self::PanelCount => "hi-transfer-panel-count",
+            Self::PanelSearch => "hi-transfer-panel-search",
+            Self::PanelInput => "hi-transfer-panel-input",
+            Self::PanelList => "hi-transfer-panel-list",
+            Self::PanelItem => "hi-transfer-panel-item",
+            Self::PanelItemSelected => "hi-transfer-panel-item-selected",
+            Self::PanelItemDisabled => "hi-transfer-panel-item-disabled",
+            Self::PanelEmpty => "hi-transfer-panel-empty",
+            Self::ItemCheckbox => "hi-transfer-item-checkbox",
+            Self::ItemLabel => "hi-transfer-item-label",
         }
     }
 }
@@ -529,18 +529,18 @@ pub enum AvatarClass {
 impl TypedClass for AvatarClass {
     fn class_name(&self) -> &'static str {
         match self {
-            AvatarClass::Avatar => "hi-avatar",
-            AvatarClass::AvatarXs => "hi-avatar-xs",
-            AvatarClass::AvatarSm => "hi-avatar-sm",
-            AvatarClass::AvatarMd => "hi-avatar-md",
-            AvatarClass::AvatarLg => "hi-avatar-lg",
-            AvatarClass::AvatarXl => "hi-avatar-xl",
-            AvatarClass::AvatarCircular => "hi-avatar-circular",
-            AvatarClass::AvatarRounded => "hi-avatar-rounded",
-            AvatarClass::AvatarSquare => "hi-avatar-square",
-            AvatarClass::AvatarFallback => "hi-avatar-fallback",
-            AvatarClass::AvatarIcon => "hi-avatar-icon",
-            AvatarClass::AvatarImg => "hi-avatar-img",
+            Self::Avatar => "hi-avatar",
+            Self::AvatarXs => "hi-avatar-xs",
+            Self::AvatarSm => "hi-avatar-sm",
+            Self::AvatarMd => "hi-avatar-md",
+            Self::AvatarLg => "hi-avatar-lg",
+            Self::AvatarXl => "hi-avatar-xl",
+            Self::AvatarCircular => "hi-avatar-circular",
+            Self::AvatarRounded => "hi-avatar-rounded",
+            Self::AvatarSquare => "hi-avatar-square",
+            Self::AvatarFallback => "hi-avatar-fallback",
+            Self::AvatarIcon => "hi-avatar-icon",
+            Self::AvatarImg => "hi-avatar-img",
         }
     }
 }

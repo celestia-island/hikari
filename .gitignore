@@ -71,3 +71,20 @@ __pycache__/
 .venv/
 venv/
 
+# Coverage output
+lcov.info
+coverage-summary.txt
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.*
+
+# WASM artifacts
+*.wasm
+
+# macOS metadata
+.DS_Store
+

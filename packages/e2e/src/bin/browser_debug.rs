@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, time::Duration};
@@ -89,7 +89,7 @@ impl BrowserDebug {
                 "--window-size=1920,1080",
             ])
             .build()
-            .map_err(|e| anyhow::anyhow!("Failed to build browser config: {}", e))?;
+            .map_err(|e| anyhow!("Failed to build browser config: {}", e))?;
 
         let (browser, mut handler) = Browser::launch(config)
             .await

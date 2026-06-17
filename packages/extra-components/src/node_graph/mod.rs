@@ -1,6 +1,7 @@
 // node_graph/mod.rs
 // Node Graph System - Framework Agnostic Data Models
 
+pub mod canvas;
 pub mod connection;
 pub mod history;
 pub mod minimap;
@@ -12,6 +13,7 @@ pub mod serialization;
 pub mod value;
 pub mod viewport;
 
+pub use canvas::NodeGraphState;
 pub use connection::{Connection, ConnectionId, ConnectionLine};
 pub use history::{HistoryAction, HistoryState, SerializedConnectionState, SerializedNodeState};
 pub use minimap::NodeGraphMinimap;

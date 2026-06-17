@@ -1,11 +1,19 @@
 // node_graph/canvas.rs
 // Main canvas state for node graph rendering - Framework Agnostic
 
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
-use tairitsu_vdom::{VElement, VNode, VText, svg::SafeSvg};
+use anyhow::{Context, Result};
+use tairitsu_vdom::svg::SafeSvg;
+use tairitsu_vdom::{VElement, VNode, VText};
 
-use crate::node_graph::{ connection::{Connection, ConnectionId, ConnectionLine}, history::{HistoryAction, HistoryState}, minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap}, node::{NodeView, NodeId, NodePlacement, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
+use crate::node_graph::connection::{Connection, ConnectionId};
+use crate::node_graph::history::{HistoryAction, HistoryState};
+use crate::node_graph::minimap::{MinimapConnection, MinimapNode, NodeGraphMinimap};
+use crate::node_graph::node::{NodePlacement, NodeType, NodeView, PortPosition};
+use crate::node_graph::serialization::SerializedNodeGraph;
 
 /// Node graph state
 ///
@@ -28,6 +36,7 @@ impl Default for NodeGraphState {
 }
 
 impl NodeGraphState {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             nodes: HashMap::new(),
@@ -50,6 +59,7 @@ impl NodeGraphState {
     }
 
     /// Get a node by ID
+    #[must_use]
     pub fn get_node(&self, id: &str) -> Option<&NodePlacement> {
         self.nodes.get(id)
     }
@@ -82,20 +92,18 @@ impl NodeGraphState {
 
     /// Select a node
     pub fn select_node(&mut self, id: Option<String>) {
-        // Deselect current
-        if let Some(current_id) = &self.selected_node {
-            if let Some(node) = self.nodes.get_mut(current_id) {
-                node.selected = false;
-            }
+        if let Some(current_id) = &self.selected_node
+            && let Some(node) = self.nodes.get_mut(current_id)
+        {
+            node.selected = false;
         }
 
         self.selected_node = id.clone();
 
-        // Select new
-        if let Some(new_id) = id {
-            if let Some(node) = self.nodes.get_mut(&new_id) {
-                node.selected = true;
-            }
+        if let Some(new_id) = &id
+            && let Some(node) = self.nodes.get_mut(new_id)
+        {
+            node.selected = true;
         }
     }
 
@@ -105,7 +113,7 @@ impl NodeGraphState {
     }
 
     /// Set zoom level (clamped)
-    pub fn set_zoom(&mut self, zoom: f64, min: f64, max: f64) {
+    pub const fn set_zoom(&mut self, zoom: f64, min: f64, max: f64) {
         self.zoom = zoom.clamp(min, max);
     }
 
@@ -120,7 +128,7 @@ impl NodeGraphState {
     }
 
     /// Reset zoom and pan
-    pub fn reset_view(&mut self) {
+    pub const fn reset_view(&mut self) {
         self.zoom = 1.0;
         self.pan = (0.0, 0.0);
     }
@@ -132,6 +140,7 @@ impl NodeGraphState {
     }
 
     /// Calculate port position based on node position and port placement
+    #[must_use]
     pub fn calculate_port_position(
         &self,
         node_id: &str,
@@ -153,6 +162,7 @@ impl NodeGraphState {
     }
 
     /// Get the transform CSS string for the canvas
+    #[must_use]
     pub fn transform_style(&self) -> String {
         format!(
             "transform: scale({}) translate({}px, {}px);",
@@ -195,13 +205,16 @@ impl NodeGraphState {
                     position: node_state.position,
                 })
             }
-            HistoryAction::NodeMove { id, from, to } => {
+            HistoryAction::NodeMove { id, from, to: _ } => {
                 self.update_node_position(&id, from.0, from.1);
                 Some(NodeGraphEvent::NodeMoved { id, to: from })
             }
             HistoryAction::ConnectionAdd {
                 id,
-                state: conn_state,
+                from_node: _,
+                from_port: _,
+                to_node: _,
+                to_port: _,
             } => {
                 self.remove_connection(&id);
                 Some(NodeGraphEvent::ConnectionDeleted(id))
@@ -276,17 +289,14 @@ impl NodeGraphState {
         }
     }
 
-    pub fn save(&self) -> Result<String, serde_json::Error> {
+    pub fn save(&self) -> Result<String> {
         let serialized = SerializedNodeGraph::from_state(&self.nodes, &self.connections);
         serialized.to_json()
     }
 
-    pub fn load(&mut self, json: &str) -> Result<(), String> {
-        let serialized = SerializedNodeGraph::from_json(json)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-        let (nodes, connections) = serialized
-            .to_state()
-            .map_err(|e| format!("Failed to convert state: {}", e))?;
+    pub fn load(&mut self, json: &str) -> Result<()> {
+        let serialized = SerializedNodeGraph::from_json(json).context("Failed to parse JSON")?;
+        let (nodes, connections) = serialized.to_state();
         self.nodes = nodes;
         self.connections = connections;
         self.selected_node = None;
@@ -337,29 +347,34 @@ impl Default for NodeGraphCanvasConfig {
 }
 
 impl NodeGraphCanvasConfig {
-    pub fn with_size(mut self, width: f64, height: f64) -> Self {
+    #[must_use]
+    pub const fn with_size(mut self, width: f64, height: f64) -> Self {
         self.width = width;
         self.height = height;
         self
     }
 
-    pub fn with_zoom_bounds(mut self, min: f64, max: f64) -> Self {
+    #[must_use]
+    pub const fn with_zoom_bounds(mut self, min: f64, max: f64) -> Self {
         self.min_zoom = min;
         self.max_zoom = max;
         self
     }
 
-    pub fn with_minimap(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_minimap(mut self, show: bool) -> Self {
         self.show_minimap = show;
         self
     }
 
-    pub fn with_controls(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_controls(mut self, show: bool) -> Self {
         self.show_controls = show;
         self
     }
 
     /// Get the container style string
+    #[must_use]
     pub fn container_style(&self) -> String {
         format!("width: {}px; height: {}px;", self.width, self.height)
     }
@@ -415,14 +430,28 @@ pub enum NodeGraphEvent {
     Load,
 }
 
+pub type SharedHistory = Rc<RefCell<HistoryState>>;
+
+#[must_use]
+pub fn create_shared_history() -> SharedHistory {
+    Rc::new(RefCell::new(HistoryState::new()))
+}
+
+#[must_use]
 pub fn render_node_graph_canvas(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -> VNode {
-    render_node_graph_canvas_with_history(state, config, &HistoryState::new())
+    thread_local! {
+        static HISTORY: RefCell<SharedHistory> = RefCell::new(create_shared_history());
+    }
+    HISTORY.with(|h| {
+        let history = h.borrow().clone();
+        render_node_graph_canvas_with_history(state, config, &history)
+    })
 }
 
 pub fn render_node_graph_canvas_with_history(
     state: &NodeGraphState,
     config: &NodeGraphCanvasConfig,
-    history: &HistoryState,
+    history: &SharedHistory,
 ) -> VNode {
     let mut children: Vec<VNode> = Vec::new();
 
@@ -517,6 +546,7 @@ pub fn render_node_graph_canvas_with_history(
 
 fn build_minimap_state(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -> NodeGraphMinimap {
     let mut minimap = NodeGraphMinimap::new(200.0, 150.0);
+    minimap.canvas_size = (config.width, config.height);
     minimap.update_view(state.zoom, state.pan);
 
     let minimap_nodes: Vec<MinimapNode> = state
@@ -554,36 +584,35 @@ fn build_minimap_state(state: &NodeGraphState, config: &NodeGraphCanvasConfig) -
 
 fn render_controls(
     viewport: &crate::node_graph::viewport::Viewport,
-    history: &HistoryState,
+    history: &SharedHistory,
 ) -> VNode {
+    let history_ref = history.borrow();
     let mut children: Vec<VNode> = Vec::new();
 
     let mut undo_redo_children: Vec<VNode> = Vec::new();
 
-    let undo_btn = VNode::Element(
-        VElement::new("button")
+    let undo_btn = {
+        let mut btn = VElement::new("button")
             .class("hi-control-btn hi-undo-btn")
             .attr("title", "Undo (Ctrl+Z)")
-            .attr("data-action", "undo")
-            .attr(
-                "disabled",
-                if history.can_undo() { "false" } else { "true" },
-            )
-            .child(VNode::Text(VText::new("Undo"))),
-    );
+            .attr("data-action", "undo");
+        if !history_ref.can_undo() {
+            btn = btn.attr("disabled", "disabled");
+        }
+        VNode::Element(btn.child(VNode::Text(VText::new("Undo"))))
+    };
     undo_redo_children.push(undo_btn);
 
-    let redo_btn = VNode::Element(
-        VElement::new("button")
+    let redo_btn = {
+        let mut btn = VElement::new("button")
             .class("hi-control-btn hi-redo-btn")
             .attr("title", "Redo (Ctrl+Y)")
-            .attr("data-action", "redo")
-            .attr(
-                "disabled",
-                if history.can_redo() { "false" } else { "true" },
-            )
-            .child(VNode::Text(VText::new("Redo"))),
-    );
+            .attr("data-action", "redo");
+        if !history_ref.can_redo() {
+            btn = btn.attr("disabled", "disabled");
+        }
+        VNode::Element(btn.child(VNode::Text(VText::new("Redo"))))
+    };
     undo_redo_children.push(redo_btn);
 
     children.push(VNode::Element(
@@ -776,5 +805,276 @@ mod tests {
         assert_eq!(config.max_zoom, 2.0);
         assert!(!config.show_minimap);
         assert!(!config.show_controls);
+    }
+
+    #[test]
+    fn test_remove_nonexistent_node_no_panic() {
+        let mut state = NodeGraphState::new();
+        let result = state.remove_node("does_not_exist");
+        assert!(result.is_none());
+        assert!(state.nodes.is_empty());
+    }
+
+    #[test]
+    fn test_remove_nonexistent_node_from_populated() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+        let result = state.remove_node("does_not_exist");
+        assert!(result.is_none());
+        assert_eq!(state.nodes.len(), 1);
+    }
+
+    #[test]
+    fn test_move_node_negative_coordinates() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+        assert!(state.update_node_position("n1", -500.0, -999.9));
+        assert_eq!(state.get_node("n1").unwrap().position, (-500.0, -999.9));
+    }
+
+    #[test]
+    fn test_update_position_nonexistent_node() {
+        let mut state = NodeGraphState::new();
+        assert!(!state.update_node_position("ghost", 1.0, 2.0));
+    }
+
+    #[test]
+    fn test_select_node_none_deselects() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+        state.select_node(Some("n1".to_string()));
+        assert!(state.get_node("n1").unwrap().selected);
+
+        state.select_node(None);
+        assert!(state.selected_node.is_none());
+        assert!(!state.get_node("n1").unwrap().selected);
+    }
+
+    #[test]
+    fn test_select_nonexistent_node_no_panic() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+        state.select_node(Some("n1".to_string()));
+
+        state.select_node(Some("ghost".to_string()));
+        assert_eq!(state.selected_node, Some("ghost".to_string()));
+        assert!(!state.get_node("n1").unwrap().selected);
+    }
+
+    #[test]
+    fn test_select_node_replaces_previous() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("a".to_string()));
+        state.add_node(NodePlacement::new("b".to_string()));
+
+        state.select_node(Some("a".to_string()));
+        assert!(state.get_node("a").unwrap().selected);
+        assert!(!state.get_node("b").unwrap().selected);
+
+        state.select_node(Some("b".to_string()));
+        assert!(!state.get_node("a").unwrap().selected);
+        assert!(state.get_node("b").unwrap().selected);
+    }
+
+    #[test]
+    fn test_select_connection() {
+        let mut state = NodeGraphState::new();
+        state.select_connection(Some("conn1".to_string()));
+        assert_eq!(state.selected_connection, Some("conn1".to_string()));
+
+        state.select_connection(None);
+        assert!(state.selected_connection.is_none());
+    }
+
+    #[test]
+    fn test_zoom_clamped_to_min() {
+        let mut state = NodeGraphState::new();
+        state.set_zoom(0.01, 0.1, 3.0);
+        assert_eq!(state.zoom, 0.1);
+    }
+
+    #[test]
+    fn test_zoom_clamped_to_max() {
+        let mut state = NodeGraphState::new();
+        state.set_zoom(100.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 3.0);
+    }
+
+    #[test]
+    fn test_zoom_out_does_not_go_below_min() {
+        let mut state = NodeGraphState::new();
+        state.zoom = 0.1;
+        state.zoom_out(10.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 0.1);
+    }
+
+    #[test]
+    fn test_zoom_in_does_not_exceed_max() {
+        let mut state = NodeGraphState::new();
+        state.zoom = 3.0;
+        state.zoom_in(2.0, 0.1, 3.0);
+        assert_eq!(state.zoom, 3.0);
+    }
+
+    #[test]
+    fn test_pan_accumulates() {
+        let mut state = NodeGraphState::new();
+        state.pan(100.0, 50.0);
+        state.pan(-30.0, -20.0);
+        assert_eq!(state.pan, (70.0, 30.0));
+    }
+
+    #[test]
+    fn test_pan_negative() {
+        let mut state = NodeGraphState::new();
+        state.pan(-500.0, -500.0);
+        assert_eq!(state.pan, (-500.0, -500.0));
+    }
+
+    #[test]
+    fn test_reset_view_after_operations() {
+        let mut state = NodeGraphState::new();
+        state.set_zoom(2.5, 0.1, 3.0);
+        state.pan(100.0, 200.0);
+        state.reset_view();
+        assert_eq!(state.zoom, 1.0);
+        assert_eq!(state.pan, (0.0, 0.0));
+    }
+
+    #[test]
+    fn test_clear_resets_everything() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+        state.add_connection(Connection::new("n1", "out", "n2", "in"));
+        state.select_node(Some("n1".to_string()));
+        state.select_connection(Some("c1".to_string()));
+
+        state.clear();
+        assert!(state.nodes.is_empty());
+        assert!(state.connections.is_empty());
+        assert!(state.selected_node.is_none());
+        assert!(state.selected_connection.is_none());
+    }
+
+    #[test]
+    fn test_get_node_mut() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()));
+
+        if let Some(node) = state.get_node_mut("n1") {
+            node.minimized = true;
+        }
+        assert!(state.get_node("n1").unwrap().minimized);
+
+        assert!(state.get_node_mut("ghost").is_none());
+    }
+
+    #[test]
+    fn test_add_connection() {
+        let mut state = NodeGraphState::new();
+        let conn = Connection::new("n1", "out", "n2", "in");
+        state.add_connection(conn);
+        assert_eq!(state.connections.len(), 1);
+        assert_eq!(state.connections[0].id, "n1_out_n2_in");
+    }
+
+    #[test]
+    fn test_remove_connection_by_id() {
+        let mut state = NodeGraphState::new();
+        let conn = Connection::new("n1", "out", "n2", "in");
+        let conn_id = conn.id.clone();
+        state.add_connection(conn);
+
+        let removed = state.remove_connection(&conn_id);
+        assert!(removed.is_some());
+        assert!(state.connections.is_empty());
+    }
+
+    #[test]
+    fn test_remove_nonexistent_connection() {
+        let mut state = NodeGraphState::new();
+        let result = state.remove_connection(&"nonexistent".to_string());
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_port_position_nonexistent_node() {
+        let state = NodeGraphState::new();
+        let result = state.calculate_port_position("ghost", "p1", PortPosition::Right);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_port_position_zero_size_node() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()).with_size(0.0, 0.0));
+        let pos = state.calculate_port_position("n1", "p1", PortPosition::Right);
+        assert_eq!(pos, Some((0.0, 0.0)));
+    }
+
+    #[test]
+    fn test_save_load_round_trip() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()).with_position(10.0, 20.0));
+        state.add_node(NodePlacement::new("n2".to_string()).with_position(300.0, 400.0));
+        state.add_connection(Connection::new("n1", "out", "n2", "in"));
+
+        let json = state.save().unwrap();
+
+        let mut loaded = NodeGraphState::new();
+        loaded.load(&json).unwrap();
+
+        assert_eq!(loaded.nodes.len(), 2);
+        assert_eq!(loaded.connections.len(), 1);
+        assert_eq!(loaded.nodes.get("n1").unwrap().position, (10.0, 20.0));
+        assert_eq!(loaded.nodes.get("n2").unwrap().position, (300.0, 400.0));
+        assert!(loaded.selected_node.is_none());
+        assert!(loaded.selected_connection.is_none());
+    }
+
+    #[test]
+    fn test_load_invalid_json_returns_err() {
+        let mut state = NodeGraphState::new();
+        let result = state.load("not json");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_load_clears_selection() {
+        let mut state = NodeGraphState::new();
+        state.select_node(Some("n1".to_string()));
+        state.select_connection(Some("c1".to_string()));
+
+        let empty_graph = SerializedNodeGraph::new().to_json().unwrap();
+        state.load(&empty_graph).unwrap();
+
+        assert!(state.selected_node.is_none());
+        assert!(state.selected_connection.is_none());
+    }
+
+    #[test]
+    fn test_default() {
+        let state = NodeGraphState::default();
+        assert!(state.nodes.is_empty());
+        assert!(state.connections.is_empty());
+        assert_eq!(state.zoom, 1.0);
+        assert_eq!(state.pan, (0.0, 0.0));
+    }
+
+    #[test]
+    fn test_container_style() {
+        let config = NodeGraphCanvasConfig::default().with_size(500.0, 400.0);
+        let style = config.container_style();
+        assert!(style.contains("500px"));
+        assert!(style.contains("400px"));
+    }
+
+    #[test]
+    fn test_add_duplicate_node_replaces() {
+        let mut state = NodeGraphState::new();
+        state.add_node(NodePlacement::new("n1".to_string()).with_position(10.0, 10.0));
+        state.add_node(NodePlacement::new("n1".to_string()).with_position(20.0, 20.0));
+        assert_eq!(state.nodes.len(), 1);
+        assert_eq!(state.get_node("n1").unwrap().position, (20.0, 20.0));
     }
 }

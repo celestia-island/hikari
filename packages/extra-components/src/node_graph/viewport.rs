@@ -27,7 +27,8 @@ impl Default for Viewport {
 
 impl Viewport {
     /// Create a new viewport with default values
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             zoom: 1.0,
             pan: (0.0, 0.0),
@@ -37,7 +38,8 @@ impl Viewport {
     }
 
     /// Create with custom bounds
-    pub fn with_bounds(min_zoom: f64, max_zoom: f64) -> Self {
+    #[must_use]
+    pub const fn with_bounds(min_zoom: f64, max_zoom: f64) -> Self {
         Self {
             zoom: 1.0,
             pan: (0.0, 0.0),
@@ -55,7 +57,7 @@ impl Viewport {
     }
 
     /// Set pan offset
-    pub fn set_pan(&mut self, x: f64, y: f64) {
+    pub const fn set_pan(&mut self, x: f64, y: f64) {
         self.pan = (x, y);
     }
 
@@ -70,7 +72,7 @@ impl Viewport {
     }
 
     /// Reset to default view
-    pub fn reset(&mut self) {
+    pub const fn reset(&mut self) {
         self.zoom = 1.0;
         self.pan = (0.0, 0.0);
     }
@@ -82,21 +84,29 @@ impl Viewport {
     }
 
     /// Check if can zoom in
+    #[must_use]
     pub fn can_zoom_in(&self) -> bool {
         self.zoom < self.max_zoom
     }
 
     /// Check if can zoom out
+    #[must_use]
     pub fn can_zoom_out(&self) -> bool {
         self.zoom > self.min_zoom
     }
 
     /// Get zoom as formatted string (e.g., "1.5x")
+    #[must_use]
     pub fn zoom_text(&self) -> String {
-        format!("{:.0}x", self.zoom)
+        if (self.zoom * 10.0).round() / 10.0 == self.zoom.round() {
+            format!("{:.0}x", self.zoom)
+        } else {
+            format!("{:.1}x", self.zoom)
+        }
     }
 
     /// Get the transform CSS string
+    #[must_use]
     pub fn transform_style(&self) -> String {
         format!(
             "transform: scale({}) translate({}px, {}px);",
@@ -106,7 +116,7 @@ impl Viewport {
 }
 
 /// Viewport configuration
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ViewportConfig {
     /// Whether to show zoom controls
     pub show_zoom: bool,
@@ -134,6 +144,7 @@ impl Default for ViewportConfig {
 
 use tairitsu_vdom::{VElement, VNode, VText};
 
+#[must_use]
 pub fn render_viewport(viewport: &Viewport) -> VNode {
     let zoom_in = VNode::Element(
         VElement::new("button")
@@ -287,12 +298,12 @@ mod tests {
             zoom: 1.5,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "2x");
+        assert_eq!(viewport.zoom_text(), "1.5x");
 
         let viewport = Viewport {
-            zoom: 2.7,
+            zoom: 2.0,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "3x");
+        assert_eq!(viewport.zoom_text(), "2x");
     }
 }

@@ -1,5 +1,4 @@
-// hi-components/src/utils/positioning.rs
-// Positioning utility for components (Tooltip, Popover, Dropdown, Select)
+//! Positioning utility for components (Tooltip, Popover, Dropdown, Select)
 
 use crate::prelude::*;
 
@@ -21,6 +20,7 @@ pub enum Placement {
 }
 
 impl Placement {
+    #[must_use]
     pub fn flip(&self) -> Self {
         match self {
             Placement::Top => Placement::Bottom,
@@ -38,20 +38,21 @@ impl Placement {
         }
     }
 
+    #[must_use]
     pub fn css_position(&self) -> &'static str {
         match self {
-            Placement::Top => "top: 100%; left: 50%; transform: translateX(-50%);",
-            Placement::TopLeft => "top: 100%; left: 0;",
-            Placement::TopRight => "top: 100%; right: 0;",
-            Placement::Bottom => "bottom: 100%; left: 50%; transform: translateX(-50%);",
-            Placement::BottomLeft => "bottom: 100%; left: 0;",
-            Placement::BottomRight => "bottom: 100%; right: 0;",
-            Placement::Left => "left: 100%; top: 50%; transform: translateY(-50%);",
-            Placement::LeftTop => "left: 100%; top: 0;",
-            Placement::LeftBottom => "left: 100%; bottom: 0;",
-            Placement::Right => "right: 100%; top: 50%; transform: translateY(-50%);",
-            Placement::RightTop => "right: 100%; top: 0;",
-            Placement::RightBottom => "right: 100%; bottom: 0;",
+            Placement::Top => "bottom: 100%; left: 50%; transform: translateX(-50%);",
+            Placement::TopLeft => "bottom: 100%; left: 0;",
+            Placement::TopRight => "bottom: 100%; right: 0;",
+            Placement::Bottom => "top: 100%; left: 50%; transform: translateX(-50%);",
+            Placement::BottomLeft => "top: 100%; left: 0;",
+            Placement::BottomRight => "top: 100%; right: 0;",
+            Placement::Left => "right: 100%; top: 50%; transform: translateY(-50%);",
+            Placement::LeftTop => "right: 100%; top: 0;",
+            Placement::LeftBottom => "right: 100%; bottom: 0;",
+            Placement::Right => "left: 100%; top: 50%; transform: translateY(-50%);",
+            Placement::RightTop => "left: 100%; top: 0;",
+            Placement::RightBottom => "left: 100%; bottom: 0;",
         }
     }
 }
@@ -64,6 +65,7 @@ pub enum PositionStrategy {
 }
 
 impl PositionStrategy {
+    #[must_use]
     pub fn css_value(&self) -> &'static str {
         match self {
             PositionStrategy::Absolute => "absolute",
@@ -98,6 +100,7 @@ impl Default for PositionConfig {
 }
 
 impl PositionConfig {
+    #[must_use]
     pub fn new(placement: Placement) -> Self {
         Self {
             placement,
@@ -105,26 +108,31 @@ impl PositionConfig {
         }
     }
 
+    #[must_use]
     pub fn offset(mut self, x: i32, y: i32) -> Self {
         self.offset = (x, y);
         self
     }
 
+    #[must_use]
     pub fn strategy(mut self, strategy: PositionStrategy) -> Self {
         self.strategy = strategy;
         self
     }
 
+    #[must_use]
     pub fn flip(mut self, flip: bool) -> Self {
         self.flip = flip;
         self
     }
 
+    #[must_use]
     pub fn padding(mut self, padding: i32) -> Self {
         self.padding = padding;
         self
     }
 
+    #[must_use]
     pub fn css_style(&self) -> String {
         let mut style = format!(
             "position: {}; {};",
@@ -137,22 +145,21 @@ impl PositionConfig {
         if offset_x != 0 || offset_y != 0 {
             let transform = if offset_y != 0 {
                 format!(
-                    "translate(calc(-50% + {}px), calc(0% + {}px))",
-                    offset_x, offset_y
+                    "translate(calc(-50% + {offset_x}px), calc(0% + {offset_y}px))"
                 )
             } else {
-                format!("translate(calc(-50% + {}px), 0)", offset_x)
+                format!("translate(calc(-50% + {offset_x}px), 0)")
             };
 
             // Replace existing transform
             style = style.replacen(
                 "transform: translateX(-50%)",
-                &format!("transform: {}", transform),
+                &format!("transform: {transform}"),
                 1,
             );
             style = style.replacen(
                 "transform: translateY(-50%)",
-                &format!("transform: {}", transform),
+                &format!("transform: {transform}"),
                 1,
             );
         }
@@ -171,6 +178,7 @@ pub enum OverlayZIndex {
 }
 
 impl OverlayZIndex {
+    #[must_use]
     pub fn value(&self) -> i32 {
         match self {
             OverlayZIndex::Default => 1000,
@@ -182,23 +190,19 @@ impl OverlayZIndex {
     }
 }
 
+/// Position hook for components that need dynamic positioning.
+///
+/// **Note:** This is a simplified stub implementation. The `update_position` callback
+/// is a no-op, and `get_position` simply delegates to `PositionConfig::css_style()`.
+/// For full dynamic positioning with viewport boundary detection, use a dedicated
+/// positioning library or implement platform-specific logic.
+#[must_use]
 pub fn use_position() -> UsePositionReturn {
-    // In a full implementation, this would:
-    // 1. Track trigger element position
-    // 2. Calculate overlay position based on config
-    // 3. Handle viewport boundaries
-    // 4. Flip placement if needed
-    // 5. Listen to resize events
-    // 6. Update position dynamically
-
     UsePositionReturn {
         update_position: Callback::new(|_config: PositionConfig| {
             // Trigger position update
         }),
-        get_position: Callback::new(|_config: PositionConfig| -> String {
-            // Return CSS position string
-            _config.css_style()
-        }),
+        get_position: Callback::new(|config: PositionConfig| -> String { config.css_style() }),
     }
 }
 
@@ -227,19 +231,19 @@ mod tests {
     fn test_placement_css_position() {
         assert_eq!(
             Placement::Top.css_position(),
-            "top: 100%; left: 50%; transform: translateX(-50%);"
-        );
-        assert_eq!(
-            Placement::Bottom.css_position(),
             "bottom: 100%; left: 50%; transform: translateX(-50%);"
         );
         assert_eq!(
+            Placement::Bottom.css_position(),
+            "top: 100%; left: 50%; transform: translateX(-50%);"
+        );
+        assert_eq!(
             Placement::Left.css_position(),
-            "left: 100%; top: 50%; transform: translateY(-50%);"
+            "right: 100%; top: 50%; transform: translateY(-50%);"
         );
         assert_eq!(
             Placement::Right.css_position(),
-            "right: 100%; top: 50%; transform: translateY(-50%);"
+            "left: 100%; top: 50%; transform: translateY(-50%);"
         );
     }
 
@@ -273,7 +277,7 @@ mod tests {
         let config = PositionConfig::default();
         let style = config.css_style();
         assert!(style.contains("position: absolute"));
-        assert!(style.contains("bottom: 100%"));
+        assert!(style.contains("top: 100%"));
         assert!(style.contains("left: 50%"));
 
         // With default offset (0, 8), the transform is modified

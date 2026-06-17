@@ -34,7 +34,7 @@ pub fn Background(props: BackgroundProps) -> Element {
     use_effect(move || {
         let animation_style_clone = animation_style.clone();
         let theme_name_signal = theme_name_signal.clone();
-        let _stop = start_gradient_animation(theme_name_signal, move |style| {
+        let _ = start_gradient_animation(theme_name_signal, move |style| {
             animation_style_clone.set(style);
         });
     });
@@ -85,9 +85,7 @@ where
         let y = center_y + radius_percent * angle.sin();
 
         let theme_name = theme_name_signal
-            .as_ref()
-            .map(|s: &ReactiveSignal<String>| s.get())
-            .unwrap_or_else(|| "hikari".to_string());
+            .as_ref().map_or_else(|| "hikari".to_string(), |s: &ReactiveSignal<String>| s.get());
 
         let (color1, color2) = match theme_name.as_str() {
             "tairitsu" => (墨色, 靛蓝),
@@ -113,8 +111,8 @@ where
             .adjust_lightness(lightness_factor);
 
         let style = StyleStringBuilder::new()
-            .add_var("bg-center-x", &format!("{:.1}%", x))
-            .add_var("bg-center-y", &format!("{:.1}%", y))
+            .add_var("bg-center-x", &format!("{x:.1}%"))
+            .add_var("bg-center-y", &format!("{y:.1}%"))
             .add_var("bg-color-1", &breathing_color1.hex())
             .add_var("bg-color-2", &breathing_color2.hex())
             .build();

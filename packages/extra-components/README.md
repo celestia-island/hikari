@@ -1,6 +1,30 @@
 # hikari-extra-components
 
-Advanced components for complex interaction scenarios, including node graph systems, drag-drop utilities, and zoom controls.
+Framework-agnostic data models for advanced UI components, including node graph systems, drag-drop utilities, zoom controls, and rich media state management.
+
+## Design Philosophy
+
+This package provides **pure Rust data models** — no rendering framework dependency. All state types implement `serde::Serialize` / `serde::Deserialize` and include builder-pattern APIs.
+
+## Relationship to `hikari-components`
+
+While `hikari-components` provides **rendered components** (using `rsx!`, reactive hooks, and `StyledComponent` CSS), this package provides the underlying **data models** that can be used independently:
+
+| Feature | `hikari-components` | `hikari-extra-components` (this package) |
+|---------|---------------------|------------------------------------------|
+| Rendering | `rsx!` macro + reactive hooks | None — pure data structs |
+| Serde | Not derived | `Serialize` / `Deserialize` on all types |
+| DOM dependency | Requires Tairitsu | None |
+| CSS | `StyledComponent` trait | Exported `const *_STYLES` strings |
+| Event handling | `EventHandler<T>` closures | `data-action` attributes for delegation |
+
+**Overlapping domains** — Timeline, DragLayer, UserGuide, ZoomControls, VideoPlayer, RichTextEditor, CodeHighlight — exist in both packages. The `components` versions are rendered UI elements; the `extra` versions are pure state structs.
+
+> **Type disambiguation:** Some types share names (e.g., `GuideStep`, `TimelinePosition`). Import with explicit paths:
+> ```rust,ignore
+> use hikari_extra_components::extra::TimelineState;  // pure data model
+> use hikari_components::display::Timeline;           // rendered component
+> ```
 
 ## Installation
 

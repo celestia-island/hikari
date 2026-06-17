@@ -6,9 +6,11 @@ authors.workspace = true
 license.workspace = true
 description = "Core UI components (40+) for the Hikari design system"
 repository.workspace = true
+keywords = ["ui", "components", "design-system", "wasm", "frontend"]
+categories = ["gui", "wasm"]
 
 [lib]
-doctest = false
+doctest = true
 
 [features]
 default = [
@@ -58,7 +60,7 @@ display = [
     "timeline",
 ]
 entry = ["number_input", "search", "cascader", "transfer", "auto_complete"]
-production = ["code_highlight", "video_player", "rich_text_editor"]
+production = ["audio_player", "code_highlight", "markdown_editor", "video_player", "rich_text_editor"]
 
 # Individual component features (fine-grained control)
 button = []
@@ -111,7 +113,9 @@ qrcode = []
 carousel = []
 calendar = []
 timeline = []
+audio_player = []
 code_highlight = []
+markdown_editor = []
 video_player = []
 rich_text_editor = []
 number_input = []
@@ -135,7 +139,7 @@ tairitsu-macros = "^0.5"
 tairitsu-style = "^0.5"
 
 # QR code generation
-qrcode = "0.14"
+qrcode = "^0.14"
 
 # Date/time handling
 chrono = { workspace = true }

@@ -2,7 +2,7 @@
 //!
 //! # Example
 //!
-//! ```rust
+//! ```rust,ignore
 //! use hikari_components::navigation::Anchor;
 //! use crate::prelude::*;
 //!
@@ -76,7 +76,7 @@ pub fn Anchor(
                         if let Some(rect) = platform::get_element_rect_by_id(target_id) {
                             let scroll_y = platform::get_scroll_y();
                             platform::scroll_to_with_options(
-                                rect.y - offset as f64 - scroll_y,
+                                rect.y - f64::from(offset) - scroll_y,
                                 "smooth",
                             );
                         }

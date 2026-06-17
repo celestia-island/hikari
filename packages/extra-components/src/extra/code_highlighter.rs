@@ -21,39 +21,41 @@ pub enum Language {
 }
 
 impl Language {
-    pub fn display_name(&self) -> &'static str {
+    #[must_use]
+    pub const fn display_name(&self) -> &'static str {
         match self {
-            Language::Rust => "Rust",
-            Language::JavaScript => "JavaScript",
-            Language::TypeScript => "TypeScript",
-            Language::Python => "Python",
-            Language::Go => "Go",
-            Language::Java => "Java",
-            Language::Cpp => "C++",
-            Language::Html => "HTML",
-            Language::Css => "CSS",
-            Language::Json => "JSON",
-            Language::Yaml => "YAML",
-            Language::Markdown => "Markdown",
-            Language::Plain => "Plain Text",
+            Self::Rust => "Rust",
+            Self::JavaScript => "JavaScript",
+            Self::TypeScript => "TypeScript",
+            Self::Python => "Python",
+            Self::Go => "Go",
+            Self::Java => "Java",
+            Self::Cpp => "C++",
+            Self::Html => "HTML",
+            Self::Css => "CSS",
+            Self::Json => "JSON",
+            Self::Yaml => "YAML",
+            Self::Markdown => "Markdown",
+            Self::Plain => "Plain Text",
         }
     }
 
-    pub fn class_name(&self) -> &'static str {
+    #[must_use]
+    pub const fn class_name(&self) -> &'static str {
         match self {
-            Language::Rust => "language-rust",
-            Language::JavaScript => "language-javascript",
-            Language::TypeScript => "language-typescript",
-            Language::Python => "language-python",
-            Language::Go => "language-go",
-            Language::Java => "language-java",
-            Language::Cpp => "language-cpp",
-            Language::Html => "language-html",
-            Language::Css => "language-css",
-            Language::Json => "language-json",
-            Language::Yaml => "language-yaml",
-            Language::Markdown => "language-markdown",
-            Language::Plain => "language-plain",
+            Self::Rust => "language-rust",
+            Self::JavaScript => "language-javascript",
+            Self::TypeScript => "language-typescript",
+            Self::Python => "language-python",
+            Self::Go => "language-go",
+            Self::Java => "language-java",
+            Self::Cpp => "language-cpp",
+            Self::Html => "language-html",
+            Self::Css => "language-css",
+            Self::Json => "language-json",
+            Self::Yaml => "language-yaml",
+            Self::Markdown => "language-markdown",
+            Self::Plain => "language-plain",
         }
     }
 }
@@ -88,7 +90,8 @@ pub struct CodeHighlighterState {
 }
 
 impl CodeHighlighterState {
-    pub fn new(code: String, language: Language) -> Self {
+    #[must_use]
+    pub const fn new(code: String, language: Language) -> Self {
         Self {
             code,
             language,
@@ -103,22 +106,26 @@ impl CodeHighlighterState {
         }
     }
 
-    pub fn with_show_line_numbers(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_line_numbers(mut self, show: bool) -> Self {
         self.show_line_numbers = show;
         self
     }
 
-    pub fn with_show_language(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_language(mut self, show: bool) -> Self {
         self.show_language = show;
         self
     }
 
-    pub fn with_show_copy(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_copy(mut self, show: bool) -> Self {
         self.show_copy = show;
         self
     }
 
-    pub fn with_wrap(mut self, wrap: bool) -> Self {
+    #[must_use]
+    pub const fn with_wrap(mut self, wrap: bool) -> Self {
         self.wrap = wrap;
         self
     }
@@ -133,14 +140,17 @@ impl CodeHighlighterState {
         self
     }
 
+    #[must_use]
     pub fn line_count(&self) -> usize {
         self.code.lines().count().max(1)
     }
 
+    #[must_use]
     pub fn line_numbers(&self) -> Vec<String> {
         (1..=self.line_count()).map(|n| n.to_string()).collect()
     }
 
+    #[must_use]
     pub fn lines(&self) -> Vec<&str> {
         let lines: Vec<&str> = self.code.lines().collect();
         if lines.is_empty() && !self.code.is_empty() {
@@ -150,12 +160,12 @@ impl CodeHighlighterState {
         }
     }
 
-    pub fn mark_copied(&mut self) {
+    pub const fn mark_copied(&mut self) {
         self.copied = true;
         self.copy_anim_progress = 0.0;
     }
 
-    pub fn reset_copied(&mut self) {
+    pub const fn reset_copied(&mut self) {
         self.copied = false;
         self.copy_anim_progress = 1.0;
     }
@@ -166,14 +176,16 @@ impl CodeHighlighterState {
         }
     }
 
+    #[must_use]
     pub fn copy_icon_scale(&self) -> f64 {
         if self.copy_anim_progress >= 1.0 {
             1.0
         } else {
-            1.0 + 0.2 * (std::f64::consts::PI * self.copy_anim_progress).sin()
+            0.2f64.mul_add((std::f64::consts::PI * self.copy_anim_progress).sin(), 1.0)
         }
     }
 
+    #[must_use]
     pub fn container_class(&self) -> String {
         let mut classes = String::from("hi-code-highlighter");
         classes.push(' ');
@@ -191,7 +203,8 @@ impl CodeHighlighterState {
         classes
     }
 
-    pub fn copy_button_text(&self) -> &'static str {
+    #[must_use]
+    pub const fn copy_button_text(&self) -> &'static str {
         if self.copied { "✓" } else { "📋" }
     }
 }
@@ -203,12 +216,13 @@ impl Default for CodeHighlighterState {
 }
 
 /// Event emitted when copy is triggered
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct CodeHighlighterCopyEvent {
     pub code: String,
     pub language: Language,
 }
 
+#[must_use]
 pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
     let lines = state.lines();
     let line_numbers = state.line_numbers();
@@ -307,7 +321,8 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
 pub struct CodeHighlighterComponent;
 
 impl CodeHighlighterComponent {
-    pub fn styles() -> &'static str {
+    #[must_use]
+    pub const fn styles() -> &'static str {
         r#"
 .hi-code-highlighter {
   display: flex;
@@ -502,7 +517,8 @@ impl CodeHighlighterComponent {
 "#
     }
 
-    pub fn name() -> &'static str {
+    #[must_use]
+    pub const fn name() -> &'static str {
         "code_highlighter"
     }
 }

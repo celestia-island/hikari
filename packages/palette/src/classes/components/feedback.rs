@@ -27,24 +27,24 @@ pub enum ToastClass {
 impl TypedClass for ToastClass {
     fn class_name(&self) -> &'static str {
         match self {
-            ToastClass::Toast => "hi-toast",
-            ToastClass::ToastInfo => "hi-toast-info",
-            ToastClass::ToastSuccess => "hi-toast-success",
-            ToastClass::ToastWarning => "hi-toast-warning",
-            ToastClass::ToastError => "hi-toast-error",
-            ToastClass::ToastTopRight => "hi-toast-top-right",
-            ToastClass::ToastTopCenter => "hi-toast-top-center",
-            ToastClass::ToastTopLeft => "hi-toast-top-left",
-            ToastClass::ToastBottomRight => "hi-toast-bottom-right",
-            ToastClass::ToastBottomCenter => "hi-toast-bottom-center",
-            ToastClass::ToastBottomLeft => "hi-toast-bottom-left",
-            ToastClass::ToastIconWrapper => "hi-toast-icon-wrapper",
-            ToastClass::ToastIcon => "hi-toast-icon",
-            ToastClass::ToastContent => "hi-toast-content",
-            ToastClass::ToastTitle => "hi-toast-title",
-            ToastClass::ToastMessage => "hi-toast-message",
-            ToastClass::ToastClose => "hi-toast-close",
-            ToastClass::GlowWrapper => "hi-toast-glow-wrapper",
+            Self::Toast => "hi-toast",
+            Self::ToastInfo => "hi-toast-info",
+            Self::ToastSuccess => "hi-toast-success",
+            Self::ToastWarning => "hi-toast-warning",
+            Self::ToastError => "hi-toast-error",
+            Self::ToastTopRight => "hi-toast-top-right",
+            Self::ToastTopCenter => "hi-toast-top-center",
+            Self::ToastTopLeft => "hi-toast-top-left",
+            Self::ToastBottomRight => "hi-toast-bottom-right",
+            Self::ToastBottomCenter => "hi-toast-bottom-center",
+            Self::ToastBottomLeft => "hi-toast-bottom-left",
+            Self::ToastIconWrapper => "hi-toast-icon-wrapper",
+            Self::ToastIcon => "hi-toast-icon",
+            Self::ToastContent => "hi-toast-content",
+            Self::ToastTitle => "hi-toast-title",
+            Self::ToastMessage => "hi-toast-message",
+            Self::ToastClose => "hi-toast-close",
+            Self::GlowWrapper => "hi-toast-glow-wrapper",
         }
     }
 }
@@ -70,20 +70,20 @@ pub enum TooltipClass {
 impl TypedClass for TooltipClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TooltipClass::Tooltip => "hi-tooltip",
-            TooltipClass::TooltipWrapper => "hi-tooltip-wrapper",
-            TooltipClass::TooltipTrigger => "hi-tooltip-trigger",
-            TooltipClass::TooltipVisible => "hi-tooltip-visible",
-            TooltipClass::TooltipTop => "hi-tooltip-top",
-            TooltipClass::TooltipBottom => "hi-tooltip-bottom",
-            TooltipClass::TooltipLeft => "hi-tooltip-left",
-            TooltipClass::TooltipRight => "hi-tooltip-right",
-            TooltipClass::TooltipContent => "hi-tooltip-content",
-            TooltipClass::TooltipArrow => "hi-tooltip-arrow",
-            TooltipClass::TooltipArrowTop => "hi-tooltip-arrow-top",
-            TooltipClass::TooltipArrowBottom => "hi-tooltip-arrow-bottom",
-            TooltipClass::TooltipArrowLeft => "hi-tooltip-arrow-left",
-            TooltipClass::TooltipArrowRight => "hi-tooltip-arrow-right",
+            Self::Tooltip => "hi-tooltip",
+            Self::TooltipWrapper => "hi-tooltip-wrapper",
+            Self::TooltipTrigger => "hi-tooltip-trigger",
+            Self::TooltipVisible => "hi-tooltip-visible",
+            Self::TooltipTop => "hi-tooltip-top",
+            Self::TooltipBottom => "hi-tooltip-bottom",
+            Self::TooltipLeft => "hi-tooltip-left",
+            Self::TooltipRight => "hi-tooltip-right",
+            Self::TooltipContent => "hi-tooltip-content",
+            Self::TooltipArrow => "hi-tooltip-arrow",
+            Self::TooltipArrowTop => "hi-tooltip-arrow-top",
+            Self::TooltipArrowBottom => "hi-tooltip-arrow-bottom",
+            Self::TooltipArrowLeft => "hi-tooltip-arrow-left",
+            Self::TooltipArrowRight => "hi-tooltip-arrow-right",
         }
     }
 }
@@ -110,21 +110,21 @@ pub enum AlertClass {
 impl TypedClass for AlertClass {
     fn class_name(&self) -> &'static str {
         match self {
-            AlertClass::Alert => "hi-alert",
-            AlertClass::AlertInfo => "hi-alert-info",
-            AlertClass::AlertSuccess => "hi-alert-success",
-            AlertClass::AlertWarning => "hi-alert-warning",
-            AlertClass::AlertError => "hi-alert-error",
-            AlertClass::AlertIconWrapper => "hi-alert-icon-wrapper",
-            AlertClass::AlertIcon => "hi-alert-icon",
-            AlertClass::AlertContent => "hi-alert-content",
-            AlertClass::AlertTitle => "hi-alert-title",
-            AlertClass::AlertDescription => "hi-alert-description",
-            AlertClass::AlertClose => "hi-alert-close",
-            AlertClass::Sm => "hi-alert-sm",
-            AlertClass::Md => "hi-alert-md",
-            AlertClass::Lg => "hi-alert-lg",
-            AlertClass::GlowWrapper => "hi-alert-glow-wrapper",
+            Self::Alert => "hi-alert",
+            Self::AlertInfo => "hi-alert-info",
+            Self::AlertSuccess => "hi-alert-success",
+            Self::AlertWarning => "hi-alert-warning",
+            Self::AlertError => "hi-alert-error",
+            Self::AlertIconWrapper => "hi-alert-icon-wrapper",
+            Self::AlertIcon => "hi-alert-icon",
+            Self::AlertContent => "hi-alert-content",
+            Self::AlertTitle => "hi-alert-title",
+            Self::AlertDescription => "hi-alert-description",
+            Self::AlertClose => "hi-alert-close",
+            Self::Sm => "hi-alert-sm",
+            Self::Md => "hi-alert-md",
+            Self::Lg => "hi-alert-lg",
+            Self::GlowWrapper => "hi-alert-glow-wrapper",
         }
     }
 }
@@ -147,17 +147,17 @@ pub enum ModalClass {
 impl TypedClass for ModalClass {
     fn class_name(&self) -> &'static str {
         match self {
-            ModalClass::Overlay => "hi-modal-overlay",
-            ModalClass::OverlayTransparent => "hi-modal-overlay-transparent",
-            ModalClass::Modal => "hi-modal",
-            ModalClass::Header => "hi-modal-header",
-            ModalClass::Title => "hi-modal-title",
-            ModalClass::Close => "hi-modal-close",
-            ModalClass::Body => "hi-modal-body",
-            ModalClass::Sm => "hi-modal-sm",
-            ModalClass::Md => "hi-modal-md",
-            ModalClass::Lg => "hi-modal-lg",
-            ModalClass::Xl => "hi-modal-xl",
+            Self::Overlay => "hi-modal-overlay",
+            Self::OverlayTransparent => "hi-modal-overlay-transparent",
+            Self::Modal => "hi-modal",
+            Self::Header => "hi-modal-header",
+            Self::Title => "hi-modal-title",
+            Self::Close => "hi-modal-close",
+            Self::Body => "hi-modal-body",
+            Self::Sm => "hi-modal-sm",
+            Self::Md => "hi-modal-md",
+            Self::Lg => "hi-modal-lg",
+            Self::Xl => "hi-modal-xl",
         }
     }
 }
@@ -172,9 +172,9 @@ pub enum DropdownClass {
 impl TypedClass for DropdownClass {
     fn class_name(&self) -> &'static str {
         match self {
-            DropdownClass::Overlay => "hi-dropdown-overlay",
-            DropdownClass::OverlayDimmed => "hi-dropdown-overlay-dimmed",
-            DropdownClass::Dropdown => "hi-dropdown",
+            Self::Overlay => "hi-dropdown-overlay",
+            Self::OverlayDimmed => "hi-dropdown-overlay-dimmed",
+            Self::Dropdown => "hi-dropdown",
         }
     }
 }
@@ -197,17 +197,17 @@ pub enum DrawerClass {
 impl TypedClass for DrawerClass {
     fn class_name(&self) -> &'static str {
         match self {
-            DrawerClass::Drawer => "hi-drawer",
-            DrawerClass::Mask => "hi-drawer-mask",
-            DrawerClass::Right => "hi-drawer-right",
-            DrawerClass::Left => "hi-drawer-left",
-            DrawerClass::Top => "hi-drawer-top",
-            DrawerClass::Bottom => "hi-drawer-bottom",
-            DrawerClass::Header => "hi-drawer-header",
-            DrawerClass::Title => "hi-drawer-title",
-            DrawerClass::Close => "hi-drawer-close",
-            DrawerClass::Body => "hi-drawer-body",
-            DrawerClass::Footer => "hi-drawer-footer",
+            Self::Drawer => "hi-drawer",
+            Self::Mask => "hi-drawer-mask",
+            Self::Right => "hi-drawer-right",
+            Self::Left => "hi-drawer-left",
+            Self::Top => "hi-drawer-top",
+            Self::Bottom => "hi-drawer-bottom",
+            Self::Header => "hi-drawer-header",
+            Self::Title => "hi-drawer-title",
+            Self::Close => "hi-drawer-close",
+            Self::Body => "hi-drawer-body",
+            Self::Footer => "hi-drawer-footer",
         }
     }
 }
@@ -224,11 +224,11 @@ pub enum PopoverClass {
 impl TypedClass for PopoverClass {
     fn class_name(&self) -> &'static str {
         match self {
-            PopoverClass::Popover => "hi-popover",
-            PopoverClass::Title => "hi-popover-title",
-            PopoverClass::Content => "hi-popover-content",
-            PopoverClass::Trigger => "hi-popover-trigger",
-            PopoverClass::Backdrop => "hi-popover-backdrop",
+            Self::Popover => "hi-popover",
+            Self::Title => "hi-popover-title",
+            Self::Content => "hi-popover-content",
+            Self::Trigger => "hi-popover-trigger",
+            Self::Backdrop => "hi-popover-backdrop",
         }
     }
 }
@@ -258,24 +258,24 @@ pub enum ProgressClass {
 impl TypedClass for ProgressClass {
     fn class_name(&self) -> &'static str {
         match self {
-            ProgressClass::Wrapper => "hi-progress-wrapper",
-            ProgressClass::Progress => "hi-progress",
-            ProgressClass::Linear => "hi-progress-linear",
-            ProgressClass::Circular => "hi-progress-circular",
-            ProgressClass::Normal => "hi-progress-normal",
-            ProgressClass::Active => "hi-progress-active",
-            ProgressClass::Exception => "hi-progress-exception",
-            ProgressClass::Success => "hi-progress-success",
-            ProgressClass::Info => "hi-progress-info",
-            ProgressClass::Circle => "hi-progress-circle",
-            ProgressClass::Outer => "hi-progress-outer",
-            ProgressClass::Inner => "hi-progress-inner",
-            ProgressClass::Bg => "hi-progress-bg",
-            ProgressClass::Text => "hi-progress-text",
-            ProgressClass::CircleWrapper => "hi-progress-circle-wrapper",
-            ProgressClass::CircleTrail => "hi-progress-circle-trail",
-            ProgressClass::CirclePath => "hi-progress-circle-path",
-            ProgressClass::CircleText => "hi-progress-circle-text",
+            Self::Wrapper => "hi-progress-wrapper",
+            Self::Progress => "hi-progress",
+            Self::Linear => "hi-progress-linear",
+            Self::Circular => "hi-progress-circular",
+            Self::Normal => "hi-progress-normal",
+            Self::Active => "hi-progress-active",
+            Self::Exception => "hi-progress-exception",
+            Self::Success => "hi-progress-success",
+            Self::Info => "hi-progress-info",
+            Self::Circle => "hi-progress-circle",
+            Self::Outer => "hi-progress-outer",
+            Self::Inner => "hi-progress-inner",
+            Self::Bg => "hi-progress-bg",
+            Self::Text => "hi-progress-text",
+            Self::CircleWrapper => "hi-progress-circle-wrapper",
+            Self::CircleTrail => "hi-progress-circle-trail",
+            Self::CirclePath => "hi-progress-circle-path",
+            Self::CircleText => "hi-progress-circle-text",
         }
     }
 }
@@ -296,15 +296,15 @@ pub enum SkeletonClass {
 impl TypedClass for SkeletonClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SkeletonClass::Wrapper => "hi-skeleton-wrapper",
-            SkeletonClass::Skeleton => "hi-skeleton",
-            SkeletonClass::Active => "hi-skeleton-active",
-            SkeletonClass::Text => "hi-skeleton-text",
-            SkeletonClass::Avatar => "hi-skeleton-avatar",
-            SkeletonClass::Image => "hi-skeleton-image",
-            SkeletonClass::Button => "hi-skeleton-button",
-            SkeletonClass::Input => "hi-skeleton-input",
-            SkeletonClass::Rect => "hi-skeleton-rect",
+            Self::Wrapper => "hi-skeleton-wrapper",
+            Self::Skeleton => "hi-skeleton",
+            Self::Active => "hi-skeleton-active",
+            Self::Text => "hi-skeleton-text",
+            Self::Avatar => "hi-skeleton-avatar",
+            Self::Image => "hi-skeleton-image",
+            Self::Button => "hi-skeleton-button",
+            Self::Input => "hi-skeleton-input",
+            Self::Rect => "hi-skeleton-rect",
         }
     }
 }
@@ -323,13 +323,13 @@ pub enum SpinClass {
 impl TypedClass for SpinClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SpinClass::Spin => "hi-spin",
-            SpinClass::Sm => "hi-spin-sm",
-            SpinClass::Md => "hi-spin-md",
-            SpinClass::Lg => "hi-spin-lg",
-            SpinClass::Stopped => "hi-spin-stopped",
-            SpinClass::Spinner => "hi-spin-spinner",
-            SpinClass::Tip => "hi-spin-tip",
+            Self::Spin => "hi-spin",
+            Self::Sm => "hi-spin-sm",
+            Self::Md => "hi-spin-md",
+            Self::Lg => "hi-spin-lg",
+            Self::Stopped => "hi-spin-stopped",
+            Self::Spinner => "hi-spin-spinner",
+            Self::Tip => "hi-spin-tip",
         }
     }
 }

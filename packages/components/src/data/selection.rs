@@ -234,11 +234,6 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         }
     };
 
-    let _input_type = match props.selection_type {
-        SelectionType::Checkbox => "checkbox",
-        SelectionType::Radio => "radio",
-    };
-
     let container_classes = ClassesBuilder::new()
         .add_typed(SelectionClassNew::RowSelection)
         .add(&props.class)

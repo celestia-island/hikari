@@ -28,12 +28,14 @@ pub struct RadioButtonProps {
 
 #[component]
 pub fn RadioButton(props: RadioButtonProps) -> Element {
-    let ctx = use_context::<RadioContext>().expect("RadioContext not found");
+    let Some(ctx) = use_context::<RadioContext>() else {
+        return tairitsu_vdom::empty_vnode();
+    };
     let ctx = ctx.get();
     let is_checked = *ctx.selected_value.read() == props.value;
     let disabled = props.disabled || ctx.disabled;
 
-    let radio_name = ctx.name.to_string();
+    let radio_name = ctx.name.clone();
     let on_change = ctx.on_change.clone();
 
     let radio_classes = ClassesBuilder::new()
@@ -104,7 +106,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
         .clone()
         .unwrap_or_else(|| EventHandler::new(|_| {}));
 
-    let _ctx = use_context_provider(move || RadioContext {
+    use_context_provider(move || RadioContext {
         name,
         selected_value,
         on_change,

@@ -2,6 +2,7 @@ use std::path::Path;
 use std::{env, fs};
 
 use anyhow::Result;
+use tairitsu_packager::styles::{CompilerOptions, ScssCompiler};
 
 fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=src/styles");
@@ -22,11 +23,9 @@ fn main() -> Result<()> {
     }
 
     let Some(theme_dir) = theme_styles_dir else {
-        eprintln!("Theme styles not found, skipping SCSS compilation");
+        println!("cargo:warning=Theme styles not found, skipping SCSS compilation");
         return Ok(());
     };
-
-    use tairitsu_packager::styles::{CompilerOptions, ScssCompiler};
 
     let components_styles_dir = manifest_dir.join("src/styles");
     let compiler = ScssCompiler::with_options(CompilerOptions {
@@ -38,7 +37,7 @@ fn main() -> Result<()> {
     for scss_path in &scss_files {
         let css_name = scss_path
             .file_name()
-            .unwrap()
+            .expect("scss path should have a file name")
             .to_string_lossy()
             .replace(".scss", ".css");
         let css_content = compiler.compile_file(scss_path)?;

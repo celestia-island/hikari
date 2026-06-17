@@ -5,7 +5,7 @@
 //! 本文档收录了161个中国传统色的正式名称和历史典故
 //! These historical notes are compiled from lanqy/chinese-colors
 //!
-//! 数据来源: https://github.com/lanqy/chinese-colors
+//! 数据来源: <https://github.com/lanqy/chinese-colors>
 //!
 //! ────────────────────────────────────────────────────
 //! 红色系 (28 colors)
@@ -540,7 +540,7 @@
 //!   Disabled by default to minimize wasm binary size.
 //!   Enable with: `hikari-palette = { features = ["chinese-names"] }`
 //!
-//! Data source: https://github.com/lanqy/chinese-colors
+//! Data source: <https://github.com/lanqy/chinese-colors>
 
 mod chinese;
 mod impl_;
@@ -562,6 +562,7 @@ pub enum ColorCategory {
     Gray,
     Purple,
     Orange,
+    Custom,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

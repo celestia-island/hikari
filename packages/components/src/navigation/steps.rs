@@ -1,8 +1,6 @@
 // packages/components/src/navigation/steps.rs
 // Steps component
 
-#![allow(clippy::needless_update)]
-
 use hikari_palette::classes::{ClassesBuilder, StepsClass, TypedClass};
 
 use crate::prelude::*;

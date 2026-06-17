@@ -23,14 +23,14 @@ mod tests {
             DividerOrientation::default(),
             DividerOrientation::Horizontal
         );
-        let _vertical = DividerOrientation::Vertical;
+        let _ = DividerOrientation::Vertical;
     }
 
     #[test]
     fn test_divider_type_variants() {
         assert_eq!(DividerType::default(), DividerType::Solid);
-        let _dashed = DividerType::Dashed;
-        let _dotted = DividerType::Dotted;
+        let _ = DividerType::Dashed;
+        let _ = DividerType::Dotted;
     }
 
     #[test]
@@ -71,47 +71,47 @@ mod tests {
     #[test]
     fn test_flexbox_direction_variants() {
         assert_eq!(Direction::default(), Direction::Column);
-        let _row = Direction::Row;
-        let _row_rev = Direction::RowReverse;
-        let _col_rev = Direction::ColumnReverse;
+        let _ = Direction::Row;
+        let _ = Direction::RowReverse;
+        let _ = Direction::ColumnReverse;
     }
 
     #[test]
     fn test_flexbox_align_variants() {
         assert_eq!(Align::default(), Align::Start);
-        let _center = Align::Center;
-        let _end = Align::End;
-        let _stretch = Align::Stretch;
-        let _baseline = Align::Baseline;
+        let _ = Align::Center;
+        let _ = Align::End;
+        let _ = Align::Stretch;
+        let _ = Align::Baseline;
     }
 
     #[test]
     fn test_flexbox_justify_variants() {
         assert_eq!(Justify::default(), Justify::Start);
-        let _center = Justify::Center;
-        let _end = Justify::End;
-        let _between = Justify::Between;
-        let _around = Justify::Around;
-        let _evenly = Justify::Evenly;
+        let _ = Justify::Center;
+        let _ = Justify::End;
+        let _ = Justify::Between;
+        let _ = Justify::Around;
+        let _ = Justify::Evenly;
     }
 
     #[test]
     fn test_flexbox_wrap_variants() {
         assert_eq!(Wrap::default(), Wrap::NoWrap);
-        let _wrap = Wrap::Wrap;
-        let _wrap_rev = Wrap::WrapReverse;
+        let _ = Wrap::Wrap;
+        let _ = Wrap::WrapReverse;
     }
 
     #[test]
     fn test_flexbox_gap_variants() {
         assert_eq!(FlexGap::default(), FlexGap::None);
-        let _gap1 = FlexGap::Gap1;
-        let _gap2 = FlexGap::Gap2;
-        let _gap3 = FlexGap::Gap3;
-        let _gap4 = FlexGap::Gap4;
-        let _gap5 = FlexGap::Gap5;
-        let _gap6 = FlexGap::Gap6;
-        let _gap8 = FlexGap::Gap8;
+        let _ = FlexGap::Gap1;
+        let _ = FlexGap::Gap2;
+        let _ = FlexGap::Gap3;
+        let _ = FlexGap::Gap4;
+        let _ = FlexGap::Gap5;
+        let _ = FlexGap::Gap6;
+        let _ = FlexGap::Gap8;
     }
 
     #[test]
@@ -165,8 +165,8 @@ mod tests {
     #[test]
     fn test_space_direction_variants() {
         assert_eq!(SpaceDirection::default(), SpaceDirection::Horizontal);
-        let _vertical = SpaceDirection::Vertical;
-        let _both = SpaceDirection::Both;
+        let _ = SpaceDirection::Vertical;
+        let _ = SpaceDirection::Both;
     }
 
     #[test]

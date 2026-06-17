@@ -98,3 +98,96 @@ impl TypedClass for ZIndex {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn position_all_variants() {
+        assert_eq!(Position::Static.class_name(), "hi-static");
+        assert_eq!(Position::Relative.class_name(), "hi-relative");
+        assert_eq!(Position::Absolute.class_name(), "hi-absolute");
+        assert_eq!(Position::Fixed.class_name(), "hi-fixed");
+        assert_eq!(Position::Sticky.class_name(), "hi-sticky");
+    }
+
+    #[test]
+    fn position_copy_equality() {
+        let a = Position::Absolute;
+        let b = a;
+        assert_eq!(a, b);
+        assert_ne!(Position::Static, Position::Fixed);
+    }
+
+    #[test]
+    fn overflow_all_variants() {
+        assert_eq!(Overflow::Hidden.class_name(), "hi-overflow-hidden");
+        assert_eq!(Overflow::Auto.class_name(), "hi-overflow-auto");
+        assert_eq!(Overflow::Scroll.class_name(), "hi-overflow-scroll");
+    }
+
+    #[test]
+    fn overflow_x_all_variants() {
+        assert_eq!(OverflowX::Hidden.class_name(), "hi-overflow-x-hidden");
+        assert_eq!(OverflowX::Auto.class_name(), "hi-overflow-x-auto");
+        assert_eq!(OverflowX::Scroll.class_name(), "hi-overflow-x-scroll");
+    }
+
+    #[test]
+    fn overflow_y_all_variants() {
+        assert_eq!(OverflowY::Hidden.class_name(), "hi-overflow-y-hidden");
+        assert_eq!(OverflowY::Auto.class_name(), "hi-overflow-y-auto");
+        assert_eq!(OverflowY::Scroll.class_name(), "hi-overflow-y-scroll");
+    }
+
+    #[test]
+    fn z_index_all_variants() {
+        assert_eq!(ZIndex::Z0.class_name(), "hi-z-0");
+        assert_eq!(ZIndex::Z10.class_name(), "hi-z-10");
+        assert_eq!(ZIndex::Z20.class_name(), "hi-z-20");
+        assert_eq!(ZIndex::Z30.class_name(), "hi-z-30");
+        assert_eq!(ZIndex::Z40.class_name(), "hi-z-40");
+        assert_eq!(ZIndex::Z50.class_name(), "hi-z-50");
+        assert_eq!(ZIndex::Auto.class_name(), "hi-z-auto");
+    }
+
+    #[test]
+    fn cross_enum_collision_hidden_auto_scroll() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Overflow::Hidden)
+            .add_typed(OverflowX::Hidden)
+            .add_typed(OverflowY::Hidden)
+            .add_typed(Overflow::Auto)
+            .add_typed(OverflowX::Auto)
+            .add_typed(OverflowY::Auto)
+            .add_typed(Overflow::Scroll)
+            .add_typed(OverflowX::Scroll)
+            .add_typed(OverflowY::Scroll)
+            .build();
+        assert_eq!(
+            classes,
+            "hi-overflow-hidden hi-overflow-x-hidden hi-overflow-y-hidden \
+             hi-overflow-auto hi-overflow-x-auto hi-overflow-y-auto \
+             hi-overflow-scroll hi-overflow-x-scroll hi-overflow-y-scroll"
+        );
+    }
+
+    #[test]
+    fn cross_enum_collision_auto_zindex() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Overflow::Auto)
+            .add_typed(ZIndex::Auto)
+            .build();
+        assert_eq!(classes, "hi-overflow-auto hi-z-auto");
+    }
+
+    #[test]
+    fn combo_position_and_zindex() {
+        let classes = crate::ClassesBuilder::new()
+            .add_typed(Position::Absolute)
+            .add_typed(ZIndex::Z50)
+            .build();
+        assert_eq!(classes, "hi-absolute hi-z-50");
+    }
+}

@@ -4,8 +4,6 @@
 
 #[cfg(test)]
 mod tests {
-    #![allow(unused)]
-
     use std::collections::HashMap;
 
     use hikari_extra_components::connection::Connection;
@@ -75,7 +73,7 @@ mod tests {
 
         history.push(action.clone());
 
-        let _undone = history.undo();
+        history.undo();
         let redone = history.redo();
 
         assert!(redone.is_some());
@@ -111,9 +109,9 @@ mod tests {
 
         for i in 0..5 {
             history.push(HistoryAction::NodeAdd {
-                id: format!("node{}", i),
+                id: format!("node{i}"),
                 node_type: "constant".to_string(),
-                position: (100.0 * i as f64, 100.0 * i as f64),
+                position: (100.0 * f64::from(i), 100.0 * f64::from(i)),
             });
         }
 
@@ -280,7 +278,7 @@ mod tests {
         let plugins = list_all_plugins();
         let plugin_names: Vec<_> = plugins
             .iter()
-            .map(|p| p.node_type.id().to_string())
+            .map(|p| p.node_type.id().clone())
             .collect();
 
         assert!(plugin_names.contains(&"constant/number".to_string()));

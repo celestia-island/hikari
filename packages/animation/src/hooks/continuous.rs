@@ -6,6 +6,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+type TimeoutScheduler = Rc<RefCell<Option<Box<dyn FnMut()>>>>;
+
 pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> impl Fn() {
     let fired = Rc::new(RefCell::new(false));
 
@@ -23,24 +25,30 @@ pub fn use_timeout(duration_ms: u64, callback: impl Fn() + Clone + 'static) -> i
 
 pub fn use_interval(duration_ms: u64, callback: impl Fn() + 'static) {
     let callback = Rc::new(callback);
+    let platform = Rc::new(RefCell::new(tairitsu_web::BrowserPlatform::new()));
 
-    let platform = tairitsu_web::BrowserPlatform::new();
-    platform.set_timeout(
-        {
-            let cb = callback.clone();
-            let dur = duration_ms;
+    let scheduler: TimeoutScheduler = Rc::new(RefCell::new(None));
+    let sched_clone = scheduler.clone();
+
+    let tick = move || {
+        callback();
+        let s = sched_clone.clone();
+        let p = platform.clone();
+        let dur = duration_ms;
+        p.borrow_mut().set_timeout(
             move || {
-                cb();
-                let cb2 = callback.clone();
-                let platform = tairitsu_web::BrowserPlatform::new();
-                platform.set_timeout(
-                    move || {
-                        cb2();
-                    },
-                    dur as u32,
-                );
-            }
-        },
-        duration_ms as u32,
-    );
+                let mut guard = s.borrow_mut();
+                if let Some(ref mut f) = *guard {
+                    f();
+                }
+            },
+            dur as u32,
+        );
+    };
+
+    *scheduler.borrow_mut() = Some(Box::new(tick));
+    let mut guard = scheduler.borrow_mut();
+    if let Some(ref mut f) = *guard {
+        f();
+    }
 }

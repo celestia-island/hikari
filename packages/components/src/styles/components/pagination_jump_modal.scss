@@ -96,10 +96,10 @@
     box-shadow 0.2s ease-out;
 
   &:focus {
-    border-color: var(--hi-color-primary, #00A0E9);
+    border-color: var(--hi-color-primary, #FFB3A7);
     box-shadow:
-      0 0 0 3px rgba(0, 160, 233, 0.1),
-      0 0 0 1px var(--hi-color-primary, #00A0E9);
+      0 0 0 3px rgba(255, 179, 167, 0.1),
+      0 0 0 1px var(--hi-color-primary, #FFB3A7);
   }
 
   &::placeholder {
@@ -130,13 +130,13 @@
     border-color 0.15s ease-out;
 
   &:hover:not(:disabled) {
-    background: rgba(0, 160, 233, 0.1);
-    border-color: var(--hi-color-primary, #00A0E9);
+    background: rgba(255, 179, 167, 0.1);
+    border-color: var(--hi-color-primary, #FFB3A7);
     transform: scale(1.05);
   }
 
   &:active:not(:disabled) {
-    background: rgba(0, 160, 233, 0.15);
+    background: rgba(255, 179, 167, 0.15);
     transform: scale(0.95);
   }
 

@@ -2,7 +2,7 @@
 // Simple transition animation presets for common use cases
 
 /// Slide direction enum
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SlideDirection {
     Top,
     Bottom,
@@ -29,8 +29,9 @@ pub enum SlideDirection {
 /// // Result: "opacity 0ms ease-out, opacity 300ms ease-out"
 /// // Apply this to an element's style attribute
 /// ```
+#[must_use]
 pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
-    format!("opacity 0ms ease-out, opacity {}ms ease-out", duration_ms)
+    format!("opacity 0ms ease-out, opacity {duration_ms}ms ease-out")
 }
 
 /// Fade out animation preset
@@ -43,8 +44,9 @@ pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
-    format!("opacity 0ms ease-in, opacity {}ms ease-in", duration_ms)
+    format!("opacity 0ms ease-in, opacity {duration_ms}ms ease-in")
 }
 
 /// Slide in animation preset
@@ -59,22 +61,15 @@ pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn slide_in(
     _element_id: &str,
     duration_ms: u64,
-    direction: SlideDirection,
-    distance: i32,
+    _direction: SlideDirection,
+    _distance: i32,
 ) -> String {
-    let _transform_start = match direction {
-        SlideDirection::Top => format!("translateY(-{}px)", distance),
-        SlideDirection::Bottom => format!("translateY({}px)", distance),
-        SlideDirection::Left => format!("translateX(-{}px)", distance),
-        SlideDirection::Right => format!("translateX({}px)", distance),
-    };
-
     format!(
-        "transform 0ms, opacity 0ms, transform {}ms ease-out, opacity {}ms ease-out",
-        duration_ms, duration_ms
+        "transform 0ms, opacity 0ms, transform {duration_ms}ms ease-out, opacity {duration_ms}ms ease-out"
     )
 }
 
@@ -90,22 +85,15 @@ pub fn slide_in(
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn slide_out(
     _element_id: &str,
     duration_ms: u64,
-    direction: SlideDirection,
-    distance: i32,
+    _direction: SlideDirection,
+    _distance: i32,
 ) -> String {
-    let _transform_end = match direction {
-        SlideDirection::Top => format!("translateY(-{}px)", distance),
-        SlideDirection::Bottom => format!("translateY({}px)", distance),
-        SlideDirection::Left => format!("translateX(-{}px)", distance),
-        SlideDirection::Right => format!("translateX({}px)", distance),
-    };
-
     format!(
-        "transform 0ms, opacity 0ms, transform {}ms ease-in, opacity {}ms ease-in",
-        duration_ms, duration_ms
+        "transform 0ms, opacity 0ms, transform {duration_ms}ms ease-in, opacity {duration_ms}ms ease-in"
     )
 }
 
@@ -119,10 +107,10 @@ pub fn slide_out(
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
     format!(
-        "transform 0ms, opacity 0ms, transform {}ms ease-out-back, opacity {}ms ease-out-back",
-        duration_ms, duration_ms
+        "transform 0ms, opacity 0ms, transform {duration_ms}ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity {duration_ms}ms cubic-bezier(0.34, 1.56, 0.64, 1)"
     )
 }
 
@@ -136,10 +124,10 @@ pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
     format!(
-        "transform 0ms, opacity 0ms, transform {}ms ease-in-back, opacity {}ms ease-in-back",
-        duration_ms, duration_ms
+        "transform 0ms, opacity 0ms, transform {duration_ms}ms cubic-bezier(0.36, 0, 0.66, -0.56), opacity {duration_ms}ms cubic-bezier(0.36, 0, 0.66, -0.56)"
     )
 }
 
@@ -153,6 +141,7 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS cubic-bezier curve string for elastic bounce effect
+#[must_use]
 pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
     "cubic-bezier(0.68, -0.55, 0.265, 1.55)".to_string()
 }
@@ -167,19 +156,22 @@ pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS keyframes animation definition that can be applied via style sheet
+#[must_use]
 pub fn shake(element_id: &str, duration_ms: u64) -> String {
-    let keyframes_name = format!("{}-shake", element_id);
+    let sanitized: String = element_id
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
+        .collect();
+    let keyframes_name = format!("{sanitized}-shake");
     let keyframes = format!(
-        "@keyframes {} {{ 0%, 100% {{ transform: translateX(0); }} 10%, 30%, 50%, 70%, 90% {{ transform: translateX(-10px); }} 20%, 40%, 60%, 80% {{ transform: translateX(10px); }} }}",
-        keyframes_name
+        "@keyframes {keyframes_name} {{ 0%, 100% {{ transform: translateX(0); }} 10%, 30%, 50%, 70%, 90% {{ transform: translateX(-10px); }} 20%, 40%, 60%, 80% {{ transform: translateX(10px); }} }}"
     );
 
     let animation = format!(
-        "animation {}-shake {}ms ease-in-out infinite",
-        element_id, duration_ms
+        "animation {sanitized}-shake {duration_ms}ms ease-in-out infinite"
     );
 
-    format!("{}; {}", keyframes, animation)
+    format!("{keyframes}; {animation}")
 }
 
 /// Rotate in animation preset
@@ -193,8 +185,9 @@ pub fn shake(element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
-    format!("transform {}ms ease-out", duration_ms)
+    format!("transform {duration_ms}ms ease-out")
 }
 
 /// Rotate out animation preset
@@ -208,8 +201,9 @@ pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
+#[must_use]
 pub fn rotate_out(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
-    format!("transform {}ms ease-in", duration_ms)
+    format!("transform {duration_ms}ms ease-in")
 }
 
 #[cfg(test)]
@@ -218,12 +212,13 @@ mod tests {
 
     #[test]
     fn test_slide_direction_exists() {
-        let _directions = [
+        let directions = [
             SlideDirection::Top,
             SlideDirection::Bottom,
             SlideDirection::Left,
             SlideDirection::Right,
         ];
+        assert_eq!(directions.len(), 4);
     }
 
     #[test]
@@ -246,7 +241,7 @@ mod tests {
     fn test_zoom_in_generates_css() {
         let css = zoom_in("my-element", 300);
         assert!(css.contains("300ms"));
-        assert!(css.contains("ease-out-back"));
+        assert!(css.contains("cubic-bezier(0.34, 1.56, 0.64, 1)"));
     }
 
     #[test]

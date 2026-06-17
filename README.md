@@ -10,10 +10,7 @@
   <a href="https://github.com/celestia-island/hikari/actions">
     <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/clippy.yml?branch=master" alt="CI" />
   </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg" alt="License" />
-  </a>
-  <a href="https://github.com/casey/just">
+  [[![License: SySL](https://img.shields.io/badge/license-SySL%201.0-blue)](./LICENSE.txt)](./LICENSE.txt)<a href="https://github.com/casey/just">
     <img src="https://img.shields.io/badge/built%20with-just-blue" alt="Built with just" />
   </a>
 </div>
@@ -52,7 +49,7 @@ The result is a component framework where host-guest communication (DOM, events,
 
 ### Prerequisites
 
-- Rust 1.82+
+- Rust 1.85+ (edition 2024)
 - [Tairitsu](https://github.com/celestia-island/tairitsu) checked out as a sibling directory (`../tairitsu`)
 - `just` (command runner), Python 3.11+
 
@@ -60,9 +57,9 @@ The result is a component framework where host-guest communication (DOM, events,
 
 ```toml
 [dependencies]
-hikari-palette = "0.1.10"
-hikari-theme = "0.1.10"
-hikari-components = "0.1.10"
+hikari-palette = "^0.2"
+hikari-theme = "^0.2"
+hikari-components = "^0.2"
 ```
 
 ### Build & Run
@@ -121,8 +118,7 @@ fn app() -> VNode {
 
 ## License
 
-Hikari is dual-licensed under MIT OR Apache-2.0.
-
+Licensed under the [Synthetic Source License (SySL), Version 1.0](./LICENSE.txt).
 ## Name
 
 "Hikari" (光) means "light" in Japanese, from the rhythm game [Arcaea](https://arcaea.lowiro.com/).

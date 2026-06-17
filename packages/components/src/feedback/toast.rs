@@ -1,16 +1,14 @@
 // hi-components/src/feedback/toast.rs
 // Toast component
 
-#![allow(clippy::needless_update)]
-
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, ToastClass, TypedClass};
 
 use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
-use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::feedback::Glow;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct ToastComponent;
 
@@ -39,7 +37,6 @@ pub struct ToastProps {
     pub variant: ToastVariant,
     pub message: String,
     pub title: Option<String>,
-    pub duration: Option<u64>,
     pub position: ToastPosition,
     #[default(true)]
     pub closable: bool,
@@ -96,7 +93,7 @@ pub fn Toast(props: ToastProps) -> Element {
         },
         ToastVariant::Error => rsx! {
             Icon {
-                icon: MdiIcon::Alert,
+                icon: MdiIcon::CloseCircle,
                 class: ToastClass::ToastIcon.class_name().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),

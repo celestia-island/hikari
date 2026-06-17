@@ -7,32 +7,45 @@
 //! `hikari-extra-components` now provides pure Rust data structures for advanced UI components.
 //! These components can be rendered using any frontend framework (Tairitsu, Dioxus, etc.).
 //!
-//! ## Migration from Dioxus
+//! ## Relationship to `hikari-components`
 //!
-//! Previously, this package provided Dioxus components. Now it provides:
-//! - **Data Models**: State structures for each component
-//! - **Event Types**: Type-safe event handlers
-//! - **Utilities**: Helper functions for common operations
+//! `hikari-components` provides **rendered components** (rsx! macro, reactive hooks, StyledComponent CSS).
+//! This package provides complementary **state models** — pure data structs that are framework-agnostic
+//! and can be used alongside or independently of the rendered components.
+//!
+//! **When to use which:**
+//! - Use `hikari-components` when you want ready-to-render UI components in a Tairitsu app
+//! - Use `hikari-extra-components` when you need pure state models (e.g., for SSR, testing, or non-Tairitsu frameworks)
+//! - Use both together: state models from this crate feed into rendered components from `hikari-components`
+//!
+//! **Note on type naming:** Some types (e.g., `TimelinePosition`, `GuideStep`) exist in both packages
+//! with different fields. The `components` versions are Dioxus-specific (with `Element` children, event handlers);
+//! the `extra-components` versions are pure data (with `String` fields, serde support). Import with explicit
+//! module paths to disambiguate:
+//! ```rust,ignore
+//! use hikari_extra_components::extra::TimelineState; // pure data model
+//! use hikari_components::display::Timeline;           // rendered component
+//! ```
 //!
 //! ## Components
 //!
 //! ### Extra Components
-//! - [`Collapsible`] - Collapsible state model
-//! - [`DragLayer`] - Drag and drop state management
-//! - [`ZoomControls`] - Zoom state and controls
-//! - [`Timeline`] - Timeline event model
-//! - [`UserGuide`] - User onboarding guide state
+//! - [`CollapsibleState`] - Collapsible state model
+//! - [`DragLayerState`] - Drag and drop state management
+//! - [`ZoomControlsState`] - Zoom state and controls
+//! - [`TimelineState`] - Timeline event model
+//! - [`UserGuideState`] - User onboarding guide state
 //! - [`AudioWaveformState`] - Audio waveform visualization state
 //!
 //! ### Node Graph
 //! - [`NodeGraphState`] - Node graph canvas state
-//! - [`Node`] - Node data model
+//! - [`NodeView`] - Node data model
 //! - [`Connection`] - Connection between nodes
 //! - [`Port`] - Node port model
 //!
 //! ## Usage Example
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use hikari_extra_components::extra::{CollapsibleState, CollapsiblePosition};
 //!
 //! // Create component state
@@ -56,7 +69,6 @@
 
 pub mod extra;
 pub mod node_graph;
-pub mod prelude;
 
 pub use extra::*;
 pub use node_graph::*;

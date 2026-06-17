@@ -1,8 +1,7 @@
 // packages/components/src/production/markdown_editor.rs
 // MarkdownEditor component
 
-use hikari_icons::Icon;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, MarkdownEditorClass, TypedClass};
 
 use crate::prelude::*;
@@ -75,43 +74,45 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         .build();
 
     let height_style = if let Some(h) = &props.height {
-        format!("height: {};", h)
+        format!("height: {h};")
     } else {
         String::new()
     };
 
-    // Create two separate handlers for the two textareas
-    let handle_input_edit = {
+    // Shared handler factory to reduce clone overhead
+    let make_insert = {
+        let content = content.clone();
         let on_change = props.on_change.clone();
-        let content_for_edit = content.clone();
+        move |prefix: &'static str, suffix: &'static str| {
+            let content = content.clone();
+            let on_change = on_change.clone();
+            move |_| {
+                let current = content.get();
+                let new_value = format!("{prefix}{current}{suffix}");
+                content.set(new_value.clone());
+                if let Some(handler) = on_change.as_ref() {
+                    handler.call(new_value);
+                }
+            }
+        }
+    };
+
+    let insert_bold = make_insert("**", "**");
+    let insert_italic = make_insert("*", "*");
+    let insert_heading = make_insert("# ", "");
+    let insert_code = make_insert("```\n", "\n```");
+    let insert_link = make_insert("[", "](url)");
+    let insert_image = make_insert("![alt](", ")");
+    let insert_list = make_insert("- ", "");
+    let insert_numbered = make_insert("1. ", "");
+    let insert_quote = make_insert("> ", "");
+
+    // Shared input handler for both textareas
+    let handle_input = {
+        let on_change = props.on_change.clone();
+        let content = content.clone();
         move |e: InputEvent| {
             let new_value = e.data.clone();
-            content_for_edit.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let handle_input_split = {
-        let on_change = props.on_change.clone();
-        let content_for_split = content.clone();
-        move |e: InputEvent| {
-            let new_value = e.data.clone();
-            content_for_split.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    // Insert handlers - each needs its own clones
-    let insert_bold = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("**{}**", current);
             content.set(new_value.clone());
             if let Some(handler) = on_change.as_ref() {
                 handler.call(new_value);
@@ -119,131 +120,16 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         }
     };
 
-    let insert_italic = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("*{}*", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
+    // Mode setters
+    let current_mode_for_setter = current_mode.clone();
+    let set_mode = move |mode: MarkdownEditorMode| {
+        let current_mode = current_mode_for_setter.clone();
+        move |_| current_mode.set(mode)
     };
 
-    let insert_heading = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("# {}", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_code = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("```\n{}\n```", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_link = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("[{}](url)", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_image = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("![alt]({})", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_list = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("- {}", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_numbered = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("1. {}", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    let insert_quote = {
-        let on_change = props.on_change.clone();
-        let content = content.clone();
-        move |_| {
-            let current = content.get();
-            let new_value = format!("> {}", current);
-            content.set(new_value.clone());
-            if let Some(handler) = on_change.as_ref() {
-                handler.call(new_value);
-            }
-        }
-    };
-
-    // Mode setters - each needs its own clone of current_mode
-    let set_mode_edit = {
-        let current_mode = current_mode.clone();
-        move |_| {
-            current_mode.set(MarkdownEditorMode::Edit);
-        }
-    };
-
-    let set_mode_preview = {
-        let current_mode = current_mode.clone();
-        move |_| {
-            current_mode.set(MarkdownEditorMode::Preview);
-        }
-    };
-
-    let set_mode_split = {
-        let current_mode = current_mode.clone();
-        move |_| {
-            current_mode.set(MarkdownEditorMode::Split);
-        }
-    };
+    let set_mode_edit = set_mode(MarkdownEditorMode::Edit);
+    let set_mode_preview = set_mode(MarkdownEditorMode::Preview);
+    let set_mode_split = set_mode(MarkdownEditorMode::Split);
 
     // Get current values for display
     let current_mode_value = current_mode.get();
@@ -354,7 +240,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                             class: MarkdownEditorClass::Textarea.class_name(),
                             placeholder: props.placeholder,
                             value: "{content_value}",
-                            oninput: handle_input_edit,
+                            oninput: handle_input,
                         }
                     },
                     MarkdownEditorMode::Preview => rsx! {
@@ -371,7 +257,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                                 class: "{MarkdownEditorClass::Textarea.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
                                 placeholder: props.placeholder,
                                 value: "{content_value}",
-                                oninput: handle_input_split,
+                                oninput: handle_input,
                             }
                             div {
                                 class: "{MarkdownEditorClass::Preview.class_name()} {MarkdownEditorClass::SplitPane.class_name()}",
@@ -445,11 +331,11 @@ fn render_markdown_simple(markdown: &str) -> String {
     for line in lines {
         let trimmed = line.trim_start_matches(' ');
         if let Some(rest) = trimmed.strip_prefix("### ") {
-            processed.push(format!("<h3>{}</h3>", rest));
+            processed.push(format!("<h3>{rest}</h3>"));
         } else if let Some(rest) = trimmed.strip_prefix("## ") {
-            processed.push(format!("<h2>{}</h2>", rest));
+            processed.push(format!("<h2>{rest}</h2>"));
         } else if let Some(rest) = trimmed.strip_prefix("# ") {
-            processed.push(format!("<h1>{}</h1>", rest));
+            processed.push(format!("<h1>{rest}</h1>"));
         } else {
             processed.push(line.to_string());
         }

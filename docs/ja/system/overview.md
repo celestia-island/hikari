@@ -50,7 +50,7 @@ println!("プライマリ: {}", theme.primary.hex());
 use hikari_theme::ThemeProvider;
 
 rsx! {
-    ThemeProvider { palette: "hikari" } {
+    ThemeProvider { initial_palette: "hikari" } {
         // アプリケーションコンテンツ
         App {}
     }

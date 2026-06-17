@@ -11,7 +11,7 @@ mod tests {
 
     #[test]
     fn test_menu_renders() {
-        let _props = MenuProps {
+        let _ = MenuProps {
             default_active: "1".to_string(),
             inline: true,
             mode: MenuMode::Vertical,
@@ -54,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_submenu_renders() {
-        let _props = SubMenuProps {
+        let _ = SubMenuProps {
             item_key: "sub1".to_string(),
             title: "Sub Menu".to_string(),
             icon: None,
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_menu_item_renders() {
-        let _props = MenuItemProps {
+        let _ = MenuItemProps {
             item_key: "item1".to_string(),
             disabled: false,
             icon: None,
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_sidebar_renders() {
-        let _props = SidebarProps {
+        let _ = SidebarProps {
             active_id: "section1".to_string(),
             class: "test-sidebar".to_string(),
             children: VNode::empty(),
@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_sidebar_section_renders() {
-        let _props = SidebarSectionProps {
+        let _ = SidebarSectionProps {
             id: "sec1".to_string(),
             title: "Section 1".to_string(),
             secondary_title: Some("Subtitle".to_string()),
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn test_sidebar_leaf_renders() {
-        let _props = SidebarLeafProps {
+        let _ = SidebarLeafProps {
             id: "leaf1".to_string(),
             secondary_label: Some("badge".to_string()),
             class: String::new(),
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_tabs_renders() {
-        let _props = TabsProps {
+        let _ = TabsProps {
             default_active: "1".to_string(),
             tab_position: TabPosition::Top,
             animated: true,
@@ -289,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_tab_pane_renders() {
-        let _props = TabPaneProps {
+        let _ = TabPaneProps {
             item_key: "1".to_string(),
             tab: "Tab 1".to_string(),
             disabled: false,
@@ -330,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_breadcrumb_renders() {
-        let _props = BreadcrumbProps {
+        let _ = BreadcrumbProps {
             separator: "/".to_string(),
             class: "test-breadcrumb".to_string(),
             children: VNode::empty(),
@@ -346,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_breadcrumb_item_renders() {
-        let _props = BreadcrumbItemProps {
+        let _ = BreadcrumbItemProps {
             item_key: "home".to_string(),
             href: Some("/home".to_string()),
             children: VNode::empty(),
@@ -398,7 +398,7 @@ mod tests {
 
     #[test]
     fn test_stepper_renders() {
-        let _props = StepperProps {
+        let _ = StepperProps {
             current: 2,
             total: 5,
             direction: StepperDirection::Horizontal,
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn test_steps_renders() {
-        let _props = StepsProps {
+        let _ = StepsProps {
             current: 1,
             direction: StepsDirection::Horizontal,
             steps: vec![

@@ -28,123 +28,12 @@
 // ```
 
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
-use tairitsu_vdom::IntoAttrValue;
 
 use crate::prelude::*;
 use crate::style_builder::StyleStringBuilder;
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum GlowBlur {
-    None,
-    Light,
-    #[default]
-    Medium,
-    Heavy,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum GlowColor {
-    #[default]
-    Ghost,
-    Primary,
-    Secondary,
-    Danger,
-    Success,
-    Warning,
-    Info,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum GlowIntensity {
-    Dim,
-    #[default]
-    Soft,
-    Bright,
-}
-
-impl std::fmt::Display for GlowBlur {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GlowBlur::None => write!(f, "none"),
-            GlowBlur::Light => write!(f, "light"),
-            GlowBlur::Medium => write!(f, "medium"),
-            GlowBlur::Heavy => write!(f, "heavy"),
-        }
-    }
-}
-
-impl std::fmt::Display for GlowColor {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GlowColor::Ghost => write!(f, "ghost"),
-            GlowColor::Primary => write!(f, "primary"),
-            GlowColor::Secondary => write!(f, "secondary"),
-            GlowColor::Danger => write!(f, "danger"),
-            GlowColor::Success => write!(f, "success"),
-            GlowColor::Warning => write!(f, "warning"),
-            GlowColor::Info => write!(f, "info"),
-        }
-    }
-}
-
-impl std::fmt::Display for GlowIntensity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GlowIntensity::Dim => write!(f, "dim"),
-            GlowIntensity::Soft => write!(f, "soft"),
-            GlowIntensity::Bright => write!(f, "bright"),
-        }
-    }
-}
-
-impl IntoAttrValue for GlowBlur {
-    fn into_attr_value(self) -> Option<String> {
-        Some(self.to_string())
-    }
-}
-
-impl IntoAttrValue for GlowColor {
-    fn into_attr_value(self) -> Option<String> {
-        Some(self.to_string())
-    }
-}
-
-impl IntoAttrValue for GlowIntensity {
-    fn into_attr_value(self) -> Option<String> {
-        Some(self.to_string())
-    }
-}
-
-/// Glow animation presets for continuous animation effects
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub enum GlowPreset {
-    #[default]
-    None,
-    Pulse,
-    Breathe,
-    Shimmer,
-}
-
-impl std::fmt::Display for GlowPreset {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            GlowPreset::None => write!(f, ""),
-            GlowPreset::Pulse => write!(f, "pulse"),
-            GlowPreset::Breathe => write!(f, "breathe"),
-            GlowPreset::Shimmer => write!(f, "shimmer"),
-        }
-    }
-}
-
-impl IntoAttrValue for GlowPreset {
-    fn into_attr_value(self) -> Option<String> {
-        if self == GlowPreset::None {
-            None
-        } else {
-            Some(self.to_string())
-        }
-    }
-}
+use crate::utils::glow_types::{
+    GlowBlur, GlowColor, GlowIntensity, GlowPreset, get_opacity_for_intensity,
+};
 
 /// Props for the [`Glow`] component, controlling blur, color, intensity, and animation preset.
 #[define_props]
@@ -161,15 +50,6 @@ pub struct GlowProps {
     pub radius: String,
     #[default("100".to_string())]
     pub transition_duration: String,
-}
-
-/// Get opacity value for intensity level
-fn get_opacity_for_intensity(intensity: GlowIntensity) -> f32 {
-    match intensity {
-        GlowIntensity::Dim => 0.07,
-        GlowIntensity::Soft => 0.15,
-        GlowIntensity::Bright => 0.30,
-    }
 }
 
 /// Animation state for glow effect
@@ -234,24 +114,37 @@ pub fn Glow(props: GlowProps) -> Element {
             .build()
     });
 
-    let build_style =
-        |interaction_level: f32, opacity: f32, glow_x: &str, glow_y: &str| -> String {
-            StyleStringBuilder::new()
-                .add_var("glow-x", glow_x)
-                .add_var("glow-y", glow_y)
-                .add_var("glow-intensity-scale", &interaction_level.to_string())
-                .add_var("glow-opacity", &format!("{:.3}", opacity))
-                .build()
-        };
+    let glow_color_owned: String = glow_color.to_string();
+    let glow_radius_owned: String = props.radius.clone();
+    let glow_color = glow_color_owned;
+    let glow_radius = glow_radius_owned;
+
+    fn build_glow_style(
+        glow_color: &str,
+        glow_radius: &str,
+        interaction_level: f32,
+        opacity: f32,
+        glow_x: &str,
+        glow_y: &str,
+    ) -> String {
+        StyleStringBuilder::new()
+            .add_var("glow-x", glow_x)
+            .add_var("glow-y", glow_y)
+            .add_var("hi-glow-color", glow_color)
+            .add_var("glow-radius", glow_radius)
+            .add_var("glow-intensity-scale", &interaction_level.to_string())
+            .add_var("glow-opacity", &format!("{:.3}", opacity.min(1.0)))
+            .build()
+    }
 
     fn calc_glow_percent(event: &MouseEvent) -> (String, String) {
         if let Some(target) = event.target {
             let rect =
                 tairitsu_vdom::get_bounding_client_rect(tairitsu_vdom::DomHandle::from_raw(target));
             if rect.width > 0.0 && rect.height > 0.0 {
-                let px = (event.offset_x as f64 / rect.width * 100.0).clamp(0.0, 100.0);
-                let py = (event.offset_y as f64 / rect.height * 100.0).clamp(0.0, 100.0);
-                return (format!("{:.1}%", px), format!("{:.1}%", py));
+                let px = (f64::from(event.offset_x) / rect.width * 100.0).clamp(0.0, 100.0);
+                let py = (f64::from(event.offset_y) / rect.height * 100.0).clamp(0.0, 100.0);
+                return (format!("{px:.1}%"), format!("{py:.1}%"));
             }
         }
         ("50%".to_string(), "50%".to_string())
@@ -265,14 +158,16 @@ pub fn Glow(props: GlowProps) -> Element {
     let onmousemove_handler = {
         let state = glow_state.clone();
         let style = glow_style.clone();
+        let gc = glow_color.clone();
+        let gr = glow_radius.clone();
 
         move |event: MouseEvent| {
             let (glow_x, glow_y) = calc_glow_percent(&event);
 
             let current = state.read();
             let new_state = GlowState {
-                mouse_x: event.offset_x as f64,
-                mouse_y: event.offset_y as f64,
+                mouse_x: f64::from(event.offset_x),
+                mouse_y: f64::from(event.offset_y),
                 is_inside: true,
                 interaction_level: current.interaction_level,
             };
@@ -282,7 +177,9 @@ pub fn Glow(props: GlowProps) -> Element {
                 + (active_opacity_clone.unwrap_or(base_opacity_clone * 2.0) - base_opacity_clone)
                     * new_state.interaction_level;
 
-            let new_style = build_style(
+            let new_style = build_glow_style(
+                &gc,
+                &gr,
                 new_state.interaction_level,
                 current_opacity,
                 &glow_x,
@@ -297,14 +194,16 @@ pub fn Glow(props: GlowProps) -> Element {
         let state = glow_state.clone();
         let style = glow_style.clone();
         let base_op = base_opacity_clone;
+        let gc = glow_color.clone();
+        let gr = glow_radius.clone();
 
         move |event: MouseEvent| {
             let (glow_x, glow_y) = calc_glow_percent(&event);
 
             let current = state.read();
             let new_state = GlowState {
-                mouse_x: event.offset_x as f64,
-                mouse_y: event.offset_y as f64,
+                mouse_x: f64::from(event.offset_x),
+                mouse_y: f64::from(event.offset_y),
                 interaction_level: 0.5,
                 is_inside: true,
             };
@@ -313,7 +212,9 @@ pub fn Glow(props: GlowProps) -> Element {
             let current_opacity = base_op
                 + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
                     * new_state.interaction_level;
-            let new_style = build_style(
+            let new_style = build_glow_style(
+                &gc,
+                &gr,
                 new_state.interaction_level,
                 current_opacity,
                 &glow_x,
@@ -326,6 +227,8 @@ pub fn Glow(props: GlowProps) -> Element {
     let onmouseleave_handler = {
         let state = glow_state.clone();
         let style = glow_style.clone();
+        let gc = glow_color.clone();
+        let gr = glow_radius.clone();
 
         move |_: MouseEvent| {
             let current = state.read();
@@ -336,7 +239,7 @@ pub fn Glow(props: GlowProps) -> Element {
             };
             state.set(new_state);
 
-            let new_style = build_style(0.0, 0.0, "50%", "50%");
+            let new_style = build_glow_style(&gc, &gr, 0.0, 0.0, "50%", "50%");
             style.set(new_style);
         }
     };
@@ -346,6 +249,8 @@ pub fn Glow(props: GlowProps) -> Element {
         let state = glow_state.clone();
         let style = glow_style.clone();
         let base_op = base_opacity_clone;
+        let gc = glow_color.clone();
+        let gr = glow_radius.clone();
 
         move |_: MouseEvent| {
             let current = state.read();
@@ -358,7 +263,14 @@ pub fn Glow(props: GlowProps) -> Element {
             let current_opacity = base_op
                 + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
                     * new_state.interaction_level;
-            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
+            let new_style = build_glow_style(
+                &gc,
+                &gr,
+                new_state.interaction_level,
+                current_opacity,
+                "50%",
+                "50%",
+            );
             style.set(new_style);
         }
     };
@@ -368,6 +280,8 @@ pub fn Glow(props: GlowProps) -> Element {
         let state = glow_state.clone();
         let style = glow_style.clone();
         let base_op = base_opacity_clone;
+        let gc = glow_color.clone();
+        let gr = glow_radius.clone();
 
         move |_: MouseEvent| {
             let current = state.read();
@@ -381,7 +295,14 @@ pub fn Glow(props: GlowProps) -> Element {
             let current_opacity = base_op
                 + (active_opacity_clone.unwrap_or(base_op * 2.0) - base_op)
                     * new_state.interaction_level;
-            let new_style = build_style(new_state.interaction_level, current_opacity, "50%", "50%");
+            let new_style = build_glow_style(
+                &gc,
+                &gr,
+                new_state.interaction_level,
+                current_opacity,
+                "50%",
+                "50%",
+            );
             style.set(new_style);
         }
     };
@@ -411,14 +332,6 @@ impl crate::styled::StyledComponent for GlowComponent {
     fn name() -> &'static str {
         "glow"
     }
-}
-
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
-pub struct GlowConfig {
-    pub glow: bool,
-    pub blur: GlowBlur,
-    pub color: GlowColor,
-    pub intensity: GlowIntensity,
 }
 
 #[define_props]

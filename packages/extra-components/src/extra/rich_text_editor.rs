@@ -10,6 +10,7 @@
 //! Formatting commands delegate to `platform::exec_command` (tairitsu WIT binding).
 //! Content retrieval uses `platform::get_inner_html` / `platform::set_content_editable`.
 
+use hikari_components::utils::sanitize_html;
 use serde::{Deserialize, Serialize};
 use tairitsu_vdom::{VElement, VNode, VText};
 
@@ -43,7 +44,7 @@ pub enum ListType {
     Unordered,
 }
 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct RichTextEditorState {
     pub content: String,
     pub mode: EditorMode,
@@ -77,7 +78,8 @@ impl RichTextEditorState {
         }
     }
 
-    pub fn with_mode(mut self, mode: EditorMode) -> Self {
+    #[must_use]
+    pub const fn with_mode(mut self, mode: EditorMode) -> Self {
         self.mode = mode;
         self
     }
@@ -87,12 +89,14 @@ impl RichTextEditorState {
         self
     }
 
-    pub fn with_show_toolbar(mut self, show: bool) -> Self {
+    #[must_use]
+    pub const fn with_show_toolbar(mut self, show: bool) -> Self {
         self.show_toolbar = show;
         self
     }
 
-    pub fn with_readonly(mut self, readonly: bool) -> Self {
+    #[must_use]
+    pub const fn with_readonly(mut self, readonly: bool) -> Self {
         self.readonly = readonly;
         self
     }
@@ -111,27 +115,31 @@ impl RichTextEditorState {
         self.content = content.into();
     }
 
-    pub fn set_focused(&mut self, focused: bool) {
+    pub const fn set_focused(&mut self, focused: bool) {
         self.is_focused = focused;
     }
 
-    pub fn set_selection(&mut self, start: Option<u32>, end: Option<u32>) {
+    pub const fn set_selection(&mut self, start: Option<u32>, end: Option<u32>) {
         self.selection_start = start;
         self.selection_end = end;
     }
 
-    pub fn has_selection(&self) -> bool {
+    #[must_use]
+    pub const fn has_selection(&self) -> bool {
         self.selection_start.is_some() && self.selection_end.is_some()
     }
 
+    #[must_use]
     pub fn is_bold(&self) -> bool {
         self.active_formats.contains(&TextFormat::Bold)
     }
 
+    #[must_use]
     pub fn is_italic(&self) -> bool {
         self.active_formats.contains(&TextFormat::Italic)
     }
 
+    #[must_use]
     pub fn is_underline(&self) -> bool {
         self.active_formats.contains(&TextFormat::Underline)
     }
@@ -144,11 +152,12 @@ impl RichTextEditorState {
         }
     }
 
-    pub fn set_alignment(&mut self, alignment: TextAlignment) {
+    pub const fn set_alignment(&mut self, alignment: TextAlignment) {
         self.alignment = alignment;
     }
 
-    pub fn format_command(format: TextFormat) -> &'static str {
+    #[must_use]
+    pub const fn format_command(format: TextFormat) -> &'static str {
         match format {
             TextFormat::Bold => "bold",
             TextFormat::Italic => "italic",
@@ -157,7 +166,8 @@ impl RichTextEditorState {
         }
     }
 
-    pub fn alignment_command(alignment: TextAlignment) -> &'static str {
+    #[must_use]
+    pub const fn alignment_command(alignment: TextAlignment) -> &'static str {
         match alignment {
             TextAlignment::Left => "justifyLeft",
             TextAlignment::Center => "justifyCenter",
@@ -166,20 +176,23 @@ impl RichTextEditorState {
         }
     }
 
-    pub fn list_command(list_type: ListType) -> &'static str {
+    #[must_use]
+    pub const fn list_command(list_type: ListType) -> &'static str {
         match list_type {
             ListType::Ordered => "insertOrderedList",
             ListType::Unordered => "insertUnorderedList",
         }
     }
 
+    #[must_use]
     pub fn height_style(&self) -> String {
         match &self.min_height {
-            Some(h) => format!("min-height: {};", h),
+            Some(h) => format!("min-height: {h};"),
             None => String::new(),
         }
     }
 
+    #[must_use]
     pub fn class_string(&self) -> String {
         if self.class.is_empty() {
             "hi-editor".to_string()
@@ -188,6 +201,7 @@ impl RichTextEditorState {
         }
     }
 
+    #[must_use]
     pub fn editor_class_string(&self) -> String {
         let mut cls = String::from("hi-editor-content");
         if self.readonly {
@@ -196,6 +210,7 @@ impl RichTextEditorState {
         cls
     }
 
+    #[must_use]
     pub fn placeholder_attr(&self) -> &str {
         &self.placeholder
     }
@@ -207,13 +222,13 @@ impl Default for RichTextEditorState {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ContentChangeEvent {
     pub content: String,
     pub html: String,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct FormatChangeEvent {
     pub format: TextFormat,
     pub active: bool,
@@ -294,6 +309,7 @@ pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
 }
 "#;
 
+#[must_use]
 pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
     let mut container_children: Vec<VNode> = Vec::new();
 
@@ -442,7 +458,8 @@ pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
         .attr("data-placeholder", state.placeholder_attr());
 
     if !state.content.is_empty() {
-        content = content.attr("dangerous_inner_html", &state.content);
+        let safe_content = sanitize_html(&state.content);
+        content = content.attr("dangerous_inner_html", &safe_content);
     }
 
     if !state.height_style().is_empty() {

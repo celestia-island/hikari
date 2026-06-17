@@ -12,9 +12,10 @@ use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, TypedClass};
 
 use crate::basic::{IconButton, IconButtonProps};
-use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps};
+use crate::feedback::{Glow, GlowProps};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct InputWrapperComponent;
 
@@ -27,6 +28,7 @@ pub enum InputWrapperSize {
 }
 
 impl InputWrapperSize {
+    #[must_use]
     pub fn icon_button_size(&self) -> crate::basic::IconButtonSize {
         match self {
             InputWrapperSize::Small => crate::basic::IconButtonSize::Small,
@@ -51,6 +53,7 @@ pub enum InputWrapperItem {
 }
 
 impl InputWrapperItem {
+    #[must_use]
     pub fn button(icon: MdiIcon, onclick: EventHandler<MouseEvent>) -> Self {
         Self::Button {
             icon,
@@ -60,6 +63,7 @@ impl InputWrapperItem {
         }
     }
 
+    #[must_use]
     pub fn button_with_color(
         icon: MdiIcon,
         onclick: EventHandler<MouseEvent>,
@@ -73,6 +77,7 @@ impl InputWrapperItem {
         }
     }
 
+    #[must_use]
     pub fn button_disabled(icon: MdiIcon) -> Self {
         Self::Button {
             icon,
@@ -82,10 +87,12 @@ impl InputWrapperItem {
         }
     }
 
+    #[must_use]
     pub fn icon(icon: MdiIcon) -> Self {
         Self::Icon { icon }
     }
 
+    #[must_use]
     pub fn custom(element: Element) -> Self {
         Self::Custom(Box::new(element))
     }

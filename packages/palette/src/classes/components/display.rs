@@ -42,35 +42,35 @@ pub enum CardClass {
 impl TypedClass for CardClass {
     fn class_name(&self) -> &'static str {
         match self {
-            CardClass::Card => "hi-card",
-            CardClass::CardHoverable => "hi-card-hoverable",
-            CardClass::CardBordered => "hi-card-bordered",
-            CardClass::CardFlat => "hi-card-flat",
-            CardClass::CardHeader => "hi-card-header",
-            CardClass::CardHeaderLeft => "hi-card-header-left",
-            CardClass::CardHeaderAvatar => "hi-card-header-avatar",
-            CardClass::CardHeaderAction => "hi-card-header-action",
-            CardClass::CardTitle => "hi-card-title",
-            CardClass::CardSubtitle => "hi-card-subtitle",
-            CardClass::CardExtra => "hi-card-extra",
-            CardClass::CardBody => "hi-card-body",
-            CardClass::CardFooter => "hi-card-footer",
-            CardClass::CardMedia => "hi-card-media",
-            CardClass::CardCover => "hi-card-cover",
-            CardClass::CardActions => "hi-card-actions",
-            CardClass::CardActionsNoSpacing => "hi-card-actions-no-spacing",
-            CardClass::CardSpotlightWrapper => "hi-card-spotlight-wrapper",
-            CardClass::CardSm => "hi-card-sm",
-            CardClass::CardMd => "hi-card-md",
-            CardClass::CardLg => "hi-card-lg",
-            CardClass::CardGrid => "hi-card-grid",
-            CardClass::CardGrid2 => "hi-card-grid-2",
-            CardClass::CardGrid3 => "hi-card-grid-3",
-            CardClass::CardGrid4 => "hi-card-grid-4",
-            CardClass::CardLoading => "hi-card-loading",
-            CardClass::CardGlow => "hi-card-glow",
-            CardClass::CardAnimateIn => "hi-card-animate-in",
-            CardClass::CardStagger => "hi-card-stagger",
+            Self::Card => "hi-card",
+            Self::CardHoverable => "hi-card-hoverable",
+            Self::CardBordered => "hi-card-bordered",
+            Self::CardFlat => "hi-card-flat",
+            Self::CardHeader => "hi-card-header",
+            Self::CardHeaderLeft => "hi-card-header-left",
+            Self::CardHeaderAvatar => "hi-card-header-avatar",
+            Self::CardHeaderAction => "hi-card-header-action",
+            Self::CardTitle => "hi-card-title",
+            Self::CardSubtitle => "hi-card-subtitle",
+            Self::CardExtra => "hi-card-extra",
+            Self::CardBody => "hi-card-body",
+            Self::CardFooter => "hi-card-footer",
+            Self::CardMedia => "hi-card-media",
+            Self::CardCover => "hi-card-cover",
+            Self::CardActions => "hi-card-actions",
+            Self::CardActionsNoSpacing => "hi-card-actions-no-spacing",
+            Self::CardSpotlightWrapper => "hi-card-spotlight-wrapper",
+            Self::CardSm => "hi-card-sm",
+            Self::CardMd => "hi-card-md",
+            Self::CardLg => "hi-card-lg",
+            Self::CardGrid => "hi-card-grid",
+            Self::CardGrid2 => "hi-card-grid-2",
+            Self::CardGrid3 => "hi-card-grid-3",
+            Self::CardGrid4 => "hi-card-grid-4",
+            Self::CardLoading => "hi-card-loading",
+            Self::CardGlow => "hi-card-glow",
+            Self::CardAnimateIn => "hi-card-animate-in",
+            Self::CardStagger => "hi-card-stagger",
         }
     }
 }
@@ -86,10 +86,10 @@ pub enum SpotlightClass {
 impl TypedClass for SpotlightClass {
     fn class_name(&self) -> &'static str {
         match self {
-            SpotlightClass::Spotlight => "hi-spotlight",
-            SpotlightClass::SpotlightWrapper => "hi-spotlight-wrapper",
-            SpotlightClass::SpotlightAuto => "hi-spotlight-auto",
-            SpotlightClass::SpotlightTheme => "hi-spotlight-theme",
+            Self::Spotlight => "hi-spotlight",
+            Self::SpotlightWrapper => "hi-spotlight-wrapper",
+            Self::SpotlightAuto => "hi-spotlight-auto",
+            Self::SpotlightTheme => "hi-spotlight-theme",
         }
     }
 }
@@ -116,21 +116,21 @@ pub enum GlowClass {
 impl TypedClass for GlowClass {
     fn class_name(&self) -> &'static str {
         match self {
-            GlowClass::Glow => "hi-glow",
-            GlowClass::GlowWrapper => "hi-glow-wrapper",
-            GlowClass::GlowWrapperBlock => "hi-glow-wrapper-block",
-            GlowClass::GlowBlurNone => "hi-glow-blur-none",
-            GlowClass::GlowBlurLight => "hi-glow-blur-light",
-            GlowClass::GlowBlurMedium => "hi-glow-blur-medium",
-            GlowClass::GlowBlurHeavy => "hi-glow-blur-heavy",
-            GlowClass::GlowGhost => "hi-glow-ghost",
-            GlowClass::GlowPrimary => "hi-glow-primary",
-            GlowClass::GlowSecondary => "hi-glow-secondary",
-            GlowClass::GlowDanger => "hi-glow-danger",
-            GlowClass::GlowSuccess => "hi-glow-success",
-            GlowClass::GlowDim => "hi-glow-dim",
-            GlowClass::GlowSoft => "hi-glow-soft",
-            GlowClass::GlowBright => "hi-glow-bright",
+            Self::Glow => "hi-glow",
+            Self::GlowWrapper => "hi-glow-wrapper",
+            Self::GlowWrapperBlock => "hi-glow-wrapper-block",
+            Self::GlowBlurNone => "hi-glow-blur-none",
+            Self::GlowBlurLight => "hi-glow-blur-light",
+            Self::GlowBlurMedium => "hi-glow-blur-medium",
+            Self::GlowBlurHeavy => "hi-glow-blur-heavy",
+            Self::GlowGhost => "hi-glow-ghost",
+            Self::GlowPrimary => "hi-glow-primary",
+            Self::GlowSecondary => "hi-glow-secondary",
+            Self::GlowDanger => "hi-glow-danger",
+            Self::GlowSuccess => "hi-glow-success",
+            Self::GlowDim => "hi-glow-dim",
+            Self::GlowSoft => "hi-glow-soft",
+            Self::GlowBright => "hi-glow-bright",
         }
     }
 }
@@ -152,16 +152,16 @@ pub enum BadgeClass {
 impl TypedClass for BadgeClass {
     fn class_name(&self) -> &'static str {
         match self {
-            BadgeClass::Badge => "hi-badge",
-            BadgeClass::Dot => "hi-badge-dot",
-            BadgeClass::Primary => "hi-badge-primary",
-            BadgeClass::Secondary => "hi-badge-secondary",
-            BadgeClass::Success => "hi-badge-success",
-            BadgeClass::Warning => "hi-badge-warning",
-            BadgeClass::Danger => "hi-badge-danger",
-            BadgeClass::Info => "hi-badge-info",
-            BadgeClass::Wrapper => "hi-badge-wrapper",
-            BadgeClass::DotInner => "hi-badge-dot-inner",
+            Self::Badge => "hi-badge",
+            Self::Dot => "hi-badge-dot",
+            Self::Primary => "hi-badge-primary",
+            Self::Secondary => "hi-badge-secondary",
+            Self::Success => "hi-badge-success",
+            Self::Warning => "hi-badge-warning",
+            Self::Danger => "hi-badge-danger",
+            Self::Info => "hi-badge-info",
+            Self::Wrapper => "hi-badge-wrapper",
+            Self::DotInner => "hi-badge-dot-inner",
         }
     }
 }
@@ -181,14 +181,14 @@ pub enum TagClass {
 impl TypedClass for TagClass {
     fn class_name(&self) -> &'static str {
         match self {
-            TagClass::Tag => "hi-tag",
-            TagClass::Default => "hi-tag-default",
-            TagClass::Primary => "hi-tag-primary",
-            TagClass::Success => "hi-tag-success",
-            TagClass::Warning => "hi-tag-warning",
-            TagClass::Danger => "hi-tag-danger",
-            TagClass::Info => "hi-tag-info",
-            TagClass::Close => "hi-tag-close",
+            Self::Tag => "hi-tag",
+            Self::Default => "hi-tag-default",
+            Self::Primary => "hi-tag-primary",
+            Self::Success => "hi-tag-success",
+            Self::Warning => "hi-tag-warning",
+            Self::Danger => "hi-tag-danger",
+            Self::Info => "hi-tag-info",
+            Self::Close => "hi-tag-close",
         }
     }
 }
@@ -203,9 +203,9 @@ pub enum DescriptionListClass {
 impl TypedClass for DescriptionListClass {
     fn class_name(&self) -> &'static str {
         match self {
-            DescriptionListClass::List => "hi-description-list",
-            DescriptionListClass::Term => "hi-description-list-term",
-            DescriptionListClass::Detail => "hi-description-list-detail",
+            Self::List => "hi-description-list",
+            Self::Term => "hi-description-list-term",
+            Self::Detail => "hi-description-list-detail",
         }
     }
 }
@@ -223,12 +223,12 @@ pub enum EmptyClass {
 impl TypedClass for EmptyClass {
     fn class_name(&self) -> &'static str {
         match self {
-            EmptyClass::Container => "hi-empty-container",
-            EmptyClass::Image => "hi-empty-image",
-            EmptyClass::Img => "hi-empty-img",
-            EmptyClass::Title => "hi-empty-title",
-            EmptyClass::Description => "hi-empty-description",
-            EmptyClass::Action => "hi-empty-action",
+            Self::Container => "hi-empty-container",
+            Self::Image => "hi-empty-image",
+            Self::Img => "hi-empty-img",
+            Self::Title => "hi-empty-title",
+            Self::Description => "hi-empty-description",
+            Self::Action => "hi-empty-action",
         }
     }
 }
@@ -244,10 +244,10 @@ pub enum QRCodeClass {
 impl TypedClass for QRCodeClass {
     fn class_name(&self) -> &'static str {
         match self {
-            QRCodeClass::Container => "hi-qrcode-container",
-            QRCodeClass::Title => "hi-qrcode-title",
-            QRCodeClass::Wrapper => "hi-qrcode-wrapper",
-            QRCodeClass::Image => "hi-qrcode-image",
+            Self::Container => "hi-qrcode-container",
+            Self::Title => "hi-qrcode-title",
+            Self::Wrapper => "hi-qrcode-wrapper",
+            Self::Image => "hi-qrcode-image",
         }
     }
 }
@@ -265,12 +265,12 @@ pub enum ImageClass {
 impl TypedClass for ImageClass {
     fn class_name(&self) -> &'static str {
         match self {
-            ImageClass::ImageContainer => "hi-image-container",
-            ImageClass::Image => "hi-image",
-            ImageClass::Logo => "hi-logo",
-            ImageClass::ImagePlaceholder => "hi-image-placeholder",
-            ImageClass::ImageSkeleton => "hi-image-skeleton",
-            ImageClass::ImageIconPlaceholder => "hi-image-icon-placeholder",
+            Self::ImageContainer => "hi-image-container",
+            Self::Image => "hi-image",
+            Self::Logo => "hi-logo",
+            Self::ImagePlaceholder => "hi-image-placeholder",
+            Self::ImageSkeleton => "hi-image-skeleton",
+            Self::ImageIconPlaceholder => "hi-image-icon-placeholder",
         }
     }
 }

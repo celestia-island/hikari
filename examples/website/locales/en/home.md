@@ -27,7 +27,7 @@ use hikari_components::{ThemeProvider, Button};
 
 fn App() -> Element {
     rsx! {
-        ThemeProvider { palette: "hikari" } {
+        ThemeProvider { initial_palette: "hikari" } {
             Button { label: "Hello, Hikari!" }
         }
     }

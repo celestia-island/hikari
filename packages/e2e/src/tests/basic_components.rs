@@ -1,7 +1,7 @@
 // hikari-e2e/src/tests/basic_components.rs
 // E2E tests for Layer 1 basic components
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::{path::PathBuf, time::{Duration, Instant}};
 
 use thirtyfour::{By, WebDriver};
@@ -124,7 +124,7 @@ impl BasicComponentsTests {
 
         // Create screenshots directory if it doesn't exist
         std::fs::create_dir_all(&screenshots_dir)
-            .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
+            .map_err(|e| anyhow!("Failed to create screenshots directory: {}", e))?;
 
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
         let filename = format!("{}_{}_{}.png", component_name, status, timestamp);
@@ -132,12 +132,12 @@ impl BasicComponentsTests {
 
         // Take screenshot as bytes
         let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
-            anyhow::anyhow!("Failed to take screenshot for {}: {}", component_name, e)
+            anyhow!("Failed to take screenshot for {}: {}", component_name, e)
         })?;
 
         // Save screenshot to file
         std::fs::write(&filepath, screenshot_data)
-            .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
+            .map_err(|e| anyhow!("Failed to save screenshot: {}", e))?;
 
         info!("Screenshot saved to: {}", filepath.display());
 
@@ -155,24 +155,24 @@ impl BasicComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let button = driver.find(By::Css(".hi-button")).await.map_err(|e| {
             warn!("Button element not found: {}", e);
-            anyhow::anyhow!("Button element not found: {}", e)
+            anyhow!("Button element not found: {}", e)
         })?;
 
         info!("Button element found");
 
         // Take initial screenshot
-        let _initial_screenshot = Self::take_screenshot(driver, "Button", "initial").await;
+        let _ = Self::take_screenshot(driver, "Button", "initial").await;
 
         button
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click button: {}", e))?;
         info!("Button clicked successfully");
 
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -189,13 +189,13 @@ impl BasicComponentsTests {
         let class_attr = button
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get button attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for button"))?;
 
         if !class_attr.contains("hi-button") {
             // Take screenshot on failure
-            let _error_screenshot = Self::take_screenshot(driver, "Button", "failure").await;
+            let _ = Self::take_screenshot(driver, "Button", "failure").await;
 
             return Ok(TestResult::failure_with_screenshot(
                 "Button",
@@ -218,15 +218,15 @@ impl BasicComponentsTests {
         button
             .click()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
+            .map_err(|e| anyhow!("Failed to click button: {}", e))?;
         info!("Button clicked successfully");
 
         let class_attr = button
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get button attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for button"))?;
 
         if !class_attr.contains("hi-button") {
             return Ok(TestResult::failure(
@@ -257,13 +257,13 @@ impl BasicComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let input = driver.find(By::Css(".hi-input")).await.map_err(|e| {
             warn!("Input element not found: {}", e);
-            anyhow::anyhow!("Input element not found: {}", e)
+            anyhow!("Input element not found: {}", e)
         })?;
 
         info!("Input element found");
@@ -271,15 +271,15 @@ impl BasicComponentsTests {
         input
             .send_keys("test input")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to type in input: {}", e))?;
+            .map_err(|e| anyhow!("Failed to type in input: {}", e))?;
         info!("Text entered successfully");
 
         let class_attr = input
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get input attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get input attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for input"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for input"))?;
 
         if !class_attr.contains("hi-input") {
             return Ok(TestResult::failure(
@@ -310,13 +310,13 @@ impl BasicComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let card = driver.find(By::Css(".hi-card")).await.map_err(|e| {
             warn!("Card element not found: {}", e);
-            anyhow::anyhow!("Card element not found: {}", e)
+            anyhow!("Card element not found: {}", e)
         })?;
 
         info!("Card element found");
@@ -324,9 +324,9 @@ impl BasicComponentsTests {
         let class_attr = card
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get card attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get card attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for card"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for card"))?;
 
         if !class_attr.contains("hi-card") {
             return Ok(TestResult::failure(
@@ -356,13 +356,13 @@ impl BasicComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let divider = driver.find(By::Css(".hi-divider")).await.map_err(|e| {
             warn!("Divider element not found: {}", e);
-            anyhow::anyhow!("Divider element not found: {}", e)
+            anyhow!("Divider element not found: {}", e)
         })?;
 
         info!("Divider element found");
@@ -370,9 +370,9 @@ impl BasicComponentsTests {
         let class_attr = divider
             .attr("class")
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get divider attributes: {}", e))?;
+            .map_err(|e| anyhow!("Failed to get divider attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for divider"))?;
+            class_attr.ok_or_else(|| anyhow!("No class attribute found for divider"))?;
 
         if !class_attr.contains("hi-divider") {
             return Ok(TestResult::failure(

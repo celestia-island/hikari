@@ -12,7 +12,7 @@
 //! ## Supporting Components
 //!
 //! - [`Cell`] - Table cell rendering
-//! - [`Column`] - Table column definitions
+//! - [`ColumnDef`] - Table column definitions
 //! - [`TreeNode`] - Tree node representation
 //! - [`TreeNodeArrow`] - Tree node expand/collapse arrow
 //! - [`TreeNodeContent`] - Tree node content wrapper

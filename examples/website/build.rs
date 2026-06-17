@@ -45,40 +45,28 @@ fn main() {
         );
     }
 
-    // Get current working directory for debugging
-    if let Ok(cwd) = std::env::current_dir() {
-        println!("cargo:warning=📂 Current dir: {:?}", cwd);
+    // Step 2: Sync docs content from root docs/ to public/docs/
+    println!("cargo:warning=📄 Syncing documentation...");
+    let sync_script = workspace_root.join("scripts/sync_docs.py");
+    if sync_script.exists() {
+        match Command::new("python")
+            .arg(&sync_script)
+            .current_dir(&workspace_root)
+            .output()
+        {
+            Ok(output) => {
+                if output.status.success() {
+                    println!("cargo:warning=✅ Documentation synced");
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    println!("cargo:warning=⚠️  Failed to sync docs: {}", stderr);
+                }
+            }
+            Err(e) => println!("cargo:warning=⚠️  Failed to run sync_docs.py: {}", e),
+        }
     }
 
-    // Get manifest directory
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-    let manifest_path = Path::new(&manifest_dir);
-
-    println!("cargo:warning=📂 CARGO_MANIFEST_DIR: {:?}", manifest_dir);
-
-    // Workspace root is two levels up from examples/website
-    // Use lexical path (not canonicalize) to avoid UNC path issues
-    let workspace_root = manifest_path.join("../..");
-
-    println!(
-        "cargo:warning=📂 Workspace root (relative): {:?}",
-        workspace_root
-    );
-
-    // Use absolute() instead of canonicalize() to avoid UNC paths on Windows
-    // UNC paths (\\?\...) don't work properly with some file operations
-    let workspace_root = if let Ok(abs) = path_absolute(&workspace_root) {
-        abs
-    } else {
-        workspace_root.clone()
-    };
-
-    println!(
-        "cargo:warning=📂 Workspace root (resolved): {:?}",
-        workspace_root
-    );
-
-    let staged_public_dir = manifest_path.join("public");
+    let staged_public_dir = workspace_root.join("examples/website/public");
     let css_bundle_path = staged_public_dir.join("styles/bundle.css");
 
     println!(

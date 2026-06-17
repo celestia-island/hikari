@@ -1,8 +1,8 @@
 use tairitsu_vdom::{EventHandler, MouseEvent, VText};
 
 use crate::basic::button::{ButtonAnimation, ButtonProps, ButtonSize, ButtonVariant, ButtonWidth};
-use crate::feedback::glow::{GlowBlur, GlowColor, GlowIntensity};
 use crate::prelude::*;
+use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct ButtonBuilder {
     label: Option<String>,
@@ -22,6 +22,7 @@ pub struct ButtonBuilder {
 }
 
 impl ButtonBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             label: None,
@@ -46,56 +47,67 @@ impl ButtonBuilder {
         self
     }
 
+    #[must_use]
     pub fn variant(mut self, variant: ButtonVariant) -> Self {
         self.variant = variant;
         self
     }
 
+    #[must_use]
     pub fn size(mut self, size: ButtonSize) -> Self {
         self.size = size;
         self
     }
 
+    #[must_use]
     pub fn width(mut self, width: ButtonWidth) -> Self {
         self.width = width;
         self
     }
 
+    #[must_use]
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
 
+    #[must_use]
     pub fn loading(mut self, loading: bool) -> Self {
         self.loading = loading;
         self
     }
 
+    #[must_use]
     pub fn block(mut self, block: bool) -> Self {
         self.block = block;
         self
     }
 
+    #[must_use]
     pub fn glow(mut self, enabled: bool) -> Self {
         self.glow = enabled;
         self
     }
 
+    #[must_use]
     pub fn glow_blur(mut self, blur: GlowBlur) -> Self {
         self.glow_blur = blur;
         self
     }
 
+    #[must_use]
     pub fn glow_color(mut self, color: GlowColor) -> Self {
         self.glow_color = Some(color);
         self
     }
 
+    #[must_use]
     pub fn glow_intensity(mut self, intensity: GlowIntensity) -> Self {
         self.glow_intensity = intensity;
         self
     }
 
+    #[must_use]
     pub fn animation(mut self, animation: ButtonAnimation) -> Self {
         self.animation = animation;
         self
@@ -111,6 +123,7 @@ impl ButtonBuilder {
         self
     }
 
+    #[must_use]
     pub fn build(self) -> Element {
         let label = self.label.unwrap_or_default();
         let children = VNode::Text(VText::new(&label));

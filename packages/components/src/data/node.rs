@@ -1,8 +1,6 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-#![allow(clippy::needless_update)]
-
 use hikari_palette::classes::TreeNodeClass;
 use tairitsu_hooks::ReactiveSignal;
 use tairitsu_style::ClassesBuilder;
@@ -102,12 +100,10 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
                     let child_sk = sk.clone();
                     let child_expanded = child_ek
                         .as_ref()
-                        .map(|s| s.read().contains(&child.key))
-                        .unwrap_or(false);
+                        .is_some_and(|s| s.read().contains(&child.key));
                     let child_selected = child_sk
                         .as_ref()
-                        .map(|s| s.read().contains(&child.key))
-                        .unwrap_or(false);
+                        .is_some_and(|s| s.read().contains(&child.key));
 
                     TreeNode(TreeNodeProps {
                         node_key: child.key.clone(),

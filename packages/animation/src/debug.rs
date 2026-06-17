@@ -42,6 +42,7 @@ impl AnimationDebugProvider {
         GlobalAnimationManager::kill_all();
     }
 
+    #[must_use]
     pub fn get_state() -> AnimationDebugState {
         GlobalAnimationManager::get_state()
     }
@@ -50,10 +51,12 @@ impl AnimationDebugProvider {
         GlobalAnimationManager::set_test_mode(enabled);
     }
 
+    #[must_use]
     pub fn is_test_mode() -> bool {
         GlobalAnimationManager::is_test_mode()
     }
 
+    #[must_use]
     pub fn is_frozen() -> bool {
         GlobalAnimationManager::is_frozen()
     }

@@ -207,7 +207,8 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
 
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         if let Some(rect) = get_bounding_client_rect(&wrapper) {
                             let relative_x = client_x as f64 - rect.x;
@@ -218,8 +219,16 @@ pub fn Glow(props: GlowProps) -> Element {
                             if width > 0.0 && height > 0.0 {
                                 let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
                                 let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-                                set_style_property(&wrapper, "--glow-x", &format!("{:.1}%", percent_x));
-                                set_style_property(&wrapper, "--glow-y", &format!("{:.1}%", percent_y));
+                                set_style_property(
+                                    &wrapper,
+                                    "--glow-x",
+                                    &format!("{:.1}%", percent_x),
+                                );
+                                set_style_property(
+                                    &wrapper,
+                                    "--glow-y",
+                                    &format!("{:.1}%", percent_y),
+                                );
                             }
                         }
                     }
@@ -236,7 +245,8 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
                     }
@@ -253,7 +263,8 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0");
                     }
@@ -270,7 +281,8 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
                     }
@@ -287,7 +299,8 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) = get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                    if let Some(wrapper) =
+                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
                     {
                         let target = get_intensity_for_state(*state_clone.borrow());
                         set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());

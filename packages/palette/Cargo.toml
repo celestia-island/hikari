@@ -15,3 +15,6 @@ yuuka = "0.6"
 [features]
 chinese-names = []  # Include Chinese color names (disabled by default to minimize wasm size)
 
+[build-dependencies]
+regex-lite = "^0.1"
+

@@ -22,7 +22,7 @@ exclude = [
 version = "0.1.0"
 edition = "2024"
 authors = ["Hikari Contributors"]
-license = "SySL-1.0"
+license-file = "LICENSE"
 
 [workspace.dependencies]
 # =================================================================

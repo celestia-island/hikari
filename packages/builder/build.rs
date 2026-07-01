@@ -7,8 +7,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tairitsu_packager::styles::ScssCompiler;
-
 fn main() {
     if let Err(e) = build() {
         eprintln!("❌ Build failed: {}", e);
@@ -182,7 +180,7 @@ pub fn default_components() -> HashSet<String> {
 
 /// Compile SCSS to CSS bundle using tairitsu-packager's ScssCompiler
 fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
-    println!("🎨 Compiling SCSS with tairitsu-packager...");
+    println!("🎨 Compiling SCSS with grass...");
 
     // Use index.scss as entry point (has @import for all components)
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
@@ -203,11 +201,15 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
         println!("🗑️  Removed old bundle.css");
     }
 
-    // Create compiler with default options (minify enabled)
-    let compiler = ScssCompiler::new();
-
-    // Compile the SCSS file
-    let css_content = compiler.compile_file(&index_scss)?;
+    // Compile SCSS -> CSS with grass directly (minified). Previously this went
+    // through tairitsu-packager, which dragged in the whole WASM toolchain
+    // (wasmtime) for icon-only consumers like hikari-icons; grass is a pure-Rust
+    // Sass compiler and is all this build step needs.
+    let opts = grass::Options::default()
+        .style(grass::OutputStyle::Compressed)
+        .input_syntax(grass::InputSyntax::Scss);
+    let css_content = grass::from_path(&index_scss, &opts)
+        .map_err(|e| anyhow::anyhow!("Failed to compile SCSS {:?}: {}", index_scss, e))?;
 
     // Get file size
     let file_size = css_content.len();

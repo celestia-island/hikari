@@ -1,0 +1,120 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/visual-regression.yml'
+      - 'packages/**/*'
+      - 'examples/**/*'
+      - 'docs/**/*'
+      - '**.scss'
+      - '**.css'
+  push:
+    branches: [master, dev]
+  workflow_dispatch:
+
+concurrency:
+  group: visual-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-regression:
+    name: Visual Regression Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout hikari
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache MDI icons
+        id: mdi-cache
+        uses: actions/cache@v4
+        with:
+          path: icons/mdi
+          key: mdi-icons-v1
+
+      - name: Fetch MDI icons
+        if: steps.mdi-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Install tairitsu CLI
+        run: cargo install tairitsu-packager --locked
+
+      - name: Start dev server with debug API
+        run: |
+          cd examples/website && tairitsu --manifest-path Cargo.toml dev --debug --tty &
+          echo "Waiting for debug API..."
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+              echo "Debug API ready (took ~$((i * 5))s)"
+              break
+            fi
+            if [ "$i" -eq 90 ]; then
+              echo "::error::Debug API did not become ready in time"
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Set viewport to 1920x1080
+        run: |
+          curl -sf -X POST http://localhost:3001/resize \
+            -H 'Content-Type: application/json' \
+            -d '{"width": 1920, "height": 1080}'
+
+      - name: Capture screenshots
+        run: python3 scripts/visual-ci/capture_debug_api.py --debug-url http://localhost:3001 --site-url http://localhost:3000 --output target/screenshots --wait 3
+
+      - name: Run visual comparison
+        if: always()
+        run: |
+          tairitsu visual-diff \
+            --actual-dir target/screenshots \
+            --baseline-dir tests/visual/baseline/default \
+            --output-dir target/visual-diff \
+            --tolerance 0.02
+        continue-on-error: true
+
+      - name: Upload diff artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-results
+          path: |
+            target/visual-diff/
+            target/screenshots/
+          retention-days: 14
+
+      - name: Check results
+        if: always()
+        run: |
+          if [ -f target/visual-diff/report.json ]; then
+            passed=$(jq '.passed' target/visual-diff/report.json)
+            failed=$(jq '.failed' target/visual-diff/report.json)
+            total=$(jq '.total' target/visual-diff/report.json)
+            echo "Total: $total, Passed: $passed, Failed: $failed"
+            if [ "$failed" -gt 0 ]; then exit 1; fi
+          else
+            echo "::warning::No report.json found — possibly no baselines yet"
+            exit 0
+          fi
+
+      - name: Shutdown dev server
+        if: always()
+        run: |
+          cd examples/website && tairitsu --manifest-path Cargo.toml --shutdown || true

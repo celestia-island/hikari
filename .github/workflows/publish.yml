@@ -1,0 +1,102 @@
+name: Publish to crates.io
+on:
+  push:
+    tags: [v*]
+
+jobs:
+  verify-versions:
+    name: Verify version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract tag version
+        id: tag
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      - name: Check all publishable packages match tag
+        run: |
+          TAG_VERSION="${{ steps.tag.outputs.version }}"
+          FAIL=0
+          PACKAGES=(
+            "hikari-palette:packages/palette"
+            "hikari-animation:packages/animation"
+            "hikari-theme:packages/theme"
+            "hikari-icons:packages/icons"
+            "hikari-components:packages/components"
+            "hikari-extra-components:packages/extra-components"
+          )
+          for ENTRY in "${PACKAGES[@]}"; do
+            PKG="${ENTRY%%:*}"
+            DIR="${ENTRY##*:}"
+            CARGO_TOML="$DIR/Cargo.toml"
+            if [ ! -f "$CARGO_TOML" ]; then
+              echo "::error::$CARGO_TOML not found"
+              FAIL=1
+              continue
+            fi
+            VER=$(grep -oP '^version\s*=\s*"\K[^"]+' "$CARGO_TOML" 2>/dev/null || true)
+            if [ -z "$VER" ]; then
+              VER=$(grep -oP 'version\.workspace\s*=\s*true' "$CARGO_TOML" >/dev/null 2>&1 && echo "workspace" || echo "MISSING")
+            fi
+            if [ "$VER" = "workspace" ]; then
+              ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
+              echo "::notice::$PKG uses workspace version ($ROOT_VER) — OK"
+            elif [ "$VER" = "$TAG_VERSION" ]; then
+              echo "::notice::$PKG version ($VER) matches tag — OK"
+            else
+              echo "::error::$PKG version ($VER) != tag ($TAG_VERSION) in $CARGO_TOML"
+              FAIL=1
+            fi
+          done
+          ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
+          if [ "$ROOT_VER" != "$TAG_VERSION" ]; then
+            echo "::error::workspace.package version ($ROOT_VER) != tag ($TAG_VERSION)"
+            FAIL=1
+          fi
+          if [ "$FAIL" -ne 0 ]; then
+            echo "::error::Version mismatch detected."
+            exit 1
+          fi
+          echo "All versions match tag v$TAG_VERSION"
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: verify-versions
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache MDI icons
+        id: mdi-cache
+        uses: actions/cache@v4
+        with:
+          path: icons/mdi
+          key: mdi-icons-v1
+
+      - name: Fetch MDI icons
+        if: steps.mdi-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Generate icon data
+        run: cargo build -p hikari-icons
+
+      - name: Strip examples from workspace to avoid git-dep conflicts
+        run: |
+          pip install tomlkit
+          python3 -c "
+          import tomlkit, os
+          with open('Cargo.toml') as f: d = tomlkit.load(f)
+          d['workspace']['members'] = [m for m in d['workspace']['members'] if not m.startswith('examples/')]
+          tmp = 'Cargo.toml.tmp'
+          with open(tmp, 'w') as f: tomlkit.dump(d, f)
+          os.replace(tmp, 'Cargo.toml')
+          "
+
+      - run: cargo login ${{ secrets.CRATES_IO_API_TOKEN }}
+
+      - run: python3 scripts/publish_crates.py

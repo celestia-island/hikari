@@ -1,0 +1,72 @@
+name: Coverage
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    paths:
+      - '.github/workflows/coverage.yml'
+      - 'packages/**/*'
+      - 'examples/**/*'
+      - 'Cargo.toml'
+      - 'justfile'
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache MDI icons
+        id: mdi-cache
+        uses: actions/cache@v4
+        with:
+          path: icons/mdi
+          key: mdi-icons-v1
+
+      - name: Fetch MDI icons
+        if: steps.mdi-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Setup toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate coverage report (HTML + lcov)
+        run: |
+          cargo llvm-cov --workspace --lcov --output-path lcov.info
+          cargo llvm-cov --workspace --html
+
+      - name: Summarize coverage
+        run: |
+          cargo llvm-cov --workspace --summary-only 2>&1 | tee coverage-summary.txt
+          echo ""
+          echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n +1 coverage-summary.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            lcov.info
+            coverage-summary.txt
+            target/llvm-cov/html/
+          retention-days: 30

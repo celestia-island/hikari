@@ -1,0 +1,217 @@
+// hikari-extra-components/styles/components/user_guide.scss
+// User guide component styles with 
+
+// ============================================
+// User Guide Backdrop
+// ============================================
+
+.hi-user-guide-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+// ============================================
+// User Guide Container
+// ============================================
+
+.hi-user-guide {
+    position: relative;
+    z-index: 9999;
+    width: 90%;
+    max-width: 520px;
+    background: var(--hi-surface);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: hi-guide-enter 0.3s ease;
+}
+
+[data-theme="dark"] .hi-user-guide {
+    background: var(--hi-background);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+// ============================================
+// User Guide Header
+// ============================================
+
+.hi-user-guide-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--hi-border);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .hi-user-guide-header {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom-color: var(--hi-border);
+}
+
+// ============================================
+// User Guide Close Button
+// ============================================
+
+.hi-user-guide-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--hi-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--hi-text-primary);
+    }
+}
+
+[data-theme="dark"] .hi-user-guide-close {
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+// ============================================
+// User Guide Title & Description
+// ============================================
+
+.hi-user-guide-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--hi-text-primary);
+    margin: 0;
+}
+
+[data-theme="dark"] .hi-user-guide-title {
+    color: var(--hi-text-primary);
+}
+
+.hi-user-guide-description {
+    font-size: 14px;
+    color: var(--hi-text-secondary);
+    line-height: 1.5;
+    padding: 16px 20px;
+}
+
+[data-theme="dark"] .hi-user-guide-description {
+    color: var(--hi-text-secondary);
+}
+
+// ============================================
+// User Guide Content
+// ============================================
+
+.hi-user-guide-content {
+    padding: 0 20px 20px;
+}
+
+// ============================================
+// User Guide Step
+// ============================================
+
+.hi-user-guide-step {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--hi-border);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+[data-theme="dark"] .hi-user-guide-step {
+    border-bottom-color: var(--hi-border);
+}
+
+// ============================================
+// User Guide Navigation
+// ============================================
+
+.hi-user-guide-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-top: 1px solid var(--hi-border);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .hi-user-guide-navigation {
+    background: rgba(255, 255, 255, 0.02);
+    border-top-color: var(--hi-border);
+}
+
+// ============================================
+// Position Variants
+// ============================================
+
+.hi-user-guide-position-center {
+    .hi-user-guide-backdrop {
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.hi-user-guide-position-top-left {
+    .hi-user-guide {
+        position: fixed;
+        top: 24px;
+        left: 24px;
+        margin: 0;
+    }
+}
+
+.hi-user-guide-position-top-right {
+    .hi-user-guide {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        margin: 0;
+    }
+}
+
+.hi-user-guide-position-bottom-left {
+    .hi-user-guide {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        margin: 0;
+    }
+}
+
+.hi-user-guide-position-bottom-right {
+    .hi-user-guide {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        margin: 0;
+    }
+}
+
+// ============================================
+// Animations
+// ============================================
+
+@keyframes hi-guide-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

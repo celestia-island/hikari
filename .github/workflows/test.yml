@@ -1,0 +1,50 @@
+name: Tests
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/test.yml'
+      - 'packages/**/*'
+      - 'examples/**/*'
+      - 'Cargo.toml'
+      - 'justfile'
+  push:
+    branches: [master, dev]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain:
+          - stable
+          - nightly
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache MDI icons
+        id: mdi-cache
+        uses: actions/cache@v4
+        with:
+          path: icons/mdi
+          key: mdi-icons-v1
+
+      - name: Fetch MDI icons
+        if: steps.mdi-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/icons/fetch_mdi_icons.py
+
+      - name: Setup toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Run tests
+        run: just test

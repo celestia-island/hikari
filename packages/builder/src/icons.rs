@@ -276,9 +276,6 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("// Total selected icons: ");
     output.push_str(&selected_icons.len().to_string());
     output.push_str("\n\n");
-    output.push_str("#![allow(non_camel_case_types)]\n");
-    output.push_str("#![allow(non_snake_case)]\n");
-    output.push_str("#![allow(dead_code)]\n\n");
 
     // Type definitions
     output.push_str("/// Path data for generating Rust constants\n");

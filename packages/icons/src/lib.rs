@@ -22,7 +22,6 @@
 //! }
 //! ```
 
-pub mod generated;
 pub mod mdi_minimal;
 
 #[cfg(feature = "dioxus")]
@@ -35,8 +34,14 @@ use tairitsu_vdom::VNode as Element;
 // Re-export MDI icon enum
 pub use mdi_minimal::MdiIcon;
 
-// Re-export icon data types
-pub use generated::mdi_selected::{get, IconData, PathData, SvgElem};
+// Re-export icon data types. The selected-icon data is generated at build time
+// into OUT_DIR (see build.rs) and included here, so no `src/generated/*` needs
+// to exist on disk for `cargo fmt` / a fresh checkout to succeed.
+pub mod mdi_selected {
+    #![allow(non_camel_case_types, non_snake_case, dead_code)]
+    include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
+}
+pub use mdi_selected::{get, IconData, PathData, SvgElem};
 
 // StyleStringBuilder for building styles
 #[cfg(feature = "dioxus")]

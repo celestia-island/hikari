@@ -62,7 +62,11 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
     let config = IconConfig {
         selection: icon_selection,
         styles: vec![MdiStyle::Filled, MdiStyle::Outline],
-        output_file: "src/generated/mdi_selected.rs".into(),
+        output_file: format!(
+            "{}/mdi_selected.rs",
+            std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo")
+        )
+        .into(),
         ..Default::default()
     };
 

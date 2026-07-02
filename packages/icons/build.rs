@@ -67,7 +67,6 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
             std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo")
         )
         .into(),
-        ..Default::default()
     };
 
     hikari_builder::icons::build_selected_icons(&config)

@@ -16,6 +16,9 @@ tairitsu-vdom = { path = "../../../tairitsu/packages/vdom" }
 tairitsu-hooks = { path = "../../../tairitsu/packages/hooks" }
 tairitsu-style = { path = "../../../tairitsu/packages/style" }
 
+# Dioxus framework (required by dioxus feature)
+dioxus = { version = "0.7", optional = true }
+
 # WASM dependencies (for wasm feature)
 wasm-bindgen = { version = "0.2", optional = true }
 web-sys = { version = "0.3", optional = true, features = [
@@ -36,4 +39,4 @@ js-sys = { version = "0.3", optional = true }
 [features]
 default = []
 wasm = ["dep:wasm-bindgen", "dep:web-sys", "dep:js-sys"]
-dioxus = ["wasm"]
+dioxus = ["wasm", "dep:dioxus"]

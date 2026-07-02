@@ -3,8 +3,7 @@
 // This example demonstrates how to use the SSR E2E testing framework
 // for the Hikari website.
 
-use hikari_e2e::{SsrTestHelper, SsrTests};
-use thirtyfour::{WebDriver, prelude::*};
+use hikari_e2e::SsrTestHelper;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -5,6 +5,7 @@ description = "E2E testing framework for Hikari UI components"
 authors = ["Hikari Contributors"]
 license = "MIT OR Apache-2.0"
 edition = "2024"
+autobins = false
 
 [dependencies]
 # Selenium WebDriver for E2E testing

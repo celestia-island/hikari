@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = []
-dioxus = []
+dioxus = ["dep:dioxus"]
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
 dynamic-fetch = []
 dynamic-fetch-warnings = []
@@ -15,6 +15,9 @@ hikari-builder = { path = "../builder" }
 anyhow = "^1"
 
 [dependencies]
+# Dioxus framework (optional)
+dioxus = { version = "0.7", optional = true }
+
 # Tairitsu framework (optional)
 tairitsu-vdom = { path = "../../../tairitsu/packages/vdom", optional = true }
 tairitsu-hooks = { path = "../../../tairitsu/packages/hooks", optional = true }

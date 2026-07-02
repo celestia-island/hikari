@@ -32,8 +32,11 @@ impl Color {
 
     pub fn rgba_u8(&self, alpha: u8) -> String {
         format!(
-            "rgba({}, {}, {}, {})",
-            self.rgb.0, self.rgb.1, self.rgb.2, alpha
+            "rgba({}, {}, {}, {:.3})",
+            self.rgb.0,
+            self.rgb.1,
+            self.rgb.2,
+            alpha as f64 / 255.0
         )
     }
 

@@ -40,8 +40,11 @@ pub enum TextDirection {
 ///
 /// The variants line up with the single directory name used per language across
 /// the celestia-island documentation sites (see [`Language::code`]).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub enum Language {
+    #[default]
     English,
     ChineseSimplified,
     ChineseTraditional,
@@ -51,12 +54,6 @@ pub enum Language {
     Spanish,
     Russian,
     Arabic,
-}
-
-impl Default for Language {
-    fn default() -> Self {
-        Self::English
-    }
 }
 
 impl Language {

@@ -236,7 +236,7 @@ impl AnimationRegistry {
         let mut to_remove: Vec<String> = Vec::new();
 
         for (id, entry) in &self.animations {
-            if !self.is_target_valid(&entry) {
+            if !self.is_target_valid(entry) {
                 to_remove.push(id.clone());
             }
         }

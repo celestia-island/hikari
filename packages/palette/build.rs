@@ -8,12 +8,15 @@ fn main() {
         env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set by Cargo");
     let out_dir = env::var("OUT_DIR").expect("OUT_DIR must be set by Cargo");
 
-    let workspace_root = env::var("CARGO_WORKSPACE_DIR").map_or_else(|_| {
+    let workspace_root = env::var("CARGO_WORKSPACE_DIR").map_or_else(
+        |_| {
             Path::new(&manifest_dir)
                 .parent()
                 .expect("palette package should be under workspace root")
                 .to_path_buf()
-        }, PathBuf::from);
+        },
+        PathBuf::from,
+    );
 
     let scss_dirs = vec![
         workspace_root
@@ -182,14 +185,8 @@ fn generate(all_classes: &BTreeMap<String, Vec<String>>, dest: &Path) {
         writeln!(f, "        match self {{").expect("Failed to write match");
 
         for (variant, class) in &deduped {
-            writeln!(
-                f,
-                "            {enum_name}::{variant} => \"{class}\","
-            )
-            .unwrap_or_else(|e| {
-                panic!(
-                    "Failed to write match arm {enum_name}::{variant}: {e}"
-                )
+            writeln!(f, "            {enum_name}::{variant} => \"{class}\",").unwrap_or_else(|e| {
+                panic!("Failed to write match arm {enum_name}::{variant}: {e}")
             });
         }
 

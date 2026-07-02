@@ -290,11 +290,9 @@ impl ButtonStateMachine {
                 }
             }
             // Special case: Enable can only exit from Disabled state
-            ButtonEvent::Enable => {
-                if self.current_state == ButtonState::Disabled {
-                    self.current_state = ButtonState::Idle;
-                    return Some(ButtonState::Idle);
-                }
+            ButtonEvent::Enable if self.current_state == ButtonState::Disabled => {
+                self.current_state = ButtonState::Idle;
+                return Some(ButtonState::Idle);
             }
             // All other event combinations that don't have predefined transitions are ignored
             _ => {}

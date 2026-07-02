@@ -24,7 +24,7 @@
 
 pub mod mdi_minimal;
 
-#[cfg(feature = "dioxus")]
+#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
 use dioxus::prelude::*;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
@@ -107,7 +107,7 @@ macro_rules! build_svg {
 // Dioxus Icon Component
 // ============================================================================
 
-#[cfg(feature = "dioxus")]
+#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
 #[component]
 pub fn Icon(
     #[props(into)] icon: IconRef,

@@ -214,7 +214,7 @@ impl UserGuideState {
     }
 
     /// Go to next step, or hide if on last step
-    pub fn next(&mut self) -> bool {
+    pub fn advance(&mut self) -> bool {
         if self.is_last_step() {
             self.hide();
             false
@@ -328,10 +328,10 @@ mod tests {
         assert!(state.is_first_step());
         assert!(!state.is_last_step());
 
-        assert!(state.next());
+        assert!(state.advance());
         assert_eq!(state.current_step, 1);
 
-        assert!(state.next());
+        assert!(state.advance());
         assert_eq!(state.current_step, 2);
         assert!(state.is_last_step());
 
@@ -354,7 +354,7 @@ mod tests {
         assert_eq!(state.progress_count(), 1);
         assert_eq!(state.progress_percent(), 25.0);
 
-        state.next();
+        state.advance();
         assert_eq!(state.progress_count(), 2);
         assert_eq!(state.progress_percent(), 50.0);
     }

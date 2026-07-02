@@ -15,18 +15,13 @@ pub enum TimelinePosition {
 }
 
 /// Timeline item status
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum TimelineStatus {
+    #[default]
     Pending,
     InProgress,
     Completed,
     Cancelled,
-}
-
-impl Default for TimelineStatus {
-    fn default() -> Self {
-        Self::Pending
-    }
 }
 
 /// A single item in the timeline

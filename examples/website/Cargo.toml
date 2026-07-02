@@ -25,7 +25,7 @@ tairitsu-web = { path = "../../../tairitsu/packages/web", features = [
 hikari-palette = { path = "../../packages/palette" }
 
 # Markdown rendering
-pulldown-cmark = "0.12"
+pulldown-cmark = "^0.12"
 
 # Logging and error handling
 tracing = "^0.1"

@@ -9,26 +9,26 @@ autobins = false
 
 [dependencies]
 # Selenium WebDriver for E2E testing
-thirtyfour = { version = "0.34", features = ["reqwest"] }
+thirtyfour = { version = "^0.34", features = ["reqwest"] }
 
 # Chromiumoxide for headless Chrome screenshots - updated for Chrome 144 compatibility
-chromiumoxide = { version = "0.8", features = ["tokio-runtime"] }
+chromiumoxide = { version = "^0.8", features = ["tokio-runtime"] }
 
 # HTML parsing and assertions
-scraper = "0.20"
+scraper = "^0.20"
 
 # HTTP client for direct SSR HTML fetch in no-JS tests
-reqwest = { version = "0.12", features = [
+reqwest = { version = "^0.12", features = [
   "rustls-tls",
 ], default-features = false }
 
 # Async runtime
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "^1", features = ["full"] }
 
 # Logging and tracing
-log = "0.4"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+log = "^0.4"
+tracing = "^0.1"
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
 
 # Serde for config
 serde = { version = "^1", features = ["derive"] }

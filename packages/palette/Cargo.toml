@@ -10,7 +10,7 @@ doctest = false
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-yuuka = "0.6"
+yuuka = "^0.6"
 
 [features]
 chinese-names = []  # Include Chinese color names (disabled by default to minimize wasm size)

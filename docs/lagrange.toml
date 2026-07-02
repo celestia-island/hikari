@@ -1,0 +1,7 @@
+[site]
+title = "Hikari"
+description = "A modern Rust UI framework blending traditional Chinese aesthetics with futuristic sci-fi design"
+
+[languages]
+default = "en"
+order = ["en", "zhs", "zht", "ja", "ko", "fr", "es", "ru", "ar"]

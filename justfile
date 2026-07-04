@@ -28,6 +28,8 @@ website_manifest := "examples/website/Cargo.toml"
 # Core tasks
 # ============================================================================
 
+import "./celestia-devtools.just"
+
 default:
     @just --list
 

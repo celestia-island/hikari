@@ -73,7 +73,7 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
         });
     }
 
-    screen_size
+    screen_size.inner().clone()
 }
 
 pub fn use_is_mobile() -> Signal<bool> {
@@ -116,7 +116,7 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
         });
     }
 
-    matches
+    matches.inner().clone()
 }
 
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {

@@ -169,7 +169,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                     close_on_click_outside: props.close_on_click_outside,
                     close_on_select: props.close_on_select,
                     on_close: Some(on_close.clone()),
-                    close_requested: close_requested.clone(),
+                    close_requested: close_requested.inner().clone(),
                     children: props.children.clone(),
                 });
             } else {

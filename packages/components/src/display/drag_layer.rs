@@ -67,8 +67,8 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
                     style: "left: {x}px; top: {y}px;",
 
                     div { class: DragLayerClass::DragPreviewContent.as_class(),
-                        span { class: DragLayerClass::DragPreviewLabel.as_class(), "{item.label}" }
-                        span { class: DragLayerClass::DragPreviewType.as_class(), "{item.item_type}" }
+                        span { class: DragLayerClass::DragPreviewLabel.as_class(), "{item.label.clone()}" }
+                        span { class: DragLayerClass::DragPreviewType.as_class(), "{item.item_type.clone()}" }
                     }
                 }
             }

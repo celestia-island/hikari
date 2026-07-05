@@ -100,7 +100,7 @@ pub fn RadioGroup(props: RadioGroupProps) -> Element {
 
     let _ctx = use_context_provider(move || RadioContext {
         name,
-        selected_value,
+        selected_value: selected_value.inner().clone(),
         on_change,
         disabled,
     });

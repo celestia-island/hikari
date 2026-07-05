@@ -112,7 +112,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             let options = filtered_options_for_keydown.read().clone();
             let current = focused_index_for_keydown.read();
 
-            match e.key_code() {
+            match e.get_key() {
                 Key::Enter => {
                     e.prevent_default();
                     if !options.is_empty() && current < options.len() {
@@ -210,7 +210,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                                     }
                                 }
                             },
-                            "{options_arr[index]}"
+                            "{options_arr[index].clone()}"
                         }
                     }
                 }

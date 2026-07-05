@@ -72,7 +72,7 @@ pub fn Cascader(props: CascaderProps) -> Element {
             return;
         }
 
-        match e.key_code() {
+        match e.get_key() {
             Key::Enter => {
                 e.prevent_default();
                 is_open_for_keydown.set(!is_open_for_keydown.get());

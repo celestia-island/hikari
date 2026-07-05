@@ -118,7 +118,7 @@ pub fn Sort(props: SortProps) -> Element {
             let title_class = SortClass::SortTitle.as_class();
             let indicator_class = SortClass::SortIndicator.as_class();
 
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("button")
                     .class(button_classes)
                     .on_event("click", move |_e: Box<dyn EventData>| {
@@ -135,17 +135,17 @@ pub fn Sort(props: SortProps) -> Element {
                             });
                         }
                     })
-                    .child(VNode::Element(
+                    .child(VNode::Element(Box::new(
                         VElement::new("span")
                             .class(title_class)
                             .child(VNode::Text(VText::new(&column_title))),
-                    ))
-                    .child(VNode::Element(
+                    )))
+                    .child(VNode::Element(Box::new(
                         VElement::new("span")
                             .class(indicator_class)
                             .child(VNode::Text(VText::new(&direction_icon))),
-                    )),
-            )
+                    ))),
+            ))
         })
         .collect();
 
@@ -157,7 +157,7 @@ pub fn Sort(props: SortProps) -> Element {
 
         let sort_handler = on_sort_handler.clone();
 
-        let clear_button = VNode::Element(
+        let clear_button = VNode::Element(Box::new(
             VElement::new("button")
                 .class(clear_class)
                 .on_event("click", move |_e: Box<dyn EventData>| {
@@ -168,12 +168,12 @@ pub fn Sort(props: SortProps) -> Element {
                         });
                     }
                 })
-                .child(VNode::Element(
+                .child(VNode::Element(Box::new(
                     VElement::new("span")
                         .class(text_class)
                         .child(VNode::Text(VText::new("Clear"))),
-                ))
-                .child(VNode::Element(
+                )))
+                .child(VNode::Element(Box::new(
                     VElement::new("svg")
                         .attr("xmlns", "http://www.w3.org/2000/svg")
                         .class(icon_class)
@@ -181,22 +181,22 @@ pub fn Sort(props: SortProps) -> Element {
                         .attr("viewBox", "0 0 24 24")
                         .attr("stroke-width", "2")
                         .attr("stroke", "currentColor")
-                        .child(VNode::Element(
+                        .child(VNode::Element(Box::new(
                             VElement::new("path")
                                 .attr("stroke-linecap", "round")
                                 .attr("stroke-linejoin", "round")
                                 .attr("d", "M6 18L18 6M6 6l12 12"),
-                        )),
-                )),
-        );
+                        ))),
+                ))),
+        ));
         children.push(clear_button);
     }
 
-    VNode::Element(
+    VNode::Element(Box::new(
         VElement::new("div")
             .class(container_classes)
             .children(children),
-    )
+    ))
 }
 
 impl StyledComponent for SortComponent {

@@ -103,7 +103,7 @@ fn use_animated_portal_entry(
     }
 
     (
-        internal_animation_state.clone(),
+        internal_animation_state.inner().clone(),
         close_callback,
         computed_opacity_scale,
     )
@@ -574,7 +574,8 @@ fn PopoverPortalEntry(
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
     // Create a default signal if none provided
-    let close_requested_signal = close_requested.unwrap_or_else(|| use_signal(|| false));
+    let close_requested_signal = close_requested
+        .unwrap_or_else(|| use_signal(|| false).inner().clone());
 
     // Clone for use_effect
     let on_close_for_effect = on_close.clone();

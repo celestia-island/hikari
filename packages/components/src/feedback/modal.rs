@@ -124,7 +124,7 @@ pub fn use_modal(initial_config: ModalConfig) -> ModalController {
     };
 
     ModalController {
-        config,
+        config: config.inner().clone(),
         open,
         close,
     }

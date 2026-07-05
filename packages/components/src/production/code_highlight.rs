@@ -134,11 +134,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     // Pre-compute line number elements outside rsx! using VElement builder
     let line_number_nodes: Vec<VNode> = (1..=line_count)
         .map(|i| {
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
                     .class("hi-code-highlight-line-number")
                     .child(VNode::Text(VText::new(&i.to_string()))),
-            )
+            ))
         })
         .collect();
 

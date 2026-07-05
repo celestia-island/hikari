@@ -45,7 +45,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
     let background = props.background.clone();
     let ec_level = props.error_correction.clone();
 
-    let drawn: Signal<bool> = use_signal(|| false);
+    let drawn: Signal<bool> = use_signal(|| false).inner().clone();
 
     // Generate QR code matrix
     let qr_result = QrCode::with_error_correction_level(

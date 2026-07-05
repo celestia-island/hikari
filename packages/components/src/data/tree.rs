@@ -49,7 +49,7 @@ pub fn Tree(props: TreeProps) -> Element {
         ""
     };
 
-    let handle_keydown = move |e: KeyboardEvent| match e.key_code() {
+    let handle_keydown = move |e: KeyboardEvent| match e.get_key() {
         Key::ArrowUp | Key::ArrowDown | Key::ArrowLeft | Key::ArrowRight => {
             e.prevent_default();
         }

@@ -83,9 +83,9 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
                     drop_allowed: props.drop_allowed,
                     allow_drag: props.allow_drag.clone(),
                     allow_drop: props.allow_drop.clone(),
-                    dragged_key: dragged_key.clone(),
-                    drop_target: drop_target.clone(),
-                    drag_over_key: drag_over_key.clone(),
+                    dragged_key: dragged_key.inner().clone(),
+                    drop_target: drop_target.inner().clone(),
+                    drag_over_key: drag_over_key.inner().clone(),
                     on_drop: props.on_drop.clone(),
                 }
             }

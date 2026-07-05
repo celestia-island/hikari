@@ -110,17 +110,17 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let weekday_headers: Vec<VNode> = WEEKDAY_NAMES
         .iter()
         .map(|weekday| {
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
                     .class(weekday_class.clone())
                     .child(VNode::Text(VText::new(weekday))),
-            )
+            ))
         })
         .collect();
 
     // Build empty cells for days before the 1st
     let empty_cells: Vec<VNode> = (0..first_day)
-        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class.clone())))
+        .map(|_| VNode::Element(Box::new(VElement::new("div").class(day_cell_class.clone()))))
         .collect();
 
     // Build day cells
@@ -141,7 +141,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
             let y = year;
             let m = month;
 
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
                     .class(day_cell_cls)
                     .on_event("click", move |_e: Box<dyn EventData>| {
@@ -150,12 +150,12 @@ pub fn Calendar(props: CalendarProps) -> Element {
                             handler.call((y, m, day));
                         }
                     })
-                    .child(VNode::Element(
+                    .child(VNode::Element(Box::new(
                         VElement::new("div")
                             .class(inner_class)
                             .child(VNode::Text(VText::new(&day.to_string()))),
-                    )),
-            )
+                    ))),
+            ))
         })
         .collect();
 
@@ -163,7 +163,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let cy_prev = current_year.clone();
     let cm_prev = current_month.clone();
     let min_yr = props.min_year;
-    let prev_btn = VNode::Element(
+    let prev_btn = VNode::Element(Box::new(
         VElement::new("button")
             .class(nav_btn_class.clone())
             .attr("disabled", year <= min_yr && month == 1)
@@ -176,11 +176,11 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("‹"))),
-    );
+    ));
 
     let cy_prev2 = current_year.clone();
     let cm_prev2 = current_month.clone();
-    let prev_btn2 = VNode::Element(
+    let prev_btn2 = VNode::Element(Box::new(
         VElement::new("button")
             .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
@@ -192,11 +192,11 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("◀"))),
-    );
+    ));
 
     let cy_today = current_year.clone();
     let cm_today = current_month.clone();
-    let today_btn = VNode::Element(
+    let today_btn = VNode::Element(Box::new(
         VElement::new("button")
             .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
@@ -207,12 +207,12 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("今天"))),
-    );
+    ));
 
     let cy_next = current_year.clone();
     let cm_next = current_month.clone();
     let max_yr = props.max_year;
-    let next_btn = VNode::Element(
+    let next_btn = VNode::Element(Box::new(
         VElement::new("button")
             .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
@@ -224,11 +224,11 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("▶"))),
-    );
+    ));
 
     let cy_next2 = current_year.clone();
     let cm_next2 = current_month.clone();
-    let next_btn2 = VNode::Element(
+    let next_btn2 = VNode::Element(Box::new(
         VElement::new("button")
             .class(nav_btn_class.clone())
             .attr("disabled", year >= max_yr && month == 12)
@@ -241,7 +241,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("›"))),
-    );
+    ));
 
     let title_text = format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize]);
 

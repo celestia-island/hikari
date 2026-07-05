@@ -178,9 +178,9 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let theme_name_for_context = current_theme_name.clone();
     let direction_for_context = current_direction.clone();
     use_context_provider(move || ThemeContext {
-        palette: palette_for_context,
-        theme_name: theme_name_for_context,
-        direction: direction_for_context,
+        palette: palette_for_context.inner().clone(),
+        theme_name: theme_name_for_context.inner().clone(),
+        direction: direction_for_context.inner().clone(),
         set_theme,
     });
 

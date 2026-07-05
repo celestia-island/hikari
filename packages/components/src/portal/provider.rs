@@ -68,8 +68,8 @@ pub fn PortalProvider(children: Element) -> Element {
     let entries_for_context = entries.clone();
     let entries_for_render = entries.clone();
 
-    use_context_provider(|| PortalContext {
-        entries: entries_for_context,
+    use_context_provider(move || PortalContext {
+        entries: entries_for_context.inner().clone(),
         add_entry,
         remove_entry,
         clear_all,
@@ -78,7 +78,7 @@ pub fn PortalProvider(children: Element) -> Element {
 
     rsx! {
         children {}
-        PortalRender { entries: Some(entries_for_render) }
+        PortalRender { entries: Some(entries_for_render.inner().clone()) }
     }
 }
 

@@ -24,6 +24,17 @@
 
 pub mod mdi_minimal;
 
+/// Runtime icon fetching (wasm + `dynamic-fetch = true` in workspace metadata).
+///
+/// When the consuming workspace sets
+/// `[workspace.metadata.hikari.icons].dynamic-fetch = true`, the build script
+/// emits `cargo:rustc-cfg=hikari_icons_dynamic_fetch`. On wasm32 builds this
+/// module fetches icons over HTTP (RON-encoded, validated, cached); on every
+/// other configuration `fetch_and_cache_icon` is a no-op stub returning `None`,
+/// so calling it is always safe regardless of build target.
+pub mod dynamic_fetch;
+pub use dynamic_fetch::fetch_and_cache_icon;
+
 #[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
 use dioxus::prelude::*;
 #[cfg(feature = "tairitsu")]

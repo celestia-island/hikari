@@ -13,19 +13,23 @@
 //!
 //! ## Supported Themes
 //!
-//! The theme system includes two built-in theme palettes:
+//! The theme system includes built-in palettes (defined in `hikari-palette`):
 //!
-//! - **Hikari (光)** - Light theme inspired by traditional Chinese colors
-//!   - Primary: 石青 (Cyan/Blue)
-//!   - Secondary: 朱砂 (Vermilion/Red)
-//!   - Accent: 藤黄 (Gamboge/Yellow)
-//!   - Background: 月白 (Light White)
+//! - **Hikari (光)** — Light theme (default)
+//!   - Primary: #EEA2A4 (soft pink)
+//!   - Secondary: #519A73 (muted green)
+//!   - Accent: #FFC773 (warm yellow)
+//!   - Background: #D6ECF0
 //!
-//! - **Tairitsu** - Dark theme with high contrast
-//!   - Primary: 靛蓝 (Indigo/Dark Blue)
-//!   - Secondary: 朱砂 (Vermilion/Red)
-//!   - Accent: 鹅黄 (Goose Yellow)
-//!   - Background: 墨色 (Ink Black)
+//! - **Tairitsu** — Dark theme with high contrast
+//!   - Primary: #144A74 (deep blue)
+//!   - Secondary: #FFC773 (warm yellow)
+//!   - Background: #50616D
+//!
+//! - **Arknights** — Dark industrial (cyan + gold on deep navy)
+//!
+//! Palettes are self-contained hex definitions and do not depend on any
+//! optional color collection.
 //!
 //! ## Quick Start
 //!

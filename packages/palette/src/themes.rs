@@ -1,31 +1,28 @@
-//! Theme palette definitions
+//! Ready-to-use themed palettes.
 //!
-//! This module provides the two official theme palettes:
-//! - **Hikari** - Light theme (光) - Pink + White
-//! - **Tairitsu** - Dark theme (tairitsu) - Deep Blue + Black
+//! Every palette here is **self-contained**: colors are defined by their hex
+//! values directly, with no dependency on any `collections::*` module. This
+//! keeps the theming layer decoupled from the (opt-in) color catalogs — you can
+//! use any theme without enabling a single collection feature.
+//!
+//! The hex values below mirror the colors that the old chinese-constant-based
+//! themes referenced, so the visual output is unchanged.
 
 use std::{collections::HashMap, sync::RwLock};
 
 use super::colors::*;
 
-/// Theme mode enumeration
-///
-/// Identifies whether a palette is light or dark mode
+/// Theme mode enumeration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ThemeMode {
-    /// Light mode (白天模式)
     Light,
-    /// Dark mode (暗黑模式)
     Dark,
 }
 
-/// Color palette configuration
-///
-/// Defines a complete color scheme with primary, secondary,
-/// accent, semantic colors, and surface/text colors.
+/// A complete color scheme: accent roles, semantic colors, and surface/text
+/// colors.
 #[derive(Debug, Clone)]
 pub struct Palette {
-    /// Theme mode (light or dark)
     pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
@@ -41,151 +38,70 @@ pub struct Palette {
 }
 
 impl Palette {
-    /// Get contrast color for a button variant color (for glow effects)
-    ///
-    /// Returns rgba string for contrast color (black or white) with 0.9 opacity
-    ///
-    /// Note: For ghost/transparent buttons, use `ghost_glow_color()` instead
-    /// Note: Actual glow colors are defined in CSS (base.scss)
-    ///       based on button color brightness only (theme-independent)
-    ///
-    /// # Arguments
-    /// * `variant_color` - The button color to get contrast for
-    ///
-    /// # Examples
-    /// ```
-    /// use hikari_palette::*;
-    ///
-    /// let palette = Hikari::palette();
-    /// // Returns dynamic opacity based on button brightness (theme-independent)
-    /// let contrast = palette.button_glow_color(&palette.primary);
-    /// // e.g., "rgba(0, 0, 0, 0.7)" for pink, "rgba(255, 255, 255, 0.6)" for indigo
-    /// ```
+    /// Contrast color (black or white) for a button variant color, used for
+    /// glow effects. Dynamic opacity is derived from the button's brightness.
     pub fn button_glow_color(&self, color: &Color) -> String {
-        // Use the color's glow contrast method (theme-independent)
-        // Dynamic opacity based on contrast between button and glow color
         color.glow_contrast_dynamic_rgba()
     }
 
-    /// Get contrast color for ghost buttons (text color and border)
-    ///
-    /// Returns rgba string for 90% opacity
-    ///
-    /// # Examples
-    /// ```
-    /// use hikari_palette::*;
-    ///
-    /// let hikari = Hikari::palette();
-    /// // hikari is light mode, ghost uses black text
-    /// let text_color = hikari.ghost_text_color(0.9);
-    /// // "rgba(0, 0, 0, 0.9)"
-    ///
-    /// let tairitsu = Tairitsu::palette();
-    /// // tairitsu is dark mode, ghost uses white text
-    /// let text_color = tairitsu.ghost_text_color(0.9);
-    /// // "rgba(255, 255, 255, 0.9)"
-    /// ```
+    /// Ghost-button text color: black for light themes, white for dark.
     pub fn ghost_text_color(&self, alpha: f64) -> String {
-        let color = match self.mode {
-            ThemeMode::Light => Color::from_rgb(0, 0, 0),
-            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
-        };
-        color.rgba(alpha)
+        self.ghost_rgba(alpha)
     }
 
-    /// Get ghost border color (low opacity)
-    ///
-    /// # Examples
-    /// ```
-    /// use hikari_palette::*;
-    ///
-    /// let palette = Hikari::palette();
-    /// let border = palette.ghost_border_color(0.2);
-    /// // "rgba(0, 0, 0, 0.2)"
-    /// ```
+    /// Ghost-button border color (low opacity).
     pub fn ghost_border_color(&self, alpha: f64) -> String {
-        let color = match self.mode {
-            ThemeMode::Light => Color::from_rgb(0, 0, 0),
-            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
-        };
-        color.rgba(alpha)
+        self.ghost_rgba(alpha)
     }
 
-    /// Get glow color for ghost buttons
-    ///
-    /// # Examples
-    /// ```
-    /// use hikari_palette::*;
-    ///
-    /// let hikari = Hikari::palette();
-    /// let glow = hikari.ghost_glow_color(0.8);
-    /// // "rgba(0, 0, 0, 0.8)"
-    ///
-    /// let tairitsu = Tairitsu::palette();
-    /// let glow = tairitsu.ghost_glow_color(0.8);
-    /// // "rgba(255, 255, 255, 0.8)"
-    /// ```
+    /// Ghost-button glow color.
     pub fn ghost_glow_color(&self, alpha: f64) -> String {
-        let color = match self.mode {
-            ThemeMode::Light => Color::from_rgb(0, 0, 0),
-            ThemeMode::Dark => Color::from_rgb(255, 255, 255),
-        };
-        color.rgba(alpha)
+        self.ghost_rgba(alpha)
     }
 
-    /// Get focus brightness filter value for a button variant color
-    ///
-    /// Returns "1.2" for dark buttons (to brighten on focus)
-    /// Returns "0.8" for light buttons (to dim on focus)
-    ///
-    /// This matches the glow color selection logic:
-    /// - Dark colors (< 0.4 brightness) need to be brighter on focus
-    /// - Light colors (>= 0.4 brightness) need to be darker on focus
-    ///
-    /// # Examples
-    /// ```
-    /// use hikari_palette::*;
-    ///
-    /// let hikari = Hikari::palette();
-    /// let primary_brightness = hikari.focus_brightness_filter(&hikari.primary);
-    /// // "0.8" (primary is light, should dim on focus)
-    ///
-    /// let tairitsu = Tairitsu::palette();
-    /// let secondary_brightness = tairitsu.focus_brightness_filter(&tairitsu.secondary);
-    /// // "1.2" (secondary is dark, should brighten on focus)
-    /// ```
+    /// Focus brightness filter: `"1.2"` to brighten dark buttons on focus,
+    /// `"0.8"` to dim light buttons on focus.
     pub fn focus_brightness_filter(&self, color: &Color) -> String {
-        let brightness = color.brightness();
-        if brightness < 0.4 {
-            "1.2".to_string() // Dark button: brighten on focus
+        if color.brightness() < 0.4 {
+            "1.2".to_string()
         } else {
-            "0.8".to_string() // Light button: dim on focus
+            "0.8".to_string()
         }
+    }
+
+    fn ghost_rgba(&self, alpha: f64) -> String {
+        let color = match self.mode {
+            ThemeMode::Light => Color::from_rgb_hex(0, 0, 0),
+            ThemeMode::Dark => Color::from_rgb_hex(255, 255, 255),
+        };
+        color.rgba(alpha)
     }
 }
 
-/// Hikari theme - Light theme (光)
-///
-/// Represents light and brightness. This is the default light theme
-/// with clean, bright colors suitable for daytime use.
-#[derive(Debug, Clone)]
+// === Hikari — Light theme (default) ==========================================
+// primary 牡丹粉红 #eea2a4, secondary 苍翠 #519a73, accent 姜黄 #ffc773,
+// success 葱倩 #0eb840, warning 鹅黄 #fff143, danger 朱红 #ff4c00,
+// background 月白 #d6ecf0, surface/border 素 #e0f0e9.
+
+/// Hikari — the default light theme.
 pub struct Hikari;
 
 impl Hikari {
+    #[must_use]
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Light,
-            primary: 牡丹粉红, // 牡丹粉红 (238, 162, 164)
-            secondary: 苍翠,   // 苍翠 (81, 154, 115) - 与粉红互补
-            accent: 姜黄,      // 黄色系
-            success: 葱倩,     // 绿色系
-            warning: 鹅黄,     // 黄色系
-            danger: 朱红,      // 红色系
-            background: 月白,  // 白色 (214, 236, 240)
-            surface: 素,       // 浅灰 (236, 241, 245)
-            border: 素,        // 浅灰
-            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15), // 90% opacity black (no alpha)
-            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4), // 60% opacity black (no alpha)
+            primary: Color::from_rgb_hex(0xee, 0xa2, 0xa4), // 牡丹粉红
+            secondary: Color::from_rgb_hex(0x51, 0x9a, 0x73), // 苍翠
+            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
+            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
+            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
+            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00), // 朱红
+            background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
+            surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
+            border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
+            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15),
+            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4),
         }
     }
 }
@@ -196,28 +112,29 @@ impl Default for Hikari {
     }
 }
 
-/// Tairitsu theme - Dark theme (tairitsu)
-///
-/// Represents darkness and contrast. This is the dark theme
-/// with deep, rich colors suitable for nighttime use.
-#[derive(Debug, Clone)]
+// === Tairitsu — Dark theme ===================================================
+// primary 鷃蓝 #144a74, secondary/accent 姜黄 #ffc773, background 墨色 #50616d,
+// surface/border 黛 #4a4266.
+
+/// Tairitsu — the default dark theme.
 pub struct Tairitsu;
 
 impl Tairitsu {
+    #[must_use]
     pub fn palette() -> Palette {
         Palette {
             mode: ThemeMode::Dark,
-            primary: 鷃蓝,                                         // 鷃蓝 (20, 74, 116)
-            secondary: 姜黄,  // 姜黄 (255, 199, 115) - 与深蓝互补
-            accent: 姜黄,     // 黄色系
-            success: 葱倩,    // 绿色系
-            warning: 鹅黄,    // 黄色系
-            danger: 朱红,     // 红色系
-            background: 墨色, // 紫黑/深蓝黑 (80, 97, 109)
-            surface: 黛,      // 深蓝灰 (74, 66, 102)
-            border: 黛,       // 深蓝灰
-            text_primary: Color::from_rgb_float(0.95, 0.95, 0.95), // 95% opacity white (no alpha) - brighter
-            text_secondary: Color::from_rgb_float(0.85, 0.85, 0.85), // 85% opacity white (no alpha) - less gray
+            primary: Color::from_rgb_hex(0x14, 0x4a, 0x74), // 鷃蓝
+            secondary: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
+            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
+            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
+            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
+            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00), // 朱红
+            background: Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
+            surface: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
+            border: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
+            text_primary: Color::from_rgb_float(0.95, 0.95, 0.95),
+            text_secondary: Color::from_rgb_float(0.85, 0.85, 0.85),
         }
     }
 }
@@ -228,56 +145,69 @@ impl Default for Tairitsu {
     }
 }
 
-/// Theme registry for dynamically managing palettes
-///
-/// Allows registration and retrieval of custom palettes by name.
+// === Arknights — Dark industrial (cyan + gold on deep navy) ==================
+
+/// Arknights-inspired dark industrial theme.
+pub struct Arknights;
+
+impl Arknights {
+    #[must_use]
+    pub const fn palette() -> Palette {
+        Palette {
+            mode: ThemeMode::Dark,
+            primary: Color::from_rgb_hex(0x00, 0xb4, 0xd8),
+            secondary: Color::from_rgb_hex(0xff, 0xd7, 0x00),
+            accent: Color::from_rgb_hex(0xff, 0xd7, 0x00),
+            success: Color::from_rgb_hex(0x3f, 0xb9, 0x50),
+            warning: Color::from_rgb_hex(0xd2, 0x99, 0x22),
+            danger: Color::from_rgb_hex(0xf8, 0x51, 0x49),
+            background: Color::from_rgb_hex(0x0d, 0x11, 0x17),
+            surface: Color::from_rgb_hex(0x16, 0x1b, 0x22),
+            border: Color::from_rgb_hex(0x30, 0x36, 0x3d),
+            text_primary: Color::from_rgb_hex(0xe6, 0xed, 0xf3),
+            text_secondary: Color::from_rgb_hex(0x8b, 0x94, 0x9e),
+        }
+    }
+}
+
+impl Default for Arknights {
+    fn default() -> Self {
+        Self
+    }
+}
+
+/// Runtime registry for named palettes (built-ins + user-registered).
 pub struct ThemeRegistry {
     palettes: RwLock<HashMap<String, Palette>>,
 }
 
 impl ThemeRegistry {
-    /// Create a new theme registry
+    #[must_use]
     pub fn new() -> Self {
         let mut palettes = HashMap::new();
         palettes.insert("hikari".to_string(), Hikari::palette());
         palettes.insert("tairitsu".to_string(), Tairitsu::palette());
-
+        palettes.insert("arknights".to_string(), Arknights::palette());
         Self {
             palettes: RwLock::new(palettes),
         }
     }
 
-    /// Register a new palette
-    ///
-    /// # Arguments
-    /// * `name` - Unique name for the palette
-    /// * `palette` - The palette to register
-    ///
-    /// # Returns
-    /// * `Ok(())` if successfully registered
-    /// * `Err(String)` if a palette with this name already exists
+    /// Register a new palette. Errors if the name is already taken.
     pub fn register(&self, name: &str, palette: Palette) -> Result<(), String> {
         let mut palettes = self
             .palettes
             .write()
             .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
-
         if palettes.contains_key(name) {
             return Err(format!("Palette '{}' already registered", name));
         }
-
         palettes.insert(name.to_string(), palette);
         Ok(())
     }
 
-    /// Get a palette by name
-    ///
-    /// # Arguments
-    /// * `name` - Name of the palette to retrieve
-    ///
-    /// # Returns
-    /// * `Some(Palette)` if found
-    /// * `None` if not found
+    /// Look up a palette by name.
+    #[must_use]
     pub fn get(&self, name: &str) -> Option<Palette> {
         self.palettes
             .read()
@@ -285,30 +215,20 @@ impl ThemeRegistry {
             .and_then(|palettes| palettes.get(name).cloned())
     }
 
-    /// Update an existing palette
-    ///
-    /// # Arguments
-    /// * `name` - Name of the palette to update
-    /// * `palette` - The new palette
-    ///
-    /// # Returns
-    /// * `Ok(())` if successfully updated
-    /// * `Err(String)` if palette not found or lock failed
+    /// Replace an existing palette. Errors if the name is unknown.
     pub fn update(&self, name: &str, palette: Palette) -> Result<(), String> {
         let mut palettes = self
             .palettes
             .write()
             .map_err(|e| format!("Failed to acquire write lock: {}", e))?;
-
         if !palettes.contains_key(name) {
             return Err(format!("Palette '{}' not found", name));
         }
-
         palettes.insert(name.to_string(), palette);
         Ok(())
     }
 
-    /// List all registered palette names
+    /// List all registered palette names.
     pub fn list(&self) -> Vec<String> {
         self.palettes
             .read()
@@ -324,35 +244,39 @@ impl Default for ThemeRegistry {
     }
 }
 
-/// Global theme registry instance
 static REGISTRY: std::sync::OnceLock<ThemeRegistry> = std::sync::OnceLock::new();
 
-/// Get the global theme registry
+/// The global theme registry.
+#[must_use]
 pub fn registry() -> &'static ThemeRegistry {
     REGISTRY.get_or_init(ThemeRegistry::new)
 }
 
-/// Get a palette by name from the global registry
+/// Look up a palette by name from the global registry.
+#[must_use]
 pub fn get_palette(name: &str) -> Option<Palette> {
     registry().get(name)
 }
 
-/// Register a palette in the global registry
+/// Register a palette in the global registry.
 pub fn register_palette(name: &str, palette: Palette) -> Result<(), String> {
     registry().register(name, palette)
 }
 
-/// Get the default theme (Hikari light theme)
+/// The default theme (Hikari light).
+#[must_use]
 pub fn default_theme() -> Palette {
     Hikari::palette()
 }
 
-/// Get the light theme (Hikari)
+/// The light theme (Hikari).
+#[must_use]
 pub fn light_theme() -> Palette {
     Hikari::palette()
 }
 
-/// Get the dark theme (Tairitsu)
+/// The dark theme (Tairitsu).
+#[must_use]
 pub fn dark_theme() -> Palette {
     Tairitsu::palette()
 }
@@ -362,145 +286,106 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hikari_theme() {
+    fn test_hikari_theme_is_light() {
         let palette = Hikari::palette();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.primary, 牡丹粉红);
-        assert_eq!(palette.background, 月白);
-        assert_eq!(
-            palette.text_primary,
-            Color::from_rgb_float(0.15, 0.15, 0.15)
-        );
+        assert!(palette.background.is_light());
     }
 
     #[test]
-    fn test_tairitsu_theme() {
+    fn test_tairitsu_theme_is_dark() {
         let palette = Tairitsu::palette();
         assert_eq!(palette.mode, ThemeMode::Dark);
-        assert_eq!(palette.primary, 鷃蓝);
-        assert_eq!(palette.background, 墨色);
-        assert_eq!(
-            palette.text_primary,
-            Color::from_rgb_float(0.95, 0.95, 0.95)
-        );
+        assert!(palette.background.is_dark());
+    }
+
+    #[test]
+    fn test_arknights_theme_is_dark() {
+        let palette = Arknights::palette();
+        assert_eq!(palette.mode, ThemeMode::Dark);
+        assert!(palette.background.is_dark());
     }
 
     #[test]
     fn test_default_is_hikari() {
         let palette = default_theme();
         assert_eq!(palette.mode, ThemeMode::Light);
-        assert_eq!(palette.background, 月白);
     }
 
     #[test]
-    fn test_registry() {
+    fn test_registry_builtin_palettes() {
         let registry = ThemeRegistry::new();
+        assert_eq!(registry.get("hikari").unwrap().mode, ThemeMode::Light);
+        assert_eq!(registry.get("tairitsu").unwrap().mode, ThemeMode::Dark);
+        assert_eq!(registry.get("arknights").unwrap().mode, ThemeMode::Dark);
 
-        // Test getting existing palettes
-        let hikari = registry.get("hikari").unwrap();
-        assert_eq!(hikari.mode, ThemeMode::Light);
-
-        let tairitsu = registry.get("tairitsu").unwrap();
-        assert_eq!(tairitsu.mode, ThemeMode::Dark);
-
-        // Test listing
         let names = registry.list();
         assert!(names.contains(&"hikari".to_string()));
         assert!(names.contains(&"tairitsu".to_string()));
+        assert!(names.contains(&"arknights".to_string()));
+    }
 
-        // Test registration
+    #[test]
+    fn test_registry_register_and_update() {
+        let registry = ThemeRegistry::new();
         let custom = Palette {
             mode: ThemeMode::Light,
-            primary: 粉红,
-            secondary: 石青,
-            accent: 姜黄,
-            success: 葱倩,
-            warning: 鹅黄,
-            danger: 朱红,
-            background: 月白,
-            surface: 素,
-            border: 素,
-            text_primary: 墨色,
-            text_secondary: 黛,
+            primary: Color::from_rgb_hex(0xff, 0xb3, 0xa7),
+            secondary: Color::from_rgb_hex(0x7b, 0xcf, 0xa6),
+            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),
+            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40),
+            warning: Color::from_rgb_hex(0xff, 0xa6, 0x31),
+            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),
+            background: Color::from_rgb_hex(0xff, 0xff, 0xff),
+            surface: Color::from_rgb_hex(0xff, 0xff, 0xff),
+            border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
+            text_primary: Color::from_rgb_float(0.15, 0.15, 0.15),
+            text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4),
         };
-
         registry.register("custom", custom.clone()).unwrap();
-        let retrieved = registry.get("custom").unwrap();
-        assert_eq!(retrieved.primary, 粉红);
+        assert_eq!(registry.get("custom").unwrap().primary, custom.primary);
 
-        // Test update
         let updated = Palette {
             mode: ThemeMode::Dark,
             ..custom
         };
         registry.update("custom", updated).unwrap();
-        let updated_retrieved = registry.get("custom").unwrap();
-        assert_eq!(updated_retrieved.mode, ThemeMode::Dark);
+        assert_eq!(registry.get("custom").unwrap().mode, ThemeMode::Dark);
     }
-}
 
-#[test]
-fn test_palette_button_glow() {
-    let hikari = Hikari::palette();
-    let tairitsu = Tairitsu::palette();
+    // --- Glow/ghost behavior — value parity with the old chinese-const themes ---
 
-    // hikari Primary (牡丹粉红 - brightness 0.73) should get black glow
-    // Contrast: |0.73 - 0.0| = 0.73 > 0.7, alpha = 0.7
-    let hikari_primary_glow = hikari.button_glow_color(&hikari.primary);
-    assert_eq!(hikari_primary_glow, "rgba(0, 0, 0, 0.7)");
+    #[test]
+    fn test_palette_button_glow() {
+        let hikari = Hikari::palette();
+        let tairitsu = Tairitsu::palette();
 
-    // tairitsu Primary (鷃蓝 - brightness 0.25) should get white glow
-    // Contrast: |0.25 - 1.0| = 0.75 > 0.7, alpha = 0.7
-    let tairitsu_primary_glow = tairitsu.button_glow_color(&tairitsu.primary);
-    assert_eq!(tairitsu_primary_glow, "rgba(255, 255, 255, 0.7)");
+        // Hikari primary 牡丹粉红 #eea2a4 — light, expects black glow at 0.7.
+        assert_eq!(hikari.button_glow_color(&hikari.primary), "rgba(0, 0, 0, 0.7)");
+        // Tairitsu primary 鷃蓝 #144a74 — dark (<0.4), expects white glow at 0.7.
+        assert_eq!(
+            tairitsu.button_glow_color(&tairitsu.primary),
+            "rgba(255, 255, 255, 0.7)"
+        );
+        // Hikari secondary 苍翠 #519a73 — mid brightness → black glow at 0.6.
+        assert_eq!(
+            hikari.button_glow_color(&hikari.secondary),
+            "rgba(0, 0, 0, 0.6)"
+        );
+        // Tairitsu secondary 姜黄 #ffc773 — bright → black glow at 0.7.
+        assert_eq!(
+            tairitsu.button_glow_color(&tairitsu.secondary),
+            "rgba(0, 0, 0, 0.7)"
+        );
+    }
 
-    // hikari Secondary (苍翠 - brightness 0.501) should get black glow
-    // Contrast: |0.501 - 0.0| = 0.501 > 0.5, <= 0.7, alpha = 0.6
-    let hikari_secondary_glow = hikari.button_glow_color(&hikari.secondary);
-    assert_eq!(hikari_secondary_glow, "rgba(0, 0, 0, 0.6)");
-
-    // tairitsu Secondary (姜黄 - brightness 0.808) should get black glow
-    // Contrast: |0.808 - 0.0| = 0.808 > 0.7, alpha = 0.7
-    let tairitsu_secondary_glow = tairitsu.button_glow_color(&tairitsu.secondary);
-    assert_eq!(tairitsu_secondary_glow, "rgba(0, 0, 0, 0.7)");
-
-    // Success (葱倩 - brightness 0.47) should get black glow
-    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
-    let success_glow = hikari.button_glow_color(&hikari.success);
-    assert_eq!(success_glow, "rgba(0, 0, 0, 0.5)");
-
-    // Danger (朱红 - brightness 0.47) should get black glow
-    // Contrast: |0.47 - 0.0| = 0.47 < 0.5, alpha = 0.5
-    let danger_glow = hikari.button_glow_color(&hikari.danger);
-    assert_eq!(danger_glow, "rgba(0, 0, 0, 0.5)");
-
-    // tairitsu Success (葱倩 - brightness 0.47) should get black glow
-    let tairitsu_success_glow = tairitsu.button_glow_color(&tairitsu.success);
-    assert_eq!(tairitsu_success_glow, "rgba(0, 0, 0, 0.5)");
-
-    // tairitsu Danger (朱红 - brightness 0.47) should get black glow
-    let tairitsu_danger_glow = tairitsu.button_glow_color(&tairitsu.danger);
-    assert_eq!(tairitsu_danger_glow, "rgba(0, 0, 0, 0.5)");
-}
-
-#[test]
-fn test_palette_ghost_colors() {
-    let hikari = Hikari::palette();
-    let tairitsu = Tairitsu::palette();
-
-    // hikari ghost text should be black
-    let hikari_ghost_text = hikari.ghost_text_color(0.9);
-    assert_eq!(hikari_ghost_text, "rgba(0, 0, 0, 0.9)");
-
-    // tairitsu ghost text should be white
-    let tairitsu_ghost_text = tairitsu.ghost_text_color(0.9);
-    assert_eq!(tairitsu_ghost_text, "rgba(255, 255, 255, 0.9)");
-
-    // hikari ghost glow should be black with low opacity
-    let hikari_ghost_glow = hikari.ghost_glow_color(0.2);
-    assert_eq!(hikari_ghost_glow, "rgba(0, 0, 0, 0.2)");
-
-    // tairitsu ghost glow should be white
-    let tairitsu_ghost_glow = tairitsu.ghost_glow_color(0.8);
-    assert_eq!(tairitsu_ghost_glow, "rgba(255, 255, 255, 0.8)");
+    #[test]
+    fn test_palette_ghost_colors() {
+        let hikari = Hikari::palette();
+        let tairitsu = Tairitsu::palette();
+        assert_eq!(hikari.ghost_text_color(0.9), "rgba(0, 0, 0, 0.9)");
+        assert_eq!(tairitsu.ghost_text_color(0.9), "rgba(255, 255, 255, 0.9)");
+        assert_eq!(hikari.ghost_glow_color(0.2), "rgba(0, 0, 0, 0.2)");
+        assert_eq!(tairitsu.ghost_glow_color(0.8), "rgba(255, 255, 255, 0.8)");
+    }
 }

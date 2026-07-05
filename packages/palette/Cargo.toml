@@ -4,17 +4,30 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
+description = "Ready-to-use palette system: themed palettes plus opt-in color collections, with a small Color core"
+keywords = ["color", "palette", "design-system", "ui", "theme"]
+categories = ["gui", "wasm"]
 
 [lib]
-doctest = false
+doctest = true
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 yuuka = "^0.6"
 
 [features]
-chinese-names = []  # Include Chinese color names (disabled by default to minimize wasm size)
+default = []
+
+# Bring in the `collections` module. Without this, no collection code is compiled
+# at all. Pair with one or more `collection-<name>` features.
+collections = []
+
+# Opt-in named-color catalogs. Each maps to data/<name>.toml and is generated
+# at build time into `crate::collections::<name>`.
+collection-chinese = ["collections"]
+
+# Legacy alias kept for backward compatibility — equivalent to collection-chinese.
+chinese-names = ["collection-chinese"]
 
 [build-dependencies]
 regex-lite = "^0.1"
-

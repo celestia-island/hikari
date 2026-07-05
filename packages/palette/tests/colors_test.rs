@@ -1,3 +1,8 @@
+// This test depends on the optional Chinese color collection.
+#![cfg(feature = "collection-chinese")]
+
+use hikari_palette::collections::chinese::*;
+
 // hikari-palette/tests/colors_test.rs
 // 中国传统色库单元测试
 

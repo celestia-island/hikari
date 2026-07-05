@@ -128,16 +128,23 @@ struct ThemeCache {
 fn get_theme_colors() -> (String, String) {
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
-        use palette::{墨色, 月白, 粉红, 靛蓝};
+        use palette::Color;
         use std::cell::RefCell;
 
         thread_local! {
             static THEME_CACHE: RefCell<Option<ThemeCache>> = RefCell::new(None);
         }
 
+        // Theme gradient colors — defined inline so this module does not depend
+        // on any opt-in color collection.
+        let yuebai = Color::from_rgb_hex(0xd6, 0xec, 0xf0); // 月白
+        let fenhong = Color::from_rgb_hex(0xff, 0xb3, 0xa7); // 粉红
+        let mose = Color::from_rgb_hex(0x50, 0x61, 0x6d); // 墨色
+        let dianlan = Color::from_rgb_hex(0x06, 0x52, 0x79); // 靛蓝
+
         let document = match web_sys::window().and_then(|w| w.document()) {
             Some(doc) => doc,
-            None => return (月白.hex(), 粉红.hex()),
+            None => return (yuebai.hex(), fenhong.hex()),
         };
 
         // Get current theme from DOM
@@ -161,8 +168,8 @@ fn get_theme_colors() -> (String, String) {
             }
             // Cache miss or theme changed
             let new_colors = match current_theme.as_str() {
-                "tairitsu" => (墨色.hex(), 靛蓝.hex()),
-                _ => (月白.hex(), 粉红.hex()),
+                "tairitsu" => (mose.hex(), dianlan.hex()),
+                _ => (yuebai.hex(), fenhong.hex()),
             };
             new_colors
         });
@@ -184,9 +191,11 @@ fn get_theme_colors() -> (String, String) {
 
     #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
     {
-        // Fallback colors for non-WASM
-        use palette::{月白, 粉红};
-        (月白.hex(), 粉红.hex())
+        // Fallback colors for non-WASM — defined inline, no collection dep.
+        use palette::Color;
+        let yuebai = Color::from_rgb_hex(0xd6, 0xec, 0xf0); // 月白
+        let fenhong = Color::from_rgb_hex(0xff, 0xb3, 0xa7); // 粉红
+        (yuebai.hex(), fenhong.hex())
     }
 }
 

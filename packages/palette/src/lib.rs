@@ -1,156 +1,67 @@
 //! # Hikari Palette
 //!
-//! Comprehensive color palette system featuring 500+ traditional Chinese colors with rich historical context and modern type-safe Rust constants.
+//! A ready-to-use palette system: themed palettes plus **opt-in** color
+//! collections, with a small [`Color`] core and zero-cost collection loading.
 //!
-//! ## Overview
+//! ## What's in the box
 //!
-//! `hikari-palette` provides:
+//! - **[`Color`] core** — RGB triple with inferred category, `const`-constructible,
+//!   serializable. Always present, dependency-light.
+//! - **[`themes`]** — ready-to-use themed [`Palette`]s (light, dark, industrial…),
+//!   each self-contained and independent of any color collection.
+//! - **[`collections`]** — named-color catalogs (e.g. traditional Chinese colors),
+//!   **opt-in via Cargo features**. A disabled collection is not compiled in at
+//!   all; an enabled one becomes a module of `pub const` values generated at
+//!   build time from a TOML file.
+//! - **[`classes`]** — type-safe Tailwind-like utility-class enums generated from
+//!   SCSS.
 //!
-//! - **500+ Traditional Chinese Colors** - Authentic historical colors from Chinese art, culture, and nature
-//! - **Rich Metadata** - Each color includes hex, RGB, CMYK values, and historical notes
-//! - **Type-Safe Constants** - Use Chinese identifiers directly in your Rust code
-//! - **Pre-defined Palettes** - Ready-to-use color schemes for different design systems
-//! - **Utility Classes** - Type-safe Tailwind-like utility class system
+//! ## Design philosophy
 //!
-//! ## Design Philosophy
+//! Collections are *data*, not identity. The crate does not brand itself as any
+//! single color tradition; each catalog is a pluggable data source. Add the
+//! ones you want, ignore the rest — what you don't enable costs zero bytes.
 //!
-//! This crate uses **"Scheme C-Plus"** - Chinese constant names with English API design:
+//! ```
+//! use hikari_palette::Color;
 //!
-//! ```rust
-//! // Chinese constant names (cultural authenticity)
-//! let primary = 石青;
-//! let secondary = 朱砂;
+//! // The core works with no collections enabled.
+//! let primary = Color::from_rgb_hex(0xff, 0xb3, 0xa7);
+//! assert_eq!(primary.hex(), "#FFB3A7");
+//! assert!(primary.is_light());
+//! ```
 //!
-//! // English API (interoperability)
-//! println!("{}: {}", primary.name, primary.hex);
+//! ## Using a themed palette
+//!
+//! ```
+//! use hikari_palette::themes::Hikari;
+//!
+//! let palette = Hikari::palette();
+//! assert!(palette.primary.is_light());
+//! ```
+//!
+//! ## Opting into a color collection
+//!
+//! ```toml
+//! # Cargo.toml — only what you ask for is compiled in.
+//! hikari-palette = { version = "^0.2", features = ["collection-chinese"] }
+//! ```
+//!
+//! ```rust,ignore
+//! use hikari_palette::collections::chinese::粉红;
+//! assert_eq!(粉红.hex(), "#FFB3A7");
+//! assert_eq!(粉红.name(), Some("粉红"));
 //! ```
 //!
 //! ## Modules
 //!
-//! - [`colors`] - Individual color definitions (500+ traditional colors)
-//! - [`themes`] - Theme palettes (Hikari, Tairitsu, Arknights, Fresh)
-//! - [`classes`] - Type-safe utility class system with hierarchical enums
+//! - [`colors`] — the [`Color`] core and [`ColorCategory`].
+//! - [`themes`] — themed [`Palette`]s and a runtime [`ThemeRegistry`](themes::ThemeRegistry).
+//! - [`collections`] — opt-in named-color catalogs.
+//! - [`classes`] — auto-generated utility-class enums from SCSS.
 //!
-//! ## Quick Start
-//!
-//! ### Basic Color Usage
-//!
-//! ```rust,no_run
-//! use hikari_palette::{石青, 朱砂, 藤黄, 月白};
-//!
-//! # fn main() {
-//! #     let primary = 石青;
-//! #     let secondary = 朱砂;
-//! #
-//! #     println!("Primary color: {}", primary.name);
-//! #     println!("Hex: {}", primary.hex);
-//! #     println!("RGB: {:?}", primary.rgb);
-//! # }
-//! ```
-//!
-//! ### Using Pre-defined Palettes
-//!
-//! ```rust,no_run
-//! use hikari_palette::{primary_palette, fui_dark_palette, arknights_palette};
-//!
-//! // Primary theme (default)
-//! let palette = primary_palette();
-//! println!("Primary: {}", palette.primary.hex);
-//!
-//! // FUI Dark theme
-//! let dark = fui_dark_palette();
-//!
-//! // Arknights theme
-//! let arknights = arknights_palette();
-//! ```
-//!
-//! ### Utility Classes
-//!
-//! ```rust,no_run
-//! use hikari_palette::classes::*;
-//!
-//! let classes = ClassesBuilder::new()
-//!     .add(Display::Flex)
-//!     .add(FlexDirection::Row)
-//!     .add(Gap::Gap4)
-//!     .build();
-//! // Output: "hi-flex hi-flex-row hi-gap-4"
-//! ```
-//!
-//! ## Color Categories
-//!
-//! Colors are organized into categories:
-//!
-//! - **Red** (赤色系): 朱砂, 丹雘, 银红, ...
-//! - **Orange** (橙色系): 藤黄, 鹅黄, 杏黄, ...
-//! - **Green** (绿色系): 葱倩, 竹青, 豆碧, ...
-//! - **Cyan/Blue** (青色系): 石青, 靛蓝, 群碧, ...
-//! - **Purple** (紫色系): 紫檀, 丁香, 牡丹, ...
-//! - **White** (白色系): 月白, 云白, ...
-//! - **Black** (黑色系): 墨色, 玄色, ...
-//! - **Gray** (灰色系): 缟色, 黛色, 铁灰, 烟灰, ...
-//!
-//! ## Available Themes
-//!
-//! | Theme | Description | Primary Color | Secondary Color |
-//! |-------|-------------|---------------|-----------------|
-//! | `primary_palette()` | Default Hikari theme | 石青 (#1759A8) | 朱砂 (#FF4C00) |
-//! | `fui_dark_palette()` | FUI Dark sci-fi | 靛蓝 (#1A237E) | 朱砂 (#FF4C00) |
-//! | `arknights_palette()` | Arknights-inspired | 石青 (#1759A8) | 朱砂 (#FF4C00) |
-//! | `fresh_palette()` | Light, fresh | 月白 (#D6ECF0) | 葱倩 (#5CBF91) |
-//!
-//! ## Historical Context
-//!
-//! Many colors include historical notes:
-//!
-//! ```rust,no_run
-//! use hikari_palette::{石青};
-//!
-//! if let Some(note) = 石青.historical_note {
-//!     println!("{}", note);
-//!     // Output: 中国画传统颜料，源于蓝铜矿石
-//! }
-//! ```
-//!
-//! ## Color Reference
-//!
-//! ### Primary Colors
-//!
-//! | Color Name | Chinese | Hex | Usage |
-//! |------------|---------|-----|-------|
-//! | Stone Cyan | 石青 | #1759A8 | Primary brand color |
-//! | Cinnabar | 朱砂 | #FF4C00 | Secondary accent |
-//! | Vine Yellow | 藤黄 | #FFB800 | Highlights |
-//! | Indigo | 靛蓝 | #1A237E | Deep accents |
-//!
-//! ### Functional Colors
-//!
-//! | Color Name | Chinese | Hex | Usage |
-//! |------------|---------|-----|-------|
-//! | Scallion Green | 葱倩 | #5CBF91 | Success states |
-//! | Goosling Yellow | 鹅黄 | #FBC02D | Warnings |
-//! | Cinnabar | 朱砂 | #FF4C00 | Error, danger |
-//!
-//! ## Integration with Other Crates
-//!
-//! `hikari-palette` integrates seamlessly with:
-//!
-//! - **hikari-theme** - Theme provider uses color palettes
-//! - **hikari-components** - Components inherit colors from theme
-//!
-//! ```rust,no_run
-//! use hikari_palette::primary_palette;
-//! use hikari_theme::ThemeProvider;
-//!
-//! // In your Dioxus app
-//! rsx! {
-//!     ThemeProvider { palette: "primary".to_string(),
-//!         // Uses colors from primary_palette()
-//!     }
-//! }
-//! ```
-//!
-//! For more details, see the [crate documentation](https://docs.rs/hikari-palette)
+//! For the data file format and how to add your own collection, see the
+//! [data schema](https://github.com/celestia-island/hikari/blob/dev/packages/palette/data/SCHEMA.md).
 
 pub mod classes;
 pub mod color_math;
@@ -159,5 +70,21 @@ pub mod themes;
 
 pub use classes::*;
 pub use color_math::*;
-pub use colors::*;
+pub use colors::{Color, ColorCategory};
 pub use themes::*;
+
+/// Opt-in color collections. Each sub-module is generated from a TOML file in
+/// `data/` and is only compiled when its `collection-<name>` Cargo feature is
+/// enabled. Disabled collections cost zero bytes.
+///
+/// See [`colors`](crate::colors) for the core `Color` type and the
+/// [data schema](https://github.com/celestia-island/hikari/blob/dev/packages/palette/data/SCHEMA.md)
+/// for adding your own collection.
+#[cfg(feature = "collections")]
+pub mod collections {
+    #[cfg(feature = "collection-chinese")]
+    pub mod chinese {
+        include!(concat!(env!("OUT_DIR"), "/collections/chinese.rs"));
+    }
+}
+

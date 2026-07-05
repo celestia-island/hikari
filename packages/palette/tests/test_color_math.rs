@@ -1,3 +1,8 @@
+// This test depends on the optional Chinese color collection.
+#![cfg(feature = "collection-chinese")]
+
+use hikari_palette::collections::chinese::*;
+
 use hikari_palette::color_math::*;
 use hikari_palette::colors::*;
 

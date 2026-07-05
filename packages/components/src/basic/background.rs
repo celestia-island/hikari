@@ -6,7 +6,7 @@
 
 use hikari_palette::classes::{BackgroundClass, UtilityClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use hikari_palette::{墨色, 月白, 粉红, 靛蓝};
+use hikari_palette::Color;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;
@@ -117,8 +117,16 @@ fn start_gradient_animation() -> Box<dyn FnOnce()> {
         };
 
         let (color1, color2) = match theme.as_str() {
-            "tairitsu" => (墨色, 靛蓝),
-            _ => (月白, 粉红),
+            // Theme gradient colors — defined inline so this component does not
+            // depend on any opt-in color collection.
+            "tairitsu" => (
+                Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
+                Color::from_rgb_hex(0x06, 0x52, 0x79), // 靛蓝
+            ),
+            _ => (
+                Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
+                Color::from_rgb_hex(0xff, 0xb3, 0xa7), // 粉红
+            ),
         };
 
         let breathing_progress = (current_time / 4000.0) % 2.0;

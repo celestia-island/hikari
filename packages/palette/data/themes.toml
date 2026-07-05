@@ -1,0 +1,55 @@
+# Ready-to-use themed palettes — self-contained, no dependency on any color collection.
+# Schema: hikari-palette theme palette v1
+#
+# Each [[palettes]] entry maps to a `Palette { ... }` struct. Colors are hex strings.
+# `mode` is "light" or "dark". Role keys: primary, secondary, accent, success, warning,
+# danger, background, surface, border, text_primary, text_secondary.
+
+[collection]
+name = "themes"
+description = "Ready-to-use themed palettes"
+
+# === Hikari — Light theme (default) ===
+[palettes.hikari]
+mode = "light"
+primary = "#ffb3a7"        # soft pink
+secondary = "#519a73"      # muted green
+accent = "#ffc773"         # warm yellow
+success = "#0eb840"
+warning = "#ffa631"
+danger = "#ff4c00"
+background = "#ffffff"
+surface = "#ffffff"
+border = "#c4d8da"
+text_primary = "#262626"
+text_secondary = "#666666"
+
+# === Tairitsu — Dark theme ===
+[palettes.tairitsu]
+mode = "dark"
+primary = "#144a74"        # deep blue
+secondary = "#ffc773"      # warm yellow
+accent = "#ffc773"
+success = "#0eb840"
+warning = "#ffa631"
+danger = "#ff4c00"
+background = "#161823"
+surface = "#202336"
+border = "#303448"
+text_primary = "#f0f0f4"
+text_secondary = "#b3b4c7"
+
+# === Arknights — Dark industrial (cyan + gold on deep navy) ===
+[palettes.arknights]
+mode = "dark"
+primary = "#00b4d8"
+secondary = "#ffd700"
+accent = "#ffd700"
+success = "#3fb950"
+warning = "#d29922"
+danger = "#f85149"
+background = "#0d1117"
+surface = "#161b22"
+border = "#30363d"
+text_primary = "#e6edf3"
+text_secondary = "#8b949e"

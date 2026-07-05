@@ -24,6 +24,19 @@ edition = "2024"
 authors = ["Hikari Contributors"]
 license-file = "LICENSE"
 
+# ============================================================================
+# Hikari build-time configuration
+# ============================================================================
+#
+# Collections listed here are compiled into the crates that opt into them (e.g.
+# hikari-palette exposes `collections::chinese` when "chinese" is listed). The
+# selection is read by each crate's build.rs, which emits a matching
+# `cargo:rustc-cfg=hikari_collection_<name>` flag. No Cargo features involved.
+#
+# Add or remove entries to control which color catalogs ship in your build.
+[workspace.metadata.hikari]
+collections = ["chinese"]
+
 [workspace.dependencies]
 # =================================================================
 # Basic language and tools

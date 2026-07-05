@@ -53,16 +53,27 @@ text_secondary = "#666666"
 
 ## Enabling data
 
-Collections are opt-in via Cargo features:
+Collections are **not** Cargo features. They are selected by the consuming
+workspace via `[workspace.metadata.hikari]` in its root `Cargo.toml`:
 
 ```toml
-# Default — only the palette core + themes, no color collections
-hikari-palette = "^0.2"
-
-# Bring in a collection
-hikari-palette = { version = "^0.2", features = ["collection-chinese"] }
+# Root Cargo.toml of the business project
+[workspace.metadata.hikari]
+collections = ["chinese"]
 ```
 
-Each `collection-<name>` feature makes the generated module available at
-`hikari_palette::collections::<name>`. Nothing from a disabled collection is
-compiled into the binary.
+Each listed collection is read by `hikari-palette`'s build script, which:
+
+1. Emits `cargo:rustc-cfg=hikari_collection_<name>` so the source module compiles in.
+2. Generates a `pub const` block from `data/<name>.toml` into `OUT_DIR`.
+
+The collection is then available at `hikari_palette::collections::<name>`.
+Collections not listed are never read, never generated, never compiled — they
+cost zero bytes.
+
+### Why metadata, not features?
+
+Selection is a property of the *consuming project* (which color catalogs does
+this app need?), not of the crate graph. Centralizing it in the workspace root
+keeps every downstream crate's `Cargo.toml` free of `features = [...]` noise and
+makes the active set visible in one place.

@@ -10,8 +10,8 @@
 //! - **[`themes`]** — ready-to-use themed [`Palette`]s (light, dark, industrial…),
 //!   each self-contained and independent of any color collection.
 //! - **[`collections`]** — named-color catalogs (e.g. traditional Chinese colors),
-//!   **opt-in via Cargo features**. A disabled collection is not compiled in at
-//!   all; an enabled one becomes a module of `pub const` values generated at
+//!   **opt-in via workspace metadata**. A disabled collection is not compiled in
+//!   at all; an enabled one becomes a module of `pub const` values generated at
 //!   build time from a TOML file.
 //! - **[`classes`]** — type-safe Tailwind-like utility-class enums generated from
 //!   SCSS.
@@ -42,9 +42,13 @@
 //!
 //! ## Opting into a color collection
 //!
+//! Collections are selected in the **workspace root** `Cargo.toml`, not via
+//! Cargo features:
+//!
 //! ```toml
-//! # Cargo.toml — only what you ask for is compiled in.
-//! hikari-palette = { version = "^0.2", features = ["collection-chinese"] }
+//! # Root Cargo.toml of the business project
+//! [workspace.metadata.hikari]
+//! collections = ["chinese"]
 //! ```
 //!
 //! ```rust,ignore
@@ -74,15 +78,34 @@ pub use colors::{Color, ColorCategory};
 pub use themes::*;
 
 /// Opt-in color collections. Each sub-module is generated from a TOML file in
-/// `data/` and is only compiled when its `collection-<name>` Cargo feature is
-/// enabled. Disabled collections cost zero bytes.
+/// `data/` and is compiled in only when the consuming workspace requests it via
+/// `[workspace.metadata.hikari].collections` in its root `Cargo.toml`.
 ///
-/// See [`colors`](crate::colors) for the core `Color` type and the
-/// [data schema](https://github.com/celestia-island/hikari/blob/dev/packages/palette/data/SCHEMA.md)
-/// for adding your own collection.
-#[cfg(feature = "collections")]
+/// The build script emits a `cargo:rustc-cfg=hikari_collection_<name>` flag for
+/// each requested collection, and the corresponding module here is gated on that
+/// flag. No Cargo features are involved — selection is a property of the
+/// consuming workspace.
+///
+/// Example workspace declaration:
+///
+/// ```toml
+/// # Root Cargo.toml of the business project
+/// [workspace.metadata.hikari]
+/// collections = ["chinese"]
+/// ```
+///
+/// Then in code:
+///
+/// ```rust,ignore
+/// use hikari_palette::collections::chinese::粉红;
+/// ```
+///
+/// See the [data schema] for adding your own collection.
+///
+/// [data schema]: https://github.com/celestia-island/hikari/blob/dev/packages/palette/data/SCHEMA.md
+#[cfg(any(hikari_collection_chinese))]
 pub mod collections {
-    #[cfg(feature = "collection-chinese")]
+    #[cfg(hikari_collection_chinese)]
     pub mod chinese {
         include!(concat!(env!("OUT_DIR"), "/collections/chinese.rs"));
     }

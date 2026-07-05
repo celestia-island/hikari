@@ -3,6 +3,13 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
+/// Known collections: (name, data file). Add new collections here.
+const KNOWN_COLLECTIONS: &[(&str, &str)] = &[
+    ("chinese", "chinese.toml"),
+    // ("japanese", "japanese.toml"),
+    // ("tailwind", "tailwind.toml"),
+];
+
 fn main() {
     let manifest_dir =
         env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set by Cargo");
@@ -48,50 +55,89 @@ fn main() {
         all_classes.values().map(Vec::len).sum::<usize>()
     );
 
-    // --- Color collections (opt-in via `collection-<name>` features) ---
-    // Each enabled collection's TOML is parsed at build time and emitted as a
-    // `pub const` block. A disabled collection is never read, never compiled.
+    // --- Color collections (opt-in via workspace metadata) ---
+    //
+    // The business project declares which collections it wants in its workspace
+    // root Cargo.toml:
+    //
+    //   [workspace.metadata.hikari]
+    //   collections = ["chinese"]
+    //
+    // For each listed collection we (a) emit `cargo:rustc-cfg=hikari_collection_<name>`
+    // so the crate's `#[cfg(hikari_collection_<name>)]` modules compile in, and
+
+    // First, declare every *possible* collection cfg to the checker so Cargo
+    // doesn't warn about unexpected cfg names regardless of which are active.
+    for (name, _) in KNOWN_COLLECTIONS {
+        println!("cargo::rustc-check-cfg=cfg(hikari_collection_{name})");
+    }
+    // (b) generate the `pub const` block from data/<name>.toml.
+    //
+    // No Cargo features involved — selection is a property of the consuming
+    // workspace, not a feature flag on this crate.
     generate_collections(&manifest_dir, &out_dir);
 }
 
-/// Parse every enabled `collection-<name>` feature's `data/<name>.toml` and
-/// emit `OUT_DIR/collections/<name>.rs` — a module of `pub const` `Color`s.
-///
-/// The feature→file mapping is: feature `collection-chinese` → `data/chinese.toml`.
-fn generate_collections(manifest_dir: &str, out_dir: &str) {
-    // Map of (feature suffix) → toml filename. Add new collections here and in
-    // Cargo.toml's `[features]`.
-    let collections = [
-        ("chinese", "chinese.toml"),
-        // ("japanese", "japanese.toml"),
-        // ("tailwind", "tailwind.toml"),
-    ];
-
-    let features: BTreeSet<String> = env::vars()
-        .filter_map(|(k, _)| k.strip_prefix("CARGO_FEATURE_COLLECTION_").map(str::to_owned))
-        .map(|f| f.to_lowercase().replace('_', "-"))
-        .collect();
-
-    if features.is_empty() {
-        // No collections enabled — emit an empty dir so include! is still valid
-        // when the `collections` feature itself is on but no sub-collection is.
-        let _ = fs::create_dir_all(Path::new(out_dir).join("collections"));
-        return;
-    }
-
-    let collections_dir = Path::new(out_dir).join("collections");
-    fs::create_dir_all(&collections_dir)
-        .expect("Failed to create output directory for collections");
-
-    for (name, file) in collections {
-        if !features.contains(name) {
-            continue;
+/// Walk up from this crate's manifest dir to find the workspace root (the first
+/// ancestor whose `Cargo.toml` contains a `[workspace]` table). Mirrors the
+/// pattern already used by `hikari-icons`' build script.
+fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
+    let mut current = PathBuf::from(manifest_dir);
+    loop {
+        let cargo_toml = current.join("Cargo.toml");
+        if cargo_toml.exists() {
+            if let Ok(content) = fs::read_to_string(&cargo_toml) {
+                if content.contains("[workspace]") {
+                    return Some(current);
+                }
+            }
         }
+        match current.parent() {
+            Some(parent) if parent != current => current = parent.to_path_buf(),
+            _ => return None,
+        }
+    }
+}
+
+/// Read `[workspace.metadata.hikari].collections` from the workspace root, then
+/// for each requested collection: emit a `cargo:rustc-cfg=hikari_collection_<n>`
+/// flag and generate its `pub const` module into OUT_DIR.
+fn generate_collections(manifest_dir: &str, out_dir: &str) {
+    // Always create the collections dir so the `include!` site is valid even
+    // when no collection is requested.
+    let collections_dir = Path::new(out_dir).join("collections");
+    let _ = fs::create_dir_all(&collections_dir);
+
+    let Some(workspace_root) = find_workspace_root(manifest_dir) else {
+        // Not in a workspace (e.g. a standalone crates.io build): no
+        // collections. The crate compiles as a bare Color core.
+        return;
+    };
+
+    let requested = read_workspace_collections(&workspace_root);
+
+    for name in &requested {
+        let Some(&(_, file)) = KNOWN_COLLECTIONS.iter().find(|(n, _)| n == name) else {
+            panic!(
+                "hikari-palette: unknown collection '{name}' in [workspace.metadata.hikari].collections. \
+                 Known: {}",
+                KNOWN_COLLECTIONS
+                    .iter()
+                    .map(|(n, _)| *n)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        };
+
+        // (a) Set the cfg flag so `#[cfg(hikari_collection_<name>)]` modules compile.
+        let cfg_flag = format!("hikari_collection_{name}");
+        println!("cargo:rustc-cfg={cfg_flag}");
+
+        // (b) Generate the const block from the TOML.
         let toml_path = Path::new(manifest_dir).join("data").join(file);
         let Ok(content) = fs::read_to_string(&toml_path) else {
             panic!(
-                "hikari-palette: collection '{}' is enabled but data/{} is missing",
-                name, file
+                "hikari-palette: collection '{name}' is requested but data/{file} is missing"
             );
         };
         let colors = parse_color_toml(&content)
@@ -99,6 +145,62 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
         emit_collection_module(name, &colors, &collections_dir.join(format!("{name}.rs")));
         println!("cargo:warning=hikari-palette: collection '{name}' — {} colors", colors.len());
     }
+}
+
+/// Parse `[workspace.metadata.hikari].collections` from the workspace root
+/// `Cargo.toml`. Returns an empty vec if absent or malformed (no panic — a bare
+/// crate with no palette configuration is a valid state).
+fn read_workspace_collections(workspace_root: &Path) -> Vec<String> {
+    let cargo_toml = workspace_root.join("Cargo.toml");
+    let Ok(content) = fs::read_to_string(&cargo_toml) else {
+        return Vec::new();
+    };
+
+    // Minimal scan: find the `[workspace.metadata.hikari]` table and read its
+    // `collections = [...]` array. Avoids depending on the `toml` crate in the
+    // build script.
+    let mut in_table = false;
+    for raw in content.lines() {
+        let line = raw.trim();
+        if line.starts_with('[') {
+            in_table = line == "[workspace.metadata.hikari]";
+            continue;
+        }
+        if !in_table {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("collections") {
+            let rest = rest.trim_start();
+            if let Some(rest) = rest.strip_prefix('=') {
+                return parse_string_array(rest.trim());
+            }
+        }
+    }
+    Vec::new()
+}
+
+/// Parse a `["a", "b"]` literal into a Vec of trimmed strings. Tolerant of
+/// multi-line arrays and stray comments.
+fn parse_string_array(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut in_str = false;
+    for ch in s.chars() {
+        if in_str {
+            if ch == '"' {
+                out.push(cur.trim().to_string());
+                cur.clear();
+                in_str = false;
+            } else {
+                cur.push(ch);
+            }
+        } else if ch == '"' {
+            in_str = true;
+        } else if ch == ']' {
+            break;
+        }
+    }
+    out
 }
 
 /// A parsed entry: (name, r, g, b). The category is inferred in Rust at the use
@@ -203,7 +305,7 @@ fn infer_category_name(r: u8, g: u8, b: u8) -> &'static str {
 
     // HSL hue in degrees (integer math).
     let (r, g, b) = (r as i32, g as i32, b as i32);
-    let (mx, mn, delta) = (mx as i32, mn as i32, delta as i32);
+    let (mx, delta) = (mx as i32, delta as i32);
     let hue_milli = if mx == r {
         60000 * (g - b) / delta
     } else if mx == g {

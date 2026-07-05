@@ -22,11 +22,12 @@
 //!
 //! ## Using a color collection
 //!
-//! Enable the feature and import the generated module:
+//! Enable the collection in the workspace root and import the generated module:
 //!
 //! ```toml
-//! # Cargo.toml
-//! hikari-palette = { version = "^0.2", features = ["collection-chinese"] }
+//! # Root Cargo.toml
+//! [workspace.metadata.hikari]
+//! collections = ["chinese"]
 //! ```
 //!
 //! ```rust,ignore
@@ -96,7 +97,6 @@ impl ColorCategory {
         let g = g as i32;
         let b = b as i32;
         let mx = mx as i32;
-        let mn = mn as i32;
         let delta = delta as i32;
         // chroma-relative channel distance, scaled by 60000/delta → degrees×1000
         let hue_milli: i32 = if mx == r {

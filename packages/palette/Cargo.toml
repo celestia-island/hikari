@@ -15,19 +15,15 @@ doctest = true
 serde = { workspace = true, features = ["derive"] }
 yuuka = "^0.6"
 
-[features]
-default = []
-
-# Bring in the `collections` module. Without this, no collection code is compiled
-# at all. Pair with one or more `collection-<name>` features.
-collections = []
-
-# Opt-in named-color catalogs. Each maps to data/<name>.toml and is generated
-# at build time into `crate::collections::<name>`.
-collection-chinese = ["collections"]
-
-# Legacy alias kept for backward compatibility — equivalent to collection-chinese.
-chinese-names = ["collection-chinese"]
+# Color collections are NOT Cargo features. The consuming workspace declares
+# which collections it wants in its root Cargo.toml:
+#
+#   [workspace.metadata.hikari]
+#   collections = ["chinese"]
+#
+# The build script reads that, emits `cargo:rustc-cfg=hikari_collection_<name>`
+# per collection, and generates the corresponding `pub const` block from
+# data/<name>.toml. Source modules are gated on those cfg flags.
 
 [build-dependencies]
 regex-lite = "^0.1"

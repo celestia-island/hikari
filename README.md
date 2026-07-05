@@ -1,4 +1,4 @@
-<div align="center"><img src="https://raw.githubusercontent.com/celestia-island/hikari/master/website/res/icons/logo.png" /></div>
+<div align="center"><img src="https://raw.githubusercontent.com/celestia-island/hikari/master/docs/logo.png" /></div>
 <h1 align="center">Hikari</h1>
 <div align="center">
  <strong>
@@ -11,7 +11,7 @@
 <div align="center">
   <!-- CI status -->
   <a href="https://github.com/celestia-island/hikari/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml?branch=main"
+    <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml"
       alt="CI Status" />
   </a>
   <!-- Built with -->

@@ -47,7 +47,7 @@
 //!
 //! ```toml
 //! # Root Cargo.toml of the business project
-//! [workspace.metadata.hikari]
+//! [workspace.metadata.hikari.palette]
 //! collections = ["chinese"]
 //! ```
 //!
@@ -79,7 +79,7 @@ pub use themes::*;
 
 /// Opt-in color collections. Each sub-module is generated from a TOML file in
 /// `data/` and is compiled in only when the consuming workspace requests it via
-/// `[workspace.metadata.hikari].collections` in its root `Cargo.toml`.
+/// `[workspace.metadata.hikari.palette].collections` in its root `Cargo.toml`.
 ///
 /// The build script emits a `cargo:rustc-cfg=hikari_collection_<name>` flag for
 /// each requested collection, and the corresponding module here is gated on that
@@ -90,7 +90,7 @@ pub use themes::*;
 ///
 /// ```toml
 /// # Root Cargo.toml of the business project
-/// [workspace.metadata.hikari]
+/// [workspace.metadata.hikari.palette]
 /// collections = ["chinese"]
 /// ```
 ///

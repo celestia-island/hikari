@@ -2,7 +2,7 @@
 //!
 //! Provides secure icon fetching with RON serialization and caching.
 
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 use std::{
     collections::HashMap,
     sync::{Arc, OnceLock, RwLock},
@@ -11,7 +11,7 @@ use std::{
 /// Icon route for dynamic fetching
 /// Set by build.rs at compile time via cargo:rustc-env
 /// Defaults to "/static/dynamic-icons" if not set
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 const ICON_ROUTE: &str = {
     match option_env!("HIKARI_ICON_ROUTE") {
         Some(route) => route,
@@ -20,11 +20,11 @@ const ICON_ROUTE: &str = {
 };
 
 /// Icon cache to prevent duplicate requests
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 static ICON_CACHE: OnceLock<Arc<RwLock<HashMap<String, String>>>> = OnceLock::new();
 
 /// Fetch and cache icon SVG (RON format)
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
     // Check cache first
     {
@@ -112,7 +112,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
 }
 
 /// Parse RON safely and reconstruct SVG
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 fn parse_safe_ron(ron_data: &str) -> Result<String, String> {
     // Deserialize RON to SafeIconData
     let icon_data: SafeIconData =
@@ -126,7 +126,7 @@ fn parse_safe_ron(ron_data: &str) -> Result<String, String> {
 }
 
 /// Safe icon data structure (no raw SVG strings)
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 #[derive(serde::Deserialize, Debug)]
 struct SafeIconData {
     view_box: Option<String>,
@@ -138,7 +138,7 @@ struct SafeIconData {
 }
 
 /// Safe path data structure
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 #[derive(serde::Deserialize, Debug)]
 struct SafePathData {
     d: Option<String>,
@@ -148,7 +148,7 @@ struct SafePathData {
 }
 
 /// Validate icon data to prevent injection
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
     // Validate view_box (format: "0 0 24 24")
     if let Some(ref vb) = data.view_box {
@@ -220,7 +220,7 @@ fn validate_icon_data(data: &SafeIconData) -> Result<(), String> {
 }
 
 /// Check if a color string is safe
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 fn is_safe_color(color: &str) -> bool {
     match color {
         "none" | "currentColor" => true,
@@ -235,7 +235,7 @@ fn is_safe_color(color: &str) -> bool {
 }
 
 /// Reconstruct SVG from safe data
-#[cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))]
+#[cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))]
 fn reconstruct_svg(data: &SafeIconData) -> Result<String, String> {
     let mut svg = String::from(r#"<svg xmlns="http://www.w3.org/2000/svg""#);
 
@@ -281,7 +281,7 @@ fn reconstruct_svg(data: &SafeIconData) -> Result<String, String> {
 }
 
 /// Mock fetch for non-WASM or when feature disabled
-#[cfg(not(all(feature = "dynamic-fetch", target_arch = "wasm32")))]
+#[cfg(not(all(hikari_icons_dynamic_fetch, target_arch = "wasm32")))]
 pub async fn fetch_and_cache_icon(_icon_name: &str) -> Option<String> {
     None
 }

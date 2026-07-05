@@ -26,7 +26,7 @@
 //!
 //! ```toml
 //! # Root Cargo.toml
-//! [workspace.metadata.hikari]
+//! [workspace.metadata.hikari.palette]
 //! collections = ["chinese"]
 //! ```
 //!

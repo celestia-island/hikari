@@ -28,14 +28,24 @@ license-file = "LICENSE"
 # Hikari build-time configuration
 # ============================================================================
 #
-# Collections listed here are compiled into the crates that opt into them (e.g.
-# hikari-palette exposes `collections::chinese` when "chinese" is listed). The
-# selection is read by each crate's build.rs, which emits a matching
-# `cargo:rustc-cfg=hikari_collection_<name>` flag. No Cargo features involved.
+# Each Hikari crate reads its own subtable here. The crate's build.rs turns the
+# declared values into `cargo:rustc-cfg` flags, so selection is a property of
+# the consuming workspace — no Cargo features involved.
 #
-# Add or remove entries to control which color catalogs ship in your build.
-[workspace.metadata.hikari]
+#   [workspace.metadata.hikari.palette]
+#   collections = ["chinese"]            # which color catalogs to compile in
+#
+#   [workspace.metadata.hikari.icons]
+#   set = ["chevron-left", "menu", ...]  # explicit icon list (omit = auto-discover)
+#   dynamic-fetch = true                # fetch icons at runtime instead of embedding
+[workspace.metadata.hikari.palette]
 collections = ["chinese"]
+
+[workspace.metadata.hikari.icons]
+# When `set` is omitted, hikari-icons auto-discovers used icons by scanning
+# the workspace source. Set it explicitly to pin a known set, e.g.:
+#   set = ["chevron-left", "menu", "close"]
+dynamic-fetch = false
 
 [workspace.dependencies]
 # =================================================================

@@ -1,6 +1,18 @@
 //! Build script for hikari-icons
 //!
-//! Generates selected MDI icons at build time.
+//! Generates the selected MDI icon set at build time. Selection is configured
+//! in the consuming workspace's root `Cargo.toml`:
+//!
+//! ```toml
+//! [workspace.metadata.hikari.icons]
+//! # Optional explicit icon list. Omit to auto-discover icons used in source.
+//! set = ["chevron-left", "menu", "close"]
+//! # Fetch icons at runtime over HTTP instead of embedding them. Default false.
+//! dynamic-fetch = false
+//! ```
+//!
+//! The build script turns these into `cargo:rustc-cfg` flags so no Cargo
+//! features are involved — the same pattern hikari-palette uses.
 
 use std::path::PathBuf;
 
@@ -9,48 +21,117 @@ use hikari_builder::icons::{auto_discovery, IconConfig, IconSelection, MdiStyle}
 fn main() {
     println!("cargo:warning=🎨 hikari-icons: Building icons...");
 
-    // Check if dynamic-fetch feature is enabled
-    let is_dynamic = std::env::var("CARGO_FEATURE_DYNAMIC_FETCH").is_ok();
+    // Declare the custom cfg up front so the unexpected-cfg lint is satisfied
+    // regardless of whether dynamic-fetch is active.
+    println!("cargo::rustc-check-cfg=cfg(hikari_icons_dynamic_fetch)");
 
-    if is_dynamic {
+    let manifest_dir =
+        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set by Cargo");
+
+    // Read icon configuration from the workspace root, if any.
+    let workspace_root = find_workspace_root(&manifest_dir);
+    let config = read_icon_config(&workspace_root);
+
+    // Surface dynamic-fetch as a cfg flag (replaces the old Cargo feature).
+    if config.dynamic_fetch {
         println!("cargo:warning=🌐 Dynamic icon fetching enabled");
+        println!("cargo:rustc-cfg=hikari_icons_dynamic_fetch");
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
     } else {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    // Find workspace root
-    let workspace_root = find_workspace_root();
-
-    // Build icons using the builder's icon module
-    match build_icons(&workspace_root) {
-        Ok(()) => {
-            println!("cargo:warning=✅ Icons built successfully");
+    // Build icons using the builder's icon module.
+    if let Some(root) = &workspace_root {
+        match build_icons(root, &config) {
+            Ok(()) => {
+                println!("cargo:warning=✅ Icons built successfully");
+            }
+            Err(e) => {
+                eprintln!("❌ BUILD ERROR: Failed to build icons");
+                eprintln!("   Error: {}", e);
+                eprintln!();
+                eprintln!(
+                    "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+                );
+                std::process::exit(1);
+            }
         }
-        Err(e) => {
-            eprintln!("❌ BUILD ERROR: Failed to build icons");
-            eprintln!("   Error: {}", e);
-            eprintln!();
-            eprintln!(
-                "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
-            );
-            std::process::exit(1);
-        }
+    } else {
+        // Not in a workspace (e.g. standalone crates.io build): nothing to
+        // generate. The crate still compiles; mdi_minimal.rs provides the enum.
+        println!("cargo:warning=⚠️  No workspace root — skipping icon generation");
     }
 
-    // Track for rebuild
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_styles.json");
 }
 
-fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
-    // Try auto-discovery first
-    let icon_selection = if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
-        if !usage.icons.is_empty() {
+/// Parsed `[workspace.metadata.hikari.icons]` configuration.
+struct IconBuildConfig {
+    /// Explicit icon set, if `set = [...]` was declared. `None` → auto-discover.
+    explicit_set: Option<Vec<String>>,
+    /// Whether to fetch icons at runtime instead of embedding them.
+    dynamic_fetch: bool,
+}
+
+impl Default for IconBuildConfig {
+    fn default() -> Self {
+        Self {
+            explicit_set: None,
+            dynamic_fetch: false,
+        }
+    }
+}
+
+fn read_icon_config(workspace_root: &Option<PathBuf>) -> IconBuildConfig {
+    let Some(root) = workspace_root else {
+        return IconBuildConfig::default();
+    };
+    let Ok(content) = std::fs::read_to_string(root.join("Cargo.toml")) else {
+        return IconBuildConfig::default();
+    };
+
+    let mut cfg = IconBuildConfig::default();
+    let mut in_table = false;
+    for raw in content.lines() {
+        let line = raw.trim();
+        if line.starts_with('[') {
+            in_table = line == "[workspace.metadata.hikari.icons]";
+            continue;
+        }
+        if !in_table {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("set") {
+            if let Some(arr) = rest.trim_start().strip_prefix('=') {
+                cfg.explicit_set = Some(parse_string_array(arr.trim()));
+            }
+        } else if let Some(rest) = line.strip_prefix("dynamic-fetch") {
+            if let Some(val) = rest.trim_start().strip_prefix('=') {
+                cfg.dynamic_fetch = matches!(val.trim(), "true" | "True" | "TRUE");
+            }
+        }
+    }
+    cfg
+}
+
+fn build_icons(workspace_root: &std::path::Path, config: &IconBuildConfig) -> anyhow::Result<()> {
+    // Selection priority: explicit `set` from metadata > auto-discovery > default.
+    let icon_selection = if let Some(names) = &config.explicit_set {
+        if !names.is_empty() {
             println!(
-                "cargo:warning=🔍 Auto-discovered {} icons",
-                usage.icons.len()
+                "cargo:warning=📋 Using {} icons from [workspace.metadata.hikari.icons].set",
+                names.len()
             );
+            IconSelection::ByName(names.clone())
+        } else {
+            // Explicit empty list → fall back to default (don't generate nothing).
+            get_default_icon_selection()
+        }
+    } else if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
+        if !usage.icons.is_empty() {
+            println!("cargo:warning=🔍 Auto-discovered {} icons", usage.icons.len());
             IconSelection::ByName(auto_discovery::generate_selection(&usage))
         } else {
             get_default_icon_selection()
@@ -59,7 +140,7 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
         get_default_icon_selection()
     };
 
-    let config = IconConfig {
+    let cfg = IconConfig {
         selection: icon_selection,
         styles: vec![MdiStyle::Filled, MdiStyle::Outline],
         output_file: format!(
@@ -69,31 +150,50 @@ fn build_icons(workspace_root: &std::path::Path) -> anyhow::Result<()> {
         .into(),
     };
 
-    hikari_builder::icons::build_selected_icons(&config)
+    hikari_builder::icons::build_selected_icons(&cfg)
 }
 
-fn find_workspace_root() -> PathBuf {
-    let mut current = std::env::var("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("."));
-
+/// Walk up from this crate's manifest dir to find the workspace root (the first
+/// ancestor whose `Cargo.toml` contains a `[workspace]` table).
+fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
+    let mut current = PathBuf::from(manifest_dir);
     loop {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists() {
             if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
                 if content.contains("[workspace]") {
-                    return current;
+                    return Some(current);
                 }
             }
         }
-
         match current.parent() {
-            Some(parent) if parent != current => {
-                current = parent.to_path_buf();
-            }
-            _ => panic!("Workspace root not found"),
+            Some(parent) if parent != current => current = parent.to_path_buf(),
+            _ => return None,
         }
     }
+}
+
+/// Parse a `["a", "b"]` literal into a Vec of trimmed strings.
+fn parse_string_array(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cur = String::new();
+    let mut in_str = false;
+    for ch in s.chars() {
+        if in_str {
+            if ch == '"' {
+                out.push(cur.trim().to_string());
+                cur.clear();
+                in_str = false;
+            } else {
+                cur.push(ch);
+            }
+        } else if ch == '"' {
+            in_str = true;
+        } else if ch == ']' {
+            break;
+        }
+    }
+    out
 }
 
 fn get_default_icon_selection() -> IconSelection {

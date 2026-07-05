@@ -54,11 +54,11 @@ text_secondary = "#666666"
 ## Enabling data
 
 Collections are **not** Cargo features. They are selected by the consuming
-workspace via `[workspace.metadata.hikari]` in its root `Cargo.toml`:
+workspace via `[workspace.metadata.hikari.palette]` in its root `Cargo.toml`:
 
 ```toml
 # Root Cargo.toml of the business project
-[workspace.metadata.hikari]
+[workspace.metadata.hikari.palette]
 collections = ["chinese"]
 ```
 
@@ -71,9 +71,22 @@ The collection is then available at `hikari_palette::collections::<name>`.
 Collections not listed are never read, never generated, never compiled — they
 cost zero bytes.
 
-### Why metadata, not features?
+### Unified metadata layout
 
-Selection is a property of the *consuming project* (which color catalogs does
-this app need?), not of the crate graph. Centralizing it in the workspace root
-keeps every downstream crate's `Cargo.toml` free of `features = [...]` noise and
-makes the active set visible in one place.
+All Hikari crates read their configuration from a subtable of
+`[workspace.metadata.hikari]`:
+
+```toml
+[workspace.metadata.hikari.palette]
+collections = ["chinese"]
+
+[workspace.metadata.hikari.icons]
+# explicit icon list; omit to auto-discover from source
+set = ["chevron-left", "menu", "close"]
+dynamic-fetch = false   # fetch icons at runtime instead of embedding
+```
+
+Selection is a property of the consuming project (which color catalogs / which
+icons does this app need?), not of the crate graph. Centralizing it in the
+workspace root keeps every downstream crate's `Cargo.toml` free of
+`features = [...]` noise and makes the active set visible in one place.

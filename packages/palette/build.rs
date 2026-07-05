@@ -99,7 +99,7 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
     }
 }
 
-/// Read `[workspace.metadata.hikari].collections` from the workspace root, then
+/// Read `[workspace.metadata.hikari.palette].collections` from the workspace root, then
 /// for each requested collection: emit a `cargo:rustc-cfg=hikari_collection_<n>`
 /// flag and generate its `pub const` module into OUT_DIR.
 fn generate_collections(manifest_dir: &str, out_dir: &str) {
@@ -119,7 +119,7 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
     for name in &requested {
         let Some(&(_, file)) = KNOWN_COLLECTIONS.iter().find(|(n, _)| n == name) else {
             panic!(
-                "hikari-palette: unknown collection '{name}' in [workspace.metadata.hikari].collections. \
+                "hikari-palette: unknown collection '{name}' in [workspace.metadata.hikari.palette].collections. \
                  Known: {}",
                 KNOWN_COLLECTIONS
                     .iter()
@@ -147,23 +147,23 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
     }
 }
 
-/// Parse `[workspace.metadata.hikari].collections` from the workspace root
-/// `Cargo.toml`. Returns an empty vec if absent or malformed (no panic — a bare
-/// crate with no palette configuration is a valid state).
+/// Parse `[workspace.metadata.hikari.palette].collections` from the workspace
+/// root `Cargo.toml`. Returns an empty vec if absent or malformed (no panic — a
+/// bare crate with no palette configuration is a valid state).
 fn read_workspace_collections(workspace_root: &Path) -> Vec<String> {
     let cargo_toml = workspace_root.join("Cargo.toml");
     let Ok(content) = fs::read_to_string(&cargo_toml) else {
         return Vec::new();
     };
 
-    // Minimal scan: find the `[workspace.metadata.hikari]` table and read its
-    // `collections = [...]` array. Avoids depending on the `toml` crate in the
-    // build script.
+    // Minimal scan: find the `[workspace.metadata.hikari.palette]` table and
+    // read its `collections = [...]` array. Avoids depending on the `toml`
+    // crate in the build script.
     let mut in_table = false;
     for raw in content.lines() {
         let line = raw.trim();
         if line.starts_with('[') {
-            in_table = line == "[workspace.metadata.hikari]";
+            in_table = line == "[workspace.metadata.hikari.palette]";
             continue;
         }
         if !in_table {

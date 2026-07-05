@@ -3,12 +3,20 @@ name = "hikari-icons"
 version = "0.1.0"
 edition = "2021"
 
+# Note: icon *selection* and *dynamic-fetch* are NOT Cargo features. They are
+# declared in the consuming workspace's root Cargo.toml:
+#
+#   [workspace.metadata.hikari.icons]
+#   set = ["chevron-left", "menu"]   # explicit list; omit to auto-discover
+#   dynamic-fetch = false            # fetch at runtime instead of embedding
+#
+# The build script turns these into `cargo:rustc-cfg=hikari_icons_dynamic_fetch`
+# and the corresponding `set` selection. Only framework-binding options remain
+# as features below.
 [features]
 default = []
 dioxus = ["dep:dioxus"]
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
-dynamic-fetch = []
-dynamic-fetch-warnings = []
 
 [build-dependencies]
 hikari-builder = { path = "../builder" }
@@ -31,7 +39,8 @@ hikari-animation = { path = "../animation", default-features = false }
 serde.workspace = true
 ron.workspace = true
 
-# WASM dependencies for dynamic icon fetching
-[target.'cfg(all(feature = "dynamic-fetch", target_arch = "wasm32"))'.dependencies]
+# WASM dependencies for runtime dynamic icon fetching. Gated on the
+# build-script-emitted cfg, not a Cargo feature.
+[target.'cfg(all(hikari_icons_dynamic_fetch, target_arch = "wasm32"))'.dependencies]
 web-sys = { version = "^0.3", features = ["console"] }
 reqwest = { version = "^0.12", features = ["json"] }

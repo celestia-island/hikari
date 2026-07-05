@@ -62,7 +62,7 @@ fn use_animated_portal_entry(
         };
         (opacity, scale)
     })
-    .value();
+    .signal().clone();
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {

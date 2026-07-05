@@ -78,12 +78,12 @@ pub fn use_screen_size() -> Signal<ScreenSize> {
 
 pub fn use_is_mobile() -> Signal<bool> {
     let screen_size = use_screen_size();
-    use_memo(move || screen_size.read().is_mobile()).value()
+    use_memo(move || screen_size.read().is_mobile()).signal().clone()
 }
 
 pub fn use_is_desktop() -> Signal<bool> {
     let screen_size = use_screen_size();
-    use_memo(move || screen_size.read().is_desktop_or_larger()).value()
+    use_memo(move || screen_size.read().is_desktop_or_larger()).signal().clone()
 }
 
 fn get_screen_size_from_window() -> ScreenSize {

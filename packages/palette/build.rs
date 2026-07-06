@@ -111,7 +111,9 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
 
     let Some(workspace_root) = find_workspace_root(manifest_dir) else {
         // Not in a workspace (e.g. a standalone crates.io build): no
-        // collections. The crate compiles as a bare Color core.
+        // collections. Still emit the color! macro (empty) so the include! in
+        // lib.rs resolves.
+        emit_color_macro(&[], &Path::new(out_dir).join("color_macro.rs"));
         return;
     };
 

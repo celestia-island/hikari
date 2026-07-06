@@ -18,6 +18,38 @@ use std::path::PathBuf;
 
 use hikari_builder::icons::{IconConfig, IconSelection, MdiStyle, auto_discovery};
 
+/// Stub emitted when icons can't be generated (no workspace root). Provides
+/// the same public API surface as the generated file so downstream consumers
+/// compile, just without icon data.
+const STUB_MDI_SELECTED: &str = r#"// stub — no icons available outside the hikari workspace
+#[derive(Copy, Clone, Debug)]
+pub struct PathData {
+    pub d: Option<&'static str>,
+    pub fill: Option<&'static str>,
+    pub stroke: Option<&'static str>,
+    pub stroke_width: Option<&'static str>,
+    pub stroke_linecap: Option<&'static str>,
+    pub stroke_linejoin: Option<&'static str>,
+    pub transform: Option<&'static str>,
+}
+#[derive(Copy, Clone, Debug)]
+pub struct SvgElem {
+    pub tag: &'static str,
+    pub attributes: &'static [(&'static str, &'static str)],
+}
+#[derive(Copy, Clone, Debug)]
+pub struct IconData {
+    pub view_box: Option<&'static str>,
+    pub width: Option<&'static str>,
+    pub height: Option<&'static str>,
+    pub path: Option<&'static str>,
+    pub paths: &'static [PathData],
+    pub elements: &'static [SvgElem],
+}
+pub mod data {}
+pub fn get(_name: &str) -> Option<IconData> { None }
+"#;
+
 fn main() {
     println!("cargo:warning=🎨 hikari-icons: Building icons...");
 
@@ -59,11 +91,12 @@ fn main() {
         }
     } else {
         // Not in a workspace (e.g. standalone crates.io build): emit a stub
-        // mdi_selected.rs so the include! in lib.rs resolves.
+        // mdi_selected.rs with the expected type definitions so the include!
+        // and pub use in lib.rs resolve. No icon data is available.
         println!("cargo:warning=⚠️  No workspace root — skipping icon generation");
         let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
         let stub = std::path::Path::new(&out_dir).join("mdi_selected.rs");
-        let _ = std::fs::write(&stub, "// stub — no icons outside the hikari workspace\n");
+        let _ = std::fs::write(&stub, STUB_MDI_SELECTED);
     }
 
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");

@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
+description = "Build-time helpers for the Hikari design system (icon generation, SCSS processing)"
+repository.workspace = true
+keywords = ["build-tools", "icons", "scss", "design-system", "code-generation"]
+categories = ["development-tools::build-utils"]
 
 [lib]
 path = "src/lib.rs"

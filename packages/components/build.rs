@@ -15,10 +15,19 @@ fn main() -> Result<()> {
     // Create output directory
     fs::create_dir_all(&styles_out_dir)?;
 
-    println!("🔨 Auto-discovering and compiling SCSS files...");
-
     let manifest_dir_str = env::var("CARGO_MANIFEST_DIR")?;
     let manifest_dir = Path::new(&manifest_dir_str);
+
+    // Check if theme styles are available (they won't be when consumed from
+    // crates.io without the workspace layout). Skip SCSS compilation if not.
+    let theme_styles_dir = manifest_dir.join("../theme/styles");
+    if !theme_styles_dir.exists() {
+        println!("ℹ️  Theme styles not found — skipping SCSS compilation.");
+        return Ok(());
+    }
+
+    println!("🔨 Auto-discovering and compiling SCSS files...");
+
     let components_dir = manifest_dir.join("src/styles/components");
 
     // Auto-discover all .scss files in components directory

@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
+description = "Core UI components (buttons, inputs, tables, modals) for the Hikari design system"
 
 [lib]
 doctest = false

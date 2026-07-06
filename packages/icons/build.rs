@@ -63,7 +63,7 @@ fn main() {
         println!("cargo:warning=⚠️  No workspace root — skipping icon generation");
         let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
         let stub = std::path::Path::new(&out_dir).join("mdi_selected.rs");
-        std::fs::write(&stub, "// stub — no icons outside the hikari workspace\n")?;
+        let _ = std::fs::write(&stub, "// stub — no icons outside the hikari workspace\n");
     }
 
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");

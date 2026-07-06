@@ -62,7 +62,8 @@ fn use_animated_portal_entry(
         };
         (opacity, scale)
     })
-    .signal().clone();
+    .signal()
+    .clone();
 
     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
@@ -574,8 +575,8 @@ fn PopoverPortalEntry(
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
     // Create a default signal if none provided
-    let close_requested_signal = close_requested
-        .unwrap_or_else(|| use_signal(|| false).inner().clone());
+    let close_requested_signal =
+        close_requested.unwrap_or_else(|| use_signal(|| false).inner().clone());
 
     // Clone for use_effect
     let on_close_for_effect = on_close.clone();

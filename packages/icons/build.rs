@@ -16,7 +16,7 @@
 
 use std::path::PathBuf;
 
-use hikari_builder::icons::{auto_discovery, IconConfig, IconSelection, MdiStyle};
+use hikari_builder::icons::{IconConfig, IconSelection, MdiStyle, auto_discovery};
 
 fn main() {
     println!("cargo:warning=🎨 hikari-icons: Building icons...");
@@ -131,7 +131,10 @@ fn build_icons(workspace_root: &std::path::Path, config: &IconBuildConfig) -> an
         }
     } else if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
         if !usage.icons.is_empty() {
-            println!("cargo:warning=🔍 Auto-discovered {} icons", usage.icons.len());
+            println!(
+                "cargo:warning=🔍 Auto-discovered {} icons",
+                usage.icons.len()
+            );
             IconSelection::ByName(auto_discovery::generate_selection(&usage))
         } else {
             get_default_icon_selection()

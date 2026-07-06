@@ -129,4 +129,3 @@ pub mod collections {
         include!(concat!(env!("OUT_DIR"), "/collections/tailwind.rs"));
     }
 }
-

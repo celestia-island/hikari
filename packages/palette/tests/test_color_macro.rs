@@ -5,7 +5,7 @@
 // Active whenever at least one collection is enabled (i.e. the macro exists).
 #![cfg(any(hikari_collection_chinese, hikari_collection_tailwind))]
 
-use hikari_palette::{color, Color};
+use hikari_palette::{Color, color};
 
 #[test]
 fn test_color_macro_resolves_tailwind() {

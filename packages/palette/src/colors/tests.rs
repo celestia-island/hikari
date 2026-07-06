@@ -50,20 +50,56 @@ fn test_contrast_rgba_dark() {
 #[test]
 fn test_from_rgb_hex_infer_category() {
     // Purity anchors — the inference is a hue hint, not a precise classifier.
-    assert_eq!(Color::from_rgb_hex(0xff, 0x00, 0x00).category, ColorCategory::Red);
-    assert_eq!(Color::from_rgb_hex(0xff, 0xa5, 0x00).category, ColorCategory::Orange);
-    assert_eq!(Color::from_rgb_hex(0xff, 0xff, 0x00).category, ColorCategory::Yellow);
-    assert_eq!(Color::from_rgb_hex(0x00, 0xff, 0x00).category, ColorCategory::Green);
-    assert_eq!(Color::from_rgb_hex(0x00, 0xff, 0xff).category, ColorCategory::Cyan);
-    assert_eq!(Color::from_rgb_hex(0x00, 0x00, 0xff).category, ColorCategory::Blue);
-    assert_eq!(Color::from_rgb_hex(0xff, 0x00, 0xff).category, ColorCategory::Purple);
+    assert_eq!(
+        Color::from_rgb_hex(0xff, 0x00, 0x00).category,
+        ColorCategory::Red
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0xff, 0xa5, 0x00).category,
+        ColorCategory::Orange
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0xff, 0xff, 0x00).category,
+        ColorCategory::Yellow
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0x00, 0xff, 0x00).category,
+        ColorCategory::Green
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0x00, 0xff, 0xff).category,
+        ColorCategory::Cyan
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0x00, 0x00, 0xff).category,
+        ColorCategory::Blue
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0xff, 0x00, 0xff).category,
+        ColorCategory::Purple
+    );
     // Extremes.
-    assert_eq!(Color::from_rgb_hex(0xff, 0xff, 0xff).category, ColorCategory::White);
-    assert_eq!(Color::from_rgb_hex(0x00, 0x00, 0x00).category, ColorCategory::Black);
-    assert_eq!(Color::from_rgb_hex(0x80, 0x80, 0x80).category, ColorCategory::Gray);
+    assert_eq!(
+        Color::from_rgb_hex(0xff, 0xff, 0xff).category,
+        ColorCategory::White
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0x00, 0x00, 0x00).category,
+        ColorCategory::Black
+    );
+    assert_eq!(
+        Color::from_rgb_hex(0x80, 0x80, 0x80).category,
+        ColorCategory::Gray
+    );
     // A few concrete collection colors (sanity).
-    assert_eq!(Color::from_rgb_hex(0x0e, 0xb8, 0x40).category, ColorCategory::Green); // 葱倩-ish
-    assert_eq!(Color::from_rgb_hex(0x14, 0x4a, 0x74).category, ColorCategory::Blue);   // 鷃蓝-ish
+    assert_eq!(
+        Color::from_rgb_hex(0x0e, 0xb8, 0x40).category,
+        ColorCategory::Green
+    ); // 葱倩-ish
+    assert_eq!(
+        Color::from_rgb_hex(0x14, 0x4a, 0x74).category,
+        ColorCategory::Blue
+    ); // 鷃蓝-ish
 }
 
 #[test]

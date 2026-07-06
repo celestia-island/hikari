@@ -52,7 +52,7 @@ pub mod mdi_selected {
     #![allow(non_camel_case_types, non_snake_case, dead_code)]
     include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
 }
-pub use mdi_selected::{get, IconData, PathData, SvgElem};
+pub use mdi_selected::{IconData, PathData, SvgElem, get};
 
 // StyleStringBuilder for building styles
 #[cfg(feature = "dioxus")]

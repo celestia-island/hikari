@@ -141,14 +141,15 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
         // (b) Generate the const block from the TOML.
         let toml_path = Path::new(manifest_dir).join("data").join(file);
         let Ok(content) = fs::read_to_string(&toml_path) else {
-            panic!(
-                "hikari-palette: collection '{name}' is requested but data/{file} is missing"
-            );
+            panic!("hikari-palette: collection '{name}' is requested but data/{file} is missing");
         };
         let colors = parse_color_toml(&content)
             .unwrap_or_else(|e| panic!("hikari-palette: failed to parse {file}: {e}"));
         emit_collection_module(name, &colors, &collections_dir.join(format!("{name}.rs")));
-        println!("cargo:warning=hikari-palette: collection '{name}' — {} colors", colors.len());
+        println!(
+            "cargo:warning=hikari-palette: collection '{name}' — {} colors",
+            colors.len()
+        );
         all_enabled.push((name, colors));
     }
 

@@ -93,13 +93,13 @@ impl Hikari {
             mode: ThemeMode::Light,
             primary: Color::from_rgb_hex(0xee, 0xa2, 0xa4), // 牡丹粉红
             secondary: Color::from_rgb_hex(0x51, 0x9a, 0x73), // 苍翠
-            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
+            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
             success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
             warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00), // 朱红
+            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
             background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
             surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
-            border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
+            border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),  // 素
             text_primary: Color::from_rgb_float(0.15, 0.15, 0.15),
             text_secondary: Color::from_rgb_float(0.4, 0.4, 0.4),
         }
@@ -126,13 +126,13 @@ impl Tairitsu {
             mode: ThemeMode::Dark,
             primary: Color::from_rgb_hex(0x14, 0x4a, 0x74), // 鷃蓝
             secondary: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
-            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
+            accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
             success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
             warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00), // 朱红
+            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
             background: Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
             surface: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
-            border: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
+            border: Color::from_rgb_hex(0x4a, 0x42, 0x66),  // 黛
             text_primary: Color::from_rgb_float(0.95, 0.95, 0.95),
             text_secondary: Color::from_rgb_float(0.85, 0.85, 0.85),
         }
@@ -361,7 +361,10 @@ mod tests {
         let tairitsu = Tairitsu::palette();
 
         // Hikari primary 牡丹粉红 #eea2a4 — light, expects black glow at 0.7.
-        assert_eq!(hikari.button_glow_color(&hikari.primary), "rgba(0, 0, 0, 0.7)");
+        assert_eq!(
+            hikari.button_glow_color(&hikari.primary),
+            "rgba(0, 0, 0, 0.7)"
+        );
         // Tairitsu primary 鷃蓝 #144a74 — dark (<0.4), expects white glow at 0.7.
         assert_eq!(
             tairitsu.button_glow_color(&tairitsu.primary),

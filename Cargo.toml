@@ -19,10 +19,11 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.2.7"
+version = "0.3.0"
 edition = "2024"
 authors = ["Hikari Contributors"]
 license-file = "LICENSE"
+repository = "https://github.com/celestia-island/hikari"
 
 # ============================================================================
 # Hikari build-time configuration

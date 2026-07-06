@@ -1,7 +1,13 @@
 [package]
 name = "hikari-icons"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Material Design Icons (MDI) integration for the Hikari design system"
+repository.workspace = true
+license-file.workspace = true
+keywords = ["icons", "mdi", "material-design", "design-system", "ui"]
+categories = ["gui", "wasm"]
 
 # Note: icon *selection* and *dynamic-fetch* are NOT Cargo features. They are
 # declared in the consuming workspace's root Cargo.toml:

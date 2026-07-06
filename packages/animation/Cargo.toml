@@ -1,8 +1,13 @@
 [package]
 name = "hikari-animation"
-version = "0.1.0"
-edition = "2021"
-rust-version = "1.75"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Animation hooks, easing functions and transition utilities for the Hikari design system"
+repository.workspace = true
+license-file.workspace = true
+keywords = ["animation", "easing", "tween", "state-machine", "design-system"]
+categories = ["gui", "wasm"]
 
 [dependencies]
 # Core dependencies

@@ -77,6 +77,18 @@ pub use color_math::*;
 pub use colors::{Color, ColorCategory};
 pub use themes::*;
 
+// Compile-time color lookup across all enabled collections.
+//
+// `color!("name")` resolves to the corresponding `Color` constant at compile
+// time — zero runtime cost, equivalent to writing
+// `collections::<coll>::<name>` directly. Names span every collection enabled
+// in `[workspace.metadata.hikari.palette].collections`. An unknown name yields
+// a `compile_error!` pointing at the literal.
+//
+// (Plain comment rather than a doc-comment: the item is produced by a macro,
+// and rustdoc rejects doc-comments attached to macro-generated items.)
+include!(concat!(env!("OUT_DIR"), "/color_macro.rs"));
+
 /// Opt-in color collections. Each sub-module is generated from a TOML file in
 /// `data/` and is compiled in only when the consuming workspace requests it via
 /// `[workspace.metadata.hikari.palette].collections` in its root `Cargo.toml`.

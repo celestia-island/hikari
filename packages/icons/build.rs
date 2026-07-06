@@ -59,8 +59,15 @@ fn main() {
         }
     } else {
         // Not in a workspace (e.g. standalone crates.io build): nothing to
-        // generate. The crate still compiles; mdi_minimal.rs provides the enum.
+        // generate. Emit a stub mdi_selected.rs so the include! in lib.rs
+        // resolves. mdi_minimal.rs provides the enum for external consumers.
         println!("cargo:warning=⚠️  No workspace root — skipping icon generation");
+        let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
+        let stub = std::path::Path::new(&out_dir).join("mdi_selected.rs");
+        std::fs::write(
+            &stub,
+            "// @generated stub — no icons available outside the hikari workspace.\n",
+        )?;
     }
 
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");

@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
+description = "Advanced UI components (node graph, rich text editor, timeline) for the Hikari design system"
 
 [lib]
 doctest = false

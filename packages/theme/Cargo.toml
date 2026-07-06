@@ -4,6 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
+description = "Theme context provider, CSS variables, and SCSS compilation for the Hikari design system"
 
 [lib]
 doctest = false

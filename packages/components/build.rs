@@ -28,8 +28,9 @@ fn main() -> Result<()> {
         if scss_dir.exists() {
             if let Ok(entries) = fs::read_dir(&scss_dir) {
                 for entry in entries.flatten() {
-                    if entry.path().extension().and_then(|s| s.to_str()) == Some("scss") {
-                        let stem = entry.path().file_stem().unwrap().to_string_lossy();
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
                         let stub = styles_out_dir.join(format!("{stem}.css"));
                         fs::write(&stub, "")?;
                     }

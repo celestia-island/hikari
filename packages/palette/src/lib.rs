@@ -103,11 +103,18 @@ pub use themes::*;
 /// See the [data schema] for adding your own collection.
 ///
 /// [data schema]: https://github.com/celestia-island/hikari/blob/dev/packages/palette/data/SCHEMA.md
-#[cfg(any(hikari_collection_chinese))]
+#[cfg(any(hikari_collection_chinese, hikari_collection_tailwind))]
 pub mod collections {
     #[cfg(hikari_collection_chinese)]
+    #[allow(non_upper_case_globals, dead_code)]
     pub mod chinese {
         include!(concat!(env!("OUT_DIR"), "/collections/chinese.rs"));
+    }
+
+    #[cfg(hikari_collection_tailwind)]
+    #[allow(non_upper_case_globals, dead_code)]
+    pub mod tailwind {
+        include!(concat!(env!("OUT_DIR"), "/collections/tailwind.rs"));
     }
 }
 

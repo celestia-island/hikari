@@ -39,7 +39,7 @@ license-file = "LICENSE"
 #   set = ["chevron-left", "menu", ...]  # explicit icon list (omit = auto-discover)
 #   dynamic-fetch = true                # fetch icons at runtime instead of embedding
 [workspace.metadata.hikari.palette]
-collections = ["chinese"]
+collections = ["chinese", "tailwind"]
 
 [workspace.metadata.hikari.icons]
 # When `set` is omitted, hikari-icons auto-discovers used icons by scanning

@@ -6,8 +6,9 @@ use std::{env, fs};
 /// Known collections: (name, data file). Add new collections here.
 const KNOWN_COLLECTIONS: &[(&str, &str)] = &[
     ("chinese", "chinese.toml"),
+    ("tailwind", "tailwind.toml"),
     // ("japanese", "japanese.toml"),
-    // ("tailwind", "tailwind.toml"),
+    // ("material", "material.toml"),
 ];
 
 fn main() {

@@ -14,7 +14,7 @@ scss = []  # SCSS compilation
 
 [dependencies]
 # Hikari palette
-hikari-palette = { path = "../palette" }
+hikari-palette = { version = "^0.3", path = "../palette" }
 
 # Tairitsu framework (for theme context)
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].

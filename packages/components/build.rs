@@ -22,7 +22,20 @@ fn main() -> Result<()> {
     // crates.io without the workspace layout). Skip SCSS compilation if not.
     let theme_styles_dir = manifest_dir.join("../theme/styles");
     if !theme_styles_dir.exists() {
-        println!("ℹ️  Theme styles not found — skipping SCSS compilation.");
+        println!("ℹ️  Theme styles not found — emitting empty CSS stubs.");
+        // Generate empty CSS stubs for every SCSS file so include_str! resolves.
+        let scss_dir = manifest_dir.join("src/styles/components");
+        if scss_dir.exists() {
+            if let Ok(entries) = fs::read_dir(&scss_dir) {
+                for entry in entries.flatten() {
+                    if entry.path().extension().and_then(|s| s.to_str()) == Some("scss") {
+                        let stem = entry.path().file_stem().unwrap().to_string_lossy();
+                        let stub = styles_out_dir.join(format!("{stem}.css"));
+                        fs::write(&stub, "")?;
+                    }
+                }
+            }
+        }
         return Ok(());
     }
 

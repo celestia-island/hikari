@@ -1,11 +1,11 @@
 // packages/components/src/display/calendar.rs
-// Calendar component
+// Calendar component with Arknights + FUI styling
 
 use chrono::{Datelike, Local};
-use hikari_palette::classes::{CalendarClass, ClassesBuilder, TypedClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
+
+use crate::{prelude::*, styled::StyledComponent};
 
 fn get_current_date() -> (i32, u32) {
     let now = Local::now();
@@ -89,49 +89,49 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let days_count = days_in_month(year, month);
     let first_day = first_day_of_month(year, month);
 
-    let cal_class = CalendarClass::Calendar.class_name();
-    let header_class = CalendarClass::CalendarHeader.class_name();
-    let nav_class = CalendarClass::CalendarNav.class_name();
-    let nav_btn_class = CalendarClass::CalendarNavButton.class_name();
-    let title_class = CalendarClass::CalendarTitle.class_name();
-    let weekdays_class = CalendarClass::CalendarWeekdays.class_name();
-    let weekday_class = CalendarClass::CalendarWeekday.class_name();
-    let grid_class = CalendarClass::CalendarGrid.class_name();
-    let day_cell_class = CalendarClass::CalendarDayCell.class_name();
-    let day_class = CalendarClass::CalendarDay.class_name();
-    let selected_day_class = CalendarClass::CalendarDaySelected.class_name();
+    let cal_class = CalendarClass::Calendar.as_class();
+    let header_class = CalendarClass::CalendarHeader.as_class();
+    let nav_class = CalendarClass::CalendarNav.as_class();
+    let nav_btn_class = CalendarClass::CalendarNavButton.as_class();
+    let title_class = CalendarClass::CalendarTitle.as_class();
+    let weekdays_class = CalendarClass::CalendarWeekdays.as_class();
+    let weekday_class = CalendarClass::CalendarWeekday.as_class();
+    let grid_class = CalendarClass::CalendarGrid.as_class();
+    let day_cell_class = CalendarClass::CalendarDayCell.as_class();
+    let day_class = CalendarClass::CalendarDay.as_class();
+    let selected_day_class = CalendarClass::CalendarDaySelected.as_class();
 
     let calendar_classes = ClassesBuilder::new()
-        .add_typed(CalendarClass::Calendar)
-        .add(&props.class)
+        .add(CalendarClass::Calendar)
+        .add_raw(&props.class)
         .build();
 
     // Build weekday headers outside rsx!
     let weekday_headers: Vec<VNode> = WEEKDAY_NAMES
         .iter()
         .map(|weekday| {
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
-                    .class(weekday_class)
+                    .class(weekday_class.clone())
                     .child(VNode::Text(VText::new(weekday))),
-            )
+            ))
         })
         .collect();
 
     // Build empty cells for days before the 1st
     let empty_cells: Vec<VNode> = (0..first_day)
-        .map(|_| VNode::Element(VElement::new("div").class(day_cell_class)))
+        .map(|_| VNode::Element(Box::new(VElement::new("div").class(day_cell_class.clone()))))
         .collect();
 
     // Build day cells
     let day_cells: Vec<VNode> = (1..=days_count)
         .map(|day| {
             let is_selected = day == sel_day;
-            let day_cell_cls = day_cell_class;
+            let day_cell_cls = day_cell_class.clone();
             let inner_class = if is_selected {
-                format!("{day_class} {selected_day_class}")
+                format!("{} {}", day_class.clone(), selected_day_class.clone())
             } else {
-                day_class.to_string()
+                day_class.clone()
             };
 
             let cy = current_year.clone();
@@ -141,7 +141,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
             let y = year;
             let m = month;
 
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
                     .class(day_cell_cls)
                     .on_event("click", move |_e: Box<dyn EventData>| {
@@ -150,12 +150,12 @@ pub fn Calendar(props: CalendarProps) -> Element {
                             handler.call((y, m, day));
                         }
                     })
-                    .child(VNode::Element(
+                    .child(VNode::Element(Box::new(
                         VElement::new("div")
                             .class(inner_class)
                             .child(VNode::Text(VText::new(&day.to_string()))),
-                    )),
-            )
+                    ))),
+            ))
         })
         .collect();
 
@@ -163,9 +163,9 @@ pub fn Calendar(props: CalendarProps) -> Element {
     let cy_prev = current_year.clone();
     let cm_prev = current_month.clone();
     let min_yr = props.min_year;
-    let prev_btn = VNode::Element(
+    let prev_btn = VNode::Element(Box::new(
         VElement::new("button")
-            .class(nav_btn_class)
+            .class(nav_btn_class.clone())
             .attr("disabled", year <= min_yr && month == 1)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 1 { year - 1 } else { year };
@@ -176,13 +176,13 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("‹"))),
-    );
+    ));
 
     let cy_prev2 = current_year.clone();
     let cm_prev2 = current_month.clone();
-    let prev_btn2 = VNode::Element(
+    let prev_btn2 = VNode::Element(Box::new(
         VElement::new("button")
-            .class(nav_btn_class)
+            .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 1 { year - 1 } else { year };
                 let nm = if month == 1 { 12 } else { month - 1 };
@@ -192,13 +192,13 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("◀"))),
-    );
+    ));
 
     let cy_today = current_year.clone();
     let cm_today = current_month.clone();
-    let today_btn = VNode::Element(
+    let today_btn = VNode::Element(Box::new(
         VElement::new("button")
-            .class(nav_btn_class)
+            .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let (today_year, today_month) = get_current_date();
                 if today_year >= min_yr && today_year <= props.max_year {
@@ -207,14 +207,14 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("今天"))),
-    );
+    ));
 
     let cy_next = current_year.clone();
     let cm_next = current_month.clone();
     let max_yr = props.max_year;
-    let next_btn = VNode::Element(
+    let next_btn = VNode::Element(Box::new(
         VElement::new("button")
-            .class(nav_btn_class)
+            .class(nav_btn_class.clone())
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 12 { year + 1 } else { year };
                 let nm = if month == 12 { 1 } else { month + 1 };
@@ -224,13 +224,13 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("▶"))),
-    );
+    ));
 
     let cy_next2 = current_year.clone();
     let cm_next2 = current_month.clone();
-    let next_btn2 = VNode::Element(
+    let next_btn2 = VNode::Element(Box::new(
         VElement::new("button")
-            .class(nav_btn_class)
+            .class(nav_btn_class.clone())
             .attr("disabled", year >= max_yr && month == 12)
             .on_event("click", move |_e: Box<dyn EventData>| {
                 let ny = if month == 12 { year + 1 } else { year };
@@ -241,7 +241,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                 }
             })
             .child(VNode::Text(VText::new("›"))),
-    );
+    ));
 
     let title_text = format!("{}年 {}", year, MONTH_NAMES[(month - 1) as usize]);
 
@@ -250,20 +250,34 @@ pub fn Calendar(props: CalendarProps) -> Element {
     all_day_cells.extend(day_cells);
 
     rsx! {
-        div { class: calendar_classes, style: props.style,
-            div { class: cal_class,
-                div { class: header_class,
-                    div { class: nav_class,
+        div {
+            class: calendar_classes,
+            style: props.style,
+            div {
+                class: cal_class,
+                div {
+                    class: header_class,
+                    div {
+                        class: nav_class,
                         {prev_btn}
                         {prev_btn2}
                         {today_btn}
                         {next_btn}
                         {next_btn2}
                     }
-                    div { class: title_class, "{title_text}" }
+                    div {
+                        class: title_class,
+                        "{title_text}"
+                    }
                 }
-                div { class: weekdays_class, ..weekday_headers }
-                div { class: grid_class, ..all_day_cells }
+                div {
+                    class: weekdays_class,
+                    ..weekday_headers
+                }
+                div {
+                    class: grid_class,
+                    ..all_day_cells
+                }
             }
         }
     }
@@ -314,7 +328,7 @@ impl StyledComponent for CalendarComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
+    box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
 .hi-calendar-nav-button:disabled {
@@ -378,7 +392,7 @@ impl StyledComponent for CalendarComponent {
 .hi-calendar-day.hi-calendar-day-selected {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-glow-button-primary);
+    box-shadow: 0 0 12px var(--hi-color-primary-glow);
 }
 
 .hi-calendar-day-today {

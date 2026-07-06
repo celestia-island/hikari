@@ -1,9 +1,12 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{browser::{Browser, BrowserConfig}, cdp::browser_protocol::page::CaptureScreenshotFormat};
+use chromiumoxide::{
+    browser::{Browser, BrowserConfig},
+    cdp::browser_protocol::page::CaptureScreenshotFormat,
+};
 use clap::{Parser, Subcommand};
 use tracing::{info, warn};
 
@@ -89,7 +92,7 @@ impl BrowserDebug {
                 "--window-size=1920,1080",
             ])
             .build()
-            .map_err(|e| anyhow!("Failed to build browser config: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to build browser config: {}", e))?;
 
         let (browser, mut handler) = Browser::launch(config)
             .await

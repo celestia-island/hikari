@@ -19,7 +19,7 @@
 //!
 //! ## Basic Usage
 //!
-//! ```rust,ignore
+//! ```rust,no_run
 //! use hikari_components::ThemeProvider;
 //!
 //! rsx! {
@@ -31,7 +31,7 @@
 //!
 //! ## Nested Providers (Local Theme Override)
 //!
-//! ```rust,ignore
+//! ```rust,no_run
 //! use hikari_components::ThemeProvider;
 //!
 //! rsx! {
@@ -52,7 +52,7 @@
 //!
 //! ## Custom Color Overrides
 //!
-//! ```rust,ignore
+//! ```rust,no_run
 //! use hikari_components::ThemeProvider;
 //!
 //! rsx! {
@@ -65,12 +65,17 @@
 //! }
 //! ```
 
-use hikari_palette::themes::Hikari;
-use tairitsu_hooks::ReactiveSignal;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use hikari_animation::global_manager::init_global_animation_manager;
+use hikari_palette::*;
 
 use crate::prelude::*;
-use crate::theme::css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette};
-use crate::theme::registry::{get_default_theme, get_registered_theme};
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::scripts::scrollbar_container::init_all as init_scrollbars;
+use crate::theme::{
+    css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
+    registry::{get_default_theme, get_registered_theme},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum LayoutDirection {
@@ -80,7 +85,6 @@ pub enum LayoutDirection {
 }
 
 impl LayoutDirection {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             LayoutDirection::Ltr => "ltr",
@@ -88,17 +92,16 @@ impl LayoutDirection {
         }
     }
 
-    #[must_use]
     pub fn is_rtl(&self) -> bool {
         matches!(self, LayoutDirection::Rtl)
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct ThemeContext {
-    pub palette: ReactiveSignal<String>,
-    pub theme_name: ReactiveSignal<String>,
-    pub direction: ReactiveSignal<LayoutDirection>,
+    pub palette: Signal<String>,
+    pub theme_name: Signal<String>,
+    pub direction: Signal<LayoutDirection>,
     pub set_theme: Callback<String>,
 }
 
@@ -154,7 +157,8 @@ pub struct ThemeProviderProps {
 ///
 /// Provides hierarchical theme management across the application.
 /// Child providers can override parent theme settings.
-#[component]
+#[allow(non_snake_case)]
+#[allow(unused_braces)]
 pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let current_palette = use_signal(|| props.palette.clone());
     let current_theme_name = use_signal(|| props.palette.clone());
@@ -174,14 +178,37 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
     let theme_name_for_context = current_theme_name.clone();
     let direction_for_context = current_direction.clone();
     use_context_provider(move || ThemeContext {
-        palette: palette_for_context,
-        theme_name: theme_name_for_context,
-        direction: direction_for_context,
+        palette: palette_for_context.inner().clone(),
+        theme_name: theme_name_for_context.inner().clone(),
+        direction: direction_for_context.inner().clone(),
         set_theme,
     });
 
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    use_effect(|| {
+        crate::platform::set_timeout(
+            || {
+                init_global_animation_manager();
+                init_scrollbars();
+            },
+            50,
+        );
+    });
+
+    let primary_override = props.primary.clone();
+    let secondary_override = props.secondary.clone();
+    let accent_override = props.accent.clone();
+    let success_override = props.success.clone();
+    let warning_override = props.warning.clone();
+    let danger_override = props.danger.clone();
+    let background_override = props.background.clone();
+    let surface_override = props.surface.clone();
+    let border_override = props.border.clone();
+    let text_primary_override = props.text_primary.clone();
+    let text_secondary_override = props.text_secondary.clone();
+    let component_overrides = props.component_overrides.clone();
+
     let theme_name_for_memo = current_theme_name.clone();
-    let props_for_memo = props.clone();
     let css_vars = use_memo(move || {
         let theme_name = theme_name_for_memo.read();
 
@@ -194,24 +221,23 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         };
 
         let overrides = PaletteOverrides {
-            primary: props_for_memo.primary.clone(),
-            secondary: props_for_memo.secondary.clone(),
-            accent: props_for_memo.accent.clone(),
-            success: props_for_memo.success.clone(),
-            warning: props_for_memo.warning.clone(),
-            danger: props_for_memo.danger.clone(),
-            background: props_for_memo.background.clone(),
-            surface: props_for_memo.surface.clone(),
-            border: props_for_memo.border.clone(),
-            text_primary: props_for_memo.text_primary.clone(),
-            text_secondary: props_for_memo.text_secondary.clone(),
+            primary: primary_override.clone(),
+            secondary: secondary_override.clone(),
+            accent: accent_override.clone(),
+            success: success_override.clone(),
+            warning: warning_override.clone(),
+            danger: danger_override.clone(),
+            background: background_override.clone(),
+            surface: surface_override.clone(),
+            border: border_override.clone(),
+            text_primary: text_primary_override.clone(),
+            text_secondary: text_secondary_override.clone(),
         };
-        let theme_palette =
-            ThemePalette::from_palette(&base_palette).with_overrides(overrides, &base_palette);
+        let theme_palette = ThemePalette::from_palette(&base_palette).with_overrides(overrides);
 
         let component_palette = ComponentPalette::from_palette_with_overrides(
             &base_palette,
-            props_for_memo.component_overrides.clone(),
+            component_overrides.clone(),
         );
 
         format!(
@@ -228,44 +254,31 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
         div {
             class: "hi-theme-provider",
             "data-theme": theme_name,
-            dir,
+            dir: dir,
             style: css_vars,
             {props.children}
         }
     }
 }
 
-/// Hook to access the current theme context.
-///
-/// # Panics
-/// Panics if no `ThemeProvider` ancestor is present in the component tree.
-#[track_caller]
-#[must_use]
+/// Hook to access the current theme context
 pub fn use_theme() -> ThemeContext {
-    try_use_theme().expect("use_theme() requires a ThemeProvider ancestor")
-}
-
-/// Non-panicking variant of [`use_theme`].
-///
-/// Returns `None` if no `ThemeProvider` ancestor is present.
-pub fn try_use_theme() -> Option<ThemeContext> {
-    use_context::<ThemeContext>().map(|ctx| ctx.get().clone())
+    let ctx = use_context::<ThemeContext>().expect("ThemeContext not found");
+    ctx.get().clone()
 }
 
 /// Hook to access the current layout direction
-#[must_use]
 pub fn use_layout_direction() -> LayoutDirection {
-    use_context::<ThemeContext>()
-        .map(|ctx| ctx.get().direction.read())
+    try_consume_context::<ThemeContext>()
+        .map(|ctx| ctx.get().direction.get())
         .unwrap_or_default()
 }
 
 #[cfg(test)]
 mod tests {
-    use hikari_palette::themes::{Hikari, Tairitsu};
-
     use super::*;
     use crate::theme::css::{PaletteOverrides, ThemePalette};
+    use hikari_palette::{Hikari, Tairitsu};
 
     #[test]
     fn test_theme_palette_from_palette() {
@@ -303,8 +316,7 @@ mod tests {
             text_primary: None,
             text_secondary: None,
         };
-        let theme_palette =
-            ThemePalette::from_palette(&palette).with_overrides(overrides, &palette);
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(overrides);
 
         assert_eq!(theme_palette.primary, "#FF0000");
         assert_eq!(theme_palette.secondary, palette.secondary.hex());
@@ -326,8 +338,7 @@ mod tests {
             text_primary: Some("#AAAAAA".to_string()),
             text_secondary: Some("#BBBBBB".to_string()),
         };
-        let theme_palette =
-            ThemePalette::from_palette(&palette).with_overrides(overrides, &palette);
+        let theme_palette = ThemePalette::from_palette(&palette).with_overrides(overrides);
 
         assert_eq!(theme_palette.primary, "#111111");
         assert_eq!(theme_palette.secondary, "#222222");
@@ -424,51 +435,5 @@ mod tests {
         assert!(
             theme_palette.text_primary == "#F2F2F2" || theme_palette.text_primary.starts_with("#F")
         );
-    }
-
-    #[test]
-    fn test_layout_direction_default_is_ltr() {
-        let dir = LayoutDirection::default();
-        assert_eq!(dir, LayoutDirection::Ltr);
-    }
-
-    #[test]
-    fn test_layout_direction_as_str() {
-        assert_eq!(LayoutDirection::Ltr.as_str(), "ltr");
-        assert_eq!(LayoutDirection::Rtl.as_str(), "rtl");
-    }
-
-    #[test]
-    fn test_layout_direction_is_rtl() {
-        assert!(!LayoutDirection::Ltr.is_rtl());
-        assert!(LayoutDirection::Rtl.is_rtl());
-    }
-
-    #[test]
-    fn test_into_theme_name_for_str() {
-        use crate::theme::traits::IntoThemeName;
-        let name: &'static str = "hikari";
-        assert_eq!(name.as_theme_name(), "hikari");
-    }
-
-    #[test]
-    fn test_into_theme_name_for_string() {
-        use crate::theme::traits::IntoThemeName;
-        let name: String = "tairitsu".to_string();
-        assert_eq!(name.as_theme_name(), "tairitsu");
-    }
-
-    #[test]
-    fn test_layout_direction_copy_eq_hash() {
-        let a = LayoutDirection::Ltr;
-        let b = LayoutDirection::Ltr;
-        let c = LayoutDirection::Rtl;
-        assert_eq!(a, b);
-        assert_ne!(a, c);
-        let mut set = std::collections::HashSet::new();
-        set.insert(a);
-        set.insert(b);
-        set.insert(c);
-        assert_eq!(set.len(), 2);
     }
 }

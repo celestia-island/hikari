@@ -11,22 +11,19 @@ pub enum PortType {
 }
 
 impl PortType {
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Input => "input",
-            Self::Output => "output",
+            PortType::Input => "input",
+            PortType::Output => "output",
         }
     }
 
-    #[must_use]
-    pub const fn is_input(&self) -> bool {
-        matches!(self, Self::Input)
+    pub fn is_input(&self) -> bool {
+        matches!(self, PortType::Input)
     }
 
-    #[must_use]
-    pub const fn is_output(&self) -> bool {
-        matches!(self, Self::Output)
+    pub fn is_output(&self) -> bool {
+        matches!(self, PortType::Output)
     }
 }
 
@@ -48,12 +45,10 @@ pub struct Port {
     pub disabled: bool,
     pub connected: bool,
     pub data_type: String,
-    pub port_position_name: Option<String>,
 }
 
 impl Port {
     /// Create a new port
-    #[must_use]
     pub fn new(port_id: PortId, port_type: PortType, label: String) -> Self {
         Self {
             port_id,
@@ -63,77 +58,51 @@ impl Port {
             disabled: false,
             connected: false,
             data_type: "any".to_string(),
-            port_position_name: None,
         }
     }
 
     /// Set the position
-    #[must_use]
-    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
+    pub fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
     /// Set disabled state
-    #[must_use]
-    pub const fn with_disabled(mut self, disabled: bool) -> Self {
+    pub fn with_disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
         self
     }
 
     /// Set connected state
-    #[must_use]
-    pub const fn with_connected(mut self, connected: bool) -> Self {
+    pub fn with_connected(mut self, connected: bool) -> Self {
         self.connected = connected;
         self
     }
 
     /// Set data type
-    #[must_use]
     pub fn with_data_type(mut self, data_type: String) -> Self {
         self.data_type = data_type;
         self
     }
 
-    #[must_use]
-    pub fn with_port_position_name(mut self, name: &str) -> Self {
-        self.port_position_name = Some(name.to_string());
-        self
-    }
-
     /// Get the CSS class string
-    #[must_use]
     pub fn class_string(&self) -> String {
-        let pos_class = match &self.port_position_name {
-            Some(name) => format!("hi-node-port-{name}"),
-            None => String::new(),
-        };
         format!(
-            "hi-node-port hi-node-port-{} {} {} {}",
+            "hi-node-graph-port hi-node-port-{} {} {}",
             self.port_type.as_str(),
-            pos_class,
-            if self.disabled {
-                "hi-port-disabled"
-            } else {
-                ""
-            },
-            if self.connected {
-                "hi-port-connected"
-            } else {
-                ""
-            }
+            if self.disabled { "hi-port-disabled" } else { "" },
+            if self.connected { "hi-port-connected" } else { "" }
         )
     }
 
     /// Get the CSS style string for positioning
-    #[must_use]
     pub fn position_style(&self) -> String {
         format!("left: {}px; top: {}px;", self.position.0, self.position.1)
     }
 }
 
 /// Events related to ports
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum PortEvent {
     /// Connection requested (from_port, to_port)
     ConnectRequested(PortId, PortId),
@@ -141,42 +110,6 @@ pub enum PortEvent {
     DisconnectRequested(PortId),
     /// Port hovered
     Hover(PortId),
-}
-
-use tairitsu_vdom::{VElement, VNode, VText};
-
-#[must_use]
-pub fn render_port(port: &Port) -> VNode {
-    let mut children: Vec<VNode> = Vec::new();
-
-    children.push(VNode::Element(
-        VElement::new("div").class("hi-node-port-dot"),
-    ));
-
-    children.push(VNode::Element(
-        VElement::new("span")
-            .class("hi-node-port-label")
-            .child(VNode::Text(VText::new(&port.label))),
-    ));
-
-    if !port.disabled {
-        children.push(VNode::Element(
-            VElement::new("div")
-                .class("hi-node-port-connector")
-                .attr("data-port-id", &port.port_id)
-                .attr("data-port-type", port.port_type.as_str())
-                .attr("data-action", "port-connect"),
-        ));
-    }
-
-    VNode::Element(
-        VElement::new("div")
-            .class(port.class_string())
-            .attr("data-port-id", &port.port_id)
-            .attr("data-port-type", port.port_type.as_str())
-            .style(port.position_style())
-            .children(children),
-    )
 }
 
 #[cfg(test)]
@@ -224,20 +157,9 @@ mod tests {
             .with_connected(true);
 
         let class = port.class_string();
-        assert!(class.contains("hi-node-port"));
         assert!(class.contains("hi-node-port-input"));
         assert!(class.contains("hi-port-disabled"));
         assert!(class.contains("hi-port-connected"));
-    }
-
-    #[test]
-    fn test_port_class_string_with_position() {
-        let port = Port::new("port1".to_string(), PortType::Input, "Data".to_string())
-            .with_port_position_name("left");
-
-        let class = port.class_string();
-        assert!(class.contains("hi-node-port-input"));
-        assert!(class.contains("hi-node-port-left"));
     }
 
     #[test]

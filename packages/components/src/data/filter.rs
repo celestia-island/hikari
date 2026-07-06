@@ -1,11 +1,9 @@
 // hi-components/src/data/filter.rs
-// Filter component
+// Filter component with Arknights + FUI styling
 
-use hikari_palette::classes::FilterClass;
-use tairitsu_style::{ClassesBuilder, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, FilterClass, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct FilterComponent;
 
@@ -68,13 +66,13 @@ pub fn Filter(props: FilterProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(FilterClass::Filter)
-        .add(&props.class)
+        .add(FilterClass::Filter)
+        .add_raw(&props.class)
         .build();
 
     let trigger_classes = ClassesBuilder::new()
-        .add_typed(FilterClass::FilterTrigger)
-        .add_typed_if(FilterClass::FilterActive, active_count > 0)
+        .add(FilterClass::FilterTrigger)
+        .add_if(FilterClass::FilterActive, || active_count > 0)
         .build();
 
     let filter_options: Vec<Element> = {
@@ -110,16 +108,16 @@ pub fn Filter(props: FilterProps) -> Element {
 
                 rsx! {
                     label {
-                        class: FilterClass::FilterOption.class_name(),
+                        class: FilterClass::FilterOption.as_class(),
                         onclick: handle_click,
 
                         input {
-                            class: FilterClass::FilterCheckbox.class_name(),
+                            class: FilterClass::FilterCheckbox.as_class(),
                             r#type: "checkbox",
                             checked,
                         }
 
-                        span { class: FilterClass::FilterLabel.class_name(), "{label_text}" }
+                        span { class: FilterClass::FilterLabel.as_class(), "{label_text}" }
                     }
                 }
             })
@@ -129,12 +127,12 @@ pub fn Filter(props: FilterProps) -> Element {
     rsx! {
         div { class: container_classes,
 
-            div { class: FilterClass::FilterContainer.class_name(),
+            div { class: FilterClass::FilterContainer.as_class(),
                 button { class: trigger_classes, onclick: handle_toggle,
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: FilterClass::FilterIcon.class_name(),
+                        class: FilterClass::FilterIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -147,12 +145,12 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: FilterClass::FilterBadge.class_name(), "{active_count}" }
+                        span { class: FilterClass::FilterBadge.as_class(), "{active_count}" }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: FilterClass::FilterIcon.class_name(),
+                        class: FilterClass::FilterIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -165,12 +163,12 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     if active_count > 0 {
-                        span { class: FilterClass::FilterBadge.class_name(), "{active_count}" }
+                        span { class: FilterClass::FilterBadge.as_class(), "{active_count}" }
                     }
 
                     svg {
                         xmlns: "http://www.w3.org/2000/svg",
-                        class: FilterClass::FilterDropdownIcon.class_name(),
+                        class: FilterClass::FilterDropdownIcon.as_class(),
                         fill: "none",
                         view_box: "0 0 24 24",
                         stroke_width: 2,
@@ -186,15 +184,15 @@ pub fn Filter(props: FilterProps) -> Element {
 
             if is_open.get() {
                 div {
-                    class: FilterClass::FilterDropdown.class_name(),
+                    class: FilterClass::FilterDropdown.as_class(),
                     onclick: close_dropdown,
 
-                    div { class: FilterClass::FilterHeader.class_name(),
-                        span { class: FilterClass::FilterTitle.class_name(), "{props.column}" }
+                    div { class: FilterClass::FilterHeader.as_class(),
+                        span { class: FilterClass::FilterTitle.as_class(), "{props.column}" }
 
                         if active_count > 0 {
                             button {
-                                class: FilterClass::FilterClearBtn.class_name(),
+                                class: FilterClass::FilterClearBtn.as_class(),
                                 onclick: handle_clear,
                                 "Clear"
                             }
@@ -202,12 +200,12 @@ pub fn Filter(props: FilterProps) -> Element {
                     }
 
                     div {
-                        class: FilterClass::FilterOptions.class_name(),
+                        class: FilterClass::FilterOptions.as_class(),
                         ..filter_options,
                     }
 
-                    div { class: FilterClass::FilterFooter.class_name(),
-                        span { class: FilterClass::FilterHint.class_name(),
+                    div { class: FilterClass::FilterFooter.as_class(),
+                        span { class: FilterClass::FilterHint.as_class(),
                             if active_count > 0 {
                                 "{active_count} selected"
                             } else {

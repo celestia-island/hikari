@@ -1,13 +1,13 @@
 // hikari-extra-components/styles/components/collapsible.scss
-// Collapsible panel styles with 
+// Collapsible panel styles with Arknights design + FUI glow
 
-@use '../../../theme/styles/mixins.scss' as *;
+@use '../../../hikari-theme/styles/mixins.scss' as *;
 
 // ============================================
 // Collapsible Container
 // ============================================
 
-.hi-collapsible {
+.hikari-collapsible {
     width: 100%;
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
@@ -15,7 +15,7 @@
     overflow: hidden;
     transition: all $hikari-transition-base;
 
-    //  clean design with subtle glow
+    // Arknights clean design with subtle glow
     &:hover {
         border-color: var(--hi-color-primary);
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
@@ -26,7 +26,7 @@
 // Collapsible Header
 // ============================================
 
-.hi-collapsible-header {
+.hikari-collapsible-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -42,12 +42,12 @@
     &:hover {
         background-color: rgba(59, 130, 246, 0.05);
 
-        .hi-collapsible-icon {
+        .hikari-collapsible-icon {
             color: var(--hi-color-primary);
             transform: scale(1.1);
         }
 
-        .hi-collapsible-title {
+        .hikari-collapsible-title {
             color: var(--hi-color-text-primary);
         }
     }
@@ -58,14 +58,14 @@
     }
 }
 
-.hi-collapsible-title-wrapper {
+.hikari-collapsible-title-wrapper {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-md;
     flex: 1;
 }
 
-.hi-collapsible-icon {
+.hikari-collapsible-icon {
     width: 20px;
     height: 20px;
     color: var(--hi-color-text-secondary);
@@ -73,31 +73,31 @@
     flex-shrink: 0;
 
     // Rotation animation when collapsed
-    .hi-collapsible:not(.hi-collapsible-expanded) & {
+    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
         transform: rotate(-90deg);
     }
 
-    // glow on hover
-    .hi-collapsible-header:hover & {
+    // FUI glow on hover
+    .hikari-collapsible-header:hover & {
         filter: drop-shadow(0 0 8px currentColor);
     }
 }
 
-.hi-collapsible-title {
+.hikari-collapsible-title {
     font-size: $hikari-font-size-base;
     font-weight: 600;
     color: var(--hi-color-text-primary);
     transition: color $hikari-transition-fast;
 }
 
-.hi-collapsible-subtitle {
+.hikari-collapsible-subtitle {
     font-size: $hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
     font-weight: 400;
     margin-top: 2px;
 }
 
-.hi-collapsible-actions {
+.hikari-collapsible-actions {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-sm;
@@ -112,26 +112,26 @@
 // Collapsible Content
 // ============================================
 
-.hi-collapsible-content {
+.hikari-collapsible-content {
     overflow: hidden;
     transition:
         max-height $hikari-transition-slow cubic-bezier(0.4, 0, 0.2, 1),
         opacity $hikari-transition-base;
 
     // Collapsed state
-    .hi-collapsible:not(.hi-collapsible-expanded) & {
+    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
         max-height: 0;
         opacity: 0;
     }
 
     // Expanded state
-    .hi-collapsible.hi-collapsible-expanded & {
+    .hikari-collapsible.hikari-collapsible-expanded & {
         max-height: 2000px;
         opacity: 1;
     }
 }
 
-.hi-collapsible-body {
+.hikari-collapsible-body {
     padding: $hikari-spacing-lg;
 
     // Add scrollbar when content overflows
@@ -143,7 +143,7 @@
 // ============================================
 
 // Bordered variant
-.hi-collapsible-bordered {
+.hikari-collapsible-bordered {
     border-radius: 0;
 
     &:first-child {
@@ -162,11 +162,11 @@
 }
 
 // Ghost variant (minimal styling)
-.hi-collapsible-ghost {
+.hikari-collapsible-ghost {
     background-color: transparent;
     border: none;
 
-    .hi-collapsible-header {
+    .hikari-collapsible-header {
         background-color: transparent;
         border-bottom: none;
         border-radius: $hikari-radius-md;
@@ -176,13 +176,13 @@
         }
     }
 
-    .hi-collapsible-body {
+    .hikari-collapsible-body {
         padding: $hikari-spacing-md $hikari-spacing-lg;
     }
 }
 
-//  variant (enhanced glow)
-.hi-collapsible-fui {
+// FUI variant (enhanced glow)
+.hikari-collapsible-fui {
     position: relative;
     overflow: hidden;
 
@@ -211,7 +211,7 @@
         opacity: 1;
     }
 
-    .hi-collapsible-header {
+    .hikari-collapsible-header {
         background: linear-gradient(
              135deg,
              rgba(139, 92, 246, 0.05) 0%,
@@ -224,40 +224,40 @@
 // Collapsible Sizes
 // ============================================
 
-.hi-collapsible-sm {
-    .hi-collapsible-header {
+.hikari-collapsible-sm {
+    .hikari-collapsible-header {
         padding: $hikari-spacing-sm $hikari-spacing-md;
     }
 
-    .hi-collapsible-title {
+    .hikari-collapsible-title {
         font-size: $hikari-font-size-sm;
     }
 
-    .hi-collapsible-icon {
+    .hikari-collapsible-icon {
         width: 16px;
         height: 16px;
     }
 
-    .hi-collapsible-body {
+    .hikari-collapsible-body {
         padding: $hikari-spacing-md;
     }
 }
 
-.hi-collapsible-lg {
-    .hi-collapsible-header {
+.hikari-collapsible-lg {
+    .hikari-collapsible-header {
         padding: $hikari-spacing-lg $hikari-spacing-xl;
     }
 
-    .hi-collapsible-title {
+    .hikari-collapsible-title {
         font-size: $hikari-font-size-lg;
     }
 
-    .hi-collapsible-icon {
+    .hikari-collapsible-icon {
         width: 24px;
         height: 24px;
     }
 
-    .hi-collapsible-body {
+    .hikari-collapsible-body {
         padding: $hikari-spacing-xl;
     }
 }
@@ -267,43 +267,43 @@
 // ============================================
 
 // Disabled state
-.hi-collapsible-disabled {
+.hikari-collapsible-disabled {
     opacity: 0.6;
     pointer-events: none;
     cursor: not-allowed;
 
-    .hi-collapsible-header {
+    .hikari-collapsible-header {
         cursor: not-allowed;
     }
 }
 
 // Loading state
-.hi-collapsible-loading {
+.hikari-collapsible-loading {
     position: relative;
 
-    .hi-collapsible-icon {
+    .hikari-collapsible-icon {
         animation: hi-spin 1s linear infinite;
     }
 }
 
 // Error state
-.hi-collapsible-error {
+.hikari-collapsible-error {
     border-color: var(--hi-color-danger);
 
-    .hi-collapsible-icon {
+    .hikari-collapsible-icon {
         color: var(--hi-color-danger);
     }
 
-    .hi-collapsible-title {
+    .hikari-collapsible-title {
         color: var(--hi-color-danger);
     }
 }
 
 // Success state
-.hi-collapsible-success {
+.hikari-collapsible-success {
     border-color: var(--hi-color-success);
 
-    .hi-collapsible-icon {
+    .hikari-collapsible-icon {
         color: var(--hi-color-success);
     }
 }
@@ -312,15 +312,15 @@
 // Accordion Group
 // ============================================
 
-.hi-accordion {
+.hikari-accordion {
     display: flex;
     flex-direction: column;
     gap: $hikari-spacing-sm;
 
     // Only one collapsible can be expanded at a time
-    &.hi-accordion-mutual-exclusive {
-        .hi-collapsible:not(.hi-collapsible-expanded) {
-            .hi-collapsible-content {
+    &.hikari-accordion-mutual-exclusive {
+        .hikari-collapsible:not(.hikari-collapsible-expanded) {
+            .hikari-collapsible-content {
                 display: none;
             }
         }
@@ -332,29 +332,29 @@
 // ============================================
 
 // Fade animation
-.hi-collapsible-fade {
-    .hi-collapsible-content {
+.hikari-collapsible-fade {
+    .hikari-collapsible-content {
         transition: opacity $hikari-transition-base;
     }
 
-    &.hi-collapsible-expanded .hi-collapsible-content {
+    &.hikari-collapsible-expanded .hikari-collapsible-content {
         opacity: 1;
     }
 
-    &:not(.hi-collapsible-expanded) .hi-collapsible-content {
+    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
         opacity: 0;
         display: none;
     }
 }
 
 // Slide animation (default is in the base styles)
-.hi-collapsible-slide {
+.hikari-collapsible-slide {
     // This is the default behavior
 }
 
 // Scale animation
-.hi-collapsible-scale {
-    .hi-collapsible-content {
+.hikari-collapsible-scale {
+    .hikari-collapsible-content {
         transform-origin: top;
         transition:
             max-height $hikari-transition-slow,
@@ -362,11 +362,11 @@
             transform $hikari-transition-base;
     }
 
-    &:not(.hi-collapsible-expanded) .hi-collapsible-content {
+    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
         transform: scaleY(0);
     }
 
-    &.hi-collapsible-expanded .hi-collapsible-content {
+    &.hikari-collapsible-expanded .hikari-collapsible-content {
         transform: scaleY(1);
     }
 }
@@ -376,15 +376,15 @@
 // ============================================
 
 @include mobile {
-    .hi-collapsible-header {
+    .hikari-collapsible-header {
         padding: $hikari-spacing-sm $hikari-spacing-md;
     }
 
-    .hi-collapsible-body {
+    .hikari-collapsible-body {
         padding: $hikari-spacing-md;
     }
 
-    .hi-collapsible-title {
+    .hikari-collapsible-title {
         font-size: $hikari-font-size-sm;
     }
 }

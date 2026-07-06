@@ -1,7 +1,7 @@
 // hikari-e2e/src/tests/data_components.rs
 // E2E tests for Layer 2 data components
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::time::{Duration, Instant};
 
 use thirtyfour::{By, WebDriver};
@@ -25,13 +25,13 @@ impl DataComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let table = driver.find(By::Css(".hi-table")).await.map_err(|e| {
             info!("Table element not found: {}", e);
-            anyhow!("Table element not found: {}", e)
+            anyhow::anyhow!("Table element not found: {}", e)
         })?;
 
         info!("Table element found");
@@ -39,7 +39,7 @@ impl DataComponentsTests {
         let rows = table
             .find_all(By::Css("tr"))
             .await
-            .map_err(|e| anyhow!("Failed to find table rows: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find table rows: {}", e))?;
 
         if rows.is_empty() {
             return Ok(TestResult::failure("Table", "Table element has no rows"));
@@ -50,9 +50,9 @@ impl DataComponentsTests {
         let class_attr = table
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get table attributes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow!("No class attribute found for table"))?;
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for table"))?;
 
         if !class_attr.contains("hi-table") {
             return Ok(TestResult::failure(
@@ -85,13 +85,13 @@ impl DataComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let tree = driver.find(By::Css(".hi-tree")).await.map_err(|e| {
             info!("Tree element not found: {}", e);
-            anyhow!("Tree element not found: {}", e)
+            anyhow::anyhow!("Tree element not found: {}", e)
         })?;
 
         info!("Tree element found");
@@ -99,7 +99,7 @@ impl DataComponentsTests {
         let nodes = tree
             .find_all(By::Css(".hi-tree-node"))
             .await
-            .map_err(|e| anyhow!("Failed to find tree nodes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find tree nodes: {}", e))?;
 
         if nodes.is_empty() {
             return Ok(TestResult::failure("Tree", "Tree element has no nodes"));
@@ -110,9 +110,9 @@ impl DataComponentsTests {
         let class_attr = tree
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get tree attributes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow!("No class attribute found for tree"))?;
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for tree"))?;
 
         if !class_attr.contains("hi-tree") {
             return Ok(TestResult::failure(
@@ -145,13 +145,13 @@ impl DataComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let pagination = driver.find(By::Css(".hi-pagination")).await.map_err(|e| {
             info!("Pagination element not found: {}", e);
-            anyhow!("Pagination element not found: {}", e)
+            anyhow::anyhow!("Pagination element not found: {}", e)
         })?;
 
         info!("Pagination element found");
@@ -159,7 +159,7 @@ impl DataComponentsTests {
         let items = pagination
             .find_all(By::Css(".hi-pagination-item"))
             .await
-            .map_err(|e| anyhow!("Failed to find pagination items: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find pagination items: {}", e))?;
 
         if items.is_empty() {
             return Ok(TestResult::failure(
@@ -173,9 +173,9 @@ impl DataComponentsTests {
         let class_attr = pagination
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get pagination attributes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get pagination attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow!("No class attribute found for pagination"))?;
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for pagination"))?;
 
         if !class_attr.contains("hi-pagination") {
             return Ok(TestResult::failure(
@@ -208,13 +208,13 @@ impl DataComponentsTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let dropdown = driver.find(By::Css(".hi-dropdown")).await.map_err(|e| {
             info!("Dropdown element not found: {}", e);
-            anyhow!("Dropdown element not found: {}", e)
+            anyhow::anyhow!("Dropdown element not found: {}", e)
         })?;
 
         info!("Dropdown element found");
@@ -222,7 +222,7 @@ impl DataComponentsTests {
         dropdown
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click dropdown: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click dropdown: {}", e))?;
         info!("Dropdown clicked successfully");
 
         tokio::time::sleep(Duration::from_millis(200)).await;
@@ -230,9 +230,9 @@ impl DataComponentsTests {
         let class_attr = dropdown
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get dropdown attributes: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
         let class_attr =
-            class_attr.ok_or_else(|| anyhow!("No class attribute found for dropdown"))?;
+            class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for dropdown"))?;
 
         if !class_attr.contains("hi-dropdown") {
             return Ok(TestResult::failure(

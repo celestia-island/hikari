@@ -1,8 +1,10 @@
 //! Header component classes
 
-use tairitsu_style::TypedClass;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::classes::UtilityClass;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Header {
     Header,
     Sticky,
@@ -11,20 +13,18 @@ pub enum Header {
     Left,
     Right,
     Toggle,
-    Rtl,
 }
 
-impl TypedClass for Header {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for Header {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Header => "hi-header",
-            Self::Sticky => "hi-header-sticky",
-            Self::Md => "hi-header-md",
-            Self::Transparent => "hi-header-transparent",
-            Self::Left => "hi-header-left",
-            Self::Right => "hi-header-right",
-            Self::Toggle => "hi-header-toggle",
-            Self::Rtl => "hi-header-rtl",
+            Header::Header => "header",
+            Header::Sticky => "header-sticky",
+            Header::Md => "header-md",
+            Header::Transparent => "header-transparent",
+            Header::Left => "header-left",
+            Header::Right => "header-right",
+            Header::Toggle => "header-toggle",
         }
     }
 }

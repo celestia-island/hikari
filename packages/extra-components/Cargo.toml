@@ -3,28 +3,20 @@ name = "hikari-extra-components"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-license.workspace = true
-description = "Advanced UI components (node graph, rich text, etc.) for the Hikari design system"
-repository.workspace = true
-keywords = ["ui", "components", "node-graph", "design-system", "wasm"]
-categories = ["gui", "wasm"]
+license-file.workspace = true
 
 [lib]
-doctest = true
+doctest = false
 
 [dependencies]
 # Workspace dependencies
-hikari-palette = { version = "^0.2", path = "../palette" }
-hikari-theme = { version = "^0.2", path = "../theme" }
-hikari-icons = { version = "^0.2", path = "../icons" }
-hikari-components = { version = "^0.2", path = "../components" }
+hikari-palette = { version = "^0.3", path = "../palette" }
+hikari-theme = { version = "^0.3", path = "../theme" }
+hikari-icons = { version = "^0.3", path = "../icons" }
 
 # Serialization
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
 
-# Error handling
-anyhow = { workspace = true }
-
-# VDOM
-tairitsu-vdom = "^0.5"
+# Utilities
+lazy_static = "^1"

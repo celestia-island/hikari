@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Tooltip Component -  Styling
+// Hikari Tooltip Component - FUI Styling
 // Features: Portal-based rendering, card-like appearance, smooth animations
 // ============================================
 
@@ -27,7 +27,7 @@
 .hi-tooltip {
   // Layout
   position: fixed;
-  z-index: var(--hi-z-index-tooltip, 1070);
+  z-index: 10000;
 
   // Spacing
   padding: 0.5rem 0.75rem;
@@ -172,13 +172,13 @@
 // Color Variants (optional)
 // ============================================
 
-// Primary (Pink)
+// Primary (Blue)
 .hi-tooltip-primary {
-  border-color: rgba(238, 162, 164, 0.5);
+  border-color: rgba(59, 130, 246, 0.5);
   box-shadow:
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
-    0 0 12px rgba(238, 162, 164, 0.2),
-    0 0 0 1px rgba(238, 162, 164, 0.3) inset;
+    0 0 12px rgba(59, 130, 246, 0.2),
+    0 0 0 1px rgba(59, 130, 246, 0.3) inset;
 }
 
 // Success (Green)

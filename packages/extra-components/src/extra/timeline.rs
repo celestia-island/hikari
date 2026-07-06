@@ -25,7 +25,7 @@ pub enum TimelineStatus {
 }
 
 /// A single item in the timeline
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct TimelineItem {
     /// Item ID
     pub id: String,
@@ -86,22 +86,19 @@ impl TimelineItem {
     }
 
     /// Set the status
-    #[must_use]
-    pub const fn with_status(mut self, status: TimelineStatus) -> Self {
+    pub fn with_status(mut self, status: TimelineStatus) -> Self {
         self.status = status;
         self
     }
 
     /// Set whether expanded
-    #[must_use]
-    pub const fn with_expanded(mut self, expanded: bool) -> Self {
+    pub fn with_expanded(mut self, expanded: bool) -> Self {
         self.expanded = expanded;
         self
     }
 
     /// Get the status class name
-    #[must_use]
-    pub const fn status_class(&self) -> &'static str {
+    pub fn status_class(&self) -> &'static str {
         match self.status {
             TimelineStatus::Pending => "hi-timeline-pending",
             TimelineStatus::InProgress => "hi-timeline-in-progress",
@@ -111,8 +108,7 @@ impl TimelineItem {
     }
 
     /// Get the dot status class name
-    #[must_use]
-    pub const fn dot_status_class(&self) -> &'static str {
+    pub fn dot_status_class(&self) -> &'static str {
         match self.status {
             TimelineStatus::Pending => "hi-timeline-dot-pending",
             TimelineStatus::InProgress => "hi-timeline-dot-in-progress",
@@ -138,7 +134,7 @@ impl TimelineItem {
 ///         .with_icon("🚀")
 /// );
 /// ```
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct TimelineState {
     /// Timeline items
     pub items: Vec<TimelineItem>,
@@ -155,7 +151,6 @@ pub struct TimelineState {
 
 impl TimelineState {
     /// Create a new timeline state
-    #[must_use]
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
@@ -166,15 +161,13 @@ impl TimelineState {
     }
 
     /// Set the position
-    #[must_use]
-    pub const fn with_position(mut self, position: TimelinePosition) -> Self {
+    pub fn with_position(mut self, position: TimelinePosition) -> Self {
         self.position = position;
         self
     }
 
     /// Set whether to show line
-    #[must_use]
-    pub const fn with_show_line(mut self, show: bool) -> Self {
+    pub fn with_show_line(mut self, show: bool) -> Self {
         self.show_line = show;
         self
     }
@@ -211,8 +204,7 @@ impl TimelineState {
     }
 
     /// Get the position class name
-    #[must_use]
-    pub const fn position_class(&self) -> &'static str {
+    pub fn position_class(&self) -> &'static str {
         match self.position {
             TimelinePosition::Left => "hi-timeline-left",
             TimelinePosition::Center => "hi-timeline-center",
@@ -221,7 +213,6 @@ impl TimelineState {
     }
 
     /// Get the CSS class string
-    #[must_use]
     pub fn class_string(&self) -> String {
         let base = if self.class.is_empty() {
             self.position_class().to_string()
@@ -230,7 +221,7 @@ impl TimelineState {
         };
 
         if self.show_line {
-            format!("{base} hi-timeline-line")
+            format!("{} hi-timeline-line", base)
         } else {
             base
         }
@@ -241,82 +232,6 @@ impl Default for TimelineState {
     fn default() -> Self {
         Self::new()
     }
-}
-
-#[must_use]
-pub fn render_timeline(state: &TimelineState) -> tairitsu_vdom::VNode {
-    use tairitsu_vdom::{VElement, VNode, VText};
-
-    let mut item_nodes: Vec<VNode> = Vec::with_capacity(state.items.len());
-
-    for item in &state.items {
-        let mut dot_children: Vec<VNode> = Vec::new();
-        if !item.icon.is_empty() {
-            dot_children.push(VNode::Element(
-                VElement::new("span")
-                    .class("hi-timeline-icon")
-                    .child(VNode::Text(VText::new(&item.icon))),
-            ));
-        }
-
-        let mut content_children: Vec<VNode> = Vec::new();
-
-        let mut header_children: Vec<VNode> = Vec::new();
-        header_children.push(VNode::Element(
-            VElement::new("h4")
-                .class("hi-timeline-title")
-                .child(VNode::Text(VText::new(&item.title))),
-        ));
-        if !item.time.is_empty() {
-            header_children.push(VNode::Element(
-                VElement::new("span")
-                    .class("hi-timeline-time")
-                    .child(VNode::Text(VText::new(&item.time))),
-            ));
-        }
-
-        content_children.push(VNode::Element(
-            VElement::new("div")
-                .class("hi-timeline-header")
-                .children(header_children),
-        ));
-
-        if item.expanded && !item.description.is_empty() {
-            content_children.push(VNode::Element(
-                VElement::new("div")
-                    .class("hi-timeline-description hi-timeline-description-expanded")
-                    .child(VNode::Element(
-                        VElement::new("p").child(VNode::Text(VText::new(&item.description))),
-                    )),
-            ));
-        }
-
-        let item_class = format!("hi-timeline-item {}", item.status_class());
-        let dot_class = format!("hi-timeline-dot {}", item.dot_status_class());
-
-        let item_node = VNode::Element(
-            VElement::new("div")
-                .class(item_class)
-                .child(VNode::Element(
-                    VElement::new("div").class(dot_class).children(dot_children),
-                ))
-                .child(VNode::Element(
-                    VElement::new("div")
-                        .class("hi-timeline-content")
-                        .children(content_children),
-                )),
-        );
-
-        item_nodes.push(item_node);
-    }
-
-    let container_class = format!("hi-timeline {}", state.class_string());
-
-    VNode::Element(
-        VElement::new("div")
-            .class(container_class)
-            .children(item_nodes),
-    )
 }
 
 #[cfg(test)]

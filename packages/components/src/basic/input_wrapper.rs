@@ -9,13 +9,14 @@
 // 4. Icon sizes: Small(24px), Medium(32px), Large(40px)
 
 use hikari_icons::MdiIcon;
-use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, InputWrapperClass, UtilityClass};
 
-use crate::basic::{IconButton, IconButtonProps};
-use crate::feedback::{Glow, GlowProps};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    basic::{IconButton, IconButtonProps},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct InputWrapperComponent;
 
@@ -28,7 +29,6 @@ pub enum InputWrapperSize {
 }
 
 impl InputWrapperSize {
-    #[must_use]
     pub fn icon_button_size(&self) -> crate::basic::IconButtonSize {
         match self {
             InputWrapperSize::Small => crate::basic::IconButtonSize::Small,
@@ -53,7 +53,6 @@ pub enum InputWrapperItem {
 }
 
 impl InputWrapperItem {
-    #[must_use]
     pub fn button(icon: MdiIcon, onclick: EventHandler<MouseEvent>) -> Self {
         Self::Button {
             icon,
@@ -63,7 +62,6 @@ impl InputWrapperItem {
         }
     }
 
-    #[must_use]
     pub fn button_with_color(
         icon: MdiIcon,
         onclick: EventHandler<MouseEvent>,
@@ -77,7 +75,6 @@ impl InputWrapperItem {
         }
     }
 
-    #[must_use]
     pub fn button_disabled(icon: MdiIcon) -> Self {
         Self::Button {
             icon,
@@ -87,12 +84,10 @@ impl InputWrapperItem {
         }
     }
 
-    #[must_use]
     pub fn icon(icon: MdiIcon) -> Self {
         Self::Icon { icon }
     }
 
-    #[must_use]
     pub fn custom(element: Element) -> Self {
         Self::Custom(Box::new(element))
     }
@@ -124,7 +119,7 @@ pub struct InputWrapperProps {
     #[default(true)]
     pub glow: bool,
 
-    #[default(GlowBlur::Light)]
+    #[default]
     pub glow_blur: GlowBlur,
 
     #[default]
@@ -145,14 +140,14 @@ pub struct InputWrapperProps {
 #[component]
 pub fn InputWrapper(props: InputWrapperProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(InputWrapperClass::Wrapper)
-        .add_typed(match props.size {
+        .add(InputWrapperClass::Wrapper)
+        .add(match props.size {
             InputWrapperSize::Small => InputWrapperClass::SizeSm,
             InputWrapperSize::Medium => InputWrapperClass::SizeMd,
             InputWrapperSize::Large => InputWrapperClass::SizeLg,
         })
-        .add_typed_if(InputWrapperClass::Disabled, props.disabled)
-        .add(&props.class)
+        .add_if(InputWrapperClass::Disabled, || props.disabled)
+        .add_raw(&props.class)
         .build();
 
     let icon_button_size = props.size.icon_button_size();
@@ -207,11 +202,11 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
             // Left section
             if !props.left.is_empty() {
-                div { class: InputWrapperClass::LeftSection.class_name(),
+                div { class: InputWrapperClass::LeftSection.as_class(),
                     for (i , item) in props.left.iter().enumerate() {
                         div {
                             key: i,
-                            class: InputWrapperClass::SideItem.class_name(),
+                            class: InputWrapperClass::SideItem.as_class(),
                             {render_item(item)}
                         }
                     }
@@ -219,7 +214,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
             }
 
             // Input section
-            div { class: InputWrapperClass::InputSection.class_name(),
+            div { class: InputWrapperClass::InputSection.as_class(),
                 if let Some(input) = props.input.as_ref() {
                     {input.clone()}
                 }
@@ -227,11 +222,11 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
             // Right section
             if !props.right.is_empty() {
-                div { class: InputWrapperClass::RightSection.class_name(),
+                div { class: InputWrapperClass::RightSection.as_class(),
                     for (i , item) in props.right.iter().enumerate() {
                         div {
                             key: i,
-                            class: InputWrapperClass::SideItem.class_name(),
+                            class: InputWrapperClass::SideItem.as_class(),
                             {render_item(item)}
                         }
                     }

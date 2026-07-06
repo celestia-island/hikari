@@ -2,20 +2,14 @@
 //!
 //! Provides runtime information for computing dynamic animation values,
 //! including DOM dimensions, mouse positions, and element metrics.
-//!
-//! This module uses the tairitsu-vdom Platform trait for cross-platform
-//! browser API access, working consistently in both WASM and server environments.
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use tairitsu_vdom::{DomRect, Platform};
+use web_sys::{HtmlElement, Window};
 
 /// Context for computing dynamic animation values
 ///
 /// This context provides access to runtime information that can be used
 /// to compute animation values dynamically, such as:
-/// - DOM element dimensions (via bounding rect)
+/// - DOM element dimensions
 /// - Mouse cursor position
 /// - Scroll position
 /// - Window size
@@ -27,67 +21,62 @@ use tairitsu_vdom::{DomRect, Platform};
 /// ```ignore
 /// use animation::AnimationContext;
 ///
-/// let ctx = AnimationContext::new(platform, element_handle);
+/// let ctx = AnimationContext::new(&element);
 ///
 /// // Get element dimensions
 /// let width = ctx.element_width();
 /// let height = ctx.element_height();
 ///
+/// // Get mouse position relative to element
+/// let mouse_x = ctx.mouse_x();
+/// let mouse_y = ctx.mouse_y();
+///
 /// // Get delta time for smooth animations
 /// let delta = ctx.delta_time();
 /// let new_pos = current_pos + speed * delta;
+///
+/// // Get scroll position
+/// let scroll_y = ctx.scroll_y();
 /// ```
-pub struct AnimationContext<P: Platform> {
-    /// Target element handle for the animation
-    element: P::Element,
-    /// Platform reference for DOM operations
-    platform: Rc<RefCell<P>>,
-    /// Cached bounding rect for the element
-    bounding_rect: DomRect,
+pub struct AnimationContext {
+    /// Target element for the animation
+    element: HtmlElement,
+    /// Window reference
+    window: Window,
     /// Previous frame timestamp for delta calculation
     previous_time: f64,
     /// Current frame timestamp
     current_time: f64,
     /// Delta time between frames (in milliseconds)
     delta_time: f64,
-    /// Mouse position (stored separately, typically from events)
-    mouse_pos: Option<(f64, f64)>,
 }
 
-impl<P: Platform> AnimationContext<P> {
+impl AnimationContext {
     /// Create a new AnimationContext for the given element
-    pub fn new(platform: Rc<RefCell<P>>, element: P::Element) -> Self {
-        let bounding_rect = platform.borrow_mut().get_bounding_client_rect(&element);
+    pub fn new(element: &HtmlElement) -> Self {
+        let window = web_sys::window().expect("No window reference");
+        let now = window.performance().map(|p| p.now()).unwrap_or(0.0);
 
         Self {
-            element,
-            platform,
-            bounding_rect,
-            previous_time: 0.0,
-            current_time: 0.0,
+            element: element.clone(),
+            window,
+            previous_time: now,
+            current_time: now,
             delta_time: 16.67, // ~60fps default
-            mouse_pos: None,
         }
     }
 
     /// Create a new AnimationContext with custom timing
-    pub fn new_with_timing(
-        platform: Rc<RefCell<P>>,
-        element: P::Element,
-        previous_time: f64,
-        current_time: f64,
-    ) -> Self {
-        let bounding_rect = platform.borrow_mut().get_bounding_client_rect(&element);
+    pub fn new_with_timing(element: &HtmlElement, previous_time: f64, current_time: f64) -> Self {
+        let window = web_sys::window().expect("No window reference");
         let delta_time = current_time - previous_time;
 
         Self {
-            element,
-            platform,
-            bounding_rect,
+            element: element.clone(),
+            window,
             previous_time,
             current_time,
             delta_time: delta_time.max(0.0),
-            mouse_pos: None,
         }
     }
 
@@ -98,101 +87,97 @@ impl<P: Platform> AnimationContext<P> {
         self.delta_time = (self.current_time - self.previous_time).max(0.0);
     }
 
-    /// Set the mouse position (typically called from event handlers)
-    pub const fn set_mouse_position(&mut self, x: f64, y: f64) {
-        self.mouse_pos = Some((x, y));
+    /// Get the target element
+    pub fn element(&self) -> &HtmlElement {
+        &self.element
     }
 
-    /// Get the target element handle
-    pub fn element(&self) -> P::Element {
-        self.element.clone()
+    /// Get the window reference
+    pub fn window(&self) -> &Window {
+        &self.window
     }
 
     // ===== Element Dimensions =====
 
-    /// Get element width in pixels
-    ///
-    /// Note: This returns the bounding rect width, which includes padding
-    /// but not borders or margins.
-    pub const fn element_width(&self) -> f64 {
-        self.bounding_rect.width
+    /// Get element width in pixels (including padding, but not border)
+    pub fn element_width(&self) -> f64 {
+        self.element.offset_width() as f64
     }
 
-    /// Get element height in pixels
-    ///
-    /// Note: This returns the bounding rect height, which includes padding
-    /// but not borders or margins.
-    pub const fn element_height(&self) -> f64 {
-        self.bounding_rect.height
+    /// Get element height in pixels (including padding, but not border)
+    pub fn element_height(&self) -> f64 {
+        self.element.offset_height() as f64
     }
 
-    /// Get element client width (approximated)
-    pub const fn client_width(&self) -> f64 {
-        self.bounding_rect.width
+    /// Get element client width (including padding, excluding scrollbars)
+    pub fn client_width(&self) -> f64 {
+        self.element.client_width() as f64
     }
 
-    /// Get element client height (approximated)
-    pub const fn client_height(&self) -> f64 {
-        self.bounding_rect.height
+    /// Get element client height (including padding, excluding scrollbars)
+    pub fn client_height(&self) -> f64 {
+        self.element.client_height() as f64
     }
 
-    /// Get element scroll width (approximated as element width)
-    pub const fn scroll_width(&self) -> f64 {
-        self.bounding_rect.width
+    /// Get element scroll width
+    pub fn scroll_width(&self) -> f64 {
+        self.element.scroll_width() as f64
     }
 
-    /// Get element scroll height (approximated as element height)
-    pub const fn scroll_height(&self) -> f64 {
-        self.bounding_rect.height
+    /// Get element scroll height
+    pub fn scroll_height(&self) -> f64 {
+        self.element.scroll_height() as f64
     }
 
     /// Get element bounding rectangle
-    pub const fn bounding_rect(&self) -> DomRect {
-        self.bounding_rect
+    pub fn bounding_rect(&self) -> web_sys::DomRect {
+        self.element.get_bounding_client_rect()
     }
 
     // ===== Element Position =====
 
-    /// Get element offset left relative to offset parent (approximated)
-    pub const fn offset_left(&self) -> f64 {
-        self.bounding_rect.x
+    /// Get element offset left relative to offset parent
+    pub fn offset_left(&self) -> f64 {
+        self.element.offset_left() as f64
     }
 
-    /// Get element offset top relative to offset parent (approximated)
-    pub const fn offset_top(&self) -> f64 {
-        self.bounding_rect.y
+    /// Get element offset top relative to offset parent
+    pub fn offset_top(&self) -> f64 {
+        self.element.offset_top() as f64
     }
 
     /// Get element's left position relative to viewport
-    pub const fn viewport_left(&self) -> f64 {
-        self.bounding_rect.x
+    pub fn viewport_left(&self) -> f64 {
+        self.bounding_rect().left()
     }
 
     /// Get element's top position relative to viewport
-    pub const fn viewport_top(&self) -> f64 {
-        self.bounding_rect.y
+    pub fn viewport_top(&self) -> f64 {
+        self.bounding_rect().top()
     }
 
     /// Get element's right position relative to viewport
     pub fn viewport_right(&self) -> f64 {
-        self.bounding_rect.x + self.bounding_rect.width
+        self.bounding_rect().right()
     }
 
     /// Get element's bottom position relative to viewport
     pub fn viewport_bottom(&self) -> f64 {
-        self.bounding_rect.y + self.bounding_rect.height
+        self.bounding_rect().bottom()
     }
 
     // ===== Mouse Position =====
 
     /// Get mouse X position relative to viewport
     pub fn mouse_x_viewport(&self) -> f64 {
-        self.mouse_pos.map_or(0.0, |(x, _)| x)
+        // This would need to be stored elsewhere or passed in
+        // For now, return 0.0
+        0.0
     }
 
     /// Get mouse Y position relative to viewport
     pub fn mouse_y_viewport(&self) -> f64 {
-        self.mouse_pos.map_or(0.0, |(_, y)| y)
+        0.0
     }
 
     /// Get mouse X position relative to element
@@ -227,28 +212,32 @@ impl<P: Platform> AnimationContext<P> {
 
     // ===== Scroll Position =====
 
-    /// Get element scroll X position (not directly available via WIT, returns 0.0)
-    pub const fn scroll_x(&self) -> f64 {
-        // WIT bindings don't provide direct scroll position access
-        // This would need to be tracked separately or added to the WIT interface
-        0.0
+    /// Get element scroll X position
+    pub fn scroll_x(&self) -> f64 {
+        self.element.scroll_left() as f64
     }
 
-    /// Get element scroll Y position (not directly available via WIT, returns 0.0)
-    pub const fn scroll_y(&self) -> f64 {
-        // WIT bindings don't provide direct scroll position access
-        // This would need to be tracked separately or added to the WIT interface
-        0.0
+    /// Get element scroll Y position
+    pub fn scroll_y(&self) -> f64 {
+        self.element.scroll_top() as f64
     }
 
-    /// Get document scroll X position (not directly available via WIT, returns 0.0)
-    pub const fn document_scroll_x(&self) -> f64 {
-        0.0
+    /// Get document scroll X position
+    pub fn document_scroll_x(&self) -> f64 {
+        self.document()
+            .and_then(|doc| doc.body())
+            .map(|body| body.scroll_left() as f64)
+            .or_else(|| self.window.scroll_x().ok())
+            .unwrap_or(0.0)
     }
 
-    /// Get document scroll Y position (not directly available via WIT, returns 0.0)
-    pub const fn document_scroll_y(&self) -> f64 {
-        0.0
+    /// Get document scroll Y position
+    pub fn document_scroll_y(&self) -> f64 {
+        self.document()
+            .and_then(|doc| doc.body())
+            .map(|body| body.scroll_top() as f64)
+            .or_else(|| self.window.scroll_y().ok())
+            .unwrap_or(0.0)
     }
 
     /// Get maximum scrollable X distance
@@ -285,28 +274,36 @@ impl<P: Platform> AnimationContext<P> {
 
     /// Get window inner width
     pub fn window_width(&self) -> f64 {
-        f64::from(self.platform.borrow().inner_width())
+        self.window
+            .inner_width()
+            .ok()
+            .and_then(|w| w.as_f64())
+            .unwrap_or(0.0)
     }
 
     /// Get window inner height
     pub fn window_height(&self) -> f64 {
-        f64::from(self.platform.borrow().inner_height())
+        self.window
+            .inner_height()
+            .ok()
+            .and_then(|h| h.as_f64())
+            .unwrap_or(0.0)
     }
 
     // ===== Time =====
 
     /// Get current timestamp in milliseconds
-    pub const fn now(&self) -> f64 {
+    pub fn now(&self) -> f64 {
         self.current_time
     }
 
     /// Get previous frame timestamp in milliseconds
-    pub const fn previous_time(&self) -> f64 {
+    pub fn previous_time(&self) -> f64 {
         self.previous_time
     }
 
     /// Get delta time between frames in milliseconds
-    pub const fn delta_time(&self) -> f64 {
+    pub fn delta_time(&self) -> f64 {
         self.delta_time
     }
 
@@ -326,13 +323,18 @@ impl<P: Platform> AnimationContext<P> {
 
     // ===== Helpers =====
 
+    /// Get the document reference
+    fn document(&self) -> Option<web_sys::Document> {
+        self.window.document()
+    }
+
     /// Calculate distance from element center to mouse
     pub fn distance_from_center(&self) -> f64 {
         let center_x = self.element_width() / 2.0;
         let center_y = self.element_height() / 2.0;
         let dx = self.mouse_x() - center_x;
         let dy = self.mouse_y() - center_y;
-        dx.hypot(dy)
+        (dx * dx + dy * dy).sqrt()
     }
 
     /// Calculate angle from element center to mouse (in radians)
@@ -343,20 +345,16 @@ impl<P: Platform> AnimationContext<P> {
     }
 
     /// Check if mouse is inside element
-    pub fn is_mouse_inside(&self) -> bool {
+    pub fn is_mouse_inside(&self) -> f64 {
         let x = self.mouse_x();
         let y = self.mouse_y();
         let width = self.element_width();
         let height = self.element_height();
 
-        x >= 0.0 && x <= width && y >= 0.0 && y <= height
-    }
-
-    /// Refresh the cached bounding rect from the platform
-    pub fn refresh_bounding_rect(&mut self) {
-        self.bounding_rect = self
-            .platform
-            .borrow_mut()
-            .get_bounding_client_rect(&self.element);
+        if x >= 0.0 && x <= width && y >= 0.0 && y <= height {
+            1.0
+        } else {
+            0.0
+        }
     }
 }

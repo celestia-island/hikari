@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Pagination Component - Styling
+// Hikari // Hikari // Hikari // Hikari // Hikari Pagination Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Pagination Styles
@@ -682,13 +682,36 @@
 @include mix.mobile {
   .pagination {
     @include pagination-compact;
-  }
 }
 
 @include mix.tablet {
   .pagination {
     .hi-pagination-size-selector,
     .hi-pagination-total {
+      display: flex;
+    }
+
+    .hi-pagination-jumper {
+      display: none;
+    }
+  }
+}
+
+@include mix.desktop {
+  .pagination {
+    .hi-pagination-size-selector,
+    .hi-pagination-total,
+    .hi-pagination-jumper {
+      display: flex;
+    }
+  }
+}
+}
+
+@include mix.tablet {
+  .pagination {
+    .hi-pagination-size-selector,
+.hi-pagination-total {
       display: flex;
     }
 

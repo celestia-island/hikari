@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 @use './button-vars.scss' as button-vars;
 
 // ============================================
@@ -11,7 +11,7 @@
 // - Layer2: Component variables (button-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
 //
-// NOTE: Primary hover effects are handled by CSS (not Glow wrapper)
+// NOTE: Hover effects are handled by Glow wrapper, not here
 // ============================================
 
 // Base button styles
@@ -55,10 +55,7 @@
   background-color: var(--hi-button-bg);
   backdrop-filter: var(--hi-button-bg-blur);
 
-  // Active state - scale down effect
-  &:active:not(:disabled) {
-    transform: scale(0.98);
-  }
+  // No transform - controlled by AnimationBuilder via Glow wrapper
 
   // Focus state - only outline, no color changes
   &:focus-visible {
@@ -66,7 +63,7 @@
     border-width: var(--hi-button-border-width-focus);
     outline: none;
     color: var(--hi-button-text-color);
-
+    
     .hikari-icon {
       color: var(--hi-button-icon-color);
     }
@@ -88,170 +85,63 @@
 }
 
 // ============================================
-// Variant: Primary (Pink glow accent)
+// Variant: Primary
 // ============================================
 
 .hi-button-primary {
-  background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark));
-  color: var(--hi-color-text-on-primary, #ffffff);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(255, 107, 129, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-primary-hover), var(--hi-button-primary-dark));
-    box-shadow: var(--hi-glow-button-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-color-primary),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 }
 
 // ============================================
-// Variant: Secondary (Blue accent)
+// Variant: Secondary
 // ============================================
 
 .hi-button-secondary {
-  background-color: var(--hi-color-secondary);
-  color: var(--hi-color-text-on-secondary, #ffffff);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(75, 92, 196, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
-
-  &:hover:not(:disabled) {
-    background-color: var(--hi-button-secondary-hover);
-    box-shadow: var(--hi-glow-button-secondary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-secondary);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    background-color: var(--hi-button-secondary-dark);
-    box-shadow:
-      0 0 4px var(--hi-color-secondary),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 }
 
 // ============================================
-// Variant: Ghost (Transparent with theme color border)
+// Variant: Ghost
 // ============================================
 
 .hi-button-ghost {
-  background-color: transparent;
-  color: var(--hi-ghost-text);
-  border: 1px solid var(--hi-ghost-border);
-  --hi-glow-transparent: true;
-  --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-ghost-glow);
-
-  &:hover:not(:disabled) {
-    box-shadow: var(--hi-ghost-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-ghost-border);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    box-shadow: 0 0 4px var(--hi-ghost-glow);
-    transform: scale(0.98);
-  }
+  background-color: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 }
 
 // ============================================
-// Variant: Borderless (No border, minimal styling)
+// Variant: Borderless
 // ============================================
 
 .hi-button-borderless {
-  background-color: transparent;
-  color: var(--hi-ghost-text);
+  background-color: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
   border: none;
-  --hi-glow-transparent: true;
-  --hi-glow-bg-color: transparent;
-  --hi-glow-color: var(--hi-ghost-glow);
-
-  &:hover:not(:disabled) {
-    box-shadow: var(--hi-ghost-glow);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-ghost-border);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    box-shadow: 0 0 4px var(--hi-ghost-glow);
-    transform: scale(0.98);
-  }
 }
 
 // ============================================
-// Variant: Danger (Red glow accent)
+// Variant: Danger
 // ============================================
 
 .hi-button-danger {
-  background: linear-gradient(135deg, var(--hi-color-danger), var(--hi-button-danger-dark));
-  color: var(--hi-color-text-on-danger, #ffffff);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-danger-hover), var(--hi-button-danger-dark));
-    box-shadow: var(--hi-glow-button-danger);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-danger);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-color-danger),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 }
 
 // ============================================
-// Variant: Success (Green glow accent)
+// Variant: Success
 // ============================================
 
 .hi-button-success {
-  background: linear-gradient(135deg, var(--hi-color-success), var(--hi-button-success-dark));
-  color: var(--hi-color-text-on-success, #ffffff);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15), 0 1px 3px rgba(0, 0, 0, 0.06);
-
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--hi-button-success-hover), var(--hi-button-success-dark));
-    box-shadow: var(--hi-glow-button-success);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-success);
-    outline-offset: 2px;
-  }
-
-  &:active:not(:disabled) {
-    box-shadow:
-      0 0 4px var(--hi-color-success),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: scale(0.98);
-  }
+  background: var(--hi-button-bg);
+  color: var(--hi-button-text-color);
+  border-color: var(--hi-button-border-color);
 }
 
 // ============================================

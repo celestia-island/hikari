@@ -51,7 +51,6 @@ pub enum StateValue {
 
 impl AnimationDataStore {
     /// Create a new empty animation data store
-    #[must_use]
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
@@ -59,8 +58,7 @@ impl AnimationDataStore {
     }
 
     /// Create animation data store with initial values
-    #[must_use]
-    pub const fn with_values(values: HashMap<String, StateValue>) -> Self {
+    pub fn with_values(values: HashMap<String, StateValue>) -> Self {
         Self { values }
     }
 
@@ -70,13 +68,11 @@ impl AnimationDataStore {
     }
 
     /// Get a state value
-    #[must_use]
     pub fn get(&self, key: &str) -> Option<&StateValue> {
         self.values.get(key)
     }
 
     /// Check if a key exists
-    #[must_use]
     pub fn contains_key(&self, key: &str) -> bool {
         self.values.contains_key(key)
     }
@@ -94,7 +90,6 @@ impl AnimationDataStore {
     // ===== Typed getters with defaults =====
 
     /// Get f64 value with default
-    #[must_use]
     pub fn get_f64(&self, key: &str, default: f64) -> f64 {
         match self.get(key) {
             Some(StateValue::F64(v)) => *v,
@@ -103,7 +98,6 @@ impl AnimationDataStore {
     }
 
     /// Get i32 value with default
-    #[must_use]
     pub fn get_i32(&self, key: &str, default: i32) -> i32 {
         match self.get(key) {
             Some(StateValue::I32(v)) => *v,
@@ -112,7 +106,6 @@ impl AnimationDataStore {
     }
 
     /// Get i64 value with default
-    #[must_use]
     pub fn get_i64(&self, key: &str, default: i64) -> i64 {
         match self.get(key) {
             Some(StateValue::I64(v)) => *v,
@@ -121,7 +114,6 @@ impl AnimationDataStore {
     }
 
     /// Get bool value with default
-    #[must_use]
     pub fn get_bool(&self, key: &str, default: bool) -> bool {
         match self.get(key) {
             Some(StateValue::Bool(v)) => *v,
@@ -130,7 +122,6 @@ impl AnimationDataStore {
     }
 
     /// Get string value with default
-    #[must_use]
     pub fn get_string(&self, key: &str, default: &str) -> String {
         match self.get(key) {
             Some(StateValue::String(v)) => v.clone(),
@@ -138,8 +129,7 @@ impl AnimationDataStore {
         }
     }
 
-    /// Get `Vec<f64>` value with default
-    #[must_use]
+    /// Get Vec<f64> value with default
     pub fn get_vec_f64(&self, key: &str, default: Vec<f64>) -> Vec<f64> {
         match self.get(key) {
             Some(StateValue::VecF64(v)) => v.clone(),
@@ -203,11 +193,10 @@ impl AnimationDataStore {
     // ===== Advanced operations =====
 
     /// Lerp between two f64 values based on t (0.0 to 1.0)
-    #[must_use]
     pub fn lerp_f64(&self, from_key: &str, to_key: &str, t: f64) -> f64 {
         let from = self.get_f64(from_key, 0.0);
         let to = self.get_f64(to_key, 0.0);
-        (to - from).mul_add(t.clamp(0.0, 1.0), from)
+        from + (to - from) * t.clamp(0.0, 1.0)
     }
 
     /// Clamp f64 value to range
@@ -217,26 +206,22 @@ impl AnimationDataStore {
     }
 
     /// Check if f64 value is within range
-    #[must_use]
     pub fn in_range_f64(&self, key: &str, min: f64, max: f64) -> bool {
         let value = self.get_f64(key, 0.0);
         value >= min && value <= max
     }
 
     /// Get all keys
-    #[must_use]
     pub fn keys(&self) -> Vec<String> {
         self.values.keys().cloned().collect()
     }
 
     /// Get number of values
-    #[must_use]
     pub fn len(&self) -> usize {
         self.values.len()
     }
 
     /// Check if empty
-    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
     }

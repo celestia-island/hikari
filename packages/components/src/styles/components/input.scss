@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 @use './input-vars.scss' as input-vars;
 
 // ============================================
@@ -131,12 +131,14 @@
       box-shadow: none;
     }
 
+    // 确保 IconButton 在 Input focus 时不改变颜色
+    // 保持 secondary 颜色，不使用 --hi-icon-button-icon-color（ghost 变体中指向 primary）
     .hi-icon-button {
-      color: var(--hi-color-text-secondary);
+      color: var(--hi-color-text-secondary) !important;
       
       .hi-icon-button-icon,
       .hikari-icon {
-        color: var(--hi-color-text-secondary);
+        color: var(--hi-color-text-secondary) !important;
       }
     }
   }
@@ -373,10 +375,10 @@
     pointer-events: none;
     z-index: 1;
     border-radius: inherit;
-    opacity: var(--hi-spotlight-opacity, 0);
+    opacity: var(--spotlight-opacity, 0);
 
     background-image: radial-gradient(
-      circle at var(--hi-spotlight-x, 50%) var(--hi-spotlight-y, 50%),
+      circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
       var(--hi-color-primary) 0%,
       transparent 70%
     );

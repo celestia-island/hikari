@@ -1,15 +1,11 @@
 // packages/components/src/display/drag_layer.rs
-// DragLayer component
+// DragLayer component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, DragLayerClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, DragLayerClass, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::anim_helpers::run_ease_out;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct DragLayerComponent;
-
-const DRAG_PREVIEW_ANIM_MS: f64 = 150.0;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragItem {
@@ -18,7 +14,6 @@ pub struct DragItem {
     pub item_type: String,
 }
 
-/// Props for the DragLayer component.
 #[define_props]
 pub struct DragLayerProps {
     #[default]
@@ -37,7 +32,7 @@ pub struct DragLayerProps {
     pub class: String,
 }
 
-/// A drag overlay layer that shows a drag preview and optional drop zones.
+///
 #[component]
 pub fn DragLayer(props: DragLayerProps) -> Element {
     if !props.is_dragging {
@@ -47,33 +42,18 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
     let (x, y) = props.position;
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(DragLayerClass::Container)
-        .add(&props.class)
+        .add(DragLayerClass::Container)
+        .add_raw(&props.class)
         .build();
-
-    let progress_signal = use_signal(|| 0.0_f64);
-
-    {
-        let sig = progress_signal.clone();
-        use_effect(move || {
-            run_ease_out(DRAG_PREVIEW_ANIM_MS, 2, sig.clone());
-        });
-    }
-
-    let progress = progress_signal.get();
-    let scale = 0.9 + 0.1 * progress;
-    let preview_style = format!(
-        "left: {x}px; top: {y}px; opacity: {progress:.2}; transform: translate(-50%, -50%) scale({scale:.3});"
-    );
 
     rsx! {
         div { class: container_classes,
 
             // Drop zone overlay
             if props.show_drop_zones {
-                div { class: DragLayerClass::DropZoneOverlay.class_name(),
+                div { class: DragLayerClass::DropZoneOverlay.as_class(),
                     div {
-                        class: DragLayerClass::DropZone.class_name(),
+                        class: DragLayerClass::DropZone.as_class(),
                         style: "top: 50%; left: 50%; transform: translate(-50%, -50%);",
                         "Drop here"
                     }
@@ -83,12 +63,12 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
             // Drag preview
             if let Some(ref item) = props.drag_item {
                 div {
-                    class: DragLayerClass::DragPreview.class_name(),
-                    style: preview_style,
+                    class: DragLayerClass::DragPreview.as_class(),
+                    style: "left: {x}px; top: {y}px;",
 
-                    div { class: DragLayerClass::DragPreviewContent.class_name(),
-                        span { class: DragLayerClass::DragPreviewLabel.class_name(), {item.label.clone()} }
-                        span { class: DragLayerClass::DragPreviewType.class_name(), {item.item_type.clone()} }
+                    div { class: DragLayerClass::DragPreviewContent.as_class(),
+                        span { class: DragLayerClass::DragPreviewLabel.as_class(), "{item.label.clone()}" }
+                        span { class: DragLayerClass::DragPreviewType.as_class(), "{item.item_type.clone()}" }
                     }
                 }
             }
@@ -137,7 +117,20 @@ impl StyledComponent for DragLayerComponent {
 
 .hi-drag-layer-drag-preview {
     position: fixed;
+    transform: translate(-50%, -50%);
     pointer-events: none;
+    animation: hi-drag-preview-fade-in 0.15s ease;
+}
+
+@keyframes hi-drag-preview-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 .hi-drag-layer-drag-preview-content {

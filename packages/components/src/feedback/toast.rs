@@ -1,14 +1,17 @@
 // hi-components/src/feedback/toast.rs
-// Toast component
+// Toast component with Arknights + FUI styling
+
+#![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, ToastClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 
-use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
-use crate::feedback::Glow;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    basic::{IconButton, IconButtonSize, IconButtonVariant},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct ToastComponent;
 
@@ -37,6 +40,7 @@ pub struct ToastProps {
     pub variant: ToastVariant,
     pub message: String,
     pub title: Option<String>,
+    pub duration: Option<u64>,
     pub position: ToastPosition,
     #[default(true)]
     pub closable: bool,
@@ -61,16 +65,16 @@ pub fn Toast(props: ToastProps) -> Element {
     };
 
     let toast_classes = ClassesBuilder::new()
-        .add_typed(ToastClass::Toast)
-        .add_typed(variant_class)
-        .add(&props.class)
+        .add(ToastClass::Toast)
+        .add(variant_class)
+        .add_raw(&props.class)
         .build();
 
     let default_icon = match props.variant {
         ToastVariant::Info => rsx! {
             Icon {
                 icon: MdiIcon::Information,
-                class: ToastClass::ToastIcon.class_name().to_string(),
+                class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),
             }
@@ -78,23 +82,23 @@ pub fn Toast(props: ToastProps) -> Element {
         ToastVariant::Success => rsx! {
             Icon {
                 icon: MdiIcon::Check,
-                class: ToastClass::ToastIcon.class_name().to_string(),
+                class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Warning => rsx! {
             Icon {
-                icon: MdiIcon::Alert,
-                class: ToastClass::ToastIcon.class_name().to_string(),
+                icon: MdiIcon::AlertTriangle,
+                class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),
             }
         },
         ToastVariant::Error => rsx! {
             Icon {
-                icon: MdiIcon::CloseCircle,
-                class: ToastClass::ToastIcon.class_name().to_string(),
+                icon: MdiIcon::Alert,
+                class: ToastClass::ToastIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-white-100)".to_string(),
             }
@@ -107,18 +111,17 @@ pub fn Toast(props: ToastProps) -> Element {
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            block: true,
             div { class: toast_classes,
 
-                div { class: ToastClass::ToastIconWrapper.class_name(), {default_icon} }
+                div { class: ToastClass::ToastIconWrapper.as_class(), {default_icon} }
 
-                div { class: ToastClass::ToastContent.class_name(),
+                div { class: ToastClass::ToastContent.as_class(),
 
                     if let Some(title) = props.title {
-                        div { class: ToastClass::ToastTitle.class_name(), "{title}" }
+                        div { class: ToastClass::ToastTitle.as_class(), "{title}" }
                     }
 
-                    div { class: ToastClass::ToastMessage.class_name(), "{props.message}" }
+                    div { class: ToastClass::ToastMessage.as_class(), "{props.message}" }
                 }
 
                 if props.closable {

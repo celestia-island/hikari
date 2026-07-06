@@ -5,19 +5,15 @@
 //! Includes support for:
 //! - Normal completion callbacks
 //! - Exception/interruption handling (component unmount, element removal)
-//! - Element handle-based target element monitoring
+//! - WeakRef-based target element monitoring
 //! - Animation state callbacks (onComplete, onError, onCancel)
 
-use std::collections::HashMap;
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Weak};
 
-use tairitsu_vdom::Platform;
+use wasm_bindgen::JsValue;
+use web_sys::HtmlElement;
 
-use super::builder::AnimationBuilder;
-use super::state::AnimationDataStore as AnimationState;
-
-/// Element handle type (u64 for WIT bindings)
-pub type ElementHandle = u64;
+use super::{builder::AnimationBuilder, state::AnimationDataStore as AnimationState};
 
 /// Callback types for animation lifecycle events
 pub enum LifecycleCallback {
@@ -34,7 +30,7 @@ struct AnimationEntry {
     stop_fn: Box<dyn FnOnce()>,
     cleanup_fn: Option<Box<dyn FnOnce()>>,
     callbacks: Vec<LifecycleCallback>,
-    _target_element: Option<ElementHandle>, // Reserved for future element lifecycle monitoring
+    target_element: Option<Weak<HtmlElement>>,
     created_at: std::time::Instant,
 }
 
@@ -43,7 +39,7 @@ struct AnimationEntry {
 /// This registry tracks all active animations and provides
 /// automatic cleanup when components unmount or animations complete.
 /// Includes support for:
-/// - Element handle-based target element monitoring
+/// - WeakRef-based target element monitoring
 /// - Lifecycle callbacks
 /// - Timeout-based cleanup
 pub struct AnimationRegistry {
@@ -57,7 +53,6 @@ pub struct AnimationRegistry {
 
 impl AnimationRegistry {
     /// Create a new animation registry
-    #[must_use]
     pub fn new() -> Self {
         Self {
             animations: HashMap::new(),
@@ -71,7 +66,6 @@ impl AnimationRegistry {
     /// # Arguments
     ///
     /// * `timeout_ms` - Default timeout in milliseconds (None = no timeout)
-    #[must_use]
     pub fn new_with_timeout(timeout_ms: Option<u64>) -> Self {
         Self {
             animations: HashMap::new(),
@@ -86,14 +80,14 @@ impl AnimationRegistry {
     ///
     /// * `stop_fn` - Function to call when stopping animation
     /// * `cleanup_fn` - Optional cleanup function (e.g., to remove event listeners)
-    /// * `target_element` - Element handle for monitoring
+    /// * `target_element` - Weak reference to target element for monitoring
     ///
     /// Returns: Unique animation ID
     pub fn register_animation(
         &mut self,
         stop_fn: Box<dyn FnOnce()>,
         cleanup_fn: Option<Box<dyn FnOnce()>>,
-        target_element: Option<ElementHandle>,
+        target_element: Option<Weak<HtmlElement>>,
     ) -> String {
         let id = format!("animation_{}", self.next_id);
         self.next_id += 1;
@@ -104,7 +98,7 @@ impl AnimationRegistry {
                 stop_fn,
                 cleanup_fn,
                 callbacks: Vec::new(),
-                _target_element: target_element,
+                target_element,
                 created_at: std::time::Instant::now(),
             },
         );
@@ -117,12 +111,12 @@ impl AnimationRegistry {
     ///
     /// * `stop_fn` - Function to call when stopping animation
     /// * `callbacks` - Lifecycle callbacks
-    /// * `target_element` - Element handle for monitoring
+    /// * `target_element` - Weak reference to target element
     pub fn register_with_callbacks(
         &mut self,
         stop_fn: Box<dyn FnOnce()>,
         callbacks: Vec<LifecycleCallback>,
-        target_element: Option<ElementHandle>,
+        target_element: Option<Weak<HtmlElement>>,
     ) -> String {
         let id = format!("animation_{}", self.next_id);
         self.next_id += 1;
@@ -133,22 +127,25 @@ impl AnimationRegistry {
                 stop_fn,
                 cleanup_fn: None,
                 callbacks,
-                _target_element: target_element,
+                target_element,
                 created_at: std::time::Instant::now(),
             },
         );
         id
     }
 
-    /// Check if target element still exists
+    /// Check if target element still exists (for WeakRef monitoring)
     ///
-    /// Note: In WIT environment, we can't directly check if an element is still in DOM
-    /// This would need to be tracked separately or added to the WIT interface
-    /// For now, we always return true (assuming element is valid)
-    const fn is_target_valid(&self, _entry: &AnimationEntry) -> bool {
-        // WIT bindings don't provide a way to check if an element is still in DOM
-        // This would need to be tracked separately
-        true
+    /// Returns false if target has been garbage collected or removed from DOM
+    fn is_target_valid(&self, entry: &AnimationEntry) -> bool {
+        if let Some(weak_ref) = &entry.target_element {
+            if let Some(element) = weak_ref.upgrade() {
+                // Check if element is still in DOM
+                return element.parent_element().is_some();
+            }
+            return false;
+        }
+        true // No target to monitor
     }
 
     /// Stop and remove an animation by ID
@@ -157,7 +154,7 @@ impl AnimationRegistry {
     ///
     /// * `id` - Animation ID to stop
     /// * `reason` - Reason for stopping (for callback invocation)
-    pub fn stop_animation(&mut self, id: &str, _reason: &str) -> bool {
+    pub fn stop_animation(&mut self, id: &str, reason: &str) -> bool {
         if let Some(entry) = self.animations.remove(id) {
             // Collect callbacks to call
             let callbacks_to_call: Vec<_> = entry
@@ -182,6 +179,10 @@ impl AnimationRegistry {
                 cb();
             }
 
+            web_sys::console::log_2(
+                &format!("🛑 Animation {} stopped: {}", id, reason).into(),
+                &id.into(),
+            );
             true
         } else {
             false
@@ -193,10 +194,10 @@ impl AnimationRegistry {
     /// # Arguments
     ///
     /// * `reason` - Reason for stopping (for callback invocation)
-    pub fn stop_all(&mut self, _reason: &str) {
+    pub fn stop_all(&mut self, reason: &str) {
         let animations: Vec<(String, AnimationEntry)> = self.animations.drain().collect();
 
-        for (_id, entry) in animations {
+        for (id, entry) in animations {
             // Collect callbacks to call
             let callbacks_to_call: Vec<_> = entry
                 .callbacks
@@ -219,6 +220,11 @@ impl AnimationRegistry {
             for cb in callbacks_to_call {
                 cb();
             }
+
+            web_sys::console::log_2(
+                &format!("🛑 Animation {} stopped: {}", id, reason).into(),
+                &id.into(),
+            );
         }
     }
 
@@ -240,10 +246,8 @@ impl AnimationRegistry {
         }
 
         if !to_remove.is_empty() {
-            #[cfg(debug_assertions)]
-            eprintln!(
-                "[ANIMATION] Cleaned up {} invalid animations",
-                to_remove.len()
+            web_sys::console::log_1(
+                &format!("🧹 Cleaned up {} invalid animations", to_remove.len()).into(),
             );
         }
 
@@ -274,25 +278,21 @@ impl AnimationRegistry {
     }
 
     /// Get count of active animations
-    #[must_use]
     pub fn active_count(&self) -> usize {
         self.animations.len()
     }
 
     /// Check if any animations are active
-    #[must_use]
     pub fn has_active(&self) -> bool {
         !self.animations.is_empty()
     }
 
     /// Get all active animation IDs
-    #[must_use]
     pub fn active_ids(&self) -> Vec<String> {
         self.animations.keys().cloned().collect()
     }
 
     /// Get animation info (for debugging)
-    #[must_use]
     pub fn get_animation_info(&self, id: &str) -> Option<(std::time::Duration, usize)> {
         self.animations.get(id).map(|entry| {
             let duration = std::time::Instant::now().duration_since(entry.created_at);
@@ -321,7 +321,6 @@ pub struct AnimationManager {
 
 impl AnimationManager {
     /// Create a new animation manager
-    #[must_use]
     pub fn new() -> Self {
         Self {
             registry: AnimationRegistry::new(),
@@ -334,7 +333,6 @@ impl AnimationManager {
     /// # Arguments
     ///
     /// * `timeout_ms` - Default timeout in milliseconds
-    #[must_use]
     pub fn new_with_timeout(timeout_ms: Option<u64>) -> Self {
         Self {
             registry: AnimationRegistry::new_with_timeout(timeout_ms),
@@ -351,14 +349,14 @@ impl AnimationManager {
     ///
     /// * `builder` - AnimationBuilder to start
     /// * `cleanup_fn` - Optional cleanup function
-    /// * `target_element` - Element handle for monitoring
+    /// * `target_element` - Weak reference to target element
     ///
     /// Returns: Animation ID for manual control if needed
-    pub fn start_animation<P: Platform>(
+    pub fn start_animation(
         &mut self,
-        builder: AnimationBuilder<P>,
+        builder: AnimationBuilder,
         cleanup_fn: Option<Box<dyn FnOnce()>>,
-        target_element: Option<ElementHandle>,
+        target_element: Option<Weak<HtmlElement>>,
     ) -> String {
         let stop_fn = builder.start_continuous_animation();
         let id = self
@@ -374,25 +372,21 @@ impl AnimationManager {
     ///
     /// # Arguments
     ///
-    /// * `elements` - Map of element names to element handles
+    /// * `elements` - Map of element names to DOM references
     /// * `initial_state` - Initial animation state
     /// * `cleanup_fn` - Optional cleanup function
-    /// * `target_element` - Element handle for monitoring
+    /// * `target_element` - Weak reference to target element
     ///
     /// Returns: Animation ID for manual control if needed
-    pub fn start_animation_with_state<P: Platform>(
+    pub fn start_animation_with_state(
         &mut self,
-        _platform: Rc<std::cell::RefCell<P>>,
-        _elements: &HashMap<String, ElementHandle>,
-        _initial_state: AnimationState,
-        _cleanup_fn: Option<Box<dyn FnOnce()>>,
-        _target_element: Option<ElementHandle>,
+        elements: &HashMap<String, JsValue>,
+        initial_state: AnimationState,
+        cleanup_fn: Option<Box<dyn FnOnce()>>,
+        target_element: Option<Weak<HtmlElement>>,
     ) -> String {
-        // Note: This is a simplified version
-        // The full implementation would create a builder from elements and state
-        let id = format!("manual_{}", self.component_ids.len());
-        self.component_ids.push(id.clone());
-        id
+        let builder = AnimationBuilder::new_with_state(elements, initial_state);
+        self.start_animation(builder, cleanup_fn, target_element)
     }
 
     /// Stop a specific animation
@@ -434,19 +428,16 @@ impl AnimationManager {
     }
 
     /// Get count of managed animations
-    #[must_use]
-    pub const fn managed_count(&self) -> usize {
+    pub fn managed_count(&self) -> usize {
         self.component_ids.len()
     }
 
     /// Get active animation IDs
-    #[must_use]
-    pub fn managed_ids(&self) -> &[String] {
-        &self.component_ids
+    pub fn managed_ids(&self) -> Vec<String> {
+        self.component_ids.clone()
     }
 
     /// Get animation info (for debugging)
-    #[must_use]
     pub fn get_animation_info(&self, id: &str) -> Option<(std::time::Duration, usize)> {
         self.registry.get_animation_info(id)
     }

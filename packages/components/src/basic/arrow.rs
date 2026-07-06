@@ -2,11 +2,9 @@
 // Arrow indicator component with rotation support
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::ClassesBuilder;
-use hikari_palette::classes::components::ArrowClass;
+use hikari_palette::classes::{ClassesBuilder, components::ArrowClass};
 
-use crate::StyledComponent;
-use crate::prelude::*;
+use crate::{StyledComponent, prelude::*};
 
 pub struct ArrowComponent;
 
@@ -30,6 +28,11 @@ impl IntoAttrValue for ArrowDirection {
     }
 }
 
+///
+///
+///
+///
+///
 #[component]
 pub fn Arrow(
     #[props(default)] direction: ArrowDirection,
@@ -55,17 +58,20 @@ pub fn Arrow(
     };
 
     // Build classes
-    let mut builder = ClassesBuilder::new().add_typed(ArrowClass::Arrow);
+    let mut builder = ClassesBuilder::new().add(ArrowClass::Arrow);
 
+    // Add direction class
     if let Some(dir) = direction_class {
-        builder = builder.add_typed(dir);
+        builder = builder.add(dir);
     }
 
+    // Add size class
     if let Some(sz) = size_class {
-        builder = builder.add_typed(sz);
+        builder = builder.add(sz);
     }
 
-    builder = builder.add(&class);
+    // Add user custom class
+    builder = builder.add_raw(&class);
 
     let classes = builder.build();
 

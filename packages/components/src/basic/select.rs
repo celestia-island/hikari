@@ -1,17 +1,19 @@
 // hi-components/src/basic/select.rs
-// Custom Select component with Portal-based dropdown
+// Custom Select component with Portal-based dropdown and FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps, Glow, GlowProps};
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
-use crate::portal::{
-    PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-    use_portal,
+use crate::{
+    feedback::{Glow, GlowProps},
+    portal::{
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
+    },
+    prelude::*,
+    styled::StyledComponent,
 };
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct SelectComponent;
 
@@ -54,9 +56,6 @@ pub struct SelectProps {
 
     #[default]
     pub on_change: Option<EventHandler<String>>,
-
-    #[default(false)]
-    pub glow: bool,
 }
 
 ///
@@ -113,11 +112,11 @@ pub fn Select(props: SelectProps) -> Element {
 
     let open_for_classes = open.clone();
     let trigger_classes = ClassesBuilder::new()
-        .add_typed(SelectClass::SelectTrigger)
-        .add_typed(size_class)
-        .add_typed_if(SelectClass::Disabled, props.disabled)
-        .add_typed_if(SelectClass::Open, open_for_classes.get())
-        .add(&props.class)
+        .add(SelectClass::SelectTrigger)
+        .add(size_class)
+        .add_if(SelectClass::Disabled, || props.disabled)
+        .add_if(SelectClass::Open, move || open_for_classes.get())
+        .add_raw(&props.class)
         .build();
 
     // Build the options menu for sharing in the click handler
@@ -130,27 +129,6 @@ pub fn Select(props: SelectProps) -> Element {
     let portal_add = portal.add_entry.clone();
     let internal_value_for_click = internal_value.clone();
     let dropdown_id_for_click2 = dropdown_id.clone();
-
-    let portal_remove_for_kb = portal.remove_entry.clone();
-    let dropdown_id_for_kb = dropdown_id.clone();
-    let handle_keydown = move |e: KeyboardEvent| {
-        if props.disabled {
-            return;
-        }
-        match e.get_key() {
-            Key::Escape => {
-                let id = dropdown_id_for_kb.get();
-                if !id.is_empty() {
-                    portal_remove_for_kb.call(id);
-                }
-            }
-            Key::ArrowDown | Key::ArrowUp => {
-                e.prevent_default();
-            }
-            _ => {}
-        }
-    };
-
     let handle_trigger_click = move |e: MouseEvent| {
         e.stop_propagation();
 
@@ -172,27 +150,35 @@ pub fn Select(props: SelectProps) -> Element {
             dropdown_id_for_click.set(id.clone());
 
             // Get trigger rect for positioning
-            let trigger_rect_opt = if let Some(target_el) =
-                platform::get_target_element_from_event(e.client_x, e.client_y)
-            {
-                platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
-                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-            } else {
-                None
+            let trigger_rect_opt = {
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                {
+                    if let Some(target_el) =
+                        platform::get_target_element_from_event(e.client_x, e.client_y)
+                    {
+                        platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
+                            .map(|rect| (rect.x, rect.y, rect.width, rect.height))
+                    } else {
+                        None
+                    }
+                }
+
+                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                {
+                    None::<(f64, f64, f64, f64)>
+                }
             };
 
             let opts = options_for_menu.clone();
             let portal_inner = portal_remove.clone();
             let id_inner = id.clone();
             let internal_value_clone2 = internal_value_for_click.clone();
-            let glow_for_options = props.glow;
 
             let menu_content = rsx! {
                 div {
                     class: "hi-select-dropdown",
-                    role: "listbox",
                     // Match trigger width via inline style if we have the rect
-                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { "min-width: 100%;".to_string() },
+                    style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { String::new() },
 
                     for opt in opts.iter() {
                         {
@@ -215,30 +201,15 @@ pub fn Select(props: SelectProps) -> Element {
                                 portal_close.call(id_close.clone());
                             });
 
-                            let option_classes = if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" };
-
-                            let aria_selected = is_selected.to_string();
-
                             rsx! {
-                                if glow_for_options {
-                                    Glow {
-                                        block: true,
-                                        blur: crate::GlowBlur::Light,
-                                        intensity: crate::GlowIntensity::Soft,
-                                        div {
-                                            class: option_classes,
-                                            onclick: click_handler,
-                                            role: "option",
-                                            "aria-selected": "{aria_selected}",
-                                            "{label}"
-                                        }
-                                    }
-                                } else {
+                                Glow {
+                                    block: true,
+                                    blur: crate::GlowBlur::Light,
+                                    intensity: crate::GlowIntensity::Soft,
+
                                     div {
-                                        class: option_classes,
+                                        class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
                                         onclick: click_handler,
-                                        role: "option",
-                                        "aria-selected": "{aria_selected}",
                                         "{label}"
                                     }
                                 }
@@ -263,38 +234,24 @@ pub fn Select(props: SelectProps) -> Element {
         }
     };
 
-    let is_open = open.get();
-    let aria_expanded = if is_open { "true" } else { "false" };
-
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(Position::Relative)
-        .add_typed(Display::InlineBlock)
+        .add(Position::Relative)
+        .add(Display::InlineBlock)
         .build();
 
     rsx! {
         div { class: wrapper_classes,
-            ConditionalGlow {
-                glow: props.glow,
-                block: true,
-                blur: GlowBlur::Light,
-                color: GlowColor::Primary,
-                intensity: GlowIntensity::Soft,
 
-                div { class: trigger_classes, onclick: handle_trigger_click,
-                    role: "combobox",
-                    tabindex: "0",
-                    "aria-expanded": "{aria_expanded}",
-                    "aria-haspopup": "listbox",
-                    onkeydown: handle_keydown,
+            div { class: trigger_classes, onclick: handle_trigger_click,
 
-                    span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
-                        "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"Select...\".to_string()) }}"
-                    }
+                span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                    "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
+                }
 
-                    span {
-                        class: "hi-select-arrow",
-                        dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
-                    }
+                // Chevron arrow
+                span {
+                    class: "hi-select-arrow",
+                    dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
                 }
             }
         }

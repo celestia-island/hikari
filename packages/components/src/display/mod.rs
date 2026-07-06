@@ -1,7 +1,7 @@
-//! Display components module
+// Display components module
 //!
-//! Provides data display components with flat design
-//! and glow effect aesthetics.
+//! Provides data display components with Arknights-style design
+//! and FUI aesthetics.
 //!
 //! ## Components
 //!

@@ -1,11 +1,11 @@
 // hi-components/src/navigation/breadcrumb.rs
-// Breadcrumb component
+// Breadcrumb component with Arknights + FUI styling
 
-use hikari_palette::classes::components::BreadcrumbClass;
-use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap};
+use hikari_palette::classes::{
+    ClassesBuilder, Display, FlexDirection, Gap, components::BreadcrumbClass,
+};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BreadcrumbComponent;
 
@@ -35,11 +35,11 @@ pub struct BreadcrumbProps {
 #[component]
 pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add_typed(BreadcrumbClass::Breadcrumb)
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Row)
-        .add_typed(Gap::Gap2)
-        .add(&props.class)
+        .add(BreadcrumbClass::Breadcrumb)
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .add(Gap::Gap2)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
@@ -65,11 +65,11 @@ impl StyledComponent for BreadcrumbComponent {
 #[component]
 pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
     let classes = ClassesBuilder::new()
-        .add_typed(BreadcrumbClass::BreadcrumbItem)
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Row)
-        .add_typed(Gap::Gap2)
-        .add(&props.class)
+        .add(BreadcrumbClass::BreadcrumbItem)
+        .add(Display::Flex)
+        .add(FlexDirection::Row)
+        .add(Gap::Gap2)
+        .add_raw(&props.class)
         .build();
 
     rsx! {

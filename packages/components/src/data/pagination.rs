@@ -1,16 +1,17 @@
 // hi-components/src/data/pagination.rs
-// Pagination component
+// Pagination component with Arknights + FUI styling
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::PaginationClass;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
-use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
-use crate::feedback::{Glow, Popover, PopoverPositioning};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
-use crate::utils::portal_types::PopoverPlacement;
+use crate::{
+    basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
+    feedback::{
+        Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
+    },
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct PaginationComponent;
 
@@ -38,8 +39,6 @@ pub struct PaginationProps {
     pub on_change: Option<EventHandler<u32>>,
 
     pub on_size_change: Option<EventHandler<u32>>,
-
-    pub aria_label: Option<String>,
 }
 
 #[component]
@@ -68,8 +67,8 @@ pub fn Pagination(props: PaginationProps) -> Element {
         (total_items.saturating_sub(1) / current_size.get()) + 1
     };
 
-    let start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
-    let end = (current_page.get() * current_size.get()).min(total_items);
+    let _start = (current_page.get().saturating_sub(1) * current_size.get()) + 1;
+    let _end = (current_page.get() * current_size.get()).min(total_items);
 
     // Handler for prev button
     let current_page_for_prev = current_page.clone();
@@ -123,34 +122,34 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     // Build container classes
     let container_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::Pagination)
-        .add(&props.class)
+        .add(PaginationClass::Pagination)
+        .add_raw(&props.class)
         .build();
 
     // Build total display classes
     let total_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::PaginationTotal)
+        .add(PaginationClass::PaginationTotal)
         .build();
 
     // Build size selector classes
     let size_selector_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::PaginationSizer)
+        .add(PaginationClass::PaginationSizer)
         .build();
 
     // Build pages container classes
     let pages_container_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::PaginationPages)
+        .add(PaginationClass::PaginationPages)
         .build();
 
     // Build navigation button classes
     let prev_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::PaginationItem)
-        .add_typed(PaginationClass::PaginationPrev)
+        .add(PaginationClass::PaginationItem)
+        .add(PaginationClass::PaginationPrev)
         .build();
 
     let next_classes = ClassesBuilder::new()
-        .add_typed(PaginationClass::PaginationItem)
-        .add_typed(PaginationClass::PaginationNext)
+        .add(PaginationClass::PaginationItem)
+        .add(PaginationClass::PaginationNext)
         .build();
 
     // Build page size options outside rsx!
@@ -171,10 +170,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_class = current_page.clone();
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
-                let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
-                    .add_typed(PaginationClass::PaginationItem)
-                    .add_typed_if(PaginationClass::PaginationActive, is_active)
+                    .add(PaginationClass::PaginationItem)
+                    .add_if(PaginationClass::PaginationActive, move || {
+                        i == current_page_for_class.get()
+                    })
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {
@@ -192,7 +192,6 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: page_class,
                             onclick: handler,
-                            "aria-current": if is_active { "page" } else { "false" },
                             "{i}"
                         }
                     }
@@ -213,10 +212,11 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 let current_page_for_class = current_page.clone();
                 let current_page_for_handler = current_page.clone();
                 let on_change_for_handler = on_change.clone();
-                let is_active = i == current_page_for_class.get();
                 let page_class = ClassesBuilder::new()
-                    .add_typed(PaginationClass::PaginationItem)
-                    .add_typed_if(PaginationClass::PaginationActive, is_active)
+                    .add(PaginationClass::PaginationItem)
+                    .add_if(PaginationClass::PaginationActive, move || {
+                        i == current_page_for_class.get()
+                    })
                     .build();
                 let handler = move |_| {
                     if i != current_page_for_handler.get() {
@@ -234,7 +234,6 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         button {
                             class: page_class,
                             onclick: handler,
-                            "aria-current": if is_active { "page" } else { "false" },
                             "{i}"
                         }
                     }
@@ -307,7 +306,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
                                 && v <= total_pages * 2 {
-                                    jump_to_for_input.set(val.clone());
+                                    jump_to_for_input.set(val.to_string());
                                 }
                         })),
                         glow: true,
@@ -376,7 +375,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
                                 && v <= total_pages * 2 {
-                                    jump_to_for_input.set(val.clone());
+                                    jump_to_for_input.set(val.to_string());
                                 }
                         })),
                         glow: true,
@@ -409,11 +408,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
     rsx! {
         div { class: container_classes,
-            "aria-label": props.aria_label.clone().unwrap_or_else(|| "Pagination".to_string()),
 
             if props.show_total {
                 div { class: total_classes,
-                    "{start}-{end} of {total_items}"
+                    "{_start}-{_end} of {total_items}"
                 }
             }
 
@@ -439,8 +437,6 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         class: prev_classes,
                         disabled: current_page.get() <= 1,
                         onclick: handle_prev,
-                        "aria-label": "Previous page",
-                        "aria-disabled": if current_page.get() <= 1 { "true" } else { "false" },
                         Arrow {
                             direction: ArrowDirection::Left,
                             size: 16,
@@ -459,11 +455,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         intensity: GlowIntensity::Dim,
                         button {
                             class: ClassesBuilder::new()
-                                .add_typed(PaginationClass::PaginationItem)
-                                .add_typed_if(PaginationClass::PaginationActive, 1 == current_page.get())
+                                .add(PaginationClass::PaginationItem)
+                                .add_if(PaginationClass::PaginationActive, || 1 == current_page.get())
                                 .build(),
                             onclick: first_page_handler,
-                            "aria-current": if 1 == current_page.get() { "page" } else { "false" },
                             "1"
                         }
                     }
@@ -483,7 +478,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     intensity: GlowIntensity::Dim,
                                     button {
                                         class: ClassesBuilder::new()
-                                            .add_typed(PaginationClass::PaginationItem)
+                                            .add(PaginationClass::PaginationItem)
                                             .build(),
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
@@ -515,7 +510,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                                     intensity: GlowIntensity::Dim,
                                     button {
                                         class: ClassesBuilder::new()
-                                            .add_typed(PaginationClass::PaginationItem)
+                                            .add(PaginationClass::PaginationItem)
                                             .build(),
                                         Icon {
                                             icon: MdiIcon::DotsHorizontal,
@@ -537,11 +532,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
                             intensity: GlowIntensity::Dim,
                         button {
                             class: ClassesBuilder::new()
-                                .add_typed(PaginationClass::PaginationItem)
-                                .add_typed_if(PaginationClass::PaginationActive, total_pages == current_page.get())
+                                .add(PaginationClass::PaginationItem)
+                                .add_if(PaginationClass::PaginationActive, || total_pages == current_page.get())
                                 .build(),
                             onclick: last_page_handler,
-                            "aria-current": if total_pages == current_page.get() { "page" } else { "false" },
                             "{total_pages}"
                         }
                         }
@@ -557,8 +551,6 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         class: next_classes,
                         disabled: current_page.get() >= total_pages,
                         onclick: handle_next,
-                        "aria-label": "Next page",
-                        "aria-disabled": if current_page.get() >= total_pages { "true" } else { "false" },
                         Arrow {
                             direction: ArrowDirection::Right,
                             size: 16,
@@ -679,7 +671,6 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
-            aria_label: None,
         };
 
         let cloned = props.clone();
@@ -702,7 +693,6 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
-            aria_label: None,
         };
 
         let props2 = PaginationProps {
@@ -715,7 +705,6 @@ mod tests {
             class: "test-class".to_string(),
             on_change: None,
             on_size_change: None,
-            aria_label: None,
         };
 
         assert!(props1.current == props2.current);

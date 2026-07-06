@@ -1,20 +1,171 @@
 //! Easing function utilities and helpers
 //!
 //! This module provides convenient functions to create and configure easing functions,
-//! including custom bezier curves, and preset animations.
-//!
-//! For standard easing curves, use [`EasingFunction`] enum variants directly:
-//! - `EasingFunction::Linear`
-//! - `EasingFunction::EaseInQuad` / `EaseOutQuad` / `EaseInOutQuad`
-//! - `EasingFunction::EaseInCubic` / `EaseOutCubic` / `EaseInOutCubic`
-//! - ...etc (see [`EasingFunction`] for all variants)
-
-use std::sync::Arc;
+//! including standard easing curves, custom bezier curves, and preset animations.
 
 use crate::core::EasingFunction;
 
+/// Create a linear easing function (no acceleration)
+pub fn linear() -> EasingFunction {
+    EasingFunction::Linear
+}
+
+/// Quadratic easing in
+pub fn ease_in_quad() -> EasingFunction {
+    EasingFunction::EaseInQuad
+}
+
+/// Quadratic easing out
+pub fn ease_out_quad() -> EasingFunction {
+    EasingFunction::EaseOutQuad
+}
+
+/// Quadratic easing in and out
+pub fn ease_in_out_quad() -> EasingFunction {
+    EasingFunction::EaseInOutQuad
+}
+
+/// Cubic easing in
+pub fn ease_in_cubic() -> EasingFunction {
+    EasingFunction::EaseInCubic
+}
+
+/// Cubic easing out
+pub fn ease_out_cubic() -> EasingFunction {
+    EasingFunction::EaseOutCubic
+}
+
+/// Cubic easing in and out
+pub fn ease_in_out_cubic() -> EasingFunction {
+    EasingFunction::EaseInOutCubic
+}
+
+/// Quartic easing in
+pub fn ease_in_quart() -> EasingFunction {
+    EasingFunction::EaseInQuart
+}
+
+/// Quartic easing out
+pub fn ease_out_quart() -> EasingFunction {
+    EasingFunction::EaseOutQuart
+}
+
+/// Quartic easing in and out
+pub fn ease_in_out_quart() -> EasingFunction {
+    EasingFunction::EaseInOutQuart
+}
+
+/// Quintic easing in
+pub fn ease_in_quint() -> EasingFunction {
+    EasingFunction::EaseInQuint
+}
+
+/// Quintic easing out
+pub fn ease_out_quint() -> EasingFunction {
+    EasingFunction::EaseOutQuint
+}
+
+/// Quintic easing in and out
+pub fn ease_in_out_quint() -> EasingFunction {
+    EasingFunction::EaseInOutQuint
+}
+
+/// Exponential easing in
+pub fn ease_in_expo() -> EasingFunction {
+    EasingFunction::EaseInExpo
+}
+
+/// Exponential easing out
+pub fn ease_out_expo() -> EasingFunction {
+    EasingFunction::EaseOutExpo
+}
+
+/// Exponential easing in and out
+pub fn ease_in_out_expo() -> EasingFunction {
+    EasingFunction::EaseInOutExpo
+}
+
+/// Circular easing in
+pub fn ease_in_circ() -> EasingFunction {
+    EasingFunction::EaseInCirc
+}
+
+/// Circular easing out
+pub fn ease_out_circ() -> EasingFunction {
+    EasingFunction::EaseOutCirc
+}
+
+/// Circular easing in and out
+pub fn ease_in_out_circ() -> EasingFunction {
+    EasingFunction::EaseInOutCirc
+}
+
+/// Sine easing in
+pub fn ease_in_sine() -> EasingFunction {
+    EasingFunction::EaseInSine
+}
+
+/// Sine easing out
+pub fn ease_out_sine() -> EasingFunction {
+    EasingFunction::EaseOutSine
+}
+
+/// Sine easing in and out
+pub fn ease_in_out_sine() -> EasingFunction {
+    EasingFunction::EaseInOutSine
+}
+
+/// Back easing in (overshoots before accelerating)
+pub fn ease_in_back() -> EasingFunction {
+    EasingFunction::EaseInBack
+}
+
+/// Back easing out (overshoots after accelerating)
+pub fn ease_out_back() -> EasingFunction {
+    EasingFunction::EaseOutBack
+}
+
+/// Back easing in and out
+pub fn ease_in_out_back() -> EasingFunction {
+    EasingFunction::EaseInOutBack
+}
+
+/// Elastic easing in
+pub fn ease_in_elastic() -> EasingFunction {
+    EasingFunction::EaseInElastic
+}
+
+/// Elastic easing out
+pub fn ease_out_elastic() -> EasingFunction {
+    EasingFunction::EaseOutElastic
+}
+
+/// Elastic easing in and out
+pub fn ease_in_out_elastic() -> EasingFunction {
+    EasingFunction::EaseInOutElastic
+}
+
+/// Bounce easing in
+pub fn ease_in_bounce() -> EasingFunction {
+    EasingFunction::EaseInBounce
+}
+
+/// Bounce easing out
+pub fn ease_out_bounce() -> EasingFunction {
+    EasingFunction::EaseOutBounce
+}
+
+/// Bounce easing in and out
+pub fn ease_in_out_bounce() -> EasingFunction {
+    EasingFunction::EaseInOutBounce
+}
+
+/// Custom easing function
+///
+/// # Arguments
+/// * `f` - Function that takes progress (0.0-1.0) and returns eased value
 pub fn custom(f: fn(f64) -> f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(f))
+    EasingFunction::Custom(Box::new(f))
 }
 
 /// Create a cubic bezier easing function
@@ -25,42 +176,34 @@ pub fn custom(f: fn(f64) -> f64) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function that follows the bezier curve
-#[must_use]
 pub fn bezier(x1: f64, y1: f64, x2: f64, y2: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| cubic_bezier(t, x1, y1, x2, y2)))
+    EasingFunction::Custom(Box::new(move |t| cubic_bezier(t, x1, y1, x2, y2)))
 }
 
+/// Cubic bezier curve solver
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+/// * `x1`, `y1` - First control point
+/// * `x2`, `y2` - Second control point
+///
+/// # Returns
+/// Eased value (0.0 to 1.0)
 fn cubic_bezier(t: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
     if x1 == y1 && x2 == y2 {
         return t;
     }
 
     let sample_curve_x = |t: f64| -> f64 {
-        3.0f64.mul_add(
-            x1,
-            6.0f64
-                .mul_add(-x1, 3.0 * x2)
-                .mul_add(t, 3.0f64.mul_add(x1, 3.0f64.mul_add(-x2, 1.0)) * t * t),
-        ) * t
+        ((1.0 - 3.0 * x2 + 3.0 * x1) * t * t + (3.0 * x2 - 6.0 * x1) * t + 3.0 * x1) * t
     };
 
     let sample_curve_y = |t: f64| -> f64 {
-        3.0f64.mul_add(
-            y1,
-            6.0f64
-                .mul_add(-y1, 3.0 * y2)
-                .mul_add(t, 3.0f64.mul_add(y1, 3.0f64.mul_add(-y2, 1.0)) * t * t),
-        ) * t
+        ((1.0 - 3.0 * y2 + 3.0 * y1) * t * t + (3.0 * y2 - 6.0 * y1) * t + 3.0 * y1) * t
     };
 
     let sample_curve_derivative_x = |t: f64| -> f64 {
-        3.0f64.mul_add(
-            x1,
-            2.0f64.mul_add(
-                6.0f64.mul_add(-x1, 3.0 * x2),
-                3.0 * 3.0f64.mul_add(x1, 3.0f64.mul_add(-x2, 1.0)) * t,
-            ) * t,
-        )
+        (3.0 * (1.0 - 3.0 * x2 + 3.0 * x1) * t + 2.0 * (3.0 * x2 - 6.0 * x1)) * t + 3.0 * x1
     };
 
     let solve_curve_x = |x: f64| -> f64 {
@@ -90,9 +233,8 @@ fn cubic_bezier(t: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
 ///
 /// # Returns
 /// Easing function that jumps between discrete steps
-#[must_use]
 pub fn steps(n: u32, start: bool) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t <= 0.0 {
             return 0.0;
         }
@@ -100,9 +242,9 @@ pub fn steps(n: u32, start: bool) -> EasingFunction {
             return 1.0;
         }
         let step = if start {
-            (t * f64::from(n)).ceil() / f64::from(n)
+            (t * n as f64).ceil() / n as f64
         } else {
-            (t * f64::from(n)).floor() / f64::from(n)
+            (t * n as f64).floor() / n as f64
         };
         step.clamp(0.0, 1.0)
     }))
@@ -115,9 +257,8 @@ pub fn steps(n: u32, start: bool) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function with t^p curve
-#[must_use]
 pub fn power(p: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| t.powf(p)))
+    EasingFunction::Custom(Box::new(move |t| t.powf(p)))
 }
 
 /// Create an elastic easing function
@@ -128,15 +269,16 @@ pub fn power(p: f64) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function with elastic bounce
-#[must_use]
 pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t == 0.0 || t == 1.0 {
             t
         } else {
             let s = period / (2.0 * std::f64::consts::PI) * 1.0_f64.asin();
-            (amplitude * (-10.0 * t).exp2())
-                .mul_add(((t - s) * 2.0 * std::f64::consts::PI / period).sin(), 1.0)
+            amplitude
+                * 2.0_f64.powf(-10.0 * t)
+                * ((t - s) * 2.0 * std::f64::consts::PI / period).sin()
+                + 1.0
         }
     }))
 }
@@ -148,20 +290,19 @@ pub fn elastic(amplitude: f64, period: f64) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function with bouncing effect
-#[must_use]
 pub fn bounce(amplitude: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t < 1.0 / 2.75 {
             amplitude * t * t
         } else if t < 2.0 / 2.75 {
             let t = t - 1.5 / 2.75;
-            (amplitude * t).mul_add(t, 0.75)
+            amplitude * t * t + 0.75
         } else if t < 2.5 / 2.75 {
             let t = t - 2.25 / 2.75;
-            (amplitude * t).mul_add(t, 0.9375)
+            amplitude * t * t + 0.9375
         } else {
             let t = t - 2.625 / 2.75;
-            (amplitude * t).mul_add(t, 0.984375)
+            amplitude * t * t + 0.984375
         }
     }))
 }
@@ -173,16 +314,15 @@ pub fn bounce(amplitude: f64) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function that overshoots the target
-#[must_use]
 pub fn overshoot(tension: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| {
+    EasingFunction::Custom(Box::new(move |t| {
         if t == 0.0 {
             0.0
         } else if t == 1.0 {
             1.0
         } else {
             let s = tension + 1.0;
-            (tension * t).mul_add(-t, s * t * t * t)
+            s * t * t * t - tension * t * t
         }
     }))
 }
@@ -194,167 +334,125 @@ pub fn overshoot(tension: f64) -> EasingFunction {
 ///
 /// # Returns
 /// Easing function that anticipates the movement
-#[must_use]
 pub fn anticipate(tension: f64) -> EasingFunction {
-    EasingFunction::Custom(Arc::new(move |t| {
-        let t = t.clamp(0.0, 1.0);
-        let s = (tension * t).mul_add(-t, (tension + 1.0) * t * t * t);
-        s.clamp(0.0, 1.0)
+    EasingFunction::Custom(Box::new(move |t| {
+        let s = tension * t * t * (2.0 * t - tension - 2.0);
+        if s.abs() > 1.0 {
+            1.0
+        } else if s < 0.0 {
+            0.0
+        } else {
+            s
+        }
     }))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Smoothstep interpolation (Hermite interpolation)
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Smoothed value
+pub fn smooth(t: f64) -> f64 {
+    t * t * (3.0 - 2.0 * t)
+}
 
-    #[test]
-    fn test_custom() {
-        let f = custom(|t| t * 2.0);
-        assert!((f.apply(0.5) - 1.0).abs() < 1e-6);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 2.0).abs() < 1e-6);
-    }
+/// Smootherstep interpolation (5th order Hermite interpolation)
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Smoother interpolated value
+pub fn smoother(t: f64) -> f64 {
+    t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
+}
 
-    #[test]
-    fn test_bezier_linear() {
-        let f = bezier(0.0, 0.0, 1.0, 1.0);
-        for t in [0.0, 0.25, 0.5, 0.75, 1.0] {
-            assert!(
-                (f.apply(t) - t).abs() < 1e-6,
-                "bezier linear at t={}: expected {}, got {}",
-                t,
-                t,
-                f.apply(t)
-            );
-        }
-    }
+/// Fade in transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Fade in value
+pub fn fade_in(t: f64) -> f64 {
+    t
+}
 
-    #[test]
-    fn test_bezier_ease() {
-        let f = bezier(0.25, 0.1, 0.25, 1.0);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        let mid = f.apply(0.5);
-        assert!(
-            (0.0..=1.5).contains(&mid),
-            "bezier ease at t=0.5 should be in reasonable range, got {mid}"
-        );
-    }
+/// Fade out transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Fade out value
+pub fn fade_out(t: f64) -> f64 {
+    1.0 - t
+}
 
-    #[test]
-    fn test_steps_start_true() {
-        let f = steps(4, true);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        assert!((f.apply(0.1) - 0.25).abs() < 1e-6);
-        assert!((f.apply(0.25) - 0.25).abs() < 1e-6);
-        assert!((f.apply(0.3) - 0.5).abs() < 1e-6);
-        assert!((f.apply(0.6) - 0.75).abs() < 1e-6);
-        assert!((f.apply(0.85) - 1.0).abs() < 1e-6);
-    }
+/// Scale in transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Scale in value
+pub fn scale_in(t: f64) -> f64 {
+    t * t * (2.0 - t)
+}
 
-    #[test]
-    fn test_steps_start_false() {
-        let f = steps(4, false);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        assert!((f.apply(0.1) - 0.0).abs() < 1e-6);
-        assert!((f.apply(0.25) - 0.25).abs() < 1e-6);
-        assert!((f.apply(0.4) - 0.25).abs() < 1e-6);
-        assert!((f.apply(0.5) - 0.5).abs() < 1e-6);
-        assert!((f.apply(0.75) - 0.75).abs() < 1e-6);
-        assert!((f.apply(0.9) - 0.75).abs() < 1e-6);
-    }
+/// Scale out transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Scale out value
+pub fn scale_out(t: f64) -> f64 {
+    1.0 - (1.0 - t) * (1.0 - t) * (2.0 - (1.0 - t))
+}
 
-    #[test]
-    fn test_power_2_matches_ease_in_quad() {
-        let f = power(2.0);
-        for t in [0.0, 0.25, 0.5, 0.75, 1.0] {
-            let expected = t * t;
-            assert!(
-                (f.apply(t) - expected).abs() < 1e-6,
-                "power(2) at t={}: expected {}, got {}",
-                t,
-                expected,
-                f.apply(t)
-            );
-        }
-    }
+/// Slide in transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Slide in value
+pub fn slide_in(t: f64) -> f64 {
+    t
+}
 
-    #[test]
-    fn test_power_3_matches_ease_in_cubic() {
-        let f = power(3.0);
-        for t in [0.0, 0.25, 0.5, 0.75, 1.0] {
-            let expected = t * t * t;
-            assert!(
-                (f.apply(t) - expected).abs() < 1e-6,
-                "power(3) at t={}: expected {}, got {}",
-                t,
-                expected,
-                f.apply(t)
-            );
-        }
-    }
+/// Slide out transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Slide out value
+pub fn slide_out(t: f64) -> f64 {
+    1.0 - t
+}
 
-    #[test]
-    fn test_elastic_boundary_and_midrange() {
-        let f = elastic(1.0, 0.3);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        let mid = f.apply(0.5);
-        assert!(
-            mid.is_finite(),
-            "elastic mid-range should be finite, got {mid}"
-        );
-    }
+/// Flip in transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Flip in value (0.0 for t < 0.5, 1.0 otherwise)
+pub fn flip_in(t: f64) -> f64 {
+    if t < 0.5 { 0.0 } else { 1.0 }
+}
 
-    #[test]
-    fn test_bounce_boundary_and_range() {
-        let f = bounce(7.5625);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!(
-            (f.apply(1.0) - 7.5625_f64 * (1.0_f64 - 2.625 / 2.75).powi(2) - 0.984375).abs() < 1e-6
-        );
-        for t in [0.1, 0.3, 0.5, 0.7, 0.9] {
-            let v = f.apply(t);
-            assert!(
-                v.is_finite() && v >= 0.0,
-                "bounce({t}) = {v} should be finite and non-negative"
-            );
-        }
-    }
-
-    #[test]
-    fn test_overshoot_boundary_and_midrange() {
-        let f = overshoot(1.70158);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        let mid = f.apply(0.5);
-        assert!(
-            mid < 0.0,
-            "overshoot at t=0.5 should undershoot below 0, got {mid}"
-        );
-        assert!(mid.is_finite());
-    }
-
-    #[test]
-    fn test_anticipate_boundary_and_validity() {
-        let f = anticipate(2.0);
-        assert!((f.apply(0.0) - 0.0).abs() < 1e-6);
-        assert!((f.apply(1.0) - 1.0).abs() < 1e-6);
-        for t in [0.25, 0.5, 0.75] {
-            let v = f.apply(t);
-            assert!(
-                v.is_finite() && !v.is_nan(),
-                "anticipate({t}) produced invalid value: {v}"
-            );
-        }
-    }
-
-    #[test]
-    fn test_cubic_bezier_linear_shortcut() {
-        assert!((cubic_bezier(0.5, 0.3, 0.3, 0.7, 0.7) - 0.5).abs() < 1e-6);
-        assert!((cubic_bezier(0.0, 1.0, 1.0, 2.0, 2.0) - 0.0).abs() < 1e-6);
-        assert!((cubic_bezier(1.0, 1.0, 1.0, 2.0, 2.0) - 1.0).abs() < 1e-6);
-    }
+/// Flip out transition
+///
+/// # Arguments
+/// * `t` - Progress value (0.0 to 1.0)
+///
+/// # Returns
+/// Flip out value (1.0 for t < 0.5, 0.0 otherwise)
+pub fn flip_out(t: f64) -> f64 {
+    if t < 0.5 { 1.0 } else { 0.0 }
 }

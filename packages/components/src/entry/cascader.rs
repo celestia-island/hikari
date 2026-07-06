@@ -1,16 +1,15 @@
 // hi-components/src/entry/cascader.rs
-// Cascader component
+// Cascader component with Arknights + FUI styling
+
+#![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{CascaderClass, ClassesBuilder, TypedClass};
+use hikari_palette::classes::{CascaderClass, ClassesBuilder, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Style provider for the Cascader component.
 pub struct CascaderComponent;
 
-/// A single option in the cascader, optionally containing child options.
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct CascaderOption {
     pub label: String,
@@ -19,7 +18,6 @@ pub struct CascaderOption {
     pub disabled: bool,
 }
 
-/// Available sizes for the Cascader component.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum CascaderSize {
     #[default]
@@ -28,7 +26,6 @@ pub enum CascaderSize {
     Lg,
 }
 
-/// Props for the Cascader component.
 #[define_props]
 pub struct CascaderProps {
     pub options: Vec<CascaderOption>,
@@ -48,7 +45,10 @@ pub struct CascaderProps {
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-/// A multi-level cascading selection component for hierarchical data.
+///
+///
+///
+///
 #[component]
 pub fn Cascader(props: CascaderProps) -> Element {
     let is_open = use_signal(|| false);
@@ -124,7 +124,8 @@ pub fn Cascader(props: CascaderProps) -> Element {
 
         let has_children = find_option_by_path(&options_for_select, &new_values)
             .and_then(|opt| opt.children.as_ref())
-            .is_some_and(|c| !c.is_empty());
+            .map(|c| !c.is_empty())
+            .unwrap_or(false);
 
         if !has_children {
             is_open_for_select.set(false);
@@ -165,31 +166,36 @@ pub fn Cascader(props: CascaderProps) -> Element {
             .join(" / ")
     };
 
+    let is_open_for_close = is_open.clone();
+    let _close_dropdown = move |_: Event| {
+        is_open_for_close.set(false);
+    };
+
     let is_open_for_classes = is_open.clone();
     let selected_values_for_clear_check = selected_values.clone();
     rsx! {
-        div { class: CascaderClass::Wrapper.class_name(),
+        div { class: CascaderClass::Wrapper.as_class(),
             div {
                 class: ClassesBuilder::new()
-                    .add_typed(CascaderClass::Cascader)
-                    .add_typed(size_class)
-                    .add_typed_if(CascaderClass::Disabled, props.disabled)
-                    .add_typed_if(CascaderClass::Open, is_open_for_classes.get())
-                    .add(&props.class)
+                    .add(CascaderClass::Cascader)
+                    .add(size_class)
+                    .add_if(CascaderClass::Disabled, || props.disabled)
+                    .add_if(CascaderClass::Open, move || is_open_for_classes.get())
+                    .add_raw(&props.class)
                     .build(),
 
                 onclick: handle_click,
                 onkeydown: handle_keydown,
                 tabindex: 0,
 
-                div { class: CascaderClass::Display.class_name(),
-                    div { class: CascaderClass::Text.class_name(), "{display_text}" }
+                div { class: CascaderClass::Display.as_class(),
+                    div { class: CascaderClass::Text.as_class(), "{display_text}" }
 
                     if props.allow_clear && !selected_values_for_clear_check.get().is_empty()
                         && !props.disabled
                     {
                         div {
-                            class: CascaderClass::Clear.class_name(),
+                            class: CascaderClass::Clear.as_class(),
                             onclick: handle_clear,
                             Icon { icon: MdiIcon::Close, size: 14 }
                         }
@@ -198,14 +204,14 @@ pub fn Cascader(props: CascaderProps) -> Element {
                     Icon {
                         icon: MdiIcon::ChevronDown,
                         size: 16,
-                        class: CascaderClass::Arrow.class_name().to_string(),
+                        class: CascaderClass::Arrow.as_class(),
                     }
                 }
             }
 
             if is_open.get() {
                 div {
-                    class: CascaderClass::Dropdown.class_name(),
+                    class: CascaderClass::Dropdown.as_class(),
                     onclick: |e: MouseEvent| e.stop_propagation(),
 
                     CascaderMenus {
@@ -251,7 +257,8 @@ fn CascaderMenus(
                 let has_children = opt
                     .children
                     .as_ref()
-                    .is_some_and(|c| !c.is_empty());
+                    .map(|c| !c.is_empty())
+                    .unwrap_or(false);
                 let is_selected = selected_at_level.as_ref() == Some(&opt_value);
                 let handler_for_item = on_select.clone();
 
@@ -261,7 +268,7 @@ fn CascaderMenus(
                         Icon {
                             icon: MdiIcon::ChevronRight,
                             size: 14,
-                            class: CascaderClass::MenuItemArrow.class_name().to_string(),
+                            class: CascaderClass::MenuItemArrow.as_class(),
                         }
                     })
                 } else {
@@ -269,9 +276,9 @@ fn CascaderMenus(
                 };
 
                 let item_class = ClassesBuilder::new()
-                    .add_typed(CascaderClass::MenuItem)
-                    .add_typed_if(CascaderClass::MenuItemSelected, is_selected)
-                    .add_typed_if(CascaderClass::MenuItemDisabled, opt_disabled)
+                    .add(CascaderClass::MenuItem)
+                    .add_if(CascaderClass::MenuItemSelected, || is_selected)
+                    .add_if(CascaderClass::MenuItemDisabled, || opt_disabled)
                     .build();
 
                 rsx! {
@@ -297,9 +304,9 @@ fn CascaderMenus(
 
         menus.push(rsx! {
             div {
-                class: CascaderClass::Menu.class_name(),
+                class: CascaderClass::Menu.as_class(),
                 key: format!("menu-{}", level),
-                ul { class: CascaderClass::MenuList.class_name(), ..menu_items }
+                ul { class: CascaderClass::MenuList.as_class(), ..menu_items }
             }
         });
 

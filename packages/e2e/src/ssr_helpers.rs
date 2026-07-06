@@ -1,8 +1,7 @@
 // hikari-e2e/src/ssr_helpers.rs
 // Helper utilities for SSR testing
 
-use anyhow::{anyhow, Result};
-
+use anyhow::Result;
 use scraper::{Html, Selector};
 use thirtyfour::WebDriver;
 
@@ -32,7 +31,7 @@ impl SsrTestHelper {
         driver
             .goto(&url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", url, e))?;
 
         // Wait for page to load
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
@@ -40,12 +39,12 @@ impl SsrTestHelper {
         driver
             .source()
             .await
-            .map_err(|e| anyhow!("Failed to get page source: {}", e))
+            .map_err(|e| anyhow::anyhow!("Failed to get page source: {}", e))
     }
 
     /// Check if page has valid SSR structure
     pub fn validate_ssr_structure(html: &str) -> Result<SsrValidationResult> {
-        HtmlAssertions::from_html_str(html);
+        let _assertions = HtmlAssertions::from_str(html);
         let parsed = Html::parse_document(html);
 
         let has_doctype =
@@ -108,7 +107,7 @@ impl SsrTestHelper {
     pub fn has_rendered_content(html: &str, selector: &str) -> Result<bool> {
         let parsed = Html::parse_document(html);
         let sel = Selector::parse(selector)
-            .map_err(|e| anyhow!("Invalid selector '{}': {}", selector, e))?;
+            .map_err(|e| anyhow::anyhow!("Invalid selector '{}': {}", selector, e))?;
 
         if let Some(element) = parsed.select(&sel).next() {
             let text = element.text().collect::<String>();
@@ -122,7 +121,7 @@ impl SsrTestHelper {
     pub fn count_elements(html: &str, selector: &str) -> Result<usize> {
         let parsed = Html::parse_document(html);
         let sel = Selector::parse(selector)
-            .map_err(|e| anyhow!("Invalid selector '{}': {}", selector, e))?;
+            .map_err(|e| anyhow::anyhow!("Invalid selector '{}': {}", selector, e))?;
 
         Ok(parsed.select(&sel).count())
     }
@@ -131,12 +130,12 @@ impl SsrTestHelper {
     pub fn get_text_content(html: &str, selector: &str) -> Result<String> {
         let parsed = Html::parse_document(html);
         let sel = Selector::parse(selector)
-            .map_err(|e| anyhow!("Invalid selector '{}': {}", selector, e))?;
+            .map_err(|e| anyhow::anyhow!("Invalid selector '{}': {}", selector, e))?;
 
         let element = parsed
             .select(&sel)
             .next()
-            .ok_or_else(|| anyhow!("Element not found: {}", selector))?;
+            .ok_or_else(|| anyhow::anyhow!("Element not found: {}", selector))?;
 
         Ok(element.text().collect::<String>())
     }

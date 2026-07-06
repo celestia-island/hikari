@@ -9,7 +9,7 @@
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.45);
-    z-index: var(--hi-z-index-drawer, 1000);
+    z-index: 1000;
     opacity: 0;
     transition: opacity 0.3s ease;
 
@@ -21,7 +21,7 @@
 // Base drawer container
 .hi-drawer {
     position: fixed;
-    z-index: var(--hi-z-index-drawer-content, 1001);
+    z-index: 1001;
     background-color: var(--hi-surface, #ffffff);
     box-shadow: var(--hi-shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
     display: flex;
@@ -140,7 +140,7 @@
         border-radius: 3px;
 
         &:hover {
-            background: var(--hi-color-border, rgba(0, 0, 0, 0.35));
+            background: var(--hi-text-secondary, #666);
         }
     }
 }

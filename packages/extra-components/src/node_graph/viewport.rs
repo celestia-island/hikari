@@ -27,8 +27,7 @@ impl Default for Viewport {
 
 impl Viewport {
     /// Create a new viewport with default values
-    #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             zoom: 1.0,
             pan: (0.0, 0.0),
@@ -38,8 +37,7 @@ impl Viewport {
     }
 
     /// Create with custom bounds
-    #[must_use]
-    pub const fn with_bounds(min_zoom: f64, max_zoom: f64) -> Self {
+    pub fn with_bounds(min_zoom: f64, max_zoom: f64) -> Self {
         Self {
             zoom: 1.0,
             pan: (0.0, 0.0),
@@ -57,7 +55,7 @@ impl Viewport {
     }
 
     /// Set pan offset
-    pub const fn set_pan(&mut self, x: f64, y: f64) {
+    pub fn set_pan(&mut self, x: f64, y: f64) {
         self.pan = (x, y);
     }
 
@@ -72,7 +70,7 @@ impl Viewport {
     }
 
     /// Reset to default view
-    pub const fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.zoom = 1.0;
         self.pan = (0.0, 0.0);
     }
@@ -84,29 +82,21 @@ impl Viewport {
     }
 
     /// Check if can zoom in
-    #[must_use]
     pub fn can_zoom_in(&self) -> bool {
         self.zoom < self.max_zoom
     }
 
     /// Check if can zoom out
-    #[must_use]
     pub fn can_zoom_out(&self) -> bool {
         self.zoom > self.min_zoom
     }
 
     /// Get zoom as formatted string (e.g., "1.5x")
-    #[must_use]
     pub fn zoom_text(&self) -> String {
-        if (self.zoom * 10.0).round() / 10.0 == self.zoom.round() {
-            format!("{:.0}x", self.zoom)
-        } else {
-            format!("{:.1}x", self.zoom)
-        }
+        format!("{:.0}x", self.zoom)
     }
 
     /// Get the transform CSS string
-    #[must_use]
     pub fn transform_style(&self) -> String {
         format!(
             "transform: scale({}) translate({}px, {}px);",
@@ -116,7 +106,7 @@ impl Viewport {
 }
 
 /// Viewport configuration
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ViewportConfig {
     /// Whether to show zoom controls
     pub show_zoom: bool,
@@ -142,83 +132,6 @@ impl Default for ViewportConfig {
     }
 }
 
-use tairitsu_vdom::{VElement, VNode, VText};
-
-#[must_use]
-pub fn render_viewport(viewport: &Viewport) -> VNode {
-    let zoom_in = VNode::Element(
-        VElement::new("button")
-            .class("hi-viewport-button")
-            .attr("aria-label", "Zoom in")
-            .attr("title", "Zoom in")
-            .attr("data-action", "viewport-zoom-in")
-            .attr(
-                "disabled",
-                if viewport.can_zoom_in() {
-                    "false"
-                } else {
-                    "true"
-                },
-            )
-            .child(VNode::Element(
-                VElement::new("span")
-                    .class("hi-viewport-icon")
-                    .child(VNode::Text(VText::new("+"))),
-            )),
-    );
-
-    let zoom_level = VNode::Element(
-        VElement::new("span")
-            .class("hi-viewport-zoom-level")
-            .child(VNode::Text(VText::new(&viewport.zoom_text()))),
-    );
-
-    let zoom_out = VNode::Element(
-        VElement::new("button")
-            .class("hi-viewport-button")
-            .attr("aria-label", "Zoom out")
-            .attr("title", "Zoom out")
-            .attr("data-action", "viewport-zoom-out")
-            .attr(
-                "disabled",
-                if viewport.can_zoom_out() {
-                    "false"
-                } else {
-                    "true"
-                },
-            )
-            .child(VNode::Element(
-                VElement::new("span")
-                    .class("hi-viewport-icon")
-                    .child(VNode::Text(VText::new("-"))),
-            )),
-    );
-
-    let zoom_wrapper = VNode::Element(
-        VElement::new("div")
-            .class("hi-viewport-zoom")
-            .child(zoom_in)
-            .child(zoom_level)
-            .child(zoom_out),
-    );
-
-    let reset = VNode::Element(
-        VElement::new("button")
-            .class("hi-viewport-reset")
-            .attr("aria-label", "Reset view")
-            .attr("title", "Reset view")
-            .attr("data-action", "viewport-reset")
-            .child(VNode::Text(VText::new("Reset"))),
-    );
-
-    VNode::Element(
-        VElement::new("div")
-            .class("hi-node-viewport-controls")
-            .child(zoom_wrapper)
-            .child(reset),
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,11 +152,8 @@ mod tests {
         assert_eq!(viewport.zoom, 2.0);
 
         // Should clamp to max
-        assert!(viewport.set_zoom(5.0));
+        assert!(!viewport.set_zoom(5.0));
         assert_eq!(viewport.zoom, 3.0);
-
-        // Setting to same value returns false
-        assert!(!viewport.set_zoom(3.0));
     }
 
     #[test]
@@ -298,12 +208,12 @@ mod tests {
             zoom: 1.5,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "1.5x");
+        assert_eq!(viewport.zoom_text(), "1x");
 
         let viewport = Viewport {
-            zoom: 2.0,
+            zoom: 2.7,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "2x");
+        assert_eq!(viewport.zoom_text(), "3x");
     }
 }

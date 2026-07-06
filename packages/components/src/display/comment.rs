@@ -1,10 +1,9 @@
 // packages/components/src/display/comment.rs
-// Comment component
+// Comment component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, CommentClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, CommentClass, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CommentComponent;
 
@@ -35,47 +34,46 @@ pub struct CommentProps {
     pub style: String,
 }
 
-/// A comment component for displaying user feedback with avatar, author, and nested replies.
 #[component]
 pub fn Comment(props: CommentProps) -> Element {
     let container_classes = ClassesBuilder::new()
-        .add_typed(CommentClass::Container)
-        .add(&props.class)
+        .add(CommentClass::Container)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
         div { class: container_classes, style: props.style,
 
-            div { class: CommentClass::Header.class_name(),
+            div { class: CommentClass::Header.as_class(),
 
                 if let Some(ref avatar) = props.avatar {
                     img {
-                        class: CommentClass::Avatar.class_name(),
+                        class: CommentClass::Avatar.as_class(),
                         src: avatar,
                         alt: "Avatar",
                     }
                 }
 
-                div { class: CommentClass::Meta.class_name(),
+                div { class: CommentClass::Meta.as_class(),
 
                     if let Some(ref author) = props.author {
-                        span { class: CommentClass::Author.class_name(), "{author}" }
+                        span { class: CommentClass::Author.as_class(), "{author}" }
                     }
 
                     if let Some(ref datetime) = props.datetime {
-                        span { class: CommentClass::Datetime.class_name(), "{datetime}" }
+                        span { class: CommentClass::Datetime.as_class(), "{datetime}" }
                     }
                 }
             }
 
-            div { class: CommentClass::Content.class_name(), "{props.content}" }
+            div { class: CommentClass::Content.as_class(), "{props.content}" }
 
             if let Some(actions) = props.actions {
-                div { class: CommentClass::Actions.class_name(), {actions} }
+                div { class: CommentClass::Actions.as_class(), {actions} }
             }
 
             if let Some(nested) = props.nested {
-                div { class: CommentClass::Nested.class_name(), {nested} }
+                div { class: CommentClass::Nested.as_class(), {nested} }
             }
         }
     }

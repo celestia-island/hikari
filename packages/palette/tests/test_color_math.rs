@@ -1,3 +1,9 @@
+// This test depends on the optional Chinese color collection, selected via
+// [workspace.metadata.hikari].collections in the workspace root.
+#![cfg(hikari_collection_chinese)]
+
+use hikari_palette::collections::chinese::*;
+
 use hikari_palette::color_math::*;
 use hikari_palette::colors::*;
 

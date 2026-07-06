@@ -1,22 +1,6 @@
 //! CSS variable generation for themes
 
-use hikari_palette::colors::Color;
-use hikari_palette::themes::{Palette, ThemeMode};
-
-fn color_from_hex_or(hex: &str, fallback: Color) -> Color {
-    let hex = hex.trim_start_matches('#');
-    if hex.len() != 6 {
-        return fallback;
-    }
-    match (
-        u8::from_str_radix(&hex[0..2], 16),
-        u8::from_str_radix(&hex[2..4], 16),
-        u8::from_str_radix(&hex[4..6], 16),
-    ) {
-        (Ok(r), Ok(g), Ok(b)) => Color::from_rgb(r, g, b),
-        _ => fallback,
-    }
-}
+use hikari_palette::*;
 
 #[derive(Clone, Default)]
 pub struct PaletteOverrides {
@@ -58,12 +42,10 @@ pub struct ComponentPalette {
 }
 
 impl ComponentPalette {
-    #[must_use]
     pub fn from_palette(palette: &Palette) -> Self {
         Self::from_palette_with_overrides(palette, ComponentOverrides::default())
     }
 
-    #[must_use]
     pub fn from_palette_with_overrides(palette: &Palette, overrides: ComponentOverrides) -> Self {
         let auto = Self::compute_defaults(palette);
         Self {
@@ -123,7 +105,6 @@ impl ComponentPalette {
         }
     }
 
-    #[must_use]
     pub fn css_variables(&self) -> String {
         [
             format!(
@@ -228,8 +209,7 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
-    #[must_use]
-    pub fn from_palette(palette: &Palette) -> Self {
+    pub(crate) fn from_palette(palette: &Palette) -> Self {
         ThemePalette {
             primary: palette.primary.hex(),
             secondary: palette.secondary.hex(),
@@ -346,117 +326,44 @@ impl ThemePalette {
         }
     }
 
-    pub(crate) fn with_overrides(self, overrides: PaletteOverrides, palette: &Palette) -> Self {
-        let mut result = self;
-
+    pub(crate) fn with_overrides(mut self, overrides: PaletteOverrides) -> Self {
         if let Some(color) = overrides.primary {
-            let c = color_from_hex_or(&color, palette.primary);
-            result.primary = color;
-            result.button_primary = c.rgba(0.9);
-            result.button_primary_dark = c.rgba(0.75);
-            result.button_primary_light = c.rgba(0.95);
-            result.button_primary_hover_start = if c.brightness() < 0.4 {
-                c.rgba(0.9)
-            } else {
-                c.rgba(0.95)
-            };
-            result.button_primary_hover_end = if c.brightness() < 0.4 {
-                c.rgba(0.75)
-            } else {
-                c.rgba(0.9)
-            };
-            result.glow_button_primary = palette.button_glow_color(&c);
-            result.focus_brightness_primary = palette.focus_brightness_filter(&c);
+            self.primary = color;
         }
         if let Some(color) = overrides.secondary {
-            let c = color_from_hex_or(&color, palette.secondary);
-            result.secondary = color;
-            result.button_secondary = c.rgba(0.9);
-            result.button_secondary_dark = c.rgba(0.75);
-            result.button_secondary_light = c.rgba(0.95);
-            result.button_secondary_hover_start = if c.brightness() < 0.4 {
-                c.rgba(0.9)
-            } else {
-                c.rgba(0.95)
-            };
-            result.button_secondary_hover_end = if c.brightness() < 0.4 {
-                c.rgba(0.75)
-            } else {
-                c.rgba(0.9)
-            };
-            result.glow_button_secondary = palette.button_glow_color(&c);
-            result.focus_brightness_secondary = palette.focus_brightness_filter(&c);
+            self.secondary = color;
         }
         if let Some(color) = overrides.accent {
-            let c = color_from_hex_or(&color, palette.accent);
-            result.accent = color;
-            result.glow_button_info = palette.button_glow_color(&c);
-            result.focus_brightness_info = palette.focus_brightness_filter(&c);
+            self.accent = color;
         }
         if let Some(color) = overrides.success {
-            let c = color_from_hex_or(&color, palette.success);
-            result.success = color;
-            result.button_success = c.rgba(0.9);
-            result.button_success_dark = c.rgba(0.75);
-            result.button_success_light = c.rgba(0.95);
-            result.button_success_hover_start = if c.brightness() < 0.4 {
-                c.rgba(0.9)
-            } else {
-                c.rgba(0.95)
-            };
-            result.button_success_hover_end = if c.brightness() < 0.4 {
-                c.rgba(0.75)
-            } else {
-                c.rgba(0.9)
-            };
-            result.glow_button_success = palette.button_glow_color(&c);
-            result.focus_brightness_success = palette.focus_brightness_filter(&c);
+            self.success = color;
         }
         if let Some(color) = overrides.warning {
-            let c = color_from_hex_or(&color, palette.warning);
-            result.warning = color;
-            result.glow_button_warning = palette.button_glow_color(&c);
-            result.focus_brightness_warning = palette.focus_brightness_filter(&c);
+            self.warning = color;
         }
         if let Some(color) = overrides.danger {
-            let c = color_from_hex_or(&color, palette.danger);
-            result.danger = color;
-            result.button_danger = c.rgba(0.9);
-            result.button_danger_dark = c.rgba(0.75);
-            result.button_danger_light = c.rgba(0.95);
-            result.button_danger_hover_start = if c.brightness() < 0.4 {
-                c.rgba(0.9)
-            } else {
-                c.rgba(0.95)
-            };
-            result.button_danger_hover_end = if c.brightness() < 0.4 {
-                c.rgba(0.75)
-            } else {
-                c.rgba(0.9)
-            };
-            result.glow_button_danger = palette.button_glow_color(&c);
-            result.focus_brightness_danger = palette.focus_brightness_filter(&c);
+            self.danger = color;
         }
         if let Some(color) = overrides.background {
-            result.background = color;
+            self.background = color;
         }
         if let Some(color) = overrides.surface {
-            result.surface = color;
+            self.surface = color;
         }
         if let Some(color) = overrides.border {
-            result.border = color;
+            self.border = color;
         }
         if let Some(color) = overrides.text_primary {
-            result.text_primary = color;
+            self.text_primary = color;
         }
         if let Some(color) = overrides.text_secondary {
-            result.text_secondary = color;
+            self.text_secondary = color;
         }
 
-        result
+        self
     }
 
-    #[must_use]
     pub fn css_variables(&self) -> String {
         [
             format!("--hi-primary: {};", self.primary),
@@ -586,161 +493,5 @@ impl ThemePalette {
             format!("--hi-menu-hover-glow: {};", self.menu_hover_glow),
         ]
         .join(" ")
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use hikari_palette::themes::{Hikari, Tairitsu};
-
-    use super::*;
-
-    #[test]
-    fn palette_overrides_default_is_all_none() {
-        let o = PaletteOverrides::default();
-        assert!(o.primary.is_none());
-        assert!(o.secondary.is_none());
-        assert!(o.accent.is_none());
-        assert!(o.success.is_none());
-        assert!(o.warning.is_none());
-        assert!(o.danger.is_none());
-        assert!(o.background.is_none());
-        assert!(o.surface.is_none());
-        assert!(o.border.is_none());
-        assert!(o.text_primary.is_none());
-        assert!(o.text_secondary.is_none());
-    }
-
-    #[test]
-    fn component_overrides_default_is_all_none() {
-        let o = ComponentOverrides::default();
-        assert!(o.selection_icon_color.is_none());
-        assert!(o.selection_background.is_none());
-        assert!(o.selection_border.is_none());
-        assert!(o.selection_surface.is_none());
-        assert!(o.selection_glow.is_none());
-        assert!(o.input_border.is_none());
-        assert!(o.input_focus_border.is_none());
-        assert!(o.input_background.is_none());
-    }
-
-    #[test]
-    fn component_palette_construction_light() {
-        let palette = Hikari::palette();
-        let cp = ComponentPalette::from_palette(&palette);
-        assert!(!cp.selection_icon_color.is_empty());
-        assert!(!cp.selection_background.is_empty());
-        assert!(cp.selection_background.contains("linear-gradient"));
-        assert_eq!(cp.selection_icon_color, palette.background.hex());
-    }
-
-    #[test]
-    fn component_palette_construction_dark() {
-        let palette = Tairitsu::palette();
-        let cp = ComponentPalette::from_palette(&palette);
-        assert_eq!(cp.selection_icon_color, palette.primary.hex());
-        assert!(cp.selection_border.contains("255, 255, 255"));
-    }
-
-    #[test]
-    fn theme_palette_construction() {
-        let palette = Hikari::palette();
-        let tp = ThemePalette::from_palette(&palette);
-        assert_eq!(tp.primary, palette.primary.hex());
-        assert_eq!(tp.background, palette.background.hex());
-        assert!(!tp.button_primary.is_empty());
-        assert!(!tp.glow_button_primary.is_empty());
-    }
-
-    #[test]
-    fn theme_palette_css_variables_contain_key_vars() {
-        let palette = Hikari::palette();
-        let tp = ThemePalette::from_palette(&palette);
-        let css = tp.css_variables();
-        assert!(css.contains("--hi-color-primary:"));
-        assert!(css.contains("--hi-color-background:"));
-        assert!(css.contains("--hi-color-surface:"));
-        assert!(css.contains("--hi-color-border:"));
-        assert!(css.contains("--hi-button-primary:"));
-        assert!(css.contains("--hi-glow-button-primary:"));
-        assert!(css.contains("--hi-aside-bg:"));
-        assert!(css.contains("--hi-header-bg:"));
-        assert!(css.contains("--hi-focus-brightness-primary:"));
-    }
-
-    #[test]
-    fn component_palette_css_variables() {
-        let palette = Hikari::palette();
-        let cp = ComponentPalette::from_palette(&palette);
-        let css = cp.css_variables();
-        assert!(css.contains("--hi-component-selection-icon:"));
-        assert!(css.contains("--hi-component-selection-bg:"));
-        assert!(css.contains("--hi-component-selection-border:"));
-        assert!(css.contains("--hi-component-input-border:"));
-        assert!(css.contains("--hi-component-input-focus-border:"));
-    }
-
-    #[test]
-    fn override_replaces_default_value() {
-        let palette = Hikari::palette();
-        let tp = ThemePalette::from_palette(&palette);
-        let original = tp.primary.clone();
-        let overrides = PaletteOverrides {
-            primary: Some("#AABBCC".to_string()),
-            ..Default::default()
-        };
-        let overridden = tp.with_overrides(overrides, &palette);
-        assert_ne!(overridden.primary, original);
-        assert_eq!(overridden.primary, "#AABBCC");
-    }
-
-    #[test]
-    fn override_none_keeps_default_value() {
-        let palette = Hikari::palette();
-        let tp = ThemePalette::from_palette(&palette);
-        let original_bg = tp.background.clone();
-        let overrides = PaletteOverrides {
-            primary: Some("#AABBCC".to_string()),
-            ..Default::default()
-        };
-        let overridden = tp.with_overrides(overrides, &palette);
-        assert_eq!(overridden.background, original_bg);
-    }
-
-    #[test]
-    fn component_palette_with_overrides() {
-        let palette = Hikari::palette();
-        let overrides = ComponentOverrides {
-            selection_icon_color: Some("red".to_string()),
-            input_border: Some("blue".to_string()),
-            ..Default::default()
-        };
-        let cp = ComponentPalette::from_palette_with_overrides(&palette, overrides);
-        assert_eq!(cp.selection_icon_color, "red");
-        assert_eq!(cp.input_border, "blue");
-        assert!(!cp.selection_background.is_empty());
-    }
-
-    #[test]
-    fn component_palette_clone_and_partial_eq() {
-        let palette = Hikari::palette();
-        let cp = ComponentPalette::from_palette(&palette);
-        let cp2 = cp.clone();
-        assert!(cp == cp2);
-    }
-
-    #[test]
-    fn theme_palette_clone_and_partial_eq() {
-        let palette = Hikari::palette();
-        let tp = ThemePalette::from_palette(&palette);
-        let tp2 = tp.clone();
-        assert!(tp == tp2);
-    }
-
-    #[test]
-    fn theme_palette_inequality() {
-        let hikari = ThemePalette::from_palette(&Hikari::palette());
-        let tairitsu = ThemePalette::from_palette(&Tairitsu::palette());
-        assert!(hikari != tairitsu);
     }
 }

@@ -1,48 +1,58 @@
-FROM rust:1.85-slim AS builder
+# Hikari Website Dockerfile
+# This Dockerfile builds and runs the Hikari website example
 
-WORKDIR /build
+FROM rust:1.85-slim as builder
 
+WORKDIR /hikari
+
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     ca-certificates \
     git \
     python3 \
-    python3-venv \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Rust target for WASM
 RUN rustup target add wasm32-wasip2
 
-COPY hikari /build/hikari
-COPY tairitsu /build/tairitsu
+# Copy workspace files
+COPY . .
 
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install beautifulsoup4 lxml
+# Fetch sibling tairitsu repository required by tairitsu-packager
+RUN git clone --depth 1 https://github.com/celestia-island/tairitsu.git /tairitsu
 
-WORKDIR /build/hikari
+# Install Python dependencies
+RUN pip3 install --break-system-packages beautifulsoup4 lxml
 
+# Fetch MDI icons (skip for now - icons already generated)
+# RUN python3 scripts/icons/fetch_mdi_icons.py
+
+# Stage website source assets and build final public output
 RUN python3 scripts/build/compile_scss.py
-RUN cd examples/website && cargo run --manifest-path /build/tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
+RUN cd examples/website && cargo run --manifest-path /tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build
 
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    python3 \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd --gid 1000 hikari \
-    && useradd --uid 1000 --gid hikari --create-home hikari
+# Runtime stage
+FROM rust:1.85-slim
 
 WORKDIR /hikari
 
-COPY --from=builder /build/hikari/public /hikari/public
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-USER hikari
+# Copy build artifacts from builder
+COPY --from=builder /hikari/public /hikari/public
 
+# Set environment variables
 ENV RUST_BACKTRACE=1
 ENV RUST_LOG=info
 
+# Expose port 3000
 EXPOSE 3000
 
+# Default command: serve final public directory via a simple HTTP server
 CMD ["python3", "-m", "http.server", "3000", "--directory", "/hikari/public"]

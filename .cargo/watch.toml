@@ -1,0 +1,22 @@
+# Cargo Watch configuration for Hikari development
+# This file configures how cargo-watch monitors and rebuilds the project
+
+# Patterns to ignore (in addition to command-line --ignore flags)
+ignore = [
+  "target/",
+  "generated/",
+  "public/assets/",
+  "public/styles/",
+  "*.log",
+  "*.tmp",
+]
+
+# Clear the screen before each rebuild
+clear = true
+
+# Wait for a period of no activity before rebuilding (milliseconds)
+# This prevents multiple rapid rebuilds when saving multiple files
+delay = 1000
+
+# Show execution time for commands
+exec_time = true

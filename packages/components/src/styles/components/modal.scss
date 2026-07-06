@@ -1,10 +1,10 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 @use './modal-vars.scss' as modal-vars;
 
 // ============================================
-// Hikari Modal Component -  Styling
+// Hikari Modal Component - FUI Styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (modal-vars.scss)
@@ -66,7 +66,7 @@
   background: var(--hi-modal-bg);
   backdrop-filter: var(--hi-modal-blur);
 
-  // Elevated shadow with glow - use CSS variables
+  // Elevated shadow with FUI glow - use CSS variables
   box-shadow: var(--hi-modal-shadow);
 
   // Transitions - use CSS variables

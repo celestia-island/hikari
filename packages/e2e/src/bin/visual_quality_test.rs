@@ -1,13 +1,12 @@
 // hikari-e2e/src/bin/visual_quality_test.rs
 // Binary to run visual quality and interactive behavior tests
 
-use anyhow::{bail, Result};
 use hikari_e2e::tests::visual_quality::VisualQualityTests;
 use thirtyfour::{WebDriver, prelude::*};
 use tracing::{error, info};
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
@@ -51,14 +50,14 @@ async fn main() -> Result<()> {
                         }
                     }
                 }
-                bail!("Visual quality tests failed with {} checks", total_failed);
+                anyhow::bail!("Visual quality tests failed with {} checks", total_failed);
             } else {
                 info!("\n✅ All visual quality checks passed!");
             }
         }
         Err(e) => {
             error!("Visual quality tests failed: {}", e);
-            bail!("Visual quality tests failed: {}", e);
+            anyhow::bail!("Visual quality tests failed: {}", e);
         }
     }
 

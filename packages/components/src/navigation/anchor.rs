@@ -2,7 +2,7 @@
 //!
 //! # Example
 //!
-//! ```rust,ignore
+//! ```rust
 //! use hikari_components::navigation::Anchor;
 //! use crate::prelude::*;
 //!
@@ -23,21 +23,21 @@
 //! ```
 
 use hikari_palette::classes::{
-    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, TypedClass,
+    AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
-use tairitsu_hooks::ReactiveSignal;
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
 use crate::prelude::*;
 
-/// A single anchor link target with an href and display title.
 #[derive(Clone, Debug, PartialEq, Props)]
 pub struct AnchorItem {
     pub href: String,
     pub title: String,
 }
 
-/// In-page navigation with smooth scrolling to anchor targets.
+///
+///
 #[component]
 pub fn Anchor(
     items: Vec<AnchorItem>,
@@ -62,25 +62,28 @@ pub fn Anchor(
             let active_anchor_for_check = active_anchor.clone();
             let is_active = active_anchor_for_check.read() == href;
             let btn_class = ClassesBuilder::new()
-                .add_typed(AnchorClass::Link)
-                .add_typed_if(AnchorClass::Active, is_active)
+                .add(AnchorClass::Link)
+                .add_if(AnchorClass::Active, move || is_active)
                 .build();
 
             rsx! {
                 button {
                     class: btn_class,
-                    onclick: move |_| {
-                        active_anchor_for_click.set(href.clone());
+                onclick: move |_| {
+                    active_anchor_for_click.set(href.clone());
 
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                    {
                         let target_id = href.trim_start_matches('#');
                         if let Some(rect) = platform::get_element_rect_by_id(target_id) {
                             let scroll_y = platform::get_scroll_y();
                             platform::scroll_to_with_options(
-                                rect.y - f64::from(offset) - scroll_y,
-                                "smooth",
+                                rect.y - offset as f64 - scroll_y,
+                                "smooth"
                             );
                         }
-                    },
+                    }
+                },
                     "{title}"
                 }
             }
@@ -94,25 +97,29 @@ pub fn Anchor(
     };
 
     let anchor_classes = ClassesBuilder::new()
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Column)
-        .add_typed(Gap::Gap2)
-        .add_typed(Padding::P3)
-        .add_typed(position_class)
-        .add(&class)
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(Gap::Gap2)
+        .add(Padding::P3)
+        .add(position_class)
+        .add_raw(&class)
         .build();
 
-    let wrapper_class = AnchorClass::Wrapper.class_name();
+    let wrapper_class = AnchorClass::Wrapper.as_class();
     rsx! {
         div { class: wrapper_class,
-            div { class: anchor_classes, ..anchor_links }
-            {children}
+            div { class: anchor_classes,
+                ..anchor_links
+            }
+            { children }
         }
     }
 }
 
-pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
-    let active_anchor = use_signal(String::new);
+///
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> Signal<String> {
+    let active_anchor = use_signal(|| String::new());
     let active_anchor_for_effect = active_anchor.clone();
 
     use_effect(move || {

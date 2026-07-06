@@ -4,92 +4,129 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use hikari_palette::classes::BackgroundClass;
-use hikari_palette::colors::{墨色, 粉红, 精白, 靛蓝};
-use tairitsu_hooks::ReactiveSignal;
-use tairitsu_style::TypedClass;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use hikari_palette::Color;
+use hikari_palette::classes::{BackgroundClass, UtilityClass};
 
-use crate::platform;
-use crate::prelude::*;
-use crate::style_builder::StyleStringBuilder;
-use crate::styled::StyledComponent;
-use crate::theme::ThemeContext;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::style_builder::StyleBuilder;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BackgroundComponent;
 
+/// Props for the Background component
 #[define_props]
 pub struct BackgroundProps {
     #[default]
     pub children: Element,
 }
 
+/// Background component with gradient animation
+///
+/// Renders a full-screen gradient background with breathing color effects.
+/// The gradient automatically rotates and adjusts colors based on the current theme.
 #[component]
 pub fn Background(props: BackgroundProps) -> Element {
-    let animation_style = use_signal(String::new);
-    let theme_ctx = use_context::<ThemeContext>();
-
-    let theme_name_signal = theme_ctx.as_ref().map(|ctx| ctx.get().theme_name.clone());
-
-    let animation_style_rsx = animation_style.clone();
-    use_effect(move || {
-        let animation_style_clone = animation_style.clone();
-        let theme_name_signal = theme_name_signal.clone();
-        let _ = start_gradient_animation(theme_name_signal, move |style| {
-            animation_style_clone.set(style);
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    {
+        use_effect(move || {
+            let _stop = start_gradient_animation();
         });
-    });
+    }
 
     rsx! {
-        div {
-            class: BackgroundClass::Background.class_name(),
-            style: "{animation_style_rsx}",
-            {props.children}
-        }
+        div { class: BackgroundClass::Background.as_class(), {props.children} }
     }
 }
 
-struct AnimationState {
-    start_time: f64,
-    stopped: bool,
-}
+/// Starts the gradient animation for the background
+///
+/// Returns a cleanup function that stops the animation when called.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn start_gradient_animation() -> Box<dyn FnOnce()> {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    use wasm_bindgen::JsCast;
+    use wasm_bindgen::closure::Closure;
 
-fn start_gradient_animation<F>(
-    theme_name_signal: Option<ReactiveSignal<String>>,
-    mut update_style: F,
-) -> Box<dyn FnOnce()>
-where
-    F: FnMut(String) + 'static,
-{
-    let state = std::rc::Rc::new(std::cell::RefCell::new(AnimationState {
-        start_time: platform::now_timestamp(),
-        stopped: false,
-    }));
+    let window = match web_sys::window() {
+        Some(w) => w,
+        None => return Box::new(|| {}),
+    };
+
+    let document = match window.document() {
+        Some(doc) => doc,
+        None => return Box::new(|| {}),
+    };
+
+    let background_element = match document
+        .query_selector(&format!(".{}", BackgroundClass::Background.as_class()))
+        .ok()
+        .flatten()
+    {
+        Some(el) => el,
+        None => return Box::new(|| {}),
+    };
+
+    let html_element = match background_element.dyn_into::<web_sys::HtmlElement>() {
+        Ok(elem) => elem,
+        Err(_) => return Box::new(|| {}),
+    };
 
     let period_ms = 60000.0;
     let radius_percent = 20.0;
     let center_x = 50.0;
     let center_y = 50.0;
 
-    let state_clone = state.clone();
+    let f = Rc::new(RefCell::new(None::<js_sys::Function>));
+    let g = f.clone();
 
-    platform::request_animation_frame_with_timestamp(move |timestamp| {
-        let state_borrow = state_clone.borrow();
-        if state_borrow.stopped {
+    let should_stop = Rc::new(RefCell::new(false));
+    let should_stop_clone = should_stop.clone();
+
+    let animation_closure = Closure::wrap(Box::new(move || {
+        if *should_stop_clone.borrow() {
             return;
         }
 
-        let current_time = timestamp - state_borrow.start_time;
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let document = match window.document() {
+            Some(doc) => doc,
+            None => return,
+        };
+
+        let current_time = window.performance().map(|p| p.now()).unwrap_or(0.0);
 
         let angle = (current_time / period_ms) * 2.0 * std::f64::consts::PI;
+
         let x = center_x + radius_percent * angle.cos();
         let y = center_y + radius_percent * angle.sin();
 
-        let theme_name = theme_name_signal
-            .as_ref().map_or_else(|| "hikari".to_string(), |s: &ReactiveSignal<String>| s.get());
+        let theme = match document
+            .query_selector(".hi-theme-provider[data-theme]")
+            .ok()
+            .flatten()
+            .and_then(|el| el.get_attribute("data-theme"))
+        {
+            Some(t) => t,
+            None => "hikari".to_string(),
+        };
 
-        let (color1, color2) = match theme_name.as_str() {
-            "tairitsu" => (墨色, 靛蓝),
-            _ => (精白, 粉红),
+        let (color1, color2) = match theme.as_str() {
+            // Theme gradient colors — defined inline so this component does not
+            // depend on any opt-in color collection.
+            "tairitsu" => (
+                Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
+                Color::from_rgb_hex(0x06, 0x52, 0x79), // 靛蓝
+            ),
+            _ => (
+                Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
+                Color::from_rgb_hex(0xff, 0xb3, 0xa7), // 粉红
+            ),
         };
 
         let breathing_progress = (current_time / 4000.0) % 2.0;
@@ -103,26 +140,32 @@ where
         let saturation_factor = 1.0 + (sin_val * 0.05);
         let lightness_factor = 1.0 + (sin_val * 0.05);
 
-        let breathing_color1 = color1
-            .adjust_saturation(saturation_factor)
-            .adjust_lightness(lightness_factor);
-        let breathing_color2 = color2
-            .adjust_saturation(saturation_factor)
-            .adjust_lightness(lightness_factor);
+        let breathing_color1 = color1.adjust_saturation(saturation_factor);
+        let breathing_color1 = breathing_color1.adjust_lightness(lightness_factor);
+        let breathing_color2 = color2.adjust_saturation(saturation_factor);
+        let breathing_color2 = breathing_color2.adjust_lightness(lightness_factor);
 
-        let style = StyleStringBuilder::new()
-            .add_var("bg-center-x", &format!("{x:.1}%"))
-            .add_var("bg-center-y", &format!("{y:.1}%"))
-            .add_var("bg-color-1", &breathing_color1.hex())
-            .add_var("bg-color-2", &breathing_color2.hex())
-            .build();
+        StyleBuilder::new(&html_element)
+            .add_custom("--bg-center-x", &format!("{:.1}%", x))
+            .add_custom("--bg-center-y", &format!("{:.1}%", y))
+            .add_custom("--bg-color-1", &breathing_color1.hex())
+            .add_custom("--bg-color-2", &breathing_color2.hex())
+            .apply();
 
-        update_style(style);
-    });
+        if let Some(callback) = &*f.borrow() {
+            let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+        }
+    }) as Box<dyn FnMut()>);
 
-    let state_final = state.clone();
+    let callback: &js_sys::Function = animation_closure.as_ref().unchecked_ref();
+    *g.borrow_mut() = Some(callback.clone());
+
+    let _ = web_sys::window().and_then(|w| w.request_animation_frame(&callback).ok());
+    animation_closure.forget();
+
+    let should_stop_final = should_stop.clone();
     Box::new(move || {
-        state_final.borrow_mut().stopped = true;
+        *should_stop_final.borrow_mut() = true;
     })
 }
 

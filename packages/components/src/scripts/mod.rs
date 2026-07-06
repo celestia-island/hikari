@@ -1,6 +1,6 @@
-//! Script utilities for Hikari components
+//! JavaScript utilities for Hikari components
 //!
-//! This module provides WASM-friendly runtime integration utilities.
+//! This module provides WASM-friendly JavaScript integration utilities.
 
 pub mod scrollbar_container;
 

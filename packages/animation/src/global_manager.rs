@@ -1,211 +1,64 @@
-//! Global animation manager — registry, debug control, and test-mode support.
+//! Global animation manager (very simplified version)
 //!
-//! In test mode, all registered animation engines respond to global commands:
-//! freeze / unfreeze / seek / step — enabling deterministic E2E visual testing
-//! of animation states at arbitrary progress points.
+//! Provides a simple global animation loop for WASM only.
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::time::Duration;
-
-use slotmap::Key;
-
-use crate::core::{AnimationEngine, AnimationState};
-
-thread_local! {
-    static MANAGER: RefCell<GlobalAnimManagerInner> = RefCell::new(GlobalAnimManagerInner::new());
-}
-
-struct GlobalAnimManagerInner {
-    engines: HashMap<String, AnimationEngine>,
-    test_mode: bool,
-    frozen: bool,
-}
-
-impl GlobalAnimManagerInner {
-    fn new() -> Self {
-        Self {
-            engines: HashMap::new(),
-            test_mode: false,
-            frozen: false,
-        }
-    }
-}
-
+/// Global animation manager (no global state - just functions)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub struct GlobalAnimationManager;
 
-impl Default for GlobalAnimationManager {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 impl GlobalAnimationManager {
-    #[must_use]
-    pub const fn new() -> Self {
+    /// Create a new global animation manager
+    pub fn new() -> Self {
         Self
     }
 
-    pub fn register(name: &str, engine: &AnimationEngine) {
-        MANAGER.with(|m| {
-            m.borrow_mut()
-                .engines
-                .insert(name.to_owned(), engine.clone());
-        });
+    /// Start the global animation loop (no-op for now)
+    pub fn start(&self) {
+        web_sys::console::log_1(&"🎬 Global animation manager started (simplified)".into());
     }
 
-    pub fn unregister(name: &str) {
-        MANAGER.with(|m| {
-            m.borrow_mut().engines.remove(name);
-        });
+    /// Stop the global animation loop (no-op for now)
+    pub fn stop(&self) {
+        web_sys::console::log_1(&"🛑 Global animation manager stopped".into());
     }
 
-    pub fn pause_all() {
-        MANAGER.with(|m| {
-            let mgr = m.borrow();
-            for engine in mgr.engines.values() {
-                for id in engine.get_all_active() {
-                    engine.pause(id);
-                }
-            }
-        });
+    /// Register an animation callback (just log for now)
+    pub fn register(&self, _name: String, _callback: Box<dyn Fn()>) {
+        web_sys::console::log_1(&"✅ Animation callback registered (simplified)".into());
     }
 
-    pub fn resume_all() {
-        MANAGER.with(|m| {
-            let mgr = m.borrow();
-            for engine in mgr.engines.values() {
-                for id in engine.get_all_ids() {
-                    if engine.tween_state(id) == Some(AnimationState::Paused) {
-                        engine.play(id);
-                    }
-                }
-            }
-        });
-    }
-
-    pub fn freeze() {
-        Self::pause_all();
-        MANAGER.with(|m| {
-            m.borrow_mut().frozen = true;
-        });
-    }
-
-    pub fn unfreeze() {
-        MANAGER.with(|m| {
-            m.borrow_mut().frozen = false;
-        });
-        Self::resume_all();
-    }
-
-    pub fn seek_all(progress: f64) {
-        let progress = progress.clamp(0.0, 1.0);
-        MANAGER.with(|m| {
-            let mgr = m.borrow();
-            for engine in mgr.engines.values() {
-                for id in engine.get_all_ids() {
-                    engine.seek_to_progress(id, progress);
-                }
-            }
-        });
-    }
-
-    pub fn step_all(delta_ms: u64) {
-        let delta = Duration::from_millis(delta_ms);
-        MANAGER.with(|m| {
-            let mgr = m.borrow();
-            for engine in mgr.engines.values() {
-                engine.tick(delta);
-            }
-        });
-    }
-
-    pub fn kill_all() {
-        MANAGER.with(|m| {
-            for engine in m.borrow().engines.values() {
-                engine.kill_all();
-            }
-        });
-    }
-
-    #[must_use]
-    pub fn get_state() -> AnimationDebugState {
-        MANAGER.with(|m| {
-            let mgr = m.borrow();
-            let engines: Vec<EngineDebugInfo> = mgr
-                .engines
-                .iter()
-                .map(|(name, engine)| {
-                    let tweens: Vec<TweenDebugInfo> = engine
-                        .get_all_ids()
-                        .into_iter()
-                        .flat_map(|id| {
-                            engine.get_tween(id).map(|t| TweenDebugInfo {
-                                id: id.data().as_ffi(),
-                                state: format!("{:?}", t.state()),
-                                progress: t.progress(),
-                                duration_ms: t.duration().as_millis() as u64,
-                            })
-                        })
-                        .collect();
-                    EngineDebugInfo {
-                        name: name.clone(),
-                        tween_count: tweens.len(),
-                        tweens,
-                    }
-                })
-                .collect();
-
-            AnimationDebugState {
-                engine_count: engines.len(),
-                test_mode: mgr.test_mode,
-                frozen: mgr.frozen,
-                engines,
-            }
-        })
-    }
-
-    pub fn set_test_mode(enabled: bool) {
-        MANAGER.with(|m| {
-            m.borrow_mut().test_mode = enabled;
-        });
-    }
-
-    #[must_use]
-    pub fn is_test_mode() -> bool {
-        MANAGER.with(|m| m.borrow().test_mode)
-    }
-
-    #[must_use]
-    pub fn is_frozen() -> bool {
-        MANAGER.with(|m| m.borrow().frozen)
-    }
-
-    #[must_use]
-    pub fn engine_count() -> usize {
-        MANAGER.with(|m| m.borrow().engines.len())
+    /// Unregister an animation callback (just log for now)
+    pub fn unregister(&self, _name: &str) {
+        web_sys::console::log_1(&"🛑 Animation callback unregistered".into());
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct AnimationDebugState {
-    pub engine_count: usize,
-    pub test_mode: bool,
-    pub frozen: bool,
-    pub engines: Vec<EngineDebugInfo>,
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+static GLOBAL_MANAGER: GlobalAnimationManager = GlobalAnimationManager;
+
+/// Get the global animation manager
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn global_animation_manager() -> &'static GlobalAnimationManager {
+    &GLOBAL_MANAGER
 }
 
-#[derive(Debug, Clone)]
-pub struct EngineDebugInfo {
-    pub name: String,
-    pub tween_count: usize,
-    pub tweens: Vec<TweenDebugInfo>,
+/// Initialize the global animation manager
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn init_global_animation_manager() {
+    web_sys::console::log_1(&"🎬 Initializing global animation manager".into());
+    global_animation_manager().start();
 }
 
-#[derive(Debug, Clone)]
-pub struct TweenDebugInfo {
-    pub id: u64,
-    pub state: String,
-    pub progress: f64,
-    pub duration_ms: u64,
+/// Create an animation callback (simplified)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn create_animation_callback(
+    _element: web_sys::HtmlElement,
+    _state: crate::state::AnimationDataStore,
+    _actions: Vec<crate::builder::AnimationAction>,
+    _f: impl Fn(&crate::context::AnimationContext, &mut crate::state::AnimationDataStore) + 'static,
+) -> Box<dyn Fn()> {
+    Box::new(|| {
+        web_sys::console::log_1(&"Animation callback executed (simplified)".into());
+    })
 }

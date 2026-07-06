@@ -1,10 +1,9 @@
 // packages/components/src/basic/date_picker.rs
-// DatePicker component
+// DatePicker component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, DatePickerClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct DatePickerComponent;
 
@@ -49,12 +48,12 @@ pub struct DatePickerProps {
 #[component]
 pub fn DatePicker(props: DatePickerProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(DatePickerClass::DatePickerWrapper)
-        .add(&props.class)
+        .add(DatePickerClass::DatePickerWrapper)
+        .add_raw(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add_typed(DatePickerClass::DatePicker)
+        .add(DatePickerClass::DatePicker)
         .build();
 
     let disabled_class = if props.disabled {

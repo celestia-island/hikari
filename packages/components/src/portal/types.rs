@@ -1,16 +1,15 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use tairitsu_hooks::ReactiveSignal;
+use crate::{
+    feedback::PopoverPlacement,
+    modal::{MaskMode, ModalPosition, ModalSize},
+    prelude::*,
+};
 
-use crate::prelude::*;
-pub use crate::utils::portal_types::{MaskMode, ModalPosition, ModalSize, PopoverPlacement};
-
-pub(crate) static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 =
-    std::sync::atomic::AtomicU64::new(0);
+pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 #[derive(Clone, Copy, PartialEq, Debug)]
-#[non_exhaustive]
 pub enum PortalPositionStrategy {
     Fixed(f64, f64),
     TriggerBased { placement: TriggerPlacement },
@@ -26,7 +25,6 @@ impl Default for PortalPositionStrategy {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum TriggerPlacement {
     #[default]
     Bottom,
@@ -52,7 +50,7 @@ pub enum ModalAnimationState {
     Disappearing,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum PortalEntry {
     Modal {
         id: String,
@@ -88,7 +86,7 @@ pub enum PortalEntry {
         close_on_click_outside: bool,
         close_on_select: bool,
         on_close: Option<Callback<()>>,
-        close_requested: ReactiveSignal<bool>,
+        close_requested: Signal<bool>,
         children: Element,
     },
     Tooltip {
@@ -101,7 +99,6 @@ pub enum PortalEntry {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum PortalMaskMode {
     #[default]
     Dimmed,
@@ -109,7 +106,6 @@ pub enum PortalMaskMode {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum ToastPosition {
     TopLeft,
     TopCenter,

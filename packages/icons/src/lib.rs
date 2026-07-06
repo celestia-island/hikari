@@ -1,65 +1,166 @@
 //! # Hikari Icons
 //!
-//! Multi-source icon integration for the Tairitsu framework.
+//! Material Design Icons integration for Tairitsu framework.
 //!
-//! Supported icon sets: MDI (Material Design Icons), and more via tairitsu-packager.
-//!
-//! ## Typed API
+//! ## Usage
 //!
 //! ```rust,ignore
 //! use hikari_icons::{Icon, MdiIcon};
-//! rsx! { Icon { icon: MdiIcon::RocketLaunch, size: 24 } }
+//!
+//! rsx! {
+//!     Icon { icon: MdiIcon::MoonWaningCrescent, size: 24, class: "text-primary" }
+//! }
 //! ```
 //!
-//! ## String lookup
+//! ## Icon Shortcuts
 //!
 //! ```rust,ignore
-//! use hikari_icons::get;
-//! let path_d = get("rocket-launch").unwrap();
-//! let svg = build_svg_from_path(path_d, 24);
+//! use hikari_icons::mdi;
+//!
+//! rsx! {
+//!     mdi::Moon("w-6 h-6".to_string())
+//! }
 //! ```
 
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/icons/manifest.rs"));
-}
+pub mod mdi_minimal;
 
-pub use generated::{MdiIcon, get_icon_path};
+/// Runtime icon fetching (wasm + `dynamic-fetch = true` in workspace metadata).
+///
+/// When the consuming workspace sets
+/// `[workspace.metadata.hikari.icons].dynamic-fetch = true`, the build script
+/// emits `cargo:rustc-cfg=hikari_icons_dynamic_fetch`. On wasm32 builds this
+/// module fetches icons over HTTP (RON-encoded, validated, cached); on every
+/// other configuration `fetch_and_cache_icon` is a no-op stub returning `None`,
+/// so calling it is always safe regardless of build target.
+pub mod dynamic_fetch;
+pub use dynamic_fetch::fetch_and_cache_icon;
 
-#[must_use]
-pub fn get(name: &str) -> Option<&'static str> {
-    generated::get_icon_path("mdi", name)
-}
-
-#[must_use]
-pub fn get_from(set: &str, name: &str) -> Option<&'static str> {
-    generated::get_icon_path(set, name)
-}
-
-#[must_use]
-pub fn build_svg_from_path(path_d: &str, size: u32, view_box: &str) -> String {
-    format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{view_box}" width="{size}" height="{size}"><path fill="currentColor" d="{path_d}"/></svg>"#
-    )
-}
-
-#[must_use]
-pub fn build_svg_default(path_d: &str, size: u32) -> String {
-    build_svg_from_path(path_d, size, "0 0 24 24")
-}
-
-pub const FALLBACK_ICON_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Default)]
-pub enum IconRenderMode {
-    #[default]
-    SvgInline,
-    FontGlyph,
-}
-
+#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
+use dioxus::prelude::*;
 #[cfg(feature = "tairitsu")]
-use tairitsu_macros::{component, define_props, rsx};
+use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
+
+// Re-export MDI icon enum
+pub use mdi_minimal::MdiIcon;
+
+// Re-export icon data types. The selected-icon data is generated at build time
+// into OUT_DIR (see build.rs) and included here, so no `src/generated/*` needs
+// to exist on disk for `cargo fmt` / a fresh checkout to succeed.
+pub mod mdi_selected {
+    #![allow(non_camel_case_types, non_snake_case, dead_code)]
+    include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
+}
+pub use mdi_selected::{IconData, PathData, SvgElem, get};
+
+// StyleStringBuilder for building styles
+#[cfg(feature = "dioxus")]
+pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
+
+/// Default SVG fallback icon
+#[allow(dead_code)]
+const DEFAULT_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>"#;
+
+/// Icon reference wrapper
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub struct IconRef(pub MdiIcon);
+
+impl From<MdiIcon> for IconRef {
+    fn from(icon: MdiIcon) -> Self {
+        IconRef(icon)
+    }
+}
+
+impl IconRef {
+    /// Get the icon name as a string
+    pub fn name(&self) -> String {
+        self.0.to_string()
+    }
+}
+
+/// Build SVG string from IconData
+#[macro_export]
+macro_rules! build_svg {
+    ($icon_data:expr) => {{
+        let data = $icon_data;
+        let mut svg = String::from(r#"<svg xmlns="http://www.w3.org/2000/svg""#);
+
+        if let Some(vb) = data.view_box {
+            svg.push_str(&format!(r#" viewBox="{}""#, vb));
+        }
+        if let Some(w) = data.width {
+            svg.push_str(&format!(r#" width="{}""#, w));
+        }
+        if let Some(h) = data.height {
+            svg.push_str(&format!(r#" height="{}""#, h));
+        }
+        svg.push('>');
+
+        if let Some(p) = data.path {
+            svg.push_str(&format!(r#"<path fill="currentColor" d="{}"/>"#, p));
+        }
+
+        for path in data.paths {
+            svg.push_str("<path");
+            if let Some(d) = path.d {
+                svg.push_str(&format!(r#" d="{}""#, d));
+            }
+            svg.push_str(r#" fill="currentColor"/>"#);
+        }
+
+        svg.push_str("</svg>");
+        svg
+    }};
+}
+
+// ============================================================================
+// Dioxus Icon Component
+// ============================================================================
+
+#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
+#[component]
+pub fn Icon(
+    #[props(into)] icon: IconRef,
+    #[props(default)] class: String,
+    #[props(default = 24)] size: u32,
+    #[props(default)] color: String,
+) -> Element {
+    let icon_data_opt = get(&icon.name());
+
+    let final_svg = if let Some(icon_data) = icon_data_opt {
+        use_memo(move || build_svg!(icon_data))
+    } else {
+        use_memo(|| String::from(DEFAULT_SVG))
+    };
+
+    let full_style = if color.is_empty() {
+        StyleStringBuilder::new()
+            .add_px(CssProperty::Width, size)
+            .add_px(CssProperty::Height, size)
+            .build_clean()
+    } else {
+        StyleStringBuilder::new()
+            .add_px(CssProperty::Width, size)
+            .add_px(CssProperty::Height, size)
+            .add(CssProperty::Color, &color)
+            .build_clean()
+    };
+
+    let full_class = format!("hikari-icon {class}");
+
+    rsx! {
+        div {
+            class: full_class,
+            style: "{full_style}",
+            dangerous_inner_html: "{final_svg}",
+        }
+    }
+}
+
+// ============================================================================
+// Tairitsu Icon Component
+// ============================================================================
 
 #[cfg(feature = "tairitsu")]
 #[define_props]
@@ -72,28 +173,30 @@ pub struct IconProps {
     pub size: u32,
     #[default(String::new())]
     pub color: String,
-    #[default(IconRenderMode::SvgInline)]
-    pub render_mode: IconRenderMode,
 }
 
 #[cfg(feature = "tairitsu")]
-#[component]
+#[allow(non_snake_case)]
 pub fn Icon(props: IconProps) -> Element {
-    match props.render_mode {
-        IconRenderMode::SvgInline => render_svg_inline(&props),
-        IconRenderMode::FontGlyph => render_font_glyph(&props),
-    }
-}
+    let icon_ref = IconRef(props.icon);
+    let icon_name = icon_ref.name();
+    let icon_data_opt = get(&icon_name);
 
-#[cfg(feature = "tairitsu")]
-fn render_svg_inline(props: &IconProps) -> Element {
-    let icon_name = props.icon.to_string();
-    let final_svg = match get(&icon_name) {
-        Some(d) => build_svg_default(d, props.size),
-        None => FALLBACK_ICON_SVG.to_string(),
+    let final_svg = if let Some(icon_data) = icon_data_opt {
+        build_svg!(icon_data)
+    } else {
+        String::from(DEFAULT_SVG)
     };
 
-    let full_style = build_icon_style(props.size, &props.color);
+    let full_style = if props.color.is_empty() {
+        format!("width:{}px;height:{}px;", props.size, props.size)
+    } else {
+        format!(
+            "width:{}px;height:{}px;color:{};",
+            props.size, props.size, props.color
+        )
+    };
+
     let full_class = format!("hikari-icon {}", props.class);
 
     rsx! {
@@ -105,55 +208,30 @@ fn render_svg_inline(props: &IconProps) -> Element {
     }
 }
 
-#[cfg(feature = "tairitsu")]
-fn render_font_glyph(props: &IconProps) -> Element {
-    let icon_name = props.icon.to_string();
-    let font_family = font_family_for_icon(props.icon);
-    let mut style = format!(
-        "font-family:'{}';font-size:{}px;line-height:{}px;display:inline-block;text-align:center;",
-        font_family, props.size, props.size
-    );
-    if !props.color.is_empty() {
-        style.push_str(&format!("color:{};", props.color));
-    }
-    let full_class = format!("hikari-icon hikari-icon-font {}", props.class);
+// ============================================================================
+// MDI Icon Shortcuts
+// ============================================================================
 
-    rsx! {
-        span {
-            class: full_class,
-            style: style,
-            dangerous_inner_html: icon_name,
-        }
-    }
-}
-
-#[must_use]
-pub fn font_family_for_icon(_icon: MdiIcon) -> &'static str {
-    "Material Design Icons"
-}
-
-#[cfg(feature = "tairitsu")]
-fn build_icon_style(size: u32, color: &str) -> String {
-    if color.is_empty() {
-        format!("width:{}px;height:{}px;", size, size)
-    } else {
-        format!("width:{}px;height:{}px;color:{};", size, size, color)
-    }
-}
-
-#[cfg(feature = "tairitsu")]
+#[cfg(any(feature = "dioxus", feature = "tairitsu"))]
+#[allow(non_snake_case)]
 pub mod mdi {
     use super::*;
 
     macro_rules! icon_shortcut {
         ($name:ident, $icon:expr) => {
-            #[component]
             pub fn $name(class: String) -> Element {
-                Icon(IconProps {
-                    icon: $icon,
-                    class,
-                    ..Default::default()
-                })
+                #[cfg(feature = "dioxus")]
+                {
+                    rsx! { Icon { icon: $icon, class } }
+                }
+                #[cfg(all(not(feature = "dioxus"), feature = "tairitsu"))]
+                {
+                    Icon(IconProps {
+                        icon: $icon,
+                        class,
+                        ..Default::default()
+                    })
+                }
             }
         };
     }
@@ -176,9 +254,9 @@ pub mod mdi {
     icon_shortcut!(ChevronRight, MdiIcon::ChevronRight);
     icon_shortcut!(ChevronUp, MdiIcon::ChevronUp);
     icon_shortcut!(ChevronDown, MdiIcon::ChevronDown);
+    icon_shortcut!(User, MdiIcon::Account);
+    icon_shortcut!(X, MdiIcon::Close);
     icon_shortcut!(Award, MdiIcon::TrophyAward);
     icon_shortcut!(Book, MdiIcon::Book);
     icon_shortcut!(Badge, MdiIcon::Alert);
 }
-
-pub mod dynamic_fetch;

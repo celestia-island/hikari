@@ -1,12 +1,10 @@
 // packages/components/src/entry/auto_complete.rs
-// AutoComplete component
+// AutoComplete component with Arknights + FUI styling
 
-use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, TypedClass};
+use hikari_palette::classes::{AutoCompleteClass, ClassesBuilder, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Style provider for the AutoComplete component.
 pub struct AutoCompleteComponent;
 
 /// Props for the AutoComplete component
@@ -32,7 +30,6 @@ pub struct AutoCompleteProps {
     pub style: String,
 }
 
-/// An input field with a dropdown of filtered suggestions based on the current value.
 #[component]
 pub fn AutoComplete(props: AutoCompleteProps) -> Element {
     let is_open = use_signal(|| false);
@@ -157,15 +154,13 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
         }
     };
 
-    let input_classes = ClassesBuilder::new()
-        .add_typed(AutoCompleteClass::Input)
-        .build();
+    let input_classes = ClassesBuilder::new().add(AutoCompleteClass::Input).build();
 
     let is_open_value = is_open.read();
     let focused_index_value = focused_index.read();
     let options_arr = filtered_options.read().clone();
 
-    let wrapper_class = AutoCompleteClass::Wrapper.class_name();
+    let wrapper_class = AutoCompleteClass::Wrapper.as_class();
 
     rsx! {
         div { class: wrapper_class, style: "position: relative; {props.style}",
@@ -173,7 +168,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             input {
                 class: input_classes,
                 r#type: "text",
-                value: {props.value.clone()},
+                value: "{props.value}",
                 placeholder: props.placeholder,
                 disabled: props.disabled,
                 oninput: handle_input,
@@ -184,7 +179,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 
             if props.allow_clear && !props.value.is_empty() && !props.disabled {
                 button {
-                    class: AutoCompleteClass::Clear.class_name(),
+                    class: AutoCompleteClass::Clear.as_class(),
                     onclick: handle_clear,
                     r#type: "button",
                     "×"
@@ -194,16 +189,16 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
             if is_open_value && !options_arr.is_empty() {
                 div {
                     class: ClassesBuilder::new()
-                        .add_typed(AutoCompleteClass::Dropdown)
-                        .add_typed(AutoCompleteClass::Show)
-                        .add(&props.class)
+                        .add(AutoCompleteClass::Dropdown)
+                        .add(AutoCompleteClass::Show)
+                        .add_raw(&props.class)
                         .build(),
 
                     for index in 0..options_arr.len() {
                         div {
                             class: ClassesBuilder::new()
-                                .add_typed(AutoCompleteClass::Option)
-                                .add_typed_if(AutoCompleteClass::OptionFocused, index == focused_index_value)
+                                .add(AutoCompleteClass::Option)
+                                .add_if(AutoCompleteClass::OptionFocused, || index == focused_index_value)
                                 .build(),
                             onclick: {
                                 let handle_option_click_for_click = handle_option_click.clone();
@@ -215,7 +210,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                                     }
                                 }
                             },
-                            {options_arr[index].clone()}
+                            "{options_arr[index].clone()}"
                         }
                     }
                 }
@@ -247,7 +242,7 @@ impl StyledComponent for AutoCompleteComponent {
 
 .hi-autocomplete-input:focus {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 0 2px rgba(238, 162, 164, 0.1);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .hi-autocomplete-input:disabled {

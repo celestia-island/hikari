@@ -1,49 +1,57 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Glow Component - Single Glow Color System
 // ============================================
 //
-// Glow states are controlled by CSS variables updated via mouse events:
-// - --hi-glow-x, --hi-glow-y: Position of glow center (percentage, 0-100%)
-// - --hi-glow-intensity-scale: Visibility level (0 = hidden, 0.5 = hover, 1.0 = active)
-// - --hi-glow-opacity: Direct opacity control (overrides calculated value)
-// - --hi-glow-color: Glow color
+// IMPORTANT: All glow states are controlled by AnimationBuilder via inline styles.
+// CSS does NOT provide any default hover/active/focus behavior.
+// The --glow-intensity-scale variable is set inline:
+// - Idle: 0 (no glow)
+// - Hover: 0.5 (subtle glow)  
+// - Focus: 0.7 (medium glow)
+// - Active: 1.0 (intense glow)
 //
-// CSS provides:
+// CSS only provides:
 // 1. Base structure (::before pseudo-element)
 // 2. Intensity classes (dim/soft/bright) for base opacity multiplier
-// 3. Smooth transitions for position and opacity
-// 4. Fallback :hover and :active states
+// 3. Transition timing
 
 // Base glow wrapper styles
 .hi-glow-wrapper,
 .hi-glow-wrapper-block {
   position: relative;
 
+  // Initialize scale factors - default to 0 (hidden)
+  --glow-intensity-scale: 0;
+  --glow-spread-scale: 1.0;
+
+  // Create dynamic glow overlay using CSS variables (spotlight effect)
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
     z-index: 2;
-    border-radius: var(--hi-glow-radius, inherit);
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    border-radius: inherit;
+    // Use inline style value directly, no fallback
+    // AnimationBuilder controls this via --glow-intensity-scale
+    opacity: calc(var(--glow-base-opacity, 1) * var(--glow-intensity-scale));
 
+    // Use radial-gradient for acrylic spotlight effect
     background: radial-gradient(
-      circle at var(--hi-glow-x, 50%) var(--hi-glow-y, 50%),
+      circle at var(--glow-x, 50%) var(--glow-y, 50%),
       var(--hi-glow-color) 0%,
-      transparent calc(var(--hi-glow-spread, 1.5) * 100%)
+      transparent calc(var(--glow-spread, 1.5) * 100%)
     );
+
+    // Transition for smooth state changes
+    transition: opacity 100ms ease-out;
   }
 
-  &:hover::before {
-    opacity: var(--hi-glow-opacity, 0.15);
-  }
-
+  // Ensure children (links, buttons) are always clickable
   > * {
     pointer-events: auto;
     position: relative;
@@ -52,45 +60,11 @@
 }
 
 // ============================================
-// Glow Blur Levels (Backdrop Blur Effect)
-// ============================================
-
-// These classes control the backdrop blur intensity for the glow effect
-// None: No blur (default, for crisp glow edges)
-.hi-glow-blur-none {
-  // No additional blur effect
-}
-
-// Light: Subtle blur (2px) for soft glow edges
-.hi-glow-blur-light {
-  &::before {
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-  }
-}
-
-// Medium: Medium blur (4px) for balanced glow effect
-.hi-glow-blur-medium {
-  &::before {
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-  }
-}
-
-// Heavy: Heavy blur (8px) for intense glow diffusion
-.hi-glow-blur-heavy {
-  &::before {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-}
-
-// ============================================
 // Glow Intensity Levels (Opacity & Spread)
 // ============================================
 
 // These classes define the BASE opacity for different glow intensities
-// The actual visibility is controlled by --hi-glow-intensity-scale (0 = hidden, 1 = full intensity)
+// The actual visibility is controlled by --glow-intensity-scale (0 = hidden, 1 = full intensity)
 // IMPORTANT: --glow-base-opacity must be defined on the parent, not on ::before
 //
 // Opacity calculation: base-opacity * intensity-scale
@@ -98,38 +72,23 @@
 // - Active (1.0): intense glow (2x hover)
 
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
-// Very low opacity + wide spread for an almost imperceptible ambient glow
 .hi-glow-dim {
-  --hi-glow-opacity: 0.07;
-  --hi-glow-spread: 2.4;
-
-  &::before {
-    --hi-glow-opacity: 0.07;
-    --hi-glow-spread: 2.4;
-  }
+  --glow-spread: 2.4;
+  --glow-base-opacity: 0.15;
 }
 
 // 70% intensity (medium, default for interactive elements: buttons, inputs)
-// Balanced opacity + moderate spread for clear but non-distracting feedback
+// Hover: 0.30 * 0.5 = 0.15
+// Active: 0.30 * 1.0 = 0.30 (visible difference)
 .hi-glow-soft {
-  --hi-glow-opacity: 0.15;
-  --hi-glow-spread: 1.6;
-
-  &::before {
-    --hi-glow-opacity: 0.15;
-    --hi-glow-spread: 1.6;
-  }
+  --glow-spread: 1.6;
+  --glow-base-opacity: 0.30;
 }
 
 // 100% intensity (intense, for emphasis: active states, focus rings)
 .hi-glow-bright {
-  --hi-glow-opacity: 0.30;
-  --hi-glow-spread: 1.3;
-
-  &::before {
-    --hi-glow-opacity: 0.30;
-    --hi-glow-spread: 1.3;
-  }
+  --glow-spread: 1.3;
+  --glow-base-opacity: 0.50;
 }
 
 .hi-glow-wrapper {
@@ -138,8 +97,11 @@
   justify-content: center;
   flex-shrink: 0;
   align-self: flex-start;
+
+  // 统一使用 4px 圆角
+  border-radius: 4px;
+
   overflow: visible;
-  border-radius: var(--hi-glow-radius, inherit);
 }
 
 // Block variant for wrapping block-level elements (like Card)
@@ -147,61 +109,30 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  
+  // 统一使用 4px 圆角
+  border-radius: 4px;
   overflow: visible;
-  border-radius: var(--hi-glow-radius, inherit);
 }
 
 // ============================================
-// Radius Matching
-// ============================================
-// Glow wrapper must match its child's border-radius.
-// Since CSS cannot "inherit upward", we set radius on common child types.
-// Components set their own --hi-*-radius tokens in button-vars.scss etc.
-
-.hi-glow-wrapper > .hi-button { border-radius: var(--hi-button-radius, var(--hi-radius-md, 8px)); }
-.hi-glow-wrapper > .hi-input,
-.hi-glow-wrapper > .hi-textarea,
-.hi-glow-wrapper > .hi-search,
-.hi-glow-wrapper > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
-.hi-glow-wrapper > li { border-radius: var(--hi-glow-radius, var(--hi-radius-sm, 4px)); }
-
-.hi-glow-wrapper-block > .hi-input,
-.hi-glow-wrapper-block > .hi-textarea,
-.hi-glow-wrapper-block > .hi-search,
-.hi-glow-wrapper-block > .hi-number-input { border-radius: var(--hi-input-radius, var(--hi-radius-md, 8px)); }
-
-// ============================================
-// Button Enhancement
+// Button Enhancement (Managed by AnimationBuilder)
 // ============================================
 
-// When button is wrapped in glow, let the button handle its own hover effects
-// The glow wrapper adds the mouse-following spotlight effect on top
+// Remove transform translateY from button hover when wrapped in glow
 .hi-glow-wrapper .hi-button:hover {
   transform: none;
 }
 
-// Combine button outline with glow effect
+// Default: No box-shadow - controlled by AnimationBuilder via CSS variables
+// The glow wrapper handles all visual feedback through --glow-intensity-scale
 .hi-glow-wrapper .hi-button:focus-visible {
-  box-shadow:
-    0 0 0 2px currentColor,
-    0 0 12px var(--hi-glow-color);
-}
-
-// Let button handle its own active state
-.hi-glow-wrapper .hi-button:active:not(:disabled) {
-  box-shadow:
-    0 0 4px currentColor,
-    inset 0 1px 0 var(--hi-white-10, rgba(255,255,255,0.1));
-  transform: translateY(0) scale(0.98);
-}
-
-.hi-glow-wrapper .hi-button:focus-visible {
-  // Combine button outline with glow effect
-  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .hi-glow-wrapper .hi-button:active:not(:disabled) {
-  // Let button handle its own active state
+  box-shadow: none;
+  transform: none;
 }
 
 // Input hover enhancement
@@ -221,10 +152,10 @@
 // Pulse animation - heartbeat-like pulsing glow
 @keyframes glow-pulse {
   0%, 100% {
-    --hi-glow-intensity-scale: 0.5;
+    --glow-intensity-scale: 0.5;
   }
   50% {
-    --hi-glow-intensity-scale: 1.0;
+    --glow-intensity-scale: 1.0;
   }
 }
 
@@ -235,10 +166,10 @@
 // Breathe animation - slow, smooth intensity variation
 @keyframes glow-breathe {
   0%, 100% {
-    --hi-glow-intensity-scale: 0.3;
+    --glow-intensity-scale: 0.3;
   }
   50% {
-    --hi-glow-intensity-scale: 1.0;
+    --glow-intensity-scale: 1.0;
   }
 }
 
@@ -249,24 +180,24 @@
 // Shimmer animation - moving light spot across the element
 @keyframes glow-shimmer {
   0% {
-    --hi-glow-x: 20%;
-    --hi-glow-y: 50%;
+    --glow-x: 20%;
+    --glow-y: 50%;
   }
   25% {
-    --hi-glow-x: 50%;
-    --hi-glow-y: 80%;
+    --glow-x: 50%;
+    --glow-y: 80%;
   }
   50% {
-    --hi-glow-x: 80%;
-    --hi-glow-y: 50%;
+    --glow-x: 80%;
+    --glow-y: 50%;
   }
   75% {
-    --hi-glow-x: 50%;
-    --hi-glow-y: 20%;
+    --glow-x: 50%;
+    --glow-y: 20%;
   }
   100% {
-    --hi-glow-x: 20%;
-    --hi-glow-y: 50%;
+    --glow-x: 20%;
+    --glow-y: 50%;
   }
 }
 

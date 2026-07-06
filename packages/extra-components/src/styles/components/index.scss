@@ -2,23 +2,11 @@
 // Extra component styles entry point
 
 // Graph components
-@use './node_graph.scss';
+@import './node_graph.scss';
 
 // Panel components
-@use './collapsible.scss';
+@import './collapsible.scss';
 
 // Interaction components
-@use './drag_layer.scss';
-@use './zoom_controls.scss';
-@use './user_guide.scss';
-
-// Media components
-@use './audio_waveform.scss';
-@use './video_player.scss';
-
-// Editor components
-@use './rich_text_editor.scss';
-
-// Display components
-@use './timeline.scss';
-@use './code_highlighter.scss';
+@import './drag_layer.scss';
+@import './zoom_controls.scss';

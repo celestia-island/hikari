@@ -1,16 +1,16 @@
 // packages/components/src/display/qrcode.rs
-// QRCode component using inline SVG for rendering
+// QRCode component using Canvas for rendering
 
 use hikari_palette::classes::{
-    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, TypedClass,
+    AlignItems, ClassesBuilder, Display, FlexDirection, Padding, QRCodeClass, UtilityClass,
 };
 use qrcode::{Color, QrCode};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct QRCodeComponent;
 
+/// Props for the QRCode component
 #[define_props]
 pub struct QRCodeProps {
     pub value: String,
@@ -27,39 +27,27 @@ pub struct QRCodeProps {
     pub error_correction: String,
 }
 
-fn build_svg(matrix: &[Vec<bool>], modules: usize, color: &str, background: &str) -> String {
-    let mut rects = String::with_capacity(modules * modules * 32);
-    for (y, row) in matrix.iter().enumerate().take(modules) {
-        for (x, &cell) in row.iter().enumerate().take(modules) {
-            if cell {
-                rects.push_str(&format!(
-                    "<rect x=\"{x}\" y=\"{y}\" width=\"1\" height=\"1\" fill=\"{color}\"/>"
-                ));
-            }
-        }
-    }
-    format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {modules} {modules}" width="100%" height="100%" shape-rendering="crispEdges"><rect width="{modules}" height="{modules}" fill="{background}"/>{rects}</svg>"#
-    )
-}
-
 #[component]
 pub fn QRCode(props: QRCodeProps) -> Element {
     let container_classes = ClassesBuilder::new()
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Column)
-        .add_typed(AlignItems::Center)
-        .add_typed(Padding::P4)
-        .add_typed(QRCodeClass::Container)
-        .add(&props.class)
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(AlignItems::Center)
+        .add(Padding::P4)
+        .add(QRCodeClass::Container)
+        .add_raw(&props.class)
         .build();
 
+    let size = props.size;
     let size_px = format!("{}px", props.size);
     let value = props.value.clone();
     let color = props.color.clone();
     let background = props.background.clone();
     let ec_level = props.error_correction.clone();
 
+    let drawn: Signal<bool> = use_signal(|| false).inner().clone();
+
+    // Generate QR code matrix
     let qr_result = QrCode::with_error_correction_level(
         &value,
         match ec_level.as_str() {
@@ -70,7 +58,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
         },
     );
 
-    let svg_html = qr_result.ok().map(|code| {
+    let qr_matrix: Option<(Vec<Vec<bool>>, usize)> = qr_result.ok().map(|code| {
         let width = code.width();
         let mut matrix = vec![vec![false; width]; width];
         for y in 0..width {
@@ -78,25 +66,54 @@ pub fn QRCode(props: QRCodeProps) -> Element {
                 matrix[y][x] = code[(x, y)] == Color::Dark;
             }
         }
-        build_svg(&matrix, width, &color, &background)
+        (matrix, width)
     });
+
+    let canvas_id = format!("qrcode-canvas-{}", crate::platform::now_timestamp() as u64);
+
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    {
+        let canvas_id_for_effect = canvas_id.clone();
+        let drawn_for_effect = drawn.clone();
+        let qr_matrix_for_effect = qr_matrix.clone();
+        let color_for_effect = color.clone();
+        let background_for_effect = background.clone();
+
+        use_effect(move || {
+            if drawn_for_effect.get() {
+                return;
+            }
+
+            if let Some((matrix, modules)) = &qr_matrix_for_effect {
+                if crate::platform::draw_qrcode_on_canvas_by_id(
+                    &canvas_id_for_effect,
+                    matrix,
+                    *modules,
+                    &color_for_effect,
+                    &background_for_effect,
+                ) {
+                    drawn_for_effect.set(true);
+                }
+            }
+        });
+    }
 
     rsx! {
         div { class: container_classes, style: props.style,
 
             if let Some(ref title) = props.title {
-                h4 { class: QRCodeClass::Title.class_name(), "{title}" }
+                h4 { class: QRCodeClass::Title.as_class(), "{title}" }
             }
 
             div {
-                class: QRCodeClass::Wrapper.class_name(),
+                class: QRCodeClass::Wrapper.as_class(),
                 style: "width: {size_px}; height: {size_px};",
 
-                if let Some(ref svg) = svg_html {
-                    div {
-                        class: QRCodeClass::Image.class_name(),
-                        dangerous_inner_html: svg,
-                    }
+                canvas {
+                    id: canvas_id,
+                    class: QRCodeClass::Image.as_class(),
+                    width: size,
+                    height: size,
                 }
             }
         }

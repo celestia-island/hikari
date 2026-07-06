@@ -1,43 +1,27 @@
 # hikari-components
 
-Core UI component library with flat design and glow effect aesthetics, providing 40+ ready-to-use rendered components.
-
-## Relationship to `hikari-extra-components`
-
-`hikari-components` provides **rendered components** (using the `rsx!` macro, reactive hooks, and `StyledComponent` CSS embedding). Its sibling package `hikari-extra-components` provides complementary **framework-agnostic data models** for the same component domains (Timeline, DragLayer, UserGuide, ZoomControls, etc.).
-
-- Use `hikari-components` when you need ready-to-render UI in a Tairitsu application
-- Use `hikari-extra-components` when you need pure state models for SSR, testing, or non-Tairitsu frameworks
-- Use both together: state models from `extra` can feed into rendered components from this package
-
-> **Note:** Some types share names across both packages (e.g., `TimelinePosition`). The `components` versions accept `Element` children and event handlers; the `extra` versions use `String` fields with `serde`. Import with explicit module paths to disambiguate.
-
-## Animation Utilities
-
-The `utils::anim_helpers` module provides shared animation primitives used internally by components:
-
-- `run_ease_out(duration, power, signal)` — One-shot ease-out animation (used by DragLayer, UserGuide, Drawer)
-- `run_phase_loop(period, signal, compute)` — Infinite looping phase animation (used by Progress)
-- `run_dual_phase_loop(period, sig_a, sig_b, compute_a, compute_b)` — Dual-signal phase loop (used by Skeleton)
+Comprehensive UI component library with Arknights-style design and FUI (Future User Interface) aesthetics.
 
 ## Installation
 
 ```toml
 [dependencies]
-hikari-components = "0.1"
-hikari-theme = "0.1"
-hikari-palette = "0.1"
+hikari-components = "0.1.0"
+hikari-theme = "0.1.0"
+hikari-palette = "0.1.0"
+dioxus = "0.7"
 ```
 
 ## Quick Start
 
 ```rust
+use dioxus::prelude::*;
 use hikari_components::*;
 use hikari_theme::ThemeProvider;
 
 fn app() -> Element {
     rsx! {
-        ThemeProvider { initial_initial_palette: "hikari".to_string(),
+        ThemeProvider { palette: "arknights".to_string(),
             div { class: "container",
                 Button { variant: ButtonVariant::Primary, "Click Me" }
                 Card {

@@ -1,44 +1,53 @@
-//! Animation frame hook
-//!
-//! Provides `use_animation_frame` for running a callback on every animation frame.
-//! Uses tairitsu's Platform trait for cross-platform requestAnimationFrame support.
+//! Animation frame hook for Dioxus
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::cell::RefCell;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::rc::Rc;
 
-type FrameScheduler = Rc<RefCell<Option<Box<dyn FnMut()>>>>;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use wasm_bindgen::JsCast;
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub fn use_animation_frame(callback: impl Fn(f64) + 'static) {
-    let platform = Rc::new(RefCell::new(tairitsu_web::BrowserPlatform::new()));
     let callback = Rc::new(callback);
 
-    let scheduler: FrameScheduler = Rc::new(RefCell::new(None));
+    let closure: Rc<RefCell<Option<wasm_bindgen::closure::Closure<dyn FnMut()>>>> =
+        Rc::new(RefCell::new(None));
 
-    let scheduler_clone = scheduler.clone();
-    let platform_clone = platform;
-    let callback_clone = callback;
+    let closure_ref = closure.clone();
+    *closure.borrow_mut() = Some(wasm_bindgen::closure::Closure::wrap(Box::new({
+        let callback = callback.clone();
+        let window = web_sys::window().unwrap();
+        let performance = window.performance().unwrap();
+        let mut start_time: Option<f64> = None;
 
-    let frame_cb = move || {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as f64;
-        callback_clone(now / 1000.0);
+        move || {
+            let current_time = performance.now();
 
-        // Schedule next frame
-        let sched = scheduler_clone.clone();
-        let p = platform_clone.clone();
-        p.borrow_mut().request_animation_frame(move || {
-            let mut s = sched.borrow_mut();
-            if let Some(ref mut f) = *s {
-                f();
+            if let Some(start) = start_time {
+                let elapsed = (current_time - start) / 1000.0;
+                callback(elapsed);
+            } else {
+                start_time = Some(current_time);
             }
-        });
-    };
 
-    *scheduler.borrow_mut() = Some(Box::new(frame_cb));
-    let mut s = scheduler.borrow_mut();
-    if let Some(ref mut f) = *s {
-        f();
-    }
+            if let Some(inner) = &*closure_ref.borrow() {
+                window
+                    .request_animation_frame(inner.as_ref().unchecked_ref())
+                    .unwrap();
+            }
+        }
+    })
+        as Box<dyn FnMut()>));
+
+    let borrowed = closure.borrow();
+    let init = borrowed.as_ref().unwrap();
+    web_sys::window()
+        .unwrap()
+        .request_animation_frame(init.as_ref().unchecked_ref())
+        .unwrap();
 }
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+pub fn use_animation_frame(_callback: impl Fn(f64) + 'static) {}

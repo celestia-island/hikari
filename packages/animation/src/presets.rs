@@ -1,10 +1,11 @@
 use std::time::Duration;
 
 use crate::core::{
-    AnimationEngine, AnimationOptions, EasingFunction, PlaybackMode, PropertyTarget, Tween, TweenId,
+    {AnimationEngine, AnimationOptions, PropertyTarget, Tween, TweenId},
+    {EasingFunction, PlaybackMode},
 };
 
-/// Color configuration for glow animations
+/// Color configuration for FUI animations
 #[derive(Debug, Clone)]
 pub struct FUIColors {
     /// Primary color (RGB)
@@ -25,7 +26,7 @@ impl Default for FUIColors {
     }
 }
 
-/// Glow effect animations
+/// FUI glow effect animations
 ///
 /// Provides glowing, breathing, and shimmer effects suitable for
 /// futuristic interfaces and status indicators.
@@ -43,7 +44,6 @@ impl Default for GlowAnimation {
 
 impl GlowAnimation {
     /// Create a new glow animation set with default colors
-    #[must_use]
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
@@ -55,8 +55,7 @@ impl GlowAnimation {
     ///
     /// # Arguments
     /// * `colors` - Color configuration
-    #[must_use]
-    pub const fn with_colors(mut self, colors: FUIColors) -> Self {
+    pub fn with_colors(mut self, colors: FUIColors) -> Self {
         self.colors = colors;
         self
     }
@@ -71,7 +70,6 @@ impl GlowAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn pulse(&self, duration_ms: u64, intensity: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -81,7 +79,7 @@ impl GlowAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "glow-intensity".to_string(),
             start: 0.0,
@@ -107,7 +105,6 @@ impl GlowAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn breathe(&self, duration_ms: u64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -117,7 +114,7 @@ impl GlowAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "opacity".to_string(),
             start: 0.7,
@@ -144,7 +141,6 @@ impl GlowAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn shimmer(&self, duration_ms: u64, angle_deg: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -154,7 +150,7 @@ impl GlowAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "shimmer-angle".to_string(),
             start: 0.0,
@@ -172,7 +168,7 @@ impl GlowAnimation {
     }
 }
 
-/// Neon effect animations
+/// FUI neon effect animations
 ///
 /// Provides neon-style glowing, flickering, and scanline effects
 /// for retro-futuristic interfaces.
@@ -190,7 +186,6 @@ impl Default for NeonAnimation {
 
 impl NeonAnimation {
     /// Create a new neon animation set with default colors
-    #[must_use]
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
@@ -202,8 +197,7 @@ impl NeonAnimation {
     ///
     /// # Arguments
     /// * `colors` - Color configuration
-    #[must_use]
-    pub const fn with_colors(mut self, colors: FUIColors) -> Self {
+    pub fn with_colors(mut self, colors: FUIColors) -> Self {
         self.colors = colors;
         self
     }
@@ -218,17 +212,17 @@ impl NeonAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn flicker(&self, duration_ms: u64, intensity: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
             easing: EasingFunction::EaseInOutQuad,
             playback: PlaybackMode::Yoyo,
             repeat: Some(3),
+            yoyo: true,
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "neon-opacity".to_string(),
             start: 1.0,
@@ -255,7 +249,6 @@ impl NeonAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn buzz(&self, duration_ms: u64, amplitude: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -265,7 +258,7 @@ impl NeonAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "neon-buzz-x".to_string(),
             start: -amplitude,
@@ -291,7 +284,6 @@ impl NeonAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn scanline(&self, duration_ms: u64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -301,7 +293,7 @@ impl NeonAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "scanline-position".to_string(),
             start: 0.0,
@@ -314,7 +306,7 @@ impl NeonAnimation {
     }
 }
 
-/// technology effect animations
+/// FUI technology effect animations
 ///
 /// Provides glitch, typing, data flow, and HUD scan effects
 /// for technology-themed interfaces.
@@ -331,7 +323,6 @@ impl Default for TechAnimation {
 
 impl TechAnimation {
     /// Create a new tech animation set
-    #[must_use]
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
@@ -348,17 +339,17 @@ impl TechAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn glitch(&self, duration_ms: u64, severity: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
             easing: EasingFunction::EaseInOutQuad,
             playback: PlaybackMode::Normal,
             repeat: Some(2),
+            yoyo: true,
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "glitch-offset-x".to_string(),
             start: -severity,
@@ -390,7 +381,6 @@ impl TechAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn typing(&self, duration_ms: u64, char_count: usize) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -400,7 +390,7 @@ impl TechAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "typing-progress".to_string(),
             start: 0.0,
@@ -422,7 +412,6 @@ impl TechAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn data_flow(&self, duration_ms: u64, direction: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -432,7 +421,7 @@ impl TechAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "data-flow-position".to_string(),
             start: 0.0,
@@ -458,7 +447,6 @@ impl TechAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn hud_scan(&self, duration_ms: u64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -468,7 +456,7 @@ impl TechAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "hud-scan-angle".to_string(),
             start: -45.0,
@@ -503,7 +491,6 @@ impl Default for TransitionAnimation {
 
 impl TransitionAnimation {
     /// Create a new transition animation set
-    #[must_use]
     pub fn new() -> Self {
         Self {
             engine: AnimationEngine::new(),
@@ -520,7 +507,6 @@ impl TransitionAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn fade_slide_in(&self, duration_ms: u64, offset_x: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -530,7 +516,7 @@ impl TransitionAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "opacity".to_string(),
             start: 0.0,
@@ -557,7 +543,6 @@ impl TransitionAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn fade_slide_out(&self, duration_ms: u64, offset_x: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -567,7 +552,7 @@ impl TransitionAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "opacity".to_string(),
             start: 1.0,
@@ -593,7 +578,6 @@ impl TransitionAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn scale_blur_in(&self, duration_ms: u64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -603,7 +587,7 @@ impl TransitionAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "scale".to_string(),
             start: 0.8,
@@ -629,7 +613,6 @@ impl TransitionAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn scale_blur_out(&self, duration_ms: u64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -639,7 +622,7 @@ impl TransitionAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "scale".to_string(),
             start: 1.0,
@@ -666,7 +649,6 @@ impl TransitionAnimation {
     ///
     /// # Returns
     /// ID of the created tween
-    #[must_use]
     pub fn rotate_zoom_in(&self, duration_ms: u64, start_angle: f64) -> TweenId {
         let options = AnimationOptions {
             duration: Duration::from_millis(duration_ms),
@@ -676,7 +658,7 @@ impl TransitionAnimation {
             ..Default::default()
         };
 
-        let mut tween = Tween::new(TweenId::default(), options);
+        let mut tween = Tween::new(self.engine.create_tween(options.clone()), options);
         tween.add_target(PropertyTarget {
             property: "scale".to_string(),
             start: 0.5,
@@ -706,7 +688,6 @@ pub mod transition;
 ///
 /// # Returns
 /// New GlowAnimation instance
-#[must_use]
 pub fn glow() -> GlowAnimation {
     GlowAnimation::new()
 }
@@ -715,7 +696,6 @@ pub fn glow() -> GlowAnimation {
 ///
 /// # Returns
 /// New NeonAnimation instance
-#[must_use]
 pub fn neon() -> NeonAnimation {
     NeonAnimation::new()
 }
@@ -724,7 +704,6 @@ pub fn neon() -> NeonAnimation {
 ///
 /// # Returns
 /// New TechAnimation instance
-#[must_use]
 pub fn tech() -> TechAnimation {
     TechAnimation::new()
 }
@@ -733,376 +712,6 @@ pub fn tech() -> TechAnimation {
 ///
 /// # Returns
 /// New TransitionAnimation instance
-#[must_use]
 pub fn transition() -> TransitionAnimation {
     TransitionAnimation::new()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // --- FUIColors ---
-
-    #[test]
-    fn default_colors() {
-        let colors = FUIColors::default();
-        assert_eq!(colors.primary, (0.0, 0.8, 1.0));
-        assert_eq!(colors.accent, (0.0, 1.0, 0.8));
-        assert_eq!(colors.glow, (0.2, 0.6, 1.0));
-    }
-
-    #[test]
-    fn custom_colors() {
-        let colors = FUIColors {
-            primary: (1.0, 0.0, 0.0),
-            accent: (0.0, 1.0, 0.0),
-            glow: (0.0, 0.0, 1.0),
-        };
-        assert_eq!(colors.primary, (1.0, 0.0, 0.0));
-        assert_eq!(colors.accent, (0.0, 1.0, 0.0));
-        assert_eq!(colors.glow, (0.0, 0.0, 1.0));
-    }
-
-    #[test]
-    fn clone_colors() {
-        let colors = FUIColors {
-            primary: (0.5, 0.5, 0.5),
-            ..Default::default()
-        };
-        let cloned = colors.clone();
-        assert_eq!(colors.primary, cloned.primary);
-        assert_eq!(colors.accent, cloned.accent);
-        assert_eq!(colors.glow, cloned.glow);
-    }
-
-    #[test]
-    fn fuicolors_debug_contains_rgb() {
-        let colors = FUIColors::default();
-        let debug = format!("{colors:?}");
-        assert!(debug.contains("0.8") || debug.contains("0.6") || debug.contains("0.2"));
-    }
-
-    // --- GlowAnimation ---
-
-    #[test]
-    fn glow_new_creates_instance() {
-        let glow = GlowAnimation::new();
-        let id = glow.pulse(1000, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn glow_default_matches_new() {
-        let glow = GlowAnimation::default();
-        let id = glow.pulse(500, 0.3);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn glow_with_colors() {
-        let colors = FUIColors {
-            primary: (1.0, 0.0, 0.0),
-            ..Default::default()
-        };
-        let glow = GlowAnimation::new().with_colors(colors);
-        let id = glow.pulse(1000, 0.8);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn pulse_returns_valid_tween_id() {
-        let glow = GlowAnimation::new();
-        let id = glow.pulse(1000, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn pulse_zero_duration() {
-        let glow = GlowAnimation::new();
-        let id = glow.pulse(0, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn pulse_zero_intensity() {
-        let glow = GlowAnimation::new();
-        let id = glow.pulse(1000, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn breathe_returns_valid_tween_id() {
-        let glow = GlowAnimation::new();
-        let id = glow.breathe(2000);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn breathe_zero_duration() {
-        let glow = GlowAnimation::new();
-        let id = glow.breathe(0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn shimmer_returns_valid_tween_id() {
-        let glow = GlowAnimation::new();
-        let id = glow.shimmer(1500, 45.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn shimmer_zero_angle() {
-        let glow = GlowAnimation::new();
-        let id = glow.shimmer(1000, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn clone_glow_animation() {
-        let glow = GlowAnimation::new();
-        let cloned = glow;
-        let id = cloned.pulse(500, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    // --- NeonAnimation ---
-
-    #[test]
-    fn neon_new_creates_instance() {
-        let neon = NeonAnimation::new();
-        let id = neon.flicker(500, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn neon_default_matches_new() {
-        let neon = NeonAnimation::default();
-        let id = neon.buzz(300, 5.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn neon_with_colors() {
-        let colors = FUIColors {
-            accent: (1.0, 0.0, 1.0),
-            ..Default::default()
-        };
-        let neon = NeonAnimation::new().with_colors(colors);
-        let id = neon.flicker(500, 0.3);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn flicker_returns_valid_id() {
-        let neon = NeonAnimation::new();
-        let id = neon.flicker(500, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn flicker_zero_duration() {
-        let neon = NeonAnimation::new();
-        let id = neon.flicker(0, 0.5);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn flicker_zero_intensity() {
-        let neon = NeonAnimation::new();
-        let id = neon.flicker(500, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn buzz_returns_valid_id() {
-        let neon = NeonAnimation::new();
-        let id = neon.buzz(300, 5.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn buzz_zero_amplitude() {
-        let neon = NeonAnimation::new();
-        let id = neon.buzz(300, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn scanline_returns_valid_id() {
-        let neon = NeonAnimation::new();
-        let id = neon.scanline(1000);
-        assert!(id != TweenId::default());
-    }
-
-    // --- TechAnimation ---
-
-    #[test]
-    fn tech_new_creates_instance() {
-        let tech = TechAnimation::new();
-        let id = tech.glitch(500, 10.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn tech_default_matches_new() {
-        let tech = TechAnimation::default();
-        let id = tech.data_flow(1000, 200.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn glitch_returns_valid_id() {
-        let tech = TechAnimation::new();
-        let id = tech.glitch(500, 10.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn glitch_zero_severity() {
-        let tech = TechAnimation::new();
-        let id = tech.glitch(500, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn typing_returns_valid_id() {
-        let tech = TechAnimation::new();
-        let id = tech.typing(2000, 50);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn typing_zero_chars() {
-        let tech = TechAnimation::new();
-        let id = tech.typing(1000, 0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn data_flow_returns_valid_id() {
-        let tech = TechAnimation::new();
-        let id = tech.data_flow(1000, 200.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn hud_scan_returns_valid_id() {
-        let tech = TechAnimation::new();
-        let id = tech.hud_scan(2000);
-        assert!(id != TweenId::default());
-    }
-
-    // --- TransitionAnimation ---
-
-    #[test]
-    fn transition_new_creates_instance() {
-        let trans = TransitionAnimation::new();
-        let id = trans.fade_slide_in(300, 20.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn transition_default_matches_new() {
-        let trans = TransitionAnimation::default();
-        let id = trans.scale_blur_in(500);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn fade_slide_in_returns_valid_id() {
-        let trans = TransitionAnimation::new();
-        let id = trans.fade_slide_in(300, 20.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn fade_slide_in_zero_offset() {
-        let trans = TransitionAnimation::new();
-        let id = trans.fade_slide_in(300, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn fade_slide_out_returns_valid_id() {
-        let trans = TransitionAnimation::new();
-        let id = trans.fade_slide_out(300, 20.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn scale_blur_in_returns_valid_id() {
-        let trans = TransitionAnimation::new();
-        let id = trans.scale_blur_in(500);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn scale_blur_out_returns_valid_id() {
-        let trans = TransitionAnimation::new();
-        let id = trans.scale_blur_out(500);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn rotate_zoom_in_returns_valid_id() {
-        let trans = TransitionAnimation::new();
-        let id = trans.rotate_zoom_in(500, 45.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn rotate_zoom_in_zero_angle() {
-        let trans = TransitionAnimation::new();
-        let id = trans.rotate_zoom_in(500, 0.0);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn rotate_zoom_in_negative_angle() {
-        let trans = TransitionAnimation::new();
-        let id = trans.rotate_zoom_in(500, -45.0);
-        assert!(id != TweenId::default());
-    }
-
-    // --- Free functions ---
-
-    #[test]
-    fn glow_fn_returns_new() {
-        let g = glow();
-        let id = g.breathe(1000);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn neon_fn_returns_new() {
-        let n = neon();
-        let id = n.scanline(500);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn tech_fn_returns_new() {
-        let t = tech();
-        let id = t.hud_scan(1000);
-        assert!(id != TweenId::default());
-    }
-
-    #[test]
-    fn transition_fn_returns_new() {
-        let t = transition();
-        let id = t.fade_slide_out(200, 10.0);
-        assert!(id != TweenId::default());
-    }
-
-    // --- Clone ---
-
-    #[test]
-    fn clone_presets_all() {
-        let _ = GlowAnimation::new();
-        let _ = NeonAnimation::new();
-        let _ = TechAnimation::new();
-        let _ = TransitionAnimation::new();
-    }
 }

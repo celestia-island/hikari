@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Badge Component
@@ -36,7 +36,7 @@
 // Color Variants - 使用调色板上下文颜色
 // ============================================
 
-// Primary (粉红)
+// Primary (牡丹粉红)
 .hi-badge-primary {
   background: linear-gradient(135deg, var(--hi-button-primary), var(--hi-button-primary-dark));
   border-color: var(--hi-button-primary-hover);
@@ -66,7 +66,7 @@
   color: var(--hi-color-text-on-success);
 }
 
-// Warning (杏黄)
+// Warning (鹅黄)
 .hi-badge-warning {
   background: linear-gradient(135deg, var(--hi-button-warning), var(--hi-button-warning-dark));
   border-color: var(--hi-button-warning-light);
@@ -106,9 +106,9 @@
 
   .hi-badge {
     position: absolute;
-    bottom: 0;
+    top: 0;
     right: 0;
-    transform: translate(30%, 30%);
+    transform: translate(50%, -50%);
     z-index: 10;
     min-width: 18px;
     height: 18px;
@@ -123,12 +123,12 @@
 // ============================================
 
 .hi-badge-dot {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  padding: 0;
-  border-radius: 50%;
-  font-size: 0;
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 0 !important;
 
   .hi-badge-dot-inner {
     display: block;
@@ -195,11 +195,11 @@
 // ============================================
 
 .hi-badge-status {
-  width: 10px;
-  height: 10px;
-  min-width: 10px;
-  padding: 0;
-  border-radius: 50%;
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 10px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
   border: 2px solid var(--hi-color-surface);
 
   &.hi-badge-online {

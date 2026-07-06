@@ -17,15 +17,18 @@
 //    Uses a plain HTTP client (reqwest) to fetch the raw server response, bypassing
 //    the browser's JavaScript engine entirely. This is the definitive SSR content test.
 
-use anyhow::{anyhow, Result};
-use std::{path::PathBuf, time::{Duration, Instant}};
-
+use anyhow::Result;
 use reqwest;
 use scraper::{Html, Selector};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 use thirtyfour::{By, WebDriver};
 use tracing::{error, info, warn};
 
-use crate::{Test, html_assertions::HtmlAssertions};
+use crate::Test;
+use crate::html_assertions::HtmlAssertions;
 
 /// SSR-specific test result with additional metadata
 #[derive(Debug, Clone)]
@@ -256,26 +259,26 @@ impl SsrTests {
         // Verify basic HTML structure
         assertions
             .assert_exists("html")
-            .map_err(|e| anyhow!("HTML root not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("HTML root not found: {}", e))?;
         assertions
             .assert_exists("head")
-            .map_err(|e| anyhow!("Head element not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Head element not found: {}", e))?;
         assertions
             .assert_exists("body")
-            .map_err(|e| anyhow!("Body element not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Body element not found: {}", e))?;
 
         // Verify meta tags
         assertions
             .assert_exists("meta[charset]")
-            .map_err(|e| anyhow!("Charset meta tag not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Charset meta tag not found: {}", e))?;
         assertions
             .assert_attr_eq("meta[name='viewport']", "name", "viewport")
-            .map_err(|e| anyhow!("Viewport meta not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Viewport meta not found: {}", e))?;
 
         // Verify app root
         assertions
             .assert_exists("#hikari-app")
-            .map_err(|e| anyhow!("Hikari app root not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Hikari app root not found: {}", e))?;
 
         Ok(SsrTestResult::success(
             "test_fixture_html_structure",
@@ -303,13 +306,13 @@ impl SsrTests {
         for (selector, page_name) in expected_pages {
             assertions
                 .assert_exists(selector)
-                .map_err(|e| anyhow!("{} not found: {}", page_name, e))?;
+                .map_err(|e| anyhow::anyhow!("{} not found: {}", page_name, e))?;
         }
 
         // Verify all pages have the hikari-page class
         assertions
             .assert_count(".hikari-page", 5)
-            .map_err(|e| anyhow!("Expected 5 pages with .hikari-page class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Expected 5 pages with .hikari-page class: {}", e))?;
 
         Ok(SsrTestResult::success(
             "test_fixture_has_all_pages",
@@ -328,45 +331,45 @@ impl SsrTests {
         // Verify layout classes
         assertions
             .assert_has_class("#hikari-app", "hi-layout")
-            .map_err(|e| anyhow!("App root missing hi-layout class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("App root missing hi-layout class: {}", e))?;
         assertions
             .assert_has_class("#hikari-app", "hi-layout-light")
-            .map_err(|e| anyhow!("App root missing hi-layout-light class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("App root missing hi-layout-light class: {}", e))?;
 
         // Verify button classes
         assertions
             .assert_has_class(".hi-btn--primary", "hi-btn")
-            .map_err(|e| anyhow!("Primary button missing hi-btn class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn class: {}", e))?;
         assertions
             .assert_has_class(".hi-btn--primary", "hi-btn--primary")
-            .map_err(|e| anyhow!("Primary button missing hi-btn--primary class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--primary class: {}", e))?;
         assertions
             .assert_has_class(".hi-btn--primary", "hi-btn--lg")
-            .map_err(|e| anyhow!("Primary button missing hi-btn--lg class: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--lg class: {}", e))?;
 
         // Verify hero section classes
         assertions
             .assert_exists(".page-hero")
-            .map_err(|e| anyhow!("Hero section not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Hero section not found: {}", e))?;
         assertions
             .assert_exists(".page-hero__title")
-            .map_err(|e| anyhow!("Hero title not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Hero title not found: {}", e))?;
 
         // Verify card classes
         assertions
             .assert_count(".card", 3)
-            .map_err(|e| anyhow!("Expected 3 cards: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Expected 3 cards: {}", e))?;
         assertions
             .assert_exists(".card__title")
-            .map_err(|e| anyhow!("Card title not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Card title not found: {}", e))?;
 
         // Verify navigation classes
         assertions
             .assert_exists(".hi-layout-nav")
-            .map_err(|e| anyhow!("Layout nav not found: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Layout nav not found: {}", e))?;
         assertions
             .assert_count(".hi-nav-link", 3)
-            .map_err(|e| anyhow!("Expected 3 nav links: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Expected 3 nav links: {}", e))?;
 
         Ok(SsrTestResult::success(
             "test_fixture_css_classes_present",
@@ -386,31 +389,31 @@ impl SsrTests {
         // Verify important content is in HTML (not loaded via JS)
         assertions
             .assert_text_contains(".page-hero__title", "Hikari")
-            .map_err(|e| anyhow!("Hero title not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Hero title not in HTML: {}", e))?;
         assertions
             .assert_text_contains(".page-hero__subtitle", "Rust UI component library")
-            .map_err(|e| anyhow!("Hero subtitle not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Hero subtitle not in HTML: {}", e))?;
 
         // Verify card content is present
         assertions
             .assert_text_contains(".card:nth-child(1) .card__title", "Component Library")
-            .map_err(|e| anyhow!("Card 1 title not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Card 1 title not in HTML: {}", e))?;
         assertions
             .assert_text_contains(".card:nth-child(2) .card__title", "Design System")
-            .map_err(|e| anyhow!("Card 2 title not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Card 2 title not in HTML: {}", e))?;
         assertions
             .assert_text_contains(".card:nth-child(3) .card__title", "WebAssembly First")
-            .map_err(|e| anyhow!("Card 3 title not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Card 3 title not in HTML: {}", e))?;
 
         // Verify button text is present
         assertions
             .assert_text_contains(".hi-btn--primary", "Explore Components")
-            .map_err(|e| anyhow!("Primary button text not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Primary button text not in HTML: {}", e))?;
 
         // Verify navigation links are present
         assertions
             .assert_attr_eq(".hi-nav-link[href='/components']", "href", "/components")
-            .map_err(|e| anyhow!("Components nav link not in HTML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Components nav link not in HTML: {}", e))?;
 
         Ok(SsrTestResult::success(
             "test_fixture_no_js_required",
@@ -492,14 +495,14 @@ impl SsrTests {
             .unwrap_or_else(|_| "./screenshots/ssr".to_string());
 
         std::fs::create_dir_all(&screenshots_dir)
-            .map_err(|e| anyhow!("Failed to create screenshots directory: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
 
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
         let filename = format!("ssr_{}_{}_{}.png", test_name, test_type, timestamp);
         let filepath = PathBuf::from(&screenshots_dir).join(&filename);
 
         let screenshot_data = driver.screenshot_as_png().await.map_err(|e| {
-            anyhow!(
+            anyhow::anyhow!(
                 "Failed to take screenshot for {} {}: {}",
                 test_name,
                 test_type,
@@ -508,7 +511,7 @@ impl SsrTests {
         })?;
 
         std::fs::write(&filepath, screenshot_data)
-            .map_err(|e| anyhow!("Failed to save screenshot: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
 
         info!("SSR Screenshot saved to: {}", filepath.display());
 
@@ -520,7 +523,7 @@ impl SsrTests {
         driver
             .source()
             .await
-            .map_err(|e| anyhow!("Failed to get page source: {}", e))
+            .map_err(|e| anyhow::anyhow!("Failed to get page source: {}", e))
     }
 
     /// E2E Test 1: HTML Structure Validation
@@ -539,13 +542,13 @@ impl SsrTests {
         driver
             .goto(&url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Get HTML (should be SSR output)
         let html = Self::get_page_html(driver).await?;
-        let assertions = HtmlAssertions::from_html_str(&html);
+        let assertions = HtmlAssertions::from_str(&html);
 
         let mut checks_passed = vec![];
         let mut checks_failed = vec![];
@@ -690,17 +693,17 @@ impl SsrTests {
         let http_client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(10))
             .build()
-            .map_err(|e| anyhow!("Failed to build HTTP client: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to build HTTP client: {}", e))?;
 
         let raw_html = http_client
             .get(&url)
             .header("Accept", "text/html")
             .send()
             .await
-            .map_err(|e| anyhow!("HTTP fetch failed for {}: {}", url, e))?
+            .map_err(|e| anyhow::anyhow!("HTTP fetch failed for {}: {}", url, e))?
             .text()
             .await
-            .map_err(|e| anyhow!("Failed to read response body: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to read response body: {}", e))?;
 
         info!("Fetched {} bytes of raw HTML from {}", raw_html.len(), url);
 
@@ -824,7 +827,7 @@ impl SsrTests {
         driver
             .goto(&url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
@@ -1013,12 +1016,12 @@ impl SsrTests {
         driver
             .goto(&url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", url, e))?;
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let html = Self::get_page_html(driver).await?;
-        let assertions = HtmlAssertions::from_html_str(&html);
+        let assertions = HtmlAssertions::from_str(&html);
 
         let mut checks_passed = vec![];
         let mut checks_failed = vec![];

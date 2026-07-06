@@ -2,56 +2,52 @@
 //!
 //! Provides functions to detect and monitor the user's system preference
 //! for reduced motion.
-//!
-//! In WASI unified environment, this module currently provides a default
-//! implementation. The tairitsu WIT interface does not currently expose
-//! the `matchMedia` API needed for `prefers-reduced-motion` detection.
-//!
-//! When the WIT interface adds this capability, this module can be updated
-//! to use it.
-
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use tairitsu_vdom::Platform;
 
 /// Detect system prefers-reduced-motion setting
 ///
-/// Currently returns false (no preference detected) as the WIT interface
-/// does not expose the matchMedia API.
-///
-/// When available, this should use: `window.matchMedia("(prefers-reduced-motion: reduce)").matches()`
-pub const fn prefers_reduced_motion<P: Platform>(_platform: &Rc<RefCell<P>>) -> bool {
+/// # Platform Support
+/// - WASM: Uses `window.matchMedia('(prefers-reduced-motion: reduce)')`
+/// - Non-WASM: Always returns false
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn prefers_reduced_motion() -> bool {
+    web_sys::window()
+        .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
+        .flatten()
+        .map(|mql| mql.matches())
+        .unwrap_or(false)
+}
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+pub fn prefers_reduced_motion() -> bool {
     false
 }
 
 /// Watch for prefers-reduced-motion changes
 ///
-/// Currently a no-op as the WIT interface does not expose the MediaQueryList API.
+/// Sets up a listener that calls the callback when the system preference changes.
 ///
-/// When available, this should use: `window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", callback)`
-///
-/// # Arguments
-///
-/// * `callback` - Function to call when preference changes
-pub fn watch_prefers_reduced_motion<P: Platform>(
-    _platform: &Rc<RefCell<P>>,
-    _callback: impl Fn(bool) + 'static,
-) {
+/// # Platform Support
+/// - WASM: Uses MediaQueryList.onchange
+/// - Non-WASM: No-op
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn watch_prefers_reduced_motion(callback: impl Fn(bool) + 'static) {
+    use wasm_bindgen::JsCast;
+
+    if let Some(mql) = web_sys::window()
+        .and_then(|w| w.match_media("(prefers-reduced-motion: reduce)").ok())
+        .flatten()
+    {
+        let closure: wasm_bindgen::closure::Closure<dyn FnMut()> =
+            wasm_bindgen::closure::Closure::new(move || {
+                callback(prefers_reduced_motion());
+            });
+
+        mql.set_onchange(Some(closure.as_ref().unchecked_ref()));
+        closure.forget();
+    }
 }
 
-/// Check if reduced motion should be applied
-///
-/// This is a convenience function that checks both the system preference
-/// and any application-level override.
-///
-/// # Arguments
-///
-/// * `platform` - Platform reference
-/// * `enabled_override` - Optional application-level override (Some(true) = always enabled)
-pub fn should_reduce_motion<P: Platform>(
-    platform: &Rc<RefCell<P>>,
-    enabled_override: Option<bool>,
-) -> bool {
-    enabled_override.unwrap_or_else(|| prefers_reduced_motion(platform))
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+pub fn watch_prefers_reduced_motion(_callback: impl Fn(bool) + 'static) {
+    // No-op on non-WASM platforms
 }

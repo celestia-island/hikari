@@ -1,7 +1,7 @@
 //! Basic components module
 //!
-//! Provides fundamental UI components with flat design
-//! and glow effect aesthetics.
+//! Provides fundamental UI components with Arknights-style design
+//! and FUI aesthetics.
 //!
 //! ## Components
 //!
@@ -41,13 +41,11 @@ pub mod icon_button;
 pub mod image;
 pub mod input;
 pub mod input_wrapper;
-pub mod link;
 pub mod radio_group;
 pub mod select;
 pub mod slider;
 pub mod switch;
 pub mod textarea;
-pub mod typography;
 
 pub use arrow::{Arrow, ArrowComponent, ArrowDirection, ArrowProps};
 pub use avatar::*;
@@ -64,10 +62,8 @@ pub use icon_button::*;
 pub use image::*;
 pub use input::*;
 pub use input_wrapper::*;
-pub use link::*;
 pub use radio_group::*;
 pub use select::*;
 pub use slider::*;
 pub use switch::*;
 pub use textarea::*;
-pub use typography::*;

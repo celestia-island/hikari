@@ -1,15 +1,12 @@
 // packages/components/src/production/audio_player.rs
-// Audio player component
+// Audio player component with Arknights + FUI styling
 
-use hikari_palette::classes::{AudioPlayerClass, ClassesBuilder, TypedClass};
+use hikari_palette::classes::{AudioPlayerClass, ClassesBuilder, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-/// Marker struct providing the styled CSS for the audio player component.
 pub struct AudioPlayerComponent;
 
-/// Available sizes for the audio player.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AudioPlayerSize {
     #[default]
@@ -40,7 +37,6 @@ pub struct AudioPlayerProps {
     pub style: String,
 }
 
-/// Renders an audio player with cover art, title/artist info, and native HTML audio controls.
 #[component]
 pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
     let size_class = match props.size {
@@ -50,39 +46,39 @@ pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(AudioPlayerClass::Container)
-        .add_typed(size_class)
-        .add(&props.class)
+        .add(AudioPlayerClass::Container)
+        .add(size_class)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
         div { class: container_classes, style: props.style,
 
             // Cover and info section
-            div { class: AudioPlayerClass::Header.class_name(),
+            div { class: AudioPlayerClass::Header.as_class(),
                 if let Some(cover) = &props.cover {
-                    div { class: AudioPlayerClass::Cover.class_name(),
+                    div { class: AudioPlayerClass::Cover.as_class(),
                         img {
                             src: cover,
                             alt: props.title.as_deref().unwrap_or("Audio cover"),
-                            class: AudioPlayerClass::CoverImage.class_name(),
+                            class: AudioPlayerClass::CoverImage.as_class(),
                         }
                     }
                 }
 
-                div { class: AudioPlayerClass::Info.class_name(),
+                div { class: AudioPlayerClass::Info.as_class(),
                     if let Some(title) = &props.title {
-                        div { class: AudioPlayerClass::Title.class_name(), "{title}" }
+                        div { class: AudioPlayerClass::Title.as_class(), "{title}" }
                     }
                     if let Some(artist) = &props.artist {
-                        div { class: AudioPlayerClass::Artist.class_name(), "{artist}" }
+                        div { class: AudioPlayerClass::Artist.as_class(), "{artist}" }
                     }
                 }
             }
 
             // Audio element with native controls
             audio {
-                class: AudioPlayerClass::Audio.class_name(),
+                class: AudioPlayerClass::Audio.as_class(),
                 src: props.src,
                 autoplay: props.autoplay,
                 controls: props.controls,

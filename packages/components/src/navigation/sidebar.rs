@@ -8,16 +8,16 @@
 // - Styles via SCSS with CSS variables for theming
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, SidebarClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, SidebarClass, UtilityClass};
 
-use crate::feedback::Glow;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct SidebarComponent;
 
-/// Props for the [`Sidebar`] component.
 #[define_props]
 pub struct SidebarProps {
     #[default("".to_string())]
@@ -37,8 +37,8 @@ pub struct SidebarProps {
 #[component]
 pub fn Sidebar(props: SidebarProps) -> Element {
     let nav_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::Sidebar)
-        .add(&props.class)
+        .add(SidebarClass::Sidebar)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
@@ -83,7 +83,6 @@ pub struct SidebarSectionProps {
     pub children: Element,
 }
 
-/// A collapsible section within a sidebar containing nested items.
 #[component]
 pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let is_expanded = use_signal(|| props.default_expanded);
@@ -91,23 +90,23 @@ pub fn SidebarSection(props: SidebarSectionProps) -> Element {
     let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let section_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::Section)
-        .add(&props.class)
+        .add(SidebarClass::Section)
+        .add_raw(&props.class)
         .build();
 
     let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::SectionArrow)
-        .add_typed_if(SidebarClass::SectionArrowRotated, {
+        .add(SidebarClass::SectionArrow)
+        .add_if(SidebarClass::SectionArrowRotated, move || {
             is_expanded_for_arrow.get()
         })
         .build();
 
-    let header_class = SidebarClass::SectionHeader.class_name();
-    let title_group_class = SidebarClass::SectionTitleGroup.class_name();
-    let title_primary_class = SidebarClass::SectionTitlePrimary.class_name();
-    let title_secondary_class = SidebarClass::SectionTitleSecondary.class_name();
-    let children_class = SidebarClass::SectionChildren.class_name();
+    let header_class = SidebarClass::SectionHeader.as_class();
+    let title_group_class = SidebarClass::SectionTitleGroup.as_class();
+    let title_primary_class = SidebarClass::SectionTitlePrimary.as_class();
+    let title_secondary_class = SidebarClass::SectionTitleSecondary.as_class();
+    let children_class = SidebarClass::SectionChildren.as_class();
     let aria_hidden_val = (!is_expanded.get()).to_string();
 
     let is_expanded_for_click = is_expanded.clone();
@@ -177,7 +176,6 @@ pub struct SidebarItemProps {
     pub items: Option<Element>,
 }
 
-/// A sidebar item with optional nested children and expand/collapse support.
 #[component]
 pub fn SidebarItem(props: SidebarItemProps) -> Element {
     // Check if nested items are provided
@@ -187,22 +185,22 @@ pub fn SidebarItem(props: SidebarItemProps) -> Element {
     let expanded_attr = if is_expanded.get() { "true" } else { "false" };
 
     let item_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::Item)
-        .add(&props.class)
+        .add(SidebarClass::Item)
+        .add_raw(&props.class)
         .build();
 
     let is_expanded_for_arrow = is_expanded.clone();
     let arrow_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::ItemArrow)
-        .add_typed_if(SidebarClass::ItemArrowRotated, {
+        .add(SidebarClass::ItemArrow)
+        .add_if(SidebarClass::ItemArrowRotated, move || {
             is_expanded_for_arrow.get()
         })
         .build();
 
-    let header_class = SidebarClass::ItemHeader.class_name();
-    let content_class = SidebarClass::ItemContent.class_name();
-    let secondary_class = SidebarClass::ItemSecondary.class_name();
-    let item_children_class = SidebarClass::ItemChildren.class_name();
+    let header_class = SidebarClass::ItemHeader.as_class();
+    let content_class = SidebarClass::ItemContent.as_class();
+    let secondary_class = SidebarClass::ItemSecondary.as_class();
+    let item_children_class = SidebarClass::ItemChildren.as_class();
     let aria_hidden_val = (!is_expanded.get()).to_string();
 
     let is_expanded_for_click = is_expanded.clone();
@@ -286,16 +284,15 @@ pub struct SidebarLeafProps {
     pub children: Element,
 }
 
-/// A terminal leaf node in the sidebar with no nested children.
 #[component]
 pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
     let leaf_classes = ClassesBuilder::new()
-        .add_typed(SidebarClass::Leaf)
-        .add(&props.class)
+        .add(SidebarClass::Leaf)
+        .add_raw(&props.class)
         .build();
 
-    let leaf_content_class = SidebarClass::LeafContent.class_name();
-    let secondary_class = SidebarClass::ItemSecondary.class_name();
+    let leaf_content_class = SidebarClass::LeafContent.as_class();
+    let secondary_class = SidebarClass::ItemSecondary.as_class();
 
     rsx! {
         div { class: leaf_classes, "data-id": props.id,

@@ -6,8 +6,6 @@
 
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
-py := if os_family() == "windows" { "python" } else { "python3" }
-
 # ============================================================================
 # Icons build tasks
 # ============================================================================
@@ -20,7 +18,7 @@ fetch:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Fetching Lucide icons from GitHub..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    {{py}} scripts/icons/fetch_lucide_icons.py
+    python scripts/icons/fetch_lucide_icons.py
 
 # Generate Lucide icons enum (legacy script, use fetch instead)
 enum:
@@ -28,14 +26,14 @@ enum:
     @echo "Generating Lucide icons enum..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Note: This is the legacy script, use 'fetch' instead"
-    {{py}} scripts/icons/generate_lucide_icons.py
+    python scripts/icons/generate_lucide_icons.py
 
 # Build Lucide icon assets (legacy script)
 assets:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Building Lucide icon assets..."
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    {{py}} scripts/icons/build_lucide_assets.py
+    python scripts/icons/build_lucide_assets.py
 
 # Generate all icon resources
 all: fetch
@@ -80,14 +78,14 @@ fmt:
 # Check if icons need to be regenerated
 check:
     @echo "Checking Lucide icons..."
-    @{{py}} -c "from pathlib import Path; p = Path('packages/icons/src/generated/lucide.rs'); print('✅ Lucide icons exist') if p.exists() else (print('❌ Lucide icons not generated'), exit(1))"
+    @if (!(Test-Path "packages/icons/src/generated/lucide.rs")) { echo "❌ Lucide icons not generated"; exit 1 } else { echo "✅ Lucide icons exist" }
 
 # List available icons
 list:
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     @echo "Available Lucide Icons"
     @echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    @{{py}} scripts/icons/list_icons.py
+    @python -c "import sys; exec(open('scripts/icons/fetch_lucide_icons.py').read().split('def main')[0]); icons = fetch_icon_list(); print(f'Total: {len(icons)} icons'); print('\\nFirst 20:'); [print(f'  - {icon}') for icon in icons[:20]]"
 
 # Show icons build status
 status:

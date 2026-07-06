@@ -1,10 +1,9 @@
 // hi-components/src/basic/slider.rs
-// Slider component
+// Slider component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, SliderClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SliderSize {
@@ -42,14 +41,14 @@ pub fn Slider(props: SliderProps) -> Element {
     };
 
     let slider_classes = ClassesBuilder::new()
-        .add_typed(SliderClass::Slider)
-        .add_typed(size_class)
-        .add_typed_if(SliderClass::Disabled, props.disabled)
-        .add(&props.class)
+        .add(SliderClass::Slider)
+        .add(size_class)
+        .add_if(SliderClass::Disabled, || props.disabled)
+        .add_raw(&props.class)
         .build();
 
     let percent = if props.max > props.min {
-        (f64::from(props.value - props.min) / f64::from(props.max - props.min) * 100.0)
+        ((props.value - props.min) as f64 / (props.max - props.min) as f64 * 100.0)
             .clamp(0.0, 100.0)
     } else {
         0.0
@@ -58,8 +57,14 @@ pub fn Slider(props: SliderProps) -> Element {
     rsx! {
         div { class: slider_classes,
             div { class: "hi-slider-rail" }
-            div { class: "hi-slider-track", style: "width: {percent}%;" }
-            div { class: "hi-slider-handle", style: "left: {percent}%;" }
+            div {
+                class: "hi-slider-track",
+                style: "width: {percent}%;",
+            }
+            div {
+                class: "hi-slider-handle",
+                style: "left: {percent}%;",
+            }
             input {
                 r#type: "range",
                 class: "hi-slider-input",
@@ -75,7 +80,7 @@ pub fn Slider(props: SliderProps) -> Element {
                             handler.call(constrained);
                         }
                     }
-                },
+                }
             }
         }
     }
@@ -129,7 +134,7 @@ impl StyledComponent for SliderComponent {
     top: 50%;
     transform: translate(-50%, -50%);
     background-color: var(--hi-color-primary, #1890ff);
-    border: 2px solid var(--hi-color-bg-container, #fff);
+    border: 2px solid #fff;
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -139,16 +144,6 @@ impl StyledComponent for SliderComponent {
 .hi-slider-handle:hover {
     transform: translate(-50%, -50%) scale(1.2);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.hi-slider-handle:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #1890ff);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(var(--hi-color-primary-rgb, 24, 144, 255), 0.2);
-}
-
-.hi-slider-handle:active {
-    transform: translate(-50%, -50%) scale(1.1);
 }
 
 .hi-slider-input {
@@ -199,12 +194,6 @@ impl StyledComponent for SliderComponent {
 
 [data-theme="dark"] .hi-slider-disabled .hi-slider-handle {
     background-color: var(--hi-text-disabled, #555);
-}
-
-[data-theme="dark"] .hi-slider-handle:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #1890ff);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(var(--hi-color-primary-rgb, 24, 144, 255), 0.3);
 }
 "#
     }

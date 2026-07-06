@@ -26,7 +26,6 @@ impl Default for TweenBuilder {
 }
 
 impl TweenBuilder {
-    #[must_use]
     pub fn new() -> Self {
         Self {
             options: AnimationOptions::default(),
@@ -37,53 +36,49 @@ impl TweenBuilder {
         }
     }
 
-    #[must_use]
     pub fn with_engine(mut self, engine: AnimationEngine) -> Self {
         self.engine = Some(engine);
         self
     }
 
-    #[must_use]
-    pub const fn duration(mut self, duration: Duration) -> Self {
+    pub fn duration(mut self, duration: Duration) -> Self {
         self.options.duration = duration;
         self
     }
 
-    #[must_use]
-    pub const fn duration_ms(self, ms: u64) -> Self {
+    pub fn duration_ms(self, ms: u64) -> Self {
         self.duration(Duration::from_millis(ms))
     }
 
-    #[must_use]
     pub fn duration_secs(self, secs: f64) -> Self {
         self.duration(Duration::from_secs_f64(secs))
     }
 
-    #[must_use]
-    pub const fn delay(mut self, delay: Duration) -> Self {
+    pub fn delay(mut self, delay: Duration) -> Self {
         self.options.delay = delay;
         self
     }
 
-    #[must_use]
-    pub const fn delay_ms(self, ms: u64) -> Self {
+    pub fn delay_ms(self, ms: u64) -> Self {
         self.delay(Duration::from_millis(ms))
     }
 
-    #[must_use]
     pub fn easing(mut self, easing: crate::core::EasingFunction) -> Self {
         self.options.easing = easing;
         self
     }
 
-    #[must_use]
-    pub const fn repeat(mut self, count: u32) -> Self {
+    pub fn repeat(mut self, count: u32) -> Self {
         self.options.repeat = Some(count);
         self
     }
 
-    #[must_use]
-    pub const fn loop_anim(mut self) -> Self {
+    pub fn yoyo(mut self, enabled: bool) -> Self {
+        self.options.yoyo = enabled;
+        self
+    }
+
+    pub fn loop_anim(mut self) -> Self {
         self.options.playback = crate::core::PlaybackMode::Loop;
         self
     }
@@ -118,9 +113,10 @@ impl TweenBuilder {
         self
     }
 
-    #[must_use]
     pub fn build(self) -> Tween {
-        let mut tween = Tween::new(TweenId::default(), self.options);
+        let engine = self.engine.unwrap_or_default();
+        let id = engine.create_tween(self.options.clone());
+        let mut tween = Tween::new(id, self.options);
 
         for target in self.targets {
             tween.add_target(target);
@@ -137,23 +133,36 @@ impl TweenBuilder {
         tween
     }
 
-    #[must_use]
-    pub fn play(self) -> Option<TweenId> {
-        let engine = self.engine.clone()?;
-        let mut tween = self.build();
+    pub fn play(self) -> TweenId {
+        let engine = self.engine.clone().unwrap_or_default();
+        let id = engine.create_tween(self.options.clone());
+        let mut tween = Tween::new(id, self.options.clone());
+
+        for target in self.targets {
+            tween.add_target(target);
+        }
+
+        if let Some(callback) = self.on_update {
+            tween.set_on_update(callback);
+        }
+
+        if let Some(callback) = self.on_complete {
+            tween.set_on_complete(callback);
+        }
+
         tween.play();
 
-        let id = engine.tweens.borrow_mut().insert(tween);
-        Some(id)
+        let mut tweens = engine.tweens.borrow_mut();
+        tweens.insert(tween);
+
+        id
     }
 }
 
-#[must_use]
 pub fn tween() -> TweenBuilder {
     TweenBuilder::new()
 }
 
-#[must_use]
 pub fn tween_with(engine: AnimationEngine) -> TweenBuilder {
     TweenBuilder::new().with_engine(engine)
 }
@@ -239,7 +248,6 @@ impl Default for ParallelBuilder {
 }
 
 impl ParallelBuilder {
-    #[must_use]
     pub fn new() -> Self {
         Self {
             tweens: Vec::new(),
@@ -247,37 +255,34 @@ impl ParallelBuilder {
         }
     }
 
-    #[must_use]
     pub fn with_engine(mut self, engine: AnimationEngine) -> Self {
         self.engine = engine;
         self
     }
 
-    #[must_use]
-    pub fn add_tween(mut self, tween: Tween) -> Self {
+    #[allow(clippy::should_implement_trait)]
+    pub fn add(mut self, tween: Tween) -> Self {
         self.tweens.push(tween);
         self
     }
 
-    #[must_use]
     pub fn build(self) -> Vec<TweenId> {
         let mut ids = Vec::new();
         for mut tween in self.tweens {
+            let id = tween.id();
             tween.play();
             let mut tweens = self.engine.tweens.borrow_mut();
-            let id = tweens.insert(tween);
+            tweens.insert(tween);
             ids.push(id);
         }
         ids
     }
 
-    #[must_use]
     pub fn play(self) -> Vec<TweenId> {
         self.build()
     }
 }
 
-#[must_use]
 pub fn parallel() -> ParallelBuilder {
     ParallelBuilder::new()
 }
@@ -295,7 +300,6 @@ impl Default for SequenceBuilder {
 }
 
 impl SequenceBuilder {
-    #[must_use]
     pub fn new() -> Self {
         Self {
             tweens: Vec::new(),
@@ -304,57 +308,47 @@ impl SequenceBuilder {
         }
     }
 
-    #[must_use]
     pub fn with_engine(mut self, engine: AnimationEngine) -> Self {
         self.engine = engine;
         self
     }
 
-    #[must_use]
-    pub fn add_tween(mut self, tween: Tween) -> Self {
+    #[allow(clippy::should_implement_trait)]
+    pub fn add(mut self, tween: Tween) -> Self {
         self.tweens.push((tween, self.delay));
         self.delay = Duration::ZERO;
         self
     }
 
-    #[must_use]
-    pub const fn delay(mut self, delay: Duration) -> Self {
+    pub fn delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
         self
     }
 
-    #[must_use]
-    pub const fn delay_ms(self, ms: u64) -> Self {
+    pub fn delay_ms(self, ms: u64) -> Self {
         self.delay(Duration::from_millis(ms))
     }
 
-    #[must_use]
     pub fn build(self) -> Vec<TweenId> {
         let mut ids = Vec::new();
-        let mut cumulative_delay = Duration::ZERO;
-        for (mut tween, delay) in self.tweens {
-            cumulative_delay += delay;
-            // Set elapsed to simulate delay offset so the sequence plays in order
-            if cumulative_delay > Duration::ZERO {
-                tween.seek(cumulative_delay);
-            }
+        for (tween, delay) in self.tweens {
+            let id = tween.id();
             let mut tweens = self.engine.tweens.borrow_mut();
-            let id = tweens.insert(tween);
+            tweens.insert(tween);
             drop(tweens);
 
+            std::thread::sleep(delay);
             self.engine.play(id);
             ids.push(id);
         }
         ids
     }
 
-    #[must_use]
     pub fn play(self) -> Vec<TweenId> {
         self.build()
     }
 }
 
-#[must_use]
 pub fn sequence() -> SequenceBuilder {
     SequenceBuilder::new()
 }

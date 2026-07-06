@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Toast Component - Emphasis Style
@@ -14,7 +14,7 @@
 
 .hi-toast-container {
   position: fixed;
-  z-index: var(--hi-z-index-toast, 9999);
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -192,7 +192,7 @@
   background: var(--hi-color-info);
 }
 
-// Warning (Amber) - 杏黄 (use darker variant for white text readability)
+// Warning (Yellow) - 鹅黄 (use darker variant for white text readability)
 .hi-toast-warning {
   background: var(--hi-button-warning-dark);
 }

@@ -1,11 +1,14 @@
 // hikari-e2e/src/screenshot_bin.rs
 // E2E screenshot generator using headless Chromium (chromiumoxide)
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result};
 use futures::StreamExt;
 use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{browser::{Browser, BrowserConfig}, page::Page};
+use chromiumoxide::{
+    browser::{Browser, BrowserConfig},
+    page::Page,
+};
 use clap::Parser;
 use tracing::{error, info, warn};
 
@@ -152,7 +155,7 @@ impl ScreenshotGenerator {
                 "--disable-extensions",
             ])
             .build()
-            .map_err(|e| anyhow!("Failed to build browser config: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to build browser config: {}", e))?;
 
         // Launch browser
         let (browser, mut handler) = Browser::launch(config)
@@ -361,7 +364,7 @@ async fn main() -> Result<()> {
     let end = args.end.unwrap_or(ROUTES.len());
     if end > ROUTES.len() {
         error!("End index {} exceeds total routes {}", end, ROUTES.len());
-        bail!("Invalid route range");
+        anyhow::bail!("Invalid route range");
     }
 
     if args.start >= end {
@@ -369,7 +372,7 @@ async fn main() -> Result<()> {
             "Start index {} must be less than end index {}",
             args.start, end
         );
-        bail!("Invalid route range");
+        anyhow::bail!("Invalid route range");
     }
 
     // Create screenshot generator

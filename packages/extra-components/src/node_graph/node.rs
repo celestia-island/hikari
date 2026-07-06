@@ -3,8 +3,6 @@
 
 use std::collections::HashMap;
 
-use tairitsu_vdom::{VElement, VNode, VText};
-
 pub type NodeId = String;
 pub type PortId = String;
 
@@ -16,7 +14,6 @@ pub struct NodeType {
 }
 
 impl NodeType {
-    #[must_use]
     pub fn new(category: &str, name: &str) -> Self {
         Self {
             category: category.to_string(),
@@ -24,7 +21,6 @@ impl NodeType {
         }
     }
 
-    #[must_use]
     pub fn id(&self) -> String {
         if self.category.is_empty() && self.name.is_empty() {
             String::new()
@@ -34,12 +30,9 @@ impl NodeType {
     }
 }
 
-/// Minimal node state for serialization and undo/redo history.
-///
-/// Contains only the fields that can change at runtime (position, size, selection).
-/// Use [`NodeView`] for rendering, which adds title, type, ports, and custom data.
+/// Node state
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodePlacement {
+pub struct NodeState {
     pub id: NodeId,
     pub position: (f64, f64),
     pub size: (f64, f64),
@@ -47,9 +40,8 @@ pub struct NodePlacement {
     pub minimized: bool,
 }
 
-impl NodePlacement {
-    #[must_use]
-    pub const fn new(id: NodeId) -> Self {
+impl NodeState {
+    pub fn new(id: NodeId) -> Self {
         Self {
             id,
             position: (0.0, 0.0),
@@ -59,33 +51,29 @@ impl NodePlacement {
         }
     }
 
-    #[must_use]
-    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
+    pub fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
-    #[must_use]
-    pub const fn with_size(mut self, width: f64, height: f64) -> Self {
+    pub fn with_size(mut self, width: f64, height: f64) -> Self {
         self.size = (width, height);
         self
     }
 
-    #[must_use]
-    pub const fn with_selected(mut self, selected: bool) -> Self {
+    pub fn with_selected(mut self, selected: bool) -> Self {
         self.selected = selected;
         self
     }
 
-    #[must_use]
-    pub const fn with_minimized(mut self, minimized: bool) -> Self {
+    pub fn with_minimized(mut self, minimized: bool) -> Self {
         self.minimized = minimized;
         self
     }
 }
 
 /// Node port
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NodePort {
     pub port_id: PortId,
     pub port_type: String,
@@ -94,13 +82,7 @@ pub struct NodePort {
 }
 
 impl NodePort {
-    #[must_use]
-    pub const fn new(
-        port_id: PortId,
-        port_type: String,
-        label: String,
-        position: PortPosition,
-    ) -> Self {
+    pub fn new(port_id: PortId, port_type: String, label: String, position: PortPosition) -> Self {
         Self {
             port_id,
             port_type,
@@ -110,7 +92,7 @@ impl NodePort {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub enum PortPosition {
     Top,
     Bottom,
@@ -119,13 +101,12 @@ pub enum PortPosition {
 }
 
 impl PortPosition {
-    #[must_use]
-    pub const fn name(&self) -> &'static str {
+    pub fn name(&self) -> &'static str {
         match self {
-            Self::Top => "top",
-            Self::Bottom => "bottom",
-            Self::Left => "left",
-            Self::Right => "right",
+            PortPosition::Top => "top",
+            PortPosition::Bottom => "bottom",
+            PortPosition::Left => "left",
+            PortPosition::Right => "right",
         }
     }
 }
@@ -142,7 +123,7 @@ pub trait NodePlugin: Send + Sync {
 
     /// Get display label for the node
     fn label(&self) -> String {
-        self.node_type().name
+        self.node_type().name.clone()
     }
 
     /// Get display value (for constant nodes, etc.)
@@ -151,9 +132,7 @@ pub trait NodePlugin: Send + Sync {
     }
 
     /// Handle input port data
-    ///
-    /// Default implementation does nothing. Override in plugins that process input.
-    fn handle_input(&self, _port_id: PortId, _data: crate::node_graph::value::NodeValue) {}
+    fn handle_input(&self, port_id: PortId, data: crate::node_graph::value::NodeValue);
 
     /// Get output port data
     fn get_output(&self, port_id: PortId) -> Option<crate::node_graph::value::NodeValue>;
@@ -162,32 +141,6 @@ pub trait NodePlugin: Send + Sync {
     fn default_ports(&self) -> Vec<NodePort> {
         Vec::new()
     }
-
-    /// Render the node body as a VNode
-    fn render_body(&self) -> VNode {
-        let type_name = self.node_type().name;
-        let mut body = VElement::new("div")
-            .class("hi-node-body")
-            .attr("data-node-type", &type_name);
-
-        if let Some(value) = self.display_value() {
-            let value_class = format!("hi-node-{type_name}-value");
-            body = body.child(VNode::Element(
-                VElement::new("div")
-                    .class(value_class)
-                    .child(VNode::Text(VText::new(&value))),
-            ));
-        } else {
-            let label = self.label();
-            body = body.child(VNode::Element(
-                VElement::new("div")
-                    .class("hi-node-label")
-                    .child(VNode::Text(VText::new(&label))),
-            ));
-        }
-
-        VNode::Element(body)
-    }
 }
 
 /// Simple node data structure for rendering
@@ -195,7 +148,7 @@ pub trait NodePlugin: Send + Sync {
 /// This is the data model that frameworks can use to render nodes.
 /// Previously a Dioxus component, now framework-agnostic.
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodeView {
+pub struct Node {
     pub id: NodeId,
     pub title: String,
     pub position: (f64, f64),
@@ -207,8 +160,7 @@ pub struct NodeView {
     pub custom_data: HashMap<String, String>,
 }
 
-impl NodeView {
-    #[must_use]
+impl Node {
     pub fn new(id: NodeId, title: String) -> Self {
         Self {
             id,
@@ -223,48 +175,41 @@ impl NodeView {
         }
     }
 
-    #[must_use]
-    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
+    pub fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
-    #[must_use]
-    pub const fn with_size(mut self, width: f64, height: f64) -> Self {
+    pub fn with_size(mut self, width: f64, height: f64) -> Self {
         self.size = (width, height);
         self
     }
 
-    #[must_use]
     pub fn with_type(mut self, node_type: String) -> Self {
         self.node_type = node_type;
         self
     }
 
-    #[must_use]
     pub fn add_port(mut self, port: NodePort) -> Self {
         self.ports.push(port);
         self
     }
 
-    #[must_use]
     pub fn with_custom_data(mut self, key: String, value: String) -> Self {
         self.custom_data.insert(key, value);
         self
     }
 
     /// Calculate height based on minimization state
-    #[must_use]
-    pub const fn effective_height(&self) -> f64 {
+    pub fn effective_height(&self) -> f64 {
         if self.minimized {
             40.0
         } else {
-            (self.ports.len() as f64).mul_add(30.0, 150.0)
+            150.0 + self.ports.len() as f64 * 30.0
         }
     }
 
     /// Get the CSS position style string
-    #[must_use]
     pub fn position_style(&self) -> String {
         format!(
             "position: absolute; left: {}px; top: {}px; width: {}px; height: {}px;",
@@ -276,7 +221,6 @@ impl NodeView {
     }
 
     /// Get CSS classes for the node
-    #[must_use]
     pub fn class_string(&self) -> String {
         format!(
             "hi-node-graph-node hi-node-{} {} {}",
@@ -295,8 +239,8 @@ impl NodeView {
     }
 }
 
-impl From<NodePlacement> for NodeView {
-    fn from(state: NodePlacement) -> Self {
+impl From<NodeState> for Node {
+    fn from(state: NodeState) -> Self {
         let id = state.id.clone();
         Self {
             id,
@@ -310,60 +254,6 @@ impl From<NodePlacement> for NodeView {
             custom_data: HashMap::new(),
         }
     }
-}
-
-use super::port::{Port, PortType};
-
-#[must_use]
-pub fn render_node(node: &NodeView) -> VNode {
-    let mut children: Vec<VNode> = Vec::new();
-
-    let mut header = VElement::new("div")
-        .class("hi-node-header")
-        .child(VNode::Element(
-            VElement::new("span")
-                .class("hi-node-title")
-                .child(VNode::Text(VText::new(&node.title))),
-        ));
-
-    if node.minimized {
-        header = header.child(VNode::Element(
-            VElement::new("span")
-                .class("hi-node-minimized-icon")
-                .child(VNode::Text(VText::new("⋯"))),
-        ));
-    }
-
-    children.push(VNode::Element(header));
-
-    if !node.minimized {
-        let body = VElement::new("div").class("hi-node-body");
-        children.push(VNode::Element(body));
-
-        let mut ports = VElement::new("div").class("hi-node-ports");
-
-        for np in &node.ports {
-            let is_input = matches!(np.position, PortPosition::Left | PortPosition::Top);
-            let port_type = if is_input {
-                PortType::Input
-            } else {
-                PortType::Output
-            };
-            let p = Port::new(np.port_id.clone(), port_type, np.label.clone())
-                .with_port_position_name(np.position.name());
-            ports = ports.child(super::port::render_port(&p));
-        }
-
-        children.push(VNode::Element(ports));
-    }
-
-    VNode::Element(
-        VElement::new("div")
-            .class(node.class_string())
-            .style(node.position_style())
-            .attr("data-node-id", &node.id)
-            .children(children),
-    )
 }
 
 #[cfg(test)]
@@ -401,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_node_state_new() {
-        let state = NodePlacement::new("node1".to_string());
+        let state = NodeState::new("node1".to_string());
         assert_eq!(state.id, "node1");
         assert_eq!(state.position, (0.0, 0.0));
         assert_eq!(state.size, (200.0, 150.0));
@@ -411,7 +301,7 @@ mod tests {
 
     #[test]
     fn test_node_state_builder() {
-        let state = NodePlacement::new("node1".to_string())
+        let state = NodeState::new("node1".to_string())
             .with_position(100.0, 200.0)
             .with_size(300.0, 400.0)
             .with_selected(true)
@@ -425,7 +315,7 @@ mod tests {
 
     #[test]
     fn test_node_new() {
-        let node = NodeView::new("node1".to_string(), "My Node".to_string());
+        let node = Node::new("node1".to_string(), "My Node".to_string());
         assert_eq!(node.id, "node1");
         assert_eq!(node.title, "My Node");
         assert_eq!(node.position, (0.0, 0.0));
@@ -434,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_node_builder() {
-        let node = NodeView::new("node1".to_string(), "My Node".to_string())
+        let node = Node::new("node1".to_string(), "My Node".to_string())
             .with_position(50.0, 50.0)
             .with_type("custom".to_string())
             .add_port(NodePort::new(
@@ -452,7 +342,7 @@ mod tests {
 
     #[test]
     fn test_effective_height() {
-        let mut node = NodeView::new("node1".to_string(), "Node".to_string());
+        let mut node = Node::new("node1".to_string(), "Node".to_string());
         node.ports = vec![
             NodePort::new(
                 "p1".to_string(),
@@ -485,11 +375,11 @@ mod tests {
 
     #[test]
     fn test_from_node_state() {
-        let state = NodePlacement::new("node1".to_string())
+        let state = NodeState::new("node1".to_string())
             .with_position(10.0, 20.0)
             .with_selected(true);
 
-        let node: NodeView = state.into();
+        let node: Node = state.into();
         assert_eq!(node.id, "node1");
         assert_eq!(node.position, (10.0, 20.0));
         assert!(node.selected);

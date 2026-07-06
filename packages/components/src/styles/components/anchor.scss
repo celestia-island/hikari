@@ -1,167 +1,69 @@
 // Anchor component styles
-// In-page navigation with smooth scrolling,  design system
-
-@use 'variables' as vars;
+// In-page navigation with smooth scrolling
 
 .hi-anchor-wrapper {
-    position: relative;
-}
-
-// Anchor container -  acrylic surface
-.hi-anchor-right,
-.hi-anchor-left {
-    position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--hi-surface, rgba(255, 255, 255, 0.7));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--hi-color-border, var(--hi-border, #C4D8DA));
-    border-radius: vars.$hikari-radius-lg;
-    box-shadow: var(--hi-shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-    z-index: var(--hi-z-dropdown, 1000);
-    padding: 8px;
+  position: relative;
 }
 
 .hi-anchor-right {
-    right: 20px;
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--hi-color-background, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 .hi-anchor-left {
-    left: 20px;
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--hi-color-background, #ffffff);
+  border: 1px solid var(--hi-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
-// Individual anchor link item
 .hi-anchor-link {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 8px 12px;
-    border: none;
-    border-radius: vars.$hikari-radius-md;
-    background: transparent;
-    color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
-    text-align: left;
-    cursor: pointer;
-    transition:
-        color vars.$hikari-transition-fast,
-        background-color vars.$hikari-transition-fast,
-        transform vars.$hikari-transition-fast,
-        box-shadow vars.$hikari-transition-fast;
-    font-size: vars.$hikari-font-size-sm;
-    line-height: 1.5;
-    white-space: nowrap;
-    position: relative;
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--hi-color-text, #333333);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: nowrap;
 
-    &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%) scaleY(0);
-        width: 3px;
-        height: 16px;
-        border-radius: 0 2px 2px 0;
-        background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-        transition: transform vars.$hikari-transition-fast;
-    }
+  &:hover {
+    background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
+    color: var(--hi-color-primary, #00a0e9);
+  }
 
-    &:hover {
-        background: var(--hi-button-primary-light, #FFE4E9);
-        color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
+  &:focus {
+    outline: 2px solid var(--hi-color-primary, #00a0e9);
+    outline-offset: 2px;
+  }
 
-        &::before {
-            transform: translateY(-50%) scaleY(1);
-        }
-    }
-
-    &:focus-visible {
-        outline: 2px solid var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-        outline-offset: -2px;
-    }
-
-    &:active {
-        background: var(--hi-button-primary-hover, rgba(255, 192, 203, 0.3));
-        transform: scale(0.98);
-    }
+  &:active {
+    background: var(--hi-color-primary-dark, rgba(0, 160, 233, 0.2));
+  }
 }
 
-// Active state - filled with primary color
 .hi-anchor-active {
-    background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-    color: var(--hi-badge-text, #FFFFFF);
-    font-weight: 600;
+  background: var(--hi-color-primary, #00a0e9);
+  color: white;
+  font-weight: 500;
 
-    &::before {
-        content: none;
-    }
-
-    &:hover {
-        background: var(--hi-button-primary-hover, rgba(255, 192, 203, 0.85));
-    }
-
-    &:active {
-        background: var(--hi-button-primary-dark, #FF9AA9);
-    }
-}
-
-// Ink line variant (minimal active indicator)
-.hi-anchor-ink .hi-anchor-active {
-    background: transparent;
-    color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-    font-weight: 600;
-
-    &::before {
-        transform: translateY(-50%) scaleY(1);
-    }
-}
-
-// Dark theme (Tairitsu)
-[data-theme="tairitsu"] {
-    .hi-anchor-right,
-    .hi-anchor-left {
-        background: var(--hi-surface, rgba(32, 35, 54, 0.7));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-color: var(--hi-border, #303448);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .hi-anchor-link {
-        color: var(--hi-text-secondary, #B3B8C7);
-
-        &:hover {
-            background: rgba(20, 74, 116, 0.2);
-            color: var(--hi-primary, #144A74);
-
-            &::before {
-                background: var(--hi-primary, #144A74);
-            }
-        }
-
-        &:active {
-            background: rgba(20, 74, 116, 0.3);
-        }
-    }
-
-    .hi-anchor-active {
-        background: var(--hi-primary, #144A74);
-        color: var(--hi-badge-text, #F0F0F5);
-
-        &:hover {
-            background: rgba(20, 74, 116, 0.85);
-        }
-    }
-}
-
-// Reduced motion support
-@media (prefers-reduced-motion: reduce) {
-    .hi-anchor-link,
-    .hi-anchor-active {
-        transition: none;
-    }
-
-    .hi-anchor-link:active {
-        transform: none;
-    }
+  &:hover {
+    background: var(--hi-color-primary-dark, #0088c7);
+  }
 }

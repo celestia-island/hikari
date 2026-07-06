@@ -5,15 +5,19 @@ use hikari_palette::classes::{ClassesBuilder, SpaceClass};
 
 use crate::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SpaceDirection {
-    #[default]
     Horizontal,
     Vertical,
     Both,
 }
 
-/// Props for the [`Space`] component.
+impl Default for SpaceDirection {
+    fn default() -> Self {
+        Self::Horizontal
+    }
+}
+
 #[define_props]
 pub struct SpaceProps {
     #[default(1)]
@@ -31,7 +35,9 @@ pub struct SpaceProps {
     pub children: Element,
 }
 
-/// Adds consistent spacing between elements in horizontal, vertical, or both directions.
+///
+///
+///
 #[component]
 pub fn Space(props: SpaceProps) -> Element {
     let direction_class = match props.direction {
@@ -41,23 +47,23 @@ pub fn Space(props: SpaceProps) -> Element {
     };
 
     let space_classes = ClassesBuilder::new()
-        .add_typed(SpaceClass::Space)
-        .add_typed(direction_class)
-        .add_typed_if(SpaceClass::Wrap, props.wrap)
-        .add(&props.class)
+        .add(SpaceClass::Space)
+        .add(direction_class)
+        .add_if(SpaceClass::Wrap, || props.wrap)
+        .add_raw(&props.class)
         .build();
 
     let size_px = props.size * 8;
 
     let style = match props.direction {
         SpaceDirection::Horizontal => {
-            format!("width: {size_px}px;")
+            format!("width: {}px;", size_px)
         }
         SpaceDirection::Vertical => {
-            format!("height: {size_px}px;")
+            format!("height: {}px;", size_px)
         }
         SpaceDirection::Both => {
-            format!("width: {size_px}px; height: {size_px}px;")
+            format!("width: {}px; height: {}px;", size_px, size_px)
         }
     };
 

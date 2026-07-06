@@ -1,23 +1,25 @@
 //! Form component classes (Input, Checkbox, Radio, Select, etc.)
 
-use tairitsu_style::TypedClass;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::classes::UtilityClass;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Input {
     Input,
     Wrapper,
 }
 
-impl TypedClass for Input {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for Input {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Input => "hi-input",
-            Self::Wrapper => "hi-input-wrapper",
+            Input::Input => "input",
+            Input::Wrapper => "input-wrapper",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InputClass {
     Input,
     InputWrapper,
@@ -31,24 +33,24 @@ pub enum InputClass {
     InputSuccess,
 }
 
-impl TypedClass for InputClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for InputClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Input => "hi-input",
-            Self::InputWrapper => "hi-input-wrapper",
-            Self::InputSm => "hi-input-sm",
-            Self::InputMd => "hi-input-md",
-            Self::InputLg => "hi-input-lg",
-            Self::InputDisabled => "hi-input-disabled",
-            Self::InputPrefix => "hi-input-prefix",
-            Self::InputSuffix => "hi-input-suffix",
-            Self::InputError => "hi-input-error",
-            Self::InputSuccess => "hi-input-success",
+            InputClass::Input => "input",
+            InputClass::InputWrapper => "input-wrapper",
+            InputClass::InputSm => "input-sm",
+            InputClass::InputMd => "input-md",
+            InputClass::InputLg => "input-lg",
+            InputClass::InputDisabled => "input-disabled",
+            InputClass::InputPrefix => "input-prefix",
+            InputClass::InputSuffix => "input-suffix",
+            InputClass::InputError => "input-error",
+            InputClass::InputSuccess => "input-success",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CheckboxClass {
     Checkbox,
     Sm,
@@ -62,24 +64,24 @@ pub enum CheckboxClass {
     Text,
 }
 
-impl TypedClass for CheckboxClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for CheckboxClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Checkbox => "hi-checkbox",
-            Self::Sm => "hi-checkbox-sm",
-            Self::Md => "hi-checkbox-md",
-            Self::Lg => "hi-checkbox-lg",
-            Self::Checked => "hi-checkbox-checked",
-            Self::Disabled => "hi-checkbox-disabled",
-            Self::Label => "hi-checkbox-label",
-            Self::Input => "hi-checkbox-input",
-            Self::Icon => "hi-checkbox-icon",
-            Self::Text => "hi-checkbox-text",
+            CheckboxClass::Checkbox => "checkbox",
+            CheckboxClass::Sm => "checkbox-sm",
+            CheckboxClass::Md => "checkbox-md",
+            CheckboxClass::Lg => "checkbox-lg",
+            CheckboxClass::Checked => "checkbox-checked",
+            CheckboxClass::Disabled => "checkbox-disabled",
+            CheckboxClass::Label => "checkbox-label",
+            CheckboxClass::Input => "checkbox-input",
+            CheckboxClass::Icon => "checkbox-icon",
+            CheckboxClass::Text => "checkbox-text",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RadioClass {
     RadioGroup,
     RadioGroupVertical,
@@ -90,21 +92,21 @@ pub enum RadioClass {
     Text,
 }
 
-impl TypedClass for RadioClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for RadioClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::RadioGroup => "hi-radio-group",
-            Self::RadioGroupVertical => "hi-radio-group-vertical",
-            Self::RadioGroupHorizontal => "hi-radio-group-horizontal",
-            Self::Label => "hi-radio-label",
-            Self::Indicator => "hi-radio-indicator",
-            Self::Dot => "hi-radio-dot",
-            Self::Text => "hi-radio-text",
+            RadioClass::RadioGroup => "radio-group",
+            RadioClass::RadioGroupVertical => "radio-group-vertical",
+            RadioClass::RadioGroupHorizontal => "radio-group-horizontal",
+            RadioClass::Label => "radio-label",
+            RadioClass::Indicator => "radio-indicator",
+            RadioClass::Dot => "radio-dot",
+            RadioClass::Text => "radio-text",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SwitchClass {
     Switch,
     Sm,
@@ -112,79 +114,43 @@ pub enum SwitchClass {
     Lg,
     Checked,
     Disabled,
-    TextVariant,
-    IconVariant,
-    CustomVariant,
-    ColorPrimary,
-    ColorSecondary,
-    Glow,
-    ThumbText,
-    ThumbIcon,
-    ThumbImage,
-    ThumbDot,
-    Label,
-    Track,
-    Thumb,
-    SwitchText,
 }
 
-impl TypedClass for SwitchClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SwitchClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Switch => "hi-switch",
-            Self::Sm => "hi-switch-sm",
-            Self::Md => "hi-switch-md",
-            Self::Lg => "hi-switch-lg",
-            Self::Checked => "hi-switch-checked",
-            Self::Disabled => "hi-switch-disabled",
-            Self::TextVariant => "hi-switch-text-variant",
-            Self::IconVariant => "hi-switch-icon-variant",
-            Self::CustomVariant => "hi-switch-custom-variant",
-            Self::ColorPrimary => "hi-switch-color-primary",
-            Self::ColorSecondary => "hi-switch-color-secondary",
-            Self::Glow => "hi-switch-glow",
-            Self::ThumbText => "hi-switch-thumb-text",
-            Self::ThumbIcon => "hi-switch-thumb-icon",
-            Self::ThumbImage => "hi-switch-thumb-image",
-            Self::ThumbDot => "hi-switch-thumb-dot",
-            Self::Label => "hi-switch-label",
-            Self::Track => "hi-switch-track",
-            Self::Thumb => "hi-switch-thumb",
-            Self::SwitchText => "hi-switch-text",
+            SwitchClass::Switch => "switch",
+            SwitchClass::Sm => "switch-sm",
+            SwitchClass::Md => "switch-md",
+            SwitchClass::Lg => "switch-lg",
+            SwitchClass::Checked => "switch-checked",
+            SwitchClass::Disabled => "switch-disabled",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SliderClass {
     Slider,
     Sm,
     Md,
     Lg,
     Disabled,
-    Rail,
-    Track,
-    Handle,
-    Input,
 }
 
-impl TypedClass for SliderClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SliderClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Slider => "hi-slider",
-            Self::Sm => "hi-slider-sm",
-            Self::Md => "hi-slider-md",
-            Self::Lg => "hi-slider-lg",
-            Self::Disabled => "hi-slider-disabled",
-            Self::Rail => "hi-slider-rail",
-            Self::Track => "hi-slider-track",
-            Self::Handle => "hi-slider-handle",
-            Self::Input => "hi-slider-input",
+            SliderClass::Slider => "slider",
+            SliderClass::Sm => "slider-sm",
+            SliderClass::Md => "slider-md",
+            SliderClass::Lg => "slider-lg",
+            SliderClass::Disabled => "slider-disabled",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SelectClass {
     SelectTrigger,
     Sm,
@@ -192,55 +158,37 @@ pub enum SelectClass {
     Lg,
     Disabled,
     Open,
-    Select,
-    Dropdown,
-    Option,
-    OptionSelected,
-    Value,
-    Placeholder,
-    Arrow,
 }
 
-impl TypedClass for SelectClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SelectClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::SelectTrigger => "hi-select-trigger",
-            Self::Sm => "hi-select-sm",
-            Self::Md => "hi-select-md",
-            Self::Lg => "hi-select-lg",
-            Self::Disabled => "hi-select-disabled",
-            Self::Open => "hi-select-open",
-            Self::Select => "hi-select",
-            Self::Dropdown => "hi-select-dropdown",
-            Self::Option => "hi-select-option",
-            Self::OptionSelected => "hi-select-option-selected",
-            Self::Value => "hi-select-value",
-            Self::Placeholder => "hi-select-placeholder",
-            Self::Arrow => "hi-select-arrow",
+            SelectClass::SelectTrigger => "select-trigger",
+            SelectClass::Sm => "select-sm",
+            SelectClass::Md => "select-md",
+            SelectClass::Lg => "select-lg",
+            SelectClass::Disabled => "select-disabled",
+            SelectClass::Open => "select-open",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DatePickerClass {
     DatePickerWrapper,
     DatePicker,
-    Disabled,
-    Icon,
 }
 
-impl TypedClass for DatePickerClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for DatePickerClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::DatePickerWrapper => "hi-date-picker-wrapper",
-            Self::DatePicker => "hi-date-picker",
-            Self::Disabled => "hi-date-picker-disabled",
-            Self::Icon => "hi-date-picker-icon",
+            DatePickerClass::DatePickerWrapper => "date-picker-wrapper",
+            DatePickerClass::DatePicker => "date-picker",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FileUploadClass {
     FileUploadWrapper,
     FileUpload,
@@ -249,64 +197,36 @@ pub enum FileUploadClass {
     Uploading,
     Success,
     Error,
-    Area,
-    Icon,
-    Text,
-    Preview,
-    File,
 }
 
-impl TypedClass for FileUploadClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for FileUploadClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::FileUploadWrapper => "hi-file-upload-wrapper",
-            Self::FileUpload => "hi-file-upload",
-            Self::Idle => "hi-file-upload-idle",
-            Self::Dragging => "hi-file-upload-dragging",
-            Self::Uploading => "hi-file-upload-uploading",
-            Self::Success => "hi-file-upload-success",
-            Self::Error => "hi-file-upload-error",
-            Self::Area => "hi-file-upload-area",
-            Self::Icon => "hi-file-upload-icon",
-            Self::Text => "hi-file-upload-text",
-            Self::Preview => "hi-file-upload-preview",
-            Self::File => "hi-file-upload-file",
+            FileUploadClass::FileUploadWrapper => "file-upload-wrapper",
+            FileUploadClass::FileUpload => "file-upload",
+            FileUploadClass::Idle => "file-upload-idle",
+            FileUploadClass::Dragging => "file-upload-dragging",
+            FileUploadClass::Uploading => "file-upload-uploading",
+            FileUploadClass::Success => "file-upload-success",
+            FileUploadClass::Error => "file-upload-error",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FormFieldClass {
     FormField,
-    Error,
-    Warning,
-    Success,
-    Required,
-    Label,
-    Help,
-    ErrorMsg,
-    SuccessMsg,
-    WarningMsg,
 }
 
-impl TypedClass for FormFieldClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for FormFieldClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::FormField => "hi-form-field",
-            Self::Error => "hi-form-field-error",
-            Self::Warning => "hi-form-field-warning",
-            Self::Success => "hi-form-field-success",
-            Self::Required => "hi-form-field-required",
-            Self::Label => "hi-form-field-label",
-            Self::Help => "hi-form-field-help",
-            Self::ErrorMsg => "hi-form-field-error-msg",
-            Self::SuccessMsg => "hi-form-field-success-msg",
-            Self::WarningMsg => "hi-form-field-warning-msg",
+            FormFieldClass::FormField => "form-field",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AutoCompleteClass {
     Wrapper,
     Input,
@@ -317,21 +237,21 @@ pub enum AutoCompleteClass {
     OptionFocused,
 }
 
-impl TypedClass for AutoCompleteClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for AutoCompleteClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Wrapper => "hi-autocomplete-wrapper",
-            Self::Input => "hi-autocomplete-input",
-            Self::Clear => "hi-autocomplete-clear",
-            Self::Dropdown => "hi-autocomplete-dropdown",
-            Self::Show => "hi-autocomplete-show",
-            Self::Option => "hi-autocomplete-option",
-            Self::OptionFocused => "hi-autocomplete-option-focused",
+            AutoCompleteClass::Wrapper => "autocomplete-wrapper",
+            AutoCompleteClass::Input => "autocomplete-input",
+            AutoCompleteClass::Clear => "autocomplete-clear",
+            AutoCompleteClass::Dropdown => "autocomplete-dropdown",
+            AutoCompleteClass::Show => "autocomplete-show",
+            AutoCompleteClass::Option => "autocomplete-option",
+            AutoCompleteClass::OptionFocused => "autocomplete-option-focused",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CascaderClass {
     Wrapper,
     Cascader,
@@ -353,90 +273,68 @@ pub enum CascaderClass {
     MenuItemArrow,
 }
 
-impl TypedClass for CascaderClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for CascaderClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Wrapper => "hi-cascader-wrapper",
-            Self::Cascader => "hi-cascader",
-            Self::Sm => "hi-cascader-sm",
-            Self::Md => "hi-cascader-md",
-            Self::Lg => "hi-cascader-lg",
-            Self::Disabled => "hi-cascader-disabled",
-            Self::Open => "hi-cascader-open",
-            Self::Display => "hi-cascader-display",
-            Self::Text => "hi-cascader-text",
-            Self::Clear => "hi-cascader-clear",
-            Self::Arrow => "hi-cascader-arrow",
-            Self::Dropdown => "hi-cascader-dropdown",
-            Self::Menu => "hi-cascader-menu",
-            Self::MenuList => "hi-cascader-menu-list",
-            Self::MenuItem => "hi-cascader-menu-item",
-            Self::MenuItemSelected => "hi-cascader-menu-item-selected",
-            Self::MenuItemDisabled => "hi-cascader-menu-item-disabled",
-            Self::MenuItemArrow => "hi-cascader-menu-item-arrow",
+            CascaderClass::Wrapper => "cascader-wrapper",
+            CascaderClass::Cascader => "cascader",
+            CascaderClass::Sm => "cascader-sm",
+            CascaderClass::Md => "cascader-md",
+            CascaderClass::Lg => "cascader-lg",
+            CascaderClass::Disabled => "cascader-disabled",
+            CascaderClass::Open => "cascader-open",
+            CascaderClass::Display => "cascader-display",
+            CascaderClass::Text => "cascader-text",
+            CascaderClass::Clear => "cascader-clear",
+            CascaderClass::Arrow => "cascader-arrow",
+            CascaderClass::Dropdown => "cascader-dropdown",
+            CascaderClass::Menu => "cascader-menu",
+            CascaderClass::MenuList => "cascader-menu-list",
+            CascaderClass::MenuItem => "cascader-menu-item",
+            CascaderClass::MenuItemSelected => "cascader-menu-item-selected",
+            CascaderClass::MenuItemDisabled => "cascader-menu-item-disabled",
+            CascaderClass::MenuItemArrow => "cascader-menu-item-arrow",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NumberInputClass {
     Wrapper,
     Button,
     Input,
-    Sm,
-    Md,
-    Lg,
-    Btn,
-    BtnDecrement,
-    BtnIncrement,
 }
 
-impl TypedClass for NumberInputClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for NumberInputClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Wrapper => "hi-number-input-wrapper",
-            Self::Button => "hi-number-input-button",
-            Self::Input => "hi-number-input-input",
-            Self::Sm => "hi-number-input-sm",
-            Self::Md => "hi-number-input-md",
-            Self::Lg => "hi-number-input-lg",
-            Self::Btn => "hi-number-input-btn",
-            Self::BtnDecrement => "hi-number-input-btn-decrement",
-            Self::BtnIncrement => "hi-number-input-btn-increment",
+            NumberInputClass::Wrapper => "number-input-wrapper",
+            NumberInputClass::Button => "number-input-button",
+            NumberInputClass::Input => "number-input-input",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SearchClass {
     Wrapper,
     Input,
     Clear,
     Loading,
-    InputContainer,
-    SuggestionsDropdown,
-    SuggestionItem,
-    SuggestionIcon,
-    InputWrapper,
 }
 
-impl TypedClass for SearchClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SearchClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Wrapper => "hi-search-wrapper",
-            Self::Input => "hi-search-input",
-            Self::Clear => "hi-search-clear",
-            Self::Loading => "hi-search-loading",
-            Self::InputContainer => "hi-search-input-container",
-            Self::SuggestionsDropdown => "hi-search-suggestions-dropdown",
-            Self::SuggestionItem => "hi-search-suggestion-item",
-            Self::SuggestionIcon => "hi-search-suggestion-icon",
-            Self::InputWrapper => "hi-search-input-wrapper",
+            SearchClass::Wrapper => "search-wrapper",
+            SearchClass::Input => "search-input",
+            SearchClass::Clear => "search-clear",
+            SearchClass::Loading => "search-loading",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InputWrapperClass {
     Wrapper,
     SizeSm,
@@ -449,23 +347,23 @@ pub enum InputWrapperClass {
     SideItem,
 }
 
-impl TypedClass for InputWrapperClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for InputWrapperClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Wrapper => "hi-input-wrapper",
-            Self::SizeSm => "hi-input-wrapper-sm",
-            Self::SizeMd => "hi-input-wrapper-md",
-            Self::SizeLg => "hi-input-wrapper-lg",
-            Self::Disabled => "hi-input-wrapper-disabled",
-            Self::LeftSection => "hi-input-wrapper-left",
-            Self::RightSection => "hi-input-wrapper-right",
-            Self::InputSection => "hi-input-wrapper-input",
-            Self::SideItem => "hi-input-wrapper-item",
+            InputWrapperClass::Wrapper => "input-wrapper",
+            InputWrapperClass::SizeSm => "input-wrapper-sm",
+            InputWrapperClass::SizeMd => "input-wrapper-md",
+            InputWrapperClass::SizeLg => "input-wrapper-lg",
+            InputWrapperClass::Disabled => "input-wrapper-disabled",
+            InputWrapperClass::LeftSection => "input-wrapper-left",
+            InputWrapperClass::RightSection => "input-wrapper-right",
+            InputWrapperClass::InputSection => "input-wrapper-input",
+            InputWrapperClass::SideItem => "input-wrapper-item",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TransferClass {
     Transfer,
     Operations,
@@ -486,31 +384,31 @@ pub enum TransferClass {
     ItemLabel,
 }
 
-impl TypedClass for TransferClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TransferClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Transfer => "hi-transfer",
-            Self::Operations => "hi-transfer-operations",
-            Self::Operation => "hi-transfer-operation",
-            Self::Panel => "hi-transfer-panel",
-            Self::PanelHeader => "hi-transfer-panel-header",
-            Self::PanelCheckbox => "hi-transfer-panel-checkbox",
-            Self::PanelTitle => "hi-transfer-panel-title",
-            Self::PanelCount => "hi-transfer-panel-count",
-            Self::PanelSearch => "hi-transfer-panel-search",
-            Self::PanelInput => "hi-transfer-panel-input",
-            Self::PanelList => "hi-transfer-panel-list",
-            Self::PanelItem => "hi-transfer-panel-item",
-            Self::PanelItemSelected => "hi-transfer-panel-item-selected",
-            Self::PanelItemDisabled => "hi-transfer-panel-item-disabled",
-            Self::PanelEmpty => "hi-transfer-panel-empty",
-            Self::ItemCheckbox => "hi-transfer-item-checkbox",
-            Self::ItemLabel => "hi-transfer-item-label",
+            TransferClass::Transfer => "transfer",
+            TransferClass::Operations => "transfer-operations",
+            TransferClass::Operation => "transfer-operation",
+            TransferClass::Panel => "transfer-panel",
+            TransferClass::PanelHeader => "transfer-panel-header",
+            TransferClass::PanelCheckbox => "transfer-panel-checkbox",
+            TransferClass::PanelTitle => "transfer-panel-title",
+            TransferClass::PanelCount => "transfer-panel-count",
+            TransferClass::PanelSearch => "transfer-panel-search",
+            TransferClass::PanelInput => "transfer-panel-input",
+            TransferClass::PanelList => "transfer-panel-list",
+            TransferClass::PanelItem => "transfer-panel-item",
+            TransferClass::PanelItemSelected => "transfer-panel-item-selected",
+            TransferClass::PanelItemDisabled => "transfer-panel-item-disabled",
+            TransferClass::PanelEmpty => "transfer-panel-empty",
+            TransferClass::ItemCheckbox => "transfer-item-checkbox",
+            TransferClass::ItemLabel => "transfer-item-label",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AvatarClass {
     Avatar,
     AvatarXs,
@@ -526,34 +424,21 @@ pub enum AvatarClass {
     AvatarImg,
 }
 
-impl TypedClass for AvatarClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for AvatarClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Avatar => "hi-avatar",
-            Self::AvatarXs => "hi-avatar-xs",
-            Self::AvatarSm => "hi-avatar-sm",
-            Self::AvatarMd => "hi-avatar-md",
-            Self::AvatarLg => "hi-avatar-lg",
-            Self::AvatarXl => "hi-avatar-xl",
-            Self::AvatarCircular => "hi-avatar-circular",
-            Self::AvatarRounded => "hi-avatar-rounded",
-            Self::AvatarSquare => "hi-avatar-square",
-            Self::AvatarFallback => "hi-avatar-fallback",
-            Self::AvatarIcon => "hi-avatar-icon",
-            Self::AvatarImg => "hi-avatar-img",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CanvasClass {
-    Canvas,
-}
-
-impl TypedClass for CanvasClass {
-    fn class_name(&self) -> &'static str {
-        match self {
-            Self::Canvas => "hi-canvas",
+            AvatarClass::Avatar => "avatar",
+            AvatarClass::AvatarXs => "avatar-xs",
+            AvatarClass::AvatarSm => "avatar-sm",
+            AvatarClass::AvatarMd => "avatar-md",
+            AvatarClass::AvatarLg => "avatar-lg",
+            AvatarClass::AvatarXl => "avatar-xl",
+            AvatarClass::AvatarCircular => "avatar-circular",
+            AvatarClass::AvatarRounded => "avatar-rounded",
+            AvatarClass::AvatarSquare => "avatar-square",
+            AvatarClass::AvatarFallback => "avatar-fallback",
+            AvatarClass::AvatarIcon => "avatar-icon",
+            AvatarClass::AvatarImg => "avatar-img",
         }
     }
 }

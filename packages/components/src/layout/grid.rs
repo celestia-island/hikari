@@ -3,7 +3,7 @@
 //!
 //! # Example
 //!
-//! ```rust,ignore
+//! ```rust
 //! use hikari_components::layout::{Grid, Col};
 //! use crate::prelude::*;
 //!
@@ -17,11 +17,9 @@
 //! }
 //! ```
 
-use hikari_palette::classes::components::*;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::{ClassesBuilder, classes::components::*};
 
-use crate::prelude::*;
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 ///
 ///
@@ -42,9 +40,9 @@ pub fn Grid(
     };
 
     let classes = ClassesBuilder::new()
-        .add_typed(GridClass::Grid)
-        .add_typed(gap_class)
-        .add(&class)
+        .add(GridClass::Grid)
+        .add(gap_class)
+        .add_raw(&class)
         .build();
 
     rsx! {
@@ -95,13 +93,14 @@ pub fn Col(
 
     // Add responsive classes for different breakpoints
     let responsive_class = format!(
-        "col-responsive col-span-{base_span} md:col-span-{md_span} lg:col-span-{lg_span}"
+        "col-responsive col-span-{} md:col-span-{} lg:col-span-{}",
+        base_span, md_span, lg_span
     );
 
     let classes = ClassesBuilder::new()
-        .add_typed(GridClass::Col)
-        .add(&responsive_class)
-        .add(&class)
+        .add(GridClass::Col)
+        .add_raw(&responsive_class)
+        .add_raw(&class)
         .build();
 
     rsx! {
@@ -166,9 +165,9 @@ pub fn Row(
     };
 
     let classes = ClassesBuilder::new()
-        .add_typed(RowClass::Row)
-        .add_typed(gap_class)
-        .add(&class)
+        .add(RowClass::Row)
+        .add(gap_class)
+        .add_raw(&class)
         .build();
 
     rsx! {

@@ -1,8 +1,10 @@
 //! Miscellaneous component classes (Arrow, Portal)
 
-use tairitsu_style::TypedClass;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::classes::UtilityClass;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ArrowClass {
     Arrow,
     ArrowRight,
@@ -14,56 +16,43 @@ pub enum ArrowClass {
     Size20,
 }
 
-impl TypedClass for ArrowClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for ArrowClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Arrow => "hi-arrow",
-            Self::ArrowRight => "hi-arrow-right",
-            Self::ArrowLeft => "hi-arrow-left",
-            Self::ArrowUp => "hi-arrow-up",
-            Self::ArrowDown => "hi-arrow-down",
-            Self::Size14 => "hi-arrow-14",
-            Self::Size16 => "hi-arrow-16",
-            Self::Size20 => "hi-arrow-20",
+            ArrowClass::Arrow => "arrow",
+            ArrowClass::ArrowRight => "arrow-right",
+            ArrowClass::ArrowLeft => "arrow-left",
+            ArrowClass::ArrowUp => "arrow-up",
+            ArrowClass::ArrowDown => "arrow-down",
+            ArrowClass::Size14 => "arrow-14",
+            ArrowClass::Size16 => "arrow-16",
+            ArrowClass::Size20 => "arrow-20",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PortalClass {
     PortalRoot,
 }
 
-impl TypedClass for PortalClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PortalClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::PortalRoot => "hi-portal-root",
+            PortalClass::PortalRoot => "portal-root",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BackgroundClass {
     Background,
 }
 
-impl TypedClass for BackgroundClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for BackgroundClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Background => "hi-background",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ThemeProviderClass {
-    ThemeProvider,
-}
-
-impl TypedClass for ThemeProviderClass {
-    fn class_name(&self) -> &'static str {
-        match self {
-            Self::ThemeProvider => "hi-theme-provider",
+            BackgroundClass::Background => "background",
         }
     }
 }

@@ -1,5 +1,5 @@
 // hi-components/src/styles/components/divider.scss
-// Divider component styles 
+// Divider component styles with Arknights + FUI styling
 
 .hi-divider {
   display: flex;
@@ -24,18 +24,18 @@
 .hi-divider-line {
   flex: 1;
   height: 1px;
-  background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+  background-color: var(--hi-color-border, #e0e0e0);
   transition: background-color 0.2s ease;
 }
 
-  .hi-divider-with-text {
-    .hi-divider-text {
-      padding: 0 1rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
-      white-space: nowrap;
-    }
+.hi-divider-with-text {
+  .hi-divider-text {
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--hi-color-text-secondary, #666);
+    white-space: nowrap;
+  }
 
   .hi-divider-line:first-child {
     margin-right: 0;
@@ -49,11 +49,11 @@
 // Theme-specific colors
 [data-theme="hikari"] {
   .hi-divider-line {
-    background-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
+    background-color: var(--hi-color-border, #e0e0e0);
   }
 
   .hi-divider-text {
-    color: var(--hi-text-secondary, var(--hi-text-secondary, rgba(80, 97, 109, 0.65)));
+    color: var(--hi-color-text-secondary, #666);
   }
 }
 
@@ -74,10 +74,10 @@
   }
 }
 
-//  effect - subtle glow
+// FUI effect - subtle glow
 .hi-divider-with-text {
   .hi-divider-text {
-    text-shadow: 0 0 10px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.15));
+    text-shadow: 0 0 10px rgba(0, 160, 233, 0.1);
   }
 }
 

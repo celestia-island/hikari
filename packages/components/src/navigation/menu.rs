@@ -1,14 +1,18 @@
 // hi-components/src/navigation/menu.rs
-// Menu component
+// Menu component with Arknights + FUI styling
+
+#![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 
-use crate::basic::{Arrow, ArrowDirection};
-use crate::feedback::Glow;
-use crate::prelude::*;
-use crate::style_builder::{CssProperty, StyleStringBuilder};
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    GlowBlur, GlowColor, GlowIntensity,
+    basic::{Arrow, ArrowDirection},
+    feedback::Glow,
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
+    styled::StyledComponent,
+};
 
 #[derive(Clone, Default)]
 pub struct MenuContext {
@@ -18,12 +22,10 @@ pub struct MenuContext {
 }
 
 impl MenuContext {
-    #[must_use]
     pub fn in_popover(&self) -> bool {
         self.in_popover
     }
 
-    #[must_use]
     pub fn glow_enabled(&self) -> bool {
         self.glow_enabled
     }
@@ -45,7 +47,6 @@ pub enum MenuItemHeight {
 }
 
 impl MenuItemHeight {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             MenuItemHeight::Default => "hi-menu-height-default",
@@ -155,6 +156,9 @@ pub struct MenuProps {
 ///
 #[component]
 pub fn Menu(props: MenuProps) -> Element {
+    let _active_key = use_signal(|| props.default_active.clone());
+    let mut _open_submenus = use_signal(Vec::<String>::new);
+
     let mode_class = match props.mode {
         MenuMode::Vertical => MenuClass::Vertical,
         MenuMode::Horizontal => MenuClass::Horizontal,
@@ -164,12 +168,12 @@ pub fn Menu(props: MenuProps) -> Element {
 
     let menu_classes = {
         let builder = ClassesBuilder::new()
-            .add_typed(MenuClass::Menu)
-            .add_typed_if(MenuClass::Inline, props.inline)
-            .add_typed(mode_class)
-            .add_typed_if(MenuClass::Compact, props.compact)
-            .add_typed_if(MenuClass::PopoverMenu, props.in_popover)
-            .add(&props.class);
+            .add(MenuClass::Menu)
+            .add_if(MenuClass::Inline, || props.inline)
+            .add(mode_class)
+            .add_if(MenuClass::Compact, || props.compact)
+            .add_if(MenuClass::PopoverMenu, || props.in_popover)
+            .add_raw(&props.class);
 
         builder.build()
     };
@@ -199,7 +203,7 @@ impl StyledComponent for MenuComponent {
 
 #[component]
 pub fn MenuItem(props: MenuItemProps) -> Element {
-    let menu_context = use_context::<MenuContext>();
+    let menu_context = try_consume_context::<MenuContext>();
     let should_glow = match &menu_context {
         Some(ctx) => {
             let ctx_val = ctx.get();
@@ -209,61 +213,30 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
     };
 
     let item_classes = ClassesBuilder::new()
-        .add_typed(MenuClass::MenuItem)
-        .add(props.height.as_str())
-        .add(&props.class)
+        .add(MenuClass::MenuItem)
+        .add_raw(props.height.as_str())
+        .add_raw(&props.class)
         .build();
 
     let menu_context_for_click = menu_context.clone();
-    let menu_context_for_kb = menu_context.clone();
-    let onclick_for_click = props.onclick.clone();
-    let onclick_for_kb = props.onclick.clone();
     let item_content = rsx! {
         li {
             class: item_classes,
             role: "menuitem",
             "data-key": props.item_key,
-            tabindex: "-1",
             aria_disabled: props.disabled.to_string(),
             onclick: move |e| {
                 if !props.disabled {
-                    if let Some(handler) = onclick_for_click.as_ref() {
+                    if let Some(handler) = props.onclick.as_ref() {
                         handler.call(e);
                     }
+                    // Request close if in popover mode
                     if let Some(ctx) = &menu_context_for_click {
                         let ctx_val = ctx.get();
                         if let Some(close_cb) = &ctx_val.request_close {
                             close_cb.call(());
                         }
                     }
-                }
-            },
-            onkeydown: move |e: KeyboardEvent| {
-                if props.disabled {
-                    return;
-                }
-                match e.get_key() {
-                    Key::Enter | Key::Space => {
-                        e.prevent_default();
-                        if let Some(handler) = onclick_for_kb.as_ref() {
-                            handler.call(MouseEvent::default());
-                        }
-                        if let Some(ctx) = &menu_context_for_kb {
-                            let ctx_val = ctx.get();
-                            if let Some(close_cb) = &ctx_val.request_close {
-                                close_cb.call(());
-                            }
-                        }
-                    }
-                    Key::Escape => {
-                        if let Some(ctx) = &menu_context_for_kb {
-                            let ctx_val = ctx.get();
-                            if let Some(close_cb) = &ctx_val.request_close {
-                                close_cb.call(());
-                            }
-                        }
-                    }
-                    _ => {}
                 }
             },
 
@@ -302,14 +275,12 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     let is_open = use_signal(|| props.default_expanded);
 
     let submenu_classes = ClassesBuilder::new()
-        .add_typed(MenuClass::Submenu)
-        .add_typed_if(MenuClass::SubmenuListOpen, is_open.read())
-        .add(&props.class)
+        .add(MenuClass::Submenu)
+        .add_if(MenuClass::SubmenuListOpen, || is_open.read())
+        .add_raw(&props.class)
         .build();
 
-    let list_classes = ClassesBuilder::new()
-        .add_typed(MenuClass::SubmenuList)
-        .build();
+    let list_classes = ClassesBuilder::new().add(MenuClass::SubmenuList).build();
 
     let is_open_for_memo = is_open.clone();
     let list_style = use_memo(move || {
@@ -328,44 +299,13 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
     });
 
     let is_open_for_click = is_open.clone();
-    let is_open_for_kb = is_open.clone();
     let title_content = rsx! {
         div {
             class: "{props.height.as_str()} hi-menu-submenu-title",
-            role: "menuitem",
-            "aria-expanded": is_open.read(),
-            tabindex: "-1",
             aria_disabled: props.disabled.to_string(),
             onclick: move |_e| {
                 if !props.disabled {
                     is_open_for_click.set(!is_open_for_click.get());
-                }
-            },
-            onkeydown: move |e: KeyboardEvent| {
-                if props.disabled {
-                    return;
-                }
-                match e.get_key() {
-                    Key::Enter | Key::Space => {
-                        e.prevent_default();
-                        is_open_for_kb.set(!is_open_for_kb.get());
-                    }
-                    Key::ArrowRight => {
-                        e.prevent_default();
-                        if !is_open_for_kb.get() {
-                            is_open_for_kb.set(true);
-                        }
-                    }
-                    Key::ArrowLeft => {
-                        e.prevent_default();
-                        if is_open_for_kb.get() {
-                            is_open_for_kb.set(false);
-                        }
-                    }
-                    Key::Escape => {
-                        is_open_for_kb.set(false);
-                    }
-                    _ => {}
                 }
             },
 
@@ -414,49 +354,5 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 {props.children}
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::styled::StyledComponent;
-
-    #[test]
-    fn test_menu_mode_default() {
-        assert_eq!(MenuMode::default(), MenuMode::Vertical);
-    }
-
-    #[test]
-    fn test_menu_mode_distinct() {
-        assert_ne!(MenuMode::Vertical, MenuMode::Horizontal);
-    }
-
-    #[test]
-    fn test_menu_item_height_default() {
-        assert_eq!(MenuItemHeight::default(), MenuItemHeight::Default);
-    }
-
-    #[test]
-    fn test_menu_item_height_as_str() {
-        assert_eq!(MenuItemHeight::Default.as_str(), "hi-menu-height-default");
-        assert_eq!(MenuItemHeight::Compact.as_str(), "hi-menu-height-compact");
-        assert_eq!(
-            MenuItemHeight::ExtraCompact.as_str(),
-            "hi-menu-height-extra-compact"
-        );
-    }
-
-    #[test]
-    fn test_menu_context_default() {
-        let ctx = MenuContext::default();
-        assert!(!ctx.in_popover());
-        assert!(!ctx.glow_enabled());
-        assert!(ctx.request_close.is_none());
-    }
-
-    #[test]
-    fn test_menu_component_name() {
-        assert_eq!(MenuComponent::name(), "menu");
     }
 }

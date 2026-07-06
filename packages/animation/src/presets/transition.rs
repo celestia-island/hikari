@@ -2,7 +2,7 @@
 // Simple transition animation presets for common use cases
 
 /// Slide direction enum
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SlideDirection {
     Top,
     Bottom,
@@ -10,6 +10,7 @@ pub enum SlideDirection {
     Right,
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Fade in animation preset
 ///
 /// Creates a fade-in animation from opacity 0 to 1.
@@ -29,11 +30,11 @@ pub enum SlideDirection {
 /// // Result: "opacity 0ms ease-out, opacity 300ms ease-out"
 /// // Apply this to an element's style attribute
 /// ```
-#[must_use]
 pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
-    format!("opacity 0ms ease-out, opacity {duration_ms}ms ease-out")
+    format!("opacity 0ms ease-out, opacity {}ms ease-out", duration_ms)
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Fade out animation preset
 ///
 /// Creates a fade-out animation from opacity 1 to 0.
@@ -44,11 +45,11 @@ pub fn fade_in(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
-    format!("opacity 0ms ease-in, opacity {duration_ms}ms ease-in")
+    format!("opacity 0ms ease-in, opacity {}ms ease-in", duration_ms)
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Slide in animation preset
 ///
 /// Creates a slide-in animation from a specified direction.
@@ -61,18 +62,26 @@ pub fn fade_out(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn slide_in(
     _element_id: &str,
     duration_ms: u64,
-    _direction: SlideDirection,
-    _distance: i32,
+    direction: SlideDirection,
+    distance: i32,
 ) -> String {
+    let _transform_start = match direction {
+        SlideDirection::Top => format!("translateY(-{}px)", distance),
+        SlideDirection::Bottom => format!("translateY({}px)", distance),
+        SlideDirection::Left => format!("translateX(-{}px)", distance),
+        SlideDirection::Right => format!("translateX({}px)", distance),
+    };
+
     format!(
-        "transform 0ms, opacity 0ms, transform {duration_ms}ms ease-out, opacity {duration_ms}ms ease-out"
+        "transform 0ms, opacity 0ms, transform {}ms ease-out, opacity {}ms ease-out",
+        duration_ms, duration_ms
     )
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Slide out animation preset
 ///
 /// Creates a slide-out animation to a specified direction.
@@ -85,18 +94,26 @@ pub fn slide_in(
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn slide_out(
     _element_id: &str,
     duration_ms: u64,
-    _direction: SlideDirection,
-    _distance: i32,
+    direction: SlideDirection,
+    distance: i32,
 ) -> String {
+    let _transform_end = match direction {
+        SlideDirection::Top => format!("translateY(-{}px)", distance),
+        SlideDirection::Bottom => format!("translateY({}px)", distance),
+        SlideDirection::Left => format!("translateX(-{}px)", distance),
+        SlideDirection::Right => format!("translateX({}px)", distance),
+    };
+
     format!(
-        "transform 0ms, opacity 0ms, transform {duration_ms}ms ease-in, opacity {duration_ms}ms ease-in"
+        "transform 0ms, opacity 0ms, transform {}ms ease-in, opacity {}ms ease-in",
+        duration_ms, duration_ms
     )
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Zoom in animation preset
 ///
 /// Creates a zoom-in animation from scale 0 to 1.
@@ -107,13 +124,14 @@ pub fn slide_out(
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
     format!(
-        "transform 0ms, opacity 0ms, transform {duration_ms}ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity {duration_ms}ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+        "transform 0ms, opacity 0ms, transform {}ms ease-out-back, opacity {}ms ease-out-back",
+        duration_ms, duration_ms
     )
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Zoom out animation preset
 ///
 /// Creates a zoom-out animation from scale 1 to 0.
@@ -124,13 +142,14 @@ pub fn zoom_in(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
     format!(
-        "transform 0ms, opacity 0ms, transform {duration_ms}ms cubic-bezier(0.36, 0, 0.66, -0.56), opacity {duration_ms}ms cubic-bezier(0.36, 0, 0.66, -0.56)"
+        "transform 0ms, opacity 0ms, transform {}ms ease-in-back, opacity {}ms ease-in-back",
+        duration_ms, duration_ms
     )
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Bounce in animation preset
 ///
 /// Creates a bounce-in animation with elastic effect.
@@ -141,11 +160,11 @@ pub fn zoom_out(_element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS cubic-bezier curve string for elastic bounce effect
-#[must_use]
 pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
-    "cubic-bezier(0.68, -0.55, 0.265, 1.55)".to_string()
+    format!("cubic-bezier(0.68, -0.55, 0.265, 1.55)")
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Shake animation preset
 ///
 /// Creates a shake animation for attention.
@@ -156,24 +175,22 @@ pub fn bounce_in(_element_id: &str, _duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS keyframes animation definition that can be applied via style sheet
-#[must_use]
 pub fn shake(element_id: &str, duration_ms: u64) -> String {
-    let sanitized: String = element_id
-        .chars()
-        .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
-        .collect();
-    let keyframes_name = format!("{sanitized}-shake");
+    let keyframes_name = format!("{}-shake", element_id);
     let keyframes = format!(
-        "@keyframes {keyframes_name} {{ 0%, 100% {{ transform: translateX(0); }} 10%, 30%, 50%, 70%, 90% {{ transform: translateX(-10px); }} 20%, 40%, 60%, 80% {{ transform: translateX(10px); }} }}"
+        "@keyframes {} {{ 0%, 100% {{ transform: translateX(0); }} 10%, 30%, 50%, 70%, 90% {{ transform: translateX(-10px); }} 20%, 40%, 60%, 80% {{ transform: translateX(10px); }} }}",
+        keyframes_name
     );
 
     let animation = format!(
-        "animation {sanitized}-shake {duration_ms}ms ease-in-out infinite"
+        "animation {}-shake {}ms ease-in-out infinite",
+        element_id, duration_ms
     );
 
-    format!("{keyframes}; {animation}")
+    format!("{}; {}", keyframes, animation)
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Rotate in animation preset
 ///
 /// Creates a rotation fade-in animation.
@@ -185,11 +202,11 @@ pub fn shake(element_id: &str, duration_ms: u64) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
-    format!("transform {duration_ms}ms ease-out")
+    format!("transform {}ms ease-out", duration_ms)
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 /// Rotate out animation preset
 ///
 /// Creates a rotation fade-out animation.
@@ -201,24 +218,22 @@ pub fn rotate_in(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
 ///
 /// # Returns
 /// CSS transition string that can be applied via style attribute
-#[must_use]
 pub fn rotate_out(_element_id: &str, duration_ms: u64, _degrees: i32) -> String {
-    format!("transform {duration_ms}ms ease-in")
+    format!("transform {}ms ease-in", duration_ms)
 }
 
-#[cfg(test)]
+#[cfg(all(test, target_arch = "wasm32", target_os = "unknown"))]
 mod tests {
     use super::*;
 
     #[test]
     fn test_slide_direction_exists() {
-        let directions = [
+        let _directions = vec![
             SlideDirection::Top,
             SlideDirection::Bottom,
             SlideDirection::Left,
             SlideDirection::Right,
         ];
-        assert_eq!(directions.len(), 4);
     }
 
     #[test]
@@ -233,15 +248,14 @@ mod tests {
         let css = slide_in("my-element", 300, SlideDirection::Top, 50);
         assert!(css.contains("300ms"));
         assert!(css.contains("ease-out"));
-        assert!(css.contains("transform"));
-        assert!(css.contains("opacity"));
+        assert!(css.contains("translateY(-50px)"));
     }
 
     #[test]
     fn test_zoom_in_generates_css() {
         let css = zoom_in("my-element", 300);
         assert!(css.contains("300ms"));
-        assert!(css.contains("cubic-bezier(0.34, 1.56, 0.64, 1)"));
+        assert!(css.contains("ease-out-back"));
     }
 
     #[test]

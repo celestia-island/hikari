@@ -4,7 +4,7 @@
 //! # Portal System
 //!
 //! A comprehensive portal system for rendering modals, dropdowns, toasts, and other
-//! overlay elements in Tairitsu applications.
+//! overlay elements in Dioxus applications.
 
 //! ## Architecture Overview
 //!
@@ -56,7 +56,7 @@
 //! Root component that provides the PortalContext to the entire application.
 //! Must be placed at the top of your component tree.
 //!
-//! ```rust,ignore
+//! ```rust
 //! rsx! {
 //!     PortalProvider {
 //!         // Your app content
@@ -68,7 +68,7 @@
 //!
 //! Global context for managing portal entries. Access via `use_portal()`.
 //!
-//! ```rust,ignore
+//! ```rust
 //! let portal = use_portal();
 //! portal.add_entry(PortalEntry::Modal { ... });
 //! ```
@@ -81,7 +81,7 @@
 //!
 //! Absolute screen coordinates. Useful for toasts and centered modals.
 //!
-//! ```rust,ignore
+//! ```rust
 //! PortalPositionStrategy::Fixed(x, y)
 //! ```
 //!
@@ -89,7 +89,7 @@
 //!
 //! Position relative to a trigger element. Used for dropdowns and context menus.
 //!
-//! ```rust,ignore
+//! ```rust
 //! PortalPositionStrategy::TriggerBased {
 //!     placement: TriggerPlacement::BottomRight
 //! }
@@ -99,7 +99,7 @@
 //!
 //! Position at mouse/touch cursor coordinates. Currently falls back to viewport center.
 //!
-//! ```rust,ignore
+//! ```rust
 //! PortalPositionStrategy::MouseBased {
 //!     placement: TriggerPlacement::Bottom
 //! }
@@ -119,7 +119,7 @@
 //!
 //! ### Dropdown with TriggerBased Positioning
 //!
-//! ```rust,ignore
+//! ```rust
 //! use hikari_components::portal::{PortalEntry, PortalPositionStrategy, TriggerPlacement};
 //!
 //! let portal = use_portal();
@@ -144,9 +144,9 @@
 //!
 //! ### Modal with Fixed Positioning
 //!
-//! ```rust,ignore
+//! ```rust
 //! use hikari_components::portal::PortalEntry;
-//! use hikari_components::feedback::ModalPosition;
+//! use hikari_components::modal::ModalPosition;
 //!
 //! portal.add_entry(PortalEntry::Modal {
 //!     id: "modal-1".to_string(),
@@ -171,11 +171,12 @@
 //!
 //! - **Portal Layer**: Fixed-position `div` with `z-index: 9999` at root
 //! - **Event Propagation**: Click events handled with proper stopPropagation
-//! - **Platform Support**: Works on all platforms via tairitsu's WASI-compatible platform layer
+//! - **WASM Support**: Full WASM support with `#[cfg(target_arch = "wasm32")]`
 //! - **Performance**: Signals for reactive updates, minimal re-renders
 //!
 //! See the `calculate_position` function for detailed positioning algorithm documentation.
 
+pub mod animation;
 pub mod positioning;
 pub mod provider;
 pub mod render;
@@ -184,6 +185,6 @@ pub mod types;
 pub use positioning::calculate_position;
 pub use provider::{PortalContext, PortalProvider, generate_portal_id, use_portal};
 pub use types::{
-    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
-    TriggerPlacement,
+    ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+    ToastPosition, TriggerPlacement,
 };

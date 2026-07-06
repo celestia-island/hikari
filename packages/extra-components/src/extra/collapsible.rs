@@ -27,7 +27,7 @@ pub enum CollapsiblePosition {
 /// // Toggle state
 /// state.expanded = !state.expanded;
 /// ```
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct CollapsibleState {
     /// Title displayed in the header
     pub title: String,
@@ -50,7 +50,6 @@ pub struct CollapsibleState {
 
 impl CollapsibleState {
     /// Create a new collapsible state with default values
-    #[must_use]
     pub fn new(title: String) -> Self {
         Self {
             title,
@@ -63,29 +62,25 @@ impl CollapsibleState {
     }
 
     /// Set the expanded state
-    #[must_use]
-    pub const fn with_expanded(mut self, expanded: bool) -> Self {
+    pub fn with_expanded(mut self, expanded: bool) -> Self {
         self.expanded = expanded;
         self
     }
 
     /// Set the collapsible flag
-    #[must_use]
-    pub const fn with_collapsible(mut self, collapsible: bool) -> Self {
+    pub fn with_collapsible(mut self, collapsible: bool) -> Self {
         self.collapsible = collapsible;
         self
     }
 
     /// Set the position
-    #[must_use]
-    pub const fn with_position(mut self, position: CollapsiblePosition) -> Self {
+    pub fn with_position(mut self, position: CollapsiblePosition) -> Self {
         self.position = position;
         self
     }
 
     /// Set the width
-    #[must_use]
-    pub const fn with_width(mut self, width: u32) -> Self {
+    pub fn with_width(mut self, width: u32) -> Self {
         self.width = width;
         self
     }
@@ -97,15 +92,14 @@ impl CollapsibleState {
     }
 
     /// Toggle the expanded state
-    pub const fn toggle(&mut self) {
+    pub fn toggle(&mut self) {
         if self.collapsible {
             self.expanded = !self.expanded;
         }
     }
 
     /// Get the CSS position class name
-    #[must_use]
-    pub const fn position_class(&self) -> &'static str {
+    pub fn position_class(&self) -> &'static str {
         match self.position {
             CollapsiblePosition::Left => "hi-collapsible-left",
             CollapsiblePosition::Right => "hi-collapsible-right",
@@ -113,8 +107,7 @@ impl CollapsibleState {
     }
 
     /// Get the state class name
-    #[must_use]
-    pub const fn state_class(&self) -> &'static str {
+    pub fn state_class(&self) -> &'static str {
         if self.expanded {
             "hi-collapsible-expanded"
         } else {
@@ -129,74 +122,8 @@ impl Default for CollapsibleState {
     }
 }
 
-#[must_use]
-pub fn render_collapsible(state: &CollapsibleState) -> tairitsu_vdom::VNode {
-    use tairitsu_vdom::{VElement, VNode, VText};
-
-    let mut header_children: Vec<VNode> = Vec::new();
-
-    header_children.push(VNode::Element(
-        VElement::new("h3")
-            .class("hi-collapsible-title")
-            .child(VNode::Text(VText::new(&state.title))),
-    ));
-
-    if state.collapsible {
-        let toggle_icon = if state.expanded { "▾" } else { "▸" };
-        header_children.push(VNode::Element(
-            VElement::new("button")
-                .class("hi-collapsible-toggle")
-                .attr(
-                    "aria-label",
-                    if state.expanded { "Collapse" } else { "Expand" },
-                )
-                .attr(
-                    "aria-expanded",
-                    if state.expanded { "true" } else { "false" },
-                )
-                .child(VNode::Text(VText::new(toggle_icon))),
-        ));
-    }
-
-    let mut container_children: Vec<VNode> = Vec::new();
-
-    container_children.push(VNode::Element(
-        VElement::new("div")
-            .class("hi-collapsible-header")
-            .children(header_children),
-    ));
-
-    if state.expanded {
-        container_children.push(VNode::Element(
-            VElement::new("div")
-                .class("hi-collapsible-content")
-                .child(VNode::Element(
-                    VElement::new("div").class("hi-collapsible-body"),
-                )),
-        ));
-    }
-
-    let position_class = state.position_class();
-    let state_class = state.state_class();
-
-    let container_class = if state.class.is_empty() {
-        format!("hi-collapsible {position_class} {state_class}")
-    } else {
-        format!(
-            "hi-collapsible {} {} {}",
-            position_class, state_class, state.class
-        )
-    };
-
-    VNode::Element(
-        VElement::new("div")
-            .class(container_class)
-            .children(container_children),
-    )
-}
-
 /// Event emitted when the collapse state changes
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct CollapsibleChangeEvent {
     /// Whether the panel is now expanded
     pub expanded: bool,

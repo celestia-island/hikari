@@ -1,13 +1,12 @@
 // packages/components/src/display/empty.rs
-// Empty state component
+// Empty state component with Arknights + FUI styling
 
 use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, EmptyClass, FlexDirection, Gap, JustifyContent, Padding,
-    TextAlign, TypedClass,
+    TextAlign, UtilityClass,
 };
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct EmptyComponent;
 
@@ -33,42 +32,41 @@ pub struct EmptyProps {
     pub style: String,
 }
 
-/// An empty state placeholder component with optional image, title, and action.
 #[component]
 pub fn Empty(props: EmptyProps) -> Element {
     let container_classes = ClassesBuilder::new()
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Column)
-        .add_typed(AlignItems::Center)
-        .add_typed(JustifyContent::Center)
-        .add_typed(Gap::Gap4)
-        .add_typed(Padding::P8)
-        .add_typed(TextAlign::Center)
-        .add_typed(EmptyClass::Container)
-        .add(&props.class)
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(AlignItems::Center)
+        .add(JustifyContent::Center)
+        .add(Gap::Gap4)
+        .add(Padding::P8)
+        .add(TextAlign::Center)
+        .add(EmptyClass::Container)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
         div { class: container_classes, style: props.style,
 
             if let Some(ref image) = props.image {
-                div { class: EmptyClass::Image.class_name(),
+                div { class: EmptyClass::Image.as_class(),
                     img {
                         src: image,
                         alt: "Empty state",
-                        class: "{EmptyClass::Img.class_name()}",
+                        class: "{EmptyClass::Img.as_class()}",
                     }
                 }
             }
 
             if let Some(ref title) = props.title {
-                h3 { class: EmptyClass::Title.class_name(), "{title}" }
+                h3 { class: EmptyClass::Title.as_class(), "{title}" }
             }
 
-            p { class: EmptyClass::Description.class_name(), "{props.description}" }
+            p { class: EmptyClass::Description.as_class(), "{props.description}" }
 
             if let Some(action) = props.action {
-                div { class: EmptyClass::Action.class_name(), {action} }
+                div { class: EmptyClass::Action.as_class(), {action} }
             }
         }
     }

@@ -1,12 +1,19 @@
-//! Background animation utilities
-//!
-//! Provides utilities for background animations including theme color detection
-//! and breathing effects.
+use std::collections::HashMap;
 
-use std::cell::RefCell;
+use palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
+use web_sys::HtmlElement;
 
-use hikari_palette::color_math::{adjust_lightness_hex, adjust_saturation_hex};
-use hikari_palette::colors::{粉红, 精白};
+use crate::{error::AnimationError, state_machine::{RenderOutput, StateMachineBuilder}};
+
+/// Background animation states
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum BackgroundAnimationState {
+    /// Rotating gradient state
+    Rotating {
+        /// Current angle in radians
+        angle: f64,
+    },
+}
 
 /// Background render context (carries render parameters)
 #[derive(Clone, Debug)]
@@ -21,6 +28,90 @@ pub struct BackgroundRenderContext {
     pub color2: String,
 }
 
+/// Background event type (empty - no events)
+#[derive(Clone, Debug)]
+pub enum BackgroundEvent {
+    // No events for background animation
+}
+
+/// Background state transition (Closure 1)
+///
+/// Returns: Result<(next_state, render_context), AnimationError>
+pub fn background_transition(
+    prev_state: BackgroundAnimationState,
+    timestamp: f64,
+    _events: Vec<BackgroundEvent>,
+) -> Result<(BackgroundAnimationState, BackgroundRenderContext), AnimationError> {
+    match prev_state {
+        BackgroundAnimationState::Rotating { angle } => {
+            // Rotation period: 60 seconds (60000ms)
+            // Calculate new angle based on timestamp
+            let period_ms = 60000.0;
+            let new_angle = (timestamp / period_ms) * 2.0 * std::f64::consts::PI;
+
+            // Calculate center position (radius = 20%)
+            let radius_percent = 20.0;
+            let center_x = 50.0 + radius_percent * new_angle.cos();
+            let center_y = 50.0 + radius_percent * new_angle.sin();
+
+            // Get theme colors from document (cached)
+            let (color1, color2) = get_theme_colors();
+
+            // Apply breathing effect (4-second cycle)
+            let breathing_progress = (timestamp / 4000.0) % 2.0;
+            let actual_progress = if breathing_progress > 1.0 {
+                2.0 - breathing_progress
+            } else {
+                breathing_progress
+            };
+
+            let sin_val = (actual_progress * std::f64::consts::PI).sin();
+            let saturation_factor = 1.0 + (sin_val * 0.05);
+            let lightness_factor = 1.0 + (sin_val * 0.05);
+
+            // Apply breathing to colors
+            let breathing_color1 = adjust_saturation_hex(&color1, saturation_factor);
+            let breathing_color1 = adjust_lightness_hex(&breathing_color1, lightness_factor);
+            let breathing_color2 = adjust_saturation_hex(&color2, saturation_factor);
+            let breathing_color2 = adjust_lightness_hex(&breathing_color2, lightness_factor);
+
+            let ctx = BackgroundRenderContext {
+                center_x,
+                center_y,
+                color1: breathing_color1,
+                color2: breathing_color2,
+            };
+
+            Ok((BackgroundAnimationState::Rotating { angle: new_angle }, ctx))
+        }
+    }
+}
+
+/// Background render function (Closure 2)
+///
+/// Returns: Result<render_output, AnimationError>
+pub fn background_render(
+    _state: BackgroundAnimationState,
+    ctx: BackgroundRenderContext,
+    elements: &HashMap<String, HtmlElement>,
+) -> Result<RenderOutput, AnimationError> {
+    let mut output = RenderOutput::default();
+
+    if let Some(_bg_el) = elements.get("background") {
+        let mut styles = HashMap::new();
+        styles.insert("--bg-center-x".to_string(), format!("{:.1}%", ctx.center_x));
+        styles.insert("--bg-center-y".to_string(), format!("{:.1}%", ctx.center_y));
+        styles.insert("--bg-color-1".to_string(), ctx.color1);
+        styles.insert("--bg-color-2".to_string(), ctx.color2);
+
+        output.styles.insert("background".to_string(), styles);
+    } else {
+        return Err(AnimationError::ElementNotFound("background".to_string()));
+    }
+
+    Ok(output)
+}
+
 /// Cache for theme colors to avoid repeated DOM queries
 #[derive(Clone)]
 struct ThemeCache {
@@ -28,86 +119,94 @@ struct ThemeCache {
     colors: (String, String),
 }
 
-/// Get theme colors with caching
+/// Get theme colors from document with caching
 ///
-/// Note: In WIT/WASI environments, we can't directly query DOM attributes
-/// without a Platform instance. This function returns default colors.
-/// For theme-aware behavior, use the Platform-based variant instead.
+/// Performance: Uses thread_local cache to avoid repeated DOM queries.
+/// Only queries DOM when theme has changed.
 ///
 /// Returns: (color1, color2) as hex strings
-#[must_use]
-pub fn get_theme_colors() -> (String, String) {
-    thread_local! {
-        static THEME_CACHE: RefCell<Option<ThemeCache>> = const { RefCell::new(None) };
+fn get_theme_colors() -> (String, String) {
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    {
+        use palette::Color;
+        use std::cell::RefCell;
+
+        thread_local! {
+            static THEME_CACHE: RefCell<Option<ThemeCache>> = RefCell::new(None);
+        }
+
+        // Theme gradient colors — defined inline so this module does not depend
+        // on any opt-in color collection.
+        let yuebai = Color::from_rgb_hex(0xd6, 0xec, 0xf0); // 月白
+        let fenhong = Color::from_rgb_hex(0xff, 0xb3, 0xa7); // 粉红
+        let mose = Color::from_rgb_hex(0x50, 0x61, 0x6d); // 墨色
+        let dianlan = Color::from_rgb_hex(0x06, 0x52, 0x79); // 靛蓝
+
+        let document = match web_sys::window().and_then(|w| w.document()) {
+            Some(doc) => doc,
+            None => return (yuebai.hex(), fenhong.hex()),
+        };
+
+        // Get current theme from DOM
+        let current_theme = match document
+            .query_selector(".hi-theme-provider[data-theme]")
+            .ok()
+            .flatten()
+            .and_then(|el| el.get_attribute("data-theme"))
+        {
+            Some(t) => t,
+            None => "hikari".to_string(),
+        };
+
+        // Check cache first
+        let colors = THEME_CACHE.with_borrow(|cache| {
+            if let Some(cached) = cache.as_ref() {
+                if cached.last_theme == current_theme {
+                    // Cache hit - return cached colors
+                    return cached.colors.clone();
+                }
+            }
+            // Cache miss or theme changed
+            let new_colors = match current_theme.as_str() {
+                "tairitsu" => (mose.hex(), dianlan.hex()),
+                _ => (yuebai.hex(), fenhong.hex()),
+            };
+            new_colors
+        });
+
+        // Update cache if needed
+        THEME_CACHE.with_borrow_mut(|cache| {
+            let needs_update = cache.as_ref()
+                .map_or(true, |c| c.last_theme != current_theme);
+            if needs_update {
+                *cache = Some(ThemeCache {
+                    last_theme: current_theme,
+                    colors: colors.clone(),
+                });
+            }
+        });
+
+        colors
     }
 
-    // Use default colors for now
-    let current_theme = "hikari".to_string();
-    let colors = THEME_CACHE.with_borrow(|cache| {
-        if let Some(cached) = cache.as_ref()
-            && cached.last_theme == current_theme
-        {
-            // Cache hit - return cached colors
-            return cached.colors.clone();
-        }
-        // Cache miss or theme changed
-        (精白.hex(), 粉红.hex())
-    });
-
-    // Update cache if needed
-    THEME_CACHE.with_borrow_mut(|cache| {
-        let needs_update = cache.as_ref().is_none_or(|c| c.last_theme != current_theme);
-        if needs_update {
-            *cache = Some(ThemeCache {
-                last_theme: current_theme,
-                colors: colors.clone(),
-            });
-        }
-    });
-
-    colors
+    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+    {
+        // Fallback colors for non-WASM — defined inline, no collection dep.
+        use palette::Color;
+        let yuebai = Color::from_rgb_hex(0xd6, 0xec, 0xf0); // 月白
+        let fenhong = Color::from_rgb_hex(0xff, 0xb3, 0xa7); // 粉红
+        (yuebai.hex(), fenhong.hex())
+    }
 }
 
-/// Calculate background animation context for a given timestamp
+/// Create background animation state machine builder
 ///
-/// Returns render context with rotating center position and breathing color effects.
-#[must_use]
-pub fn calculate_background_context(timestamp: f64) -> BackgroundRenderContext {
-    // Get theme colors (cached)
-    let (color1, color2) = get_theme_colors();
-
-    // Rotation period: 60 seconds (60000ms)
-    // Calculate new angle based on timestamp
-    let period_ms = 60000.0;
-    let new_angle = (timestamp / period_ms) * 2.0 * std::f64::consts::PI;
-
-    // Calculate center position (radius = 20%)
-    let radius_percent = 20.0;
-    let center_x = 50.0 + radius_percent * new_angle.cos();
-    let center_y = 50.0 + radius_percent * new_angle.sin();
-
-    // Apply breathing effect (4-second cycle)
-    let breathing_progress = (timestamp / 4000.0) % 2.0;
-    let actual_progress = if breathing_progress > 1.0 {
-        2.0 - breathing_progress
-    } else {
-        breathing_progress
-    };
-
-    let sin_val = (actual_progress * std::f64::consts::PI).sin();
-    let saturation_factor = 1.0 + (sin_val * 0.05);
-    let lightness_factor = 1.0 + (sin_val * 0.05);
-
-    // Apply breathing to colors
-    let breathing_color1 = adjust_saturation_hex(&color1, saturation_factor);
-    let breathing_color1 = adjust_lightness_hex(&breathing_color1, lightness_factor);
-    let breathing_color2 = adjust_saturation_hex(&color2, saturation_factor);
-    let breathing_color2 = adjust_lightness_hex(&breathing_color2, lightness_factor);
-
-    BackgroundRenderContext {
-        center_x,
-        center_y,
-        color1: breathing_color1,
-        color2: breathing_color2,
-    }
+/// This is a convenience function to create a properly configured
+/// StateMachineBuilder for background animations.
+pub fn create_background_state_machine(
+) -> StateMachineBuilder<BackgroundAnimationState, BackgroundEvent, BackgroundRenderContext> {
+    StateMachineBuilder::new()
+        .initial_state(BackgroundAnimationState::Rotating { angle: 0.0 })
+        .transition_fn(background_transition)
+        .render_fn(background_render)
 }

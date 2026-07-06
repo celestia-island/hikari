@@ -1,0 +1,117 @@
+[common]
+[common.button]
+submit = "إرسال"
+cancel = "إلغاء"
+confirm = "تأكيد"
+delete = "حذف"
+edit = "تحرير"
+save = "حفظ"
+
+[common.navigation]
+home = "الرئيسية"
+about = "حول"
+documentation = "التوثيق"
+components = "المكونات"
+theme = "السمة"
+
+[common.status]
+loading = "جاري التحميل..."
+success = "نجاح"
+error = "خطأ"
+warning = "تحذير"
+
+[theme]
+light = "فاتح"
+dark = "داكن"
+auto = "تلقائي"
+
+[page]
+[page.home]
+[page.home.hero]
+title = "إطار عمل هيكاري"
+subtitle = "الضوء - إطار عمل واجهة مستخدم حديث بلغة Rust"
+description = "مبني على Dioxus + Grass + Axum، مصمم بجماليات Arknights وأسلوب FUI."
+tagline = "لا عار في الرغبة بالشعور بالسعادة."
+explore = "استكشف المكونات ←"
+
+[page.home.features]
+title = "الميزات"
+description = "مصمم للمطورين الذين يريدون إنشاء تطبيقات ويب جميلة وعالية الأداء."
+
+[page.components]
+title = "المكونات"
+description = "مجموعة غنية من مكونات واجهة المستخدم القابلة لإعادة الاستخدام."
+
+[page.documentation]
+title = "التوثيق"
+description = "ابدأ مع هيكاري وتعلم كيفية إنشاء تطبيقات مذهلة."
+getting_started = "البدء"
+quick_start = "البداية السريعة"
+
+[language]
+english = "English"
+chinese_simplified = "简体中文"
+chinese_traditional = "繁體中文"
+french = "Français"
+russian = "Русский"
+spanish = "Español"
+arabic = "العربية"
+japanese = "日本語"
+korean = "한국어"
+
+[sidebar]
+[sidebar.overview]
+title = "مرحباً"
+home = "مرحباً"
+
+[sidebar.components]
+title = "المكونات"
+layer1 = "الطبقة 1"
+layer2 = "الطبقة 2"
+layer3 = "الطبقة 3"
+
+[sidebar.system]
+title = "النظام"
+overview = "نظرة عامة"
+css_utilities = "أدوات CSS"
+icons = "الأيقونات"
+palette = "لوحة الألوان"
+animations = "الرسوم المتحركة"
+animation_demo = "عرض الرسوم المتحركة"
+
+[sidebar.demos]
+title = "العروض"
+all_demos = "جميع العروض"
+
+[sidebar.items]
+button = "زر"
+form = "نموذج"
+number_input = "إدخال رقمي"
+search = "بحث"
+switch = "مفتاح"
+feedback = "تعليقات"
+display = "عرض"
+avatar = "صورة رمزية"
+image = "صورة"
+tag = "وسم"
+empty = "فارغ"
+comment = "تعليق"
+description_list = "قائمة الوصف"
+navigation = "تنقل"
+collapsible = "قابل للطي"
+data = "بيانات"
+table = "جدول"
+tree = "شجرة"
+pagination = "ترقيم الصفحات"
+qrcode = "رمز QR"
+timeline = "خط زمني"
+cascader = "متسلسل"
+transfer = "نقل"
+media = "وسائط"
+editor = "محرر"
+visualization = "تصور"
+user_guide = "دليل المستخدم"
+zoom_controls = "عناصر التحكم بالتكبير"
+form_demo = "عرض النموذج"
+dashboard_demo = "عرض لوحة التحكم"
+video_demo = "عرض الفيديو"

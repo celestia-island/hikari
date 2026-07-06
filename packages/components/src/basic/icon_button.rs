@@ -5,14 +5,16 @@
 // - Layer2: Component variables (icon-button-vars.scss)
 // - Custom: Runtime overrides via icon_color, animation_id
 
-use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::ClassesBuilder;
-use hikari_palette::classes::components::ButtonClass;
+#![expect(clippy::needless_update)]
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use hikari_icons::{Icon, IconProps, MdiIcon};
+use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
+
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonSize {
@@ -91,9 +93,6 @@ pub struct IconButtonProps {
     pub class: String,
 
     pub onclick: Option<EventHandler<MouseEvent>>,
-
-    #[props(optional)]
-    pub aria_label: Option<String>,
 }
 
 /// Icon button component
@@ -119,40 +118,50 @@ pub fn IconButton(props: IconButtonProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add_typed(ButtonClass::Button)
-        .add_typed(ButtonClass::IconButton)
-        .add_typed(variant_class);
+        .add(ButtonClass::Button)
+        .add(ButtonClass::IconButton)
+        .add(variant_class);
 
     if let Some(size) = size_class {
-        builder = builder.add_typed(size);
+        builder = builder.add(size);
     }
 
     if props.disabled {
-        builder = builder.add_typed(ButtonClass::Disabled);
+        builder = builder.add(ButtonClass::Disabled);
     }
 
-    let button_classes = builder.add(&props.class).build();
+    let button_classes = builder.add_raw(&props.class).build();
 
     let icon_classes = ClassesBuilder::new()
-        .add_typed(ButtonClass::IconButtonIcon)
-        .add_typed_if(ButtonClass::IconButtonDisabled, props.disabled)
+        .add(ButtonClass::IconButtonIcon)
+        .add_if(ButtonClass::IconButtonDisabled, || props.disabled)
         .build();
 
-    let style_attr = crate::utils::build_css_vars_style(
-        "--hi-icon-button-radius",
-        &[
-            crate::utils::CssVarEntry::new(
-                &props.icon_color,
-                &[
-                    "--hi-icon-button-icon-color",
-                    "--hi-icon-button-icon-color-active",
-                ],
-            ),
-            crate::utils::CssVarEntry::new(&props.background_color, &["--hi-icon-button-bg"]),
-            crate::utils::CssVarEntry::new(&props.border_radius, &["--hi-icon-button-radius"]),
-        ],
-        &props.css_vars,
-    );
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-icon-button-radius);");
+
+    if let Some(color) = &props.icon_color {
+        css_vars_string.push_str(&format!("--hi-icon-button-icon-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-icon-button-icon-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-icon-button-bg:{};", color));
+    }
+
+    if let Some(radius) = &props.border_radius {
+        css_vars_string.push_str(&format!("--hi-icon-button-radius:{};", radius));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
 
     let glow_color = match props.variant {
         IconButtonVariant::Ghost => props.glow_color,
@@ -168,8 +177,6 @@ pub fn IconButton(props: IconButtonProps) -> Element {
             style: style_attr,
             "data-animation-id": props.animation_id,
             disabled: props.disabled,
-            "aria-label": props.aria_label.unwrap_or_default(),
-            "aria-disabled": props.disabled.to_string(),
             onclick: move |e| {
                 if let Some(handler) = props.onclick.as_ref() {
                     handler(e);
@@ -184,14 +191,17 @@ pub fn IconButton(props: IconButtonProps) -> Element {
         }
     };
 
-    rsx! {
-        ConditionalGlow {
-            glow: props.glow,
-            blur: props.glow_blur,
-            color: glow_color,
-            intensity: props.glow_intensity,
-            {button_content}
+    if props.glow {
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: glow_color,
+                intensity: props.glow_intensity,
+                {button_content}
+            }
         }
+    } else {
+        button_content
     }
 }
 

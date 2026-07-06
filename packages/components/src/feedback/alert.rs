@@ -1,14 +1,17 @@
 // hi-components/src/feedback/alert.rs
-// Alert component
+// Alert component with Arknights + FUI styling
+
+#![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{AlertClass, ClassesBuilder, TypedClass};
+use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 
-use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
-use crate::feedback::Glow;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    basic::{IconButton, IconButtonSize, IconButtonVariant},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct AlertComponent;
 
@@ -64,17 +67,17 @@ pub fn Alert(props: AlertProps) -> Element {
     };
 
     let alert_classes = ClassesBuilder::new()
-        .add_typed(AlertClass::Alert)
-        .add_typed(variant_class)
-        .add_typed(size_class)
-        .add(&props.class)
+        .add(AlertClass::Alert)
+        .add(variant_class)
+        .add(size_class)
+        .add_raw(&props.class)
         .build();
 
     let default_icon: Option<Element> = match props.variant {
         AlertVariant::Info => Some(rsx! {
             Icon {
                 icon: MdiIcon::Information,
-                class: AlertClass::AlertIcon.class_name().to_string(),
+                class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-primary)".to_string(),
             }
@@ -82,15 +85,15 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Success => Some(rsx! {
             Icon {
                 icon: MdiIcon::Check,
-                class: AlertClass::AlertIcon.class_name().to_string(),
+                class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-success)".to_string(),
             }
         }),
         AlertVariant::Warning => Some(rsx! {
             Icon {
-                icon: MdiIcon::Alert,
-                class: AlertClass::AlertIcon.class_name().to_string(),
+                icon: MdiIcon::AlertTriangle,
+                class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-warning)".to_string(),
             }
@@ -98,7 +101,7 @@ pub fn Alert(props: AlertProps) -> Element {
         AlertVariant::Error => Some(rsx! {
             Icon {
                 icon: MdiIcon::Alert,
-                class: AlertClass::AlertIcon.class_name().to_string(),
+                class: AlertClass::AlertIcon.as_class().to_string(),
                 size: 20,
                 color: "var(--hi-color-danger)".to_string(),
             }
@@ -107,25 +110,13 @@ pub fn Alert(props: AlertProps) -> Element {
 
     let icon = props.icon.as_ref().or(default_icon.as_ref());
 
-    let icon_wrapper_class = AlertClass::AlertIconWrapper.class_name();
-    let content_class = AlertClass::AlertContent.class_name();
-    let title_class = AlertClass::AlertTitle.class_name();
-    let description_class = AlertClass::AlertDescription.class_name();
+    let icon_wrapper_class = AlertClass::AlertIconWrapper.as_class();
+    let content_class = AlertClass::AlertContent.as_class();
+    let title_class = AlertClass::AlertTitle.as_class();
+    let description_class = AlertClass::AlertDescription.as_class();
 
     // Pre-compute onclick handler for closable button
     let on_close_handler = props.on_close.clone();
-
-    let aria_role = match props.variant {
-        AlertVariant::Error | AlertVariant::Warning => "alert",
-        AlertVariant::Info | AlertVariant::Success => "status",
-    };
-
-    let aria_live = match props.variant {
-        AlertVariant::Error | AlertVariant::Warning => "assertive",
-        AlertVariant::Info | AlertVariant::Success => "polite",
-    };
-
-    let icon_clone = icon.cloned();
 
     rsx! {
         Glow {
@@ -133,21 +124,20 @@ pub fn Alert(props: AlertProps) -> Element {
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
-            block: true,
-            div { class: alert_classes, role: "{aria_role}", "aria-live": "{aria_live}",
+            div { class: alert_classes,
 
-                if let Some(icon_node) = icon_clone {
-                    div { class: icon_wrapper_class, {icon_node} }
+                if icon.is_some() {
+                    div { class: icon_wrapper_class, {icon.unwrap().clone()} }
                 }
 
                 div { class: content_class,
 
-                    if let Some(title) = props.title.as_ref() {
-                        div { class: title_class, "{title}" }
+                    if props.title.is_some() {
+                        div { class: title_class, "{props.title.as_ref().unwrap()}" }
                     }
 
-                    if let Some(desc) = props.description.as_ref() {
-                        div { class: description_class, "{desc}" }
+                    if props.description.is_some() {
+                        div { class: description_class, "{props.description.as_ref().unwrap()}" }
                     }
                 }
 

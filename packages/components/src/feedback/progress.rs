@@ -1,16 +1,11 @@
 // packages/components/src/feedback/progress.rs
-// Progress component
-// Active pulse: RAF-driven (migrated from CSS @keyframes)
+// Progress component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, ProgressClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::anim_helpers::run_phase_loop;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct ProgressComponent;
-
-const PULSE_PERIOD_MS: f64 = 2000.0;
 
 #[define_props]
 pub struct ProgressProps {
@@ -50,8 +45,8 @@ pub fn Progress(props: ProgressProps) -> Element {
     let percentage = (props.value / props.max * 100.0).clamp(0.0, 100.0);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(ProgressClass::Wrapper)
-        .add(&props.class)
+        .add(ProgressClass::Wrapper)
+        .add_raw(&props.class)
         .build();
 
     let status_class = match props.status {
@@ -60,57 +55,15 @@ pub fn Progress(props: ProgressProps) -> Element {
     };
 
     let combined_classes = format!("{wrapper_classes} {status_class}");
-
-    let opacity_signal = use_signal(|| 1.0_f64);
-    let is_active = props.status == ProgressStatus::Active;
-
-    {
-        let sig = opacity_signal.clone();
-        use_effect(move || {
-            if !is_active {
-                return;
-            }
-            run_phase_loop(PULSE_PERIOD_MS, sig.clone(), |phase| {
-                1.0 - 0.3 * (2.0 * std::f64::consts::PI * phase).sin().max(0.0)
-            });
-        });
-    }
-
-    let opacity = opacity_signal.get();
-    let pulse_style = if is_active && opacity < 0.99 {
-        format!("opacity: {opacity:.2};")
-    } else {
-        String::new()
-    };
-
-    let width_style = if is_active {
-        format!("width: {percentage:.0}%; {pulse_style}")
-    } else {
-        format!("width: {percentage:.0}%;")
-    };
-
+    let width_style = format!("width: {percentage:.0}%;");
     let stroke_dasharray_val = "339.292";
     let stroke_dashoffset_val = format!("{:.3}", 339.292 * (1.0 - percentage / 100.0));
     let percentage_text = format!("{percentage:.0}%");
-
-    let aria_valuenow = props.value.to_string();
-    let aria_valuemax = props.max.to_string();
-
-    let circle_style = if is_active && opacity < 0.99 {
-        format!("opacity: {opacity:.2};")
-    } else {
-        String::new()
-    };
 
     rsx! {
         div {
             class: combined_classes,
             style: props.style,
-            role: "progressbar",
-            "aria-valuenow": aria_valuenow,
-            "aria-valuemin": "0",
-            "aria-valuemax": aria_valuemax,
-            "aria-label": "Progress",
 
             {if props.progress_type == ProgressType::Linear {
                 rsx! {
@@ -160,7 +113,6 @@ pub fn Progress(props: ProgressProps) -> Element {
                                 stroke_dasharray: stroke_dasharray_val,
                                 stroke_dashoffset: stroke_dashoffset_val,
                                 transform: "rotate(-90 60 60)",
-                                style: circle_style,
                             }
                         }
 
@@ -217,9 +169,15 @@ impl StyledComponent for ProgressComponent {
     text-align: right;
 }
 
-/* Active status — RAF-driven opacity pulse (migrated from CSS @keyframes) */
+/* Active status */
 .hi-progress-active .hi-progress-bg {
-  transition: opacity 0.1s linear;
+    animation: hi-progress-active 2s linear infinite;
+}
+
+@keyframes hi-progress-active {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 /* Circular progress */
@@ -244,7 +202,13 @@ impl StyledComponent for ProgressComponent {
 }
 
 .hi-progress-active .hi-progress-circle-path {
-  transition: opacity 0.1s linear;
+    animation: hi-progress-circle-active 2s linear infinite;
+}
+
+@keyframes hi-progress-circle-active {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .hi-progress-circle-text {

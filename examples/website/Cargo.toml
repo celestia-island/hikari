@@ -1,20 +1,11 @@
 [package]
 name = "website"
 version = "0.1.0"
-edition = "2024"
-authors = ["langyo <langyo.china@gmail.com>"]
-license = "MIT OR Apache-2.0"
+edition = "2021"
 publish = false
 
 [workspace]
 # This is a standalone example, not part of the main workspace
-
-[profile.dev-wasm]
-inherits = "dev"
-opt-level = 2
-debug = 1
-codegen-units = 1
-strip = "debuginfo"
 
 [lib]
 name = "website"
@@ -23,28 +14,19 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Tairitsu framework packages
+# Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
 tairitsu-vdom = "^0.5"
 tairitsu-hooks = "^0.5"
 tairitsu-macros = "^0.5"
-tairitsu-web = { version = "^0.5", default-features = false, features = [
-  "vdom",
-  "hooks",
-  "macros",
-  "style",
+tairitsu-web = { version = "^0.5", features = [
   "wit-bindings",
-  "i18n",
 ] }
 
 # Hikari design system (pure Rust, no Dioxus)
 hikari-palette = { path = "../../packages/palette" }
-hikari-components = { path = "../../packages/components" }
-hikari-icons = { path = "../../packages/icons", features = ["tairitsu"] }
 
 # Markdown rendering
 pulldown-cmark = "^0.12"
-
-# TOML parsing (for i18n loader)
-toml = "^0.8"
 
 # Logging and error handling
 tracing = "^0.1"
@@ -74,55 +56,24 @@ title = "Hikari"
 head = """
 <link rel="stylesheet" href="/styles/bundle.css">
 <link rel="stylesheet" href="/styles/spa.css">
-<link rel="stylesheet" href="/styles/animations.css">
 <script>
 (() => {
   const ROUTES = {
     '': 'home',
     '/': 'home',
-    '/components': 'components',
-    '/components/layer1/button': 'component-button',
-    '/components/layer1/form': 'component-form',
-    '/components/layer1/number-input': 'component-number-input',
-    '/components/layer1/search': 'component-search',
-    '/components/layer1/switch': 'component-switch',
-    '/components/layer1/feedback': 'component-feedback',
-    '/components/layer1/display': 'component-display',
-    '/components/layer1/avatar': 'component-avatar',
-    '/components/layer1/image': 'component-image',
-    '/components/layer1/tag': 'component-tag',
-    '/components/layer1/empty': 'component-empty',
-    '/components/layer1/comment': 'component-comment',
-    '/components/layer1/description-list': 'component-description-list',
-    '/components/layer2/navigation': 'component-navigation',
-    '/components/layer2/collapsible': 'component-collapsible',
-    '/components/layer2/data': 'component-data',
-    '/components/layer2/table': 'component-table',
-    '/components/layer2/tree': 'component-tree',
-    '/components/layer2/pagination': 'component-pagination',
-    '/components/layer2/qrcode': 'component-qrcode',
-    '/components/layer2/timeline': 'component-timeline',
-    '/components/layer2/form': 'component-form-composed',
-    '/components/layer2/cascader': 'component-cascader',
-    '/components/layer2/transfer': 'component-transfer',
-    '/components/layer2/feedback': 'component-feedback-composed',
-    '/components/layer3/media': 'component-media',
-    '/components/layer3/editor': 'component-editor',
-    '/components/layer3/visualization': 'component-visualization',
-    '/components/layer3/user-guide': 'component-user-guide',
-    '/components/layer3/zoom-controls': 'component-zoom-controls',
+    '/components': 'components-overview',
+    '/components/layer1': 'components-layer1',
+    '/components/layer2': 'components-layer2',
+    '/components/layer3': 'components-layer3',
     '/system': 'system-overview',
     '/system/palette': 'system-palette',
     '/system/css': 'system-css',
     '/system/icons': 'system-icons',
     '/system/animations': 'system-animations',
     '/system/i18n': 'system-i18n',
-    '/interactive': 'interactive',
-    '/animations': 'animations',
     '/demos': 'demos-overview',
     '/demos/form': 'demos-form',
     '/demos/dashboard': 'demos-dashboard',
-    '/demos/video': 'demos-video',
   };
 
   function getRouteId() {
@@ -145,21 +96,12 @@ head = """
       window.scrollTo(0, 0);
     }
     // Highlight active sidebar link
-    document.querySelectorAll('.hi-sidebar-item.is-active, .hi-menu-item.is-active').forEach(function(el) {
-      el.classList.remove('is-active');
+    document.querySelectorAll('.sidebar-link').forEach(function(link) {
+      link.classList.remove('is-active');
     });
     var currentPath = location.pathname || '/';
-    var activeInner = document.querySelector('.hi-sidebar-item[href="' + currentPath + '"], .hi-menu-item-inner[href="' + currentPath + '"]');
-    if (activeInner) {
-      var activeLi = activeInner.closest('.hi-menu-item, .hi-sidebar-item');
-      if (activeLi) activeLi.classList.add('is-active');
-      // Auto-expand parent submenus so active item is visible
-      var parent = activeInner.closest('.hi-submenu[data-collapsed]');
-      while (parent) {
-        parent.removeAttribute('data-collapsed');
-        parent = parent.parentElement ? parent.parentElement.closest('.hi-submenu[data-collapsed]') : null;
-      }
-    }
+    var activeLink = document.querySelector('.sidebar-link[href="' + currentPath + '"]');
+    if (activeLink) { activeLink.classList.add('is-active'); }
     // Highlight active topnav link
     document.querySelectorAll('.hikari-topnav__link').forEach(function(link) {
       link.classList.remove('is-active');
@@ -167,37 +109,6 @@ head = """
         link.classList.add('is-active');
       }
     });
-    // Update breadcrumb
-    var bcCurrent = document.getElementById('breadcrumb-current');
-    if (bcCurrent) {
-      var pathParts = currentPath.substring(1).split('/');
-      var labels = [];
-      if (pathParts[0] === 'components') {
-        labels.push('Components');
-        if (pathParts[1]) {
-          var layerNum = pathParts[1].replace('layer', 'Layer ');
-          labels.push(layerNum);
-        }
-        if (pathParts[2]) {
-          labels.push(pathParts[2].charAt(0).toUpperCase() + pathParts[2].slice(1));
-        }
-      } else if (pathParts[0] === 'system') {
-        labels.push('System');
-        if (pathParts[1]) {
-          labels.push(pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1));
-        }
-      } else if (pathParts[0] === 'demos') {
-        labels.push('Demos');
-        if (pathParts[1]) {
-          labels.push(pathParts[1].charAt(0).toUpperCase() + pathParts[1].slice(1));
-        }
-      } else if (currentPath === '/' || !pathParts[0]) {
-        labels.push('Home');
-      } else {
-        labels.push(pathParts.map(function(s) { return s.charAt(0).toUpperCase() + s.slice(1); }).join(' '));
-      }
-      bcCurrent.textContent = labels.length > 0 ? labels[labels.length - 1] : 'Home';
-    }
   }
 
   // Intercept clicks on internal links for SPA navigation (History API)
@@ -225,10 +136,6 @@ head = """
 
   window.addEventListener('popstate', navigate);
   document.addEventListener('DOMContentLoaded', navigate);
-
-  // Expose navigate globally so the packager's post-WASM rAF callback
-  // can re-run the SPA router after DOM hydration.
-  window.navigate = navigate;
 
   // Drawer toggle behaviour
   document.addEventListener('DOMContentLoaded', function() {
@@ -280,7 +187,3 @@ output = "styles/bundle.css"
 [[package.metadata.tairitsu.scss.entries]]
 entry = "src/styles/spa.scss"
 output = "styles/spa.css"
-
-[[package.metadata.tairitsu.scss.entries]]
-entry = "src/styles/animations.scss"
-output = "styles/animations.css"

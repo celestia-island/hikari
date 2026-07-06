@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari // Hikari // Hikari // Hikari // Hikari Cascader Component -  Styling Component Component Component Component
+// Hikari // Hikari // Hikari // Hikari // Hikari Cascader Component - FUI Styling Component Component Component Component
 
 // ============================================
 // Base Cascader Styles
@@ -28,13 +28,13 @@
     -moz-appearance: none;
 
     background-color: var(--hi-input-bg);
-    border: 1px solid var(--hi-input-border, rgba(0, 0, 0, 0.1));
+    border: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
 
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-base;
     font-weight: 400;
-    color: var(--hi-input-text, var(--hi-text-primary, #262626));
+    color: var(--hi-input-text, #F8FAFC);
     line-height: 1.5;
 
     cursor: pointer;
@@ -44,7 +44,7 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
     &:hover {
-        border-color: var(--hi-input-border-hover, var(--hi-color-primary, var(--hi-primary, #FFB3A7)));
+        border-color: var(--hi-input-border-hover, rgba(139, 92, 246, 0.5));
         --hi-glow-transparent: false;
         --hi-glow-bg-color: var(--hi-color-surface);
         box-shadow: 0 0 8px var(--hi-glow-color);
@@ -52,16 +52,16 @@
 
     &:focus {
         outline: none;
-        border-color: var(--hi-input-border-focus, var(--hi-color-primary, var(--hi-primary, #FFB3A7)));
-        background-color: var(--hi-input-bg-focus, #FFFFFF);
+        border-color: var(--hi-input-border-focus, rgba(139, 92, 246, 0.7));
+        background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
         box-shadow:
-            0 0 0 3px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)),
+            0 0 0 3px rgba(139, 92, 246, 0.2),
             0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     &.hi-cascader-open {
         border-color: var(--hi-color-primary);
-        background-color: var(--hi-input-bg-focus, #FFFFFF);
+        background-color: var(--hi-input-bg-focus, rgba(55, 55, 55, 0.9));
         --hi-glow-transparent: false;
         --hi-glow-bg-color: var(--hi-color-surface);
         box-shadow: 0 0 16px var(--hi-glow-color);
@@ -92,7 +92,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--hi-input-text, var(--hi-text-primary, #262626));
+    color: var(--hi-input-text, #F8FAFC);
 
     @include mix.text-ellipsis;
 }
@@ -166,14 +166,12 @@
     min-width: 200px;
     max-height: 320px;
     overflow: hidden;
-    background: var(--hi-surface, rgba(255, 255, 255, 0.85));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--hi-color-border, var(--hi-border, #C4D8DA));
+    background: var(--hi-dropdown-bg, rgba(30, 30, 30, 0.95));
+    border: 1px solid var(--hi-dropdown-border, rgba(255, 255, 255, 0.1));
     border-radius: vars.$hikari-radius-fui-md;
     box-shadow:
-        var(--hi-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)),
-        0 0 1px rgba(255, 179, 167, 0.2);
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
     display: flex;
     flex-direction: row;
 }
@@ -187,7 +185,7 @@
     max-height: 320px;
     overflow-y: auto;
     overflow-x: hidden;
-    border-right: 1px solid var(--hi-color-border, rgba(196, 216, 218, 0.3));
+    border-right: 1px solid var(--hi-dropdown-border, rgba(255, 255, 255, 0.1));
 
     @include mix.scrollbar-hidden;
 
@@ -228,24 +226,24 @@
     @include mix.text-ellipsis;
 
     &:hover {
-        background: var(--hi-button-primary-light, #FFE4E9);
-        border-color: transparent;
+        background: var(--hi-primary);
+        border-color: var(--hi-primary);
         --hi-glow-transparent: false;
-        --hi-glow-bg-color: var(--hi-button-primary-light, #FFE4E9);
+        --hi-glow-bg-color: var(--hi-primary);
         box-shadow:
             0 0 8px var(--hi-glow-color),
             inset 0 0 6px var(--hi-glow-color);
 
-        color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
+        color: var(--hi-color-text-primary);
     }
 
     &.hi-cascader-menu-item-selected {
-        background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-        color: var(--hi-badge-text, #FFFFFF);
+        background: var(--hi-primary);
+        color: var(--hi-color-primary);
         font-weight: 500;
         box-shadow:
-            0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
-            inset 0 0 8px rgba(255, 255, 255, 0.1);
+            0 0 12px var(--hi-primary),
+            inset 0 0 8px var(--hi-primary);
     }
 
     &.hi-cascader-menu-item-disabled {

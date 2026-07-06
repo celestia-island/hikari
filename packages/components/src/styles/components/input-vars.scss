@@ -84,8 +84,8 @@
 
 .hi-input-wrapper {
   // Colors
-  --hi-input-wrapper-bg: transparent;
-  --hi-input-wrapper-bg-focus: transparent;
+  --hi-input-wrapper-bg: var(--hi-color-surface);
+  --hi-input-wrapper-bg-focus: var(--hi-color-surface);
   --hi-input-wrapper-border-color: var(--hi-color-border);
   --hi-input-wrapper-border-color-focus: var(--hi-color-primary);
   

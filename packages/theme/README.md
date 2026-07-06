@@ -1,23 +1,24 @@
 # hikari-theme
 
-Theme system for Hikari UI applications with glow effects and flat design aesthetics.
+Theme system for Hikari UI applications with Arknights-inspired aesthetics and FUI design principles.
 
 ## Installation
 
 ```toml
 [dependencies]
-hikari-theme = "0.1"
-hikari-palette = "0.1"
+hikari-theme = "0.1.0"
+hikari-palette = "0.1.0"
 ```
 
 ## Quick Start
 
 ```rust
+use dioxus::prelude::*;
 use hikari_theme::ThemeProvider;
 
 fn app() -> Element {
     rsx! {
-        ThemeProvider { initial_initial_palette: "hikari".to_string(),
+        ThemeProvider { palette: "hikari".to_string(),
             div { class: "container",
                 h1 { "Welcome to Hikari" }
                 div { "Your app content" }
@@ -33,9 +34,9 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 ## Features
 
-- **ThemeProvider Component** - Context-based theme management
+- **ThemeProvider Component** - Context-based theme management for Dioxus apps
 - **CSS Variables System** - Dynamic theming via CSS custom properties
-- **Built-in Themes** - Hikari (light) and Tairitsu (dark)
+- **Multiple Built-in Themes** - Hikari (light), Tairitsu (dark), Arknights, Fresh
 - **SCSS Mixins & Utilities** - Reusable styling helpers
 - **Nested Theme Support** - Local theme override capability
 
@@ -43,8 +44,10 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 | Theme | Type | Primary Color | Secondary Color |
 |-------|------|---------------|-----------------|
-| `hikari` | Light | 粉红 (Pink) | 苍翠 (Green) |
-| `tairitsu` | Dark | 鷃蓝 (Navy Blue) | 姜黄 (Gold) |
+| `hikari` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion/Red) |
+| `tairitsu` | Dark | 靛蓝 (Indigo) | 朱砂 (Vermilion) |
+| `arknights` | Light | 石青 (Cyan/Blue) | 朱砂 (Vermilion) |
+| `fresh` | Light | 月白 (Light White) | 葱倩 (Green) |
 
 ## License
 

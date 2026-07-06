@@ -3,8 +3,7 @@
 
 use hikari_palette::classes::{ClassesBuilder, DividerClass};
 
-use crate::prelude::*;
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DividerOrientation {
@@ -21,7 +20,6 @@ pub enum DividerType {
     Dotted,
 }
 
-/// Props for the [`Divider`] component.
 #[define_props]
 pub struct DividerProps {
     #[default]
@@ -43,7 +41,9 @@ pub struct DividerProps {
     pub class: String,
 }
 
-/// A visual divider line that separates content sections, with optional centered text label.
+///
+///
+///
 #[component]
 pub fn Divider(props: DividerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -61,14 +61,14 @@ pub fn Divider(props: DividerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add_typed(DividerClass::Divider)
-        .add_typed(orientation_class)
-        .add_typed(type_class)
-        .add_typed_if(DividerClass::WithText, props.text.is_some())
-        .add(&props.class);
+        .add(DividerClass::Divider)
+        .add(orientation_class)
+        .add(type_class)
+        .add_if(DividerClass::WithText, || props.text.is_some())
+        .add_raw(&props.class);
 
     if is_rtl {
-        builder = builder.add_typed(DividerClass::Rtl);
+        builder = builder.add_raw("hi-divider-rtl");
     }
 
     let divider_classes = builder.build();

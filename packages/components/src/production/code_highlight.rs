@@ -1,5 +1,5 @@
 // packages/components/src/production/code_highlight.rs
-// Code highlighting component
+// Code highlighting component with Arknights + FUI styling
 //
 // NOTE: This component provides a styled code display with line numbers
 // and copy functionality. The `language-{lang}` class is added to the code
@@ -8,16 +8,44 @@
 // integrating with syntect.
 
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use wasm_bindgen::prelude::*;
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
-const COPY_FEEDBACK_TIMEOUT_MS: i32 = 2000;
+// Helper function to copy text to clipboard (WASM only)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[wasm_bindgen(inline_js = r#"
+export function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+    } else {
+        // Fallback to execCommand
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return Promise.resolve(success);
+    }
+}
+"#)]
+#[allow(unsafe)]
+unsafe extern "C" {
+    fn copyToClipboard(text: &str) -> js_sys::Promise;
+}
 
-// Copy text to clipboard using platform layer
+// WASM implementation
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 fn copy_to_clipboard(text: &str) -> bool {
-    platform::copy_to_clipboard(text)
+    let _promise = copyToClipboard(text);
+    true
 }
 
 pub struct CodeHighlightComponent;
@@ -52,32 +80,30 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let line_count = lines.len();
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::Container)
-        .add(&props.class)
+        .add(CodeHighlightClass::Container)
+        .add_raw(&props.class)
         .build();
 
     let header_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::Header)
+        .add(CodeHighlightClass::Header)
         .build();
 
     let language_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::Language)
+        .add(CodeHighlightClass::Language)
         .build();
 
     let copy_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::CopyButton)
+        .add(CodeHighlightClass::CopyButton)
         .build();
 
-    let code_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::Code)
-        .build();
+    let code_classes = ClassesBuilder::new().add(CodeHighlightClass::Code).build();
 
     let line_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::LineNumbers)
+        .add(CodeHighlightClass::LineNumbers)
         .build();
 
     let content_classes = ClassesBuilder::new()
-        .add_typed(CodeHighlightClass::Content)
+        .add(CodeHighlightClass::Content)
         .build();
 
     let max_height_style = if let Some(ref height) = props.max_height {
@@ -95,7 +121,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         let base = copy_classes.clone();
         let copied_state = copied.read();
         if copied_state {
-            format!("{base} copied hi-code-highlight-copy-copied")
+            format!("{} copied hi-code-highlight-copy-copied", base)
         } else {
             base
         }
@@ -103,25 +129,30 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 
     let button_text = if copied.read() { "已复制" } else { "复制" };
 
-    let language_class = format!("language-{language}");
+    let language_class = format!("language-{}", language);
 
     // Pre-compute line number elements outside rsx! using VElement builder
     let line_number_nodes: Vec<VNode> = (1..=line_count)
         .map(|i| {
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("div")
                     .class("hi-code-highlight-line-number")
                     .child(VNode::Text(VText::new(&i.to_string()))),
-            )
+            ))
         })
         .collect();
 
     rsx! {
-        div { class: container_classes,
+        div {
+            class: container_classes,
 
-            div { class: header_classes,
+            div {
+                class: header_classes,
 
-                div { class: language_classes, language }
+                div {
+                    class: language_classes,
+                    language
+                }
 
                 if props.copyable {
                     button {
@@ -130,31 +161,45 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                             let code_for_copy = code_for_copy.clone();
                             let copied_for_timeout = copied.clone();
                             move |_| {
-                                if copy_to_clipboard(&code_for_copy) {
-                                    copied.set(true);
-                                    let copied_signal = copied_for_timeout.clone();
-                                    platform::set_timeout(
-                                        move || {
+                                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                                {
+                                    if copy_to_clipboard(&code_for_copy) {
+                                        copied.set(true);
+                                        let copied_signal = copied_for_timeout.clone();
+                                        platform::set_timeout(move || {
                                             copied_signal.set(false);
-                                        },
-                                        COPY_FEEDBACK_TIMEOUT_MS,
-                                    );
+                                        }, 2000);
+                                    }
+                                }
+                                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                                {
+                                    let _ = code_for_copy;
+                                    let _ = copied;
                                 }
                             }
                         },
-                        button_text,
+                        button_text
                     }
                 }
             }
 
-            div { class: content_classes, style: max_height_style,
+            div {
+                class: content_classes,
+                style: max_height_style,
 
                 if props.line_numbers {
-                    div { class: line_classes, ..line_number_nodes }
+                    div {
+                        class: line_classes,
+                        ..line_number_nodes
+                    }
                 }
 
-                pre { class: code_classes,
-                    code { class: language_class, code }
+                pre {
+                    class: code_classes,
+                    code {
+                        class: language_class,
+                        code
+                    }
                 }
             }
         }
@@ -204,14 +249,14 @@ impl StyledComponent for CodeHighlightComponent {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
+    box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
 .hi-code-highlight-copy.hi-code-highlight-copy-copied,
 .hi-code-highlight-copy.copied {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 12px var(--hi-glow-button-primary);
+    box-shadow: 0 0 12px var(--hi-color-primary-glow);
     opacity: 1;
 }
 

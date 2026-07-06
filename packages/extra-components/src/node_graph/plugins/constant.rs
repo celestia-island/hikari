@@ -1,8 +1,10 @@
 // node_graph/plugins/constant.rs
 // Constant node plugin - provides static values
 
-use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
-use crate::node_graph::value::NodeValue;
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Constant node plugin
 ///
@@ -15,9 +17,8 @@ pub struct ConstantNode {
 
 impl ConstantNode {
     /// Create a new constant node
-    #[must_use]
     pub fn new(name: &str, value: NodeValue) -> Self {
-        let output_port_id = format!("{name}_output");
+        let output_port_id = format!("{}_output", name);
         Self {
             node_type: NodeType::new("constant", name),
             value,
@@ -26,26 +27,22 @@ impl ConstantNode {
     }
 
     /// Create a numeric constant node
-    #[must_use]
     pub fn numeric(name: &str, value: f64) -> Self {
         Self::new(name, NodeValue::from(value))
     }
 
     /// Create a string constant node
-    #[must_use]
     pub fn string(name: &str, value: &str) -> Self {
         Self::new(name, NodeValue::from(value))
     }
 
     /// Create a boolean constant node
-    #[must_use]
     pub fn boolean(name: &str, value: bool) -> Self {
         Self::new(name, NodeValue::from(value))
     }
 
     /// Get the current value
-    #[must_use]
-    pub const fn value(&self) -> &NodeValue {
+    pub fn value(&self) -> &NodeValue {
         &self.value
     }
 

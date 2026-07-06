@@ -1,17 +1,18 @@
 # hikari-icons
 
-Type-safe Material Design Icons (MDI) integration for Tairitsu with 7,447 icons.
+Type-safe Material Design Icons (MDI) integration for Dioxus with 7,447 icons.
 
 ## Installation
 
 ```toml
 [dependencies]
-hikari-icons = "0.1"
+hikari-icons = "0.1.0"
 ```
 
 ## Quick Start
 
 ```rust
+use dioxus::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
@@ -34,7 +35,7 @@ For complete API documentation, icon shortcuts, and dynamic icon usage, see [doc
 
 ## Dynamic Icons
 
-When dynamically changing icons (e.g., theme toggle), use a reactive `key` on the wrapper component, not on `Icon` itself. See [documentation](https://docs.rs/hikari-icons) for details.
+⚠️ **Important**: When dynamically changing icons (e.g., theme toggle), use a reactive `key` on the wrapper component, not on `Icon` itself. See [documentation](https://docs.rs/hikari-icons) for details.
 
 ## License
 

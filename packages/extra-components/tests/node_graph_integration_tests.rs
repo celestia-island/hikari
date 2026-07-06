@@ -6,11 +6,13 @@ mod tests {
 
     use std::collections::HashMap;
 
-    use hikari_extra_components::connection::Connection;
-    use hikari_extra_components::history::{HistoryAction, HistoryState, SerializedNodeState};
-    use hikari_extra_components::node::NodePlacement;
-    use hikari_extra_components::registry::list_all_plugins;
-    use hikari_extra_components::serialization::SerializedNodeGraph;
+    use hikari_extra_components::{
+        connection::Connection,
+        history::{HistoryAction, HistoryState, SerializedNodeState},
+        node::NodeState,
+        registry::list_all_plugins,
+        serialization::SerializedNodeGraph,
+    };
 
     #[test]
     fn test_history_state_initialization() {
@@ -70,9 +72,9 @@ mod tests {
 
         for i in 0..5 {
             let action = HistoryAction::NodeAdd {
-                id: format!("node{i}"),
+                id: format!("node{}", i),
                 node_type: "constant".to_string(),
-                position: (100.0 * f64::from(i), 100.0 * f64::from(i)),
+                position: (100.0 * i as f64, 100.0 * i as f64),
             };
             history.push(action);
         }
@@ -206,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_serialized_node_state_conversion() {
-        let node_state = NodePlacement {
+        let node_state = NodeState {
             id: "node1".to_string(),
             position: (100.0, 200.0),
             size: (250.0, 180.0),
@@ -220,7 +222,7 @@ mod tests {
         assert_eq!(serialized.size, (250.0, 180.0));
         assert!(serialized.minimized);
 
-        let converted: NodePlacement = serialized.into();
+        let converted: NodeState = serialized.into();
         assert_eq!(converted.id, "node1");
         assert_eq!(converted.position, (100.0, 200.0));
         assert_eq!(converted.size, (250.0, 180.0));
@@ -243,7 +245,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -304,7 +306,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -316,7 +318,7 @@ mod tests {
         let connections = vec![];
         let serialized = SerializedNodeGraph::from_state(&nodes, &connections);
 
-        let (restored_nodes, restored_connections) = serialized.to_state();
+        let (restored_nodes, restored_connections) = serialized.to_state().unwrap();
 
         assert_eq!(restored_nodes.len(), 1);
         assert_eq!(restored_connections.len(), 0);
@@ -329,7 +331,7 @@ mod tests {
         let mut nodes = HashMap::new();
         nodes.insert(
             "node1".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node1".to_string(),
                 position: (100.0, 100.0),
                 size: (200.0, 150.0),
@@ -339,7 +341,7 @@ mod tests {
         );
         nodes.insert(
             "node2".to_string(),
-            NodePlacement {
+            NodeState {
                 id: "node2".to_string(),
                 position: (300.0, 200.0),
                 size: (150.0, 100.0),
@@ -354,7 +356,7 @@ mod tests {
         let json = serialized.to_json().unwrap();
 
         let deserialized_graph = SerializedNodeGraph::from_json(&json).unwrap();
-        let (restored_nodes, _) = deserialized_graph.to_state();
+        let (restored_nodes, _) = deserialized_graph.to_state().unwrap();
 
         assert_eq!(restored_nodes.len(), 2);
         let node1 = restored_nodes.get("node1").unwrap();
@@ -392,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_node_state_default() {
-        let state = NodePlacement::new("".to_string());
+        let state = NodeState::new("".to_string());
 
         assert!(state.id.is_empty());
         assert_eq!(state.position, (0.0, 0.0));

@@ -1,18 +1,16 @@
 // hi-components/src/data/pagination_button.rs
 // Unified pagination button component with consistent structure
 
-use hikari_palette::classes::PaginationClass;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
-use crate::basic::{Arrow, ArrowDirection};
-use crate::feedback::Glow;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    basic::{Arrow, ArrowDirection},
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct PaginationButtonComponent;
-
-const PAGINATION_BTN_BASE: &str = "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;";
 
 #[derive(Clone, PartialEq, Props)]
 pub struct PaginationButtonProps {
@@ -57,10 +55,11 @@ pub enum PaginationButtonContent {
 #[component]
 pub fn PaginationButton(props: PaginationButtonProps) -> Element {
     // Build base classes
-    let mut builder = ClassesBuilder::new().add_typed(PaginationClass::PaginationItem);
+    let mut builder = ClassesBuilder::new().add(PaginationClass::PaginationItem);
 
+    // Add active state class
     if props.active {
-        builder = builder.add_typed(PaginationClass::PaginationActive);
+        builder = builder.add(PaginationClass::PaginationActive);
     }
 
     let button_classes = builder.build();
@@ -70,7 +69,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Arrow { direction, size } => rsx! {
             div {
                 class: button_classes,
-                style: PAGINATION_BTN_BASE,
+                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
                 onclick: props.onclick,
 
                 Arrow { direction, size }
@@ -79,7 +78,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Text { text, font_size: _ } => rsx! {
             div {
                 class: button_classes,
-                style: PAGINATION_BTN_BASE,
+                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none;",
                 onclick: props.onclick,
                 "{text}"
             }
@@ -87,7 +86,7 @@ pub fn PaginationButton(props: PaginationButtonProps) -> Element {
         PaginationButtonContent::Ellipsis => rsx! {
             div {
                 class: button_classes,
-                style: format!("{PAGINATION_BTN_BASE} font-size: 14px; font-weight: 600; color: var(--hi-color-text-secondary); letter-spacing: 0.1em;"),
+                style: "display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; cursor: pointer; user-select: none; font-size: 14px; font-weight: 600; color: var(--hi-color-text-secondary); letter-spacing: 0.1em;",
                 onclick: props.onclick,
                 "..."
             }

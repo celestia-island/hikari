@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 use web_sys::HtmlElement;
 
 use super::style::{CssProperty, StyleBuilder};

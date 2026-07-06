@@ -113,9 +113,9 @@ pub use glow::Glow;
 pub use hooks::*;
 #[cfg(feature = "dioxus")]
 pub use provider::{
-    try_use_animation_config, use_animation_config, use_animation_duration_scale,
-    use_animation_enabled, use_animation_reduced_motion,
-    AnimationContext as AnimationProviderContext, AnimationProvider,
+    AnimationContext as AnimationProviderContext, AnimationProvider, try_use_animation_config,
+    use_animation_config, use_animation_duration_scale, use_animation_enabled,
+    use_animation_reduced_motion,
 };
 
 // Re-export transition presets for convenience (only available with wasm/dioxus feature)
@@ -125,6 +125,6 @@ pub use provider::{
     target_os = "unknown"
 ))]
 pub use presets::transition::{
-    bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in, slide_out, zoom_in,
-    zoom_out, SlideDirection,
+    SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
+    slide_out, zoom_in, zoom_out,
 };

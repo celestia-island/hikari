@@ -10,7 +10,7 @@
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{JsCast, prelude::*};
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

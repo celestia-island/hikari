@@ -5,7 +5,7 @@
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, closure::Closure};
 use web_sys::HtmlElement;
 
 use super::{

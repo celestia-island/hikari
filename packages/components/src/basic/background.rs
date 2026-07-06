@@ -4,9 +4,9 @@
 //! Automatically adapts to theme changes via global theme provider registry.
 //! Includes a 60-second rotating gradient animation with configurable breathing.
 
-use hikari_palette::classes::{BackgroundClass, UtilityClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_palette::Color;
+use hikari_palette::classes::{BackgroundClass, UtilityClass};
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;

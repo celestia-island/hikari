@@ -23,7 +23,13 @@ fn build() -> anyhow::Result<()> {
         .unwrap_or_else(|_| PathBuf::from("."));
 
     // Find workspace root (go up until we find Cargo.toml with workspace members)
-    let workspace_root = find_workspace_root(&workspace_root);
+    let Some(workspace_root) = find_workspace_root(&workspace_root) else {
+        // Not inside the hikari workspace (e.g. consumed as a crates.io dep).
+        // Nothing to generate — the library still exports its API; the SCSS
+        // bundle and component constants are only needed in-workspace.
+        println!("ℹ️  Not in hikari workspace, skipping build steps.");
+        return Ok(());
+    };
 
     println!("📂 Workspace root: {:?}", workspace_root);
 
@@ -77,8 +83,9 @@ fn build() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Find the workspace root by looking for Cargo.toml with [workspace]
-fn find_workspace_root(start: &Path) -> PathBuf {
+/// Find the workspace root by looking for Cargo.toml with [workspace].
+/// Returns None when not inside a hikari workspace (e.g. consumed from crates.io).
+fn find_workspace_root(start: &Path) -> Option<PathBuf> {
     let mut current = start;
 
     loop {
@@ -87,14 +94,14 @@ fn find_workspace_root(start: &Path) -> PathBuf {
             && let Ok(content) = fs::read_to_string(&cargo_toml)
             && content.contains("[workspace]")
         {
-            return current.to_path_buf();
+            return Some(current.to_path_buf());
         }
 
         match current.parent() {
             Some(parent) if parent != current => {
                 current = parent;
             }
-            _ => return start.to_path_buf(),
+            _ => return None,
         }
     }
 }

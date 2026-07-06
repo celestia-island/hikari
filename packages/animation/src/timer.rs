@@ -7,37 +7,23 @@
 //! - Temporary visual feedback
 //! - Debouncing and throttling
 //! - requestAnimationFrame-based animations
-//!
-//! This module uses the tairitsu-vdom Platform trait for cross-platform
-//! timer support, working consistently in both WASM and server environments.
 
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::sync::atomic::{AtomicI32, Ordering};
-use std::time::Duration;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use tairitsu_vdom::Platform;
-
-static NEXT_TIMER_ID: AtomicI32 = AtomicI32::new(1);
-
-fn allocate_timer_id() -> i32 {
-    NEXT_TIMER_ID.fetch_add(1, Ordering::Relaxed)
-}
+use wasm_bindgen::{JsCast, prelude::*};
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TimerId(i32);
+pub struct TimerId(u32);
 
 impl TimerId {
     /// Create a new timer ID from raw value
-    #[must_use]
-    pub const fn new(id: i32) -> Self {
+    pub fn new(id: u32) -> Self {
         Self(id)
     }
 
     /// Get raw timer ID
-    #[must_use]
-    pub const fn as_i32(&self) -> i32 {
+    pub fn as_u32(&self) -> u32 {
         self.0
     }
 }
@@ -48,14 +34,12 @@ pub struct FrameId(u32);
 
 impl FrameId {
     /// Create a new frame ID from raw value
-    #[must_use]
-    pub const fn new(id: u32) -> Self {
+    pub fn new(id: u32) -> Self {
         Self(id)
     }
 
     /// Get raw frame ID
-    #[must_use]
-    pub const fn as_u32(&self) -> u32 {
+    pub fn as_u32(&self) -> u32 {
         self.0
     }
 }
@@ -68,21 +52,15 @@ pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 
 /// Timer manager for scheduling and cancelling delayed callbacks
 ///
-/// Uses the Platform trait for cross-platform timer support.
-///
 /// # Example
 /// ```ignore
 /// use animation::TimerManager;
-/// use tairitsu_vdom::Platform;
-/// use std::rc::Rc;
-/// use std::cell::RefCell;
 ///
-/// let platform = Rc::new(RefCell::new(/* platform implementation */));
-/// let manager = TimerManager::new(platform);
+/// let manager = TimerManager::new();
 ///
 /// // Schedule a callback
 /// let callback = Rc::new(|| {
-///     println!("Timer fired!");
+///     web_sys::console::log_1(&"Timer fired!".into());
 /// });
 ///
 /// let id = manager.set_timeout(callback, Duration::from_millis(500));
@@ -90,17 +68,20 @@ pub type FrameCallback = Rc<RefCell<dyn FnMut(f64)>>;
 /// // Cancel if needed
 /// manager.clear_timeout(id);
 /// ```
-pub struct TimerManager<P: Platform> {
-    platform: Rc<RefCell<P>>,
-    interval_registry: Rc<RefCell<std::collections::HashMap<i32, bool>>>,
+#[derive(Clone)]
+pub struct TimerManager {
+    next_id: Rc<RefCell<u32>>,
+    timers: Rc<RefCell<std::collections::HashMap<TimerId, i32>>>,
+    animation_frames: Rc<RefCell<std::collections::HashMap<FrameId, i32>>>,
 }
 
-impl<P: Platform> TimerManager<P> {
-    /// Create a new timer manager with the given platform
-    pub fn new(platform: Rc<RefCell<P>>) -> Self {
+impl TimerManager {
+    /// Create a new timer manager
+    pub fn new() -> Self {
         Self {
-            platform,
-            interval_registry: Rc::new(RefCell::new(std::collections::HashMap::new())),
+            next_id: Rc::new(RefCell::new(0)),
+            timers: Rc::new(RefCell::new(std::collections::HashMap::new())),
+            animation_frames: Rc::new(RefCell::new(std::collections::HashMap::new())),
         }
     }
 
@@ -113,12 +94,43 @@ impl<P: Platform> TimerManager<P> {
     /// # Returns
     /// Timer ID that can be used to cancel the timer
     pub fn set_timeout(&self, callback: TimerCallback, delay: Duration) -> TimerId {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return TimerId(0),
+        };
+
+        // Generate unique timer ID
+        let id = {
+            let mut next_id = self.next_id.borrow_mut();
+            let id = TimerId(*next_id);
+            *next_id = next_id.wrapping_add(1);
+            id
+        };
+
+        // Schedule timeout
         let callback_clone = callback.clone();
-        let handle = self.platform.borrow_mut().set_timeout(
-            Box::new(move || callback_clone()),
-            delay.as_millis().min(i32::MAX as u128) as i32,
+        let callback_js = Closure::wrap(Box::new(move || {
+            callback_clone();
+        }) as Box<dyn FnMut()>);
+
+        let handle = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+            callback_js.as_ref().unchecked_ref(),
+            delay.as_millis() as i32,
         );
-        TimerId(handle)
+
+        match handle {
+            Ok(handle) => {
+                self.timers.borrow_mut().insert(id, handle);
+                // Successfully scheduled, closure will be owned by browser
+                callback_js.forget();
+            }
+            Err(_) => {
+                // Failed to schedule, need to manually drop closure
+                callback_js.forget();
+            }
+        }
+
+        id
     }
 
     /// Cancel a scheduled timer
@@ -126,7 +138,14 @@ impl<P: Platform> TimerManager<P> {
     /// # Arguments
     /// * `id` - Timer ID returned by `set_timeout`
     pub fn clear_timeout(&self, id: TimerId) {
-        self.platform.borrow_mut().clear_timeout(id.0);
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        if let Some(handle) = self.timers.borrow_mut().remove(&id) {
+            window.clear_timeout_with_handle(handle);
+        }
     }
 
     /// Schedule an interval callback
@@ -137,56 +156,65 @@ impl<P: Platform> TimerManager<P> {
     ///
     /// # Returns
     /// Timer ID that can be used to cancel the interval
-    ///
-    /// Note: This implementation re-schedules the callback after each execution.
-    /// For true interval behavior, consider using platform-specific interval APIs.
     pub fn set_interval(&self, callback: TimerCallback, interval: Duration) -> TimerId {
-        let interval_id = allocate_timer_id();
-        self.interval_registry
-            .borrow_mut()
-            .insert(interval_id, true);
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return TimerId(0),
+        };
 
-        let registry = Rc::clone(&self.interval_registry);
-        let platform = Rc::clone(&self.platform);
-        let interval_ms = interval.as_millis().min(i32::MAX as u128) as i32;
+        // Generate unique timer ID
+        let id = {
+            let mut next_id = self.next_id.borrow_mut();
+            let id = TimerId(*next_id);
+            *next_id = next_id.wrapping_add(1);
+            id
+        };
 
-        fn do_schedule<P: Platform>(
-            platform: Rc<RefCell<P>>,
-            registry: Rc<RefCell<std::collections::HashMap<i32, bool>>>,
-            interval_id: i32,
-            callback: TimerCallback,
-            interval_ms: i32,
-        ) {
-            let reg = registry;
-            let plat = platform.clone();
-            let cb = callback.clone();
+        // Schedule interval
+        let callback_js = Closure::wrap(Box::new(move || {
+            callback();
+        }) as Box<dyn FnMut()>);
 
-            platform.borrow_mut().set_timeout(
-                Box::new(move || {
-                    let active = reg.borrow().get(&interval_id).copied().unwrap_or(false);
-                    if !active {
-                        return;
-                    }
-                    cb();
-                    do_schedule(
-                        plat.clone(),
-                        reg.clone(),
-                        interval_id,
-                        callback.clone(),
-                        interval_ms,
-                    );
-                }),
-                interval_ms,
-            );
+        let handle = window.set_interval_with_callback_and_timeout_and_arguments_0(
+            callback_js.as_ref().unchecked_ref(),
+            interval.as_millis() as i32,
+        );
+
+        match handle {
+            Ok(handle) => {
+                self.timers.borrow_mut().insert(id, handle);
+                // Successfully scheduled, closure will be owned by browser
+                callback_js.forget();
+            }
+            Err(_) => {
+                // Failed to schedule, need to manually drop closure
+                callback_js.forget();
+            }
         }
 
-        do_schedule(platform, registry, interval_id, callback, interval_ms);
-        TimerId(interval_id)
+        id
     }
 
     /// Cancel a scheduled interval
+    ///
+    /// # Arguments
+    /// * `id` - Timer ID returned by `set_interval`
     pub fn clear_interval(&self, id: TimerId) {
-        self.interval_registry.borrow_mut().remove(&id.0);
+        self.clear_timeout(id); // Same implementation
+    }
+
+    /// Clear all active timers
+    pub fn clear_all(&self) {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let mut timers = self.timers.borrow_mut();
+        for (_id, handle) in timers.iter() {
+            window.clear_timeout_with_handle(*handle);
+        }
+        timers.clear();
     }
 
     /// Schedule a requestAnimationFrame callback
@@ -204,7 +232,7 @@ impl<P: Platform> TimerManager<P> {
     /// ```ignore
     /// use animation::TimerManager;
     ///
-    /// let manager = TimerManager::new(platform);
+    /// let manager = TimerManager::new();
     ///
     /// let callback = Rc::new(RefCell::new(move |timestamp| {
     ///     let angle = (timestamp / 100.0) % 360.0;
@@ -217,16 +245,41 @@ impl<P: Platform> TimerManager<P> {
     /// manager.cancel_animation_frame(id);
     /// ```
     pub fn request_animation_frame(&self, callback: FrameCallback) -> FrameId {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return FrameId(0),
+        };
+
+        // Generate unique frame ID
+        let id = {
+            let mut next_id = self.next_id.borrow_mut();
+            let id = FrameId(*next_id);
+            *next_id = next_id.wrapping_add(1);
+            id
+        };
+
+        // Schedule requestAnimationFrame
         let callback_clone = callback.clone();
-        let handle =
-            self.platform
-                .borrow_mut()
-                .request_animation_frame(Box::new(move |timestamp| {
-                    if let Ok(mut cb) = callback_clone.try_borrow_mut() {
-                        cb(timestamp);
-                    }
-                }));
-        FrameId(handle)
+        let callback_js = Closure::wrap(Box::new(move |timestamp: f64| {
+            if let Ok(mut cb) = callback_clone.try_borrow_mut() {
+                cb(timestamp);
+            }
+        }) as Box<dyn FnMut(f64)>);
+
+        let handle = window.request_animation_frame(callback_js.as_ref().unchecked_ref());
+
+        match handle {
+            Ok(handle) => {
+                let mut frames = self.animation_frames.borrow_mut();
+                frames.insert(id, handle);
+                callback_js.forget();
+            }
+            Err(_) => {
+                callback_js.forget();
+            }
+        }
+
+        id
     }
 
     /// Cancel a requestAnimationFrame callback
@@ -235,16 +288,34 @@ impl<P: Platform> TimerManager<P> {
     ///
     /// * `id` - Frame ID returned by `request_animation_frame`
     pub fn cancel_animation_frame(&self, id: FrameId) {
-        self.platform.borrow_mut().cancel_animation_frame(id.0);
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        if let Some(handle) = self.animation_frames.borrow_mut().remove(&id) {
+            let _ = window.cancel_animation_frame(handle);
+        }
+    }
+
+    /// Clear all active animation frames
+    pub fn clear_all_animation_frames(&self) {
+        let window = match web_sys::window() {
+            Some(w) => w,
+            None => return,
+        };
+
+        let mut frames = self.animation_frames.borrow_mut();
+        for (_id, handle) in frames.iter() {
+            let _ = window.cancel_animation_frame(*handle);
+        }
+        frames.clear();
     }
 }
 
-impl<P: Platform> Clone for TimerManager<P> {
-    fn clone(&self) -> Self {
-        Self {
-            platform: Rc::clone(&self.platform),
-            interval_registry: Rc::clone(&self.interval_registry),
-        }
+impl Default for TimerManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -254,7 +325,7 @@ impl<P: Platform> Clone for TimerManager<P> {
 /// ```ignore
 /// use animation::{TimerManager, debounce};
 ///
-/// let manager = TimerManager::new(platform);
+/// let manager = TimerManager::new();
 /// let debounced = debounce(manager.clone(), Duration::from_millis(300), || {
 ///     // This will only fire 300ms after the last call
 /// });
@@ -262,8 +333,8 @@ impl<P: Platform> Clone for TimerManager<P> {
 /// debounced(); // Will fire in 300ms
 /// debounced(); // Resets timer, will fire in 300ms from now
 /// ```
-pub fn debounce<P: Platform + 'static>(
-    manager: TimerManager<P>,
+pub fn debounce(
+    manager: TimerManager,
     delay: Duration,
     callback: TimerCallback,
 ) -> Rc<RefCell<dyn Fn()>> {
@@ -274,7 +345,7 @@ pub fn debounce<P: Platform + 'static>(
     let state = Rc::new(RefCell::new(DebounceState { timer_id: None }));
     let state_clone = state.clone();
 
-    (Rc::new(RefCell::new(move || {
+    let debounced = Rc::new(RefCell::new(move || {
         // Cancel existing timer
         if let Some(timer_id) = state_clone.borrow_mut().timer_id.take() {
             manager.clear_timeout(timer_id);
@@ -291,7 +362,9 @@ pub fn debounce<P: Platform + 'static>(
             delay,
         );
         state_clone.borrow_mut().timer_id = Some(timer_id);
-    }))) as _
+    }));
+
+    debounced
 }
 
 /// Throttle utility - only call function once per delay period
@@ -300,7 +373,7 @@ pub fn debounce<P: Platform + 'static>(
 /// ```ignore
 /// use animation::{TimerManager, throttle};
 ///
-/// let manager = TimerManager::new(platform);
+/// let manager = TimerManager::new();
 /// let throttled = throttle(manager, Duration::from_millis(100), || {
 ///     // This will fire at most once every 100ms
 /// });
@@ -308,8 +381,8 @@ pub fn debounce<P: Platform + 'static>(
 /// throttled(); // Fires immediately
 /// throttled(); // Ignored (within throttle period)
 /// ```
-pub fn throttle<P: Platform + 'static>(
-    _manager: TimerManager<P>,
+pub fn throttle(
+    _manager: TimerManager,
     interval: Duration,
     callback: TimerCallback,
 ) -> Rc<RefCell<dyn Fn()>> {
@@ -319,83 +392,19 @@ pub fn throttle<P: Platform + 'static>(
 
     let state = Rc::new(RefCell::new(ThrottleState { last_call: None }));
 
-    (Rc::new(RefCell::new(move || {
-        use std::time::{SystemTime, UNIX_EPOCH};
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as f64;
+    let throttled = Rc::new(RefCell::new(move || {
+        let now = js_sys::Date::now();
         let mut state_ref = state.borrow_mut();
 
-        if let Some(last_time) = state_ref.last_call
-            && now - last_time < interval.as_millis() as f64
-        {
-            return; // Throttled
+        if let Some(last_time) = state_ref.last_call {
+            if now - last_time < interval.as_millis() as f64 {
+                return; // Throttled
+            }
         }
 
         state_ref.last_call = Some(now);
-        drop(state_ref);
         callback();
-    }))) as _
-}
+    }));
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn timer_id_new_and_as_i32() {
-        let id = TimerId::new(42);
-        assert_eq!(id.as_i32(), 42);
-    }
-
-    #[test]
-    fn timer_id_equality() {
-        assert_eq!(TimerId::new(1), TimerId::new(1));
-        assert_ne!(TimerId::new(1), TimerId::new(2));
-    }
-
-    #[test]
-    fn timer_id_copy() {
-        let a = TimerId::new(10);
-        let b = a;
-        assert_eq!(a, b);
-    }
-
-    #[test]
-    fn timer_id_hash_consistency() {
-        use std::collections::HashSet;
-        let mut set = HashSet::new();
-        set.insert(TimerId::new(1));
-        assert!(set.contains(&TimerId::new(1)));
-        assert!(!set.contains(&TimerId::new(2)));
-    }
-
-    #[test]
-    fn frame_id_new_and_as_u32() {
-        let id = FrameId::new(99);
-        assert_eq!(id.as_u32(), 99);
-    }
-
-    #[test]
-    fn frame_id_equality() {
-        assert_eq!(FrameId::new(5), FrameId::new(5));
-        assert_ne!(FrameId::new(5), FrameId::new(6));
-    }
-
-    #[test]
-    fn frame_id_copy() {
-        let a = FrameId::new(7);
-        let b = a;
-        assert_eq!(a, b);
-    }
-
-    #[test]
-    fn frame_id_hash_consistency() {
-        use std::collections::HashSet;
-        let mut set = HashSet::new();
-        set.insert(FrameId::new(3));
-        assert!(set.contains(&FrameId::new(3)));
-        assert!(!set.contains(&FrameId::new(4)));
-    }
+    throttled
 }

@@ -13,7 +13,7 @@ This demo showcases:
 
 ## Running the Demo
 
-This demo uses **Axum + WASM** architecture.
+This demo uses **Axum + WASM** architecture (similar to quotation-sheet-generator).
 
 ### Quick Start
 
@@ -45,7 +45,7 @@ just run-server
 
 ### Architecture
 
-- **Client**: Tairitsu WASM compiled to `dist/assets/`
+- **Client**: Dioxus WASM compiled to `dist/assets/`
 - **Server**: Axum serves static files and handles SPA routing
 - **Routes**:
   - `/assets/*` - Static files (WASM, JS, CSS)
@@ -93,9 +93,9 @@ The demo is organized into sections, each demonstrating a different category of 
 
 All components use the Hikari design system:
 
-- **Flat design** with clean lines and high contrast
-- **Glow effects** with subtle luminous touches
-- **Themed color palettes** from the Hikari palette system
+- **Arknights-inspired** clean, flat design
+- **FUI elements** with subtle glows and futuristic touches
+- **Chinese traditional colors** from the Hikari palette
 - **Responsive layouts** that work on all screen sizes
 
 ## Sidebar Navigation

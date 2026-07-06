@@ -9,15 +9,15 @@
 // ============================================
 
 // Use @use with as * to make variables available to all imported files
-@use 'variables.scss' as *;
-@use 'mixins.scss' as *;
+@use '../../../theme/styles/variables.scss' as *;
+@use '../../../theme/styles/mixins.scss' as *;
 
 // ============================================
 // Theme Base Styles (before components)
 // ============================================
 
 // Import theme base styles with CSS variables for hikari and tairitsu themes
-@use '../../../theme/styles/base.scss';
+@import '../../../theme/styles/base.scss';
 
 // ============================================
 // Utility Classes (Tailwind-compatible)
@@ -135,7 +135,7 @@
 .hi-text-base { font-size: 1rem; line-height: 1.5rem; }
 .hi-text-lg { font-size: 1.125rem; line-height: 1.75rem; }
 .hi-text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-.hi-text-2xl { font-size: 1.5rem; line-height: 2rem; font-weight: 600; }
+.hi-text-2xl { font-size: 1.5rem; line-height: 2rem; }
 
 // Font Weight
 .hi-font-medium { font-weight: 500; }
@@ -157,8 +157,7 @@
 
 // Background Color - 语义化背景色，支持主题切换
 .hi-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
-.hi-bg-secondary { background-color: var(--hi-color-secondary, #519A73); }
-.hi-bg-surface-secondary { background-color: var(--hi-color-surface-secondary, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%)); }
+.hi-bg-secondary { background-color: var(--hi-color-secondary, #FF4C00); }
 .hi-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
 .hi-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
 .hi-bg-black { background-color: var(--hi-color-background, #000000); }
@@ -209,52 +208,6 @@
 .hi-z-10 { z-index: 10; }
 .hi-z-20 { z-index: 20; }
 .hi-z-50 { z-index: 50; }
-
-// ============================================
-// Accessibility Utility Classes
-// ============================================
-
-.hi-visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.hi-skip-nav {
-  position: absolute;
-  top: -100%;
-  left: 0;
-  z-index: 9999;
-  padding: 0.5rem 1rem;
-  background: var(--hi-color-primary);
-  color: var(--hi-color-text-inverted, #fff);
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 0 0 0.25rem 0;
-
-  &:focus {
-    top: 0;
-    outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
-  }
-}
-
-.hi-focus-ring {
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
-  }
-}
-
-.hi-sr-only {
-  @extend .hi-visually-hidden;
-}
 
 // ============================================
 // Animation Utility Classes (通用动画)
@@ -364,6 +317,20 @@
 // ============================================
 // Additional utility classes not yet in palette:
 
+// Max-width constraints for images
+.hi-max-w-logo {
+  max-width: 160px;
+}
+
+// Object-fit utilities for images
+.hi-object-contain {
+  object-fit: contain;
+}
+
+.hi-object-cover {
+  object-fit: cover;
+}
+
 // ============================================
 // CSS Variables (Default Fallback Values)
 // ============================================
@@ -381,93 +348,77 @@
 // actual theme colors via inline styles at runtime.
 
  :root {
-  // Theme Colors (canonical --hi-color-* names, matching ThemeProvider base.scss)
-  --hi-color-primary: #FFB3A7;
-  --hi-color-secondary: #519A73;
-  --hi-color-accent: #FFC773;
-  --hi-color-success: #0EB840;
-  --hi-color-warning: #FFA631;
-  --hi-color-danger: #FF4C00;
-  --hi-color-info: #6ABED6;
+  // Theme Colors (fallback to Hikari light theme)
+  --hi-primary: #FFC0CB;     // 粉红
+  --hi-secondary: #FF4C00;   // 朱红
+  --hi-accent: #F59E0B;      // 姜黄
+  --hi-success: #10B981;     // 葱倩
+  --hi-warning: #FBBF24;     // 鹅黄
+  --hi-danger: #EF4444;      // 朱红
+  --hi-info: #FFC0CB;        // 粉红
 
   // Surface & Background Colors
-  --hi-color-background: #ffffff;
-  --hi-color-surface: rgba(255, 255, 255, 0.7);
-  --hi-color-border: #C4D8DA;
+  --hi-background: #E0F0E9;  // 素
+  --hi-surface: rgba(255, 255, 255, 0.7);  // 透明白色
+  --hi-border: #E0F0E9;     // 素
 
   // Text Colors
-  --hi-color-text-primary: #262626;
-  --hi-color-text-secondary: rgba(38, 38, 38, 0.6);
-  --hi-color-text-disabled: rgba(38, 38, 38, 0.3);
-  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #ffffff 0%, #f0f0f4 100%));
+  --hi-text-primary: #50616D;   // 墨色
+  --hi-text-secondary: #4A4266;  // 黛
+  --hi-text-disabled: #9CA3AF;
 
-  // Short aliases (--hi-* → canonical --hi-color-*)
-  --hi-primary: var(--hi-color-primary);
-  --hi-secondary: var(--hi-color-secondary);
-  --hi-accent: var(--hi-color-accent);
-  --hi-success: var(--hi-color-success);
-  --hi-warning: var(--hi-color-warning);
-  --hi-danger: var(--hi-color-danger);
-  --hi-info: var(--hi-color-info);
-  --hi-background: var(--hi-color-background);
-  --hi-surface: var(--hi-color-surface);
-  --hi-border: var(--hi-color-border);
-  --hi-text-primary: var(--hi-color-text-primary);
-  --hi-text-secondary: var(--hi-color-text-secondary);
-  --hi-text-disabled: var(--hi-color-text-disabled);
-  --hi-secondary-bg: rgba(255, 255, 255, 0.5);
-  --hi-tertiary-bg: rgba(240, 240, 244, 0.5);
+  // Aliases for components (with color- prefix for consistency)
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
+  --hi-secondary-bg: rgba(248, 250, 252, 0.5);
+  --hi-tertiary-bg: rgba(243, 244, 246, 0.5);
 
-  // Component-specific Colors (light theme defaults)
+  // Component-specific Colors
   --hi-button-bg: var(--hi-surface);
-  --hi-button-bg-hover: rgba(255, 179, 167, 0.8);
-  --hi-button-text: #262626;
-  --hi-button-border: var(--hi-border);
+  --hi-button-bg-hover: rgba(65, 65, 65, 0.9);
+  --hi-button-text: #FFFFFF;
+  --hi-button-border: rgba(255, 255, 255, 0.1);
 
   --hi-input-bg: var(--hi-surface);
-  --hi-input-bg-focus: #FFFFFF;
-  --hi-input-border: var(--hi-border);
-  --hi-input-border-focus: var(--hi-primary);
-  --hi-input-text: #262626;
-  --hi-input-placeholder: rgba(38, 38, 38, 0.4);
+  --hi-input-bg-focus: rgba(65, 65, 65, 0.9);
+  --hi-input-border: rgba(255, 255, 255, 0.1);
+  --hi-input-border-focus: rgba(139, 92, 246, 0.7);
+  --hi-input-text: #F8FAFC;
+  --hi-input-placeholder: #94A3B8;
 
   --hi-card-bg: var(--hi-surface);
-  --hi-card-border: var(--hi-border);
+  --hi-card-border: rgba(255, 255, 255, 0.1);
 
-  // Header & Aside surfaces
-  --hi-header-surface: var(--hi-surface);
-  --hi-aside-surface: var(--hi-surface);
-
-  --hi-badge-bg-primary: var(--hi-primary);
-  --hi-badge-bg-success: var(--hi-success);
+  --hi-badge-bg-primary: rgba(59, 130, 246, 0.9);
+  --hi-badge-bg-success: rgba(14, 184, 64, 0.9);
 
 
-  // Button Variant Colors
-  --hi-button-primary: var(--hi-primary);
-  --hi-button-primary-hover: rgba(255, 179, 167, 0.85);
-  --hi-button-primary-light: #FFD4CC;
-  --hi-button-primary-dark: #FF8A78;
-
-  --hi-button-secondary: var(--hi-secondary);
-  --hi-button-secondary-hover: rgba(81, 154, 115, 0.8);
-  --hi-button-secondary-light: #6BB38C;
-  --hi-button-secondary-dark: #3D7657;
-
-  --hi-button-danger: var(--hi-danger);
-  --hi-button-danger-hover: rgba(255, 76, 0, 0.8);
-  --hi-button-danger-light: #FF7A33;
-  --hi-button-danger-dark: #CC3D00;
-
-  --hi-button-success: var(--hi-success);
-  --hi-button-success-hover: rgba(14, 184, 64, 0.8);
-  --hi-button-success-light: #3DC86E;
-  --hi-button-success-dark: #0A8F33;
-
+  // Button Variant Colors (rgba format for gradients)
+  --hi-button-primary: rgba(59, 130, 246, 0.9);     // Blue
+  --hi-button-primary-dark: rgba(37, 99, 235, 0.9);
+  --hi-button-primary-light: rgba(96, 165, 250, 0.95);
+  
+  --hi-button-secondary: rgba(107, 114, 128, 0.9);   // Gray
+  --hi-button-secondary-dark: rgba(75, 85, 99, 0.9);
+  --hi-button-secondary-light: rgba(156, 163, 175, 0.95);
+  
+  --hi-button-danger: rgba(255, 76, 0, 0.9);      // Red
+  --hi-button-danger-dark: rgba(220, 38, 38, 0.9);
+  --hi-button-danger-light: rgba(248, 113, 113, 0.95);
+  
+  --hi-button-success: rgba(14, 184, 64, 0.9);    // Green
+  --hi-button-success-dark: rgba(5, 150, 105, 0.9);
+  --hi-button-success-light: rgba(52, 211, 153, 0.95);
+  
   // Button icon colors
-  --hi-button-icon-on-dark: #ffffff;
-  --hi-button-icon-on-light: #262626;
-  --hi-badge-bg-warning: var(--hi-warning);
-  --hi-badge-bg-danger: var(--hi-danger);
+  --hi-button-icon-on-dark: #ffffff;  // White for solid buttons
+  --hi-button-icon-on-light: #96c7ff;  // Light blue for ghost buttons (fallback)
+  --hi-badge-bg-warning: rgba(251, 191, 36, 0.9);
+  --hi-badge-bg-danger: rgba(255, 76, 0, 0.9);
   --hi-badge-text: #FFFFFF;
 
   // Opacity Variants
@@ -483,11 +434,15 @@
   --hi-opacity-90: 0.9;
   --hi-opacity-100: 1;
 
-  // Shadow definitions are in foundation.scss — do not redefine here
-  // to avoid cascade conflicts.
-  --hi-glow-primary-sm: 0 0 8px rgba(255, 179, 167, 0.3);
-  --hi-glow-primary-md: 0 0 16px rgba(255, 179, 167, 0.5);
-  --hi-glow-primary-lg: 0 0 24px rgba(255, 179, 167, 0.4);
+  // Shadow & Glow Effects
+  --hi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --hi-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --hi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --hi-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  --hi-glow-primary-sm: 0 0 8px rgba(59, 130, 246, 0.3);
+  --hi-glow-primary-md: 0 0 16px rgba(59, 130, 246, 0.5);
+  --hi-glow-primary-lg: 0 0 24px rgba(59, 130, 246, 0.4);
 
   --hi-glow-danger-sm: 0 0 8px rgba(255, 76, 0, 0.3);
   --hi-glow-danger-md: 0 0 16px rgba(255, 76, 0, 0.5);
@@ -495,11 +450,20 @@
   --hi-glow-success-sm: 0 0 8px rgba(14, 184, 64, 0.3);
   --hi-glow-success-md: 0 0 16px rgba(14, 184, 64, 0.5);
 
-  --hi-glow-warning-sm: 0 0 8px rgba(255, 166, 49, 0.3);
-  --hi-glow-warning-md: 0 0 16px rgba(255, 166, 49, 0.5);
+  --hi-glow-warning-sm: 0 0 8px rgba(251, 191, 36, 0.3);
+  --hi-glow-warning-md: 0 0 16px rgba(251, 191, 36, 0.5);
 
-  // White/black color aliases are defined in base.scss
-  // — do not redefine here to avoid cascade conflicts.
+  // Common Values
+  --hi-white-5: rgba(255, 255, 255, 0.05);
+  --hi-white-8: rgba(255, 255, 255, 0.08);
+  --hi-white-10: rgba(255, 255, 255, 0.1);
+  --hi-white-15: rgba(255, 255, 255, 0.15);
+  --hi-white-20: rgba(255, 255, 255, 0.2);
+  --hi-white-30: rgba(255, 255, 255, 0.3);
+
+  --hi-black-10: rgba(0, 0, 0, 0.1);
+  --hi-black-20: rgba(0, 0, 0, 0.2);
+  --hi-black-30: rgba(0, 0, 0, 0.3);
 
   // Scrollbar Colors
   --hi-scrollbar-track-dark: rgba(74, 66, 102, 0.25);  // 黛 with 25% opacity
@@ -509,145 +473,140 @@
   --hi-scrollbar-thumb-active-filter: brightness(0.85);     // Darken in light mode
 }
 
-// Dark theme specific overrides — must stay in sync with Tairitsu::palette() in hikari-palette
+// Dark theme specific overrides
 [data-theme="tairitsu"] {
-  // Theme Colors (canonical --hi-color-* names)
-  --hi-color-primary: #144A74;
-  --hi-color-secondary: #FFC773;
-  --hi-color-accent: #FFC773;
-  --hi-color-success: #0EB840;
-  --hi-color-warning: #FFA631;
-  --hi-color-danger: #FF4C00;
-  --hi-color-info: #144A74;
+  // Theme Colors
+  --hi-primary: #065279;     // 靛蓝
+  --hi-secondary: #4B5CC4;   // 宝蓝
+  --hi-accent: #F59E0B;      // 姜黄
+  --hi-success: #10B981;     // 葱倩
+  --hi-warning: #FBBF24;     // 鹅黄
+  --hi-danger: #EF4444;      // 朱红
+  --hi-info: #065279;        // 靛蓝
 
   // Surface & Background Colors
-  --hi-color-background: #161823;
-  --hi-color-surface: rgba(32, 35, 54, 0.7);
-  --hi-color-border: #303448;
+  --hi-background: #4A4266;  // 黛
+  --hi-surface: rgba(0, 0, 0, 0.7);  // 透明黑色
+  --hi-border: #4A4266;      // 黛
 
   // Text Colors
-  --hi-color-text-primary: #F0F0F5;
-  --hi-color-text-secondary: #B3B8C7;
-  --hi-color-text-disabled: #6B7280;
-  --hi-color-surface-secondary: var(--hi-page-bg, linear-gradient(135deg, #10101c 0%, #161823 100%));
+  --hi-text-primary: #D6ECF0;   // 月白
+  --hi-text-secondary: #E0F0E9;  // 素
+  --hi-text-disabled: #9CA3AF;
 
-  // Short aliases (--hi-* → canonical --hi-color-*)
-  --hi-primary: var(--hi-color-primary);
-  --hi-secondary: var(--hi-color-secondary);
-  --hi-accent: var(--hi-color-accent);
-  --hi-success: var(--hi-color-success);
-  --hi-warning: var(--hi-color-warning);
-  --hi-danger: var(--hi-color-danger);
-  --hi-info: var(--hi-color-info);
-  --hi-background: var(--hi-color-background);
-  --hi-surface: var(--hi-color-surface);
-  --hi-border: var(--hi-color-border);
-  --hi-text-primary: var(--hi-color-text-primary);
-  --hi-text-secondary: var(--hi-color-text-secondary);
-  --hi-text-disabled: var(--hi-color-text-disabled);
+  // Aliases for components (with color- prefix for consistency)
+  --hi-color-text-primary: var(--hi-text-primary);
+  --hi-color-text-secondary: var(--hi-text-secondary);
+  --hi-color-border: var(--hi-border);
+  --hi-color-primary: var(--hi-primary);
+  --hi-color-background: var(--hi-background);
+  --hi-color-surface: var(--hi-surface);
 
   // Scrollbar Colors
-  --hi-scrollbar-track-dark: rgba(255,255, 255, 0.08);
-  --hi-scrollbar-track-light: rgba(255, 255, 255, 0.04);
-  --hi-scrollbar-thumb: rgba(179, 184, 199, 0.5);
-  --hi-scrollbar-thumb-hover: rgba(179, 184, 199, 0.7);
-  --hi-scrollbar-thumb-active-filter: brightness(1.2);
+  --hi-scrollbar-track-dark: rgba(255,255, 255, 0.25);  // White with 25% opacity
+  --hi-scrollbar-track-light: rgba(255, 255, 255, 0.12); // White with 12% opacity
+  --hi-scrollbar-thumb: rgba(203, 213, 225, 0.7);       // Slate with 70% opacity
+  --hi-scrollbar-thumb-hover: rgba(224, 240, 233, 0.9); // 素 with 90% opacity
+  --hi-scrollbar-thumb-active-filter: brightness(1.15);     // Brighten in dark mode
 
   // Component-specific Colors
-  --hi-button-bg: rgba(240, 240, 245, 0.08);
-  --hi-button-bg-hover: rgba(240, 240, 245, 0.14);
+  --hi-button-bg: rgba(250, 250, 250, 0.1);
+  --hi-button-bg-hover: rgba(250, 250, 250, 0.15);
 
-  --hi-input-bg: rgba(240, 240, 245, 0.06);
-  --hi-input-bg-focus: rgba(240, 240, 245, 0.10);
+  --hi-input-bg: rgba(250, 250, 250, 0.08);
+  --hi-input-bg-focus: rgba(250, 250, 250, 0.12);
 
-  --hi-card-bg: rgba(240, 240, 245, 0.06);
+  --hi-card-bg: rgba(250, 250, 250, 0.08);
 }
 
-// No global `* { transition: all }` — it causes performance issues
-// and unwanted animations on all elements. Apply transitions
-// at the component level instead.
+// ============================================
+// Global Transitions
+// ============================================
+
+* {
+  transition: all 0.3s $hikari-ease-smooth;
+}
 
 // ============================================
 // 2. Basic Components
 // ============================================
 
-@use 'animations.scss';
-@use './components/background.scss';
-@use './components/avatar.scss';
-@use './components/button.scss';
-@use './components/icon_button.scss';
-@use './components/input.scss';
-@use './components/select.scss';
-@use './components/card.scss';
-@use './components/image.scss';
-@use './components/badge.scss';
-@use './components/checkbox.scss';
-@use './components/radio.scss';
-@use './components/divider.scss';
-@use './components/icon.scss';
-@use './components/arrow.scss';
-@use './components/switch.scss';
-@use './components/slider.scss';
-@use './components/number_input.scss';
-@use './components/search.scss';
-@use './components/input_wrapper.scss';
+@import './components/background.scss';
+@import './components/avatar.scss';
+@import './components/button.scss';
+@import './components/icon_button.scss';
+@import './components/input.scss';
+@import './components/select.scss';
+@import './components/card.scss';
+@import './components/image.scss';
+@import './components/badge.scss';
+@import './components/checkbox.scss';
+@import './components/radio.scss';
+@import './components/divider.scss';
+@import './components/icon.scss';
+@import './components/arrow.scss';
+@import './components/switch.scss';
+@import './components/slider.scss';
+@import './components/number_input.scss';
+@import './components/search.scss';
+@import './components/input_wrapper.scss';
 
 // ============================================
 // Feedback Components
 // ============================================
 
-@use './components/glow.scss';
-@use './components/alert.scss';
-@use './components/toast.scss';
-@use './components/tooltip.scss';
-@use './components/progress.scss';
-@use './components/skeleton.scss';
-@use './components/spin.scss';
-@use './components/drawer.scss';
-@use './components/popover.scss';
+@import './components/glow.scss';
+@import './components/alert.scss';
+@import './components/toast.scss';
+@import './components/tooltip.scss';
+@import './components/progress.scss';
+@import './components/skeleton.scss';
+@import './components/spin.scss';
+@import './components/drawer.scss';
+@import './components/popover.scss';
 
-@use './components/modal.scss';
+@import './components/modal.scss';
 
 // ============================================
 // Navigation Components
 // ============================================
 
-@use './components/menu.scss';
-@use './components/tabs.scss';
-@use './components/breadcrumb.scss';
-@use './components/sidebar.scss';
+@import './components/menu.scss';
+@import './components/tabs.scss';
+@import './components/breadcrumb.scss';
+@import './components/sidebar.scss';
 
 // ============================================
 // Layout Components
 // ============================================
 
-@use './components/layout.scss';
-@use './components/header.scss';
-@use './components/aside.scss';
-@use './components/container.scss';
-@use './components/grid.scss';
-@use './components/section.scss';
-@use './components/scrollbar_container.scss';
-@use './components/table.scss';
-@use './components/tree.scss';
-@use './components/pagination.scss';
-@use './components/carousel.scss';
-@use './components/code_block.scss';
-@use './components/markdown_renderer.scss';
+@import './components/layout.scss';
+@import './components/header.scss';
+@import './components/aside.scss';
+@import './components/container.scss';
+@import './components/grid.scss';
+@import './components/section.scss';
+@import './components/scrollbar_container.scss';
+@import './components/table.scss';
+@import './components/tree.scss';
+@import './components/pagination.scss';
+@import './components/carousel.scss';
+@import './components/code_block.scss';
+@import './components/markdown_renderer.scss';
 
 // ============================================
 // Additional Components
 // ============================================
 
-@use './components/anchor.scss';
-@use './components/cascader.scss';
-@use './components/collapse.scss';
-@use './components/drag.scss';
-@use './components/filter.scss';
-@use './components/flex.scss';
-@use './components/pagination_jump_modal.scss';
-@use './components/selection.scss';
-@use './components/sort.scss';
-@use './components/stepper.scss';
-@use './components/transfer.scss';
-@use './components/virtual-scroll.scss';
+@import './components/anchor.scss';
+@import './components/cascader.scss';
+@import './components/collapse.scss';
+@import './components/drag.scss';
+@import './components/filter.scss';
+@import './components/flex.scss';
+@import './components/pagination_jump_modal.scss';
+@import './components/selection.scss';
+@import './components/sort.scss';
+@import './components/stepper.scss';
+@import './components/transfer.scss';
+@import './components/virtual-scroll.scss';

@@ -1,7 +1,7 @@
 // hikari-e2e/src/main.rs
 // E2E testing entry point for Hikari components
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::{env, time::Duration};
 
 use thirtyfour::prelude::*;
@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
     let caps = DesiredCapabilities::chrome();
     let driver = WebDriver::new(remote_chrome.as_str(), caps)
         .await
-        .map_err(|e| anyhow!("Failed to connect to Chrome: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to connect to Chrome: {}", e))?;
 
     info!("Remote Chrome connected successfully");
 
@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
     driver
         .quit()
         .await
-        .map_err(|e| anyhow!("Failed to quit driver: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to quit driver: {}", e))?;
     info!("Remote Chrome closed");
 
     info!("E2E test framework execution completed");

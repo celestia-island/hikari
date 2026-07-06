@@ -1,86 +1,101 @@
 // hi-components/src/portal/render.rs
 // Portal rendering components
 
-use hikari_palette::classes::{
-    ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass, TypedClass,
-};
-use tairitsu_hooks::ReactiveSignal;
+#![expect(clippy::needless_update)]
 
+use hikari_palette::classes::{
+    ClassesBuilder, DropdownClass, ModalClass, PopoverClass, PortalClass, TooltipClass,
+    UtilityClass,
+};
+
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use super::provider::use_portal;
-use crate::platform::{
-    element_closest, element_from_point, inner_height, inner_width, log, request_animation_frame,
-    set_timeout,
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+use crate::platform::{element_closest, element_from_point, request_animation_frame, set_timeout};
+use crate::{
+    feedback::PopoverPlacement,
+    modal::{MaskMode, ModalPosition, ModalSize},
+    platform::{inner_height, inner_width, log},
+    portal::{
+        positioning::calculate_position,
+        types::{
+            ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy,
+            ToastPosition, TriggerPlacement,
+        },
+    },
+    prelude::*,
 };
-use crate::portal::positioning::calculate_position;
-use crate::portal::types::{
-    MaskMode, ModalAnimationState, ModalPosition, ModalSize, PopoverPlacement, PortalEntry,
-    PortalMaskMode, PortalPositionStrategy, ToastPosition, TriggerPlacement,
-};
-use crate::prelude::*;
 
 fn use_animated_portal_entry(
     id: String,
     initial_state: ModalAnimationState,
     name: &'static str,
 ) -> (
-    ReactiveSignal<ModalAnimationState>,
+    Signal<ModalAnimationState>,
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
-    let portal = use_portal();
+    #[cfg_attr(
+        not(all(target_arch = "wasm32", target_os = "unknown")),
+        allow(unused_variables)
+    )]
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
     let close_callback = {
         let anim_state = internal_animation_state.clone();
         Callback::new(move |_| {
-            log(&format!("{name} close triggered"));
+            log(&format!("{} close triggered", name));
+            let _ = name;
             anim_state.set(ModalAnimationState::Disappearing);
         })
     };
 
-    let computed_opacity_scale = {
-        let anim_state = internal_animation_state.clone();
-        use_memo(move || {
-            let state = anim_state.read();
-            log(&format!("{name} use_memo triggered, state: {state:?}"));
-            let (opacity, scale) = match state {
-                ModalAnimationState::Appearing => ("0".to_string(), "0.95".to_string()),
-                ModalAnimationState::Visible => ("1".to_string(), "1".to_string()),
-                ModalAnimationState::Disappearing => ("0".to_string(), "0.95".to_string()),
-            };
-            (opacity, scale)
-        })
-        .value()
-    };
+    let internal_animation_state_for_memo = internal_animation_state.clone();
+    let computed_opacity_scale = use_memo(move || {
+        let state = internal_animation_state_for_memo.read();
+        log(&format!("{} use_memo triggered, state: {:?}", name, state));
+        let (opacity, scale) = match state {
+            ModalAnimationState::Appearing => ("0".to_string(), "0.95".to_string()),
+            ModalAnimationState::Visible => ("1".to_string(), "1".to_string()),
+            ModalAnimationState::Disappearing => ("0".to_string(), "0.95".to_string()),
+        };
+        (opacity, scale)
+    })
+    .signal()
+    .clone();
 
-    let anim_state_for_effect = internal_animation_state.clone();
-    let id_for_timeout = id_for_close.clone();
-    let remove_entry_for_timeout = portal.remove_entry.clone();
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
     {
+        let internal_animation_state_for_effect = internal_animation_state.clone();
+        let portal = use_portal();
+        let remove_entry_for_effect = portal.remove_entry.clone();
         use_effect(move || {
-            let state = anim_state_for_effect.get();
+            let state = internal_animation_state_for_effect.get();
             log(&format!(
-                "{name} use_effect triggered, state: {state:?}"
+                "{} use_effect triggered, state: {:?}",
+                name, state
             ));
             if state == ModalAnimationState::Appearing {
-                let anim_state = anim_state_for_effect.clone();
+                let anim_state_clone = internal_animation_state_for_effect.clone();
                 request_animation_frame(move || {
-                    anim_state.set(ModalAnimationState::Visible);
+                    anim_state_clone.set(ModalAnimationState::Visible);
                     log(&format!(
-                        "{name} set to visible via requestAnimationFrame"
+                        "{} set to visible via requestAnimationFrame",
+                        name
                     ));
                 });
             } else if state == ModalAnimationState::Disappearing {
-                let id = id_for_timeout.clone();
+                let id = id_for_close.clone();
                 log(&format!(
-                    "{name} setTimeout scheduled for removing entry: {id}"
+                    "{} setTimeout scheduled for removing entry: {}",
+                    name, id
                 ));
-                let remove = remove_entry_for_timeout.clone();
+                let remove_entry = remove_entry_for_effect.clone();
                 set_timeout(
                     move || {
-                        log(&format!("{name} removing entry after timeout: {id}"));
-                        remove.call(id);
+                        log(&format!("{} removing entry after timeout: {}", name, id));
+                        remove_entry.call(id.clone());
                     },
                     200,
                 );
@@ -89,16 +104,14 @@ fn use_animated_portal_entry(
     }
 
     (
-        internal_animation_state.clone(),
+        internal_animation_state.inner().clone(),
         close_callback,
         computed_opacity_scale,
     )
 }
 
 #[component]
-pub fn PortalRender(
-    #[props(default)] entries: Option<ReactiveSignal<Vec<PortalEntry>>>,
-) -> Element {
+pub fn PortalRender(#[props(default)] entries: Option<Signal<Vec<PortalEntry>>>) -> Element {
     let entries = match entries {
         Some(signal) => signal.read(),
         None => {
@@ -108,9 +121,7 @@ pub fn PortalRender(
         }
     };
 
-    let portal_classes = ClassesBuilder::new()
-        .add_typed(PortalClass::PortalRoot)
-        .build();
+    let portal_classes = ClassesBuilder::new().add(PortalClass::PortalRoot).build();
 
     // Pre-collect all portal entry elements
     let entry_elements: Vec<Element> = entries
@@ -158,7 +169,7 @@ pub fn PortalRender(
                         mask_mode: *mask_mode,
                         children: children.clone(),
                         trigger_rect: *trigger_rect,
-                        close_on_select: *close_on_select,
+                        close_on_select: *close_on_select
                     }
                 },
                 PortalEntry::Toast {
@@ -170,7 +181,7 @@ pub fn PortalRender(
                         z_index,
                         id: id.clone(),
                         position: *position,
-                        children: children.clone(),
+                        children: children.clone()
                     }
                 },
                 PortalEntry::Popover {
@@ -198,7 +209,7 @@ pub fn PortalRender(
                         close_on_select: *close_on_select,
                         on_close: on_close.clone(),
                         close_requested: Some(close_requested.clone()),
-                        children: children.clone(),
+                        children: children.clone()
                     }
                 },
                 PortalEntry::Tooltip {
@@ -214,7 +225,7 @@ pub fn PortalRender(
                         trigger_rect: *trigger_rect,
                         placement: *placement,
                         content: content.clone(),
-                        arrow: *arrow,
+                        arrow: *arrow
                     }
                 },
             }
@@ -243,31 +254,20 @@ fn ModalPortalEntry(
     #[props(default)] children: Element,
     #[props(default)] animation_state: ModalAnimationState,
 ) -> Element {
-    let (anim_state, button_close, computed_opacity_scale) =
+    let _internal_animation_state = use_signal(|| animation_state);
+    let (_, button_close, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), animation_state, "Modal");
 
+    // Clone button_close for the overlay click handler
     let button_close_for_overlay = button_close.clone();
-
-    // Escape key and focus trap callback
-    let on_keydown = {
-        let mc = mask_closable;
-        let anim = anim_state.clone();
-        move |e: KeyboardEvent| {
-            if mc && e.get_key() == Key::Escape {
-                e.prevent_default();
-                e.stop_propagation();
-                anim.set(ModalAnimationState::Disappearing);
-            }
-        }
-    };
 
     let overlay_classes = if mask_mode == MaskMode::Transparent {
         ClassesBuilder::new()
-            .add_typed(ModalClass::Overlay)
-            .add_typed(ModalClass::OverlayTransparent)
+            .add(ModalClass::Overlay)
+            .add(ModalClass::OverlayTransparent)
             .build()
     } else {
-        ClassesBuilder::new().add_typed(ModalClass::Overlay).build()
+        ClassesBuilder::new().add(ModalClass::Overlay).build()
     };
 
     let size_class = match size {
@@ -278,38 +278,41 @@ fn ModalPortalEntry(
     };
 
     let modal_classes = ClassesBuilder::new()
-        .add_typed(ModalClass::Modal)
-        .add_typed(size_class)
+        .add(ModalClass::Modal)
+        .add(size_class)
         .build();
 
     let modal_style = use_memo(move || {
         let (opacity, scale) = computed_opacity_scale.read().clone();
         let style = format!(
-            "opacity: {opacity}; transform: scale({scale}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;"
+            "opacity: {}; transform: scale({}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
+            opacity, scale
         );
-        log(&format!("Modal style computed: {style}"));
+        log(&format!("Modal style computed: {}", style));
         style
     });
 
-    let header_classes = ClassesBuilder::new().add_typed(ModalClass::Header).build();
+    let header_classes = ClassesBuilder::new().add(ModalClass::Header).build();
 
-    let title_classes = ClassesBuilder::new().add_typed(ModalClass::Title).build();
+    let title_classes = ClassesBuilder::new().add(ModalClass::Title).build();
 
-    let close_classes = ClassesBuilder::new().add_typed(ModalClass::Close).build();
+    let close_classes = ClassesBuilder::new().add(ModalClass::Close).build();
 
-    let body_classes = ClassesBuilder::new().add_typed(ModalClass::Body).build();
+    let body_classes = ClassesBuilder::new().add(ModalClass::Body).build();
 
-    let title_el = if let Some(title_text) = title.as_ref() {
+    // Build title element outside rsx!
+    let title_el = if title.is_some() {
         rsx! {
-            h3 { class: title_classes, id: "hi-modal-title-{id}", "{title_text.clone()}" }
+            h3 { class: title_classes, "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()
     };
 
+    // Build close button outside rsx!
     let close_button = if closable {
         rsx! {
-            button { class: close_classes, onclick: button_close, "aria-label": "Close",
+            button { class: close_classes, onclick: button_close,
                 svg {
                     view_box: "0 0 24 24",
                     fill: "none",
@@ -334,30 +337,20 @@ fn ModalPortalEntry(
         VNode::empty()
     };
 
-    let overlay_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: {z_index}; pointer-events: auto;"
-    );
-
     rsx! {
         div {
             class: overlay_classes,
-            style: overlay_style,
-            tabindex: "0",
+            style: "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; display: flex; align-items: center; justify-content: center; z-index: {z_index};",
             onclick: move |e: MouseEvent| {
-                if mask_closable {
+                if mask_closable && mask_mode == MaskMode::Opaque {
                     e.stop_propagation();
                     button_close_for_overlay.call(e);
                 }
             },
-            onkeydown: on_keydown,
 
             div {
                 class: modal_classes,
                 style: modal_style.read(),
-                role: "dialog",
-                "aria-modal": "true",
-                "aria-labelledby": if title.is_some() { format!("hi-modal-title-{id}") } else { String::new() },
-                tabindex: "-1",
                 onclick: |e: MouseEvent| {
                     e.stop_propagation();
                 },
@@ -383,6 +376,7 @@ fn DropdownPortalEntry(
     #[props(default)] trigger_rect: Option<(f64, f64, f64, f64)>,
     #[props(default)] close_on_select: bool,
 ) -> Element {
+    let _internal_animation_state = use_signal(|| ModalAnimationState::Appearing);
     let (_, close_dropdown, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Dropdown");
 
@@ -390,19 +384,19 @@ fn DropdownPortalEntry(
     let close_dropdown_for_overlay = close_dropdown.clone();
     let close_dropdown_for_content = close_dropdown.clone();
 
-    let viewport_width = use_signal(|| f64::from(inner_width()));
-    let viewport_height = use_signal(|| f64::from(inner_height()));
+    let viewport_width = use_signal(|| inner_width() as f64);
+    let viewport_height = use_signal(|| inner_height() as f64);
 
     // Use trigger_rect width if available, otherwise default to 200.0
     let element_width =
-        use_signal(move || trigger_rect.map_or(200.0, |(_, _, width, _)| width));
+        use_signal(move || trigger_rect.map(|(_, _, width, _)| width).unwrap_or(200.0));
 
-    let position_style = use_memo(move || {
+    let _position_style = use_memo(move || {
         let viewport_w = viewport_width.read();
         let viewport_h = viewport_height.read();
         let elem_w = element_width.read();
 
-        let (placement, _, trigger_y) = match &strategy {
+        let (placement, _trigger_x, trigger_y) = match &strategy {
             PortalPositionStrategy::TriggerBased { placement } => {
                 if let Some((rect_x, rect_y, _, _)) = trigger_rect {
                     (Some(*placement), Some(rect_x), Some(rect_y))
@@ -421,7 +415,7 @@ fn DropdownPortalEntry(
                 | TriggerPlacement::BottomLeft
                 | TriggerPlacement::BottomRight,
             ) => {
-                format!("position: fixed; left: {x}px; top: {y}px;")
+                format!("position: fixed; left: {}px; top: {}px;", x, y)
             }
             Some(
                 TriggerPlacement::Top | TriggerPlacement::TopLeft | TriggerPlacement::TopRight,
@@ -429,54 +423,51 @@ fn DropdownPortalEntry(
                 if let Some(ty) = trigger_y {
                     let bottom_offset = viewport_h - ty;
                     format!(
-                        "position: fixed; left: {x}px; bottom: {bottom_offset}px;"
+                        "position: fixed; left: {}px; bottom: {}px;",
+                        x, bottom_offset
                     )
                 } else {
-                    format!("position: fixed; left: {x}px; bottom: {y}px;")
+                    format!("position: fixed; left: {}px; bottom: {}px;", x, y)
                 }
             }
             Some(
                 TriggerPlacement::Left | TriggerPlacement::LeftTop | TriggerPlacement::LeftBottom,
             ) => {
-                format!("position: fixed; left: {x}px; top: {y}px;")
+                format!("position: fixed; left: {}px; top: {}px;", x, y)
             }
             Some(
                 TriggerPlacement::Right
                 | TriggerPlacement::RightTop
                 | TriggerPlacement::RightBottom,
             ) => {
-                format!("position: fixed; left: {x}px; top: {y}px;")
+                format!("position: fixed; left: {}px; top: {}px;", x, y)
             }
             Some(TriggerPlacement::Center) => {
-                format!("position: fixed; left: {x}px; top: {y}px;")
+                format!("position: fixed; left: {}px; top: {}px;", x, y)
             }
-            None => format!("position: fixed; left: {x}px; top: {y}px;"),
+            None => format!("position: fixed; left: {}px; top: {}px;", x, y),
         }
     });
 
     let overlay_classes = if mask_mode == PortalMaskMode::Dimmed {
         ClassesBuilder::new()
-            .add_typed(DropdownClass::Overlay)
-            .add_typed(DropdownClass::OverlayDimmed)
+            .add(DropdownClass::Overlay)
+            .add(DropdownClass::OverlayDimmed)
             .build()
     } else {
-        ClassesBuilder::new()
-            .add_typed(DropdownClass::Overlay)
-            .build()
+        ClassesBuilder::new().add(DropdownClass::Overlay).build()
     };
 
-    let dropdown_classes = use_memo(move || {
-        ClassesBuilder::new()
-            .add_typed(DropdownClass::Dropdown)
-            .build()
-    });
+    let dropdown_classes =
+        use_memo(move || ClassesBuilder::new().add(DropdownClass::Dropdown).build());
 
     let overlay_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {z_index};"
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: auto; z-index: {}; transition: opacity 0.2s ease-in-out;",
+        z_index
     );
 
     let content_style = use_memo(move || {
-        let pos = position_style.read();
+        let pos = _position_style.read();
         let (opacity, scale) = computed_opacity_scale.read().clone();
 
         let transform_origin = match &strategy {
@@ -493,9 +484,10 @@ fn DropdownPortalEntry(
         };
 
         let style = format!(
-            "{pos} transform-origin: {transform_origin}; opacity: {opacity}; transform: scale({scale}); transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;"
+            "{} opacity: {}; transform: scaleY({}); transform-origin: {}; transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;",
+            pos, opacity, scale, transform_origin
         );
-        log(&format!("Dropdown style computed: {style}"));
+        log(&format!("Dropdown style computed: {}", style));
         style
     });
 
@@ -513,11 +505,19 @@ fn DropdownPortalEntry(
                 style: content_style.read(),
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
-                    if close_on_select
-                        && let Some(target_el) = element_from_point(e.client_x, e.client_y)
-                        && element_closest(&target_el, ".hi-menu-item").is_some()
-                    {
-                        close_dropdown_for_content.call(e);
+                    if close_on_select {
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                        {
+                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                    close_dropdown_for_content.call(e);
+                                }
+                            }
+                        }
+                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                        {
+                            close_dropdown_for_content.call(e);
+                        }
                     }
                 },
 
@@ -551,8 +551,6 @@ fn ToastPortalEntry(
         div {
             class: "hi-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
-            "aria-live": "assertive",
-            role: "alert",
             {children}
         }
     }
@@ -570,20 +568,23 @@ fn PopoverPortalEntry(
     #[props(default)] close_on_click_outside: bool,
     #[props(default)] close_on_select: bool,
     #[props(default)] on_close: Option<Callback<()>>,
-    #[props(default)] close_requested: Option<ReactiveSignal<bool>>,
+    #[props(default)] close_requested: Option<Signal<bool>>,
     #[props(default)] children: Element,
 ) -> Element {
-    let (animation_state, close_popover, computed_opacity_scale) =
+    let (mut animation_state, close_popover, computed_opacity_scale) =
         use_animated_portal_entry(id.clone(), ModalAnimationState::Appearing, "Popover");
 
-    let close_requested_signal = close_requested.unwrap_or_else(|| use_signal(|| false));
+    // Create a default signal if none provided
+    let close_requested_signal =
+        close_requested.unwrap_or_else(|| use_signal(|| false).inner().clone());
 
+    // Clone for use_effect
     let on_close_for_effect = on_close.clone();
     {
         use_effect(move || {
             if close_requested_signal.get() {
                 let current_state = animation_state.read();
-                if current_state != ModalAnimationState::Disappearing {
+                if current_state == ModalAnimationState::Visible {
                     animation_state.set(ModalAnimationState::Disappearing);
                     if let Some(handler) = on_close_for_effect.as_ref() {
                         handler.call(());
@@ -593,7 +594,7 @@ fn PopoverPortalEntry(
         });
     }
 
-    let viewport_height = use_signal(|| f64::from(inner_height()));
+    let viewport_height = use_signal(|| inner_height() as f64);
 
     let position_state = use_signal(|| {
         struct PlacementParams {
@@ -665,7 +666,7 @@ fn PopoverPortalEntry(
         }
 
         fn get_viewport_width() -> f64 {
-            f64::from(inner_width())
+            inner_width() as f64
         }
 
         const PADDING: f64 = 16.0;
@@ -713,54 +714,43 @@ fn PopoverPortalEntry(
         }
     });
 
-    let popover_style = if let Some((placement, x, y)) = trigger_rect.map(|_| {
-        let (placement, x, y) = position_state.get();
-        (placement, x, y)
-    }) {
-        let (position_style, transform_origin, translate_transform) = match placement {
-            PopoverPlacement::Bottom => (
-                format!("position: fixed; left: {x}px; top: {y}px;"),
-                "top center",
-                "translateX(-50%)",
-            ),
-            PopoverPlacement::Top => (
-                format!(
-                    "position: fixed; left: {}px; bottom: {}px;",
-                    x,
-                    viewport_height.get() - y
-                ),
-                "bottom center",
-                "translateX(-50%)",
-            ),
-            PopoverPlacement::Left => (
-                format!("position: fixed; left: {x}px; top: {y}px;"),
-                "right center",
-                "translateX(-100%) translateY(-50%)",
-            ),
-            PopoverPlacement::Right => (
-                format!("position: fixed; left: {x}px; top: {y}px;"),
-                "left center",
-                "translateY(-50%)",
-            ),
-        };
+    let (placement, x, y) = position_state.get();
 
-        let width_style = width.as_deref().unwrap_or("auto");
-        format!(
-            "{} z-index: {}; width: {}; transform: {}; transform-origin: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
-            position_style,
-            z_index,
-            width_style,
-            translate_transform,
-            transform_origin,
-            computed_opacity_scale.read().0
-        )
-    } else {
-        format!(
-            "position: fixed; z-index: {}; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0; opacity: {}; transition: opacity 0.2s ease-in-out;",
-            z_index,
-            computed_opacity_scale.read().0
-        )
+    let (position_style, transform_origin, translate_transform) = match placement {
+        PopoverPlacement::Bottom => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "top center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Top => (
+            format!(
+                "position: fixed; left: {}px; bottom: {}px;",
+                x,
+                viewport_height.get() - y
+            ),
+            "bottom center",
+            "translateX(-50%)",
+        ),
+        PopoverPlacement::Left => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "right center",
+            "translateX(-100%) translateY(-50%)",
+        ),
+        PopoverPlacement::Right => (
+            format!("position: fixed; left: {}px; top: {}px;", x, y),
+            "left center",
+            "translateY(-50%)",
+        ),
     };
+
+    let (opacity, scale) = computed_opacity_scale.read().clone();
+    let width_style = width.as_deref().unwrap_or("auto");
+    let popover_classes = ClassesBuilder::new().add(PopoverClass::Popover).build();
+
+    let popover_style = format!(
+        "{} z-index: {}; width: {}; transform: {} scaleY({}); transform-origin: {}; opacity: {}; transition: opacity 0.15s ease-out, transform 0.15s ease-out; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10); backdrop-filter: blur(12px); padding: 4px 0;",
+        position_style, z_index, width_style, translate_transform, scale, transform_origin, opacity
+    );
 
     let backdrop_z_index = z_index.saturating_sub(1);
 
@@ -775,7 +765,8 @@ fn PopoverPortalEntry(
     };
 
     let backdrop_style = format!(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {backdrop_z_index}; background: transparent; pointer-events: auto;"
+        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: {}; background: transparent; pointer-events: auto;",
+        backdrop_z_index
     );
 
     let backdrop = if close_on_click_outside {
@@ -790,18 +781,13 @@ fn PopoverPortalEntry(
         VNode::empty()
     };
 
-    let title_classes = ClassesBuilder::new().add_typed(PopoverClass::Title).build();
-    let content_classes = ClassesBuilder::new()
-        .add_typed(PopoverClass::Content)
-        .build();
-    let popover_classes = ClassesBuilder::new()
-        .add_typed(PopoverClass::Popover)
-        .build();
+    let title_classes = ClassesBuilder::new().add(PopoverClass::Title).build();
+    let content_classes = ClassesBuilder::new().add(PopoverClass::Content).build();
 
     // Build title element outside rsx!
-    let title_el = if let Some(title_text) = title.as_ref() {
+    let title_el = if title.is_some() {
         rsx! {
-            div { class: title_classes, "{title_text.clone()}" }
+            div { class: title_classes, "{title.as_ref().unwrap().clone()}" }
         }
     } else {
         VNode::empty()
@@ -811,14 +797,11 @@ fn PopoverPortalEntry(
     let close_popover_for_content = close_popover.clone();
     let on_close_for_content = on_close.clone();
 
-    let aria_label = title.as_deref().unwrap_or("Popover").to_string();
     let popover_content = rsx! {
         div {
-            class: "{popover_classes}",
+            class: popover_classes,
             style: popover_style,
             "data-open": "true",
-            role: "dialog",
-            "aria-label": "{aria_label}",
 
             {title_el}
 
@@ -827,13 +810,24 @@ fn PopoverPortalEntry(
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
 
-                    if close_on_select
-                        && let Some(target_el) = element_from_point(e.client_x, e.client_y)
-                        && element_closest(&target_el, ".hi-menu-item").is_some()
-                    {
-                        close_popover_for_content.call(e);
-                        if let Some(handler) = on_close_for_content.as_ref() {
-                            handler.call(());
+                    if close_on_select {
+                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                        {
+                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
+                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                    close_popover_for_content.call(e);
+                                    if let Some(handler) = on_close_for_content.as_ref() {
+                                        handler.call(());
+                                    }
+                                }
+                            }
+                        }
+                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                        {
+                            close_popover_for_content.call(e);
+                            if let Some(handler) = on_close_for_content.as_ref() {
+                                handler.call(());
+                            }
                         }
                     }
                 },
@@ -854,8 +848,8 @@ fn TooltipPortalEntry(
     #[props(default)] content: String,
     #[props(default)] arrow: bool,
 ) -> Element {
-    let viewport_width = use_signal(|| f64::from(inner_width()));
-    let viewport_height = use_signal(|| f64::from(inner_height()));
+    let viewport_width = use_signal(|| inner_width() as f64);
+    let viewport_height = use_signal(|| inner_height() as f64);
 
     let tooltip_width = use_signal(|| 120.0);
     let tooltip_height = use_signal(|| 40.0);
@@ -892,10 +886,11 @@ fn TooltipPortalEntry(
             let y_clamped = y.clamp(8.0, vh - th - 8.0);
 
             format!(
-                "position: fixed; left: {x_clamped}px; top: {y_clamped}px;"
+                "position: fixed; left: {}px; top: {}px;",
+                x_clamped, y_clamped
             )
         } else {
-            String::new()
+            "position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);".to_string()
         }
     });
 
@@ -908,9 +903,9 @@ fn TooltipPortalEntry(
     };
 
     let tooltip_classes = ClassesBuilder::new()
-        .add_typed(TooltipClass::Tooltip)
-        .add_typed(placement_class)
-        .add_typed(TooltipClass::TooltipVisible)
+        .add(TooltipClass::Tooltip)
+        .add(placement_class)
+        .add(TooltipClass::TooltipVisible)
         .build();
 
     let tooltip_style = format!(
@@ -931,7 +926,7 @@ fn TooltipPortalEntry(
     rsx! {
         div { class: tooltip_classes, style: tooltip_style,
 
-            div { class: TooltipClass::TooltipContent.class_name(), id: format!("hi-tooltip-{}", id), "role": "tooltip", "{content}" }
+            div { class: TooltipClass::TooltipContent.as_class(), "{content}" }
 
             {arrow_el}
         }

@@ -5,9 +5,7 @@ use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex as FlexUtil, FlexDirection, FlexWrap, JustifyContent,
 };
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, styled::StyledComponent, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum Direction {
@@ -60,7 +58,6 @@ pub enum FlexGap {
     Gap8,
 }
 
-/// Props for the [`FlexBox`] component.
 #[define_props]
 pub struct FlexBoxProps {
     pub direction: Direction,
@@ -95,7 +92,6 @@ pub struct FlexBoxProps {
     pub children: Element,
 }
 
-/// A flexible box layout component supporting direction, alignment, justification, wrapping, and gap.
 #[component]
 pub fn FlexBox(props: FlexBoxProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -161,29 +157,29 @@ pub fn FlexBox(props: FlexBoxProps) -> Element {
     };
 
     let builder = ClassesBuilder::new()
-        .add_typed(display_class)
-        .add_typed(direction_class)
-        .add_typed(align_class)
-        .add_typed(justify_class)
-        .add_typed(wrap_class)
-        .add_typed_if(FlexUtil::Flex1, props.flex)
-        .add(gap_class)
-        .add(&props.class);
+        .add(display_class)
+        .add(direction_class)
+        .add(align_class)
+        .add(justify_class)
+        .add(wrap_class)
+        .add_if(FlexUtil::Flex1, || props.flex)
+        .add_raw(gap_class)
+        .add_raw(&props.class);
 
     let classes = builder.build();
 
     let mut style = props.style.clone();
     if let Some(min_w) = &props.min_width {
-        style = format!("{style} min-width: {min_w};");
+        style = format!("{} min-width: {};", style, min_w);
     }
     if let Some(min_h) = &props.min_height {
-        style = format!("{style} min-height: {min_h};");
+        style = format!("{} min-height: {};", style, min_h);
     }
     if let Some(max_w) = &props.max_width {
-        style = format!("{style} max-width: {max_w};");
+        style = format!("{} max-width: {};", style, max_w);
     }
     if let Some(max_h) = &props.max_height {
-        style = format!("{style} max-height: {max_h};");
+        style = format!("{} max-height: {};", style, max_h);
     }
 
     rsx! {

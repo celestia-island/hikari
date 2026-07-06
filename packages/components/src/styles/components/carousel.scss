@@ -1,5 +1,5 @@
 // styles/components/carousel.scss
-// Carousel component 
+// Carousel component with Arknights + FUI styling
 
 .hi-carousel {
   position: relative;
@@ -112,7 +112,7 @@
 .hi-carousel-dot-active {
   background-color: var(--hi-color-primary, #00A0E9);
   border-color: var(--hi-color-primary, #00A0E9);
-  box-shadow: 0 0 12px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.4));
+  box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4));
 }
 
 // Pause button
@@ -147,23 +147,23 @@
   }
 }
 
-//  effects
+// FUI effects
 .hi-carousel-arrow:hover {
   box-shadow:
     0 4px 12px rgba(0, 160, 233, 0.3),
-    0 0 20px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.2));
+    0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
 }
 
 .hi-carousel-dot-active {
   box-shadow:
-    0 0 12px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.4)),
+    0 0 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4)),
     0 0 24px rgba(0, 160, 233, 0.2);
 }
 
 .hi-carousel-pause:hover {
   box-shadow:
     0 4px 12px rgba(0, 160, 233, 0.3),
-    0 0 20px var(--hi-glow-button-primary, rgba(0, 160, 233, 0.2));
+    0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
 }
 
 // Tairitsu theme (dark)
@@ -180,9 +180,9 @@
   .hi-carousel-arrow:hover,
   .hi-carousel-dot-active,
   .hi-carousel-pause:hover {
-    background-color: var(--hi-color-primary);
+    background-color: #1a237e;
     color: rgba(255, 255, 255, 0.95);
-    border-color: var(--hi-color-primary);
+    border-color: #1a237e;
     box-shadow: 0 4px 12px rgba(26, 35, 126, 0.4);
   }
 
@@ -192,8 +192,8 @@
   }
 
   .hi-carousel-dot-active {
-    background-color: var(--hi-color-primary);
-    border-color: var(--hi-color-primary);
+    background-color: #1a237e;
+    border-color: #1a237e;
     box-shadow:
       0 0 12px rgba(26, 35, 126, 0.5),
       0 0 24px rgba(26, 35, 126, 0.3);

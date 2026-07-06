@@ -1,11 +1,11 @@
 // Hikari Radio Component Styles
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Radio Component
-// Features:  styling, smooth transitions, glow effects
+// Features: FUI styling, smooth transitions, glow effects
 // Uses Layer 2 CSS variables (--hi-component-selection-*)
 // ============================================
 

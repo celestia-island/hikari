@@ -4,30 +4,35 @@
 //! reducing boilerplate and catching property name typos at compile time.
 //!
 //! This module re-exports core types from `tairitsu_style` and provides
-//! additional DOM manipulation utilities for Platform-based integration.
+//! additional DOM manipulation utilities for web-sys integration.
 //!
 //! # Example
 //!
 //! ```ignore
 //! use animation::style::*;
-//! use std::rc::Rc;
-//! use std::cell::RefCell;
+//! use wasm_bindgen::JsCast;
 //!
-//! let platform = Rc::new(RefCell::new(/* your platform impl */));
-//! let element = /* your element handle */;
+//! let element = web_sys::window()
+//!     .unwrap()
+//!     .document()
+//!     .unwrap()
+//!     .get_element_by_id("my-element")
+//!     .unwrap()
+//!     .dyn_into::<web_sys::HtmlElement>()
+//!     .unwrap();
 //!
 //! // Set a single property
-//! set_style(&platform, &element, CssProperty::Width, "100px");
+//! set_style(&element, CssProperty::Width, "100px");
 //!
 //! // Set multiple properties at once
-//! set_styles(&platform, &element, &[
+//! set_styles(&element, &[
 //!     (CssProperty::Display, "flex"),
 //!     (CssProperty::FlexDirection, "column"),
 //!     (CssProperty::Gap, "1rem"),
 //! ]);
 //!
 //! // Using the builder pattern for more complex scenarios
-//! StyleBuilder::new(&platform, &element)
+//! StyleBuilder::new(&element)
 //!     .add(CssProperty::Position, "relative")
 //!     .add(CssProperty::Top, "0")
 //!     .add(CssProperty::Left, "0")
@@ -44,7 +49,7 @@
 // Re-export core types from tairitsu_style
 pub use tairitsu_style::{CssProperty, Property, StyleStringBuilder};
 
-// DOM manipulation utilities (Platform-based)
+// DOM manipulation utilities (web-sys specific)
 mod builder;
 mod helpers;
 
@@ -111,24 +116,24 @@ mod tests {
     #[test]
     fn test_style_string_builder_add_custom() {
         let style = StyleStringBuilder::new()
-            .add_custom("--hi-glow-x", "100px")
-            .add_custom("--hi-glow-y", "200px")
+            .add_custom("--glow-x", "100px")
+            .add_custom("--glow-y", "200px")
             .build_clean();
 
-        assert!(style.contains("--hi-glow-x:100px"));
-        assert!(style.contains("--hi-glow-y:200px"));
+        assert!(style.contains("--glow-x:100px"));
+        assert!(style.contains("--glow-y:200px"));
     }
 
     #[test]
     fn test_style_string_builder_mixed() {
         let style = StyleStringBuilder::new()
             .add(CssProperty::Position, "relative")
-            .add_custom("--hi-glow-x", "50px")
+            .add_custom("--glow-x", "50px")
             .add_px(CssProperty::Height, 100)
             .build_clean();
 
         assert!(style.contains("position:relative"));
-        assert!(style.contains("--hi-glow-x:50px"));
+        assert!(style.contains("--glow-x:50px"));
         assert!(style.contains("height:100px"));
     }
 }

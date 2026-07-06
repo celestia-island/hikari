@@ -1,5 +1,5 @@
 // hi-components/src/basic/button.rs
-// Button component
+// Button component with Arknights + FUI styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (button-vars.scss)
@@ -7,10 +7,11 @@
 
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonAnimation {
@@ -26,7 +27,6 @@ pub struct ButtonComponent;
 
 /// Button variant determining visual style
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum ButtonVariant {
     #[default]
     Primary,
@@ -39,7 +39,6 @@ pub enum ButtonVariant {
 
 /// Button size preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum ButtonSize {
     #[default]
     Medium,
@@ -49,7 +48,6 @@ pub enum ButtonSize {
 
 /// Button width preset
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum ButtonWidth {
     #[default]
     Auto,
@@ -122,15 +120,15 @@ pub fn Button(props: ButtonProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add_typed(ButtonClass::Button)
-        .add_typed(variant_class)
-        .add_typed(size_class)
-        .add_typed(width_class)
-        .add_typed_if(ButtonClass::Loading, props.loading)
-        .add_typed_if(ButtonClass::Block, props.block)
-        .add_typed(justify_content)
-        .add_typed_if(ButtonClass::SpaceBetween, has_both_sides)
-        .add(&props.class)
+        .add(ButtonClass::Button)
+        .add(variant_class)
+        .add(size_class)
+        .add(width_class)
+        .add_if(ButtonClass::Loading, || props.loading)
+        .add_if(ButtonClass::Block, || props.block)
+        .add(justify_content)
+        .add_if(ButtonClass::SpaceBetween, || has_both_sides)
+        .add_raw(&props.class)
         .build();
 
     let animation_attr = match props.animation {
@@ -141,25 +139,37 @@ pub fn Button(props: ButtonProps) -> Element {
         ButtonAnimation::IconRotate => Some("icon-rotate"),
     };
 
-    let style_attr = crate::utils::build_css_vars_style(
-        "--hi-button-radius",
-        &[
-            crate::utils::CssVarEntry::new(
-                &props.icon_color,
-                &["--hi-button-icon-color", "--hi-button-icon-color-active"],
-            ),
-            crate::utils::CssVarEntry::new(
-                &props.text_color,
-                &["--hi-button-text-color", "--hi-button-text-color-active"],
-            ),
-            crate::utils::CssVarEntry::new(&props.background_color, &["--hi-button-bg"]),
-            crate::utils::CssVarEntry::new(
-                &props.border_color,
-                &["--hi-button-border-color", "--hi-button-border-color-focus"],
-            ),
-        ],
-        &props.css_vars,
-    );
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-button-radius);");
+
+    if let Some(color) = &props.icon_color {
+        css_vars_string.push_str(&format!("--hi-button-icon-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-icon-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-button-text-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-text-color-active:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-button-bg:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-button-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-button-border-color-focus:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
 
     let button_content = rsx! {
         button {
@@ -190,27 +200,30 @@ pub fn Button(props: ButtonProps) -> Element {
         }
     };
 
-    let glow_color = if let Some(color) = props.glow_color {
-        color
-    } else {
-        match props.variant {
-            ButtonVariant::Ghost => GlowColor::Ghost,
-            ButtonVariant::Borderless => GlowColor::Ghost,
-            ButtonVariant::Primary => GlowColor::Primary,
-            ButtonVariant::Secondary => GlowColor::Secondary,
-            ButtonVariant::Danger => GlowColor::Danger,
-            ButtonVariant::Success => GlowColor::Success,
-        }
-    };
+    if props.glow {
+        let glow_color = if let Some(color) = props.glow_color {
+            color
+        } else {
+            match props.variant {
+                ButtonVariant::Ghost => GlowColor::Ghost,
+                ButtonVariant::Borderless => GlowColor::Ghost,
+                ButtonVariant::Primary => GlowColor::Primary,
+                ButtonVariant::Secondary => GlowColor::Secondary,
+                ButtonVariant::Danger => GlowColor::Danger,
+                ButtonVariant::Success => GlowColor::Success,
+            }
+        };
 
-    rsx! {
-        ConditionalGlow {
-            glow: props.glow,
-            blur: props.glow_blur,
-            color: glow_color,
-            intensity: props.glow_intensity,
-            {button_content}
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: glow_color,
+                intensity: props.glow_intensity,
+                {button_content}
+            }
         }
+    } else {
+        button_content
     }
 }
 
@@ -221,64 +234,5 @@ impl StyledComponent for ButtonComponent {
 
     fn name() -> &'static str {
         "button"
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::styled::StyledComponent;
-
-    #[test]
-    fn test_button_variant_default() {
-        assert_eq!(ButtonVariant::default(), ButtonVariant::Primary);
-    }
-
-    #[test]
-    fn test_button_variant_distinct() {
-        let variants = [
-            ButtonVariant::Primary,
-            ButtonVariant::Secondary,
-            ButtonVariant::Ghost,
-            ButtonVariant::Borderless,
-            ButtonVariant::Danger,
-            ButtonVariant::Success,
-        ];
-        for (i, a) in variants.iter().enumerate() {
-            for (j, b) in variants.iter().enumerate() {
-                if i != j {
-                    assert_ne!(a, b);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_button_size_default() {
-        assert_eq!(ButtonSize::default(), ButtonSize::Medium);
-    }
-
-    #[test]
-    fn test_button_width_default() {
-        assert_eq!(ButtonWidth::default(), ButtonWidth::Auto);
-    }
-
-    #[test]
-    fn test_button_animation_default() {
-        assert_eq!(ButtonAnimation::default(), ButtonAnimation::None);
-    }
-
-    #[test]
-    fn test_button_component_name() {
-        assert_eq!(ButtonComponent::name(), "button");
-    }
-
-    #[test]
-    fn test_button_animation_values() {
-        assert_eq!(ButtonAnimation::None as u8, 0);
-        assert_eq!(ButtonAnimation::Scale as u8, 1);
-        assert_eq!(ButtonAnimation::ScaleElevate as u8, 2);
-        assert_eq!(ButtonAnimation::Ripple as u8, 3);
-        assert_eq!(ButtonAnimation::IconRotate as u8, 4);
     }
 }

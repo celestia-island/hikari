@@ -1,19 +1,19 @@
-//! Portal provider module
-//!
-//! Provides the [`PortalProvider`] component which manages portal-based rendering
-//! for modals, dropdowns, toasts, popovers, and tooltips.
+// hi-components/src/portal/provider.rs
+// PortalProvider and PortalContext
+
+#![expect(clippy::needless_update)]
 
 use std::sync::atomic::Ordering;
 
-use tairitsu_hooks::ReactiveSignal;
-
 use super::render::{PortalRender, PortalRenderProps};
-use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
-use crate::prelude::*;
+use crate::{
+    portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
+    prelude::*,
+};
 
 #[derive(Clone)]
 pub struct PortalContext {
-    pub entries: ReactiveSignal<Vec<PortalEntry>>,
+    pub entries: Signal<Vec<PortalEntry>>,
     pub add_entry: Callback<PortalEntry>,
     pub remove_entry: Callback<String>,
     pub clear_all: Callback<()>,
@@ -68,8 +68,8 @@ pub fn PortalProvider(children: Element) -> Element {
     let entries_for_context = entries.clone();
     let entries_for_render = entries.clone();
 
-    use_context_provider(|| PortalContext {
-        entries: entries_for_context,
+    use_context_provider(move || PortalContext {
+        entries: entries_for_context.inner().clone(),
         add_entry,
         remove_entry,
         clear_all,
@@ -78,26 +78,13 @@ pub fn PortalProvider(children: Element) -> Element {
 
     rsx! {
         children {}
-        PortalRender { entries: Some(entries_for_render) }
+        PortalRender { entries: Some(entries_for_render.inner().clone()) }
     }
 }
 
-/// Hook to access the current portal context.
-///
-/// # Panics
-/// Panics if no `PortalProvider` ancestor is present in the component tree.
-#[track_caller]
-#[must_use]
 pub fn use_portal() -> PortalContext {
-    try_use_portal().expect("use_portal() requires a PortalProvider ancestor")
-}
-
-/// Non-panicking variant of [`use_portal`].
-///
-/// Returns `None` if no `PortalProvider` ancestor is present.
-#[must_use]
-pub fn try_use_portal() -> Option<PortalContext> {
-    use_context::<PortalContext>().map(|ctx| ctx.get().clone())
+    let ctx = use_context::<PortalContext>().expect("PortalContext not found");
+    ctx.get().clone()
 }
 
 pub fn generate_portal_id() -> String {

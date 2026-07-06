@@ -5,8 +5,6 @@
 //! Previously a Dioxus component with mouse event handling.
 //! Now provides a pure state model for drag and drop functionality.
 
-use tairitsu_vdom::{VElement, VNode};
-
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct DragConstraints {
@@ -22,8 +20,7 @@ pub struct DragConstraints {
 
 impl DragConstraints {
     /// Create new constraints with all bounds
-    #[must_use]
-    pub const fn new(
+    pub fn new(
         min_x: Option<f64>,
         max_x: Option<f64>,
         min_y: Option<f64>,
@@ -38,8 +35,7 @@ impl DragConstraints {
     }
 
     /// Create horizontal-only constraints
-    #[must_use]
-    pub const fn horizontal(min: f64, max: f64) -> Self {
+    pub fn horizontal(min: f64, max: f64) -> Self {
         Self {
             min_x: Some(min),
             max_x: Some(max),
@@ -49,8 +45,7 @@ impl DragConstraints {
     }
 
     /// Create vertical-only constraints
-    #[must_use]
-    pub const fn vertical(min: f64, max: f64) -> Self {
+    pub fn vertical(min: f64, max: f64) -> Self {
         Self {
             min_x: None,
             max_x: None,
@@ -60,8 +55,7 @@ impl DragConstraints {
     }
 
     /// Create bounded constraints (all directions)
-    #[must_use]
-    pub const fn bounded(min_x: f64, max_x: f64, min_y: f64, max_y: f64) -> Self {
+    pub fn bounded(min_x: f64, max_x: f64, min_y: f64, max_y: f64) -> Self {
         Self {
             min_x: Some(min_x),
             max_x: Some(max_x),
@@ -71,8 +65,7 @@ impl DragConstraints {
     }
 
     /// Constrain a value within the X bounds
-    #[must_use]
-    pub const fn constrain_x(&self, x: f64) -> f64 {
+    pub fn constrain_x(&self, x: f64) -> f64 {
         let mut constrained = x;
         if let Some(min) = self.min_x {
             constrained = constrained.max(min);
@@ -84,8 +77,7 @@ impl DragConstraints {
     }
 
     /// Constrain a value within the Y bounds
-    #[must_use]
-    pub const fn constrain_y(&self, y: f64) -> f64 {
+    pub fn constrain_y(&self, y: f64) -> f64 {
         let mut constrained = y;
         if let Some(min) = self.min_y {
             constrained = constrained.max(min);
@@ -97,8 +89,7 @@ impl DragConstraints {
     }
 
     /// Constrain both X and Y values
-    #[must_use]
-    pub const fn constrain(&self, x: f64, y: f64) -> (f64, f64) {
+    pub fn constrain(&self, x: f64, y: f64) -> (f64, f64) {
         (self.constrain_x(x), self.constrain_y(y))
     }
 }
@@ -114,7 +105,6 @@ pub struct DragData {
 
 impl DragData {
     /// Calculate the delta from start position
-    #[must_use]
     pub fn delta(&self) -> (f64, f64) {
         (self.x - self.start_x, self.y - self.start_y)
     }
@@ -164,7 +154,6 @@ pub struct DragLayerState {
 
 impl DragLayerState {
     /// Create a new drag layer state with default values
-    #[must_use]
     pub fn new() -> Self {
         Self {
             position: (0.0, 0.0),
@@ -179,29 +168,25 @@ impl DragLayerState {
     }
 
     /// Create with initial position
-    #[must_use]
-    pub const fn with_position(mut self, x: f64, y: f64) -> Self {
+    pub fn with_position(mut self, x: f64, y: f64) -> Self {
         self.position = (x, y);
         self
     }
 
     /// Set the constraints
-    #[must_use]
-    pub const fn with_constraints(mut self, constraints: DragConstraints) -> Self {
+    pub fn with_constraints(mut self, constraints: DragConstraints) -> Self {
         self.constraints = constraints;
         self
     }
 
     /// Set the z-index
-    #[must_use]
-    pub const fn with_z_index(mut self, z_index: i32) -> Self {
+    pub fn with_z_index(mut self, z_index: i32) -> Self {
         self.z_index = z_index;
         self
     }
 
     /// Set whether draggable
-    #[must_use]
-    pub const fn with_draggable(mut self, draggable: bool) -> Self {
+    pub fn with_draggable(mut self, draggable: bool) -> Self {
         self.draggable = draggable;
         self
     }
@@ -213,7 +198,7 @@ impl DragLayerState {
     }
 
     /// Start dragging at the given position
-    pub const fn start_drag(&mut self, x: f64, y: f64) {
+    pub fn start_drag(&mut self, x: f64, y: f64) {
         if self.draggable {
             self.is_dragging = true;
             self.drag_start = (x, y);
@@ -249,7 +234,7 @@ impl DragLayerState {
     }
 
     /// End dragging
-    pub const fn end_drag(&mut self) -> DragData {
+    pub fn end_drag(&mut self) -> DragData {
         self.is_dragging = false;
         DragData {
             x: self.position.0,
@@ -260,13 +245,11 @@ impl DragLayerState {
     }
 
     /// Constrain a position with the current constraints
-    #[must_use]
-    pub const fn constrain_position(&self, x: f64, y: f64) -> (f64, f64) {
+    pub fn constrain_position(&self, x: f64, y: f64) -> (f64, f64) {
         self.constraints.constrain(x, y)
     }
 
     /// Get the CSS style string for positioning
-    #[must_use]
     pub fn position_style(&self) -> String {
         format!(
             "position: absolute; left: {}px; top: {}px; z-index: {}; cursor: {};",
@@ -278,7 +261,6 @@ impl DragLayerState {
     }
 
     /// Get the CSS class string including dragging state
-    #[must_use]
     pub fn class_string(&self) -> String {
         let base = if self.class.is_empty() {
             "hi-drag-layer".to_string()
@@ -287,7 +269,7 @@ impl DragLayerState {
         };
 
         if self.is_dragging {
-            format!("{base} hi-dragging")
+            format!("{} hi-dragging", base)
         } else {
             base
         }
@@ -298,30 +280,6 @@ impl Default for DragLayerState {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// Render a drag layer as a [`VNode`] tree.
-///
-/// The returned element uses [`DragLayerState::class_string`] for classes and
-/// [`DragLayerState::position_style`] for inline positioning.
-///
-/// Mouse event listeners (mousedown / mousemove / mouseup) are **not** attached —
-/// they require platform-specific APIs.  The caller should listen for pointer
-/// events on the rendered element and drive the state through
-/// [`DragLayerState::start_drag`], [`DragLayerState::update_drag`], and
-/// [`DragLayerState::end_drag`].
-#[must_use]
-pub fn render_drag_layer(state: &DragLayerState, content: VNode) -> VNode {
-    let mut el = VElement::new("div")
-        .class(state.class_string())
-        .style(state.position_style())
-        .attr("data-action", "drag-start");
-
-    if state.is_dragging {
-        el = el.attr("data-dragging", "true");
-    }
-
-    VNode::Element(el.child(content))
 }
 
 /// Events emitted by the drag layer
@@ -386,11 +344,9 @@ mod tests {
 
         state.start_drag(100.0, 100.0);
         state.update_drag(-50.0, -50.0); // Try to go negative
-        // delta = -150, new position = 100 - 150 = -50, constrained to 0
-        assert_eq!(state.position, (0.0, 0.0)); // Should be constrained to 0
+        assert_eq!(state.position, (50.0, 50.0)); // Should be constrained to 0
 
         state.update_drag(300.0, 300.0); // Try to go beyond bounds
-        // delta = 200, new position = 0 + 200 = 200, constrained to 200
         assert_eq!(state.position, (200.0, 200.0)); // Should be constrained to 200
     }
 

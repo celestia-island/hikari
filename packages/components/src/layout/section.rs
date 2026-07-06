@@ -3,7 +3,7 @@
 //!
 //! # Example
 //!
-//! ```rust,ignore
+//! ```rust
 //! use hikari_components::layout::Section;
 //! use crate::prelude::*;
 //!
@@ -16,11 +16,12 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{ClassesBuilder, SectionClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, SectionClass, UtilityClass};
 
 use crate::prelude::*;
 
-/// A content section with an optional title and description header.
+///
+///
 #[component]
 pub fn Section(
     children: Element,
@@ -40,9 +41,9 @@ pub fn Section(
     };
 
     let section_classes = ClassesBuilder::new()
-        .add_typed(SectionClass::Section)
-        .add_typed(size_class)
-        .add(&class)
+        .add(SectionClass::Section)
+        .add(size_class)
+        .add_raw(&class)
         .build();
 
     let section_classes_str = section_classes.as_str();
@@ -52,23 +53,24 @@ pub fn Section(
 
             // Optional header
             if title.is_some() || description.is_some() {
-                div { class: SectionClass::SectionHeader.class_name(),
+                div { class: SectionClass::SectionHeader.as_class(),
                     if let Some(t) = title {
-                        h2 { class: SectionClass::SectionTitle.class_name(), "{t}" }
+                        h2 { class: SectionClass::SectionTitle.as_class(), "{t}" }
                     }
                     if let Some(d) = description {
-                        p { class: SectionClass::SectionDescription.class_name(), "{d}" }
+                        p { class: SectionClass::SectionDescription.as_class(), "{d}" }
                     }
                 }
             }
 
             // Section content
-            div { class: SectionClass::SectionBody.class_name(), {children} }
+            div { class: SectionClass::SectionBody.as_class(), {children} }
         }
     }
 }
 
-/// An invisible spacer element for adding vertical or horizontal gaps.
+///
+///
 #[component]
 pub fn Spacer(
     #[props(default = "vertical".to_string())] orientation: String,
@@ -92,8 +94,8 @@ pub fn Spacer(
     };
 
     let classes = ClassesBuilder::new()
-        .add_typed(SectionClass::Spacer)
-        .add(&class)
+        .add(SectionClass::Spacer)
+        .add_raw(&class)
         .build();
 
     let classes_str = classes.as_str();

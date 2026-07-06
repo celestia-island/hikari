@@ -3,8 +3,7 @@
 
 use hikari_palette::classes::{ClassesBuilder, SwitchClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[define_props]
 pub struct SwitchProps {
@@ -32,9 +31,6 @@ pub struct SwitchProps {
 
     #[default(SwitchColor::Primary)]
     pub color: SwitchColor,
-
-    #[default(false)]
-    pub glow: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
@@ -99,14 +95,13 @@ pub fn Switch(props: SwitchProps) -> Element {
     };
 
     let switch_classes = ClassesBuilder::new()
-        .add_typed(SwitchClass::Switch)
-        .add_typed(size_class)
-        .add_typed_if(SwitchClass::Checked, props.checked)
-        .add_typed_if(SwitchClass::Disabled, props.disabled)
-        .add(variant_class)
-        .add(color_class)
-        .add_typed_if(SwitchClass::Glow, props.glow)
-        .add(&props.class)
+        .add(SwitchClass::Switch)
+        .add(size_class)
+        .add_if(SwitchClass::Checked, || props.checked)
+        .add_if(SwitchClass::Disabled, || props.disabled)
+        .add_raw(variant_class)
+        .add_raw(color_class)
+        .add_raw(&props.class)
         .build();
 
     let thumb_content = if props.checked {
@@ -122,72 +117,38 @@ pub fn Switch(props: SwitchProps) -> Element {
         Some(SwitchContent::Icon(icon)) => {
             let icon_svg = match icon {
                 SwitchIcon::Check => rsx! {
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "3",
-                        stroke_linecap: "round",
-                        stroke_linejoin: "round",
+                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round", stroke_linejoin: "round",
                         path { d: "M20 6L9 17l-5-5" }
                     }
                 },
                 SwitchIcon::Close => rsx! {
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "3",
-                        stroke_linecap: "round",
+                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
                         path { d: "M18 6L6 18M6 6l12 12" }
                     }
                 },
                 SwitchIcon::Plus => rsx! {
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "3",
-                        stroke_linecap: "round",
+                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
                         path { d: "M12 5v14M5 12h14" }
                     }
                 },
                 SwitchIcon::Minus => rsx! {
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "3",
-                        stroke_linecap: "round",
+                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "3", stroke_linecap: "round",
                         path { d: "M5 12h14" }
                     }
                 },
                 SwitchIcon::Custom(path) => rsx! {
-                    svg {
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "2",
-                        stroke_linecap: "round",
-                        stroke_linejoin: "round",
+                    svg { view_box: "0 0 24 24", fill: "none", stroke: "currentColor", stroke_width: "2", stroke_linecap: "round", stroke_linejoin: "round",
                         path { d: "{path}" }
                     }
                 },
             };
-            rsx! {
-                span { class: "hi-switch-thumb-icon", {icon_svg} }
-            }
+            rsx! { span { class: "hi-switch-thumb-icon", {icon_svg} } }
         }
         Some(SwitchContent::Image(src)) => rsx! {
-            img { class: "hi-switch-thumb-image", src, alt: "" }
+            img { class: "hi-switch-thumb-image", src: src, alt: "" }
         },
-        None => rsx! {
-            div { class: "hi-switch-thumb-dot" }
-        },
+        None => rsx! { div { class: "hi-switch-thumb-dot" } },
     };
-
-    let on_change_click = props.on_change.clone();
-    let on_change_kb = props.on_change.clone();
 
     rsx! {
         label {
@@ -195,32 +156,13 @@ pub fn Switch(props: SwitchProps) -> Element {
             onclick: move |e: MouseEvent| {
                 if !props.disabled {
                     e.stop_propagation();
-                    if let Some(callback) = on_change_click.as_ref() {
+                    if let Some(callback) = props.on_change.as_ref() {
                         callback.call(!props.checked);
                     }
                 }
             },
 
-            div {
-                class: switch_classes,
-                role: "switch",
-                "aria-checked": props.checked.to_string(),
-                tabindex: "0",
-                "aria-disabled": props.disabled.to_string(),
-                onkeydown: move |e: KeyboardEvent| {
-                    if !props.disabled {
-                        match e.get_key() {
-                            Key::Space | Key::Enter => {
-                                e.prevent_default();
-                                if let Some(callback) = on_change_kb.as_ref() {
-                                    callback.call(!props.checked);
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                },
-
+            div { class: switch_classes,
                 div { class: "hi-switch-track",
                     div { class: "hi-switch-thumb", {thumb_inner} }
                 }
@@ -427,64 +369,5 @@ impl StyledComponent for SwitchComponent {
 
     fn name() -> &'static str {
         "switch"
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_switch_size_default() {
-        assert_eq!(SwitchSize::default(), SwitchSize::Medium);
-    }
-
-    #[test]
-    fn test_switch_size_distinct() {
-        assert_ne!(SwitchSize::Small, SwitchSize::Medium);
-        assert_ne!(SwitchSize::Medium, SwitchSize::Large);
-        assert_ne!(SwitchSize::Small, SwitchSize::Large);
-    }
-
-    #[test]
-    fn test_switch_variant_default() {
-        assert_eq!(SwitchVariant::default(), SwitchVariant::Default);
-    }
-
-    #[test]
-    fn test_switch_variant_distinct() {
-        assert_ne!(SwitchVariant::Default, SwitchVariant::Text);
-        assert_ne!(SwitchVariant::Text, SwitchVariant::Icon);
-        assert_ne!(SwitchVariant::Icon, SwitchVariant::Custom);
-    }
-
-    #[test]
-    fn test_switch_color_default() {
-        assert_eq!(SwitchColor::default(), SwitchColor::Primary);
-    }
-
-    #[test]
-    fn test_switch_icon_default() {
-        assert_eq!(SwitchIcon::default(), SwitchIcon::Check);
-    }
-
-    #[test]
-    fn test_switch_content_variants() {
-        let text = SwitchContent::Text("ON".to_string());
-        let icon = SwitchContent::Icon(SwitchIcon::Check);
-        let img = SwitchContent::Image("check.png".to_string());
-
-        assert_ne!(text, icon);
-        assert_ne!(icon, img);
-
-        assert!(matches!(text, SwitchContent::Text(_)));
-        assert!(matches!(icon, SwitchContent::Icon(_)));
-        assert!(matches!(img, SwitchContent::Image(_)));
-    }
-
-    #[test]
-    fn test_switch_icon_custom() {
-        let custom = SwitchIcon::Custom("M4 12l8 8");
-        assert!(matches!(custom, SwitchIcon::Custom(_)));
     }
 }

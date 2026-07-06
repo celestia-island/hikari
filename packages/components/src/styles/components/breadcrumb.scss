@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Breadcrumb Component
@@ -470,11 +470,11 @@
     }
 
     &:last-child {
-      background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
-      border-color: var(--hi-color-primary);
+      background: linear-gradient(135deg, var(--hi-primary), var(--hi-primary));
+      border-color: var(--hi-primary);
       box-shadow:
-        0 0 12px var(--hi-glow-primary-md, rgba(255, 179, 167, 0.5)),
-        inset 0 0 8px rgba(255, 255, 255, 0.1);
+        0 0 12px var(--hi-primary),
+        inset 0 0 8px var(--hi-primary);
     }
   }
 }

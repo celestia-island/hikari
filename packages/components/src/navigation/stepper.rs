@@ -1,10 +1,9 @@
 // hi-components/src/navigation/stepper.rs
-// Stepper component
+// Stepper component with Arknights + FUI styling
 
-use hikari_palette::classes::{ClassesBuilder, StepperClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, StepperClass, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct StepperComponent;
 
@@ -24,7 +23,6 @@ pub enum StepperDirection {
     Vertical,
 }
 
-/// Props for the [`Stepper`] component.
 #[define_props]
 pub struct StepperProps {
     #[default]
@@ -40,7 +38,7 @@ pub struct StepperProps {
     pub class: String,
 }
 
-/// A step indicator showing progress through a numbered sequence.
+///
 #[component]
 pub fn Stepper(props: StepperProps) -> Element {
     let direction_class = match props.direction {
@@ -49,22 +47,22 @@ pub fn Stepper(props: StepperProps) -> Element {
     };
 
     let stepper_classes = ClassesBuilder::new()
-        .add_typed(StepperClass::Stepper)
-        .add_typed(direction_class)
-        .add(&props.class)
+        .add(StepperClass::Stepper)
+        .add(direction_class)
+        .add_raw(&props.class)
         .build();
 
-    let step_number_class = StepperClass::StepNumber.class_name();
-    let connector_class = StepperClass::StepConnector.class_name();
-    let connector_vertical_class = StepperClass::StepConnectorVertical.class_name();
+    let step_number_class = StepperClass::StepNumber.as_class();
+    let connector_class = StepperClass::StepConnector.as_class();
+    let connector_vertical_class = StepperClass::StepConnectorVertical.as_class();
 
     rsx! {
         div { class: stepper_classes,
             for index in 0..props.total {
                 {
                     let step_classes = ClassesBuilder::new()
-                        .add_typed(StepperClass::Step)
-                        .add_typed(
+                        .add(StepperClass::Step)
+                        .add(
                             if index < props.current {
                                 StepperClass::StepPending
                             } else if index == props.current {
@@ -79,13 +77,13 @@ pub fn Stepper(props: StepperProps) -> Element {
                         div { class: {step_classes},
 
                             // Step number
-                            div { class: step_number_class, "{step_number}" }
+                            div { class: step_number_class.clone(), "{step_number}" }
 
                             // Connector line (except for last step in horizontal mode)
                             {
                                 if index < props.total - 1 && props.direction == StepperDirection::Horizontal {
                                     rsx! {
-                                        div { class: connector_class }
+                                        div { class: connector_class.clone() }
                                     }
                                 } else {
                                     VNode::empty()
@@ -96,7 +94,7 @@ pub fn Stepper(props: StepperProps) -> Element {
                             {
                                 if props.direction == StepperDirection::Vertical && index < props.total - 1 {
                                     rsx! {
-                                        div { class: connector_vertical_class }
+                                        div { class: connector_vertical_class.clone() }
                                     }
                                 } else {
                                     VNode::empty()
@@ -150,7 +148,7 @@ impl StyledComponent for StepperComponent {
 .hi-step-pending .hi-step-number {
     background-color: var(--hi-color-primary);
     color: white;
-    box-shadow: 0 0 8px var(--hi-glow-button-primary);
+    box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
 .hi-step-active .hi-step-number {

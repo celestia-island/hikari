@@ -1,13 +1,13 @@
 // hikari-extra-components/styles/components/drag_layer.scss
-// Drag layer styles with 
+// Drag layer styles with Arknights design + FUI glow
 
-@use '../../../theme/styles/mixins.scss' as *;
+@use '../../../hikari-theme/styles/mixins.scss' as *;
 
 // ============================================
 // Drag Layer Container
 // ============================================
 
-.hi-drag-layer {
+.hikari-drag-layer {
     position: fixed;
     inset: 0;
     pointer-events: none;
@@ -19,7 +19,7 @@
 // Drag Preview (Ghost Element)
 // ============================================
 
-.hi-drag-preview {
+.hikari-drag-preview {
     position: absolute;
     pointer-events: none;
     opacity: 0.8;
@@ -28,7 +28,7 @@
         opacity $hikari-transition-fast,
         transform $hikari-transition-fast;
 
-    // 
+    // Arknights clean design with FUI glow
     background-color: var(--hi-color-surface);
     border: 2px solid var(--hi-color-primary);
     border-radius: $hikari-radius-md;
@@ -41,13 +41,13 @@
     animation: hikari-drag-glow 1.5s ease-in-out infinite;
 
     // Scale effect on drag start
-    &.hi-drag-starting {
+    &.hikari-drag-starting {
         transform: rotate(3deg) scale(0.9);
         opacity: 0.6;
     }
 
     // Scale effect on drag end
-    &.hi-drag-ending {
+    &.hikari-drag-ending {
         transform: rotate(0deg) scale(1);
         opacity: 0;
     }
@@ -57,7 +57,7 @@
 // Drag Preview Content
 // ============================================
 
-.hi-drag-preview-content {
+.hikari-drag-preview-content {
     padding: $hikari-spacing-md;
     min-width: 100px;
     min-height: 40px;
@@ -73,14 +73,14 @@
     text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 }
 
-.hi-drag-preview-icon {
+.hikari-drag-preview-icon {
     width: 20px;
     height: 20px;
     color: var(--hi-color-primary);
     filter: drop-shadow(0 0 8px currentColor);
 }
 
-.hi-drag-preview-label {
+.hikari-drag-preview-label {
     @include text-ellipsis;
     font-weight: 500;
 }
@@ -89,7 +89,7 @@
 // Drag Cursor States
 // ============================================
 
-.hi-draggable {
+.hikari-draggable {
     cursor: grab;
     transition: transform $hikari-transition-fast;
 
@@ -103,7 +103,7 @@
     }
 
     // Dragging state on original element
-    &.hi-dragging {
+    &.hikari-dragging {
         opacity: 0.4;
         cursor: grabbing;
     }
@@ -113,12 +113,12 @@
 // Drop Zone Indicator
 // ============================================
 
-.hi-drop-zone {
+.hikari-drop-zone {
     position: relative;
     transition: all $hikari-transition-base;
 
     // Valid drop target
-    &.hi-drop-zone-valid {
+    &.hikari-drop-zone-valid {
         border-color: var(--hi-color-success);
         background-color: rgba(16, 185, 129, 0.05);
         box-shadow:
@@ -127,7 +127,7 @@
     }
 
     // Invalid drop target
-    &.hi-drop-zone-invalid {
+    &.hikari-drop-zone-invalid {
         border-color: var(--hi-color-danger);
         background-color: rgba(239, 68, 68, 0.05);
         box-shadow:
@@ -136,7 +136,7 @@
     }
 
     // Active drop target (dragging over)
-    &.hi-drop-zone-active {
+    &.hikari-drop-zone-active {
         border-color: var(--hi-color-accent);
         background-color: rgba(245, 158, 11, 0.1);
         box-shadow:
@@ -152,7 +152,7 @@
 // Drag Overlay
 // ============================================
 
-.hi-drag-overlay {
+.hikari-drag-overlay {
     position: absolute;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
@@ -161,7 +161,7 @@
     transition: opacity $hikari-transition-base;
     pointer-events: none;
 
-    &.hi-drag-overlay-active {
+    &.hikari-drag-overlay-active {
         opacity: 1;
         pointer-events: auto;
     }
@@ -171,7 +171,7 @@
 // Drag Handle
 // ============================================
 
-.hi-drag-handle {
+.hikari-drag-handle {
     display: inline-flex;
     align-items: center;
     gap: $hikari-spacing-xs;
@@ -188,7 +188,7 @@
         border-color: var(--hi-color-primary);
         color: var(--hi-color-primary);
 
-        // glow
+        // FUI glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 
@@ -197,18 +197,18 @@
         transform: scale(0.95);
     }
 
-    &.hi-drag-handle-dragging {
+    &.hikari-drag-handle-dragging {
         opacity: 0.6;
     }
 }
 
-.hi-drag-handle-icon {
+.hikari-drag-handle-icon {
     width: 16px;
     height: 16px;
     color: currentColor;
 }
 
-.hi-drag-handle-label {
+.hikari-drag-handle-label {
     font-size: $hikari-font-size-xs;
     font-weight: 500;
     text-transform: uppercase;
@@ -220,18 +220,18 @@
 // ============================================
 
 // Card preview
-.hi-drag-preview-card {
+.hikari-drag-preview-card {
     @include card-base;
     min-width: 200px;
 
-    .hi-drag-preview-content {
+    .hikari-drag-preview-content {
         flex-direction: column;
         align-items: flex-start;
     }
 }
 
 // List item preview
-.hi-drag-preview-list-item {
+.hikari-drag-preview-list-item {
     background-color: var(--hi-color-surface);
     border-left: 3px solid var(--hi-color-primary);
     border-radius: $hikari-radius-sm;
@@ -239,13 +239,13 @@
     min-width: 150px;
     box-shadow: $hikari-shadow-md;
 
-    .hi-drag-preview-content {
+    .hikari-drag-preview-content {
         justify-content: flex-start;
     }
 }
 
 // Table row preview
-.hi-drag-preview-table-row {
+.hikari-drag-preview-table-row {
     display: flex;
     align-items: center;
     background-color: var(--hi-color-surface);
@@ -253,7 +253,7 @@
     border-radius: $hikari-radius-sm;
     overflow: hidden;
 
-    .hi-drag-preview-cell {
+    .hikari-drag-preview-cell {
         padding: $hikari-spacing-sm $hikari-spacing-md;
         border-right: 1px solid var(--hi-color-border);
         font-size: $hikari-font-size-sm;
@@ -269,31 +269,31 @@
 // Drag Line Indicator
 // ============================================
 
-.hi-drag-line {
+.hikari-drag-line {
     position: absolute;
     background-color: var(--hi-color-primary);
     transition: all $hikari-transition-fast;
     z-index: 100;
 
-    // glow
+    // FUI glow
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
 
     // Horizontal line
-    &.hi-drag-line-horizontal {
+    &.hikari-drag-line-horizontal {
         height: 3px;
         left: 0;
         right: 0;
     }
 
     // Vertical line
-    &.hi-drag-line-vertical {
+    &.hikari-drag-line-vertical {
         width: 3px;
         top: 0;
         bottom: 0;
     }
 
     // Pulsing animation
-    &.hi-drag-line-active {
+    &.hikari-drag-line-active {
         animation: hi-pulse 1s ease-in-out infinite;
     }
 }
@@ -302,7 +302,7 @@
 // Multiple Selection Drag
 // ============================================
 
-.hi-drag-preview-multiple {
+.hikari-drag-preview-multiple {
     display: flex;
     flex-direction: column;
     gap: $hikari-spacing-xs;
@@ -328,7 +328,7 @@
     }
 }
 
-.hi-drag-preview-item {
+.hikari-drag-preview-item {
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
     border-radius: $hikari-radius-sm;
@@ -342,22 +342,22 @@
 // Z-Index Management
 // ============================================
 
-.hi-drag-layer {
+.hikari-drag-layer {
     // Ensure drag layer is always on top
     z-index: 9999;
 
     // Drag preview z-index
-    .hi-drag-preview {
+    .hikari-drag-preview {
         z-index: 10000;
     }
 
     // Drag line z-index
-    .hi-drag-line {
+    .hikari-drag-line {
         z-index: 10001;
     }
 
     // Drop overlay z-index
-    .hi-drag-overlay {
+    .hikari-drag-overlay {
         z-index: 9998;
     }
 }
@@ -367,17 +367,17 @@
 // ============================================
 
 @include mobile {
-    .hi-drag-preview {
+    .hikari-drag-preview {
         transform: rotate(2deg) scale(0.9);
     }
 
-    .hi-drag-preview-content {
+    .hikari-drag-preview-content {
         padding: $hikari-spacing-sm;
         font-size: $hikari-font-size-xs;
     }
 
-    .hi-drop-zone {
-        &.hi-drop-zone-active {
+    .hikari-drop-zone {
+        &.hikari-drop-zone-active {
             animation: none; // Disable animation on mobile for performance
         }
     }

@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Header Component
@@ -29,12 +29,12 @@
   // Appearance - 移除圆角
   border-radius: 0;
 
-  // Semi-transparent surface background (theme-aware, mint-tinted for legacy match)
-  background: var(--hi-header-surface, var(--hi-surface));
+  // Semi-transparent surface background (theme-aware)
+  background: var(--hi-surface);
   backdrop-filter: blur(4px);
 
-  // Simple border (mint-tinted to match legacy)
-  border-bottom: 1px solid var(--hi-color-background, var(--hi-border));
+  // Simple border
+  border-bottom: 1px solid var(--hi-border);
   box-shadow: 0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.05));
 
   // Transitions - smooth GSAP-style easing
@@ -69,7 +69,7 @@
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-card-bg);
     box-shadow:
-      0 8px 24px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)),
+      0 8px 24px rgba(23, 89, 168, 0.25),
       0 0 40px var(--hi-glow-color);
 
     &::before {
@@ -130,7 +130,7 @@
 
     // Glow effect
     border-radius: vars.$hikari-radius-fui-sm;
-    background: linear-gradient(135deg, var(--hi-primary), rgba(238, 162, 164, 0.2));
+    background: linear-gradient(135deg, var(--hi-primary), rgba(59, 130, 246, 0.2));
     --hi-glow-transparent: false;
     --hi-glow-bg-color: var(--hi-primary);
     box-shadow:
@@ -407,7 +407,7 @@
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-primary);
-    background: var(--hi-tertiary-bg, rgba(240, 240, 244, 0.5));
+    background: rgba(214, 236, 240, 0.5);
     border: 1px solid var(--hi-primary);
     border-radius: vars.$hikari-radius-fui-sm;
     outline: none;
@@ -423,15 +423,15 @@
     // Hover state
     &:hover {
       border-color: var(--hi-primary);
-      background: var(--hi-button-primary-light, rgba(255, 192, 203, 0.15));
+      background: rgba(23, 89, 168, 0.2);
     }
 
     // Focus state
     &:focus {
       border-color: var(--hi-color-primary);
-      background: var(--hi-input-bg-focus, #FFFFFF);
+      background: rgba(23, 89, 168, 0.25);
       --hi-glow-transparent: false;
-      --hi-glow-bg-color: var(--hi-button-primary-light, #FFE4E9);
+      --hi-glow-bg-color: rgba(23, 89, 168, 0.25);
       box-shadow:
         0 0 0 2px var(--hi-primary),
         0 0 12px var(--hi-glow-color);
@@ -641,7 +641,7 @@
 
 // Primary variant
 .hi-header-primary {
-  background: linear-gradient(135deg, rgba(238, 162, 164, 0.9), rgba(216, 139, 142, 0.9));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
 
   &::before {
     background: linear-gradient(

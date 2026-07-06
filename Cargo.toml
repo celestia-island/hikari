@@ -6,21 +6,47 @@ members = [
     "packages/components",
     "packages/extra-components",
     "packages/icons",
+    "packages/builder",
+    "packages/e2e",
+    "packages/i18n",
 ]
 
 resolver = "2"
 
 exclude = [
     "examples/*",
-    "packages/e2e",
+    "examples/demo",
 ]
 
 [workspace.package]
-version = "0.2.7"
+version = "0.3.0"
 edition = "2024"
-authors = ["langyo <langyo.china@gmail.com>"]
-license = "SySL-1.0"
+authors = ["Hikari Contributors"]
+license-file = "LICENSE"
 repository = "https://github.com/celestia-island/hikari"
+
+# ============================================================================
+# Hikari build-time configuration
+# ============================================================================
+#
+# Each Hikari crate reads its own subtable here. The crate's build.rs turns the
+# declared values into `cargo:rustc-cfg` flags, so selection is a property of
+# the consuming workspace — no Cargo features involved.
+#
+#   [workspace.metadata.hikari.palette]
+#   collections = ["chinese"]            # which color catalogs to compile in
+#
+#   [workspace.metadata.hikari.icons]
+#   set = ["chevron-left", "menu", ...]  # explicit icon list (omit = auto-discover)
+#   dynamic-fetch = true                # fetch icons at runtime instead of embedding
+[workspace.metadata.hikari.palette]
+collections = ["chinese", "tailwind"]
+
+[workspace.metadata.hikari.icons]
+# When `set` is omitted, hikari-icons auto-discovers used icons by scanning
+# the workspace source. Set it explicitly to pin a known set, e.g.:
+#   set = ["chevron-left", "menu", "close"]
+dynamic-fetch = false
 
 [workspace.dependencies]
 # =================================================================
@@ -28,13 +54,45 @@ repository = "https://github.com/celestia-island/hikari"
 # =================================================================
 anyhow = "^1"
 thiserror = "^2"
+futures = "^0.3"
+yuuka = "^0.6"
 
 # =================================================================
 # Data and serialization
 # =================================================================
-chrono = { version = "^0.4", features = ["serde"] }
+chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1" }
+uuid = { version = "^1", features = ["v7", "fast-rng", "macro-diagnostics", "serde"] }
+
+# =================================================================
+# Async runtime
+# =================================================================
+tokio = { version = "^1", features = ["full"] }
+
+# =================================================================
+# Logging and tracing
+# =================================================================
+log = "^0.4"
+tracing = "^0.1"
+
+# =================================================================
+# Server-side dependencies (for SSR)
+# =================================================================
+axum = { version = "^0.8", features = ["macros", "ws"] }
+axum-extra = { version = "^0.12", features = ["typed-header"] }
+tower = { version = "^0.5", features = ["full"] }
+tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
+gloo = "^0.11"
+gloo-net = "^0.6"
+
+# =================================================================
+# Data serialization and processing
+# =================================================================
+ron = "^0.8"
+once_cell = "^1"
+quick-xml = "^0.30"
+reqwest = { version = "^0.12", features = ["json"] }
 
 # =================================================================
 # Profile settings

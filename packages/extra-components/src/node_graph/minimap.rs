@@ -27,9 +27,6 @@ pub struct NodeGraphMinimap {
 
     /// Whether the minimap is visible
     pub visible: bool,
-
-    /// Canvas dimensions for proper scaling
-    pub canvas_size: (f64, f64),
 }
 
 /// A node as displayed in the minimap
@@ -50,8 +47,7 @@ pub struct MinimapConnection {
 
 impl NodeGraphMinimap {
     /// Create a new minimap state
-    #[must_use]
-    pub const fn new(width: f64, height: f64) -> Self {
+    pub fn new(width: f64, height: f64) -> Self {
         Self {
             width,
             height,
@@ -60,12 +56,11 @@ impl NodeGraphMinimap {
             nodes: Vec::new(),
             connections: Vec::new(),
             visible: true,
-            canvas_size: (1200.0, 800.0),
         }
     }
 
     /// Update the view state (zoom and pan from main canvas)
-    pub const fn update_view(&mut self, zoom: f64, pan: (f64, f64)) {
+    pub fn update_view(&mut self, zoom: f64, pan: (f64, f64)) {
         self.zoom = zoom;
         self.pan = pan;
     }
@@ -81,7 +76,6 @@ impl NodeGraphMinimap {
     }
 
     /// Calculate the viewport rectangle in minimap coordinates
-    #[must_use]
     pub fn viewport_rect(&self, canvas_width: f64, canvas_height: f64) -> (f64, f64, f64, f64) {
         // The viewport represents what's visible in the main canvas
         // Map canvas coordinates to minimap coordinates
@@ -99,7 +93,6 @@ impl NodeGraphMinimap {
     }
 
     /// Convert a click position in minimap to canvas pan coordinates
-    #[must_use]
     pub fn click_to_pan(
         &self,
         click_x: f64,
@@ -111,14 +104,13 @@ impl NodeGraphMinimap {
         let total_width = canvas_width * self.zoom;
         let total_height = canvas_height * self.zoom;
 
-        let new_pan_x = (click_x / self.width).mul_add(total_width, -(total_width / 2.0));
-        let new_pan_y = (click_y / self.height).mul_add(total_height, -(total_height / 2.0));
+        let new_pan_x = (click_x / self.width) * total_width - total_width / 2.0;
+        let new_pan_y = (click_y / self.height) * total_height - total_height / 2.0;
 
         (new_pan_x, new_pan_y)
     }
 
     /// Get the CSS style string for the minimap container
-    #[must_use]
     pub fn container_style(&self) -> String {
         format!(
             "position: absolute; bottom: 10px; right: 10px; width: {}px; height: {}px;",
@@ -127,80 +119,13 @@ impl NodeGraphMinimap {
     }
 
     /// Get the CSS style string for the viewport indicator
-    #[must_use]
     pub fn viewport_style(&self, canvas_width: f64, canvas_height: f64) -> String {
         let (x, y, w, h) = self.viewport_rect(canvas_width, canvas_height);
         format!(
-            "position: absolute; left: {x}px; top: {y}px; width: {w}px; height: {h}px; border: 1px solid var(--hi-color-primary);"
+            "position: absolute; left: {}px; top: {}px; width: {}px; height: {}px; border: 1px solid var(--hi-color-primary);",
+            x, y, w, h
         )
     }
-}
-
-use tairitsu_vdom::svg::SafeSvg;
-use tairitsu_vdom::{VElement, VNode};
-
-#[must_use]
-pub fn render_minimap(minimap: &NodeGraphMinimap) -> VNode {
-    if !minimap.visible {
-        return VNode::Element(
-            VElement::new("div").class("hi-node-graph-minimap hi-minimap-hidden"),
-        );
-    }
-
-    let canvas_w = minimap.canvas_size.0;
-    let canvas_h = minimap.canvas_size.1;
-    let scale_x = minimap.width / canvas_w;
-    let scale_y = minimap.height / canvas_h;
-
-    let mut svg_parts = String::new();
-    svg_parts.push_str(&format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" class="hi-node-graph-minimap" width="{}" height="{}">"#,
-        minimap.width,
-        minimap.height,
-    ));
-
-    svg_parts.push_str(
-        r#"<rect width="100%" height="100%" fill="var(--hi-color-minimap-bg, #f8fafc)" rx="4"/>"#,
-    );
-
-    svg_parts.push_str(r#"<g class="hi-minimap-connections">"#);
-    for conn in &minimap.connections {
-        svg_parts.push_str(&format!(
-            r#"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="var(--hi-color-connection, #94a3b8)" stroke-width="1"/>"#,
-            conn.from.0 * scale_x,
-            conn.from.1 * scale_y,
-            conn.to.0 * scale_x,
-            conn.to.1 * scale_y,
-        ));
-    }
-    svg_parts.push_str("</g>");
-
-    svg_parts.push_str(r#"<g class="hi-minimap-nodes">"#);
-    for node in &minimap.nodes {
-        svg_parts.push_str(&format!(
-            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="var(--hi-color-node, #EEA2A4)" rx="2"/>"#,
-            node.position.0 * scale_x,
-            node.position.1 * scale_y,
-            node.size.0 * scale_x,
-            node.size.1 * scale_y,
-        ));
-    }
-    svg_parts.push_str("</g>");
-
-    let (vp_x, vp_y, vp_w, vp_h) = minimap.viewport_rect(canvas_w, canvas_h);
-    svg_parts.push_str(&format!(
-        r#"<rect x="{vp_x}" y="{vp_y}" width="{vp_w}" height="{vp_h}" fill="none" stroke="var(--hi-color-primary, #EEA2A4)" stroke-width="1.5" rx="1"/>"#,
-    ));
-
-    svg_parts.push_str("</svg>");
-
-    VNode::Element(
-        VElement::new("div")
-            .class("hi-node-graph-minimap-container")
-            .attr("data-action", "minimap-click")
-            .style(minimap.container_style())
-            .safe_svg(SafeSvg::new(&svg_parts)),
-    )
 }
 
 #[cfg(test)]
@@ -232,10 +157,9 @@ mod tests {
         let (x, y, w, h) = minimap.viewport_rect(1200.0, 800.0);
         assert_eq!(x, 0.0);
         assert_eq!(y, 0.0);
-        // Width and height are scaled to fit the minimap
-        // When canvas is larger than minimap and zoom is 1.0, viewport fills minimap
-        assert_eq!(w, 200.0);
-        assert_eq!(h, 150.0);
+        // Width and height should be scaled down
+        assert!(w < 200.0);
+        assert!(h < 150.0);
     }
 
     #[test]

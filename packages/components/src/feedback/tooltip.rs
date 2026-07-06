@@ -1,13 +1,15 @@
 // hi-components/src/feedback/tooltip.rs
-// Tooltip component  - Portal-based rendering with animation
+// Tooltip component with Arknights + FUI styling - Portal-based rendering with animation
 
-use hikari_palette::classes::{ClassesBuilder, TooltipClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
-use crate::platform;
-use crate::portal::provider::{generate_portal_id, use_portal};
+#[cfg(target_arch = "wasm32")]
 use crate::portal::{PortalEntry, TriggerPlacement};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{
+    portal::provider::{generate_portal_id, use_portal},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct TooltipComponent;
 
@@ -21,7 +23,8 @@ pub enum TooltipPlacement {
 }
 
 impl TooltipPlacement {
-    fn to_trigger_placement(self) -> TriggerPlacement {
+    #[cfg(target_arch = "wasm32")]
+    fn to_trigger_placement(&self) -> TriggerPlacement {
         match self {
             TooltipPlacement::Top => TriggerPlacement::Top,
             TooltipPlacement::Bottom => TriggerPlacement::Bottom,
@@ -46,11 +49,12 @@ pub struct TooltipProps {
 pub fn Tooltip(props: TooltipProps) -> Element {
     let portal = use_portal();
     let tooltip_id = use_signal(generate_portal_id);
-    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[allow(unused_mut)]
+    let mut trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(TooltipClass::TooltipWrapper)
-        .add(&props.class)
+        .add(TooltipClass::TooltipWrapper)
+        .add_raw(&props.class)
         .build();
 
     let handle_mouse_enter = {
@@ -59,25 +63,28 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         let portal_add_entry = portal.add_entry.clone();
         let content = props.content.clone();
         let arrow = props.arrow;
+        #[cfg(target_arch = "wasm32")]
         let placement = props.placement.to_trigger_placement();
         move |event: MouseEvent| {
-            let rect_tuple = if let Some(target_el) =
-                platform::get_target_element_from_event(event.client_x, event.client_y)
+            #[cfg(target_arch = "wasm32")]
             {
-                platform::get_bounding_rect_by_class_impl("hi-tooltip-trigger", &target_el)
-                    .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-            } else {
-                None
-            };
-            trigger_rect.set(rect_tuple);
+                // Use clientX/clientY from MouseEvent to approximate trigger position
+                // For precise element bounds, a ref-based approach would be needed
+                let rect_tuple = (event.client_x as f64, event.client_y as f64, 100.0, 30.0);
+                trigger_rect.set(Some(rect_tuple));
 
-            portal_add_entry(PortalEntry::Tooltip {
-                id: tooltip_id.get(),
-                trigger_rect: rect_tuple,
-                placement,
-                content: content.clone(),
-                arrow,
-            });
+                portal_add_entry(PortalEntry::Tooltip {
+                    id: tooltip_id.get(),
+                    trigger_rect: Some(rect_tuple),
+                    placement,
+                    content: content.clone(),
+                    arrow,
+                });
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                let _ = (&tooltip_id, &trigger_rect, &event, &content, arrow);
+            }
         }
     };
 
@@ -91,10 +98,9 @@ pub fn Tooltip(props: TooltipProps) -> Element {
         div { class: wrapper_classes,
 
             div {
-                class: TooltipClass::TooltipTrigger.class_name(),
+                class: TooltipClass::TooltipTrigger.as_class(),
                 onmouseenter: handle_mouse_enter,
                 onmouseleave: handle_mouse_leave,
-                "aria-describedby": format!("hi-tooltip-{}", tooltip_id.get()),
                 {props.children}
             }
         }

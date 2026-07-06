@@ -6,7 +6,10 @@
 
 use crate::prelude::*;
 
-/// A custom scrollbar container that hides native scrollbars in favor of script-based ones.
+///
+///
+///
+///
 #[component]
 pub fn ScrollbarContainer(
     children: Element,
@@ -19,13 +22,14 @@ pub fn ScrollbarContainer(
 ) -> Element {
     rsx! {
         div {
-            class: format!("custom-scrollbar-container-vdom {}", class),
+            class: format!("custom-scrollbar-wrapper-vdom {}", class),
             style: "position: relative; display: flex; width: {width}; height: {height}; overflow: hidden;",
 
+            // Content area - will be wrapped by the script
             div {
                 class: "custom-scrollbar-content-vdom",
+                style: "flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0;",
                 "data-custom-scrollbar": "content",
-                style: "overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; -ms-overflow-style: none; scrollbar-width: none;",
 
                 {children}
             }
@@ -38,33 +42,25 @@ pub struct ScrollbarContainerComponent;
 impl crate::styled::StyledComponent for ScrollbarContainerComponent {
     fn styles() -> &'static str {
         r#"
-.custom-scrollbar-container-vdom {
+.custom-scrollbar-wrapper-vdom {
   position: relative;
   display: flex;
 }
 
-.custom-scrollbar-container-vdom .custom-scrollbar-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: 100%;
-}
-
-.custom-scrollbar-container-vdom .custom-scrollbar-content {
+.custom-scrollbar-content-vdom {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;
 }
 
-.custom-scrollbar-container-vdom .custom-scrollbar-content::-webkit-scrollbar {
+.custom-scrollbar-content-vdom::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
-.custom-scrollbar-container-vdom .custom-scrollbar-content {
+.custom-scrollbar-content-vdom {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

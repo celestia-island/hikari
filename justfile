@@ -8,9 +8,8 @@
 # Main tasks:
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
-#   just dev             - Blocking foreground dev server (hot-reload)
-#   just dev --daemon    - Start/restart daemon (non-blocking, for AI agents)
-#   just dev --daemon stop - Stop daemon
+#   just dev             - Development mode (build and start website)
+#   just dev-by-agent    - Start dev server and exit when ready (for AI agent)
 #   just fmt             - Format code
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
@@ -21,12 +20,15 @@ set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
-# External packager (tairitsu CLI via cargo install tairitsu-packager)
+# External packager from sibling repository (tairitsu)
+tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
 website_manifest := "examples/website/Cargo.toml"
 
 # ============================================================================
 # Core tasks
 # ============================================================================
+
+import "./celestia-devtools.just"
 
 default:
     @just --list
@@ -35,18 +37,14 @@ default:
 # Infrastructure setup
 # ============================================================================
 
-# Check that tairitsu CLI is available in PATH
+# Check that tairitsu-packager is available from sibling repository
 check-tairitsu-packager:
-    @tairitsu --help > /dev/null 2>&1 || (echo "[ERROR] tairitsu CLI not found in PATH. Install: cargo install tairitsu-packager" && exit 1)
+    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{tairitsu_packager_manifest}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] Missing tairitsu-packager: {p}'), sys.exit(1))"
 
-# Fetch MDI icons (download SVGs from GitHub) and pack into .dat
+# Fetch MDI icons (optional - tairitsu will also handle this)
 fetch-icons:
-    @{{py}} scripts/icons/fetch_mdi_icons.py
-    @{{py}} scripts/icons/pack_mdi_data.py
-
-# Sync markdown docs from root docs/ to website public/docs/
-sync-docs:
-    @{{py}} scripts/sync_docs.py
+    @echo "  →  Fetching MDI icons..."
+    @{{py}} scripts/icons/fetch_mdi_icons.py 2>&1 | grep -E "(OK:|ERROR:|WARNING:)" || true
 
 # ============================================================================
 # Build tasks
@@ -63,7 +61,7 @@ build: fetch-icons
     @cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
-build-website: sync-docs (check-tairitsu-packager)
+build-website: (check-tairitsu-packager)
     @echo "  ╭──────────────────────────────────────────────────╮"
     @echo "  │  Building website with tairitsu-packager         │"
     @echo "  ╰──────────────────────────────────────────────────╯"
@@ -73,23 +71,38 @@ build-website: sync-docs (check-tairitsu-packager)
 # Development
 # ============================================================================
 
-# Development mode for website
-#   just dev             - Blocking foreground with hot-reload
-#   just dev --daemon    - Start/restart daemon (non-blocking)
-#   just dev --daemon stop - Stop daemon
-dev *FLAGS="": (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch {{FLAGS}}
+# Check if port 3000 is occupied
+check-port *force="":
+    @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
 
+# Development mode for website
+dev *force="": (check-port force) (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
+
+# Start dev server (no watch, for AI agent)
+dev-by-agent: (check-tairitsu-packager)
+    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
+
+# Alias for dev
 serve: dev
+
+# Development mode with file watching
+watch:
+    @just dev
+
+watch-dev:
+    @just dev
+
+run: dev
 
 # ============================================================================
 # Code quality
 # ============================================================================
 
-# Format code with rustfmt (nightly to match CI)
+# Format code with rustfmt
 fmt:
     @echo "  →  Formatting code..."
-    @cargo +nightly fmt --all -- --unstable-features
+    @cargo fmt --all
 
 # Run Clippy checks
 clippy:
@@ -101,9 +114,16 @@ clippy:
 # ============================================================================
 
 # Clean build artifacts
+[linux]
 clean:
     @echo "  →  Cleaning..."
-    @{{py}} scripts/clean.py
+    @cargo clean 2>/dev/null || true
+    @rm -rf examples/website/dist packages/builder/src/generated public 2>/dev/null || true
+    @echo "  ✓  Clean completed"
+
+[windows]
+clean:
+    @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
 
 # ============================================================================
 # E2E Testing
@@ -112,7 +132,7 @@ clean:
 # Run E2E screenshots in parallel
 e2e-parallel:
     @echo "  →  Running E2E tests..."
-    @{{py}} scripts/run_parallel_screenshots.py
+    @./scripts/run_parallel_screenshots.sh
     @echo "  ✓  Screenshots saved to: target/e2e_screenshots/"
 
 # Test specific route
@@ -133,26 +153,6 @@ test-verbose:
     @cargo test --workspace -- --nocapture
 
 # ============================================================================
-# Coverage (requires nightly + cargo-llvm-cov)
-# ============================================================================
-
-# Generate coverage report (HTML + lcov)
-coverage:
-    @echo "  →  Generating coverage report..."
-    @cargo llvm-cov --workspace --lcov --output-path lcov.info
-    @cargo llvm-cov --workspace --html
-    @echo "  ✓  HTML report → target/llvm-cov/html/index.html"
-    @echo "  ✓  lcov info   → lcov.info"
-
-# Show coverage summary only (fast)
-coverage-summary:
-    @cargo llvm-cov --workspace --summary-only
-
-# Clean coverage artifacts
-coverage-clean:
-    @cargo llvm-cov clean --workspace
-
-# ============================================================================
 # Utilities
 # ============================================================================
 
@@ -161,130 +161,34 @@ update:
     @echo "  →  Updating dependencies..."
     @cargo update
 
-# ============================================================================
-# Browser Debug & E2E (Python framework, powered by Tairitsu MCP)
-# ============================================================================
-#
-# The E2E framework is now pure Python (scripts/e2e/), replacing the old
-# Rust hikari-e2e package. It communicates with tairitsu-debug HTTP API.
-#
-# Key commands:
-#   just health              - Check if tairitsu-debug server is running
-#   just capture             - Screenshot a single page
-#   just batch               - Batch capture all routes
-#   just inspect             - Inspect a single page (diagnostics)
-#   just compare             - Compare screenshots / visual regression
-#   just baseline ...        - Manage golden screenshots
-#   just e2e-run             - Execute a JSON test suite
-# ============================================================================
-
-# Install Python dependencies for E2E framework
-e2e-install:
-    @{{py}} -m pip install Pillow requests --quiet 2>/dev/null || echo "Note: pip install may need --user or venv"
-
-# Check tairitsu-debug server health (replaces wry-health)
-health debug_port="3001":
-    @{{py}} scripts/e2e/cli.py health --debug-port {{debug_port}}
-
-# Capture a single screenshot (replaces hikari-browser-debug navigate)
-capture route="/" output="" wait="8":
-    @{{py}} scripts/e2e/cli.py capture --route "{{route}}" {{if output != "" { "--output " + output } else { "" } }} --wait {{wait}}
-
-# Batch capture all routes (replaces visual-batch / wry-batch)
-batch url="http://localhost:3000" output="./screenshots" routes="" wait="8":
-    @{{py}} scripts/e2e/cli.py batch --url "{{url}}" --output "{{output}}" {{if routes != "" { "--routes " + routes } else { "" } }} --wait {{wait}}
-
-# Inspect a single page: screenshot + errors + console + DOM snapshot
-inspect route="/" output="inspect.png" wait="8":
-    @{{py}} scripts/e2e/cli.py inspect --route "{{route}}" --output "{{output}}" --wait {{wait}}
-
-# Compare two screenshots or run regression against baselines
-compare expected="" actual="" baseline_dir="" candidate_dir="" threshold="30":
-    @{{py}} scripts/e2e/cli.py compare \
-        {{if expected != "" { "--expected " + expected } else { "" }}} \
-        {{if actual != "" { "--actual " + actual } else { "" }}} \
-        {{if baseline_dir != "" { "--baseline-dir " + baseline_dir } else { "" }}} \
-        {{if candidate_dir != "" { "--candidate-dir " + candidate_dir } else { "" }}} \
-        --threshold {{threshold}}
-
-# Baseline management: init, set, accept, list, delete, export
-baseline action="list" name="" image="" route="" suite="default":
-    @{{py}} scripts/e2e/cli.py baseline {{action}} \
-        {{if name != "" { "--name " + name } else { "" }}} \
-        {{if image != "" { "--image " + image } else { "" }}} \
-        {{if route != "" { "--route " + route } else { "" }}} \
-        --suite {{suite}}
-
-# Run a JSON test suite (replaces main hikari-e2e binary)
-e2e-run suite="" url="http://localhost:3000" output="e2e_output" html="":
-    @{{py}} scripts/e2e/cli.py run "{{suite}}" --url "{{url}}" --output "{{output}}" {{if html != "" { "--html" } else { "" }}}
+# Generate SCSS bundle manually
+generate-scss:
+    @cargo build --manifest-path packages/builder/Cargo.toml
 
 # ============================================================================
-# Visual Regression CI (Playwright-based, for GitHub Actions)
-# ============================================================================
-#
-# CI-friendly visual regression using Playwright (no tairitsu-debug needed):
-#   just vr-capture           - Capture baseline/candidate screenshots
-#   just vr-compare           - Compare candidates vs baselines
-#   just vr-baseline-init     - Promote current screenshots as baselines
-#   just vr-baseline-accept   - Accept a specific candidate as new baseline
-#   just vr-run               - Full pipeline: capture + compare
-#
-# Baselines live in tests/visual/baseline/default/
+# Browser Debug (for AI agents)
 # ============================================================================
 
-vr-install:
-    @{{py}} -m pip install Pillow playwright requests --quiet 2>/dev/null
-    @{{py}} -m playwright install chromium --with-deps 2>/dev/null || echo "Playwright install may need sudo"
+build-debug:
+    @cargo build --release --package hikari-e2e --bin hikari-browser-debug
 
-# Capture screenshots via tairitsu debug API (requires `just dev --debug` running)
-vr-capture debug_url="http://localhost:3001" site_url="http://localhost:3000" output="target/screenshots" wait="3":
-    @{{py}} scripts/visual-ci/capture_debug_api.py --debug-url "{{debug_url}}" --site-url "{{site_url}}" --output "{{output}}" --wait {{wait}}
+debug-screenshot url="http://localhost:3000" output="screenshot.png" wait="10" inject="":
+    @{{py}} scripts/dev/browser_debug.py screenshot --url "{{url}}" --output "{{output}}" --wait {{wait}} {{if inject != "" { "--inject " + inject } else { "" } }}
 
-# Compare candidate screenshots against baselines (via tairitsu visual-diff)
-vr-compare baseline_dir="tests/visual/baseline/default" candidate_dir="target/screenshots" output="target/visual-diff" tolerance="0.01":
-    @tairitsu visual-diff \
-        --actual-dir "{{candidate_dir}}" \
-        --baseline-dir "{{baseline_dir}}" \
-        --output-dir "{{output}}" \
-        --tolerance {{tolerance}}
+debug-check url="http://localhost:3000" wait="10":
+    @{{py}} scripts/dev/browser_debug.py check --url "{{url}}" --wait {{wait}}
 
-# Initialize baseline directory structure
-vr-baseline-init:
-    @{{py}} scripts/visual-ci/baseline.py init
+debug-script url="http://localhost:3000" script="return document.title;" wait="10":
+    @{{py}} scripts/dev/browser_debug.py script --url "{{url}}" --script '{{script}}' --wait {{wait}}
 
-# Promote current screenshots as baselines
-vr-baseline-accept-all candidate_dir="target/screenshots":
-    @{{py}} scripts/visual-ci/baseline.py accept-all --candidate-dir "{{candidate_dir}}"
+debug-interactive input="scripts/dev/commands/example_commands.json":
+    @{{py}} scripts/dev/browser_debug.py interactive --input "{{input}}" --output-dir scripts/dev/screenshots
 
-# Accept a single candidate image as new baseline
-vr-baseline-accept name="" candidate_dir="target/screenshots":
-    @{{py}} scripts/visual-ci/baseline.py accept --name "{{name}}" --candidate-dir "{{candidate_dir}}"
+debug-visual-check:
+    @{{py}} scripts/dev/browser_debug.py interactive --input "scripts/dev/commands/example_commands.json" --output-dir scripts/dev/screenshots
 
-# Full visual regression pipeline: capture + compare (requires `just dev --debug`)
-vr-run tolerance="0.01":
-    @just vr-capture
-    @just vr-compare --tolerance {{tolerance}}
-    @echo ""
-    @echo "  \u2564\u2500 Visual Regression Results \u2500\u2567"
-    @cat target/visual-diff/report.json 2>/dev/null || echo "  No results yet — run vr-capture first"
-
-# Full visual regression: capture + compare all component pages
-vr-full: (check-tairitsu-packager)
-    @echo "  →  Running full component visual regression..."
-    @{{py}} scripts/e2e/cli.py run tests/visual/full_component_coverage.json --url http://localhost:3000 --output target/visual-full --baseline-dir tests/visual/baseline
-
-# Initialize baselines for all component pages (requires dev server)
-vr-init-baselines:
-    @{{py}} scripts/e2e/baseline_init.py --url http://localhost:3000 --debug-port 3001
-
-# Dry-run: show missing baselines without capturing
-vr-missing:
-    @{{py}} scripts/e2e/baseline_init.py --dry-run
-
-# Interactive session from commands JSON file
-interactive input="scripts/dev/commands/example_commands.json" output-dir="scripts/dev/screenshots":
-    @{{py}} scripts/e2e/cli.py interactive --input "{{input}}" --output-dir "{{output-dir}}"
+debug-session route="/":
+    @{{py}} scripts/dev/browser_debug.py screenshot --url "http://localhost:3000{{route}}" --output "debug.png" --wait 10
 
 debug-chrome-up:
     @docker compose -f docker/docker-compose.debug.yml up -d chrome-debug

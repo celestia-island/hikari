@@ -1,12 +1,13 @@
 // hi-components/src/data/tree.rs
 // Tree component for hierarchical data display
 
-use hikari_palette::classes::TreeClassNew;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
-use crate::data::node::{TreeNode, TreeNodeData, TreeNodeProps};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{
+    data::node::{TreeNode, TreeNodeData, TreeNodeProps},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct TreeComponent;
 
@@ -58,40 +59,33 @@ pub fn Tree(props: TreeProps) -> Element {
         _ => {}
     };
 
+    // Build tree nodes by calling TreeNode function directly with props struct
     let tree_nodes: Vec<Element> = props
         .data
         .iter()
         .map(|item| {
-            let ek = expanded_keys.clone();
-            let sk = selected_keys.clone();
-            let on_select = props.on_select.clone();
-            let on_expand = props.on_expand.clone();
-
             TreeNode(TreeNodeProps {
                 node_key: item.key.clone(),
                 label: item.label.clone(),
                 node_children: item.children.clone(),
                 disabled: item.disabled,
-                expanded: ek.read().contains(&item.key),
-                selected: sk.read().contains(&item.key),
+                expanded: expanded_keys.read().contains(&item.key),
+                selected: selected_keys.read().contains(&item.key),
                 level: 0,
-                expanded_keys: Some(ek),
-                selected_keys: Some(sk),
-                on_select,
-                on_expand,
                 ..TreeNodeProps::default()
             })
         })
         .collect();
 
+    // Use TreeClassNew for tree container classes
     let container_classes = ClassesBuilder::new()
-        .add_typed(TreeClassNew::TreeContainer)
-        .add(&props.class)
+        .add(TreeClassNew::TreeContainer)
+        .add_raw(&props.class)
         .build();
 
     let tree_classes = ClassesBuilder::new()
-        .add_typed(TreeClassNew::Tree)
-        .add(line_class)
+        .add(TreeClassNew::Tree)
+        .add_raw(line_class)
         .build();
 
     rsx! {

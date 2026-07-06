@@ -1,35 +1,85 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, time::Duration};
 
-use chromiumoxide::{browser::{Browser, BrowserConfig}, cdp::browser_protocol::page::CaptureScreenshotFormat};
+use chromiumoxide::{
+    browser::{Browser, BrowserConfig},
+    cdp::browser_protocol::page::CaptureScreenshotFormat,
+};
 use clap::{Parser, Subcommand};
+use tairitsu_browser_test::{
+    BrowserCache, BrowserDownloader,
+    browser::{CHROME_VERSION, Platform, detect_platform},
+};
 use tracing::{error, info, warn};
-use tairitsu_browser_test::{BrowserCache, BrowserDownloader, browser::{CHROME_VERSION, Platform, detect_platform}};
 
 const SCREENSHOT_DIR: &str = "/tmp/e2e_screenshots";
 
 const ROUTES: &[(&str, &str, &str)] = &[
     ("/en", "home", "Home page - hero + overview"),
     ("/en/components", "components", "Components overview page"),
-    ("/en/components/layer1/button", "button", "Button component showcase"),
-    ("/en/components/layer1/form", "form", "Form components (Input, Select)"),
-    ("/en/components/layer1/display", "display", "Display components (Card, Tag, etc)"),
-    ("/en/components/layer1/feedback", "feedback", "Feedback (Alert, Toast, Modal)"),
-    ("/en/components/layer2/table", "table", "Data Table component"),
+    (
+        "/en/components/layer1/button",
+        "button",
+        "Button component showcase",
+    ),
+    (
+        "/en/components/layer1/form",
+        "form",
+        "Form components (Input, Select)",
+    ),
+    (
+        "/en/components/layer1/display",
+        "display",
+        "Display components (Card, Tag, etc)",
+    ),
+    (
+        "/en/components/layer1/feedback",
+        "feedback",
+        "Feedback (Alert, Toast, Modal)",
+    ),
+    (
+        "/en/components/layer2/table",
+        "table",
+        "Data Table component",
+    ),
     ("/en/components/layer2/tree", "tree", "Tree component"),
-    ("/en/components/layer2/navigation", "navigation", "Navigation (Menu, Tabs, Breadcrumb)"),
-    ("/en/components/layer3/media", "media", "Media (VideoPlayer, AudioWaveform)"),
-    ("/en/components/layer3/editor", "editor", "RichTextEditor component"),
+    (
+        "/en/components/layer2/navigation",
+        "navigation",
+        "Navigation (Menu, Tabs, Breadcrumb)",
+    ),
+    (
+        "/en/components/layer3/media",
+        "media",
+        "Media (VideoPlayer, AudioWaveform)",
+    ),
+    (
+        "/en/components/layer3/editor",
+        "editor",
+        "RichTextEditor component",
+    ),
     ("/en/system/palette", "palette", "Color palette system page"),
     ("/en/system/icons", "icons", "Icon system page"),
-    ("/en/demos/animation", "demos_animation", "Animation demo page"),
-    ("/en/demos/layer2/dashboard", "demos_dashboard", "Dashboard demo"),
+    (
+        "/en/demos/animation",
+        "demos_animation",
+        "Animation demo page",
+    ),
+    (
+        "/en/demos/layer2/dashboard",
+        "demos_dashboard",
+        "Dashboard demo",
+    ),
 ];
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Visual debug tool powered by Tairitsu browser-test")]
+#[command(
+    author,
+    version,
+    about = "Visual debug tool powered by Tairitsu browser-test"
+)]
 struct Args {
     #[command(subcommand)]
     command: Commands,
@@ -176,19 +226,20 @@ impl VisualDebugger {
         let platform = detect_platform();
         let candidates: Vec<&str> = match platform {
             Platform::LinuxX64 => vec!["chromium-browser", "chromium", "google-chrome"],
-            Platform::MacosArm64 | Platform::MacosX64 => vec![
-                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-            ],
-            Platform::WindowsX64 => vec![
-                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-            ],
+            Platform::MacosArm64 | Platform::MacosX64 => {
+                vec!["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
+            }
+            Platform::WindowsX64 => {
+                vec!["C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"]
+            }
         };
 
         for candidate in &candidates {
             if std::process::Command::new(candidate)
                 .arg("--version")
                 .output()
-                .is_ok() {
+                .is_ok()
+            {
                 info!("Found system Chrome: {}", candidate);
                 return Ok(candidate.to_string());
             }
@@ -226,7 +277,8 @@ impl VisualDebugger {
             .await;
 
         let loaded: bool = page
-            .evaluate(r#"
+            .evaluate(
+                r#"
                 (function() {
                     const loading = document.getElementById('loading');
                     const main = document.getElementById('main');
@@ -234,7 +286,8 @@ impl VisualDebugger {
                     if (!main || main.children.length === 0) return false;
                     return true;
                 })()
-            "#)
+            "#,
+            )
             .await
             .map(|r| r.into_value::<bool>().unwrap_or(false))
             .unwrap_or(false);
@@ -288,7 +341,11 @@ impl VisualDebugger {
         let url = format!("{}{}", base_url, route);
         info!("Inspecting: {}", url);
 
-        let page = self.browser.new_page(url).await.context("Failed to create page")?;
+        let page = self
+            .browser
+            .new_page(url)
+            .await
+            .context("Failed to create page")?;
 
         let _ = page.evaluate(format!(
             "document.documentElement.style.width='{}px'; document.documentElement.style.height='{}px';",
@@ -353,11 +410,14 @@ impl VisualDebugger {
                 .full_page(true)
                 .build(),
             &out_path,
-        ).await.ok();
+        )
+        .await
+        .ok();
 
         page.close().await.ok();
 
-        let mut result = layout_info.as_object()
+        let mut result = layout_info
+            .as_object()
             .cloned()
             .unwrap_or(serde_json::Map::new());
         result.insert("screenshot".to_string(), serde_json::json!(output));
@@ -377,7 +437,9 @@ async fn cmd_install(force: bool) -> Result<()> {
     let cache = BrowserCache::new(None);
     let downloader = BrowserDownloader::new(cache, None);
     let platform = detect_platform();
-    let path = downloader.download(CHROME_VERSION, platform).await
+    let path = downloader
+        .download(CHROME_VERSION, platform)
+        .await
         .context("Failed to download Chromium")?;
     info!("Chromium installed to: {}", path.display());
     info!("Set CHROME_BIN={} to use it.", path.display());
@@ -398,18 +460,27 @@ async fn cmd_capture(
     let filtered: Vec<_> = match filter.as_deref() {
         Some(f) if f.ends_with('*') => {
             let prefix = f.trim_end_matches('*');
-            ROUTES.iter().filter(|(_, name, _)| name.starts_with(prefix)).copied().collect()
+            ROUTES
+                .iter()
+                .filter(|(_, name, _)| name.starts_with(prefix))
+                .copied()
+                .collect()
         }
-        Some(f) => {
-            ROUTES.iter().filter(|(_, name, _)| *name == f).copied().collect()
-        }
+        Some(f) => ROUTES
+            .iter()
+            .filter(|(_, name, _)| *name == f)
+            .copied()
+            .collect(),
         None => ROUTES.to_vec(),
     };
 
     info!("Capturing {} pages from {}", filtered.len(), base_url);
 
     for (route, name, desc) in &filtered {
-        match debugger.capture(base_url, route, name, desc, wait_secs, full_page).await {
+        match debugger
+            .capture(base_url, route, name, desc, wait_secs, full_page)
+            .await
+        {
             Ok(result) => results.push(result),
             Err(e) => {
                 error!("Failed to capture {}: {}", name, e);
@@ -457,7 +528,9 @@ async fn cmd_inspect(
     output: &str,
 ) -> Result<()> {
     let mut debugger = VisualDebugger::new(".", None).await?;
-    let result = debugger.inspect_page(base_url, route, width, height, wait_secs, output).await?;
+    let result = debugger
+        .inspect_page(base_url, route, width, height, wait_secs, output)
+        .await?;
     debugger.shutdown().await?;
     println!("{}", serde_json::to_string_pretty(&result)?);
     Ok(())
@@ -473,7 +546,10 @@ async fn cmd_batch(
     let mut results = Vec::new();
 
     for (route, name, desc) in ROUTES {
-        match debugger.capture(base_url, route, name, desc, 10, true).await {
+        match debugger
+            .capture(base_url, route, name, desc, 10, true)
+            .await
+        {
             Ok(result) => results.push(result),
             Err(e) => {
                 error!("Failed: {} - {}", name, e);
@@ -518,13 +594,23 @@ async fn cmd_batch(
         println!("\n=== Visual Debug Batch Report ===");
         println!("Base URL: {}", base_url);
         println!("Time:   {}", report.timestamp);
-        println!("Total:  {} | Passed: {} | Failed: {}", report.total, report.passed, report.failed);
+        println!(
+            "Total:  {} | Passed: {} | Failed: {}",
+            report.total, report.passed, report.failed
+        );
         println!("\n{:<25} {:<40} {:>8}", "Name", "Path", "Duration");
         println!("{}", "-".repeat(80));
         for r in &results {
-            println!("{:<25} {:<40} {:>7}ms", r.name, 
-                if r.output_path.is_empty() {"(none)".to_string()} else {r.output_path.replace("/tmp/e2e_screenshots/", "")},
-                r.duration_ms);
+            println!(
+                "{:<25} {:<40} {:>7}ms",
+                r.name,
+                if r.output_path.is_empty() {
+                    "(none)".to_string()
+                } else {
+                    r.output_path.replace("/tmp/e2e_screenshots/", "")
+                },
+                r.duration_ms
+            );
         }
         println!("{}", "-".repeat(80));
     }
@@ -545,31 +631,50 @@ async fn main() -> Result<()> {
 
     match args.command {
         Commands::Install { force } => cmd_install(force).await,
-        Commands::Capture { base_url, output_dir, filter, wait_secs, full_page, json } => {
-            cmd_capture(&base_url, &output_dir, filter, wait_secs, full_page, json).await
-        }
-        Commands::Analyze { screenshot_path, aspect } => {
-            println!("{}", serde_json::json!({
-                "action": "analyze",
-                "screenshot": screenshot_path,
-                "aspect": aspect,
-                "instruction": "Use zai-mcp-server_analyze_image MCP tool to analyze this screenshot",
-                "prompts": {
-                    "layout": "Analyze the UI layout: check alignment, spacing, visual hierarchy, grid consistency, overflow issues",
-                    "visual_quality": "Full visual quality audit: shadows, colors, typography, borders, corner radius, overall polish",
-                    "components": "Identify each UI component and check its rendering quality, state correctness, interaction readiness",
-                    "responsive": "Check responsive layout behavior at this viewport size",
-                    "accessibility": "Check color contrast, focus indicators, semantic structure, ARIA attributes",
-                    "general": "General analysis of this UI screenshot - describe what you see and flag any issues"
-                }
-            }));
+        Commands::Capture {
+            base_url,
+            output_dir,
+            filter,
+            wait_secs,
+            full_page,
+            json,
+        } => cmd_capture(&base_url, &output_dir, filter, wait_secs, full_page, json).await,
+        Commands::Analyze {
+            screenshot_path,
+            aspect,
+        } => {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "action": "analyze",
+                    "screenshot": screenshot_path,
+                    "aspect": aspect,
+                    "instruction": "Use zai-mcp-server_analyze_image MCP tool to analyze this screenshot",
+                    "prompts": {
+                        "layout": "Analyze the UI layout: check alignment, spacing, visual hierarchy, grid consistency, overflow issues",
+                        "visual_quality": "Full visual quality audit: shadows, colors, typography, borders, corner radius, overall polish",
+                        "components": "Identify each UI component and check its rendering quality, state correctness, interaction readiness",
+                        "responsive": "Check responsive layout behavior at this viewport size",
+                        "accessibility": "Check color contrast, focus indicators, semantic structure, ARIA attributes",
+                        "general": "General analysis of this UI screenshot - describe what you see and flag any issues"
+                    }
+                })
+            );
             Ok(())
-        },
-        Commands::Inspect { base_url, route, width, height, wait_secs, output } => {
-            cmd_inspect(&base_url, &route, width, height, wait_secs, &output).await
-        },
-        Commands::Batch { base_url, output_dir, json, report_path } => {
-            cmd_batch(&base_url, &output_dir, json, report_path.as_deref()).await
-        },
+        }
+        Commands::Inspect {
+            base_url,
+            route,
+            width,
+            height,
+            wait_secs,
+            output,
+        } => cmd_inspect(&base_url, &route, width, height, wait_secs, &output).await,
+        Commands::Batch {
+            base_url,
+            output_dir,
+            json,
+            report_path,
+        } => cmd_batch(&base_url, &output_dir, json, report_path.as_deref()).await,
     }
 }

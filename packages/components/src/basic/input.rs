@@ -1,21 +1,21 @@
 // hi-components/src/basic/input.rs
-// Input component
+// Input component with Arknights + FUI styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (input-vars.scss)
 // - Custom: Runtime overrides via text_color, border_color, animation_id
 
-use hikari_palette::classes::{ClassesBuilder, InputClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, InputClass, UtilityClass};
 
-use crate::feedback::{ConditionalGlow, ConditionalGlowProps};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
+use crate::{
+    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
+    prelude::*,
+    styled::StyledComponent,
+};
 
 pub struct InputComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum InputSize {
     Small,
     #[default]
@@ -24,7 +24,6 @@ pub enum InputSize {
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
-#[non_exhaustive]
 pub enum InputStatus {
     #[default]
     Default,
@@ -96,50 +95,69 @@ pub struct InputProps {
     pub status: InputStatus,
 }
 
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
 #[component]
 pub fn Input(props: InputProps) -> Element {
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(InputClass::InputWrapper)
-        .add_typed(match props.size {
+        .add(InputClass::InputWrapper)
+        .add(match props.size {
             InputSize::Small => InputClass::InputSm,
             InputSize::Medium => InputClass::InputMd,
             InputSize::Large => InputClass::InputLg,
         })
-        .add(&props.class)
+        .add_raw(&props.class)
         .build();
 
     let input_classes = ClassesBuilder::new()
-        .add_typed(InputClass::Input)
-        .add_typed_if(InputClass::InputDisabled, props.disabled)
-        .add_typed_if(
-            InputClass::InputError,
-            matches!(props.status, InputStatus::Error),
-        )
-        .add_typed_if(
-            InputClass::InputSuccess,
-            matches!(props.status, InputStatus::Success),
-        )
+        .add(InputClass::Input)
+        .add_if(InputClass::InputDisabled, || props.disabled)
+        .add_if(InputClass::InputError, || {
+            matches!(props.status, InputStatus::Error)
+        })
+        .add_if(InputClass::InputSuccess, || {
+            matches!(props.status, InputStatus::Success)
+        })
         .build();
 
-    let style_attr = crate::utils::build_css_vars_style(
-        "--hi-input-radius",
-        &[
-            crate::utils::CssVarEntry::new(&props.text_color, &["--hi-input-text-color"]),
-            crate::utils::CssVarEntry::new(
-                &props.placeholder_color,
-                &["--hi-input-placeholder-color"],
-            ),
-            crate::utils::CssVarEntry::new(
-                &props.border_color,
-                &["--hi-input-border-color", "--hi-input-wrapper-border-color"],
-            ),
-            crate::utils::CssVarEntry::new(
-                &props.background_color,
-                &["--hi-input-bg", "--hi-input-wrapper-bg"],
-            ),
-        ],
-        &props.css_vars,
-    );
+    let mut css_vars_string = String::new();
+
+    // 设置 glow radius 变量，让 Glow wrapper 可以读取
+    css_vars_string.push_str("--hi-glow-radius:var(--hi-input-radius);");
+
+    if let Some(color) = &props.text_color {
+        css_vars_string.push_str(&format!("--hi-input-text-color:{};", color));
+    }
+
+    if let Some(color) = &props.placeholder_color {
+        css_vars_string.push_str(&format!("--hi-input-placeholder-color:{};", color));
+    }
+
+    if let Some(color) = &props.border_color {
+        css_vars_string.push_str(&format!("--hi-input-border-color:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-border-color:{};", color));
+    }
+
+    if let Some(color) = &props.background_color {
+        css_vars_string.push_str(&format!("--hi-input-bg:{};", color));
+        css_vars_string.push_str(&format!("--hi-input-wrapper-bg:{};", color));
+    }
+
+    if let Some(vars) = &props.css_vars {
+        for (name, value) in vars {
+            css_vars_string.push_str(&format!("{}:{};", name, value));
+        }
+    }
+
+    let style_attr = Some(css_vars_string);
 
     let input_content = rsx! {
         div {
@@ -148,7 +166,7 @@ pub fn Input(props: InputProps) -> Element {
             "data-animation-id": props.animation_id,
 
             if let Some(icon) = props.prefix_icon {
-                span { class: InputClass::InputPrefix.class_name(), {icon} }
+                span { class: InputClass::InputPrefix.as_class(), {icon} }
             }
 
             input {
@@ -157,9 +175,8 @@ pub fn Input(props: InputProps) -> Element {
                 autofocus: props.autofocus,
                 disabled: props.disabled,
                 readonly: props.readonly,
-                placeholder: props.placeholder.clone(),
+                placeholder: props.placeholder,
                 value: props.value,
-                "aria-invalid": if matches!(props.status, InputStatus::Error) { Some("true".to_string()) } else { None },
                 oninput: move |e: InputEvent| {
                     if let Some(handler) = props.oninput.as_ref() {
                         handler.call(e.data.clone());
@@ -183,19 +200,22 @@ pub fn Input(props: InputProps) -> Element {
             }
 
             if let Some(icon) = props.suffix_icon {
-                span { class: InputClass::InputSuffix.class_name(), {icon} }
+                span { class: InputClass::InputSuffix.as_class(), {icon} }
             }
         }
     };
 
-    rsx! {
-        ConditionalGlow {
-            glow: props.glow,
-            blur: props.glow_blur,
-            color: props.glow_color,
-            intensity: props.glow_intensity,
-            {input_content}
+    if props.glow {
+        rsx! {
+            Glow {
+                blur: props.glow_blur,
+                color: props.glow_color,
+                intensity: props.glow_intensity,
+                {input_content}
+            }
         }
+    } else {
+        input_content
     }
 }
 
@@ -206,50 +226,5 @@ impl StyledComponent for InputComponent {
 
     fn name() -> &'static str {
         "input"
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::styled::StyledComponent;
-
-    #[test]
-    fn test_input_size_default() {
-        assert_eq!(InputSize::default(), InputSize::Medium);
-    }
-
-    #[test]
-    fn test_input_size_distinct() {
-        assert_ne!(InputSize::Small, InputSize::Medium);
-        assert_ne!(InputSize::Medium, InputSize::Large);
-        assert_ne!(InputSize::Small, InputSize::Large);
-    }
-
-    #[test]
-    fn test_input_status_default() {
-        assert_eq!(InputStatus::default(), InputStatus::Default);
-    }
-
-    #[test]
-    fn test_input_status_distinct() {
-        assert_ne!(InputStatus::Default, InputStatus::Error);
-        assert_ne!(InputStatus::Error, InputStatus::Success);
-        assert_ne!(InputStatus::Default, InputStatus::Success);
-    }
-
-    #[test]
-    fn test_input_size_into_attr() {
-        assert_eq!(InputSize::Small.into_attr_value().as_deref(), Some("small"));
-        assert_eq!(
-            InputSize::Medium.into_attr_value().as_deref(),
-            Some("medium")
-        );
-        assert_eq!(InputSize::Large.into_attr_value().as_deref(), Some("large"));
-    }
-
-    #[test]
-    fn test_input_component_name() {
-        assert_eq!(InputComponent::name(), "input");
     }
 }

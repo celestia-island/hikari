@@ -2,11 +2,13 @@
 // Tests verify that animation presets compile and generate correct CSS
 // Only available on browser WASM (wasm32-unknown-unknown)
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use hikari_animation::presets::transition::{
     SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
     slide_out, zoom_in, zoom_out,
 };
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[test]
 fn test_transition_presets_compile() {
     // Test that all transition presets compile and return CSS strings
@@ -28,11 +30,11 @@ fn test_transition_presets_compile() {
 
     let zoom_in_css = zoom_in("my-element", 300);
     assert!(zoom_in_css.contains("300ms"));
-    assert!(zoom_in_css.contains("cubic-bezier"));
+    assert!(zoom_in_css.contains("ease-out-back"));
 
     let zoom_out_css = zoom_out("my-element", 300);
     assert!(zoom_out_css.contains("300ms"));
-    assert!(zoom_out_css.contains("cubic-bezier"));
+    assert!(zoom_out_css.contains("ease-in-back"));
 
     let bounce_css = bounce_in("my-element", 300);
     assert!(bounce_css.contains("cubic-bezier"));
@@ -50,6 +52,7 @@ fn test_transition_presets_compile() {
     assert!(rotate_out_css.contains("ease-in"));
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 #[test]
 fn test_all_slide_directions() {
     let directions = vec![

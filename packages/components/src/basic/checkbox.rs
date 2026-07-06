@@ -1,10 +1,9 @@
 // hi-components/src/basic/checkbox.rs
-// Checkbox component
+// Checkbox component with Arknights + FUI styling
 
 use hikari_palette::classes::{CheckboxClass, ClassesBuilder};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[define_props]
 pub struct CheckboxProps {
@@ -48,11 +47,11 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     };
 
     let checkbox_classes = ClassesBuilder::new()
-        .add_typed(CheckboxClass::Checkbox)
-        .add_typed(size_class)
-        .add_typed_if(CheckboxClass::Checked, props.checked)
-        .add_typed_if(CheckboxClass::Disabled, props.disabled)
-        .add(&props.class)
+        .add(CheckboxClass::Checkbox)
+        .add(size_class)
+        .add_if(CheckboxClass::Checked, || props.checked)
+        .add_if(CheckboxClass::Disabled, || props.disabled)
+        .add_raw(&props.class)
         .build();
 
     // Track previous checked state to detect changes

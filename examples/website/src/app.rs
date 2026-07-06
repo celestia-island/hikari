@@ -6,57 +6,51 @@
 //! The layout mirrors the old Dioxus-era structure:
 //!   Layout (hi-layout) → Header → Body (hi-layout-body) → Aside + Main
 
-use std::{cell::RefCell, rc::Rc};
-
 use tairitsu_vdom::{VElement, VNode};
 
-use crate::{components::{portal::PortalJs, self}, pages::{animations, components as comp_pages, demos as demo_pages, home, interactive, not_found, system as sys_pages}, theme};
+use crate::{
+    components,
+    pages::{components as comp_pages, demos as demo_pages, home, not_found, system as sys_pages},
+};
 
+/// Render the full application VNode tree.
 pub fn render() -> VNode {
     let mut content: Vec<VNode> = Vec::new();
     content.push(home::render());
     content.extend(comp_pages::render_all());
     content.extend(sys_pages::render_all());
     content.extend(demo_pages::render_all());
-    content.push(animations::render());
-    content.push(interactive::render());
     content.push(not_found::render());
 
-    let theme_style = theme::hikari_style();
-    let portal_init = PortalJs::init_script();
-
-    let app_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
-    let aside_ref: Rc<RefCell<Option<Box<dyn std::any::Any>>>> = Rc::new(RefCell::new(None));
-
-    let app_content = VNode::Element(
+    // Outer layout wrapper — matches hikari-components Layout component
+    VNode::Element(
         VElement::new("div")
             .attr("id", "hikari-app")
-            .attr("data-theme", "hikari")
-            .class("hi-layout hi-layout-light hi-layout-has-sidebar hi-ambient-bg")
-            .style(theme_style)
-            .ref_(app_ref.clone())
+            .class("hi-layout hi-layout-light hi-layout-has-sidebar")
+            // Header bar (top, full-width, sticky)
             .child(components::top_nav())
+            // Body: aside + main content area
             .child(VNode::Element(
                 VElement::new("div")
                     .class("hi-layout-body")
+                    // Mobile overlay backdrop
                     .child(VNode::Element(
                         VElement::new("div")
                             .attr("id", "drawer-overlay")
                             .class("hi-layout-overlay"),
                     ))
-                    .child(components::sidebar(app_ref.clone(), aside_ref.clone()))
+                    // Sidebar / Aside (drawer)
+                    .child(components::sidebar())
+                    // Main content wrapper
                     .child(VNode::Element(
                         VElement::new("div")
                             .class("hi-layout-main")
                             .child(VNode::Element(
                                 VElement::new("main")
                                     .class("hi-layout-content")
-                                    .child(components::breadcrumb::render())
                                     .children(content),
                             )),
                     )),
             )),
-    );
-
-    components::portal::PortalProvider::render(vec![app_content, portal_init])
+    )
 }

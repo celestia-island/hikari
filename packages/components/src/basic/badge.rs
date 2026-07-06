@@ -1,10 +1,9 @@
 // hi-components/src/basic/badge.rs
-// Badge component
+// Badge component with Arknights + FUI styling
 
 use hikari_palette::classes::{BadgeClass, ClassesBuilder, Display};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct BadgeComponent;
 
@@ -75,14 +74,14 @@ pub fn Badge(props: BadgeProps) -> Element {
 
     if is_standalone {
         let mut builder = ClassesBuilder::new()
-            .add_typed(BadgeClass::Badge)
-            .add_typed(Display::InlineFlex);
+            .add(BadgeClass::Badge)
+            .add(Display::InlineFlex);
 
         if let Some(vc) = variant_class {
-            builder = builder.add_typed(vc);
+            builder = builder.add(vc);
         }
 
-        let badge_classes = builder.add(&props.class).build();
+        let badge_classes = builder.add_raw(&props.class).build();
 
         rsx! {
             span { class: badge_classes,
@@ -91,11 +90,11 @@ pub fn Badge(props: BadgeProps) -> Element {
         }
     } else {
         let mut builder = ClassesBuilder::new()
-            .add_typed(BadgeClass::Badge)
-            .add_typed(BadgeClass::Dot);
+            .add(BadgeClass::Badge)
+            .add(BadgeClass::Dot);
 
         if let Some(vc) = variant_class {
-            builder = builder.add_typed(vc);
+            builder = builder.add(vc);
         }
 
         let badge_classes = builder.build();

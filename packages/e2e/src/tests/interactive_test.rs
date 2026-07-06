@@ -1,9 +1,12 @@
 // hikari-e2e/src/tests/interactive_test.rs
 // Interactive E2E tests with multi-step operations and visual analysis
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use serde_json;
-use std::{path::PathBuf, time::{Duration, Instant}};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use thirtyfour::{By, WebDriver};
 use tracing::{info, warn};
@@ -101,7 +104,7 @@ impl InteractiveTests {
             std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots".to_string());
 
         std::fs::create_dir_all(&screenshots_dir)
-            .map_err(|e| anyhow!("Failed to create screenshots directory: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
 
         let step_name = step.as_str();
         let filename = format!("{}_{}_step{}.png", component_name, step_name, index);
@@ -110,10 +113,10 @@ impl InteractiveTests {
         let screenshot_data = driver
             .screenshot_as_png()
             .await
-            .map_err(|e| anyhow!("Failed to take screenshot: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to take screenshot: {}", e))?;
 
         std::fs::write(&filepath, screenshot_data)
-            .map_err(|e| anyhow!("Failed to save screenshot: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
 
         info!("Screenshot saved: {}", filepath.display());
         Ok(filepath.to_string_lossy().to_string())
@@ -138,7 +141,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -166,14 +169,14 @@ impl InteractiveTests {
         // Step 3: Find button element
         let button = driver.find(By::Css(button_selector)).await.map_err(|e| {
             warn!("Button element not found: {}", e);
-            anyhow!("Button element not found: {}", e)
+            anyhow::anyhow!("Button element not found: {}", e)
         })?;
 
         // Step 4: Click button
         button
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -190,8 +193,8 @@ impl InteractiveTests {
         let class_attr = button
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get button attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-button") {
             return Ok(InteractiveTestResult::failure(
@@ -230,7 +233,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -246,7 +249,7 @@ impl InteractiveTests {
         // Find input element
         let input = driver.find(By::Css(input_selector)).await.map_err(|e| {
             warn!("Input element not found: {}", e);
-            anyhow!("Input element not found: {}", e)
+            anyhow::anyhow!("Input element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -265,7 +268,7 @@ impl InteractiveTests {
         input
             .send_keys("Hello Hikari")
             .await
-            .map_err(|e| anyhow!("Failed to type in input: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to type in input: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -282,8 +285,8 @@ impl InteractiveTests {
         let class_attr = input
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get input attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get input attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-input") {
             return Ok(InteractiveTestResult::failure(
@@ -318,7 +321,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -332,12 +335,12 @@ impl InteractiveTests {
         });
 
         // Find scroll container
-        let _ = driver
+        let _scroll_container = driver
             .find(By::Css(".custom-scrollbar-content"))
             .await
             .map_err(|e| {
                 warn!("Scroll container not found: {}", e);
-                anyhow!("Scroll container not found: {}", e)
+                anyhow::anyhow!("Scroll container not found: {}", e)
             })?;
 
         // Initial screenshot (scroll at top)
@@ -356,7 +359,7 @@ impl InteractiveTests {
         driver
             .execute("window.scrollBy(0, 200);", vec![])
             .await
-            .map_err(|e| anyhow!("Failed to scroll: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to scroll: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -376,7 +379,7 @@ impl InteractiveTests {
         driver
             .execute(script, vec![])
             .await
-            .map_err(|e| anyhow!("Failed to scroll back: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to scroll back: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_4 =
@@ -725,7 +728,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -753,7 +756,7 @@ impl InteractiveTests {
         // Find alert element
         let alert = driver.find(By::Css(alert_selector)).await.map_err(|e| {
             warn!("Alert element not found: {}", e);
-            anyhow!("Alert element not found: {}", e)
+            anyhow::anyhow!("Alert element not found: {}", e)
         })?;
 
         // Hover over alert using JavaScript
@@ -763,7 +766,7 @@ impl InteractiveTests {
                 vec![serde_json::to_value(&alert).unwrap()],
             )
             .await
-            .map_err(|e| anyhow!("Failed to hover over alert: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to hover over alert: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -780,8 +783,8 @@ impl InteractiveTests {
         let class_attr = alert
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get alert attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get alert attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-alert") {
             return Ok(InteractiveTestResult::failure(
@@ -820,7 +823,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -848,19 +851,19 @@ impl InteractiveTests {
         // Find tabs element
         let tabs = driver.find(By::Css(tabs_selector)).await.map_err(|e| {
             warn!("Tabs element not found: {}", e);
-            anyhow!("Tabs element not found: {}", e)
+            anyhow::anyhow!("Tabs element not found: {}", e)
         })?;
 
         // Find and click second tab
         let second_tab = tabs
             .find(By::Css(".hi-tab:nth-child(2)"))
             .await
-            .map_err(|e| anyhow!("Failed to find second tab: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find second tab: {}", e))?;
 
         second_tab
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click second tab: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click second tab: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Tabs", InteractionStep::Click, 3).await?;
@@ -876,8 +879,8 @@ impl InteractiveTests {
         let class_attr = tabs
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get tabs attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get tabs attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-tabs") {
             return Ok(InteractiveTestResult::failure(
@@ -916,7 +919,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -944,7 +947,7 @@ impl InteractiveTests {
         // Find card element
         let card = driver.find(By::Css(card_selector)).await.map_err(|e| {
             warn!("Card element not found: {}", e);
-            anyhow!("Card element not found: {}", e)
+            anyhow::anyhow!("Card element not found: {}", e)
         })?;
 
         // Hover over card using JavaScript
@@ -954,7 +957,7 @@ impl InteractiveTests {
                 vec![serde_json::to_value(&card).unwrap()],
             )
             .await
-            .map_err(|e| anyhow!("Failed to hover over card: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to hover over card: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -971,8 +974,8 @@ impl InteractiveTests {
         let class_attr = card
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get card attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get card attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-card") {
             return Ok(InteractiveTestResult::failure(
@@ -1007,7 +1010,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1023,7 +1026,7 @@ impl InteractiveTests {
         // Find table element
         let table = driver.find(By::Css(".hi-table")).await.map_err(|e| {
             warn!("Table element not found: {}", e);
-            anyhow!("Table element not found: {}", e)
+            anyhow::anyhow!("Table element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1042,12 +1045,12 @@ impl InteractiveTests {
         let header = table
             .find(By::Css(".hi-table-header"))
             .await
-            .map_err(|e| anyhow!("Failed to find table header: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find table header: {}", e))?;
 
         header
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click table header: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click table header: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1064,8 +1067,8 @@ impl InteractiveTests {
         let class_attr = table
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get table attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-table") {
             return Ok(InteractiveTestResult::failure(
@@ -1100,7 +1103,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1116,7 +1119,7 @@ impl InteractiveTests {
         // Find tree element
         let tree = driver.find(By::Css(".hi-tree")).await.map_err(|e| {
             warn!("Tree element not found: {}", e);
-            anyhow!("Tree element not found: {}", e)
+            anyhow::anyhow!("Tree element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1135,11 +1138,11 @@ impl InteractiveTests {
         let node = tree
             .find(By::Css(".hi-tree-node"))
             .await
-            .map_err(|e| anyhow!("Failed to find tree node: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find tree node: {}", e))?;
 
         node.click()
             .await
-            .map_err(|e| anyhow!("Failed to click tree node: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click tree node: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Tree", InteractionStep::Click, 3).await?;
@@ -1155,8 +1158,8 @@ impl InteractiveTests {
         let class_attr = tree
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get tree attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-tree") {
             return Ok(InteractiveTestResult::failure(
@@ -1191,7 +1194,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1207,7 +1210,7 @@ impl InteractiveTests {
         // Find menu element
         let menu = driver.find(By::Css(".hi-menu")).await.map_err(|e| {
             warn!("Menu element not found: {}", e);
-            anyhow!("Menu element not found: {}", e)
+            anyhow::anyhow!("Menu element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1226,12 +1229,12 @@ impl InteractiveTests {
         let menu_item = menu
             .find(By::Css(".hi-menu-item"))
             .await
-            .map_err(|e| anyhow!("Failed to find menu item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find menu item: {}", e))?;
 
         menu_item
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click menu item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click menu item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 = Self::take_screenshot(driver, "Menu", InteractionStep::Click, 3).await?;
@@ -1247,8 +1250,8 @@ impl InteractiveTests {
         let class_attr = menu
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get menu attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get menu attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-menu") {
             return Ok(InteractiveTestResult::failure(
@@ -1286,7 +1289,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1302,7 +1305,7 @@ impl InteractiveTests {
         // Find pagination element
         let pagination = driver.find(By::Css(".hi-pagination")).await.map_err(|e| {
             warn!("Pagination element not found: {}", e);
-            anyhow!("Pagination element not found: {}", e)
+            anyhow::anyhow!("Pagination element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1321,12 +1324,12 @@ impl InteractiveTests {
         let next_btn = pagination
             .find(By::Css(".hi-pagination-next"))
             .await
-            .map_err(|e| anyhow!("Failed to find next page button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find next page button: {}", e))?;
 
         next_btn
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click next page button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click next page button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1343,8 +1346,8 @@ impl InteractiveTests {
         let class_attr = pagination
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get pagination attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get pagination attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-pagination") {
             return Ok(InteractiveTestResult::failure(
@@ -1379,7 +1382,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1398,7 +1401,7 @@ impl InteractiveTests {
             .await
             .map_err(|e| {
                 warn!("Modal trigger button not found: {}", e);
-                anyhow!("Modal trigger button not found: {}", e)
+                anyhow::anyhow!("Modal trigger button not found: {}", e)
             })?;
 
         // Initial screenshot (modal closed)
@@ -1417,7 +1420,7 @@ impl InteractiveTests {
         trigger_btn
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click modal trigger: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click modal trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1433,15 +1436,15 @@ impl InteractiveTests {
         // Find modal element
         let modal = driver.find(By::Css(".hi-modal")).await.map_err(|e| {
             warn!("Modal element not found: {}", e);
-            anyhow!("Modal element not found: {}", e)
+            anyhow::anyhow!("Modal element not found: {}", e)
         })?;
 
         // Verify modal class
         let class_attr = modal
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get modal attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get modal attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-modal") {
             return Ok(InteractiveTestResult::failure(
@@ -1476,7 +1479,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1492,7 +1495,7 @@ impl InteractiveTests {
         // Find dropdown element
         let dropdown = driver.find(By::Css(".hi-dropdown")).await.map_err(|e| {
             warn!("Dropdown element not found: {}", e);
-            anyhow!("Dropdown element not found: {}", e)
+            anyhow::anyhow!("Dropdown element not found: {}", e)
         })?;
 
         // Initial screenshot (dropdown closed)
@@ -1511,7 +1514,7 @@ impl InteractiveTests {
         dropdown
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click dropdown: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click dropdown: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1528,8 +1531,8 @@ impl InteractiveTests {
         let class_attr = dropdown
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get dropdown attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-dropdown") {
             return Ok(InteractiveTestResult::failure(
@@ -1564,7 +1567,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1583,7 +1586,7 @@ impl InteractiveTests {
             .await
             .map_err(|e| {
                 warn!("Drawer trigger button not found: {}", e);
-                anyhow!("Drawer trigger button not found: {}", e)
+                anyhow::anyhow!("Drawer trigger button not found: {}", e)
             })?;
 
         // Initial screenshot (drawer closed)
@@ -1602,7 +1605,7 @@ impl InteractiveTests {
         trigger_btn
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click drawer trigger: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click drawer trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1618,15 +1621,15 @@ impl InteractiveTests {
         // Find drawer element
         let drawer = driver.find(By::Css(".hi-drawer")).await.map_err(|e| {
             warn!("Drawer element not found: {}", e);
-            anyhow!("Drawer element not found: {}", e)
+            anyhow::anyhow!("Drawer element not found: {}", e)
         })?;
 
         // Verify drawer class
         let class_attr = drawer
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get drawer attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get drawer attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-drawer") {
             return Ok(InteractiveTestResult::failure(
@@ -1664,7 +1667,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1680,7 +1683,7 @@ impl InteractiveTests {
         // Find breadcrumb element
         let breadcrumb = driver.find(By::Css(".hi-breadcrumb")).await.map_err(|e| {
             warn!("Breadcrumb element not found: {}", e);
-            anyhow!("Breadcrumb element not found: {}", e)
+            anyhow::anyhow!("Breadcrumb element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1699,12 +1702,12 @@ impl InteractiveTests {
         let breadcrumb_item = breadcrumb
             .find(By::Css(".hi-breadcrumb-item"))
             .await
-            .map_err(|e| anyhow!("Failed to find breadcrumb item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find breadcrumb item: {}", e))?;
 
         breadcrumb_item
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click breadcrumb item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click breadcrumb item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1721,8 +1724,8 @@ impl InteractiveTests {
         let class_attr = breadcrumb
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get breadcrumb attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get breadcrumb attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-breadcrumb") {
             return Ok(InteractiveTestResult::failure(
@@ -1757,7 +1760,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1773,7 +1776,7 @@ impl InteractiveTests {
         // Find steps element
         let steps_el = driver.find(By::Css(".hi-steps")).await.map_err(|e| {
             warn!("Steps element not found: {}", e);
-            anyhow!("Steps element not found: {}", e)
+            anyhow::anyhow!("Steps element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1792,12 +1795,12 @@ impl InteractiveTests {
         let step_item = steps_el
             .find(By::Css(".hi-step"))
             .await
-            .map_err(|e| anyhow!("Failed to find step item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find step item: {}", e))?;
 
         step_item
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click step: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click step: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1814,8 +1817,8 @@ impl InteractiveTests {
         let class_attr = steps_el
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get steps attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get steps attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-steps") {
             return Ok(InteractiveTestResult::failure(
@@ -1850,7 +1853,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1866,7 +1869,7 @@ impl InteractiveTests {
         // Find timeline element
         let timeline = driver.find(By::Css(".hi-timeline")).await.map_err(|e| {
             warn!("Timeline element not found: {}", e);
-            anyhow!("Timeline element not found: {}", e)
+            anyhow::anyhow!("Timeline element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1885,12 +1888,12 @@ impl InteractiveTests {
         let timeline_item = timeline
             .find(By::Css(".hi-timeline-item"))
             .await
-            .map_err(|e| anyhow!("Failed to find timeline item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find timeline item: {}", e))?;
 
         timeline_item
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click timeline item: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click timeline item: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -1907,8 +1910,8 @@ impl InteractiveTests {
         let class_attr = timeline
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get timeline attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get timeline attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-timeline") {
             return Ok(InteractiveTestResult::failure(
@@ -1946,7 +1949,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -1962,7 +1965,7 @@ impl InteractiveTests {
         // Find user guide element
         let user_guide = driver.find(By::Css(".hi-user-guide")).await.map_err(|e| {
             warn!("UserGuide element not found: {}", e);
-            anyhow!("UserGuide element not found: {}", e)
+            anyhow::anyhow!("UserGuide element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -1981,12 +1984,12 @@ impl InteractiveTests {
         let next_btn = user_guide
             .find(By::Css("[data-testid=\"user-guide-next\"]"))
             .await
-            .map_err(|e| anyhow!("Failed to find next button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find next button: {}", e))?;
 
         next_btn
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click next button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click next button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2003,8 +2006,8 @@ impl InteractiveTests {
         let class_attr = user_guide
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get user guide attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get user guide attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-user-guide") {
             return Ok(InteractiveTestResult::failure(
@@ -2042,7 +2045,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2061,7 +2064,7 @@ impl InteractiveTests {
             .await
             .map_err(|e| {
                 warn!("ZoomControls element not found: {}", e);
-                anyhow!("ZoomControls element not found: {}", e)
+                anyhow::anyhow!("ZoomControls element not found: {}", e)
             })?;
 
         // Initial screenshot
@@ -2080,12 +2083,12 @@ impl InteractiveTests {
         let zoom_in = zoom_controls
             .find(By::Css("[data-testid=\"zoom-in\"]"))
             .await
-            .map_err(|e| anyhow!("Failed to find zoom in button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find zoom in button: {}", e))?;
 
         zoom_in
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click zoom in button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click zoom in button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2102,8 +2105,8 @@ impl InteractiveTests {
         let class_attr = zoom_controls
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get zoom controls attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get zoom controls attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-zoom-controls") {
             return Ok(InteractiveTestResult::failure(
@@ -2141,7 +2144,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2157,7 +2160,7 @@ impl InteractiveTests {
         // Find collapsible element
         let collapsible = driver.find(By::Css(".hi-collapsible")).await.map_err(|e| {
             warn!("Collapsible element not found: {}", e);
-            anyhow!("Collapsible element not found: {}", e)
+            anyhow::anyhow!("Collapsible element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -2176,12 +2179,12 @@ impl InteractiveTests {
         let trigger = collapsible
             .find(By::Css("[data-testid=\"collapsible-trigger\"]"))
             .await
-            .map_err(|e| anyhow!("Failed to find collapsible trigger: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find collapsible trigger: {}", e))?;
 
         trigger
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click collapsible trigger: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click collapsible trigger: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2198,8 +2201,8 @@ impl InteractiveTests {
         let class_attr = collapsible
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get collapsible attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get collapsible attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-collapsible") {
             return Ok(InteractiveTestResult::failure(
@@ -2237,7 +2240,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2256,7 +2259,7 @@ impl InteractiveTests {
             .await
             .map_err(|e| {
                 warn!("VideoPlayer element not found: {}", e);
-                anyhow!("VideoPlayer element not found: {}", e)
+                anyhow::anyhow!("VideoPlayer element not found: {}", e)
             })?;
 
         // Initial screenshot
@@ -2275,12 +2278,12 @@ impl InteractiveTests {
         let play_btn = video_player
             .find(By::Css("[data-testid=\"video-play\"]"))
             .await
-            .map_err(|e| anyhow!("Failed to find play button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find play button: {}", e))?;
 
         play_btn
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click play button: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click play button: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2297,8 +2300,8 @@ impl InteractiveTests {
         let class_attr = video_player
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get video player attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get video player attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-video-player") {
             return Ok(InteractiveTestResult::failure(
@@ -2336,7 +2339,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2352,7 +2355,7 @@ impl InteractiveTests {
         // Find rich text editor element
         let editor = driver.find(By::Css(".hi-editor")).await.map_err(|e| {
             warn!("RichTextEditor element not found: {}", e);
-            anyhow!("RichTextEditor element not found: {}", e)
+            anyhow::anyhow!("RichTextEditor element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -2371,19 +2374,19 @@ impl InteractiveTests {
         let editor_body = editor
             .find(By::Css(".hi-editor-body"))
             .await
-            .map_err(|e| anyhow!("Failed to find editor body: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find editor body: {}", e))?;
 
         editor_body
             .click()
             .await
-            .map_err(|e| anyhow!("Failed to click in editor: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to click in editor: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Type in editor
         editor_body
             .send_keys("Hello Hikari!")
             .await
-            .map_err(|e| anyhow!("Failed to type in editor: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to type in editor: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2400,8 +2403,8 @@ impl InteractiveTests {
         let class_attr = editor
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get editor attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get editor attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-editor") {
             return Ok(InteractiveTestResult::failure(
@@ -2439,7 +2442,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2458,7 +2461,7 @@ impl InteractiveTests {
             .await
             .map_err(|e| {
                 warn!("CodeHighlighter element not found: {}", e);
-                anyhow!("CodeHighlighter element not found: {}", e)
+                anyhow::anyhow!("CodeHighlighter element not found: {}", e)
             })?;
 
         // Initial screenshot
@@ -2477,7 +2480,7 @@ impl InteractiveTests {
         let code_block = code_highlighter
             .find(By::Css(".hi-code-block"))
             .await
-            .map_err(|e| anyhow!("Failed to find code block: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find code block: {}", e))?;
 
         driver
             .execute(
@@ -2485,7 +2488,7 @@ impl InteractiveTests {
                 vec![serde_json::to_value(&code_block).unwrap()],
             )
             .await
-            .map_err(|e| anyhow!("Failed to hover over code: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to hover over code: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2503,8 +2506,8 @@ impl InteractiveTests {
         let class_attr = code_highlighter
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get code highlighter attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get code highlighter attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-code-highlighter") {
             return Ok(InteractiveTestResult::failure(
@@ -2542,7 +2545,7 @@ impl InteractiveTests {
         driver
             .goto(&test_url)
             .await
-            .map_err(|e| anyhow!("Failed to navigate to {}: {}", test_url, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to navigate to {}: {}", test_url, e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_1 =
@@ -2558,7 +2561,7 @@ impl InteractiveTests {
         // Find drag layer element
         let drag_layer = driver.find(By::Css(".hi-drag-layer")).await.map_err(|e| {
             warn!("DragLayer element not found: {}", e);
-            anyhow!("DragLayer element not found: {}", e)
+            anyhow::anyhow!("DragLayer element not found: {}", e)
         })?;
 
         // Initial screenshot
@@ -2577,7 +2580,7 @@ impl InteractiveTests {
         let draggable = drag_layer
             .find(By::Css("[data-testid=\"draggable\"]"))
             .await
-            .map_err(|e| anyhow!("Failed to find draggable element: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to find draggable element: {}", e))?;
 
         // Mouse down to start drag
         driver
@@ -2586,7 +2589,7 @@ impl InteractiveTests {
                 vec![serde_json::to_value(&draggable).unwrap()],
             )
             .await
-            .map_err(|e| anyhow!("Failed to trigger mousedown: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to trigger mousedown: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_3 =
@@ -2606,7 +2609,7 @@ impl InteractiveTests {
                 vec![serde_json::to_value(&draggable).unwrap()],
             )
             .await
-            .map_err(|e| anyhow!("Failed to trigger mouseup: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to trigger mouseup: {}", e))?;
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         let screenshot_4 =
@@ -2623,8 +2626,8 @@ impl InteractiveTests {
         let class_attr = drag_layer
             .attr("class")
             .await
-            .map_err(|e| anyhow!("Failed to get drag layer attributes: {}", e))?;
-        let class_attr = class_attr.ok_or_else(|| anyhow!("No class attribute found"))?;
+            .map_err(|e| anyhow::anyhow!("Failed to get drag layer attributes: {}", e))?;
+        let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
         if !class_attr.contains("hi-drag-layer") {
             return Ok(InteractiveTestResult::failure(
@@ -2708,7 +2711,7 @@ pub async fn analyze_test_step(
         std::env::var("E2E_SCREENSHOTS_DIR").unwrap_or_else(|_| "./screenshots".to_string());
 
     std::fs::create_dir_all(&screenshots_dir)
-        .map_err(|e| anyhow!("Failed to create screenshots directory: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to create screenshots directory: {}", e))?;
 
     let step_name = step.as_str();
     let filename = format!("{}_{}_step{}.png", component_name, step_name, index);
@@ -2717,10 +2720,10 @@ pub async fn analyze_test_step(
     let screenshot_data = driver
         .screenshot_as_png()
         .await
-        .map_err(|e| anyhow!("Failed to take screenshot: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to take screenshot: {}", e))?;
 
     std::fs::write(&filepath, screenshot_data)
-        .map_err(|e| anyhow!("Failed to save screenshot: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to save screenshot: {}", e))?;
 
     info!("Screenshot saved: {}", filepath.display());
 

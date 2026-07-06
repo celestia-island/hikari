@@ -1,19 +1,14 @@
 // packages/components/src/display/skeleton.rs
-// Skeleton component
+// Skeleton component with Arknights + FUI styling
 
-use hikari_palette::classes::components::SkeletonDisplayClass;
 use hikari_palette::classes::{
     ClassesBuilder, Display, FlexDirection, Gap, Padding, SkeletonClass,
 };
 use tairitsu_vdom::IntoAttrValue;
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::anim_helpers::run_dual_phase_loop;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SkeletonComponent;
-
-const SKELETON_PERIOD_MS: f64 = 1500.0;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SkeletonVariant {
@@ -75,91 +70,60 @@ pub struct SkeletonProps {
 pub fn Skeleton(props: SkeletonProps) -> Element {
     let mut style = props.style.clone();
     if let Some(w) = &props.width {
-        style = format!("{style} width: {w};");
+        style = format!("{} width: {};", style, w);
     }
     if let Some(h) = &props.height {
-        style = format!("{style} height: {h};");
+        style = format!("{} height: {};", style, h);
     }
 
     let mut builder = ClassesBuilder::new()
-        .add_typed(SkeletonClass::Skeleton)
-        .add(&props.class);
+        .add(SkeletonClass::Skeleton)
+        .add_raw(&props.class);
 
+    // Add variant class
     match props.variant {
         SkeletonVariant::Text => {
-            builder = builder.add_typed(SkeletonClass::Text);
+            builder = builder.add(SkeletonClass::Text);
         }
         SkeletonVariant::Circular => {
-            builder = builder.add_typed(SkeletonDisplayClass::Circular);
+            builder = builder.add_raw("hi-skeleton-circular");
         }
         SkeletonVariant::Rectangular => {
-            builder = builder.add_typed(SkeletonClass::Rect);
+            builder = builder.add(SkeletonClass::Rect);
         }
         SkeletonVariant::Rounded => {
-            builder = builder.add_typed(SkeletonDisplayClass::Rounded);
+            builder = builder.add_raw("hi-skeleton-rounded");
         }
     }
 
+    // Add size class
     match props.size {
         SkeletonSize::Small => {
-            builder = builder.add_typed(SkeletonDisplayClass::Sm);
+            builder = builder.add_raw("hi-skeleton-sm");
         }
         SkeletonSize::Medium => {
-            builder = builder.add_typed(SkeletonDisplayClass::Md);
+            builder = builder.add_raw("hi-skeleton-md");
         }
         SkeletonSize::Large => {
-            builder = builder.add_typed(SkeletonDisplayClass::Lg);
+            builder = builder.add_raw("hi-skeleton-lg");
         }
     }
 
+    // Add animation class
     if props.animation {
-        builder = builder.add_typed(SkeletonClass::Active);
+        builder = builder.add(SkeletonClass::Active);
     }
 
     let classes = builder.build();
 
-    let bg_pos_signal = use_signal(|| 200.0_f64);
-    let opacity_signal = use_signal(|| 1.0_f64);
-
-    {
-        let is_animated = props.animation;
-        let bp_sig = bg_pos_signal.clone();
-        let op_sig = opacity_signal.clone();
-        use_effect(move || {
-            if !is_animated {
-                return;
-            }
-            run_dual_phase_loop(
-                SKELETON_PERIOD_MS,
-                bp_sig.clone(),
-                op_sig.clone(),
-                |phase| 200.0 - 400.0 * phase,
-                |phase| 1.0 - 0.3 * (std::f64::consts::PI * phase).sin(),
-            );
-        });
-    }
-
-    let anim_style = if props.animation {
-        let pos = bg_pos_signal.get();
-        let op = opacity_signal.get();
-        format!("background-position: {pos:.1}% 0; opacity: {op:.2};")
-    } else {
-        String::new()
-    };
-
-    if let Some(rows) = props.rows.filter(|&r| r > 1) {
-        let anim = anim_style.clone();
+    if props.rows.is_some() && props.rows.unwrap() > 1 {
+        let rows = props.rows.unwrap();
         let row_styles: Vec<String> = (0..rows)
             .map(|i| {
-                let base = if i == rows - 1 {
+                if i == rows - 1 {
                     "width: 60%;".to_string()
                 } else {
                     String::new()
-                };
-                if props.animation {
-                    format!("{base} {anim}")
-                } else {
-                    base
                 }
             })
             .collect();
@@ -183,14 +147,8 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
         };
     }
 
-    let final_style = if props.animation && !anim_style.is_empty() {
-        format!("{style} {anim_style}")
-    } else {
-        style
-    };
-
     rsx! {
-        div { class: classes, style: final_style }
+        div { class: classes, style }
     }
 }
 
@@ -215,12 +173,12 @@ pub struct SkeletonCardProps {
 #[component]
 pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
     let mut builder = ClassesBuilder::new()
-        .add_typed(Display::Flex)
-        .add_typed(FlexDirection::Column)
-        .add_typed(Gap::Gap4)
-        .add_typed(Padding::P4)
-        .add_typed(SkeletonDisplayClass::Card)
-        .add(&props.class);
+        .add(Display::Flex)
+        .add(FlexDirection::Column)
+        .add(Gap::Gap4)
+        .add(Padding::P4)
+        .add_raw("hi-skeleton-card")
+        .add_raw(&props.class);
 
     let container_classes = builder.build();
 
@@ -338,14 +296,13 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
         div {
             class: "hi-skeleton-table {props.class}",
             style: props.style,
+            ..table_rows,
 
             div {
                 class: "hi-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
                 ..header_cells,
             }
-
-            ..table_rows,
         }
     }
 }
@@ -363,6 +320,24 @@ impl StyledComponent for SkeletonComponent {
     );
     background-size: 200% 100%;
     border-radius: 4px;
+}
+
+.hi-skeleton-animated {
+    animation: hi-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes hi-skeleton-pulse {
+    0% {
+        background-position: 200% 0;
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        background-position: -200% 0;
+        opacity: 1;
+    }
 }
 
 .hi-skeleton-text {

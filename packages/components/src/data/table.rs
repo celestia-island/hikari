@@ -1,15 +1,15 @@
 // hi-components/src/data/table.rs
-// Table component
+// Table component with Arknights + FUI styling
 
 use std::collections::HashMap;
 
-use hikari_palette::classes::TableClass;
-use tairitsu_style::{ClassesBuilder, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
-pub use super::column::{ColumnAlign, ColumnDef};
-pub use super::sort::{SortConfig, SortDirection};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+pub use super::{
+    column::{ColumnAlign, ColumnDef},
+    sort::{SortConfig, SortDirection},
+};
+use crate::{prelude::*, styled::StyledComponent};
 
 pub type TableFilters = HashMap<String, Vec<String>>;
 
@@ -71,7 +71,7 @@ pub struct TableProps {
 pub fn Table(props: TableProps) -> Element {
     // First filter data, then sort it
     let filtered_data = filter_data(&props.data, &props.columns, &props.filters);
-    let sorted_data = sort_data(
+    let sorted_data = use_sortable_data(
         &filtered_data,
         &props.columns,
         &props.sort_column,
@@ -79,16 +79,16 @@ pub fn Table(props: TableProps) -> Element {
     );
 
     let table_classes = ClassesBuilder::new()
-        .add_typed(TableClass::Table)
-        .add_typed(match props.size {
+        .add(TableClass::Table)
+        .add(match props.size {
             TableSize::Small => TableClass::TableSm,
             TableSize::Medium => TableClass::TableMd,
             TableSize::Large => TableClass::TableLg,
         })
-        .add_typed_if(TableClass::TableBordered, props.bordered)
-        .add_typed_if(TableClass::TableStriped, props.striped)
-        .add_typed_if(TableClass::TableHover, props.hoverable)
-        .add(&props.class)
+        .add_if(TableClass::TableBordered, || props.bordered)
+        .add_if(TableClass::TableStriped, || props.striped)
+        .add_if(TableClass::TableHover, || props.hoverable)
+        .add_raw(&props.class)
         .build();
 
     // Clone values for use in closures
@@ -131,11 +131,11 @@ pub fn Table(props: TableProps) -> Element {
                 };
 
                 let cell_classes = ClassesBuilder::new()
-                    .add_typed(TableClass::TableHeaderCell)
-                    .add_typed(align_class)
-                    .add_typed_if(TableClass::TableSortable, column.sortable)
-                    .add_typed_if(TableClass::TableSortActive, is_sorted)
-                    .add(&column.class)
+                    .add(TableClass::TableHeaderCell)
+                    .add(align_class)
+                    .add_if(TableClass::TableSortable, || column.sortable)
+                    .add_if(TableClass::TableSortActive, || is_sorted)
+                    .add_raw(&column.class)
                     .build();
 
                 // Clone for closure
@@ -172,7 +172,7 @@ pub fn Table(props: TableProps) -> Element {
                         "{column_title}"
 
                         if !sort_icon_str.is_empty() {
-                            span { class: TableClass::TableSortIcon.class_name(),
+                            span { class: TableClass::TableSortIcon.as_class(),
                                 "{sort_icon_str}"
                             }
                         }
@@ -184,7 +184,7 @@ pub fn Table(props: TableProps) -> Element {
         Some(rsx! {
             thead {
                 tr {
-                    class: TableClass::TableHeaderRow.class_name(),
+                    class: TableClass::TableHeaderRow.as_class(),
                     ..header_cells
                 }
             }
@@ -217,8 +217,8 @@ pub fn Table(props: TableProps) -> Element {
                         };
 
                         let cell_classes = ClassesBuilder::new()
-                            .add_typed(TableClass::TableCell)
-                            .add_typed(align_class)
+                            .add(TableClass::TableCell)
+                            .add(align_class)
                             .build();
 
                         let cell_value = cell.clone();
@@ -235,7 +235,7 @@ pub fn Table(props: TableProps) -> Element {
 
                 rsx! {
                     tr {
-                        class: TableClass::TableRow.class_name(),
+                        class: TableClass::TableRow.as_class(),
                         key: "{row_index}",
                         ..cell_elements
                     }
@@ -248,11 +248,11 @@ pub fn Table(props: TableProps) -> Element {
         // Empty state
         rsx! {
             tr {
-                class: TableClass::TableRow.class_name(),
+                class: TableClass::TableRow.as_class(),
                 td {
-                    class: TableClass::TableEmpty.class_name(),
+                    class: TableClass::TableEmpty.as_class(),
                     colspan: colspan_count,
-                    div { class: TableClass::TableEmptyContent.class_name(),
+                    div { class: TableClass::TableEmptyContent.as_class(),
                         "{props.empty_text.clone()}"
                     }
                 }
@@ -261,7 +261,7 @@ pub fn Table(props: TableProps) -> Element {
     };
 
     rsx! {
-        div { class: TableClass::TableWrapper.class_name(),
+        div { class: TableClass::TableWrapper.as_class(),
             table {
                 class: table_classes,
 
@@ -269,7 +269,7 @@ pub fn Table(props: TableProps) -> Element {
 
                 // Render table body with sorted data
                 tbody {
-                    class: TableClass::TableBody.class_name(),
+                    class: TableClass::TableBody.as_class(),
                     {body_content}
                 }
             }
@@ -294,18 +294,18 @@ fn sort_data(
     sort_direction: SortDirection,
 ) -> Vec<Vec<String>> {
     // Find the column index for the sort key
-    let Some(col_idx) = columns.iter().position(|col| col.column_key == sort_column) else {
-        return data.to_vec();
-    };
+    let column_index = columns.iter().position(|col| col.column_key == sort_column);
 
-    if sort_direction == SortDirection::None {
+    if sort_direction == SortDirection::None || column_index.is_none() {
         return data.to_vec();
     }
 
+    let col_idx = column_index.unwrap();
+
     let mut sorted_data = data.to_vec();
     sorted_data.sort_by(|a, b| {
-        let a_val = a.get(col_idx).map_or("", String::as_str);
-        let b_val = b.get(col_idx).map_or("", String::as_str);
+        let a_val = a.get(col_idx).map(String::as_str).unwrap_or("");
+        let b_val = b.get(col_idx).map(String::as_str).unwrap_or("");
 
         // Try numeric comparison first
         let a_num = a_val.parse::<f64>();
@@ -329,6 +329,15 @@ fn sort_data(
     }
 
     sorted_data
+}
+
+fn use_sortable_data(
+    data: &[Vec<String>],
+    columns: &[ColumnDef],
+    sort_column: &str,
+    sort_direction: SortDirection,
+) -> Vec<Vec<String>> {
+    sort_data(data, columns, sort_column, sort_direction)
 }
 
 fn filter_data(

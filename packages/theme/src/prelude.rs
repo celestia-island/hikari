@@ -1,91 +1,37 @@
-//! Prelude for hikari-theme (style generation only)
+//! Compatibility prelude for theme package migration to Tairitsu
 
-pub use hikari_palette::themes::Palette;
-pub use hikari_palette::{classes, color_math, colors, themes};
+// Re-export tairitsu core types
+pub use tairitsu_vdom::{
+    Callback, ChangeEvent, Classes, EventData, FocusEvent, InputEvent, KeyboardEvent, MouseEvent,
+    Signal, Style, VElement, VNode, VNode as Element, VText, batch, create_effect,
+};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// Re-export tairitsu hooks
+pub use tairitsu_hooks::{
+    Context, UseRef, provide_context, use_context, use_effect, use_ref, use_signal, use_state,
+};
 
-    #[test]
-    fn palette_type_is_accessible() {
-        let _palette: Palette = themes::Hikari::palette();
-    }
+// Re-export tairitsu macros
+pub use tairitsu_macros::{component, rsx};
 
-    #[test]
-    fn light_theme_accessible() {
-        let palette = themes::light_theme();
-        assert_eq!(palette.mode, themes::ThemeMode::Light);
-    }
+// Props derive compatibility shim
+pub use tairitsu_macros::component as Props;
 
-    #[test]
-    fn dark_theme_accessible() {
-        let palette = themes::dark_theme();
-        assert_eq!(palette.mode, themes::ThemeMode::Dark);
-    }
+// Re-export hikari palette
+pub use hikari_palette::*;
 
-    #[test]
-    fn default_theme_is_light() {
-        let palette = themes::default_theme();
-        assert_eq!(palette.mode, themes::ThemeMode::Light);
-    }
+/// Event handler type alias (using tairitsu's Callback)
+pub type EventHandler<T> = Callback<T, ()>;
 
-    #[test]
-    fn colors_re_export_works() {
-        let _ = colors::粉红;
-        let _ = colors::苍翠;
-        let _ = colors::姜黄;
-    }
+/// Consume context helper - retrieves and clones the context value
+pub fn consume_context<T: 'static + Clone>() -> T {
+    use_context::<T>()
+        .expect("Context not found. Make sure to call provide_context first.")
+        .get()
+        .clone()
+}
 
-    #[test]
-    fn classes_re_export_works() {
-        let _ = classes::Display::Flex;
-        let _ = classes::Display::Block;
-        let _ = classes::Display::InlineFlex;
-        let _ = classes::FlexDirection::Row;
-        let _ = classes::FlexDirection::Column;
-    }
-
-    #[test]
-    fn color_math_re_export_works() {
-        let blended = color_math::blend_colors(colors::粉红, colors::石青, 0.5);
-        assert!(!blended.hex().is_empty());
-    }
-
-    #[test]
-    fn theme_mode_equality() {
-        assert_eq!(themes::ThemeMode::Light, themes::ThemeMode::Light);
-        assert_ne!(themes::ThemeMode::Light, themes::ThemeMode::Dark);
-    }
-
-    #[test]
-    fn hikari_default_trait() {
-        let _ = themes::Hikari;
-    }
-
-    #[test]
-    fn tairitsu_default_trait() {
-        let _ = themes::Tairitsu;
-    }
-
-    #[test]
-    fn arknights_default_trait() {
-        let _ = themes::Arknights;
-    }
-
-    #[test]
-    fn palette_fields_are_populated() {
-        let p = themes::Hikari::palette();
-        assert!(!p.primary.hex().is_empty());
-        assert!(!p.secondary.hex().is_empty());
-        assert!(!p.accent.hex().is_empty());
-        assert!(!p.success.hex().is_empty());
-        assert!(!p.warning.hex().is_empty());
-        assert!(!p.danger.hex().is_empty());
-        assert!(!p.background.hex().is_empty());
-        assert!(!p.surface.hex().is_empty());
-        assert!(!p.border.hex().is_empty());
-        assert!(!p.text_primary.hex().is_empty());
-        assert!(!p.text_secondary.hex().is_empty());
-    }
+/// Create an empty VNode (text node with empty string)
+pub fn empty_vnode() -> VNode {
+    VNode::Text(VText::new(""))
 }

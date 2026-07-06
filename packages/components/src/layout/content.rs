@@ -3,7 +3,9 @@
 
 use crate::prelude::*;
 
-/// Main content area wrapper with configurable background, padding, and scroll behavior.
+///
+///
+///
 #[component]
 pub fn Content(
     children: Element,

@@ -20,7 +20,7 @@
   background: var(--hi-drag-indicator-color);
   box-shadow: 0 0 8px var(--hi-drag-indicator-glow);
   pointer-events: none;
-  z-index: var(--hi-z-index-drag, 1000);
+  z-index: 1000;
   display: none;
 
   &.hi-drop-indicator-visible {

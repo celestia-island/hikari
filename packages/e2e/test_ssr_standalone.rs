@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use std::fs;
-
 use tracing::info;
 
 fn main() -> Result<()> {

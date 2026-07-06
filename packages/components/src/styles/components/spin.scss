@@ -51,6 +51,7 @@
     to { transform: rotate(360deg); }
 }
 
+// Stopped state
 .hi-spin-stopped .hi-spin-spinner {
     animation: none;
     border-top-color: var(--hi-border, rgba(0, 0, 0, 0.1));

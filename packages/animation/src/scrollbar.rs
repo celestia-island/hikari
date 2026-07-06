@@ -1,76 +1,78 @@
 // animation/src/scrollbar.rs
-// Scrollbar animation system
-//
-// In WASI unified environment, scrollbar registration is handled via
-// tairitsu's Platform trait rather than direct DOM access.
+// Scrollbar animation system using StyleBuilder
 
-use std::cell::RefCell;
+#![allow(unused_imports)]
+
 use std::collections::HashMap;
-use std::rc::Rc;
 
-use tairitsu_vdom::Platform;
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
+use web_sys::HtmlElement;
+
+use super::style::{CssProperty, StyleBuilder};
 
 /// Store all scrollbar elements for animation updates
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+static mut SCROLLBARS: Option<HashMap<String, HtmlElement>> = None;
+
+/// Register a scrollbar element for animation
 ///
-/// Note: This is a simplified implementation for demonstration.
-/// In a real application, you'd use thread-local storage or
-/// a proper state management system.
-pub struct ScrollbarRegistry<P: Platform> {
-    scrollbars: HashMap<String, P::Element>,
-}
+/// # Arguments
+///
+/// * `id` - Unique identifier for this scrollbar
+/// * `track` - The scrollbar track element
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[wasm_bindgen(js_name = registerScrollbar)]
+pub fn register_scrollbar(id: String, track: JsValue) {
+    let track_element = match track.dyn_into::<HtmlElement>() {
+        Ok(el) => el,
+        Err(_) => {
+            web_sys::console::error_1(&"❌ Invalid track element for scrollbar".into());
+            return;
+        }
+    };
 
-impl<P: Platform> Default for ScrollbarRegistry<P> {
-    fn default() -> Self {
-        Self {
-            scrollbars: HashMap::new(),
+    unsafe {
+        let scrollbars_ptr = &raw mut SCROLLBARS;
+
+        if (*scrollbars_ptr).is_none() {
+            *scrollbars_ptr = Some(HashMap::new());
+        }
+
+        if let Some(scrollbars) = &mut *scrollbars_ptr {
+            scrollbars.insert(id, track_element);
         }
     }
 }
 
-impl<P: Platform> ScrollbarRegistry<P> {
-    /// Create a new scrollbar registry
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
+/// Update scrollbar width with smooth transition
+///
+/// # Arguments
+///
+/// * `id` - Unique identifier for scrollbar
+/// * `width` - Target width in pixels (e.g., 4.0 or 8.0)
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[wasm_bindgen(js_name = updateScrollbarWidth)]
+pub fn update_scrollbar_width(id: String, width: f64) {
+    unsafe {
+        let scrollbars_ptr = &raw const SCROLLBARS;
 
-    /// Register a scrollbar element for animation
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - Unique identifier for this scrollbar
-    /// * `track` - The scrollbar track element handle
-    pub fn register(&mut self, id: String, track: P::Element) {
-        self.scrollbars.insert(id, track);
-    }
-
-    /// Update scrollbar width with smooth transition
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - Unique identifier for scrollbar
-    /// * `width` - Target width in pixels (e.g., 4.0 or 8.0)
-    /// * `platform` - Platform reference for DOM operations
-    pub fn update_width(&mut self, id: &str, width: f64, platform: &Rc<RefCell<P>>) {
-        if let Some(track_handle) = self.scrollbars.get(id) {
-            // Apply transition and width via Platform trait
-            platform.borrow_mut().set_style(
-                track_handle,
-                "transition",
-                "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-            );
-            platform
-                .borrow_mut()
-                .set_style(track_handle, "width", &format!("{width}px"));
+        if let Some(scrollbars) = &*scrollbars_ptr {
+            if let Some(track) = scrollbars.get(&id) {
+                // Use StyleBuilder (consistent with AnimationBuilder architecture)
+                StyleBuilder::new(track)
+                    .add(
+                        CssProperty::Transition,
+                        "width 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+                    )
+                    .add(CssProperty::Width, &format!("{}px", width))
+                    .apply();
+            }
         }
     }
-
-    /// Unregister a scrollbar element
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - Unique identifier for scrollbar to remove
-    pub fn unregister(&mut self, id: &str) {
-        self.scrollbars.remove(id);
-    }
 }
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+pub fn register_scrollbar(_id: String, _track: JsValue) {}
+
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+pub fn update_scrollbar_width(_id: String, _width: f64) {}

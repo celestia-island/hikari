@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Background Component - Gradient Animation
@@ -23,9 +23,9 @@
   // Dynamic gradient with rotating center and breathing colors
   // Updated by JS animation loop
   background: radial-gradient(
-    circle at var(--hi-bg-center-x, 50%) var(--hi-bg-center-y, 50%),
-    var(--hi-bg-color-1, rgba(245, 245, 245, 0.9)) 0%,
-    var(--hi-bg-color-2, rgba(255, 182, 193, 0.7)) 100%
+    circle at var(--bg-center-x, 50%) var(--bg-center-y, 50%),
+    var(--bg-color-1, rgba(245, 245, 245, 0.9)) 0%,
+    var(--bg-color-2, rgba(255, 182, 193, 0.7)) 100%
   );
 
   // Smooth transition for color changes

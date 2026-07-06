@@ -1,10 +1,10 @@
 // node_graph/plugins/input_node.rs
 // Input node plugin - accepts user input or external data
 
-use tairitsu_vdom::{VElement, VNode};
-
-use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
-use crate::node_graph::value::NodeValue;
+use crate::node_graph::{
+    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
+    value::NodeValue,
+};
 
 /// Input node plugin
 ///
@@ -18,9 +18,8 @@ pub struct InputNode {
 
 impl InputNode {
     /// Create a new input node
-    #[must_use]
     pub fn new(name: &str, input_type: &str) -> Self {
-        let output_port_id = format!("{name}_output");
+        let output_port_id = format!("{}_output", name);
         Self {
             node_type: NodeType::new("input", name),
             output_port_id,
@@ -30,9 +29,8 @@ impl InputNode {
     }
 
     /// Create a new input node with default value
-    #[must_use]
     pub fn with_default(name: &str, input_type: &str, default_value: NodeValue) -> Self {
-        let output_port_id = format!("{name}_output");
+        let output_port_id = format!("{}_output", name);
         Self {
             node_type: NodeType::new("input", name),
             output_port_id,
@@ -51,50 +49,42 @@ impl InputNode {
     }
 
     /// Create a numeric input node
-    #[must_use]
     pub fn numeric(name: &str) -> Self {
         Self::new(name, "number")
     }
 
     /// Create a numeric input node with default value
-    #[must_use]
     pub fn numeric_with_default(name: &str, default: f64) -> Self {
         Self::with_default(name, "number", NodeValue::from(default))
     }
 
     /// Create a string input node
-    #[must_use]
     pub fn string(name: &str) -> Self {
         Self::new(name, "text")
     }
 
     /// Create a string input node with default value
-    #[must_use]
     pub fn string_with_default(name: &str, default: &str) -> Self {
         Self::with_default(name, "text", NodeValue::from(default))
     }
 
     /// Create a boolean input node
-    #[must_use]
     pub fn boolean(name: &str) -> Self {
         Self::new(name, "checkbox")
     }
 
     /// Create a boolean input node with default value
-    #[must_use]
     pub fn boolean_with_default(name: &str, default: bool) -> Self {
         Self::with_default(name, "checkbox", NodeValue::from(default))
     }
 
     /// Get the input type (e.g., "number", "text", "checkbox")
-    #[must_use]
     pub fn input_type(&self) -> &str {
         &self.input_type
     }
 
     /// Get the default value
-    #[must_use]
-    pub const fn default_value(&self) -> &NodeValue {
+    pub fn default_value(&self) -> &NodeValue {
         &self.default_value
     }
 }
@@ -127,23 +117,6 @@ impl NodePlugin for InputNode {
         } else {
             None
         }
-    }
-
-    fn render_body(&self) -> VNode {
-        let value_str = self.default_value.to_display_string();
-        VNode::Element(
-            VElement::new("div")
-                .class("hi-node-input hi-node-body")
-                .attr("data-node-type", "input")
-                .child(VNode::Element(
-                    VElement::new("input")
-                        .attr("data-node-input", "true")
-                        .attr("data-action", "node-input-change")
-                        .attr("type", &self.input_type)
-                        .attr("placeholder", "Enter value...")
-                        .attr("value", &value_str),
-                )),
-        )
     }
 }
 

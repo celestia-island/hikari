@@ -29,7 +29,8 @@ public/
 # Generated CSS files are in public/ directory which is already ignored
 # packages/*/styles/
 
-# Generated Rust code
+# Generated Rust code (completely ignored)
+packages/*/src/generated/
 packages/*/generated/
 
 # Node.js
@@ -47,17 +48,12 @@ packages/*/theme/tailwind/
 packages/icons/dist/lucide/
 packages/icons/assets/lucide_svgs.json
 packages/icons/assets/lucide_manifest.json
-packages/icons/src/mdi_data.rs
-packages/icons/src/mdi_enum.rs
 
 # Bulk SVG downloads (build-time intermediate files fetched from CDN)
 /icons/
 
 # NPM cache
 .npm/
-
-# Playwright MCP debug artifacts
-.playwright-mcp/
 
 # Python cache and virtual environments
 __pycache__/
@@ -70,21 +66,4 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
-
-# Coverage output
-lcov.info
-coverage-summary.txt
-
-# Log files
-*.log
-
-# Environment files
-.env
-.env.*
-
-# WASM artifacts
-*.wasm
-
-# macOS metadata
-.DS_Store
 

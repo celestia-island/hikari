@@ -25,8 +25,8 @@
   --hi-card-bg-footer: transparent;
   
   // Border Colors
-  --hi-card-border-color: var(--hi-color-border, var(--hi-border, #C4D8DA));
-  --hi-card-border-color-hover: var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.25));
+  --hi-card-border-color: rgba(226, 232, 240, 0.8);
+  --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);
   --hi-card-divider-color: var(--hi-color-border);
   
   // Shadow
@@ -136,5 +136,5 @@
 // ============================================
 
 .hi-card-hoverable {
-  --hi-card-border-color-hover: var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.25));
+  --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);
 }

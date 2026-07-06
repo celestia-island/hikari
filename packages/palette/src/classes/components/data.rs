@@ -1,8 +1,10 @@
 //! Data component classes (Table, Pagination, Tree, etc.)
 
-use tairitsu_style::TypedClass;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use crate::classes::UtilityClass;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TableClass {
     Table,
     TableSm,
@@ -27,35 +29,36 @@ pub enum TableClass {
     TextRight,
 }
 
-impl TypedClass for TableClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TableClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Table => "hi-table",
-            Self::TableSm => "hi-table-sm",
-            Self::TableMd => "hi-table-md",
-            Self::TableLg => "hi-table-lg",
-            Self::TableBordered => "hi-table-bordered",
-            Self::TableStriped => "hi-table-striped",
-            Self::TableHover => "hi-table-hover",
-            Self::TableWrapper => "hi-table-wrapper",
-            Self::TableHeaderCell => "hi-table-header-cell",
-            Self::TableCell => "hi-table-cell",
-            Self::TableHeaderRow => "hi-table-header-row",
-            Self::TableBody => "hi-table-body",
-            Self::TableRow => "hi-table-row",
-            Self::TableEmpty => "hi-table-empty",
-            Self::TableEmptyContent => "hi-table-empty-content",
-            Self::TableSortable => "hi-table-sortable",
-            Self::TableSortIcon => "hi-table-sort-icon",
-            Self::TableSortActive => "hi-table-sort-active",
-            Self::TextLeft => "hi-text-left",
-            Self::TextCenter => "hi-text-center",
-            Self::TextRight => "hi-text-right",
+            TableClass::Table => "table",
+            TableClass::TableSm => "table-sm",
+            TableClass::TableMd => "table-md",
+            TableClass::TableLg => "table-lg",
+            TableClass::TableBordered => "table-bordered",
+            TableClass::TableStriped => "table-striped",
+            TableClass::TableHover => "table-hover",
+            TableClass::TableWrapper => "table-wrapper",
+            TableClass::TableHeaderCell => "table-header-cell",
+            TableClass::TableCell => "table-cell",
+            TableClass::TableHeaderRow => "table-header-row",
+            TableClass::TableBody => "table-body",
+            TableClass::TableRow => "table-row",
+            TableClass::TableEmpty => "table-empty",
+            TableClass::TableEmptyContent => "table-empty-content",
+            TableClass::TableSortable => "table-sortable",
+            TableClass::TableSortIcon => "table-sort-icon",
+            TableClass::TableSortActive => "table-sort-active",
+            TableClass::TextLeft => "text-left",
+            TableClass::TextCenter => "text-center",
+            TableClass::TextRight => "text-right",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum TableHeaderClass {
     TableHeader,
     HeaderRow,
@@ -67,22 +70,22 @@ pub enum TableHeaderClass {
     ResizeHandle,
 }
 
-impl TypedClass for TableHeaderClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TableHeaderClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::TableHeader => "hi-table-header",
-            Self::HeaderRow => "hi-header-row",
-            Self::HeaderCell => "hi-header-cell",
-            Self::HeaderCellActive => "hi-header-cell-active",
-            Self::HeaderCellContent => "hi-header-cell-content",
-            Self::SortIndicator => "hi-sort-indicator",
-            Self::FilterIcon => "hi-filter-icon",
-            Self::ResizeHandle => "hi-resize-handle",
+            TableHeaderClass::TableHeader => "table-header",
+            TableHeaderClass::HeaderRow => "header-row",
+            TableHeaderClass::HeaderCell => "header-cell",
+            TableHeaderClass::HeaderCellActive => "header-cell-active",
+            TableHeaderClass::HeaderCellContent => "header-cell-content",
+            TableHeaderClass::SortIndicator => "sort-indicator",
+            TableHeaderClass::FilterIcon => "filter-icon",
+            TableHeaderClass::ResizeHandle => "resize-handle",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CellClass {
     Cell,
     CellHover,
@@ -92,20 +95,20 @@ pub enum CellClass {
     AlignRight,
 }
 
-impl TypedClass for CellClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for CellClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Cell => "hi-cell",
-            Self::CellHover => "hi-cell-hover",
-            Self::CellEditable => "hi-cell-editable",
-            Self::AlignLeft => "hi-align-left",
-            Self::AlignCenter => "hi-align-center",
-            Self::AlignRight => "hi-align-right",
+            CellClass::Cell => "cell",
+            CellClass::CellHover => "cell-hover",
+            CellClass::CellEditable => "cell-editable",
+            CellClass::AlignLeft => "align-left",
+            CellClass::AlignCenter => "align-center",
+            CellClass::AlignRight => "align-right",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SortClass {
     Sort,
     SortButton,
@@ -115,28 +118,24 @@ pub enum SortClass {
     SortIndicator,
     SortClearText,
     SortClearIcon,
-    Asc,
-    Desc,
 }
 
-impl TypedClass for SortClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SortClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Sort => "hi-sort",
-            Self::SortButton => "hi-sort-button",
-            Self::SortActive => "hi-sort-active",
-            Self::SortClear => "hi-sort-clear",
-            Self::SortTitle => "hi-sort-title",
-            Self::SortIndicator => "hi-sort-indicator",
-            Self::SortClearText => "hi-sort-clear-text",
-            Self::SortClearIcon => "hi-sort-clear-icon",
-            Self::Asc => "hi-sort-asc",
-            Self::Desc => "hi-sort-desc",
+            SortClass::Sort => "sort",
+            SortClass::SortButton => "sort-button",
+            SortClass::SortActive => "sort-active",
+            SortClass::SortClear => "sort-clear",
+            SortClass::SortTitle => "sort-title",
+            SortClass::SortIndicator => "sort-indicator",
+            SortClass::SortClearText => "sort-clear-text",
+            SortClass::SortClearIcon => "sort-clear-icon",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaginationClass {
     Pagination,
     PaginationTotal,
@@ -151,25 +150,25 @@ pub enum PaginationClass {
     PaginationJumpLabel,
 }
 
-impl TypedClass for PaginationClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaginationClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Pagination => "hi-pagination",
-            Self::PaginationTotal => "hi-pagination-total",
-            Self::PaginationSizer => "hi-pagination-sizer",
-            Self::PaginationPages => "hi-pagination-pages",
-            Self::PaginationPrev => "hi-pagination-prev",
-            Self::PaginationNext => "hi-pagination-next",
-            Self::PaginationEllipsis => "hi-pagination-ellipsis",
-            Self::PaginationItem => "hi-pagination-item",
-            Self::PaginationActive => "hi-pagination-active",
-            Self::PaginationJump => "hi-pagination-jump",
-            Self::PaginationJumpLabel => "hi-pagination-jump-label",
+            PaginationClass::Pagination => "pagination",
+            PaginationClass::PaginationTotal => "pagination-total",
+            PaginationClass::PaginationSizer => "pagination-sizer",
+            PaginationClass::PaginationPages => "pagination-pages",
+            PaginationClass::PaginationPrev => "pagination-prev",
+            PaginationClass::PaginationNext => "pagination-next",
+            PaginationClass::PaginationEllipsis => "pagination-ellipsis",
+            PaginationClass::PaginationItem => "pagination-item",
+            PaginationClass::PaginationActive => "pagination-active",
+            PaginationClass::PaginationJump => "pagination-jump",
+            PaginationClass::PaginationJumpLabel => "pagination-jump-label",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FilterClass {
     Filter,
     FilterContainer,
@@ -190,46 +189,46 @@ pub enum FilterClass {
     FilterHint,
 }
 
-impl TypedClass for FilterClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for FilterClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Filter => "hi-filter",
-            Self::FilterContainer => "hi-filter-container",
-            Self::FilterTrigger => "hi-filter-trigger",
-            Self::FilterActive => "hi-filter-active",
-            Self::FilterIcon => "hi-filter-icon",
-            Self::FilterBadge => "hi-filter-badge",
-            Self::FilterDropdownIcon => "hi-filter-dropdown-icon",
-            Self::FilterDropdown => "hi-filter-dropdown",
-            Self::FilterHeader => "hi-filter-header",
-            Self::FilterTitle => "hi-filter-title",
-            Self::FilterClearBtn => "hi-filter-clear-btn",
-            Self::FilterOptions => "hi-filter-options",
-            Self::FilterOption => "hi-filter-option",
-            Self::FilterCheckbox => "hi-filter-checkbox",
-            Self::FilterLabel => "hi-filter-label",
-            Self::FilterFooter => "hi-filter-footer",
-            Self::FilterHint => "hi-filter-hint",
+            FilterClass::Filter => "filter",
+            FilterClass::FilterContainer => "filter-container",
+            FilterClass::FilterTrigger => "filter-trigger",
+            FilterClass::FilterActive => "filter-active",
+            FilterClass::FilterIcon => "filter-icon",
+            FilterClass::FilterBadge => "filter-badge",
+            FilterClass::FilterDropdownIcon => "filter-dropdown-icon",
+            FilterClass::FilterDropdown => "filter-dropdown",
+            FilterClass::FilterHeader => "filter-header",
+            FilterClass::FilterTitle => "filter-title",
+            FilterClass::FilterClearBtn => "filter-clear-btn",
+            FilterClass::FilterOptions => "filter-options",
+            FilterClass::FilterOption => "filter-option",
+            FilterClass::FilterCheckbox => "filter-checkbox",
+            FilterClass::FilterLabel => "filter-label",
+            FilterClass::FilterFooter => "filter-footer",
+            FilterClass::FilterHint => "filter-hint",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SelectionClass {
     Selection,
     RowSelection,
 }
 
-impl TypedClass for SelectionClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SelectionClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Selection => "hi-selection",
-            Self::RowSelection => "hi-row-selection",
+            SelectionClass::Selection => "selection",
+            SelectionClass::RowSelection => "row-selection",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SelectionClassNew {
     SelectionColumn,
     SelectionFixed,
@@ -244,180 +243,132 @@ pub enum SelectionClassNew {
     RowSelectionCustom,
     RowSelectionChecked,
     RowSelectionRadioDot,
-    RadioGroup,
 }
 
-impl TypedClass for SelectionClassNew {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SelectionClassNew {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::SelectionColumn => "hi-selection-column",
-            Self::SelectionFixed => "hi-selection-fixed",
-            Self::SelectionHeader => "hi-selection-header",
-            Self::SelectionAll => "hi-selection-all",
-            Self::SelectionCheckbox => "hi-selection-checkbox",
-            Self::SelectionRow => "hi-selection-row",
-            Self::SelectionItem => "hi-selection-item",
-            Self::RowSelection => "hi-row-selection",
-            Self::RowSelectionLabel => "hi-row-selection-label",
-            Self::RowSelectionInput => "hi-row-selection-input",
-            Self::RowSelectionCustom => "hi-row-selection-custom",
-            Self::RowSelectionChecked => "hi-row-selection-checked",
-            Self::RowSelectionRadioDot => "hi-row-selection-radio-dot",
-            Self::RadioGroup => "hi-selection-radio-group",
+            SelectionClassNew::SelectionColumn => "selection-column",
+            SelectionClassNew::SelectionFixed => "selection-fixed",
+            SelectionClassNew::SelectionHeader => "selection-header",
+            SelectionClassNew::SelectionAll => "selection-all",
+            SelectionClassNew::SelectionCheckbox => "selection-checkbox",
+            SelectionClassNew::SelectionRow => "selection-row",
+            SelectionClassNew::SelectionItem => "selection-item",
+            SelectionClassNew::RowSelection => "row-selection",
+            SelectionClassNew::RowSelectionLabel => "row-selection-label",
+            SelectionClassNew::RowSelectionInput => "row-selection-input",
+            SelectionClassNew::RowSelectionCustom => "row-selection-custom",
+            SelectionClassNew::RowSelectionChecked => "row-selection-checked",
+            SelectionClassNew::RowSelectionRadioDot => "row-selection-radio-dot",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ColumnClass {
-    Fixed,
-    Sortable,
-    Resizable,
-}
-
-impl TypedClass for ColumnClass {
-    fn class_name(&self) -> &'static str {
-        match self {
-            Self::Fixed => "hi-column-fixed",
-            Self::Sortable => "hi-column-sortable",
-            Self::Resizable => "hi-column-resizable",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TreeClass {
     DragNode,
     VirtualTree,
     NodeDisabled,
     Dragging,
     DragOver,
-    ShowLine,
 }
 
-impl TypedClass for TreeClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TreeClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::DragNode => "hi-drag-node",
-            Self::VirtualTree => "hi-virtual-tree",
-            Self::NodeDisabled => "hi-tree-node-disabled",
-            Self::Dragging => "hi-dragging",
-            Self::DragOver => "hi-drag-over",
-            Self::ShowLine => "hi-tree-show-line",
+            TreeClass::DragNode => "drag-node",
+            TreeClass::VirtualTree => "virtual-tree",
+            TreeClass::NodeDisabled => "tree-node-disabled",
+            TreeClass::Dragging => "dragging",
+            TreeClass::DragOver => "drag-over",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TreeClassNew {
     TreeContainer,
     Tree,
 }
 
-impl TypedClass for TreeClassNew {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TreeClassNew {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::TreeContainer => "hi-tree-container",
-            Self::Tree => "hi-tree",
+            TreeClassNew::TreeContainer => "tree-container",
+            TreeClassNew::Tree => "tree",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum TreeLabelClass {
     TreeNodeLabel,
 }
 
-impl TypedClass for TreeLabelClass {
-    fn class_name(&self) -> &'static str {
-        "hi-tree-node-label"
+impl UtilityClass for TreeLabelClass {
+    fn as_suffix(&self) -> &'static str {
+        "tree-node-label"
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DragDropTreeClass {
     DragDropTree,
     DragNode,
     Dragging,
     DragOver,
     NodeDisabled,
-    DropIndicator,
-    DragHandle,
-    DragHandleIcon,
-    NodeContent,
-    DragGhost,
-    DropLine,
-    NodeChildren,
 }
 
-impl TypedClass for DragDropTreeClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for DragDropTreeClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::DragDropTree => "hi-drag-drop-tree",
-            Self::DragNode => "hi-drag-node",
-            Self::Dragging => "hi-drag-node-dragging",
-            Self::DragOver => "hi-drag-node-drag-over",
-            Self::NodeDisabled => "hi-drag-node-disabled",
-            Self::DropIndicator => "hi-drop-indicator",
-            Self::DragHandle => "hi-drag-handle",
-            Self::DragHandleIcon => "hi-drag-handle-icon",
-            Self::NodeContent => "hi-node-content",
-            Self::DragGhost => "hi-drag-ghost",
-            Self::DropLine => "hi-drop-line",
-            Self::NodeChildren => "hi-node-children",
+            DragDropTreeClass::DragDropTree => "drag-drop-tree",
+            DragDropTreeClass::DragNode => "drag-node",
+            DragDropTreeClass::Dragging => "drag-node-dragging",
+            DragDropTreeClass::DragOver => "drag-node-drag-over",
+            DragDropTreeClass::NodeDisabled => "drag-node-disabled",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VirtualScrollClass {
     VirtualTree,
     NodeDisabled,
-    Viewport,
 }
 
-impl TypedClass for VirtualScrollClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for VirtualScrollClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::VirtualTree => "hi-virtual-tree",
-            Self::NodeDisabled => "hi-tree-node-disabled",
-            Self::Viewport => "hi-virtual-tree-viewport",
+            VirtualScrollClass::VirtualTree => "virtual-tree",
+            VirtualScrollClass::NodeDisabled => "tree-node-disabled",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TreeNodeClass {
     TreeNode,
     TreeNodeSelected,
     TreeNodeDisabled,
     TreeNodeParent,
-    NodeContent,
-    NodeIcon,
-    NodeArrow,
-    NodeArrowPlaceholder,
-    NodeArrowExpanded,
-    NodeDisabled,
 }
 
-impl TypedClass for TreeNodeClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for TreeNodeClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::TreeNode => "hi-tree-node",
-            Self::TreeNodeSelected => "hi-tree-node-selected",
-            Self::TreeNodeDisabled => "hi-tree-node-disabled",
-            Self::TreeNodeParent => "hi-tree-node-parent",
-            Self::NodeContent => "hi-tree-node-content",
-            Self::NodeIcon => "hi-tree-node-icon",
-            Self::NodeArrow => "hi-tree-node-arrow",
-            Self::NodeArrowPlaceholder => "hi-tree-node-arrow-placeholder",
-            Self::NodeArrowExpanded => "hi-tree-node-arrow-expanded",
-            Self::NodeDisabled => "hi-tree-node-disabled",
+            TreeNodeClass::TreeNode => "tree-node",
+            TreeNodeClass::TreeNodeSelected => "tree-node-selected",
+            TreeNodeClass::TreeNodeDisabled => "tree-node-disabled",
+            TreeNodeClass::TreeNodeParent => "tree-node-parent",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CollapseClass {
     CollapseContent,
     Expanded,
@@ -425,27 +376,17 @@ pub enum CollapseClass {
     TreeNodeChildren,
     TreeExpanded,
     TreeCollapsed,
-    Collapse,
-    Header,
-    Arrow,
-    HeaderContent,
-    Inner,
 }
 
-impl TypedClass for CollapseClass {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for CollapseClass {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::CollapseContent => "hi-collapse-content",
-            Self::Expanded => "hi-collapse-expanded",
-            Self::Collapsed => "hi-collapse-collapsed",
-            Self::TreeNodeChildren => "hi-tree-node-children",
-            Self::TreeExpanded => "hi-tree-expanded",
-            Self::TreeCollapsed => "hi-tree-collapsed",
-            Self::Collapse => "hi-collapse",
-            Self::Header => "hi-collapse-header",
-            Self::Arrow => "hi-collapse-arrow",
-            Self::HeaderContent => "hi-collapse-header-content",
-            Self::Inner => "hi-collapse-inner",
+            CollapseClass::CollapseContent => "collapse-content",
+            CollapseClass::Expanded => "collapse-expanded",
+            CollapseClass::Collapsed => "collapse-collapsed",
+            CollapseClass::TreeNodeChildren => "tree-node-children",
+            CollapseClass::TreeExpanded => "tree-expanded",
+            CollapseClass::TreeCollapsed => "tree-collapsed",
         }
     }
 }

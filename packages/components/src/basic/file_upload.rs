@@ -1,10 +1,9 @@
 // packages/components/src/basic/file_upload.rs
-// FileUpload component
+// FileUpload component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct FileUploadComponent;
 
@@ -52,11 +51,15 @@ pub struct FileUploadProps {
 pub fn FileUpload(props: FileUploadProps) -> Element {
     let upload_status = use_signal(|| FileUploadStatus::Idle);
 
+    #[cfg(target_arch = "wasm32")]
+    let files = use_signal(|| Vec::<String>::new());
+
+    #[cfg(not(target_arch = "wasm32"))]
     let files = use_signal(Vec::<String>::new);
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(FileUploadClass::FileUploadWrapper)
-        .add(&props.class)
+        .add(FileUploadClass::FileUploadWrapper)
+        .add_raw(&props.class)
         .build();
 
     let status_class = match upload_status.get() {
@@ -67,16 +70,15 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
         _ => None,
     };
 
-    let mut drag_builder = ClassesBuilder::new().add_typed(FileUploadClass::FileUpload);
+    let mut drag_builder = ClassesBuilder::new().add(FileUploadClass::FileUpload);
     if let Some(class) = status_class {
-        drag_builder = drag_builder.add_typed(class);
+        drag_builder = drag_builder.add(class);
     }
     let drag_classes = drag_builder.build();
 
     let on_files_for_drop = props.on_files.clone();
     let on_files_for_change = props.on_files.clone();
     let on_error_for_drop = props.on_error.clone();
-    let on_error_for_change = props.on_error.clone();
 
     let upload_status_for_drag_over = upload_status.clone();
     let on_drag_over = move |e: DragEvent| {
@@ -91,91 +93,73 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
     let upload_status_for_drop = upload_status.clone();
     let files_for_drop = files.clone();
-    let max_size_for_drop = props.max_size;
     let on_drop = move |e: DragEvent| {
         e.prevent_default();
         upload_status_for_drop.set(FileUploadStatus::Idle);
 
-        if let Some(data_transfer) = &e.data_transfer {
-            let file_list = &data_transfer.files;
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(data_transfer) = &e.data_transfer {
+                let file_list = &data_transfer.files;
 
-            let mut selected_files = Vec::new();
-            let mut errors = Vec::new();
+                let mut selected_files = Vec::new();
+                let mut errors = Vec::new();
 
-            for file_name in file_list {
-                if file_name.len() > max_size_for_drop {
-                    errors.push(format!(
-                        "File '{file_name}' exceeds maximum size of {max_size_for_drop} bytes"
-                    ));
-                } else {
+                for file_name in file_list {
                     selected_files.push(file_name.clone());
                 }
-            }
 
-            if !errors.is_empty() && on_error_for_drop.is_some() {
-                for error in errors {
-                    if let Some(handler) = on_error_for_drop.as_ref() {
-                        handler.call(error);
+                if !errors.is_empty() && on_error_for_drop.is_some() {
+                    for error in errors {
+                        if let Some(handler) = on_error_for_drop.as_ref() {
+                            handler.call(error);
+                        }
                     }
                 }
-            }
 
-            if !selected_files.is_empty() {
-                files_for_drop.set(selected_files.clone());
+                if !selected_files.is_empty() {
+                    files_for_drop.set(selected_files.clone());
 
-                if let Some(handler) = on_files_for_drop.as_ref() {
-                    handler.call(selected_files);
+                    if let Some(handler) = on_files_for_drop.as_ref() {
+                        handler.call(selected_files);
+                    }
+
+                    upload_status_for_drop.set(FileUploadStatus::Success);
                 }
-
-                upload_status_for_drop.set(FileUploadStatus::Success);
             }
         }
     };
 
     let upload_status_for_change = upload_status.clone();
     let files_for_change = files.clone();
-    let max_size_for_change = props.max_size;
     let on_change = move |e: ChangeEvent| {
-        let file_value = e.value;
-        if file_value.is_empty() {
-            return;
-        }
-
-        let selected_files: Vec<String> = file_value
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-
-        let mut accepted_files = Vec::new();
-        let mut errors = Vec::new();
-
-        for file_name in &selected_files {
-            if file_name.len() > max_size_for_change {
-                errors.push(format!(
-                    "File '{file_name}' exceeds maximum size of {max_size_for_change} bytes"
-                ));
-            } else {
-                accepted_files.push(file_name.clone());
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+        {
+            let file_value = e.value;
+            if file_value.is_empty() {
+                return;
             }
-        }
 
-        if !errors.is_empty() && on_error_for_change.is_some() {
-            for error in errors {
-                if let Some(handler) = on_error_for_change.as_ref() {
-                    handler.call(error);
+            let selected_files: Vec<String> = file_value
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            if !selected_files.is_empty() {
+                files_for_change.set(selected_files.clone());
+
+                if let Some(handler) = on_files_for_change.as_ref() {
+                    handler.call(selected_files);
                 }
+
+                upload_status_for_change.set(FileUploadStatus::Success);
             }
         }
 
-        if !accepted_files.is_empty() {
-            files_for_change.set(accepted_files.clone());
-
-            if let Some(handler) = on_files_for_change.as_ref() {
-                handler.call(accepted_files);
-            }
-
-            upload_status_for_change.set(FileUploadStatus::Success);
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+        {
+            let _ = e;
         }
     };
 

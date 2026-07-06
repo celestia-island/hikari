@@ -1,10 +1,12 @@
 // hikari-components/src/basic/image.rs
 //! Image component with configurable sizing and fit modes
 
-use hikari_palette::classes::{ClassesBuilder, ImageClass, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, ImageClass, UtilityClass};
 
-use crate::prelude::*;
-use crate::style_builder::{CssProperty, StyleStringBuilder};
+use crate::{
+    prelude::*,
+    style_builder::{CssProperty, StyleStringBuilder},
+};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ImageFit {
@@ -17,7 +19,6 @@ pub enum ImageFit {
 }
 
 impl ImageFit {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             ImageFit::Contain => "contain",
@@ -82,15 +83,16 @@ pub fn Image(
     let style = builder.build_clean();
 
     let classes = ClassesBuilder::new()
-        .add_typed(ImageClass::Image)
-        .add(&class)
+        .add(ImageClass::Image)
+        .add_raw(&class)
         .build();
 
     let container_style = if responsive {
         "width: 100%; position: relative; display: inline-block;".to_string()
     } else if let (Some(w), Some(h)) = (width, height) {
         format!(
-            "width: {w}px; height: {h}px; position: relative; display: inline-block;"
+            "width: {}px; height: {}px; position: relative; display: inline-block;",
+            w, h
         )
     } else {
         "position: relative; display: inline-block;".to_string()
@@ -116,8 +118,8 @@ pub fn Image(
         Some(rsx! {
             div {
                 class: ClassesBuilder::new()
-                    .add_typed(ImageClass::ImagePlaceholder)
-                    .add_typed(ImageClass::ImageSkeleton)
+                    .add(ImageClass::ImagePlaceholder)
+                    .add(ImageClass::ImageSkeleton)
                     .build(),
                 style: "width: 100%; height: 100%; min-height: 100px;",
             }
@@ -126,8 +128,8 @@ pub fn Image(
         Some(rsx! {
             div {
                 class: ClassesBuilder::new()
-                    .add_typed(ImageClass::ImagePlaceholder)
-                    .add_typed(ImageClass::ImageIconPlaceholder)
+                    .add(ImageClass::ImagePlaceholder)
+                    .add(ImageClass::ImageIconPlaceholder)
                     .build(),
                 style: "width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--hi-color-surface);",
                 svg {
@@ -156,7 +158,7 @@ pub fn Image(
 
     rsx! {
         div {
-            class: ImageClass::ImageContainer.class_name(),
+            class: ImageClass::ImageContainer.as_class(),
             style: container_style,
 
             {placeholder_el.unwrap_or_else(VNode::empty)}
@@ -193,8 +195,8 @@ pub fn Logo(
         .build_clean();
 
     let classes = ClassesBuilder::new()
-        .add_typed(ImageClass::Logo)
-        .add(&class)
+        .add(ImageClass::Logo)
+        .add_raw(&class)
         .build();
 
     rsx! {

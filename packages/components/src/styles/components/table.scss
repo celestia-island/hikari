@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
-// Hikari Table Component -  Styling
+// Hikari Table Component - FUI Styling
 // ============================================
 
 // ============================================
@@ -33,7 +33,6 @@
   background: var(--hi-surface);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-md;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 // ============================================
@@ -68,8 +67,7 @@
 // Table Bordered
 // ============================================
 
-.hi-table-bordered,
-.hi-table--bordered {
+.hi-table-bordered {
   .hi-table-header-cell,
   .hi-table-cell {
     border: 1px solid var(--hi-color-border);
@@ -77,42 +75,12 @@
 }
 
 // ============================================
-// Table Striped (Zebra) -  subtle alternation
+// Table Striped
 // ============================================
 
-.hi-table-striped,
-.hi-table--striped {
-  // Target explicit .hi-table-row class
+.hi-table-striped {
   .hi-table-row:nth-child(even) {
-    background: rgba(0, 0, 0, 0.02);
-  }
-
-  .hi-table-row:nth-child(even):hover {
-    background: var(--hi-color-surface-secondary);
-  }
-
-  // Also target bare <tr> elements (for raw HTML / demo usage)
-  tr:nth-child(even) {
-    background: rgba(0, 0, 0, 0.02);
-  }
-
-  tr:nth-child(even):hover {
-    background: var(--hi-color-surface-secondary);
-  }
-}
-
-[data-theme="dark"] .hi-table-striped,
-[data-theme="dark"] .hi-table--striped,
-[data-theme="tairitsu"] .hi-table-striped,
-[data-theme="tairitsu"] .hi-table--striped {
-  .hi-table-row:nth-child(even),
-  tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.03);
-  }
-
-  .hi-table-row:nth-child(even):hover,
-  tr:nth-child(even):hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--hi-color-gray-40);
   }
 }
 
@@ -210,7 +178,7 @@
 }
 
 // ============================================
-// Sortable - with  arrow indicators
+// Sortable
 // ============================================
 
 .hi-table-sortable {
@@ -219,42 +187,6 @@
   
   &:hover {
     background: var(--hi-color-surface);
-  }
-
-  // Default sort arrow (unsorted, shows bidirectional hint)
-  &::after {
-    content: '';
-    display: inline-block;
-    margin-left: 6px;
-    vertical-align: middle;
-    border: solid 4px transparent;
-    width: 0; height: 0;
-    opacity: 0.4;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-  }
-}
-
-.hi-table-sort-asc {
-  color: var(--hi-color-primary);
-  background: var(--hi-color-surface);
-
-  &::after {
-    border-bottom-color: var(--hi-color-primary);
-    border-top-width: 0;
-    transform: translateY(2px);
-    opacity: 1;
-  }
-}
-
-.hi-table-sort-desc {
-  color: var(--hi-color-primary);
-  background: var(--hi-color-surface);
-
-  &::after {
-    border-top-color: var(--hi-color-primary);
-    border-bottom-width: 0;
-    transform: translateY(-2px);
-    opacity: 1;
   }
 }
 
@@ -267,65 +199,4 @@
 .hi-table-sort-active {
   color: var(--hi-color-primary);
   background: var(--hi-color-surface);
-}
-
-// ============================================
-// Table Hover (BEM alias)
-// ============================================
-
-.hi-table-hover,
-.hi-table--hover {
-  .hi-table-row:hover {
-    background: var(--hi-color-surface-secondary);
-  }
-}
-
-[data-theme="dark"] .hi-table-hover,
-[data-theme="tairitsu"] .hi-table-hover,
-[data-theme="dark"] .hi-table--hover,
-[data-theme="tairitsu"] .hi-table--hover {
-  .hi-table-row:hover {
-    background: rgba(255, 255, 255, 0.04);
-  }
-}
-
-// ============================================
-// Pagination (inline with table demos)
-// ============================================
-
-.hi-pagination {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  li {
-    display: inline-flex;
-  }
-}
-
-.hi-pagination-item,
-.hi-pagination-prev,
-.hi-pagination-next {
-  min-width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: vars.$hikari-radius-fui-sm;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.hi-pagination-item:not(.hi-button--disabled):hover {
-  background: var(--hi-color-surface-secondary);
-}
-
-.hi-pagination-prev.hi-button--disabled,
-.hi-pagination-next.hi-button--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }

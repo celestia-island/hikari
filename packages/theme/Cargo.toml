@@ -3,19 +3,25 @@ name = "hikari-theme"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-license.workspace = true
-description = "Theme system with SCSS/CSS variable generation for the Hikari design system"
-repository.workspace = true
-keywords = ["theme", "scss", "css-variables", "design-system", "ui"]
-categories = ["gui", "wasm"]
+license-file.workspace = true
 
 [lib]
-doctest = true
+doctest = false
+
+[features]
+default = ["scss"]
+scss = []  # SCSS compilation
 
 [dependencies]
 # Hikari palette
-hikari-palette = { version = "^0.2", path = "../palette" }
+hikari-palette = { version = "^0.3", path = "../palette" }
+
+# Tairitsu framework (for theme context)
+# Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
+tairitsu-vdom = "^0.5"
+tairitsu-hooks = "^0.5"
+tairitsu-macros = "^0.5"
 
 [build-dependencies]
-tairitsu-packager = { version = "^0.5", default-features = false }
+tairitsu-packager = "^0.5"
 anyhow = "^1"

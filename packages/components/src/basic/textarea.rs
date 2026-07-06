@@ -1,10 +1,9 @@
 // hi-components/src/basic/textarea.rs
-// Textarea component
+// Textarea component with Arknights + FUI styling
 
 use hikari_palette::classes::{ClassesBuilder, InputClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextareaSize {
@@ -67,18 +66,16 @@ pub fn Textarea(props: TextareaProps) -> Element {
     };
 
     let textarea_classes = ClassesBuilder::new()
-        .add_typed(InputClass::Input)
-        .add_typed(size_class)
-        .add_typed_if(InputClass::InputDisabled, props.disabled)
-        .add_typed_if(
-            InputClass::InputError,
-            matches!(props.status, TextareaStatus::Error),
-        )
-        .add_typed_if(
-            InputClass::InputSuccess,
-            matches!(props.status, TextareaStatus::Success),
-        )
-        .add(&props.class)
+        .add(InputClass::Input)
+        .add(size_class)
+        .add_if(InputClass::InputDisabled, || props.disabled)
+        .add_if(InputClass::InputError, || {
+            matches!(props.status, TextareaStatus::Error)
+        })
+        .add_if(InputClass::InputSuccess, || {
+            matches!(props.status, TextareaStatus::Success)
+        })
+        .add_raw(&props.class)
         .build();
 
     rsx! {
@@ -86,12 +83,10 @@ pub fn Textarea(props: TextareaProps) -> Element {
             class: textarea_classes,
             disabled: props.disabled,
             readonly: props.readonly,
-            placeholder: props.placeholder.clone().unwrap_or_default(),
+            placeholder: props.placeholder.unwrap_or_default(),
             value: "{props.value}",
             rows: props.rows,
             maxlength: props.maxlength.unwrap_or(0),
-            "aria-invalid": if matches!(props.status, TextareaStatus::Error) { Some("true".to_string()) } else { None },
-            "aria-label": props.placeholder.clone(),
             oninput: move |e: InputEvent| {
                 if let Some(handler) = props.oninput.as_ref() {
                     handler.call(e.data.clone());

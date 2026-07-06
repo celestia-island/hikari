@@ -8,8 +8,8 @@
 // ============================================
 
 @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="fresh"]):not([data-theme="tairitsu"]):not([data-theme="arknights"]) {
-        --hi-color-background: #000000;
+    :root:not([data-theme="fresh"]) {
+        --hi-color-background: #0F172A;
         --hi-color-surface: #1E293B;
         --hi-color-text-primary: rgba(255, 255, 255, 0.9);
         --hi-color-text-secondary: rgba(255, 255, 255, 0.6);

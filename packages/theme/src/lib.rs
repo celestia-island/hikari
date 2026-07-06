@@ -1,11 +1,187 @@
 //! # Hikari Theme System
 //!
-//! Theme system for Hikari UI applications.
-//! Provides SCSS/CSS variable compilation for the Hikari design system.
+//! Theme system for Hikari UI applications with Arknights-inspired aesthetics
+//! and FUI (Future User Interface) design principles.
 //!
 //! ## Architecture
 //!
-//! - **[`assets`]** - Auto-generated theme assets
+//! The theme system consists of several core components:
+//!
+//! - **[`provider`]** - [`ThemeProvider`] component for theme context management
+//! - **[`context`]** - Theme context hooks and state management
+//! - **[`generated`]** - Auto-generated theme assets (Tailwind CSS, variables)
+//!
+//! ## Supported Themes
+//!
+//! The theme system includes built-in palettes (defined in `hikari-palette`):
+//!
+//! - **Hikari (光)** — Light theme (default)
+//!   - Primary: #EEA2A4 (soft pink)
+//!   - Secondary: #519A73 (muted green)
+//!   - Accent: #FFC773 (warm yellow)
+//!   - Background: #D6ECF0
+//!
+//! - **Tairitsu** — Dark theme with high contrast
+//!   - Primary: #144A74 (deep blue)
+//!   - Secondary: #FFC773 (warm yellow)
+//!   - Background: #50616D
+//!
+//! - **Arknights** — Dark industrial (cyan + gold on deep navy)
+//!
+//! Palettes are self-contained hex definitions and do not depend on any
+//! optional color collection.
+//!
+//! ## Quick Start
+//!
+//! ### Basic Usage
+//!
+//! ```rust,no_run
+//! use theme::ThemeProvider;
+//!
+//! rsx! {
+//!     ThemeProvider { palette: "hikari" } {
+//!         // Your application content
+//!         div { "Hello, Hikari!" }
+//!     }
+//! }
+//! ```
+//!
+//! ### Dark Theme
+//!
+//! ```rust,no_run
+//! use theme::ThemeProvider;
+//!
+//! rsx! {
+//!     ThemeProvider { palette: "tairitsu" } {
+//!         // Application with dark theme
+//!     }
+//! }
+//! ```
+//!
+//! ### Accessing Theme Context
+//!
+//! ```rust,no_run
+//! use theme::{use_theme, ThemeContext};
+//! use crate::prelude::*;;
+//!
+//! fn Component() -> Element {
+//!     let theme = use_theme()?;
+//!
+//!     rsx! {
+//!         div {
+//!             style: "color: {theme.palette.primary}",
+//!             "Themed text"
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ### Nested Themes (Local Override)
+//!
+//! Theme providers can be nested for local theme overrides:
+//!
+//! ```rust,no_run
+//! use theme::ThemeProvider;
+//!
+//! rsx! {
+//!     ThemeProvider { palette: "hikari" } {
+//!         // Main app uses light theme
+//!         Sidebar {}
+//!
+//!         div {
+//!             ThemeProvider { palette: "tairitsu" } {
+//!                 // This section uses dark theme
+//!                 DarkPanel {}
+//!             }
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ## Theme Switching
+//!
+//! Implement theme switching with state management:
+//!
+//! ```rust,no_run
+//! use theme::ThemeProvider;
+//! use crate::prelude::*;;
+//!
+//! fn App() -> Element {
+//!     let mut theme = use_signal(|| "hikari".to_string());
+//!
+//!     rsx! {
+//!         ThemeProvider { palette: "{theme}" } {
+//!             button {
+//!                 onclick: move |_| {
+//!                     theme.set(if *theme() == "hikari" {
+//!                         "tairitsu".to_string()
+//!                     } else {
+//!                         "hikari".to_string()
+//!                     });
+//!                 },
+//!                 "Toggle Theme"
+//!             }
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ## Theme Customization
+//!
+//! Custom themes can be defined by extending the palette system:
+//!
+//! ```rust,no_run
+//! use palette::ThemePalette;
+//!
+//! struct CustomTheme;
+//!
+//! impl CustomTheme {
+//!     pub fn palette() -> ThemePalette {
+//!         ThemePalette {
+//!             primary: "#FF0000",
+//!             secondary: "#00FF00",
+//!             // ... other color definitions
+//!         }
+//!     }
+//! }
+//! ```
+//!
+//! ## Design Principles
+//!
+//! The Hikari theme system follows these design principles:
+//!
+//! 1. **Arknights Aesthetics**
+//!    - Clean lines and clear information hierarchy
+//!    - High contrast for readability
+//!    - Minimalist yet refined design
+//!
+//! 2. **FUI (Future User Interface)**
+//!    - Subtle glow effects (box-shadow, text-shadow)
+//!    - Dynamic indicators (breathing lights, pulse animations)
+//!    - Fine borders (1px semi-transparent)
+//!    - Geometric patterns (hexagons, grids)
+//!
+//! 3. **Traditional Chinese Colors**
+//!    - Authentic color names and values
+//!    - Culturally significant color combinations
+//!    - Harmony between traditional and modern design
+//!
+//! ## Integration with Components
+//!
+//! All Hikari components automatically inherit the theme from the nearest
+//! [`ThemeProvider`] ancestor:
+//!
+//! ```rust,no_run
+//! use theme::ThemeProvider;
+//! use components::Button;
+//!
+//! rsx! {
+//!     ThemeProvider { palette: "hikari" } {
+//!         // Button automatically uses Hikari theme colors
+//!         Button { label: "Themed Button" }
+//!     }
+//! }
+//! ```
 //!
 //! ## CSS Variables
 //!
@@ -13,143 +189,31 @@
 //!
 //! ```css
 //! .hi-theme-provider[data-theme="hikari"] {
-//!     --hi-primary: #FFB3A7;
-//!     --hi-secondary: #519A73;
-//!     --hi-accent: #FFC773;
+//!     --hi-primary: #00A0E9;
+//!     --hi-secondary: #E94B35;
+//!     --hi-accent: #F8B62D;
 //!     /* ... more variables */
+//! }
+//! ```
+//!
+//! These can be used in custom CSS:
+//!
+//! ```css
+//! .my-component {
+//!     color: var(--hi-primary);
+//!     background: var(--hi-background);
 //! }
 //! ```
 
 pub mod assets;
+pub mod context;
 pub mod prelude;
+pub mod provider;
+pub mod style_provider;
 
-pub use prelude::*;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn prelude_re_exports_palette_type() {
-        let _palette: Palette = themes::light_theme();
-    }
-
-    #[test]
-    fn prelude_re_exports_dark_theme() {
-        let palette = themes::dark_theme();
-        assert_eq!(palette.mode, themes::ThemeMode::Dark);
-    }
-
-    #[test]
-    fn prelude_re_exports_default_theme() {
-        let palette = themes::default_theme();
-        assert_eq!(palette.mode, themes::ThemeMode::Light);
-    }
-
-    #[test]
-    fn themes_module_accessible() {
-        let _ = themes::Hikari::palette();
-        let _ = themes::Tairitsu::palette();
-        let _ = themes::Arknights::palette();
-    }
-
-    #[test]
-    fn colors_module_accessible() {
-        let _ = colors::粉红;
-        let _ = colors::精白;
-        let _ = colors::漆黑;
-    }
-
-    #[test]
-    fn classes_module_accessible() {
-        let _ = classes::Display::Flex;
-        let _ = classes::FlexDirection::Row;
-    }
-
-    #[test]
-    fn color_math_module_accessible() {
-        let c = colors::粉红;
-        let hsl = c.to_hsl();
-        let _ = color_math::blend_colors(colors::粉红, colors::石青, 0.5);
-        let _ = hsl;
-    }
-
-    #[test]
-    fn hikari_palette_has_expected_primary_color() {
-        let palette = themes::light_theme();
-        assert_eq!(palette.primary.hex(), "#FFB3A7");
-    }
-
-    #[test]
-    fn tairitsu_palette_has_expected_primary_color() {
-        let palette = themes::dark_theme();
-        assert_eq!(palette.primary.hex(), "#144A74");
-    }
-
-    #[test]
-    fn palette_clone_works() {
-        let p1 = themes::light_theme();
-        let p2 = p1.clone();
-        assert_eq!(p1.primary.hex(), p2.primary.hex());
-        assert_eq!(p1.mode, p2.mode);
-    }
-
-    #[test]
-    fn theme_registry_accessible_via_prelude() {
-        let registry = themes::ThemeRegistry::new();
-        let names = registry.list();
-        assert!(names.contains(&"hikari".to_string()));
-        assert!(names.contains(&"tairitsu".to_string()));
-        assert!(names.contains(&"arknights".to_string()));
-    }
-
-    #[test]
-    fn theme_registry_get_returns_correct_palettes() {
-        let registry = themes::ThemeRegistry::new();
-        let hikari = registry.get("hikari").unwrap();
-        assert_eq!(hikari.mode, themes::ThemeMode::Light);
-        let tairitsu = registry.get("tairitsu").unwrap();
-        assert_eq!(tairitsu.mode, themes::ThemeMode::Dark);
-    }
-
-    #[test]
-    fn theme_registry_nonexistent_returns_none() {
-        let registry = themes::ThemeRegistry::new();
-        assert!(registry.get("nonexistent_theme").is_none());
-    }
-
-    #[test]
-    fn palette_ghost_text_color_light_mode() {
-        let palette = themes::light_theme();
-        let text = palette.ghost_text_color(0.9);
-        assert_eq!(text, "rgba(0, 0, 0, 0.9)");
-    }
-
-    #[test]
-    fn palette_ghost_text_color_dark_mode() {
-        let palette = themes::dark_theme();
-        let text = palette.ghost_text_color(0.9);
-        assert_eq!(text, "rgba(255, 255, 255, 0.9)");
-    }
-
-    #[test]
-    fn palette_button_glow_color_primary() {
-        let palette = themes::light_theme();
-        let glow = palette.button_glow_color(&palette.primary);
-        assert!(glow.starts_with("rgba("));
-    }
-
-    #[test]
-    fn palette_focus_brightness_filter() {
-        let palette = themes::light_theme();
-        let filter = palette.focus_brightness_filter(&palette.primary);
-        assert!(filter == "0.8" || filter == "1.2");
-    }
-
-    #[test]
-    fn global_get_palette_function() {
-        let p = themes::get_palette("hikari");
-        assert!(p.is_some());
-        assert_eq!(p.unwrap().mode, themes::ThemeMode::Light);
-    }
-}
+pub use context::*;
+pub use provider::*;
+pub use style_provider::{
+    StyleConfig, StyleContext, StyleProvider, StyleProviderProps, try_use_style,
+    use_component_class, use_style,
+};

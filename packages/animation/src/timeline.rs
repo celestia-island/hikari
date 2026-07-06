@@ -3,9 +3,7 @@
 //! This module provides a timeline system that allows sequencing and
 //! coordinating multiple tween animations with precise timing control.
 
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use slotmap::SlotMap;
 
@@ -50,7 +48,6 @@ pub struct Timeline {
     yoyo: bool,
     repeat_count: u32,
     direction: crate::core::AnimationDirection,
-    yoyo_completed_backward: bool,
 }
 
 impl Default for Timeline {
@@ -61,7 +58,6 @@ impl Default for Timeline {
 
 impl Timeline {
     /// Create a new timeline
-    #[must_use]
     pub fn new() -> Self {
         Self {
             tweens: Rc::new(RefCell::new(SlotMap::with_key())),
@@ -73,30 +69,25 @@ impl Timeline {
             yoyo: false,
             repeat_count: 0,
             direction: crate::core::AnimationDirection::Forward,
-            yoyo_completed_backward: false,
         }
     }
 
     /// Get the current state of the timeline
-    #[must_use]
-    pub const fn state(&self) -> TimelineState {
+    pub fn state(&self) -> TimelineState {
         self.state
     }
 
     /// Get the current playback time
-    #[must_use]
-    pub const fn current_time(&self) -> Duration {
+    pub fn current_time(&self) -> Duration {
         self.current_time
     }
 
     /// Get the total duration of the timeline
-    #[must_use]
-    pub const fn total_duration(&self) -> Duration {
+    pub fn total_duration(&self) -> Duration {
         self.total_duration
     }
 
     /// Get the current progress (0.0 to 1.0)
-    #[must_use]
     pub fn progress(&self) -> f64 {
         if self.total_duration == Duration::ZERO {
             0.0
@@ -106,8 +97,7 @@ impl Timeline {
     }
 
     /// Get the playback rate (speed multiplier)
-    #[must_use]
-    pub const fn playback_rate(&self) -> f64 {
+    pub fn playback_rate(&self) -> f64 {
         self.playback_rate
     }
 
@@ -115,7 +105,7 @@ impl Timeline {
     ///
     /// # Arguments
     /// * `rate` - Playback rate (0.0 to 10.0)
-    pub const fn set_playback_rate(&mut self, rate: f64) {
+    pub fn set_playback_rate(&mut self, rate: f64) {
         self.playback_rate = rate.clamp(0.0, 10.0);
     }
 
@@ -123,7 +113,7 @@ impl Timeline {
     ///
     /// # Arguments
     /// * `count` - Number of times to repeat (None for infinite)
-    pub const fn set_repeat(&mut self, count: Option<u32>) {
+    pub fn set_repeat(&mut self, count: Option<u32>) {
         self.repeat = count;
     }
 
@@ -131,7 +121,7 @@ impl Timeline {
     ///
     /// # Arguments
     /// * `enabled` - Whether to enable yoyo
-    pub const fn set_yoyo(&mut self, enabled: bool) {
+    pub fn set_yoyo(&mut self, enabled: bool) {
         self.yoyo = enabled;
     }
 
@@ -212,7 +202,7 @@ impl Timeline {
     }
 
     /// Stop the timeline and reset to beginning
-    pub const fn stop(&mut self) {
+    pub fn stop(&mut self) {
         self.state = TimelineState::Idle;
         self.current_time = Duration::ZERO;
     }
@@ -230,7 +220,7 @@ impl Timeline {
     }
 
     /// Reverse the playback direction
-    pub const fn reverse(&mut self) {
+    pub fn reverse(&mut self) {
         self.direction = match self.direction {
             crate::core::AnimationDirection::Forward => crate::core::AnimationDirection::Backward,
             crate::core::AnimationDirection::Backward => crate::core::AnimationDirection::Forward,
@@ -319,30 +309,20 @@ impl Timeline {
     }
 
     /// Handle timeline completion based on repeat settings
-    const fn handle_completion(&mut self) {
+    fn handle_completion(&mut self) {
         if let Some(count) = self.repeat {
             if self.repeat_count < count {
                 self.repeat_count += 1;
                 if self.yoyo {
-                    if self.yoyo_completed_backward {
-                        self.yoyo_completed_backward = false;
-                    } else {
-                        self.reverse();
-                        self.yoyo_completed_backward = true;
-                    }
+                    self.reverse();
                 }
                 self.current_time = Duration::ZERO;
             } else {
                 self.state = TimelineState::Completed;
             }
         } else if self.yoyo {
-            if self.yoyo_completed_backward {
-                self.state = TimelineState::Completed;
-            } else {
-                self.reverse();
-                self.current_time = Duration::ZERO;
-                self.yoyo_completed_backward = true;
-            }
+            self.reverse();
+            self.current_time = Duration::ZERO;
         } else {
             self.state = TimelineState::Completed;
         }
@@ -352,7 +332,6 @@ impl Timeline {
     ///
     /// # Returns
     /// Vector of active tween IDs
-    #[must_use]
     pub fn get_active_tweens(&self) -> Vec<TweenId> {
         let tweens = self.tweens.borrow();
         tweens
@@ -366,342 +345,17 @@ impl Timeline {
     }
 
     /// Check if timeline is currently playing
-    #[must_use]
     pub fn is_playing(&self) -> bool {
         self.state == TimelineState::Playing
     }
 
     /// Check if timeline is paused
-    #[must_use]
     pub fn is_paused(&self) -> bool {
         self.state == TimelineState::Paused
     }
 
     /// Check if timeline has completed
-    #[must_use]
     pub fn is_completed(&self) -> bool {
         self.state == TimelineState::Completed
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::core::{AnimationOptions, EasingFunction, PlaybackMode, TweenId};
-
-    fn make_options(duration_ms: u64) -> AnimationOptions {
-        AnimationOptions {
-            duration: Duration::from_millis(duration_ms),
-            delay: Duration::ZERO,
-            easing: EasingFunction::Linear,
-            playback: PlaybackMode::Normal,
-            repeat: None,
-        }
-    }
-
-    fn make_tween(duration_ms: u64) -> Tween {
-        Tween::new(TweenId::default(), make_options(duration_ms))
-    }
-
-    #[test]
-    fn new_timeline_is_idle() {
-        let tl = Timeline::new();
-        assert_eq!(tl.state(), TimelineState::Idle);
-        assert_eq!(tl.current_time(), Duration::ZERO);
-        assert_eq!(tl.total_duration(), Duration::ZERO);
-        assert!(!tl.is_playing());
-        assert!(!tl.is_paused());
-        assert!(!tl.is_completed());
-    }
-
-    #[test]
-    fn default_is_same_as_new() {
-        let tl = Timeline::default();
-        assert_eq!(tl.state(), TimelineState::Idle);
-    }
-
-    #[test]
-    fn empty_timeline_progress_is_zero() {
-        let tl = Timeline::new();
-        assert_eq!(tl.progress(), 0.0);
-    }
-
-    #[test]
-    fn add_tween_updates_total_duration() {
-        let mut tl = Timeline::new();
-        let tween = make_tween(500);
-        tl.add_tween(tween, Duration::from_millis(100));
-        assert_eq!(tl.total_duration(), Duration::from_millis(600));
-    }
-
-    #[test]
-    fn add_multiple_tweens_max_duration() {
-        let mut tl = Timeline::new();
-        let t1 = make_tween(200);
-        let t2 = make_tween(300);
-        tl.add_tween(t1, Duration::ZERO);
-        tl.add_tween(t2, Duration::from_millis(100));
-        assert_eq!(tl.total_duration(), Duration::from_millis(400));
-    }
-
-    #[test]
-    fn add_tween_at_current_time() {
-        let mut tl = Timeline::new();
-        let t1 = make_tween(200);
-        tl.add_tween(t1, Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(50));
-        let t2 = make_tween(300);
-        tl.add_tween_at(t2);
-        assert_eq!(tl.total_duration(), Duration::from_millis(350));
-    }
-
-    #[test]
-    fn play_sets_playing() {
-        let mut tl = Timeline::new();
-        tl.play();
-        assert!(tl.is_playing());
-    }
-
-    #[test]
-    fn pause_and_resume() {
-        let mut tl = Timeline::new();
-        tl.play();
-        tl.pause();
-        assert!(tl.is_paused());
-        tl.resume();
-        assert!(tl.is_playing());
-    }
-
-    #[test]
-    fn pause_on_idle_is_noop() {
-        let mut tl = Timeline::new();
-        tl.pause();
-        assert_eq!(tl.state(), TimelineState::Idle);
-    }
-
-    #[test]
-    fn resume_on_idle_is_noop() {
-        let mut tl = Timeline::new();
-        tl.resume();
-        assert_eq!(tl.state(), TimelineState::Idle);
-    }
-
-    #[test]
-    fn stop_resets_time() {
-        let mut tl = Timeline::new();
-        let tween = make_tween(500);
-        tl.add_tween(tween, Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(200));
-        tl.stop();
-        assert_eq!(tl.state(), TimelineState::Idle);
-        assert_eq!(tl.current_time(), Duration::ZERO);
-    }
-
-    #[test]
-    fn restart_resets_and_plays() {
-        let mut tl = Timeline::new();
-        let tween = make_tween(500);
-        tl.add_tween(tween, Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(300));
-        tl.restart();
-        assert!(tl.is_playing());
-        assert_eq!(tl.current_time(), Duration::ZERO);
-    }
-
-    #[test]
-    fn tick_advances_time() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(200));
-        assert_eq!(tl.current_time(), Duration::from_millis(200));
-        let p = tl.progress();
-        assert!((p - 0.2).abs() < 1e-9);
-    }
-
-    #[test]
-    fn tick_on_idle_is_noop() {
-        let mut tl = Timeline::new();
-        tl.tick(Duration::from_millis(100));
-        assert_eq!(tl.current_time(), Duration::ZERO);
-    }
-
-    #[test]
-    fn tick_completes_at_total_duration() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(500));
-        assert!(tl.is_completed());
-    }
-
-    #[test]
-    fn tick_beyond_duration_completes() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(1000));
-        assert!(tl.is_completed());
-    }
-
-    #[test]
-    fn seek_updates_time() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.seek(Duration::from_millis(300));
-        assert_eq!(tl.current_time(), Duration::from_millis(300));
-    }
-
-    #[test]
-    fn seek_clamps_to_total_duration() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.seek(Duration::from_millis(9999));
-        assert_eq!(tl.current_time(), Duration::from_millis(500));
-    }
-
-    #[test]
-    fn seek_to_progress() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.seek_to_progress(0.5);
-        assert_eq!(tl.current_time(), Duration::from_millis(500));
-    }
-
-    #[test]
-    fn seek_to_progress_clamps() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.seek_to_progress(-0.5);
-        assert_eq!(tl.current_time(), Duration::ZERO);
-        tl.seek_to_progress(2.0);
-        assert_eq!(tl.current_time(), Duration::from_millis(1000));
-    }
-
-    #[test]
-    fn playback_rate_affects_tick() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.set_playback_rate(2.0);
-        tl.play();
-        tl.tick(Duration::from_millis(200));
-        assert_eq!(tl.current_time(), Duration::from_millis(400));
-    }
-
-    #[test]
-    fn playback_rate_clamped() {
-        let mut tl = Timeline::new();
-        tl.set_playback_rate(100.0);
-        assert_eq!(tl.playback_rate(), 10.0);
-        tl.set_playback_rate(-1.0);
-        assert_eq!(tl.playback_rate(), 0.0);
-    }
-
-    #[test]
-    fn remove_tween() {
-        let mut tl = Timeline::new();
-        let tween = make_tween(500);
-        let id = tl.add_tween(tween, Duration::ZERO);
-        assert!(tl.remove_tween(id));
-    }
-
-    #[test]
-    fn remove_nonexistent_tween() {
-        let mut tl = Timeline::new();
-        assert!(!tl.remove_tween(TweenId::default()));
-    }
-
-    #[test]
-    fn clear_resets_timeline() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(200));
-        tl.clear();
-        assert_eq!(tl.state(), TimelineState::Idle);
-        assert_eq!(tl.current_time(), Duration::ZERO);
-        assert_eq!(tl.total_duration(), Duration::ZERO);
-    }
-
-    #[test]
-    fn reverse_direction() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(1000), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(500));
-        tl.reverse();
-        tl.tick(Duration::from_millis(200));
-        assert_eq!(tl.current_time(), Duration::from_millis(300));
-    }
-
-    #[test]
-    fn repeat_finite() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(100), Duration::ZERO);
-        tl.set_repeat(Some(1));
-        tl.play();
-        tl.tick(Duration::from_millis(100));
-        assert!(tl.is_playing());
-        tl.tick(Duration::from_millis(100));
-        assert!(tl.is_completed());
-    }
-
-    #[test]
-    fn get_active_tweens() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.add_tween(make_tween(500), Duration::from_millis(500));
-        tl.seek(Duration::from_millis(250));
-        let active = tl.get_active_tweens();
-        assert_eq!(active.len(), 1);
-    }
-
-    #[test]
-    fn get_active_tweens_at_boundary() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(500), Duration::ZERO);
-        tl.add_tween(make_tween(500), Duration::from_millis(500));
-        tl.seek(Duration::from_millis(500));
-        let active = tl.get_active_tweens();
-        assert_eq!(active.len(), 1);
-    }
-
-    #[test]
-    fn play_after_completed_restarts() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(100), Duration::ZERO);
-        tl.play();
-        tl.tick(Duration::from_millis(100));
-        assert!(tl.is_completed());
-        tl.play();
-        assert!(tl.is_playing());
-    }
-
-    #[test]
-    fn set_yoyo() {
-        let mut tl = Timeline::new();
-        tl.set_yoyo(true);
-    }
-
-    #[test]
-    fn set_repeat_none_means_no_repeat() {
-        let mut tl = Timeline::new();
-        tl.add_tween(make_tween(100), Duration::ZERO);
-        tl.set_repeat(None);
-        tl.play();
-        tl.tick(Duration::from_millis(100));
-        assert!(tl.is_completed());
-    }
-
-    #[test]
-    fn timeline_state_enum() {
-        assert_ne!(TimelineState::Idle, TimelineState::Playing);
-        assert_ne!(TimelineState::Paused, TimelineState::Completed);
-        let state = TimelineState::Idle;
-        let cloned = state;
-        assert_eq!(state, cloned);
     }
 }

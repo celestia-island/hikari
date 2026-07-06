@@ -13,6 +13,7 @@ use anyhow::Result;
 
 use thirtyfour::WebDriver;
 
+#[allow(async_fn_in_trait)]
 pub trait Test {
     fn name(&self) -> &str;
     fn setup(&self) -> Result<()>;

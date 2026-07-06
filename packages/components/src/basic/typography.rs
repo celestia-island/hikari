@@ -68,24 +68,24 @@ pub fn Typography(props: TypographyProps) -> Element {
     }
 
     match tag {
-        "code" => VNode::Element(
+        "code" => VNode::Element(Box::new(
             VElement::new("code")
                 .class(classes)
                 .style(props.style)
                 .child(props.children),
-        ),
-        "div" => VNode::Element(
+        )),
+        "div" => VNode::Element(Box::new(
             VElement::new("div")
                 .class(classes)
                 .style(props.style)
                 .child(props.children),
-        ),
-        _ => VNode::Element(
+        )),
+        _ => VNode::Element(Box::new(
             VElement::new("span")
                 .class(classes)
                 .style(props.style)
                 .child(props.children),
-        ),
+        )),
     }
 }
 

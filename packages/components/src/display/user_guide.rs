@@ -1,18 +1,12 @@
 // packages/components/src/display/user_guide.rs
-// UserGuide component
+// UserGuide component with Arknights + FUI styling
 
-use hikari_icons::{Icon, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, TypedClass, UserGuideClass};
-use tairitsu_vdom::events::MouseEvent;
+use hikari_icons::{Icon, IconProps, MdiIcon};
+use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
 
-use crate::basic::IconButton;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::anim_helpers::run_ease_out;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct UserGuideComponent;
-
-const USER_GUIDE_ANIM_MS: f64 = 300.0;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct GuideStep {
@@ -42,7 +36,6 @@ pub enum GuidePlacement {
     Right,
 }
 
-/// Props for the UserGuide component.
 #[define_props]
 pub struct UserGuideProps {
     pub steps: Vec<GuideStep>,
@@ -69,7 +62,7 @@ pub struct UserGuideProps {
     pub on_skip: Option<EventHandler<()>>,
 }
 
-/// A step-by-step user guide overlay with navigation, progress dots, and skip support.
+///
 #[component]
 pub fn UserGuide(props: UserGuideProps) -> Element {
     if !props.visible || props.steps.is_empty() {
@@ -91,29 +84,15 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(UserGuideClass::Container)
-        .add_typed(placement_class)
-        .add(&props.class)
+        .add(UserGuideClass::Container)
+        .add(placement_class)
+        .add_raw(&props.class)
         .build();
-
-    let progress_signal = use_signal(|| 0.0_f64);
-
-    {
-        let sig = progress_signal.clone();
-        use_effect(move || {
-            run_ease_out(USER_GUIDE_ANIM_MS, 3, sig.clone());
-        });
-    }
-
-    let progress = progress_signal.get();
-    let guide_opacity = progress;
-    let guide_translate_y = 8.0 * (1.0 - progress);
-    let container_style =
-        format!("opacity: {guide_opacity:.2}; transform: translateY({guide_translate_y:.1}px);");
 
     let handle_next = {
         let on_step_change = props.on_step_change.clone();
         let on_finish = props.on_finish.clone();
+        let _total = total_steps;
         move |_| {
             if is_last_step {
                 if let Some(handler) = on_finish.as_ref() {
@@ -127,11 +106,11 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     let handle_prev = {
         let on_step_change = props.on_step_change.clone();
-        EventHandler::new(move |_: MouseEvent| {
+        move |_| {
             if !is_first_step && let Some(handler) = on_step_change.as_ref() {
                 handler.call(current_step - 1);
             }
-        })
+        }
     };
 
     let handle_skip = {
@@ -147,8 +126,8 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
     let counter_text = format!("{} / {}", current_step + 1, total_steps);
     let next_btn_class = format!(
         "{} {}",
-        UserGuideClass::NavButton.class_name(),
-        UserGuideClass::PrimaryButton.class_name()
+        UserGuideClass::NavButton.as_class(),
+        UserGuideClass::PrimaryButton.as_class()
     );
 
     // Pre-build progress dots as Vec<VNode>
@@ -157,11 +136,11 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
             let dot_class = if i == current_step {
                 format!(
                     "{} {}",
-                    UserGuideClass::ProgressDot.class_name(),
-                    UserGuideClass::ProgressDotActive.class_name()
+                    UserGuideClass::ProgressDot.as_class(),
+                    UserGuideClass::ProgressDotActive.as_class()
                 )
             } else {
-                UserGuideClass::ProgressDot.class_name().to_string()
+                UserGuideClass::ProgressDot.as_class()
             };
             rsx! {
                 div { class: dot_class }
@@ -171,54 +150,53 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 
     // Build overlay and guide separately, then combine as fragment
     let overlay = rsx! {
-        div { class: {UserGuideClass::Overlay.class_name()} }
+        div { class: {UserGuideClass::Overlay.as_class()} }
     };
 
     let progress_section = if props.show_progress && total_steps > 1 {
         rsx! {
-            div { class: {UserGuideClass::Progress.class_name()}, {VNode::Fragment(progress_dots)} }
+            div { class: {UserGuideClass::Progress.as_class()}, {VNode::Fragment(progress_dots)} }
         }
     } else {
         VNode::empty()
     };
 
     let guide_tooltip = rsx! {
-        div { class: container_classes, style: container_style,
+        div { class: container_classes,
             // Arrow
-            div { class: {UserGuideClass::Arrow.class_name()} }
+            div { class: {UserGuideClass::Arrow.as_class()} }
 
             // Content
-            div { class: {UserGuideClass::Content.class_name()},
+            div { class: {UserGuideClass::Content.as_class()},
                 // Header with step counter
-                div { class: {UserGuideClass::Header.class_name()},
-                    span { class: {UserGuideClass::Title.class_name()}, "{step.title.clone()}" }
+                div { class: {UserGuideClass::Header.as_class()},
+                    span { class: {UserGuideClass::Title.as_class()}, "{step.title.clone()}" }
                     if props.show_progress {
-                        span { class: {UserGuideClass::Counter.class_name()}, "{counter_text.clone()}" }
+                        span { class: {UserGuideClass::Counter.as_class()}, "{counter_text.clone()}" }
                     }
                 }
 
                 // Description
-                div { class: {UserGuideClass::Description.class_name()}, "{step.description.clone()}" }
+                div { class: {UserGuideClass::Description.as_class()}, "{step.description.clone()}" }
 
                 // Footer with controls
-                div { class: {UserGuideClass::Footer.class_name()},
+                div { class: {UserGuideClass::Footer.as_class()},
                     // Skip button
                     if props.skippable {
                         button {
-                            class: {UserGuideClass::SkipButton.class_name()},
+                            class: {UserGuideClass::SkipButton.as_class()},
                             onclick: handle_skip,
                             "Skip"
                         }
                     }
 
                     // Navigation
-                    div { class: {UserGuideClass::Navigation.class_name()},
+                    div { class: {UserGuideClass::Navigation.as_class()},
                         if !is_first_step {
-                            IconButton {
-                                icon: MdiIcon::ChevronLeft,
-                                size: crate::basic::IconButtonSize::Small,
-                                variant: crate::basic::IconButtonVariant::Ghost,
-                                onclick: Some(handle_prev),
+                            button {
+                                class: {UserGuideClass::NavButton.as_class()},
+                                onclick: handle_prev,
+                                Icon { icon: MdiIcon::ChevronLeft, size: 18 }
                             }
                         }
 
@@ -265,11 +243,23 @@ impl StyledComponent for UserGuideComponent {
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     max-width: 320px;
+    animation: hi-user-guide-fade-in 0.3s ease;
 }
 
 [data-theme="dark"] .hi-user-guide-container {
     background-color: var(--hi-surface);
     border-color: var(--hi-color-border);
+}
+
+@keyframes hi-user-guide-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hi-user-guide-arrow {

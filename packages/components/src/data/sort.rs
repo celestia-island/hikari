@@ -1,12 +1,10 @@
 // hi-components/src/data/sort.rs
-// Sort component
+// Sort component with Arknights + FUI styling
 
-use hikari_palette::classes::SortClass;
-use tairitsu_style::{ClassesBuilder, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, SortClass, UtilityClass};
 
 pub use super::column::ColumnDef;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SortComponent;
 
@@ -19,7 +17,6 @@ pub enum SortDirection {
 }
 
 impl SortDirection {
-    #[must_use]
     pub fn toggle(&self) -> Self {
         match self {
             SortDirection::None => SortDirection::Ascending,
@@ -28,7 +25,6 @@ impl SortDirection {
         }
     }
 
-    #[must_use]
     pub fn icon(&self) -> &'static str {
         match self {
             SortDirection::None => "⇅",
@@ -37,7 +33,6 @@ impl SortDirection {
         }
     }
 
-    #[must_use]
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",
@@ -89,8 +84,8 @@ pub fn Sort(props: SortProps) -> Element {
     let has_active_sort = props.direction != SortDirection::None;
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(SortClass::Sort)
-        .add(&props.class)
+        .add(SortClass::Sort)
+        .add_raw(&props.class)
         .build();
 
     // Build sort buttons using VElement directly
@@ -116,14 +111,14 @@ pub fn Sort(props: SortProps) -> Element {
             let col_key = column_key.clone();
 
             let button_classes = ClassesBuilder::new()
-                .add_typed(SortClass::SortButton)
-                .add_typed_if(SortClass::SortActive, is_active)
+                .add(SortClass::SortButton)
+                .add_if(SortClass::SortActive, || is_active)
                 .build();
 
-            let title_class = SortClass::SortTitle.class_name();
-            let indicator_class = SortClass::SortIndicator.class_name();
+            let title_class = SortClass::SortTitle.as_class();
+            let indicator_class = SortClass::SortIndicator.as_class();
 
-            VNode::Element(
+            VNode::Element(Box::new(
                 VElement::new("button")
                     .class(button_classes)
                     .on_event("click", move |_e: Box<dyn EventData>| {
@@ -140,29 +135,29 @@ pub fn Sort(props: SortProps) -> Element {
                             });
                         }
                     })
-                    .child(VNode::Element(
+                    .child(VNode::Element(Box::new(
                         VElement::new("span")
                             .class(title_class)
                             .child(VNode::Text(VText::new(&column_title))),
-                    ))
-                    .child(VNode::Element(
+                    )))
+                    .child(VNode::Element(Box::new(
                         VElement::new("span")
                             .class(indicator_class)
                             .child(VNode::Text(VText::new(&direction_icon))),
-                    )),
-            )
+                    ))),
+            ))
         })
         .collect();
 
     // Add clear button if there's an active sort
     if has_active_sort {
-        let clear_class = SortClass::SortClear.class_name();
-        let text_class = SortClass::SortClearText.class_name();
-        let icon_class = SortClass::SortClearIcon.class_name();
+        let clear_class = SortClass::SortClear.as_class();
+        let text_class = SortClass::SortClearText.as_class();
+        let icon_class = SortClass::SortClearIcon.as_class();
 
         let sort_handler = on_sort_handler.clone();
 
-        let clear_button = VNode::Element(
+        let clear_button = VNode::Element(Box::new(
             VElement::new("button")
                 .class(clear_class)
                 .on_event("click", move |_e: Box<dyn EventData>| {
@@ -173,12 +168,12 @@ pub fn Sort(props: SortProps) -> Element {
                         });
                     }
                 })
-                .child(VNode::Element(
+                .child(VNode::Element(Box::new(
                     VElement::new("span")
                         .class(text_class)
                         .child(VNode::Text(VText::new("Clear"))),
-                ))
-                .child(VNode::Element(
+                )))
+                .child(VNode::Element(Box::new(
                     VElement::new("svg")
                         .attr("xmlns", "http://www.w3.org/2000/svg")
                         .class(icon_class)
@@ -186,22 +181,22 @@ pub fn Sort(props: SortProps) -> Element {
                         .attr("viewBox", "0 0 24 24")
                         .attr("stroke-width", "2")
                         .attr("stroke", "currentColor")
-                        .child(VNode::Element(
+                        .child(VNode::Element(Box::new(
                             VElement::new("path")
                                 .attr("stroke-linecap", "round")
                                 .attr("stroke-linejoin", "round")
                                 .attr("d", "M6 18L18 6M6 6l12 12"),
-                        )),
-                )),
-        );
+                        ))),
+                ))),
+        ));
         children.push(clear_button);
     }
 
-    VNode::Element(
+    VNode::Element(Box::new(
         VElement::new("div")
             .class(container_classes)
             .children(children),
-    )
+    ))
 }
 
 impl StyledComponent for SortComponent {

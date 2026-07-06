@@ -5,8 +5,7 @@
 #[cfg(test)]
 mod tests {
 
-    use std::collections::HashMap;
-    use std::sync::OnceLock;
+    use std::{collections::HashMap, sync::OnceLock};
 
     /// Test icon name validation (kebab-case)
     #[test]
@@ -43,12 +42,12 @@ mod tests {
 
         // Test valid names should pass
         for name in valid_names {
-            assert!(is_safe_icon_name(name), "{name} should be valid");
+            assert!(is_safe_icon_name(name), "{} should be valid", name);
         }
 
         // Test invalid names should fail
         for name in invalid_names {
-            assert!(!is_safe_icon_name(name), "{name} should be invalid");
+            assert!(!is_safe_icon_name(name), "{} should be invalid", name);
         }
 
         // Test boundary conditions
@@ -101,12 +100,12 @@ mod tests {
 
         // Test valid colors should pass
         for color in valid_colors {
-            assert!(is_safe_color(color), "{color} should be valid");
+            assert!(is_safe_color(color), "{} should be valid", color);
         }
 
         // Test invalid colors should fail
         for color in invalid_colors {
-            assert!(!is_safe_color(color), "{color} should be invalid");
+            assert!(!is_safe_color(color), "{} should be invalid", color);
         }
     }
 

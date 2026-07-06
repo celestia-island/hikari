@@ -1,7 +1,8 @@
 services:
+  # Hikari Website
   website:
     build:
-      context: ..
+      context: /mnt/sdb1/hikari
       dockerfile: docker/website.Dockerfile
     container_name: hikari-website
     ports:
@@ -9,10 +10,11 @@ services:
     environment:
       - RUST_BACKTRACE=1
       - RUST_LOG=info
-    command: python3 -m http.server 3000 --directory /hikari/public
+    command: cargo run --bin website --features server
     networks:
       - hikari-network
 
+  # Chrome Standalone (for E2E testing)
   chrome:
     image: selenium/standalone-chrome:latest
     container_name: hikari-chrome

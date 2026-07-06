@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Menu Component
@@ -770,29 +770,12 @@ aside .hi-menu {
 }
 
 // ============================================
-// Hover state
-// NOTE: Sidebar menu items use GlowWrapper for spotlight effect,
-//       so hover background is intentionally subtle here.
-//       The GlowWrapper provides the visual hover feedback instead.
-// ============================================
-
-.hi-menu-item:hover {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: transparent;
-  color: var(--hi-color-text-primary);
-
-  .hi-menu-item-icon {
-    color: var(--hi-color-text-secondary);
-  }
-}
-
-// ============================================
 // Focus state
 // ============================================
 
 .hi-menu-item:focus-visible {
   outline: none;
-  background: var(--hi-button-primary-light, #FFE4E9);
+  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
   border-color: var(--hi-primary);
 }
 
@@ -1048,9 +1031,9 @@ aside .hi-menu {
 // ============================================
 
 .hi-menu-list .hi-menu-item.hi-menu-item-active {
-  background: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
+  background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
   border-color: var(--hi-primary);
-  color: var(--hi-badge-text, #FFFFFF);
+  color: var(--hi-color-text-primary);
 
   .hi-menu-item-icon {
     color: var(--hi-color-primary);

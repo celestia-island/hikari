@@ -3,8 +3,7 @@
 
 use hikari_palette::classes::{ClassesBuilder, ContainerClass};
 
-use crate::prelude::*;
-use crate::theme::use_layout_direction;
+use crate::{prelude::*, theme::use_layout_direction};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ContainerSize {
@@ -15,7 +14,6 @@ pub enum ContainerSize {
     Xl,
 }
 
-/// Props for the [`Container`] component.
 #[define_props]
 pub struct ContainerProps {
     #[default]
@@ -38,7 +36,6 @@ pub struct ContainerProps {
 }
 
 impl ContainerSize {
-    #[must_use]
     pub fn max_width(&self) -> &'static str {
         match self {
             ContainerSize::Small => "640px",
@@ -49,7 +46,9 @@ impl ContainerSize {
     }
 }
 
-/// A responsive container that wraps content with a configurable max-width and optional centering.
+///
+///
+///
 #[component]
 pub fn Container(props: ContainerProps) -> Element {
     let layout_direction = use_layout_direction();
@@ -63,15 +62,15 @@ pub fn Container(props: ContainerProps) -> Element {
     };
 
     let mut builder = ClassesBuilder::new()
-        .add_typed(ContainerClass::Container)
-        .add_typed(size_class)
-        .add_typed_if(ContainerClass::Centered, props.center);
+        .add(ContainerClass::Container)
+        .add(size_class)
+        .add_if(ContainerClass::Centered, || props.center);
 
     if is_rtl {
-        builder = builder.add_typed(ContainerClass::Rtl);
+        builder = builder.add_raw("hi-container-rtl");
     }
 
-    let container_classes = builder.add(&props.class).build();
+    let container_classes = builder.add_raw(&props.class).build();
 
     let max_width = props
         .max_width

@@ -1,17 +1,14 @@
 // packages/components/src/production/rich_text_editor.rs
-// Rich text editor component
+// Rich text editor component with Arknights + FUI styling
 //
-// Platform API: Uses tairitsu WIT bindings for contenteditable, execCommand,
-// and inner HTML retrieval. Stubs are provided in platform/wit.rs for
-// environments without WIT support.
+// NOTE: This is a basic implementation that provides a styled container
+// with toolbar UI. For full rich text editing functionality with
+// contenteditable, execCommand support, etc., consider integrating
+// with libraries like ProseMirror, Tiptap, or Quill.
 
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
-use tairitsu_vdom::events::InputEvent;
 
-use crate::platform;
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::sanitize_html;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct RichTextEditorComponent;
 
@@ -33,8 +30,6 @@ pub struct RichTextEditorProps {
 
     #[default("".to_string())]
     pub style: String,
-
-    pub on_content_change: Option<EventHandler<String>>,
 }
 
 #[component]
@@ -42,38 +37,22 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
     let content = use_signal(|| props.content.clone());
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(RichTextEditorClass::Container)
-        .add(&props.class)
+        .add(RichTextEditorClass::Container)
+        .add_raw(&props.class)
         .build();
 
     let toolbar_classes = ClassesBuilder::new()
-        .add_typed(RichTextEditorClass::Toolbar)
+        .add(RichTextEditorClass::Toolbar)
         .build();
 
     let editor_classes = ClassesBuilder::new()
-        .add_typed(RichTextEditorClass::Editor)
+        .add(RichTextEditorClass::Editor)
         .build();
 
     let height_style = if let Some(ref h) = props.height {
         format!("height: {}; {}", h, props.style)
     } else {
         props.style.clone()
-    };
-
-    let exec_format = move |command: &str| {
-        let _ = platform::exec_command(command, None);
-    };
-
-    let on_change = {
-        let content = content.clone();
-        let on_content_change = props.on_content_change.clone();
-        move |_: InputEvent| {
-            let html = platform::get_inner_html(0);
-            content.set(html.clone());
-            if let Some(handler) = on_content_change.as_ref() {
-                handler.call(html);
-            }
-        }
     };
 
     rsx! {
@@ -87,66 +66,24 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("bold"),
                         "B"
                     }
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("italic"),
-                        style: "font-style: italic;",
                         "I"
                     }
 
                     button {
                         class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("underline"),
-                        style: "text-decoration: underline;",
                         "U"
-                    }
-
-                    div { class: "hi-editor-divider" }
-
-                    button {
-                        class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("justifyLeft"),
-                        "⫷"
-                    }
-
-                    button {
-                        class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("justifyCenter"),
-                        "⫿"
-                    }
-
-                    button {
-                        class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("justifyRight"),
-                        "⫸"
-                    }
-
-                    div { class: "hi-editor-divider" }
-
-                    button {
-                        class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("insertUnorderedList"),
-                        "•"
-                    }
-
-                    button {
-                        class: "hi-rich-text-editor-toolbar-button",
-                        onclick: move |_| exec_format("insertOrderedList"),
-                        "1."
                     }
                 }
             }
 
             div {
                 class: editor_classes,
-                contenteditable: "true",
-                "data-placeholder": "{props.placeholder}",
-                dangerous_inner_html: sanitize_html(&content.get()),
-                oninput: on_change,
+                "{content.get()}"
             }
         }
     }
@@ -164,7 +101,7 @@ impl StyledComponent for RichTextEditorComponent {
 
 .hi-rich-text-editor:focus-within {
     border-color: var(--hi-color-primary);
-    box-shadow: 0 0 2px var(--hi-glow-button-primary);
+    box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
 
 .hi-rich-text-editor-toolbar {
@@ -196,32 +133,16 @@ impl StyledComponent for RichTextEditorComponent {
     color: var(--hi-color-primary);
 }
 
-.hi-editor-divider {
-    width: 1px;
-    height: 20px;
-    background: var(--hi-border);
-    margin: 0 4px;
-}
-
-[data-theme="dark"] .hi-editor-divider {
-    background: var(--hi-border);
-}
-
 .hi-rich-text-editor-editor {
     padding: 1rem;
     min-height: 200px;
     outline: none;
     color: var(--hi-color-text-primary);
-    line-height: 1.6;
 }
 
 .hi-rich-text-editor-editor:empty::before {
     content: attr(data-placeholder);
     color: var(--hi-color-text-tertiary);
-}
-
-.hi-rich-text-editor-editor:focus {
-    outline: none;
 }
 
 .hi-rich-text-editor-editor p {

@@ -1,7 +1,14 @@
+// This test depends on the optional Chinese color collection, selected via
+// [workspace.metadata.hikari].collections in the workspace root.
+#![cfg(hikari_collection_chinese)]
+
+use hikari_palette::collections::chinese::*;
+
 #[cfg(test)]
 mod tests {
 
-    use hikari_palette::colors::靛蓝;
+    use super::*;
+    use hikari_palette::*;
 
     #[test]
     fn test_indigo_is_dark() {
@@ -12,11 +19,11 @@ mod tests {
         println!("靛蓝 is_dark_for_glow: {}", indigo.is_dark_for_glow());
 
         let (r, g, b, a) = indigo.glow_contrast_dynamic();
-        println!("Glow RGB: ({r}, {g}, {b})");
-        println!("Glow alpha: {a}");
+        println!("Glow RGB: ({}, {}, {})", r, g, b);
+        println!("Glow alpha: {}", a);
 
         let glow = indigo.glow_contrast_dynamic_rgba();
-        println!("Glow color: {glow}");
+        println!("Glow color: {}", glow);
 
         // 靛蓝的亮度是 0.25 < 0.4，应该返回白色 glow
         assert!(indigo.brightness() < 0.4, "靛蓝应该是深色");

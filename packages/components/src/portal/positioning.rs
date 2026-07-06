@@ -3,7 +3,6 @@
 
 use crate::portal::types::{PortalPositionStrategy, TriggerPlacement};
 
-#[must_use]
 pub fn calculate_position(
     strategy: &PortalPositionStrategy,
     viewport_width: f64,
@@ -106,11 +105,17 @@ mod tests {
         let tolerance = 0.01;
         assert!(
             (x - expected_x).abs() < tolerance,
-            "{description}: x mismatch: expected {expected_x}, got {x}"
+            "{}: x mismatch: expected {}, got {}",
+            description,
+            expected_x,
+            x
         );
         assert!(
             (y - expected_y).abs() < tolerance,
-            "{description}: y mismatch: expected {expected_y}, got {y}"
+            "{}: y mismatch: expected {}, got {}",
+            description,
+            expected_y,
+            y
         );
     }
 

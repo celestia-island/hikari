@@ -1,10 +1,10 @@
 // node_graph/registry.rs
 // Node registry for plugin-based node system
 
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-
-use anyhow::{Result, bail};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use crate::node_graph::node::{NodePlugin, NodeType};
 
@@ -29,7 +29,6 @@ impl Default for NodeRegistry {
 }
 
 impl NodeRegistry {
-    #[must_use]
     pub fn new() -> Self {
         Self {
             entries: RwLock::new(HashMap::new()),
@@ -37,12 +36,12 @@ impl NodeRegistry {
     }
 
     /// Register a node plugin
-    pub fn register(&self, entry: RegistryEntry) -> Result<()> {
-        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
+    pub fn register(&self, entry: RegistryEntry) -> Result<(), String> {
+        let mut entries = self.entries.write().unwrap();
         let node_id = entry.node_type.id();
 
         if entries.contains_key(&node_id) {
-            bail!("Node type {node_id} already registered");
+            return Err(format!("Node type {} already registered", node_id));
         }
 
         entries.insert(node_id, entry);
@@ -51,19 +50,19 @@ impl NodeRegistry {
 
     /// Get node plugin by type
     pub fn get(&self, node_type: &str) -> Option<RegistryEntry> {
-        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
+        let entries = self.entries.read().unwrap();
         entries.get(node_type).cloned()
     }
 
     /// List all registered nodes
     pub fn list_all(&self) -> Vec<RegistryEntry> {
-        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
+        let entries = self.entries.read().unwrap();
         entries.values().cloned().collect()
     }
 
     /// List nodes by category
     pub fn list_by_category(&self, category: &str) -> Vec<RegistryEntry> {
-        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
+        let entries = self.entries.read().unwrap();
         entries
             .values()
             .filter(|e| e.category == category)
@@ -72,12 +71,13 @@ impl NodeRegistry {
     }
 }
 
-use std::sync::LazyLock;
-
-static GLOBAL_NODE_REGISTRY: LazyLock<NodeRegistry> = LazyLock::new(NodeRegistry::new);
+lazy_static::lazy_static! {
+    /// Global node registry instance
+    pub static ref GLOBAL_NODE_REGISTRY: NodeRegistry = NodeRegistry::new();
+}
 
 /// Register a node plugin globally
-pub fn register_node_plugin(entry: RegistryEntry) -> Result<()> {
+pub fn register_node_plugin(entry: RegistryEntry) -> Result<(), String> {
     GLOBAL_NODE_REGISTRY.register(entry)
 }
 
@@ -142,12 +142,7 @@ mod tests {
 
         let result2 = registry.register(entry);
         assert!(result2.is_err());
-        assert!(
-            result2
-                .unwrap_err()
-                .to_string()
-                .contains("already registered")
-        );
+        assert!(result2.unwrap_err().contains("already registered"));
         assert_eq!(registry.list_all().len(), 1);
     }
 
@@ -251,13 +246,7 @@ mod tests {
         };
 
         let result = register_node_plugin(entry);
-        assert!(
-            result.is_ok()
-                || result
-                    .unwrap_err()
-                    .to_string()
-                    .contains("already registered")
-        );
+        assert!(result.is_ok() || result.unwrap_err().contains("already registered"));
     }
 
     #[test]

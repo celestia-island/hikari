@@ -1,13 +1,13 @@
 // hikari-extra-components/styles/components/zoom_controls.scss
-// Zoom controls styles with 
+// Zoom controls styles with Arknights design + FUI glow
 
-@use '../../../theme/styles/mixins.scss' as *;
+@use '../../../hikari-theme/styles/mixins.scss' as *;
 
 // ============================================
 // Zoom Controls Container
 // ============================================
 
-.hi-zoom-controls {
+.hikari-zoom-controls {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-xs;
@@ -19,7 +19,7 @@
     backdrop-filter: blur(8px);
     transition: all $hikari-transition-base;
 
-    // glow on hover
+    // FUI glow on hover
     &:hover {
         border-color: var(--hi-color-primary);
         box-shadow:
@@ -28,7 +28,7 @@
     }
 
     // Compact variant
-    &.hi-zoom-compact {
+    &.hikari-zoom-compact {
         padding: $hikari-spacing-xs;
         gap: 0;
     }
@@ -38,7 +38,7 @@
 // Zoom Buttons
 // ============================================
 
-.hi-zoom-button {
+.hikari-zoom-button {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -53,7 +53,7 @@
     transition: all $hikari-transition-fast;
     user-select: none;
 
-    // glow effect on hover
+    // FUI glow effect on hover
     &:hover:not(:disabled) {
         background-color: rgba(59, 130, 246, 0.1);
         border-color: var(--hi-color-primary);
@@ -74,19 +74,19 @@
     }
 
     // Active state
-    &.hi-zoom-button-active {
+    &.hikari-zoom-button-active {
         background-color: var(--hi-color-primary);
         border-color: var(--hi-color-primary);
         color: var(--hi-color-text-primary);
 
-        // Enhanced glow
+        // Enhanced FUI glow
         box-shadow:
             0 0 20px rgba(59, 130, 246, 0.5),
             inset 0 0 10px rgba(255, 255, 255, 0.1);
     }
 }
 
-.hi-zoom-button-icon {
+.hikari-zoom-button-icon {
     width: 18px;
     height: 18px;
     stroke-width: 2;
@@ -96,7 +96,7 @@
 // Zoom Display
 // ============================================
 
-.hi-zoom-display {
+.hikari-zoom-display {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -112,8 +112,8 @@
     user-select: none;
     transition: all $hikari-transition-fast;
 
-    // glow
-    &.hi-zoom-display-active {
+    // FUI glow
+    &.hikari-zoom-display-active {
         border-color: var(--hi-color-accent);
         color: var(--hi-color-accent);
         box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
@@ -124,13 +124,13 @@
 // Zoom Slider
 // ============================================
 
-.hi-zoom-slider-container {
+.hikari-zoom-slider-container {
     display: flex;
     align-items: center;
     padding: 0 $hikari-spacing-sm;
 }
 
-.hi-zoom-slider {
+.hikari-zoom-slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100px;
@@ -174,7 +174,7 @@
         cursor: grab;
         transition: all $hikari-transition-fast;
 
-        // glow
+        // FUI glow
         box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
 
         &:hover {
@@ -231,14 +231,14 @@
 // Zoom Presets
 // ============================================
 
-.hi-zoom-presets {
+.hikari-zoom-presets {
     display: flex;
     gap: $hikari-spacing-xs;
     padding-left: $hikari-spacing-sm;
     border-left: 1px solid var(--hi-color-border);
 }
 
-.hi-zoom-preset {
+.hikari-zoom-preset {
     padding: $hikari-spacing-xs $hikari-spacing-sm;
     background-color: transparent;
     border: 1px solid var(--hi-color-border);
@@ -261,12 +261,12 @@
         transform: scale(0.95);
     }
 
-    &.hi-zoom-preset-active {
+    &.hikari-zoom-preset-active {
         background-color: var(--hi-color-primary);
         border-color: var(--hi-color-primary);
         color: var(--hi-color-text-primary);
 
-        // glow
+        // FUI glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     }
 }
@@ -276,35 +276,35 @@
 // ============================================
 
 // Top-left
-.hi-zoom-controls-top-left {
+.hikari-zoom-controls-top-left {
     position: absolute;
     top: $hikari-spacing-md;
     left: $hikari-spacing-md;
 }
 
 // Top-right
-.hi-zoom-controls-top-right {
+.hikari-zoom-controls-top-right {
     position: absolute;
     top: $hikari-spacing-md;
     right: $hikari-spacing-md;
 }
 
 // Bottom-left
-.hi-zoom-controls-bottom-left {
+.hikari-zoom-controls-bottom-left {
     position: absolute;
     bottom: $hikari-spacing-md;
     left: $hikari-spacing-md;
 }
 
 // Bottom-right
-.hi-zoom-controls-bottom-right {
+.hikari-zoom-controls-bottom-right {
     position: absolute;
     bottom: $hikari-spacing-md;
     right: $hikari-spacing-md;
 }
 
 // Center
-.hi-zoom-controls-center {
+.hikari-zoom-controls-center {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -315,46 +315,46 @@
 // Size Variants
 // ============================================
 
-.hi-zoom-controls-sm {
-    .hi-zoom-button {
+.hikari-zoom-controls-sm {
+    .hikari-zoom-button {
         width: 28px;
         height: 28px;
     }
 
-    .hi-zoom-button-icon {
+    .hikari-zoom-button-icon {
         width: 14px;
         height: 14px;
     }
 
-    .hi-zoom-display {
+    .hikari-zoom-display {
         min-width: 50px;
         font-size: $hikari-font-size-xs;
         padding: $hikari-spacing-xs;
     }
 
-    .hi-zoom-slider {
+    .hikari-zoom-slider {
         width: 80px;
     }
 }
 
-.hi-zoom-controls-lg {
-    .hi-zoom-button {
+.hikari-zoom-controls-lg {
+    .hikari-zoom-button {
         width: 44px;
         height: 44px;
     }
 
-    .hi-zoom-button-icon {
+    .hikari-zoom-button-icon {
         width: 22px;
         height: 22px;
     }
 
-    .hi-zoom-display {
+    .hikari-zoom-display {
         min-width: 70px;
         font-size: $hikari-font-size-base;
         padding: $hikari-spacing-sm;
     }
 
-    .hi-zoom-slider {
+    .hikari-zoom-slider {
         width: 120px;
     }
 }
@@ -363,15 +363,15 @@
 // Orientation Variants
 // ============================================
 
-.hi-zoom-controls-horizontal {
+.hikari-zoom-controls-horizontal {
     flex-direction: row;
 }
 
-.hi-zoom-controls-vertical {
+.hikari-zoom-controls-vertical {
     flex-direction: column;
     padding: $hikari-spacing-sm;
 
-    .hi-zoom-presets {
+    .hikari-zoom-presets {
         flex-direction: column;
         padding-left: 0;
         padding-top: $hikari-spacing-sm;
@@ -379,11 +379,11 @@
         border-top: 1px solid var(--hi-color-border);
     }
 
-    .hi-zoom-slider-container {
+    .hikari-zoom-slider-container {
         padding: $hikari-spacing-sm 0;
     }
 
-    .hi-zoom-slider {
+    .hikari-zoom-slider {
         width: 4px;
         height: 100px;
 
@@ -414,19 +414,19 @@
 // ============================================
 
 // Minimal variant
-.hi-zoom-controls-minimal {
+.hikari-zoom-controls-minimal {
     background-color: transparent;
     border: none;
     box-shadow: none;
 
-    .hi-zoom-button {
+    .hikari-zoom-button {
         background-color: rgba(var(--hi-color-surface), 0.8);
         backdrop-filter: blur(4px);
     }
 }
 
-//  variant (enhanced glow effects)
-.hi-zoom-controls-fui {
+// FUI variant (enhanced glow effects)
+.hikari-zoom-controls-fui {
     position: relative;
     overflow: hidden;
 
@@ -453,7 +453,7 @@
         opacity: 0.6;
     }
 
-    .hi-zoom-button {
+    .hikari-zoom-button {
         position: relative;
         z-index: 1;
     }
@@ -463,8 +463,8 @@
 // Tooltip Support
 // ============================================
 
-.hi-zoom-button[data-tooltip],
-.hi-zoom-preset[data-tooltip] {
+.hikari-zoom-button[data-tooltip],
+.hikari-zoom-preset[data-tooltip] {
     position: relative;
 
     &::after {
@@ -485,7 +485,7 @@
         transition: opacity $hikari-transition-fast;
         z-index: 100;
 
-        // glow
+        // FUI glow
         box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 
@@ -499,12 +499,12 @@
 // ============================================
 
 // Zoom in animation - use utility class
-.hi-zoom-controls-enter {
+.hikari-zoom-controls-enter {
     animation: hi-zoom-in 0.3s ease-out forwards;
 }
 
 // Pulse animation for active zoom - use utility class
-.hi-zoom-display-pulse {
+.hikari-zoom-display-pulse {
     animation: hi-pulse 2s ease-in-out infinite;
 }
 
@@ -513,35 +513,35 @@
 // ============================================
 
 @include mobile {
-    .hi-zoom-controls {
+    .hikari-zoom-controls {
         padding: $hikari-spacing-xs;
         gap: 0;
     }
 
-    .hi-zoom-button {
+    .hikari-zoom-button {
         width: 32px;
         height: 32px;
     }
 
-    .hi-zoom-button-icon {
+    .hikari-zoom-button-icon {
         width: 16px;
         height: 16px;
     }
 
-    .hi-zoom-display {
+    .hikari-zoom-display {
         min-width: 50px;
         font-size: $hikari-font-size-xs;
     }
 
-    .hi-zoom-slider {
+    .hikari-zoom-slider {
         width: 60px;
     }
 
-    .hi-zoom-presets {
+    .hikari-zoom-presets {
         display: none; // Hide presets on mobile
     }
 
-    .hi-zoom-button[data-tooltip]::after {
+    .hikari-zoom-button[data-tooltip]::after {
         display: none; // Hide tooltips on mobile
     }
 }

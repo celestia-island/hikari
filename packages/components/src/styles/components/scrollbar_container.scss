@@ -83,8 +83,6 @@
     border-radius: 4px;
     pointer-events: none;  // Don't capture clicks - let them pass through to content
     z-index: 100;
-    transition: width 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
-                opacity 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
 
     // Gradient background: dark at ends, light in middle
     // 16px - auto - (100% - 16px)
@@ -143,23 +141,4 @@
 .custom-scrollbar-track.custom-scrollbar-hidden {
     opacity: 0;
     pointer-events: none;
-}
-
-// Scroll-hover active state: wide track that auto-retracts after ~1s
-// Uses CSS animation so no JS timer is needed (works reliably in WASM)
-.custom-scrollbar-track.scrollbar-scrolling {
-    animation: scrollbar-retract 1.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
-
-    // Override the base transition during animation
-    transition: none;
-}
-
-@keyframes scrollbar-retract {
-    0%,
-    70% {
-        width: 8px;
-    }
-    100% {
-        width: 4px;
-    }
 }

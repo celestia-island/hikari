@@ -1,13 +1,12 @@
 // hikari-e2e/src/bin/run_ssr_e2e.rs
 // Binary to run SSR E2E tests
 
-use anyhow::{anyhow, Result};
 use hikari_e2e::run_ssr_e2e_tests;
 use thirtyfour::prelude::*;
 use tracing::info;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
@@ -33,7 +32,7 @@ async fn main() -> Result<()> {
 
     let driver = WebDriver::new("http://localhost:4444", caps)
         .await
-        .map_err(|e| anyhow!("Failed to connect to WebDriver: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to connect to WebDriver: {}", e))?;
 
     info!("WebDriver connected successfully");
 

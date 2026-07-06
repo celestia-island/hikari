@@ -3,8 +3,7 @@
 
 use std::rc::Rc;
 
-use hikari_palette::classes::CellClass;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::classes::{CellClass, ClassesBuilder};
 
 use super::column::ColumnDef;
 use crate::prelude::*;
@@ -69,11 +68,11 @@ pub fn Cell(props: CellProps) -> Element {
     };
 
     let classes = ClassesBuilder::new()
-        .add_typed(CellClass::Cell)
-        .add_typed(align_class)
-        .add_typed(CellClass::CellHover)
-        .add_typed_if(CellClass::CellEditable, props.editable)
-        .add(&props.class)
+        .add(CellClass::Cell)
+        .add(align_class)
+        .add(CellClass::CellHover)
+        .add_if(CellClass::CellEditable, || props.editable)
+        .add_raw(&props.class)
         .build();
 
     // Use custom render callback if provided

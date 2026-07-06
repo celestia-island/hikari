@@ -1,13 +1,22 @@
 // hi-components/src/feedback/popover.rs
 // Popover component with smart positioning via Portal system
 
-use hikari_palette::classes::{ClassesBuilder, Display, PopoverClass, Position};
+use hikari_palette::classes::{ClassesBuilder, Display, Position};
 
-use crate::platform;
-use crate::portal::{PortalEntry, generate_portal_id, use_portal};
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::portal_types::PopoverPlacement;
+use crate::{
+    portal::{PortalEntry, generate_portal_id, use_portal},
+    prelude::*,
+    styled::StyledComponent,
+};
+
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum PopoverPlacement {
+    #[default]
+    Bottom,
+    Top,
+    Left,
+    Right,
+}
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum PopoverAbsolutePosition {
@@ -37,7 +46,6 @@ impl IntoAttrValue for PopoverPositioning {
 }
 
 impl PopoverPositioning {
-    #[must_use]
     pub fn default_relative() -> Self {
         PopoverPositioning::Relative {
             preferred: vec![
@@ -76,6 +84,9 @@ pub fn Popover(props: PopoverProps) -> Element {
 
     let close_requested = use_signal(|| false);
 
+    #[cfg(target_arch = "wasm32")]
+    let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[cfg(not(target_arch = "wasm32"))]
     let trigger_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
 
     let portal = use_portal();
@@ -135,15 +146,18 @@ pub fn Popover(props: PopoverProps) -> Element {
                 popover_id.set(id.clone());
                 close_requested.set(false);
 
-                let rect_tuple = if let Some(target_el) =
-                    platform::get_target_element_from_event(e.client_x, e.client_y)
+                #[cfg(target_arch = "wasm32")]
                 {
-                    platform::get_bounding_rect_by_class_impl("hi-popover-trigger", &target_el)
-                        .map(|rect| (rect.x, rect.y, rect.width, rect.height))
-                } else {
-                    None
-                };
-                trigger_rect.set(rect_tuple);
+                    if let Some(drag_event) = e.as_any().downcast_ref::<MouseEvent>() {
+                        // Use client coordinates for approximate positioning
+                        trigger_rect.set(Some((
+                            drag_event.client_x as f64,
+                            drag_event.client_y as f64,
+                            100.0,
+                            30.0,
+                        )));
+                    }
+                }
 
                 portal.add_entry.call(PortalEntry::Popover {
                     id,
@@ -155,7 +169,7 @@ pub fn Popover(props: PopoverProps) -> Element {
                     close_on_click_outside: props.close_on_click_outside,
                     close_on_select: props.close_on_select,
                     on_close: Some(on_close.clone()),
-                    close_requested: close_requested.clone(),
+                    close_requested: close_requested.inner().clone(),
                     children: props.children.clone(),
                 });
             } else {
@@ -169,14 +183,13 @@ pub fn Popover(props: PopoverProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(Position::Relative)
-        .add_typed(Display::InlineBlock)
-        .add_typed(PopoverClass::Trigger)
-        .add(&props.class)
+        .add(Position::Relative)
+        .add(Display::InlineBlock)
+        .add_raw(&props.class)
         .build();
 
     rsx! {
-        div { class: container_classes, onclick: handle_trigger_click, "aria-haspopup": "dialog", "aria-expanded": open.get().to_string(), {props.trigger} }
+        div { class: container_classes, onclick: handle_trigger_click, {props.trigger} }
     }
 }
 
@@ -210,6 +223,17 @@ impl StyledComponent for PopoverComponent {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--hi-color-primary), transparent);
   opacity: 0.35;
+}
+
+@keyframes hi-popover-enter {
+  from {
+    opacity: 0;
+    transform: scaleY(0.95) translateX(-50%);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1) translateX(-50%);
+  }
 }
 
 [data-theme="dark"] .hi-popover {

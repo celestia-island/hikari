@@ -1,8 +1,13 @@
-//! Spacing utility classes.
+//! Spacing utility classes
+//!
+//! Padding, margin, and related spacing utilities.
 
-use tairitsu_style::TypedClass;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use super::UtilityClass;
+
+/// Padding all sides
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Padding {
     P0,
     P1,
@@ -16,24 +21,25 @@ pub enum Padding {
     P12,
 }
 
-impl TypedClass for Padding {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for Padding {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::P0 => "hi-p-0",
-            Self::P1 => "hi-p-1",
-            Self::P2 => "hi-p-2",
-            Self::P3 => "hi-p-3",
-            Self::P4 => "hi-p-4",
-            Self::P5 => "hi-p-5",
-            Self::P6 => "hi-p-6",
-            Self::P8 => "hi-p-8",
-            Self::P10 => "hi-p-10",
-            Self::P12 => "hi-p-12",
+            Padding::P0 => "p-0",
+            Padding::P1 => "p-1",
+            Padding::P2 => "p-2",
+            Padding::P3 => "p-3",
+            Padding::P4 => "p-4",
+            Padding::P5 => "p-5",
+            Padding::P6 => "p-6",
+            Padding::P8 => "p-8",
+            Padding::P10 => "p-10",
+            Padding::P12 => "p-12",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding X axis (left and right)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingX {
     Px1,
     Px2,
@@ -42,19 +48,20 @@ pub enum PaddingX {
     Px6,
 }
 
-impl TypedClass for PaddingX {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingX {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Px1 => "hi-px-1",
-            Self::Px2 => "hi-px-2",
-            Self::Px3 => "hi-px-3",
-            Self::Px4 => "hi-px-4",
-            Self::Px6 => "hi-px-6",
+            PaddingX::Px1 => "px-1",
+            PaddingX::Px2 => "px-2",
+            PaddingX::Px3 => "px-3",
+            PaddingX::Px4 => "px-4",
+            PaddingX::Px6 => "px-6",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding Y axis (top and bottom)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingY {
     Py1,
     Py2,
@@ -62,18 +69,19 @@ pub enum PaddingY {
     Py4,
 }
 
-impl TypedClass for PaddingY {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingY {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Py1 => "hi-py-1",
-            Self::Py2 => "hi-py-2",
-            Self::Py3 => "hi-py-3",
-            Self::Py4 => "hi-py-4",
+            PaddingY::Py1 => "py-1",
+            PaddingY::Py2 => "py-2",
+            PaddingY::Py3 => "py-3",
+            PaddingY::Py4 => "py-4",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin all sides
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Margin {
     M0,
     M1,
@@ -86,49 +94,52 @@ pub enum Margin {
     Auto,
 }
 
-impl TypedClass for Margin {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for Margin {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::M0 => "hi-m-0",
-            Self::M1 => "hi-m-1",
-            Self::M2 => "hi-m-2",
-            Self::M3 => "hi-m-3",
-            Self::M4 => "hi-m-4",
-            Self::M5 => "hi-m-5",
-            Self::M6 => "hi-m-6",
-            Self::M8 => "hi-m-8",
-            Self::Auto => "hi-m-auto",
+            Margin::M0 => "m-0",
+            Margin::M1 => "m-1",
+            Margin::M2 => "m-2",
+            Margin::M3 => "m-3",
+            Margin::M4 => "m-4",
+            Margin::M5 => "m-5",
+            Margin::M6 => "m-6",
+            Margin::M8 => "m-8",
+            Margin::Auto => "m-auto",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin X axis
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginX {
     MxAuto,
 }
 
-impl TypedClass for MarginX {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginX {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::MxAuto => "hi-mx-auto",
+            MarginX::MxAuto => "mx-auto",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin Y axis
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginY {
     MyAuto,
 }
 
-impl TypedClass for MarginY {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginY {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::MyAuto => "hi-my-auto",
+            MarginY::MyAuto => "my-auto",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin Top
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginTop {
     Mt0,
     Mt1,
@@ -140,22 +151,23 @@ pub enum MarginTop {
     Mt8,
 }
 
-impl TypedClass for MarginTop {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginTop {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Mt0 => "hi-mt-0",
-            Self::Mt1 => "hi-mt-1",
-            Self::Mt2 => "hi-mt-2",
-            Self::Mt3 => "hi-mt-3",
-            Self::Mt4 => "hi-mt-4",
-            Self::Mt5 => "hi-mt-5",
-            Self::Mt6 => "hi-mt-6",
-            Self::Mt8 => "hi-mt-8",
+            MarginTop::Mt0 => "mt-0",
+            MarginTop::Mt1 => "mt-1",
+            MarginTop::Mt2 => "mt-2",
+            MarginTop::Mt3 => "mt-3",
+            MarginTop::Mt4 => "mt-4",
+            MarginTop::Mt5 => "mt-5",
+            MarginTop::Mt6 => "mt-6",
+            MarginTop::Mt8 => "mt-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin Bottom
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginBottom {
     Mb0,
     Mb1,
@@ -167,22 +179,23 @@ pub enum MarginBottom {
     Mb8,
 }
 
-impl TypedClass for MarginBottom {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginBottom {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Mb0 => "hi-mb-0",
-            Self::Mb1 => "hi-mb-1",
-            Self::Mb2 => "hi-mb-2",
-            Self::Mb3 => "hi-mb-3",
-            Self::Mb4 => "hi-mb-4",
-            Self::Mb5 => "hi-mb-5",
-            Self::Mb6 => "hi-mb-6",
-            Self::Mb8 => "hi-mb-8",
+            MarginBottom::Mb0 => "mb-0",
+            MarginBottom::Mb1 => "mb-1",
+            MarginBottom::Mb2 => "mb-2",
+            MarginBottom::Mb3 => "mb-3",
+            MarginBottom::Mb4 => "mb-4",
+            MarginBottom::Mb5 => "mb-5",
+            MarginBottom::Mb6 => "mb-6",
+            MarginBottom::Mb8 => "mb-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin Left
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginLeft {
     Ml0,
     Ml1,
@@ -194,22 +207,23 @@ pub enum MarginLeft {
     Ml8,
 }
 
-impl TypedClass for MarginLeft {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginLeft {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Ml0 => "hi-ml-0",
-            Self::Ml1 => "hi-ml-1",
-            Self::Ml2 => "hi-ml-2",
-            Self::Ml3 => "hi-ml-3",
-            Self::Ml4 => "hi-ml-4",
-            Self::Ml5 => "hi-ml-5",
-            Self::Ml6 => "hi-ml-6",
-            Self::Ml8 => "hi-ml-8",
+            MarginLeft::Ml0 => "ml-0",
+            MarginLeft::Ml1 => "ml-1",
+            MarginLeft::Ml2 => "ml-2",
+            MarginLeft::Ml3 => "ml-3",
+            MarginLeft::Ml4 => "ml-4",
+            MarginLeft::Ml5 => "ml-5",
+            MarginLeft::Ml6 => "ml-6",
+            MarginLeft::Ml8 => "ml-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Margin Right
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MarginRight {
     Mr0,
     Mr1,
@@ -221,22 +235,23 @@ pub enum MarginRight {
     Mr8,
 }
 
-impl TypedClass for MarginRight {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for MarginRight {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Mr0 => "hi-mr-0",
-            Self::Mr1 => "hi-mr-1",
-            Self::Mr2 => "hi-mr-2",
-            Self::Mr3 => "hi-mr-3",
-            Self::Mr4 => "hi-mr-4",
-            Self::Mr5 => "hi-mr-5",
-            Self::Mr6 => "hi-mr-6",
-            Self::Mr8 => "hi-mr-8",
+            MarginRight::Mr0 => "mr-0",
+            MarginRight::Mr1 => "mr-1",
+            MarginRight::Mr2 => "mr-2",
+            MarginRight::Mr3 => "mr-3",
+            MarginRight::Mr4 => "mr-4",
+            MarginRight::Mr5 => "mr-5",
+            MarginRight::Mr6 => "mr-6",
+            MarginRight::Mr8 => "mr-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding Top
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingTop {
     Pt0,
     Pt1,
@@ -248,22 +263,23 @@ pub enum PaddingTop {
     Pt8,
 }
 
-impl TypedClass for PaddingTop {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingTop {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Pt0 => "hi-pt-0",
-            Self::Pt1 => "hi-pt-1",
-            Self::Pt2 => "hi-pt-2",
-            Self::Pt3 => "hi-pt-3",
-            Self::Pt4 => "hi-pt-4",
-            Self::Pt5 => "hi-pt-5",
-            Self::Pt6 => "hi-pt-6",
-            Self::Pt8 => "hi-pt-8",
+            PaddingTop::Pt0 => "pt-0",
+            PaddingTop::Pt1 => "pt-1",
+            PaddingTop::Pt2 => "pt-2",
+            PaddingTop::Pt3 => "pt-3",
+            PaddingTop::Pt4 => "pt-4",
+            PaddingTop::Pt5 => "pt-5",
+            PaddingTop::Pt6 => "pt-6",
+            PaddingTop::Pt8 => "pt-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding Bottom
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingBottom {
     Pb0,
     Pb1,
@@ -275,22 +291,23 @@ pub enum PaddingBottom {
     Pb8,
 }
 
-impl TypedClass for PaddingBottom {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingBottom {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Pb0 => "hi-pb-0",
-            Self::Pb1 => "hi-pb-1",
-            Self::Pb2 => "hi-pb-2",
-            Self::Pb3 => "hi-pb-3",
-            Self::Pb4 => "hi-pb-4",
-            Self::Pb5 => "hi-pb-5",
-            Self::Pb6 => "hi-pb-6",
-            Self::Pb8 => "hi-pb-8",
+            PaddingBottom::Pb0 => "pb-0",
+            PaddingBottom::Pb1 => "pb-1",
+            PaddingBottom::Pb2 => "pb-2",
+            PaddingBottom::Pb3 => "pb-3",
+            PaddingBottom::Pb4 => "pb-4",
+            PaddingBottom::Pb5 => "pb-5",
+            PaddingBottom::Pb6 => "pb-6",
+            PaddingBottom::Pb8 => "pb-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding Left
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingLeft {
     Pl0,
     Pl1,
@@ -302,22 +319,23 @@ pub enum PaddingLeft {
     Pl8,
 }
 
-impl TypedClass for PaddingLeft {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingLeft {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Pl0 => "hi-pl-0",
-            Self::Pl1 => "hi-pl-1",
-            Self::Pl2 => "hi-pl-2",
-            Self::Pl3 => "hi-pl-3",
-            Self::Pl4 => "hi-pl-4",
-            Self::Pl5 => "hi-pl-5",
-            Self::Pl6 => "hi-pl-6",
-            Self::Pl8 => "hi-pl-8",
+            PaddingLeft::Pl0 => "pl-0",
+            PaddingLeft::Pl1 => "pl-1",
+            PaddingLeft::Pl2 => "pl-2",
+            PaddingLeft::Pl3 => "pl-3",
+            PaddingLeft::Pl4 => "pl-4",
+            PaddingLeft::Pl5 => "pl-5",
+            PaddingLeft::Pl6 => "pl-6",
+            PaddingLeft::Pl8 => "pl-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Padding Right
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PaddingRight {
     Pr0,
     Pr1,
@@ -329,248 +347,35 @@ pub enum PaddingRight {
     Pr8,
 }
 
-impl TypedClass for PaddingRight {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for PaddingRight {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::Pr0 => "hi-pr-0",
-            Self::Pr1 => "hi-pr-1",
-            Self::Pr2 => "hi-pr-2",
-            Self::Pr3 => "hi-pr-3",
-            Self::Pr4 => "hi-pr-4",
-            Self::Pr5 => "hi-pr-5",
-            Self::Pr6 => "hi-pr-6",
-            Self::Pr8 => "hi-pr-8",
+            PaddingRight::Pr0 => "pr-0",
+            PaddingRight::Pr1 => "pr-1",
+            PaddingRight::Pr2 => "pr-2",
+            PaddingRight::Pr3 => "pr-3",
+            PaddingRight::Pr4 => "pr-4",
+            PaddingRight::Pr5 => "pr-5",
+            PaddingRight::Pr6 => "pr-6",
+            PaddingRight::Pr8 => "pr-8",
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Space between children
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SpaceBetween {
     SpaceY2,
     SpaceY4,
     SpaceY6,
 }
 
-impl TypedClass for SpaceBetween {
-    fn class_name(&self) -> &'static str {
+impl UtilityClass for SpaceBetween {
+    fn as_suffix(&self) -> &'static str {
         match self {
-            Self::SpaceY2 => "hi-space-y-2",
-            Self::SpaceY4 => "hi-space-y-4",
-            Self::SpaceY6 => "hi-space-y-6",
+            SpaceBetween::SpaceY2 => "space-y-2",
+            SpaceBetween::SpaceY4 => "space-y-4",
+            SpaceBetween::SpaceY6 => "space-y-6",
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn padding_all_variants() {
-        assert_eq!(Padding::P0.class_name(), "hi-p-0");
-        assert_eq!(Padding::P1.class_name(), "hi-p-1");
-        assert_eq!(Padding::P2.class_name(), "hi-p-2");
-        assert_eq!(Padding::P3.class_name(), "hi-p-3");
-        assert_eq!(Padding::P4.class_name(), "hi-p-4");
-        assert_eq!(Padding::P5.class_name(), "hi-p-5");
-        assert_eq!(Padding::P6.class_name(), "hi-p-6");
-        assert_eq!(Padding::P8.class_name(), "hi-p-8");
-        assert_eq!(Padding::P10.class_name(), "hi-p-10");
-        assert_eq!(Padding::P12.class_name(), "hi-p-12");
-    }
-
-    #[test]
-    fn padding_x_all_variants() {
-        assert_eq!(PaddingX::Px1.class_name(), "hi-px-1");
-        assert_eq!(PaddingX::Px2.class_name(), "hi-px-2");
-        assert_eq!(PaddingX::Px3.class_name(), "hi-px-3");
-        assert_eq!(PaddingX::Px4.class_name(), "hi-px-4");
-        assert_eq!(PaddingX::Px6.class_name(), "hi-px-6");
-    }
-
-    #[test]
-    fn padding_y_all_variants() {
-        assert_eq!(PaddingY::Py1.class_name(), "hi-py-1");
-        assert_eq!(PaddingY::Py2.class_name(), "hi-py-2");
-        assert_eq!(PaddingY::Py3.class_name(), "hi-py-3");
-        assert_eq!(PaddingY::Py4.class_name(), "hi-py-4");
-    }
-
-    #[test]
-    fn margin_all_variants() {
-        assert_eq!(Margin::M0.class_name(), "hi-m-0");
-        assert_eq!(Margin::M1.class_name(), "hi-m-1");
-        assert_eq!(Margin::M2.class_name(), "hi-m-2");
-        assert_eq!(Margin::M3.class_name(), "hi-m-3");
-        assert_eq!(Margin::M4.class_name(), "hi-m-4");
-        assert_eq!(Margin::M5.class_name(), "hi-m-5");
-        assert_eq!(Margin::M6.class_name(), "hi-m-6");
-        assert_eq!(Margin::M8.class_name(), "hi-m-8");
-        assert_eq!(Margin::Auto.class_name(), "hi-m-auto");
-    }
-
-    #[test]
-    fn margin_x_all_variants() {
-        assert_eq!(MarginX::MxAuto.class_name(), "hi-mx-auto");
-        let a = MarginX::MxAuto;
-        let b = a;
-        assert_eq!(a, b);
-    }
-
-    #[test]
-    fn margin_y_all_variants() {
-        assert_eq!(MarginY::MyAuto.class_name(), "hi-my-auto");
-    }
-
-    #[test]
-    fn margin_top_all_variants() {
-        assert_eq!(MarginTop::Mt0.class_name(), "hi-mt-0");
-        assert_eq!(MarginTop::Mt1.class_name(), "hi-mt-1");
-        assert_eq!(MarginTop::Mt2.class_name(), "hi-mt-2");
-        assert_eq!(MarginTop::Mt3.class_name(), "hi-mt-3");
-        assert_eq!(MarginTop::Mt4.class_name(), "hi-mt-4");
-        assert_eq!(MarginTop::Mt5.class_name(), "hi-mt-5");
-        assert_eq!(MarginTop::Mt6.class_name(), "hi-mt-6");
-        assert_eq!(MarginTop::Mt8.class_name(), "hi-mt-8");
-    }
-
-    #[test]
-    fn margin_bottom_all_variants() {
-        assert_eq!(MarginBottom::Mb0.class_name(), "hi-mb-0");
-        assert_eq!(MarginBottom::Mb1.class_name(), "hi-mb-1");
-        assert_eq!(MarginBottom::Mb2.class_name(), "hi-mb-2");
-        assert_eq!(MarginBottom::Mb3.class_name(), "hi-mb-3");
-        assert_eq!(MarginBottom::Mb4.class_name(), "hi-mb-4");
-        assert_eq!(MarginBottom::Mb5.class_name(), "hi-mb-5");
-        assert_eq!(MarginBottom::Mb6.class_name(), "hi-mb-6");
-        assert_eq!(MarginBottom::Mb8.class_name(), "hi-mb-8");
-    }
-
-    #[test]
-    fn margin_left_all_variants() {
-        assert_eq!(MarginLeft::Ml0.class_name(), "hi-ml-0");
-        assert_eq!(MarginLeft::Ml1.class_name(), "hi-ml-1");
-        assert_eq!(MarginLeft::Ml2.class_name(), "hi-ml-2");
-        assert_eq!(MarginLeft::Ml3.class_name(), "hi-ml-3");
-        assert_eq!(MarginLeft::Ml4.class_name(), "hi-ml-4");
-        assert_eq!(MarginLeft::Ml5.class_name(), "hi-ml-5");
-        assert_eq!(MarginLeft::Ml6.class_name(), "hi-ml-6");
-        assert_eq!(MarginLeft::Ml8.class_name(), "hi-ml-8");
-    }
-
-    #[test]
-    fn margin_right_all_variants() {
-        assert_eq!(MarginRight::Mr0.class_name(), "hi-mr-0");
-        assert_eq!(MarginRight::Mr1.class_name(), "hi-mr-1");
-        assert_eq!(MarginRight::Mr2.class_name(), "hi-mr-2");
-        assert_eq!(MarginRight::Mr3.class_name(), "hi-mr-3");
-        assert_eq!(MarginRight::Mr4.class_name(), "hi-mr-4");
-        assert_eq!(MarginRight::Mr5.class_name(), "hi-mr-5");
-        assert_eq!(MarginRight::Mr6.class_name(), "hi-mr-6");
-        assert_eq!(MarginRight::Mr8.class_name(), "hi-mr-8");
-    }
-
-    #[test]
-    fn padding_top_all_variants() {
-        assert_eq!(PaddingTop::Pt0.class_name(), "hi-pt-0");
-        assert_eq!(PaddingTop::Pt1.class_name(), "hi-pt-1");
-        assert_eq!(PaddingTop::Pt2.class_name(), "hi-pt-2");
-        assert_eq!(PaddingTop::Pt3.class_name(), "hi-pt-3");
-        assert_eq!(PaddingTop::Pt4.class_name(), "hi-pt-4");
-        assert_eq!(PaddingTop::Pt5.class_name(), "hi-pt-5");
-        assert_eq!(PaddingTop::Pt6.class_name(), "hi-pt-6");
-        assert_eq!(PaddingTop::Pt8.class_name(), "hi-pt-8");
-    }
-
-    #[test]
-    fn padding_bottom_all_variants() {
-        assert_eq!(PaddingBottom::Pb0.class_name(), "hi-pb-0");
-        assert_eq!(PaddingBottom::Pb1.class_name(), "hi-pb-1");
-        assert_eq!(PaddingBottom::Pb2.class_name(), "hi-pb-2");
-        assert_eq!(PaddingBottom::Pb3.class_name(), "hi-pb-3");
-        assert_eq!(PaddingBottom::Pb4.class_name(), "hi-pb-4");
-        assert_eq!(PaddingBottom::Pb5.class_name(), "hi-pb-5");
-        assert_eq!(PaddingBottom::Pb6.class_name(), "hi-pb-6");
-        assert_eq!(PaddingBottom::Pb8.class_name(), "hi-pb-8");
-    }
-
-    #[test]
-    fn padding_left_all_variants() {
-        assert_eq!(PaddingLeft::Pl0.class_name(), "hi-pl-0");
-        assert_eq!(PaddingLeft::Pl1.class_name(), "hi-pl-1");
-        assert_eq!(PaddingLeft::Pl2.class_name(), "hi-pl-2");
-        assert_eq!(PaddingLeft::Pl3.class_name(), "hi-pl-3");
-        assert_eq!(PaddingLeft::Pl4.class_name(), "hi-pl-4");
-        assert_eq!(PaddingLeft::Pl5.class_name(), "hi-pl-5");
-        assert_eq!(PaddingLeft::Pl6.class_name(), "hi-pl-6");
-        assert_eq!(PaddingLeft::Pl8.class_name(), "hi-pl-8");
-    }
-
-    #[test]
-    fn padding_right_all_variants() {
-        assert_eq!(PaddingRight::Pr0.class_name(), "hi-pr-0");
-        assert_eq!(PaddingRight::Pr1.class_name(), "hi-pr-1");
-        assert_eq!(PaddingRight::Pr2.class_name(), "hi-pr-2");
-        assert_eq!(PaddingRight::Pr3.class_name(), "hi-pr-3");
-        assert_eq!(PaddingRight::Pr4.class_name(), "hi-pr-4");
-        assert_eq!(PaddingRight::Pr5.class_name(), "hi-pr-5");
-        assert_eq!(PaddingRight::Pr6.class_name(), "hi-pr-6");
-        assert_eq!(PaddingRight::Pr8.class_name(), "hi-pr-8");
-    }
-
-    #[test]
-    fn space_between_all_variants() {
-        assert_eq!(SpaceBetween::SpaceY2.class_name(), "hi-space-y-2");
-        assert_eq!(SpaceBetween::SpaceY4.class_name(), "hi-space-y-4");
-        assert_eq!(SpaceBetween::SpaceY6.class_name(), "hi-space-y-6");
-    }
-
-    #[test]
-    fn cross_enum_collision_auto() {
-        let classes = crate::ClassesBuilder::new()
-            .add_typed(Margin::Auto)
-            .add_typed(MarginX::MxAuto)
-            .add_typed(MarginY::MyAuto)
-            .build();
-        assert_eq!(classes, "hi-m-auto hi-mx-auto hi-my-auto");
-    }
-
-    #[test]
-    fn cross_enum_collision_same_values() {
-        let classes = crate::ClassesBuilder::new()
-            .add_typed(Padding::P4)
-            .add_typed(Margin::M4)
-            .add_typed(MarginTop::Mt4)
-            .add_typed(MarginBottom::Mb4)
-            .add_typed(MarginLeft::Ml4)
-            .add_typed(MarginRight::Mr4)
-            .add_typed(PaddingTop::Pt4)
-            .add_typed(PaddingBottom::Pb4)
-            .add_typed(PaddingLeft::Pl4)
-            .add_typed(PaddingRight::Pr4)
-            .build();
-        assert_eq!(
-            classes,
-            "hi-p-4 hi-m-4 hi-mt-4 hi-mb-4 hi-ml-4 hi-mr-4 hi-pt-4 hi-pb-4 hi-pl-4 hi-pr-4"
-        );
-    }
-
-    #[test]
-    fn combo_button_padding() {
-        let classes = crate::ClassesBuilder::new()
-            .add_typed(PaddingX::Px4)
-            .add_typed(PaddingY::Py2)
-            .build();
-        assert_eq!(classes, "hi-px-4 hi-py-2");
-    }
-
-    #[test]
-    fn combo_card_spacing() {
-        let classes = crate::ClassesBuilder::new()
-            .add_typed(Padding::P6)
-            .add_typed(MarginBottom::Mb4)
-            .add_typed(SpaceBetween::SpaceY4)
-            .build();
-        assert_eq!(classes, "hi-p-6 hi-mb-4 hi-space-y-4");
     }
 }

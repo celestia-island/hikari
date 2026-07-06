@@ -1,11 +1,9 @@
 // hi-components/src/data/selection.rs
-// Selection component
+// Selection component with Arknights + FUI styling
 
-use hikari_palette::classes::SelectionClassNew;
-use tairitsu_style::{ClassesBuilder, TypedClass};
+use hikari_palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct SelectionComponent;
 
@@ -117,14 +115,14 @@ pub fn Selection(props: SelectionProps) -> Element {
     };
 
     let container_classes = ClassesBuilder::new()
-        .add_typed(SelectionClassNew::RowSelection)
-        .add_typed(SelectionClassNew::SelectionColumn)
-        .add_typed_if(SelectionClassNew::SelectionFixed, props.fixed_column)
+        .add(SelectionClassNew::RowSelection)
+        .add(SelectionClassNew::SelectionColumn)
+        .add_if(SelectionClassNew::SelectionFixed, || props.fixed_column)
         .build();
 
     let column_classes = ClassesBuilder::new()
-        .add_typed(SelectionClassNew::SelectionColumn)
-        .add_typed_if(SelectionClassNew::SelectionFixed, props.fixed_column)
+        .add(SelectionClassNew::SelectionColumn)
+        .add_if(SelectionClassNew::SelectionFixed, || props.fixed_column)
         .build();
 
     let is_checkbox_type = props.selection_type == SelectionType::Checkbox;
@@ -169,10 +167,10 @@ pub fn Selection(props: SelectionProps) -> Element {
             };
 
             rsx! {
-                div { class: {SelectionClassNew::SelectionRow.class_name()},
-                    label { class: {SelectionClassNew::SelectionItem.class_name()},
+                div { class: {SelectionClassNew::SelectionRow.as_class()},
+                    label { class: {SelectionClassNew::SelectionItem.as_class()},
                         input {
-                            class: {SelectionClassNew::SelectionCheckbox.class_name()},
+                            class: {SelectionClassNew::SelectionCheckbox.as_class()},
                             r#type: get_input_type(),
                             checked,
                             name: if selection_type == SelectionType::Radio { "hi-selection-radio-group" } else { "" },
@@ -188,13 +186,13 @@ pub fn Selection(props: SelectionProps) -> Element {
     rsx! {
         div { class: {container_classes},
 
-            div { class: {column_classes},
+            div { class: {column_classes}, ..selection_items,
 
                 if is_checkbox_type {
-                    div { class: {SelectionClassNew::SelectionHeader.class_name()},
-                        label { class: {SelectionClassNew::SelectionAll.class_name()},
+                    div { class: {SelectionClassNew::SelectionHeader.as_class()},
+                        label { class: {SelectionClassNew::SelectionAll.as_class()},
                             input {
-                                class: {SelectionClassNew::SelectionCheckbox.class_name()},
+                                class: {SelectionClassNew::SelectionCheckbox.as_class()},
                                 r#type: "checkbox",
                                 checked: is_all_selected_for_template.get(),
                                 onchange: handle_select_all,
@@ -202,7 +200,6 @@ pub fn Selection(props: SelectionProps) -> Element {
                         }
                     }
                 }
-                ..selection_items,
             }
         }
     }
@@ -234,14 +231,19 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
         }
     };
 
+    let _input_type = match props.selection_type {
+        SelectionType::Checkbox => "checkbox",
+        SelectionType::Radio => "radio",
+    };
+
     let container_classes = ClassesBuilder::new()
-        .add_typed(SelectionClassNew::RowSelection)
-        .add(&props.class)
+        .add(SelectionClassNew::RowSelection)
+        .add_raw(&props.class)
         .build();
 
     let custom_classes = ClassesBuilder::new()
-        .add_typed(SelectionClassNew::RowSelectionCustom)
-        .add_typed_if(SelectionClassNew::RowSelectionChecked, is_selected)
+        .add(SelectionClassNew::RowSelectionCustom)
+        .add_if(SelectionClassNew::RowSelectionChecked, || is_selected)
         .build();
 
     let is_checkbox = props.selection_type == SelectionType::Checkbox;
@@ -256,9 +258,9 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
 
     rsx! {
         div { class: {container_classes},
-            label { class: {SelectionClassNew::RowSelectionLabel.class_name()},
+            label { class: {SelectionClassNew::RowSelectionLabel.as_class()},
                 input {
-                    class: {SelectionClassNew::RowSelectionInput.class_name()},
+                    class: {SelectionClassNew::RowSelectionInput.as_class()},
                     r#type: "checkbox",
                     checked: is_selected,
                     name: input_name,
@@ -283,7 +285,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
                     }
 
                     if show_radio_dot {
-                        span { class: {SelectionClassNew::RowSelectionRadioDot.class_name()} }
+                        span { class: {SelectionClassNew::RowSelectionRadioDot.as_class()} }
                     }
                 }
             }

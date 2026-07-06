@@ -1,11 +1,9 @@
 // hi-components/src/data/collapse.rs
 // Animated collapse/expand component for tree nodes
 
-use hikari_palette::classes::CollapseClass;
-use tairitsu_style::ClassesBuilder;
+use hikari_palette::classes::{ClassesBuilder, CollapseClass};
 
-use crate::prelude::*;
-use crate::styled::StyledComponent;
+use crate::{prelude::*, styled::StyledComponent};
 
 pub struct CollapseComponent;
 
@@ -32,14 +30,6 @@ pub struct CollapseProps {
 #[component]
 pub fn Collapse(props: CollapseProps) -> Element {
     let is_expanded = use_signal(|| props.expanded);
-
-    let content_id = use_signal(|| {
-        static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-        format!(
-            "hi-collapse-panel-{}",
-            COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-        )
-    });
 
     let animation_style = if props.animated {
         format!(
@@ -74,13 +64,13 @@ pub fn Collapse(props: CollapseProps) -> Element {
     // Use CollapseClass for the content area
     let content_classes = if is_expanded.read() {
         ClassesBuilder::new()
-            .add_typed(CollapseClass::CollapseContent)
-            .add_typed(CollapseClass::Expanded)
+            .add(CollapseClass::CollapseContent)
+            .add(CollapseClass::Expanded)
             .build()
     } else {
         ClassesBuilder::new()
-            .add_typed(CollapseClass::CollapseContent)
-            .add_typed(CollapseClass::Collapsed)
+            .add(CollapseClass::CollapseContent)
+            .add(CollapseClass::Collapsed)
             .build()
     };
 
@@ -90,10 +80,6 @@ pub fn Collapse(props: CollapseProps) -> Element {
             div {
                 class: "hi-collapse-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
-                role: "button",
-                tabindex: "0",
-                "aria-expanded": if is_expanded.get() { "true" } else { "false" },
-                "aria-controls": "{content_id}",
                 onclick: handle_toggle,
 
                 span {
@@ -110,9 +96,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
             }
 
             div {
-                id: "{content_id}",
                 class: content_classes,
-                "aria-hidden": if is_expanded.get() { "false" } else { "true" },
                 style: format!(
                     "max-height: {}; overflow: hidden; opacity: {}; {};",
                     max_height,

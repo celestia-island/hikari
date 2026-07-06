@@ -5,8 +5,6 @@
 //! Previously a Dioxus component with keyboard event handling.
 //! Now provides a pure state model for zoom functionality.
 
-use tairitsu_vdom::{VElement, VNode, VText};
-
 /// Position of the zoom controls
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum ZoomPosition {
@@ -64,7 +62,6 @@ pub struct ZoomControlsState {
 
 impl ZoomControlsState {
     /// Create new zoom controls state with default values
-    #[must_use]
     pub fn new() -> Self {
         Self {
             zoom: 1.0,
@@ -79,15 +76,13 @@ impl ZoomControlsState {
     }
 
     /// Set the zoom level
-    #[must_use]
-    pub const fn with_zoom(mut self, zoom: f64) -> Self {
+    pub fn with_zoom(mut self, zoom: f64) -> Self {
         self.zoom = zoom.clamp(self.min_zoom, self.max_zoom);
         self
     }
 
     /// Set zoom bounds
-    #[must_use]
-    pub const fn with_bounds(mut self, min: f64, max: f64) -> Self {
+    pub fn with_bounds(mut self, min: f64, max: f64) -> Self {
         self.min_zoom = min;
         self.max_zoom = max;
         self.zoom = self.zoom.clamp(min, max);
@@ -95,15 +90,13 @@ impl ZoomControlsState {
     }
 
     /// Set zoom step size
-    #[must_use]
-    pub const fn with_step(mut self, step: f64) -> Self {
+    pub fn with_step(mut self, step: f64) -> Self {
         self.zoom_step = step;
         self
     }
 
     /// Set the position
-    #[must_use]
-    pub const fn with_position(mut self, position: ZoomPosition) -> Self {
+    pub fn with_position(mut self, position: ZoomPosition) -> Self {
         self.position = position;
         self
     }
@@ -115,19 +108,16 @@ impl ZoomControlsState {
     }
 
     /// Get zoom as percentage
-    #[must_use]
     pub fn zoom_percent(&self) -> i32 {
         (self.zoom * 100.0).round() as i32
     }
 
     /// Check if can zoom in
-    #[must_use]
     pub fn can_zoom_in(&self) -> bool {
         self.zoom < self.max_zoom
     }
 
     /// Check if can zoom out
-    #[must_use]
     pub fn can_zoom_out(&self) -> bool {
         self.zoom > self.min_zoom
     }
@@ -167,15 +157,15 @@ impl ZoomControlsState {
     /// Returns the new zoom level if changed, None otherwise
     pub fn handle_key(&mut self, key: &str, modifiers_has_control: bool) -> Option<f64> {
         match key {
-            "+" | "=" if modifiers_has_control => {
+            "+" | "=" if !modifiers_has_control => {
                 self.zoom_in();
                 Some(self.zoom)
             }
-            "-" | "_" if modifiers_has_control => {
+            "-" | "_" if !modifiers_has_control => {
                 self.zoom_out();
                 Some(self.zoom)
             }
-            "0" if modifiers_has_control => {
+            "0" if !modifiers_has_control => {
                 self.reset();
                 Some(self.zoom)
             }
@@ -184,8 +174,7 @@ impl ZoomControlsState {
     }
 
     /// Get the CSS position class name
-    #[must_use]
-    pub const fn position_class(&self) -> &'static str {
+    pub fn position_class(&self) -> &'static str {
         match self.position {
             ZoomPosition::TopRight => "hi-zoom-top-right",
             ZoomPosition::TopLeft => "hi-zoom-top-left",
@@ -195,7 +184,6 @@ impl ZoomControlsState {
     }
 
     /// Get the CSS class string
-    #[must_use]
     pub fn class_string(&self) -> String {
         if self.class.is_empty() {
             format!("hi-zoom-controls {}", self.position_class())
@@ -209,83 +197,6 @@ impl Default for ZoomControlsState {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// Render zoom controls as a [`VNode`] tree.
-///
-/// Produces a container with zoom-out, display, zoom-in, reset, and optional fit buttons.
-/// Event listeners (onclick) are **not** attached — the caller must wire up interactions
-/// through platform-specific APIs and then call the state mutation methods.
-#[must_use]
-pub fn render_zoom_controls(state: &ZoomControlsState) -> VNode {
-    let mut children: Vec<VNode> = Vec::with_capacity(5);
-
-    let zoom_out = VNode::Element(
-        VElement::new("button")
-            .class("hi-zoom-btn hi-zoom-out")
-            .attr("aria-label", "Zoom out")
-            .attr("title", "Zoom out (-)")
-            .attr(
-                "disabled",
-                if state.can_zoom_out() {
-                    "false"
-                } else {
-                    "true"
-                },
-            )
-            .child(VNode::Text(VText::new("\u{25C0}"))),
-    );
-    children.push(zoom_out);
-
-    let display = VNode::Element(
-        VElement::new("div")
-            .class("hi-zoom-level")
-            .child(VNode::Text(VText::new(&format!(
-                "{}%",
-                state.zoom_percent()
-            )))),
-    );
-    children.push(display);
-
-    let zoom_in = VNode::Element(
-        VElement::new("button")
-            .class("hi-zoom-btn hi-zoom-in")
-            .attr("aria-label", "Zoom in")
-            .attr("title", "Zoom in (+)")
-            .attr(
-                "disabled",
-                if state.can_zoom_in() { "false" } else { "true" },
-            )
-            .child(VNode::Text(VText::new("\u{25B6}"))),
-    );
-    children.push(zoom_in);
-
-    let reset = VNode::Element(
-        VElement::new("button")
-            .class("hi-zoom-btn hi-zoom-reset")
-            .attr("aria-label", "Reset zoom")
-            .attr("title", "Reset to 100% (0)")
-            .child(VNode::Text(VText::new("100%"))),
-    );
-    children.push(reset);
-
-    if state.show_fit {
-        let fit = VNode::Element(
-            VElement::new("button")
-                .class("hi-zoom-btn hi-zoom-fit")
-                .attr("aria-label", "Fit to screen")
-                .attr("title", "Fit to screen")
-                .child(VNode::Text(VText::new("\u{25A1}"))),
-        );
-        children.push(fit);
-    }
-
-    VNode::Element(
-        VElement::new("div")
-            .class(state.class_string())
-            .attr("tabindex", "0")
-            .children(children),
-    )
 }
 
 /// Event emitted when zoom changes
@@ -314,10 +225,10 @@ mod tests {
     fn test_zoom_in() {
         let mut state = ZoomControlsState::new();
         assert!(state.zoom_in());
-        assert!((state.zoom - 1.1).abs() < 0.001);
+        assert_eq!(state.zoom, 1.1);
 
         assert!(state.zoom_in());
-        assert!((state.zoom - 1.2).abs() < 0.001);
+        assert_eq!(state.zoom, 1.2);
     }
 
     #[test]
@@ -384,24 +295,20 @@ mod tests {
     fn test_keyboard_shortcuts() {
         let mut state = ZoomControlsState::new();
 
-        let zoom = state.handle_key("+", true).unwrap();
-        assert!((zoom - 1.1).abs() < 0.001);
+        // Plus key
+        assert_eq!(state.handle_key("+", false), Some(1.1));
+        assert_eq!(state.handle_key("=", false), Some(1.2));
 
-        let zoom = state.handle_key("=", true).unwrap();
-        assert!((zoom - 1.2).abs() < 0.001);
+        // Minus key
+        assert_eq!(state.handle_key("-", false), Some(1.1));
+        assert_eq!(state.handle_key("_", false), Some(1.0));
 
-        let zoom = state.handle_key("-", true).unwrap();
-        assert!((zoom - 1.1).abs() < 0.001);
-
-        let zoom = state.handle_key("_", true).unwrap();
-        assert!((zoom - 1.0).abs() < 0.001);
-
+        // Zero key resets
         state.set_zoom(1.5);
-        let zoom = state.handle_key("0", true).unwrap();
-        assert!((zoom - 1.0).abs() < 0.001);
+        assert_eq!(state.handle_key("0", false), Some(1.0));
 
-        assert_eq!(state.handle_key("a", true), None);
-        assert_eq!(state.handle_key("+", false), None);
+        // Unknown key returns None
+        assert_eq!(state.handle_key("a", false), None);
     }
 
     #[test]

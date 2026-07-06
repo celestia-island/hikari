@@ -1,19 +1,23 @@
 // packages/components/src/entry/search.rs
-// Search component
+// Search component with Arknights + FUI styling
 // Features: Embedded icons/buttons, unified input styling, Glow effects
 // Uses InputWrapper for consistent layout and Portal system for dropdown suggestions
+
+#![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 
-use crate::basic::{InputWrapper, InputWrapperItem, InputWrapperSize};
-use crate::portal::{
-    PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-    use_portal,
+use crate::{
+    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
+    feedback::{GlowBlur, GlowColor, GlowIntensity},
+    portal::{
+        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+        use_portal,
+    },
+    prelude::*,
+    styled::StyledComponent,
 };
-use crate::prelude::*;
-use crate::styled::StyledComponent;
-use crate::utils::glow_types::{GlowBlur, GlowColor, GlowIntensity};
 
 pub struct SearchComponent;
 
@@ -42,12 +46,13 @@ pub struct SearchProps {
 pub fn Search(props: SearchProps) -> Element {
     let mut value_signal = use_signal(|| props.value.clone());
     let mut dropdown_id = use_signal(String::new);
-    let container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
+    #[allow(unused_mut)]
+    let mut container_rect = use_signal(|| None::<(f64, f64, f64, f64)>);
     let portal = use_portal();
 
     let wrapper_classes = ClassesBuilder::new()
-        .add_typed(SearchClass::Wrapper)
-        .add(&props.class)
+        .add(SearchClass::Wrapper)
+        .add_raw(&props.class)
         .build();
 
     let current_value = value_signal.get();

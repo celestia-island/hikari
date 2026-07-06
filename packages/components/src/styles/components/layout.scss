@@ -1,6 +1,6 @@
 // Use theme variables with namespace to avoid conflicts
-@use 'variables' as vars;
-@use 'mixins' as mix;
+@use '../../../../theme/styles/variables.scss' as vars;
+@use '../../../../theme/styles/mixins.scss' as mix;
 
 // ============================================
 // Hikari Layout Component
@@ -29,8 +29,8 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 
-  // Ensure content stays above background (but not .hi-background which needs position:fixed)
-  > *:not(.hi-background) {
+  // Ensure content stays above background
+  > * {
     position: relative;
     z-index: 1;
   }
@@ -72,7 +72,7 @@
   // Scrolled state (applied via JS)
   &.hi-layout-header-scrolled {
     background: var(--hi-card-bg);
-    box-shadow: 0 8px 16px var(--hi-glow-primary-sm, rgba(255, 179, 167, 0.2)), 0 0 30px var(--hi-primary);
+    box-shadow: 0 8px 16px rgba(23, 89, 168, 0.25), 0 0 30px var(--hi-primary);
   }
 }
 
@@ -86,7 +86,7 @@
   display: flex;
   flex-direction: row;
   height: calc(100vh - 60px); // Subtract header height
-  overflow: clip;
+  overflow: hidden;
   position: relative;
 }
 
@@ -189,7 +189,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--hi-fade-top-opacity, 0); // Controlled by JS
+      opacity: var(--fade-top-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;
@@ -205,7 +205,7 @@
       height: 20px;
       background: transparent;
       pointer-events: none;
-      opacity: var(--hi-fade-bottom-opacity, 0); // Controlled by JS
+      opacity: var(--fade-bottom-opacity, 0); // Controlled by JS
       // DISABLED - migrated to JS animation
 
       // transition: opacity 0.2s ease;
@@ -374,7 +374,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: var(--hi-black-20, rgba(0, 0, 0, 0.2));
+      background: rgba(23, 89, 168, 0.3);
       backdrop-filter: blur(4px);
       z-index: 199;
       opacity: 0;
@@ -547,7 +547,7 @@
   right: 0;
   bottom: 0;
   pointer-events: auto;
-  z-index: var(--hi-z-index-dropdown, 1000);
+  z-index: 10000;
   transition: opacity 0.2s ease-in-out;
 }
 

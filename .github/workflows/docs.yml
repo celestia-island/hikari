@@ -24,9 +24,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install lagrange-library --locked || cargo install --git https://github.com/celestia-island/lagrange --branch dev lagrange-library
+      - run: cargo install --git https://github.com/celestia-island/lagrange --branch dev lagrange-library --locked
       - run: lagrange build --src docs --out _site
-      - run: echo "hikari.docs.celestia.world" > _site/CNAME
 
       - uses: actions/upload-pages-artifact@v3
         with:

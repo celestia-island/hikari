@@ -360,7 +360,7 @@ Examples:
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # health
-    p_health = subparsers.add_parser("health", help="Check server status")
+    p_health = subparsers.add_parser("health", help="Check server status")  # noqa: F841  (argparse subparser registration)
 
     # capture
     p_cap = subparsers.add_parser("capture", help="Capture a single screenshot")

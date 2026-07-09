@@ -82,7 +82,7 @@ class GLMVisionAnalyzer:
             return {"success": False, "error": "requests library not available"}
         
         with open(image_path, "rb") as f:
-            image_data = base64.b64encode(f.read()).decode()
+            image_data = base64.b64encode(f.read()).decode()  # noqa: F841  (TODO: GLM API call placeholder)
         
         # Note: This is a placeholder - actual implementation would call GLM API
         # through the MCP server. The MCP tool should be called externally.

@@ -15,7 +15,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -85,8 +84,8 @@ def generate(variants: dict[str, str], icons_dir: Path, output: Path) -> None:
             const_name = variant.upper()
             const_lines.append(f"    pub const {const_name}: IconData = IconData {{")
             const_lines.append(f'        view_box: Some("{view_box}"),')
-            const_lines.append(f'        width: Some("24"),')
-            const_lines.append(f'        height: Some("24"),')
+            const_lines.append('        width: Some("24"),')
+            const_lines.append('        height: Some("24"),')
             const_lines.append(f'        path: Some("{path_d}"),')
             const_lines.append("        paths: &[],")
             const_lines.append("        elements: &[],")

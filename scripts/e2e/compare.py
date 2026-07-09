@@ -17,9 +17,7 @@ Dependencies (optional, with graceful fallback):
 
 from __future__ import annotations
 
-import json
 import math
-import struct
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional

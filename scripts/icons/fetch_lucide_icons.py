@@ -52,7 +52,7 @@ def download_svg(icon_name: str) -> str | None:
         )
         with urllib.request.urlopen(request, timeout=10) as response:
             return response.read().decode('utf-8')
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -283,7 +283,7 @@ def main():
                     svg_map[icon_name] = svg_content
                 else:
                     failed_icons.append(icon_name)
-            except Exception as e:
+            except Exception:
                 failed_icons.append(icon_name)
     
     if failed_icons:
@@ -314,16 +314,16 @@ def main():
     print(f"Total icons: {len(icons)}")
     print(f"Downloaded: {len(svg_map)}")
     print(f"Failed: {len(failed_icons)}")
-    print(f"\nOutput file:")
+    print("\nOutput file:")
     print(f"  - {OUTPUT_FILE}")
-    print(f"\nRust usage:")
-    print(f"  use hikari_icons::generated::lucide::LucideIcon;")
-    print(f"  use hikari_icons::generated::lucide::svgs;")
-    print(f"  ")
-    print(f"  let svg = svgs::get(\"menu\").unwrap();")
-    print(f"  rsx! {{")
-    print(f'      dangerous_inner_html: "{{svg}}"')
-    print(f"  }}")
+    print("\nRust usage:")
+    print("  use hikari_icons::generated::lucide::LucideIcon;")
+    print("  use hikari_icons::generated::lucide::svgs;")
+    print("  ")
+    print("  let svg = svgs::get(\"menu\").unwrap();")
+    print("  rsx! {")
+    print('      dangerous_inner_html: "{svg}"')
+    print("  }")
     print("=" * 60)
 
 

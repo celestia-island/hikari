@@ -16,7 +16,6 @@ from __future__ import annotations
 import os
 import json
 import time
-import subprocess
 import base64
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -414,7 +413,7 @@ class E2ETestRunner:
                 all_passed = False
                 print(f"    ❌ Failed: {step_result.get('error', 'Unknown error')}")
             else:
-                print(f"    ✓ Passed")
+                print("    ✓ Passed")
         
         results["status"] = "passed" if all_passed else "failed"
         print(f"\nTest {test_name}: {results['status'].upper()}")

@@ -5,7 +5,13 @@ Uses tairitsu debug HTTP API (same layer as MCP browser tools).
 No raw Playwright, no direct JS eval.
 """
 
-import sys, time, os, base64, json, urllib.request, urllib.error
+import sys
+import time
+import os
+import base64
+import json
+import urllib.request
+import urllib.error
 from pathlib import Path
 
 BASE = "http://localhost:52848"

@@ -6,7 +6,6 @@ Hikari SCSS Compiler
 Compiles all SCSS files into a single CSS bundle using Dart Sass CLI.
 """
 
-import os
 import sys
 import io
 import subprocess
@@ -123,12 +122,12 @@ def main():
 
         # Get file size
         file_size = output_css.stat().st_size
-        print(f"\n✅ CSS bundle generated successfully!")
+        print("\n✅ CSS bundle generated successfully!")
         print(f"   Size: {file_size:,} bytes")
         print(f"   Path: {output_css}")
 
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ SCSS compilation failed:")
+        print("\n❌ SCSS compilation failed:")
         print(f"   {e.stderr}")
         sys.exit(1)
     except Exception as e:

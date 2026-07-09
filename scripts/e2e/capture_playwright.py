@@ -11,7 +11,6 @@ Naming convention:
       s047_click_nav-link_120,340-280,380_after-click.png
 """
 
-import sys
 import time
 import os
 from pathlib import Path
@@ -324,7 +323,7 @@ with sync_playwright() as p:
         try:
             go(page, route)
         except PWTimeout:
-            print(f"  ! Navigation timeout, using current state")
+            print("  ! Navigation timeout, using current state")
             time.sleep(3)
 
         for action in actions:

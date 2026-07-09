@@ -5,7 +5,6 @@ Distributes routes across multiple containers to utilize multiple CPU cores.
 """
 
 import argparse
-import os
 import shlex
 import subprocess
 import sys

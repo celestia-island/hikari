@@ -11,8 +11,6 @@ import sys
 sys.path.insert(0, "/mnt/sdb1/hikari/scripts/e2e")
 
 import time
-import json
-import os
 from pathlib import Path
 from browser import TairitsuBrowser
 

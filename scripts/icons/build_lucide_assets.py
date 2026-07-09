@@ -15,7 +15,6 @@ import re
 import sys
 import io
 from pathlib import Path
-from typing import Dict
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -167,12 +166,12 @@ def main():
     print(f"Total icons: {len(icons)}")
     print(f"Downloaded: {len(svg_map)}")
     print(f"Failed: {len(failed_icons)}")
-    print(f"\nOutput files:")
+    print("\nOutput files:")
     print(f"  - {JSON_FILE}")
     print(f"  - {MANIFEST_FILE}")
-    print(f"\nRust usage:")
-    print(f"  use hikari_icons::assets::get_icon;")
-    print(f"  let svg = get_icon(\"menu\").unwrap();")
+    print("\nRust usage:")
+    print("  use hikari_icons::assets::get_icon;")
+    print("  let svg = get_icon(\"menu\").unwrap();")
     print("=" * 60)
 
 

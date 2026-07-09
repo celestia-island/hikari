@@ -242,7 +242,7 @@ class ReportGenerator:
 
         failed_tests = [t for t in result.tests if t.status == "failed"]
         if failed_tests:
-            print(f"\n \033[31mFailed tests:\033[0m")
+            print("\n \033[31mFailed tests:\033[0m")
             for t in failed_tests:
                 reason_parts = []
                 if not all(s.success for s in t.steps):

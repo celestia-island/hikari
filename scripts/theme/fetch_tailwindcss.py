@@ -23,7 +23,7 @@ OUTPUT_FILE = OUTPUT_DIR / "tailwind.rs"
 
 def fetch_tailwind_css() -> str:
     """Fetch Tailwind CSS from CDN"""
-    print(f"Fetching Tailwind CSS from CDN...")
+    print("Fetching Tailwind CSS from CDN...")
     print(f"  URL: {TAILWIND_CDN_URL}")
     
     try:
@@ -102,11 +102,11 @@ def main():
     print("=" * 60)
     print(f"Tailwind CSS size: {len(css_content)} bytes")
     print(f"Rust module size: {file_size} bytes")
-    print(f"\nOutput file:")
+    print("\nOutput file:")
     print(f"  - {OUTPUT_FILE}")
-    print(f"\nRust usage:")
-    print(f"  use hikari_theme::generated::tailwind::TAILWIND_CSS;")
-    print(f"  let css = TAILWIND_CSS;")
+    print("\nRust usage:")
+    print("  use hikari_theme::generated::tailwind::TAILWIND_CSS;")
+    print("  let css = TAILWIND_CSS;")
     print("=" * 60)
 
 

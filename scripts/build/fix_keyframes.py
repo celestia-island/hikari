@@ -4,7 +4,6 @@
 Fix SCSS keyframes blocks that were incorrectly commented.
 """
 
-import os
 import re
 from pathlib import Path
 

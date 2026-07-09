@@ -4,6 +4,11 @@
 // This file defines the base layer of the design system.
 // All variables here can be overridden at Layer2 (component level) or Custom (runtime).
 
+// Import supplementary tokens adopted from shittim-chest's design system.
+@use 'tokens';
+@use 'glass';
+@use 'scrollbar';
+
 // ============================================
 // 1. Color System
 // ============================================

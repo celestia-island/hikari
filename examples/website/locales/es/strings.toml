@@ -30,7 +30,7 @@ auto = "Auto"
 [page.home.hero]
 title = "Framework UI Hikari"
 subtitle = "Luz - Un Framework UI Moderno en Rust"
-description = "Basado en Dioxus + Grass + Axum, diseñado con la efeitos de brilho y el efectos de brillo."
+description = "Basado en Tairitsu + Grass + Axum, diseñado con la efeitos de brilho y el efectos de brillo."
 tagline = "No hay vergüenza en querer sentirse feliz."
 explore = "Explorar Componentes →"
 

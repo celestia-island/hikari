@@ -3,7 +3,7 @@
 //! All pages are rendered at once; JavaScript routing (History API) controls
 //! which page is visible by toggling `.is-active` on `.hikari-page` divs.
 //!
-//! The layout mirrors the old Dioxus-era structure:
+//! The layout mirrors the old tairitsu-era structure:
 //!   Layout (hi-layout) → Header → Body (hi-layout-body) → Aside + Main
 
 use tairitsu_vdom::{VElement, VNode};

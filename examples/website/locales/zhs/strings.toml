@@ -30,7 +30,7 @@ auto = "自动"
 [page.home.hero]
 title = "Hikari UI 框架"
 subtitle = "光 - 现代化 Rust UI 框架"
-description = "基于 Dioxus + Grass + Axum，融合了扁平设计和发光效果设计。"
+description = "基于 Tairitsu + Grass + Axum，融合了扁平设计和发光效果设计。"
 tagline = "渴望快乐，无需羞愧。"
 explore = "探索组件 →"
 

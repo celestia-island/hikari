@@ -30,7 +30,7 @@ auto = "자동"
 [page.home.hero]
 title = "Hikari UI 프레임워크"
 subtitle = "빛 - 현대적인 Rust UI 프레임워크"
-description = "Dioxus + Grass + Axum 기반으로 flat design 미학과 flat design 스타일로 설계되었습니다."
+description = "Tairitsu + Grass + Axum 기반으로 flat design 미학과 flat design 스타일로 설계되었습니다."
 tagline = "행복하고 싶은 것은 부끄러운 일이 아닙니다."
 explore = "컴포넌트 탐색 →"
 

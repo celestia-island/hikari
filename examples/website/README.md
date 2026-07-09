@@ -45,7 +45,7 @@ just run-server
 
 ### Architecture
 
-- **Client**: Dioxus WASM compiled to `dist/assets/`
+- **Client**: tairitsu WASM compiled to `dist/assets/`
 - **Server**: Axum serves static files and handles SPA routing
 - **Routes**:
   - `/assets/*` - Static files (WASM, JS, CSS)

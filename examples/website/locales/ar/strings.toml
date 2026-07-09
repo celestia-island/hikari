@@ -30,7 +30,7 @@ auto = "تلقائي"
 [page.home.hero]
 title = "إطار عمل هيكاري"
 subtitle = "الضوء - إطار عمل واجهة مستخدم حديث بلغة Rust"
-description = "مبني على Dioxus + Grass + Axum، مصمم بتأثيرات التوهج وأسلوب flat design."
+description = "مبني على Tairitsu + Grass + Axum، مصمم بتأثيرات التوهج وأسلوب flat design."
 tagline = "لا عار في الرغبة بالشعور بالسعادة."
 explore = "استكشف المكونات ←"
 

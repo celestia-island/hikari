@@ -22,7 +22,7 @@ tairitsu-web = { version = "^0.5", features = [
   "wit-bindings",
 ] }
 
-# Hikari design system (pure Rust, no Dioxus)
+# Hikari design system (pure Rust)
 hikari-palette = { path = "../../packages/palette" }
 
 # Markdown rendering

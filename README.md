@@ -20,7 +20,7 @@
   </a>
   <!-- License -->
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg" alt="License: MIT OR Apache-2.0">
+    <img src="https://img.shields.io/badge/license-SySL%201.0-blue" alt="License: SySL">
   </a>
   <!-- Rust -->
   <a href="https://www.rust-lang.org/">
@@ -46,7 +46,7 @@
       Examples
     </a>
     <span> | </span>
-    <a href="docs/en-US/guides/ARCHITECTURE.md">
+    <a href="docs/en/guides/ARCHITECTURE.md">
       Architecture
     </a>
   </h3>
@@ -176,11 +176,14 @@ fn customize_theme() {
 ```
 hikari/
 ├── packages/
-│   ├── hikari-palette/          # Chinese color system
-│   ├── hikari-theme/            # Theme system + SCSS
-│   ├── hikari-components/       # Basic components
-│   ├── hikari-extra-components/ # Advanced components
-│   └── hikari-render-service/   # SSR + style service
+│   ├── palette/                 # Chinese color system
+│   ├── theme/                   # Theme system + SCSS
+│   ├── components/              # Basic components
+│   ├── extra-components/        # Advanced components
+│   ├── animation/               # Animation utilities
+│   ├── icons/                   # Icon set
+│   ├── builder/                 # Build-time live component compiler
+│   └── i18n/                    # Locale resources
 │
 ├── examples/
 │   ├── website/                 # Comprehensive website
@@ -190,12 +193,12 @@ hikari/
 │   └── ssr-demo/                # SSR example
 │
 ├── docs/
-│   ├── en-US/
+│   ├── en/
 │   │   ├── guides/
 │   │   ├── design/
 │   │   ├── components/
 │   │   └── system/
-│   └── zh-CHS/                  # Other locales follow the same layout
+│   └── zhs/                     # Other locales follow the same layout
 │
 ├── Cargo.toml                   # Workspace configuration
 ├── PLAN.md                      # Implementation plan
@@ -360,26 +363,20 @@ See [PLAN.md](PLAN.md) for detailed implementation status.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](docs/en-US/guides/CONTRIBUTING.md) for guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](docs/en/guides/CONTRIBUTING.md) for guidelines.
 
 ## Documentation
 
-- [Architecture Overview](docs/en-US/guides/ARCHITECTURE.md)
-- [Contributing Guidelines](docs/en-US/guides/CONTRIBUTING.md)
-- [hikari-palette Documentation](packages/hikari-palette/README.md)
-- [hikari-theme Documentation](packages/hikari-theme/README.md)
-- [hikari-components Documentation](packages/hikari-components/README.md)
-- [hikari-extra-components Documentation](packages/hikari-extra-components/README.md)
-- [hikari-render-service Documentation](packages/hikari-render-service/README.md)
+- [Architecture Overview](docs/en/guides/ARCHITECTURE.md)
+- [Contributing Guidelines](docs/en/guides/CONTRIBUTING.md)
+- [hikari-palette Documentation](packages/palette/README.md)
+- [hikari-theme Documentation](packages/theme/README.md)
+- [hikari-components Documentation](packages/components/README.md)
+- [hikari-extra-components Documentation](packages/extra-components/README.md)
 
 ## License
 
-Hikari is dual-licensed under:
-
-- MIT License ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
-
-You may choose either license for your use.
+Hikari is licensed under the [Synthetic Source License (SySL), Version 1.0](./LICENSE).
 
 ## Acknowledgments
 

@@ -240,7 +240,6 @@ class ScreenshotComparator:
         """Generate a diff heatmap showing changed regions."""
         overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
-        bl_data = baseline.load()
 
         for y in range(height):
             for x in range(width):

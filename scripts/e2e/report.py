@@ -125,7 +125,6 @@ class ReportGenerator:
             cmp_html = ""
             if tr.comparison:
                 cmp_color = "#2ecc71" if tr.comparison.passed else "#e74c3c"
-                cmp_text = tr.comparison.summary.replace("PASS", "").replace("FAIL", "")
                 diff_img = ""
                 if tr.comparison.diff_image_path and Path(tr.comparison.diff_image_path).exists():
                     rel = Path(tr.comparison.diff_image_path).resolve().relative_to(

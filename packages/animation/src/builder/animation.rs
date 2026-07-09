@@ -31,11 +31,11 @@
 //!     .add_stateful_style("background", CssProperty::BackgroundPosition, |ctx, state| {
 //!         // Update angle based on delta time for smooth rotation
 //!         state.add_f64("angle", ctx.delta_seconds() * 60.0); // 60 degrees per second
-//!         
+//!
 //!         let angle = state.get_f64("angle", 0.0);
 //!         let x = 50.0 + 10.0 * angle.cos();
 //!         let y = 50.0 + 10.0 * angle.sin();
-//!         
+//!
 //!         format!("{:.1}% {:.1}%", x, y)
 //!     })
 //!     .start_continuous_animation();

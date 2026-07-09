@@ -11,7 +11,7 @@ use super::*;
     fn test_background_animation_setup() {
         use crate::prelude::*;
         use hikari_theme::ThemeProvider;
-        
+
         // Test that Background component can be created without panicking
         let test_app = rsx! {
             ThemeProvider { palette: "hikari" }
@@ -20,19 +20,19 @@ use super::*;
                 }
             }
         };
-        
+
         // This test just verifies the component can be instantiated
         // In a real WASM environment, we would test the animation itself
         assert!(true);
         println!("✅ Background component creation test passed");
     }
-    
+
     #[test]
     fn test_background_props() {
         let props = BackgroundProps {
             children: VNode::empty(),
         };
-        
+
         // Just verify we can create props
         assert!(true);
         println!("✅ BackgroundProps creation test passed");

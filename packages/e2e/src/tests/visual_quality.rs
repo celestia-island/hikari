@@ -936,17 +936,17 @@ impl VisualQualityTests {
             (function() {
                 const elements = document.querySelectorAll('div, button, a, nav, header, footer, .dropdown, .modal, .drawer');
                 let count = 0;
-                
+
                 elements.forEach(el => {
                     const style = window.getComputedStyle(el);
                     const zIndex = parseInt(style.zIndex) || 0;
                     const position = style.position;
-                    
+
                     if (zIndex > 0 && position !== 'static') {
                         count++;
                     }
                 });
-                
+
                 return count;
             })();
         "#;

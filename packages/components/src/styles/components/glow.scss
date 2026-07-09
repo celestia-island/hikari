@@ -10,7 +10,7 @@
 // CSS does NOT provide any default hover/active/focus behavior.
 // The --glow-intensity-scale variable is set inline:
 // - Idle: 0 (no glow)
-// - Hover: 0.5 (subtle glow)  
+// - Hover: 0.5 (subtle glow)
 // - Focus: 0.7 (medium glow)
 // - Active: 1.0 (intense glow)
 //
@@ -109,7 +109,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  
+
   // 统一使用 4px 圆角
   border-radius: 4px;
   overflow: visible;

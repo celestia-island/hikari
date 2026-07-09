@@ -2,9 +2,9 @@
 
 > Created 2026-07-10 during a routine maintenance sweep.
 
-## Open issue: rustfmt.toml uses unstable options on a stable toolchain
+## Documented decision: rustfmt.toml unstable options on a stable toolchain
 
-`rustfmt.toml` declares:
+`rustfmt.toml` declares two unstable options:
 
 ```toml
 imports_granularity = "Module"
@@ -12,28 +12,23 @@ group_imports = "StdExternalCrate"
 ```
 
 Both are **unstable** rustfmt options, but `rust-toolchain.toml` pins the
-**stable** channel. As a result every `cargo fmt` invocation prints:
+**stable** channel, so they are **silently ignored** and every `cargo fmt`
+prints two "unstable features are only available in nightly channel" warnings.
 
-```
-Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
-Warning: can't set `imports_granularity = Module`, unstable features are only available in nightly channel.
-```
+### Resolution (2026-07-10)
 
-and the two options have **no effect** — imports are not being grouped as the
-config intends. This also explains the 8 `cargo fmt --check` diffs: contributors
-on nightly produce grouped imports, the stable toolchain on CI/locally does not,
-so the tree drifts.
+Verified empirically that the options have **zero effect** on the current tree
+(`cargo fmt --all -- --check` reports 0 diffs both with and without the config),
+so the tree is already fmt-clean on stable regardless. Rather than delete the
+options (which would lose the documented intent) or force a nightly toolchain
+(which would burden all contributors/CI), the options are **kept and annotated**
+with a comment in `rustfmt.toml` explaining they are nightly-only and have no
+effect today. The original "8 fmt drift" diffs had already resolved themselves
+by the time of this check.
 
-### Suggested resolution (pick one)
-
-1. **Mean what the config says**: switch `rust-toolchain.toml` to
-   `channel = "nightly"` so the unstable options take effect, then run
-   `cargo fmt --all` once to re-group imports.
-2. **Drop the unstable options**: remove the two lines from `rustfmt.toml`,
-   accept stable rustfmt's default (no import grouping), and run
-   `cargo fmt --all` to normalize the tree. CI will then be self-consistent.
-
-Either way a one-time `cargo fmt --all` pass is needed to clear the drift.
+If the project later wants the import grouping to actually apply, switch
+`rust-toolchain.toml` to `channel = "nightly"` (the options will then take
+effect and a one-time `cargo fmt --all` will group imports).
 
 ## Open issue: clippy warnings (24)
 

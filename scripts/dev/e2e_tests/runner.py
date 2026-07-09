@@ -34,7 +34,7 @@ except ImportError:
     SELENIUM_AVAILABLE = False
 
 try:
-    import requests
+    import requests  # noqa: F401  (availability check)
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False

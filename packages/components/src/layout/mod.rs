@@ -17,10 +17,10 @@
 
 mod app_layout;
 mod aside;
-mod container;
-mod content;
-mod divider;
-mod flex;
+pub mod container;
+pub mod content;
+pub mod divider;
+pub mod flex;
 mod footer;
 mod grid;
 mod header;

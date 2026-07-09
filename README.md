@@ -357,7 +357,6 @@ just dev
 - [x] hikari-theme - Complete
 - [x] hikari-components - Basic components complete
 - [ ] hikari-extra-components - In progress
-- [x] hikari-render-service - Core features complete
 
 See the [Contributing guide](docs/en/guides/CONTRIBUTING.md) for how to get involved.
 

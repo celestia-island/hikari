@@ -201,7 +201,6 @@ cargo test --workspace
 ## 📚 Learn More
 
 - **Hikari Components**: [../../packages/components/](../../packages/components/)
-- **Hikari Render Service**: [../../packages/render-service/](../../packages/render-service/)
 - **Hikari Palette**: [../../packages/palette/](../../packages/palette/)
 - **Hikari Theme**: [../../packages/theme/](../../packages/theme/)
 

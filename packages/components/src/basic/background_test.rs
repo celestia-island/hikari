@@ -30,7 +30,7 @@ use super::*;
     #[test]
     fn test_background_props() {
         let props = BackgroundProps {
-            children: dioxus::prelude::VNode::empty(),
+            children: VNode::empty(),
         };
         
         // Just verify we can create props

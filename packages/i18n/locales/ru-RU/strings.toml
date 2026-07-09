@@ -30,7 +30,7 @@ auto = "Авто"
 [page.home.hero]
 title = "UI Фреймворк Hikari"
 subtitle = "Свет - Современный UI Фреймворк на Rust"
-description = "Основан на Dioxus + Grass + Axum, разработан с эстетикой Arknights и стилем FUI."
+description = "Основан на Tairitsu + Grass + Axum, разработан с эстетикой Arknights и стилем FUI."
 tagline = "Нет ничего постыдного в желании быть счастливым."
 explore = "Исследовать Компоненты →"
 

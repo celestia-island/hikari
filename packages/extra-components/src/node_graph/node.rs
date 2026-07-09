@@ -116,7 +116,7 @@ impl PortPosition {
 /// This trait defines the interface for creating custom node types.
 /// Implementations should handle node logic. Rendering is now
 /// framework-agnostic - use the data provided by this trait to
-/// render with your preferred framework (Tairitsu, Dioxus, etc.).
+/// render with your preferred framework (Tairitsu, etc.).
 pub trait NodePlugin: Send + Sync {
     /// Get node type
     fn node_type(&self) -> NodeType;
@@ -146,7 +146,7 @@ pub trait NodePlugin: Send + Sync {
 /// Simple node data structure for rendering
 ///
 /// This is the data model that frameworks can use to render nodes.
-/// Previously a Dioxus component, now framework-agnostic.
+/// Previously a component, now framework-agnostic.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Node {
     pub id: NodeId,

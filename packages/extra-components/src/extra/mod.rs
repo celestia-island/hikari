@@ -25,7 +25,7 @@ pub use timeline::*;
 pub use user_guide::*;
 pub use zoom_controls::*;
 
-// NOTE: The following modules have been removed as they were heavily dependent on Dioxus/wasm-bindgen:
+// NOTE: The following modules have been removed as they were heavily dependent on legacy Dioxus/wasm-bindgen:
 // - audio_waveform (requires Web Audio API)
 // - video_player (requires HTML5 video element APIs)
 // - rich_text_editor (requires contenteditable APIs)

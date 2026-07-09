@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component with modal overlay.
-//! Now provides a pure state model for user onboarding guides.
+//! Previously a component with modal overlay.
+//! Now provides a pure state model (migrated from legacy Dioxus) for user onboarding guides.
 
 /// Guide position on screen
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]

@@ -21,7 +21,6 @@ categories = ["gui", "wasm"]
 # as features below.
 [features]
 default = []
-dioxus = ["dep:dioxus"]
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
 
 [build-dependencies]
@@ -29,9 +28,6 @@ hikari-builder = { version = "^0.3", path = "../builder" }
 anyhow = "^1"
 
 [dependencies]
-# Dioxus framework (optional)
-dioxus = { version = "^0.7", optional = true }
-
 # Tairitsu framework (optional)
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
 tairitsu-vdom = { version = "^0.5", optional = true }

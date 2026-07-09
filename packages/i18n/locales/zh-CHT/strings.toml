@@ -30,7 +30,7 @@ auto = "自動"
 [page.home.hero]
 title = "Hikari UI 框架"
 subtitle = "光 - 現代化 Rust UI 框架"
-description = "基於 Dioxus + Grass + Axum，融合了明日方舟美學和 FUI 風格設計。"
+description = "基於 Tairitsu + Grass + Axum，融合了明日方舟美學和 FUI 風格設計。"
 tagline = "渴望快樂，無需羞愧。"
 explore = "探索元件 →"
 

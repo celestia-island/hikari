@@ -107,7 +107,7 @@ def hover_el(page, selector):
         page.evaluate(f"document.querySelector('{selector}')?.dispatchEvent(new MouseEvent('mouseover',{{bubbles:true}}))")
         time.sleep(0.5)
         return True
-    except:
+    except Exception:
         return False
 
 def get_scroll_height(page):

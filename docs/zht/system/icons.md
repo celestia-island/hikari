@@ -138,5 +138,4 @@ pub mod server {
 ## 相關系統
 
 - [Components 元件](../components/) - 使用圖示的元件
-- [Render-service](./render-service.md) - 圖示檔案服務
 - [Palette 調色板](./palette.md) - 圖示顏色

@@ -138,5 +138,4 @@ pub mod server {
 ## Systèmes liés
 
 - [Composants](../components/) - Composants utilisant des icônes
-- [Render-service](./render-service.md) - Service de fichiers d'icônes
 - [Palette](./palette.md) - Couleurs d'icônes

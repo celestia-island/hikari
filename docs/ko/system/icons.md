@@ -138,5 +138,4 @@ pub mod server {
 ## 관련 시스템
 
 - [컴포넌트](../components/) - 아이콘을 사용하는 컴포넌트들
-- [Render-service](./render-service.md) - 아이콘 파일 서비스
 - [Palette](./palette.md) - 아이콘 색상

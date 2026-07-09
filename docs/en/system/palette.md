@@ -586,7 +586,6 @@ let error_color = Color::苍翠;
 
 - [Theme System](./theme.md) - Theme context and CSS variables
 - [Components](../components/) - Component library using palettes
-- [Builder System](./builder.md) - SCSS compilation with palette variables
 
 ## Resources
 

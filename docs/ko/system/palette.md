@@ -586,7 +586,6 @@ let error_color = Color::苍翠;
 
 - [테마 시스템](./theme.md) - 테마 컨텍스트 및 CSS 변수
 - [컴포넌트](../components/) - 팔레트를 사용하는 컴포넌트 라이브러리
-- [Builder 시스템](./builder.md) - 팔레트 변수를 사용한 SCSS 컴파일
 
 ## 리소스
 

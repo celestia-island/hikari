@@ -176,7 +176,7 @@ AnimationBuilder::new(&elements)
 
 ## Участие в разработке
 
-Приветствуются любые вклады! Пожалуйста, прочитайте [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) для подробностей.
+Приветствуются любые вклады! Пожалуйста, прочитайте [CONTRIBUTING.md](../../en/guides/CONTRIBUTING.md) для подробностей.
 
 ## Лицензия
 

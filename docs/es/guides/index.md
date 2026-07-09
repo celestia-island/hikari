@@ -176,7 +176,7 @@ AnimationBuilder::new(&elements)
 
 ## Contribuir
 
-¡Las contribuciones son bienvenidas! Por favor, lee [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) para más detalles.
+¡Las contribuciones son bienvenidas! Por favor, lee [CONTRIBUTING.md](../../en/guides/CONTRIBUTING.md) para más detalles.
 
 ## Licencia
 

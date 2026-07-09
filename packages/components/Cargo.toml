@@ -123,6 +123,6 @@ web-sys = { version = "^0.3", features = [
 ] }
 
 [build-dependencies]
-tairitsu-packager = "^0.5"
+grass = "^0.13"
 anyhow = "^1"
 

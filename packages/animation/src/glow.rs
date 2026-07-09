@@ -2,9 +2,9 @@
 // Component-isolated glow effect built on tairitsu hooks.
 
 use tairitsu_macros::{component, define_props, rsx};
-use tairitsu_vdom::VNode as Element;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use tairitsu_vdom::MouseEvent;
+use tairitsu_vdom::VNode as Element;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsValue;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]

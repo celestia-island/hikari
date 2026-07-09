@@ -535,7 +535,7 @@ rsx! {
 
 ## Filosofía de Diseño
 
-### Estilo 
+### Estilo
 
 - **Tema claro (hikari)**:
   - Primario: Rosa (#FFB3A7)
@@ -547,7 +547,7 @@ rsx! {
   - Fondo: Oscuro
   - Texto: Claro
 
-### Elementos 
+### Elementos
 
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias)

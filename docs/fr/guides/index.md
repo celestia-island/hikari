@@ -86,7 +86,7 @@ trunk build --release
 
 ## Philosophie de Design
 
-### Design Plat 
+### Design Plat
 - Lignes épurées et hiérarchie d'information claire
 - Contraste élevé pour la lisibilité
 - Design minimaliste mais raffiné

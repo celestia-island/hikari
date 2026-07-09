@@ -41,7 +41,7 @@ COMPRESS_SVG = True  # Remove unnecessary whitespace and newlines
 def download_svg(icon_name: str) -> str | None:
     """Download a single SVG icon from GitHub"""
     url = f"{GITHUB_RAW}/{icon_name}.svg"
-    
+
     try:
         response = requests.get(url, timeout=10, headers={
             'Accept': 'application/vnd.github.raw',
@@ -92,34 +92,34 @@ def main():
     print("=" * 60)
     print("Hikari Icon Assets Generator")
     print("=" * 60)
-    
+
     # Create output directory
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Fetch icon list
     icons = fetch_icon_list()
-    
+
     # Download all SVG icons with concurrency
     print(f"\nDownloading {len(icons)} SVG icons (with {MAX_WORKERS} workers)...")
     svg_map = {}
     failed_icons = []
     completed = 0
-    
+
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         # Submit all download tasks
         future_to_icon = {
             executor.submit(download_svg, icon_name): icon_name
             for icon_name in icons
         }
-        
+
         # Process completed downloads
         for future in as_completed(future_to_icon):
             icon_name = future_to_icon[future]
             completed += 1
-            
+
             if completed % 50 == 0:
                 print(f"  Progress: {completed}/{len(icons)}")
-            
+
             try:
                 svg_content = future.result()
                 if svg_content:
@@ -131,14 +131,14 @@ def main():
             except Exception as e:
                 print(f"  ERROR: Exception for {icon_name}: {e}")
                 failed_icons.append(icon_name)
-    
+
     if failed_icons:
         print(f"\nWARNING: Failed to download {len(failed_icons)} icons:")
         for icon in failed_icons[:10]:
             print(f"    - {icon}")
         if len(failed_icons) > 10:
             print(f"    ... and {len(failed_icons) - 10} more")
-    
+
     print(f"  OK: Successfully downloaded {len(svg_map)} icons")
 
     # Write JSON file

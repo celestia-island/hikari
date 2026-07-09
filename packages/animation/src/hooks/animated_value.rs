@@ -15,7 +15,9 @@ pub fn use_animated_value<T: Clone + 'static>(initial: T) -> Signal<T> {
 /// Uses `use_signal` so the controller is constructed once and shared across
 /// re-renders (the controller is `Signal`-backed, so cloning is cheap).
 pub fn use_transition(duration_ms: u64) -> UseTransition {
-    use_signal(move || UseTransition::new(duration_ms)).inner().get()
+    use_signal(move || UseTransition::new(duration_ms))
+        .inner()
+        .get()
 }
 
 /// Like [`use_transition`], but scales the duration by the active animation
@@ -26,7 +28,9 @@ pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
     } else {
         duration_ms
     };
-    use_signal(move || UseTransition::new(scaled_duration)).inner().get()
+    use_signal(move || UseTransition::new(scaled_duration))
+        .inner()
+        .get()
 }
 
 #[derive(Clone)]

@@ -535,7 +535,7 @@ rsx! {
 
 ## Philosophie de Design
 
-### Style 
+### Style
 
 - **Thème clair (hikari)**:
   - Primaire: Pink (#FFB3A7)
@@ -547,7 +547,7 @@ rsx! {
   - Fond: Sombre
   - Texte: Clair
 
-### Éléments 
+### Éléments
 
 - Effets de lueur subtils
 - Indicateurs dynamiques (lumières respirantes)

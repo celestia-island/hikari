@@ -292,11 +292,8 @@ impl<'a> AnimationBuilder<'a> {
                 if let Some(element_actions) = actions.get(element_name)
                     && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>()
                 {
-                    let ctx = AnimationContext::new_with_timing(
-                        &element,
-                        previous_time,
-                        current_time,
-                    );
+                    let ctx =
+                        AnimationContext::new_with_timing(&element, previous_time, current_time);
 
                     let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
                     let element_cache = cached_ref.entry(element_name.clone()).or_default();

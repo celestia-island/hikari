@@ -196,4 +196,3 @@ pub fn use_animation_duration_scale() -> f32 {
 pub fn use_animation_reduced_motion() -> bool {
     use_animation_config().is_reduced_motion()
 }
-

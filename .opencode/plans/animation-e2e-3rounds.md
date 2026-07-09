@@ -106,7 +106,7 @@ Builds on `capture_v3.py`. New Playwright operations:
 
 ```python
 def anim_freeze(page):     # page.evaluate("window.__HIKARI_ANIM__.freeze()")
-def anim_unfreeze(page):   # page.evaluate("window.__HIKARI_ANIM__.unfreeze()")  
+def anim_unfreeze(page):   # page.evaluate("window.__HIKARI_ANIM__.unfreeze()")
 def anim_seek(page, p):    # page.evaluate(f"window.__HIKARI_ANIM__.seekAll({p})")
 def anim_step(page, ms):   # page.evaluate(f"window.__HIKARI_ANIM__.stepAll({ms})")
 def anim_state(page):      # page.evaluate("window.__HIKARI_ANIM__.getState()")

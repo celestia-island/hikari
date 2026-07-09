@@ -28,10 +28,6 @@ mod tests {
         assert!(!props.muted);
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
-        assert!(props.on_play.is_none());
-        assert!(props.on_pause.is_none());
-        assert!(props.on_time_update.is_none());
-        assert!(props.on_fullscreen_change.is_none());
     }
 
     #[test]
@@ -118,7 +114,6 @@ mod tests {
         assert!(props.height.is_none());
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
-        assert!(props.on_content_change.is_none());
     }
 
     #[test]

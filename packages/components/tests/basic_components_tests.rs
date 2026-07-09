@@ -189,7 +189,7 @@ mod tests {
     fn test_select_renders() {
         let entries = use_signal(Vec::<PortalEntry>::new);
         provide_context(PortalContext {
-            entries: entries.clone(),
+            entries: entries.inner().clone(),
             add_entry: Callback::new(|_| {}),
             remove_entry: Callback::new(|_| {}),
             clear_all: Callback::new(|_| {}),

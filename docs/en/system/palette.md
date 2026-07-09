@@ -6,7 +6,7 @@ Traditional Chinese color system implementation with 660+ historical colors.
 
 - [Overview](#overview)
 - [Colors](#colors)
-- [ClassesBuilder](#classesbuilder-utility-class-generator)
+- [ClassesBuilder](#classesbuilder)
 - [Themes](#themes)
 - [Opacity & Blending](#opacity--blending)
 - [API Reference](#api-reference)

@@ -6,7 +6,7 @@
 
 - [概要](#概要)
 - [色](#色)
-- [ClassesBuilder](#classesbuilder-ユーティリティクラスジェネレーター)
+- [ClassesBuilder](#classesbuilder)
 - [テーマ](#テーマ)
 - [不透明度とブレンド](#不透明度とブレンド)
 - [APIリファレンス](#apiリファレンス)

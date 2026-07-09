@@ -5,8 +5,8 @@
 ## 목차
 
 - [개요](#개요)
-- [ThemeProvider](#themeprovider-테마-프로바이더)
-- [ThemeContext](#themecontext-테마-컨텍스트)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [생성된 리소스](#생성된-리소스)
 - [CSS 변수 시스템](#css-변수-시스템)
 - [테마 전환](#테마-전환)

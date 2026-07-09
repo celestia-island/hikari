@@ -6,7 +6,7 @@ Implementación del sistema de colores tradicionales chinos con más de 660 colo
 
 - [Descripción General](#descripción-general)
 - [Colores](#colores)
-- [ClassesBuilder (Generador de Clases de Utilidad)](#classesbuilder-generador-de-clases-de-utilidad)
+- [ClassesBuilder (Generador de Clases de Utilidad)](#classesbuilder)
 - [Temas](#temas)
 - [Opacidad y Mezcla](#opacidad-y-mezcla)
 - [Referencia de API](#referencia-de-api)

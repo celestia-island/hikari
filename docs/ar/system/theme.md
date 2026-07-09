@@ -5,8 +5,8 @@
 ## جدول المحتويات
 
 - [نظرة عامة](#نظرة-عامة)
-- [ThemeProvider](#themeprovider-مزود-السمة)
-- [ThemeContext](#themecontext-سياق-السمة)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [الموارد المولدة](#الموارد-المولدة)
 - [نظام متغيرات CSS](#نظام-متغيرات-css)
 - [تبديل السمات](#تبديل-السمات)

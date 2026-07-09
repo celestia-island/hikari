@@ -6,7 +6,7 @@
 
 - [개요](#개요)
 - [색상](#색상)
-- [ClassesBuilder](#classesbuilder-유틸리티-클래스-생성기)
+- [ClassesBuilder](#classesbuilder)
 - [테마](#테마)
 - [불투명도 및 혼합](#불투명도-및-혼합)
 - [API 참조](#api-참조)

@@ -6,7 +6,7 @@ Implémentation du système de couleurs traditionnelles chinoises avec plus de 6
 
 - [Aperçu](#aperçu)
 - [Couleurs](#couleurs)
-- [ClassesBuilder](#classesbuilder-générateur-de-classes-utilitaires)
+- [ClassesBuilder](#classesbuilder)
 - [Thèmes](#thèmes)
 - [Opacité et fusion](#opacité-et-fusion)
 - [Référence API](#référence-api)

@@ -5,8 +5,8 @@
 ## Содержание
 
 - [Обзор](#обзор)
-- [ThemeProvider](#themeprovider-провайдер-темы)
-- [ThemeContext](#themecontext-контекст-темы)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [Сгенерированные ресурсы](#сгенерированные-ресурсы)
 - [Система CSS-переменных](#система-css-переменных)
 - [Переключение тем](#переключение-тем)

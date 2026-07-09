@@ -17,6 +17,7 @@ allow = [
     "Unicode-3.0",
     "Zlib",
     "OpenSSL",
+    "LicenseRef-sysl-1.0",
 ]
 deny = [
     "GPL-2.0",

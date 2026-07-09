@@ -127,6 +127,3 @@ AnimationBuilder::new()
 ## Related Documentation
 
 - [Design System Overview](../../design/overview.md)
-- [Layer1 Base Layer](../../design/layer1.md)
-- [Layer2 Component Layer](../../design/layer2.md)
-- [Custom Custom Layer](../../design/custom.md)

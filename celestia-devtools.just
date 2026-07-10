@@ -14,7 +14,7 @@
 # unstable) so it composes cleanly with each repo's own header.
 #
 # Windows note: each repo's justfile MUST declare, near its own header,
-#     set windows-shell := ["bash.exe", "-c"]
+#     set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-c"]
 # Without it just resolves recipe shebangs via `cygpath`, which Git for Windows
 # does not place on PATH, so every shebang recipe dies with
 # "could not find cygpath executable to translate recipe ... shebang". The

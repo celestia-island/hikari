@@ -28,8 +28,11 @@ py := if os_family() == "windows" { "python" } else { "python3" }
 # External packager from sibling repository (tairitsu)
 tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
 website_manifest := "examples/website/Cargo.toml"
-# Lagrange SSG binary (sibling repo) — used for docs rendering.
-lagrange_bin := "../lagrange/target/release/lagrange.exe"
+# Lagrange SSG binary — resolved via celestia-devtools locate (checks env
+# vars, cargo [patch] config, sibling dir, git clone). Falls back to the
+# standard sibling layout ../lagrange if devtools isn't installed.
+lagrange_root := `celestia-devtools locate --crate lagrange 2>/dev/null || python -m celestia_devtools locate --crate lagrange 2>/dev/null || echo "../lagrange"`
+lagrange_bin := lagrange_root + if os_family() == "windows" { "/target/release/lagrange.exe" } else { "/target/release/lagrange" }
 
 # ============================================================================
 # Core tasks
@@ -68,25 +71,26 @@ build: fetch-icons
     @cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
-build-website:
+build-website: _check-lagrange
     @echo "  ╭──────────────────────────────────────────────────╮"
     @echo "  │  Building docs with lagrange SSG                 │"
     @echo "  ╰──────────────────────────────────────────────────╯"
-    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
     {{lagrange_bin}} build --src docs --out dist
 
 # ============================================================================
 # Development
 # ============================================================================
 
+# Verify the lagrange binary exists, with a helpful error if not.
+_check-lagrange:
+    @test -f "{{lagrange_bin}}" || { echo "[ERROR] lagrange not built: {{lagrange_bin}}"; echo "  Run: cd {{lagrange_root}} && cargo build --release"; exit 1; }
+
 # Development mode: build docs with lagrange + serve with watch
-dev:
-    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
+dev: _check-lagrange
     {{lagrange_bin}} dev --src docs --out dist --port 3000
 
 # Start dev server (no watch, for AI agent)
-dev-by-agent:
-    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
+dev-by-agent: _check-lagrange
     {{lagrange_bin}} build --src docs --out dist
     {{lagrange_bin}} dev --src docs --out dist --port 3000 --interval 999
 

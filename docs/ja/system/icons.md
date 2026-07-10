@@ -138,5 +138,4 @@ pub mod server {
 ## 関連システム
 
 - [コンポーネント](../components/) - アイコンを使用するコンポーネント
-- [Render-service](./render-service.md) - アイコンファイルサービス
 - [パレット](./palette.md) - アイコンの色

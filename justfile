@@ -16,6 +16,10 @@
 
 # Windows uses PowerShell with UTF-8 encoding
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
+# `set lists` enables which() (used by the imported celestia-devtools.just);
+# `set unstable` gates it.
+set unstable
+set lists
 
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }

@@ -1,10 +1,10 @@
-//! Continuous animation hooks (timeout, interval) for Dioxus
+//! Continuous animation hooks (timeout, interval) for tairitsu components
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::sync::{Arc, Mutex};
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-use dioxus::prelude::*;
+use tairitsu_hooks::use_effect;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::JsCast;
 

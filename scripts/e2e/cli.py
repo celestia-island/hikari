@@ -82,7 +82,6 @@ def cmd_capture(args):
         print("ERROR: --route or --url is required", file=sys.stderr)
         return 1
 
-    url = args.url or f"http://localhost:3000{args.route}"
     output = args.output or (
         f"{args.route.strip('/').replace('/', '_') or 'home'}.png"
     )
@@ -107,7 +106,6 @@ def cmd_capture(args):
 
 def cmd_batch(args):
     """Batch capture all routes."""
-    browser = TairitsuBrowser(debug_port=args.debug_port)
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -362,7 +360,7 @@ Examples:
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # health
-    p_health = subparsers.add_parser("health", help="Check server status")
+    p_health = subparsers.add_parser("health", help="Check server status")  # noqa: F841  (argparse subparser registration)
 
     # capture
     p_cap = subparsers.add_parser("capture", help="Capture a single screenshot")

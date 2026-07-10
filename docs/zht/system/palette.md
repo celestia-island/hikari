@@ -586,7 +586,6 @@ let error_color = Color::苍翠;
 
 - [Theme System](./theme.md) - 主題上下文和 CSS 變數
 - [Components](../components/) - 使用調色板的元件庫
-- [Builder System](./builder.md) - 使用調色板變數的 SCSS 編譯
 
 ## 參考資源
 

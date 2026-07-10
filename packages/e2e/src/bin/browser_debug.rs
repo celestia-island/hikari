@@ -209,15 +209,15 @@ impl BrowserDebug {
                 const loading = document.getElementById('loading');
                 const main = document.getElementById('main');
                 const errors = [];
-                
+
                 if (loading && loading.style.display !== 'none') {
                     errors.push('Loading indicator still visible');
                 }
-                
+
                 if (!main || main.children.length === 0) {
                     errors.push('Main content area is empty');
                 }
-                
+
                 return {
                     ready: errors.length === 0,
                     errors: errors,

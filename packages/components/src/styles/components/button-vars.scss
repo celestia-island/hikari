@@ -1,6 +1,6 @@
 // packages/components/src/styles/components/button-vars.scss
 // Layer2 - Button Component Variables
-// 
+//
 // This file defines component-level CSS variables for the Button component.
 // These variables can be overridden at runtime via AnimationBuilder.
 //
@@ -15,94 +15,94 @@
   // ============================================
   // 1. Color System
   // ============================================
-  
+
   // Text Colors
   --hi-button-text-color: var(--hi-color-text-primary);
   --hi-button-text-color-active: var(--hi-color-text-primary);
   --hi-button-text-color-disabled: rgba(128, 128, 128, 0.5);
-  
+
   // Icon Colors
   --hi-button-icon-color: var(--hi-icon-color);
   --hi-button-icon-color-active: var(--hi-icon-color);
   --hi-button-icon-color-disabled: rgba(128, 128, 128, 0.5);
-  
+
   // Background Colors
   --hi-button-bg: transparent;
   --hi-button-bg-active: var(--hi-bg-surface-dark);
   --hi-button-bg-disabled: rgba(128, 128, 128, 0.1);
-  
+
   // Border Colors
   --hi-button-border-color: var(--hi-border-color);
   --hi-button-border-color-focus: var(--hi-border-color-focus);
   --hi-button-border-color-disabled: rgba(128, 128, 128, 0.2);
-  
+
   // Shadow & Glow (used by Glow wrapper)
   --hi-button-glow: var(--hi-glow-color);
-  
+
   // ============================================
   // 2. Border Radius System
   // ============================================
-  
+
   --hi-button-radius: 4px;
-  
+
   // ============================================
   // 3. Animation System
   // ============================================
-  
+
   // Duration
   --hi-button-duration: var(--hi-duration-normal);
   --hi-button-duration-active: var(--hi-duration-instant);
-  
+
   // Easing
   --hi-button-easing: var(--hi-ease-default);
-  
+
   // Transition
-  --hi-button-transition: 
+  --hi-button-transition:
     background-color var(--hi-button-duration) var(--hi-button-easing),
     border-color var(--hi-button-duration) var(--hi-button-easing),
     transform var(--hi-button-duration-active) var(--hi-button-easing);
-  
+
   // ============================================
   // 4. Background System
   // ============================================
-  
+
   --hi-button-bg-blur: none;
-  
+
   // ============================================
   // 5. SVG System
   // ============================================
-  
+
   --hi-button-icon-fill: var(--hi-icon-fill);
   --hi-button-icon-fill-opacity: var(--hi-icon-fill-opacity);
   --hi-button-icon-size: var(--hi-icon-size-sm);
-  
+
   // ============================================
   // 6. Spacing System
   // ============================================
-  
+
   --hi-button-padding-x: var(--hi-spacing-md);
   --hi-button-padding-y: var(--hi-spacing-sm);
   --hi-button-gap: var(--hi-spacing-xs);
-  
+
   // ============================================
   // 7. Border System
   // ============================================
-  
+
   --hi-button-border-width: var(--hi-border-width);
   --hi-button-border-width-focus: var(--hi-border-width-focus);
   --hi-button-border-style: var(--hi-border-style);
-  
+
   // ============================================
   // 8. Transform System
   // ============================================
-  
+
   --hi-button-transform: none;
   --hi-button-transform-active: scale(0.98);
-  
+
   // ============================================
   // 9. Typography System
   // ============================================
-  
+
   --hi-button-font-size: 0.8125rem;
   --hi-button-font-weight: 500;
   --hi-button-line-height: 1.4;
@@ -116,16 +116,16 @@
 .hi-button-primary {
   --hi-button-text-color: var(--hi-color-text-on-primary);
   --hi-button-text-color-active: var(--hi-color-text-on-primary);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-primary);
   --hi-button-icon-color-active: var(--hi-color-text-on-primary);
-  
+
   --hi-button-bg: var(--hi-color-primary);
   --hi-button-bg-active: var(--hi-color-primary-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-primary);
-  
+
   --hi-button-glow: var(--hi-glow-color);
 }
 
@@ -136,16 +136,16 @@
 .hi-button-secondary {
   --hi-button-text-color: var(--hi-color-text-on-secondary);
   --hi-button-text-color-active: var(--hi-color-text-on-secondary);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-secondary);
   --hi-button-icon-color-active: var(--hi-color-text-on-secondary);
-  
+
   --hi-button-bg: var(--hi-color-secondary);
   --hi-button-bg-active: var(--hi-color-secondary-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-secondary);
-  
+
   --hi-button-glow: var(--hi-glow-color);
 }
 
@@ -156,16 +156,16 @@
 .hi-button-ghost {
   --hi-button-text-color: var(--hi-color-text-secondary);
   --hi-button-text-color-active: var(--hi-color-text-secondary);
-  
+
   --hi-button-icon-color: var(--hi-color-text-secondary);
   --hi-button-icon-color-active: var(--hi-color-text-secondary);
-  
+
   --hi-button-bg: transparent;
   --hi-button-bg-active: var(--hi-bg-surface-dark);
-  
+
   --hi-button-border-color: var(--hi-border-color);
   --hi-button-border-color-focus: var(--hi-border-color-focus);
-  
+
   --hi-button-glow: var(--hi-glow-color);
 }
 
@@ -176,16 +176,16 @@
 .hi-button-danger {
   --hi-button-text-color: var(--hi-color-text-on-danger, #ffffff);
   --hi-button-text-color-active: var(--hi-color-text-on-danger, #ffffff);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
   --hi-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
-  
+
   --hi-button-bg: var(--hi-color-danger);
   --hi-button-bg-active: var(--hi-color-danger-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-danger);
-  
+
   --hi-button-glow: var(--hi-glow-color);
 }
 
@@ -196,16 +196,16 @@
 .hi-button-success {
   --hi-button-text-color: var(--hi-color-text-on-success, #ffffff);
   --hi-button-text-color-active: var(--hi-color-text-on-success, #ffffff);
-  
+
   --hi-button-icon-color: var(--hi-color-text-on-success, #ffffff);
   --hi-button-icon-color-active: var(--hi-color-text-on-success, #ffffff);
-  
+
   --hi-button-bg: var(--hi-color-success);
   --hi-button-bg-active: var(--hi-color-success-dark);
-  
+
   --hi-button-border-color: transparent;
   --hi-button-border-color-focus: var(--hi-color-success);
-  
+
   --hi-button-glow: var(--hi-glow-color);
 }
 

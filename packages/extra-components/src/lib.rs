@@ -5,7 +5,7 @@
 //! ## Overview
 //!
 //! `hikari-extra-components` now provides pure Rust data structures for advanced UI components.
-//! These components can be rendered using any frontend framework (Tairitsu, Dioxus, etc.).
+//! These components can be rendered using any frontend framework (Tairitsu, etc.).
 //!
 //! ## Migration from Dioxus
 //!
@@ -40,7 +40,7 @@
 //! state.expanded = true;
 //!
 //! // Use with your preferred framework
-//! // (Tairitsu, Dioxus, Yew, etc.)
+//! // (Tairitsu, etc.)
 //! ```
 //!
 //! ## Dependencies

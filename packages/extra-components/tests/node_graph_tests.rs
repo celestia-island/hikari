@@ -1,6 +1,6 @@
 // Node Graph Integration Tests
 // Tests for history, serialization, and plugin systems
-// Note: Some tests require Dioxus runtime and are ignored
+// Note: Some tests require browser runtime and are disabled
 
 #[cfg(test)]
 mod tests {

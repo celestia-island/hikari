@@ -176,7 +176,7 @@ AnimationBuilder::new(&elements)
 
 ## 貢獻
 
-歡迎貢獻！請閱讀 [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) 了解詳情。
+歡迎貢獻！請閱讀 [CONTRIBUTING.md](../../en/guides/CONTRIBUTING.md) 了解詳情。
 
 ## 授權
 

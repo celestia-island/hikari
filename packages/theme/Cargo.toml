@@ -24,5 +24,7 @@ tairitsu-hooks = "^0.5"
 tairitsu-macros = "^0.5"
 
 [build-dependencies]
-tairitsu-packager = "^0.5"
+# Use grass directly for SCSS compilation — avoids pulling tairitsu-packager
+# (which transitively depends on wasmtime) into every consumer's build.
+grass = "^0.13"
 anyhow = "^1"

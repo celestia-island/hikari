@@ -5,7 +5,6 @@ Distributes routes across multiple containers to utilize multiple CPU cores.
 """
 
 import argparse
-import os
 import shlex
 import subprocess
 import sys
@@ -154,7 +153,6 @@ def main():
     print(f"{YELLOW}Launching {num_containers} containers in parallel...{NC}")
     print()
 
-    container_pids = []
 
     with ThreadPoolExecutor(max_workers=num_containers) as executor:
         futures = []

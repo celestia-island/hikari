@@ -216,4 +216,4 @@ MIT OR Apache-2.0
 
 ## Contributing
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution guidelines.
+See [CONTRIBUTING.md](../../docs/en/guides/CONTRIBUTING.md) for contribution guidelines.

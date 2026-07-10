@@ -2,7 +2,7 @@
 
 Hikari (光) is a modern Rust UI framework built with:
 
-- **Dioxus 0.7** - Reactive UI framework
+- **Tairitsu 0.7** - Reactive UI framework
 - **Grass** - SCSS compiler
 - **Axum** - Web server for SSR
 

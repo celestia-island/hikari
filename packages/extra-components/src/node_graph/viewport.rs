@@ -3,7 +3,7 @@
 
 /// Viewport state for pan and zoom
 ///
-/// Previously a Dioxus component. Now a pure state model.
+/// Previously a component. Now a pure state model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Viewport {
     /// Current zoom level

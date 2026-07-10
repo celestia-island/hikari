@@ -7,7 +7,7 @@
   z-index: -1;
   pointer-events: none;
   overflow: hidden;
-  
+
   /* Hikari theme (light) */
   &[data-theme="hikari"] &__gradient {
     background: radial-gradient(
@@ -18,7 +18,7 @@
       rgba(219, 112, 147, 0.6) 100%
     );
   }
-  
+
   /* Tairitsu theme (dark) */
   &[data-theme="tairitsu"] &__gradient {
     background: radial-gradient(
@@ -38,7 +38,7 @@
   top: -25vh;
   left: -25vw;
   will-change: transform;
-  
+
   /* Hikari theme (light) */
   .hi-background[data-theme="hikari"] & {
     background: radial-gradient(
@@ -50,7 +50,7 @@
     );
     animation: gradient-move-hikari 60s linear infinite;
   }
-  
+
   /* Tairitsu theme (dark) */
   .hi-background[data-theme="tairitsu"] & {
     background: radial-gradient(

@@ -9,13 +9,13 @@ Comprehensive UI component library with Arknights-style design and FUI (Future U
 hikari-components = "0.1.0"
 hikari-theme = "0.1.0"
 hikari-palette = "0.1.0"
-dioxus = "0.7"
+tairitsu-vdom = "0.5"
 ```
 
 ## Quick Start
 
 ```rust
-use dioxus::prelude::*;
+use tairitsu_macros::{component, rsx};
 use hikari_components::*;
 use hikari_theme::ThemeProvider;
 

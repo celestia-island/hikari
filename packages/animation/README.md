@@ -1,6 +1,6 @@
 # hikari-animation
 
-High-performance, declarative animation system for Dioxus with dynamic values, complex timelines, and smooth transitions.
+High-performance, declarative animation system with dynamic values, complex timelines, and smooth transitions.
 
 ## Installation
 
@@ -38,15 +38,15 @@ The `Glow` component provides a mouse-following glow effect with **component-iso
 
 ### Component-Isolated Features
 
-- ✅ **No Global Side Effects**: Does not use `MutationObserver` to monitor global DOM
-- ✅ **Reactive State**: Uses Dioxus hooks (`use_node_ref`, `use_effect`)
-- ✅ **Automatic Cleanup**: Dioxus automatically handles cleanup on unmount
-- ✅ **High Performance**: Direct CSS variable updates without re-render
+- **No Global Side Effects**: Does not use `MutationObserver` to monitor global DOM
+- **Reactive State**: Uses tairitsu hooks (`use_ref`, `use_effect`)
+- **Automatic Cleanup**: The hook runtime handles cleanup on unmount
+- **High Performance**: Direct CSS variable updates without re-render
 
 ### Usage
 
 ```rust
-use dioxus::prelude::*;
+use tairitsu_macros::rsx;
 use hikari_animation::Glow;
 
 rsx! {
@@ -76,8 +76,7 @@ rsx! {
 ### Internal Implementation
 
 The Glow component uses:
-- `use_node_ref` for direct DOM access
-- `use_effect` to initialize CSS variables on mount
+- tairitsu hooks for component-scoped state
 - `onmousemove` handler for mouse tracking with `getBoundingClientRect()`
 - Direct CSS variable updates via `element.set_attribute("style", ...)`
 - CSS variables (`--glow-x`, `--glow-y`, `--glow-color`, `--glow-intensity`) for dynamic updates

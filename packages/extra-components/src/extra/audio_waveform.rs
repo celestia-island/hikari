@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component using Web Audio API (`AudioContext`, `AnalyserNode`)
-//! via `web-sys`. Now provides a pure state model with rendering data.
+//! Previously a component using Web Audio API (`AudioContext`, `AnalyserNode`)
+//! via `web-sys`. Now provides a pure state model (migrated from legacy Dioxus) with rendering data.
 //!
 //! ## Missing Platform API
 //!

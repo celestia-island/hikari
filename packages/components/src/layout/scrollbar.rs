@@ -1,7 +1,7 @@
 // hikari-components/src/layout/scrollbar.rs
 //! Custom Scrollbar Container component
 //!
-//! A Dioxus component wrapper that uses the script-based scrollbar system.
+//! A tairitsu component wrapper that uses the script-based scrollbar system.
 //! The component renders a container that's initialized by the script.
 
 use crate::prelude::*;

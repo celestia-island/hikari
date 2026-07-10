@@ -125,7 +125,6 @@ class ReportGenerator:
             cmp_html = ""
             if tr.comparison:
                 cmp_color = "#2ecc71" if tr.comparison.passed else "#e74c3c"
-                cmp_text = tr.comparison.summary.replace("PASS", "").replace("FAIL", "")
                 diff_img = ""
                 if tr.comparison.diff_image_path and Path(tr.comparison.diff_image_path).exists():
                     rel = Path(tr.comparison.diff_image_path).resolve().relative_to(
@@ -242,7 +241,7 @@ class ReportGenerator:
 
         failed_tests = [t for t in result.tests if t.status == "failed"]
         if failed_tests:
-            print(f"\n \033[31mFailed tests:\033[0m")
+            print("\n \033[31mFailed tests:\033[0m")
             for t in failed_tests:
                 reason_parts = []
                 if not all(s.success for s in t.steps):

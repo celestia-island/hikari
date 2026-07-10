@@ -4,7 +4,6 @@
 Fix SCSS keyframes blocks that were incorrectly commented.
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -17,15 +16,8 @@ def fix_keyframes_in_file(file_path: Path) -> int:
     original_content = content
     changes = 0
 
-    # Pattern to find keyframes blocks that start with // but have uncommented content
-    # Matches: // @keyframes name { ... } with possible nesting
-    pattern = r'(// @keyframes\s+[\w-]+\s*\{)([^}]*\{[^}]*\})*([^}]*\})'
-
     def replace_keyframes(match):
         block = match.group(0)
-        # Count braces to find the end of the keyframes block
-        start_comment = match.group(1)
-        rest = block[len(start_comment):]
 
         # Properly comment out the entire block
         lines = block.split('\n')
@@ -42,15 +34,12 @@ def fix_keyframes_in_file(file_path: Path) -> int:
     lines = content.split('\n')
     i = 0
     new_lines = []
-    in_keyframes = False
-    keyframes_indent = 0
 
     while i < len(lines):
         line = lines[i]
 
         # Check if this line starts a keyframes block
         if re.match(r'^\s*//\s*@keyframes', line):
-            in_keyframes = True
             # The line is already commented, keep it
             new_lines.append(line)
             # Also comment all lines until we find the closing brace

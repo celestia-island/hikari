@@ -7,7 +7,6 @@ GitHub repository and generates a Rust enum with all icon names.
 """
 
 import requests
-import json
 from pathlib import Path
 from datetime import datetime
 
@@ -26,7 +25,7 @@ RUST_KEYWORDS = {
 
 def fetch_icons():
     """Fetch all icon names from Lucide GitHub API"""
-    print(f"Fetching icons from GitHub...")
+    print("Fetching icons from GitHub...")
     try:
         # Fetch icons directory from GitHub
         response = requests.get(GITHUB_API, timeout=30, headers={

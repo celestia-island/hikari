@@ -138,5 +138,4 @@ pub mod server {
 ## 相关系统
 
 - [Components 组件](../components/) - 使用图标的组件
-- [Render-service](./render-service.md) - 图标文件服务
 - [Palette 调色板](./palette.md) - 图标颜色

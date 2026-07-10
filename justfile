@@ -27,6 +27,8 @@ py := if os_family() == "windows" { "python" } else { "python3" }
 # External packager from sibling repository (tairitsu)
 tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
 website_manifest := "examples/website/Cargo.toml"
+# Lagrange SSG binary (sibling repo) — used for docs rendering.
+lagrange_bin := "../lagrange/target/release/lagrange.exe"
 
 # ============================================================================
 # Core tasks
@@ -65,11 +67,12 @@ build: fetch-icons
     @cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
-build-website: (check-tairitsu-packager)
+build-website:
     @echo "  ╭──────────────────────────────────────────────────╮"
-    @echo "  │  Building website with tairitsu-packager         │"
+    @echo "  │  Building docs with lagrange SSG                 │"
     @echo "  ╰──────────────────────────────────────────────────╯"
-    @cd examples/website && tairitsu --manifest-path Cargo.toml build
+    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
+    {{lagrange_bin}} build --src docs --out dist
 
 # ============================================================================
 # Development
@@ -79,13 +82,16 @@ build-website: (check-tairitsu-packager)
 check-port *force="":
     @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
 
-# Development mode for website
-dev *force="": (check-port force) (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
+# Development mode: build docs with lagrange + serve with watch
+dev *force="": (check-port force)
+    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
+    {{lagrange_bin}} dev --src docs --out dist --port 3000
 
 # Start dev server (no watch, for AI agent)
-dev-by-agent: (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
+dev-by-agent:
+    @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
+    {{lagrange_bin}} build --src docs --out dist
+    {{lagrange_bin}} dev --src docs --out dist --port 3000 --interval 999
 
 # Alias for dev
 serve: dev

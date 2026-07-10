@@ -23,7 +23,7 @@ jobs:
           - nightly
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache MDI icons
         id: mdi-cache

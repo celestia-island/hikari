@@ -14,8 +14,9 @@
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
 
-# Windows uses PowerShell with UTF-8 encoding
-set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
+# Windows uses Git Bash (not PowerShell/WSL — neither has cargo on PATH).
+set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-c"]
+set shell := ["bash", "-c"]
 # `set lists` enables which() (used by the imported celestia-devtools.just);
 # `set unstable` gates it.
 set unstable
@@ -78,12 +79,8 @@ build-website:
 # Development
 # ============================================================================
 
-# Check if port 3000 is occupied
-check-port *force="":
-    @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
-
 # Development mode: build docs with lagrange + serve with watch
-dev *force="": (check-port force)
+dev:
     @{{py}} -c "import pathlib,sys; p=pathlib.Path('{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print(f'[ERROR] lagrange not built: {p}'), print('  Run: cd ../lagrange && cargo build --release'), sys.exit(1))"
     {{lagrange_bin}} dev --src docs --out dist --port 3000
 

@@ -27,7 +27,7 @@ jobs:
       - run: cargo install --git https://github.com/celestia-island/lagrange --branch dev lagrange-library --locked
       - run: lagrange build --src docs --out _site
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 

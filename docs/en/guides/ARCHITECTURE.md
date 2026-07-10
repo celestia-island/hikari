@@ -174,7 +174,7 @@ pub use production::*;
 - Rich media state models (RichTextEditorState, VideoPlayerState, AudioWaveformState, CodeHighlighterState)
 - Event types and builder patterns for all state models
 
-**Design approach**: Pure Rust structs with `serde` support — no rendering framework dependency. These models can be used with any frontend framework (Tairitsu, Dioxus, Yew, Leptos) or in SSR/testing contexts without pulling in a DOM library.
+**Design approach**: Pure Rust structs with `serde` support — no rendering framework dependency. These models can be used with any frontend framework (Tairitsu, Yew, Leptos) or in SSR/testing contexts without pulling in a DOM library.
 
 **Dependencies**:
 - `hikari-components` (reuses types like `sanitize_html`)
@@ -188,7 +188,7 @@ pub use extra::*;
 pub use node_graph::*;
 ```
 
-> **Note:** Some types share names across `hikari-components` and `hikari-extra-components` (e.g., `TimelinePosition`, `GuideStep`). The `components` versions are rendered Dioxus-style components with `Element` children and event handlers; the `extra-components` versions are pure data structs with `String` fields and `serde` derives. Import with explicit module paths to disambiguate.
+> **Note:** Some types share names across `hikari-components` and `hikari-extra-components` (e.g., `TimelinePosition`, `GuideStep`). The `components` versions are rendered tairitsu-style components with `Element` children and event handlers; the `extra-components` versions are pure data structs with `String` fields and `serde` derives. Import with explicit module paths to disambiguate.
 
 #### hikari-animation
 **Purpose**: Animation engine and presets

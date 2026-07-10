@@ -2,7 +2,7 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component. Now provides a pure state model
+//! Previously a component. Now provides a pure state model (migrated from legacy Dioxus)
 //! for timeline/event display.
 
 /// Timeline position

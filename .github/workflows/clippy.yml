@@ -36,7 +36,7 @@ jobs:
         run: python3 scripts/icons/fetch_mdi_icons.py
 
       - name: Setup toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy

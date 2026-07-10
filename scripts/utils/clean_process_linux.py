@@ -151,7 +151,7 @@ def clean_port(port: int = 3000, force: bool = False):
             return 1
     else:
         # Without --force, just warn and exit
-        print_warning(f"Process is running. Use 'just dev --force' to kill it.")
+        print_warning("Process is running. Use 'just dev --force' to kill it.")
         return 0
 
 

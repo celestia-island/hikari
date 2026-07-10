@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component using `web-sys` for video control and fullscreen.
-//! Now provides a pure state model with playback controls and timing.
+//! Previously a component using `web-sys` for video control and fullscreen.
+//! Now provides a pure state model (migrated from legacy Dioxus) with playback controls and timing.
 //!
 //! ## Platform API
 //!

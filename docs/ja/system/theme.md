@@ -5,8 +5,8 @@
 ## 目次
 
 - [概要](#概要)
-- [ThemeProvider](#themeprovider-テーマプロバイダー)
-- [ThemeContext](#themecontext-テーマコンテキスト)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [生成リソース](#生成リソース)
 - [CSS変数システム](#css変数システム)
 - [テーマ切り替え](#テーマ切り替え)

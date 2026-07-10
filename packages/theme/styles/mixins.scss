@@ -81,7 +81,7 @@
 
 @mixin hover-effect {
     transition: all $hikari-transition-base;
-    
+
     &:hover {
         opacity: 0.8;
         cursor: pointer;
@@ -90,7 +90,7 @@
 
 @mixin focus-ring {
     outline: none;
-    
+
     &:focus-visible {
         box-shadow: 0 0 0 2px var(--hi-color-primary);
     }
@@ -117,7 +117,7 @@
     transition: all $hikari-transition-base;
     border: 1px solid transparent;
     cursor: pointer;
-    
+
     @include focus-ring;
 }
 
@@ -125,7 +125,7 @@
     @include button-base;
     background-color: var(--hi-color-primary);
     color: var(--hi-color-text-primary);
-    
+
     &:hover:not(:disabled) {
         filter: brightness(1.1);
     }
@@ -136,7 +136,7 @@
     background-color: transparent;
     color: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    
+
     &:hover:not(:disabled) {
         background-color: var(--hi-color-surface);
     }
@@ -146,7 +146,7 @@
     @include button-base;
     background-color: transparent;
     color: var(--hi-color-text-primary);
-    
+
     &:hover:not(:disabled) {
         background-color: var(--hi-color-surface);
     }
@@ -166,13 +166,13 @@
     font-size: $hikari-font-size-base;
     font-family: $hikari-font-family-sans;
     transition: all $hikari-transition-base;
-    
+
     @include focus-ring;
-    
+
     &::placeholder {
         color: var(--hi-color-text-secondary);
     }
-    
+
     &:disabled {
         @include disabled;
     }

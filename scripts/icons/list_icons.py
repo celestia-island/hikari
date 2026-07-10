@@ -4,7 +4,6 @@ from __future__ import annotations
 import io
 import sys
 import urllib.request
-from pathlib import Path
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

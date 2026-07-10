@@ -119,7 +119,7 @@ mod tests {
         let props = TimelineItemProps {
             time: "2024-01-01".to_string(),
             title: "Event".to_string(),
-            description: "Description".to_string(),
+            color: "blue".to_string(),
             ..Default::default()
         };
         let _ = TimelineItem(props);
@@ -131,12 +131,11 @@ mod tests {
         assert_eq!(props.position, TimelinePosition::Alternate);
         assert_eq!(props.time, "");
         assert_eq!(props.title, "");
-        assert_eq!(props.description, "");
         assert!(props.icon.is_none());
         assert_eq!(props.color, "");
         assert!(!props.last);
-        assert!(!props.expanded);
-        assert!(props.extra.is_none());
+        assert_eq!(props.class, "");
+        assert_eq!(props.style, "");
     }
 
     // ── Skeleton ───────────────────────────────────────────────

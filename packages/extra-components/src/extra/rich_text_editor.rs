@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component using `web-sys` (`contenteditable`, `execCommand`).
-//! Now provides a pure state model with formatting commands and content tracking.
+//! Previously a component using `web-sys` (`contenteditable`, `execCommand`).
+//! Now provides a pure state model (migrated from legacy Dioxus) with formatting commands and content tracking.
 //!
 //! ## Platform API
 //!

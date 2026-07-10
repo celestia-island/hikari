@@ -83,7 +83,7 @@ Production-ready SSR example with Axum integration.
 
 **Features:**
 
-- Full SSR with Dioxus
+- Full SSR with Tairitsu
 - Static asset serving with caching
 - Health check endpoints
 - API routes
@@ -178,7 +178,7 @@ All examples use the Hikari design system:
 For development with hot reloading:
 
 ```bash
-cargo install dioxus-cli
+cargo install tairitsu
 dx watch --bin website
 ```
 
@@ -201,7 +201,6 @@ cargo test --workspace
 ## 📚 Learn More
 
 - **Hikari Components**: [../../packages/components/](../../packages/components/)
-- **Hikari Render Service**: [../../packages/render-service/](../../packages/render-service/)
 - **Hikari Palette**: [../../packages/palette/](../../packages/palette/)
 - **Hikari Theme**: [../../packages/theme/](../../packages/theme/)
 
@@ -221,6 +220,6 @@ All examples are licensed under the same terms as the Hikari project (MIT OR Apa
 
 ## 🙏 Acknowledgments
 
-- Built with [Dioxus](https://dioxuslabs.com/)
+- Built with [Tairitsu](https://github.com/celestia-island/tairitsu)
 - Design inspired by [Arknights](https://www.arknights.global/)
 - Colors from [ChineseColors](https://github.com/zhaoolee/ChineseColors)

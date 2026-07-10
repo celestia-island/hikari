@@ -1,2 +1,9 @@
+# NOTE: these two options are unstable and are silently ignored on the stable
+# toolchain pinned in rust-toolchain.toml. They document the *intended* import
+# grouping (StdExternalCrate, Module granularity) for the day the toolchain
+# moves to nightly. The tree is already fmt-clean on stable, so they have no
+# effect today; keep them to preserve the intent. To silence the per-run
+# "unstable features are only available in nightly channel" warnings, either
+# delete these lines or switch the toolchain to nightly.
 imports_granularity = "Module"
 group_imports = "StdExternalCrate"

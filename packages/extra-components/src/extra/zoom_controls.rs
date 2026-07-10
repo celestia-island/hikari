@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component with keyboard event handling.
-//! Now provides a pure state model for zoom functionality.
+//! Previously a component with keyboard event handling.
+//! Now provides a pure state model (migrated from legacy Dioxus) for zoom functionality.
 
 /// Position of the zoom controls
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]

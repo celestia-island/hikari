@@ -1,8 +1,8 @@
-//! Tween hook for Dioxus
+//! Tween hook for tairitsu components
 
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use dioxus::prelude::*;
+use tairitsu_hooks::use_signal;
 
 use crate::{
     core::{AnimationEngine, AnimationOptions, Tween, TweenId},
@@ -81,10 +81,18 @@ impl UseTween {
     }
 }
 
+/// Create a persistent animation engine for the current component.
+///
+/// Uses `use_signal` so the engine is constructed once and shared across
+/// re-renders (the engine is `Rc`-backed, so cloning the handle is cheap).
 pub fn use_animation_engine() -> AnimationEngine {
-    use_hook(AnimationEngine::new)
+    use_signal(AnimationEngine::new).inner().get()
 }
 
+/// Create a persistent tween controller for the current component.
+///
+/// Uses `use_signal` so the controller is constructed once and shared across
+/// re-renders (the controller is `Rc`-backed, so cloning the handle is cheap).
 pub fn use_tween() -> UseTween {
-    use_hook(UseTween::new)
+    use_signal(UseTween::new).inner().get()
 }

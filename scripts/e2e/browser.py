@@ -23,12 +23,11 @@ API endpoints mirror the tairitsu-debug protocol:
 
 from __future__ import annotations
 
-import json
 import base64
 import time
 from pathlib import Path
 from typing import Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 try:
     import requests

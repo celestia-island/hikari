@@ -138,5 +138,4 @@ pub mod server {
 ## Sistemas Relacionados
 
 - [Componentes](../components/) - Componentes que usan iconos
-- [Render-service](./render-service.md) - Servicio de archivos de iconos
 - [Paleta](./palette.md) - Colores de iconos

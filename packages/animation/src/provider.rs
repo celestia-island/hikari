@@ -2,11 +2,16 @@
 //!
 //! Provides global animation configuration to child components via context.
 
-use dioxus::prelude::*;
+use tairitsu_hooks::{provide_context, use_context, use_memo, use_signal};
+use tairitsu_macros::{component, define_props, rsx};
+use tairitsu_vdom::{Callback, Signal, VNode as Element};
 
 use crate::{config::AnimationConfig, prefers_reduced_motion::prefers_reduced_motion};
 
 /// Animation context for accessing configuration
+///
+/// Stored in the tairitsu context registry so any descendant component can read
+/// or update the active [`AnimationConfig`].
 #[derive(Clone)]
 pub struct AnimationContext {
     /// Current configuration
@@ -44,26 +49,25 @@ impl AnimationContext {
 }
 
 /// AnimationProvider Props
-#[derive(Clone, Props, PartialEq)]
+#[define_props]
 pub struct AnimationProviderProps {
     /// Whether animations are enabled (default: true)
-    #[props(default = true)]
+    #[default(true)]
     pub enabled: bool,
 
     /// Duration scale factor (default: 1.0)
-    #[props(default = 1.0)]
+    #[default(1.0)]
     pub duration_scale: f32,
 
     /// Whether to respect system prefers-reduced-motion (default: true)
     /// When true and system prefers reduced motion, reduced_motion will be set to true
-    #[props(default = true)]
+    #[default(true)]
     pub respect_reduced_motion: bool,
 
     /// Force reduced motion mode (overrides system detection)
-    #[props(default)]
     pub force_reduced_motion: Option<bool>,
 
-    children: Element,
+    pub children: Element,
 }
 
 /// AnimationProvider component
@@ -110,14 +114,21 @@ pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
         reduced_motion,
     };
 
-    let config = use_signal(|| initial_config);
+    let config = use_signal(move || initial_config);
 
-    let mut config_for_callback = config;
-    let set_config = Callback::new(move |new_config: AnimationConfig| {
-        config_for_callback.set(new_config);
+    let set_config = Callback::new({
+        let config = config.clone();
+        move |new_config: AnimationConfig| {
+            config.set(new_config);
+        }
     });
 
-    use_context_provider(move || AnimationContext { config, set_config });
+    // Store the inner Signal (Clone) in the shared context; the ReactiveSignal
+    // wrapper is only needed at the call site to drive re-renders.
+    provide_context(AnimationContext {
+        config: config.inner().clone(),
+        set_config,
+    });
 
     let css_vars = use_memo(move || {
         let cfg = config.read();
@@ -132,7 +143,7 @@ pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
     rsx! {
         div {
             class: "hi-animation-provider",
-            style: "{css_vars}",
+            style: "{css_vars.read()}",
             {props.children}
         }
     }
@@ -158,14 +169,17 @@ pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
 /// }
 /// ```
 pub fn use_animation_config() -> AnimationContext {
-    use_context()
+    use_context::<AnimationContext>()
+        .expect("AnimationContext not found — wrap your tree in an AnimationProvider")
+        .get()
+        .clone()
 }
 
 /// Hook: Try to get animation configuration context
 ///
 /// Returns None if called outside of an AnimationProvider.
 pub fn try_use_animation_config() -> Option<AnimationContext> {
-    try_consume_context::<AnimationContext>()
+    use_context::<AnimationContext>().map(|ctx| ctx.get().clone())
 }
 
 /// Hook: Check if animations are enabled

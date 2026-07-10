@@ -7,7 +7,7 @@ use crate::node_graph::{ connection::{Connection, ConnectionId}, history::{Histo
 
 /// Node graph state
 ///
-/// Previously a Dioxus component with complex rendering logic.
+/// Previously a component with complex rendering logic.
 /// Now a pure state model that can be used with any framework.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeGraphState {

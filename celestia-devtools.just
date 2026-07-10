@@ -49,8 +49,8 @@ ensure:
 # every shebang recipe then dies with a cryptic "could not find cygpath
 # executable" error. This recipe surfaces the real cause up front. No-op on
 # non-Windows hosts.
+[script('bash')]
 windows-shell-check:
-    #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{os_family()}}" != "windows" ]; then
       echo "windows-shell-check: non-Windows host, nothing to check."
@@ -74,8 +74,8 @@ windows-shell-check:
 # Flags (consumed from *FLAGS):
 #   --dev    use the dev command instead of release
 #   --clean  cargo clean before building
+[script('bash')]
 _build always_pre dcmd rcmd *FLAGS='':
-    #!/usr/bin/env bash
     set -euo pipefail
     profile=release
     for a in {{FLAGS}}; do
@@ -197,8 +197,8 @@ pglite *ARGS='':
 # Per-platform subpackages are staged from CI (one matrix job per target),
 # then a final job reassembles the root. Actual `npm publish` runs in CI; this
 # recipe only stages + `npm pack --dry-run` so you can inspect the tarball.
+[script('bash')]
 npm-dist name version='' binary='' target='':
-    #!/usr/bin/env bash
     set -euo pipefail
     # Assemble the npm-dist CLI args. just params are not bash vars, so we test
     # the substituted strings directly rather than relying on ${var:+}.
@@ -217,8 +217,8 @@ npm-dist name version='' binary='' target='':
 # Publish the staged packages to npm (requires NPM_TOKEN in the environment).
 # Intended for CI; prompts interactively for the OTP if 2FA is on.
 # Override the tag with NPM_DIST_TAG (default: latest).
+[script('bash')]
 npm-release *PKGS='':
-    #!/usr/bin/env bash
     set -euo pipefail
     cd dist
     tag="${NPM_DIST_TAG:-latest}"

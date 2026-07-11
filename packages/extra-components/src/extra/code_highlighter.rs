@@ -2,6 +2,27 @@
 
 use tairitsu_vdom::{VElement, VNode, VText};
 
+/// Render an MDI icon as an inline SVG string via hikari-icons.
+/// Falls back to an empty string if the icon is not found.
+fn render_icon_svg(name: &str, size: u32) -> String {
+    match hikari_icons::get(name) {
+        Some(d) => {
+            let path = d
+                .path
+                .or_else(|| d.paths.first().and_then(|p| p.d))
+                .unwrap_or("");
+            if path.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="{size}" height="{size}" fill="currentColor"><path d="{path}"/></svg>"#
+                )
+            }
+        }
+        None => String::new(),
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum Language {
     #[default]
@@ -205,7 +226,14 @@ impl CodeHighlighterState {
 
     #[must_use]
     pub const fn copy_button_text(&self) -> &'static str {
-        if self.copied { "✓" } else { "📋" }
+        if self.copied { "✓" } else { "Copy" }
+    }
+
+    /// Returns the MDI icon name for the copy button based on state.
+    /// "content-copy" when idle, "check" when copied.
+    #[must_use]
+    pub const fn copy_button_icon(&self) -> &'static str {
+        if self.copied { "check" } else { "content-copy" }
     }
 }
 
@@ -265,10 +293,13 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
                 } else {
                     None
                 };
+                // Render hikari-icon SVG (content-copy when idle, check when copied).
+                let icon_name = state.copy_button_icon();
+                let icon_svg = render_icon_svg(icon_name, 14);
                 VElement::new("span")
                     .class("hi-code-highlighter-copy-icon")
                     .attr_opt("style", icon_style)
-                    .child(VNode::Text(VText::new(state.copy_button_text())))
+                    .dangerous_inner_html(&icon_svg)
             }));
         header = header.child(VNode::Element(copy_btn));
     }
@@ -581,11 +612,11 @@ mod tests {
     fn test_copied_state() {
         let mut state = CodeHighlighterState::default();
         assert!(!state.copied);
-        assert_eq!(state.copy_button_text(), "📋");
+        assert_eq!(state.copy_button_icon(), "content-copy");
 
         state.mark_copied();
         assert!(state.copied);
-        assert_eq!(state.copy_button_text(), "✓");
+        assert_eq!(state.copy_button_icon(), "check");
 
         state.reset_copied();
         assert!(!state.copied);

@@ -128,5 +128,5 @@ pub use crate::layout::{
 // Add ArrowProps from basic module
 pub use crate::basic::ArrowProps;
 
-// Re-export IconProps from hikari-icons for convenience
-pub use hikari_icons::IconProps;
+// Re-export Icon component and types from hikari-icons for convenience
+pub use hikari_icons::{Icon, IconProps, MdiIcon};

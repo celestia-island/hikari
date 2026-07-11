@@ -191,7 +191,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_prev2.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("◀"))),
+            .child(crate::utils::icon_vnode("chevron-left", 14)),
     ));
 
     let cy_today = current_year.clone();
@@ -206,7 +206,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_today.write() = today_month;
                 }
             })
-            .child(VNode::Text(VText::new("今天"))),
+            .child(VNode::Text(VText::new(&hikari_i18n::t("hikari.date_picker.today", "Today")))),
     ));
 
     let cy_next = current_year.clone();
@@ -223,7 +223,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_next.write() = nm;
                 }
             })
-            .child(VNode::Text(VText::new("▶"))),
+            .child(crate::utils::icon_vnode("chevron-right", 14)),
     ));
 
     let cy_next2 = current_year.clone();

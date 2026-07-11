@@ -116,7 +116,12 @@ _check-lagrange:
 [script]
 dev:
     #!/usr/bin/env bash
-    set -euo pipefail
+    set -eu
+    # Ensure MSYS /usr/bin is on PATH (just spawns bash.exe without /etc/profile).
+    case ":$PATH:" in
+      *":/usr/bin:"*) ;;
+      *) PATH="/usr/bin:$PATH" ;;
+    esac
     if [ ! -f "{{lagrange_bin}}" ]; then
       echo "[ERROR] lagrange not built: {{lagrange_bin}}" >&2
       echo "  Run: cd {{lagrange_root}} && cargo build --release" >&2
@@ -124,14 +129,9 @@ dev:
     fi
     malkuth="{{malkuth_bin}}"
     if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
-      malkuth_path=$( {{python_cmd}} -m celestia_devtools locate --crate malkuth 2>/dev/null || true )
-      if [ -n "$malkuth_path" ]; then
-        suffix="target/release/malkuth"
-        case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) suffix="target/release/malkuth.exe" ;; esac
-        malkuth="$malkuth_path/$suffix"
-      fi
+      malkuth="../malkuth/target/release/malkuth.exe"
     fi
-    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+    if [ ! -f "$malkuth" ]; then
       echo "[dev] malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli" >&2
       exit 1
     fi

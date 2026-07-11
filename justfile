@@ -140,7 +140,7 @@ dev:
     if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
       malkuth="../malkuth/target/release/malkuth.exe"
     fi
-    if [ ! -f "$malkuth" ]; then
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
       err "malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli"
       exit 1
     fi

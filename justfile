@@ -85,9 +85,10 @@ build-website: _check-lagrange
 _check-lagrange:
     @test -f "{{lagrange_bin}}" || { echo "[ERROR] lagrange not built: {{lagrange_bin}}"; echo "  Run: cd {{lagrange_root}} && cargo build --release"; exit 1; }
 
-# Development mode: build docs with lagrange + serve with watch
+# Development mode: build docs with lagrange + serve with file-watch auto-restart
+# via malkuth. Watches docs/ and the lagrange/hikari source for changes.
 dev: _check-lagrange
-    {{lagrange_bin}} dev --src docs --out dist --port 3000
+    just dev-watch docs -- {{lagrange_bin}} dev --src docs --out dist --port 3000
 
 # Start dev server (no watch, for AI agent)
 dev-by-agent: _check-lagrange

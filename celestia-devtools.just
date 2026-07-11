@@ -5,7 +5,7 @@
 # to parse the justfile, only to run the recipes.
 #
 # Refresh with:  celestia-devtools init --force
-# Version: 0.2.0
+# Version: 0.3.0
 #
 # All recipes and variables are overridable — redefine anything after the
 # `import` line in your justfile to customize it.
@@ -13,13 +13,12 @@
 # This file is intentionally free of `set` directives (shell, windows-shell,
 # unstable) so it composes cleanly with each repo's own header.
 #
-# Windows note: each repo's justfile MUST declare, near its own header,
-#     set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-c"]
-# Without it just resolves recipe shebangs via `cygpath`, which Git for Windows
-# does not place on PATH, so every shebang recipe dies with
-# "could not find cygpath executable to translate recipe ... shebang". The
-# `windows-shell-check` recipe below fails fast with a clear message if it is
-# missing, instead of that cryptic per-recipe error.
+# Windows note: `set windows-shell` only governs linewise recipes. Shebang
+# recipes bypass it and force `just` to call `cygpath` (which Git for Windows
+# keeps off PATH), so they die with "could not find cygpath executable". To
+# avoid that, the multi-line recipes below use the `[script('bash')]` attribute
+# (stable since just 1.32.0), which resolves the interpreter via PATH and never
+# calls cygpath. The `windows-shell-check` recipe below verifies bash is on PATH.
 
 # ── Tool resolution ───────────────────────────────────────────────────────────
 
@@ -111,6 +110,20 @@ clean-incremental:
 fmt-markdown *ARGS='':
     {{ _devtools }} format-markdown . {{ARGS}}
 
+# ── Commit message lint ──────────────────────────────────────────────────────
+
+# Validate a commit message against the org gitmoji convention.
+# Pass the commit-msg file path (git passes $1 to the hook).
+commit-msg-lint FILE:
+    {{ _devtools }} commit-msg-lint check {{ FILE }}
+
+# Install (or refresh) the org commit-msg hook into .git/hooks/.
+# Normally triggered automatically by `celestia-devtools init`; call this
+# directly to reinstall after a force-override or to install into a fresh
+# checkout where init has already vendored the justfile.
+commit-msg-hook-install *ARGS='':
+    {{ _devtools }} hook install {{ ARGS }}
+
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
 # Pre-stage all deps for offline builds (cargo fetch + pnpm/npm/yarn install).
@@ -130,6 +143,91 @@ cross-check target='aarch64-unknown-linux-gnu' features='full':
 # Locate a celestia-island crate checkout (env → cargo [patch] → sibling → clone).
 locate crate:
     {{ _devtools }} locate --crate {{crate}}
+
+# ── File-watch dev server (malkuth) ──────────────────────────────────────────
+#
+# Wraps any command with malkuth's file-watching + auto-restart supervisor.
+# malkuth (celestia-island/malkuth) uses notify v8 for recursive directory
+# watching with 400 ms debounce, and kill+respawn on each change.
+#
+#   just dev-watch src -- cargo run
+#   just dev-watch src docs -- lagrange dev --src docs --port 3000
+#   just dev-watch packages -- cargo run --features full
+#
+# The first N positional args (before `--`) are watch paths. Everything after
+# `--` is the command to supervise.
+#
+# Override the malkuth binary location with $MALKUTH_BIN or $MALKUTH_ROOT.
+
+# Resolve the malkuth binary path (env → PATH → sibling layout).
+malkuth_bin := if env("MALKUTH_BIN", "") != "" {
+    env("MALKUTH_BIN", "")
+} else if env("MALKUTH_ROOT", "") != "" {
+    env("MALKUTH_ROOT", "") + if os_family() == "windows" { "/target/release/malkuth.exe" } else { "/target/release/malkuth" }
+} else if which("malkuth") != "" {
+    "malkuth"
+} else {
+    "../malkuth/target/release/" + if os_family() == "windows" { "malkuth.exe" } else { "malkuth" }
+}
+
+[script('bash')]
+dev-watch *ARGS:
+    set -euo pipefail
+    # Split args at `--`: everything before = watch paths, after = command.
+    watch_paths=()
+    cmd=()
+    found_sep=0
+    for arg in {{ARGS}}; do
+      if [ "$arg" = "--" ]; then
+        found_sep=1
+        continue
+      fi
+      if [ "$found_sep" = "1" ]; then
+        cmd+=("$arg")
+      else
+        watch_paths+=("$arg")
+      fi
+    done
+    if [ "${#cmd[@]}" -eq 0 ]; then
+      echo "usage: just dev-watch <watch-paths...> -- <command...>" >&2
+      echo "  e.g.  just dev-watch src -- cargo run" >&2
+      exit 1
+    fi
+    # Resolve malkuth binary — try the static path, then locate.
+    malkuth="{{malkuth_bin}}"
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      malkuth_path=$( {{python_cmd}} -m celestia_devtools locate --crate malkuth 2>/dev/null || true )
+      if [ -n "$malkuth_path" ]; then
+        suffix="target/release/malkuth"
+        case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) suffix="target/release/malkuth.exe" ;; esac
+        malkuth="$malkuth_path/$suffix"
+      fi
+    fi
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      echo "[dev-watch] malkuth not found." >&2
+      echo "[dev-watch] Build it: cd ../malkuth && cargo build --release --features cli" >&2
+      echo "[dev-watch] Or set: export MALKUTH_BIN=/path/to/malkuth" >&2
+      exit 1
+    fi
+    # Build --watch flags.
+    watch_flags=()
+    for p in "${watch_paths[@]}"; do
+      watch_flags+=(--watch "$p")
+    done
+    echo "[dev-watch] supervising: ${cmd[*]}"
+    echo "[dev-watch] watching: ${watch_paths[*]}"
+    exec "$malkuth" "${watch_flags[@]}" --drain-secs 2 -- "${cmd[@]}"
+
+# Auto-register all local celestia-island repos as cargo [patch] entries in
+# ~/.cargo/config.toml. Scans the sibling directory for git repos whose origin
+# points at celestia-island, discovers their workspace member crates, and writes
+# [patch] sections so cargo resolves every celestia crate to its local checkout.
+#
+#   just register-patches              scan + write
+#   just register-patches --dry-run    preview only
+#   just register-patches --repo hikari,lagrange   limit to specific repos
+register-patches *ARGS='':
+    {{ _devtools }} register-patches {{ARGS}}
 
 # ── WSL2 dev environment ──────────────────────────────────────────────────────
 #

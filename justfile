@@ -110,9 +110,35 @@ _check-lagrange:
     @test -f "{{lagrange_bin}}" || { echo "[ERROR] lagrange not built: {{lagrange_bin}}"; echo "  Run: cd {{lagrange_root}} && cargo build --release"; exit 1; }
 
 # Development mode: build docs with lagrange + serve with file-watch auto-restart
-# via malkuth. Watches docs/ and the lagrange/hikari source for changes.
-dev: _check-lagrange
-    just dev-watch docs -- {{lagrange_bin}} dev --src docs --out dist --port 3000
+# via malkuth. Watches docs/ for changes. Self-contained [script] (not a linewise
+# `just dev-watch` call) so it runs under the interop-pinned Git Bash even when
+# WSL shadows PATH.
+[script]
+dev:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f "{{lagrange_bin}}" ]; then
+      echo "[ERROR] lagrange not built: {{lagrange_bin}}" >&2
+      echo "  Run: cd {{lagrange_root}} && cargo build --release" >&2
+      exit 1
+    fi
+    malkuth="{{malkuth_bin}}"
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      malkuth_path=$( {{python_cmd}} -m celestia_devtools locate --crate malkuth 2>/dev/null || true )
+      if [ -n "$malkuth_path" ]; then
+        suffix="target/release/malkuth"
+        case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) suffix="target/release/malkuth.exe" ;; esac
+        malkuth="$malkuth_path/$suffix"
+      fi
+    fi
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      echo "[dev] malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli" >&2
+      exit 1
+    fi
+    echo "[dev] supervising: {{lagrange_bin}} dev --src docs --out dist --port 3000"
+    echo "[dev] watching: docs"
+    exec "$malkuth" --watch docs --drain-secs 2 -- \
+      "{{lagrange_bin}}" dev --src docs --out dist --port 3000
 
 # Start dev server (no watch, for AI agent)
 dev-by-agent: _check-lagrange

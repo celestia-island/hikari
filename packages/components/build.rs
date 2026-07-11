@@ -35,7 +35,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    println!("🔨 Compiling component SCSS files...");
+    println!("cargo:warning=Compiling component SCSS files...");
 
     let components_dir = manifest_dir.join("src/styles/components");
     let scss_files = discover_scss_files(&components_dir);
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
         fs::write(&output_path, css)?;
     }
 
-    println!("✅ SCSS compilation complete!");
+    println!("cargo:warning=SCSS compilation complete: {} files", scss_files.len());
     Ok(())
 }
 

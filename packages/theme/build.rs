@@ -26,7 +26,7 @@ fn build_scss_bundle() -> Result<()> {
     let manifest_dir = Path::new(&manifest_dir_str);
     let scss_dir = manifest_dir.join("styles");
 
-    println!("🔨 Compiling SCSS bundle...");
+    println!("cargo:warning=Compiling SCSS bundle...");
 
     let scss_files = find_scss_files(&scss_dir);
     let mut all_css = String::new();
@@ -40,7 +40,7 @@ fn build_scss_bundle() -> Result<()> {
     let output_path = styles_out_dir.join("styles.css");
     fs::write(&output_path, &all_css)?;
 
-    println!("✅ SCSS bundle compiled ({} bytes)", all_css.len());
+    println!("cargo:warning=SCSS bundle compiled: {} bytes", all_css.len());
     Ok(())
 }
 
@@ -64,7 +64,7 @@ fn build_tailwind_bundle() -> Result<()> {
     let package_json = manifest_dir.join("package.json");
 
     if !package_json.exists() {
-        eprintln!("⚠️  Tailwind requested but package.json not found");
+        eprintln!("cargo:warning=Tailwind requested but package.json not found");
         return Ok(());
     }
 
@@ -79,6 +79,6 @@ fn build_tailwind_bundle() -> Result<()> {
         std::process::exit(1);
     }
 
-    println!("✅ Tailwind CSS compiled");
+    println!("cargo:warning=Tailwind CSS compiled");
     Ok(())
 }

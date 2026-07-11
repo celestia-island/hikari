@@ -9,13 +9,13 @@ use std::{
 
 fn main() {
     if let Err(e) = build() {
-        eprintln!("❌ Build failed: {}", e);
+        eprintln!("Build failed: {}", e);
         std::process::exit(1);
     }
 }
 
 fn build() -> anyhow::Result<()> {
-    println!("🔨 Hikari Builder starting...");
+    println!("cargo:warning=Hikari Builder starting...");
 
     // Get workspace root
     let workspace_root = env::var("CARGO_MANIFEST_DIR")
@@ -27,15 +27,15 @@ fn build() -> anyhow::Result<()> {
         // Not inside the hikari workspace (e.g. consumed as a crates.io dep).
         // Nothing to generate — the library still exports its API; the SCSS
         // bundle and component constants are only needed in-workspace.
-        println!("ℹ️  Not in hikari workspace, skipping build steps.");
+        println!("cargo:warning=Not in hikari workspace, skipping build steps.");
         return Ok(());
     };
 
-    println!("📂 Workspace root: {:?}", workspace_root);
+    println!("cargo:warning=Workspace root: {:?}", workspace_root);
 
     // Scan for SCSS files
     let scss_files = scan_scss_files(&workspace_root)?;
-    println!("📄 Found {} SCSS files", scss_files.len());
+    println!("cargo:warning=Found {} SCSS files", scss_files.len());
 
     // Track SCSS directories for rebuild detection (catch new files and modifications)
     let scss_watch_paths = [
@@ -48,7 +48,6 @@ fn build() -> anyhow::Result<()> {
         let full_path = workspace_root.join(watch_path);
         if full_path.exists() {
             println!("cargo:rerun-if-changed={}", full_path.display());
-            println!("👁️  Watching: {:?}", full_path);
 
             // Also watch individual SCSS files in this directory
             if let Ok(entries) = fs::read_dir(&full_path) {
@@ -66,7 +65,6 @@ fn build() -> anyhow::Result<()> {
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
     if index_scss.exists() {
         println!("cargo:rerun-if-changed={}", index_scss.display());
-        println!("👁️  Watching index.scss");
     }
 
     // Generate Rust constants
@@ -78,7 +76,7 @@ fn build() -> anyhow::Result<()> {
     // Compile SCSS bundle using tairitsu-packager
     compile_scss_bundle(&workspace_root)?;
 
-    println!("✅ Hikari Builder completed!");
+    println!("cargo:warning=Hikari Builder completed");
 
     Ok(())
 }
@@ -113,7 +111,6 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
     // 1. Scan packages/components/src/styles/components/
     let components_dir = workspace_root.join("packages/components/src/styles/components");
     if components_dir.exists() {
-        println!("📁 Scanning: {:?}", components_dir);
         let entries = fs::read_dir(&components_dir)?;
         for entry in entries {
             let entry = entry?;
@@ -122,7 +119,6 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
                 && let Some(file_name) = path.file_stem().and_then(|s| s.to_str())
             {
                 scss_files.push(file_name.to_string());
-                println!("   ✓ {}.scss", file_name);
             }
         }
     }
@@ -130,7 +126,6 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
     // 2. Scan packages/theme/styles/ (theme base files)
     let theme_styles_dir = workspace_root.join("packages/theme/styles");
     if theme_styles_dir.exists() {
-        println!("📁 Scanning theme styles: {:?}", theme_styles_dir);
         let entries = fs::read_dir(&theme_styles_dir)?;
         for entry in entries {
             let entry = entry?;
@@ -138,15 +133,12 @@ fn scan_scss_files(workspace_root: &Path) -> anyhow::Result<Vec<String>> {
             if path.extension().and_then(|s| s.to_str()) == Some("scss")
                 && let Some(file_name) = path.file_stem().and_then(|s| s.to_str())
             {
-                // Add with theme- prefix
                 scss_files.push(format!("theme-{}", file_name));
-                println!("   ✓ theme-{}.scss", file_name);
             }
         }
     }
 
     scss_files.sort();
-    println!("📊 Total SCSS files discovered: {}", scss_files.len());
     Ok(scss_files)
 }
 
@@ -180,22 +172,19 @@ pub fn default_components() -> HashSet<String> {
     );
 
     fs::write(output_dir.join("components.rs"), content)?;
-    println!("📝 Generated components.rs");
 
     Ok(())
 }
 
 /// Compile SCSS to CSS bundle using tairitsu-packager's ScssCompiler
 fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
-    println!("🎨 Compiling SCSS with grass...");
+    println!("cargo:warning=Compiling SCSS with grass...");
 
     // Use index.scss as entry point (has @import for all components)
     let index_scss = workspace_root.join("packages/components/src/styles/index.scss");
     if !index_scss.exists() {
         return Err(anyhow::anyhow!("index.scss not found at {:?}", index_scss));
     }
-
-    println!("   Entry point: {:?}", index_scss);
 
     // Prepare output path
     let output_dir = workspace_root.join("public/styles");
@@ -205,7 +194,6 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     // Delete existing bundle to prevent cache issues
     if css_output.exists() {
         fs::remove_file(&css_output)?;
-        println!("🗑️  Removed old bundle.css");
     }
 
     // Compile SCSS -> CSS with grass directly (minified). Previously this went
@@ -226,12 +214,7 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
 
     // Verify file was written
     if css_output.exists() {
-        println!("✅ CSS bundle generated: {:?}", css_output);
-        println!("   Size: {} bytes", file_size);
-        println!(
-            "   Verified: File exists at {:?}",
-            css_output.canonicalize()
-        );
+        println!("cargo:warning=CSS bundle generated: {} bytes", file_size);
     } else {
         return Err(anyhow::anyhow!(
             "CSS bundle was not created at {:?}",

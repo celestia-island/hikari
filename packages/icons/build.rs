@@ -51,7 +51,7 @@ pub fn get(_name: &str) -> Option<IconData> { None }
 "#;
 
 fn main() {
-    println!("cargo:warning=🎨 hikari-icons: Building icons...");
+    println!("cargo:warning=Building icons...");
 
     // Declare the custom cfg up front so the unexpected-cfg lint is satisfied
     // regardless of whether dynamic-fetch is active.
@@ -66,7 +66,7 @@ fn main() {
 
     // Surface dynamic-fetch as a cfg flag (replaces the old Cargo feature).
     if config.dynamic_fetch {
-        println!("cargo:warning=🌐 Dynamic icon fetching enabled");
+        println!("cargo:warning=Dynamic icon fetching enabled");
         println!("cargo:rustc-cfg=hikari_icons_dynamic_fetch");
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/api/icons");
     } else {
@@ -77,14 +77,14 @@ fn main() {
     if let Some(root) = &workspace_root {
         match build_icons(root, &config) {
             Ok(()) => {
-                println!("cargo:warning=✅ Icons built successfully");
+                println!("cargo:warning=Icons built successfully");
             }
             Err(e) => {
-                eprintln!("❌ BUILD ERROR: Failed to build icons");
-                eprintln!("   Error: {}", e);
+                eprintln!("BUILD ERROR: Failed to build icons");
+                eprintln!("  Error: {}", e);
                 eprintln!();
                 eprintln!(
-                    "   Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
+                    "  Solution: Run 'python scripts/icons/fetch_mdi_icons.py' to download icons"
                 );
                 std::process::exit(1);
             }
@@ -93,7 +93,7 @@ fn main() {
         // Not in a workspace (e.g. standalone crates.io build): emit a stub
         // mdi_selected.rs with the expected type definitions so the include!
         // and pub use in lib.rs resolve. No icon data is available.
-        println!("cargo:warning=⚠️  No workspace root — skipping icon generation");
+        println!("cargo:warning=No workspace root — skipping icon generation");
         let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
         let stub = std::path::Path::new(&out_dir).join("mdi_selected.rs");
         let _ = std::fs::write(&stub, STUB_MDI_SELECTED);
@@ -157,7 +157,7 @@ fn build_icons(workspace_root: &std::path::Path, config: &IconBuildConfig) -> an
     let icon_selection = if let Some(names) = &config.explicit_set {
         if !names.is_empty() {
             println!(
-                "cargo:warning=📋 Using {} icons from [workspace.metadata.hikari.icons].set",
+                "cargo:warning=Using {} icons from [workspace.metadata.hikari.icons].set",
                 names.len()
             );
             IconSelection::ByName(names.clone())
@@ -168,7 +168,7 @@ fn build_icons(workspace_root: &std::path::Path, config: &IconBuildConfig) -> an
     } else if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
         if !usage.icons.is_empty() {
             println!(
-                "cargo:warning=🔍 Auto-discovered {} icons",
+                "cargo:warning=Auto-discovered {} icons",
                 usage.icons.len()
             );
             IconSelection::ByName(auto_discovery::generate_selection(&usage))

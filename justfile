@@ -15,7 +15,7 @@
 #   just clean           - Clean build artifacts
 
 # Windows uses Git Bash (not PowerShell/WSL — neither has cargo on PATH).
-set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-c"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 set shell := ["bash", "-c"]
 # `set lists` enables which() (used by the imported celestia-devtools.just);
 # `set unstable` gates it.

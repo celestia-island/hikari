@@ -122,9 +122,12 @@ dev:
       *":/usr/bin:"*) ;;
       *) PATH="/usr/bin:$PATH" ;;
     esac
+    # tracing-style log helper: <RFC3339 UTC>  INFO hikari-dev: <msg>
+    log() { printf '%s  INFO hikari-dev: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
+    err() { printf '%s ERROR hikari-dev: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; }
     if [ ! -f "{{lagrange_bin}}" ]; then
-      echo "[ERROR] lagrange not built: {{lagrange_bin}}" >&2
-      echo "  Run: cd {{lagrange_root}} && cargo build --release" >&2
+      err "lagrange not built: {{lagrange_bin}}"
+      err "run: cd {{lagrange_root}} && cargo build --release"
       exit 1
     fi
     malkuth="{{malkuth_bin}}"
@@ -132,11 +135,11 @@ dev:
       malkuth="../malkuth/target/release/malkuth.exe"
     fi
     if [ ! -f "$malkuth" ]; then
-      echo "[dev] malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli" >&2
+      err "malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli"
       exit 1
     fi
-    echo "[dev] supervising: {{lagrange_bin}} dev --src docs --out dist --port 3000"
-    echo "[dev] watching: docs"
+    log "supervising: {{lagrange_bin}} dev --src docs --out dist --port 3000"
+    log "watching: docs"
     exec "$malkuth" --watch docs --drain-secs 2 -- \
       "{{lagrange_bin}}" dev --src docs --out dist --port 3000
 

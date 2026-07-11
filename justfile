@@ -122,9 +122,10 @@ dev:
       *":/usr/bin:"*) ;;
       *) PATH="/usr/bin:$PATH" ;;
     esac
-    # tracing-style log helper: <RFC3339 UTC>  INFO hikari-dev: <msg>
-    log() { printf '%s  INFO hikari-dev: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
-    err() { printf '%s ERROR hikari-dev: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; }
+    # tracing-style log helper — matches lagrange_library's format:
+    # local time, "%Y-%m-%d %H:%M:%S", no T/Z.
+    log() { printf '%s  INFO hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+    err() { printf '%s ERROR hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2; }
     if [ ! -f "{{lagrange_bin}}" ]; then
       err "lagrange not built: {{lagrange_bin}}"
       err "run: cd {{lagrange_root}} && cargo build --release"

@@ -14,13 +14,37 @@
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
 
-# Windows uses Git Bash (not PowerShell/WSL — neither has cargo on PATH).
-set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 set shell := ["bash", "-c"]
-# `set lists` enables which() (used by the imported celestia-devtools.just);
-# `set unstable` gates it.
+set windows-shell := ["bash.exe", "-c"]
 set unstable
 set lists
+
+# Shared celestia-devtools recipes — NOT in git. This justfile references shared
+# variables, so the import is REQUIRED. Bootstrap once: celestia-devtools init
+# (or `just fetch` if already staged). Refresh after upgrades.
+import "./.just/celestia-devtools.just"
+
+# Stage shared celestia-devtools recipes into .just/ (gitignored).
+# Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
+# curl honors HTTP_PROXY/HTTPS_PROXY/ALL_PROXY env vars automatically.
+[script('bash')]
+fetch URL='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=.just/celestia-devtools.just
+    mkdir -p .just
+    if [ -n "{{URL}}" ]; then
+      echo "[fetch] {{URL}} -> $out"
+      curl -fsSL "{{URL}}" -o "$out"
+    elif command -v celestia-devtools >/dev/null 2>&1; then
+      src=$(celestia-devtools include-path)
+      echo "[fetch] local bundle ($src) -> $out"
+      cp "$src" "$out"
+    else
+      echo "[fetch] github raw -> $out"
+      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just" -o "$out"
+    fi
+    echo "[fetch] wrote $out"
 
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
@@ -38,7 +62,6 @@ lagrange_bin := lagrange_root + if os_family() == "windows" { "/target/release/l
 # Core tasks
 # ============================================================================
 
-import "./celestia-devtools.just"
 
 default:
     @just --list

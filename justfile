@@ -117,10 +117,15 @@ _check-lagrange:
 dev:
     #!/usr/bin/env bash
     set -eu
-    # Ensure MSYS /usr/bin is on PATH (just spawns bash.exe without /etc/profile).
+    # Ensure MSYS /usr/bin + cargo bin are on PATH (just spawns bash.exe
+    # without /etc/profile, so /usr/bin and ~/.cargo/bin may be absent).
     case ":$PATH:" in
       *":/usr/bin:"*) ;;
       *) PATH="/usr/bin:$PATH" ;;
+    esac
+    case ":$PATH:" in
+      *":$HOME/.cargo/bin:"*) ;;
+      *) PATH="$HOME/.cargo/bin:$PATH" ;;
     esac
     # tracing-style log helper — matches lagrange_library's format:
     # local time, "%Y-%m-%d %H:%M:%S", no T/Z.

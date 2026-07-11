@@ -8,6 +8,7 @@
 // integrating with syntect.
 
 use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
+use hikari_i18n::t;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
@@ -224,7 +225,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         }
     };
 
-    let button_text = if copied.read() { "已复制" } else { "复制" };
+    let button_text = if copied.read() {
+        t("hikari.code.copied", "Copied")
+    } else {
+        t("hikari.code.copy", "Copy")
+    };
 
     let language_class = format!("language-{}", language);
 

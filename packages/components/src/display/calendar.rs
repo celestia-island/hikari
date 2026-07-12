@@ -206,7 +206,10 @@ pub fn Calendar(props: CalendarProps) -> Element {
                     *cm_today.write() = today_month;
                 }
             })
-            .child(VNode::Text(VText::new(&hikari_i18n::t("hikari.date_picker.today", "Today")))),
+            .child(VNode::Text(VText::new(&hikari_i18n::t(
+                "hikari.date_picker.today",
+                "Today",
+            )))),
     ));
 
     let cy_next = current_year.clone();

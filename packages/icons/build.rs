@@ -167,10 +167,7 @@ fn build_icons(workspace_root: &std::path::Path, config: &IconBuildConfig) -> an
         }
     } else if let Ok(usage) = auto_discovery::scan_icon_usage(workspace_root) {
         if !usage.icons.is_empty() {
-            println!(
-                "cargo:warning=Auto-discovered {} icons",
-                usage.icons.len()
-            );
+            println!("cargo:warning=Auto-discovered {} icons", usage.icons.len());
             IconSelection::ByName(auto_discovery::generate_selection(&usage))
         } else {
             get_default_icon_selection()

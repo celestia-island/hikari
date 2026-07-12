@@ -182,9 +182,7 @@ pub fn lookup<'a>(keys: &'a I18nKeys, dotted_key: &str) -> Option<&'a str> {
 pub fn t(dotted_key: &str, fallback: &str) -> String {
     CURRENT.with(|c| {
         let c = c.borrow();
-        lookup(&c.keys, dotted_key)
-            .unwrap_or(fallback)
-            .to_string()
+        lookup(&c.keys, dotted_key).unwrap_or(fallback).to_string()
     })
 }
 
@@ -192,9 +190,7 @@ pub fn t(dotted_key: &str, fallback: &str) -> String {
 pub fn t_lang(dotted_key: &str, fallback: &str) -> (String, Language) {
     CURRENT.with(|c| {
         let c = c.borrow();
-        let val = lookup(&c.keys, dotted_key)
-            .unwrap_or(fallback)
-            .to_string();
+        let val = lookup(&c.keys, dotted_key).unwrap_or(fallback).to_string();
         (val, c.language)
     })
 }

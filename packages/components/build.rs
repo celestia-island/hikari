@@ -62,7 +62,10 @@ fn main() -> Result<()> {
         fs::write(&output_path, css)?;
     }
 
-    println!("cargo:warning=SCSS compilation complete: {} files", scss_files.len());
+    println!(
+        "cargo:warning=SCSS compilation complete: {} files",
+        scss_files.len()
+    );
     Ok(())
 }
 

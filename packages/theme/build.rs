@@ -40,7 +40,10 @@ fn build_scss_bundle() -> Result<()> {
     let output_path = styles_out_dir.join("styles.css");
     fs::write(&output_path, &all_css)?;
 
-    println!("cargo:warning=SCSS bundle compiled: {} bytes", all_css.len());
+    println!(
+        "cargo:warning=SCSS bundle compiled: {} bytes",
+        all_css.len()
+    );
     Ok(())
 }
 

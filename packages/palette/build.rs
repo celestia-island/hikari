@@ -51,7 +51,7 @@ fn main() {
     generate(&all_classes, &dest);
 
     println!(
-        "cargo:warning=hikari-palette: {} component groups, {} classes generated",
+        "cargo:warning={} component groups, {} classes generated",
         all_classes.len(),
         all_classes.values().map(Vec::len).sum::<usize>()
     );
@@ -149,7 +149,7 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
             .unwrap_or_else(|e| panic!("hikari-palette: failed to parse {file}: {e}"));
         emit_collection_module(name, &colors, &collections_dir.join(format!("{name}.rs")));
         println!(
-            "cargo:warning=hikari-palette: collection '{name}' — {} colors",
+            "cargo:warning=collection '{name}' — {} colors",
             colors.len()
         );
         all_enabled.push((name, colors));
@@ -374,7 +374,7 @@ fn emit_color_macro(enabled: &[(&str, Vec<ColorEntry>)], dest: &Path) {
          }}"
     );
     println!(
-        "cargo:warning=hikari-palette: color! macro — {total} names resolvable across {} collection(s)",
+        "cargo:warning=color! macro — {total} names resolvable across {} collection(s)",
         enabled.len()
     );
 }

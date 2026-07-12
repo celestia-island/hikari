@@ -6,38 +6,48 @@ Tailwind-compatible utility classes for rapid styling.
 
 控制元素顯示方式。
 
-```_hikari_component
-pages/system/css#display
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#display" }
+}
 ```
 
 ## Flexbox
 
  Flex 佈局工具類。
 
-```_hikari_component
-pages/system/css#flex
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#flex" }
+}
 ```
 
 ## Spacing
 
 間距工具類（padding, margin, gap）。
 
-```_hikari_component
-pages/system/css#spacing
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#spacing" }
+}
 ```
 
 ## Typography
 
 文字樣式工具類。
 
-```_hikari_component
-pages/system/css#typography
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#typography" }
+}
 ```
 
 ## Colors
 
 顏色工具類。
 
-```_hikari_component
-pages/system/css#colors
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#colors" }
+}
 ```

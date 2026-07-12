@@ -186,21 +186,7 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
                     class: "hi-file-upload-area",
                     style: "pointer-events: none;",
 
-                    svg {
-                        class: "hi-file-upload-icon",
-                        view_box: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        stroke_width: "2",
-                        path { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }
-                        polyline { points: "17 8 12 3 7 8" }
-                        line {
-                            x1: "12",
-                            y1: "3",
-                            x2: "12",
-                            y2: "15",
-                        }
-                    }
+                    Icon { icon: MdiIcon::Upload, size: 32, class: "hi-file-upload-icon".to_string(), color: String::new() }
 
                     p { class: "hi-file-upload-text", "{props.upload_text}" }
 

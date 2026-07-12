@@ -4,8 +4,14 @@ ZoomControls 컴포넌트는 인터페이스 확대/축소를 제어합니다.
 
 ## 기본 사용법
 
-```_hikari_component
-pages/components/layer3/zoom_controls#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:inline-flex;gap:4px;align-items:center;border:1px solid #e2e2ea;border-radius:6px;padding:4px;",
+        button { style: "width:28px;height:28px;border:none;background:none;cursor:pointer;font-size:16px;", "−" }
+        span { style: "font-size:14px;min-width:40px;text-align:center;", "100%" }
+        button { style: "width:28px;height:28px;border:none;background:none;cursor:pointer;font-size:16px;", "+" }
+    }
+}
 ```
 
 ## API

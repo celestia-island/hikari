@@ -221,9 +221,9 @@ pub fn Carousel(props: CarouselProps) -> Element {
                     onclick: toggle_pause,
                     aria_label: if is_paused.get() { "Play" } else { "Pause" },
                     if is_paused.get() {
-                        "▶"
+                        Icon { icon: MdiIcon::Play, size: 14, class: String::new(), color: String::new() }
                     } else {
-                        "⏸"
+                        Icon { icon: MdiIcon::Pause, size: 14, class: String::new(), color: String::new() }
                     }
                 }
             }

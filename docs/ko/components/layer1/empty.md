@@ -4,8 +4,12 @@ Empty 컴포넌트는 데이터가 없는 상태를 표시합니다.
 
 ## 기본 사용법
 
-```_hikari_component
-pages/components/layer1/empty#basic
+```hikari
+rsx! {
+    div { style: "padding:2rem;text-align:center;color:#999;",
+        p { style: "font-size:14px;margin:0;", "No data available" }
+    }
+}
 ```
 
 ## API

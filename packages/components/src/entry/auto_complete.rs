@@ -182,7 +182,7 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
                     class: AutoCompleteClass::Clear.as_class(),
                     onclick: handle_clear,
                     r#type: "button",
-                    "×"
+                    Icon { icon: MdiIcon::Close, size: 12, class: String::new(), color: String::new() }
                 }
             }
 

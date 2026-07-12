@@ -12,16 +12,24 @@ Input 컴포넌트는 3계층 CSS 변수 구성 아키텍처를 지원합니다:
 
 ## 기본 사용법
 
-```_hikari_component
-pages/components/layer1/input#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Basic input", style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;" }
+    }
+}
 ```
 
 ## 비활성화 상태
 
 입력 필드는 비활성화할 수 있으며, 비활성화 상태에서는 편집할 수 없습니다.
 
-```_hikari_component
-pages/components/layer1/input#disabled
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Disabled", disabled: true, style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;background:#f5f5f5;color:#999;" }
+    }
+}
 ```
 
 ## 사용자 정의 색상

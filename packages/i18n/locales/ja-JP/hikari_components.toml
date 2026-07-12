@@ -1,0 +1,46 @@
+# Hikari コンポーネント内部 UI 文字列 — 日本語
+
+[hikari.code]
+copy = "コピー"
+copied = "コピーしました"
+
+[hikari.table]
+empty = "データがありません"
+loading = "読み込み中..."
+
+[hikari.pagination]
+prev = "前へ"
+next = "次へ"
+page = "ページ"
+of = "/"
+
+[hikari.form]
+submit = "送信"
+cancel = "キャンセル"
+reset = "リセット"
+
+[hikari.select]
+placeholder = "選択..."
+empty = "オプションがありません"
+
+[hikari.date_picker]
+placeholder = "日付を選択"
+today = "今日"
+
+[hikari.upload]
+placeholder = "クリックまたはドラッグしてアップロード"
+browse = "参照"
+
+[hikari.search]
+placeholder = "検索..."
+no_results = "結果がありません"
+
+[hikari.empty]
+description = "データがありません"
+
+[hikari.image]
+alt_fallback = "画像"
+
+[hikari.dialog]
+close = "閉じる"
+confirm = "確認"

@@ -6,38 +6,48 @@
 
 التحكم في سلوك عرض العناصر.
 
-```_hikari_component
-pages/system/css#display
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#display" }
+}
 ```
 
 ## Flexbox
 
 فئات أدوات تخطيط Flex.
 
-```_hikari_component
-pages/system/css#flex
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#flex" }
+}
 ```
 
 ## التباعد
 
 فئات أدوات التباعد (الحشوة، الهامش، الفجوة).
 
-```_hikari_component
-pages/system/css#spacing
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#spacing" }
+}
 ```
 
 ## الخط
 
 فئات أدوات الخط.
 
-```_hikari_component
-pages/system/css#typography
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#typography" }
+}
 ```
 
 ## الألوان
 
 فئات أدوات الألوان.
 
-```_hikari_component
-pages/system/css#colors
+```hikari
+rsx! {
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/system/css#colors" }
+}
 ```

@@ -12,16 +12,24 @@ Input 組件支援三層級 CSS 變數配置架構：
 
 ## 基礎用法
 
-```_hikari_component
-pages/components/layer1/input#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Basic input", style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;" }
+    }
+}
 ```
 
 ## 停用狀態
 
 輸入框可以被停用，停用狀態下不可編輯。
 
-```_hikari_component
-pages/components/layer1/input#disabled
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Disabled", disabled: true, style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;background:#f5f5f5;color:#999;" }
+    }
+}
 ```
 
 ## 自訂顏色

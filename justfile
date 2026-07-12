@@ -14,12 +14,38 @@
 #   just clippy          - Run Clippy checks
 #   just clean           - Clean build artifacts
 
-# Windows uses PowerShell with UTF-8 encoding
-set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
-# `set lists` enables which() (used by the imported celestia-devtools.just);
-# `set unstable` gates it.
+set shell := ["bash", "-c"]
+set windows-shell := ["bash.exe", "-c"]
 set unstable
 set lists
+
+# Shared celestia-devtools recipes — NOT in git. This justfile references shared
+# variables, so the import is REQUIRED. Bootstrap once: celestia-devtools init
+# (or `just fetch` if already staged). Refresh after upgrades.
+import? "./.just/git-bash-interop.just"
+import "./.just/celestia-devtools.just"
+
+# Stage shared celestia-devtools recipes into .just/ (gitignored).
+# Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
+# curl honors HTTP_PROXY/HTTPS_PROXY/ALL_PROXY env vars automatically.
+[script('bash')]
+fetch URL='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=.just/celestia-devtools.just
+    mkdir -p .just
+    if [ -n "{{URL}}" ]; then
+      echo "[fetch] {{URL}} -> $out"
+      curl -fsSL "{{URL}}" -o "$out"
+    elif command -v celestia-devtools >/dev/null 2>&1; then
+      src=$(celestia-devtools include-path)
+      echo "[fetch] local bundle ($src) -> $out"
+      cp "$src" "$out"
+    else
+      echo "[fetch] github raw -> $out"
+      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just" -o "$out"
+    fi
+    echo "[fetch] wrote $out"
 
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
@@ -27,12 +53,16 @@ py := if os_family() == "windows" { "python" } else { "python3" }
 # External packager from sibling repository (tairitsu)
 tairitsu_packager_manifest := "../tairitsu/packages/packager/Cargo.toml"
 website_manifest := "examples/website/Cargo.toml"
+# Lagrange SSG binary — resolved via celestia-devtools locate (checks env
+# vars, cargo [patch] config, sibling dir, git clone). Falls back to the
+# standard sibling layout ../lagrange if devtools isn't installed.
+lagrange_root := `celestia-devtools locate --crate lagrange 2>/dev/null || python -m celestia_devtools locate --crate lagrange 2>/dev/null || echo "../lagrange"`
+lagrange_bin := lagrange_root + if os_family() == "windows" { "/target/release/lagrange.exe" } else { "/target/release/lagrange" }
 
 # ============================================================================
 # Core tasks
 # ============================================================================
 
-import "./celestia-devtools.just"
 
 default:
     @just --list
@@ -65,27 +95,64 @@ build: fetch-icons
     @cargo build --workspace --release
 
 # Build website with tairitsu-packager (production output to public/)
-build-website: (check-tairitsu-packager)
+build-website: _check-lagrange
     @echo "  ╭──────────────────────────────────────────────────╮"
-    @echo "  │  Building website with tairitsu-packager         │"
+    @echo "  │  Building docs with lagrange SSG                 │"
     @echo "  ╰──────────────────────────────────────────────────╯"
-    @cd examples/website && tairitsu --manifest-path Cargo.toml build
+    {{lagrange_bin}} build --src docs --out dist
 
 # ============================================================================
 # Development
 # ============================================================================
 
-# Check if port 3000 is occupied
-check-port *force="":
-    @{{py}} scripts/utils/clean_process_linux.py {{force}} 2>/dev/null || true
+# Verify the lagrange binary exists, with a helpful error if not.
+_check-lagrange:
+    @test -f "{{lagrange_bin}}" || { echo "[ERROR] lagrange not built: {{lagrange_bin}}"; echo "  Run: cd {{lagrange_root}} && cargo build --release"; exit 1; }
 
-# Development mode for website
-dev *force="": (check-port force) (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000 --watch
+# Development mode: build docs with lagrange + serve with file-watch auto-restart
+# via malkuth. Watches docs/ for changes. Self-contained [script] (not a linewise
+# `just dev-watch` call) so it runs under the interop-pinned Git Bash even when
+# WSL shadows PATH.
+[script]
+dev:
+    #!/usr/bin/env bash
+    set -eu
+    # Ensure MSYS /usr/bin + cargo bin are on PATH (just spawns bash.exe
+    # without /etc/profile, so /usr/bin and ~/.cargo/bin may be absent).
+    case ":$PATH:" in
+      *":/usr/bin:"*) ;;
+      *) PATH="/usr/bin:$PATH" ;;
+    esac
+    case ":$PATH:" in
+      *":$HOME/.cargo/bin:"*) ;;
+      *) PATH="$HOME/.cargo/bin:$PATH" ;;
+    esac
+    # tracing-style log helper — matches lagrange_library's format:
+    # local time, "%Y-%m-%d %H:%M:%S", no T/Z.
+    log() { printf '%s  INFO hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
+    err() { printf '%s ERROR hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2; }
+    if [ ! -f "{{lagrange_bin}}" ]; then
+      err "lagrange not built: {{lagrange_bin}}"
+      err "run: cd {{lagrange_root}} && cargo build --release"
+      exit 1
+    fi
+    malkuth="{{malkuth_bin}}"
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      malkuth="../malkuth/target/release/malkuth.exe"
+    fi
+    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
+      err "malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli"
+      exit 1
+    fi
+    log "supervising: {{lagrange_bin}} dev --src docs --out dist --port 3000"
+    log "watching: docs"
+    exec "$malkuth" --watch docs --drain-secs 2 -- \
+      "{{lagrange_bin}}" dev --src docs --out dist --port 3000
 
 # Start dev server (no watch, for AI agent)
-dev-by-agent: (check-tairitsu-packager)
-    cd examples/website && tairitsu --manifest-path Cargo.toml dev --port 3000
+dev-by-agent: _check-lagrange
+    {{lagrange_bin}} build --src docs --out dist
+    {{lagrange_bin}} dev --src docs --out dist --port 3000 --interval 999
 
 # Alias for dev
 serve: dev

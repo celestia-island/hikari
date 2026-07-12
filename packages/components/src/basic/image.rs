@@ -132,24 +132,7 @@ pub fn Image(
                     .add(ImageClass::ImageIconPlaceholder)
                     .build(),
                 style: "width: 100%; height: 100%; min-height: 100px; display: flex; align-items: center; justify-content: center; background: var(--hi-color-surface);",
-                svg {
-                    width: "48",
-                    height: "48",
-                    view_box: "0 0 24 24",
-                    fill: "none",
-                    stroke: "var(--hi-color-text-secondary)",
-                    stroke_width: "1.5",
-                    rect {
-                        x: "3",
-                        y: "3",
-                        width: "18",
-                        height: "18",
-                        rx: "2",
-                        ry: "2",
-                    }
-                    circle { cx: "8.5", cy: "8.5", r: "1.5" }
-                    polyline { points: "21 15 16 10 5 21" }
-                }
+                Icon { icon: MdiIcon::Image, size: 48, class: String::new(), color: "var(--hi-color-text-secondary)".to_string() }
             }
         })
     } else {

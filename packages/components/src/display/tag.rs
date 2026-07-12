@@ -65,7 +65,7 @@ pub fn Tag(props: TagProps) -> Element {
                             on_close.call(e);
                         }
                     },
-                    "×"
+                    Icon { icon: MdiIcon::Close, size: 12, class: String::new(), color: String::new() }
                 }
             }
         }

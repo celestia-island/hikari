@@ -15,7 +15,7 @@ thirtyfour = { version = "^0.34", features = ["reqwest"] }
 chromiumoxide = { version = "^0.8", features = ["tokio-runtime"] }
 
 # HTML parsing and assertions
-scraper = "^0.20"
+scraper = "^0.27"
 
 # HTTP client for direct SSR HTML fetch in no-JS tests
 reqwest = { version = "^0.12", features = [

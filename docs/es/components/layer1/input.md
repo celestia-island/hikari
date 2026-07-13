@@ -12,16 +12,24 @@ El componente Input admite una arquitectura de configuración de variables CSS d
 
 ## Uso básico
 
-```_hikari_component
-pages/components/layer1/input#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Basic input", style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;" }
+    }
+}
 ```
 
 ## Estado deshabilitado
 
 El campo de entrada puede deshabilitarse, volviéndolo no editable cuando está deshabilitado.
 
-```_hikari_component
-pages/components/layer1/input#disabled
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "text", placeholder: "Disabled", disabled: true, style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;background:#f5f5f5;color:#999;" }
+    }
+}
 ```
 
 ## Colores personalizados

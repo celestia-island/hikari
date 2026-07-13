@@ -209,7 +209,7 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
-    pub(crate) fn from_palette(palette: &Palette) -> Self {
+    pub fn from_palette(palette: &Palette) -> Self {
         ThemePalette {
             primary: palette.primary.hex(),
             secondary: palette.secondary.hex(),

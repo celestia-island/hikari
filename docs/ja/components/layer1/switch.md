@@ -6,48 +6,90 @@
 
 Success、Primary、Secondary、Danger、Warning、Infoの複数の色をサポートしています。
 
-```_hikari_component
-pages/components/layer1/switch#switch
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#ccc;position:relative;",
+            div { style: "position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+    }
+}
 ```
 
 ## スイッチアイコンバリアント
 
 アイコン付きスイッチ、デフォルトで✓と✗シンボルを提供します。
 
-```_hikari_component
-pages/components/layer1/switch#icon
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:16px;", "🌙" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:16px;", "☀" }
+    }
+}
 ```
 
 ## スイッチテキストバリアント
 
 テキストラベル付きスイッチ、スライダー幅を自動調整します。
 
-```_hikari_component
-pages/components/layer1/switch#text
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:14px;color:#666;", "Off" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:14px;color:#333;", "On" }
+    }
+}
 ```
 
 ## スイッチサイズバリアント
 
 Small、Medium、Largeサイズをサポートしています。
 
-```_hikari_component
-pages/components/layer1/switch#sizes
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:28px;height:16px;border-radius:8px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:1px;top:1px;width:14px;height:14px;border-radius:50%;background:#fff;" } }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        div { style: "width:52px;height:28px;border-radius:14px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;" } }
+    }
+}
 ```
 
 ## Progress
 
 操作の進行状況を表示するプログレスバーコンポーネント。
 
-```_hikari_component
-pages/components/layer1/switch#progress
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        div { style: "width:200px;height:6px;background:#e2e2ea;border-radius:3px;overflow:hidden;",
+            div { style: "width:60%;height:100%;background:#3a6ea5;border-radius:3px;" }
+        }
+    }
+}
 ```
 
 ## Slider
 
 数値選択用のスライダーコンポーネント。
 
-```_hikari_component
-pages/components/layer1/switch#slider
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "range", min: "0", max: "100", value: "60", style: "width:200px;" }
+    }
+}
 ```
 
 ## API

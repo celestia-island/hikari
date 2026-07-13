@@ -1,0 +1,46 @@
+# Внутренние строки UI компонентов Hikari — Русский
+
+[hikari.code]
+copy = "Копировать"
+copied = "Скопировано"
+
+[hikari.table]
+empty = "Нет данных"
+loading = "Загрузка..."
+
+[hikari.pagination]
+prev = "Назад"
+next = "Далее"
+page = "Страница"
+of = "из"
+
+[hikari.form]
+submit = "Отправить"
+cancel = "Отмена"
+reset = "Сбросить"
+
+[hikari.select]
+placeholder = "Выбрать..."
+empty = "Нет вариантов"
+
+[hikari.date_picker]
+placeholder = "Выбрать дату"
+today = "Сегодня"
+
+[hikari.upload]
+placeholder = "Нажмите или перетащите файл"
+browse = "Обзор"
+
+[hikari.search]
+placeholder = "Поиск..."
+no_results = "Нет результатов"
+
+[hikari.empty]
+description = "Нет данных"
+
+[hikari.image]
+alt_fallback = "Изображение"
+
+[hikari.dialog]
+close = "Закрыть"
+confirm = "Подтвердить"

@@ -6,48 +6,90 @@
 
 Success, Primary, Secondary, Danger, Warning, Info의 여러 색상을 지원합니다.
 
-```_hikari_component
-pages/components/layer1/switch#switch
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#ccc;position:relative;",
+            div { style: "position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+    }
+}
 ```
 
 ## 스위치 아이콘 변형
 
 아이콘이 있는 스위치, 기본적으로 ✓ 및 ✗ 기호를 제공합니다.
 
-```_hikari_component
-pages/components/layer1/switch#icon
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:16px;", "🌙" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:16px;", "☀" }
+    }
+}
 ```
 
 ## 스위치 텍스트 변형
 
 텍스트 레이블이 있는 스위치, 슬라이더 너비가 자동으로 조정됩니다.
 
-```_hikari_component
-pages/components/layer1/switch#text
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:14px;color:#666;", "Off" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:14px;color:#333;", "On" }
+    }
+}
 ```
 
 ## 스위치 크기 변형
 
 Small, Medium, Large 크기를 지원합니다.
 
-```_hikari_component
-pages/components/layer1/switch#sizes
+```hikari
+rsx! {
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:28px;height:16px;border-radius:8px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:1px;top:1px;width:14px;height:14px;border-radius:50%;background:#fff;" } }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        div { style: "width:52px;height:28px;border-radius:14px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;" } }
+    }
+}
 ```
 
 ## Progress
 
 작업 진행률을 표시하는 진행 바 컴포넌트입니다.
 
-```_hikari_component
-pages/components/layer1/switch#progress
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        div { style: "width:200px;height:6px;background:#e2e2ea;border-radius:3px;overflow:hidden;",
+            div { style: "width:60%;height:100%;background:#3a6ea5;border-radius:3px;" }
+        }
+    }
+}
 ```
 
 ## Slider
 
 숫자 선택을 위한 슬라이더 컴포넌트입니다.
 
-```_hikari_component
-pages/components/layer1/switch#slider
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        input { type: "range", min: "0", max: "100", value: "60", style: "width:200px;" }
+    }
+}
 ```
 
 ## API

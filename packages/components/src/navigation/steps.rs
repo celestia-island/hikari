@@ -226,36 +226,10 @@ fn StepItem(props: StepItemProps) -> Element {
             span { class: props.number_class, "{step_number}" }
         },
         StepStatus::Finish => rsx! {
-            svg {
-                class: props.number_class,
-                view_box: "0 0 24 24",
-                fill: "none",
-                stroke: "currentColor",
-                stroke_width: "2",
-                polyline { points: "20 6 9 17 4 12" }
-            }
+            Icon { icon: MdiIcon::Check, size: 16, class: props.number_class.clone(), color: String::new() }
         },
         StepStatus::Error => rsx! {
-            svg {
-                class: props.number_class,
-                view_box: "0 0 24 24",
-                fill: "none",
-                stroke: "currentColor",
-                stroke_width: "2",
-                circle { cx: "12", cy: "12", r: "10" }
-                line {
-                    x1: "12",
-                    y1: "8",
-                    x2: "12",
-                    y2: "12",
-                }
-                line {
-                    x1: "12",
-                    y1: "16",
-                    x2: "12.01",
-                    y2: "16",
-                }
-            }
+            Icon { icon: MdiIcon::Alert, size: 16, class: props.number_class.clone(), color: String::new() }
         },
     };
 

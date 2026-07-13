@@ -18,7 +18,7 @@ chromiumoxide = { version = "^0.8", features = ["tokio-runtime"] }
 scraper = "^0.20"
 
 # HTTP client for direct SSR HTML fetch in no-JS tests
-reqwest = { version = "^0.12", features = [
+reqwest = { version = "^0.13", features = [
   "rustls-tls",
 ], default-features = false }
 

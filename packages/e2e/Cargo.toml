@@ -12,7 +12,7 @@ autobins = false
 thirtyfour = { version = "^0.34", features = ["reqwest"] }
 
 # Chromiumoxide for headless Chrome screenshots - updated for Chrome 144 compatibility
-chromiumoxide = { version = "^0.8", features = ["tokio-runtime"] }
+chromiumoxide = { version = "^0.9", features = ["tokio-runtime"] }
 
 # HTML parsing and assertions
 scraper = "^0.20"

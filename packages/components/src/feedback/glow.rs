@@ -130,6 +130,7 @@ impl IntoAttrValue for GlowPreset {
 }
 
 /// Get the target intensity scale for a given interaction state
+#[allow(dead_code)]
 fn get_intensity_for_state(state: InteractionState) -> f32 {
     match state {
         InteractionState::Idle => 0.0,

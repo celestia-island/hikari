@@ -151,9 +151,9 @@ def generate_documentation(colors_data: List[Dict]) -> str:
         category_name = color_category['name']
         colors = color_category['colors']
 
-        docs.append(f"//! ────────────────────────────────────────────────────\n")
+        docs.append("//! ────────────────────────────────────────────────────\n")
         docs.append(f"//! {category_name}色系 ({len(colors)} colors)\n")
-        docs.append(f"//! ────────────────────────────────────────────────────\n")
+        docs.append("//! ────────────────────────────────────────────────────\n")
         docs.append("//! \n")
 
         for color in colors:

@@ -11,8 +11,6 @@ import sys
 sys.path.insert(0, "/mnt/sdb1/hikari/scripts/e2e")
 
 import time
-import json
-import os
 from pathlib import Path
 from browser import TairitsuBrowser
 
@@ -285,19 +283,24 @@ for test_name, actions in tests:
             if atype == "nav":
                 ok = nav(action[1], action[2] if len(action) > 2 else 8000)
                 print(f"  navigate -> {action[1]} {'OK' if ok else 'FAIL'}")
-                if not ok: test_ok = False
+                if not ok:
+                    test_ok = False
 
             elif atype == "snap_viewport":
                 p, ok = snap(action[1])
                 total_snaps += 1
-                if ok: total_ok += 1
-                else: test_ok = False
+                if ok:
+                    total_ok += 1
+                else:
+                    test_ok = False
 
             elif atype == "snap_full":
                 p, ok = snap(action[1], full_page=True)
                 total_snaps += 1
-                if ok: total_ok += 1
-                else: test_ok = False
+                if ok:
+                    total_ok += 1
+                else:
+                    test_ok = False
 
             elif atype == "scroll":
                 ok = scroll_page(action[1])

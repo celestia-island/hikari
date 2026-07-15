@@ -35,8 +35,6 @@ pub mod mdi_minimal;
 pub mod dynamic_fetch;
 pub use dynamic_fetch::fetch_and_cache_icon;
 
-#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
-use dioxus::prelude::*;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
@@ -53,10 +51,6 @@ pub mod mdi_selected {
     include!(concat!(env!("OUT_DIR"), "/mdi_selected.rs"));
 }
 pub use mdi_selected::{IconData, PathData, SvgElem, get};
-
-// StyleStringBuilder for building styles
-#[cfg(feature = "dioxus")]
-pub use hikari_animation::style::{CssProperty, StyleStringBuilder};
 
 /// Default SVG fallback icon
 #[allow(dead_code)]
@@ -115,50 +109,6 @@ macro_rules! build_svg {
 }
 
 // ============================================================================
-// Dioxus Icon Component
-// ============================================================================
-
-#[cfg(all(feature = "dioxus", not(feature = "tairitsu")))]
-#[component]
-pub fn Icon(
-    #[props(into)] icon: IconRef,
-    #[props(default)] class: String,
-    #[props(default = 24)] size: u32,
-    #[props(default)] color: String,
-) -> Element {
-    let icon_data_opt = get(&icon.name());
-
-    let final_svg = if let Some(icon_data) = icon_data_opt {
-        use_memo(move || build_svg!(icon_data))
-    } else {
-        use_memo(|| String::from(DEFAULT_SVG))
-    };
-
-    let full_style = if color.is_empty() {
-        StyleStringBuilder::new()
-            .add_px(CssProperty::Width, size)
-            .add_px(CssProperty::Height, size)
-            .build_clean()
-    } else {
-        StyleStringBuilder::new()
-            .add_px(CssProperty::Width, size)
-            .add_px(CssProperty::Height, size)
-            .add(CssProperty::Color, &color)
-            .build_clean()
-    };
-
-    let full_class = format!("hikari-icon {class}");
-
-    rsx! {
-        div {
-            class: full_class,
-            style: "{full_style}",
-            dangerous_inner_html: "{final_svg}",
-        }
-    }
-}
-
-// ============================================================================
 // Tairitsu Icon Component
 // ============================================================================
 
@@ -212,7 +162,7 @@ pub fn Icon(props: IconProps) -> Element {
 // MDI Icon Shortcuts
 // ============================================================================
 
-#[cfg(any(feature = "dioxus", feature = "tairitsu"))]
+#[cfg(feature = "tairitsu")]
 #[allow(non_snake_case)]
 pub mod mdi {
     use super::*;
@@ -220,18 +170,11 @@ pub mod mdi {
     macro_rules! icon_shortcut {
         ($name:ident, $icon:expr) => {
             pub fn $name(class: String) -> Element {
-                #[cfg(feature = "dioxus")]
-                {
-                    rsx! { Icon { icon: $icon, class } }
-                }
-                #[cfg(all(not(feature = "dioxus"), feature = "tairitsu"))]
-                {
-                    Icon(IconProps {
-                        icon: $icon,
-                        class,
-                        ..Default::default()
-                    })
-                }
+                Icon(IconProps {
+                    icon: $icon,
+                    class,
+                    ..Default::default()
+                })
             }
         };
     }

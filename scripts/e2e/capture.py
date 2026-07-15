@@ -5,7 +5,13 @@ Uses tairitsu debug HTTP API (same layer as MCP browser tools).
 No raw Playwright, no direct JS eval.
 """
 
-import sys, time, os, base64, json, urllib.request, urllib.error
+import sys
+import time
+import os
+import base64
+import json
+import urllib.request
+import urllib.error
 from pathlib import Path
 
 BASE = "http://localhost:52848"
@@ -29,11 +35,14 @@ window.__HIKARI_ANIM__ = {
     freeze() {
         this._frozen = true;
         this._frozenCSSAnimations = [];
-        document.getAnimations().forEach(a => { a.pause(); this._frozenCSSAnimations.push(a); });
+        document.getAnimations().forEach(a => { a.pause()
+        this._frozenCSSAnimations.push(a)
+        })
     },
     unfreeze() {
         this._frozen = false;
-        this._frozenCSSAnimations.forEach(a => { try { a.play(); } catch(e) {} });
+        this._frozenCSSAnimations.forEach(a => { try { a.play()
+        } catch(e) {} })
         this._frozenCSSAnimations = [];
         var p = this._pendingCallbacks.slice();
         this._pendingCallbacks = [];
@@ -42,15 +51,20 @@ window.__HIKARI_ANIM__ = {
     step(ms) {
         var d = ms || 0;
         this._frozenCSSAnimations.forEach(a => {
-            try { var t = a.effect.getTiming().duration || 600; a.currentTime = ((a.currentTime||0)+d)%t; } catch(e) {}
+            try { var t = a.effect.getTiming().duration || 600
+            a.currentTime = ((a.currentTime||0)+d)%t
+            } catch(e) {}
         });
         var p = this._pendingCallbacks.slice();
         this._pendingCallbacks = [];
-        p.forEach(cb => { if (typeof cb==='function') cb(performance.now()+d); });
+        p.forEach(cb => { if (typeof cb==='function') cb(performance.now()+d)
+        })
     },
     seek(p) {
         this._frozenCSSAnimations.forEach(a => {
-            try { var t = a.effect.getTiming().duration||600; a.currentTime = p*t; } catch(e) {}
+            try { var t = a.effect.getTiming().duration||600
+            a.currentTime = p*t
+            } catch(e) {}
         });
     }
 };
@@ -432,7 +446,9 @@ api_post("resize", {"width": VP_W, "height": VP_H})
 api_post("evaluate", {"expression": ANIM_BRIDGE})
 time.sleep(0.5)
 
-total = 0; ok = 0; fails = []
+total = 0
+ok = 0
+fails = []
 
 for route, desc, actions in PLAN:
     _current_group = desc
@@ -440,20 +456,36 @@ for route, desc, actions in PLAN:
     nav(route)
 
     for act in actions:
-        t = act[0]; total += 1
+        t = act[0]
+        total += 1
         try:
-            if   t == "sv": snap(act[1]); ok += 1
-            elif t == "sf": snap(act[1], full_page=True); ok += 1
-            elif t == "sc": scroll_content(act[1]); snap(act[2]); ok += 1
-            elif t == "rs": reset_scroll()
-            elif t == "ck": do_click(act[1])
-            elif t == "tp": do_type(act[1], act[2])
-            elif t == "freeze": anim_freeze()
-            elif t == "unfreeze": anim_unfreeze()
-            elif t == "step": anim_step(act[1])
-            elif t == "wait": time.sleep(act[1])
+            if   t == "sv":
+                snap(act[1])
+                ok += 1
+            elif t == "sf":
+                snap(act[1], full_page=True)
+                ok += 1
+            elif t == "sc":
+                scroll_content(act[1])
+                snap(act[2])
+                ok += 1
+            elif t == "rs":
+                reset_scroll()
+            elif t == "ck":
+                do_click(act[1])
+            elif t == "tp":
+                do_type(act[1], act[2])
+            elif t == "freeze":
+                anim_freeze()
+            elif t == "unfreeze":
+                anim_unfreeze()
+            elif t == "step":
+                anim_step(act[1])
+            elif t == "wait":
+                time.sleep(act[1])
             else:
-                print(f"  ? Unknown: {t}"); fails.append(str(act))
+                print(f"  ? Unknown: {t}")
+                fails.append(str(act))
         except Exception as e:
             print(f"  ERROR [{act}]: {e}")
             fails.append(str(act))

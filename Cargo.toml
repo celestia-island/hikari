@@ -19,8 +19,9 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.3.10"
+version = "0.3.12"
 edition = "2024"
+rust-version = "1.85"
 authors = ["Hikari Contributors"]
 license-file = "LICENSE"
 repository = "https://github.com/celestia-island/hikari"

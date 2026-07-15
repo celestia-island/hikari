@@ -164,4 +164,3 @@ cargo install just
 ## See Also
 
 - [Root justfile](../justfile) - Main project build tasks
-- [CLAUDE.md](../CLAUDE.md) - Project documentation

@@ -172,7 +172,11 @@ mod tests {
 
     #[test]
     fn test_image_renders() {
-        let _ = Image(ImageProps::default());
+        let props = ImageProps {
+            src: Some("https://example.com/image.png".to_string()),
+            ..Default::default()
+        };
+        let _ = Image(props);
     }
 
     #[test]
@@ -189,7 +193,7 @@ mod tests {
     fn test_select_renders() {
         let entries = use_signal(Vec::<PortalEntry>::new);
         provide_context(PortalContext {
-            entries: entries.clone(),
+            entries: entries.inner().clone(),
             add_entry: Callback::new(|_| {}),
             remove_entry: Callback::new(|_| {}),
             clear_all: Callback::new(|_| {}),

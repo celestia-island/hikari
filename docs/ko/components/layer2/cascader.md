@@ -4,8 +4,14 @@ Cascader는 다단계 데이터 선택에 사용됩니다.
 
 ## 기본 사용법
 
-```_hikari_component
-pages/components/layer2/cascader#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        select { style: "padding:6px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;",
+            option { "Province / City / District" }
+        }
+    }
+}
 ```
 
 ## API

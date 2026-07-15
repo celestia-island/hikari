@@ -1,0 +1,30 @@
+# Squash Message Clean — amends bloated squash-merge commit bodies to 1 line.
+# Installed by: noa hook install-action
+
+name: Squash Message Clean
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Amend squash message
+        run: |
+          set -euo pipefail
+          BODY_LINES=$(git log -1 --format='%B' | wc -l)
+          if [ "$BODY_LINES" -le 1 ]; then
+            echo "Commit body is already clean (${BODY_LINES} lines), skipping."
+            exit 0
+          fi
+          SUBJECT=$(git log -1 --format='%s')
+          git commit --amend -m "$SUBJECT"
+          git push --force-with-lease

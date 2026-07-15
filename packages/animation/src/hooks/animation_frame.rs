@@ -1,4 +1,4 @@
-//! Animation frame hook for Dioxus
+//! Animation frame hook for tairitsu components
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use std::cell::RefCell;

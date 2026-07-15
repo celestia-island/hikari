@@ -4,8 +4,14 @@ Cascader is used for multi-level data selection.
 
 ## Basic Usage
 
-```_hikari_component
-pages/components/layer2/cascader#basic
+```hikari
+rsx! {
+    div { style: "padding:1rem;",
+        select { style: "padding:6px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;",
+            option { "Province / City / District" }
+        }
+    }
+}
 ```
 
 ## API

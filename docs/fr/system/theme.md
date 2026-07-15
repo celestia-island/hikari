@@ -5,8 +5,8 @@ Système de gestion de thèmes fournissant le contexte de thème, les variables 
 ## Table des Matières
 
 - [Aperçu](#aperçu)
-- [ThemeProvider](#themeprovider-fournisseur-de-thème)
-- [ThemeContext](#themecontext-contexte-de-thème)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [Ressources Générées](#ressources-générées)
 - [Système de Variables CSS](#système-de-variables-css)
 - [Changement de Thème](#changement-de-thème)
@@ -535,7 +535,7 @@ rsx! {
 
 ## Philosophie de Design
 
-### Style 
+### Style
 
 - **Thème clair (hikari)**:
   - Primaire: Pink (#FFB3A7)
@@ -547,7 +547,7 @@ rsx! {
   - Fond: Sombre
   - Texte: Clair
 
-### Éléments 
+### Éléments
 
 - Effets de lueur subtils
 - Indicateurs dynamiques (lumières respirantes)

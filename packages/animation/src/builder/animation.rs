@@ -31,11 +31,11 @@
 //!     .add_stateful_style("background", CssProperty::BackgroundPosition, |ctx, state| {
 //!         // Update angle based on delta time for smooth rotation
 //!         state.add_f64("angle", ctx.delta_seconds() * 60.0); // 60 degrees per second
-//!         
+//!
 //!         let angle = state.get_f64("angle", 0.0);
 //!         let x = 50.0 + 10.0 * angle.cos();
 //!         let y = 50.0 + 10.0 * angle.sin();
-//!         
+//!
 //!         format!("{:.1}% {:.1}%", x, y)
 //!     })
 //!     .start_continuous_animation();
@@ -289,48 +289,45 @@ impl<'a> AnimationBuilder<'a> {
             let mut needs_update = false;
 
             for (element_name, js_value) in &elements {
-                if let Some(element_actions) = actions.get(element_name) {
-                    if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                        let ctx = AnimationContext::new_with_timing(
-                            &element,
-                            previous_time,
-                            current_time,
-                        );
+                if let Some(element_actions) = actions.get(element_name)
+                    && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>()
+                {
+                    let ctx =
+                        AnimationContext::new_with_timing(&element, previous_time, current_time);
 
-                        let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
-                        let element_cache = cached_ref.entry(element_name.clone()).or_default();
+                    let mut new_styles: Vec<(CssProperty, String)> = Vec::new();
+                    let element_cache = cached_ref.entry(element_name.clone()).or_default();
 
-                        for action in element_actions {
-                            if let AnimationAction::Style(prop, value) = action {
-                                if matches!(
-                                    value,
-                                    DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
-                                ) {
-                                    let new_value = value.evaluate(&ctx, &mut state);
+                    for action in element_actions {
+                        if let AnimationAction::Style(prop, value) = action
+                            && matches!(
+                                value,
+                                DynamicValue::Dynamic(_) | DynamicValue::StatefulDynamic(_)
+                            )
+                        {
+                            let new_value = value.evaluate(&ctx, &mut state);
 
-                                    if let Some(old_value) = element_cache.get(prop) {
-                                        if old_value != &new_value {
-                                            new_styles.push((*prop, new_value.clone()));
-                                            element_cache.insert(*prop, new_value);
-                                            needs_update = true;
-                                        }
-                                    } else {
-                                        new_styles.push((*prop, new_value.clone()));
-                                        element_cache.insert(*prop, new_value);
-                                        needs_update = true;
-                                    }
+                            if let Some(old_value) = element_cache.get(prop) {
+                                if old_value != &new_value {
+                                    new_styles.push((*prop, new_value.clone()));
+                                    element_cache.insert(*prop, new_value);
+                                    needs_update = true;
                                 }
+                            } else {
+                                new_styles.push((*prop, new_value.clone()));
+                                element_cache.insert(*prop, new_value);
+                                needs_update = true;
                             }
                         }
+                    }
 
-                        if needs_update && !new_styles.is_empty() {
-                            let mut builder = StyleBuilder::new(&element);
-                            for (prop, value_str) in &new_styles {
-                                builder = builder.add(*prop, value_str);
-                            }
-                            builder.apply();
-                            needs_update = false;
+                    if needs_update && !new_styles.is_empty() {
+                        let mut builder = StyleBuilder::new(&element);
+                        for (prop, value_str) in &new_styles {
+                            builder = builder.add(*prop, value_str);
                         }
+                        builder.apply();
+                        needs_update = false;
                     }
                 }
             }
@@ -355,29 +352,29 @@ impl<'a> AnimationBuilder<'a> {
 
     fn apply_internal(self, _is_transition: bool) {
         for (element_name, actions) in self.actions {
-            if let Some(js_value) = self.elements.get(&element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                    let ctx = AnimationContext::new(&element);
-                    let mut state = self.initial_state.clone();
-                    let builder = StyleBuilder::new(&element);
-                    let mut has_style = false;
+            if let Some(js_value) = self.elements.get(&element_name)
+                && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>()
+            {
+                let ctx = AnimationContext::new(&element);
+                let mut state = self.initial_state.clone();
+                let builder = StyleBuilder::new(&element);
+                let mut has_style = false;
 
-                    for action in &actions {
-                        match action {
-                            AnimationAction::Style(prop, value) => {
-                                has_style = true;
-                                let value_str = value.evaluate(&ctx, &mut state);
-                                builder.clone().add(*prop, &value_str);
-                            }
-                            AnimationAction::Class(class) => {
-                                let _ = element.class_list().add_1(class);
-                            }
+                for action in &actions {
+                    match action {
+                        AnimationAction::Style(prop, value) => {
+                            has_style = true;
+                            let value_str = value.evaluate(&ctx, &mut state);
+                            builder.clone().add(*prop, &value_str);
+                        }
+                        AnimationAction::Class(class) => {
+                            let _ = element.class_list().add_1(class);
                         }
                     }
+                }
 
-                    if has_style {
-                        builder.apply();
-                    }
+                if has_style {
+                    builder.apply();
                 }
             }
         }
@@ -385,15 +382,15 @@ impl<'a> AnimationBuilder<'a> {
 
     fn apply_with_transition_internal(self, duration: &str, easing: &str, _is_transition: bool) {
         for element_name in self.actions.keys() {
-            if let Some(js_value) = self.elements.get(element_name) {
-                if let Ok(element) = js_value.clone().dyn_into::<HtmlElement>() {
-                    StyleBuilder::new(&element)
-                        .add(
-                            CssProperty::Transition,
-                            &format!("all {} {}", duration, easing),
-                        )
-                        .apply();
-                }
+            if let Some(js_value) = self.elements.get(element_name)
+                && let Ok(element) = js_value.clone().dyn_into::<HtmlElement>()
+            {
+                StyleBuilder::new(&element)
+                    .add(
+                        CssProperty::Transition,
+                        &format!("all {} {}", duration, easing),
+                    )
+                    .apply();
             }
         }
 

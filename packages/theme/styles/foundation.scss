@@ -1,8 +1,13 @@
 // hikari-theme/styles/foundation.scss
 // Layer1 - Foundation Layer: Global CSS Variables
-// 
+//
 // This file defines the base layer of the design system.
 // All variables here can be overridden at Layer2 (component level) or Custom (runtime).
+
+// Import supplementary tokens adopted from shittim-chest's design system.
+@use 'tokens';
+@use 'glass';
+@use 'scrollbar';
 
 // ============================================
 // 1. Color System
@@ -170,10 +175,10 @@
   --hi-color-text-primary: #ffffff;
   --hi-color-text-secondary: rgba(255, 255, 255, 0.7);
   --hi-color-text-disabled: rgba(255, 255, 255, 0.3);
-  
+
   --hi-bg-surface: rgba(30, 30, 30, 0.8);
   --hi-bg-surface-dark: rgba(20, 20, 20, 0.9);
-  
+
   --hi-border-color: rgba(255, 255, 255, 0.1);
   --hi-border-color-disabled: rgba(255, 255, 255, 0.05);
 }
@@ -186,10 +191,10 @@
   --hi-color-text-primary: #1a1a1a;
   --hi-color-text-secondary: rgba(0, 0, 0, 0.7);
   --hi-color-text-disabled: rgba(0, 0, 0, 0.3);
-  
+
   --hi-bg-surface: rgba(255, 255, 255, 0.9);
   --hi-bg-surface-dark: rgba(245, 245, 245, 0.95);
-  
+
   --hi-border-color: rgba(0, 0, 0, 0.1);
   --hi-border-color-disabled: rgba(0, 0, 0, 0.05);
 }

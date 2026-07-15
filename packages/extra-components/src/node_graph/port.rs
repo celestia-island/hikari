@@ -35,7 +35,7 @@ impl std::fmt::Display for PortType {
 
 /// Port state model
 ///
-/// Previously a Dioxus component. Now a pure state model.
+/// Previously a component. Now a pure state model.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Port {
     pub port_id: PortId,

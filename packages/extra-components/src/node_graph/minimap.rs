@@ -3,7 +3,7 @@
 
 /// Data model for node graph minimap
 ///
-/// Previously a Dioxus component. Now a pure state model
+/// Previously a component. Now a pure state model
 /// that can be rendered with any framework.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeGraphMinimap {

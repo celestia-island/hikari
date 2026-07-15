@@ -16,20 +16,20 @@ pub struct ComponentProps {
     // 颜色覆盖
     #[props(default)]
     pub icon_color: Option<String>,
-    
+
     #[props(default)]
     pub text_color: Option<String>,
-    
+
     #[props(default)]
     pub background_color: Option<String>,
-    
+
     #[props(default)]
     pub border_color: Option<String>,
-    
+
     // 动画集成
     #[props(default)]
     pub animation_id: Option<String>,
-    
+
     // 任意 CSS 变量覆盖
     #[props(default)]
     pub css_vars: Option<Vec<(&'static str, String)>>,
@@ -225,7 +225,7 @@ use hikari_animation::{AnimationBuilder, Easing};
 
 fn ThemeToggleButton() -> Element {
     let mut is_dark = use_signal(|| false);
-    
+
     rsx! {
         Button {
             variant: ButtonVariant::Primary,
@@ -233,14 +233,14 @@ fn ThemeToggleButton() -> Element {
             onclick: move |_| {
                 let new_bg = if is_dark() { "#ffffff" } else { "#1a1a1a" };
                 let new_text = if is_dark() { "#1a1a1a" } else { "#ffffff" };
-                
+
                 AnimationBuilder::new()
                     .style("--hi-button-bg", new_bg)
                     .style("--hi-button-text-color", new_text)
                     .duration(300)
                     .easing(Easing::EaseInOut)
                     .apply_to_element("theme-toggle-btn");
-                
+
                 is_dark.set(!is_dark());
             },
             if is_dark() { "🌙 Dark" } else { "☀️ Light" }
@@ -302,7 +302,7 @@ fn PulseButton() -> Element {
                             .duration(100)
                             .easing(Easing::EaseOut)
                             .apply_to_element("pulse-btn");
-                        
+
                         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
                         AnimationBuilder::new()
                             .style("transform", "scale(1.0)")

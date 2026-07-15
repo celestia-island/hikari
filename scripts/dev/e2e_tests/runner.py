@@ -1,5 +1,5 @@
 # E2E Testing Framework for Hikari UI
-# 
+#
 # This framework provides:
 # - Interactive browser testing (hover, click, input)
 # - Visual quality analysis (shadows, alignment, colors, spacing)
@@ -16,7 +16,6 @@ from __future__ import annotations
 import os
 import json
 import time
-import subprocess
 import base64
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -35,7 +34,7 @@ except ImportError:
     SELENIUM_AVAILABLE = False
 
 try:
-    import requests
+    import requests  # noqa: F401  (availability check)
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
@@ -71,20 +70,20 @@ class TestCase:
 
 class GLMVisionAnalyzer:
     """Integration with GLM Vision Analysis via MCP"""
-    
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("GLM_API_KEY")
         if not self.api_key:
             raise ValueError("GLM_API_KEY environment variable is required for visual analysis")
-    
+
     def analyze_screenshot(self, image_path: str, prompt: str) -> dict:
         """Analyze screenshot using GLM Vision API"""
         if not REQUESTS_AVAILABLE:
             return {"success": False, "error": "requests library not available"}
-        
+
         with open(image_path, "rb") as f:
-            image_data = base64.b64encode(f.read()).decode()
-        
+            image_data = base64.b64encode(f.read()).decode()  # noqa: F841  (TODO: GLM API call placeholder)
+
         # Note: This is a placeholder - actual implementation would call GLM API
         # through the MCP server. The MCP tool should be called externally.
         return {
@@ -98,16 +97,16 @@ class GLMVisionAnalyzer:
 
 class BrowserController:
     """Controls browser for E2E testing"""
-    
+
     def __init__(self, base_url: str = "http://localhost:3000", headless: bool = True):
         if not SELENIUM_AVAILABLE:
             raise ImportError("Selenium is required. Install with: pip install selenium")
-        
+
         self.base_url = base_url
         self.headless = headless
         self.driver: Optional[webdriver.Chrome] = None
         self.wait: Optional[WebDriverWait] = None
-    
+
     def start(self):
         """Initialize browser"""
         options = webdriver.ChromeOptions()
@@ -117,17 +116,17 @@ class BrowserController:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-gpu")
-        
+
         self.driver = webdriver.Chrome(options=options)
         self.wait = WebDriverWait(self.driver, 10)
         return self
-    
+
     def stop(self):
         """Close browser"""
         if self.driver:
             self.driver.quit()
             self.driver = None
-    
+
     def navigate(self, route: str) -> bool:
         """Navigate to route"""
         url = f"{self.base_url}{route}"
@@ -135,7 +134,7 @@ class BrowserController:
         # Wait for WASM to load
         time.sleep(8)
         return True
-    
+
     def wait_for_selector(self, selector: str, timeout: int = 10000) -> Optional[WebElement]:
         """Wait for element to appear"""
         try:
@@ -145,7 +144,7 @@ class BrowserController:
             return element
         except Exception:
             return None
-    
+
     def hover(self, selector: str) -> bool:
         """Hover over element"""
         try:
@@ -158,7 +157,7 @@ class BrowserController:
         except Exception as e:
             print(f"Hover failed: {e}")
             return False
-    
+
     def click(self, selector: str) -> bool:
         """Click element"""
         try:
@@ -171,7 +170,7 @@ class BrowserController:
         except Exception as e:
             print(f"Click failed: {e}")
             return False
-    
+
     def input_text(self, selector: str, text: str) -> bool:
         """Input text into element"""
         try:
@@ -185,7 +184,7 @@ class BrowserController:
         except Exception as e:
             print(f"Input failed: {e}")
             return False
-    
+
     def screenshot(self, output_path: str) -> bool:
         """Take screenshot"""
         try:
@@ -194,11 +193,11 @@ class BrowserController:
         except Exception as e:
             print(f"Screenshot failed: {e}")
             return False
-    
+
     def execute_script(self, script: str) -> Any:
         """Execute JavaScript"""
         return self.driver.execute_script(script)
-    
+
     def get_element_styles(self, selector: str) -> dict:
         """Get computed styles of element"""
         script = f"""
@@ -230,7 +229,7 @@ class BrowserController:
 
 class VisualQualityPrompts:
     """Predefined prompts for visual quality analysis"""
-    
+
     # Shadow analysis prompts
     SHADOW_CHECK = """分析这个UI组件的阴影效果，检查以下问题：
 1. **阴影深度**: 阴影是否明显深于周围元素？是否存在"脏"或"模糊"的阴影？
@@ -298,68 +297,68 @@ class VisualQualityPrompts:
 
 class E2ETestRunner:
     """Main test runner for E2E tests"""
-    
+
     def __init__(self, config_path: str = None):
         self.config_path = Path(config_path) if config_path else None
         self.browser: Optional[BrowserController] = None
         self.results: list[dict] = []
         self.screenshot_dir = Path("scripts/dev/e2e_tests/reports/screenshots")
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def load_test_suite(self, suite_path: str) -> dict:
         """Load test suite from JSON file"""
         with open(suite_path) as f:
             return json.load(f)
-    
+
     def execute_step(self, step: dict) -> dict:
         """Execute a single test step"""
         action = step.get("action")
         params = step.get("params", {})
         result = {"action": action, "params": params, "success": False}
-        
+
         try:
             if action == "navigate":
                 result["success"] = self.browser.navigate(params.get("route", "/"))
-            
+
             elif action == "wait_for_selector":
                 element = self.browser.wait_for_selector(
                     params.get("selector"),
                     params.get("timeout", 10000)
                 )
                 result["success"] = element is not None
-            
+
             elif action == "hover":
                 result["success"] = self.browser.hover(params.get("selector"))
-            
+
             elif action == "click":
                 result["success"] = self.browser.click(params.get("selector"))
-            
+
             elif action == "input":
                 result["success"] = self.browser.input_text(
                     params.get("selector"),
                     params.get("text", "")
                 )
-            
+
             elif action == "screenshot":
                 output = params.get("output", f"screenshot_{int(time.time())}.png")
                 output_path = self.screenshot_dir / output
                 result["success"] = self.browser.screenshot(str(output_path))
                 result["output_path"] = str(output_path)
-            
+
             elif action == "execute_script":
                 script_result = self.browser.execute_script(params.get("script", ""))
                 result["success"] = True
                 result["script_result"] = script_result
-            
+
             elif action == "get_styles":
                 styles = self.browser.get_element_styles(params.get("selector"))
                 result["success"] = styles is not None
                 result["styles"] = styles
-            
+
             elif action == "wait":
                 time.sleep(params.get("duration", 1))
                 result["success"] = True
-            
+
             elif action == "visual_analysis":
                 # This step requires external MCP call
                 result["success"] = True
@@ -367,28 +366,28 @@ class E2ETestRunner:
                 result["prompt"] = params.get("prompt", "")
                 result["image_path"] = params.get("image_path", "")
                 result["note"] = "Use zai-mcp-server_analyze_image MCP tool"
-            
+
             else:
                 result["error"] = f"Unknown action: {action}"
-        
+
         except Exception as e:
             result["error"] = str(e)
-        
+
         return result
-    
+
     def run_test(self, test_case: dict) -> dict:
         """Run a single test case"""
         test_id = test_case.get("id", "unknown")
         test_name = test_case.get("name", test_id)
         route = test_case.get("route", "/")
         steps = test_case.get("steps", [])
-        
+
         print(f"\n{'='*60}")
         print(f"Running test: {test_name}")
         print(f"Route: {route}")
         print(f"Steps: {len(steps)}")
         print(f"{'='*60}")
-        
+
         results = {
             "id": test_id,
             "name": test_name,
@@ -396,46 +395,46 @@ class E2ETestRunner:
             "status": "running",
             "steps": []
         }
-        
+
         # Navigate to route first
         if not self.browser.navigate(route):
             results["status"] = "failed"
             results["error"] = "Failed to navigate to route"
             return results
-        
+
         # Execute each step
         all_passed = True
         for i, step in enumerate(steps):
             print(f"  Step {i+1}/{len(steps)}: {step.get('action', 'unknown')}")
             step_result = self.execute_step(step)
             results["steps"].append(step_result)
-            
+
             if not step_result.get("success", False):
                 all_passed = False
                 print(f"    ❌ Failed: {step_result.get('error', 'Unknown error')}")
             else:
-                print(f"    ✓ Passed")
-        
+                print("    ✓ Passed")
+
         results["status"] = "passed" if all_passed else "failed"
         print(f"\nTest {test_name}: {results['status'].upper()}")
-        
+
         return results
-    
+
     def run_suite(self, suite_path: str) -> dict:
         """Run all tests in a suite"""
         suite = self.load_test_suite(suite_path)
         suite_name = suite.get("name", "Unnamed Suite")
         tests = suite.get("tests", [])
-        
+
         print(f"\n{'#'*60}")
         print(f"# Test Suite: {suite_name}")
         print(f"# Tests: {len(tests)}")
         print(f"{'#'*60}")
-        
+
         # Start browser
         self.browser = BrowserController(headless=True)
         self.browser.start()
-        
+
         results = {
             "suite": suite_name,
             "total_tests": len(tests),
@@ -443,7 +442,7 @@ class E2ETestRunner:
             "failed": 0,
             "tests": []
         }
-        
+
         try:
             for test in tests:
                 test_result = self.run_test(test)
@@ -454,41 +453,41 @@ class E2ETestRunner:
                     results["failed"] += 1
         finally:
             self.browser.stop()
-        
+
         print(f"\n{'#'*60}")
         print(f"# Suite Complete: {suite_name}")
         print(f"# Passed: {results['passed']}/{results['total_tests']}")
         print(f"{'#'*60}")
-        
+
         return results
-    
+
     def save_results(self, results: dict, output_path: str = None):
         """Save test results to JSON"""
         if output_path is None:
             output_path = f"scripts/dev/e2e_tests/reports/results_{int(time.time())}.json"
-        
+
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2)
-        
+
         print(f"Results saved to: {output_path}")
 
 
 def main():
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Hikari E2E Test Runner")
     parser.add_argument("suite", help="Path to test suite JSON file")
     parser.add_argument("--output", "-o", help="Output file for results")
     parser.add_argument("--no-headless", action="store_true", help="Run with visible browser")
-    
+
     args = parser.parse_args()
-    
+
     runner = E2ETestRunner()
     results = runner.run_suite(args.suite)
-    
+
     if args.output:
         runner.save_results(results, args.output)
-    
+
     # Exit with error code if any tests failed
     exit(0 if results["failed"] == 0 else 1)
 

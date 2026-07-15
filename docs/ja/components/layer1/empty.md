@@ -4,8 +4,12 @@
 
 ## 基本的な使い方
 
-```_hikari_component
-pages/components/layer1/empty#basic
+```hikari
+rsx! {
+    div { style: "padding:2rem;text-align:center;color:#999;",
+        p { style: "font-size:14px;margin:0;", "No data available" }
+    }
+}
 ```
 
 ## API

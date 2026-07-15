@@ -6,7 +6,7 @@ Traditional Chinese color system implementation with 660+ historical colors.
 
 - [Overview](#overview)
 - [Colors](#colors)
-- [ClassesBuilder](#classesbuilder-utility-class-generator)
+- [ClassesBuilder](#classesbuilder)
 - [Themes](#themes)
 - [Opacity & Blending](#opacity--blending)
 - [API Reference](#api-reference)
@@ -586,7 +586,6 @@ let error_color = Color::苍翠;
 
 - [Theme System](./theme.md) - Theme context and CSS variables
 - [Components](../components/) - Component library using palettes
-- [Builder System](./builder.md) - SCSS compilation with palette variables
 
 ## Resources
 

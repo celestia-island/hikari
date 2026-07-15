@@ -5,8 +5,8 @@ Theme management system providing theme context, CSS variables, and theme switch
 ## Table of Contents
 
 - [Overview](#overview)
-- [ThemeProvider](#themeprovider-theme-provider)
-- [ThemeContext](#themecontext-theme-context)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [Generated Resources](#generated-resources)
 - [CSS Variables System](#css-variables-system)
 - [Theme Switching](#theme-switching)

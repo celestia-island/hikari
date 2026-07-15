@@ -1,0 +1,64 @@
+// _tokens.scss — Design tokens adopted from shittim-chest's theme system.
+// These supplement hikari's existing foundation.scss tokens with the
+// detail-oriented tokens that make shittim-chest's UI feel polished:
+// z-index hierarchy, blur/opacity tiers, shittim-chest easings, and
+// scrollbar geometry.
+
+:root {
+  // ── Z-Index Hierarchy (from shittim-chest) ──────────────────────
+  --hi-z-base: 0;
+  --hi-z-above: 1;
+  --hi-z-content: 10;
+  --hi-z-header: 30;
+  --hi-z-sidebar: 40;
+  --hi-z-floating: 50;
+  --hi-z-header-popup: 150;
+  --hi-z-modal: 1000;
+  --hi-z-modal-step: 2;
+  --hi-z-toast: 9999;
+  --hi-z-tooltip: 10000;
+
+  // ── Blur Scale ──────────────────────────────────────────────────
+  --hi-blur-xs: 4px;
+  --hi-blur-sm: 8px;
+  --hi-blur-md: 16px;
+  --hi-blur-lg: 24px;
+
+  // ── Opacity Tiers ───────────────────────────────────────────────
+  --hi-opacity-faded: 0.45;
+  --hi-opacity-less: 0.85;
+  --hi-opacity-half: 0.92;
+  --hi-opacity-more: 0.96;
+
+  // ── Extended Easing (shittim-chest style) ───────────────────────
+  --hi-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --hi-ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+  --hi-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  // ── Extended Duration ───────────────────────────────────────────
+  --hi-duration-instant: 0.1s;
+  --hi-duration-short: 0.15s;
+  --hi-duration-fade: 0.15s;
+
+  // ── Motion Tokens ───────────────────────────────────────────────
+  --hi-motion-popup-scale: 0.98;
+  --hi-motion-popup-offset: 4px;
+  --hi-motion-drawer-offset: 0.5rem;
+
+  // ── Extended Shadow Ladder (shittim-chest style) ────────────────
+  --hi-shadow-panel: 0 4px 32px rgb(0 0 0 / 20%), 0 0 0 1px rgb(255 255 255 / 4%);
+  --hi-shadow-elevated: 0 8px 32px rgb(0 0 0 / 15%);
+  --hi-shadow-modal: 0 20px 60px rgb(0 0 0 / 25%), 0 0 0 1px rgb(255 255 255 / 5%);
+  --hi-shadow-dropdown: 0 4px 24px rgb(0 0 0 / 12%), 0 0 0 1px rgb(255 255 255 / 4%);
+  --hi-shadow-tooltip: 0 2px 8px rgb(0 0 0 / 20%);
+  --hi-shadow-focus: 0 0 0 3px rgb(255 107 157 / 12%);
+
+  // ── Scrollbar Geometry (overlay scrollbar system) ───────────────
+  --hi-scroll-inset: 4px;
+  --hi-scroll-size: 8px;
+  --hi-scroll-size-hover: 14px;
+  --hi-scroll-thumb: 4px;
+  --hi-scroll-thumb-hover: 6px;
+  --hi-scroll-thumb-min: 20px;
+  --hi-scroll-edge: 1px;
+}

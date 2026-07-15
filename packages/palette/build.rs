@@ -51,7 +51,7 @@ fn main() {
     generate(&all_classes, &dest);
 
     println!(
-        "cargo:warning=hikari-palette: {} component groups, {} classes generated",
+        "cargo:warning={} component groups, {} classes generated",
         all_classes.len(),
         all_classes.values().map(Vec::len).sum::<usize>()
     );
@@ -86,13 +86,11 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
     let mut current = PathBuf::from(manifest_dir);
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
+        if cargo_toml.exists()
+            && let Ok(content) = fs::read_to_string(&cargo_toml)
+                && content.contains("[workspace]") {
                     return Some(current);
                 }
-            }
-        }
         match current.parent() {
             Some(parent) if parent != current => current = parent.to_path_buf(),
             _ => return None,
@@ -149,7 +147,7 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
             .unwrap_or_else(|e| panic!("hikari-palette: failed to parse {file}: {e}"));
         emit_collection_module(name, &colors, &collections_dir.join(format!("{name}.rs")));
         println!(
-            "cargo:warning=hikari-palette: collection '{name}' — {} colors",
+            "cargo:warning=collection '{name}' — {} colors",
             colors.len()
         );
         all_enabled.push((name, colors));
@@ -374,7 +372,7 @@ fn emit_color_macro(enabled: &[(&str, Vec<ColorEntry>)], dest: &Path) {
          }}"
     );
     println!(
-        "cargo:warning=hikari-palette: color! macro — {total} names resolvable across {} collection(s)",
+        "cargo:warning=color! macro — {total} names resolvable across {} collection(s)",
         enabled.len()
     );
 }
@@ -409,7 +407,7 @@ fn infer_category_name(r: u8, g: u8, b: u8) -> &'static str {
     let hue = ((hue_milli % 360_000) + 360_000) % 360_000;
     let deg = hue / 1000;
 
-    if deg < 18 || deg >= 348 {
+    if !(18..348).contains(&deg) {
         "Red"
     } else if deg < 48 {
         "Orange"

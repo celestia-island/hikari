@@ -4,7 +4,7 @@
 //! # Portal System
 //!
 //! A comprehensive portal system for rendering modals, dropdowns, toasts, and other
-//! overlay elements in Dioxus applications.
+//! overlay elements in tairitsu applications.
 
 //! ## Architecture Overview
 //!

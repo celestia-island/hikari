@@ -21,7 +21,7 @@ packages/theme/styles/foundation.scss
   --hi-color-primary: #ff4f00;           // 主色（橙红色）
   --hi-color-primary-light: #ff6b33;     // 主色浅色
   --hi-color-primary-dark: #cc3f00;      // 主色深色
-  
+
   // 辅助色
   --hi-color-secondary: #3b82f6;         // 辅助色（蓝色）
   --hi-color-secondary-light: #60a5fa;
@@ -81,7 +81,7 @@ packages/theme/styles/foundation.scss
   --hi-radius-xl: 16px;
   --hi-radius-2xl: 24px;
   --hi-radius-full: 9999px;              // 全圆
-  
+
   // 组件圆角
   --hi-radius-button: var(--hi-radius-md);
   --hi-radius-input: var(--hi-radius-md);
@@ -125,7 +125,7 @@ packages/theme/styles/foundation.scss
   --hi-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --hi-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --hi-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
-  
+
   // 发光阴影
   --hi-glow-color: rgba(255, 79, 0, 0.3);
   --hi-glow-sm: 0 0 8px var(--hi-glow-color);
@@ -156,7 +156,7 @@ packages/theme/styles/foundation.scss
   // 字体族
   --hi-font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --hi-font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
+
   // 字号
   --hi-font-size-xs: 0.75rem;            // 12px
   --hi-font-size-sm: 0.875rem;           // 14px
@@ -164,12 +164,12 @@ packages/theme/styles/foundation.scss
   --hi-font-size-lg: 1.125rem;           // 18px
   --hi-font-size-xl: 1.25rem;            // 20px
   --hi-font-size-2xl: 1.5rem;            // 24px
-  
+
   // 行高
   --hi-line-height-tight: 1.25;
   --hi-line-height-normal: 1.5;
   --hi-line-height-relaxed: 1.75;
-  
+
   // 字重
   --hi-font-weight-normal: 400;
   --hi-font-weight-medium: 500;
@@ -188,7 +188,7 @@ packages/theme/styles/foundation.scss
   --hi-icon-size-md: 20px;
   --hi-icon-size-lg: 24px;
   --hi-icon-size-xl: 32px;
-  
+
   // 图标颜色
   --hi-icon-color: var(--hi-color-text-primary);
   --hi-icon-color-secondary: var(--hi-color-text-secondary);
@@ -253,7 +253,7 @@ packages/theme/styles/foundation.scss
   border-radius: var(--hi-radius-md);
   padding: var(--hi-spacing-4);
   transition: all var(--hi-duration-normal) var(--hi-ease-smooth);
-  
+
   &:hover {
     box-shadow: var(--hi-shadow-md);
   }

@@ -110,7 +110,7 @@ impl ColorCategory {
             60000 * (r - g) / delta + 240_000
         };
         // Normalize to [0, 360000).
-        let hue = ((hue_milli % 360_000) + 360_000) % 360_000; // milli-degrees
+        let hue = hue_milli.rem_euclid(360000); // milli-degrees
         let deg = hue / 1000; // [0, 359]
 
         // Sector boundaries (degrees).

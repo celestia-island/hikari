@@ -117,7 +117,7 @@ impl<'a> StyleBuilder<'a> {
         updated
     }
 
-    /// Build the style as a CSS string (for Dioxus style attribute)
+    /// Build the style as a CSS string (for an inline `style` attribute)
     ///
     /// Uses the tairitsu_style::StyleStringBuilder internally.
     ///

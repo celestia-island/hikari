@@ -1,0 +1,32 @@
+// _glass.scss — Glass-morphism utility classes adopted from shittim-chest.
+// These provide the frosted-glass aesthetic that makes panels feel layered
+// without heavy borders.
+
+.hi-glass {
+  background: rgb(30 30 30 / var(--hi-opacity-half, 0.92));
+  backdrop-filter: blur(var(--hi-blur-md, 16px));
+  -webkit-backdrop-filter: blur(var(--hi-blur-md, 16px));
+}
+
+.hi-glass-header {
+  background: rgb(30 30 30 / var(--hi-opacity-more, 0.96));
+  backdrop-filter: blur(var(--hi-blur-sm, 8px));
+  -webkit-backdrop-filter: blur(var(--hi-blur-sm, 8px));
+}
+
+.hi-glass-panel {
+  background: rgb(30 30 30 / var(--hi-opacity-half, 0.92));
+  backdrop-filter: blur(var(--hi-blur-lg, 24px));
+  -webkit-backdrop-filter: blur(var(--hi-blur-lg, 24px));
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: var(--hi-radius-lg, 12px);
+  box-shadow: var(--hi-shadow-panel);
+}
+
+.hi-glass-float {
+  background: rgb(30 30 30 / var(--hi-opacity-more, 0.96));
+  backdrop-filter: blur(var(--hi-blur-md, 16px));
+  -webkit-backdrop-filter: blur(var(--hi-blur-md, 16px));
+  border: 1px solid rgb(255 255 255 / 6%);
+  box-shadow: var(--hi-shadow-elevated);
+}

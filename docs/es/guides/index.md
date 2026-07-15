@@ -86,12 +86,12 @@ trunk build --release
 
 ## Filosofía de Diseño
 
-### Diseño Plano de 
+### Diseño Plano de
 - Líneas limpias y jerarquía de información clara
 - Alto contraste para legibilidad
 - Diseño minimalista pero refinado
 
-### Estética Sci-Fi 
+### Estética Sci-Fi
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias, animaciones de pulso)
 - Bordes finos y patrones geométricos
@@ -176,7 +176,7 @@ AnimationBuilder::new(&elements)
 
 ## Contribuir
 
-¡Las contribuciones son bienvenidas! Por favor, lee [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) para más detalles.
+¡Las contribuciones son bienvenidas! Por favor, lee [CONTRIBUTING.md](../../en/guides/CONTRIBUTING.md) para más detalles.
 
 ## Licencia
 

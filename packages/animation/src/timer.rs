@@ -211,7 +211,7 @@ impl TimerManager {
         };
 
         let mut timers = self.timers.borrow_mut();
-        for (_id, handle) in timers.iter() {
+        for handle in timers.values() {
             window.clear_timeout_with_handle(*handle);
         }
         timers.clear();
@@ -306,7 +306,7 @@ impl TimerManager {
         };
 
         let mut frames = self.animation_frames.borrow_mut();
-        for (_id, handle) in frames.iter() {
+        for handle in frames.values() {
             let _ = window.cancel_animation_frame(*handle);
         }
         frames.clear();
@@ -345,7 +345,7 @@ pub fn debounce(
     let state = Rc::new(RefCell::new(DebounceState { timer_id: None }));
     let state_clone = state.clone();
 
-    let debounced = Rc::new(RefCell::new(move || {
+    Rc::new(RefCell::new(move || {
         // Cancel existing timer
         if let Some(timer_id) = state_clone.borrow_mut().timer_id.take() {
             manager.clear_timeout(timer_id);
@@ -362,9 +362,7 @@ pub fn debounce(
             delay,
         );
         state_clone.borrow_mut().timer_id = Some(timer_id);
-    }));
-
-    debounced
+    }))
 }
 
 /// Throttle utility - only call function once per delay period
@@ -392,19 +390,17 @@ pub fn throttle(
 
     let state = Rc::new(RefCell::new(ThrottleState { last_call: None }));
 
-    let throttled = Rc::new(RefCell::new(move || {
+    Rc::new(RefCell::new(move || {
         let now = js_sys::Date::now();
         let mut state_ref = state.borrow_mut();
 
-        if let Some(last_time) = state_ref.last_call {
-            if now - last_time < interval.as_millis() as f64 {
-                return; // Throttled
-            }
+        if let Some(last_time) = state_ref.last_call
+            && now - last_time < interval.as_millis() as f64
+        {
+            return; // Throttled
         }
 
         state_ref.last_call = Some(now);
         callback();
-    }));
-
-    throttled
+    }))
 }

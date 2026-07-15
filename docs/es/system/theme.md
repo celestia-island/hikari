@@ -5,8 +5,8 @@ Sistema de gestión de temas que proporciona contexto de tema, variables CSS y f
 ## Tabla de Contenidos
 
 - [Descripción General](#descripción-general)
-- [ThemeProvider](#themeprovider-provider-de-tema)
-- [ThemeContext](#themecontext-contexto-de-tema)
+- [ThemeProvider](#themeprovider)
+- [ThemeContext](#themecontext)
 - [Recursos Generados](#recursos-generados)
 - [Sistema de Variables CSS](#sistema-de-variables-css)
 - [Cambio de Tema](#cambio-de-tema)
@@ -535,7 +535,7 @@ rsx! {
 
 ## Filosofía de Diseño
 
-### Estilo 
+### Estilo
 
 - **Tema claro (hikari)**:
   - Primario: Rosa (#FFB3A7)
@@ -547,7 +547,7 @@ rsx! {
   - Fondo: Oscuro
   - Texto: Claro
 
-### Elementos 
+### Elementos
 
 - Efectos de brillo sutiles
 - Indicadores dinámicos (luces respiratorias)

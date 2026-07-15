@@ -176,7 +176,7 @@ AnimationBuilder::new(&elements)
 
 ## コントリビュート
 
-コントリビュートは大歓迎です！詳細は [CONTRIBUTING.md](../../en-US/guides/CONTRIBUTING.md) をお読みください。
+コントリビュートは大歓迎です！詳細は [CONTRIBUTING.md](../../en/guides/CONTRIBUTING.md) をお読みください。
 
 ## ライセンス
 

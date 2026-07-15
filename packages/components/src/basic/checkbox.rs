@@ -90,17 +90,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
                 disabled: props.disabled,
             }
             div { class: checkbox_classes, onclick: handle_click,
-                svg {
-                    class: "hi-checkbox-icon",
-                    // No inline opacity/transform - let CSS handle it
-                    view_box: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                    stroke_width: "3",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    polyline { points: "20 6 9 17 4 12" }
-                }
+                Icon { icon: MdiIcon::Check, size: 16, class: "hi-checkbox-icon".to_string(), color: String::new() }
             }
             span { class: "hi-checkbox-text", {props.children} }
         }

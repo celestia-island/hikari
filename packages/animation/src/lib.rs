@@ -31,12 +31,11 @@
 //!
 //! ## Feature Flags
 //!
-//! - `dioxus` - Enable Dioxus framework integration (requires wasm-bindgen)
-//! - `wasm` - Enable minimal WASM support without Dioxus
+//! - `wasm` - Enable WASM/browser integration, including tairitsu hooks and components
 //!
-//! When the `dioxus` feature is enabled, you also get:
-//! - **[`provider`]** - AnimationProvider component for Dioxus context
-//! - **[`hooks`]** - React hooks for animation lifecycle management
+//! When the `wasm` feature is enabled, you also get:
+//! - **[`provider`]** - AnimationProvider component for the tairitsu context system
+//! - **[`hooks`]** - Hooks for animation lifecycle management (built on `tairitsu-hooks`)
 
 pub mod breathing;
 pub mod config;
@@ -59,71 +58,67 @@ pub use state_machine::*;
 pub use timeline::*;
 pub use tween::*;
 
-// Modules that may use browser APIs but work without Dioxus
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+// Modules that use browser APIs (and, for some, tairitsu hooks)
+#[cfg(feature = "wasm")]
 pub mod builder;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod context;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod events;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod lifecycle;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod prefers_reduced_motion;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod scrollbar;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod style;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod timer;
 
 // Re-export WASM-specific items
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use builder::*;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use context::AnimationContext;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use events::*;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use lifecycle::*;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use prefers_reduced_motion::{prefers_reduced_motion, watch_prefers_reduced_motion};
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use scrollbar::*;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use style::*;
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub use timer::*;
 
-// Dioxus-specific modules
-#[cfg(feature = "dioxus")]
+// tairitsu-specific modules (require the wasm feature + browser APIs)
+#[cfg(feature = "wasm")]
 pub mod glow;
-#[cfg(feature = "dioxus")]
+#[cfg(feature = "wasm")]
 pub mod hooks;
-#[cfg(feature = "dioxus")]
+#[cfg(feature = "wasm")]
 pub mod provider;
 
-#[cfg(any(feature = "wasm", feature = "dioxus"))]
+#[cfg(feature = "wasm")]
 pub mod global_manager;
 
-// Re-export Dioxus-specific items
-#[cfg(feature = "dioxus")]
+// Re-export tairitsu-specific items
+#[cfg(feature = "wasm")]
 pub use glow::Glow;
-#[cfg(feature = "dioxus")]
+#[cfg(feature = "wasm")]
 pub use hooks::*;
-#[cfg(feature = "dioxus")]
+#[cfg(feature = "wasm")]
 pub use provider::{
     AnimationContext as AnimationProviderContext, AnimationProvider, try_use_animation_config,
     use_animation_config, use_animation_duration_scale, use_animation_enabled,
     use_animation_reduced_motion,
 };
 
-// Re-export transition presets for convenience (only available with wasm/dioxus feature)
-#[cfg(all(
-    any(feature = "wasm", feature = "dioxus"),
-    target_arch = "wasm32",
-    target_os = "unknown"
-))]
+// Re-export transition presets for convenience (only available with wasm feature)
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use presets::transition::{
     SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
     slide_out, zoom_in, zoom_out,

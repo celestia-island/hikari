@@ -617,4 +617,3 @@ impl Tairitsu {
 
 - [Theme 主题系统](./theme.md) - 使用 Palette 配置主题
 - [Components 组件](../components/) - 使用颜色的 UI 组件
-- [Classes 工具类参考](./classes.md) - 完整的工具类列表

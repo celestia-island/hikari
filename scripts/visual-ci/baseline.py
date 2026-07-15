@@ -53,7 +53,7 @@ def main():
     ap = argparse.ArgumentParser(description="Visual regression baseline management")
     sub = ap.add_subparsers(dest="action")
 
-    p_init = sub.add_parser("init")
+    p_init = sub.add_parser("init")  # noqa: F841  (argparse subparser registration)
     p_accept = sub.add_parser("accept")
     p_accept.add_argument("--name", required=True)
     p_accept.add_argument("--candidate-dir", default="target/screenshots")

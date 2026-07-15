@@ -2,8 +2,8 @@
 //!
 //! ## Migration Notice
 //!
-//! Previously a Dioxus component with mouse event handling.
-//! Now provides a pure state model for drag and drop functionality.
+//! Previously a component with mouse event handling.
+//! Now provides a pure state model (migrated from legacy Dioxus) for drag and drop functionality.
 
 /// Constraints for drag boundaries
 #[derive(Clone, PartialEq, Debug, Default)]

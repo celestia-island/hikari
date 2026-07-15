@@ -1,12 +1,12 @@
-//! Animation hooks for Dioxus components
+//! Animation hooks for tairitsu components
 //!
-//! Provides React-like hooks for managing animations in Dioxus components.
+//! Provides hooks for managing animations in tairitsu components.
 //! Includes:
 //! - use_animation: Basic animation management hook
 //! - use_button_state: Button state machine hook
 //! - use_glow_animation: Glow effect animation hook
 //!
-//! Note: These hooks are designed for use within Dioxus components.
+//! Note: These hooks are designed for use within tairitsu components.
 //! They provide state management and cleanup functionality.
 
 mod animated_value;

@@ -1,27 +1,36 @@
-//! Animated value and transition hooks for Dioxus
+//! Animated value and transition hooks for tairitsu components
 
-use dioxus::prelude::*;
+use tairitsu_hooks::use_signal;
+use tairitsu_vdom::Signal;
 use wasm_bindgen::JsCast;
 
 use crate::provider::try_use_animation_config;
 
 pub fn use_animated_value<T: Clone + 'static>(initial: T) -> Signal<T> {
-    use_signal(|| initial)
+    use_signal(move || initial).inner().clone()
 }
 
+/// Create a persistent transition controller for the current component.
+///
+/// Uses `use_signal` so the controller is constructed once and shared across
+/// re-renders (the controller is `Signal`-backed, so cloning is cheap).
 pub fn use_transition(duration_ms: u64) -> UseTransition {
-    use_hook(move || UseTransition::new(duration_ms))
+    use_signal(move || UseTransition::new(duration_ms))
+        .inner()
+        .get()
 }
 
+/// Like [`use_transition`], but scales the duration by the active animation
+/// configuration when one is provided via an [`AnimationProvider`](crate::AnimationProvider).
 pub fn use_transition_with_config(duration_ms: u64) -> UseTransition {
-    use_hook(move || {
-        let scaled_duration = if let Some(ctx) = try_use_animation_config() {
-            ctx.config.read().scale_duration(duration_ms)
-        } else {
-            duration_ms
-        };
-        UseTransition::new(scaled_duration)
-    })
+    let scaled_duration = if let Some(ctx) = try_use_animation_config() {
+        ctx.config.read().scale_duration(duration_ms)
+    } else {
+        duration_ms
+    };
+    use_signal(move || UseTransition::new(scaled_duration))
+        .inner()
+        .get()
 }
 
 #[derive(Clone)]
@@ -41,18 +50,18 @@ impl UseTransition {
     }
 
     pub fn is_visible(&self) -> bool {
-        *self.is_visible.read()
+        self.is_visible.read()
     }
 
     pub fn is_animating(&self) -> bool {
-        *self.is_animating.read()
+        self.is_animating.read()
     }
 
-    pub fn enter(&mut self) {
+    pub fn enter(&self) {
         self.is_visible.set(true);
         self.is_animating.set(true);
 
-        let mut is_animating = self.is_animating;
+        let is_animating = self.is_animating.clone();
         let duration_ms = self.duration_ms as i32;
 
         let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
@@ -69,11 +78,11 @@ impl UseTransition {
         closure.forget();
     }
 
-    pub fn exit(&mut self) {
+    pub fn exit(&self) {
         self.is_animating.set(true);
 
-        let mut is_visible = self.is_visible;
-        let mut is_animating = self.is_animating;
+        let is_visible = self.is_visible.clone();
+        let is_animating = self.is_animating.clone();
         let duration_ms = self.duration_ms as i32;
 
         let closure = wasm_bindgen::closure::Closure::once(Box::new(move || {
@@ -91,8 +100,8 @@ impl UseTransition {
         closure.forget();
     }
 
-    pub fn toggle(&mut self) {
-        if *self.is_visible.read() {
+    pub fn toggle(&self) {
+        if self.is_visible.read() {
             self.exit();
         } else {
             self.enter();

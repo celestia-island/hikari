@@ -251,7 +251,7 @@ pub fn Select(props: SelectProps) -> Element {
                 // Chevron arrow
                 span {
                     class: "hi-select-arrow",
-                    dangerous_inner_html: r#"<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>"#,
+                    Icon { icon: MdiIcon::ChevronDown, size: 16, class: String::new(), color: String::new() }
                 }
             }
         }

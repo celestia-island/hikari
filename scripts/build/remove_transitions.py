@@ -7,7 +7,6 @@ This script comments out all transition and animation declarations
 to prepare for migration to JS animation library.
 """
 
-import os
 import re
 from pathlib import Path
 

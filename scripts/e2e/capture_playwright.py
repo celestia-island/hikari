@@ -11,7 +11,6 @@ Naming convention:
       s047_click_nav-link_120,340-280,380_after-click.png
 """
 
-import sys
 import time
 import os
 from pathlib import Path
@@ -88,7 +87,9 @@ def type_el(page, selector, text, desc=""):
             return True
         page.evaluate(f"""
             const el = document.querySelector('{selector}');
-            if(el){{el.value='{text}';el.dispatchEvent(new Event('input',{{bubbles:true}}));el.dispatchEvent(new Event('change',{{bubbles:true}}))}}
+            if(el){{el.value='{text}'
+            el.dispatchEvent(new Event('input',{{bubbles:true}}))
+            el.dispatchEvent(new Event('change',{{bubbles:true}}))}}
         """)
         time.sleep(0.5)
         return True
@@ -106,7 +107,7 @@ def hover_el(page, selector):
         page.evaluate(f"document.querySelector('{selector}')?.dispatchEvent(new MouseEvent('mouseover',{{bubbles:true}}))")
         time.sleep(0.5)
         return True
-    except:
+    except Exception:
         return False
 
 def get_scroll_height(page):
@@ -324,7 +325,7 @@ with sync_playwright() as p:
         try:
             go(page, route)
         except PWTimeout:
-            print(f"  ! Navigation timeout, using current state")
+            print("  ! Navigation timeout, using current state")
             time.sleep(3)
 
         for action in actions:
@@ -334,18 +335,24 @@ with sync_playwright() as p:
             try:
                 if atype == "snap_viewport":
                     r = snap(page, action[1])
-                    if r: ok_count += 1
-                    else: failures.append(action[1])
+                    if r:
+                        ok_count += 1
+                    else:
+                        failures.append(action[1])
 
                 elif atype == "snap_full":
                     r = snap(page, action[1], full_page=True)
-                    if r: ok_count += 1
-                    else: failures.append(action[1])
+                    if r:
+                        ok_count += 1
+                    else:
+                        failures.append(action[1])
 
                 elif atype == "snap_el":
                     r = snap(page, action[1], selector=action[2])
-                    if r: ok_count += 1
-                    else: failures.append(action[1])
+                    if r:
+                        ok_count += 1
+                    else:
+                        failures.append(action[1])
 
                 elif atype == "scroll_to":
                     scroll_to(page, action[1])

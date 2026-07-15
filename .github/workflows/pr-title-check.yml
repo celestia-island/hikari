@@ -1,0 +1,31 @@
+# PR Title Check — validates PR titles against noa message rules.
+# Installed by: noa hook install-action
+# Requires: noa binary available in PATH (downloaded from GitHub Releases)
+#
+# The NOA_VERSION env var controls which release to fetch.
+# Defaults to "latest".
+
+name: PR Title Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install noa
+        run: |
+          set -euo pipefail
+          VERSION="${NOA_VERSION:-latest}"
+          if [ "$VERSION" = "latest" ]; then
+            URL="https://github.com/celestia-island/noa/releases/latest/download/noa-x86_64-unknown-linux-gnu"
+          else
+            URL="https://github.com/celestia-island/noa/releases/download/${VERSION}/noa-x86_64-unknown-linux-gnu"
+          fi
+          curl -fsSL "$URL" -o /usr/local/bin/noa
+          chmod +x /usr/local/bin/noa
+
+      - name: Check PR title
+        run: noa hook validate-msg -m "${{ github.event.pull_request.title }}" -p celestia

@@ -133,7 +133,7 @@ impl<'a> EventDrivenAnimation<'a> {
                 let ctx = AnimationContext::new(&el);
                 let value = f(&ctx);
 
-                for (_name, js_val) in elements.iter() {
+                for js_val in elements.values() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                         StyleBuilder::new(&el)
                             .add(CssProperty::Transform, &value)
@@ -163,7 +163,7 @@ impl<'a> EventDrivenAnimation<'a> {
                 let ctx = AnimationContext::new(&el);
                 let value = f(&ctx);
 
-                for (_name, js_val) in elements.iter() {
+                for js_val in elements.values() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                         StyleBuilder::new(&el)
                             .add(CssProperty::Transform, &value)
@@ -203,7 +203,7 @@ impl<'a> EventDrivenAnimation<'a> {
                 let ctx = AnimationContext::new(&el);
                 let value = f(&ctx);
 
-                for (_name, js_val) in elements.iter() {
+                for js_val in elements.values() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                         StyleBuilder::new(&el)
                             .add(CssProperty::Transform, &value)
@@ -248,7 +248,7 @@ impl<'a> EventDrivenAnimation<'a> {
                 let ctx = AnimationContext::new(&el);
                 let value = f(&ctx);
 
-                for (_name, js_val) in elements.iter() {
+                for js_val in elements.values() {
                     if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                         StyleBuilder::new(&el)
                             .add(CssProperty::Transform, &value)
@@ -280,7 +280,7 @@ impl<'a> EventDrivenAnimation<'a> {
                         let ctx = AnimationContext::new(&el);
                         let value = f(&ctx);
 
-                        for (_name, js_val) in elements.iter() {
+                        for js_val in elements.values() {
                             if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                                 StyleBuilder::new(&el)
                                     .add(CssProperty::Transform, &value)
@@ -305,7 +305,7 @@ impl<'a> EventDrivenAnimation<'a> {
                         let ctx = AnimationContext::new(&el);
                         let value = f(&ctx);
 
-                        for (_name, js_val) in elements.iter() {
+                        for js_val in elements.values() {
                             if let Ok(el) = js_val.clone().dyn_into::<HtmlElement>() {
                                 StyleBuilder::new(&el)
                                     .add(CssProperty::Transform, &value)

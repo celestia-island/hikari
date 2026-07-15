@@ -86,13 +86,11 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
     let mut current = PathBuf::from(manifest_dir);
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
+        if cargo_toml.exists()
+            && let Ok(content) = fs::read_to_string(&cargo_toml)
+                && content.contains("[workspace]") {
                     return Some(current);
                 }
-            }
-        }
         match current.parent() {
             Some(parent) if parent != current => current = parent.to_path_buf(),
             _ => return None,
@@ -409,7 +407,7 @@ fn infer_category_name(r: u8, g: u8, b: u8) -> &'static str {
     let hue = ((hue_milli % 360_000) + 360_000) % 360_000;
     let deg = hue / 1000;
 
-    if deg < 18 || deg >= 348 {
+    if !(18..348).contains(&deg) {
         "Red"
     } else if deg < 48 {
         "Orange"

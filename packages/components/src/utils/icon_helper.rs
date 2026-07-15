@@ -29,7 +29,7 @@ pub fn icon_vnode(name: &str, size: u32) -> VNode {
             .class("hi-icon-inline")
             .attr(
                 "style",
-                &format!("display:inline-flex;align-items:center;width:{size}px;height:{size}px"),
+                format!("display:inline-flex;align-items:center;width:{size}px;height:{size}px"),
             )
             .attr("aria-hidden", "true")
             .dangerous_inner_html(&svg),

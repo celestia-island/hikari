@@ -1,7 +1,6 @@
 // packages/components/src/navigation/steps.rs
 // Steps component with Arknights + FUI styling
 
-#![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, StepsClass, UtilityClass};
 

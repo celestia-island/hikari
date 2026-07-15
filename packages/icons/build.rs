@@ -104,6 +104,7 @@ fn main() {
 }
 
 /// Parsed `[workspace.metadata.hikari.icons]` configuration.
+#[derive(Default)]
 struct IconBuildConfig {
     /// Explicit icon set, if `set = [...]` was declared. `None` → auto-discover.
     explicit_set: Option<Vec<String>>,
@@ -111,14 +112,6 @@ struct IconBuildConfig {
     dynamic_fetch: bool,
 }
 
-impl Default for IconBuildConfig {
-    fn default() -> Self {
-        Self {
-            explicit_set: None,
-            dynamic_fetch: false,
-        }
-    }
-}
 
 fn read_icon_config(workspace_root: &Option<PathBuf>) -> IconBuildConfig {
     let Some(root) = workspace_root else {
@@ -143,11 +136,10 @@ fn read_icon_config(workspace_root: &Option<PathBuf>) -> IconBuildConfig {
             if let Some(arr) = rest.trim_start().strip_prefix('=') {
                 cfg.explicit_set = Some(parse_string_array(arr.trim()));
             }
-        } else if let Some(rest) = line.strip_prefix("dynamic-fetch") {
-            if let Some(val) = rest.trim_start().strip_prefix('=') {
+        } else if let Some(rest) = line.strip_prefix("dynamic-fetch")
+            && let Some(val) = rest.trim_start().strip_prefix('=') {
                 cfg.dynamic_fetch = matches!(val.trim(), "true" | "True" | "TRUE");
             }
-        }
     }
     cfg
 }
@@ -195,13 +187,11 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
     let mut current = PathBuf::from(manifest_dir);
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+                && content.contains("[workspace]") {
                     return Some(current);
                 }
-            }
-        }
         match current.parent() {
             Some(parent) if parent != current => current = parent.to_path_buf(),
             _ => return None,

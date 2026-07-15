@@ -1,7 +1,6 @@
 // hi-components/src/entry/transfer.rs
 // Transfer component with Arknights + FUI styling
 
-#![expect(clippy::needless_update)]
 
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, TransferClass, UtilityClass};

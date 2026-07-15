@@ -20,8 +20,8 @@ fn main() -> Result<()> {
     if !theme_styles_dir.exists() {
         // Generate empty CSS stubs for every SCSS file so include_str! resolves.
         let scss_dir = manifest_dir.join("src/styles/components");
-        if scss_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&scss_dir) {
+        if scss_dir.exists()
+            && let Ok(entries) = fs::read_dir(&scss_dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.extension().and_then(|s| s.to_str()) == Some("scss") {
@@ -31,7 +31,6 @@ fn main() -> Result<()> {
                     }
                 }
             }
-        }
         return Ok(());
     }
 

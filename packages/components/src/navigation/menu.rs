@@ -1,7 +1,6 @@
 // hi-components/src/navigation/menu.rs
 // Menu component with Arknights + FUI styling
 
-#![expect(clippy::needless_update)]
 
 use hikari_palette::classes::{ClassesBuilder, MenuClass};
 

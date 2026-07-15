@@ -172,7 +172,11 @@ mod tests {
 
     #[test]
     fn test_image_renders() {
-        let _ = Image(ImageProps::default());
+        let props = ImageProps {
+            src: Some("https://example.com/image.png".to_string()),
+            ..Default::default()
+        };
+        let _ = Image(props);
     }
 
     #[test]

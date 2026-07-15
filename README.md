@@ -1,4 +1,4 @@
-<div align="center"><img src="https://docs.celestia.world/res/logo/hikari.png" /></div>
+<div align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/dev/res/logo/hikari.png" /></div>
 <h1 align="center">Hikari</h1>
 <div align="center">
  <strong>

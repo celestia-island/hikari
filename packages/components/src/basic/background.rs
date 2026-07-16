@@ -171,7 +171,7 @@ fn start_gradient_animation() -> Box<dyn FnOnce()> {
 
 impl StyledComponent for BackgroundComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/background.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/background.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

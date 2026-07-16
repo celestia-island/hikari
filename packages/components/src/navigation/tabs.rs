@@ -112,7 +112,7 @@ pub fn Tabs(props: TabsProps) -> Element {
 
 impl StyledComponent for TabsComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/tabs.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/tabs.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

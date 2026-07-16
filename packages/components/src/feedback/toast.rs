@@ -147,7 +147,7 @@ pub fn Toast(props: ToastProps) -> Element {
 
 impl StyledComponent for ToastComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/toast.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/toast.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

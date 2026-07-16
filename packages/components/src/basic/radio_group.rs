@@ -125,7 +125,7 @@ pub struct RadioGroupComponent;
 
 impl StyledComponent for RadioGroupComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/radio.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/radio_group.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

@@ -54,7 +54,7 @@ pub fn Breadcrumb(props: BreadcrumbProps) -> Element {
 
 impl StyledComponent for BreadcrumbComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/breadcrumb.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/breadcrumb.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

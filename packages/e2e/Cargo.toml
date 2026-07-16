@@ -12,23 +12,14 @@ autobins = false
 thirtyfour = { version = "^0.34", features = ["reqwest"] }
 
 # Chromiumoxide for headless Chrome screenshots - updated for Chrome 144 compatibility
-<<<<<<< HEAD
-chromiumoxide = { version = "^0.8", features = ["tokio-runtime"] }
-=======
 chromiumoxide = { version = "^0.9" }
->>>>>>> 40cec58 (🐛 Switch logo URLs to raw.githubusercontent.com for GitHub camo proxy support.)
 
 # HTML parsing and assertions
 scraper = "^0.20"
 
 # HTTP client for direct SSR HTML fetch in no-JS tests
-<<<<<<< HEAD
-reqwest = { version = "^0.12", features = [
-  "rustls-tls",
-=======
 reqwest = { version = "^0.13", features = [
   "rustls-no-provider",
->>>>>>> 40cec58 (🐛 Switch logo URLs to raw.githubusercontent.com for GitHub camo proxy support.)
 ], default-features = false }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 

@@ -67,6 +67,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure tag is on master
+        run: |
+          git fetch origin master --depth=1
+          if ! git merge-base --is-ancestor HEAD origin/master; then
+            echo "::error::Tag must be on master branch to publish"
+            exit 1
+          fi
+
       - name: Cache MDI icons
         id: mdi-cache
         uses: actions/cache@v4
@@ -98,5 +106,17 @@ jobs:
           "
 
       - run: cargo login ${{ secrets.CRATES_IO_API_TOKEN }}
+
+      - name: Skip if already published
+        id: check-exists
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          STATUS=$(curl -sf -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/${CRATE}/${VERSION}" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "::warning::Version ${VERSION} already published — skipping."
+            exit 78
+          fi
+        env:
+          CRATE: hikari-palette
 
       - run: python3 scripts/publish_crates.py

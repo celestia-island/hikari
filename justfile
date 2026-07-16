@@ -23,7 +23,7 @@ set lists
 # variables, so the import is REQUIRED. Bootstrap once: celestia-devtools init
 # (or `just fetch` if already staged). Refresh after upgrades.
 import? "./.just/git-bash-interop.just"
-import "./.just/celestia-devtools.just"
+import? "./.just/celestia-devtools.just"
 
 # Stage shared celestia-devtools recipes into .just/ (gitignored).
 # Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.

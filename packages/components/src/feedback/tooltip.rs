@@ -109,7 +109,7 @@ pub fn Tooltip(props: TooltipProps) -> Element {
 
 impl StyledComponent for TooltipComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/tooltip.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/tooltip.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

@@ -279,7 +279,7 @@ pub fn Table(props: TableProps) -> Element {
 
 impl StyledComponent for TableComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/table.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/table.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

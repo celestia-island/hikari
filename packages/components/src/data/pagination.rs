@@ -564,7 +564,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
 impl StyledComponent for PaginationComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/pagination.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/pagination.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

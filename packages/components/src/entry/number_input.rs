@@ -169,7 +169,7 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
 
 impl StyledComponent for NumberInputComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/number_input.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/number_input.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

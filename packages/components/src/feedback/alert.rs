@@ -163,7 +163,7 @@ pub fn Alert(props: AlertProps) -> Element {
 
 impl StyledComponent for AlertComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/alert.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/alert.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

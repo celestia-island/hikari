@@ -338,7 +338,7 @@ pub struct GlowComponent;
 
 impl crate::styled::StyledComponent for GlowComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/glow.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/glow.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

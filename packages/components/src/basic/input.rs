@@ -221,7 +221,7 @@ pub fn Input(props: InputProps) -> Element {
 
 impl StyledComponent for InputComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/input.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/input.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

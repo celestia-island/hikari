@@ -229,7 +229,7 @@ pub fn Button(props: ButtonProps) -> Element {
 
 impl StyledComponent for ButtonComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/button.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/button.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

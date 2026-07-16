@@ -208,7 +208,7 @@ pub struct IconButtonComponent;
 
 impl StyledComponent for IconButtonComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/icon_button.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/icon_button.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

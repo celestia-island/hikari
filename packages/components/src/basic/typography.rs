@@ -93,7 +93,7 @@ pub struct TypographyComponent;
 
 impl StyledComponent for TypographyComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/typography.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/typography.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

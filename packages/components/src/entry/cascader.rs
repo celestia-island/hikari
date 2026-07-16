@@ -367,7 +367,7 @@ fn find_option_by_path<'a>(
 
 impl StyledComponent for CascaderComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/cascader.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/cascader.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

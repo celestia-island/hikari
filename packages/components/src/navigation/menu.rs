@@ -192,7 +192,7 @@ pub struct MenuComponent;
 
 impl StyledComponent for MenuComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/menu.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/menu.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

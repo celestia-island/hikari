@@ -119,7 +119,7 @@ pub fn Badge(props: BadgeProps) -> Element {
 
 impl StyledComponent for BadgeComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/badge.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/badge.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

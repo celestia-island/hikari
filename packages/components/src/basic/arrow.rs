@@ -88,7 +88,7 @@ pub fn Arrow(
 
 impl StyledComponent for ArrowComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/arrow.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/arrow.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

@@ -105,7 +105,7 @@ pub fn Card(props: CardProps) -> Element {
 
 impl StyledComponent for CardComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/card.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/card.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

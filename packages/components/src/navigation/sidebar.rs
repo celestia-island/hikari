@@ -54,7 +54,7 @@ pub fn Sidebar(props: SidebarProps) -> Element {
 
 impl StyledComponent for SidebarComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/sidebar.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/sidebar.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

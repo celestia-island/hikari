@@ -195,7 +195,7 @@ pub struct FlexBoxComponent;
 
 impl StyledComponent for FlexBoxComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/flex.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/flex.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

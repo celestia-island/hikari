@@ -260,7 +260,7 @@ pub fn Select(props: SelectProps) -> Element {
 
 impl StyledComponent for SelectComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/select.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/select.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

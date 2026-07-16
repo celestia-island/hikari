@@ -252,7 +252,7 @@ pub fn InputWrapper(props: InputWrapperProps) -> Element {
 
 impl StyledComponent for InputWrapperComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/input_wrapper.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/input_wrapper.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

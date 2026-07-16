@@ -221,7 +221,7 @@ pub fn Filter(props: FilterProps) -> Element {
 
 impl StyledComponent for FilterComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/filter.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/filter.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

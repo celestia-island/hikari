@@ -103,7 +103,7 @@ pub fn Tree(props: TreeProps) -> Element {
 
 impl StyledComponent for TreeComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/tree.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/tree.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

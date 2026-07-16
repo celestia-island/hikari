@@ -195,7 +195,7 @@ pub fn calculate_position(
 
 impl StyledComponent for ModalComponent {
     fn styles() -> &'static str {
-        include_str!(concat!(env!("OUT_DIR"), "/styles/modal.css"))
+        tairitsu_macros::scss! { file: "src/styles/components/modal.scss", no_hash }.0
     }
 
     fn name() -> &'static str {

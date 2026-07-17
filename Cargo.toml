@@ -7,7 +7,6 @@ members = [
     "packages/extra-components",
     "packages/icons",
     "packages/builder",
-    "packages/e2e",
     "packages/i18n",
 ]
 

@@ -29,7 +29,7 @@ mod svg_parser;
 
 use anyhow::{Context, Result, anyhow};
 use std::{
-    collections::HashSet,
+    collections::{BTreeMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -265,8 +265,82 @@ fn read_svg_content(workspace_root: &Path, icon_name: &str) -> Result<String> {
     fs::read_to_string(&svg_path).with_context(|| format!("Failed to read SVG: {:?}", svg_path))
 }
 
-/// Generate Rust code for selected icons
-fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path) -> Result<String> {
+/// Location of the packed icon archive inside the hikari workspace.
+pub const PACKED_ARCHIVE_REL: &str = "packages/icons/resources/mdi_icons.dat";
+
+/// One icon record from the packed `mdi_icons.dat` archive.
+#[derive(Clone, Debug)]
+pub struct PackedIcon {
+    pub view_box: [f32; 4],
+    pub path: String,
+}
+
+/// Read the gzip-compressed `MDI1` archive produced by
+/// `scripts/icons/pack_mdi_data.py`. The archive is committed inside the
+/// hikari-icons crate so fresh clones and crates.io consumers can build
+/// icon data without the development-time `icons/mdi/*.svg` download.
+pub fn read_packed_icons(path: &Path) -> Result<BTreeMap<String, PackedIcon>> {
+    use std::io::Read as _;
+
+    let compressed = fs::read(path)
+        .with_context(|| format!("Failed to read packed icon archive: {path:?}"))?;
+    let mut raw = Vec::new();
+    flate2::read::GzDecoder::new(&compressed[..])
+        .read_to_end(&mut raw)
+        .context("Failed to decompress packed icon archive")?;
+    if raw.len() < 6 || &raw[..4] != b"MDI1" {
+        return Err(anyhow!("Bad packed icon archive magic in {path:?}"));
+    }
+    let count = u16::from_le_bytes([raw[4], raw[5]]) as usize;
+    let mut cur = 6usize;
+    let mut out = BTreeMap::new();
+    for _ in 0..count {
+        let truncated = || anyhow!("Truncated packed icon archive in {path:?}");
+        let name_len = *raw.get(cur).ok_or_else(truncated)? as usize;
+        cur += 1;
+        let name = raw.get(cur..cur + name_len).ok_or_else(truncated)?;
+        let name = std::str::from_utf8(name)?.to_owned();
+        cur += name_len;
+        let vb = raw.get(cur..cur + 16).ok_or_else(truncated)?;
+        let mut view_box = [0f32; 4];
+        for (slot, bytes) in view_box.iter_mut().zip(vb.chunks_exact(4)) {
+            *slot = f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
+        }
+        cur += 16;
+        let plen = raw.get(cur..cur + 2).ok_or_else(truncated)?;
+        let plen = u16::from_le_bytes([plen[0], plen[1]]) as usize;
+        cur += 2;
+        let path = raw.get(cur..cur + plen).ok_or_else(truncated)?;
+        let path = std::str::from_utf8(path)?.to_owned();
+        cur += plen;
+        out.insert(name, PackedIcon { view_box, path });
+    }
+    Ok(out)
+}
+
+/// Convert a packed record into the emit tuple the module generator uses.
+fn packed_icon(
+    name: &str,
+    packed: &BTreeMap<String, PackedIcon>,
+) -> Option<(String, String, SvgIcon)> {
+    let p = packed.get(name)?;
+    let vb = p.view_box;
+    Some((
+        name.replace('-', "_").to_uppercase(),
+        name.to_owned(),
+        SvgIcon {
+            view_box: Some(format!("{} {} {} {}", vb[0], vb[1], vb[2], vb[3])),
+            width: None,
+            height: None,
+            path: Some(p.path.clone()),
+            paths: Vec::new(),
+            elements: Vec::new(),
+        },
+    ))
+}
+
+/// Module header: banner comment plus the shared type definitions.
+fn module_header(selected_count: usize) -> String {
     let mut output = String::new();
 
     // Header
@@ -274,7 +348,7 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("// DO NOT EDIT - This file is generated at build time\n");
     output.push_str("//\n");
     output.push_str("// Total selected icons: ");
-    output.push_str(&selected_icons.len().to_string());
+    output.push_str(&selected_count.to_string());
     output.push_str("\n\n");
 
     // Type definitions
@@ -308,25 +382,37 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("    pub elements: &'static [SvgElem],\n");
     output.push_str("}\n\n");
 
-    // Collect icon data
+    output
+}
+
+/// Generate Rust code for selected icons
+fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path) -> Result<String> {
+    let mut output = module_header(selected_icons.len());
+
+    // Collect icon data. Development checkouts read icons/mdi/*.svg from the
+    // workspace; when those are absent (fresh clone, crates.io consumer),
+    // fall back to the packed archive committed inside the hikari-icons crate.
     let mut sorted_icons: Vec<_> = selected_icons.iter().collect();
     sorted_icons.sort();
 
+    let packed = read_packed_icons(&workspace_root.join(PACKED_ARCHIVE_REL)).ok();
+
     let mut icon_data: Vec<(String, String, SvgIcon)> = Vec::new();
     for icon_name in &sorted_icons {
-        match read_svg_content(workspace_root, icon_name) {
-            Ok(svg_content) => match svg_parser::parse_svg(&svg_content) {
-                Ok(icon) => {
-                    let const_name = icon_name.replace('-', "_").to_uppercase();
-                    icon_data.push((const_name, (**icon_name).clone(), icon));
-                }
-                Err(e) => {
-                    eprintln!("⚠️  Failed to parse SVG for '{}': {}", icon_name, e);
-                }
-            },
-            Err(e) => {
-                eprintln!("⚠️  Failed to read SVG for '{}': {}", icon_name, e);
-            }
+        let parsed = read_svg_content(workspace_root, icon_name)
+            .ok()
+            .and_then(|svg| svg_parser::parse_svg(&svg).ok());
+        let entry = match parsed {
+            Some(icon) => Some((
+                icon_name.replace('-', "_").to_uppercase(),
+                (**icon_name).clone(),
+                icon,
+            )),
+            None => packed.as_ref().and_then(|db| packed_icon(icon_name, db)),
+        };
+        match entry {
+            Some(e) => icon_data.push(e),
+            None => eprintln!("⚠️  No SVG or packed data for '{}'", icon_name),
         }
     }
 
@@ -337,6 +423,12 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
         );
     }
 
+    emit_data_and_get(&mut output, &icon_data);
+    Ok(output)
+}
+
+/// Append the `data` module with one const per icon and the `get()` matcher.
+fn emit_data_and_get(output: &mut String, icon_data: &[(String, String, SvgIcon)]) {
     // Generate structured data
     output.push_str("/// Structured icon data\n");
     output.push_str("pub mod data {\n");
@@ -345,7 +437,7 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     }
     output.push('\n');
 
-    for (const_name, icon_name, icon) in &icon_data {
+    for (const_name, icon_name, icon) in icon_data {
         output.push_str("    /// Icon data for '");
         output.push_str(icon_name);
         output.push_str("'\n");
@@ -433,7 +525,7 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("pub fn get(name: &str) -> Option<&'static IconData> {\n");
     output.push_str("    match name {\n");
 
-    for (const_name, icon_name, _) in &icon_data {
+    for (const_name, icon_name, _) in icon_data {
         output.push_str("        \"");
         output.push_str(icon_name);
         output.push_str("\" => Some(&data::");
@@ -444,8 +536,41 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
     output.push_str("        _ => None,\n");
     output.push_str("    }\n");
     output.push_str("}\n");
+}
 
-    Ok(output)
+/// Build an `mdi_selected.rs` module solely from the packed archive that
+/// ships inside hikari-icons — used when no workspace SVG directory is
+/// available (fresh clone, crates.io build). `names == None` (or an empty
+/// list) embeds every icon in the archive. Returns the number embedded.
+pub fn build_icons_from_packed(
+    packed_path: &Path,
+    names: Option<&[String]>,
+    output_file: &Path,
+) -> Result<usize> {
+    let db = read_packed_icons(packed_path)?;
+    let selected: Vec<String> = match names {
+        Some(n) if !n.is_empty() => n.to_vec(),
+        _ => db.keys().cloned().collect(),
+    };
+
+    let mut icon_data: Vec<(String, String, SvgIcon)> = Vec::new();
+    for name in &selected {
+        match packed_icon(name, &db) {
+            Some(entry) => icon_data.push(entry),
+            None => eprintln!("⚠️  Packed archive has no icon named '{}'", name),
+        }
+    }
+    icon_data.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let mut output = module_header(icon_data.len());
+    emit_data_and_get(&mut output, &icon_data);
+
+    if let Some(parent) = output_file.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(output_file, output)?;
+
+    Ok(icon_data.len())
 }
 
 /// Convenience function for building icons with a builder pattern

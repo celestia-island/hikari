@@ -14,17 +14,21 @@ fn main() {
     let manifest_dir_str = env::var("CARGO_MANIFEST_DIR").unwrap();
     let manifest_dir = Path::new(&manifest_dir_str);
 
-    let theme_styles_dir = manifest_dir.join("../theme/styles");
-    if !theme_styles_dir.exists() {
-        // Generate empty CSS stubs so include_str! in legacy paths resolves.
-        let scss_dir = manifest_dir.join("src/styles/components");
-        if scss_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&scss_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.extension().and_then(|s| s.to_str()) == Some("scss") {
-                        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-                        let stub = styles_out_dir.join(format!("{stem}.css"));
+    // Generate empty CSS stubs for legacy `include_str!(OUT_DIR/...)` paths
+    // (e.g. data/virtual_scroll.rs) whenever the prebuilt stylesheet is
+    // absent. This must also run for in-workspace builds: local path
+    // consumption (the ecosystem's ~/.cargo/config.toml patch flow) has
+    // ../theme/styles available, but nothing else writes these files, so a
+    // missing stub used to hard-fail the build with include_str! os error 2.
+    let scss_dir = manifest_dir.join("src/styles/components");
+    if scss_dir.exists() {
+        if let Ok(entries) = fs::read_dir(&scss_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                    let stem = path.file_stem().unwrap().to_string_lossy().to_string();
+                    let stub = styles_out_dir.join(format!("{stem}.css"));
+                    if !stub.exists() {
                         let _ = fs::write(&stub, "");
                     }
                 }

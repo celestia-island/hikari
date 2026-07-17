@@ -1,6 +1,9 @@
 target/
 Cargo.lock
 
+# Local-only cargo patches (e.g. path overrides for unreleased tairitsu)
+.cargo/
+
 # E2E test logs
 logs/
 target/e2e_screenshots/

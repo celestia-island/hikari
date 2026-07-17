@@ -374,6 +374,12 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: var(--hi-surface);
+  // Widely used by component styles (code blocks, tables, markdown
+  // renderer, demo blocks) but previously never defined here.
+  --hi-color-surface-secondary: rgba(248, 250, 252, 0.5);
+  --hi-color-bg-container: #ffffff;
+  --hi-color-bg-elevated: #f6f8fa;
+  --hi-color-text-tertiary: #8c8c8c;
   --hi-secondary-bg: rgba(248, 250, 252, 0.5);
   --hi-tertiary-bg: rgba(243, 244, 246, 0.5);
 
@@ -592,6 +598,7 @@
 @import './components/pagination.scss';
 @import './components/carousel.scss';
 @import './components/code_block.scss';
+@import './components/demo_block.scss';
 @import './components/markdown_renderer.scss';
 
 // ============================================

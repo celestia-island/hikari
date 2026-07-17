@@ -92,10 +92,13 @@ hikari-i18n = { version = "^0.3", path = "../i18n" }
 
 # Tairitsu framework (replaces Dioxus (legacy compat))
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
-tairitsu-vdom = "^0.5"
-tairitsu-hooks = "^0.5"
-tairitsu-macros = "^0.5"
-tairitsu-style = "^0.5"
+# Floor 0.5.18: first tairitsu release whose scss! macro honours `no_hash` —
+# every component stylesheet passes `no_hash`, and older macros silently
+# hashed (or corrupted) them, leaving components without any styling.
+tairitsu-vdom = "^0.5.18"
+tairitsu-hooks = "^0.5.18"
+tairitsu-macros = "^0.5.18"
+tairitsu-style = "^0.5.18"
 
 # Global static variables
 once_cell = "^1.19"

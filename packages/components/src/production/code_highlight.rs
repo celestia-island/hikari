@@ -322,8 +322,8 @@ impl StyledComponent for CodeHighlightComponent {
     fn styles() -> &'static str {
         r#"
 .hi-code-highlight {
-    background-color: var(--hi-color-bg-container);
-    border: 1px solid var(--hi-color-border);
+    background-color: var(--hi-color-bg-container, #ffffff);
+    border: 1px solid var(--hi-color-border, #e2e8f0);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -334,53 +334,79 @@ impl StyledComponent for CodeHighlightComponent {
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem 1rem;
-    background-color: var(--hi-color-bg-elevated);
-    border-bottom: 1px solid var(--hi-color-border);
+    background-color: var(--hi-color-bg-elevated, #f6f8fa);
+    border-bottom: 1px solid var(--hi-color-border, #e2e8f0);
 }
 
 .hi-code-highlight-language {
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--hi-color-primary);
+    color: var(--hi-color-primary, #3b82f6);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 .hi-code-highlight-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
     padding: 0.375rem 0.75rem;
     font-size: 0.75rem;
     background-color: transparent;
-    border: 1px solid var(--hi-color-border);
+    border: 1px solid var(--hi-color-border, #e2e8f0);
     border-radius: 4px;
-    color: var(--hi-color-text-secondary);
+    color: var(--hi-color-text-secondary, #64748b);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
+.hi-code-highlight-copy svg {
+    display: block;
+}
+
 .hi-code-highlight-copy:hover {
-    background-color: var(--hi-color-primary);
+    background-color: var(--hi-color-primary, #3b82f6);
     color: white;
-    border-color: var(--hi-color-primary);
-    box-shadow: 0 0 8px var(--hi-color-primary-glow);
+    border-color: var(--hi-color-primary, #3b82f6);
+    box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
 }
 
 .hi-code-highlight-copy.hi-code-highlight-copy-copied,
 .hi-code-highlight-copy.copied {
-    background-color: var(--hi-color-primary);
+    background-color: var(--hi-color-primary, #3b82f6);
     color: white;
-    box-shadow: 0 0 12px var(--hi-color-primary-glow);
+    box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
     opacity: 1;
+}
+
+/* Icon-only copy buttons: swap clipboard → check while `.copied` is set. */
+.hi-code-highlight-copy-icon {
+    display: inline-flex;
+}
+
+.hi-code-highlight-check {
+    display: none;
+}
+
+.hi-code-highlight-copy.copied .hi-code-highlight-copy-icon {
+    display: none;
+}
+
+.hi-code-highlight-copy.copied .hi-code-highlight-check {
+    display: inline-flex;
 }
 
 .hi-code-highlight-content {
     display: flex;
-    background-color: var(--hi-color-bg-container);
+    background-color: var(--hi-color-bg-container, #ffffff);
 }
 
 .hi-code-highlight-line-numbers {
+    flex-shrink: 0;
     padding: 1rem 0.5rem;
-    background-color: var(--hi-color-bg-elevated);
-    border-right: 1px solid var(--hi-color-border);
+    background-color: var(--hi-color-bg-elevated, #f6f8fa);
+    border-right: 1px solid var(--hi-color-border, #e2e8f0);
     text-align: right;
     user-select: none;
 }
@@ -389,22 +415,32 @@ impl StyledComponent for CodeHighlightComponent {
     font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--hi-color-text-tertiary);
+    color: var(--hi-color-text-tertiary, #94a3b8);
 }
 
+/* margin: 0 — the UA `pre { margin-block: 1em }` otherwise pushes the code
+   column half a line below the line-number gutter in the flex row.
+   font metrics must also be pinned here, not only on `code`: the pre's own
+   strut (inherited family/size/line-height, e.g. body sans at 1.65) both
+   stretches every line box and shifts its baseline, drifting code away
+   from the gutter numbers. */
 .hi-code-highlight-code {
     flex: 1;
+    margin: 0;
     padding: 1rem;
     overflow-x: auto;
     background-color: transparent;
     border: none;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
 }
 
 .hi-code-highlight-code code {
     font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--hi-color-text-primary);
+    color: var(--hi-color-text-primary, #1f2328);
 }
 
 /* Syntax highlighting — palette-driven CSS variables.

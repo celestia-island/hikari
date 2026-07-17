@@ -21,16 +21,14 @@ fn main() {
     // ../theme/styles available, but nothing else writes these files, so a
     // missing stub used to hard-fail the build with include_str! os error 2.
     let scss_dir = manifest_dir.join("src/styles/components");
-    if scss_dir.exists() {
-        if let Ok(entries) = fs::read_dir(&scss_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("scss") {
-                    let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-                    let stub = styles_out_dir.join(format!("{stem}.css"));
-                    if !stub.exists() {
-                        let _ = fs::write(&stub, "");
-                    }
+    if scss_dir.exists() && let Ok(entries) = fs::read_dir(&scss_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("scss") {
+                let stem = path.file_stem().unwrap().to_string_lossy().to_string();
+                let stub = styles_out_dir.join(format!("{stem}.css"));
+                if !stub.exists() {
+                    let _ = fs::write(&stub, "");
                 }
             }
         }

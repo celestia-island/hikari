@@ -344,6 +344,7 @@ mod tests {
     fn test_section_renders() {
         let props = SectionProps {
             children: Some(VNode::empty()),
+            title: None,
             ..Default::default()
         };
         let _ = Section(props);
@@ -407,6 +408,7 @@ mod tests {
     fn test_header_renders() {
         let props = HeaderProps {
             children: Some(VNode::empty()),
+            on_menu_toggle: None,
             ..Default::default()
         };
         let _ = Header(props);

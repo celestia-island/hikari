@@ -41,7 +41,6 @@ mod tests {
             muted: true,
             class: "custom".to_string(),
             style: "width:100%".to_string(),
-            ..Default::default()
         };
         assert_eq!(props.src, "movie.mp4");
         assert!(props.autoplay);

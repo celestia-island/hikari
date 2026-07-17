@@ -1,7 +1,6 @@
 // hi-components/src/portal/provider.rs
 // PortalProvider and PortalContext
 
-
 use std::sync::atomic::Ordering;
 
 use super::render::{PortalRender, PortalRenderProps};

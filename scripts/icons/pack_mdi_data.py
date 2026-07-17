@@ -91,7 +91,13 @@ def generate(variants: dict[str, str], icons_dir: Path, output: Path) -> None:
     missing: list[str] = []
     icon_entries: list[tuple[str, list[float], str]] = []
 
+    seen: set[str] = set()
     for variant, kebab in sorted(variants.items()):
+        # mdi_minimal.rs has alias variants mapping to the same kebab name
+        # (e.g. Account/User) — pack each icon once.
+        if kebab in seen:
+            continue
+        seen.add(kebab)
         svg_path = icons_dir / f"{kebab}.svg"
         if not svg_path.exists():
             missing.append(kebab)

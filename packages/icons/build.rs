@@ -168,7 +168,6 @@ struct IconBuildConfig {
     dynamic_fetch: bool,
 }
 
-
 fn read_icon_config(workspace_root: &Option<PathBuf>) -> IconBuildConfig {
     let Some(root) = workspace_root else {
         return IconBuildConfig::default();
@@ -193,9 +192,10 @@ fn read_icon_config(workspace_root: &Option<PathBuf>) -> IconBuildConfig {
                 cfg.explicit_set = Some(parse_string_array(arr.trim()));
             }
         } else if let Some(rest) = line.strip_prefix("dynamic-fetch")
-            && let Some(val) = rest.trim_start().strip_prefix('=') {
-                cfg.dynamic_fetch = matches!(val.trim(), "true" | "True" | "TRUE");
-            }
+            && let Some(val) = rest.trim_start().strip_prefix('=')
+        {
+            cfg.dynamic_fetch = matches!(val.trim(), "true" | "True" | "TRUE");
+        }
     }
     cfg
 }
@@ -245,9 +245,10 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists()
             && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-                && content.contains("[workspace]") {
-                    return Some(current);
-                }
+            && content.contains("[workspace]")
+        {
+            return Some(current);
+        }
         match current.parent() {
             Some(parent) if parent != current => current = parent.to_path_buf(),
             _ => return None,

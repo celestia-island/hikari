@@ -231,112 +231,6 @@ pub fn Carousel(props: CarouselProps) -> Element {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_carousel_indicator_position_default() {
-        let position = CarouselIndicatorPosition::default();
-        assert_eq!(position, CarouselIndicatorPosition::Bottom);
-    }
-
-    #[test]
-    fn test_carousel_indicator_type_default() {
-        let indicator = CarouselIndicatorType::default();
-        assert_eq!(indicator, CarouselIndicatorType::Dots);
-    }
-
-    #[test]
-    fn test_carousel_indicator_position_variants() {
-        assert!(matches!(CarouselIndicatorPosition::Bottom, _));
-        assert!(matches!(CarouselIndicatorPosition::Top, _));
-        assert!(matches!(CarouselIndicatorPosition::Left, _));
-        assert!(matches!(CarouselIndicatorPosition::Right, _));
-    }
-
-    #[test]
-    fn test_carousel_indicator_type_variants() {
-        assert!(matches!(CarouselIndicatorType::Dots, _));
-        assert!(matches!(CarouselIndicatorType::Line, _));
-        assert!(matches!(CarouselIndicatorType::Hidden, _));
-    }
-
-    #[test]
-    fn test_carousel_props_default() {
-        let props = CarouselProps::default();
-        assert_eq!(props.autoplay, 5000);
-        assert!(props.show_arrows);
-        assert_eq!(props.indicator_position, CarouselIndicatorPosition::Bottom);
-        assert_eq!(props.indicator_type, CarouselIndicatorType::Dots);
-        assert!(props.show_pause);
-        assert!(!props.infinite);
-        assert!(!props.initial_paused);
-    }
-
-    #[test]
-    fn test_carousel_props_clone() {
-        let props = CarouselProps {
-            autoplay: 3000,
-            show_arrows: false,
-            indicator_position: CarouselIndicatorPosition::Top,
-            indicator_type: CarouselIndicatorType::Line,
-            show_pause: false,
-            infinite: true,
-            initial_paused: true,
-            children: VNode::empty(),
-        };
-
-        let cloned = props.clone();
-        assert_eq!(cloned.autoplay, 3000);
-        assert_eq!(cloned.infinite, true);
-    }
-
-    #[test]
-    fn test_carousel_props_partial_eq() {
-        let props1 = CarouselProps {
-            autoplay: 5000,
-            show_arrows: true,
-            indicator_position: CarouselIndicatorPosition::Bottom,
-            indicator_type: CarouselIndicatorType::Dots,
-            show_pause: true,
-            infinite: false,
-            initial_paused: false,
-            children: VNode::empty(),
-        };
-
-        let props2 = CarouselProps {
-            autoplay: 5000,
-            show_arrows: true,
-            indicator_position: CarouselIndicatorPosition::Bottom,
-            indicator_type: CarouselIndicatorType::Dots,
-            show_pause: true,
-            infinite: false,
-            initial_paused: false,
-            children: VNode::empty(),
-        };
-
-        assert_eq!(props1, props2);
-    }
-
-    #[test]
-    fn test_carousel_props_not_equal() {
-        let props1 = CarouselProps {
-            autoplay: 1000,
-            show_arrows: false,
-            ..Default::default()
-        };
-
-        let props2 = CarouselProps {
-            autoplay: 2000,
-            show_arrows: false,
-            ..Default::default()
-        };
-
-        assert_ne!(props1, props2);
-    }
-}
-
 impl StyledComponent for CarouselComponent {
     fn styles() -> &'static str {
         r#"
@@ -464,5 +358,111 @@ impl StyledComponent for CarouselComponent {
 
     fn name() -> &'static str {
         "carousel"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_carousel_indicator_position_default() {
+        let position = CarouselIndicatorPosition::default();
+        assert_eq!(position, CarouselIndicatorPosition::Bottom);
+    }
+
+    #[test]
+    fn test_carousel_indicator_type_default() {
+        let indicator = CarouselIndicatorType::default();
+        assert_eq!(indicator, CarouselIndicatorType::Dots);
+    }
+
+    #[test]
+    fn test_carousel_indicator_position_variants() {
+        assert!(matches!(CarouselIndicatorPosition::Bottom, _));
+        assert!(matches!(CarouselIndicatorPosition::Top, _));
+        assert!(matches!(CarouselIndicatorPosition::Left, _));
+        assert!(matches!(CarouselIndicatorPosition::Right, _));
+    }
+
+    #[test]
+    fn test_carousel_indicator_type_variants() {
+        assert!(matches!(CarouselIndicatorType::Dots, _));
+        assert!(matches!(CarouselIndicatorType::Line, _));
+        assert!(matches!(CarouselIndicatorType::Hidden, _));
+    }
+
+    #[test]
+    fn test_carousel_props_default() {
+        let props = CarouselProps::default();
+        assert_eq!(props.autoplay, 5000);
+        assert!(props.show_arrows);
+        assert_eq!(props.indicator_position, CarouselIndicatorPosition::Bottom);
+        assert_eq!(props.indicator_type, CarouselIndicatorType::Dots);
+        assert!(props.show_pause);
+        assert!(!props.infinite);
+        assert!(!props.initial_paused);
+    }
+
+    #[test]
+    fn test_carousel_props_clone() {
+        let props = CarouselProps {
+            autoplay: 3000,
+            show_arrows: false,
+            indicator_position: CarouselIndicatorPosition::Top,
+            indicator_type: CarouselIndicatorType::Line,
+            show_pause: false,
+            infinite: true,
+            initial_paused: true,
+            children: VNode::empty(),
+        };
+
+        let cloned = props.clone();
+        assert_eq!(cloned.autoplay, 3000);
+        assert!(cloned.infinite);
+    }
+
+    #[test]
+    fn test_carousel_props_partial_eq() {
+        let props1 = CarouselProps {
+            autoplay: 5000,
+            show_arrows: true,
+            indicator_position: CarouselIndicatorPosition::Bottom,
+            indicator_type: CarouselIndicatorType::Dots,
+            show_pause: true,
+            infinite: false,
+            initial_paused: false,
+            children: VNode::empty(),
+        };
+
+        let props2 = CarouselProps {
+            autoplay: 5000,
+            show_arrows: true,
+            indicator_position: CarouselIndicatorPosition::Bottom,
+            indicator_type: CarouselIndicatorType::Dots,
+            show_pause: true,
+            infinite: false,
+            initial_paused: false,
+            children: VNode::empty(),
+        };
+
+        assert_eq!(props1, props2);
+    }
+
+    #[test]
+    fn test_carousel_props_not_equal() {
+        let props1 = CarouselProps {
+            autoplay: 1000,
+            show_arrows: false,
+            ..Default::default()
+        };
+
+        let props2 = CarouselProps {
+            autoplay: 2000,
+            show_arrows: false,
+            ..Default::default()
+        };
+
+        assert_ne!(props1, props2);
     }
 }

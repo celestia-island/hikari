@@ -5,15 +5,13 @@ use hikari_palette::classes::{ClassesBuilder, SpaceClass};
 
 use crate::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-#[derive(Default)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SpaceDirection {
     #[default]
     Horizontal,
     Vertical,
     Both,
 }
-
 
 #[define_props]
 pub struct SpaceProps {

@@ -53,8 +53,7 @@ pub struct CodeHighlightComponent;
 
 /// Selectable syntax highlighting palettes inspired by popular Neovim colorschemes.
 /// Each palette defines CSS variables for syntax token colors.
-#[derive(Debug, Clone, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum CodePalette {
     /// TokyoNight — deep blues, muted purples. Good default for dark themes.
     #[default]
@@ -151,7 +150,6 @@ impl CodePalette {
         }
     }
 }
-
 
 #[define_props]
 pub struct CodeHighlightProps {

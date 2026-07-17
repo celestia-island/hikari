@@ -8,7 +8,6 @@ use hikari_palette::collections::chinese::*;
 mod tests {
 
     use super::*;
-    use hikari_palette::*;
 
     #[test]
     fn test_indigo_is_dark() {

@@ -73,8 +73,26 @@ fn main() {
         println!("cargo:rustc-env=HIKARI_ICON_ROUTE=/static/dynamic-icons");
     }
 
-    // Build icons using the builder's icon module.
-    if let Some(root) = &workspace_root {
+    // Build icons. Development checkouts keep the SVGs under
+    // <workspace>/icons/mdi (populated by scripts/icons/fetch_mdi_icons.py).
+    // Without them — a fresh clone, or a crates.io consumer build where there
+    // is no hikari workspace at all — fall back to the packed archive
+    // committed inside this crate so icon data is always available.
+    let packed_path = PathBuf::from(&manifest_dir).join("resources/mdi_icons.dat");
+    let svg_dir_usable = workspace_root
+        .as_ref()
+        .map(|root| root.join("icons/mdi"))
+        .map(|dir| {
+            std::fs::read_dir(&dir)
+                .map(|mut entries| entries.next().is_some())
+                .unwrap_or(false)
+        })
+        .unwrap_or(false);
+
+    if svg_dir_usable {
+        let root = workspace_root
+            .as_ref()
+            .expect("a usable icons/mdi directory implies a workspace root");
         match build_icons(root, &config) {
             Ok(()) => {
                 println!("cargo:warning=Icons built successfully");
@@ -89,11 +107,31 @@ fn main() {
                 std::process::exit(1);
             }
         }
+    } else if packed_path.exists() {
+        let names = packed_selection(&workspace_root, &config);
+        let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
+        let output = std::path::Path::new(&out_dir).join("mdi_selected.rs");
+        match hikari_builder::icons::build_icons_from_packed(
+            &packed_path,
+            names.as_deref(),
+            &output,
+        ) {
+            Ok(count) => {
+                println!(
+                    "cargo:warning=No icons/mdi directory — embedded {count} icons from the packed archive"
+                );
+            }
+            Err(e) => {
+                eprintln!("BUILD ERROR: Failed to build icons from the packed archive");
+                eprintln!("  Error: {}", e);
+                std::process::exit(1);
+            }
+        }
     } else {
-        // Not in a workspace (e.g. standalone crates.io build): emit a stub
+        // No SVGs and no packed archive (broken packaging): emit a stub
         // mdi_selected.rs with the expected type definitions so the include!
         // and pub use in lib.rs resolve. No icon data is available.
-        println!("cargo:warning=No workspace root — skipping icon generation");
+        println!("cargo:warning=No icon sources at all — emitting the empty stub");
         let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR set by Cargo");
         let stub = std::path::Path::new(&out_dir).join("mdi_selected.rs");
         let _ = std::fs::write(&stub, STUB_MDI_SELECTED);
@@ -101,6 +139,24 @@ fn main() {
 
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_svgs");
     println!("cargo:rerun-if-changed=../../packages/builder/generated/mdi_styles.json");
+    println!("cargo:rerun-if-changed=resources/mdi_icons.dat");
+}
+
+/// Icon selection for the packed-archive build: explicit `set` >
+/// auto-discovered usage > `None` (embed the whole archive).
+fn packed_selection(
+    workspace_root: &Option<PathBuf>,
+    config: &IconBuildConfig,
+) -> Option<Vec<String>> {
+    if let Some(names) = &config.explicit_set
+        && !names.is_empty() {
+            return Some(names.clone());
+        }
+    let root = workspace_root.as_ref()?;
+    auto_discovery::scan_icon_usage(root)
+        .ok()
+        .filter(|usage| !usage.icons.is_empty())
+        .map(|usage| auto_discovery::generate_selection(&usage))
 }
 
 /// Parsed `[workspace.metadata.hikari.icons]` configuration.

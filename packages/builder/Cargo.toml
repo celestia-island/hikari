@@ -19,6 +19,7 @@ anyhow = "^1.0"
 lightningcss = "^1.0.0-alpha.68"
 quick-xml = { version = "^0.35", features = ["serialize"] }
 regex = "^1"
+flate2 = "^1"
 
 [build-dependencies]
 grass = "^0.13"

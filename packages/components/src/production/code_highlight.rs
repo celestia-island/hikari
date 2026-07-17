@@ -420,10 +420,10 @@ impl StyledComponent for CodeHighlightComponent {
 
 /* margin: 0 — the UA `pre { margin-block: 1em }` otherwise pushes the code
    column half a line below the line-number gutter in the flex row.
-   font-size/line-height must also be pinned here, not only on `code`:
-   the pre's own strut (inherited metrics, e.g. body line-height 1.65)
-   stretches every line box and progressively drifts code away from the
-   gutter numbers. */
+   font metrics must also be pinned here, not only on `code`: the pre's own
+   strut (inherited family/size/line-height, e.g. body sans at 1.65) both
+   stretches every line box and shifts its baseline, drifting code away
+   from the gutter numbers. */
 .hi-code-highlight-code {
     flex: 1;
     margin: 0;
@@ -431,6 +431,7 @@ impl StyledComponent for CodeHighlightComponent {
     overflow-x: auto;
     background-color: transparent;
     border: none;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
 }

@@ -1,7 +1,6 @@
 // hi-components/src/feedback/toast.rs
 // Toast component with Arknights + FUI styling
 
-
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, ToastClass, UtilityClass};
 

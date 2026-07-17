@@ -1,7 +1,6 @@
 // hi-components/src/feedback/alert.rs
 // Alert component with Arknights + FUI styling
 
-
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 

@@ -88,9 +88,10 @@ fn find_workspace_root(manifest_dir: &str) -> Option<PathBuf> {
         let cargo_toml = current.join("Cargo.toml");
         if cargo_toml.exists()
             && let Ok(content) = fs::read_to_string(&cargo_toml)
-                && content.contains("[workspace]") {
-                    return Some(current);
-                }
+            && content.contains("[workspace]")
+        {
+            return Some(current);
+        }
         match current.parent() {
             Some(parent) if parent != current => current = parent.to_path_buf(),
             _ => return None,

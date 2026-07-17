@@ -1,7 +1,6 @@
 // hi-components/src/data/node.rs
 // TreeNode component for tree data structures
 
-
 use hikari_palette::classes::{ClassesBuilder, TreeNodeClass};
 
 use crate::{

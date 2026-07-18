@@ -32,7 +32,9 @@ fn build_scss_bundle() -> Result<()> {
     let mut all_css = String::new();
 
     for scss_file in &scss_files {
-        let css = grass::from_path(scss_file, &grass::Options::default())?;
+        let mut options = grass::Options::default();
+        options = options.load_path(&scss_dir);
+        let css = grass::from_path(scss_file, &options)?;
         all_css.push_str(&css);
         all_css.push('\n');
     }

@@ -38,7 +38,7 @@ export { default as HkToast } from "./components/HkToast";
 export { default as HkTooltip } from "./components/HkTooltip";
 export { default as HkTree } from "./components/HkTree";
 
-export { default as HkErrorBoundary } from "./components/HkErrorBoundary.vue";
+export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 
 // Runtime systems
 export {

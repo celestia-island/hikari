@@ -38,7 +38,36 @@ export { default as HkToast } from "./components/Toast.vue";
 export { default as HkTooltip } from "./components/HkTooltip.vue";
 export { default as HkTree } from "./components/HkTree.vue";
 
-export { useBreakpoint } from "./composables/useBreakpoint";
-export { useClipboard } from "./composables/useClipboard";
-export { useConfirm } from "./composables/useConfirm";
-export { useToast } from "./composables/useToast";
+export { default as HkErrorBoundary } from "./components/HkErrorBoundary.vue";
+
+// Runtime systems
+export {
+  onFrame,
+  onceFrame,
+  scheduleFrame,
+  scheduleEvery,
+  scheduleAfter,
+  scheduleCron,
+  scheduleCronAfter,
+  setReducedMotion,
+  notifyScrollStart,
+  useOverlay,
+  usePopupManager,
+  useToast,
+  useConfirm,
+  useBreakpoint,
+  useClipboard,
+  useAsyncData,
+  closeAll,
+  isOverlayOpen,
+  TOAST_DURATION,
+  type AnimationHandle,
+  type CronHandle,
+  type FrameContext,
+  type OverlayHandle,
+  type PopupHandle,
+  type PopupKind,
+  type ToastItem,
+  type ToastType,
+  type UseAsyncDataReturn,
+} from "./runtime";

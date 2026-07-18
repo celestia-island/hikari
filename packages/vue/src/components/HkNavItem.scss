@@ -1,0 +1,27 @@
+.hk-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--hi-color-text-secondary, #8b949e);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hi-color-bg-subtle, #21262d);
+    color: var(--hi-color-text-primary, #c9d1d9);
+  }
+
+  &--active {
+    background: var(--hi-color-bg-subtle, #21262d);
+    color: var(--hi-color-text-primary, #c9d1d9);
+  }
+
+  &--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}

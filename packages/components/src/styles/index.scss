@@ -9,15 +9,15 @@
 // ============================================
 
 // Use @use with as * to make variables available to all imported files
-@use '../../../theme/styles/variables.scss' as *;
-@use '../../../theme/styles/mixins.scss' as *;
+@use '../../../theme/styles/variables' as *;
+@use '../../../theme/styles/mixins' as *;
 
 // ============================================
 // Theme Base Styles (before components)
 // ============================================
 
 // Import theme base styles with CSS variables for hikari and tairitsu themes
-@import '../../../theme/styles/base.scss';
+@import '../../../theme/styles/base';
 
 // ============================================
 // Utility Classes (Tailwind-compatible)

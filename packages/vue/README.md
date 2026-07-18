@@ -1,12 +1,12 @@
-# @hikari/vue
+# @celestia-island/hikari
 
 Vue 3 component library sharing SCSS styles with the hikari Rust/WASM renderer.
 
 ## Installation
 
 ```bash
-npm install @hikari/vue
-pnpm add @hikari/vue
+npm install @celestia-island/hikari
+pnpm add @celestia-island/hikari
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ Import styles once in your app entry point:
 
 ```ts
 // main.ts
-import "@hikari/vue/styles";
+import "@celestia-island/hikari/styles";
 import { createApp } from "vue";
 import App from "./App.vue";
 
@@ -26,7 +26,7 @@ Use components in your templates:
 
 ```vue
 <script setup lang="ts">
-import { HkButton, HkCard, HkInput } from "@hikari/vue";
+import { HkButton, HkCard, HkInput } from "@celestia-island/hikari";
 </script>
 
 <template>

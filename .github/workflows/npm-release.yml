@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish @hikari/vue to npm
+    name: Publish @celestia-island/hikari to npm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
             v="${GITHUB_REF_NAME#v}"
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "Publishing @hikari/vue@$v"
+          echo "Publishing @celestia-island/hikari@$v"
 
       - name: Bump version
         shell: bash

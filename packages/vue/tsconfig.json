@@ -12,8 +12,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@hikari/vue": ["./src/index.ts"],
-      "@hikari/vue/styles": ["./src/styles/index.scss"]
+      "@celestia-island/hikari": ["./src/index.ts"],
+      "@celestia-island/hikari/styles": ["./src/styles/index.scss"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts"],

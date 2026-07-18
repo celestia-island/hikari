@@ -1,4 +1,8 @@
-// Re-export shared hikari theme and component styles
+// Re-export shared hikari theme and component styles.
+// NOTE: The `../../../theme/...` and `../../../components/...` imports below
+// resolve relative to the monorepo root and work locally. When published to
+// npm, consumers who need the full hikari SCSS stack should import this file
+// from a monorepo checkout or bring their own SCSS load-path resolution.
 @use "../../../theme/styles/variables.scss";
 @use "../../../theme/styles/mixins.scss";
 @use "../../../theme/styles/foundation.scss";

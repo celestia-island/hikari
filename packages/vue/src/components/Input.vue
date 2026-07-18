@@ -21,22 +21,40 @@ const inputAttrs = computed(() => {
 </script>
 
 <template>
-  <div class="hikari-input-wrapper" :class="{ 'hikari-input-wrapper--error': error }">
-    <input
-      class="hikari-input"
-      :type="type ?? 'text'"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      v-bind="inputAttrs"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-    />
-    <span v-if="error" class="hikari-input__error">{{ error }}</span>
+  <div class="hi-input-wrapper" :class="{ 'hi-input-wrapper--error': error }">
+    <div v-if="$slots.prefix" class="hi-input-wrapper-left">
+      <span class="hi-input-wrapper-item">
+        <slot name="prefix" />
+      </span>
+    </div>
+    <div class="hi-input-wrapper-input">
+      <input
+        :type="type ?? 'text'"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        v-bind="inputAttrs"
+        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      />
+    </div>
+    <div v-if="$slots.suffix" class="hi-input-wrapper-right">
+      <span class="hi-input-wrapper-item">
+        <slot name="suffix" />
+      </span>
+    </div>
   </div>
+  <span v-if="error" class="hikari-input__error">{{ error }}</span>
 </template>
 
 <style lang="scss" scoped>
 @use "../../../components/src/styles/components/input.scss";
 @use "../../../components/src/styles/components/input-vars.scss";
 @use "../../../components/src/styles/components/input_wrapper.scss";
+
+.hikari-input__error {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--hi-color-danger, #ef4444);
+}
 </style>

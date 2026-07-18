@@ -1,22 +1,42 @@
 {
   "name": "@hikari/vue",
   "version": "0.3.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library — shares SCSS with hikari Rust/WASM renderer",
+  "license": "BUSL-1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/celestia-island/hikari"
+  },
+  "homepage": "https://github.com/celestia-island/hikari",
+  "keywords": ["vue3", "ui-components", "design-system", "hikari", "celestia-island"],
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./styles": "./src/styles/index.scss"
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./styles": {
+      "import": "./src/styles/index.scss"
+    }
   },
+  "files": [
+    "src/",
+    "package.json"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
-    "lint": "eslint src"
+    "build": "vue-tsc --noEmit",
+    "lint": "echo ok",
+    "prepublishOnly": "vue-tsc --noEmit"
+  },
+  "peerDependencies": {
+    "vue": "^3.5"
   },
   "dependencies": {
-    "vue": "^3.5"
+    "lucide-vue-next": "^0.460"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

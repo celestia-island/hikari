@@ -1,0 +1,60 @@
+.hk-splash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--hi-color-bg-canvas, #0d1117);
+  color: var(--hi-color-text-primary, #c9d1d9);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.hk-splash__main {
+  text-align: center;
+  max-width: 480px;
+  padding: 2rem;
+}
+
+.hk-splash__logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+  border-radius: 16px;
+}
+
+.hk-splash__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--hi-color-primary, #58a6ff);
+  margin: 0 0 0.5rem;
+}
+
+.hk-splash__subtitle {
+  font-size: 1.1rem;
+  color: var(--hi-color-text-secondary, #8b949e);
+  margin: 0 0 0.5rem;
+}
+
+.hk-splash__description {
+  font-size: 0.9rem;
+  color: var(--hi-color-text-tertiary, #6e7681);
+  margin-bottom: 1rem;
+}
+
+.hk-splash__status {
+  margin-bottom: 1.5rem;
+}
+
+.hk-splash__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hk-splash__footer {
+  margin-top: auto;
+  padding: 1rem;
+  font-size: 0.75rem;
+  color: var(--hi-color-text-tertiary, #484f58);
+}

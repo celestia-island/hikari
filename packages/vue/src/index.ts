@@ -26,6 +26,7 @@ export { default as HkProgressRing } from "./components/HkProgressRing";
 export { default as HkRadio } from "./components/HkRadio";
 export { default as HkScrollContainer } from "./components/HkScrollContainer";
 export { default as HkSearchInput } from "./components/HkSearchInput";
+export { default as HkSplash } from "./components/HkSplash";
 export { default as HkSelect } from "./components/HkSelect";
 export { default as HkSidebar } from "./components/HkSidebar";
 export { default as HkSkeleton } from "./components/HkSkeleton";

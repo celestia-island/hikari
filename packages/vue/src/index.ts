@@ -16,6 +16,7 @@ export { default as HkIconButton } from "./components/HkIconButton";
 export { default as HkInput } from "./components/HkInput";
 export { default as HkKbd } from "./components/HkKbd";
 export { default as HkListTransition } from "./components/HkListTransition";
+export { default as HkMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HkModal } from "./components/HkModal";
 export { default as HkNavItem } from "./components/HkNavItem";
 export { default as HkNumberInput } from "./components/HkNumberInput";

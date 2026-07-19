@@ -43,6 +43,17 @@ export { default as HkTree } from "./components/HkTree";
 
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 
+export { default as HkAdminShell } from "./components/HkAdminShell";
+export { default as HkAdminHeader } from "./components/HkAdminHeader";
+export { default as HkStatusBar } from "./components/HkStatusBar";
+export { default as HkLogo } from "./components/HkLogo";
+
+// Theme system
+export {
+  initTheme, useTheme, themePresets, tokensToCSSVars,
+  type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode, type ThemeId,
+} from "./theme";
+
 // Runtime systems
 export {
   onFrame,

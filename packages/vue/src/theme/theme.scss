@@ -1,0 +1,37 @@
+// Essential theme CSS variables applied via [data-mode="dark"] / [data-mode="light"]
+// These are set by useTheme.applyTheme() which writes --color-* vars on :root
+
+:root {
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-full: 9999px;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem; --text-lg: 1.125rem; --text-xl: 1.25rem;
+  --space-2: 2px; --space-4: 4px; --space-8: 8px; --space-12: 12px; --space-16: 16px; --space-24: 24px;
+  --duration-short: 0.15s; --duration-normal: 0.3s;
+}
+
+[data-mode="dark"] body {
+  color-scheme: dark;
+}
+
+[data-mode="light"] body {
+  color-scheme: light;
+}
+
+// Color opacity cascade
+:root {
+  --c-primary: rgb(var(--color-primary));
+  --c-text: rgb(var(--color-text));
+  --c-muted: rgb(var(--color-muted));
+  --c-success: rgb(var(--color-success));
+  --c-error: rgb(var(--color-error));
+  --c-warning: rgb(var(--color-warning));
+  --c-info: rgb(var(--color-info));
+}
+
+// Glass mixin
+.hi-glass {
+  background: rgb(var(--color-surface) / 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}

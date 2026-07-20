@@ -1,13 +1,9 @@
 import { defineComponent, computed } from "vue";
 import "./HkNavItem.scss";
 
-let RouterLink: any = null;
-try {
-  // eslint-disable-next-line
-  RouterLink = require("vue-router").RouterLink;
-} catch {
-  RouterLink = "a";
-}
+// vue-router is an optional peer dependency.
+// When unavailable, fall back to a plain <a> element.
+let RouterLink: any = "a";
 
 function buildClass(props: { active: boolean; disabled: boolean }, extra: string[] = []) {
   return [

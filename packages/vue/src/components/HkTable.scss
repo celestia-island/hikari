@@ -1,0 +1,198 @@
+.hk-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.hk-table {
+  width: 100%;
+  font-size: var(--hi-text-base, 1rem);
+  border-collapse: collapse;
+  color: var(--hi-color-text-primary, #c9d1d9);
+}
+
+.hk-table-header-row {
+  border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.08));
+}
+
+.hk-table-header-cell {
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  text-align: left;
+  font-size: var(--hi-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-text-secondary, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.hk-table-header--sortable {
+  cursor: pointer;
+  transition: color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover {
+    color: var(--hi-color-primary, #58a6ff);
+  }
+}
+
+.hk-table-header--sorted {
+  color: var(--hi-color-primary, #58a6ff);
+}
+
+.hk-table-header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hk-table-sort-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.hk-table-sort-icon--desc {
+  transform: rotate(180deg);
+}
+
+.hk-table-body {
+  .hk-table-row {
+    border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.05));
+  }
+}
+
+.hk-table--hover .hk-table-row:hover {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
+}
+
+.hk-table--striped .hk-table-row:nth-child(even) {
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
+}
+
+.hk-table--bordered {
+  border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--hi-radius-md, 8px);
+
+  .hk-table-header-cell,
+  .hk-table-cell {
+    border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.06));
+  }
+
+  .hk-table-header-cell {
+    border-bottom: 2px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
+  }
+}
+
+.hk-table-cell {
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  color: var(--hi-color-text-primary, #c9d1d9);
+  vertical-align: middle;
+}
+
+/* Size variants */
+.hk-table--sm {
+  .hk-table-header-cell,
+  .hk-table-cell {
+    padding: var(--hi-space-4, 4px) var(--hi-space-8, 8px);
+    font-size: var(--hi-text-xs, 0.75rem);
+  }
+}
+
+.hk-table--md {
+  .hk-table-header-cell,
+  .hk-table-cell {
+    padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  }
+}
+
+.hk-table--lg {
+  .hk-table-header-cell,
+  .hk-table-cell {
+    padding: var(--hi-space-16, 16px) var(--hi-space-24, 24px);
+  }
+}
+
+.hk-table-empty {
+  padding: var(--hi-space-32, 32px) var(--hi-space-16, 16px);
+  text-align: center;
+  color: var(--hi-color-text-secondary, #8b949e);
+}
+
+/* Alignment helpers */
+.hk-text--left {
+  text-align: left;
+}
+
+.hk-text--center {
+  text-align: center;
+}
+
+.hk-text--right {
+  text-align: right;
+}
+
+/* Checkbox styles inline */
+.hk-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hk-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.hk-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--hi-color-border, rgba(255, 255, 255, 0.2));
+  border-radius: var(--hi-radius-sm, 4px);
+  background: transparent;
+  transition:
+    background-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &--md {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--checked {
+    background: var(--hi-color-primary, #58a6ff);
+    border-color: var(--hi-color-primary, #58a6ff);
+  }
+
+  .hk-checkbox-input:focus-visible + & {
+    box-shadow:
+      0 0 0 2px var(--hi-color-bg-canvas, #0d1117),
+      0 0 0 4px var(--hi-color-primary, #58a6ff);
+  }
+}
+
+.hk-checkbox-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--hi-color-text-on-primary, #ffffff);
+}
+
+/* SR-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

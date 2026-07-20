@@ -1,0 +1,17 @@
+.hk-windowed-item {
+  display: block;
+}
+
+.hk-windowed-item[data-state="placeholder"] {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  pointer-events: none;
+  background: transparent;
+}
+
+.hk-windowed-item[data-state="real"] {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}

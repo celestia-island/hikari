@@ -1,15 +1,91 @@
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+import "./HkLogo.scss";
+
+const sizeMap: Record<string, string> = {
+  xs: "1.25rem",
+  sm: "1.625rem",
+  md: "2rem",
+  lg: "3.5rem",
+  xl: "5rem",
+};
+
+const placeholderSvg = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="60%" height="60%">
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
+  </svg>
+);
 
 export default defineComponent({
   name: "HkLogo",
   props: {
-    src: { type: String, default: "" },
-    size: { type: String, default: "md" },
+    src: { type: String, default: undefined },
+    alt: { type: String, default: "" },
+    size: {
+      type: String as PropType<"xs" | "sm" | "md" | "lg" | "xl">,
+      default: "md",
+    },
+    href: { type: String, default: undefined },
   },
-  setup(props) {
-    const sizes: Record<string, { w: number; h: number }> = { sm: { w: 24, h: 24 }, md: { w: 32, h: 32 }, lg: { w: 48, h: 48 } };
-    const s = sizes[props.size] || sizes.md;
-    const imgStyle = { width: `${s.w}px`, height: `${s.h}px`, borderRadius: "8px", filter: "drop-shadow(0 2px 8px rgb(0 0 0 / 0.3))" };
-    return () => props.src ? <img src={props.src} style={imgStyle} alt="logo" /> : <div style={{ ...imgStyle, background: "rgb(var(--color-primary))", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700 }}>A</div>;
+  emits: {
+    click: (_e: MouseEvent) => true,
+  },
+  setup(props, { emit }) {
+    const logoSize = () => sizeMap[props.size] ?? sizeMap.md;
+
+    const renderLogo = () => {
+      if (props.src) {
+        return (
+          <img
+            class="hk-logo__img"
+            src={props.src}
+            alt={props.alt}
+            style={{ width: logoSize(), height: logoSize() }}
+          />
+        );
+      }
+
+      return (
+        <div
+          class="hk-logo__placeholder"
+          style={{
+            width: logoSize(),
+            height: logoSize(),
+          }}
+          role="img"
+          aria-label={props.alt || "Logo"}
+        >
+          {props.alt ? (
+            <span class="hk-logo__initial">{props.alt.charAt(0).toUpperCase()}</span>
+          ) : (
+            placeholderSvg
+          )}
+        </div>
+      );
+    };
+
+    if (props.href) {
+      return () => (
+        <a
+          class="hk-logo"
+          href={props.href}
+          onClick={(e: MouseEvent) => emit("click", e)}
+          style={{ lineHeight: 0 }}
+        >
+          {renderLogo()}
+        </a>
+      );
+    }
+
+    return () => (
+      <div
+        class="hk-logo"
+        onClick={(e: MouseEvent) => emit("click", e)}
+        style={{ lineHeight: 0 }}
+      >
+        {renderLogo()}
+      </div>
+    );
   },
 });

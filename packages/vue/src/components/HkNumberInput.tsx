@@ -1,46 +1,59 @@
-import { computed, defineComponent, ref, onUnmounted, type PropType } from "vue";
-import "../../../components/src/styles/components/input_wrapper.scss";
-import "../../../components/src/styles/components/number_input.scss";
+import { computed, defineComponent, onUnmounted, ref, type PropType } from "vue";
+import "./HkNumberInput.scss";
 
 export default defineComponent({
   name: "HkNumberInput",
   props: {
     modelValue: { type: Number, default: 0 },
-    min: { type: Number },
-    max: { type: Number },
+    min: { type: Number, default: undefined },
+    max: { type: Number, default: undefined },
     step: { type: Number, default: 1 },
     disabled: { type: Boolean, default: false },
-    placeholder: { type: String },
+    placeholder: { type: String, default: undefined },
+    size: {
+      type: String as PropType<"sm" | "md" | "lg">,
+      default: "md",
+    },
   },
   emits: {
     "update:modelValue": (_value: number) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     let holdInterval: ReturnType<typeof setInterval> | null = null;
     let holdTimeout: ReturnType<typeof setTimeout> | null = null;
+    const inputRef = ref<HTMLInputElement | null>(null);
 
-    const canDecrement = computed(() => (props.min != null ? props.modelValue > props.min : true));
-    const canIncrement = computed(() => (props.max != null ? props.modelValue < props.max : true));
+    const canIncrement = computed(() =>
+      props.max != null ? props.modelValue < props.max : true,
+    );
+    const canDecrement = computed(() =>
+      props.min != null ? props.modelValue > props.min : true,
+    );
+
+    function emitValue(val: number) {
+      if (props.min != null && val < props.min) {
+        emit("update:modelValue", props.min);
+        return;
+      }
+      if (props.max != null && val > props.max) {
+        emit("update:modelValue", props.max);
+        return;
+      }
+      emit("update:modelValue", val);
+    }
 
     function increment() {
-      const newVal = props.modelValue + props.step;
-      if (props.max != null && newVal > props.max) {
-        emit("update:modelValue", props.max);
-      } else {
-        emit("update:modelValue", newVal);
-      }
+      if (!canIncrement.value) return;
+      emitValue(props.modelValue + props.step);
     }
 
     function decrement() {
-      const newVal = props.modelValue - props.step;
-      if (props.min != null && newVal < props.min) {
-        emit("update:modelValue", props.min);
-      } else {
-        emit("update:modelValue", newVal);
-      }
+      if (!canDecrement.value) return;
+      emitValue(props.modelValue - props.step);
     }
 
     function startHold(dir: "up" | "down") {
+      stopHold();
       holdTimeout = setTimeout(() => {
         holdInterval = setInterval(() => {
           if (dir === "up") increment();
@@ -52,51 +65,91 @@ export default defineComponent({
     function stopHold() {
       if (holdTimeout) clearTimeout(holdTimeout);
       if (holdInterval) clearInterval(holdInterval);
-      holdInterval = null;
       holdTimeout = null;
+      holdInterval = null;
     }
 
     onUnmounted(stopHold);
 
+    const wrapperClass = computed(() => [
+      "hk-number-input",
+      `hk-number-input--${props.size}`,
+      props.disabled ? "hk-number-input--disabled" : "",
+    ]);
+
     return () => (
-      <div class="hi-number-input-wrapper">
-        <div class="hi-input-wrapper">
-          <div class="hi-input-wrapper-input">
-            <input
-              type="number"
-              value={props.modelValue}
-              min={props.min}
-              max={props.max}
-              step={props.step}
-              disabled={props.disabled}
-              placeholder={props.placeholder}
-              onInput={(e: Event) => emit("update:modelValue", Number((e.target as HTMLInputElement).value))}
-            />
-          </div>
-          <div class="hi-input-wrapper-right" style={{ flexDirection: "column", gap: "1px" }}>
+      <div class={wrapperClass.value}>
+        <div class="hk-number-input__inner">
+          {slots.prefix ? (
+            <span class="hk-number-input__prefix">{slots.prefix()}</span>
+          ) : null}
+          <input
+            ref={inputRef}
+            type="number"
+            class="hk-number-input__field"
+            value={props.modelValue}
+            min={props.min}
+            max={props.max}
+            step={props.step}
+            disabled={props.disabled}
+            placeholder={props.placeholder}
+            onInput={(e: Event) =>
+              emitValue(Number((e.target as HTMLInputElement).value))
+            }
+          />
+          {slots.suffix ? (
+            <span class="hk-number-input__suffix">{slots.suffix()}</span>
+          ) : null}
+          <div class="hk-number-input__steppers">
             <button
               type="button"
-              class="hi-number-step-btn"
+              class="hk-number-input__step hk-number-input__step--up"
               disabled={!canIncrement.value || props.disabled}
-              onMousedown={(e: MouseEvent) => { e.preventDefault(); startHold("up"); }}
-              onMouseup={(e: MouseEvent) => { e.preventDefault(); stopHold(); }}
-              onMouseleave={(e: MouseEvent) => { e.preventDefault(); stopHold(); }}
-              onClick={(e: MouseEvent) => { e.preventDefault(); increment(); }}
+              onMousedown={(e: MouseEvent) => {
+                e.preventDefault();
+                startHold("up");
+              }}
+              onMouseup={(e: MouseEvent) => {
+                e.preventDefault();
+                stopHold();
+              }}
+              onMouseleave={(e: MouseEvent) => {
+                e.preventDefault();
+                stopHold();
+              }}
+              onClick={(e: MouseEvent) => {
+                e.preventDefault();
+                increment();
+              }}
+              tabindex={-1}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
                 <polyline points="18 15 12 9 6 15" />
               </svg>
             </button>
             <button
               type="button"
-              class="hi-number-step-btn"
+              class="hk-number-input__step hk-number-input__step--down"
               disabled={!canDecrement.value || props.disabled}
-              onMousedown={(e: MouseEvent) => { e.preventDefault(); startHold("down"); }}
-              onMouseup={(e: MouseEvent) => { e.preventDefault(); stopHold(); }}
-              onMouseleave={(e: MouseEvent) => { e.preventDefault(); stopHold(); }}
-              onClick={(e: MouseEvent) => { e.preventDefault(); decrement(); }}
+              onMousedown={(e: MouseEvent) => {
+                e.preventDefault();
+                startHold("down");
+              }}
+              onMouseup={(e: MouseEvent) => {
+                e.preventDefault();
+                stopHold();
+              }}
+              onMouseleave={(e: MouseEvent) => {
+                e.preventDefault();
+                stopHold();
+              }}
+              onClick={(e: MouseEvent) => {
+                e.preventDefault();
+                decrement();
+              }}
+              tabindex={-1}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>

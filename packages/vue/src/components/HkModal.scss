@@ -1,0 +1,318 @@
+// HkModal.scss
+// Full-featured modal component with overlay, transitions,
+// header / body / footer slots, windowed mode, and auto-follow.
+//
+// Uses hikari's --hi- design-token CSS custom properties for
+// colors, spacing, and typography. Component-specific overrides
+// use the --hk-modal-* namespace.
+
+// ============================================
+// Root wrapper — positioned via popup-manager z-index
+// ============================================
+
+.hk-modal-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+// ============================================
+// Overlay (backdrop)
+// ============================================
+
+.hk-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
+  backdrop-filter: var(--hk-modal-overlay-blur, blur(6px));
+  pointer-events: auto;
+}
+
+.hk-modal-overlay-enter-active {
+  transition: opacity var(--hk-modal-duration, 0.3s)
+    var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.hk-modal-overlay-leave-active {
+  transition: opacity var(--hk-modal-duration, 0.3s)
+    var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+}
+
+.hk-modal-overlay-enter-from,
+.hk-modal-overlay-leave-to {
+  opacity: 0;
+}
+
+// ============================================
+// Content frame
+// ============================================
+
+.hk-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  interpolate-size: allow-keywords;
+  width: 100%;
+  background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  backdrop-filter: var(--hk-modal-blur, blur(12px));
+  border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
+  border-radius: var(--hk-modal-radius, var(--hi-radius-xl, 1rem));
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  outline: none;
+  pointer-events: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+// ============================================
+// Content enter/leave transitions
+//
+// Height-clipped reveal: the frame grows from 80% of its
+// natural height to full height while fading in. Content
+// children are pinned at natural size (not squashed) —
+// overflow: hidden on the frame clips the viewport.
+// ============================================
+
+.hk-modal-content-enter-active {
+  transition:
+    opacity var(--hk-modal-duration, 0.3s)
+      var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    height var(--hk-modal-duration, 0.3s)
+      var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  will-change: height, opacity;
+}
+
+.hk-modal-content-leave-active {
+  transition:
+    opacity var(--hk-modal-duration, 0.25s)
+      var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
+    height var(--hk-modal-duration, 0.25s)
+      var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+  will-change: height, opacity;
+}
+
+// Pin children to natural flex-basis during animation so the
+// frame's overflow: hidden does the clipping, not flex-shrink.
+.hk-modal-content-enter-active > *,
+.hk-modal-content-leave-active > * {
+  flex: 0 0 auto;
+}
+
+.hk-modal-content-enter-from,
+.hk-modal-content-leave-to {
+  opacity: 0;
+  height: calc-size(auto, size * 0.8);
+}
+
+.hk-modal-content-enter-to,
+.hk-modal-content-leave-from {
+  opacity: 1;
+  height: auto;
+}
+
+// ============================================
+// Header
+// ============================================
+
+.hk-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hk-modal-padding-header, 1rem 1.5rem);
+  border-bottom: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
+  flex-shrink: 0;
+}
+
+.hk-modal-title {
+  font-size: var(--hk-modal-title-font-size, 1.125rem);
+  font-weight: var(--hk-modal-title-font-weight, 700);
+  margin: 0;
+  color: var(--hk-modal-title-color, var(--hi-color-text-primary, #333));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-modal-close {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--hi-radius-md, 0.5rem);
+  color: var(--hk-modal-close-color, var(--hi-color-text-secondary, #666));
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: var(
+      --hk-modal-close-hover-bg,
+      var(--hi-secondary-bg, rgba(0, 0, 0, 0.06))
+    );
+    color: var(
+      --hk-modal-close-hover-color,
+      var(--hi-color-text-primary, #333)
+    );
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #ffc0cb);
+    outline-offset: 2px;
+  }
+}
+
+// ============================================
+// Sub-header (caller-provided slot)
+// ============================================
+
+.hk-modal-subheader {
+  padding: var(--hk-modal-padding-subheader, 0.75rem 1.5rem 0.75rem);
+  border-bottom: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
+  flex-shrink: 0;
+}
+
+// ============================================
+// Body (scroll region)
+// ============================================
+
+.hk-modal-body {
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  color: var(--hk-modal-body-color, var(--hi-color-text-primary, #333));
+  flex: 1;
+  min-height: 0;
+}
+
+.hk-modal-body-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(
+      --hk-modal-scrollbar-thumb,
+      var(--hi-color-border, rgba(0, 0, 0, 0.12))
+    );
+    border-radius: 3px;
+
+    &:hover {
+      background: var(
+        --hi-color-text-secondary,
+        rgba(0, 0, 0, 0.3)
+      );
+    }
+  }
+}
+
+.hk-modal-body-inner {
+  padding: var(--hk-modal-padding-body, 1.5rem);
+}
+
+// ============================================
+// Auto-follow indicator bar
+// ============================================
+
+.hk-modal-autofollow-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  background: var(
+    --hk-modal-autofollow-bg,
+    var(--hi-color-surface, rgba(255, 255, 255, 0.9))
+  );
+  backdrop-filter: blur(8px);
+  border-top: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
+  font-size: 0.75rem;
+  color: var(--hi-color-text-secondary, #666);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(
+      --hi-secondary-bg,
+      rgba(0, 0, 0, 0.04)
+    );
+  }
+}
+
+// ============================================
+// Footer
+// ============================================
+
+.hk-modal-footer {
+  padding: var(--hk-modal-padding-footer, 0.75rem 1.5rem);
+  border-top: 1px solid
+    var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+// ============================================
+// Responsive — full-screen on narrow viewports
+// ============================================
+
+@media (max-width: 640px) {
+  .hk-modal-content {
+    max-width: 100% !important;
+    border-radius: 0;
+    max-height: 100vh;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+  }
+
+  .hk-modal-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .hk-modal-subheader {
+    padding: 0.625rem 1rem 0.625rem;
+  }
+
+  .hk-modal-body-inner {
+    padding: 1rem;
+  }
+
+  .hk-modal-footer {
+    padding: 0.625rem 1rem;
+  }
+}

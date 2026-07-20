@@ -1,117 +1,228 @@
-import { defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/tree.scss";
+import { defineComponent, ref, watch, h, type Component, type PropType, type VNodeChild } from "vue";
 
-interface TreeNode {
-  key: string | number;
+import "./HkTree.scss";
+
+export type TreeSize = "xs" | "sm" | "md";
+
+export interface TreeNode {
+  id: string;
   label: string;
-  icon?: string;
-  disabled?: boolean;
+  icon?: Component;
+  iconClass?: string;
+  status?: string;
+  tag?: boolean;
+  tagLabel?: string;
   children?: TreeNode[];
+  data?: unknown;
 }
+
+export interface TreeRowScope {
+  node: TreeNode;
+  depth: number;
+  indent: number;
+}
+
+type RowRenderer = (scope: TreeRowScope) => VNodeChild;
 
 export default defineComponent({
   name: "HkTree",
   props: {
-    nodes: { type: Array as PropType<TreeNode[]>, required: true },
-    expandable: { type: Boolean, default: true },
-    selectable: { type: Boolean, default: false },
-    selectedKeys: { type: Array as PropType<(string | number)[]>, default: () => [] },
-    size: { type: String as PropType<"compact" | "default" | "spacious">, default: "default" },
+    nodes: { type: Array as PropType<TreeNode[]>, default: () => [] },
+    size: { type: String as PropType<TreeSize>, default: "sm" },
+    defaultExpandAll: { type: Boolean, default: false },
+    indent: { type: Number, default: 16 },
+    expandOnClick: { type: Boolean, default: false },
   },
   emits: {
     select: (_node: TreeNode) => true,
-    expand: (_node: TreeNode) => true,
-    "update:selectedKeys": (_keys: (string | number)[]) => true,
+    toggle: (_node: TreeNode) => true,
   },
-  setup(props, { emit }) {
-    const expandedKeys = new Map<string | number, { value: boolean }>();
-    const expandedKeySet = new Map<string | number, boolean>();
+  setup(props, { slots, emit }) {
+    const expanded = ref<Set<string>>(new Set());
 
-    function initKeys() {
-      props.nodes.forEach((n) => traverseKeys(n));
-    }
-
-    function traverseKeys(node: TreeNode) {
-      if (!expandedKeySet.has(node.key)) {
-        expandedKeySet.set(node.key, false);
+    function ensureExpanded() {
+      if (expanded.value.size > 0) return;
+      if (!props.defaultExpandAll) return;
+      const ids = new Set<string>();
+      function walk(list: TreeNode[]) {
+        for (const n of list) {
+          if (n.children?.length) {
+            ids.add(n.id);
+            walk(n.children);
+          }
+        }
       }
-      node.children?.forEach(traverseKeys);
+      walk(props.nodes);
+      expanded.value = ids;
     }
 
-    initKeys();
+    watch(
+      () => props.nodes,
+      () => { if (props.defaultExpandAll) ensureExpanded(); },
+      { immediate: true },
+    );
 
-    function isExpanded(key: string | number) {
-      return expandedKeySet.get(key) ?? false;
+    function findNode(id: string): TreeNode | undefined {
+      let found: TreeNode | undefined;
+      function walk(list: TreeNode[]) {
+        for (const n of list) {
+          if (n.id === id) { found = n; return; }
+          if (n.children?.length) walk(n.children);
+          if (found) return;
+        }
+      }
+      walk(props.nodes);
+      return found;
     }
 
-    function isSelected(key: string | number) {
-      return props.selectedKeys?.includes(key) ?? false;
+    function toggle(id: string) {
+      const next = new Set(expanded.value);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      expanded.value = next;
+      const node = findNode(id);
+      if (node) emit("toggle", node);
     }
 
-    function toggleExpand(node: TreeNode) {
-      if (!node.children || node.children.length === 0) return;
-      expandedKeySet.set(node.key, !isExpanded(node.key));
-      emit("expand", node);
-      expandedKeys.set(node.key, { value: isExpanded(node.key) });
-    }
-
-    function onSelect(node: TreeNode) {
-      emit("select", node);
-      const newKeys = [...(props.selectedKeys ?? [])];
-      const idx = newKeys.indexOf(node.key);
-      if (idx >= 0) newKeys.splice(idx, 1);
-      else newKeys.push(node.key);
-      emit("update:selectedKeys", newKeys);
-    }
-
-    function renderNode(node: TreeNode): JSX.Element {
-      const expanded = isExpanded(node.key);
-      const selected = isSelected(node.key);
-      const hasChildren = node.children && node.children.length > 0;
-
-      return (
-        <li class={["hi-tree-node", expanded ? "hi-tree-node-expanded" : "", node.disabled ? "hi-tree-node-disabled" : ""]}>
-          <div
-            class={["hi-tree-node-content", selected ? "hi-tree-node-selected" : ""]}
-            onClick={() => (props.selectable ? onSelect(node) : toggleExpand(node))}
-          >
-            {props.expandable !== false && (
-              <span
-                class="hi-tree-node-expand-icon"
-                style={{ visibility: hasChildren ? "visible" : "hidden" }}
-                onClick={(e: MouseEvent) => { e.stopPropagation(); toggleExpand(node); }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </span>
-            )}
-            {node.icon && (
-              <span class="hi-tree-node-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <line x1="3" y1="9" x2="21" y2="9" />
-                  <line x1="9" y1="21" x2="9" y2="9" />
-                </svg>
-              </span>
-            )}
-            <span class="hi-tree-node-label">{node.label}</span>
-          </div>
-          {hasChildren && expanded && (
-            <ul class="hi-tree-node-children">
-              {node.children!.map((child) => renderNode(child))}
-            </ul>
-          )}
-        </li>
-      );
-    }
+    const renderRow: RowRenderer | undefined = slots.row
+      ? (scope) => slots.row!(scope)
+      : undefined;
 
     return () => (
-      <div class={["hi-tree", `hi-tree-${props.size}`]}>
-        <ul class="hi-tree-list hi-tree-root">
-          {props.nodes.map((node) => renderNode(node))}
-        </ul>
+      <div class="hk-tree" data-size={props.size}>
+        {props.nodes.map((node) => (
+          <TreeNodeRow
+            key={node.id}
+            node={node}
+            depth={0}
+            indent={props.indent}
+            expanded={expanded.value}
+            expandOnClick={props.expandOnClick}
+            renderRow={renderRow}
+            onToggle={toggle}
+            onSelect={(n) => emit("select", n)}
+          />
+        ))}
       </div>
     );
   },
 });
+
+interface TreeNodeRowProps {
+  node: TreeNode;
+  depth: number;
+  indent: number;
+  expanded: Set<string>;
+  expandOnClick: boolean;
+  renderRow?: RowRenderer;
+  onToggle: (id: string) => void;
+  onSelect: (node: TreeNode) => void;
+}
+
+const TreeNodeRow = ({
+  node,
+  depth,
+  indent,
+  expanded,
+  expandOnClick,
+  renderRow,
+  onToggle,
+  onSelect,
+}: TreeNodeRowProps) => {
+  const hasChildren = (node.children?.length ?? 0) > 0;
+  const isExpanded = hasChildren && expanded.has(node.id);
+  const IconComp = node.icon;
+
+  const guideLeft = depth * indent + 16;
+
+  function handleRowClick() {
+    onSelect(node);
+    if (expandOnClick && hasChildren) onToggle(node.id);
+  }
+
+  return (
+    <div class="hk-tree-node">
+      <div
+        class="hk-tree-row"
+        data-status={node.status || undefined}
+        onClick={handleRowClick}
+      >
+        {depth > 0 && (
+          <span class="hk-tree-indent" style={{ width: `${depth * indent}px` }} />
+        )}
+
+        <span
+          class="hk-tree-toggle"
+          data-parent={hasChildren || undefined}
+          data-open={isExpanded || undefined}
+          onClick={(e: MouseEvent) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
+        >
+          {hasChildren ? (
+            <svg viewBox="0 0 16 16" width="12" height="12" class="hk-tree-chevron" data-open={isExpanded || undefined}>
+              <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          ) : (
+            <span class="hk-tree-leaf" />
+          )}
+        </span>
+
+        {renderRow
+          ? renderRow({ node, depth, indent })
+          : (
+            <>
+              {IconComp ? (
+                <span class={["hk-tree-icon", node.iconClass ?? ""]}>
+                  {h(IconComp as Component, { size: 13 })}
+                </span>
+              ) : null}
+
+              <span class="hk-tree-label">
+                {node.tagLabel
+                  ? [renderTagLabel(node.tagLabel), " ", renderLabel(node.label)]
+                  : node.tag
+                    ? renderTagLabel(node.label)
+                    : renderLabel(node.label)}
+              </span>
+            </>
+          )}
+      </div>
+
+      {hasChildren && isExpanded && (
+        <div class="hk-tree-children" style={{ "--guide-left": `${guideLeft}px` } as Record<string, string>}>
+          {node.children?.map((child) => (
+            <TreeNodeRow
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              indent={indent}
+              expanded={expanded}
+              expandOnClick={expandOnClick}
+              renderRow={renderRow}
+              onToggle={onToggle}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+function renderLabel(label: string) {
+  const pos = label.indexOf("::");
+  if (pos === -1) return label;
+  const agent = label.slice(0, pos);
+  const skill = label.slice(pos + 2);
+  if (agent.length > 0 && /^[a-zA-Z0-9]+$/.test(agent)) {
+    return [
+      <span class="hk-tree-label-agent">{agent}</span>,
+      <span class="hk-tree-label-sep">::</span>,
+      <span class="hk-tree-label-skill">{skill}</span>,
+    ];
+  }
+  return label;
+}
+
+function renderTagLabel(label: string) {
+  return <span class="hk-tree-label-tag">{label}</span>;
+}

@@ -1,74 +1,123 @@
-import { defineComponent, computed } from "vue";
+import { computed, defineComponent, ref, watch } from "vue";
+import HkSpinner from "./HkSpinner";
+import "./HkMarkdownRenderer.scss";
 
-const ESCAPE_MAP: Record<string, string> = {
-  "&": "&amp;", "<": "&lt;", ">": "&gt;",
-};
+let _marked: any = null;
+let _DOMPurify: any = null;
 
-function escapeHtml(text: string): string {
-  return text.replace(/[&<>]/g, (c) => ESCAPE_MAP[c] || c);
+async function ensureMarked(): Promise<any> {
+  if (_marked) return _marked;
+  try {
+    // @ts-ignore
+    const mod = await import("marked");
+    _marked = mod.marked;
+    _marked.setOptions({ gfm: true, breaks: true });
+    return _marked;
+  } catch {
+    return null as never;
+  }
 }
 
-function renderMarkdown(md: string): string {
-  let html = escapeHtml(md);
+async function ensureDOMPurify() {
+  if (_DOMPurify) return _DOMPurify;
+  try {
+    // @ts-ignore
+    const mod = await import("dompurify");
+    _DOMPurify = mod.default;
+    return _DOMPurify;
+  } catch {
+    return null;
+  }
+}
 
-  // Code blocks (fenced)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
-    const escaped = escapeHtml(code.trimEnd());
-    return `<pre class="hk-md-pre"><code class="hk-md-code${lang ? ` language-${lang}` : ""}">${escaped}</code></pre>`;
-  });
+function tryHighlight(code: string, lang?: string): string {
+  try {
+    const hljs = (globalThis as Record<string, unknown>).hljs as
+      | { highlight: (code: string, opts: { language?: string }) => { value: string } }
+      | undefined;
+    if (hljs?.highlight) {
+      const result = hljs.highlight(code, { language: lang });
+      return result.value;
+    }
+  } catch {
+    // fall through
+  }
+  return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, "<code class=\"hk-md-inline\">$1</code>");
+function renderPlain(content: string): string {
+  const escaped = content
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `<pre class="hk-md-plain">${escaped}</pre>`;
+}
 
-  // Bold + italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+async function renderMarkdown(content: string): Promise<string> {
+  const [marked, DOMPurify] = await Promise.all([ensureMarked(), ensureDOMPurify()]);
 
-  // Headers
-  html = html.replace(/^#### (.+)$/gm, "<h4>$1</h4>");
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+  if (!marked || !DOMPurify) {
+    return renderPlain(content);
+  }
 
-  // Unordered lists
-  html = html.replace(/^[\*\-] (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>");
+  const renderer = new (marked as unknown as { Renderer: new () => Record<string, unknown> }).Renderer();
 
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
+  (renderer as Record<string, unknown>).code = function (tok: { text: string; lang?: string }) {
+    const highlighted = tryHighlight(tok.text, tok.lang);
+    const langAttr = tok.lang ? ` language-${tok.lang}` : "";
+    const langLabel = tok.lang ? `<span class="hk-md-code-lang">${tok.lang}</span>` : "";
+    return `<div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div>`;
+  };
 
-  // Blockquotes
-  html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
-
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-  // Horizontal rules
-  html = html.replace(/^---$/gm, "<hr>");
-
-  // Paragraphs — wrap remaining text blocks
-  html = html.replace(/\n{2,}/g, "</p><p>");
-  html = `<p>${html}</p>`;
-  html = html.replace(/<p>\s*<\/p>/g, "");
-
-  return html;
+  const raw = marked.parse(content, { renderer, async: false });
+  const html = typeof raw === "string" ? raw : "";
+  return DOMPurify.sanitize(html);
 }
 
 export default defineComponent({
   name: "HkMarkdownRenderer",
   props: {
-    content: { type: String, default: "" },
-    inline: { type: Boolean, default: false },
+    content: { type: String, required: true },
+    loading: { type: Boolean, default: false },
+    plain: { type: Boolean, default: false },
   },
   setup(props) {
-    const html = computed(() => renderMarkdown(props.content));
+    const renderedHtml = ref("");
+    const parseError = ref(false);
 
-    return () => {
-      if (props.inline) {
-        return <span class="hk-markdown hk-markdown--inline" innerHTML={html.value} />;
+    async function parse() {
+      if (!props.content) {
+        renderedHtml.value = "";
+        return;
       }
-      return <div class="hk-markdown" innerHTML={html.value} />;
-    };
+      parseError.value = false;
+      try {
+        if (props.plain) {
+          renderedHtml.value = renderPlain(props.content);
+        } else {
+          renderedHtml.value = await renderMarkdown(props.content);
+        }
+      } catch {
+        parseError.value = true;
+        renderedHtml.value = renderPlain(props.content);
+      }
+    }
+
+    watch(
+      () => [props.content, props.plain],
+      () => { void parse(); },
+      { immediate: true },
+    );
+
+    return () => (
+      <div class="hk-markdown" data-plain={props.plain || undefined} data-loading={props.loading}>
+        <div class="hk-markdown__body" innerHTML={renderedHtml.value} />
+        {props.loading && (
+          <div class="hk-markdown__overlay">
+            <HkSpinner center />
+          </div>
+        )}
+      </div>
+    );
   },
 });

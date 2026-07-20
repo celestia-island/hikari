@@ -1,16 +1,22 @@
 {
   "name": "@celestia-island/hikari",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "private": false,
   "type": "module",
-  "description": "Hikari Vue 3 component library — shares SCSS with hikari Rust/WASM renderer",
+  "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/celestia-island/hikari"
   },
   "homepage": "https://github.com/celestia-island/hikari",
-  "keywords": ["vue3", "ui-components", "design-system", "hikari", "celestia-island"],
+  "keywords": [
+    "vue3",
+    "ui-components",
+    "design-system",
+    "hikari",
+    "celestia-island"
+  ],
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
@@ -42,8 +48,8 @@
     "@vitejs/plugin-vue": "^5.0.0",
     "@vitejs/plugin-vue-jsx": "^4",
     "sass": "^1.80.0",
-    "typescript": "^5.7",
+    "typescript": "5.7",
     "vite": "^6.0.0",
-    "vue-tsc": "^2.0.0"
+    "vue-tsc": "^2.2.0"
   }
 }

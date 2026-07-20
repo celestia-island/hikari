@@ -1,0 +1,101 @@
+.hk-scroll-container {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hk-scroll-container__viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: none !important;
+
+  &::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+.hk-scroll-container[data-axis="horizontal"] > .hk-scroll-container__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.hk-scroll-container__autofollow-content {
+  display: block;
+  flex-shrink: 0;
+}
+
+.hk-scroll-container__autotag {
+  position: absolute;
+  right: 0.625rem;
+  bottom: 0.625rem;
+  z-index: 6;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 2px 8px;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  color: var(--hi-color-muted);
+  background: rgb(var(--hi-color-surface, 255 255 255) / 78%);
+  border: 1px solid rgb(var(--hi-color-border, 255 255 255) / 12%);
+  border-radius: var(--radius-full, 9999px);
+  backdrop-filter: blur(4px);
+  opacity: 0.85;
+  transition: opacity var(--duration-short, 0.15s) ease;
+}
+
+.hk-scrollbar-track {
+  position: absolute;
+  z-index: 10;
+  background: transparent;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity var(--duration-short, 0.15s) ease;
+
+  &[data-axis="horizontal"] {
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 6px;
+  }
+
+  &:not([data-axis="horizontal"]) {
+    top: 4px;
+    bottom: 4px;
+    right: 2px;
+    width: 6px;
+  }
+
+  &.is-scrolling,
+  &.is-hovering {
+    opacity: 1;
+  }
+}
+
+.hk-scrollbar-thumb {
+  position: absolute;
+  border-radius: 3px;
+  background: rgb(var(--hi-color-muted, 128 128 128) / 0.35);
+  transition: background var(--duration-short, 0.15s) ease;
+
+  .is-hovering &,
+  &.is-dragging {
+    background: rgb(var(--hi-color-muted, 128 128 128) / 0.55);
+  }
+}
+
+.hk-scrollbar-track[data-axis="horizontal"] .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  height: 100%;
+  min-width: 20px;
+}
+
+.hk-scrollbar-track:not([data-axis="horizontal"]) .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 20px;
+}

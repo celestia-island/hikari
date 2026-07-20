@@ -1,22 +1,29 @@
-import { computed, defineComponent, ref, Teleport, type CSSProperties, type PropType } from "vue";
-import "../../../components/src/styles/components/tooltip.scss";
+import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType } from "vue";
+import "./HkTooltip.scss";
 
 export default defineComponent({
   name: "HkTooltip",
   props: {
     text: { type: String, required: true },
     placement: { type: String as PropType<"top" | "bottom" | "left" | "right">, default: "top" },
+    delay: { type: Number, default: 300 },
+    maxWidth: { type: String, default: undefined },
   },
   setup(props, { slots }) {
     const visible = ref(false);
     const wrapperRef = ref<HTMLElement | null>(null);
     const tooltipStyle = ref<CSSProperties>({});
+    let showTimer: ReturnType<typeof setTimeout> | null = null;
 
     function updatePosition() {
       if (!wrapperRef.value) return;
       const rect = wrapperRef.value.getBoundingClientRect();
       const gap = 8;
       const style: CSSProperties = {};
+
+      if (props.maxWidth) {
+        style.maxWidth = props.maxWidth;
+      }
 
       switch (props.placement) {
         case "top":
@@ -45,39 +52,56 @@ export default defineComponent({
     }
 
     function show() {
-      visible.value = true;
-      requestAnimationFrame(updatePosition);
+      clearShowTimer();
+      showTimer = setTimeout(() => {
+        visible.value = true;
+        requestAnimationFrame(updatePosition);
+      }, props.delay);
     }
 
     function hide() {
+      clearShowTimer();
       visible.value = false;
     }
 
+    function clearShowTimer() {
+      if (showTimer !== null) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+    }
+
+    onBeforeUnmount(() => {
+      clearShowTimer();
+    });
+
     const tooltipCls = computed(() => [
-      "hi-tooltip",
-      `hi-tooltip-${props.placement}`,
-      visible.value ? "hi-tooltip-visible" : "",
+      "hk-tooltip-popup",
+      `hk-tooltip-${props.placement}`,
+      visible.value ? "hk-tooltip-visible" : "",
     ]);
 
     return () => (
       <span
         ref={wrapperRef}
-        class="hi-tooltip-wrapper"
+        class="hk-tooltip-wrapper"
+        data-position={props.placement}
         onMouseenter={show}
         onMouseleave={hide}
         onFocusin={show}
         onFocusout={hide}
       >
-        <span class="hi-tooltip-trigger">
+        <span class="hk-tooltip-trigger">
           {slots.default?.()}
         </span>
-        {visible.value && (
-          <Teleport to="body">
-            <div class={tooltipCls.value} style={tooltipStyle.value}>
-              <div class="hi-tooltip-content">{props.text}</div>
-            </div>
-          </Teleport>
-        )}
+        <Teleport to="body">
+          <div
+            class={tooltipCls.value}
+            style={tooltipStyle.value}
+          >
+            <div class="hk-tooltip-content">{props.text}</div>
+          </div>
+        </Teleport>
       </span>
     );
   },

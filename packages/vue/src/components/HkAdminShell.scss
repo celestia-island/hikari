@@ -1,0 +1,80 @@
+.hk-admin-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: rgb(var(--color-background));
+}
+
+.hk-admin-shell__header {
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+.hk-admin-shell__footer {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.hk-admin-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.hk-admin-shell__sidebar {
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width var(--hi-duration-normal, 0.3s) ease;
+  background: rgb(var(--color-surface));
+  border-right: 1px solid rgb(var(--color-border) / 0.1);
+}
+
+.hk-admin-shell__sidebar--collapsed {
+  border-right-color: transparent;
+}
+
+.hk-admin-shell__sidebar-inner {
+  width: v-bind("props.sidebarWidth");
+  height: 100%;
+  min-height: 0;
+}
+
+.hk-admin-shell__main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  background: rgb(var(--color-background));
+}
+
+.hk-admin-shell__drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: v-bind("props.sidebarWidth");
+  max-width: 85vw;
+  background: rgb(var(--color-surface));
+  border-right: 1px solid rgb(var(--color-border) / 0.1);
+  transform: translateX(-100%);
+  transition: transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow-y: auto;
+}
+
+.hk-admin-shell__drawer--open {
+  transform: translateX(0);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.16);
+}
+
+.hk-admin-shell__drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}

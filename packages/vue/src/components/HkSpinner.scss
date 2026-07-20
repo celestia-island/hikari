@@ -1,0 +1,64 @@
+.hk-spinner-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--hk-space-8, 8px);
+}
+
+.hk-spinner-centered {
+  justify-content: center;
+  padding: var(--hk-space-32, 32px) 0;
+}
+
+.hk-spinner {
+  border: 2px solid rgb(var(--hk-color-border, 48 54 61) / 20%);
+  border-top-color: var(--hk-c-primary, rgb(88 166 255));
+  border-radius: 50%;
+  animation: hk-spinner-rotate 0.7s linear infinite;
+  box-sizing: border-box;
+}
+
+.hk-spinner-current {
+  border-color: color-mix(in srgb, currentcolor 30%, transparent);
+  border-top-color: currentcolor;
+}
+
+.hk-spinner-xs {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
+.hk-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.hk-spinner-md {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+}
+
+.hk-spinner-lg {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.hk-spinner-xl {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.hk-spinner-text {
+  font-size: var(--hk-text-base, 0.875rem);
+  color: color-mix(in srgb, rgb(var(--hk-c-muted, 139 148 158)) 70%, rgb(var(--hk-color-background, 13 17 23)));
+}
+
+@keyframes hk-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

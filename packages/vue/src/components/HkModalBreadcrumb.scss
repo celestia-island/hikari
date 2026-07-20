@@ -1,0 +1,55 @@
+.hk-modal-breadcrumb {
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--hk-breadcrumb-z, 100001);
+  display: flex;
+  align-items: center;
+  gap: var(--hi-space-4, 0.5rem);
+  padding: var(--hi-space-6, 0.75rem) var(--hi-space-16, 2rem);
+  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
+  border: 1px solid var(--hk-breadcrumb-border, rgba(0, 0, 0, 0.06));
+  border-radius: var(--hi-radius-md, 0.5rem);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+  user-select: none;
+  animation: hk-modal-breadcrumb-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-modal-breadcrumb-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hi-space-4, 0.5rem);
+}
+
+.hk-modal-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.4;
+  font-size: var(--hi-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-text-secondary, #666);
+  white-space: nowrap;
+}
+
+.hk-modal-breadcrumb-item-current {
+  color: var(--hi-color-primary, #58a6ff);
+}
+
+.hk-modal-breadcrumb-sep {
+  color: var(--hi-color-text-secondary, #666);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+@keyframes hk-modal-breadcrumb-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}

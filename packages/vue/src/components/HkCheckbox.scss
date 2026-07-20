@@ -1,0 +1,129 @@
+.hk-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* --- Box --- */
+
+.hk-checkbox-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--hi-color-border);
+  background: var(--hi-color-surface);
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+
+  .hk-checkbox--sm & {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .hk-checkbox--md & {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .hk-checkbox--lg & {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  .hk-checkbox[data-type="radio"] & {
+    border-radius: 50%;
+  }
+
+  &[data-checked] {
+    background: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
+    color: var(--hi-color-text-on-primary);
+  }
+
+  &[data-indeterminate] {
+    background: var(--hi-color-primary);
+    border-color: var(--hi-color-primary);
+  }
+}
+
+.hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]) {
+  border-color: var(--hi-color-primary);
+}
+
+/* --- Hidden input --- */
+
+.hk-checkbox-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Icon --- */
+
+.hk-checkbox-icon {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Dot (radio) --- */
+
+.hk-checkbox-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hi-color-text-on-primary, #fff);
+  z-index: 1;
+
+  .hk-checkbox--lg & {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* --- Indeterminate line --- */
+
+.hk-checkbox-indeterminate {
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--hi-color-text-on-primary, #fff);
+  z-index: 1;
+
+  .hk-checkbox--lg & {
+    width: 10px;
+  }
+}
+
+/* --- Label text --- */
+
+.hk-checkbox-label-text {
+  font-size: 0.875rem;
+  color: var(--hi-color-text-primary);
+
+  .hk-checkbox--sm & {
+    font-size: 0.75rem;
+  }
+
+  .hk-checkbox--lg & {
+    font-size: 1rem;
+  }
+}
+
+/* --- Animating --- */
+
+.hk-checkbox[data-animating] .hk-checkbox-box {
+  will-change: border-color, background;
+}

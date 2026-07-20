@@ -1,0 +1,45 @@
+.hk-progress-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.hk-progress-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(0deg);
+}
+
+.hk-progress-ring-track {
+  stroke: var(--hk-progress-ring-track, var(--hi-color-border, rgba(0, 0, 0, 0.12)));
+  transition: stroke 0.3s ease;
+}
+
+.hk-progress-ring-fill {
+  stroke: var(--hi-color-primary, #58a6ff);
+  transition:
+    stroke-dashoffset 0.3s ease,
+    stroke 0.3s ease;
+}
+
+.hk-progress-ring--success .hk-progress-ring-fill {
+  stroke: var(--hi-color-success, #3fb950);
+}
+
+.hk-progress-ring--exception .hk-progress-ring-fill {
+  stroke: var(--hi-color-danger, #f85149);
+}
+
+.hk-progress-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #333);
+  user-select: none;
+  pointer-events: none;
+}

@@ -3,25 +3,66 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  color: var(--hi-color-text-secondary, #8b949e);
-  text-decoration: none;
+  border-radius: var(--radius-md, 6px);
+  color: rgb(var(--color-muted));
   font-size: 0.875rem;
-  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+  line-height: 1.4;
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
   cursor: pointer;
+  transition:
+    background-color var(--hi-duration-fast, 0.15s) ease,
+    color var(--hi-duration-fast, 0.15s) ease;
+  user-select: none;
 
-  &:hover {
-    background: var(--hi-color-bg-subtle, #21262d);
-    color: var(--hi-color-text-primary, #c9d1d9);
+  &:hover:not([data-disabled]) {
+    background: rgb(var(--color-surface) / 0.6);
+    color: rgb(var(--color-text));
   }
 
-  &--active {
-    background: var(--hi-color-bg-subtle, #21262d);
-    color: var(--hi-color-text-primary, #c9d1d9);
+  &[data-active] {
+    background: rgb(var(--color-primary) / 0.15);
+    color: rgb(var(--color-primary));
+    font-weight: 600;
   }
 
-  &--disabled {
-    opacity: 0.5;
+  &[data-disabled] {
+    opacity: 0.4;
     pointer-events: none;
   }
+}
+
+.hk-nav-item--button {
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+.hk-nav-item--link {
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+.hk-nav-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.hk-nav-item__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

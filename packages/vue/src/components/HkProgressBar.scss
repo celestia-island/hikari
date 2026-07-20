@@ -1,0 +1,106 @@
+.hk-progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hi-space-4, 0.25rem);
+  width: 100%;
+}
+
+.hk-progress-bar-label {
+  font-size: var(--hi-text-xs, 0.625rem);
+  color: var(--hi-color-text-secondary, #666);
+  line-height: 1;
+}
+
+.hk-progress-bar-track {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--hi-radius-full, 9999px);
+  background: var(--hk-progress-track-bg, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
+  overflow: hidden;
+  position: relative;
+}
+
+.hk-progress-bar[data-size="xs"] .hk-progress-bar-track {
+  height: 2px;
+}
+
+.hk-progress-bar[data-size="md"] .hk-progress-bar-track {
+  height: 6px;
+}
+
+.hk-progress-bar-secondary {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: var(--hi-radius-full, 9999px);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.3;
+
+  &--loading {
+    background: var(--hi-color-primary, #58a6ff);
+  }
+
+  &--done {
+    background: var(--hi-color-success, #3fb950);
+  }
+
+  &--error {
+    background: var(--hi-color-danger, #f85149);
+  }
+}
+
+.hk-progress-bar-fill {
+  position: relative;
+  height: 100%;
+  border-radius: var(--hi-radius-full, 9999px);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--loading {
+    background: var(--hi-color-primary, #58a6ff);
+  }
+
+  &--done {
+    background: var(--hi-color-success, #3fb950);
+  }
+
+  &--error {
+    background: var(--hi-color-danger, #f85149);
+  }
+}
+
+.hk-progress-bar-indeterminate {
+  height: 100%;
+  width: 40%;
+  border-radius: var(--hi-radius-full, 9999px);
+  position: absolute;
+  animation: hk-progress-indeterminate 1.4s ease-in-out infinite;
+
+  &--loading {
+    background: var(--hi-color-primary, #58a6ff);
+  }
+
+  &--done {
+    background: var(--hi-color-success, #3fb950);
+    animation: none;
+    width: 100%;
+  }
+
+  &--error {
+    background: var(--hi-color-danger, #f85149);
+    animation: none;
+    width: 100%;
+  }
+}
+
+@keyframes hk-progress-indeterminate {
+  0% {
+    left: -40%;
+  }
+  60% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}

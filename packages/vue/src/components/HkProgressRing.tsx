@@ -1,5 +1,6 @@
 import { computed, defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/progress.scss";
+
+import "./HkProgressRing.scss";
 
 export default defineComponent({
   name: "HkProgressRing",
@@ -11,45 +12,57 @@ export default defineComponent({
     showLabel: { type: Boolean, default: false },
   },
   setup(props) {
-    const clampedValue = computed(() => Math.max(0, Math.min(100, props.value)));
+    const clampedValue = computed(() => Math.min(100, Math.max(0, props.value)));
 
     const radius = computed(() => (props.size - props.strokeWidth) / 2);
     const circumference = computed(() => 2 * Math.PI * radius.value);
     const dashOffset = computed(() => circumference.value * (1 - clampedValue.value / 100));
 
     const variantClass = computed(() => {
-      if (props.variant === "exception") return "hi-progress-exception";
-      if (props.variant === "success") return "hi-progress-success";
-      return "hi-progress-normal";
+      if (props.variant === "success") return "hk-progress-ring--success";
+      if (props.variant === "exception") return "hk-progress-ring--exception";
+      return "";
     });
 
     const textSize = computed(() => Math.round(props.size / 5));
 
+    const center = computed(() => props.size / 2);
+
     return () => (
-      <div class={["hi-progress-circle-wrapper", variantClass.value]} style={{ width: `${props.size}px`, height: `${props.size}px` }}>
-        <svg class="hi-progress-circle" width={props.size} height={props.size}>
+      <div
+        class={["hk-progress-ring", variantClass.value]}
+        style={{ width: `${props.size}px`, height: `${props.size}px` }}
+        role="progressbar"
+        aria-valuenow={clampedValue.value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <svg class="hk-progress-ring-svg" viewBox={`0 0 ${props.size} ${props.size}`}>
           <circle
-            class="hi-progress-circle-trail"
-            cx={props.size / 2}
-            cy={props.size / 2}
+            class="hk-progress-ring-track"
+            cx={center.value}
+            cy={center.value}
             r={radius.value}
             fill="none"
+            stroke="currentColor"
             stroke-width={props.strokeWidth}
+            stroke-linecap="round"
           />
           <circle
-            class="hi-progress-circle-path"
-            cx={props.size / 2}
-            cy={props.size / 2}
+            class="hk-progress-ring-fill"
+            cx={center.value}
+            cy={center.value}
             r={radius.value}
             fill="none"
             stroke-width={props.strokeWidth}
             stroke-dasharray={circumference.value}
             stroke-dashoffset={dashOffset.value}
             stroke-linecap="round"
+            transform={`rotate(-90 ${center.value} ${center.value})`}
           />
         </svg>
         {props.showLabel && (
-          <span class="hi-progress-circle-text" style={{ fontSize: `${textSize.value}px` }}>
+          <span class="hk-progress-ring-label" style={{ fontSize: `${textSize.value}px` }}>
             {Math.round(clampedValue.value)}%
           </span>
         )}

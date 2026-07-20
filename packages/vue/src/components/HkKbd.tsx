@@ -3,24 +3,23 @@ import { computed, defineComponent, type PropType } from "vue";
 export default defineComponent({
   name: "HkKbd",
   props: {
-    keys: { type: Array as PropType<string[]>, default: () => [] },
+    keys: { type: String, required: true },
     size: { type: String as PropType<"sm" | "md">, default: "md" },
   },
-  setup(props, { slots }) {
-    const cls = computed(() => ["hi-kbd", `hi-kbd-${props.size}`]);
+  setup(props) {
+    const chunks = computed(() => props.keys.split("+").map((k) => k.trim()));
 
     return () => (
-      <kbd class={cls.value}>
-        {slots.default ? (
-          slots.default()
-        ) : (
-          props.keys.map((key, i) => (
-            <span key={i}>
-              {i > 0 && <span class="hi-kbd-plus">+</span>}
-              <span class="hi-kbd-key">{key}</span>
-            </span>
-          ))
-        )}
+      <kbd
+        class={["hk-kbd", `hk-kbd--${props.size}`]}
+        aria-hidden="true"
+      >
+        {chunks.value.map((key, i) => (
+          <span key={i}>
+            {i > 0 && <span class="hk-kbd__sep">+</span>}
+            <span class="hk-kbd__key">{key}</span>
+          </span>
+        ))}
       </kbd>
     );
   },

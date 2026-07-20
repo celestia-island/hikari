@@ -1,39 +1,71 @@
-import { computed, defineComponent, type PropType } from "vue";
+import { defineComponent } from "vue";
+
+import "./HkConfirmDialog.scss";
+import HkButton from "./HkButton";
 import HkModal from "./HkModal";
-import "../../../components/src/styles/components/button.scss";
-import "../../../components/src/styles/components/button-vars.scss";
 
 export default defineComponent({
   name: "HkConfirmDialog",
   props: {
-    open: { type: Boolean, default: false },
-    title: { type: String, default: "Confirm" },
-    message: { type: String },
-    confirmText: { type: String, default: "Confirm" },
-    cancelText: { type: String, default: "Cancel" },
+    open: { type: Boolean, required: true },
+    title: { type: String, default: "" },
+    message: { type: String, default: "" },
+    confirmLabel: { type: String, default: undefined },
+    confirmVariant: {
+      type: String as () => "primary" | "danger",
+      default: "danger",
+    },
+    cancelLabel: { type: String, default: undefined },
+    loading: { type: Boolean, default: false },
   },
   emits: {
     confirm: () => true,
     cancel: () => true,
+    "update:open": (_value: boolean) => true,
   },
   setup(props, { emit }) {
+    function onConfirm() {
+      emit("confirm");
+      emit("update:open", false);
+    }
+
+    function onCancel() {
+      emit("cancel");
+      emit("update:open", false);
+    }
+
     return () => (
-      <HkModal open={props.open} title={props.title} onClose={() => emit("cancel")}>
-        <p style={{ margin: "0 0 1.5rem", color: "var(--hi-color-text-primary, #333)" }}>{props.message}</p>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-          <button
-            class="hikari-btn hikari-btn--secondary hikari-btn--md"
-            onClick={() => emit("cancel")}
-          >
-            {props.cancelText}
-          </button>
-          <button
-            class="hikari-btn hikari-btn--primary hikari-btn--md"
-            onClick={() => emit("confirm")}
-          >
-            {props.confirmText}
-          </button>
-        </div>
+      <HkModal
+        modelValue={props.open}
+        title={props.title}
+        closable={!props.loading}
+        onUpdate:modelValue={(v: boolean) => emit("update:open", v)}
+      >
+        {{
+          default: () => (
+            <div class="hk-confirm-dialog">
+              <p class="hk-confirm-dialog__message">{props.message}</p>
+              <div class="hk-confirm-dialog__actions">
+                <HkButton
+                  variant="secondary"
+                  size="sm"
+                  disabled={props.loading}
+                  onClick={onCancel}
+                >
+                  {props.cancelLabel || "Cancel"}
+                </HkButton>
+                <HkButton
+                  variant={props.confirmVariant}
+                  size="sm"
+                  loading={props.loading}
+                  onClick={onConfirm}
+                >
+                  {props.confirmLabel || "Confirm"}
+                </HkButton>
+              </div>
+            </div>
+          ),
+        }}
       </HkModal>
     );
   },

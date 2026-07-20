@@ -1,0 +1,98 @@
+.hk-badge {
+  --hk-badge-text: inherit;
+  --hk-badge-bg: transparent;
+  --hk-badge-border: transparent;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hk-space-4, 4px);
+  font-size: var(--hk-text-xs, 0.75rem);
+  font-weight: 600;
+  padding: var(--hk-space-2, 2px) var(--hk-space-8, 8px);
+  border-radius: var(--hk-radius-full, 9999px);
+  border: 1px solid var(--hk-badge-border);
+  background: var(--hk-badge-bg);
+  color: var(--hk-badge-text);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.hk-badge[data-size="sm"] {
+  font-size: 0.625rem;
+  padding: 1px 6px;
+}
+
+.hk-badge[data-size="md"] {
+  font-size: var(--hk-text-xs, 0.75rem);
+  padding: var(--hk-space-2, 2px) var(--hk-space-8, 8px);
+}
+
+.hk-badge[data-pill="false"] {
+  border-radius: var(--hk-radius-sm, 4px);
+}
+
+.hk-badge[data-mono] {
+  font-family: var(--hk-font-mono, ui-monospace, "JetBrains Mono", monospace);
+  font-weight: 600;
+}
+
+.hk-badge[data-uppercase] {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hk-badge [data-el="dot"] {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hk-badge-text);
+  flex-shrink: 0;
+}
+
+.hk-badge[data-dot-only] {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.hk-badge-default {
+  --hk-badge-text: rgb(var(--hk-color-text, 201 209 217));
+  --hk-badge-bg: rgb(var(--hk-color-surface, 22 27 34) / 50%);
+  --hk-badge-border: rgb(var(--hk-color-border, 48 54 61));
+}
+
+.hk-badge-primary {
+  --hk-badge-text: var(--hk-c-primary, rgb(88 166 255));
+  --hk-badge-bg: rgb(88 166 255 / 10%);
+  --hk-badge-border: rgb(88 166 255 / 20%);
+}
+
+.hk-badge-success {
+  --hk-badge-text: var(--hk-c-success, rgb(63 185 80));
+  --hk-badge-bg: rgb(63 185 80 / 10%);
+  --hk-badge-border: rgb(63 185 80 / 20%);
+}
+
+.hk-badge-error {
+  --hk-badge-text: var(--hk-c-error, rgb(248 81 73));
+  --hk-badge-bg: rgb(248 81 73 / 10%);
+  --hk-badge-border: rgb(248 81 73 / 20%);
+}
+
+.hk-badge-warning {
+  --hk-badge-text: var(--hk-c-warning, rgb(210 153 34));
+  --hk-badge-bg: rgb(210 153 34 / 10%);
+  --hk-badge-border: rgb(210 153 34 / 20%);
+}
+
+.hk-badge-info {
+  --hk-badge-text: var(--hk-c-info, rgb(88 166 255));
+  --hk-badge-bg: rgb(88 166 255 / 10%);
+  --hk-badge-border: rgb(88 166 255 / 20%);
+}
+
+.hk-badge-muted {
+  --hk-badge-text: color-mix(in srgb, rgb(var(--hk-c-muted, 139 148 158)) 70%, rgb(var(--hk-color-background, 13 17 23)));
+  --hk-badge-bg: rgb(139 148 158 / 8%);
+  --hk-badge-border: rgb(139 148 158 / 12%);
+}

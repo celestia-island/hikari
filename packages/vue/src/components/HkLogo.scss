@@ -1,0 +1,38 @@
+.hk-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+a.hk-logo {
+  text-decoration: none;
+}
+
+.hk-logo__img {
+  display: block;
+  border-radius: var(--radius-md, 8px);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
+}
+
+.hk-logo__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--color-primary));
+  color: #fff;
+  border-radius: var(--radius-md, 8px);
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
+}
+
+.hk-logo__initial {
+  font-weight: 700;
+  font-size: 50%;
+  line-height: 1;
+  user-select: none;
+}

@@ -1,24 +1,29 @@
 import { defineComponent, TransitionGroup, type PropType } from "vue";
 
+import "./HkListTransition.scss";
+
+type ListAnimVariant = "pop" | "slide" | "fade" | "grow" | "reveal";
+
 export default defineComponent({
   name: "HkListTransition",
   props: {
-    name: { type: String, default: "hi-list" },
     tag: { type: String, default: "div" },
+    variant: { type: String as PropType<ListAnimVariant>, default: "pop" },
+    move: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
-    return () => (
-      <TransitionGroup
-        name={props.name}
-        tag={props.tag}
-        moveClass="hi-list-move"
-        enterActiveClass="hi-list-enter-active"
-        leaveActiveClass="hi-list-leave-active"
-        enterFromClass="hi-list-enter-from"
-        leaveToClass="hi-list-leave-to"
-      >
-        {slots.default?.()}
-      </TransitionGroup>
-    );
+    return () => {
+      const name = props.disabled ? "hk-list-none" : `hk-list-${props.variant}`;
+      return (
+        <TransitionGroup
+          tag={props.tag}
+          name={name}
+          moveClass={props.move ? undefined : "hk-list-move-disabled"}
+        >
+          {slots.default?.()}
+        </TransitionGroup>
+      );
+    };
   },
 });

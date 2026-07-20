@@ -1,0 +1,176 @@
+.hikari-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--hi-radius-sm, 4px);
+  cursor: pointer;
+  transition:
+    background-color var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    color var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    opacity var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--hi-duration-fast, 150ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    filter var(--hi-duration-normal, 300ms) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+  position: relative;
+  text-decoration: none;
+}
+
+.hikari-btn:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--hi-color-bg-canvas, #0d1117),
+    0 0 0 4px var(--hi-color-primary, #58a6ff);
+}
+
+.hikari-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hikari-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ---- Size variants ---- */
+
+.hikari-btn--sm {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.hikari-btn--md {
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.hikari-btn--lg {
+  padding: 0.5rem 1.125rem;
+  font-size: 0.875rem;
+}
+
+/* ---- Primary ---- */
+
+.hikari-btn--primary {
+  background: var(--hi-color-primary, #58a6ff);
+  color: var(--hi-color-text-on-primary, #ffffff);
+}
+
+.hikari-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.hikari-btn--primary:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Secondary ---- */
+
+.hikari-btn--secondary {
+  background: var(--hi-color-bg-elevated, #161b22);
+  color: var(--hi-color-text-primary, #c9d1d9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.hikari-btn--secondary:hover:not(:disabled) {
+  background: var(--hi-color-bg-elevated, #161b22);
+  border-color: var(--hi-color-primary, #58a6ff);
+}
+
+/* ---- Ghost ---- */
+
+.hikari-btn--ghost {
+  background: transparent;
+  color: var(--hi-color-text-primary, #c9d1d9);
+  border-color: transparent;
+}
+
+.hikari-btn--ghost:hover:not(:disabled) {
+  background: var(--hi-color-bg-subtle, #21262d);
+}
+
+/* ---- Danger ---- */
+
+.hikari-btn--danger {
+  background: var(--hi-color-danger, #f85149);
+  color: var(--hi-color-text-on-primary, #ffffff);
+}
+
+.hikari-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 1px 4px rgba(248, 81, 73, 0.4);
+}
+
+.hikari-btn--danger:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+/* ---- Outline ---- */
+
+.hikari-btn--outline {
+  background: transparent;
+  color: var(--hi-color-primary, #58a6ff);
+  border-color: var(--hi-color-primary, #58a6ff);
+}
+
+.hikari-btn--outline:hover:not(:disabled) {
+  background: var(--hi-color-primary, #58a6ff);
+  color: var(--hi-color-text-on-primary, #ffffff);
+}
+
+/* ---- Block ---- */
+
+.hikari-btn--block {
+  width: 100%;
+}
+
+/* ---- Loading ---- */
+
+.hikari-btn--loading {
+  pointer-events: none;
+}
+
+/* ---- Has shortcut ---- */
+
+.hikari-btn--has-shortcut {
+  gap: 1rem;
+}
+
+/* ---- Icon wrappers ---- */
+
+.hikari-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hikari-btn__suffix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hikari-btn--has-shortcut .hi-kbd {
+  margin-inline-start: auto;
+}
+
+/* ---- Spinner inside button ---- */
+
+.hikari-btn .hi-spin {
+  color: inherit;
+}
+
+.hikari-btn .hi-spin-spinner {
+  border-color: rgba(255, 255, 255, 0.25);
+  border-top-color: currentColor;
+}

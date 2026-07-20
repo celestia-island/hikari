@@ -1,23 +1,37 @@
-import { computed, defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/card.scss";
-import "../../../components/src/styles/components/card-vars.scss";
+import { defineComponent } from "vue";
+
+import "./HkCard.scss";
 
 export default defineComponent({
   name: "HkCard",
   props: {
-    padding: { type: String as PropType<"none" | "sm" | "md" | "lg">, default: "md" },
+    title: { type: String, default: undefined },
     hoverable: { type: Boolean, default: false },
+    padded: { type: Boolean, default: true },
+    class: { type: String, default: "" },
   },
-  setup(props, { slots }) {
-    const cls = computed(() => [
-      "hikari-card",
-      `hikari-card--${props.padding}`,
-      props.hoverable ? "hikari-card--hoverable" : "",
-    ]);
-
+  emits: {
+    click: (_e: MouseEvent) => true,
+  },
+  setup(props, { emit, slots }) {
     return () => (
-      <div class={cls.value}>
-        {slots.default?.()}
+      <div
+        class={[
+          "hk-card",
+          props.hoverable ? "hk-card--hoverable" : "",
+          props.class,
+        ]}
+        onClick={(e) => emit("click", e)}
+      >
+        {props.title || slots.header ? (
+          <div class="hk-card-header">
+            {slots.header ? slots.header() : <h3 class="hk-card-title">{props.title}</h3>}
+          </div>
+        ) : null}
+        <div class={["hk-card-body", !props.padded ? "hk-card-body--unpadded" : ""]}>
+          {slots.default?.()}
+        </div>
+        {slots.footer ? <div class="hk-card-footer">{slots.footer()}</div> : null}
       </div>
     );
   },

@@ -1,0 +1,42 @@
+.hk-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--hi-space-48, 3rem) var(--hi-space-16, 1rem);
+  text-align: center;
+  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  border-radius: var(--hi-radius-md, 0.5rem);
+}
+
+.hk-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--hi-space-12, 0.75rem);
+  color: var(--hi-color-text-secondary, #666);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hk-empty-title {
+  font-size: var(--hi-text-base, 1rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #333);
+  margin: 0 0 var(--hi-space-8, 0.5rem);
+}
+
+.hk-empty-desc {
+  font-size: var(--hi-text-sm, 0.8125rem);
+  color: var(--hi-color-text-secondary, #666);
+  margin: 0 0 var(--hi-space-16, 1rem);
+  max-width: 24rem;
+  line-height: 1.5;
+}
+
+.hk-empty-action {
+  margin-top: var(--hi-space-4, 0.25rem);
+}

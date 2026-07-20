@@ -1,0 +1,85 @@
+.hk-divider {
+  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.12));
+  flex-shrink: 0;
+
+  width: 100%;
+  height: 0;
+  border-top: 1px solid var(--hk-divider-color);
+}
+
+.hk-divider-vertical {
+  width: 0;
+  height: auto;
+  align-self: stretch;
+  border-top: none;
+  border-left: 1px solid var(--hk-divider-color);
+}
+
+.hk-divider-faint {
+  --hk-divider-color: var(--hi-color-border-faint, rgba(0, 0, 0, 0.06));
+}
+
+.hk-divider-input {
+  --hk-divider-color: var(--hi-color-border-input, rgba(0, 0, 0, 0.15));
+}
+
+.hk-divider-dashed.hk-divider-vertical {
+  border-left-style: dashed;
+}
+
+.hk-divider-dashed:not(.hk-divider-vertical) {
+  border-top-style: dashed;
+}
+
+.hk-divider-spacing-xs {
+  --hk-divider-space: var(--hi-space-2, 0.125rem);
+}
+
+.hk-divider-spacing-sm {
+  --hk-divider-space: var(--hi-space-4, 0.25rem);
+}
+
+.hk-divider-spacing-md {
+  --hk-divider-space: var(--hi-space-6, 0.375rem);
+}
+
+.hk-divider-spacing-lg {
+  --hk-divider-space: var(--hi-space-8, 0.5rem);
+}
+
+.hk-divider-spacing-xl {
+  --hk-divider-space: var(--hi-space-12, 0.75rem);
+}
+
+.hk-divider[class*="hk-divider-spacing-"]:not(.hk-divider-vertical) {
+  margin-block: var(--hk-divider-space);
+}
+
+.hk-divider-vertical[class*="hk-divider-spacing-"] {
+  margin-inline: var(--hk-divider-space);
+}
+
+.hk-divider-vertical.hk-divider-length-xs {
+  align-self: center;
+  height: var(--hi-space-8, 0.5rem);
+}
+
+.hk-divider-vertical.hk-divider-length-sm {
+  align-self: center;
+  height: var(--hi-space-12, 0.75rem);
+}
+
+.hk-divider-vertical.hk-divider-length-md {
+  align-self: center;
+  height: var(--hi-space-16, 1rem);
+}
+
+.hk-divider-vertical.hk-divider-length-lg {
+  align-self: center;
+  height: var(--hi-space-24, 1.5rem);
+}
+
+.hk-divider-vertical.hk-divider-length-xl {
+  align-self: center;
+  height: var(--hi-space-32, 2rem);
+}

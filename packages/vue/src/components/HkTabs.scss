@@ -1,0 +1,117 @@
+.hk-tabs {
+  width: 100%;
+}
+
+.hk-tabs-list {
+  display: flex;
+  gap: 2px;
+}
+
+.hk-tabs-list[data-variant="pill"] {
+  position: relative;
+  display: inline-flex;
+  gap: 0;
+  padding: 2px;
+  border-radius: var(--hi-radius-sm, 4px);
+  border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
+  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.05));
+}
+
+.hk-tabs-trigger {
+  font-weight: 500;
+  color: var(--hi-color-text-secondary, #8b949e);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  transition: color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover:not(:disabled) {
+    color: var(--hi-color-text-primary, #c9d1d9);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &[data-active] {
+    color: var(--hi-color-primary, #58a6ff);
+  }
+}
+
+/* Underline variant */
+
+.hk-tabs[data-variant="underline"] .hk-tabs-list {
+  border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.08));
+}
+
+.hk-tabs[data-variant="underline"] .hk-tabs-trigger {
+  padding: var(--hi-space-8, 8px) var(--hi-space-16, 16px);
+  font-size: var(--hi-text-base, 1rem);
+  border-bottom: 2px solid transparent;
+  transition:
+    background-color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    opacity var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    filter var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.05));
+  }
+
+  &[data-active] {
+    border-bottom-color: var(--hi-color-primary, #58a6ff);
+  }
+}
+
+/* Pill variant */
+
+.hk-tabs[data-variant="pill"] .hk-tabs-trigger {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  padding: var(--hi-space-4, 4px) var(--hi-space-12, 12px);
+  font-size: var(--hi-text-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--hi-radius-sm, 4px);
+  white-space: nowrap;
+}
+
+/* Pill sliding indicator */
+
+.hk-tabs-indicator {
+  position: absolute;
+  top: 2px;
+  height: calc(100% - 4px);
+  border-radius: var(--hi-radius-sm, 4px);
+  background: var(--hi-color-primary, #58a6ff);
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    left var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    width var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* Panel */
+
+.hk-tabs-panel {
+  outline: none;
+
+  &:not([data-active]) {
+    display: none;
+  }
+}
+
+.hk-tabs[data-variant="underline"] .hk-tabs-panel {
+  padding: var(--hi-space-16, 16px) 0;
+}

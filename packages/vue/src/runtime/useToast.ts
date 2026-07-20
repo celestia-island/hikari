@@ -57,7 +57,6 @@ function removeSlot(slotId: number) {
 function scheduleAutoDismiss(slot: ToastItem) {
   const duration = slot.duration ?? 0;
   if (duration <= 0) return;
-  if (!isTransient(slot.type) && slot.type !== "loading") return;
   clearTimer(slot.id);
   timers.set(
     slot.id,

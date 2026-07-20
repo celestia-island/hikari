@@ -1,26 +1,51 @@
-import { computed, defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/divider.scss";
+import { defineComponent, type PropType } from "vue";
+
+import "./HkDivider.scss";
+
+type DividerOrientation = "horizontal" | "vertical";
+type DividerTone = "faint" | "subtle" | "input";
+type DividerVariant = "solid" | "dashed";
+type DividerSpacing = "none" | "xs" | "sm" | "md" | "lg" | "xl";
+type DividerLength = "stretch" | "xs" | "sm" | "md" | "lg" | "xl";
 
 export default defineComponent({
   name: "HkDivider",
   props: {
-    orientation: { type: String as PropType<"horizontal" | "vertical">, default: "horizontal" },
-    text: { type: String },
-    spacing: { type: String },
+    orientation: {
+      type: String as PropType<DividerOrientation>,
+      default: "horizontal",
+    },
+    tone: {
+      type: String as PropType<DividerTone>,
+      default: "subtle",
+    },
+    variant: {
+      type: String as PropType<DividerVariant>,
+      default: "solid",
+    },
+    spacing: {
+      type: String as PropType<DividerSpacing>,
+      default: "none",
+    },
+    length: {
+      type: String as PropType<DividerLength>,
+      default: "stretch",
+    },
   },
   setup(props) {
-    const cls = computed(() => [
-      "hi-divider",
-      `hi-divider-${props.orientation}`,
-      props.text ? "hi-divider-with-text" : "",
-    ]);
-
     return () => (
-      <div class={cls.value} style={{ margin: props.spacing }}>
-        <span class="hi-divider-line" />
-        {props.text && <span class="hi-divider-text">{props.text}</span>}
-        {props.text && <span class="hi-divider-line" />}
-      </div>
+      <div
+        class={[
+          "hk-divider",
+          props.orientation === "vertical" && "hk-divider-vertical",
+          props.variant === "dashed" && "hk-divider-dashed",
+          props.tone === "faint" && "hk-divider-faint",
+          props.tone === "input" && "hk-divider-input",
+          props.spacing !== "none" && `hk-divider-spacing-${props.spacing}`,
+          props.length !== "stretch" && `hk-divider-length-${props.length}`,
+        ]}
+        aria-hidden="true"
+      />
     );
   },
 });

@@ -1,0 +1,44 @@
+.hk-skeleton {
+  display: inline-block;
+  background: rgb(88 166 255 / 8%);
+}
+
+.hk-skeleton[data-tone="muted"] {
+  background: rgb(139 148 158 / 12%);
+}
+
+.hk-skeleton[data-animated] {
+  background: linear-gradient(
+    90deg,
+    rgb(88 166 255 / 8%) 25%,
+    rgb(88 166 255 / 18%) 50%,
+    rgb(88 166 255 / 8%) 75%
+  );
+  background-size: 200% 100%;
+  animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.hk-skeleton[data-tone="muted"][data-animated] {
+  background: linear-gradient(
+    90deg,
+    rgb(139 148 158 / 10%) 25%,
+    rgb(139 148 158 / 22%) 50%,
+    rgb(139 148 158 / 10%) 75%
+  );
+  background-size: 200% 100%;
+  animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes hk-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.hk-skeleton-list {
+  display: flex;
+  flex-direction: column;
+}

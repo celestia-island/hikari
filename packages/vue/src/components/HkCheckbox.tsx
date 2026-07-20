@@ -1,47 +1,85 @@
-import { computed, defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/checkbox.scss";
+import { defineComponent, ref, type PropType } from "vue";
+import { Check } from "lucide-vue-next";
+import "./HkCheckbox.scss";
 
 export default defineComponent({
   name: "HkCheckbox",
   props: {
     modelValue: { type: Boolean, default: false },
-    label: { type: String },
+    label: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
-    size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
+    type: {
+      type: String as PropType<"checkbox" | "radio">,
+      default: "checkbox",
+    },
+    size: {
+      type: String as PropType<"sm" | "md" | "lg">,
+      default: "md",
+    },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
   },
   setup(props, { emit, slots }) {
-    const labelCls = computed(() => [
-      "hi-checkbox-label",
-      props.disabled ? "hi-checkbox-disabled" : "",
-    ]);
+    const animating = ref(false);
+    let animTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const checkboxCls = computed(() => [
-      "hi-checkbox",
-      `hi-checkbox-${props.size}`,
-      props.modelValue ? "hi-checkbox-checked" : "",
-    ]);
+    function markActive() {
+      animating.value = true;
+      if (animTimer) clearTimeout(animTimer);
+      animTimer = setTimeout(() => {
+        animating.value = false;
+      }, 300);
+    }
 
-    return () => (
-      <label class={labelCls.value}>
-        <input
-          type="checkbox"
-          class="hi-checkbox-input"
-          checked={props.modelValue}
-          disabled={props.disabled}
-          onChange={(e: Event) => emit("update:modelValue", (e.target as HTMLInputElement).checked)}
-        />
-        <span class={checkboxCls.value}>
-          {props.modelValue && (
-            <svg class="hi-checkbox-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
-        </span>
-        {props.label ? <span class="hi-checkbox-text">{props.label}</span> : slots.default?.()}
-      </label>
-    );
+    function onChange(e: Event) {
+      if (props.disabled) return;
+      emit("update:modelValue", (e.target as HTMLInputElement).checked);
+      markActive();
+    }
+
+    return () => {
+      const inputType = props.type === "radio" ? "radio" : "checkbox";
+      const isChecked = props.modelValue === true || props.modelValue === null;
+
+      return (
+        <label
+          class={[
+            "hk-checkbox",
+            `hk-checkbox--${props.size}`,
+          ]}
+          data-type={inputType}
+          data-disabled={props.disabled ? "" : undefined}
+          data-animating={animating.value ? "" : undefined}
+        >
+          <span
+            class="hk-checkbox-box"
+            data-checked={props.modelValue ? "" : undefined}
+            data-indeterminate={props.modelValue === null ? "" : undefined}
+          >
+            <input
+              class="hk-checkbox-input"
+              type={inputType}
+              checked={props.modelValue === true}
+              disabled={props.disabled}
+              onChange={onChange}
+            />
+            {props.modelValue === true
+              ? props.type === "radio"
+                ? <span class="hk-checkbox-dot" />
+                : <Check size={14} class="hk-checkbox-icon" />
+              : null}
+            {props.modelValue === null && props.type !== "radio" ? (
+              <span class="hk-checkbox-indeterminate" />
+            ) : null}
+          </span>
+          {props.label || slots.default ? (
+            <span class="hk-checkbox-label-text">
+              {slots.default?.() ?? props.label}
+            </span>
+          ) : null}
+        </label>
+      );
+    };
   },
 });

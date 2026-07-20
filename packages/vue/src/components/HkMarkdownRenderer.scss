@@ -1,0 +1,141 @@
+.hk-markdown {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--hi-color-text-primary, #c9d1d9);
+  position: relative;
+}
+
+.hk-markdown__body {
+  min-height: 120px;
+}
+
+.hk-markdown h1,
+.hk-markdown h2,
+.hk-markdown h3 {
+  font-weight: 700;
+  margin: 1.25em 0 0.5em;
+  color: var(--hi-color-text-primary, #c9d1d9);
+}
+
+.hk-markdown h1 { font-size: 1.5em; }
+.hk-markdown h2 { font-size: 1.25em; }
+.hk-markdown h3 { font-size: 1.1em; }
+
+.hk-markdown p {
+  margin: 0.5em 0;
+}
+
+.hk-markdown ul,
+.hk-markdown ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.hk-markdown li {
+  margin: 0.25em 0;
+}
+
+.hk-markdown code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: var(--hi-color-bg-subtle, #21262d);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+}
+
+.hk-md-code {
+  position: relative;
+  margin: 0.75em 0;
+  padding: 1em;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  user-select: none;
+  cursor: pointer;
+  overflow-x: auto;
+  background: var(--hi-color-bg-subtle, #0d1117);
+}
+
+.hk-md-code pre {
+  margin: 0;
+}
+
+.hk-md-code-lang {
+  position: absolute;
+  top: 0.25em;
+  right: 0.5em;
+  font-size: 0.625em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  opacity: 0.6;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.hk-md-plain {
+  margin: 0;
+  padding: 0.5rem 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--hi-color-text-primary, #c9d1d9);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.hk-markdown blockquote {
+  margin: 0.75em 0;
+  padding: 0.5em 1em;
+  border-left: 3px solid var(--hi-color-text-tertiary, #8b949e);
+  color: var(--hi-color-text-secondary, #8b949e);
+}
+
+.hk-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+}
+
+.hk-markdown th,
+.hk-markdown td {
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--hi-color-border, #30363d);
+  text-align: left;
+}
+
+.hk-markdown th {
+  font-weight: 600;
+  background: var(--hi-color-bg-subtle, #21262d);
+}
+
+.hk-markdown a {
+  color: var(--hi-color-primary, #58a6ff);
+  text-decoration: none;
+}
+
+.hk-markdown a:hover {
+  text-decoration: underline;
+}
+
+.hk-markdown hr {
+  border: none;
+  border-top: 1px solid var(--hi-color-border, #30363d);
+  margin: 1em 0;
+}
+
+.hk-markdown img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.hk-markdown__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(from var(--hi-color-bg-elevated, #161b22) r g b / 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}

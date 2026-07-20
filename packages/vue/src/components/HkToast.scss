@@ -1,0 +1,168 @@
+.hk-toast-container {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  z-index: var(--hk-z-toast, 9999);
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.hk-toast-container > div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hk-space-12, 12px);
+}
+
+.hk-toast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--hk-space-8, 8px);
+  padding: var(--hk-space-12, 12px) var(--hk-space-16, 16px);
+  border-radius: var(--hk-radius-sm, 4px);
+  font-size: var(--hk-text-base, 0.875rem);
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  user-select: none;
+}
+
+.hk-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hk-space-4, 4px);
+}
+
+.hk-toast-icon {
+  display: flex;
+  align-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.hk-toast-message {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.hk-toast-count {
+  align-self: flex-start;
+  font-size: 0.78em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 20%);
+  white-space: nowrap;
+}
+
+.hk-toast-error {
+  background: var(--hk-color-error-vivid, #f85149);
+  color: #fff;
+}
+
+.hk-toast-success {
+  background: var(--hk-color-success, #3fb950);
+  color: #fff;
+}
+
+.hk-toast-warning {
+  background: var(--hk-color-warning, #d29922);
+  color: #fff;
+}
+
+.hk-toast-info {
+  background: var(--hk-color-info, #58a6ff);
+  color: #fff;
+}
+
+.hk-toast-loading {
+  background: var(--hk-color-info, #58a6ff);
+  color: #fff;
+}
+
+.hk-toast-loading-spinner {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: hk-toast-spin 0.7s linear infinite;
+  box-sizing: border-box;
+}
+
+@keyframes hk-toast-spin {
+  to { transform: rotate(360deg); }
+}
+
+.hk-toast-copy-btn,
+.hk-toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--hk-radius-sm, 4px);
+  opacity: 0.7;
+  transition: opacity var(--hk-duration-short, 0.15s) ease;
+  padding: 0;
+}
+
+.hk-toast-copy-btn:hover,
+.hk-toast-close:hover {
+  opacity: 1;
+}
+
+.hk-toast-enter-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--hk-duration-normal, 0.3s);
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hk-toast-leave-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--hk-duration-normal, 0.3s);
+  transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
+}
+
+.hk-toast-enter-from {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+.hk-toast-leave-to {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+.hk-toast-leave-active {
+  position: absolute;
+  width: 100%;
+}
+
+.hk-toast-move {
+  transition: transform var(--hk-duration-normal, 0.3s) ease;
+}
+
+.hk-toast-msg-enter-active,
+.hk-toast-msg-leave-active {
+  transition: opacity var(--hk-duration-short, 0.15s) ease;
+}
+
+.hk-toast-msg-enter-from,
+.hk-toast-msg-leave-to {
+  opacity: 0;
+}

@@ -1,99 +1,229 @@
-import { computed, defineComponent, ref, onMounted, onUnmounted, type PropType, type CSSProperties, Teleport } from "vue";
-import "../../../components/src/styles/components/select.scss";
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  onBeforeUnmount,
+  ref,
+  watch,
+  type PropType,
+  Teleport,
+} from "vue";
+import { ChevronDown, Search } from "lucide-vue-next";
+import "./HkSelect.scss";
+
+export interface HkSelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
 
 export default defineComponent({
   name: "HkSelect",
   props: {
-    options: { type: Array as PropType<{ value: string | number; label: string; disabled?: boolean }[]>, required: true },
-    modelValue: { type: [String, Number] as PropType<string | number | null>, default: null },
-    placeholder: { type: String },
+    modelValue: { type: String, default: "" },
+    label: { type: String, default: undefined },
+    placeholder: { type: String, default: "" },
+    error: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
-    size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
+    required: { type: Boolean, default: false },
+    options: {
+      type: Array as PropType<HkSelectOption[]>,
+      default: () => [] as HkSelectOption[],
+    },
   },
   emits: {
-    "update:modelValue": (_value: string | number) => true,
+    "update:modelValue": (_value: string) => true,
   },
-  setup(props, { emit }) {
-    const open = ref(false);
-    const triggerRef = ref<HTMLElement | null>(null);
-    const dropdownRef = ref<HTMLElement | null>(null);
+  setup(props, { emit, slots }) {
+    const isOpen = ref(false);
+    const triggerRef = ref<HTMLElement>();
+    const panelRef = ref<HTMLElement>();
+    const highlightedIndex = ref(-1);
 
-    const selectedLabel = computed(() => {
-      const opt = props.options.find((o) => o.value === props.modelValue);
-      return opt?.label ?? null;
+    function onDocumentClick(e: MouseEvent) {
+      if (!isOpen.value) return;
+      const target = e.target as Node;
+      if (triggerRef.value?.contains(target)) return;
+      if (panelRef.value?.contains(target)) return;
+      isOpen.value = false;
+    }
+
+    watch(isOpen, (open) => {
+      if (open) {
+        document.addEventListener("click", onDocumentClick, true);
+      } else {
+        document.removeEventListener("click", onDocumentClick, true);
+      }
     });
 
-    function select(value: string | number) {
-      emit("update:modelValue", value);
-      open.value = false;
-    }
+    onBeforeUnmount(() => {
+      document.removeEventListener("click", onDocumentClick, true);
+    });
+
+    const normalizedOptions = computed<HkSelectOption[]>(
+      () => props.options ?? [],
+    );
+
+    const displayLabel = computed(() => {
+      if (!props.modelValue) return props.placeholder || "";
+      const opt = normalizedOptions.value.find(
+        (o) => o.value === props.modelValue,
+      );
+      return opt?.label ?? props.modelValue;
+    });
 
     function toggle() {
-      if (!props.disabled) {
-        open.value = !open.value;
+      if (props.disabled) return;
+      isOpen.value = !isOpen.value;
+    }
+
+    function select(value: string) {
+      emit("update:modelValue", value);
+      isOpen.value = false;
+    }
+
+    function onTriggerKeydown(e: KeyboardEvent) {
+      if (props.disabled) return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!isOpen.value) {
+          isOpen.value = true;
+          highlightedIndex.value = 0;
+        } else {
+          highlightedIndex.value =
+            (highlightedIndex.value + 1) % normalizedOptions.value.length;
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!isOpen.value) {
+          isOpen.value = true;
+        } else {
+          highlightedIndex.value =
+            (highlightedIndex.value - 1 + normalizedOptions.value.length) %
+            normalizedOptions.value.length;
+        }
+      } else if (e.key === "Escape") {
+        isOpen.value = false;
       }
     }
 
-    function onClickOutside(e: MouseEvent) {
-      if (
-        triggerRef.value && !triggerRef.value.contains(e.target as Node) &&
-        dropdownRef.value && !dropdownRef.value.contains(e.target as Node)
-      ) {
-        open.value = false;
+    function onPopoutKeydown(e: KeyboardEvent) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        highlightedIndex.value =
+          (highlightedIndex.value + 1) % normalizedOptions.value.length;
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        highlightedIndex.value =
+          (highlightedIndex.value - 1 + normalizedOptions.value.length) %
+          normalizedOptions.value.length;
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const opt = normalizedOptions.value[highlightedIndex.value];
+        if (opt && !opt.disabled) {
+          select(opt.value);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        isOpen.value = false;
       }
     }
 
-    onMounted(() => document.addEventListener("click", onClickOutside));
-    onUnmounted(() => document.removeEventListener("click", onClickOutside));
+    watch(isOpen, (open) => {
+      if (open) {
+        const idx = normalizedOptions.value.findIndex(
+          (o) => o.value === props.modelValue,
+        );
+        highlightedIndex.value = idx;
+        nextTick(() => {
+          scrollToHighlighted();
+        });
+      } else {
+        highlightedIndex.value = -1;
+      }
+    });
 
-    const dropdownStyle = computed<CSSProperties>(() => {
+    function scrollToHighlighted() {
+      const el = panelRef.value?.querySelector(
+        `[data-select-index="${highlightedIndex.value}"]`,
+      );
+      if (el) {
+        el.scrollIntoView({ block: "nearest" });
+      }
+    }
+
+    watch(highlightedIndex, () => {
+      scrollToHighlighted();
+    });
+
+    const triggerCoords = computed(() => {
       if (!triggerRef.value) return {};
       const rect = triggerRef.value.getBoundingClientRect();
       return {
-        position: "fixed",
+        position: "fixed" as const,
         top: `${rect.bottom + 4}px`,
         left: `${rect.left}px`,
-        width: `${rect.width}px`,
-        zIndex: 1000,
+        minWidth: `${rect.width}px`,
       };
     });
 
-    const triggerCls = computed(() => [
-      "hi-select-trigger",
-      `hi-select-${props.size}`,
-      open.value ? "hi-select-open" : "",
-      props.disabled ? "hi-select-disabled" : "",
-    ]);
-
     return () => (
-      <div class="hi-select-root">
-        <div ref={triggerRef} class={triggerCls.value} onClick={toggle}>
-          {selectedLabel.value ? (
-            <span class="hi-select-value">{selectedLabel.value}</span>
-          ) : (
-            <span class="hi-select-placeholder">{props.placeholder ?? "Select..."}</span>
-          )}
-          <span class="hi-select-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </span>
-        </div>
-        {open.value && (
+      <div class="hk-select-wrapper">
+        {props.label ? (
+          <label class="hk-select-label">
+            {props.label}
+            {props.required && <span class="hk-select-required">*</span>}
+          </label>
+        ) : null}
+        <button
+          ref={triggerRef}
+          type="button"
+          class="hk-select-trigger"
+          data-error={props.error || undefined}
+          data-disabled={props.disabled || undefined}
+          data-state={isOpen.value ? "open" : "closed"}
+          disabled={props.disabled}
+          onClick={toggle}
+          onKeydown={onTriggerKeydown}
+        >
+          <span class="hk-select-value">{displayLabel.value || props.placeholder}</span>
+          <ChevronDown size={16} class="hk-select-arrow" />
+        </button>
+        {isOpen.value && (
           <Teleport to="body">
-            <div ref={dropdownRef} class="hi-select-dropdown" style={dropdownStyle.value}>
-              {props.options.map((opt) => (
-                <div
-                  key={opt.value}
-                  class={["hi-select-option", opt.value === props.modelValue ? "hi-select-option--selected" : ""]}
-                  onClick={() => select(opt.value)}
-                >
-                  {opt.label}
-                </div>
-              ))}
+            <div
+              ref={panelRef}
+              class="hk-select-popout"
+              style={triggerCoords.value}
+              onKeydown={onPopoutKeydown}
+            >
+              {slots.default
+                ? slots.default()
+                : normalizedOptions.value.map((opt, i) => (
+                    <div
+                      key={opt.value}
+                      class="hk-select-option"
+                      data-highlighted={highlightedIndex.value === i || undefined}
+                      data-select-index={i}
+                      data-checked={opt.value === props.modelValue || undefined}
+                      data-disabled={opt.disabled || undefined}
+                      onClick={() => {
+                        if (!opt.disabled) select(opt.value);
+                      }}
+                      onPointerenter={() => {
+                        highlightedIndex.value = i;
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                    </div>
+                  ))}
             </div>
           </Teleport>
         )}
+        {props.error ? <p class="hk-select-error">{props.error}</p> : null}
       </div>
     );
   },

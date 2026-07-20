@@ -12,9 +12,9 @@ export default defineComponent({
     statusLabel: { type: String, default: "" },
   },
   setup(props, { slots }) {
-    const statusVariant: Record<string, "success" | "danger" | "warning" | "primary"> = {
+    const statusVariant: Record<string, "success" | "error" | "warning" | "primary"> = {
       online: "success",
-      offline: "danger",
+      offline: "error",
       loading: "warning",
       "coming-soon": "primary",
     };

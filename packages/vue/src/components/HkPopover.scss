@@ -1,0 +1,32 @@
+.hk-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hk-popover-panel {
+  min-width: 0;
+  max-height: min(70vh, calc(100vh - 2 * 8px));
+}
+
+.hk-popover-enter-active {
+  transition:
+    opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hk-popover-leave-active {
+  transition:
+    opacity 0.15s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.15s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-popover-enter-from {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+}
+
+.hk-popover-leave-to {
+  opacity: 0;
+  transform: translateY(4px) scale(0.97);
+}

@@ -68,8 +68,16 @@ function sampleShader(): boolean {
 
 function sampleMedia(el: HTMLImageElement | HTMLVideoElement): boolean {
   try {
-    const w = Math.min(el.naturalWidth || el.videoWidth || 1, 64);
-    const h = Math.min(el.naturalHeight || el.videoHeight || 1, 64);
+    let w: number, h: number;
+    if (el instanceof HTMLImageElement) {
+      w = el.naturalWidth || 1;
+      h = el.naturalHeight || 1;
+    } else {
+      w = el.videoWidth || 1;
+      h = el.videoHeight || 1;
+    }
+    w = Math.min(w, 64);
+    h = Math.min(h, 64);
     const c = document.createElement("canvas");
     c.width = 1;
     c.height = 1;

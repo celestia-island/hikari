@@ -1,0 +1,47 @@
+.hk-card {
+  display: block;
+  overflow: hidden;
+  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--hi-radius-md, 8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.hk-card--hoverable {
+  cursor: pointer;
+  transition:
+    box-shadow var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.hk-card--hoverable:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-color: var(--hi-color-primary, #58a6ff);
+}
+
+.hk-card-header {
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+}
+
+.hk-card-title {
+  font-size: var(--hi-text-base, 1rem);
+  font-weight: 600;
+  margin: 0;
+  color: var(--hi-color-text-primary, #c9d1d9);
+}
+
+.hk-card-body {
+  padding: var(--hi-space-16, 16px);
+  color: var(--hi-color-text-primary, #c9d1d9);
+}
+
+.hk-card-body--unpadded {
+  padding: 0;
+}
+
+.hk-card-footer {
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+}

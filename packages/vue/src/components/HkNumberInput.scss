@@ -1,0 +1,154 @@
+.hk-number-input {
+  display: block;
+  width: 100%;
+
+  &--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.hk-number-input__inner {
+  display: flex;
+  align-items: center;
+  background: rgb(var(--color-surface));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: var(--radius-md, 6px);
+  overflow: hidden;
+  transition:
+    background-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));
+
+  &:hover {
+    border-color: rgb(var(--color-primary));
+  }
+
+  &:focus-within {
+    border-color: rgb(var(--color-primary));
+    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.12);
+  }
+}
+
+.hk-number-input__field {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0 0.75rem;
+
+  &::placeholder {
+    color: rgb(var(--color-muted));
+    opacity: 0.6;
+  }
+
+  -moz-appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.hk-number-input__prefix,
+.hk-number-input__suffix {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: rgb(var(--color-muted));
+  font-size: 0.875rem;
+}
+
+.hk-number-input__prefix {
+  padding-left: 0.75rem;
+}
+
+.hk-number-input__suffix {
+  padding-right: 0.5rem;
+}
+
+.hk-number-input__steppers {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-left: 1px solid rgb(var(--color-border));
+}
+
+.hk-number-input__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 50%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color var(--hi-duration-fast, 0.15s) ease,
+    color var(--hi-duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-surface) / 0.6);
+    color: rgb(var(--color-text));
+  }
+
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.15);
+    color: rgb(var(--color-primary));
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+/* --- Size variants --- */
+
+.hk-number-input--sm .hk-number-input__field {
+  font-size: 0.75rem;
+  padding: 0 0.5rem;
+  height: 1.75rem;
+}
+
+.hk-number-input--sm .hk-number-input__step {
+  width: 1.25rem;
+}
+
+.hk-number-input--sm .hk-number-input__step svg {
+  width: 12px;
+  height: 12px;
+}
+
+.hk-number-input--md .hk-number-input__field {
+  font-size: 0.875rem;
+  padding: 0 0.75rem;
+  height: 2.25rem;
+}
+
+.hk-number-input--md .hk-number-input__step {
+  width: 1.5rem;
+}
+
+.hk-number-input--lg .hk-number-input__field {
+  font-size: 1rem;
+  padding: 0 1rem;
+  height: 2.75rem;
+}
+
+.hk-number-input--lg .hk-number-input__step {
+  width: 1.75rem;
+}
+
+.hk-number-input--lg .hk-number-input__step svg {
+  width: 16px;
+  height: 16px;
+}

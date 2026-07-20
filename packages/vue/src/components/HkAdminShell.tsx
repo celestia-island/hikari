@@ -1,4 +1,5 @@
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
+import "./HkAdminShell.scss";
 
 export default defineComponent({
   name: "HkAdminShell",
@@ -13,20 +14,61 @@ export default defineComponent({
     "update:sidebarCollapsed": (_v: boolean) => true,
   },
   setup(props, { slots, emit }) {
+    const sidebarStyle = computed(() => ({
+      width: props.sidebarCollapsed ? "0px" : props.sidebarWidth,
+    }));
+
+    function closeDrawer() {
+      emit("update:drawerOpen", false);
+    }
+
+    function onOverlayClick() {
+      closeDrawer();
+    }
+
     return () => (
-      <div class="hk-admin-shell" style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-        {slots.header?.()}
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {!props.mobile ? (
-            <aside style={{ width: props.sidebarCollapsed ? "0px" : props.sidebarWidth, flexShrink: 0, overflow: "hidden", transition: "width 0.3s ease" }}>
-              {slots.sidebar?.()}
+      <div class="hk-admin-shell">
+        <div class="hk-admin-shell__header">
+          {slots.header?.()}
+        </div>
+        <div class="hk-admin-shell__body">
+          {props.mobile ? (
+            <>
+              {props.drawerOpen && (
+                <div
+                  class="hk-admin-shell__drawer-overlay"
+                  onClick={onOverlayClick}
+                />
+              )}
+              <aside
+                class={[
+                  "hk-admin-shell__drawer",
+                  props.drawerOpen ? "hk-admin-shell__drawer--open" : "",
+                ]}
+              >
+                {slots.sidebar?.()}
+              </aside>
+            </>
+          ) : (
+            <aside
+              class={[
+                "hk-admin-shell__sidebar",
+                props.sidebarCollapsed ? "hk-admin-shell__sidebar--collapsed" : "",
+              ]}
+              style={sidebarStyle.value}
+            >
+              <div class="hk-admin-shell__sidebar-inner">
+                {slots.sidebar?.()}
+              </div>
             </aside>
-          ) : null}
-          <main style={{ flex: 1, overflow: "auto", background: "rgb(var(--color-background))" }}>
+          )}
+          <main class="hk-admin-shell__main">
             {slots.default?.()}
           </main>
         </div>
-        {slots.footer?.()}
+        <div class="hk-admin-shell__footer">
+          {slots.footer?.()}
+        </div>
       </div>
     );
   },

@@ -1,0 +1,93 @@
+.hk-selection-waterfall {
+  margin-bottom: 1rem;
+}
+
+.hk-selection-waterfall__title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin: 0 0 0.5rem;
+}
+
+.hk-selection-waterfall__flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.hk-selection-waterfall__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  border: 1px solid var(--hi-color-border, #30363d);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--hi-color-primary, #58a6ff);
+    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.04);
+    box-shadow: 0 2px 8px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.1);
+  }
+
+  &[data-selected] {
+    border-color: var(--hi-color-primary, #58a6ff);
+    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.1);
+    color: var(--hi-color-primary, #58a6ff);
+    font-weight: 500;
+  }
+}
+
+.hk-selection-waterfall__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--hi-color-primary, #58a6ff);
+  color: #fff;
+}
+
+.hk-selection-waterfall__name {
+  line-height: 1.5;
+}
+
+.hk-selection-waterfall__tag {
+  font-size: 0.625rem;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+  background: var(--hi-color-bg-subtle, #21262d);
+  color: var(--hi-color-text-tertiary, #8b949e);
+
+  &[data-variant="success"] {
+    background: rgb(from var(--hi-color-success, #3fb950) r g b / 0.12);
+    color: var(--hi-color-success, #3fb950);
+  }
+
+  &[data-variant="info"] {
+    background: rgb(from var(--hi-color-info, #79c0ff) r g b / 0.12);
+    color: var(--hi-color-info, #79c0ff);
+  }
+
+  &[data-variant="primary"] {
+    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.12);
+    color: var(--hi-color-primary, #58a6ff);
+  }
+}
+
+.hk-selection-waterfall__desc {
+  font-size: 0.625rem;
+  color: var(--hi-color-text-tertiary, #8b949e);
+  margin-left: 0.25rem;
+}

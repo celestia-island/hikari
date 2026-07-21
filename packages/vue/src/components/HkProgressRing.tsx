@@ -19,8 +19,8 @@ export default defineComponent({
     const dashOffset = computed(() => circumference.value * (1 - clampedValue.value / 100));
 
     const variantClass = computed(() => {
-      if (props.variant === "success") return "hk-progress-ring--success";
-      if (props.variant === "exception") return "hk-progress-ring--exception";
+      if (props.variant === "success") return "hk-progress-ring-success";
+      if (props.variant === "exception") return "hk-progress-ring-exception";
       return "";
     });
 

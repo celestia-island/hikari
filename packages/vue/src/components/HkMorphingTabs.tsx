@@ -59,7 +59,7 @@ export default defineComponent({
                 disabled={tab.disabled}
                 class={[
                   "hk-morphing-tabs-trigger",
-                  { "hk-morphing-tabs-trigger--active": isActive },
+                  { "hk-morphing-tabs-trigger-active": isActive },
                 ]}
                 onClick={() => emit("update:modelValue", tab.key)}
               >

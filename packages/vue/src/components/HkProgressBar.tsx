@@ -42,17 +42,17 @@ export default defineComponent({
             <>
               {secondaryPct.value != null && (
                 <div
-                  class={["hk-progress-bar-secondary", `hk-progress-bar-secondary--${props.status}`]}
+                  class={["hk-progress-bar-secondary", `hk-progress-bar-secondary-${props.status}`]}
                   style={{ width: `${secondaryPct.value}%` }}
                 />
               )}
               <div
-                class={["hk-progress-bar-fill", `hk-progress-bar-fill--${props.status}`]}
+                class={["hk-progress-bar-fill", `hk-progress-bar-fill-${props.status}`]}
                 style={{ width: `${pct.value}%` }}
               />
             </>
           ) : (
-            <div class={["hk-progress-bar-indeterminate", `hk-progress-bar-indeterminate--${props.status}`]} />
+            <div class={["hk-progress-bar-indeterminate", `hk-progress-bar-indeterminate-${props.status}`]} />
           )}
         </div>
       </div>

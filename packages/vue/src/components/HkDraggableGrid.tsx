@@ -280,8 +280,8 @@ export default defineComponent({
             );
           })}
           {s != null && phRow != null && phRow >= props.rows.length && (
-            <div class="hk-draggable-grid-row hk-draggable-grid-row--phantom" data-cols={1}>
-              <div class="hk-draggable-grid-cell hk-draggable-grid-cell--placeholder-target" />
+            <div class="hk-draggable-grid-row hk-draggable-grid-row-phantom" data-cols={1}>
+              <div class="hk-draggable-grid-cell hk-draggable-grid-cell-placeholder-target" />
             </div>
           )}
         </div>

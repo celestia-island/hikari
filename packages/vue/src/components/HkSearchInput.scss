@@ -19,7 +19,7 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
   }
 
-  &--disabled {
+  &-disabled {
     opacity: 0.5;
     pointer-events: none;
   }
@@ -93,12 +93,12 @@
 
 /* --- Size variants --- */
 
-.hk-search-input--sm .hk-search-input-field {
+.hk-search-input-sm .hk-search-input-field {
   font-size: 0.75rem;
   height: 1.75rem;
 }
 
-.hk-search-input--sm .hk-search-input-icon {
+.hk-search-input-sm .hk-search-input-icon {
   padding-left: 0.5rem;
 
   svg {
@@ -107,17 +107,17 @@
   }
 }
 
-.hk-search-input--md .hk-search-input-field {
+.hk-search-input-md .hk-search-input-field {
   font-size: 0.875rem;
   height: 2.25rem;
 }
 
-.hk-search-input--lg .hk-search-input-field {
+.hk-search-input-lg .hk-search-input-field {
   font-size: 1rem;
   height: 2.75rem;
 }
 
-.hk-search-input--lg .hk-search-input-icon {
+.hk-search-input-lg .hk-search-input-icon {
   padding-left: 1rem;
 
   svg {
@@ -126,7 +126,7 @@
   }
 }
 
-.hk-search-input--lg .hk-search-input-clear svg {
+.hk-search-input-lg .hk-search-input-clear svg {
   width: 16px;
   height: 16px;
 }

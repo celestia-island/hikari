@@ -11,7 +11,7 @@ export default defineComponent({
   setup(props) {
     const cls = computed(() => [
       "hk-avatar",
-      `hk-avatar--${props.size}`,
+      `hk-avatar-${props.size}`,
     ]);
 
     return () => (

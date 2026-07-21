@@ -47,39 +47,16 @@ export default defineComponent({
 
       if (props.to) {
         return (
-          <RouterLink
-            to={props.to}
-            class={buildClass(props, ["hk-nav-item-link"])}
+          <a
+            href={props.to}
+            class={cls}
             {...dataAttrs.value}
             aria-disabled={props.disabled}
             aria-current={props.active ? "page" : undefined}
             onClick={onClick}
           >
-            {({ navigate, isActive, isExactActive }: any) => {
-              const active = isActive || isExactActive || props.active;
-              const cls = buildClass({ active, disabled: props.disabled }, ["hk-nav-item-link"]);
-              return (
-                <a
-                  href={props.to}
-                  class={cls}
-                  data-active={active ? "" : undefined}
-                  data-disabled={props.disabled ? "" : undefined}
-                  aria-disabled={props.disabled}
-                  aria-current={active ? "page" : undefined}
-                  onClick={(e: MouseEvent) => {
-                    if (props.disabled) {
-                      e.preventDefault();
-                      return;
-                    }
-                    navigate(e);
-                    emit("click", e);
-                  }}
-                >
-                  {content()}
-                </a>
-              );
-            }}
-          </RouterLink>
+            {content()}
+          </a>
         );
       }
 
@@ -87,7 +64,7 @@ export default defineComponent({
         return (
           <a
             href={props.href}
-            class={buildClass(props, ["hk-nav-item-link"])}
+            class={cls}
             {...dataAttrs.value}
             aria-disabled={props.disabled}
             onClick={onClick}

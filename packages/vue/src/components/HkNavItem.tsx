@@ -1,19 +1,6 @@
 import { defineComponent, computed } from "vue";
+import { RouterLink } from "vue-router";
 import "./HkNavItem.scss";
-
-// vue-router is an optional peer dependency.
-// When unavailable, fall back to a plain <a> element.
-let RouterLink: any = "a";
-let useRouterLink = false;
-try {
-  const vueRouter = require("vue-router");
-  if (vueRouter && vueRouter.RouterLink) {
-    RouterLink = vueRouter.RouterLink;
-    useRouterLink = true;
-  }
-} catch {
-  // vue-router not installed — use plain <a>
-}
 
 function buildClass(props: { active: boolean; disabled: boolean }, extra: string[] = []) {
   return [

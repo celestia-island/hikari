@@ -130,12 +130,12 @@
     font-size: 0.625rem;
   }
 
-  &--off {
+  &-off {
     right: 4px;
     color: var(--hi-color-text-secondary);
   }
 
-  &--on {
+  &-on {
     left: 4px;
     color: var(--hi-color-text-on-primary, #fff);
   }

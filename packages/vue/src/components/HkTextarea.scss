@@ -2,11 +2,11 @@
   display: block;
   width: 100%;
 
-  &--disabled {
+  &-disabled {
     opacity: 0.5;
   }
 
-  &--overlimit .hk-textarea-field {
+  &-overlimit .hk-textarea-field {
     border-color: var(--hi-color-danger);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
   }

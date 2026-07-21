@@ -161,12 +161,12 @@
     background-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
     border-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
 
-  &--md {
+  &-md {
     width: 16px;
     height: 16px;
   }
 
-  &--checked {
+  &-checked {
     background: var(--hi-color-primary, #58a6ff);
     border-color: var(--hi-color-primary, #58a6ff);
   }

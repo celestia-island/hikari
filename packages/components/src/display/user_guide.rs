@@ -1,6 +1,7 @@
 // packages/components/src/display/user_guide.rs
 // UserGuide component with Arknights + FUI styling
 
+use hikari_i18n::t;
 use hikari_icons::{Icon, IconProps, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UserGuideClass, UtilityClass};
 
@@ -204,9 +205,9 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
                             class: {next_btn_class.clone()},
                             onclick: handle_next,
                             if is_last_step {
-                                "Finish"
+                                { t("hikari.user_guide.finish", "Finish") }
                             } else {
-                                "Next"
+                                { t("hikari.user_guide.next", "Next") }
                             }
                             if !is_last_step {
                                 Icon { icon: MdiIcon::ChevronRight, size: 18 }

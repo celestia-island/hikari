@@ -13,6 +13,9 @@ prev = "이전"
 next = "다음"
 page = "페이지"
 of = "/"
+jump_to_page = "페이지 이동"
+page_placeholder = "페이지"
+page_range = "{current} / {total} 페이지"
 
 [hikari.form]
 submit = "제출"
@@ -44,3 +47,7 @@ alt_fallback = "이미지"
 [hikari.dialog]
 close = "닫기"
 confirm = "확인"
+
+[hikari.user_guide]
+finish = "완료"
+next = "다음"

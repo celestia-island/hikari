@@ -13,6 +13,9 @@ prev = "上一頁"
 next = "下一頁"
 page = "第"
 of = "頁，共"
+jump_to_page = "跳轉到頁面"
+page_placeholder = "頁碼"
+page_range = "第 {current} 頁，共 {total} 頁"
 
 [hikari.form]
 submit = "提交"
@@ -44,3 +47,7 @@ alt_fallback = "圖片"
 [hikari.dialog]
 close = "關閉"
 confirm = "確認"
+
+[hikari.user_guide]
+finish = "完成"
+next = "下一步"

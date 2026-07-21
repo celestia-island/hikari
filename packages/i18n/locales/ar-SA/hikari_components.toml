@@ -13,6 +13,9 @@ prev = "السابق"
 next = "التالي"
 page = "صفحة"
 of = "من"
+jump_to_page = "الانتقال إلى الصفحة"
+page_placeholder = "صفحة"
+page_range = "الصفحة {current} من {total}"
 
 [hikari.form]
 submit = "إرسال"
@@ -44,3 +47,7 @@ alt_fallback = "صورة"
 [hikari.dialog]
 close = "إغلاق"
 confirm = "تأكيد"
+
+[hikari.user_guide]
+finish = "إنهاء"
+next = "التالي"

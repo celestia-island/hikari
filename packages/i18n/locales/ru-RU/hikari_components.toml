@@ -13,6 +13,9 @@ prev = "Назад"
 next = "Далее"
 page = "Страница"
 of = "из"
+jump_to_page = "Перейти к странице"
+page_placeholder = "Страница"
+page_range = "Страница {current} из {total}"
 
 [hikari.form]
 submit = "Отправить"
@@ -44,3 +47,7 @@ alt_fallback = "Изображение"
 [hikari.dialog]
 close = "Закрыть"
 confirm = "Подтвердить"
+
+[hikari.user_guide]
+finish = "Завершить"
+next = "Далее"

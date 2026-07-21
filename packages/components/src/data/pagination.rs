@@ -1,6 +1,7 @@
 // hi-components/src/data/pagination.rs
 // Pagination component with Arknights + FUI styling
 
+use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
@@ -291,7 +292,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 style: "padding: 20px; min-width: 200px;",
                 div {
                     style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
-                    "Jump to Page"
+                    { t("hikari.pagination.jump_to_page", "Jump to Page") }
                 }
 
                 div {
@@ -301,7 +302,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         size: InputSize::Medium,
                         input_type: Some("number".to_string()),
                         value: Some(jump_to_for_modal1.get()),
-                        placeholder: Some("Page".to_string()),
+                        placeholder: Some(t("hikari.pagination.page_placeholder", "Page")),
                         autofocus: true,
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
@@ -331,7 +332,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                 div {
                     style: "font-size: 12px; color: var(--hi-color-text-secondary);",
-                    "Page 1 to {total_pages}"
+                    {{
+                        let tr = t("hikari.pagination.page_range", "Page {current} to {total}");
+                        tr.replace("{current}", "1").replace("{total}", &total_pages.to_string())
+                    }}
                 }
             }
         }
@@ -360,7 +364,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                 style: "padding: 20px; min-width: 200px;",
                 div {
                     style: "font-weight: 600; margin-bottom: 16px; font-size: 14px;",
-                    "Jump to Page"
+                    { t("hikari.pagination.jump_to_page", "Jump to Page") }
                 }
 
                 div {
@@ -370,7 +374,7 @@ pub fn Pagination(props: PaginationProps) -> Element {
                         size: InputSize::Medium,
                         input_type: Some("number".to_string()),
                         value: Some(jump_to_for_modal2.get()),
-                        placeholder: Some("Page".to_string()),
+                        placeholder: Some(t("hikari.pagination.page_placeholder", "Page")),
                         autofocus: true,
                         oninput: Some(EventHandler::new(move |val: String| {
                             if let Ok(v) = val.parse::<u32>()
@@ -400,7 +404,10 @@ pub fn Pagination(props: PaginationProps) -> Element {
 
                 div {
                     style: "font-size: 12px; color: var(--hi-color-text-secondary);",
-                    "Page 1 to {total_pages}"
+                    {{
+                        let tr = t("hikari.pagination.page_range", "Page {current} to {total}");
+                        tr.replace("{current}", "1").replace("{total}", &total_pages.to_string())
+                    }}
                 }
             }
         }

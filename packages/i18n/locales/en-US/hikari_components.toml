@@ -16,6 +16,9 @@ prev = "Previous"
 next = "Next"
 page = "Page"
 of = "of"
+jump_to_page = "Jump to Page"
+page_placeholder = "Page"
+page_range = "Page {current} to {total}"
 
 [hikari.form]
 submit = "Submit"
@@ -47,3 +50,7 @@ alt_fallback = "Image"
 [hikari.dialog]
 close = "Close"
 confirm = "Confirm"
+
+[hikari.user_guide]
+finish = "Finish"
+next = "Next"

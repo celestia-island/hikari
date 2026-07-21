@@ -13,6 +13,9 @@ prev = "前へ"
 next = "次へ"
 page = "ページ"
 of = "/"
+jump_to_page = "ページにジャンプ"
+page_placeholder = "ページ"
+page_range = "{current} / {total} ページ"
 
 [hikari.form]
 submit = "送信"
@@ -44,3 +47,7 @@ alt_fallback = "画像"
 [hikari.dialog]
 close = "閉じる"
 confirm = "確認"
+
+[hikari.user_guide]
+finish = "完了"
+next = "次へ"

@@ -125,7 +125,7 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
     for name in &requested {
         let Some(&(_, file)) = KNOWN_COLLECTIONS.iter().find(|(n, _)| n == name) else {
             panic!(
-                "hikari-palette: unknown collection '{name}' in [workspace.metadata.hikari.palette].collections. \
+                "hk-palette: unknown collection '{name}' in [workspace.metadata.hikari.palette].collections. \
                  Known: {}",
                 KNOWN_COLLECTIONS
                     .iter()
@@ -142,10 +142,10 @@ fn generate_collections(manifest_dir: &str, out_dir: &str) {
         // (b) Generate the const block from the TOML.
         let toml_path = Path::new(manifest_dir).join("data").join(file);
         let Ok(content) = fs::read_to_string(&toml_path) else {
-            panic!("hikari-palette: collection '{name}' is requested but data/{file} is missing");
+            panic!("hk-palette: collection '{name}' is requested but data/{file} is missing");
         };
         let colors = parse_color_toml(&content)
-            .unwrap_or_else(|e| panic!("hikari-palette: failed to parse {file}: {e}"));
+            .unwrap_or_else(|e| panic!("hk-palette: failed to parse {file}: {e}"));
         emit_collection_module(name, &colors, &collections_dir.join(format!("{name}.rs")));
         println!(
             "cargo:warning=collection '{name}' — {} colors",
@@ -311,7 +311,7 @@ fn emit_collection_module(name: &str, colors: &[ColorEntry], dest: &Path) {
 ///     // …
 ///     ($name:literal) => {
 ///         compile_error!(concat!(
-///             "hikari-palette: unknown color '", $name,
+///             "hk-palette: unknown color '", $name,
 ///             "'. Enable a collection in [workspace.metadata.hikari.palette].collections."
 ///         ))
 ///     };
@@ -330,7 +330,7 @@ fn emit_color_macro(enabled: &[(&str, Vec<ColorEntry>)], dest: &Path) {
              macro_rules! color {{\n\
              \x20   ($name:literal) => {{\n\
              \x20       compile_error!(concat!(\n\
-             \x20           \"hikari-palette: color!('\", $name, \"') is unavailable — \",\n\
+             \x20           \"hk-palette: color!('\", $name, \"') is unavailable — \",\n\
              \x20           \"no collections enabled. Add one in [workspace.metadata.hikari.palette].collections.\"\n\
              \x20       ))\n\
              \x20   }};\n\
@@ -366,7 +366,7 @@ fn emit_color_macro(enabled: &[(&str, Vec<ColorEntry>)], dest: &Path) {
         f,
         "    ($name:literal) => {{\n\
          \x20       compile_error!(concat!(\n\
-         \x20           \"hikari-palette: color!('\", $name, \"') is not in any enabled collection. \",\n\
+         \x20           \"hk-palette: color!('\", $name, \"') is not in any enabled collection. \",\n\
          \x20           \"Enable one in [workspace.metadata.hikari.palette].collections.\"\n\
          \x20       ))\n\
          \x20   }};\n\
@@ -458,8 +458,8 @@ fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
         };
 
         let group_name = stem.replace('-', "_");
-        let prefix = format!("hi-{stem}-");
-        let hikari_prefix = format!("hikari-{stem}-");
+        let prefix = format!("hk-{stem}-");
+        let hikari_prefix = format!("hk-{stem}-");
 
         let classes = extract_classes(&content, &prefix, &hikari_prefix);
         if classes.is_empty() {
@@ -498,8 +498,8 @@ fn extract_classes(scss: &str, prefix: &str, hikari_prefix: &str) -> Vec<String>
 
 fn class_to_variant(class: &str) -> String {
     let stripped = class
-        .strip_prefix("hi-")
-        .or_else(|| class.strip_prefix("hikari-"))
+        .strip_prefix("hk-")
+        .or_else(|| class.strip_prefix("hk-"))
         .unwrap_or(class);
     stripped
         .split('-')

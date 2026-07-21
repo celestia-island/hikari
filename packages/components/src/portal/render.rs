@@ -507,7 +507,7 @@ fn DropdownPortalEntry(
                         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                if element_closest(&target_el, ".hk-menu-item").is_some() {
                                     close_dropdown_for_content.call(e);
                                 }
                             }
@@ -547,7 +547,7 @@ fn ToastPortalEntry(
 
     rsx! {
         div {
-            class: "hi-toast",
+            class: "hk-toast",
             style: "{position_style} z-index: {z_index}; pointer-events: auto;",
             {children}
         }
@@ -770,7 +770,7 @@ fn PopoverPortalEntry(
     let backdrop = if close_on_click_outside {
         rsx! {
             div {
-                class: "hi-popover-backdrop",
+                class: "hk-popover-backdrop",
                 style: backdrop_style,
                 onclick: handle_close,
             }
@@ -812,7 +812,7 @@ fn PopoverPortalEntry(
                         #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                         {
                             if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                                if element_closest(&target_el, ".hi-menu-item").is_some() {
+                                if element_closest(&target_el, ".hk-menu-item").is_some() {
                                     close_popover_for_content.call(e);
                                     if let Some(handler) = on_close_for_content.as_ref() {
                                         handler.call(());
@@ -915,7 +915,7 @@ fn TooltipPortalEntry(
     // Build arrow element outside rsx!
     let arrow_el = if arrow {
         rsx! {
-            div { class: "hi-tooltip-arrow" }
+            div { class: "hk-tooltip-arrow" }
         }
     } else {
         VNode::empty()

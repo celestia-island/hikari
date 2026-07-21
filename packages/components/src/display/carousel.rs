@@ -234,7 +234,7 @@ pub fn Carousel(props: CarouselProps) -> Element {
 impl StyledComponent for CarouselComponent {
     fn styles() -> &'static str {
         r#"
-.hi-carousel {
+.hk-carousel {
     position: relative;
     width: 100%;
     overflow: hidden;
@@ -242,16 +242,16 @@ impl StyledComponent for CarouselComponent {
     background-color: var(--hi-color-bg-container);
 }
 
-[data-theme="dark"] .hi-carousel {
+[data-theme="dark"] .hk-carousel {
     background-color: var(--hi-surface);
 }
 
-.hi-carousel-track {
+.hk-carousel-track {
     display: flex;
     transition: transform 0.3s ease-in-out;
 }
 
-.hi-carousel-arrow {
+.hk-carousel-arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -270,37 +270,37 @@ impl StyledComponent for CarouselComponent {
     z-index: 10;
 }
 
-.hi-carousel-arrow:hover {
+.hk-carousel-arrow:hover {
     background-color: rgba(0, 0, 0, 0.7);
 }
 
-.hi-carousel-arrow:disabled {
+.hk-carousel-arrow:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 
-.hi-carousel-arrow-prev {
+.hk-carousel-arrow-prev {
     left: 16px;
 }
 
-.hi-carousel-arrow-next {
+.hk-carousel-arrow-next {
     right: 16px;
 }
 
-.hi-carousel-indicators {
+.hk-carousel-indicators {
     position: absolute;
     display: flex;
     gap: 8px;
     z-index: 10;
 }
 
-.hi-carousel-indicators-dots {
+.hk-carousel-indicators-dots {
     bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
 }
 
-.hi-carousel-indicators-line {
+.hk-carousel-indicators-line {
     bottom: 0;
     left: 0;
     right: 0;
@@ -308,11 +308,11 @@ impl StyledComponent for CarouselComponent {
     background-color: rgba(0, 0, 0, 0.2);
 }
 
-.hi-carousel-indicators-hidden {
+.hk-carousel-indicators-hidden {
     display: none;
 }
 
-.hi-carousel-dot {
+.hk-carousel-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -322,16 +322,16 @@ impl StyledComponent for CarouselComponent {
     transition: all 0.2s ease;
 }
 
-.hi-carousel-dot:hover {
+.hk-carousel-dot:hover {
     background-color: rgba(255, 255, 255, 0.8);
 }
 
-.hi-carousel-dot-active {
+.hk-carousel-dot-active {
     background-color: var(--hi-color-primary);
     transform: scale(1.2);
 }
 
-.hi-carousel-pause {
+.hk-carousel-pause {
     position: absolute;
     bottom: 16px;
     right: 16px;
@@ -350,7 +350,7 @@ impl StyledComponent for CarouselComponent {
     z-index: 10;
 }
 
-.hi-carousel-pause:hover {
+.hk-carousel-pause:hover {
     background-color: rgba(0, 0, 0, 0.7);
 }
 "#

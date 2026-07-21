@@ -67,7 +67,7 @@ pub fn Container(props: ContainerProps) -> Element {
         .add_if(ContainerClass::Centered, || props.center);
 
     if is_rtl {
-        builder = builder.add_raw("hi-container-rtl");
+        builder = builder.add_raw("hk-container-rtl");
     }
 
     let container_classes = builder.add_raw(&props.class).build();
@@ -96,35 +96,35 @@ pub struct ContainerComponent;
 impl crate::styled::StyledComponent for ContainerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-container {
+.hk-container {
   width: 80%;
   margin-left: 10%;
   margin-right: 10%;
   box-sizing: border-box;
 }
 
-.hi-container-centered {
+.hk-container-centered {
   margin-left: auto;
   margin-right: auto;
 }
 
-.hi-container-sm {
+.hk-container-sm {
   max-width: 640px;
 }
 
-.hi-container-md {
+.hk-container-md {
   max-width: 960px;
 }
 
-.hi-container-lg {
+.hk-container-lg {
   max-width: 1200px;
 }
 
-.hi-container-xl {
+.hk-container-xl {
   max-width: 1400px;
 }
 
-[data-theme="dark"] .hi-container {
+[data-theme="dark"] .hk-container {
   background: var(--hi-surface);
 }
 "#

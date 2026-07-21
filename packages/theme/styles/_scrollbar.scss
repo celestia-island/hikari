@@ -3,8 +3,8 @@
 // This hides native scrollbars and provides CSS for the overlay track/thumb
 // that a JS component (or lagrange's vanilla JS) creates imperatively.
 
-// Hide native scrollbar on any element with .hi-scroll-container
-.hi-scroll-container {
+// Hide native scrollbar on any element with .hk-scroll-container
+.hk-scroll-container {
   overflow: auto;
   scrollbar-width: none !important;
 
@@ -14,7 +14,7 @@
 }
 
 // Overlay scrollbar track (vertical)
-.hi-obs-track {
+.hk-obs-track {
   position: absolute;
   top: var(--hi-scroll-inset, 4px);
   bottom: var(--hi-scroll-inset, 4px);
@@ -27,7 +27,7 @@
   opacity: 0;
 
   &:hover,
-  &.hi-obs-active {
+  &.hk-obs-active {
     width: var(--hi-scroll-size-hover, 14px);
     opacity: 1;
     pointer-events: auto;
@@ -35,7 +35,7 @@
 }
 
 // Overlay scrollbar thumb (vertical)
-.hi-obs-thumb {
+.hk-obs-thumb {
   position: absolute;
   right: 2px;
   width: var(--hi-scroll-thumb, 4px);
@@ -57,7 +57,7 @@
 }
 
 // Horizontal scrollbar track
-.hi-obs-track-horizontal {
+.hk-obs-track-horizontal {
   position: absolute;
   left: var(--hi-scroll-inset, 4px);
   right: var(--hi-scroll-inset, 4px);
@@ -69,14 +69,14 @@
   transition: height var(--hi-duration-short, 0.15s), opacity var(--hi-duration-short, 0.15s);
 
   &:hover,
-  &.hi-obs-active {
+  &.hk-obs-active {
     height: var(--hi-scroll-size-hover, 14px);
     opacity: 1;
     pointer-events: auto;
   }
 }
 
-.hi-obs-thumb-horizontal {
+.hk-obs-thumb-horizontal {
   position: absolute;
   bottom: 2px;
   height: var(--hi-scroll-thumb, 4px);

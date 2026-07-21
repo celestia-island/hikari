@@ -184,7 +184,7 @@ impl VideoPlayerState {
 
     #[must_use]
     pub fn class_string(&self) -> String {
-        let base = "hi-video-player";
+        let base = "hk-video-player";
         if self.class.is_empty() {
             base.to_string()
         } else {
@@ -224,13 +224,13 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
     if let Some(title) = &state.title {
         container_children.push(VNode::Element(
             VElement::new("div")
-                .class("hi-video-title")
+                .class("hk-video-title")
                 .child(VNode::Text(VText::new(title.as_str()))),
         ));
     }
 
     let mut video = VElement::new("video")
-        .class("hi-video-element")
+        .class("hk-video-element")
         .attr("src", &state.src);
 
     if !state.poster.is_empty() {
@@ -249,7 +249,7 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
 
     container_children.push(VNode::Element(
         VElement::new("div")
-            .class("hi-video-wrapper")
+            .class("hk-video-wrapper")
             .child(VNode::Element(video)),
     ));
 
@@ -261,38 +261,38 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
         let progress_style = format!("width: {}%;", state.progress_percent());
 
         let controls = VElement::new("div")
-            .class("hi-video-controls")
+            .class("hk-video-controls")
             .child(VNode::Element(
                 VElement::new("button")
-                    .class("hi-video-control-btn")
+                    .class("hk-video-control-btn")
                     .attr("aria-label", play_label)
                     .attr("data-action", "toggle-play")
                     .child(VNode::Text(VText::new(play_icon))),
             ))
             .child(VNode::Element(
                 VElement::new("div")
-                    .class("hi-video-progress")
+                    .class("hk-video-progress")
                     .child(VNode::Element(
                         VElement::new("div")
-                            .class("hi-video-progress-bar")
+                            .class("hk-video-progress-bar")
                             .style(progress_style.as_str()),
                     )),
             ))
             .child(VNode::Element(
                 VElement::new("span")
-                    .class("hi-video-time")
+                    .class("hk-video-time")
                     .child(VNode::Text(VText::new(&state.formatted_progress()))),
             ))
             .child(VNode::Element(
                 VElement::new("button")
-                    .class("hi-video-control-btn")
+                    .class("hk-video-control-btn")
                     .attr("aria-label", if state.is_muted { "Unmute" } else { "Mute" })
                     .attr("data-action", "toggle-mute")
                     .child(VNode::Text(VText::new(mute_icon))),
             ))
             .child(VNode::Element(
                 VElement::new("button")
-                    .class("hi-video-control-btn")
+                    .class("hk-video-control-btn")
                     .attr("aria-label", "Fullscreen")
                     .attr("data-action", "toggle-fullscreen")
                     .child(VNode::Text(VText::new("Fullscreen"))),
@@ -309,13 +309,13 @@ pub fn render_video_player(state: &VideoPlayerState) -> VNode {
 }
 
 pub const VIDEO_PLAYER_STYLES: &str = r#"
-.hi-video-player {
+.hk-video-player {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
 }
 
-.hi-video-container {
+.hk-video-container {
   position: relative;
   background: var(--hi-surface);
   border-radius: 8px;
@@ -323,12 +323,12 @@ pub const VIDEO_PLAYER_STYLES: &str = r#"
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-[data-theme="dark"] .hi-video-container {
+[data-theme="dark"] .hk-video-container {
   background: var(--hi-background);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.hi-video-title {
+.hk-video-title {
   padding: 12px 16px;
   font-size: 16px;
   font-weight: 600;
@@ -336,23 +336,23 @@ pub const VIDEO_PLAYER_STYLES: &str = r#"
   border-bottom: 1px solid var(--hi-border);
 }
 
-[data-theme="dark"] .hi-video-title {
+[data-theme="dark"] .hk-video-title {
   color: var(--hi-text-primary);
   border-bottom-color: var(--hi-border);
 }
 
-.hi-video-wrapper {
+.hk-video-wrapper {
   position: relative;
   width: 100%;
 }
 
-.hi-video-element {
+.hk-video-element {
   width: 100%;
   display: block;
   background-color: #000;
 }
 
-.hi-video-controls {
+.hk-video-controls {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -361,23 +361,23 @@ pub const VIDEO_PLAYER_STYLES: &str = r#"
   border-top: 1px solid var(--hi-border);
 }
 
-[data-theme="dark"] .hi-video-controls {
+[data-theme="dark"] .hk-video-controls {
   background: var(--hi-background);
   border-top-color: var(--hi-border);
 }
 
-.hi-video-time {
+.hk-video-time {
   font-size: 14px;
   color: var(--hi-text-secondary);
   min-width: 100px;
   text-align: center;
 }
 
-[data-theme="dark"] .hi-video-time {
+[data-theme="dark"] .hk-video-time {
   color: var(--hi-text-secondary);
 }
 
-.hi-video-progress {
+.hk-video-progress {
   flex: 1;
   height: 4px;
   background: var(--hi-border);
@@ -386,7 +386,7 @@ pub const VIDEO_PLAYER_STYLES: &str = r#"
   cursor: pointer;
 }
 
-.hi-video-progress-bar {
+.hk-video-progress-bar {
   height: 100%;
   background: var(--hi-color-primary);
   transition: width 0.1s linear;
@@ -505,10 +505,10 @@ mod tests {
     #[test]
     fn test_class_string() {
         let state = VideoPlayerState::new("video.mp4");
-        assert_eq!(state.class_string(), "hi-video-player");
+        assert_eq!(state.class_string(), "hk-video-player");
 
         let state = VideoPlayerState::new("video.mp4").with_class("custom");
-        assert_eq!(state.class_string(), "hi-video-player custom");
+        assert_eq!(state.class_string(), "hk-video-player custom");
     }
 
     #[test]

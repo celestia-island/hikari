@@ -68,40 +68,40 @@ pub fn Tabs(props: TabsProps) -> Element {
     use_context_provider(|| active_key);
 
     let position_class = match props.tab_position {
-        TabPosition::Top => "hi-tabs-top",
-        TabPosition::Right => "hi-tabs-right",
-        TabPosition::Bottom => "hi-tabs-bottom",
-        TabPosition::Left => "hi-tabs-left",
+        TabPosition::Top => "hk-tabs-top",
+        TabPosition::Right => "hk-tabs-right",
+        TabPosition::Bottom => "hk-tabs-bottom",
+        TabPosition::Left => "hk-tabs-left",
     };
 
     let animated_class = if props.animated {
-        "hi-tabs-animated"
+        "hk-tabs-animated"
     } else {
         ""
     };
 
     rsx! {
         div {
-            class: format!("hi-tabs {position_class} {animated_class} {}", props.class),
+            class: format!("hk-tabs {position_class} {animated_class} {}", props.class),
 
             div {
-                class: "hi-tabs-nav",
+                class: "hk-tabs-nav",
 
                 div {
-                    class: "hi-tabs-nav-list",
+                    class: "hk-tabs-nav-list",
                     role: "tablist",
 
                     { props.children.clone() }
                 }
 
                 div {
-                    class: "hi-tabs-ink-bar",
+                    class: "hk-tabs-ink-bar",
                     style: "transform: translateX(...)",
                 }
             }
 
             div {
-                class: "hi-tabs-content",
+                class: "hk-tabs-content",
                 role: "tabpanel",
 
                 { props.children }
@@ -152,10 +152,10 @@ pub fn TabPane(props: TabPaneProps) -> Element {
             "aria-disabled": props.disabled,
 
             if let Some(icon) = props.icon {
-                span { class: "hi-tabs-tab-icon", {icon} }
+                span { class: "hk-tabs-tab-icon", {icon} }
             }
 
-            span { class: "hi-tabs-tab-label", "{props.tab}" }
+            span { class: "hk-tabs-tab-label", "{props.tab}" }
         }
     };
 

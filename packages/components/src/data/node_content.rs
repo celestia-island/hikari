@@ -36,9 +36,9 @@ pub fn TreeNodeContent(props: TreeNodeContentProps) -> Element {
     let indentation_style = format!("padding-left: {}px;", props.level * 24);
 
     let classes = if props.disabled {
-        "hi-tree-node-content hi-tree-node-disabled"
+        "hk-tree-node-content hi-tree-node-disabled"
     } else {
-        "hi-tree-node-content"
+        "hk-tree-node-content"
     };
 
     let full_class = if props.class.is_empty() {

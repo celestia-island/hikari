@@ -23,19 +23,19 @@ export default defineComponent({
     }
 
     const contentCls = computed(() => [
-      "hi-collapse-content",
-      isOpen.value ? "hi-collapse-expanded" : "",
+      "hk-collapse-content",
+      isOpen.value ? "hk-collapse-expanded" : "",
     ]);
 
     return () => (
-      <div class="hi-collapse">
-        <div class="hi-collapse-header" onClick={toggle}>
-          <span class="hi-collapse-arrow" style={{ transform: isOpen.value ? "rotate(90deg)" : "rotate(0deg)" }}>
+      <div class="hk-collapse">
+        <div class="hk-collapse-header" onClick={toggle}>
+          <span class="hk-collapse-arrow" style={{ transform: isOpen.value ? "rotate(90deg)" : "rotate(0deg)" }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </span>
-          <div class="hi-collapse-header-content">
+          <div class="hk-collapse-header-content">
             {slots.title ? slots.title() : props.title ? <span>{props.title}</span> : null}
           </div>
         </div>

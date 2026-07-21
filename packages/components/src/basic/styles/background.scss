@@ -1,4 +1,4 @@
-.hi-background {
+.hk-background {
   position: fixed;
   top: 0;
   left: 0;
@@ -9,7 +9,7 @@
   overflow: hidden;
 
   /* Hikari theme (light) */
-  &[data-theme="hikari"] &__gradient {
+  &[data-theme="hikari"] &-gradient {
     background: radial-gradient(
       circle at center,
       rgba(245, 245, 245, 0.9) 0%,
@@ -20,7 +20,7 @@
   }
 
   /* Tairitsu theme (dark) */
-  &[data-theme="tairitsu"] &__gradient {
+  &[data-theme="tairitsu"] -gradient {
     background: radial-gradient(
       circle at center,
       rgba(25, 35, 55, 0.95) 0%,
@@ -31,7 +31,7 @@
   }
 }
 
-.hi-background__gradient {
+.hk-background-gradient {
   position: absolute;
   width: 150vw;
   height: 150vh;
@@ -40,7 +40,7 @@
   will-change: transform;
 
   /* Hikari theme (light) */
-  .hi-background[data-theme="hikari"] & {
+  .hk-background[data-theme="hikari"] & {
     background: radial-gradient(
       circle at center,
       rgba(245, 245, 245, 0.9) 0%,
@@ -52,7 +52,7 @@
   }
 
   /* Tairitsu theme (dark) */
-  .hi-background[data-theme="tairitsu"] & {
+  .hk-background[data-theme="tairitsu"] & {
     background: radial-gradient(
       circle at center,
       rgba(25, 35, 55, 0.95) 0%,

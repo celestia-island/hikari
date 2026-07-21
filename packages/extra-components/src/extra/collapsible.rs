@@ -101,17 +101,17 @@ impl CollapsibleState {
     /// Get the CSS position class name
     pub fn position_class(&self) -> &'static str {
         match self.position {
-            CollapsiblePosition::Left => "hi-collapsible-left",
-            CollapsiblePosition::Right => "hi-collapsible-right",
+            CollapsiblePosition::Left => "hk-collapsible-left",
+            CollapsiblePosition::Right => "hk-collapsible-right",
         }
     }
 
     /// Get the state class name
     pub fn state_class(&self) -> &'static str {
         if self.expanded {
-            "hi-collapsible-expanded"
+            "hk-collapsible-expanded"
         } else {
-            "hi-collapsible-collapsed"
+            "hk-collapsible-collapsed"
         }
     }
 }
@@ -167,10 +167,10 @@ mod tests {
     #[test]
     fn test_position_class() {
         let state = CollapsibleState::new("Test".to_string());
-        assert_eq!(state.position_class(), "hi-collapsible-left");
+        assert_eq!(state.position_class(), "hk-collapsible-left");
 
         let state = state.with_position(CollapsiblePosition::Right);
-        assert_eq!(state.position_class(), "hi-collapsible-right");
+        assert_eq!(state.position_class(), "hk-collapsible-right");
     }
 
     #[test]

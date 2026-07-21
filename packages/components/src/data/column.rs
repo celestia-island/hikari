@@ -154,19 +154,19 @@ impl ColumnDef {
 
     pub fn align_class(&self) -> &'static str {
         match self.align {
-            ColumnAlign::Left => "hi-align-left",
-            ColumnAlign::Center => "hi-align-center",
-            ColumnAlign::Right => "hi-align-right",
+            ColumnAlign::Left => "hk-align-left",
+            ColumnAlign::Center => "hk-align-center",
+            ColumnAlign::Right => "hk-align-right",
         }
     }
 
     pub fn fixed_class(&self) -> &'static str {
-        if self.fixed { "hi-column-fixed" } else { "" }
+        if self.fixed { "hk-column-fixed" } else { "" }
     }
 
     pub fn sortable_class(&self) -> &'static str {
         if self.sortable {
-            "hi-column-sortable"
+            "hk-column-sortable"
         } else {
             ""
         }
@@ -174,7 +174,7 @@ impl ColumnDef {
 
     pub fn resizable_class(&self) -> &'static str {
         if self.resizable {
-            "hi-column-resizable"
+            "hk-column-resizable"
         } else {
             ""
         }

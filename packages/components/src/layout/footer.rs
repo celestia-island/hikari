@@ -34,7 +34,7 @@ pub struct FooterComponent;
 impl crate::styled::StyledComponent for FooterComponent {
     fn styles() -> &'static str {
         r#"
-.hi-footer {
+.hk-footer {
   width: 100%;
   padding: 24px 16px;
   background: var(--hi-surface);
@@ -44,7 +44,7 @@ impl crate::styled::StyledComponent for FooterComponent {
   font-size: 14px;
 }
 
-[data-theme="dark"] .hi-footer {
+[data-theme="dark"] .hk-footer {
   background: var(--hi-background);
   border-top-color: var(--hi-border);
   color: var(--hi-text-secondary);

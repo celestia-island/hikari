@@ -33,9 +33,9 @@ export default defineComponent({
       return (
         <div class="hk-selection-waterfall">
           {props.groupTitle && (
-            <h4 class="hk-selection-waterfall__title">{props.groupTitle}</h4>
+            <h4 class="hk-selection-waterfall-title">{props.groupTitle}</h4>
           )}
-          <div class="hk-selection-waterfall__flow">
+          <div class="hk-selection-waterfall-flow">
             {props.items.map((item) => {
               const isSelected = props.multi
                 ? props.selectedIds.includes(item.id)
@@ -47,7 +47,7 @@ export default defineComponent({
                   key={item.id}
                   role="button"
                   tabindex={0}
-                  class="hk-selection-waterfall__item"
+                  class="hk-selection-waterfall-item"
                   data-selected={isSelected || undefined}
                   aria-selected={isSelected}
                   onClick={() => emit("select", item)}
@@ -59,23 +59,23 @@ export default defineComponent({
                   }}
                 >
                   {isSelected && (
-                    <span class="hk-selection-waterfall__check">
+                    <span class="hk-selection-waterfall-check">
                       <Check size={10} />
                     </span>
                   )}
-                  <span class="hk-selection-waterfall__name">
+                  <span class="hk-selection-waterfall-name">
                     {item.title}
                   </span>
                   {item.tag && (
                     <span
-                      class="hk-selection-waterfall__tag"
+                      class="hk-selection-waterfall-tag"
                       data-variant={item.tagVariant || undefined}
                     >
                       {item.tag}
                     </span>
                   )}
                   {item.description && (
-                    <span class="hk-selection-waterfall__desc">
+                    <span class="hk-selection-waterfall-desc">
                       {item.description}
                     </span>
                   )}

@@ -4,13 +4,13 @@
   align-items: center;
 }
 
-.hk-hover-reveal__main {
+.hk-hover-reveal-main {
   display: inline-flex;
   align-items: center;
   min-width: 0;
 }
 
-.hk-hover-reveal__extension {
+.hk-hover-reveal-extension {
   position: absolute;
   display: inline-flex;
   align-items: center;
@@ -21,45 +21,45 @@
     transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.hk-hover-reveal[data-placement="right"] > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="right"] > .hk-hover-reveal-extension {
   left: 100%;
   top: 50%;
   transform: translate(-4px, -50%);
 }
-.hk-hover-reveal[data-placement="right"].is-revealed > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="right"].is-revealed > .hk-hover-reveal-extension {
   opacity: 1;
   pointer-events: auto;
   transform: translate(4px, -50%);
 }
 
-.hk-hover-reveal[data-placement="left"] > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="left"] > .hk-hover-reveal-extension {
   right: 100%;
   top: 50%;
   transform: translate(4px, -50%);
 }
-.hk-hover-reveal[data-placement="left"].is-revealed > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="left"].is-revealed > .hk-hover-reveal-extension {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-4px, -50%);
 }
 
-.hk-hover-reveal[data-placement="bottom"] > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="bottom"] > .hk-hover-reveal-extension {
   left: 50%;
   top: 100%;
   transform: translate(-50%, -4px);
 }
-.hk-hover-reveal[data-placement="bottom"].is-revealed > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="bottom"].is-revealed > .hk-hover-reveal-extension {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, 4px);
 }
 
-.hk-hover-reveal[data-placement="top"] > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="top"] > .hk-hover-reveal-extension {
   left: 50%;
   bottom: 100%;
   transform: translate(-50%, 4px);
 }
-.hk-hover-reveal[data-placement="top"].is-revealed > .hk-hover-reveal__extension {
+.hk-hover-reveal[data-placement="top"].is-revealed > .hk-hover-reveal-extension {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, -4px);

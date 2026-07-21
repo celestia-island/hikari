@@ -185,17 +185,17 @@ pub fn Button(props: ButtonProps) -> Element {
             },
 
             if props.loading {
-                span { class: "hi-button-spinner", "" }
+                span { class: "hk-button-spinner", "" }
             }
 
             if let Some(icon) = props.icon {
-                span { class: "hi-button-icon", "data-button-icon": "true", {icon} }
+                span { class: "hk-button-icon", "data-button-icon": "true", {icon} }
             }
 
             {props.children}
 
             if let Some(suffix) = props.suffix {
-                span { class: "hi-button-suffix", "data-button-suffix": "true", {suffix} }
+                span { class: "hk-button-suffix", "data-button-suffix": "true", {suffix} }
             }
         }
     };

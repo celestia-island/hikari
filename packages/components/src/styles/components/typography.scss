@@ -11,7 +11,7 @@
 // Base Typography
 // ============================================
 
-.hi-typography {
+.hk-typography {
     font-family: vars.$hikari-font-family-sans;
     color: var(--hi-color-text-primary);
     line-height: 1.5;
@@ -22,40 +22,40 @@
 // Heading Variants (H1–H6)
 // ============================================
 
-.hi-typography-h1 {
+.hk-typography-h1 {
     font-size: vars.$hikari-font-size-3xl;
     font-weight: 600;
     line-height: 1.25;
     margin-bottom: vars.$hikari-spacing-md;
 }
 
-.hi-typography-h2 {
+.hk-typography-h2 {
     font-size: vars.$hikari-font-size-2xl;
     font-weight: 600;
     line-height: 1.25;
     margin-bottom: vars.$hikari-spacing-md;
 }
 
-.hi-typography-h3 {
+.hk-typography-h3 {
     font-size: vars.$hikari-font-size-xl;
     font-weight: 600;
     line-height: 1.25;
     margin-bottom: vars.$hikari-spacing-md;
 }
 
-.hi-typography-h4 {
+.hk-typography-h4 {
     font-size: vars.$hikari-font-size-lg;
     font-weight: 500;
     line-height: 1.35;
 }
 
-.hi-typography-h5 {
+.hk-typography-h5 {
     font-size: vars.$hikari-font-size-base;
     font-weight: 500;
     line-height: 1.5;
 }
 
-.hi-typography-h6 {
+.hk-typography-h6 {
     font-size: vars.$hikari-font-size-sm;
     font-weight: 500;
     line-height: 1.5;
@@ -65,7 +65,7 @@
 // Body Text
 // ============================================
 
-.hi-typography-body {
+.hk-typography-body {
     font-size: vars.$hikari-font-size-base;
     line-height: 1.5;
 }
@@ -74,7 +74,7 @@
 // Caption / Small Text
 // ============================================
 
-.hi-typography-caption {
+.hk-typography-caption {
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
     line-height: 1.5;
@@ -84,7 +84,7 @@
 // Inline Code
 // ============================================
 
-.hi-typography-code {
+.hk-typography-code {
     font-family: vars.$hikari-font-family-mono;
     font-size: 0.9em;
     padding: 0.15em 0.4em;
@@ -97,7 +97,7 @@
 // Muted Text
 // ============================================
 
-.hi-typography-muted {
+.hk-typography-muted {
     font-size: vars.$hikari-font-size-base;
     color: var(--hi-color-text-secondary);
     line-height: 1.5;
@@ -107,7 +107,7 @@
 // Overline
 // ============================================
 
-.hi-typography-overline {
+.hk-typography-overline {
     font-size: vars.$hikari-font-size-xs;
     font-weight: 500;
     text-transform: uppercase;

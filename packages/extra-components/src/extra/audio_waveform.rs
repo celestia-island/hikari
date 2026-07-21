@@ -183,16 +183,16 @@ impl AudioWaveformState {
     #[must_use]
     pub const fn color_class(&self) -> &'static str {
         match self.waveform_color {
-            WaveformColor::Primary => "hi-waveform-Primary",
-            WaveformColor::Success => "hi-waveform-Success",
-            WaveformColor::Warning => "hi-waveform-Warning",
-            WaveformColor::Danger => "hi-waveform-Danger",
+            WaveformColor::Primary => "hk-waveform-Primary",
+            WaveformColor::Success => "hk-waveform-Success",
+            WaveformColor::Warning => "hk-waveform-Warning",
+            WaveformColor::Danger => "hk-waveform-Danger",
         }
     }
 
     #[must_use]
     pub fn class_string(&self) -> String {
-        let base = format!("hi-audio-waveform {}", self.color_class());
+        let base = format!("hk-audio-waveform {}", self.color_class());
         if self.class.is_empty() {
             base
         } else {
@@ -245,7 +245,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
     ));
 
     let bars = state.waveform_bars();
-    let mut bars_container = VElement::new("div").class("hi-waveform-bars");
+    let mut bars_container = VElement::new("div").class("hk-waveform-bars");
 
     if !bars.is_empty() {
         let bar_nodes: Vec<VNode> = bars
@@ -253,7 +253,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
             .map(|(_i, amplitude)| {
                 VNode::Element(
                     VElement::new("div")
-                        .class("hi-waveform-bar")
+                        .class("hk-waveform-bar")
                         .attr("style", state.bar_style(*amplitude)),
                 )
             })
@@ -267,7 +267,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
                 let style = format!("height: {h}px; opacity: 0.3;");
                 VNode::Element(
                     VElement::new("div")
-                        .class("hi-waveform-bar hi-waveform-bar--placeholder")
+                        .class("hk-waveform-bar hi-waveform-bar--placeholder")
                         .attr("style", style),
                 )
             })
@@ -277,7 +277,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
 
     container_children.push(VNode::Element(
         VElement::new("div")
-            .class("hi-waveform-container")
+            .class("hk-waveform-container")
             .attr("data-action", "waveform-click")
             .child(VNode::Element(bars_container)),
     ));
@@ -293,27 +293,27 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
         );
 
         let controls = VElement::new("div")
-            .class("hi-audio-controls")
+            .class("hk-audio-controls")
             .child(VNode::Element(
                 VElement::new("button")
-                    .class("hi-audio-control-btn")
+                    .class("hk-audio-control-btn")
                     .attr("aria-label", play_label)
                     .attr("data-action", "toggle-play")
                     .child(VNode::Text(VText::new(play_icon))),
             ))
             .child(VNode::Element(
                 VElement::new("div")
-                    .class("hi-audio-progress")
+                    .class("hk-audio-progress")
                     .attr("data-action", "audio-seek")
                     .child(VNode::Element(
                         VElement::new("div")
-                            .class("hi-audio-progress-bar")
+                            .class("hk-audio-progress-bar")
                             .attr("style", format!("width: {progress_width};")),
                     )),
             ))
             .child(VNode::Element(
                 VElement::new("span")
-                    .class("hi-audio-time")
+                    .class("hk-audio-time")
                     .child(VNode::Text(VText::new(&time_display))),
             ));
 
@@ -328,7 +328,7 @@ pub fn render_audio_waveform(state: &AudioWaveformState) -> VNode {
 }
 
 pub const AUDIO_WAVEFORM_STYLES: &str = r#"
-.hi-audio-waveform {
+.hk-audio-waveform {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -338,12 +338,12 @@ pub const AUDIO_WAVEFORM_STYLES: &str = r#"
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-[data-theme="dark"] .hi-audio-waveform {
+[data-theme="dark"] .hk-audio-waveform {
   background: var(--hi-background);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.hi-waveform-container {
+.hk-waveform-container {
   margin: 16px 0;
   height: 120px;
   display: flex;
@@ -351,7 +351,7 @@ pub const AUDIO_WAVEFORM_STYLES: &str = r#"
   justify-content: center;
 }
 
-.hi-waveform-bars {
+.hk-waveform-bars {
   display: flex;
   align-items: flex-end;
   gap: 2px;
@@ -360,37 +360,37 @@ pub const AUDIO_WAVEFORM_STYLES: &str = r#"
   justify-content: center;
 }
 
-.hi-waveform-bar {
+.hk-waveform-bar {
   width: 8px;
   background: var(--hi-color-primary);
   border-radius: 2px;
   transition: all 0.2s ease;
 }
 
-.hi-waveform-Primary .hi-waveform-bar {
+.hk-waveform-Primary .hk-waveform-bar {
   background: var(--hi-color-primary);
 }
 
-.hi-waveform-Success .hi-waveform-bar {
+.hk-waveform-Success .hk-waveform-bar {
   background: var(--hi-color-success);
 }
 
-.hi-waveform-Warning .hi-waveform-bar {
+.hk-waveform-Warning .hk-waveform-bar {
   background: var(--hi-color-warning);
 }
 
-.hi-waveform-Danger .hi-waveform-bar {
+.hk-waveform-Danger .hk-waveform-bar {
   background: var(--hi-color-error);
 }
 
-.hi-audio-controls {
+.hk-audio-controls {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 0;
 }
 
-.hi-audio-progress {
+.hk-audio-progress {
   flex: 1;
   height: 4px;
   background: var(--hi-border);
@@ -398,24 +398,24 @@ pub const AUDIO_WAVEFORM_STYLES: &str = r#"
   overflow: hidden;
 }
 
-[data-theme="dark"] .hi-audio-progress {
+[data-theme="dark"] .hk-audio-progress {
   background: var(--hi-border);
 }
 
-.hi-audio-progress-bar {
+.hk-audio-progress-bar {
   height: 100%;
   background: var(--hi-color-primary);
   transition: width 0.1s linear;
 }
 
-.hi-audio-time {
+.hk-audio-time {
   font-size: 12px;
   color: var(--hi-text-secondary);
   min-width: 100px;
   text-align: center;
 }
 
-[data-theme="dark"] .hi-audio-time {
+[data-theme="dark"] .hk-audio-time {
   color: var(--hi-text-secondary);
 }
 "#;
@@ -529,8 +529,8 @@ mod tests {
             .with_color(WaveformColor::Success)
             .with_class("my-class");
         let class = state.class_string();
-        assert!(class.contains("hi-audio-waveform"));
-        assert!(class.contains("hi-waveform-Success"));
+        assert!(class.contains("hk-audio-waveform"));
+        assert!(class.contains("hk-waveform-Success"));
         assert!(class.contains("my-class"));
     }
 

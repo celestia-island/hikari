@@ -8,7 +8,7 @@
 // Modal Overlay Variables
 // ============================================
 
-.hi-modal-overlay {
+.hk-modal-overlay {
   // ============================================
   // 1. Color System
   // ============================================
@@ -28,7 +28,7 @@
 // Modal Container Variables
 // ============================================
 
-.hi-modal {
+.hk-modal {
   // ============================================
   // 1. Color System
   // ============================================
@@ -110,22 +110,22 @@
 // Size Variants
 // ============================================
 
-.hi-modal-sm {
+.hk-modal-sm {
   --hi-modal-width: 90%;
   --hi-modal-max-width: 400px;
 }
 
-.hi-modal-md {
+.hk-modal-md {
   --hi-modal-width: 90%;
   --hi-modal-max-width: 560px;
 }
 
-.hi-modal-lg {
+.hk-modal-lg {
   --hi-modal-width: 90%;
   --hi-modal-max-width: 720px;
 }
 
-.hi-modal-xl {
+.hk-modal-xl {
   --hi-modal-width: 95%;
   --hi-modal-max-width: 960px;
 }
@@ -134,7 +134,7 @@
 // Position Variants
 // ============================================
 
-.hi-modal-top {
+.hk-modal-top {
   --hi-modal-margin-top: 4rem;
 }
 
@@ -142,7 +142,7 @@
 // Transparent Overlay Variant
 // ============================================
 
-.hi-modal-overlay-transparent {
+.hk-modal-overlay-transparent {
   --hi-modal-overlay-bg: transparent;
   --hi-modal-overlay-blur: none;
 }

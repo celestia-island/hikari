@@ -31,12 +31,12 @@ export default defineComponent({
   setup(props, { slots, emit }) {
     return () => (
       <header class="hk-admin-header">
-        <div class="hk-admin-header__left">
+        <div class="hk-admin-header-left">
           {slots["menu-button"]?.()}
-          <span class="hk-admin-header__title">{props.title}</span>
+          <span class="hk-admin-header-title">{props.title}</span>
           {slots.actions?.()}
         </div>
-        <div class="hk-admin-header__right">
+        <div class="hk-admin-header-right">
           <HkButton
             variant="ghost"
             size="sm"
@@ -46,19 +46,19 @@ export default defineComponent({
             {sunMoonIcon}
           </HkButton>
           {props.authenticated ? (
-            <div class="hk-admin-header__user">
+            <div class="hk-admin-header-user">
               {props.avatarUrl ? (
                 <img
-                  class="hk-admin-header__avatar"
+                  class="hk-admin-header-avatar"
                   src={props.avatarUrl}
                   alt={props.username}
                 />
               ) : (
-                <div class="hk-admin-header__avatar-placeholder">
+                <div class="hk-admin-header-avatar-placeholder">
                   {props.username.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span class="hk-admin-header__username">{props.username}</span>
+              <span class="hk-admin-header-username">{props.username}</span>
               <HkButton variant="ghost" size="sm" onClick={() => emit("logout")}>
                 Logout
               </HkButton>

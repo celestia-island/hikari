@@ -88,7 +88,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> VNode {
 
     rsx! {
         div {
-            class: "hi-theme-provider",
+            class: "hk-theme-provider",
             "data-theme": palette_name,
             "data-language": props.language.as_str(),
             "dir": dir,

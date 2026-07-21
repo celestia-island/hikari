@@ -352,10 +352,10 @@ impl ButtonStateMachine {
     /// # Example
     ///
     /// ```ignore
-    /// // For a button with base class "hi-button"
+    /// // For a button with base class "hk-button"
     /// let class_suffix = sm.css_class_suffix();
     /// // Returns: "", "hover", "active", "focus", or "disabled"
-    /// // CSS: .hi-button, .hi-button:hover, .hi-button:active, etc.
+    /// // CSS: .hk-button, .hk-button:hover, .hk-button:active, etc.
     #[inline]
     pub fn css_class_suffix(&self) -> &'static str {
         match self.current_state {

@@ -11,7 +11,7 @@
 // Base Alert Styles
 // ============================================
 
-.hi-alert {
+.hk-alert {
   // Layout
   display: flex;
   align-items: flex-start;
@@ -37,7 +37,7 @@
   overflow: visible;
 
   // Icon
-  .hi-alert-icon {
+  .hk-alert-icon {
     flex-shrink: 0;
     width: 1.25rem;
     height: 1.25rem;
@@ -50,13 +50,13 @@
   }
 
   // Content wrapper
-  .hi-alert-content {
+  .hk-alert-content {
     flex: 1;
     min-width: 0;
   }
 
   // Title
-  .hi-alert-title {
+  .hk-alert-title {
     margin: 0 0 0.25rem 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
@@ -66,7 +66,7 @@
   }
 
   // Description
-  .hi-alert-description {
+  .hk-alert-description {
     margin: 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
@@ -76,7 +76,7 @@
   }
 
   // Close button - simple icon button, glow handled by wrapper
-  .hi-alert-close {
+  .hk-alert-close {
     flex-shrink: 0;
     align-self: flex-start;
     width: 1.25rem;
@@ -108,37 +108,37 @@
 // ============================================
 
 // Success (Green)
-.hi-alert-success {
+.hk-alert-success {
   border-left: 3px solid var(--hi-color-success);
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     color: var(--hi-color-success);
   }
 }
 
 // Info (Blue)
-.hi-alert-info {
+.hk-alert-info {
   border-left: 3px solid var(--hi-color-primary);
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     color: var(--hi-color-primary);
   }
 }
 
 // Warning (Yellow)
-.hi-alert-warning {
+.hk-alert-warning {
   border-left: 3px solid var(--hi-color-warning);
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     color: var(--hi-color-warning);
   }
 }
 
 // Error (Red)
-.hi-alert-error {
+.hk-alert-error {
   border-left: 3px solid var(--hi-color-danger);
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     color: var(--hi-color-danger);
   }
 }
@@ -148,33 +148,33 @@
 // ============================================
 
 // Solid variant - uses surface background, glow handled by wrapper
-.hi-alert-solid {
+.hk-alert-solid {
   // No static gradient - glow effect handled by GlowWrapper
 }
 
 // Outlined variant (transparent background, more prominent border)
-.hi-alert-outlined {
+.hk-alert-outlined {
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
 
-  &.hi-alert-success {
+  &.hk-alert-success {
     border: 2px solid var(--hi-glow-button-success);
     border-left-width: 3px;
   }
 
-  &.hi-alert-info {
+  &.hk-alert-info {
     border: 2px solid var(--hi-glow-button-info);
     border-left-width: 3px;
   }
 
-  &.hi-alert-warning {
+  &.hk-alert-warning {
     border: 2px solid var(--hi-glow-button-warning);
     border-left-width: 3px;
   }
 
-  &.hi-alert-error {
+  &.hk-alert-error {
     border: 2px solid var(--hi-glow-button-danger);
     border-left-width: 3px;
   }
@@ -184,40 +184,40 @@
 // Size Variants
 // ============================================
 
-.hi-alert-sm {
+.hk-alert-sm {
   padding: 0.75rem 1rem;
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     width: 1rem;
     height: 1rem;
   }
 
-  .hi-alert-title {
+  .hk-alert-title {
     font-size: 0.875rem;
   }
 
-  .hi-alert-description {
+  .hk-alert-description {
     font-size: 0.75rem;
   }
 }
 
-.hi-alert-md {
+.hk-alert-md {
   padding: 1rem 1.25rem;
 }
 
-.hi-alert-lg {
+.hk-alert-lg {
   padding: 1.25rem 1.5rem;
 
-  .hi-alert-icon {
+  .hk-alert-icon {
     width: 1.5rem;
     height: 1.5rem;
   }
 
-  .hi-alert-title {
+  .hk-alert-title {
     font-size: 1rem;
   }
 
-  .hi-alert-description {
+  .hk-alert-description {
     font-size: 0.9375rem;
   }
 }
@@ -226,7 +226,7 @@
 // Banner Variant (full width, no border radius)
 // ============================================
 
-.hi-alert-banner {
+.hk-alert-banner {
   border-radius: 0;
   border-left: none;
   border-right: none;
@@ -236,12 +236,12 @@
 // Center-aligned content
 // ============================================
 
-.hi-alert-center {
+.hk-alert-center {
   text-align: center;
   justify-content: center;
 
-  .hi-alert-title,
-  .hi-alert-description {
+  .hk-alert-title,
+  .hk-alert-description {
     margin-left: auto;
     margin-right: auto;
   }
@@ -251,8 +251,8 @@
 // Without Title
 // ============================================
 
-.hi-alert-no-title {
-  .hi-alert-description {
+.hk-alert-no-title {
+  .hk-alert-description {
     margin: 0;
   }
 }
@@ -261,8 +261,8 @@
 // With Action Button
 // ============================================
 
-.hi-alert-action {
-  .hi-alert-actions {
+.hk-alert-action {
+  .hk-alert-actions {
     display: flex;
     gap: 0.5rem;
     margin-top: 0.75rem;
@@ -273,6 +273,6 @@
 // Closable State
 // ============================================
 
-.hi-alert-closable {
+.hk-alert-closable {
   cursor: pointer;
 }

@@ -75,7 +75,7 @@ pub fn Aside(
         .add(variant_class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-aside-rtl");
+        builder = builder.add_raw("hk-aside-rtl");
     }
 
     if is_open.read() {
@@ -84,8 +84,8 @@ pub fn Aside(
 
     let classes = builder.add_raw(&class).build();
     let content_class = AsideClass::Content.as_class();
-    let header_class = "hi-layout-aside-header".to_string();
-    let footer_class = "hi-layout-aside-footer".to_string();
+    let header_class = "hk-layout-aside-header".to_string();
+    let footer_class = "hk-layout-aside-footer".to_string();
 
     rsx! {
         aside { class: classes,
@@ -108,7 +108,7 @@ pub struct AsideComponent;
 impl crate::styled::StyledComponent for AsideComponent {
     fn styles() -> &'static str {
         r#"
-.hi-aside {
+.hk-aside {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -119,27 +119,27 @@ impl crate::styled::StyledComponent for AsideComponent {
   padding: 0;
 }
 
-.hi-aside-sm {
+.hk-aside-sm {
   width: 200px;
 }
 
-.hi-aside-md {
+.hk-aside-md {
   width: 260px;
 }
 
-.hi-aside-lg {
+.hk-aside-lg {
   width: 320px;
 }
 
-.hi-aside-light {
+.hk-aside-light {
   background: var(--hi-surface);
 }
 
-.hi-aside-dark {
+.hk-aside-dark {
   background: var(--hi-card-bg);
 }
 
-.hi-aside-content {
+.hk-aside-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -148,12 +148,12 @@ impl crate::styled::StyledComponent for AsideComponent {
   position: relative;
 }
 
-.hi-aside-rtl {
+.hk-aside-rtl {
   direction: rtl;
 }
 
 @media print {
-  .hi-aside {
+  .hk-aside {
     display: none;
   }
 }

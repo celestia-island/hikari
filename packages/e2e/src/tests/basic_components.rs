@@ -162,7 +162,7 @@ impl BasicComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let button = driver.find(By::Css(".hi-button")).await.map_err(|e| {
+        let button = driver.find(By::Css(".hk-button")).await.map_err(|e| {
             warn!("Button element not found: {}", e);
             anyhow::anyhow!("Button element not found: {}", e)
         })?;
@@ -196,7 +196,7 @@ impl BasicComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
 
-        if !class_attr.contains("hi-button") {
+        if !class_attr.contains("hk-button") {
             // Take screenshot on failure
             let _error_screenshot = Self::take_screenshot(driver, "Button", "failure").await;
 
@@ -231,7 +231,7 @@ impl BasicComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for button"))?;
 
-        if !class_attr.contains("hi-button") {
+        if !class_attr.contains("hk-button") {
             return Ok(TestResult::failure(
                 "Button",
                 "Button element missing 'hi-button' class",
@@ -264,7 +264,7 @@ impl BasicComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let input = driver.find(By::Css(".hi-input")).await.map_err(|e| {
+        let input = driver.find(By::Css(".hk-input")).await.map_err(|e| {
             warn!("Input element not found: {}", e);
             anyhow::anyhow!("Input element not found: {}", e)
         })?;
@@ -284,7 +284,7 @@ impl BasicComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for input"))?;
 
-        if !class_attr.contains("hi-input") {
+        if !class_attr.contains("hk-input") {
             return Ok(TestResult::failure(
                 "Input",
                 "Input element missing 'hi-input' class",
@@ -317,7 +317,7 @@ impl BasicComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let card = driver.find(By::Css(".hi-card")).await.map_err(|e| {
+        let card = driver.find(By::Css(".hk-card")).await.map_err(|e| {
             warn!("Card element not found: {}", e);
             anyhow::anyhow!("Card element not found: {}", e)
         })?;
@@ -331,7 +331,7 @@ impl BasicComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for card"))?;
 
-        if !class_attr.contains("hi-card") {
+        if !class_attr.contains("hk-card") {
             return Ok(TestResult::failure(
                 "Card",
                 "Card element missing 'hi-card' class",
@@ -363,7 +363,7 @@ impl BasicComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let divider = driver.find(By::Css(".hi-divider")).await.map_err(|e| {
+        let divider = driver.find(By::Css(".hk-divider")).await.map_err(|e| {
             warn!("Divider element not found: {}", e);
             anyhow::anyhow!("Divider element not found: {}", e)
         })?;
@@ -377,7 +377,7 @@ impl BasicComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for divider"))?;
 
-        if !class_attr.contains("hi-divider") {
+        if !class_attr.contains("hk-divider") {
             return Ok(TestResult::failure(
                 "Divider",
                 "Divider element missing 'hi-divider' class",

@@ -263,9 +263,9 @@ impl DragLayerState {
     /// Get the CSS class string including dragging state
     pub fn class_string(&self) -> String {
         let base = if self.class.is_empty() {
-            "hi-drag-layer".to_string()
+            "hk-drag-layer".to_string()
         } else {
-            format!("hi-drag-layer {}", self.class)
+            format!("hk-drag-layer {}", self.class)
         };
 
         if self.is_dragging {

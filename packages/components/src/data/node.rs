@@ -137,7 +137,7 @@ pub fn TreeNode(props: TreeNodeProps) -> Element {
             // Render children if expanded
             if has_children && is_expanded_for_children.get() {
                 ul {
-                    class: "hi-tree-node-children",
+                    class: "hk-tree-node-children",
                     role: "group",
                     ..child_nodes
                 }

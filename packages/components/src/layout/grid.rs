@@ -186,39 +186,39 @@ pub struct GridComponent;
 impl crate::styled::StyledComponent for GridComponent {
     fn styles() -> &'static str {
         r#"
-.hi-grid {
+.hk-grid {
   display: grid;
 }
 
-.hi-grid-gap-sm {
+.hk-grid-gap-sm {
   gap: 0.5rem;
 }
 
-.hi-grid-gap-md {
+.hk-grid-gap-md {
   gap: 1rem;
 }
 
-.hi-grid-gap-lg {
+.hk-grid-gap-lg {
   gap: 1.5rem;
 }
 
-.hi-col {
+.hk-col {
   min-width: 0;
 }
 
-.hi-row {
+.hk-row {
   display: flex;
 }
 
-.hi-row-gap-sm {
+.hk-row-gap-sm {
   gap: 0.5rem;
 }
 
-.hi-row-gap-md {
+.hk-row-gap-md {
   gap: 1rem;
 }
 
-.hi-row-gap-lg {
+.hk-row-gap-lg {
   gap: 1.5rem;
 }
 

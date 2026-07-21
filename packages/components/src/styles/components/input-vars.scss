@@ -8,7 +8,7 @@
 // Base Input Variables
 // ============================================
 
-.hi-input {
+.hk-input {
   // ============================================
   // 1. Color System
   // ============================================
@@ -82,7 +82,7 @@
 // Input Wrapper Variables
 // ============================================
 
-.hi-input-wrapper {
+.hk-input-wrapper {
   // Colors
   --hi-input-wrapper-bg: var(--hi-color-surface);
   --hi-input-wrapper-bg-focus: var(--hi-color-surface);
@@ -104,24 +104,24 @@
 // Size Variants
 // ============================================
 
-.hi-input-sm,
-.hi-input-wrapper-sm {
+.hk-input-sm,
+.hk-input-wrapper-sm {
   --hi-input-font-size: var(--hi-font-size-xs);
   --hi-input-padding-x: 0.5rem;
   --hi-input-padding-y: 0.25rem;
   --hi-input-radius: 4px;
 }
 
-.hi-input-md,
-.hi-input-wrapper-md {
+.hk-input-md,
+.hk-input-wrapper-md {
   --hi-input-font-size: var(--hi-font-size-sm);
   --hi-input-padding-x: 0.75rem;
   --hi-input-padding-y: 0.375rem;
   --hi-input-radius: 4px;
 }
 
-.hi-input-lg,
-.hi-input-wrapper-lg {
+.hk-input-lg,
+.hk-input-wrapper-lg {
   --hi-input-font-size: var(--hi-font-size-base);
   --hi-input-padding-x: 1rem;
   --hi-input-padding-y: 0.5rem;
@@ -132,12 +132,12 @@
 // State Variants
 // ============================================
 
-.hi-input-error {
+.hk-input-error {
   --hi-input-border-color: var(--hi-color-danger);
   --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-danger), 0 0 12px var(--hi-glow-color);
 }
 
-.hi-input-success {
+.hk-input-success {
   --hi-input-border-color: var(--hi-color-success);
   --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-success), 0 0 12px var(--hi-glow-color);
 }
@@ -146,8 +146,8 @@
 // Prefix/Suffix Variables
 // ============================================
 
-.hi-input-prefix,
-.hi-input-suffix {
+.hk-input-prefix,
+.hk-input-suffix {
   --hi-input-affix-color: var(--hi-color-text-secondary);
   --hi-input-affix-padding: 0 0.5rem;
   --hi-input-affix-font-size: var(--hi-font-size-sm);

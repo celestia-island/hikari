@@ -289,7 +289,7 @@ pub fn Calendar(props: CalendarProps) -> Element {
 impl StyledComponent for CalendarComponent {
     fn styles() -> &'static str {
         r#"
-.hi-calendar {
+.hk-calendar {
     display: inline-block;
     padding: 1rem;
     background-color: var(--hi-color-bg-container);
@@ -298,7 +298,7 @@ impl StyledComponent for CalendarComponent {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.hi-calendar-header {
+.hk-calendar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -306,12 +306,12 @@ impl StyledComponent for CalendarComponent {
     padding: 0.5rem;
 }
 
-.hi-calendar-nav {
+.hk-calendar-nav {
     display: flex;
     gap: 0.25rem;
 }
 
-.hi-calendar-nav-button {
+.hk-calendar-nav-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -327,32 +327,32 @@ impl StyledComponent for CalendarComponent {
     transition: all 0.2s ease;
 }
 
-.hi-calendar-nav-button:hover:not(:disabled) {
+.hk-calendar-nav-button:hover:not(:disabled) {
     background-color: var(--hi-color-primary);
     color: white;
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
-.hi-calendar-nav-button:disabled {
+.hk-calendar-nav-button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.hi-calendar-title {
+.hk-calendar-title {
     font-size: 1rem;
     font-weight: 500;
     color: var(--hi-color-text-primary);
 }
 
-.hi-calendar-weekdays {
+.hk-calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.25rem;
     margin-bottom: 0.5rem;
 }
 
-.hi-calendar-weekday {
+.hk-calendar-weekday {
     text-align: center;
     font-size: 0.75rem;
     font-weight: 500;
@@ -360,13 +360,13 @@ impl StyledComponent for CalendarComponent {
     padding: 0.5rem 0;
 }
 
-.hi-calendar-grid {
+.hk-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.25rem;
 }
 
-.hi-calendar-day-cell {
+.hk-calendar-day-cell {
     aspect-ratio: 1;
     display: flex;
     align-items: center;
@@ -374,7 +374,7 @@ impl StyledComponent for CalendarComponent {
     cursor: pointer;
 }
 
-.hi-calendar-day {
+.hk-calendar-day {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -387,22 +387,22 @@ impl StyledComponent for CalendarComponent {
     transition: all 0.2s ease;
 }
 
-.hi-calendar-day:hover {
+.hk-calendar-day:hover {
     background-color: var(--hi-color-primary-bg);
     color: var(--hi-color-primary);
 }
 
-.hi-calendar-day.hi-calendar-day-selected {
+.hk-calendar-day.hk-calendar-day-selected {
     background-color: var(--hi-color-primary);
     color: white;
     box-shadow: 0 0 12px var(--hi-color-primary-glow);
 }
 
-.hi-calendar-day-today {
+.hk-calendar-day-today {
     border: 1px solid var(--hi-color-primary);
 }
 
-.hi-calendar-day-disabled {
+.hk-calendar-day-disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }

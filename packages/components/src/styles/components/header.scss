@@ -11,7 +11,7 @@
 // Base Header Styles
 // ============================================
 
-.hi-header {
+.hk-header {
   // Layout
   display: flex;
   align-items: center;
@@ -46,14 +46,14 @@
   position: relative;
 
   // Sticky positioning
-  &.hi-header-sticky {
+  &.hk-header-sticky {
     position: sticky;
     top: 0;
     z-index: 100;
   }
 
   // Fixed positioning
-  &.hi-header-fixed {
+  &.hk-header-fixed {
     position: fixed;
     top: 0;
     left: 0;
@@ -63,7 +63,7 @@
   }
 
   // Scrolled state (applied via JS)
-  &.hi-header-scrolled {
+  &.hk-header-scrolled {
     background: var(--hi-card-bg);
     backdrop-filter: blur(4px);
     --hi-glow-transparent: false;
@@ -96,7 +96,7 @@
 // Header Left Section
 // ============================================
 
-.hi-header-left {
+.hk-header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -108,7 +108,7 @@
 // Header Logo Area
 // ============================================
 
-.hi-header-logo {
+.hk-header-logo {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -120,7 +120,7 @@
   position: relative;
 
   // Logo icon/image
-  .hi-header-logo-icon {
+  .hk-header-logo-icon {
     width: 2rem;
     height: 2rem;
     flex-shrink: 0;
@@ -147,7 +147,7 @@
     }
 
     // Animation on hover
-    .hi-header-logo:hover & {
+    .hk-header-logo:hover & {
       box-shadow:
         0 0 20px var(--hi-glow-color),
         inset 0 0 12px var(--hi-glow-color);
@@ -160,7 +160,7 @@
   }
 
   // Logo text
-  .hi-header-logo-text {
+  .hk-header-logo-text {
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-lg;
     font-weight: 700;
@@ -184,7 +184,7 @@
   }
 
   // Logo subtitle
-  .hi-header-logo-subtitle {
+  .hk-header-logo-subtitle {
     font-size: 0.75rem;
     font-weight: 400;
     color: var(--hi-color-text-secondary);
@@ -199,7 +199,7 @@
   &:hover {
     color: var(--hi-color-text-primary);
 
-    .hi-header-logo-text {
+    .hk-header-logo-text {
       --hi-glow-transparent: true;
       --hi-glow-bg-color: transparent;
       text-shadow: 0 0 12px var(--hi-glow-color);
@@ -211,7 +211,7 @@
 // Header Center Section (Menu)
 // ============================================
 
-.hi-header-center {
+.hk-header-center {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -223,12 +223,12 @@
 }
 
 // Navigation menu in header
-.hi-header-nav {
+.hk-header-nav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 
-  .hi-header-nav-item {
+  .hk-header-nav-item {
     position: relative;
     padding: 0.5rem 1rem;
     font-family: vars.$hikari-font-family-sans;
@@ -248,7 +248,7 @@
     }
 
     // Active state
-    &.hi-header-nav-item-active {
+    &.hk-header-nav-item-active {
       color: var(--hi-color-text-primary);
       background: var(--hi-primary);
       --hi-glow-transparent: false;
@@ -274,7 +274,7 @@
 // Header Right Section (Actions)
 // ============================================
 
-.hi-header-right {
+.hk-header-right {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -286,7 +286,7 @@
 // Header Action Buttons
 // ============================================
 
-.hi-header-action {
+.hk-header-action {
   // Layout
   display: inline-flex;
   align-items: center;
@@ -354,7 +354,7 @@
   }
 
   // Badge indicator
-  &.hi-header-action-badge {
+  &.hk-header-action-badge {
     &::after {
       content: '';
       position: absolute;
@@ -388,7 +388,7 @@
 // Header Search
 // ============================================
 
-.hi-header-search {
+.hk-header-search {
   position: relative;
   width: 240px;
 
@@ -401,7 +401,7 @@
   }
 
   // Search input
-  .hi-header-search-input {
+  .hk-header-search-input {
     width: 100%;
     padding: 0.5rem 1rem 0.5rem 2.25rem;
     font-family: vars.$hikari-font-family-sans;
@@ -439,7 +439,7 @@
   }
 
   // Search icon
-  .hi-header-search-icon {
+  .hk-header-search-icon {
     position: absolute;
     left: 0.625rem;
     top: 50%;
@@ -456,7 +456,7 @@
   }
 
   // Focus state on icon
-  .hi-header-search-input:focus + .hi-header-search-icon {
+  .hk-header-search-input:focus + .hk-header-search-icon {
     color: var(--hi-color-primary);
   }
 }
@@ -465,7 +465,7 @@
 // Header User/Profile
 // ============================================
 
-.hi-header-user {
+.hk-header-user {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -479,7 +479,7 @@
   color: var(--hi-color-text-primary);
 
   // Avatar
-  .hi-header-user-avatar {
+  .hk-header-user-avatar {
     width: 2rem;
     height: 2rem;
     border-radius: vars.$hikari-radius-fui-sm;
@@ -494,7 +494,7 @@
   }
 
   // User info
-  .hi-header-user-info {
+  .hk-header-user-info {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
@@ -504,7 +504,7 @@
     }
 
     // Username
-    .hi-header-user-name {
+    .hk-header-user-name {
       font-size: vars.$hikari-font-size-sm;
       font-weight: 500;
       line-height: 1.2;
@@ -512,7 +512,7 @@
     }
 
     // User role/status
-    .hi-header-user-role {
+    .hk-header-user-role {
       font-size: 0.75rem;
       font-weight: 400;
       color: var(--hi-color-text-secondary);
@@ -520,7 +520,7 @@
   }
 
   // Dropdown arrow
-  .hi-header-user-arrow {
+  .hk-header-user-arrow {
     width: 0.75rem;
     height: 0.75rem;
     color: var(--hi-color-text-secondary);
@@ -542,7 +542,7 @@
   &:hover {
     background: var(--hi-primary);
 
-    .hi-header-user-avatar {
+    .hk-header-user-avatar {
       border-color: var(--hi-primary);
       --hi-glow-transparent: false;
       --hi-glow-bg-color: var(--hi-color-surface);
@@ -551,10 +551,10 @@
   }
 
   // Open state
-  &.hi-header-user-open {
+  &.hk-header-user-open {
     background: var(--hi-primary);
 
-    .hi-header-user-arrow {
+    .hk-header-user-arrow {
       transform: rotate(180deg);
       color: var(--hi-color-primary);
     }
@@ -565,7 +565,7 @@
 // Header Mobile Menu Toggle
 // ============================================
 
-.hi-header-toggle {
+.hk-header-toggle {
   display: none;
   align-items: center;
   justify-content: center;
@@ -574,28 +574,28 @@
     display: inline-flex;
   }
 
-  // Inherits styles from .hi-header-action
-  @extend .hi-header-action;
+  // Inherits styles from .hk-header-action
+  @extend .hk-header-action;
 }
 
 // ============================================
 // Header Size Variants
 // ============================================
 
-.hi-header-sm {
+.hk-header-sm {
   padding: 0.5rem 1rem;
   min-height: 3rem;
 
-  .hi-header-logo-icon {
+  .hk-header-logo-icon {
     width: 1.5rem;
     height: 1.5rem;
   }
 
-  .hi-header-logo-text {
+  .hk-header-logo-text {
     font-size: vars.$hikari-font-size-base;
   }
 
-  .hi-header-action {
+  .hk-header-action {
     width: 2rem;
     height: 2rem;
 
@@ -606,25 +606,25 @@
   }
 }
 
-.hi-header-md {
-  // Inherits 64px height from base .hi-header
+.hk-header-md {
+  // Inherits 64px height from base .hk-header
   padding: 0 1rem;
 }
 
-.hi-header-lg {
+.hk-header-lg {
   padding: 1rem 2rem;
   min-height: 5rem;
 
-  .hi-header-logo-icon {
+  .hk-header-logo-icon {
     width: 2.5rem;
     height: 2.5rem;
   }
 
-  .hi-header-logo-text {
+  .hk-header-logo-text {
     font-size: vars.$hikari-font-size-xl;
   }
 
-  .hi-header-action {
+  .hk-header-action {
     width: 2.5rem;
     height: 2.5rem;
 
@@ -640,7 +640,7 @@
 // ============================================
 
 // Primary variant
-.hi-header-primary {
+.hk-header-primary {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
 
   &::before {
@@ -654,14 +654,14 @@
 }
 
 // Transparent variant
-.hi-header-transparent {
+.hk-header-transparent {
   background: transparent;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   box-shadow: none;
   border-bottom: 1px solid transparent;
 
-  &.hi-header-scrolled {
+  &.hk-header-scrolled {
     background: var(--hi-card-bg);
     backdrop-filter: blur(4px);
   }
@@ -671,20 +671,20 @@
 // Header Collapsible (Mobile)
 // ============================================
 
-.hi-header-collapsible {
+.hk-header-collapsible {
   @include mix.mobile {
     flex-wrap: wrap;
 
-    &.hi-header-collapsed {
-      .hi-header-center,
-      .hi-header-right {
+    &.hk-header-collapsed {
+      .hk-header-center,
+      .hk-header-right {
         display: none;
       }
     }
 
-    &.hi-header-expanded {
-      .hi-header-center,
-      .hi-header-right {
+    &.hk-header-expanded {
+      .hk-header-center,
+      .hk-header-right {
         display: flex;
         flex-basis: 100%;
         order: 3;
@@ -701,7 +701,7 @@
 // ============================================
 
 // Slide down animation
-.hi-header-slide-down {
+.hk-header-slide-down {
   // DISABLED - migrated to JS animation
 
   // animation: header-slide-down vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -720,7 +720,7 @@
 // }
 
 // Fade in animation
-.hi-header-fade-in {
+.hk-header-fade-in {
   // DISABLED - migrated to JS animation
 
   // animation: header-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -740,7 +740,7 @@
 // Header with Breadcrumb
 // ============================================
 
-.hi-header-breadcrumb {
+.hk-header-breadcrumb {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -751,11 +751,11 @@
     display: none;
   }
 
-  .hi-header-breadcrumb-item {
+  .hk-header-breadcrumb-item {
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
 
-    &.hi-header-breadcrumb-active {
+    &.hk-header-breadcrumb-active {
       color: var(--hi-color-text-primary);
     }
 

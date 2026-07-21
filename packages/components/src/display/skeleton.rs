@@ -86,26 +86,26 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
             builder = builder.add(SkeletonClass::Text);
         }
         SkeletonVariant::Circular => {
-            builder = builder.add_raw("hi-skeleton-circular");
+            builder = builder.add_raw("hk-skeleton-circular");
         }
         SkeletonVariant::Rectangular => {
             builder = builder.add(SkeletonClass::Rect);
         }
         SkeletonVariant::Rounded => {
-            builder = builder.add_raw("hi-skeleton-rounded");
+            builder = builder.add_raw("hk-skeleton-rounded");
         }
     }
 
     // Add size class
     match props.size {
         SkeletonSize::Small => {
-            builder = builder.add_raw("hi-skeleton-sm");
+            builder = builder.add_raw("hk-skeleton-sm");
         }
         SkeletonSize::Medium => {
-            builder = builder.add_raw("hi-skeleton-md");
+            builder = builder.add_raw("hk-skeleton-md");
         }
         SkeletonSize::Large => {
-            builder = builder.add_raw("hi-skeleton-lg");
+            builder = builder.add_raw("hk-skeleton-lg");
         }
     }
 
@@ -140,7 +140,7 @@ pub fn Skeleton(props: SkeletonProps) -> Element {
 
         return rsx! {
             div {
-                class: "hi-skeleton-group",
+                class: "hk-skeleton-group",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
                 ..children,
             }
@@ -177,7 +177,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
         .add(FlexDirection::Column)
         .add(Gap::Gap4)
         .add(Padding::P4)
-        .add_raw("hi-skeleton-card")
+        .add_raw("hk-skeleton-card")
         .add_raw(&props.class);
 
     let container_classes = builder.build();
@@ -200,7 +200,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
 
             if props.show_header {
                 div {
-                    class: "hi-skeleton-card-header",
+                    class: "hk-skeleton-card-header",
                     style: "display: flex; align-items: center; gap: 0.75rem;",
 
                     if props.show_avatar {
@@ -228,7 +228,7 @@ pub fn SkeletonCard(props: SkeletonCardProps) -> Element {
             }
 
             div {
-                class: "hi-skeleton-card-content",
+                class: "hk-skeleton-card-content",
                 style: "display: flex; flex-direction: column; gap: 0.5rem;",
                 ..content_rows,
             }
@@ -284,7 +284,7 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
                 .collect();
             rsx! {
                 div {
-                    class: "hi-skeleton-table-row",
+                    class: "hk-skeleton-table-row",
                     style: "display: flex; gap: 1rem; padding: 0.75rem 1rem;",
                     ..cells,
                 }
@@ -294,12 +294,12 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
 
     rsx! {
         div {
-            class: "hi-skeleton-table {props.class}",
+            class: "hk-skeleton-table {props.class}",
             style: props.style,
             ..table_rows,
 
             div {
-                class: "hi-skeleton-table-header",
+                class: "hk-skeleton-table-header",
                 style: "display: flex; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--hi-color-border);",
                 ..header_cells,
             }
@@ -310,7 +310,7 @@ pub fn SkeletonTable(props: SkeletonTableProps) -> Element {
 impl StyledComponent for SkeletonComponent {
     fn styles() -> &'static str {
         r#"
-.hi-skeleton {
+.hk-skeleton {
     display: block;
     background: linear-gradient(
         90deg,
@@ -322,7 +322,7 @@ impl StyledComponent for SkeletonComponent {
     border-radius: 4px;
 }
 
-.hi-skeleton-animated {
+.hk-skeleton-animated {
     animation: hi-skeleton-pulse 1.5s ease-in-out infinite;
 }
 
@@ -340,54 +340,54 @@ impl StyledComponent for SkeletonComponent {
     }
 }
 
-.hi-skeleton-text {
+.hk-skeleton-text {
     height: 14px;
     width: 100%;
     border-radius: 4px;
 }
 
-.hi-skeleton-circular {
+.hk-skeleton-circular {
     border-radius: 50%;
 }
 
-.hi-skeleton-rectangular {
+.hk-skeleton-rectangular {
     border-radius: 0;
 }
 
-.hi-skeleton-rounded {
+.hk-skeleton-rounded {
     border-radius: 8px;
 }
 
-.hi-skeleton-sm {
+.hk-skeleton-sm {
     height: 12px;
 }
 
-.hi-skeleton-md {
+.hk-skeleton-md {
     height: 14px;
 }
 
-.hi-skeleton-lg {
+.hk-skeleton-lg {
     height: 20px;
 }
 
-.hi-skeleton-card {
+.hk-skeleton-card {
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
     background-color: var(--hi-color-surface);
 }
 
-.hi-skeleton-table {
+.hk-skeleton-table {
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
     overflow: hidden;
     background-color: var(--hi-color-surface);
 }
 
-.hi-skeleton-table-row:not(:last-child) {
+.hk-skeleton-table-row:not(:last-child) {
     border-bottom: 1px solid var(--hi-color-border);
 }
 
-[data-theme="dark"] .hi-skeleton {
+[data-theme="dark"] .hk-skeleton {
     background: linear-gradient(
         90deg,
         var(--hi-surface) 25%,

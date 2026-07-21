@@ -110,44 +110,44 @@ pub struct SectionComponent;
 impl crate::styled::StyledComponent for SectionComponent {
     fn styles() -> &'static str {
         r#"
-.hi-section {
+.hk-section {
   margin-bottom: 2rem;
 }
 
-.hi-section-sm {
+.hk-section-sm {
   margin-bottom: 1rem;
 }
 
-.hi-section-md {
+.hk-section-md {
   margin-bottom: 2rem;
 }
 
-.hi-section-lg {
+.hk-section-lg {
   margin-bottom: 3rem;
 }
 
-.hi-section-header {
+.hk-section-header {
   margin-bottom: 1rem;
 }
 
-.hi-section-title {
+.hk-section-title {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--hi-color-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
-.hi-section-description {
+.hk-section-description {
   font-size: 0.875rem;
   color: var(--hi-color-text-secondary);
   margin: 0;
 }
 
-.hi-section-body {
+.hk-section-body {
   /* Content styles */
 }
 
-.hi-spacer {
+.hk-spacer {
   display: block;
 }
 "#

@@ -119,7 +119,7 @@ pub struct LayoutComponent;
 impl crate::styled::StyledComponent for LayoutComponent {
     fn styles() -> &'static str {
         r#"
-.hi-layout {
+.hk-layout {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -128,7 +128,7 @@ impl crate::styled::StyledComponent for LayoutComponent {
   overflow: hidden;
 }
 
-.hi-layout-body {
+.hk-layout-body {
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -137,7 +137,7 @@ impl crate::styled::StyledComponent for LayoutComponent {
   position: relative;
 }
 
-.hi-layout-main {
+.hk-layout-main {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -147,7 +147,7 @@ impl crate::styled::StyledComponent for LayoutComponent {
   position: relative;
 }
 
-.hi-layout-content {
+.hk-layout-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -157,25 +157,25 @@ impl crate::styled::StyledComponent for LayoutComponent {
   background: transparent;
 }
 
-.hi-layout-light {
+.hk-layout-light {
   background-color: transparent;
 }
 
-.hi-layout-has-sidebar {
+.hk-layout-has-sidebar {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
 }
 
-.hi-layout-has-sidebar .hi-layout-body > aside,
-.hi-layout-has-sidebar .hi-layout-body > .hi-aside {
+.hk-layout-has-sidebar .hk-layout-body > aside,
+.hk-layout-has-sidebar .hk-layout-body > .hk-aside {
   width: 260px;
   flex-shrink: 0;
   height: 100%;
 }
 
-.hi-layout-has-sidebar .hi-layout-main {
+.hk-layout-has-sidebar .hk-layout-main {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -185,7 +185,7 @@ impl crate::styled::StyledComponent for LayoutComponent {
   position: relative;
 }
 
-.hi-layout-overlay-open {
+.hk-layout-overlay-open {
   position: fixed;
   top: 0;
   left: 0;
@@ -199,17 +199,17 @@ impl crate::styled::StyledComponent for LayoutComponent {
 }
 
 @media print {
-  .hi-layout {
+  .hk-layout {
     background: white;
   }
 
-  .hi-layout-header,
-  .hi-layout-footer,
-  .hi-layout-aside {
+  .hk-layout-header,
+  .hk-layout-footer,
+  .hk-layout-aside {
     display: none;
   }
 
-  .hi-layout-content {
+  .hk-layout-content {
     background: white;
     box-shadow: none;
   }

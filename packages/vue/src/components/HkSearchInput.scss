@@ -25,7 +25,7 @@
   }
 }
 
-.hk-search-input__icon {
+.hk-search-input-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,7 +39,7 @@
   }
 }
 
-.hk-search-input__field {
+.hk-search-input-field {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -63,7 +63,7 @@
   }
 }
 
-.hk-search-input__clear {
+.hk-search-input-clear {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,12 +93,12 @@
 
 /* --- Size variants --- */
 
-.hk-search-input--sm .hk-search-input__field {
+.hk-search-input--sm .hk-search-input-field {
   font-size: 0.75rem;
   height: 1.75rem;
 }
 
-.hk-search-input--sm .hk-search-input__icon {
+.hk-search-input--sm .hk-search-input-icon {
   padding-left: 0.5rem;
 
   svg {
@@ -107,17 +107,17 @@
   }
 }
 
-.hk-search-input--md .hk-search-input__field {
+.hk-search-input--md .hk-search-input-field {
   font-size: 0.875rem;
   height: 2.25rem;
 }
 
-.hk-search-input--lg .hk-search-input__field {
+.hk-search-input--lg .hk-search-input-field {
   font-size: 1rem;
   height: 2.75rem;
 }
 
-.hk-search-input--lg .hk-search-input__icon {
+.hk-search-input--lg .hk-search-input-icon {
   padding-left: 1rem;
 
   svg {
@@ -126,7 +126,7 @@
   }
 }
 
-.hk-search-input--lg .hk-search-input__clear svg {
+.hk-search-input--lg .hk-search-input-clear svg {
   width: 16px;
   height: 16px;
 }

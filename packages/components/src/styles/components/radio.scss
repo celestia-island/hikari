@@ -13,16 +13,16 @@
 // Radio Group
 // ============================================
 
-.hi-radio-group {
+.hk-radio-group {
   display: flex;
   gap: 12px;
 }
 
-.hi-radio-group-vertical {
+.hk-radio-group-vertical {
   flex-direction: column;
 }
 
-.hi-radio-group-horizontal {
+.hk-radio-group-horizontal {
   flex-direction: row;
   align-items: center;
 }
@@ -31,7 +31,7 @@
 // Radio Label (wraps input + indicator + text)
 // ============================================
 
-.hi-radio-label {
+.hk-radio-label {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -39,7 +39,7 @@
   user-select: none;
   padding: 4px 0;
 
-  &:hover .hi-radio-indicator:not([disabled]) {
+  &:hover .hk-radio-indicator:not([disabled]) {
     border-color: var(--hi-primary);
     box-shadow: 0 0 8px var(--hi-component-selection-glow);
   }
@@ -49,7 +49,7 @@
 // Hidden native input
 // ============================================
 
-.hi-radio-label input[type="radio"] {
+.hk-radio-label input[type="radio"] {
   position: absolute;
   opacity: 0;
   cursor: pointer;
@@ -64,7 +64,7 @@
 // Uses Layer 2 variables
 // ============================================
 
-.hi-radio-indicator {
+.hk-radio-indicator {
   position: relative;
   display: inline-block;
   flex-shrink: 0;
@@ -81,7 +81,7 @@
 // Inner dot (uses Layer 2 gradient)
 // ============================================
 
-.hi-radio-dot {
+.hk-radio-dot {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -97,14 +97,14 @@
 // Checked state - dot becomes visible
 // ============================================
 
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator {
+.hk-radio-label input[type="radio"]:checked + .hk-radio-indicator {
   border-color: var(--hi-primary);
   box-shadow:
     0 0 6px var(--hi-component-selection-glow),
     inset 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
-.hi-radio-label input[type="radio"]:checked + .hi-radio-indicator .hi-radio-dot {
+.hk-radio-label input[type="radio"]:checked + .hk-radio-indicator .hk-radio-dot {
   transform: translate(-50%, -50%) scale(1);
 }
 
@@ -112,7 +112,7 @@
 // Hover effect on checked
 // ============================================
 
-.hi-radio-label:hover input[type="radio"]:checked + .hi-radio-indicator {
+.hk-radio-label:hover input[type="radio"]:checked + .hk-radio-indicator {
   box-shadow:
     0 0 10px var(--hi-component-selection-glow),
     inset 0 0 4px rgba(255, 255, 255, 0.2);
@@ -122,12 +122,12 @@
 // Disabled state
 // ============================================
 
-.hi-radio-label input[type="radio"]:disabled + .hi-radio-indicator {
+.hk-radio-label input[type="radio"]:disabled + .hk-radio-indicator {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.hi-radio-label:has(input[type="radio"]:disabled) {
+.hk-radio-label:has(input[type="radio"]:disabled) {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -136,7 +136,7 @@
 // Label text
 // ============================================
 
-.hi-radio-text {
+.hk-radio-text {
   font-family: vars.$hikari-font-family-sans;
   font-size: vars.$hikari-font-size-base;
   font-weight: 400;

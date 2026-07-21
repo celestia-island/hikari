@@ -11,7 +11,7 @@
 // Base Layout Container
 // ============================================
 
-.hi-layout {
+.hk-layout {
   // Full viewport layout
   height: 100vh;
   display: flex;
@@ -56,7 +56,7 @@
 // Layout Header Area
 // ============================================
 
-.hi-layout-header {
+.hk-layout-header {
   position: sticky;
   top: 0;
   z-index: 100;
@@ -70,7 +70,7 @@
   // transition: background vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Scrolled state (applied via JS)
-  &.hi-layout-header-scrolled {
+  &.hk-layout-header-scrolled {
     background: var(--hi-card-bg);
     box-shadow: 0 8px 16px rgba(23, 89, 168, 0.25), 0 0 30px var(--hi-primary);
   }
@@ -81,7 +81,7 @@
 // ============================================
 
 // Layout Body - contains Aside and Main side by side
-.hi-layout-body {
+.hk-layout-body {
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -90,7 +90,7 @@
   position: relative;
 }
 
-.hi-layout-content {
+.hk-layout-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -121,21 +121,21 @@
 // Layout with Sidebar
 // ============================================
 
-.hi-layout-has-sidebar {
+.hk-layout-has-sidebar {
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
 
   // Aside is now inside hi-layout-body
-  .hi-layout-body > aside,
-  .hi-layout-body > .hi-aside {
+  .hk-layout-body > aside,
+  .hk-layout-body > .hk-aside {
     width: 260px;
     flex-shrink: 0;
     height: 100%;
   }
 
-  .hi-layout-main {
+  .hk-layout-main {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -150,7 +150,7 @@
 // Layout Aside (Sidebar)
 // ============================================
 
-.hi-layout-aside {
+.hk-layout-aside {
   // No outer padding - padding should be inside scrollable content
   padding: 0;
 
@@ -160,14 +160,14 @@
   height: 100%;
 
   // Sticky header in sidebar
-  .hi-layout-aside-header {
+  .hk-layout-aside-header {
     padding: 0.75rem 0.5rem;
     margin-bottom: vars.$hikari-spacing-md;
     flex-shrink: 0;
   }
 
   // Scrollable content area
-  .hi-layout-aside-content {
+  .hk-layout-aside-content {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
@@ -223,7 +223,7 @@
   }
 
   // Footer in sidebar - positioned at bottom
-  .hi-layout-aside-footer {
+  .hk-layout-aside-footer {
     flex-shrink: 0;
   }
 }
@@ -232,7 +232,7 @@
 // Layout Footer
 // ============================================
 
-.hi-layout-footer {
+.hk-layout-footer {
   // Simple background only
   background: var(--hi-card-bg);
 
@@ -256,12 +256,12 @@
 // ============================================
 
 // Fluid container (full width)
-.hi-layout-fluid {
+.hk-layout-fluid {
   max-width: 100%;
 }
 
 // Fixed container with max width
-.hi-layout-container {
+.hk-layout-container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -284,12 +284,12 @@
   }
 
   // Wide variant
-  &.hi-layout-container-wide {
+  &.hk-layout-container-wide {
     max-width: 1400px;
   }
 
   // Narrow variant
-  &.hi-layout-container-narrow {
+  &.hk-layout-container-narrow {
     max-width: 800px;
   }
 }
@@ -299,26 +299,26 @@
 // ============================================
 
 // Default dark theme (transparent - let Background component handle it)
-.hi-layout-dark {
+.hk-layout-dark {
   background-color: transparent;
 }
 
 // Light theme (transparent - let Background component handle it)
-.hi-layout-light {
+.hk-layout-light {
   background-color: transparent;
 
   &::before {
     display: none;
   }
 
-  .hi-layout-content {
+  .hk-layout-content {
     background: transparent;
     box-shadow: none;
   }
 }
 
 // Transparent layout (no background)
-.hi-layout-transparent {
+.hk-layout-transparent {
   background-color: transparent;
 
   &::before,
@@ -326,7 +326,7 @@
     display: none;
   }
 
-  .hi-layout-content {
+  .hk-layout-content {
     background: transparent;
     box-shadow: none;
   }
@@ -337,18 +337,18 @@
 // ============================================
 
 // Hide sidebar on mobile
-.hi-layout-mobile-sidebar-hidden {
+.hk-layout-mobile-sidebar-hidden {
   @include mix.mobile {
-    .hi-layout-aside {
+    .hk-layout-aside {
       display: none;
     }
   }
 }
 
 // Overlay sidebar on mobile (drawer behavior)
-.hi-layout-mobile-sidebar-overlay {
+.hk-layout-mobile-sidebar-overlay {
   @include mix.mobile {
-    .hi-layout-aside {
+    .hk-layout-aside {
       position: fixed;
       top: 0;
       left: 0;
@@ -361,7 +361,7 @@
 
       // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
-      &.hi-layout-aside-open {
+      &.hk-layout-aside-open {
         transform: translateX(0);
       }
     }
@@ -384,7 +384,7 @@
       // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
-    &.hi-layout-overlay-open::before {
+    &.hk-layout-overlay-open::before {
       opacity: 1;
       pointer-events: auto;
     }
@@ -396,7 +396,7 @@
 // ============================================
 
 // Fade in animation for layout content
-.hi-layout-animate-in {
+.hk-layout-animate-in {
   // DISABLED - migrated to JS animation
 
   // animation: layout-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -415,7 +415,7 @@
 // }
 
 // Slide in from left (for sidebar)
-.hi-layout-slide-in-left {
+.hk-layout-slide-in-left {
   // DISABLED - migrated to JS animation
 
   // animation: layout-slide-left vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -438,13 +438,13 @@
 // ============================================
 
 // Smooth transition when sidebar collapses/expands
-.hi-layout-sidebar-transition {
-  .hi-layout-aside {
+.hk-layout-sidebar-transition {
+  .hk-layout-aside {
     // DISABLED - migrated to JS animation
     // transition: width vars.$hikari-duration-normal vars.$hikari-ease-smooth,
   }
 
-  .hi-layout-aside-content {
+  .hk-layout-aside-content {
     // DISABLED - migrated to JS animation
     // transition: opacity vars.$hikari-duration-fast vars.$hikari-ease-smooth;
   }
@@ -455,30 +455,30 @@
 // ============================================
 
 // Full height layout
-.hi-layout-full-height {
+.hk-layout-full-height {
   min-height: 100vh;
 }
 
 // Centered content layout
-.hi-layout-centered {
+.hk-layout-centered {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 // Horizontal layout (left-to-right)
-.hi-layout-horizontal {
+.hk-layout-horizontal {
   flex-direction: row;
 }
 
 // Scrollable layout
-.hi-layout-scrollable {
+.hk-layout-scrollable {
   overflow-y: auto;
   @include mix.scrollbar-hidden;
 }
 
 // No scroll layout
-.hi-layout-no-scroll {
+.hk-layout-no-scroll {
   overflow: hidden;
 }
 
@@ -515,7 +515,7 @@
 // ============================================
 
 @media print {
-  .hi-layout {
+  .hk-layout {
     background: white;
 
     &::before,
@@ -524,13 +524,13 @@
     }
   }
 
-  .hi-layout-header,
-  .hi-layout-footer,
-  .hi-layout-aside {
+  .hk-layout-header,
+  .hk-layout-footer,
+  .hk-layout-aside {
     display: none;
   }
 
-  .hi-layout-content {
+  .hk-layout-content {
     background: white;
     box-shadow: none;
   }

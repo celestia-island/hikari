@@ -424,7 +424,7 @@ fn render_markdown_simple(markdown: &str) -> String {
 impl StyledComponent for MarkdownEditorComponent {
     fn styles() -> &'static str {
         r#"
-.hi-markdown-editor {
+.hk-markdown-editor {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
@@ -433,28 +433,28 @@ impl StyledComponent for MarkdownEditorComponent {
     flex-direction: column;
 }
 
-.hi-markdown-editor:focus-within {
+.hk-markdown-editor:focus-within {
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 0 2px var(--hi-color-primary-glow);
 }
 
-[data-theme="dark"] .hi-markdown-editor {
+[data-theme="dark"] .hk-markdown-editor {
     background-color: var(--hi-surface);
 }
 
-.hi-markdown-editor-sm {
+.hk-markdown-editor-sm {
     min-height: 150px;
 }
 
-.hi-markdown-editor-md {
+.hk-markdown-editor-md {
     min-height: 250px;
 }
 
-.hi-markdown-editor-lg {
+.hk-markdown-editor-lg {
     min-height: 400px;
 }
 
-.hi-markdown-editor-toolbar {
+.hk-markdown-editor-toolbar {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -464,7 +464,7 @@ impl StyledComponent for MarkdownEditorComponent {
     flex-wrap: wrap;
 }
 
-.hi-markdown-editor-toolbar-button {
+.hk-markdown-editor-toolbar-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -479,30 +479,30 @@ impl StyledComponent for MarkdownEditorComponent {
     transition: all 0.2s ease;
 }
 
-.hi-markdown-editor-toolbar-button:hover {
+.hk-markdown-editor-toolbar-button:hover {
     background-color: var(--hi-color-hover);
     color: var(--hi-text-primary);
 }
 
-.hi-markdown-editor-toolbar-button-active {
+.hk-markdown-editor-toolbar-button-active {
     background-color: var(--hi-color-primary);
     color: white;
 }
 
-.hi-markdown-editor-toolbar-divider {
+.hk-markdown-editor-toolbar-divider {
     width: 1px;
     height: 24px;
     background-color: var(--hi-color-border);
     margin: 0 4px;
 }
 
-.hi-markdown-editor-content {
+.hk-markdown-editor-content {
     flex: 1;
     display: flex;
     overflow: hidden;
 }
 
-.hi-markdown-editor-textarea {
+.hk-markdown-editor-textarea {
     width: 100%;
     flex: 1;
     padding: 16px;
@@ -516,11 +516,11 @@ impl StyledComponent for MarkdownEditorComponent {
     background-color: transparent;
 }
 
-.hi-markdown-editor-textarea::placeholder {
+.hk-markdown-editor-textarea::placeholder {
     color: var(--hi-text-tertiary);
 }
 
-.hi-markdown-editor-preview {
+.hk-markdown-editor-preview {
     flex: 1;
     padding: 16px;
     overflow-y: auto;
@@ -528,23 +528,23 @@ impl StyledComponent for MarkdownEditorComponent {
     line-height: 1.6;
 }
 
-.hi-markdown-editor-preview .markdown-content {
+.hk-markdown-editor-preview .markdown-content {
     font-size: 14px;
 }
 
-.hi-markdown-editor-preview h1,
-.hi-markdown-editor-preview h2,
-.hi-markdown-editor-preview h3 {
+.hk-markdown-editor-preview h1,
+.hk-markdown-editor-preview h2,
+.hk-markdown-editor-preview h3 {
     margin: 16px 0 8px 0;
     font-weight: 600;
     color: var(--hi-text-primary);
 }
 
-.hi-markdown-editor-preview strong {
+.hk-markdown-editor-preview strong {
     font-weight: 600;
 }
 
-.hi-markdown-editor-preview code {
+.hk-markdown-editor-preview code {
     background-color: var(--hi-color-bg-elevated);
     padding: 2px 6px;
     border-radius: 4px;
@@ -552,18 +552,18 @@ impl StyledComponent for MarkdownEditorComponent {
     font-size: 13px;
 }
 
-.hi-markdown-editor-split-container {
+.hk-markdown-editor-split-container {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-.hi-markdown-editor-split-pane {
+.hk-markdown-editor-split-pane {
     width: 50% !important;
     border-right: 1px solid var(--hi-color-border);
 }
 
-.hi-markdown-editor-split-pane:last-child {
+.hk-markdown-editor-split-pane:last-child {
     border-right: none;
 }
 "#

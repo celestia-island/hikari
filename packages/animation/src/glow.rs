@@ -77,10 +77,10 @@ pub fn Glow(props: GlowProps) -> Element {
             };
 
             let mut current = target;
-            // Traverse up to find the .hi-glow-wrapper element.
+            // Traverse up to find the .hk-glow-wrapper element.
             loop {
                 let class_list = current.class_list();
-                if class_list.contains("hi-glow-wrapper") {
+                if class_list.contains("hk-glow-wrapper") {
                     break;
                 }
 
@@ -149,7 +149,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
         rsx! {
             div {
-                class: "hi-glow-wrapper",
+                class: "hk-glow-wrapper",
 
                 // Initial style
                 style: "--glow-x: 50%; --glow-y: 50%; --glow-color: {rsx_color}; --glow-intensity: {rsx_intensity};",
@@ -165,7 +165,7 @@ pub fn Glow(props: GlowProps) -> Element {
     {
         // SSR fallback: just render children
         rsx! {
-            div { class: "hi-glow-wrapper", { props.children } }
+            div { class: "hk-glow-wrapper", { props.children } }
         }
     }
 }

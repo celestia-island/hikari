@@ -88,39 +88,39 @@ pub struct SpinComponent;
 impl StyledComponent for SpinComponent {
     fn styles() -> &'static str {
         r#"
-.hi-spin {
+.hk-spin {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
 }
 
-.hi-spin-spinner {
+.hk-spin-spinner {
   border-radius: 50%;
   border: 3px solid var(--hi-border);
   border-top-color: var(--hi-color-primary);
   animation: hi-spin-rotate 0.9s linear infinite;
 }
 
-.hi-spin-sm .hi-spin-spinner {
+.hk-spin-sm .hk-spin-spinner {
   width: 16px;
   height: 16px;
   border-width: 2px;
 }
 
-.hi-spin-md .hi-spin-spinner {
+.hk-spin-md .hk-spin-spinner {
   width: 24px;
   height: 24px;
   border-width: 3px;
 }
 
-.hi-spin-lg .hi-spin-spinner {
+.hk-spin-lg .hk-spin-spinner {
   width: 32px;
   height: 32px;
   border-width: 4px;
 }
 
-.hi-spin-stopped .hi-spin-spinner {
+.hk-spin-stopped .hk-spin-spinner {
   animation: none;
   opacity: 0.3;
 }
@@ -130,18 +130,18 @@ impl StyledComponent for SpinComponent {
   100% { transform: rotate(360deg); }
 }
 
-.hi-spin-tip {
+.hk-spin-tip {
   font-size: 14px;
   color: var(--hi-text-secondary);
   line-height: 1.5;
 }
 
-[data-theme="dark"] .hi-spin-spinner {
+[data-theme="dark"] .hk-spin-spinner {
   border-color: var(--hi-border);
   border-top-color: var(--hi-color-primary);
 }
 
-[data-theme="dark"] .hi-spin-tip {
+[data-theme="dark"] .hk-spin-tip {
   color: var(--hi-text-secondary);
 }
 "#

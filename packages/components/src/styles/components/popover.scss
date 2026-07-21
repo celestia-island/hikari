@@ -2,7 +2,7 @@
 // Floating content container with optional title
 
 // Base popover container
-.hi-popover {
+.hk-popover {
     position: absolute;
     z-index: 1000;
     background-color: var(--hi-surface, #ffffff);
@@ -28,7 +28,7 @@
 }
 
 // Popover title
-.hi-popover-title {
+.hk-popover-title {
     font-size: 14px;
     font-weight: 600;
     color: var(--hi-text-primary, #333);
@@ -38,7 +38,7 @@
 }
 
 // Popover content
-.hi-popover-content {
+.hk-popover-content {
     font-size: 14px;
     color: var(--hi-text-secondary, #666);
     line-height: 1.5;
@@ -54,38 +54,38 @@
 }
 
 // Dark theme adjustments
-[data-theme="dark"] .hi-popover,
-[data-theme="tairitsu"] .hi-popover {
+[data-theme="dark"] .hk-popover,
+[data-theme="tairitsu"] .hk-popover {
     background-color: rgba(0, 0, 0, 0.9);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .hi-popover-title,
-[data-theme="tairitsu"] .hi-popover-title {
+[data-theme="dark"] .hk-popover-title,
+[data-theme="tairitsu"] .hk-popover-title {
     color: var(--hi-text-primary, #e0e0e0);
     border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .hi-popover-content,
-[data-theme="tairitsu"] .hi-popover-content {
+[data-theme="dark"] .hk-popover-content,
+[data-theme="tairitsu"] .hk-popover-content {
     color: var(--hi-text-secondary, #b0b0b0);
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-    .hi-popover {
+    .hk-popover {
         border-width: 2px;
         border-color: var(--hi-color-border, #000);
     }
 
-    .hi-popover-title {
+    .hk-popover-title {
         border-bottom-width: 2px;
     }
 }
 
 // Accessibility: respect prefers-reduced-motion
 @media (prefers-reduced-motion: reduce) {
-    .hi-popover {
+    .hk-popover {
         transition: opacity 0.1s ease;
         animation: none;
     }

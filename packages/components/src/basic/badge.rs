@@ -100,14 +100,14 @@ pub fn Badge(props: BadgeProps) -> Element {
         let badge_classes = builder.build();
 
         rsx! {
-            div { class: format!("hi-badge-wrapper {}", props.class),
+            div { class: format!("hk-badge-wrapper {}", props.class),
 
                 {props.children}
 
                 span { class: badge_classes,
 
                     if props.dot {
-                        span { class: "hi-badge-dot-inner" }
+                        span { class: "hk-badge-dot-inner" }
                     } else if let Some(count) = display_count.clone() {
                         "{count}"
                     }

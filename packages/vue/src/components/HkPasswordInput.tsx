@@ -29,6 +29,10 @@ export default defineComponent({
     name: { type: String, default: undefined },
     autocomplete: { type: String, default: undefined },
     strength: { type: Boolean, default: false },
+    passwordEnteredText: { type: String, default: "Password entered" },
+    allSelectedText: { type: String, default: "All selected" },
+    capsLockText: { type: String, default: "Caps Lock is on" },
+    fullWidthWarningText: { type: String, default: "Full-width characters not allowed" },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -124,20 +128,27 @@ export default defineComponent({
     function syncColor() {
       try {
         const raw = getComputedStyle(document.documentElement)
-          .getPropertyValue("--hi-color-primary")
+          .getPropertyValue("--hi-color-primary-rgb")
           .trim();
-        if (raw.startsWith("#")) {
-          const hex = raw.slice(1);
-          rgb = [
-            parseInt(hex.slice(0, 2), 16),
-            parseInt(hex.slice(2, 4), 16),
-            parseInt(hex.slice(4, 6), 16),
-          ];
-        } else {
-          const ns = raw.split(/\s+/).map(Number);
-          if (ns.length >= 3 && ns.every((n) => !isNaN(n)))
-            rgb = [ns[0], ns[1], ns[2]];
+        if (!raw) {
+          const hex = getComputedStyle(document.documentElement)
+            .getPropertyValue("--hi-color-primary")
+            .trim();
+          if (hex.startsWith("#")) {
+            rgb = [
+              parseInt(hex.slice(1, 3), 16),
+              parseInt(hex.slice(3, 5), 16),
+              parseInt(hex.slice(5, 7), 16),
+            ];
+            return;
+          }
+          const ns = hex.split(/[\s,\(\)]+/).map(Number).filter((n) => !isNaN(n));
+          if (ns.length >= 3) rgb = [ns[0], ns[1], ns[2]];
+          return;
         }
+        const ns = raw.split(/\s+/).map(Number);
+        if (ns.length >= 3 && ns.every((n) => !isNaN(n)))
+          rgb = [ns[0], ns[1], ns[2]];
       } catch {
         // ignore
       }
@@ -454,11 +465,11 @@ export default defineComponent({
                 clearAndFocus();
               }}
             >
-              Password entered
+              {props.passwordEnteredText}
             </span>
           ) : null}
           {focused.value && allSelected.value ? (
-            <span class="hk-pwd-select-hint">All selected</span>
+            <span class="hk-pwd-select-hint">{props.allSelectedText}</span>
           ) : null}
           {revealing.value ? (
             <span class="hk-pwd-reveal-text">{props.modelValue}</span>
@@ -499,14 +510,14 @@ export default defineComponent({
           <HkListTransition tag="div">
             {capsLock.value ? (
               <span key="caps" class="hk-pwd-hint" data-variant="caps">
-                Caps Lock is on
+                {props.capsLockText}
               </span>
             ) : null}
           </HkListTransition>
           <HkListTransition tag="div">
             {fullWidthPaused.value ? (
               <span key="fw" class="hk-pwd-hint" data-variant="fw">
-                Full-width characters not allowed
+                {props.fullWidthWarningText}
               </span>
             ) : null}
           </HkListTransition>

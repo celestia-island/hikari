@@ -16,8 +16,8 @@ export default defineComponent({
       >
         {chunks.value.map((key, i) => (
           <span key={i}>
-            {i > 0 && <span class="hk-kbd__sep">+</span>}
-            <span class="hk-kbd__key">{key}</span>
+            {i > 0 && <span class="hk-kbd-sep">+</span>}
+            <span class="hk-kbd-key">{key}</span>
           </span>
         ))}
       </kbd>

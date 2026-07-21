@@ -16,9 +16,9 @@ async fn main() -> anyhow::Result<()> {
 <html>
 <head><title>Hikari</title></head>
 <body>
-    <div id="hikari-app" class="hi-layout">
-        <main class="hi-layout-content">
-            <div class="hikari-page">
+    <div id="hk-app" class="hk-layout">
+        <main class="hk-layout-content">
+            <div class="hk-page">
                 <h1>Welcome to Hikari</h1>
             </div>
         </main>

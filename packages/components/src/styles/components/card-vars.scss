@@ -8,7 +8,7 @@
 // Base Card Variables
 // ============================================
 
-.hi-card {
+.hk-card {
   // ============================================
   // 1. Color System
   // ============================================
@@ -86,7 +86,7 @@
 // Size Variants
 // ============================================
 
-.hi-card-sm {
+.hk-card-sm {
   --hi-card-radius: var(--hi-radius-sm);
   --hi-card-padding: 1rem;
   --hi-card-padding-header: 0.75rem 1rem;
@@ -95,7 +95,7 @@
   --hi-card-title-font-size: var(--hi-font-size-base);
 }
 
-.hi-card-md {
+.hk-card-md {
   --hi-card-radius: var(--hi-radius-md);
   --hi-card-padding: 1.25rem;
   --hi-card-padding-header: 1rem 1.25rem;
@@ -104,7 +104,7 @@
   --hi-card-title-font-size: var(--hi-font-size-lg);
 }
 
-.hi-card-lg {
+.hk-card-lg {
   --hi-card-radius: var(--hi-radius-lg);
   --hi-card-padding: 1.75rem;
   --hi-card-padding-header: 1.5rem 1.75rem;
@@ -117,7 +117,7 @@
 // Variant: Bordered
 // ============================================
 
-.hi-card-bordered {
+.hk-card-bordered {
   --hi-card-border-width: 2px;
   --hi-card-shadow: 0 2px 4px var(--hi-black-20, rgba(0, 0, 0, 0.15)), 0 0 0 1px var(--hi-white-8, rgba(255, 255, 255, 0.08)) inset;
 }
@@ -126,7 +126,7 @@
 // Variant: Flat
 // ============================================
 
-.hi-card-flat {
+.hk-card-flat {
   --hi-card-shadow: none;
   --hi-card-border-color: var(--hi-color-border);
 }
@@ -135,6 +135,6 @@
 // Variant: Hoverable
 // ============================================
 
-.hi-card-hoverable {
+.hk-card-hoverable {
   --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);
 }

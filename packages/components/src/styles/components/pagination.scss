@@ -9,7 +9,7 @@
 // Base Pagination Styles
 // ============================================
 
-.hi-pagination {
+.hk-pagination {
   // Layout - ensure proper horizontal alignment
   display: flex;
   align-items: center;
@@ -32,14 +32,14 @@
 // ============================================
 
 // Pages container - ensure horizontal layout
-.hi-pagination-pages {
+.hk-pagination-pages {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.125rem;
 }
 
-.hi-pagination-item {
+.hk-pagination-item {
   // Layout - FIXED: Match icon button size (28px)
   display: flex;
   align-items: center;
@@ -94,7 +94,7 @@
   }
 
   // Active state (current page with theme color border + shadow)
-  &.hi-pagination-active {
+  &.hk-pagination-active {
     background: transparent;
     border: 1px solid var(--hi-color-primary);
     color: var(--hi-color-text-primary);
@@ -158,30 +158,30 @@
 // ============================================
 
 // Previous button
-.hi-pagination-prev {
-  @extend .hi-pagination-item;
+.hk-pagination-prev {
+  @extend .hk-pagination-item;
 }
 
 // Next button
-.hi-pagination-next {
-  @extend .hi-pagination-item;
+.hk-pagination-next {
+  @extend .hk-pagination-item;
 }
 
 // First button (jump to start)
-.hi-pagination-first {
-  @extend .hi-pagination-item;
+.hk-pagination-first {
+  @extend .hk-pagination-item;
 }
 
 // Last button (jump to end)
-.hi-pagination-last {
-  @extend .hi-pagination-item;
+.hk-pagination-last {
+  @extend .hk-pagination-item;
 }
 
 // ============================================
 // Page Jump Animation (Fade + Scale)
 // ============================================
 
-.hi-pagination-jump {
+.hk-pagination-jump {
   // DISABLED - migrated to JS animation
 
   // animation: pagination-jump-animation vars.$hikari-duration-normal vars.$hikari-ease-smooth;
@@ -207,15 +207,15 @@
 // Smooth Page Change Transitions
 // ============================================
 
-.hi-pagination-animate {
-  .hi-pagination-item {
+.hk-pagination-animate {
+  .hk-pagination-item {
     // DISABLED - migrated to JS animation
 
     // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
   }
 
   // Active page transition
-  .hi-pagination-item.hi-pagination-active {
+  .hk-pagination-item.hk-pagination-active {
     // DISABLED - migrated to JS animation
 
     // animation: pagination-page-change vars.$hikari-duration-normal vars.$hikari-ease-smooth;
@@ -248,7 +248,7 @@
 // Ellipsis (for large page counts)
 // ============================================
 
-.hi-pagination-ellipsis {
+.hk-pagination-ellipsis {
   // Layout - FIXED: Match button size (28px)
   display: flex;
   align-items: center;
@@ -288,7 +288,7 @@
 // Page Size Selector
 // ============================================
 
-.hi-pagination-size-selector {
+.hk-pagination-size-selector {
   // Layout
   display: flex;
   align-items: center;
@@ -296,14 +296,14 @@
   margin: 0 0.5rem;
 
   // Label
-  .hi-pagination-size-label {
+  .hk-pagination-size-label {
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
     white-space: nowrap;
   }
 
   // Select dropdown
-  .hi-pagination-size-select {
+  .hk-pagination-size-select {
     // Layout
     padding: 0.375rem 0.75rem;
 
@@ -355,7 +355,7 @@
 // Total Count Display
 // ============================================
 
-.hi-pagination-total {
+.hk-pagination-total {
   // Layout
   display: flex;
   align-items: center;
@@ -369,14 +369,14 @@
   white-space: nowrap;
 
   // Highlight numbers
-  .hi-pagination-total-highlight {
+  .hk-pagination-total-highlight {
     color: var(--hi-color-primary);
     font-weight: 600;
     text-shadow: 0 0 8px var(--hi-primary);
   }
 
   // Separator
-  .hi-pagination-total-separator {
+  .hk-pagination-total-separator {
     margin: 0 0.25rem;
     opacity: 0.5;
   }
@@ -386,7 +386,7 @@
 // Input Jump to Page
 // ============================================
 
-.hi-pagination-jumper {
+.hk-pagination-jumper {
   // Layout
   display: flex;
   align-items: center;
@@ -394,14 +394,14 @@
   margin: 0 0.5rem;
 
   // Label
-  .hi-pagination-jumper-label {
+  .hk-pagination-jumper-label {
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
     white-space: nowrap;
   }
 
   // Input field
-  .hi-pagination-jumper-input {
+  .hk-pagination-jumper-input {
     // Layout
     width: 3.5rem;
     padding: 0.375rem 0.5rem;
@@ -432,7 +432,7 @@
     }
 
     // Validation states
-    &.hi-pagination-jumper-invalid {
+    &.hk-pagination-jumper-invalid {
       border-color: var(--hi-color-danger);
       box-shadow: 0 0 8px rgba(255, 76, 0, 0.4);
     }
@@ -444,7 +444,7 @@
   }
 
   // Go button
-  .hi-pagination-jumper-button {
+  .hk-pagination-jumper-button {
     // Layout
     display: flex;
     align-items: center;
@@ -492,11 +492,11 @@
 // ============================================
 
 // Small size
-.hi-pagination-sm {
+.hk-pagination-sm {
   gap: 0.375rem;
   padding: 0.375rem;
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     width: 24px;
     height: 24px;
     min-width: 24px;
@@ -512,7 +512,7 @@
     }
   }
 
-  .hi-pagination-ellipsis {
+  .hk-pagination-ellipsis {
     width: 24px;
     height: 24px;
     min-width: 24px;
@@ -523,25 +523,25 @@
     font-size: 0.8125rem;
   }
 
-  .hi-pagination-size-selector,
-  .hi-pagination-total,
-  .hi-pagination-jumper {
+  .hk-pagination-size-selector,
+  .hk-pagination-total,
+  .hk-pagination-jumper {
     margin: 0 0.375rem;
 
-    .hi-pagination-size-label,
-    .hi-pagination-total-label,
-    .hi-pagination-jumper-label {
+    .hk-pagination-size-label,
+    .hk-pagination-total-label,
+    .hk-pagination-jumper-label {
       font-size: 0.8125rem;
     }
   }
 }
 
 // Medium size (default)
-.hi-pagination-md {
+.hk-pagination-md {
   gap: 0.5rem;
   padding: 0.5rem;
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     width: 28px;
     height: 28px;
     min-width: 28px;
@@ -557,7 +557,7 @@
     }
   }
 
-  .hi-pagination-ellipsis {
+  .hk-pagination-ellipsis {
     width: 28px;
     height: 28px;
     min-width: 28px;
@@ -570,11 +570,11 @@
 }
 
 // Large size
-.hi-pagination-lg {
+.hk-pagination-lg {
   gap: 0.625rem;
   padding: 0.625rem;
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     width: 32px;
     height: 32px;
     min-width: 32px;
@@ -590,7 +590,7 @@
     }
   }
 
-  .hi-pagination-ellipsis {
+  .hk-pagination-ellipsis {
     width: 32px;
     height: 32px;
     min-width: 32px;
@@ -601,14 +601,14 @@
     font-size: 0.9375rem;
   }
 
-  .hi-pagination-size-selector,
-  .hi-pagination-total,
-  .hi-pagination-jumper {
+  .hk-pagination-size-selector,
+  .hk-pagination-total,
+  .hk-pagination-jumper {
     margin: 0 0.625rem;
 
     .pagination-size-label,
-    .hi-pagination-total-label,
-    .hi-pagination-jumper-label {
+    .hk-pagination-total-label,
+    .hk-pagination-jumper-label {
       font-size: 0.9375rem;
     }
   }
@@ -625,21 +625,21 @@
   padding: 0.5rem 0.75rem;
 
   // Hide less important elements
-  .hi-pagination-size-selector,
-  .hi-pagination-total,
-  .hi-pagination-jumper {
+  .hk-pagination-size-selector,
+  .hk-pagination-total,
+  .hk-pagination-jumper {
     display: none;
   }
 
   // Ellipsis always hidden in compact mode
-  .hi-pagination-ellipsis {
+  .hk-pagination-ellipsis {
     display: none;
   }
 
   // Smaller gaps
   gap: 0.25rem;
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     width: 24px;
     height: 24px;
     min-width: 24px;
@@ -657,7 +657,7 @@
   }
 }
 
-.hi-pagination-compact {
+.hk-pagination-compact {
   @include pagination-compact;
 }
 
@@ -665,12 +665,12 @@
 // Simple Mode (Only Prev/Next/Active)
 // ============================================
 
-.hi-pagination-simple {
-  .hi-pagination-item:not(.hi-pagination-prev):not(.hi-pagination-next):not(.hi-pagination-active) {
+.hk-pagination-simple {
+  .hk-pagination-item:not(.hk-pagination-prev):not(.hk-pagination-next):not(.hk-pagination-active) {
     display: none;
   }
 
-  .hi-pagination-ellipsis {
+  .hk-pagination-ellipsis {
     display: none;
   }
 }
@@ -686,12 +686,12 @@
 
 @include mix.tablet {
   .pagination {
-    .hi-pagination-size-selector,
-    .hi-pagination-total {
+    .hk-pagination-size-selector,
+    .hk-pagination-total {
       display: flex;
     }
 
-    .hi-pagination-jumper {
+    .hk-pagination-jumper {
       display: none;
     }
   }
@@ -699,9 +699,9 @@
 
 @include mix.desktop {
   .pagination {
-    .hi-pagination-size-selector,
-    .hi-pagination-total,
-    .hi-pagination-jumper {
+    .hk-pagination-size-selector,
+    .hk-pagination-total,
+    .hk-pagination-jumper {
       display: flex;
     }
   }
@@ -710,12 +710,12 @@
 
 @include mix.tablet {
   .pagination {
-    .hi-pagination-size-selector,
-.hi-pagination-total {
+    .hk-pagination-size-selector,
+.hk-pagination-total {
       display: flex;
     }
 
-    .hi-pagination-jumper {
+    .hk-pagination-jumper {
       display: none;
     }
   }
@@ -723,9 +723,9 @@
 
 @include mix.desktop {
   .pagination {
-    .hi-pagination-size-selector,
-    .hi-pagination-total,
-    .hi-pagination-jumper {
+    .hk-pagination-size-selector,
+    .hk-pagination-total,
+    .hk-pagination-jumper {
       display: flex;
     }
   }
@@ -735,11 +735,11 @@
 // Loading State
 // ============================================
 
-.hi-pagination-loading {
+.hk-pagination-loading {
   pointer-events: none;
   opacity: 0.6;
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     cursor: wait;
 
     &::after {
@@ -772,17 +772,17 @@
 // ============================================
 
 // Left aligned
-.hi-pagination-left {
+.hk-pagination-left {
   justify-content: flex-start;
 }
 
 // Right aligned
-.hi-pagination-right {
+.hk-pagination-right {
   justify-content: flex-end;
 }
 
 // Center aligned (default)
-.hi-pagination-center {
+.hk-pagination-center {
   justify-content: center;
 }
 
@@ -791,28 +791,28 @@
 // ============================================
 
 // Focus visible
-.hi-pagination-item:focus-visible {
+.hk-pagination-item:focus-visible {
   outline: 2px solid var(--hi-color-primary);
   outline-offset: 2px;
 }
 
 // High contrast mode
 @media (prefers-contrast: high) {
-  .hi-pagination-item {
+  .hk-pagination-item {
     border-width: 2px;
   }
 
-  .hi-pagination-item.hi-pagination-active {
+  .hk-pagination-item.hk-pagination-active {
     border-width: 2px;
   }
 }
 
 // Reduced motion
 @media (prefers-reduced-motion: reduce) {
-  .hi-pagination-item,
+  .hk-pagination-item,
   .pagination-size-select,
-  .hi-pagination-jumper-input,
-  .hi-pagination-jumper-button {
+  .hk-pagination-jumper-input,
+  .hk-pagination-jumper-button {
     // DISABLED - migrated to JS animation
 
     // transition: none;
@@ -821,13 +821,13 @@
     // animation: none;
   }
 
-  .hi-pagination-item.hi-pagination-active {
+  .hk-pagination-item.hk-pagination-active {
     // DISABLED - migrated to JS animation
 
     // animation: none;
   }
 
-  .hi-pagination-jump {
+  .hk-pagination-jump {
     // DISABLED - migrated to JS animation
 
     // animation: none;
@@ -845,14 +845,14 @@
     border: 1px solid #000;
   }
 
-  .hi-pagination-item {
+  .hk-pagination-item {
     background: white;
     border: 1px solid #000;
     color: black;
     box-shadow: none;
   }
 
-  .hi-pagination-item.hi-pagination-active {
+  .hk-pagination-item.hk-pagination-active {
     background: #ccc;
     border-color: #000;
   }
@@ -863,13 +863,13 @@
 // ============================================
 
 @media (prefers-color-scheme: dark) {
-  .hi-pagination-item {
+  .hk-pagination-item {
     background: var(--hi-card-bg);
     border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }
 
   .pagination-size-select,
-  .hi-pagination-jumper-input {
+  .hk-pagination-jumper-input {
     background: var(--hi-card-bg);
     border-color: var(--hi-white-10, rgba(255, 255, 255, 0.1));
   }

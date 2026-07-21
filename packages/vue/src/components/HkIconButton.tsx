@@ -16,9 +16,9 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const cls = computed(() => [
-      "hi-icon-button",
-      `hi-icon-button-${props.size}`,
-      `hi-icon-button-${props.variant}`,
+      "hk-icon-button",
+      `hk-icon-button-${props.size}`,
+      `hk-icon-button-${props.variant}`,
     ]);
 
     return () => (
@@ -27,7 +27,7 @@ export default defineComponent({
         disabled={props.disabled}
         onClick={(e: MouseEvent) => emit("click", e)}
       >
-        <span class="hi-icon-button-icon">
+        <span class="hk-icon-button-icon">
           {slots.icon ? (
             slots.icon()
           ) : (

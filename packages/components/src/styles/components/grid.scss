@@ -6,25 +6,25 @@
 // ============================================
 
 // Grid container
-.hi-grid {
+.hk-grid {
   display: grid;
 }
 
 // Grid gap variants
-.hi-grid-gap-sm {
+.hk-grid-gap-sm {
   gap: 0.5rem;
 }
 
-.hi-grid-gap-md {
+.hk-grid-gap-md {
   gap: 1rem;
 }
 
-.hi-grid-gap-lg {
+.hk-grid-gap-lg {
   gap: 1.5rem;
 }
 
 // Grid column
-.hi-col {
+.hk-col {
   min-width: 0; // Prevent grid blowout
 }
 
@@ -32,19 +32,19 @@
 // Hikari Row Component
 // ============================================
 
-.hi-row {
+.hk-row {
   display: flex;
 }
 
 // Row gap variants
-.hi-row-gap-sm {
+.hk-row-gap-sm {
   gap: 0.5rem;
 }
 
-.hi-row-gap-md {
+.hk-row-gap-md {
   gap: 1rem;
 }
 
-.hi-row-gap-lg {
+.hk-row-gap-lg {
   gap: 1.5rem;
 }

@@ -227,7 +227,7 @@ pub fn UserGuide(props: UserGuideProps) -> Element {
 impl StyledComponent for UserGuideComponent {
     fn styles() -> &'static str {
         r#"
-.hi-user-guide-overlay {
+.hk-user-guide-overlay {
     position: fixed;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.45);
@@ -235,7 +235,7 @@ impl StyledComponent for UserGuideComponent {
     pointer-events: none;
 }
 
-.hi-user-guide-container {
+.hk-user-guide-container {
     position: fixed;
     z-index: 1001;
     background-color: var(--hi-color-bg-container);
@@ -246,7 +246,7 @@ impl StyledComponent for UserGuideComponent {
     animation: hi-user-guide-fade-in 0.3s ease;
 }
 
-[data-theme="dark"] .hi-user-guide-container {
+[data-theme="dark"] .hk-user-guide-container {
     background-color: var(--hi-surface);
     border-color: var(--hi-color-border);
 }
@@ -262,7 +262,7 @@ impl StyledComponent for UserGuideComponent {
     }
 }
 
-.hi-user-guide-arrow {
+.hk-user-guide-arrow {
     position: absolute;
     width: 12px;
     height: 12px;
@@ -273,52 +273,52 @@ impl StyledComponent for UserGuideComponent {
     transform: rotate(45deg);
 }
 
-[data-theme="dark"] .hi-user-guide-arrow {
+[data-theme="dark"] .hk-user-guide-arrow {
     background-color: var(--hi-surface);
 }
 
-.hi-user-guide-placement-top .hi-user-guide-arrow {
+.hk-user-guide-placement-top .hk-user-guide-arrow {
     bottom: -7px;
     left: 50%;
     transform: translateX(-50%) rotate(-135deg);
 }
 
-.hi-user-guide-placement-bottom .hi-user-guide-arrow {
+.hk-user-guide-placement-bottom .hk-user-guide-arrow {
     top: -7px;
     left: 50%;
     transform: translateX(-50%) rotate(45deg);
 }
 
-.hi-user-guide-placement-left .hi-user-guide-arrow {
+.hk-user-guide-placement-left .hk-user-guide-arrow {
     right: -7px;
     top: 50%;
     transform: translateY(-50%) rotate(135deg);
 }
 
-.hi-user-guide-placement-right .hi-user-guide-arrow {
+.hk-user-guide-placement-right .hk-user-guide-arrow {
     left: -7px;
     top: 50%;
     transform: translateY(-50%) rotate(-45deg);
 }
 
-.hi-user-guide-content {
+.hk-user-guide-content {
     padding: 16px;
 }
 
-.hi-user-guide-header {
+.hk-user-guide-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 8px;
 }
 
-.hi-user-guide-title {
+.hk-user-guide-title {
     font-size: 16px;
     font-weight: 600;
     color: var(--hi-text-primary);
 }
 
-.hi-user-guide-counter {
+.hk-user-guide-counter {
     font-size: 12px;
     color: var(--hi-text-secondary);
     background-color: var(--hi-color-bg-elevated);
@@ -326,21 +326,21 @@ impl StyledComponent for UserGuideComponent {
     border-radius: 10px;
 }
 
-.hi-user-guide-description {
+.hk-user-guide-description {
     font-size: 14px;
     color: var(--hi-text-secondary);
     line-height: 1.6;
     margin-bottom: 16px;
 }
 
-.hi-user-guide-footer {
+.hk-user-guide-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.hi-user-guide-skip-button {
+.hk-user-guide-skip-button {
     background: transparent;
     border: none;
     color: var(--hi-text-secondary);
@@ -351,19 +351,19 @@ impl StyledComponent for UserGuideComponent {
     transition: all 0.2s ease;
 }
 
-.hi-user-guide-skip-button:hover {
+.hk-user-guide-skip-button:hover {
     background-color: var(--hi-color-hover);
     color: var(--hi-text-primary);
 }
 
-.hi-user-guide-navigation {
+.hk-user-guide-navigation {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-left: auto;
 }
 
-.hi-user-guide-nav-button {
+.hk-user-guide-nav-button {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -377,29 +377,29 @@ impl StyledComponent for UserGuideComponent {
     transition: all 0.2s ease;
 }
 
-.hi-user-guide-nav-button:hover {
+.hk-user-guide-nav-button:hover {
     background-color: var(--hi-color-hover);
 }
 
-.hi-user-guide-primary-button {
+.hk-user-guide-primary-button {
     background-color: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
     color: white;
 }
 
-.hi-user-guide-primary-button:hover {
+.hk-user-guide-primary-button:hover {
     background-color: var(--hi-color-primary-hover);
     border-color: var(--hi-color-primary-hover);
 }
 
-.hi-user-guide-progress {
+.hk-user-guide-progress {
     display: flex;
     justify-content: center;
     gap: 6px;
     padding: 8px 16px 12px;
 }
 
-.hi-user-guide-progress-dot {
+.hk-user-guide-progress-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -407,7 +407,7 @@ impl StyledComponent for UserGuideComponent {
     transition: all 0.2s ease;
 }
 
-.hi-user-guide-progress-dot-active {
+.hk-user-guide-progress-dot-active {
     background-color: var(--hi-color-primary);
     transform: scale(1.25);
 }

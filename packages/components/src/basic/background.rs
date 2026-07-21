@@ -107,7 +107,7 @@ fn start_gradient_animation() -> Box<dyn FnOnce()> {
         let y = center_y + radius_percent * angle.sin();
 
         let theme = match document
-            .query_selector(".hi-theme-provider[data-theme]")
+            .query_selector(".hk-theme-provider[data-theme]")
             .ok()
             .flatten()
             .and_then(|el| el.get_attribute("data-theme"))

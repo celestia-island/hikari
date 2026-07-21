@@ -44,22 +44,22 @@ export default defineComponent({
 
       return (
         <div class="hk-error-boundary">
-          <div class="hk-error-boundary__card">
-            <div class="hk-error-boundary__header">
-              <AlertTriangle size={16} class="hk-error-boundary__icon" />
-              <span class="hk-error-boundary__label">Component Error</span>
+          <div class="hk-error-boundary-card">
+            <div class="hk-error-boundary-header">
+              <AlertTriangle size={16} class="hk-error-boundary-icon" />
+              <span class="hk-error-boundary-label">Component Error</span>
               {props.name !== "unknown" && (
-                <span class="hk-error-boundary__tag">{props.name}</span>
+                <span class="hk-error-boundary-tag">{props.name}</span>
               )}
             </div>
-            <div class="hk-error-boundary__msg">
+            <div class="hk-error-boundary-msg">
               <div style={{ maxHeight: "12rem" }}>
                 <HkScrollContainer>
                   {error.value}
                 </HkScrollContainer>
               </div>
             </div>
-            <div class="hk-error-boundary__actions">
+            <div class="hk-error-boundary-actions">
               <HkButton variant="ghost" size="sm" onClick={copyError}>
                 <Copy size={12} />
                 Copy Error

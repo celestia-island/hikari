@@ -7,7 +7,7 @@
 // Collapsible Container
 // ============================================
 
-.hikari-collapsible {
+.hk-collapsible {
     width: 100%;
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
@@ -26,7 +26,7 @@
 // Collapsible Header
 // ============================================
 
-.hikari-collapsible-header {
+.hk-collapsible-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -42,12 +42,12 @@
     &:hover {
         background-color: rgba(59, 130, 246, 0.05);
 
-        .hikari-collapsible-icon {
+        .hk-collapsible-icon {
             color: var(--hi-color-primary);
             transform: scale(1.1);
         }
 
-        .hikari-collapsible-title {
+        .hk-collapsible-title {
             color: var(--hi-color-text-primary);
         }
     }
@@ -58,14 +58,14 @@
     }
 }
 
-.hikari-collapsible-title-wrapper {
+.hk-collapsible-title-wrapper {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-md;
     flex: 1;
 }
 
-.hikari-collapsible-icon {
+.hk-collapsible-icon {
     width: 20px;
     height: 20px;
     color: var(--hi-color-text-secondary);
@@ -73,31 +73,31 @@
     flex-shrink: 0;
 
     // Rotation animation when collapsed
-    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
+    .hk-collapsible:not(.hk-collapsible-expanded) & {
         transform: rotate(-90deg);
     }
 
     // FUI glow on hover
-    .hikari-collapsible-header:hover & {
+    .hk-collapsible-header:hover & {
         filter: drop-shadow(0 0 8px currentColor);
     }
 }
 
-.hikari-collapsible-title {
+.hk-collapsible-title {
     font-size: $hikari-font-size-base;
     font-weight: 600;
     color: var(--hi-color-text-primary);
     transition: color $hikari-transition-fast;
 }
 
-.hikari-collapsible-subtitle {
+.hk-collapsible-subtitle {
     font-size: $hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
     font-weight: 400;
     margin-top: 2px;
 }
 
-.hikari-collapsible-actions {
+.hk-collapsible-actions {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-sm;
@@ -112,26 +112,26 @@
 // Collapsible Content
 // ============================================
 
-.hikari-collapsible-content {
+.hk-collapsible-content {
     overflow: hidden;
     transition:
         max-height $hikari-transition-slow cubic-bezier(0.4, 0, 0.2, 1),
         opacity $hikari-transition-base;
 
     // Collapsed state
-    .hikari-collapsible:not(.hikari-collapsible-expanded) & {
+    .hk-collapsible:not(.hk-collapsible-expanded) & {
         max-height: 0;
         opacity: 0;
     }
 
     // Expanded state
-    .hikari-collapsible.hikari-collapsible-expanded & {
+    .hk-collapsible.hk-collapsible-expanded & {
         max-height: 2000px;
         opacity: 1;
     }
 }
 
-.hikari-collapsible-body {
+.hk-collapsible-body {
     padding: $hikari-spacing-lg;
 
     // Add scrollbar when content overflows
@@ -143,7 +143,7 @@
 // ============================================
 
 // Bordered variant
-.hikari-collapsible-bordered {
+.hk-collapsible-bordered {
     border-radius: 0;
 
     &:first-child {
@@ -162,11 +162,11 @@
 }
 
 // Ghost variant (minimal styling)
-.hikari-collapsible-ghost {
+.hk-collapsible-ghost {
     background-color: transparent;
     border: none;
 
-    .hikari-collapsible-header {
+    .hk-collapsible-header {
         background-color: transparent;
         border-bottom: none;
         border-radius: $hikari-radius-md;
@@ -176,13 +176,13 @@
         }
     }
 
-    .hikari-collapsible-body {
+    .hk-collapsible-body {
         padding: $hikari-spacing-md $hikari-spacing-lg;
     }
 }
 
 // FUI variant (enhanced glow)
-.hikari-collapsible-fui {
+.hk-collapsible-fui {
     position: relative;
     overflow: hidden;
 
@@ -211,7 +211,7 @@
         opacity: 1;
     }
 
-    .hikari-collapsible-header {
+    .hk-collapsible-header {
         background: linear-gradient(
              135deg,
              rgba(139, 92, 246, 0.05) 0%,
@@ -224,40 +224,40 @@
 // Collapsible Sizes
 // ============================================
 
-.hikari-collapsible-sm {
-    .hikari-collapsible-header {
+.hk-collapsible-sm {
+    .hk-collapsible-header {
         padding: $hikari-spacing-sm $hikari-spacing-md;
     }
 
-    .hikari-collapsible-title {
+    .hk-collapsible-title {
         font-size: $hikari-font-size-sm;
     }
 
-    .hikari-collapsible-icon {
+    .hk-collapsible-icon {
         width: 16px;
         height: 16px;
     }
 
-    .hikari-collapsible-body {
+    .hk-collapsible-body {
         padding: $hikari-spacing-md;
     }
 }
 
-.hikari-collapsible-lg {
-    .hikari-collapsible-header {
+.hk-collapsible-lg {
+    .hk-collapsible-header {
         padding: $hikari-spacing-lg $hikari-spacing-xl;
     }
 
-    .hikari-collapsible-title {
+    .hk-collapsible-title {
         font-size: $hikari-font-size-lg;
     }
 
-    .hikari-collapsible-icon {
+    .hk-collapsible-icon {
         width: 24px;
         height: 24px;
     }
 
-    .hikari-collapsible-body {
+    .hk-collapsible-body {
         padding: $hikari-spacing-xl;
     }
 }
@@ -267,43 +267,43 @@
 // ============================================
 
 // Disabled state
-.hikari-collapsible-disabled {
+.hk-collapsible-disabled {
     opacity: 0.6;
     pointer-events: none;
     cursor: not-allowed;
 
-    .hikari-collapsible-header {
+    .hk-collapsible-header {
         cursor: not-allowed;
     }
 }
 
 // Loading state
-.hikari-collapsible-loading {
+.hk-collapsible-loading {
     position: relative;
 
-    .hikari-collapsible-icon {
+    .hk-collapsible-icon {
         animation: hi-spin 1s linear infinite;
     }
 }
 
 // Error state
-.hikari-collapsible-error {
+.hk-collapsible-error {
     border-color: var(--hi-color-danger);
 
-    .hikari-collapsible-icon {
+    .hk-collapsible-icon {
         color: var(--hi-color-danger);
     }
 
-    .hikari-collapsible-title {
+    .hk-collapsible-title {
         color: var(--hi-color-danger);
     }
 }
 
 // Success state
-.hikari-collapsible-success {
+.hk-collapsible-success {
     border-color: var(--hi-color-success);
 
-    .hikari-collapsible-icon {
+    .hk-collapsible-icon {
         color: var(--hi-color-success);
     }
 }
@@ -312,15 +312,15 @@
 // Accordion Group
 // ============================================
 
-.hikari-accordion {
+.hk-accordion {
     display: flex;
     flex-direction: column;
     gap: $hikari-spacing-sm;
 
     // Only one collapsible can be expanded at a time
-    &.hikari-accordion-mutual-exclusive {
-        .hikari-collapsible:not(.hikari-collapsible-expanded) {
-            .hikari-collapsible-content {
+    &.hk-accordion-mutual-exclusive {
+        .hk-collapsible:not(.hk-collapsible-expanded) {
+            .hk-collapsible-content {
                 display: none;
             }
         }
@@ -332,29 +332,29 @@
 // ============================================
 
 // Fade animation
-.hikari-collapsible-fade {
-    .hikari-collapsible-content {
+.hk-collapsible-fade {
+    .hk-collapsible-content {
         transition: opacity $hikari-transition-base;
     }
 
-    &.hikari-collapsible-expanded .hikari-collapsible-content {
+    &.hk-collapsible-expanded .hk-collapsible-content {
         opacity: 1;
     }
 
-    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
+    &:not(.hk-collapsible-expanded) .hk-collapsible-content {
         opacity: 0;
         display: none;
     }
 }
 
 // Slide animation (default is in the base styles)
-.hikari-collapsible-slide {
+.hk-collapsible-slide {
     // This is the default behavior
 }
 
 // Scale animation
-.hikari-collapsible-scale {
-    .hikari-collapsible-content {
+.hk-collapsible-scale {
+    .hk-collapsible-content {
         transform-origin: top;
         transition:
             max-height $hikari-transition-slow,
@@ -362,11 +362,11 @@
             transform $hikari-transition-base;
     }
 
-    &:not(.hikari-collapsible-expanded) .hikari-collapsible-content {
+    &:not(.hk-collapsible-expanded) .hk-collapsible-content {
         transform: scaleY(0);
     }
 
-    &.hikari-collapsible-expanded .hikari-collapsible-content {
+    &.hk-collapsible-expanded .hk-collapsible-content {
         transform: scaleY(1);
     }
 }
@@ -376,15 +376,15 @@
 // ============================================
 
 @include mobile {
-    .hikari-collapsible-header {
+    .hk-collapsible-header {
         padding: $hikari-spacing-sm $hikari-spacing-md;
     }
 
-    .hikari-collapsible-body {
+    .hk-collapsible-body {
         padding: $hikari-spacing-md;
     }
 
-    .hikari-collapsible-title {
+    .hk-collapsible-title {
         font-size: $hikari-font-size-sm;
     }
 }

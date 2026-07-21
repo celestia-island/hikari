@@ -45,7 +45,7 @@ pub fn Card(props: CardProps) -> Element {
     let glow_overlay = if props.glow {
         Some(rsx! {
             div {
-                class: "hi-card-glow hi-glow-dim",
+                class: "hk-card-glow hi-glow-dim",
                 style: "--glow-x: 50%; --glow-y: 50%; --hi-glow-color: var(--hi-glow-button-primary);",
             }
         })
@@ -149,7 +149,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     let avatar_el = if has_avatar {
         let avatar = props.avatar.clone().unwrap();
         Some(rsx! {
-            div { class: "hi-card-header-avatar", {avatar} }
+            div { class: "hk-card-header-avatar", {avatar} }
         })
     } else {
         None
@@ -176,7 +176,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     let action_el = if has_action {
         let action = props.action.clone().unwrap();
         Some(rsx! {
-            div { class: "hi-card-header-action", {action} }
+            div { class: "hk-card-header-action", {action} }
         })
     } else {
         None
@@ -185,7 +185,7 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     rsx! {
         div { class: classes,
             // Left section: avatar + title/subtitle
-            div { class: "hi-card-header-left",
+            div { class: "hk-card-header-left",
                 {avatar_el.unwrap_or_else(VNode::empty)}
                 div {
                     {title_el.unwrap_or_else(VNode::empty)}

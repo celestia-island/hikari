@@ -28,8 +28,8 @@ export default defineComponent({
   setup(props, { slots, emit }) {
     const content = () => (
       <>
-        {slots.icon ? <span class="hk-nav-item__icon">{slots.icon()}</span> : null}
-        {slots.default ? <span class="hk-nav-item__label">{slots.default()}</span> : null}
+        {slots.icon ? <span class="hk-nav-item-icon">{slots.icon()}</span> : null}
+        {slots.default ? <span class="hk-nav-item-label">{slots.default()}</span> : null}
       </>
     );
 

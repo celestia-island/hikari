@@ -5,10 +5,10 @@
   height: 1.75rem;
   padding: 0 0.75rem;
   flex-shrink: 0;
-  background: rgb(var(--color-surface));
-  border-top: 1px solid rgb(var(--color-border) / 0.1);
-  font-size: var(--text-xs, 0.75rem);
-  color: rgb(var(--color-muted));
+  background: var(--hi-color-surface);
+  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+  font-size: var(--hi-text-xs, 0.75rem);
+  color: var(--hi-color-muted);
   user-select: none;
 }
 
@@ -47,7 +47,7 @@
     cursor: pointer;
 
     &:hover {
-      color: rgb(var(--color-text));
+      color: var(--hi-color-text-primary);
     }
   }
 
@@ -60,7 +60,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--dot-color, rgb(var(--color-muted)));
+  background: var(--dot-color, var(--hi-color-muted));
   flex-shrink: 0;
 
   .hk-status-bar__connection--reconnecting & {
@@ -89,7 +89,7 @@
 
 .hk-status-bar__stat-value {
   font-weight: 600;
-  color: rgb(var(--color-text));
+  color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;
 }
 

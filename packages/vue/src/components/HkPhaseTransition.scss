@@ -1,13 +1,13 @@
 .hk-phase-enter-active {
   transition:
-    opacity var(--duration-short, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--duration-short, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-phase-leave-active {
   transition:
-    opacity var(--duration-short, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    transform var(--duration-short, 0.15s) cubic-bezier(0.5, 0, 0.75, 0);
+    opacity var(--hi-duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
+    transform var(--hi-duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0);
 }
 
 .hk-phase-enter-from {

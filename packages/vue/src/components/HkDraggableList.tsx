@@ -52,7 +52,7 @@ export default defineComponent({
       if (isLocked(item.key)) return;
 
       const handle = (e.currentTarget as HTMLElement);
-      const isHandle = handle.classList.contains("hk-draggable-list__handle");
+      const isHandle = handle.classList.contains("hk-draggable-list-handle");
       if (!isHandle) {
         const target = e.target as HTMLElement | null;
         if (target && target.closest("button, a, input, textarea, select, [contenteditable]")) {
@@ -94,7 +94,7 @@ export default defineComponent({
     function attachGhost(sourceRect: DOMRect, html: string) {
       detachGhost();
       const node = document.createElement("div");
-      node.className = "hk-draggable-list__ghost";
+      node.className = "hk-draggable-list-ghost";
       node.innerHTML = html;
       node.style.width = `${sourceRect.width}px`;
       node.style.transform = `translate3d(${sourceRect.left}px, ${sourceRect.top}px, 0)`;
@@ -200,14 +200,14 @@ export default defineComponent({
               <div
                 key={item.key}
                 ref={(el) => setRowEl(index, el as Element | null)}
-                class="hk-draggable-list__item"
+                class="hk-draggable-list-item"
                 data-locked={locked || undefined}
                 data-dragging={isSource || undefined}
                 data-placeholder={placeholderDir || undefined}
                 onPointerdown={(e: PointerEvent) => onPointerDown(e, index, item)}
               >
                 <span
-                  class="hk-draggable-list__handle"
+                  class="hk-draggable-list-handle"
                   data-hidden={locked || undefined}
                   onPointerdown={(e: PointerEvent) => {
                     e.stopPropagation();
@@ -225,7 +225,7 @@ export default defineComponent({
                     </svg>
                   )}
                 </span>
-                <div class="hk-draggable-list__content">
+                <div class="hk-draggable-list-content">
                   {slots.item?.({ item, index, locked })}
                 </div>
               </div>

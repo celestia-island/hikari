@@ -208,7 +208,7 @@ impl CodeHighlighterState {
 
     #[must_use]
     pub fn container_class(&self) -> String {
-        let mut classes = String::from("hi-code-highlighter");
+        let mut classes = String::from("hk-code-highlighter");
         classes.push(' ');
         classes.push_str(self.language.class_name());
         if self.wrap {
@@ -267,14 +267,14 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
         );
 
     // Header
-    let mut header = VElement::new("div").class("hi-code-highlighter-container");
+    let mut header = VElement::new("div").class("hk-code-highlighter-container");
 
     if state.show_language {
         let lang_div = VElement::new("div")
-            .class("hi-code-highlighter-language")
+            .class("hk-code-highlighter-language")
             .child(VNode::Element(
                 VElement::new("span")
-                    .class("hi-code-highlighter-language-label")
+                    .class("hk-code-highlighter-language-label")
                     .child(VNode::Text(VText::new(state.language.display_name()))),
             ));
         header = header.child(VNode::Element(lang_div));
@@ -285,7 +285,7 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
         // platform::copy_to_clipboard is a stub (returns false) until WIT is implemented.
         // The caller should call copy_to_clipboard and toggle state.copied on success.
         let copy_btn = VElement::new("button")
-            .class("hi-code-highlighter-copy")
+            .class("hk-code-highlighter-copy")
             .child(VNode::Element({
                 let scale = state.copy_icon_scale();
                 let icon_style = if (scale - 1.0).abs() > 0.001 {
@@ -297,7 +297,7 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
                 let icon_name = state.copy_button_icon();
                 let icon_svg = render_icon_svg(icon_name, 14);
                 VElement::new("span")
-                    .class("hi-code-highlighter-copy-icon")
+                    .class("hk-code-highlighter-copy-icon")
                     .attr_opt("style", icon_style)
                     .dangerous_inner_html(&icon_svg)
             }));
@@ -310,14 +310,14 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
     let mut code_body = VElement::new("div").class(state.container_class());
 
     if state.show_line_numbers && !lines.is_empty() {
-        let mut nums_div = VElement::new("div").class("hi-code-highlighter-line-numbers");
+        let mut nums_div = VElement::new("div").class("hk-code-highlighter-line-numbers");
 
         let num_nodes: Vec<VNode> = line_numbers
             .iter()
             .map(|n| {
                 VNode::Element(
                     VElement::new("div")
-                        .class("hi-code-highlighter-line-number")
+                        .class("hk-code-highlighter-line-number")
                         .child(VNode::Text(VText::new(n))),
                 )
             })
@@ -328,14 +328,14 @@ pub fn render_code_highlighter(state: &CodeHighlighterState) -> VNode {
     }
 
     // Content div with code lines
-    let mut content_div = VElement::new("div").class("hi-code-highlighter-content");
+    let mut content_div = VElement::new("div").class("hk-code-highlighter-content");
 
     let line_nodes: Vec<VNode> = lines
         .iter()
         .map(|line| {
             VNode::Element(
                 VElement::new("div")
-                    .class("hi-code-highlighter-line")
+                    .class("hk-code-highlighter-line")
                     .child(VNode::Text(VText::new(line))),
             )
         })
@@ -355,7 +355,7 @@ impl CodeHighlighterComponent {
     #[must_use]
     pub const fn styles() -> &'static str {
         r#"
-.hi-code-highlighter {
+.hk-code-highlighter {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -368,7 +368,7 @@ impl CodeHighlighterComponent {
   line-height: 1.6;
 }
 
-.hi-code-highlighter-container {
+.hk-code-highlighter-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -377,12 +377,12 @@ impl CodeHighlighterComponent {
   border-bottom: 1px solid var(--hi-color-border, #e0e0e0);
 }
 
-.hi-code-highlighter-language {
+.hk-code-highlighter-language {
   display: flex;
   align-items: center;
 }
 
-.hi-code-highlighter-language-label {
+.hk-code-highlighter-language-label {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -394,11 +394,11 @@ impl CodeHighlighterComponent {
   transition: all 0.3s ease;
 }
 
-.hi-code-highlighter-language-label:hover {
+.hk-code-highlighter-language-label:hover {
   opacity: 0.9;
 }
 
-.hi-code-highlighter-copy {
+.hk-code-highlighter-copy {
   background: none;
   border: 1px solid var(--hi-color-border, #e0e0e0);
   border-radius: 4px;
@@ -408,41 +408,41 @@ impl CodeHighlighterComponent {
   font-size: 0.875rem;
 }
 
-.hi-code-highlighter-copy:hover {
+.hk-code-highlighter-copy:hover {
   background-color: rgba(0, 160, 233, 0.1);
   border-color: var(--hi-color-primary, #00A0E9);
 }
 
-.hi-code-highlighter-copy:active {
+.hk-code-highlighter-copy:active {
   transform: scale(0.95);
 }
 
-.hi-code-highlighter-content {
+.hk-code-highlighter-content {
   flex: 1;
   padding: 1rem;
   overflow-x: auto;
   color: var(--hi-color-code-text, #d4d4d4);
 }
 
-.hi-code-highlighter-line {
+.hk-code-highlighter-line {
   display: flex;
   align-items: flex-start;
   min-height: 1.6em;
 }
 
-.hi-code-highlighter-line span {
+.hk-code-highlighter-line span {
   white-space: pre;
   word-break: break-word;
 }
 
-.hi-code-highlighter-wrap {
-  .hi-code-highlighter-content {
+.hk-code-highlighter-wrap {
+  .hk-code-highlighter-content {
     white-space: pre-wrap;
     word-break: break-word;
   }
 }
 
-.hi-code-highlighter-line-numbers {
+.hk-code-highlighter-line-numbers {
   display: flex;
   flex-direction: column;
   padding: 1rem 0.75rem;
@@ -451,98 +451,98 @@ impl CodeHighlighterComponent {
   user-select: none;
 }
 
-.hi-code-highlighter-line-number {
+.hk-code-highlighter-line-number {
   font-size: 0.75rem;
   color: var(--hi-color-text-secondary, #666);
   text-align: right;
   min-height: 1.6em;
 }
 
-.hi-code-highlighter.language-rust {
-  .hi-code-highlighter-content {
-    .hi-code-highlighter-line:nth-child(1n) {
+.hk-code-highlighter.language-rust {
+  .hk-code-highlighter-content {
+    .hk-code-highlighter-line:nth-child(1n) {
       opacity: 1;
     }
   }
 }
 
-.hi-code-highlighter-language-label {
+.hk-code-highlighter-language-label {
   box-shadow: 0 0 10px rgba(0, 160, 233, 0.2);
 }
 
-.hi-code-highlighter-copy:hover {
+.hk-code-highlighter-copy:hover {
   box-shadow: 0 0 15px rgba(0, 160, 233, 0.1);
 }
 
 [data-theme="hikari"] {
-  .hi-code-highlighter {
+  .hk-code-highlighter {
     background-color: #1e1e1e;
     border-color: #e0e0e0;
   }
 
-  .hi-code-highlighter-container {
+  .hk-code-highlighter-container {
     background-color: #2a2a2a;
     border-bottom-color: #e0e0e0;
   }
 
-  .hi-code-highlighter-language-label {
+  .hk-code-highlighter-language-label {
     background-color: #00A0E9;
   }
 
-  .hi-code-highlighter-line-numbers {
+  .hk-code-highlighter-line-numbers {
     background-color: #252525;
     border-right-color: #e0e0e0;
   }
 
-  .hi-code-highlighter-content {
+  .hk-code-highlighter-content {
     color: #d4d4d4;
   }
 
-  .hi-code-highlighter-line-number {
+  .hk-code-highlighter-line-number {
     color: #666;
   }
 }
 
 [data-theme="tairitsu"] {
-  .hi-code-highlighter {
+  .hk-code-highlighter {
     background-color: #0d0d0d;
     border-color: rgba(255, 255, 255, 0.12);
   }
 
-  .hi-code-highlighter-container {
+  .hk-code-highlighter-container {
     background-color: #1a1a1a;
     border-bottom-color: rgba(255, 255, 255, 0.12);
   }
 
-  .hi-code-highlighter-language-label {
+  .hk-code-highlighter-language-label {
     background-color: #1a237e;
   }
 
-  .hi-code-highlighter-line-numbers {
+  .hk-code-highlighter-line-numbers {
     background-color: #141414;
     border-right-color: rgba(255, 255, 255, 0.12);
   }
 
-  .hi-code-highlighter-content {
+  .hk-code-highlighter-content {
     color: rgba(255, 255, 255, 0.9);
   }
 
-  .hi-code-highlighter-line-number {
+  .hk-code-highlighter-line-number {
     color: rgba(255, 255, 255, 0.6);
   }
 }
 
-.hi-code-highlighter.hi-code-copied {
-  .hi-code-highlighter-content {
+.hk-code-highlighter.hk-code-copied {
+  .hk-code-highlighter-content {
     opacity: 0.6;
   }
 }
 
-.hi-code-highlighter-copy-icon {
+.hk-code-highlighter-copy-icon {
   transition: all 0.2s ease;
 }
 
-.hi-code-highlighter-copied .hi-code-highlighter-copy-icon {
+.hk-code-highlighter-copied .hk-code-highlighter-copy-icon {
   color: #4caf50;
 }
 "#
@@ -626,9 +626,9 @@ mod tests {
     fn test_container_class() {
         let state = CodeHighlighterState::new("code".to_string(), Language::Rust);
         let cls = state.container_class();
-        assert!(cls.contains("hi-code-highlighter"));
+        assert!(cls.contains("hk-code-highlighter"));
         assert!(cls.contains("language-rust"));
-        assert!(cls.contains("hi-code-wrap"));
+        assert!(cls.contains("hk-code-wrap"));
     }
 
     #[test]

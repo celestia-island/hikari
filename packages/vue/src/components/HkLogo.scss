@@ -13,24 +13,22 @@ a.hk-logo {
   text-decoration: none;
 }
 
-.hk-logo__img {
+.hk-logo-img {
   display: block;
   border-radius: var(--hi-radius-md, 8px);
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
 
-.hk-logo__placeholder {
+.hk-logo-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--hi-color-primary);
   color: #fff;
   border-radius: var(--hi-radius-md, 8px);
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
 
-.hk-logo__initial {
+.hk-logo-initial {
   font-weight: 700;
   font-size: 50%;
   line-height: 1;

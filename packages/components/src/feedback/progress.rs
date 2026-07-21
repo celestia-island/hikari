@@ -50,8 +50,8 @@ pub fn Progress(props: ProgressProps) -> Element {
         .build();
 
     let status_class = match props.status {
-        ProgressStatus::Normal => "hi-progress-normal",
-        ProgressStatus::Active => "hi-progress-active",
+        ProgressStatus::Normal => "hk-progress-normal",
+        ProgressStatus::Active => "hk-progress-active",
     };
 
     let combined_classes = format!("{wrapper_classes} {status_class}");
@@ -68,17 +68,17 @@ pub fn Progress(props: ProgressProps) -> Element {
             {if props.progress_type == ProgressType::Linear {
                 rsx! {
                     div {
-                        class: "hi-progress-outer",
+                        class: "hk-progress-outer",
                         div {
-                            class: "hi-progress-inner",
+                            class: "hk-progress-inner",
                             div {
-                                class: "hi-progress-bg",
+                                class: "hk-progress-bg",
                                 style: width_style,
                             }
                         }
 
                         if props.show_info {
-                            span { class: "hi-progress-text",
+                            span { class: "hk-progress-text",
                                 percentage_text
                             }
                         }
@@ -86,15 +86,15 @@ pub fn Progress(props: ProgressProps) -> Element {
                 }
             } else {
                 rsx! {
-                    div { class: "hi-progress-circle-wrapper",
+                    div { class: "hk-progress-circle-wrapper",
                         svg {
-                            class: "hi-progress-circle",
+                            class: "hk-progress-circle",
                             width: "120",
                             height: "120",
                             view_box: "0 0 120 120",
 
                             circle {
-                                class: "hi-progress-circle-trail",
+                                class: "hk-progress-circle-trail",
                                 cx: "60",
                                 cy: "60",
                                 r: "54",
@@ -103,7 +103,7 @@ pub fn Progress(props: ProgressProps) -> Element {
                             }
 
                             circle {
-                                class: "hi-progress-circle-path",
+                                class: "hk-progress-circle-path",
                                 cx: "60",
                                 cy: "60",
                                 r: "54",
@@ -117,7 +117,7 @@ pub fn Progress(props: ProgressProps) -> Element {
                         }
 
                         if props.show_info {
-                            span { class: "hi-progress-circle-text",
+                            span { class: "hk-progress-circle-text",
                                 percentage_text
                             }
                         }
@@ -131,21 +131,21 @@ pub fn Progress(props: ProgressProps) -> Element {
 impl StyledComponent for ProgressComponent {
     fn styles() -> &'static str {
         r#"
-.hi-progress-wrapper {
+.hk-progress-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.hi-progress-outer {
+.hk-progress-outer {
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
 }
 
-.hi-progress-inner {
+.hk-progress-inner {
     flex: 1;
     background-color: var(--hi-component-selection-surface);
     border: 1px solid var(--hi-component-selection-border);
@@ -154,14 +154,14 @@ impl StyledComponent for ProgressComponent {
     height: 8px;
 }
 
-.hi-progress-bg {
+.hk-progress-bg {
     height: 100%;
     border-radius: 100px;
     background: var(--hi-component-selection-bg);
     transition: width 0.3s ease;
 }
 
-.hi-progress-text {
+.hk-progress-text {
     flex-shrink: 0;
     font-size: 14px;
     color: var(--hi-text-primary);
@@ -170,7 +170,7 @@ impl StyledComponent for ProgressComponent {
 }
 
 /* Active status */
-.hi-progress-active .hi-progress-bg {
+.hk-progress-active .hk-progress-bg {
     animation: hi-progress-active 2s linear infinite;
 }
 
@@ -181,27 +181,27 @@ impl StyledComponent for ProgressComponent {
 }
 
 /* Circular progress */
-.hi-progress-circle-wrapper {
+.hk-progress-circle-wrapper {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
-.hi-progress-circle {
+.hk-progress-circle {
     display: block;
 }
 
-.hi-progress-circle-trail {
+.hk-progress-circle-trail {
     stroke: var(--hi-component-selection-surface);
 }
 
-.hi-progress-circle-path {
+.hk-progress-circle-path {
     stroke: var(--hi-primary);
     transition: stroke-dashoffset 0.3s ease;
 }
 
-.hi-progress-active .hi-progress-circle-path {
+.hk-progress-active .hk-progress-circle-path {
     animation: hi-progress-circle-active 2s linear infinite;
 }
 
@@ -211,7 +211,7 @@ impl StyledComponent for ProgressComponent {
     100% { opacity: 1; }
 }
 
-.hi-progress-circle-text {
+.hk-progress-circle-text {
     position: absolute;
     top: 50%;
     left: 50%;

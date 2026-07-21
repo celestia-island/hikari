@@ -7,16 +7,16 @@
 // NumberInput Wrapper
 // ============================================
 
-.hi-number-input-wrapper {
+.hk-number-input-wrapper {
   display: inline-flex;
 
   // NumberInput should have fixed width for content
-  .hi-input-wrapper {
+  .hk-input-wrapper {
     width: auto;
     min-width: 100px;
 
     // Input should be centered and have fixed width
-    .hi-input-wrapper-input {
+    .hk-input-wrapper-input {
       flex: 0 0 auto;
       width: 60px;
       min-width: 60px;
@@ -33,7 +33,7 @@
 // Dark Theme Support
 // ============================================
 
-[data-theme="dark"] .hi-number-input-wrapper,
-[data-theme="tairitsu"] .hi-number-input-wrapper {
+[data-theme="dark"] .hk-number-input-wrapper,
+[data-theme="tairitsu"] .hk-number-input-wrapper {
   // Inherits from InputWrapper dark theme
 }

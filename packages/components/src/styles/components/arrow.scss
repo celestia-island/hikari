@@ -5,25 +5,25 @@
 // Hikari Arrow Component - FUI Styling
 // ============================================
 
-.hi-arrow {
+.hk-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   // Rotation states
-  &.hi-arrow-right {
+  &.hk-arrow-right {
     transform: rotate(0deg);
   }
 
-  &.hi-arrow-left {
+  &.hk-arrow-left {
     transform: rotate(180deg);
   }
 
-  &.hi-arrow-up {
+  &.hk-arrow-up {
     transform: rotate(-90deg);
   }
 
-  &.hi-arrow-down {
+  &.hk-arrow-down {
     transform: rotate(90deg);
   }
 }
@@ -32,17 +32,17 @@
 // Size Variants
 // ============================================
 
-.hi-arrow-14 {
+.hk-arrow-14 {
   width: vars.$hikari-icon-size-sm;
   height: vars.$hikari-icon-size-sm;
 }
 
-.hi-arrow-16 {
+.hk-arrow-16 {
   width: vars.$hikari-icon-size-md;
   height: vars.$hikari-icon-size-md;
 }
 
-.hi-arrow-20 {
+.hk-arrow-20 {
   width: vars.$hikari-icon-size-lg;
   height: vars.$hikari-icon-size-lg;
 }
@@ -52,6 +52,6 @@
 // ============================================
 
 // DISABLED - avoid unwanted animations when using with Glow
-// .hi-arrow {
+// .hk-arrow {
 //   transition: transform 0.2s ease-out;
 // }

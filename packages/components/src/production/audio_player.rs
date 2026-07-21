@@ -92,7 +92,7 @@ pub fn AudioPlayer(props: AudioPlayerProps) -> Element {
 impl StyledComponent for AudioPlayerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-audio-player {
+.hk-audio-player {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
     border-radius: 12px;
@@ -103,28 +103,28 @@ impl StyledComponent for AudioPlayerComponent {
     transition: all 0.3s ease;
 }
 
-.hi-audio-player:hover {
+.hk-audio-player:hover {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
-.hi-audio-player-sm {
+.hk-audio-player-sm {
     max-width: 280px;
 }
 
-.hi-audio-player-md {
+.hk-audio-player-md {
     max-width: 360px;
 }
 
-.hi-audio-player-lg {
+.hk-audio-player-lg {
     max-width: 480px;
 }
 
-[data-theme="dark"] .hi-audio-player {
+[data-theme="dark"] .hk-audio-player {
     background-color: var(--hi-surface);
     border-color: var(--hi-color-border);
 }
 
-.hi-audio-player-header {
+.hk-audio-player-header {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -132,7 +132,7 @@ impl StyledComponent for AudioPlayerComponent {
     border-bottom: 1px solid var(--hi-color-border);
 }
 
-.hi-audio-player-cover {
+.hk-audio-player-cover {
     width: 64px;
     height: 64px;
     border-radius: 8px;
@@ -141,18 +141,18 @@ impl StyledComponent for AudioPlayerComponent {
     background-color: var(--hi-color-bg-elevated);
 }
 
-.hi-audio-player-cover-image {
+.hk-audio-player-cover-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.hi-audio-player-info {
+.hk-audio-player-info {
     flex: 1;
     min-width: 0;
 }
 
-.hi-audio-player-title {
+.hk-audio-player-title {
     font-size: 14px;
     font-weight: 600;
     color: var(--hi-text-primary);
@@ -162,7 +162,7 @@ impl StyledComponent for AudioPlayerComponent {
     text-overflow: ellipsis;
 }
 
-.hi-audio-player-artist {
+.hk-audio-player-artist {
     font-size: 12px;
     color: var(--hi-text-secondary);
     white-space: nowrap;
@@ -170,42 +170,42 @@ impl StyledComponent for AudioPlayerComponent {
     text-overflow: ellipsis;
 }
 
-.hi-audio-player-audio {
+.hk-audio-player-audio {
     width: 100%;
     padding: 12px 16px;
 }
 
-.hi-audio-player-sm .hi-audio-player-header {
+.hk-audio-player-sm .hk-audio-player-header {
     padding: 12px;
 }
 
-.hi-audio-player-sm .hi-audio-player-cover {
+.hk-audio-player-sm .hk-audio-player-cover {
     width: 48px;
     height: 48px;
 }
 
-.hi-audio-player-sm .hi-audio-player-title {
+.hk-audio-player-sm .hk-audio-player-title {
     font-size: 13px;
 }
 
-.hi-audio-player-sm .hi-audio-player-artist {
+.hk-audio-player-sm .hk-audio-player-artist {
     font-size: 11px;
 }
 
-.hi-audio-player-lg .hi-audio-player-header {
+.hk-audio-player-lg .hk-audio-player-header {
     padding: 20px;
 }
 
-.hi-audio-player-lg .hi-audio-player-cover {
+.hk-audio-player-lg .hk-audio-player-cover {
     width: 80px;
     height: 80px;
 }
 
-.hi-audio-player-lg .hi-audio-player-title {
+.hk-audio-player-lg .hk-audio-player-title {
     font-size: 16px;
 }
 
-.hi-audio-player-lg .hi-audio-player-artist {
+.hk-audio-player-lg .hk-audio-player-artist {
     font-size: 13px;
 }
 "#

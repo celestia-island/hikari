@@ -75,7 +75,7 @@ pub fn Tag(props: TagProps) -> Element {
 impl StyledComponent for TagComponent {
     fn styles() -> &'static str {
         r#"
-.hi-tag {
+.hk-tag {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -88,72 +88,72 @@ impl StyledComponent for TagComponent {
     transition: all 0.2s ease;
 }
 
-.hi-tag-default {
+.hk-tag-default {
     background-color: rgba(107, 114, 128, 0.1);
     color: var(--hi-color-text-primary);
     border-color: rgba(107, 114, 128, 0.2);
 }
 
-.hi-tag-default:hover {
+.hk-tag-default:hover {
     background-color: rgba(107, 114, 128, 0.2);
 }
 
-.hi-tag-primary {
+.hk-tag-primary {
     background-color: rgba(59, 130, 246, 0.1);
     color: var(--hi-color-primary);
     border-color: rgba(59, 130, 246, 0.3);
 }
 
-.hi-tag-primary:hover {
+.hk-tag-primary:hover {
     background-color: rgba(59, 130, 246, 0.2);
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
 }
 
-.hi-tag-success {
+.hk-tag-success {
     background-color: rgba(16, 185, 129, 0.1);
     color: #10b981;
     border-color: rgba(16, 185, 129, 0.3);
 }
 
-.hi-tag-success:hover {
+.hk-tag-success:hover {
     background-color: rgba(16, 185, 129, 0.2);
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
-.hi-tag-warning {
+.hk-tag-warning {
     background-color: rgba(245, 158, 11, 0.1);
     color: #f59e0b;
     border-color: rgba(245, 158, 11, 0.3);
 }
 
-.hi-tag-warning:hover {
+.hk-tag-warning:hover {
     background-color: rgba(245, 158, 11, 0.2);
     box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
 }
 
-.hi-tag-danger {
+.hk-tag-danger {
     background-color: rgba(255, 76, 0, 0.1);
     color: #ff4c00;
     border-color: rgba(255, 76, 0, 0.3);
 }
 
-.hi-tag-danger:hover {
+.hk-tag-danger:hover {
     background-color: rgba(255, 76, 0, 0.2);
     box-shadow: 0 0 8px rgba(255, 76, 0, 0.3);
 }
 
-.hi-tag-info {
+.hk-tag-info {
     background-color: rgba(6, 182, 212, 0.1);
     color: #06b6d4;
     border-color: rgba(6, 182, 212, 0.3);
 }
 
-.hi-tag-info:hover {
+.hk-tag-info:hover {
     background-color: rgba(6, 182, 212, 0.2);
     box-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
 }
 
-.hi-tag-close {
+.hk-tag-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -172,7 +172,7 @@ impl StyledComponent for TagComponent {
     transition: all 0.2s ease;
 }
 
-.hi-tag-close:hover {
+.hk-tag-close:hover {
     opacity: 1;
     background-color: rgba(0, 0, 0, 0.1);
 }

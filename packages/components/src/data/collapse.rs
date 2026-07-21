@@ -75,15 +75,15 @@ pub fn Collapse(props: CollapseProps) -> Element {
     };
 
     rsx! {
-        div { class: format!("hi-collapse {}", props.class),
+        div { class: format!("hk-collapse {}", props.class),
 
             div {
-                class: "hi-collapse-header",
+                class: "hk-collapse-header",
                 style: "cursor: pointer; display: flex; align-items: center; gap: 8px;",
                 onclick: handle_toggle,
 
                 span {
-                    class: "hi-collapse-arrow",
+                    class: "hk-collapse-arrow",
                     style: format!(
                         "display: inline-block; transition: transform {}ms ease-in-out; transform: rotate({});",
                         props.duration,
@@ -92,7 +92,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
                     "›"
                 }
 
-                span { class: "hi-collapse-header-content", {props.children.clone()} }
+                span { class: "hk-collapse-header-content", {props.children.clone()} }
             }
 
             div {
@@ -104,7 +104,7 @@ pub fn Collapse(props: CollapseProps) -> Element {
                     animation_style,
                 ),
 
-                div { class: "hi-collapse-inner", {props.children.clone()} }
+                div { class: "hk-collapse-inner", {props.children.clone()} }
             }
         }
     }
@@ -113,12 +113,12 @@ pub fn Collapse(props: CollapseProps) -> Element {
 impl StyledComponent for CollapseComponent {
     fn styles() -> &'static str {
         r#"
-.hi-collapse {
+.hk-collapse {
     display: flex;
     flex-direction: column;
 }
 
-.hi-collapse-header {
+.hk-collapse-header {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -127,27 +127,27 @@ impl StyledComponent for CollapseComponent {
     user-select: none;
 }
 
-.hi-collapse-arrow {
+.hk-collapse-arrow {
     display: inline-block;
     font-size: 0.75rem;
     transition: transform 0.2s ease-in-out;
 }
 
-.hi-collapse-header-content {
+.hk-collapse-header-content {
     flex: 1;
 }
 
-.hi-collapse-content {
+.hk-collapse-content {
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
-.hi-collapse-content.hi-collapse-expanded {
+.hk-collapse-content.hk-collapse-expanded {
     opacity: 1;
 }
 
-.hi-collapse-inner {
+.hk-collapse-inner {
     padding: 0.5rem 0;
 }
 "#

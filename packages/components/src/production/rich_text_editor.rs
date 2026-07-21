@@ -65,17 +65,17 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
                     class: toolbar_classes,
 
                     button {
-                        class: "hi-rich-text-editor-toolbar-button",
+                        class: "hk-rich-text-editor-toolbar-button",
                         "B"
                     }
 
                     button {
-                        class: "hi-rich-text-editor-toolbar-button",
+                        class: "hk-rich-text-editor-toolbar-button",
                         "I"
                     }
 
                     button {
-                        class: "hi-rich-text-editor-toolbar-button",
+                        class: "hk-rich-text-editor-toolbar-button",
                         "U"
                     }
                 }
@@ -92,19 +92,19 @@ pub fn RichTextEditor(props: RichTextEditorProps) -> Element {
 impl StyledComponent for RichTextEditorComponent {
     fn styles() -> &'static str {
         r#"
-.hi-rich-text-editor {
+.hk-rich-text-editor {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
     overflow: hidden;
 }
 
-.hi-rich-text-editor:focus-within {
+.hk-rich-text-editor:focus-within {
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
 
-.hi-rich-text-editor-toolbar {
+.hk-rich-text-editor-toolbar {
     display: flex;
     gap: 0.25rem;
     padding: 0.5rem;
@@ -112,7 +112,7 @@ impl StyledComponent for RichTextEditorComponent {
     border-bottom: 1px solid var(--hi-color-border);
 }
 
-.hi-rich-text-editor-toolbar-button {
+.hk-rich-text-editor-toolbar-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -128,32 +128,32 @@ impl StyledComponent for RichTextEditorComponent {
     transition: all 0.2s ease;
 }
 
-.hi-rich-text-editor-toolbar-button:hover {
+.hk-rich-text-editor-toolbar-button:hover {
     background-color: var(--hi-color-primary-bg);
     color: var(--hi-color-primary);
 }
 
-.hi-rich-text-editor-editor {
+.hk-rich-text-editor-editor {
     padding: 1rem;
     min-height: 200px;
     outline: none;
     color: var(--hi-color-text-primary);
 }
 
-.hi-rich-text-editor-editor:empty::before {
+.hk-rich-text-editor-editor:empty::before {
     content: attr(data-placeholder);
     color: var(--hi-color-text-tertiary);
 }
 
-.hi-rich-text-editor-editor p {
+.hk-rich-text-editor-editor p {
     margin: 0.5rem 0;
 }
 
-.hi-rich-text-editor-editor p:first-child {
+.hk-rich-text-editor-editor p:first-child {
     margin-top: 0;
 }
 
-.hi-rich-text-editor-editor p:last-child {
+.hk-rich-text-editor-editor p:last-child {
     margin-bottom: 0;
 }
 "#

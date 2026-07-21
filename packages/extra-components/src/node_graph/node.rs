@@ -223,15 +223,15 @@ impl Node {
     /// Get CSS classes for the node
     pub fn class_string(&self) -> String {
         format!(
-            "hi-node-graph-node hi-node-{} {} {}",
+            "hk-node-graph-node hi-node-{} {} {}",
             self.node_type,
             if self.selected {
-                "hi-node-selected"
+                "hk-node-selected"
             } else {
                 ""
             },
             if self.minimized {
-                "hi-node-minimized"
+                "hk-node-minimized"
             } else {
                 ""
             }

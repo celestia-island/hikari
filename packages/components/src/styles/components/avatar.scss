@@ -5,7 +5,7 @@
 // Hikari Avatar Component
 // ============================================
 
-.hi-avatar {
+.hk-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -22,49 +22,49 @@
   }
 }
 
-.hi-avatar-xs {
+.hk-avatar-xs {
   width: 24px;
   height: 24px;
   font-size: 0.625rem;
 }
 
-.hi-avatar-sm {
+.hk-avatar-sm {
   width: 32px;
   height: 32px;
   font-size: 0.75rem;
 }
 
-.hi-avatar-md {
+.hk-avatar-md {
   width: 40px;
   height: 40px;
   font-size: 0.875rem;
 }
 
-.hi-avatar-lg {
+.hk-avatar-lg {
   width: 48px;
   height: 48px;
   font-size: 1rem;
 }
 
-.hi-avatar-xl {
+.hk-avatar-xl {
   width: 64px;
   height: 64px;
   font-size: 1.25rem;
 }
 
-.hi-avatar-circular {
+.hk-avatar-circular {
   border-radius: 50%;
 }
 
-.hi-avatar-rounded {
+.hk-avatar-rounded {
   border-radius: 8px;
 }
 
-.hi-avatar-square {
+.hk-avatar-square {
   border-radius: 0;
 }
 
-.hi-avatar-fallback {
+.hk-avatar-fallback {
   width: 100%;
   height: 100%;
   display: flex;
@@ -74,23 +74,23 @@
   font-weight: 600;
 }
 
-.hi-avatar-icon {
+.hk-avatar-icon {
   color: var(--hi-color-text-secondary);
   opacity: 0.8;
 }
 
-.hi-avatar-img {
+.hk-avatar-img {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-[data-theme="dark"] .hi-avatar {
+[data-theme="dark"] .hk-avatar {
   background-color: var(--hi-surface);
   color: var(--hi-color-text-secondary);
 }
 
-[data-theme="dark"] .hi-avatar-icon {
+[data-theme="dark"] .hk-avatar-icon {
   color: var(--hi-color-text-secondary);
   opacity: 0.6;
 }

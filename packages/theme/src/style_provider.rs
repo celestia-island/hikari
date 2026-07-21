@@ -120,7 +120,7 @@ pub fn StyleProvider(props: StyleProviderProps) -> VNode {
 
     let css_vars = format!("--hi-style-class-prefix: {};", context.config.class_prefix);
     let extra_classes_str = context.config.extra_classes.join(" ");
-    let class = format!("hi-style-provider {}", extra_classes_str);
+    let class = format!("hk-style-provider {}", extra_classes_str);
 
     rsx! {
         div {
@@ -162,7 +162,7 @@ pub fn try_use_style() -> Option<StyleContext> {
 /// use hikari_theme::use_component_class;
 ///
 /// fn MyButton() -> VNode {
-///     let class = use_component_class("button", "hi-button");
+///     let class = use_component_class("button", "hk-button");
 ///
 ///     rsx! {
 ///         button {

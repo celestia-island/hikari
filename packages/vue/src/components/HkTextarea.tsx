@@ -80,8 +80,8 @@ export default defineComponent({
         <textarea
           ref={textareaRef}
           class={[
-            "hk-textarea__field",
-            props.autoGrow ? "hk-textarea__field--autogrow" : "",
+            "hk-textarea-field",
+            props.autoGrow ? "hk-textarea-field--autogrow" : "",
           ]}
           value={props.modelValue}
           placeholder={props.placeholder}
@@ -91,8 +91,8 @@ export default defineComponent({
           onInput={onInput}
         />
         {props.showCount && props.maxLength != null ? (
-          <div class="hk-textarea__count">
-            <span class={isOverLimit.value ? "hk-textarea__count--over" : ""}>
+          <div class="hk-textarea-count">
+            <span class={isOverLimit.value ? "hk-textarea-count--over" : ""}>
               {charCount.value}
             </span>
             <span> / {props.maxLength}</span>

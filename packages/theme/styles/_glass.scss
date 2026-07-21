@@ -2,19 +2,19 @@
 // These provide the frosted-glass aesthetic that makes panels feel layered
 // without heavy borders.
 
-.hi-glass {
+.hk-glass {
   background: rgb(30 30 30 / var(--hi-opacity-half, 0.92));
   backdrop-filter: blur(var(--hi-blur-md, 16px));
   -webkit-backdrop-filter: blur(var(--hi-blur-md, 16px));
 }
 
-.hi-glass-header {
+.hk-glass-header {
   background: rgb(30 30 30 / var(--hi-opacity-more, 0.96));
   backdrop-filter: blur(var(--hi-blur-sm, 8px));
   -webkit-backdrop-filter: blur(var(--hi-blur-sm, 8px));
 }
 
-.hi-glass-panel {
+.hk-glass-panel {
   background: rgb(30 30 30 / var(--hi-opacity-half, 0.92));
   backdrop-filter: blur(var(--hi-blur-lg, 24px));
   -webkit-backdrop-filter: blur(var(--hi-blur-lg, 24px));
@@ -23,7 +23,7 @@
   box-shadow: var(--hi-shadow-panel);
 }
 
-.hi-glass-float {
+.hk-glass-float {
   background: rgb(30 30 30 / var(--hi-opacity-more, 0.96));
   backdrop-filter: blur(var(--hi-blur-md, 16px));
   -webkit-backdrop-filter: blur(var(--hi-blur-md, 16px));

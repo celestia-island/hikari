@@ -23,7 +23,7 @@ const DEFAULT_DEBUG_PORT: u16 = 3001;
 const OUTPUT_DIR: &str = "wry_screenshots";
 
 #[derive(Parser)]
-#[command(name = "hikari-visual-debug-wry")]
+#[command(name = "hk-visual-debug-wry")]
 #[command(about = "Hikari visual debugger powered by tairitsu-debug (wry WebView)")]
 struct Cli {
     #[arg(long, default_value_t = DEFAULT_DEBUG_PORT)]
@@ -476,14 +476,14 @@ async fn do_interactive(client: &DebugClient, route: &str) -> Result<()> {
 
     let actions = [
         (
-            ".hi-sidebar-item:first-child",
+            ".hk-sidebar-item:first-child",
             "nav_home",
             None as Option<&str>,
         ),
-        (".hi-sidebar-item:nth-child(2)", "nav_components", None),
-        (".hi-btn-primary", "btn_primary", Some("click")),
-        (".hi-btn-secondary", "btn_secondary", Some("click")),
-        (".hi-switch-input", "toggle_switch", Some("click")),
+        (".hk-sidebar-item:nth-child(2)", "nav_components", None),
+        (".hk-btn-primary", "btn_primary", Some("click")),
+        (".hk-btn-secondary", "btn_secondary", Some("click")),
+        (".hk-switch-input", "toggle_switch", Some("click")),
     ];
 
     for (sel, name, action) in &actions {

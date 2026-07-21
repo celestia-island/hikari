@@ -57,15 +57,15 @@ pub fn Header(
         .add_raw(&class);
 
     if is_rtl {
-        header_builder = header_builder.add_raw("hi-header-rtl");
+        header_builder = header_builder.add_raw("hk-header-rtl");
     }
 
     let header_classes = header_builder.build();
 
     let (left_class, right_class) = if is_rtl {
-        ("hi-header-right", "hi-header-left")
+        ("hk-header-right", "hk-header-left")
     } else {
-        ("hi-header-left", "hi-header-right")
+        ("hk-header-left", "hk-header-right")
     };
 
     rsx! {
@@ -75,7 +75,7 @@ pub fn Header(
 
                 if show_menu_toggle {
                     button {
-                        class: "hi-header-toggle",
+                        class: "hk-header-toggle",
                         onclick: move |e| {
                             if let Some(handler) = &on_menu_toggle {
                                 handler.call(e);
@@ -111,7 +111,7 @@ pub struct HeaderComponent;
 impl crate::styled::StyledComponent for HeaderComponent {
     fn styles() -> &'static str {
         r#"
-.hi-header {
+.hk-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -128,13 +128,13 @@ impl crate::styled::StyledComponent for HeaderComponent {
   position: relative;
 }
 
-.hi-header-sticky {
+.hk-header-sticky {
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.hi-header-transparent {
+.hk-header-transparent {
   background: transparent;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -142,7 +142,7 @@ impl crate::styled::StyledComponent for HeaderComponent {
   border-bottom: 1px solid transparent;
 }
 
-.hi-header-left {
+.hk-header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -150,7 +150,7 @@ impl crate::styled::StyledComponent for HeaderComponent {
   min-width: 0;
 }
 
-.hi-header-right {
+.hk-header-right {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -158,30 +158,30 @@ impl crate::styled::StyledComponent for HeaderComponent {
   justify-content: flex-end;
 }
 
-.hi-header-toggle {
+.hk-header-toggle {
   display: none;
   align-items: center;
   justify-content: center;
 }
 
 @media (max-width: 768px) {
-  .hi-header-toggle {
+  .hk-header-toggle {
     display: inline-flex;
   }
 
-  .hi-header {
+  .hk-header {
     padding: 0 0.75rem;
   }
 }
 
 @media (min-width: 768px) {
-  .hi-header {
+  .hk-header {
     padding: 0 1rem;
   }
 }
 
 @media (min-width: 1024px) {
-  .hi-header {
+  .hk-header {
     padding: 0 1rem;
   }
 }

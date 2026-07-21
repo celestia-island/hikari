@@ -111,9 +111,9 @@ export default defineComponent({
 
     return () => (
       <div class="hk-markdown" data-plain={props.plain || undefined} data-loading={props.loading}>
-        <div class="hk-markdown__body" innerHTML={renderedHtml.value} />
+        <div class="hk-markdown-body" innerHTML={renderedHtml.value} />
         {props.loading && (
-          <div class="hk-markdown__overlay">
+          <div class="hk-markdown-overlay">
             <HkSpinner center />
           </div>
         )}

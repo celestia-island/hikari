@@ -100,20 +100,20 @@ impl TimelineItem {
     /// Get the status class name
     pub fn status_class(&self) -> &'static str {
         match self.status {
-            TimelineStatus::Pending => "hi-timeline-pending",
-            TimelineStatus::InProgress => "hi-timeline-in-progress",
-            TimelineStatus::Completed => "hi-timeline-completed",
-            TimelineStatus::Cancelled => "hi-timeline-cancelled",
+            TimelineStatus::Pending => "hk-timeline-pending",
+            TimelineStatus::InProgress => "hk-timeline-in-progress",
+            TimelineStatus::Completed => "hk-timeline-completed",
+            TimelineStatus::Cancelled => "hk-timeline-cancelled",
         }
     }
 
     /// Get the dot status class name
     pub fn dot_status_class(&self) -> &'static str {
         match self.status {
-            TimelineStatus::Pending => "hi-timeline-dot-pending",
-            TimelineStatus::InProgress => "hi-timeline-dot-in-progress",
-            TimelineStatus::Completed => "hi-timeline-dot-completed",
-            TimelineStatus::Cancelled => "hi-timeline-dot-cancelled",
+            TimelineStatus::Pending => "hk-timeline-dot-pending",
+            TimelineStatus::InProgress => "hk-timeline-dot-in-progress",
+            TimelineStatus::Completed => "hk-timeline-dot-completed",
+            TimelineStatus::Cancelled => "hk-timeline-dot-cancelled",
         }
     }
 }
@@ -206,9 +206,9 @@ impl TimelineState {
     /// Get the position class name
     pub fn position_class(&self) -> &'static str {
         match self.position {
-            TimelinePosition::Left => "hi-timeline-left",
-            TimelinePosition::Center => "hi-timeline-center",
-            TimelinePosition::Right => "hi-timeline-right",
+            TimelinePosition::Left => "hk-timeline-left",
+            TimelinePosition::Center => "hk-timeline-center",
+            TimelinePosition::Right => "hk-timeline-right",
         }
     }
 
@@ -308,17 +308,17 @@ mod tests {
     fn test_status_classes() {
         let item = TimelineItem::new("1", "Test");
 
-        assert_eq!(item.status_class(), "hi-timeline-pending");
-        assert_eq!(item.dot_status_class(), "hi-timeline-dot-pending");
+        assert_eq!(item.status_class(), "hk-timeline-pending");
+        assert_eq!(item.dot_status_class(), "hk-timeline-dot-pending");
     }
 
     #[test]
     fn test_position_classes() {
         let state = TimelineState::new();
-        assert_eq!(state.position_class(), "hi-timeline-left");
+        assert_eq!(state.position_class(), "hk-timeline-left");
 
         let state = state.with_position(TimelinePosition::Center);
-        assert_eq!(state.position_class(), "hi-timeline-center");
+        assert_eq!(state.position_class(), "hk-timeline-center");
     }
 
     #[test]
@@ -327,8 +327,8 @@ mod tests {
             .with_show_line(true)
             .with_class("custom");
         let class = state.class_string();
-        assert!(class.contains("hi-timeline-left"));
-        assert!(class.contains("hi-timeline-line"));
+        assert!(class.contains("hk-timeline-left"));
+        assert!(class.contains("hk-timeline-line"));
         assert!(class.contains("custom"));
     }
 }

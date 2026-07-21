@@ -81,7 +81,7 @@ impl SsrTestHelper {
             .next()
         {
             let class = app.value().attr("class").unwrap_or("");
-            result.has_layout_class = class.contains("hi-layout");
+            result.has_layout_class = class.contains("hk-layout");
         }
 
         // Check for content
@@ -197,8 +197,8 @@ mod tests {
 <html>
 <head><title>Test</title></head>
 <body>
-    <div id="hikari-app" class="hi-layout">
-        <div class="hikari-page">Content</div>
+    <div id="hk-app" class="hk-layout">
+        <div class="hk-page">Content</div>
     </div>
 </body>
 </html>"#;

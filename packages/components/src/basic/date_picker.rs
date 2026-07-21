@@ -57,7 +57,7 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
         .build();
 
     let disabled_class = if props.disabled {
-        "hi-date-picker-disabled"
+        "hk-date-picker-disabled"
     } else {
         ""
     };
@@ -96,7 +96,7 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
 
             // Calendar icon
             svg {
-                class: "hi-date-picker-icon",
+                class: "hk-date-picker-icon",
                 view_box: "0 0 24 24",
                 fill: "none",
                 stroke: "currentColor",
@@ -135,12 +135,12 @@ pub fn DatePicker(props: DatePickerProps) -> Element {
 impl StyledComponent for DatePickerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-date-picker-wrapper {
+.hk-date-picker-wrapper {
     position: relative;
     width: 100%;
 }
 
-.hi-date-picker {
+.hk-date-picker {
     width: 100%;
     height: 36px;
     padding: 0.5rem 2.5rem 0.5rem 0.75rem;
@@ -154,24 +154,24 @@ impl StyledComponent for DatePickerComponent {
     cursor: pointer;
 }
 
-.hi-date-picker:hover:not(:disabled) {
+.hk-date-picker:hover:not(:disabled) {
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 0 3px rgba(var(--hi-color-primary-rgb), 0.1);
 }
 
-.hi-date-picker:focus {
+.hk-date-picker:focus {
     outline: none;
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 0 3px rgba(var(--hi-color-primary-rgb), 0.15);
 }
 
-.hi-date-picker-disabled {
+.hk-date-picker-disabled {
     opacity: 0.5;
     cursor: not-allowed;
     background-color: var(--hi-color-surface);
 }
 
-.hi-date-picker-icon {
+.hk-date-picker-icon {
     position: absolute;
     right: 0.75rem;
     top: 50%;
@@ -182,7 +182,7 @@ impl StyledComponent for DatePickerComponent {
     pointer-events: none;
 }
 
-.hi-date-picker:hover:not(:disabled) + .hi-date-picker-icon {
+.hk-date-picker:hover:not(:disabled) + .hk-date-picker-icon {
     color: var(--hi-color-primary);
 }
 "#

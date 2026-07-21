@@ -20,8 +20,8 @@
 // 3. Transition timing
 
 // Base glow wrapper styles
-.hi-glow-wrapper,
-.hi-glow-wrapper-block {
+.hk-glow-wrapper,
+.hk-glow-wrapper-block {
   position: relative;
 
   // Initialize scale factors - default to 0 (hidden)
@@ -72,7 +72,7 @@
 // - Active (1.0): intense glow (2x hover)
 
 // 30% intensity (subtle, for large surfaces: cards, panels, containers)
-.hi-glow-dim {
+.hk-glow-dim {
   --glow-spread: 2.4;
   --glow-base-opacity: 0.15;
 }
@@ -80,18 +80,18 @@
 // 70% intensity (medium, default for interactive elements: buttons, inputs)
 // Hover: 0.30 * 0.5 = 0.15
 // Active: 0.30 * 1.0 = 0.30 (visible difference)
-.hi-glow-soft {
+.hk-glow-soft {
   --glow-spread: 1.6;
   --glow-base-opacity: 0.30;
 }
 
 // 100% intensity (intense, for emphasis: active states, focus rings)
-.hi-glow-bright {
+.hk-glow-bright {
   --glow-spread: 1.3;
   --glow-base-opacity: 0.50;
 }
 
-.hi-glow-wrapper {
+.hk-glow-wrapper {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -105,7 +105,7 @@
 }
 
 // Block variant for wrapping block-level elements (like Card)
-.hi-glow-wrapper-block {
+.hk-glow-wrapper-block {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -120,23 +120,23 @@
 // ============================================
 
 // Remove transform translateY from button hover when wrapped in glow
-.hi-glow-wrapper .hi-button:hover {
+.hk-glow-wrapper .hk-button:hover {
   transform: none;
 }
 
 // Default: No box-shadow - controlled by AnimationBuilder via CSS variables
 // The glow wrapper handles all visual feedback through --glow-intensity-scale
-.hi-glow-wrapper .hi-button:focus-visible {
+.hk-glow-wrapper .hk-button:focus-visible {
   box-shadow: none;
 }
 
-.hi-glow-wrapper .hi-button:active:not(:disabled) {
+.hk-glow-wrapper .hk-button:active:not(:disabled) {
   box-shadow: none;
   transform: none;
 }
 
 // Input hover enhancement
-.hi-glow-wrapper .hi-input-wrapper:hover {
+.hk-glow-wrapper .hk-input-wrapper:hover {
   // No hover effect - handled by glow overlay
 }
 
@@ -159,7 +159,7 @@
   }
 }
 
-.hi-glow-wrapper.pulse::before {
+.hk-glow-wrapper.pulse::before {
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
@@ -173,7 +173,7 @@
   }
 }
 
-.hi-glow-wrapper.breathe::before {
+.hk-glow-wrapper.breathe::before {
   animation: glow-breathe 4s ease-in-out infinite;
 }
 
@@ -201,16 +201,16 @@
   }
 }
 
-.hi-glow-wrapper.shimmer::before {
+.hk-glow-wrapper.shimmer::before {
   animation: glow-shimmer 3s linear infinite;
 }
 
 // Pause preset animations during mouse interaction
-.hi-glow-wrapper.pulse:has(:hover)::before,
-.hi-glow-wrapper.pulse:has(:active)::before,
-.hi-glow-wrapper.breathe:has(:hover)::before,
-.hi-glow-wrapper.breathe:has(:active)::before,
-.hi-glow-wrapper.shimmer:has(:hover)::before,
-.hi-glow-wrapper.shimmer:has(:active)::before {
+.hk-glow-wrapper.pulse:has(:hover)::before,
+.hk-glow-wrapper.pulse:has(:active)::before,
+.hk-glow-wrapper.breathe:has(:hover)::before,
+.hk-glow-wrapper.breathe:has(:active)::before,
+.hk-glow-wrapper.shimmer:has(:hover)::before,
+.hk-glow-wrapper.shimmer:has(:active)::before {
   animation-play-state: paused;
 }

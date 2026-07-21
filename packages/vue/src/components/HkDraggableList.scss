@@ -4,7 +4,7 @@
   gap: 4px;
 }
 
-.hk-draggable-list__item {
+.hk-draggable-list-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -54,7 +54,7 @@
   }
 }
 
-.hk-draggable-list__handle {
+.hk-draggable-list-handle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +73,7 @@
   }
 }
 
-.hk-draggable-list__content {
+.hk-draggable-list-content {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -81,7 +81,7 @@
   gap: 0.5rem;
 }
 
-.hk-draggable-list__ghost {
+.hk-draggable-list-ghost {
   position: fixed;
   top: 0;
   left: 0;
@@ -98,7 +98,7 @@
   z-index: 9999;
   will-change: transform;
 
-  > .hk-draggable-list__item {
+  > .hk-draggable-list-item {
     margin: 0;
     border-color: transparent;
     background: transparent;

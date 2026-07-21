@@ -116,7 +116,7 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
                 "data-key": id,
 
                 span {
-                    class: "hi-tree-node-content",
+                    class: "hk-tree-node-content",
                     style: "display: flex; align-items: center; gap: 8px;",
                     "{title}"
                 }
@@ -130,19 +130,19 @@ pub fn VirtualTree(props: VirtualTreeProps) -> Element {
 
     rsx! {
         div {
-            class: format!("hi-virtual-tree {}", props.class),
+            class: format!("hk-virtual-tree {}", props.class),
             style: "position: relative; overflow: hidden; height: {props.height};",
 
             div { style: "position: absolute; top: 0; left: 0; right: 0; height: {total_height}px; pointer-events: none;" }
 
             div {
-                class: "hi-virtual-tree-viewport",
+                class: "hk-virtual-tree-viewport",
                 style: "position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto;",
                 onscroll: move |_e: Event| {
                     #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
                     {
                         use crate::platform::get_scroll_top_by_selector;
-                        let scroll_top = get_scroll_top_by_selector(".hi-virtual-tree-viewport");
+                        let scroll_top = get_scroll_top_by_selector(".hk-virtual-tree-viewport");
                         scroll_position_for_onscroll.set(scroll_top);
 
                         if let Some(handler) = on_scroll_handler.as_ref() {

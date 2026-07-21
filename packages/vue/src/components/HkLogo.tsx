@@ -38,7 +38,7 @@ export default defineComponent({
       if (props.src) {
         return (
           <img
-            class="hk-logo__img"
+            class="hk-logo-img"
             src={props.src}
             alt={props.alt}
             style={{ width: logoSize(), height: logoSize() }}
@@ -48,7 +48,7 @@ export default defineComponent({
 
       return (
         <div
-          class="hk-logo__placeholder"
+          class="hk-logo-placeholder"
           style={{
             width: logoSize(),
             height: logoSize(),
@@ -57,7 +57,7 @@ export default defineComponent({
           aria-label={props.alt || "Logo"}
         >
           {props.alt ? (
-            <span class="hk-logo__initial">{props.alt.charAt(0).toUpperCase()}</span>
+            <span class="hk-logo-initial">{props.alt.charAt(0).toUpperCase()}</span>
           ) : (
             placeholderSvg
           )}

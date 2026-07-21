@@ -5,7 +5,7 @@
 // Editor Container
 // ============================================
 
-.hi-editor {
+.hk-editor {
     width: 100%;
     border: 1px solid var(--hi-border);
     border-radius: 8px;
@@ -13,12 +13,12 @@
     background: var(--hi-surface);
 }
 
-[data-theme="dark"] .hi-editor {
+[data-theme="dark"] .hk-editor {
     background: var(--hi-background);
     border-color: var(--hi-border);
 }
 
-.hi-editor:focus-within {
+.hk-editor:focus-within {
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
@@ -27,7 +27,7 @@
 // Editor Toolbar
 // ============================================
 
-.hi-editor-toolbar {
+.hk-editor-toolbar {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -36,7 +36,7 @@
     background: var(--hi-surface);
 }
 
-[data-theme="dark"] .hi-editor-toolbar {
+[data-theme="dark"] .hk-editor-toolbar {
     background: var(--hi-background);
     border-bottom-color: var(--hi-border);
 }
@@ -45,14 +45,14 @@
 // Toolbar Divider
 // ============================================
 
-.hi-editor-divider {
+.hk-editor-divider {
     width: 1px;
     height: 20px;
     background: var(--hi-border);
     margin: 0 4px;
 }
 
-[data-theme="dark"] .hi-editor-divider {
+[data-theme="dark"] .hk-editor-divider {
     background: var(--hi-border);
 }
 
@@ -60,7 +60,7 @@
 // Editor Content Area
 // ============================================
 
-.hi-editor-content {
+.hk-editor-content {
     padding: 16px;
     min-height: 200px;
     outline: none;
@@ -68,20 +68,20 @@
     color: var(--hi-text-primary);
 }
 
-[data-theme="dark"] .hi-editor-content {
+[data-theme="dark"] .hk-editor-content {
     color: var(--hi-text-primary);
 }
 
-.hi-editor-content:empty:before {
+.hk-editor-content:empty:before {
     content: attr(data-placeholder);
     color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-editor-content:empty:before {
+[data-theme="dark"] .hk-editor-content:empty:before {
     color: var(--hi-text-secondary);
 }
 
-.hi-editor-content:focus {
+.hk-editor-content:focus {
     outline: none;
 }
 
@@ -89,7 +89,7 @@
 // Editor States
 // ============================================
 
-.hi-editor-readonly {
+.hk-editor-readonly {
     opacity: 0.7;
     cursor: not-allowed;
 }

@@ -142,7 +142,7 @@ pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
 
     rsx! {
         div {
-            class: "hi-animation-provider",
+            class: "hk-animation-provider",
             style: "{css_vars.read()}",
             {props.children}
         }

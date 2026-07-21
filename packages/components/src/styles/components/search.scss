@@ -7,18 +7,18 @@
 // Search Wrapper
 // ============================================
 
-.hi-search-wrapper {
+.hk-search-wrapper {
   position: relative;
   display: inline-block;
   width: 100%;
 }
 
-.hi-search-input-wrapper {
+.hk-search-input-wrapper {
   position: relative;
   width: 100%;
 
   // Search input wrapper should take full width
-  .hi-input-wrapper {
+  .hk-input-wrapper {
     width: 100%;
   }
 }
@@ -27,7 +27,7 @@
 // Input Container
 // ============================================
 
-.hi-search-input-container {
+.hk-search-input-container {
   position: relative;
   flex: 1;
   display: flex;
@@ -86,7 +86,7 @@
 // Loading Spinner
 // ============================================
 
-.hi-search-spinner {
+.hk-search-spinner {
   animation: hi-search-spin 1s linear infinite;
 }
 
@@ -103,7 +103,7 @@
 // Suggestions Dropdown (Portal-based)
 // ============================================
 
-.hi-search-suggestions-dropdown {
+.hk-search-suggestions-dropdown {
   max-height: 240px;
   overflow-y: auto;
   background-color: var(--hi-color-surface);
@@ -114,7 +114,7 @@
   min-width: 200px;
 }
 
-.hi-search-suggestion-item {
+.hk-search-suggestion-item {
   display: flex;
   align-items: center;
   gap: vars.$hikari-spacing-xs;
@@ -130,7 +130,7 @@
   }
 }
 
-.hi-search-suggestion-icon {
+.hk-search-suggestion-icon {
   flex-shrink: 0;
   color: var(--hi-color-text-secondary);
 }
@@ -139,14 +139,14 @@
 // Dark Theme Support
 // ============================================
 
-[data-theme="dark"] .hi-search-suggestions-dropdown,
-[data-theme="tairitsu"] .hi-search-suggestions-dropdown {
+[data-theme="dark"] .hk-search-suggestions-dropdown,
+[data-theme="tairitsu"] .hk-search-suggestions-dropdown {
   background-color: var(--hi-surface);
   border-color: var(--hi-border);
 }
 
-[data-theme="dark"] .hi-search-suggestion-item,
-[data-theme="tairitsu"] .hi-search-suggestion-item {
+[data-theme="dark"] .hk-search-suggestion-item,
+[data-theme="tairitsu"] .hk-search-suggestion-item {
   color: var(--hi-text-primary);
 
   &:hover {
@@ -154,7 +154,7 @@
   }
 }
 
-[data-theme="dark"] .hi-search-suggestion-icon,
-[data-theme="tairitsu"] .hi-search-suggestion-icon {
+[data-theme="dark"] .hk-search-suggestion-icon,
+[data-theme="tairitsu"] .hk-search-suggestion-icon {
   color: var(--hi-text-secondary);
 }

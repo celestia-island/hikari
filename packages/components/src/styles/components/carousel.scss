@@ -1,7 +1,7 @@
 // styles/components/carousel.scss
 // Carousel component with Arknights + FUI styling
 
-.hi-carousel {
+.hk-carousel {
   position: relative;
   width: 100%;
   overflow: hidden;
@@ -11,21 +11,21 @@
 }
 
 // Carousel track - contains all slides
-.hi-carousel-track {
+.hk-carousel-track {
   display: flex;
   transition: transform 0.5s ease-in-out;
   width: 100%;
 }
 
 // Carousel item - individual slide
-.hi-carousel-item {
+.hk-carousel-item {
   flex: 0 0 100%;
   min-width: 0;
   overflow: hidden;
 }
 
 // Navigation arrows
-.hi-carousel-arrow {
+.hk-carousel-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -56,16 +56,16 @@
   }
 }
 
-.hi-carousel-arrow-prev {
+.hk-carousel-arrow-prev {
   left: 1rem;
 }
 
-.hi-carousel-arrow-next {
+.hk-carousel-arrow-next {
   right: 1rem;
 }
 
 // Indicators container
-.hi-carousel-indicators {
+.hk-carousel-indicators {
   position: absolute;
   bottom: 1rem;
   left: 50%;
@@ -75,20 +75,20 @@
   z-index: 10;
 }
 
-.hi-carousel-indicators-dots {
+.hk-carousel-indicators-dots {
   // Dots are positioned at bottom center
 }
 
-.hi-carousel-indicators-line {
+.hk-carousel-indicators-line {
   // Line indicators are positioned at bottom center
 }
 
-.hi-carousel-indicators-hidden {
+.hk-carousel-indicators-hidden {
   display: none;
 }
 
 // Indicator dots
-.hi-carousel-dot {
+.hk-carousel-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -109,14 +109,14 @@
   }
 }
 
-.hi-carousel-dot-active {
+.hk-carousel-dot-active {
   background-color: var(--hi-color-primary, #00A0E9);
   border-color: var(--hi-color-primary, #00A0E9);
   box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4));
 }
 
 // Pause button
-.hi-carousel-pause {
+.hk-carousel-pause {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
@@ -148,19 +148,19 @@
 }
 
 // FUI effects
-.hi-carousel-arrow:hover {
+.hk-carousel-arrow:hover {
   box-shadow:
     0 4px 12px rgba(0, 160, 233, 0.3),
     0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
 }
 
-.hi-carousel-dot-active {
+.hk-carousel-dot-active {
   box-shadow:
     0 0 12px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.4)),
     0 0 24px rgba(0, 160, 233, 0.2);
 }
 
-.hi-carousel-pause:hover {
+.hk-carousel-pause:hover {
   box-shadow:
     0 4px 12px rgba(0, 160, 233, 0.3),
     0 0 20px var(--hi-color-primary-glow, rgba(0, 160, 233, 0.2));
@@ -168,30 +168,30 @@
 
 // Tairitsu theme (dark)
 [data-theme="tairitsu"] {
-  .hi-carousel-arrow,
-  .hi-carousel-dot,
-  .hi-carousel-pause {
+  .hk-carousel-arrow,
+  .hk-carousel-dot,
+  .hk-carousel-pause {
     background-color: #1a1a1a;
     color: rgba(255, 255, 255, 0.95);
     border-color: rgba(255, 255, 255, 0.24);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
-  .hi-carousel-arrow:hover,
-  .hi-carousel-dot-active,
-  .hi-carousel-pause:hover {
+  .hk-carousel-arrow:hover,
+  .hk-carousel-dot-active,
+  .hk-carousel-pause:hover {
     background-color: #1a237e;
     color: rgba(255, 255, 255, 0.95);
     border-color: #1a237e;
     box-shadow: 0 4px 12px rgba(26, 35, 126, 0.4);
   }
 
-  .hi-carousel-dot {
+  .hk-carousel-dot {
     background-color: #1a1a1a;
     border-color: rgba(255, 255, 255, 0.24);
   }
 
-  .hi-carousel-dot-active {
+  .hk-carousel-dot-active {
     background-color: #1a237e;
     border-color: #1a237e;
     box-shadow:
@@ -199,8 +199,8 @@
       0 0 24px rgba(26, 35, 126, 0.3);
   }
 
-  .hi-carousel-arrow:hover,
-  .hi-carousel-pause:hover {
+  .hk-carousel-arrow:hover,
+  .hk-carousel-pause:hover {
     box-shadow:
       0 4px 12px rgba(26, 35, 126, 0.5),
       0 0 20px rgba(26, 35, 126, 0.3);
@@ -209,26 +209,26 @@
 
 // Responsive adjustments
 @media (max-width: 768px) {
-  .hi-carousel-arrow {
+  .hk-carousel-arrow {
     width: 32px;
     height: 32px;
     font-size: 1.25rem;
   }
 
-  .hi-carousel-arrow-prev {
+  .hk-carousel-arrow-prev {
     left: 0.5rem;
   }
 
-  .hi-carousel-arrow-next {
+  .hk-carousel-arrow-next {
     right: 0.5rem;
   }
 
-  .hi-carousel-dot {
+  .hk-carousel-dot {
     width: 6px;
     height: 6px;
   }
 
-  .hi-carousel-pause {
+  .hk-carousel-pause {
     width: 30px;
     height: 30px;
     font-size: 0.875rem;
@@ -249,6 +249,6 @@
   }
 }
 
-.hi-carousel-item {
+.hk-carousel-item {
   animation: hi-carousel-slide 0.5s ease-out;
 }

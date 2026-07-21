@@ -5,7 +5,7 @@
 // User Guide Backdrop
 // ============================================
 
-.hi-user-guide-backdrop {
+.hk-user-guide-backdrop {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -20,7 +20,7 @@
 // User Guide Container
 // ============================================
 
-.hi-user-guide {
+.hk-user-guide {
     position: relative;
     z-index: 9999;
     width: 90%;
@@ -32,7 +32,7 @@
     animation: hi-guide-enter 0.3s ease;
 }
 
-[data-theme="dark"] .hi-user-guide {
+[data-theme="dark"] .hk-user-guide {
     background: var(--hi-background);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
@@ -41,7 +41,7 @@
 // User Guide Header
 // ============================================
 
-.hi-user-guide-header {
+.hk-user-guide-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -50,7 +50,7 @@
     background: rgba(0, 0, 0, 0.03);
 }
 
-[data-theme="dark"] .hi-user-guide-header {
+[data-theme="dark"] .hk-user-guide-header {
     background: rgba(255, 255, 255, 0.03);
     border-bottom-color: var(--hi-border);
 }
@@ -59,7 +59,7 @@
 // User Guide Close Button
 // ============================================
 
-.hi-user-guide-close {
+.hk-user-guide-close {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -78,7 +78,7 @@
     }
 }
 
-[data-theme="dark"] .hi-user-guide-close {
+[data-theme="dark"] .hk-user-guide-close {
     &:hover {
         background: rgba(255, 255, 255, 0.08);
     }
@@ -88,25 +88,25 @@
 // User Guide Title & Description
 // ============================================
 
-.hi-user-guide-title {
+.hk-user-guide-title {
     font-size: 18px;
     font-weight: 700;
     color: var(--hi-text-primary);
     margin: 0;
 }
 
-[data-theme="dark"] .hi-user-guide-title {
+[data-theme="dark"] .hk-user-guide-title {
     color: var(--hi-text-primary);
 }
 
-.hi-user-guide-description {
+.hk-user-guide-description {
     font-size: 14px;
     color: var(--hi-text-secondary);
     line-height: 1.5;
     padding: 16px 20px;
 }
 
-[data-theme="dark"] .hi-user-guide-description {
+[data-theme="dark"] .hk-user-guide-description {
     color: var(--hi-text-secondary);
 }
 
@@ -114,7 +114,7 @@
 // User Guide Content
 // ============================================
 
-.hi-user-guide-content {
+.hk-user-guide-content {
     padding: 0 20px 20px;
 }
 
@@ -122,7 +122,7 @@
 // User Guide Step
 // ============================================
 
-.hi-user-guide-step {
+.hk-user-guide-step {
     padding: 12px 0;
     border-bottom: 1px solid var(--hi-border);
 
@@ -131,7 +131,7 @@
     }
 }
 
-[data-theme="dark"] .hi-user-guide-step {
+[data-theme="dark"] .hk-user-guide-step {
     border-bottom-color: var(--hi-border);
 }
 
@@ -139,7 +139,7 @@
 // User Guide Navigation
 // ============================================
 
-.hi-user-guide-navigation {
+.hk-user-guide-navigation {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -148,7 +148,7 @@
     background: rgba(0, 0, 0, 0.02);
 }
 
-[data-theme="dark"] .hi-user-guide-navigation {
+[data-theme="dark"] .hk-user-guide-navigation {
     background: rgba(255, 255, 255, 0.02);
     border-top-color: var(--hi-border);
 }
@@ -157,15 +157,15 @@
 // Position Variants
 // ============================================
 
-.hi-user-guide-position-center {
-    .hi-user-guide-backdrop {
+.hk-user-guide-position-center {
+    .hk-user-guide-backdrop {
         align-items: center;
         justify-content: center;
     }
 }
 
-.hi-user-guide-position-top-left {
-    .hi-user-guide {
+.hk-user-guide-position-top-left {
+    .hk-user-guide {
         position: fixed;
         top: 24px;
         left: 24px;
@@ -173,8 +173,8 @@
     }
 }
 
-.hi-user-guide-position-top-right {
-    .hi-user-guide {
+.hk-user-guide-position-top-right {
+    .hk-user-guide {
         position: fixed;
         top: 24px;
         right: 24px;
@@ -182,8 +182,8 @@
     }
 }
 
-.hi-user-guide-position-bottom-left {
-    .hi-user-guide {
+.hk-user-guide-position-bottom-left {
+    .hk-user-guide {
         position: fixed;
         bottom: 24px;
         left: 24px;
@@ -191,8 +191,8 @@
     }
 }
 
-.hi-user-guide-position-bottom-right {
-    .hi-user-guide {
+.hk-user-guide-position-bottom-right {
+    .hk-user-guide {
         position: fixed;
         bottom: 24px;
         right: 24px;

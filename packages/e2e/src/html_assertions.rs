@@ -211,26 +211,26 @@ mod tests {
 
     #[test]
     fn test_assert_exists() {
-        let html = r#"<div class="hi-button">Click me</div>"#;
+        let html = r#"<div class="hk-button">Click me</div>"#;
         let assertions = HtmlAssertions::from_str(html);
-        assertions.assert_exists(".hi-button").unwrap();
+        assertions.assert_exists(".hk-button").unwrap();
     }
 
     #[test]
     fn test_assert_has_class() {
-        let html = r#"<button class="hi-button hi-button-primary">Click</button>"#;
+        let html = r#"<button class="hk-button hi-button-primary">Click</button>"#;
         let assertions = HtmlAssertions::from_str(html);
         assertions
-            .assert_has_class(".hi-button", "hi-button-primary")
+            .assert_has_class(".hk-button", "hk-button-primary")
             .unwrap();
     }
 
     #[test]
     fn test_assert_text_contains() {
-        let html = r#"<div class="hi-card">Hello World</div>"#;
+        let html = r#"<div class="hk-card">Hello World</div>"#;
         let assertions = HtmlAssertions::from_str(html);
         assertions
-            .assert_text_contains(".hi-card", "World")
+            .assert_text_contains(".hk-card", "World")
             .unwrap();
     }
 

@@ -322,7 +322,7 @@ impl AriaRole {
 
 #[must_use]
 pub fn visually_hidden() -> &'static str {
-    "hi-visually-hidden"
+    "hk-visually-hidden"
 }
 
 #[must_use]
@@ -344,7 +344,7 @@ pub fn skip_nav_link(target_id: &str, label: &str) -> VNode {
     VNode::Element(
         VElement::new("a")
             .attr("href", format!("#{target_id}"))
-            .class("hi-skip-nav")
+            .class("hk-skip-nav")
             .child(VNode::Text(VText::new(label))),
     )
 }
@@ -418,8 +418,8 @@ mod tests {
 
     #[test]
     fn test_visually_hidden() {
-        assert_eq!(visually_hidden(), "hi-visually-hidden");
-        assert_eq!(sr_only(), "hi-visually-hidden");
+        assert_eq!(visually_hidden(), "hk-visually-hidden");
+        assert_eq!(sr_only(), "hk-visually-hidden");
     }
 
     #[test]

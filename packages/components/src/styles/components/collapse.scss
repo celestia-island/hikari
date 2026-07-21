@@ -1,12 +1,12 @@
 // Collapse component styles
 // Animated collapse/expand for tree nodes
 
-.hi-collapse {
+.hk-collapse {
   display: flex;
   flex-direction: column;
 }
 
-.hi-collapse-header {
+.hk-collapse-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -24,27 +24,27 @@
   }
 }
 
-.hi-collapse-arrow {
+.hk-collapse-arrow {
   display: inline-block;
   transition: transform 0.2s ease;
   color: var(--hi-color-text-secondary, #666666);
   font-size: 16px;
 }
 
-.hi-collapse-header-content {
+.hk-collapse-header-content {
   flex: 1;
   display: flex;
   align-items: center;
 }
 
-.hi-collapse-content {
+.hk-collapse-content {
   overflow: hidden;
   transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out;
   opacity: 0;
   max-height: 0;
 }
 
-.hi-collapse-content.hi-collapse-expanded {
+.hk-collapse-content.hk-collapse-expanded {
   opacity: 1;
   max-height: none;
 }

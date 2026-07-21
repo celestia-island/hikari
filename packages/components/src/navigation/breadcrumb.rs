@@ -78,7 +78,7 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
 
             if let Some(href) = props.href {
                 a {
-                    class: "hi-breadcrumb-link",
+                    class: "hk-breadcrumb-link",
                     href: href,
                     onclick: move |e| {
                         if let Some(handler) = props.onclick.as_ref() {
@@ -89,7 +89,7 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
                 }
             } else if props.onclick.is_some() {
                 span {
-                    class: "hi-breadcrumb-link",
+                    class: "hk-breadcrumb-link",
                     onclick: move |e| {
                         if let Some(handler) = props.onclick.as_ref() {
                             handler.call(e);
@@ -99,13 +99,13 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
                 }
             } else {
                 span {
-                    class: "hi-breadcrumb-current",
+                    class: "hk-breadcrumb-current",
                     { props.children }
                 }
             }
 
             span {
-                class: "hi-breadcrumb-separator",
+                class: "hk-breadcrumb-separator",
                 svg {
                     xmlns: "http://www.w3.org/2000/svg",
                     width: "16",
@@ -127,7 +127,7 @@ pub fn BreadcrumbItem(props: BreadcrumbItemProps) -> Element {
 pub fn BreadcrumbSeparator(#[props(default)] separator: String) -> Element {
     rsx! {
         span {
-            class: "hi-breadcrumb-separator",
+            class: "hk-breadcrumb-separator",
             if separator.is_empty() {
                 svg {
                     xmlns: "http://www.w3.org/2000/svg",

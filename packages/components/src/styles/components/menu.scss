@@ -10,7 +10,7 @@
 // Base Menu Styles
 // ============================================
 
-.hi-menu {
+.hk-menu {
   // Layout
   display: flex;
   flex-direction: column;
@@ -35,7 +35,7 @@
 }
 
 // Sidebar-specific override
-aside .hi-menu {
+aside .hk-menu {
   background: transparent;
   backdrop-filter: none;
   border: none;
@@ -46,7 +46,7 @@ aside .hi-menu {
 // Menu List (Vertical)
 // ============================================
 
-.hi-menu-list {
+.hk-menu-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -59,12 +59,12 @@ aside .hi-menu {
 // Menu Item Wrapper (for Glow)
 // ============================================
 
-.hi-menu-item-wrapper {
+.hk-menu-item-wrapper {
   width: 100%;
   position: relative;
 
   // Ensure entire area is clickable and full width
-  .hi-menu-item {
+  .hk-menu-item {
     pointer-events: auto;
     width: 100%;
     align-self: flex-start;
@@ -80,7 +80,7 @@ aside .hi-menu {
 // Menu Item
 // ============================================
 
-.hi-menu-item {
+.hk-menu-item {
   // Layout - use flex for alignment
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@ aside .hi-menu {
   overflow: visible;
 
   // Inner content wrapper - applies padding here
-  .hi-menu-item-inner {
+  .hk-menu-item-inner {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -134,9 +134,9 @@ aside .hi-menu {
     }
 
     // Height, padding, and level-based padding are controlled by height classes:
-    // - .hi-menu-height-default (normal)
-    // - .hi-menu-height-compact (smaller)
-    // - .hi-menu-height-extra-compact (smallest)
+    // - .hk-menu-height-default (normal)
+    // - .hk-menu-height-compact (smaller)
+    // - .hk-menu-height-extra-compact (smallest)
   }
 }
 
@@ -145,15 +145,15 @@ aside .hi-menu {
 // ============================================
 
 // Default height (normal)
-.hi-menu-height-default.hi-menu-item {
+.hk-menu-height-default.hk-menu-item {
   height: 2.5rem;
 }
 
-.hi-menu-height-default.hi-menu-submenu-title {
+.hk-menu-height-default.hk-menu-submenu-title {
   height: 2.5rem;
 }
 
-.hi-menu-height-default .hi-menu-item-inner {
+.hk-menu-height-default .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -161,7 +161,7 @@ aside .hi-menu {
   padding: 0.5rem 0;
 }
 
-.hi-menu-height-default .hi-menu-submenu-title-inner {
+.hk-menu-height-default .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -170,15 +170,15 @@ aside .hi-menu {
 }
 
 // Compact height
-.hi-menu-height-compact.hi-menu-item {
+.hk-menu-height-compact.hk-menu-item {
   height: 2rem;
 }
 
-.hi-menu-height-compact.hi-menu-submenu-title {
+.hk-menu-height-compact.hk-menu-submenu-title {
   height: 2rem;
 }
 
-.hi-menu-height-compact .hi-menu-item-inner {
+.hk-menu-height-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -186,7 +186,7 @@ aside .hi-menu {
   padding: 0.375rem 0;
 }
 
-.hi-menu-height-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -195,7 +195,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in compact mode
-.hi-menu-height-compact .hi-menu-item-icon {
+.hk-menu-height-compact .hk-menu-item-icon {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -207,7 +207,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-compact .hi-menu-item-arrow {
+.hk-menu-height-compact .hk-menu-item-arrow {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -220,15 +220,15 @@ aside .hi-menu {
 }
 
 // Extra compact height (for very deep trees)
-.hi-menu-height-extra-compact.hi-menu-item {
+.hk-menu-height-extra-compact.hk-menu-item {
   height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact.hi-menu-submenu-title {
+.hk-menu-height-extra-compact.hk-menu-submenu-title {
   height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-inner {
+.hk-menu-height-extra-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -236,7 +236,7 @@ aside .hi-menu {
   padding: 0.25rem 0;
 }
 
-.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-extra-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -245,7 +245,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in extra compact mode
-.hi-menu-height-extra-compact .hi-menu-item-icon {
+.hk-menu-height-extra-compact .hk-menu-item-icon {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -257,7 +257,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-arrow {
+.hk-menu-height-extra-compact .hk-menu-item-arrow {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -269,11 +269,11 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-default.hi-menu-submenu-title {
+.hk-menu-height-default.hk-menu-submenu-title {
   height: 2.5rem;
 }
 
-.hi-menu-height-default .hi-menu-item-inner {
+.hk-menu-height-default .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -281,7 +281,7 @@ aside .hi-menu {
   padding: 0.5rem 0;
 }
 
-.hi-menu-height-default .hi-menu-submenu-title-inner {
+.hk-menu-height-default .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -290,15 +290,15 @@ aside .hi-menu {
 }
 
 // Compact height
-.hi-menu-height-compact.hi-menu-item {
+.hk-menu-height-compact.hk-menu-item {
   height: 2rem;
 }
 
-.hi-menu-height-compact.hi-menu-submenu-title {
+.hk-menu-height-compact.hk-menu-submenu-title {
   height: 2rem;
 }
 
-.hi-menu-height-compact .hi-menu-item-inner {
+.hk-menu-height-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -306,7 +306,7 @@ aside .hi-menu {
   padding: 0.375rem 0;
 }
 
-.hi-menu-height-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -315,7 +315,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in compact mode
-.hi-menu-height-compact .hi-menu-item-icon {
+.hk-menu-height-compact .hk-menu-item-icon {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -327,7 +327,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-compact .hi-menu-item-arrow {
+.hk-menu-height-compact .hk-menu-item-arrow {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -340,15 +340,15 @@ aside .hi-menu {
 }
 
 // Extra compact height (for very deep trees)
-.hi-menu-height-extra-compact.hi-menu-item {
+.hk-menu-height-extra-compact.hk-menu-item {
   height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact.hi-menu-submenu-title {
+.hk-menu-height-extra-compact.hk-menu-submenu-title {
   height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-inner {
+.hk-menu-height-extra-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -356,7 +356,7 @@ aside .hi-menu {
   padding: 0.25rem 0;
 }
 
-.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-extra-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -365,7 +365,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in extra compact mode
-.hi-menu-height-extra-compact .hi-menu-item-icon {
+.hk-menu-height-extra-compact .hk-menu-item-icon {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -377,7 +377,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-arrow {
+.hk-menu-height-extra-compact .hk-menu-item-arrow {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -389,11 +389,11 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-default.hi-menu-submenu-title {
+.hk-menu-height-default.hk-menu-submenu-title {
   height: 2.5rem;
 }
 
-.hi-menu-height-default .hi-menu-item-inner {
+.hk-menu-height-default .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -401,7 +401,7 @@ aside .hi-menu {
   padding: 0.5rem 0;
 }
 
-.hi-menu-height-default .hi-menu-submenu-title-inner {
+.hk-menu-height-default .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -410,17 +410,17 @@ aside .hi-menu {
 }
 
 // Compact height
-.hi-menu-height-compact.hi-menu-item {
+.hk-menu-height-compact.hk-menu-item {
   min-height: 2rem;
   max-height: 2rem;
 }
 
-.hi-menu-height-compact.hi-menu-submenu-title {
+.hk-menu-height-compact.hk-menu-submenu-title {
   min-height: 2rem;
   max-height: 2rem;
 }
 
-.hi-menu-height-compact .hi-menu-item-inner {
+.hk-menu-height-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -429,7 +429,7 @@ aside .hi-menu {
   padding: 0.5rem 0;
 }
 
-.hi-menu-height-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -439,7 +439,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in compact mode
-.hi-menu-height-compact .hi-menu-item-icon {
+.hk-menu-height-compact .hk-menu-item-icon {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -451,7 +451,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-compact .hi-menu-item-arrow {
+.hk-menu-height-compact .hk-menu-item-arrow {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -463,12 +463,12 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-default.hi-menu-submenu-title {
+.hk-menu-height-default.hk-menu-submenu-title {
   min-height: 2.5rem;
   max-height: 2.5rem;
 }
 
-.hi-menu-height-default .hi-menu-item-inner {
+.hk-menu-height-default .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -480,7 +480,7 @@ aside .hi-menu {
   padding-left: 0.875rem;
 }
 
-.hi-menu-height-default .hi-menu-submenu-title-inner {
+.hk-menu-height-default .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -492,12 +492,12 @@ aside .hi-menu {
   padding-left: 0.875rem;
 }
 
-.hi-menu-height-default.hi-menu-submenu-title {
+.hk-menu-height-default.hk-menu-submenu-title {
   min-height: 2.5rem;
   max-height: 2.5rem;
 }
 
-.hi-menu-height-default .hi-menu-item-inner {
+.hk-menu-height-default .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -509,7 +509,7 @@ aside .hi-menu {
   padding-right: 0.875rem;
 }
 
-.hi-menu-height-default .hi-menu-submenu-title-inner {
+.hk-menu-height-default .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -522,17 +522,17 @@ aside .hi-menu {
 }
 
 // Compact height
-.hi-menu-height-compact.hi-menu-item {
+.hk-menu-height-compact.hk-menu-item {
   min-height: 2rem;
   max-height: 2rem;
 }
 
-.hi-menu-height-compact.hi-menu-submenu-title {
+.hk-menu-height-compact.hk-menu-submenu-title {
   min-height: 2rem;
   max-height: 2rem;
 }
 
-.hi-menu-height-compact .hi-menu-item-inner {
+.hk-menu-height-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -544,61 +544,7 @@ aside .hi-menu {
   padding-right: 0.75rem;
 }
 
-.hi-menu-height-compact .hi-menu-submenu-title-inner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 2rem;
-  max-height: 2rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-// Reduce icon size in compact mode
-.hi-menu-height-compact .hi-menu-item-icon {
-  width: 14px;
-  height: 14px;
-  min-width: 14px;
-  min-height: 14px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-.hi-menu-height-compact .hi-menu-item-arrow {
-  width: 14px;
-  height: 14px;
-  min-width: 14px;
-  min-height: 14px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-.hi-menu-height-compact.hi-menu-submenu-title {
-  min-height: 2rem;
-  max-height: 2rem;
-}
-
-.hi-menu-height-compact .hi-menu-item-inner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 2rem;
-  max-height: 2rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-.hi-menu-height-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -611,7 +557,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in compact mode
-.hi-menu-height-compact .hi-menu-item-icon {
+.hk-menu-height-compact .hk-menu-item-icon {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -623,7 +569,61 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-compact .hi-menu-item-arrow {
+.hk-menu-height-compact .hk-menu-item-arrow {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hk-menu-height-compact.hk-menu-submenu-title {
+  min-height: 2rem;
+  max-height: 2rem;
+}
+
+.hk-menu-height-compact .hk-menu-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.hk-menu-height-compact .hk-menu-submenu-title-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2rem;
+  max-height: 2rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+// Reduce icon size in compact mode
+.hk-menu-height-compact .hk-menu-item-icon {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.hk-menu-height-compact .hk-menu-item-arrow {
   width: 14px;
   height: 14px;
   min-width: 14px;
@@ -636,17 +636,17 @@ aside .hi-menu {
 }
 
 // Extra compact height (for very deep trees)
-.hi-menu-height-extra-compact.hi-menu-item {
+.hk-menu-height-extra-compact.hk-menu-item {
   min-height: 1.75rem;
   max-height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact.hi-menu-submenu-title {
+.hk-menu-height-extra-compact.hk-menu-submenu-title {
   min-height: 1.75rem;
   max-height: 1.75rem;
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-inner {
+.hk-menu-height-extra-compact .hk-menu-item-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -655,7 +655,7 @@ aside .hi-menu {
   padding: 0.4375rem 0;
 }
 
-.hi-menu-height-extra-compact .hi-menu-submenu-title-inner {
+.hk-menu-height-extra-compact .hk-menu-submenu-title-inner {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -665,7 +665,7 @@ aside .hi-menu {
 }
 
 // Reduce icon size in extra compact mode
-.hi-menu-height-extra-compact .hi-menu-item-icon {
+.hk-menu-height-extra-compact .hk-menu-item-icon {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -677,7 +677,7 @@ aside .hi-menu {
   }
 }
 
-.hi-menu-height-extra-compact .hi-menu-item-arrow {
+.hk-menu-height-extra-compact .hk-menu-item-arrow {
   width: 12px;
   height: 12px;
   min-width: 12px;
@@ -693,7 +693,7 @@ aside .hi-menu {
 // Icon
 // ============================================
 
-.hi-menu-item-icon {
+.hk-menu-item-icon {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -715,13 +715,13 @@ aside .hi-menu {
 // Content
 // ============================================
 
-.hi-menu-item-content {
+.hk-menu-item-content {
   flex: 1;
   display: inline-flex;
   align-items: center;
 }
 
-.hi-menu-item-label {
+.hk-menu-item-label {
   flex: 1;
 }
 
@@ -729,7 +729,7 @@ aside .hi-menu {
 // Shortcut
 // ============================================
 
-.hi-menu-item-shortcut {
+.hk-menu-item-shortcut {
   margin-left: auto;
   font-size: 0.75rem;
   color: var(--hi-color-text-secondary);
@@ -740,7 +740,7 @@ aside .hi-menu {
 // Arrow (Submenu indicator)
 // ============================================
 
-.hi-menu-item-arrow {
+.hk-menu-item-arrow {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -763,7 +763,7 @@ aside .hi-menu {
 // Disabled state
 // ============================================
 
-.hi-menu-item-disabled {
+.hk-menu-item-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -773,7 +773,7 @@ aside .hi-menu {
 // Focus state
 // ============================================
 
-.hi-menu-item:focus-visible {
+.hk-menu-item:focus-visible {
   outline: none;
   background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
   border-color: var(--hi-primary);
@@ -783,7 +783,7 @@ aside .hi-menu {
 // Link element inside menu item
 // ============================================
 
-.hi-menu-item a {
+.hk-menu-item a {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -794,9 +794,9 @@ aside .hi-menu {
 }
 
 // Remove underline from links
-.hi-menu-item a:hover,
-.hi-menu-item a:focus,
-.hi-menu-item a:visited {
+.hk-menu-item a:hover,
+.hk-menu-item a:focus,
+.hk-menu-item a:visited {
   text-decoration: none;
 }
 
@@ -804,7 +804,7 @@ aside .hi-menu {
 // Menu Divider
 // ============================================
 
-.hi-menu-divider {
+.hk-menu-divider {
   height: 1px;
   margin: 0.5rem 0;
   background: linear-gradient(
@@ -821,8 +821,8 @@ aside .hi-menu {
 // Menu Group
 // ============================================
 
-.hi-menu-group {
-  .hi-menu-group-title {
+.hk-menu-group {
+  .hk-menu-group-title {
     padding: 0.5rem 0.875rem;
     margin: 0.25rem 0;
     font-size: 0.75rem;
@@ -837,7 +837,7 @@ aside .hi-menu {
 // Menu Header
 // ============================================
 
-.hi-menu-header {
+.hk-menu-header {
   padding: 0.75rem 1rem;
   margin: 0 0.5rem;
   font-size: vars.$hikari-font-size-sm;
@@ -853,11 +853,11 @@ aside .hi-menu {
 // Submenu (Nested)
 // ============================================
 
-.hi-menu-submenu {
+.hk-menu-submenu {
   position: relative;
 
   // Title container - use flex for alignment
-  .hi-menu-submenu-title {
+  .hk-menu-submenu-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -882,7 +882,7 @@ aside .hi-menu {
     position: relative;
 
     // Inner content wrapper - padding and height controlled by height classes
-    .hi-menu-submenu-title-inner {
+    .hk-menu-submenu-title-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -893,19 +893,19 @@ aside .hi-menu {
       line-height: 1;
 
       // Height, padding, and level-based padding are controlled by height classes:
-      // - .hi-menu-height-default (normal)
-      // - .hi-menu-height-compact (smaller)
-      // - .hi-menu-height-extra-compact (smallest)
+      // - .hk-menu-height-default (normal)
+      // - .hk-menu-height-compact (smaller)
+      // - .hk-menu-height-extra-compact (smallest)
     }
   }
 
   // Sidebar-specific overrides
   aside & {
-    .hi-menu-submenu-title {
+    .hk-menu-submenu-title {
       background: transparent;
 
       // Arrow icon - smaller for sidebar
-      .hi-menu-item-arrow {
+      .hk-menu-item-arrow {
         width: 0.75rem;
         height: 0.75rem;
         min-width: 0.75rem;
@@ -924,7 +924,7 @@ aside .hi-menu {
 // Submenu List
 // ============================================
 
-.hi-menu-submenu-list {
+.hk-menu-submenu-list {
   // Nested menu list
   list-style: none;
   margin: 0;
@@ -946,7 +946,7 @@ aside .hi-menu {
 // Arrow rotation animation
 // ============================================
 
-.hi-menu-item-arrow.hi-menu-submenu-arrow-open {
+.hk-menu-item-arrow.hk-menu-submenu-arrow-open {
   transform: rotate(90deg);
 }
 
@@ -954,21 +954,21 @@ aside .hi-menu {
 // Horizontal Menu
 // ============================================
 
-.hi-menu-horizontal {
+.hk-menu-horizontal {
   flex-direction: row;
   min-width: auto;
   padding: 0.5rem 1rem;
 
-  .hi-menu-list {
+  .hk-menu-list {
     flex-direction: row;
     gap: 0.5rem;
   }
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.5rem 1rem;
   }
 
-  .hi-menu-divider {
+  .hk-menu-divider {
     width: 1px;
     height: auto;
     margin: 0 0.5rem;
@@ -986,21 +986,21 @@ aside .hi-menu {
 // Icon-only Menu (Vertical)
 // ============================================
 
-.hi-menu-icon-only {
+.hk-menu-icon-only {
   min-width: auto;
   padding: 0.5rem;
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.75rem;
     justify-content: center;
 
-    .hi-menu-item-icon {
+    .hk-menu-item-icon {
       margin: 0;
     }
 
-    .hi-menu-item-label,
-    .hi-menu-item-shortcut,
-    .hi-menu-item-arrow {
+    .hk-menu-item-label,
+    .hk-menu-item-shortcut,
+    .hk-menu-item-arrow {
       display: none;
     }
   }
@@ -1010,17 +1010,17 @@ aside .hi-menu {
 // Collapsed Menu
 // ============================================
 
-.hi-menu-collapsed {
+.hk-menu-collapsed {
   min-width: auto;
   padding: 0.5rem;
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.75rem;
     justify-content: center;
 
-    .hi-menu-item-label,
-    .hi-menu-item-shortcut,
-    .hi-menu-item-arrow {
+    .hk-menu-item-label,
+    .hk-menu-item-shortcut,
+    .hk-menu-item-arrow {
       display: none;
     }
   }
@@ -1030,17 +1030,17 @@ aside .hi-menu {
 // Menu Item Active State
 // ============================================
 
-.hi-menu-list .hi-menu-item.hi-menu-item-active {
+.hk-menu-list .hk-menu-item.hk-menu-item-active {
   background: linear-gradient(90deg, var(--hi-primary), var(--hi-primary));
   border-color: var(--hi-primary);
   color: var(--hi-color-text-primary);
 
-  .hi-menu-item-icon {
+  .hk-menu-item-icon {
     color: var(--hi-color-primary);
     filter: drop-shadow(0 0 6px var(--hi-primary));
   }
 
-  .hi-menu-item-arrow {
+  .hk-menu-item-arrow {
     color: var(--hi-color-primary);
   }
 }
@@ -1049,19 +1049,19 @@ aside .hi-menu {
 // Danger Item
 // ============================================
 
-.hi-menu-item-danger {
+.hk-menu-item-danger {
   &:hover {
     background: rgba(255, 76, 0, 0.1);
     border-color: rgba(255, 76, 0, 0.3);
     color: var(--hi-color-danger);
 
-    .hi-menu-item-icon {
+    .hk-menu-item-icon {
       color: var(--hi-color-danger);
       filter: drop-shadow(0 0 4px rgba(255, 76, 0, 0.5));
     }
   }
 
-  &.hi-menu-item-active {
+  &.hk-menu-item-active {
     background: linear-gradient(90deg, rgba(255, 76, 0, 0.2), rgba(255, 76, 0, 0.05));
     border-color: rgba(255, 76, 0, 0.5);
     box-shadow:
@@ -1074,37 +1074,37 @@ aside .hi-menu {
 // Size Variants
 // ============================================
 
-.hi-menu-sm {
+.hk-menu-sm {
   padding: 0.375rem;
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
 
-    .hi-menu-item-icon {
+    .hk-menu-item-icon {
       width: 0.875rem;
       height: 0.875rem;
     }
   }
 }
 
-.hi-menu-md {
+.hk-menu-md {
   padding: 0.5rem;
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.625rem 0.875rem;
     font-size: vars.$hikari-font-size-sm;
   }
 }
 
-.hi-menu-lg {
+.hk-menu-lg {
   padding: 0.625rem;
 
-  .hi-menu-item {
+  .hk-menu-item {
     padding: 0.75rem 1rem;
     font-size: 0.9375rem;
 
-    .hi-menu-item-icon {
+    .hk-menu-item-icon {
       width: 1.125rem;
       height: 1.125rem;
     }
@@ -1116,8 +1116,8 @@ aside .hi-menu {
 // ============================================
 
 // Slide-in animation for menu items
-.hi-menu-animate-in {
-  .hi-menu-item {
+.hk-menu-animate-in {
+  .hk-menu-item {
     opacity: 0;
 
     @for $i from 1 through 20 {
@@ -1129,8 +1129,8 @@ aside .hi-menu {
 }
 
 // Fade-in animation
-.hi-menu-fade-in {
-  .hi-menu-item {
+.hk-menu-fade-in {
+  .hk-menu-item {
     opacity: 0;
 
     @for $i from 1 through 20 {
@@ -1142,12 +1142,12 @@ aside .hi-menu {
 }
 
 // Pulse animation for active items
-.hi-menu-item-active.hi-menu-item-pulse {
+.hk-menu-item-active.hk-menu-item-pulse {
   // DISABLED - migrated to JS animation
 }
 
 // Ripple effect on click
-.hi-menu-item-ripple {
+.hk-menu-item-ripple {
   &::after {
     content: '';
     position: absolute;
@@ -1172,7 +1172,7 @@ aside .hi-menu {
 // ============================================
 
 // High specificity to override base styles without !important
-.hi-menu.hi-menu-popover {
+.hk-menu.hk-menu-popover {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1184,19 +1184,19 @@ aside .hi-menu {
   flex-direction: column;
   gap: 0.25rem;
 
-  .hi-menu-item-wrapper {
+  .hk-menu-item-wrapper {
     width: 100%;
   }
 
-  .hi-glow-wrapper-block {
+  .hk-glow-wrapper-block {
     width: 100%;
   }
 
-  .hi-menu-item {
+  .hk-menu-item {
     width: 100%;
   }
 
-  .hi-menu-item-inner {
+  .hk-menu-item-inner {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }

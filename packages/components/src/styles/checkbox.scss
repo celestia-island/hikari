@@ -10,7 +10,7 @@
 
 // Label wrapper
 // ============================================
-.hi-checkbox-label {
+.hk-checkbox-label {
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -18,7 +18,7 @@
     user-select: none;
     padding: 4px 0;
 
-    &:hover .hi-checkbox:not(.hi-checkbox-disabled) {
+    &:hover .hk-checkbox:not(.hk-checkbox-disabled) {
         border-color: var(--hi-color-primary);
         box-shadow: 0 0 8px var(--hi-glow-button-primary);
     }
@@ -28,7 +28,7 @@
 // Hidden native input
 // ============================================
 
-.hi-checkbox-input {
+.hk-checkbox-input {
     position: absolute;
     opacity: 0;
     cursor: pointer;
@@ -42,7 +42,7 @@
 // Custom checkbox box
 // ============================================
 
-.hi-checkbox {
+.hk-checkbox {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -59,17 +59,17 @@
 // Size Variants
 // ============================================
 
-.hi-checkbox-sm {
+.hk-checkbox-sm {
     width: 16px;
     height: 16px;
 }
 
-.hi-checkbox-md {
+.hk-checkbox-md {
     width: 20px;
     height: 20px;
 }
 
-.hi-checkbox-lg {
+.hk-checkbox-lg {
     width: 24px;
     height: 24px;
 }
@@ -78,7 +78,7 @@
 // Checkmark icon (SVG)
 // ============================================
 
-.hi-checkbox-icon {
+.hk-checkbox-icon {
     color: var(--hi-component-selection-icon);
     width: 70%;
     height: 70%;
@@ -90,12 +90,12 @@
 }
 
 // Unchecked state - icon visible but semi-transparent
-.hi-checkbox:not(.hi-checkbox-checked) .hi-checkbox-icon.hi-checkbox-icon {
+.hk-checkbox:not(.hk-checkbox-checked) .hk-checkbox-icon.hk-checkbox-icon {
     opacity: 0.3;
 }
 
 // Checked state - icon fully visible and scaled
-.hi-checkbox-checked .hi-checkbox-icon.hi-checkbox-icon {
+.hk-checkbox-checked .hk-checkbox-icon.hk-checkbox-icon {
     opacity: 1;
     transform: scale(1);
 }
@@ -104,7 +104,7 @@
 // Checked state
 // ============================================
 
-.hi-checkbox-checked {
+.hk-checkbox-checked {
     background: linear-gradient(135deg, var(--hi-color-primary), var(--hi-button-primary-dark, #E89A8D));
     border-color: var(--hi-color-primary);
     box-shadow:
@@ -116,7 +116,7 @@
 // Hover effect on checked
 // ============================================
 
-.hi-checkbox-label:hover .hi-checkbox-checked:not(.hi-checkbox-disabled) {
+.hk-checkbox-label:hover .hk-checkbox-checked:not(.hk-checkbox-disabled) {
     box-shadow:
         0 0 10px var(--hi-glow-button-primary),
         inset 0 0 4px rgba(255, 255, 255, 0.2);
@@ -127,7 +127,7 @@
 // Disabled state
 // ============================================
 
-.hi-checkbox-disabled {
+.hk-checkbox-disabled {
     opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
@@ -139,7 +139,7 @@
 // Label text
 // ============================================
 
-.hi-checkbox-text {
+.hk-checkbox-text {
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-base;
     font-weight: 400;
@@ -152,6 +152,6 @@
 // Disabled label
 // ============================================
 
-.hi-checkbox-label:has(.hi-checkbox-disabled) {
+.hk-checkbox-label:has(.hk-checkbox-disabled) {
     cursor: not-allowed;
 }

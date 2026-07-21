@@ -68,7 +68,7 @@ pub fn Divider(props: DividerProps) -> Element {
         .add_raw(&props.class);
 
     if is_rtl {
-        builder = builder.add_raw("hi-divider-rtl");
+        builder = builder.add_raw("hk-divider-rtl");
     }
 
     let divider_classes = builder.build();
@@ -98,7 +98,7 @@ pub fn Divider(props: DividerProps) -> Element {
     rsx! {
         div { class: divider_classes, style: text_align_style,
             if let Some(label) = props.text {
-                span { class: "hi-divider-text", "{label}" }
+                span { class: "hk-divider-text", "{label}" }
             }
         }
     }
@@ -109,52 +109,52 @@ pub struct DividerComponent;
 impl crate::styled::StyledComponent for DividerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-divider {
+.hk-divider {
   width: 100%;
   display: flex;
   align-items: center;
   color: var(--hi-border);
 }
 
-.hi-divider-horizontal {
+.hk-divider-horizontal {
   height: 1px;
   flex-direction: row;
 }
 
-.hi-divider-vertical {
+.hk-divider-vertical {
   width: 1px;
   min-height: 100%;
   flex-direction: column;
 }
 
-.hi-divider-solid {
+.hk-divider-solid {
   border-top: 1px solid var(--hi-border);
 }
 
-.hi-divider-dashed {
+.hk-divider-dashed {
   border-top: 1px dashed var(--hi-border);
 }
 
-.hi-divider-dotted {
+.hk-divider-dotted {
   border-top: 1px dotted var(--hi-border);
 }
 
-.hi-divider-with-text {
+.hk-divider-with-text {
   position: relative;
 }
 
-.hi-divider-text {
+.hk-divider-text {
   background: var(--hi-surface);
   padding: 0 16px;
   font-size: 14px;
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-divider {
+[data-theme="dark"] .hk-divider {
   border-color: var(--hi-border);
 }
 
-[data-theme="dark"] .hi-divider-text {
+[data-theme="dark"] .hk-divider-text {
   background: var(--hi-background);
   color: var(--hi-text-secondary);
 }

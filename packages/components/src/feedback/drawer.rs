@@ -169,7 +169,7 @@ pub struct DrawerComponent;
 impl StyledComponent for DrawerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-drawer-mask {
+.hk-drawer-mask {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -183,7 +183,7 @@ impl StyledComponent for DrawerComponent {
   to { opacity: 1; }
 }
 
-.hi-drawer {
+.hk-drawer {
   position: fixed;
   z-index: 1001;
   background: var(--hi-background);
@@ -193,33 +193,33 @@ impl StyledComponent for DrawerComponent {
   animation: hi-drawer-slide-in 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-[data-theme="dark"] .hi-drawer {
+[data-theme="dark"] .hk-drawer {
   background: var(--hi-surface);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.hi-drawer-right {
+.hk-drawer-right {
   top: 0;
   right: 0;
   height: 100vh;
   border-left: 1px solid var(--hi-border);
 }
 
-.hi-drawer-left {
+.hk-drawer-left {
   top: 0;
   left: 0;
   height: 100vh;
   border-right: 1px solid var(--hi-border);
 }
 
-.hi-drawer-top {
+.hk-drawer-top {
   top: 0;
   left: 0;
   width: 100vw;
   border-bottom: 1px solid var(--hi-border);
 }
 
-.hi-drawer-bottom {
+.hk-drawer-bottom {
   bottom: 0;
   left: 0;
   width: 100vw;
@@ -235,7 +235,7 @@ impl StyledComponent for DrawerComponent {
   }
 }
 
-.hi-drawer-left {
+.hk-drawer-left {
   animation-name: hi-drawer-slide-in-left;
 }
 
@@ -248,7 +248,7 @@ impl StyledComponent for DrawerComponent {
   }
 }
 
-.hi-drawer-top {
+.hk-drawer-top {
   animation-name: hi-drawer-slide-in-top;
 }
 
@@ -261,7 +261,7 @@ impl StyledComponent for DrawerComponent {
   }
 }
 
-.hi-drawer-bottom {
+.hk-drawer-bottom {
   animation-name: hi-drawer-slide-in-bottom;
 }
 
@@ -274,7 +274,7 @@ impl StyledComponent for DrawerComponent {
   }
 }
 
-.hi-drawer-header {
+.hk-drawer-header {
   padding: 16px 24px;
   border-bottom: 1px solid var(--hi-border);
   display: flex;
@@ -282,13 +282,13 @@ impl StyledComponent for DrawerComponent {
   justify-content: space-between;
 }
 
-.hi-drawer-title {
+.hk-drawer-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--hi-text-primary);
 }
 
-.hi-drawer-close {
+.hk-drawer-close {
   background: transparent;
   border: none;
   padding: 4px;
@@ -301,19 +301,19 @@ impl StyledComponent for DrawerComponent {
   justify-content: center;
 }
 
-.hi-drawer-close:hover {
+.hk-drawer-close:hover {
   background: var(--hi-color-hover);
   color: var(--hi-text-primary);
 }
 
-.hi-drawer-body {
+.hk-drawer-body {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
   color: var(--hi-text-primary);
 }
 
-.hi-drawer-footer {
+.hk-drawer-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--hi-border);
   display: flex;
@@ -321,20 +321,20 @@ impl StyledComponent for DrawerComponent {
   gap: 12px;
 }
 
-.hi-drawer-body::-webkit-scrollbar {
+.hk-drawer-body::-webkit-scrollbar {
   width: 6px;
 }
 
-.hi-drawer-body::-webkit-scrollbar-track {
+.hk-drawer-body::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.hi-drawer-body::-webkit-scrollbar-thumb {
+.hk-drawer-body::-webkit-scrollbar-thumb {
   background: var(--hi-border);
   border-radius: 3px;
 }
 
-.hi-drawer-body::-webkit-scrollbar-thumb:hover {
+.hk-drawer-body::-webkit-scrollbar-thumb:hover {
   background: var(--hi-color-border);
 }
 "#

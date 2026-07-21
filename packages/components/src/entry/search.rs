@@ -134,7 +134,7 @@ pub fn Search(props: SearchProps) -> Element {
     let portal_for_onkeydown = portal.clone();
 
     let input_element = rsx! {
-        div { class: "hi-search-input-container",
+        div { class: "hk-search-input-container",
             input {
                 r#type: "search",
                 value: "{current_value}",
@@ -159,7 +159,7 @@ pub fn Search(props: SearchProps) -> Element {
                         let value_signal_for_dropdown = value_signal_for_onfocus.clone();
 
                         let dropdown_content = rsx! {
-                            div { class: "hi-search-suggestions-dropdown",
+                            div { class: "hk-search-suggestions-dropdown",
                                 for suggestion in suggestions_for_dropdown.iter() {
                                     {
                                         let suggestion_value = suggestion.clone();
@@ -174,7 +174,7 @@ pub fn Search(props: SearchProps) -> Element {
                                         let portal_remove_for_item = portal_remove.clone();
                                         rsx! {
                                             div {
-                                                class: "hi-search-suggestion-item",
+                                                class: "hk-search-suggestion-item",
                                                 onclick: move |e: MouseEvent| {
                                                     e.stop_propagation();
                                                     value_signal_for_item.set(suggestion_for_click.clone());
@@ -187,7 +187,7 @@ pub fn Search(props: SearchProps) -> Element {
                                                 Icon {
                                                     icon: MdiIcon::Magnify,
                                                     size: 14,
-                                                    class: "hi-search-suggestion-icon".to_string(),
+                                                    class: "hk-search-suggestion-icon".to_string(),
                                                     color: String::new(),
                                                 }
                                                 span { "{suggestion_value}" }
@@ -232,7 +232,7 @@ pub fn Search(props: SearchProps) -> Element {
     rsx! {
         div { class: wrapper_classes, style: props.style,
 
-            div { class: "hi-search-input-wrapper",
+            div { class: "hk-search-input-wrapper",
 
                 InputWrapper {
                     left: left_items,

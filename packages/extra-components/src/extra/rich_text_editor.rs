@@ -195,15 +195,15 @@ impl RichTextEditorState {
     #[must_use]
     pub fn class_string(&self) -> String {
         if self.class.is_empty() {
-            "hi-editor".to_string()
+            "hk-editor".to_string()
         } else {
-            format!("hi-editor {}", self.class)
+            format!("hk-editor {}", self.class)
         }
     }
 
     #[must_use]
     pub fn editor_class_string(&self) -> String {
-        let mut cls = String::from("hi-editor-content");
+        let mut cls = String::from("hk-editor-content");
         if self.readonly {
             cls.push_str(" hi-editor-readonly");
         }
@@ -235,7 +235,7 @@ pub struct FormatChangeEvent {
 }
 
 pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
-.hi-editor {
+.hk-editor {
   width: 100%;
   border: 1px solid var(--hi-border);
   border-radius: 8px;
@@ -243,17 +243,17 @@ pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
   background: var(--hi-surface);
 }
 
-[data-theme="dark"] .hi-editor {
+[data-theme="dark"] .hk-editor {
   background: var(--hi-background);
   border-color: var(--hi-border);
 }
 
-.hi-editor:focus-within {
+.hk-editor:focus-within {
   border-color: var(--hi-color-primary);
   box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
 
-.hi-editor-toolbar {
+.hk-editor-toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -262,23 +262,23 @@ pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
   background: var(--hi-surface);
 }
 
-[data-theme="dark"] .hi-editor-toolbar {
+[data-theme="dark"] .hk-editor-toolbar {
   background: var(--hi-background);
   border-bottom-color: var(--hi-border);
 }
 
-.hi-editor-divider {
+.hk-editor-divider {
   width: 1px;
   height: 20px;
   background: var(--hi-border);
   margin: 0 4px;
 }
 
-[data-theme="dark"] .hi-editor-divider {
+[data-theme="dark"] .hk-editor-divider {
   background: var(--hi-border);
 }
 
-.hi-editor-content {
+.hk-editor-content {
   padding: 16px;
   min-height: 200px;
   outline: none;
@@ -286,24 +286,24 @@ pub const RICH_TEXT_EDITOR_STYLES: &str = r#"
   color: var(--hi-text-primary);
 }
 
-[data-theme="dark"] .hi-editor-content {
+[data-theme="dark"] .hk-editor-content {
   color: var(--hi-text-primary);
 }
 
-.hi-editor-content:empty:before {
+.hk-editor-content:empty:before {
   content: attr(data-placeholder);
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-editor-content:empty:before {
+[data-theme="dark"] .hk-editor-content:empty:before {
   color: var(--hi-text-secondary);
 }
 
-.hi-editor-content:focus {
+.hk-editor-content:focus {
   outline: none;
 }
 
-.hi-editor-readonly {
+.hk-editor-readonly {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -314,27 +314,27 @@ pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
     let mut container_children: Vec<VNode> = Vec::new();
 
     if state.show_toolbar {
-        let mut toolbar = VElement::new("div").class("hi-editor-toolbar");
+        let mut toolbar = VElement::new("div").class("hk-editor-toolbar");
 
         let bold_active = if state.is_bold() {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
         let italic_active = if state.is_italic() {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
         let underline_active = if state.is_underline() {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
         let strike_active = if state.active_formats.contains(&TextFormat::Strikethrough) {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
 
         toolbar = toolbar.child(VNode::Element(
@@ -375,23 +375,23 @@ pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
         ));
 
         toolbar = toolbar.child(VNode::Element(
-            VElement::new("div").class("hi-editor-divider"),
+            VElement::new("div").class("hk-editor-divider"),
         ));
 
         let align_left = if state.alignment == TextAlignment::Left {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
         let align_center = if state.alignment == TextAlignment::Center {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
         let align_right = if state.alignment == TextAlignment::Right {
-            "hi-editor-tool-btn hi-editor-tool-btn--active"
+            "hk-editor-tool-btn hi-editor-tool-btn--active"
         } else {
-            "hi-editor-tool-btn"
+            "hk-editor-tool-btn"
         };
 
         toolbar = toolbar.child(VNode::Element(
@@ -423,12 +423,12 @@ pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
         ));
 
         toolbar = toolbar.child(VNode::Element(
-            VElement::new("div").class("hi-editor-divider"),
+            VElement::new("div").class("hk-editor-divider"),
         ));
 
         toolbar = toolbar.child(VNode::Element(
             VElement::new("span")
-                .class("hi-editor-tool-btn")
+                .class("hk-editor-tool-btn")
                 .attr(
                     "data-command",
                     RichTextEditorState::list_command(ListType::Ordered),
@@ -437,7 +437,7 @@ pub fn render_rich_text_editor(state: &RichTextEditorState) -> VNode {
         ));
         toolbar = toolbar.child(VNode::Element(
             VElement::new("span")
-                .class("hi-editor-tool-btn")
+                .class("hk-editor-tool-btn")
                 .attr(
                     "data-command",
                     RichTextEditorState::list_command(ListType::Unordered),
@@ -600,12 +600,12 @@ mod tests {
     #[test]
     fn test_class_strings() {
         let state = RichTextEditorState::new("");
-        assert_eq!(state.class_string(), "hi-editor");
+        assert_eq!(state.class_string(), "hk-editor");
 
         let state = RichTextEditorState::new("").with_class("my-class");
-        assert_eq!(state.class_string(), "hi-editor my-class");
+        assert_eq!(state.class_string(), "hk-editor my-class");
 
-        assert!(state.editor_class_string().contains("hi-editor-content"));
+        assert!(state.editor_class_string().contains("hk-editor-content"));
     }
 
     #[test]

@@ -9,20 +9,20 @@ export default defineComponent({
     size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
   },
   setup(props) {
-    const cls = computed(() => ["hi-breadcrumb", `hi-breadcrumb-${props.size}`]);
+    const cls = computed(() => ["hk-breadcrumb", `hk-breadcrumb-${props.size}`]);
 
     return () => (
       <nav aria-label="Breadcrumb">
         <ol class={cls.value}>
           {props.items.map((item, index) => (
-            <li key={index} class="hi-breadcrumb-item">
+            <li key={index} class="hk-breadcrumb-item">
               {item.to ? (
-                <a href={item.to} class="hi-breadcrumb-link">{item.label}</a>
+                <a href={item.to} class="hk-breadcrumb-link">{item.label}</a>
               ) : (
-                <span class="hi-breadcrumb-link">{item.label}</span>
+                <span class="hk-breadcrumb-link">{item.label}</span>
               )}
               {index < props.items.length - 1 && (
-                <span class="hi-breadcrumb-separator">
+                <span class="hk-breadcrumb-separator">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>

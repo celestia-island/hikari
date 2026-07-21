@@ -16,10 +16,10 @@
 // Icon color inheritance for theme support
 // ============================================
 
-.hi-card,
-.hi-card-header,
-.hi-card-body,
-.hi-card-footer {
+.hk-card,
+.hk-card-header,
+.hk-card-body,
+.hk-card-footer {
   svg {
     color: inherit;
   }
@@ -29,7 +29,7 @@
 // Base Card Styles
 // ============================================
 
-.hi-card {
+.hk-card {
   // Layer2 variables are defined in card-vars.scss
 
   // Layout
@@ -63,7 +63,7 @@
 // Card Header
 // ============================================
 
-.hi-card-header {
+.hk-card-header {
   position: relative;
   z-index: 1;
   display: flex;
@@ -75,7 +75,7 @@
 }
 
 // Left section (avatar + title/subtitle)
-.hi-card-header-left {
+.hk-card-header-left {
   display: flex;
   align-items: center;
   gap: var(--hi-card-gap);
@@ -83,23 +83,23 @@
 }
 
 // Avatar container
-.hi-card-header-avatar {
+.hk-card-header-avatar {
   flex-shrink: 0;
 }
 
 // Right section (action buttons)
-.hi-card-header-action {
+.hk-card-header-action {
   display: flex;
   align-items: center;
   margin-left: auto;
   flex-shrink: 0;
 
   button,
-  .hi-icon-button {
+  .hk-icon-button {
     background: transparent;
   }
 
-  .hi-card-extra {
+  .hk-card-extra {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -107,7 +107,7 @@
 }
 
 // Title - use CSS variables
-.hi-card-title {
+.hk-card-title {
   margin: 0;
   font-family: vars.$hikari-font-family-sans;
   font-size: var(--hi-card-title-font-size);
@@ -117,7 +117,7 @@
 }
 
 // Subtitle - use CSS variables
-.hi-card-subtitle {
+.hk-card-subtitle {
   margin: 0.25rem 0 0 0;
   font-family: vars.$hikari-font-family-sans;
   font-size: var(--hi-card-subtitle-font-size);
@@ -129,7 +129,7 @@
 // Card Body
 // ============================================
 
-.hi-card-body {
+.hk-card-body {
   position: relative;
   z-index: 1;
   flex: 1;
@@ -143,7 +143,7 @@
 // Card Footer
 // ============================================
 
-.hi-card-footer {
+.hk-card-footer {
   position: relative;
   z-index: 1;
   display: flex;
@@ -153,7 +153,7 @@
   border-top: 1px solid var(--hi-card-divider-color);
   background: var(--hi-card-bg-footer);
 
-  .hi-card-actions {
+  .hk-card-actions {
     display: flex;
     gap: 0.5rem;
   }
@@ -163,7 +163,7 @@
 // Card Media (images/videos)
 // ============================================
 
-.hi-card-media {
+.hk-card-media {
   width: 100%;
   object-fit: cover;
   border-bottom: 1px solid var(--hi-card-divider-color);
@@ -174,14 +174,14 @@
 // Card Actions (MUI-style footer)
 // ============================================
 
-.hi-card-actions {
+.hk-card-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   padding: 0.5rem 1rem;
   gap: 0.5rem;
 
-  &.hi-card-actions-no-spacing {
+  &.hk-card-actions-no-spacing {
     gap: 0;
   }
 }
@@ -190,7 +190,7 @@
 // Cover Image
 // ============================================
 
-.hi-card-cover {
+.hk-card-cover {
   width: 100%;
   height: 200px;
   object-fit: cover;
@@ -201,7 +201,7 @@
 // Hoverable Card
 // ============================================
 
-.hi-card-hoverable {
+.hk-card-hoverable {
   cursor: pointer;
 
   &:hover {
@@ -214,7 +214,7 @@
 // Loading State
 // ============================================
 
-.hi-card-loading {
+.hk-card-loading {
   position: relative;
   overflow: hidden;
   pointer-events: none;
@@ -239,11 +239,11 @@
 // Card Variants - Variables defined in card-vars.scss
 // ============================================
 
-.hi-card-bordered {
+.hk-card-bordered {
   // Variables defined in card-vars.scss
 }
 
-.hi-card-flat {
+.hk-card-flat {
   // Variables defined in card-vars.scss
   box-shadow: none;
 
@@ -257,21 +257,21 @@
 // Size Variants - Variables defined in card-vars.scss
 // ============================================
 
-.hi-card-sm,
-.hi-card-md,
-.hi-card-lg {
+.hk-card-sm,
+.hk-card-md,
+.hk-card-lg {
   // Size variables are already set by the classes in card-vars.scss
 
-  .hi-card-cover {
+  .hk-card-cover {
     height: 150px;
   }
 }
 
-.hi-card-md .hi-card-cover {
+.hk-card-md .hk-card-cover {
   height: 200px;
 }
 
-.hi-card-lg .hi-card-cover {
+.hk-card-lg .hk-card-cover {
   height: 280px;
 }
 
@@ -279,26 +279,26 @@
 // Grid Layout for Multiple Cards
 // ============================================
 
-.hi-card-grid {
+.hk-card-grid {
   display: grid;
   gap: 1rem;
 
-  &.hi-card-grid-2 {
+  &.hk-card-grid-2 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  &.hi-card-grid-3 {
+  &.hk-card-grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  &.hi-card-grid-4 {
+  &.hk-card-grid-4 {
     grid-template-columns: repeat(4, 1fr);
   }
 
   @media (max-width: 768px) {
-    &.hi-card-grid-2,
-    &.hi-card-grid-3,
-    &.hi-card-grid-4 {
+    &.hk-card-grid-2,
+    &.hk-card-grid-3,
+    &.hk-card-grid-4 {
       grid-template-columns: 1fr;
     }
   }
@@ -308,13 +308,13 @@
 // Animations
 // ============================================
 
-.hi-card-animate-in {
+.hk-card-animate-in {
   // Animation handled by JS
 }
 
 // Staggered animation for card grids
-.hi-card-stagger {
-  .hi-card {
+.hk-card-stagger {
+  .hk-card {
     opacity: 0;
   }
 }
@@ -323,7 +323,7 @@
 // Glow Effect (Mouse-following spotlight)
 // ============================================
 
-.hi-card-glow {
+.hk-card-glow {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -339,6 +339,6 @@
   );
 }
 
-.hi-card:hover .hi-card-glow {
+.hk-card:hover .hk-card-glow {
   opacity: var(--glow-opacity, 0.15);
 }

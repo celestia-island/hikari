@@ -11,7 +11,7 @@
 // Base IconButton Variables
 // ============================================
 
-.hi-icon-button {
+.hk-icon-button {
   // ============================================
   // 1. Color System
   // ============================================
@@ -74,27 +74,27 @@
 // Size Variants
 // ============================================
 
-.hi-icon-button-16 {
+.hk-icon-button-16 {
   --hi-icon-button-size: 16px;
   --hi-icon-button-icon-size: var(--hi-icon-size-xs);
 }
 
-.hi-icon-button-24 {
+.hk-icon-button-24 {
   --hi-icon-button-size: 24px;
   --hi-icon-button-icon-size: var(--hi-icon-size-xs);
 }
 
-.hi-icon-button-32 {
+.hk-icon-button-32 {
   --hi-icon-button-size: 32px;
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }
 
-.hi-icon-button-36 {
+.hk-icon-button-36 {
   --hi-icon-button-size: 36px;
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }
 
-.hi-icon-button-40 {
+.hk-icon-button-40 {
   --hi-icon-button-size: 40px;
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }
@@ -103,8 +103,8 @@
 // Ghost Variant Variables
 // ============================================
 
-.hi-icon-button-ghost,
-.hi-icon-button-borderless {
+.hk-icon-button-ghost,
+.hk-icon-button-borderless {
   --hi-icon-button-icon-color: var(--hi-color-text-secondary);
   --hi-icon-button-icon-color-active: var(--hi-color-text-secondary);
 
@@ -119,7 +119,7 @@
 // Primary Variant Variables
 // ============================================
 
-.hi-icon-button-primary {
+.hk-icon-button-primary {
   --hi-icon-button-icon-color: var(--hi-color-text-on-primary);
   --hi-icon-button-icon-color-active: var(--hi-color-text-on-primary);
 
@@ -134,7 +134,7 @@
 // Secondary Variant Variables
 // ============================================
 
-.hi-icon-button-secondary {
+.hk-icon-button-secondary {
   --hi-icon-button-icon-color: var(--hi-color-text-on-secondary);
   --hi-icon-button-icon-color-active: var(--hi-color-text-on-secondary);
 
@@ -149,7 +149,7 @@
 // Danger Variant Variables
 // ============================================
 
-.hi-icon-button-danger {
+.hk-icon-button-danger {
   --hi-icon-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
   --hi-icon-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
 
@@ -164,7 +164,7 @@
 // Success Variant Variables
 // ============================================
 
-.hi-icon-button-success {
+.hk-icon-button-success {
   --hi-icon-button-icon-color: var(--hi-color-text-on-success, #ffffff);
   --hi-icon-button-icon-color-active: var(--hi-color-text-on-success, #ffffff);
 

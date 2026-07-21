@@ -5,7 +5,7 @@
   flex-direction: column;
 }
 
-.hk-scroll-container__viewport {
+.hk-scroll-container-viewport {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -16,17 +16,17 @@
   }
 }
 
-.hk-scroll-container[data-axis="horizontal"] > .hk-scroll-container__viewport {
+.hk-scroll-container[data-axis="horizontal"] > .hk-scroll-container-viewport {
   overflow-x: auto;
   overflow-y: hidden;
 }
 
-.hk-scroll-container__autofollow-content {
+.hk-scroll-container-autofollow-content {
   display: block;
   flex-shrink: 0;
 }
 
-.hk-scroll-container__autotag {
+.hk-scroll-container-autotag {
   position: absolute;
   right: 0.625rem;
   bottom: 0.625rem;

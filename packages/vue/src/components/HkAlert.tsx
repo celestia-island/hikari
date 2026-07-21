@@ -49,7 +49,7 @@ export default defineComponent({
 
       return (
         <div class={rootCls.value}>
-          <span class="hk-alert__icon">
+          <span class="hk-alert-icon">
             {slots.icon ? (
               slots.icon()
             ) : (
@@ -57,18 +57,18 @@ export default defineComponent({
             )}
           </span>
 
-          <div class="hk-alert__body">
+          <div class="hk-alert-body">
             {props.title && (
-              <p class="hk-alert__title">{props.title}</p>
+              <p class="hk-alert-title">{props.title}</p>
             )}
-            <p class="hk-alert__text">
+            <p class="hk-alert-text">
               {slots.default ? slots.default() : props.message}
             </p>
           </div>
 
           {props.closable && (
             <button
-              class="hk-alert__close"
+              class="hk-alert-close"
               type="button"
               aria-label="Close"
               onClick={onClose}

@@ -102,9 +102,9 @@ impl Connection {
     /// Get the CSS class string
     pub fn class_string(&self) -> String {
         if self.selected {
-            "hi-connection hi-connection-selected".to_string()
+            "hk-connection hi-connection-selected".to_string()
         } else {
-            "hi-connection".to_string()
+            "hk-connection".to_string()
         }
     }
 }

@@ -101,7 +101,7 @@ pub struct TextareaComponent;
 impl StyledComponent for TextareaComponent {
     fn styles() -> &'static str {
         r#"
-.hi-input {
+.hk-input {
   width: 100%;
   padding: 10px 16px;
   font-size: 14px;
@@ -115,54 +115,54 @@ impl StyledComponent for TextareaComponent {
   resize: vertical;
 }
 
-.hi-input:focus {
+.hk-input:focus {
   outline: none;
   border-color: var(--hi-color-primary);
   box-shadow: 0 0 0 3px rgba(0, 160, 233, 0.1);
 }
 
-.hi-input::placeholder {
+.hk-input::placeholder {
   color: var(--hi-text-secondary);
 }
 
-.hi-input-sm {
+.hk-input-sm {
   padding: 8px 12px;
   font-size: 13px;
 }
 
-.hi-input-md {
+.hk-input-md {
   padding: 10px 16px;
   font-size: 14px;
 }
 
-.hi-input-lg {
+.hk-input-lg {
   padding: 12px 20px;
   font-size: 15px;
 }
 
-.hi-input-disabled {
+.hk-input-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: var(--hi-surface-light);
 }
 
-[data-theme="dark"] .hi-input {
+[data-theme="dark"] .hk-input {
   background: var(--hi-background);
   border-color: var(--hi-border);
   color: var(--hi-text-primary);
 }
 
-[data-theme="dark"] .hi-input:focus {
+[data-theme="dark"] .hk-input:focus {
   background: var(--hi-background);
   border-color: var(--hi-color-primary);
   box-shadow: 0 0 0 3px rgba(0, 160, 233, 0.1);
 }
 
-[data-theme="dark"] .hi-input::placeholder {
+[data-theme="dark"] .hk-input::placeholder {
   color: var(--hi-text-secondary);
 }
 
-[data-theme="dark"] .hi-input-disabled {
+[data-theme="dark"] .hk-input-disabled {
   background: var(--hi-surface);
 }
 "#

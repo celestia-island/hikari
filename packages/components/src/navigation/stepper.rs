@@ -111,29 +111,29 @@ pub fn Stepper(props: StepperProps) -> Element {
 impl StyledComponent for StepperComponent {
     fn styles() -> &'static str {
         r#"
-.hi-stepper {
+.hk-stepper {
     display: flex;
     align-items: center;
     padding: 16px 0;
 }
 
-.hi-stepper-vertical {
+.hk-stepper-vertical {
     flex-direction: column;
     align-items: flex-start;
 }
 
-.hi-step {
+.hk-step {
     display: flex;
     align-items: center;
     position: relative;
 }
 
-.hi-stepper-vertical .hi-step {
+.hk-stepper-vertical .hk-step {
     width: 100%;
     padding-bottom: 24px;
 }
 
-.hi-step-number {
+.hk-step-number {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -145,25 +145,25 @@ impl StyledComponent for StepperComponent {
     transition: all 0.3s ease;
 }
 
-.hi-step-pending .hi-step-number {
+.hk-step-pending .hk-step-number {
     background-color: var(--hi-color-primary);
     color: white;
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 
-.hi-step-active .hi-step-number {
+.hk-step-active .hk-step-number {
     background-color: var(--hi-color-bg-elevated);
     border: 2px solid var(--hi-color-primary);
     color: var(--hi-color-primary);
 }
 
-.hi-step-finished .hi-step-number {
+.hk-step-finished .hk-step-number {
     background-color: var(--hi-color-bg-elevated);
     border: 1px solid var(--hi-color-border);
     color: var(--hi-text-secondary);
 }
 
-.hi-step-connector {
+.hk-step-connector {
     height: 2px;
     min-width: 32px;
     flex: 1;
@@ -171,7 +171,7 @@ impl StyledComponent for StepperComponent {
     margin: 0 8px;
 }
 
-.hi-step-connector-vertical {
+.hk-step-connector-vertical {
     width: 2px;
     height: 24px;
     background-color: var(--hi-color-border);
@@ -180,11 +180,11 @@ impl StyledComponent for StepperComponent {
     top: 32px;
 }
 
-[data-theme="dark"] .hi-step-active .hi-step-number {
+[data-theme="dark"] .hk-step-active .hk-step-number {
     background-color: var(--hi-surface);
 }
 
-[data-theme="dark"] .hi-step-finished .hi-step-number {
+[data-theme="dark"] .hk-step-finished .hk-step-number {
     background-color: var(--hi-surface);
 }
 "#

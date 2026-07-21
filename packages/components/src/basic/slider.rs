@@ -56,18 +56,18 @@ pub fn Slider(props: SliderProps) -> Element {
 
     rsx! {
         div { class: slider_classes,
-            div { class: "hi-slider-rail" }
+            div { class: "hk-slider-rail" }
             div {
-                class: "hi-slider-track",
+                class: "hk-slider-track",
                 style: "width: {percent}%;",
             }
             div {
-                class: "hi-slider-handle",
+                class: "hk-slider-handle",
                 style: "left: {percent}%;",
             }
             input {
                 r#type: "range",
-                class: "hi-slider-input",
+                class: "hk-slider-input",
                 value: "{props.value}",
                 min: "{props.min}",
                 max: "{props.max}",
@@ -91,7 +91,7 @@ pub struct SliderComponent;
 impl StyledComponent for SliderComponent {
     fn styles() -> &'static str {
         r#"
-.hi-slider {
+.hk-slider {
     position: relative;
     width: 100%;
     height: 12px;
@@ -99,15 +99,15 @@ impl StyledComponent for SliderComponent {
     padding: 4px 0;
 }
 
-.hi-slider-sm {
+.hk-slider-sm {
     height: 10px;
 }
 
-.hi-slider-lg {
+.hk-slider-lg {
     height: 16px;
 }
 
-.hi-slider-rail {
+.hk-slider-rail {
     position: absolute;
     width: 100%;
     height: 4px;
@@ -117,7 +117,7 @@ impl StyledComponent for SliderComponent {
     border-radius: 2px;
 }
 
-.hi-slider-track {
+.hk-slider-track {
     position: absolute;
     height: 4px;
     top: 50%;
@@ -127,7 +127,7 @@ impl StyledComponent for SliderComponent {
     transition: width 0.1s ease;
 }
 
-.hi-slider-handle {
+.hk-slider-handle {
     position: absolute;
     width: 14px;
     height: 14px;
@@ -141,12 +141,12 @@ impl StyledComponent for SliderComponent {
     z-index: 1;
 }
 
-.hi-slider-handle:hover {
+.hk-slider-handle:hover {
     transform: translate(-50%, -50%) scale(1.2);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.hi-slider-input {
+.hk-slider-input {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -156,43 +156,43 @@ impl StyledComponent for SliderComponent {
     z-index: 2;
 }
 
-.hi-slider-disabled {
+.hk-slider-disabled {
     cursor: not-allowed;
     opacity: 0.5;
 }
 
-.hi-slider-disabled .hi-slider-track {
+.hk-slider-disabled .hk-slider-track {
     background-color: var(--hi-color-text-disabled, #bfbfbf);
 }
 
-.hi-slider-disabled .hi-slider-handle {
+.hk-slider-disabled .hk-slider-handle {
     background-color: var(--hi-color-text-disabled, #bfbfbf);
     cursor: not-allowed;
 }
 
-.hi-slider-disabled .hi-slider-handle:hover {
+.hk-slider-disabled .hk-slider-handle:hover {
     transform: translate(-50%, -50%) scale(1);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-[data-theme="dark"] .hi-slider-rail {
+[data-theme="dark"] .hk-slider-rail {
     background-color: var(--hi-border, #333);
 }
 
-[data-theme="dark"] .hi-slider-track {
+[data-theme="dark"] .hk-slider-track {
     background-color: var(--hi-color-primary, #1890ff);
 }
 
-[data-theme="dark"] .hi-slider-handle {
+[data-theme="dark"] .hk-slider-handle {
     background-color: var(--hi-color-primary, #1890ff);
     border-color: var(--hi-surface, #1a1a1a);
 }
 
-[data-theme="dark"] .hi-slider-disabled .hi-slider-track {
+[data-theme="dark"] .hk-slider-disabled .hk-slider-track {
     background-color: var(--hi-text-disabled, #555);
 }
 
-[data-theme="dark"] .hi-slider-disabled .hi-slider-handle {
+[data-theme="dark"] .hk-slider-disabled .hk-slider-handle {
     background-color: var(--hi-text-disabled, #555);
 }
 "#

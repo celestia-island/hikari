@@ -1,10 +1,6 @@
 import { defineComponent, computed } from "vue";
 import "./HkNavItem.scss";
 
-// vue-router is an optional peer dependency.
-// When unavailable, fall back to a plain <a> element.
-let RouterLink: any = "a";
-
 function buildClass(props: { active: boolean; disabled: boolean }, extra: string[] = []) {
   return [
     "hk-nav-item",
@@ -28,8 +24,8 @@ export default defineComponent({
   setup(props, { slots, emit }) {
     const content = () => (
       <>
-        {slots.icon ? <span class="hk-nav-item__icon">{slots.icon()}</span> : null}
-        {slots.default ? <span class="hk-nav-item__label">{slots.default()}</span> : null}
+        {slots.icon ? <span class="hk-nav-item-icon">{slots.icon()}</span> : null}
+        {slots.default ? <span class="hk-nav-item-label">{slots.default()}</span> : null}
       </>
     );
 
@@ -47,15 +43,25 @@ export default defineComponent({
     }
 
     return () => {
+      const cls = buildClass(props, ["hk-nav-item--link"]);
+
       if (props.to) {
         return (
+<<<<<<< HEAD
           <RouterLink
             to={props.to}
             class={buildClass(props, ["hk-nav-item-link"])}
+=======
+          <a
+            href={props.to}
+            class={cls}
+>>>>>>> origin/master
             {...dataAttrs.value}
             aria-disabled={props.disabled}
-            custom
+            aria-current={props.active ? "page" : undefined}
+            onClick={onClick}
           >
+<<<<<<< HEAD
             {({ navigate, isActive, isExactActive }: any) => {
               const active = isActive || isExactActive || props.active;
               const cls = buildClass({ active, disabled: props.disabled }, ["hk-nav-item-link"]);
@@ -81,6 +87,10 @@ export default defineComponent({
               );
             }}
           </RouterLink>
+=======
+            {content()}
+          </a>
+>>>>>>> origin/master
         );
       }
 
@@ -88,7 +98,11 @@ export default defineComponent({
         return (
           <a
             href={props.href}
+<<<<<<< HEAD
             class={buildClass(props, ["hk-nav-item-link"])}
+=======
+            class={cls}
+>>>>>>> origin/master
             {...dataAttrs.value}
             aria-disabled={props.disabled}
             onClick={onClick}

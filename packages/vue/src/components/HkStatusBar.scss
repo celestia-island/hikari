@@ -63,11 +63,19 @@
   background: var(--dot-color, var(--hi-color-muted));
   flex-shrink: 0;
 
+<<<<<<< HEAD
   .hk-status-bar-connection-reconnecting & {
     animation: hk-status-pulse 1.5s ease-in-out infinite;
   }
 
   .hk-status-bar-connection-disconnected & {
+=======
+  .hk-status-bar-connection--reconnecting & {
+    animation: hk-status-pulse 1.5s ease-in-out infinite;
+  }
+
+  .hk-status-bar-connection--disconnected & {
+>>>>>>> origin/master
     opacity: 0.5;
   }
 }

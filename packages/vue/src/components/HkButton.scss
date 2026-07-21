@@ -30,96 +30,160 @@
 
 /* ---- Size variants ---- */
 
+<<<<<<< HEAD
 .hk-btn-sm {
+=======
+.hk-btn--sm {
+>>>>>>> origin/master
   padding: var(--space-6) var(--space-12);
   font-size: var(--text-xs);
 }
 
+<<<<<<< HEAD
 .hk-btn-md {
+=======
+.hk-btn--md {
+>>>>>>> origin/master
   padding: var(--space-8) var(--space-16);
   font-size: var(--text-base);
 }
 
+<<<<<<< HEAD
 .hk-btn-lg {
+=======
+.hk-btn--lg {
+>>>>>>> origin/master
   padding: var(--space-10) var(--space-24);
   font-size: var(--text-md);
 }
 
 /* ---- Primary ---- */
 
+<<<<<<< HEAD
 .hk-btn-primary {
+=======
+.hk-btn--primary {
+>>>>>>> origin/master
   background: rgb(var(--color-primary));
   color: rgb(var(--color-on-solid));
 }
 
+<<<<<<< HEAD
 .hk-btn-primary:hover:not(:disabled) {
+=======
+.hk-btn--primary:hover:not(:disabled) {
+>>>>>>> origin/master
   filter: brightness(1.1);
   box-shadow: var(--shadow-button);
 }
 
+<<<<<<< HEAD
 .hk-btn-primary:active:not(:disabled) {
+=======
+.hk-btn--primary:active:not(:disabled) {
+>>>>>>> origin/master
   filter: brightness(0.95);
 }
 
 /* ---- Secondary ---- */
 
+<<<<<<< HEAD
 .hk-btn-secondary {
+=======
+.hk-btn--secondary {
+>>>>>>> origin/master
   background: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-border) / 20%);
   backdrop-filter: blur(var(--blur-sm));
 }
 
+<<<<<<< HEAD
 .hk-btn-secondary:hover:not(:disabled) {
+=======
+.hk-btn--secondary:hover:not(:disabled) {
+>>>>>>> origin/master
   background: rgb(var(--color-surface));
   border-color: var(--c-primary-strong);
 }
 
 /* ---- Outline ---- */
 
+<<<<<<< HEAD
 .hk-btn-outline {
+=======
+.hk-btn--outline {
+>>>>>>> origin/master
   background: transparent;
   color: rgb(var(--color-primary));
   border-color: var(--c-primary-intense);
 }
 
+<<<<<<< HEAD
 .hk-btn-outline:hover:not(:disabled) {
+=======
+.hk-btn--outline:hover:not(:disabled) {
+>>>>>>> origin/master
   background: var(--c-primary-light);
   border-color: rgb(var(--color-primary));
 }
 
 /* ---- Ghost ---- */
 
+<<<<<<< HEAD
 .hk-btn-ghost {
+=======
+.hk-btn--ghost {
+>>>>>>> origin/master
   background: transparent;
   color: rgb(var(--color-text));
   border-color: transparent;
 }
 
+<<<<<<< HEAD
 .hk-btn-ghost:hover:not(:disabled) {
+=======
+.hk-btn--ghost:hover:not(:disabled) {
+>>>>>>> origin/master
   background: var(--c-primary-light);
 }
 
 /* ---- Danger ---- */
 
+<<<<<<< HEAD
 .hk-btn-danger {
+=======
+.hk-btn--danger {
+>>>>>>> origin/master
   background: rgb(var(--color-error));
   color: rgb(var(--color-on-solid));
 }
 
+<<<<<<< HEAD
 .hk-btn-danger:hover:not(:disabled) {
+=======
+.hk-btn--danger:hover:not(:disabled) {
+>>>>>>> origin/master
   filter: brightness(1.1);
   box-shadow: var(--shadow-button-danger);
 }
 
 /* ---- Block ---- */
 
+<<<<<<< HEAD
 .hk-btn-block {
+=======
+.hk-btn--block {
+>>>>>>> origin/master
   width: 100%;
 }
 
 /* ---- Loading ---- */
 
+<<<<<<< HEAD
 .hk-btn-loading {
+=======
+.hk-btn--loading {
+>>>>>>> origin/master
   pointer-events: none;
 }

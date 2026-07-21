@@ -1,19 +1,11 @@
 /*
  * HkCheckbox / HkRadio — unified selection control.
- *
- * Both variants share the same `.hk-checkbox-box` outer frame. The radio
- * variant differs only in shape (circle) and checked marker (CSS dot).
- *
- * `data-animating` is added for one rAF tick on every toggle so the
- * unified animation bus keeps the rAF loop alive for the full
- * `var(--duration-normal)` (~0.3 s) transition window. The actual visual
- * work is driven by CSS `transition` — no per-frame JS involved.
  */
 
 .hk-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--hi-space-8, 0.5rem);
   cursor: pointer;
   user-select: none;
 }
@@ -31,38 +23,35 @@
   justify-content: center;
   width: 1.125rem;
   height: 1.125rem;
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--border-input);
-  background: rgb(var(--color-surface) / var(--opacity-half));
+  border-radius: var(--hi-radius-xs, 4px);
+  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
   transition:
-    border-color var(--duration-normal) ease,
-    background var(--duration-normal) ease;
+    border-color var(--hi-duration-normal, 0.3s) ease,
+    background var(--hi-duration-normal, 0.3s) ease;
   flex-shrink: 0;
   position: relative;
 }
 
-/* radio — circle */
 .hk-checkbox[data-type="radio"] .hk-checkbox-box {
   border-radius: 50%;
 }
 
 .hk-checkbox-box[data-checked] {
-  background: rgb(var(--color-primary));
-  border-color: rgb(var(--color-primary));
-  color: rgb(var(--color-on-solid));
+  background: var(--hi-color-primary, #ff6b9d);
+  border-color: var(--hi-color-primary, #ff6b9d);
+  color: var(--hi-color-text-on-primary, #fff);
 }
 
 .hk-checkbox-box[data-indeterminate] {
-  background: rgb(var(--color-primary));
-  border-color: rgb(var(--color-primary));
+  background: var(--hi-color-primary, #ff6b9d);
+  border-color: var(--hi-color-primary, #ff6b9d);
 }
 
-/* Increase specificity to override un-checked state — checked takes
-   priority without resorting to !important. */
 .hk-checkbox:hover .hk-checkbox-box[data-checked],
 .hk-checkbox[data-animating] .hk-checkbox-box[data-checked] {
-  background: rgb(var(--color-primary));
-  border-color: rgb(var(--color-primary));
+  background: var(--hi-color-primary, #ff6b9d);
+  border-color: var(--hi-color-primary, #ff6b9d);
 }
 
 /* ---------- input ---------- */
@@ -77,27 +66,28 @@
 
 /* ---------- markers ---------- */
 
-.hk-checkbox [data-el="icon"] {
+.hk-checkbox-icon {
   position: relative;
-  z-index: var(--z-above);
+  z-index: var(--hi-z-above, 1);
+  color: var(--hi-color-text-on-primary, #fff);
+  width: 14px;
+  height: 14px;
 }
 
-.hk-checkbox [data-el="dot"] {
+.hk-checkbox-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgb(var(--color-on-solid));
-  z-index: var(--z-above);
+  background: var(--hi-color-text-on-primary, #fff);
+  z-index: var(--hi-z-above, 1);
 }
 
-/* ---------- indeterminate line ---------- */
-
-.hk-checkbox [data-el="indeterminate"] {
+.hk-checkbox-indeterminate {
   width: 8px;
   height: 2px;
   border-radius: 1px;
-  background: rgb(var(--color-on-solid));
-  z-index: var(--z-above);
+  background: var(--hi-color-text-on-primary, #fff);
+  z-index: var(--hi-z-above, 1);
 }
 
 /* ---------- label ---------- */
@@ -106,7 +96,7 @@
   will-change: border-color, background;
 }
 
-.hk-checkbox [data-el="label"] {
-  font-size: var(--text-base);
-  color: rgb(var(--color-text));
+.hk-checkbox-label-text {
+  font-size: var(--hi-text-sm, 0.8125rem);
+  color: var(--hi-color-text-primary, #333);
 }

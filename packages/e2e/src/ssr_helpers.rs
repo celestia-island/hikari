@@ -197,8 +197,8 @@ mod tests {
 <html>
 <head><title>Test</title></head>
 <body>
-    <div id="hikari-app" class="hk-layout">
-        <div class="hikari-page">Content</div>
+    <div id="hk-app" class="hk-layout">
+        <div class="hk-page">Content</div>
     </div>
 </body>
 </html>"#;

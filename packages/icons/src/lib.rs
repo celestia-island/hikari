@@ -147,7 +147,7 @@ pub fn Icon(props: IconProps) -> Element {
         )
     };
 
-    let full_class = format!("hikari-icon {}", props.class);
+    let full_class = format!("hk-icon {}", props.class);
 
     rsx! {
         div {

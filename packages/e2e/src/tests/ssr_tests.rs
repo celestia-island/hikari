@@ -140,7 +140,7 @@ impl SsrTests {
     <link rel="stylesheet" href="/assets/hikari.css">
 </head>
 <body data-theme="light">
-    <div id="hikari-app" class="hk-layout hi-layout-light hi-layout-has-sidebar">
+    <div id="hk-app" class="hk-layout hi-layout-light hi-layout-has-sidebar">
         <header class="hk-layout-header">
             <div class="hk-layout-brand">
                 <span class="hk-brand-logo">Hikari</span>
@@ -171,7 +171,7 @@ impl SsrTests {
             <main class="hk-layout-main">
                 <div class="hk-layout-content">
                     <!-- Home Page -->
-                    <div id="page-home" class="hikari-page is-active">
+                    <div id="page-home" class="hk-page is-active">
                         <section class="page-hero">
                             <div class="page-hero-inner">
                                 <h1 class="page-hero-title">Hikari</h1>
@@ -204,7 +204,7 @@ impl SsrTests {
                         </section>
                     </div>
                     <!-- Components Page -->
-                    <div id="page-components" class="hikari-page">
+                    <div id="page-components" class="hk-page">
                         <section class="page-section">
                             <h1 class="page-title">Components</h1>
                             <div class="component-list">
@@ -217,7 +217,7 @@ impl SsrTests {
                         </section>
                     </div>
                     <!-- System Page -->
-                    <div id="page-system" class="hikari-page">
+                    <div id="page-system" class="hk-page">
                         <section class="page-section">
                             <h1 class="page-title">Design System</h1>
                             <div class="color-palette">
@@ -227,13 +227,13 @@ impl SsrTests {
                         </section>
                     </div>
                     <!-- Demos Page -->
-                    <div id="page-demos" class="hikari-page">
+                    <div id="page-demos" class="hk-page">
                         <section class="page-section">
                             <h1 class="page-title">Demos</h1>
                         </section>
                     </div>
                     <!-- 404 Page -->
-                    <div id="page-404" class="hikari-page">
+                    <div id="page-404" class="hk-page">
                         <section class="page-hero">
                             <h1 class="page-hero-title">404</h1>
                             <p class="page-hero-subtitle">Page not found</p>

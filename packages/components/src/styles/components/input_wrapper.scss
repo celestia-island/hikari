@@ -46,10 +46,10 @@
     }
 
     .hk-input-wrapper-item .hk-icon-button-icon,
-    .hk-input-wrapper-item .hk-icon-button .hikari-icon,
-    .hk-input-wrapper-item .hk-glow-wrapper .hikari-icon,
+    .hk-input-wrapper-item .hk-icon-button .hk-icon,
+    .hk-input-wrapper-item .hk-glow-wrapper .hk-icon,
     .hk-input-wrapper-item .hk-glow-wrapper .hk-icon-button-icon,
-    .hk-input-wrapper-item .hikari-icon {
+    .hk-input-wrapper-item .hk-icon {
       color: var(--hi-color-text-secondary) !important;
     }
   }
@@ -229,7 +229,7 @@
     color: var(--hi-color-text-secondary) !important;
 
     .hk-icon-button-icon,
-    .hikari-icon {
+    .hk-icon {
       color: var(--hi-color-text-secondary) !important;
     }
   }
@@ -271,7 +271,7 @@
     color: var(--hi-text-secondary) !important;
 
     .hk-icon-button-icon,
-    .hikari-icon {
+    .hk-icon {
       color: var(--hi-text-secondary) !important;
     }
   }

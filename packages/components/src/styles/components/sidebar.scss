@@ -390,8 +390,8 @@
 // ============================================
 
 // Fix Icon component wrapper alignment in flex containers
-.hk-sidebar-item-content .hikari-icon,
-.hk-sidebar-leaf-content .hikari-icon {
+.hk-sidebar-item-content .hk-icon,
+.hk-sidebar-leaf-content .hk-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -402,14 +402,14 @@
 
 // Icon size variants (used by Icon component)
 // These override default sizes when used in sidebar
-.hk-sidebar-item-content .hikari-icon-16,
-.hk-sidebar-leaf-content .hikari-icon-16 {
+.hk-sidebar-item-content .hk-icon-16,
+.hk-sidebar-leaf-content .hk-icon-16 {
   width: 0.875rem;  // 14px
   height: 0.875rem; // 14px
 }
 
-.hk-sidebar-item-content .hikari-icon-24,
-.hk-sidebar-leaf-content .hikari-icon-24 {
+.hk-sidebar-item-content .hk-icon-24,
+.hk-sidebar-leaf-content .hk-icon-24 {
   width: 1rem;     // 16px
   height: 1rem;    // 16px
 }

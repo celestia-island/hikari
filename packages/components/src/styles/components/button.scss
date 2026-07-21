@@ -64,7 +64,7 @@
     outline: none;
     color: var(--hi-button-text-color);
 
-    .hikari-icon {
+    .hk-icon {
       color: var(--hi-button-icon-color);
     }
   }
@@ -182,29 +182,29 @@
 // Icon styling - Use CSS Variables
 // ============================================
 
-button.hk-button .hikari-icon {
+button.hk-button .hk-icon {
   color: var(--hi-button-icon-color);
   fill: var(--hi-button-icon-fill);
   opacity: var(--hi-button-icon-fill-opacity);
 }
 
-button.hk-button:active .hikari-icon {
+button.hk-button:active .hk-icon {
   color: var(--hi-button-icon-color-active);
 }
 
-button.hk-button:disabled .hikari-icon {
+button.hk-button:disabled .hk-icon {
   color: var(--hi-button-icon-color-disabled);
 }
 
 // SVG elements inherit color from parent
-button .hikari-icon svg,
-button .hikari-icon svg path,
-button .hikari-icon svg circle,
-button .hikari-icon svg rect,
-button .hikari-icon svg ellipse,
-button .hikari-icon svg polygon,
-button .hikari-icon svg polyline,
-button .hikari-icon svg line {
+button .hk-icon svg,
+button .hk-icon svg path,
+button .hk-icon svg circle,
+button .hk-icon svg rect,
+button .hk-icon svg ellipse,
+button .hk-icon svg polygon,
+button .hk-icon svg polyline,
+button .hk-icon svg line {
   color: inherit;
 }
 
@@ -221,12 +221,12 @@ button.hk-button:not(.hk-icon-button) {
     width: var(--hi-button-icon-size);
     height: var(--hi-button-icon-size);
 
-    .hikari-icon {
+    .hk-icon {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }
 
-    .hikari-icon svg {
+    .hk-icon svg {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }
@@ -248,12 +248,12 @@ button.hk-button:not(.hk-icon-button) {
       height: var(--hi-button-icon-size);
     }
 
-    .hikari-icon {
+    .hk-icon {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }
 
-    .hikari-icon svg {
+    .hk-icon svg {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }

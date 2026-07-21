@@ -23,7 +23,7 @@ const DEFAULT_DEBUG_PORT: u16 = 3001;
 const OUTPUT_DIR: &str = "wry_screenshots";
 
 #[derive(Parser)]
-#[command(name = "hikari-visual-debug-wry")]
+#[command(name = "hk-visual-debug-wry")]
 #[command(about = "Hikari visual debugger powered by tairitsu-debug (wry WebView)")]
 struct Cli {
     #[arg(long, default_value_t = DEFAULT_DEBUG_PORT)]

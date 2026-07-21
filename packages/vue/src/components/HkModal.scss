@@ -57,7 +57,7 @@
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
   backdrop-filter: var(--hk-modal-blur, blur(12px));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
-  border-radius: var(--hk-modal-radius, var(--hi-radius-xl, 1rem));
+  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px));
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;

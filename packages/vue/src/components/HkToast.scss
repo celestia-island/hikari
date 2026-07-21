@@ -11,16 +11,16 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--hk-space-12, 12px);
+  gap: var(--hi-space-12, 12px);
 }
 
 .hk-toast-item {
   display: flex;
   align-items: flex-start;
-  gap: var(--hk-space-8, 8px);
-  padding: var(--hk-space-12, 12px) var(--hk-space-16, 16px);
-  border-radius: var(--hk-radius-sm, 4px);
-  font-size: var(--hk-text-base, 0.875rem);
+  gap: var(--hi-space-8, 8px);
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  border-radius: var(--hi-radius-sm, 4px);
+  font-size: var(--hi-text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
@@ -33,7 +33,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--hk-space-4, 4px);
+  gap: var(--hi-space-4, 4px);
 }
 
 .hk-toast-icon {
@@ -67,27 +67,27 @@
 }
 
 .hk-toast-error {
-  background: var(--hk-color-error-vivid, #f85149);
+  background: var(--hi-color-danger, #f85149);
   color: #fff;
 }
 
 .hk-toast-success {
-  background: var(--hk-color-success, #3fb950);
+  background: var(--hi-color-success, #3fb950);
   color: #fff;
 }
 
 .hk-toast-warning {
-  background: var(--hk-color-warning, #d29922);
+  background: var(--hi-color-warning, #d29922);
   color: #fff;
 }
 
 .hk-toast-info {
-  background: var(--hk-color-info, #58a6ff);
+  background: var(--hi-color-info, #58a6ff);
   color: #fff;
 }
 
 .hk-toast-loading {
-  background: var(--hk-color-info, #58a6ff);
+  background: var(--hi-color-info, #58a6ff);
   color: #fff;
 }
 
@@ -115,9 +115,9 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  border-radius: var(--hk-radius-sm, 4px);
+  border-radius: var(--hi-radius-sm, 4px);
   opacity: 0.7;
-  transition: opacity var(--hk-duration-short, 0.15s) ease;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
   padding: 0;
 }
 
@@ -128,13 +128,13 @@
 
 .hk-toast-enter-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hk-duration-normal, 0.3s);
+  transition-duration: var(--hi-duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .hk-toast-leave-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hk-duration-normal, 0.3s);
+  transition-duration: var(--hi-duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
 }
 
@@ -154,12 +154,12 @@
 }
 
 .hk-toast-move {
-  transition: transform var(--hk-duration-normal, 0.3s) ease;
+  transition: transform var(--hi-duration-normal, 0.3s) ease;
 }
 
 .hk-toast-msg-enter-active,
 .hk-toast-msg-leave-active {
-  transition: opacity var(--hk-duration-short, 0.15s) ease;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }
 
 .hk-toast-msg-enter-from,

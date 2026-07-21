@@ -3,14 +3,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
+  gap: var(--hi-space-6);
   font-family: inherit;
   font-weight: 600;
   line-height: 1;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--hi-radius-sm);
   cursor: pointer;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--hi-duration-normal) var(--hi-ease-default);
   white-space: nowrap;
   user-select: none;
   outline: none;
@@ -19,8 +19,8 @@
 
 .hikari-btn:focus-visible {
   box-shadow:
-    0 0 0 2px rgb(var(--color-surface)),
-    0 0 0 4px rgb(var(--color-primary));
+    0 0 0 2px var(--hi-color-surface),
+    0 0 0 4px var(--hi-color-primary);
 }
 
 .hikari-btn:disabled {
@@ -31,30 +31,30 @@
 /* ---- Size variants ---- */
 
 .hikari-btn--sm {
-  padding: var(--space-6) var(--space-12);
-  font-size: var(--text-xs);
+  padding: var(--hi-space-6) var(--hi-space-12);
+  font-size: var(--hi-text-xs);
 }
 
 .hikari-btn--md {
-  padding: var(--space-8) var(--space-16);
-  font-size: var(--text-base);
+  padding: var(--hi-space-8) var(--hi-space-16);
+  font-size: var(--hi-text-base);
 }
 
 .hikari-btn--lg {
-  padding: var(--space-10) var(--space-24);
-  font-size: var(--text-md);
+  padding: var(--hi-space-10) var(--hi-space-24);
+  font-size: var(--hi-text-md);
 }
 
 /* ---- Primary ---- */
 
 .hikari-btn--primary {
-  background: rgb(var(--color-primary));
-  color: rgb(var(--color-on-solid));
+  background: var(--hi-color-primary);
+  color: var(--hi-color-text-on-primary);
 }
 
 .hikari-btn--primary:hover:not(:disabled) {
   filter: brightness(1.1);
-  box-shadow: var(--shadow-button);
+  box-shadow: var(--hi-shadow-button);
 }
 
 .hikari-btn--primary:active:not(:disabled) {
@@ -64,52 +64,52 @@
 /* ---- Secondary ---- */
 
 .hikari-btn--secondary {
-  background: rgb(var(--color-surface));
-  color: rgb(var(--color-text));
-  border-color: rgb(var(--color-border) / 20%);
-  backdrop-filter: blur(var(--blur-sm));
+  background: var(--hi-color-surface);
+  color: var(--hi-color-text-primary);
+  border-color: color-mix(in srgb, var(--hi-color-border) 20%, transparent);
+  backdrop-filter: blur(var(--hi-blur-sm));
 }
 
 .hikari-btn--secondary:hover:not(:disabled) {
-  background: rgb(var(--color-surface));
-  border-color: var(--c-primary-strong);
+  background: var(--hi-color-surface);
+  border-color: color-mix(in srgb, var(--hi-color-primary) 30%, transparent);
 }
 
 /* ---- Outline ---- */
 
 .hikari-btn--outline {
   background: transparent;
-  color: rgb(var(--color-primary));
-  border-color: var(--c-primary-intense);
+  color: var(--hi-color-primary);
+  border-color: color-mix(in srgb, var(--hi-color-primary) 40%, transparent);
 }
 
 .hikari-btn--outline:hover:not(:disabled) {
-  background: var(--c-primary-light);
-  border-color: rgb(var(--color-primary));
+  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
+  border-color: var(--hi-color-primary);
 }
 
 /* ---- Ghost ---- */
 
 .hikari-btn--ghost {
   background: transparent;
-  color: rgb(var(--color-text));
+  color: var(--hi-color-text-primary);
   border-color: transparent;
 }
 
 .hikari-btn--ghost:hover:not(:disabled) {
-  background: var(--c-primary-light);
+  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
 }
 
 /* ---- Danger ---- */
 
 .hikari-btn--danger {
-  background: rgb(var(--color-error));
-  color: rgb(var(--color-on-solid));
+  background: var(--hi-color-danger);
+  color: var(--hi-color-text-on-primary);
 }
 
 .hikari-btn--danger:hover:not(:disabled) {
   filter: brightness(1.1);
-  box-shadow: var(--shadow-button-danger);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--hi-color-danger) 35%, transparent);
 }
 
 /* ---- Block ---- */

@@ -17,10 +17,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid rgb(var(--hi-color-border, 255 255 255) / 12%);
+  border-radius: var(--hi-radius-sm, 4px);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 12%, transparent);
   padding: 2px;
-  background: rgb(var(--hi-color-surface, 255 255 255) / 60%);
+  background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
 }
 
 .hk-morphing-tabs__indicator {
@@ -29,13 +29,13 @@
   left: 2px;
   height: calc(100% - 4px);
   width: calc((100% - 4px) / var(--tab-count, 1));
-  border-radius: var(--radius-sm, 4px);
-  background: rgb(var(--hi-color-primary, 88 166 255) / 12%);
+  border-radius: var(--hi-radius-sm, 4px);
+  background: color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
   box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
   pointer-events: none;
   z-index: 0;
   transform: translateX(calc(var(--tab-index, 0) * 100%));
-  transition: transform var(--duration-normal, 0.3s) ease;
+  transition: transform var(--hi-duration-normal, 0.3s) ease;
 }
 
 .hk-morphing-tabs__trigger {
@@ -43,18 +43,18 @@
   z-index: 1;
   flex: 1 1 0;
   padding: 4px 14px;
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--hi-text-sm, 0.875rem);
   font-weight: 600;
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--hi-radius-sm, 4px);
   border: none;
   background: transparent;
   color: var(--hi-color-muted);
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--duration-normal, 0.3s) ease;
+  transition: color var(--hi-duration-normal, 0.3s) ease;
 
   &:hover:not(:disabled) {
-    color: var(--hi-color-text);
+    color: var(--hi-color-text-primary);
   }
 
   &:disabled {
@@ -87,7 +87,7 @@
   flex-shrink: 0;
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows var(--duration-normal, 0.3s) ease;
+  transition: grid-template-rows var(--hi-duration-normal, 0.3s) ease;
   overflow: hidden;
 }
 
@@ -98,14 +98,14 @@
 
 .hk-morphing-crossfade-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hi-duration-normal, 0.3s) ease,
+    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-morphing-crossfade-leave-active {
   transition:
-    opacity var(--duration-short, 0.15s) ease,
-    transform var(--duration-short, 0.15s) ease-in;
+    opacity var(--hi-duration-fast, 0.15s) ease,
+    transform var(--hi-duration-fast, 0.15s) ease-in;
 }
 
 .hk-morphing-crossfade-enter-from {
@@ -120,14 +120,14 @@
 
 .hk-morphing-bar-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hi-duration-normal, 0.3s) ease,
+    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-morphing-bar-leave-active {
   transition:
-    opacity var(--duration-short, 0.15s) ease,
-    transform var(--duration-short, 0.15s) ease-in;
+    opacity var(--hi-duration-fast, 0.15s) ease,
+    transform var(--hi-duration-fast, 0.15s) ease-in;
 }
 
 .hk-morphing-bar-enter-from {

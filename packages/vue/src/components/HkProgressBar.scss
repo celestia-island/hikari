@@ -1,21 +1,21 @@
 .hk-progress-bar {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--hi-space-4);
   width: 100%;
 }
 
 .hk-progress-bar-label {
-  font-size: var(--text-2xs);
-  color: rgb(var(--color-muted));
+  font-size: var(--hi-text-2xs);
+  color: var(--hi-color-muted);
   line-height: 1;
 }
 
 .hk-progress-bar-track {
   width: 100%;
   height: 4px;
-  border-radius: var(--radius-full);
-  background: rgb(var(--color-muted) / 15%);
+  border-radius: var(--hi-radius-full);
+  background: color-mix(in srgb, var(--hi-color-muted) 15%, transparent);
   overflow: hidden;
   position: relative;
 }
@@ -33,61 +33,61 @@
   top: 0;
   left: 0;
   height: 100%;
-  border-radius: var(--radius-full);
+  border-radius: var(--hi-radius-full);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.3;
 
   &--loading {
-    background: rgb(var(--color-primary));
+    background: var(--hi-color-primary);
   }
 
   &--done {
-    background: rgb(var(--color-success));
+    background: var(--hi-color-success);
   }
 
   &--error {
-    background: rgb(var(--color-error));
+    background: var(--hi-color-danger);
   }
 }
 
 .hk-progress-bar-fill {
   position: relative;
   height: 100%;
-  border-radius: var(--radius-full);
+  border-radius: var(--hi-radius-full);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &--loading {
-    background: rgb(var(--color-primary));
+    background: var(--hi-color-primary);
   }
 
   &--done {
-    background: rgb(var(--color-success));
+    background: var(--hi-color-success);
   }
 
   &--error {
-    background: rgb(var(--color-error));
+    background: var(--hi-color-danger);
   }
 }
 
 .hk-progress-bar-indeterminate {
   height: 100%;
   width: 40%;
-  border-radius: var(--radius-full);
+  border-radius: var(--hi-radius-full);
   position: absolute;
   animation: hk-progress-indeterminate 1.4s ease-in-out infinite;
 
   &--loading {
-    background: rgb(var(--color-primary));
+    background: var(--hi-color-primary);
   }
 
   &--done {
-    background: rgb(var(--color-success));
+    background: var(--hi-color-success);
     animation: none;
     width: 100%;
   }
 
   &--error {
-    background: rgb(var(--color-error));
+    background: var(--hi-color-danger);
     animation: none;
     width: 100%;
   }

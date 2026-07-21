@@ -17,7 +17,6 @@ a.hk-logo {
   display: block;
   border-radius: var(--hi-radius-md, 8px);
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
 
 .hk-logo__placeholder {
@@ -27,7 +26,6 @@ a.hk-logo {
   background: var(--hi-color-primary);
   color: #fff;
   border-radius: var(--hi-radius-md, 8px);
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
 
 .hk-logo__initial {

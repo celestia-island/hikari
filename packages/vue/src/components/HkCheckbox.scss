@@ -1,67 +1,71 @@
+/*
+ * HkCheckbox / HkRadio — unified selection control.
+ *
+ * Both variants share the same `.hk-checkbox-box` outer frame. The radio
+ * variant differs only in shape (circle) and checked marker (CSS dot).
+ *
+ * `data-animating` is added for one rAF tick on every toggle so the
+ * unified animation bus keeps the rAF loop alive for the full
+ * `var(--duration-normal)` (~0.3 s) transition window. The actual visual
+ * work is driven by CSS `transition` — no per-frame JS involved.
+ */
+
 .hk-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-8);
   cursor: pointer;
   user-select: none;
-
-  &[data-disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
-/* --- Box --- */
+.hk-checkbox[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- box ---------- */
 
 .hk-checkbox-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  border: 1px solid var(--hi-color-border);
-  background: var(--hi-color-surface);
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-input);
+  background: rgb(var(--color-surface) / var(--opacity-half));
   transition:
-    border-color 0.3s ease,
-    background 0.3s ease;
+    border-color var(--duration-normal) ease,
+    background var(--duration-normal) ease;
   flex-shrink: 0;
   position: relative;
-
-  .hk-checkbox--sm & {
-    width: 0.875rem;
-    height: 0.875rem;
-  }
-
-  .hk-checkbox--md & {
-    width: 1.125rem;
-    height: 1.125rem;
-  }
-
-  .hk-checkbox--lg & {
-    width: 1.375rem;
-    height: 1.375rem;
-  }
-
-  .hk-checkbox[data-type="radio"] & {
-    border-radius: 50%;
-  }
-
-  &[data-checked] {
-    background: var(--hi-color-primary);
-    border-color: var(--hi-color-primary);
-    color: var(--hi-color-text-on-primary);
-  }
-
-  &[data-indeterminate] {
-    background: var(--hi-color-primary);
-    border-color: var(--hi-color-primary);
-  }
 }
 
-.hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]) {
-  border-color: var(--hi-color-primary);
+/* radio — circle */
+.hk-checkbox[data-type="radio"] .hk-checkbox-box {
+  border-radius: 50%;
 }
 
-/* --- Hidden input --- */
+.hk-checkbox-box[data-checked] {
+  background: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary));
+  color: rgb(var(--color-on-solid));
+}
+
+.hk-checkbox-box[data-indeterminate] {
+  background: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary));
+}
+
+/* Increase specificity to override un-checked state — checked takes
+   priority without resorting to !important. */
+.hk-checkbox:hover .hk-checkbox-box[data-checked],
+.hk-checkbox[data-animating] .hk-checkbox-box[data-checked] {
+  background: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary));
+}
+
+/* ---------- input ---------- */
 
 .hk-checkbox-input {
   position: absolute;
@@ -71,59 +75,38 @@
   pointer-events: none;
 }
 
-/* --- Icon --- */
+/* ---------- markers ---------- */
 
-.hk-checkbox-icon {
+.hk-checkbox [data-el="icon"] {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-above);
 }
 
-/* --- Dot (radio) --- */
-
-.hk-checkbox-dot {
+.hk-checkbox [data-el="dot"] {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--hi-color-text-on-primary, #fff);
-  z-index: 1;
-
-  .hk-checkbox--lg & {
-    width: 8px;
-    height: 8px;
-  }
+  background: rgb(var(--color-on-solid));
+  z-index: var(--z-above);
 }
 
-/* --- Indeterminate line --- */
+/* ---------- indeterminate line ---------- */
 
-.hk-checkbox-indeterminate {
+.hk-checkbox [data-el="indeterminate"] {
   width: 8px;
   height: 2px;
   border-radius: 1px;
-  background: var(--hi-color-text-on-primary, #fff);
-  z-index: 1;
-
-  .hk-checkbox--lg & {
-    width: 10px;
-  }
+  background: rgb(var(--color-on-solid));
+  z-index: var(--z-above);
 }
 
-/* --- Label text --- */
-
-.hk-checkbox-label-text {
-  font-size: 0.875rem;
-  color: var(--hi-color-text-primary);
-
-  .hk-checkbox--sm & {
-    font-size: 0.75rem;
-  }
-
-  .hk-checkbox--lg & {
-    font-size: 1rem;
-  }
-}
-
-/* --- Animating --- */
+/* ---------- label ---------- */
 
 .hk-checkbox[data-animating] .hk-checkbox-box {
   will-change: border-color, background;
+}
+
+.hk-checkbox [data-el="label"] {
+  font-size: var(--text-base);
+  color: rgb(var(--color-text));
 }

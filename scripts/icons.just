@@ -6,9 +6,9 @@
 
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
-# ============================================================================
+# ------
 # Icons build tasks
-# ============================================================================
+# ------
 
 default:
     @just --list
@@ -51,9 +51,9 @@ rebuild: fetch
     @cargo clean -p hikari-icons
     @cargo build -p hikari-icons
 
-# ============================================================================
+# ------
 # Development tasks
-# ============================================================================
+# ------
 
 # Build icons in debug mode
 dev: fetch
@@ -71,9 +71,9 @@ clippy:
 fmt:
     @cargo fmt -p hikari-icons
 
-# ============================================================================
+# ------
 # Utilities
-# ============================================================================
+# ------
 
 # Check if icons need to be regenerated
 check:

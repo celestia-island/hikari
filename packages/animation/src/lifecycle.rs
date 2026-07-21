@@ -455,6 +455,6 @@ impl Drop for AnimationManager {
     }
 }
 
-// ===== Re-exports =====
+// ------ Re-exports ------
 
 // No explicit re-exports to avoid conflicts

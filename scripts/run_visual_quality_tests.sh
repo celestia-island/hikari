@@ -3,9 +3,9 @@
 
 set -e
 
-echo "=========================================="
+echo "------"
 echo "Hikari Visual Quality Test Runner"
-echo "=========================================="
+echo "------"
 echo ""
 
 # Check if Selenium is running
@@ -40,6 +40,6 @@ echo "Running visual quality tests..."
 cargo run --bin hikari-visual-quality
 
 echo ""
-echo "=========================================="
+echo "------"
 echo "✓ Visual quality tests completed"
-echo "=========================================="
+echo "------"

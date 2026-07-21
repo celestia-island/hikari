@@ -4,24 +4,24 @@
 // This file imports all component SCSS files, which will be compiled
 // to CSS by the Grass compiler during the build process.
 
-// ============================================
+// ------
 // SCSS Variables & Mixins (must be first)
-// ============================================
+// ------
 
 // Use @use with as * to make variables available to all imported files
 @use '../../../theme/styles/variables' as *;
 @use '../../../theme/styles/mixins' as *;
 
-// ============================================
+// ------
 // Theme Base Styles (before components)
-// ============================================
+// ------
 
 // Import theme base styles with CSS variables for hikari and tairitsu themes
 @import '../../../theme/styles/base';
 
-// ============================================
+// ------
 // Utility Classes (Tailwind-compatible)
-// ============================================
+// ------
 // Basic utility classes for the Hikari UI framework
 // These provide the CSS for ClassesBuilder-generated class names
 
@@ -209,9 +209,9 @@
 .hk-z-20 { z-index: 20; }
 .hk-z-50 { z-index: 50; }
 
-// ============================================
+// ------
 // Animation Utility Classes (通用动画)
-// ============================================
+// ------
 
 // Spin (旋转)
 .hk-spin { animation: hi-spin 1s linear infinite; }
@@ -314,7 +314,7 @@
 .hk-grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .hk-col { flex: 1 1 0%; }
 
-// ============================================
+// ------
 // Additional utility classes not yet in palette:
 
 // Max-width constraints for images
@@ -331,9 +331,9 @@
   object-fit: cover;
 }
 
-// ============================================
+// ------
 // CSS Variables (Default Fallback Values)
-// ============================================
+// ------
 //
 // These CSS custom properties provide default fallback values.
 // The ThemeProvider component will override these values at runtime
@@ -525,17 +525,17 @@
   --hi-card-bg: rgba(250, 250, 250, 0.08);
 }
 
-// ============================================
+// ------
 // Global Transitions
-// ============================================
+// ------
 
 * {
   transition: all 0.3s $hikari-ease-smooth;
 }
 
-// ============================================
+// ------
 // 2. Basic Components
-// ============================================
+// ------
 
 @import './components/background.scss';
 @import './components/avatar.scss';
@@ -557,9 +557,9 @@
 @import './components/search.scss';
 @import './components/input_wrapper.scss';
 
-// ============================================
+// ------
 // Feedback Components
-// ============================================
+// ------
 
 @import './components/glow.scss';
 @import './components/alert.scss';
@@ -573,18 +573,18 @@
 
 @import './components/modal.scss';
 
-// ============================================
+// ------
 // Navigation Components
-// ============================================
+// ------
 
 @import './components/menu.scss';
 @import './components/tabs.scss';
 @import './components/breadcrumb.scss';
 @import './components/sidebar.scss';
 
-// ============================================
+// ------
 // Layout Components
-// ============================================
+// ------
 
 @import './components/layout.scss';
 @import './components/header.scss';
@@ -601,9 +601,9 @@
 @import './components/demo_block.scss';
 @import './components/markdown_renderer.scss';
 
-// ============================================
+// ------
 // Additional Components
-// ============================================
+// ------
 
 @import './components/anchor.scss';
 @import './components/cascader.scss';

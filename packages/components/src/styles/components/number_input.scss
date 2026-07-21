@@ -3,9 +3,9 @@
 
 @use '../../../../theme/styles/variables' as vars;
 
-// ============================================
+// ------
 // NumberInput Wrapper
-// ============================================
+// ------
 
 .hk-number-input-wrapper {
   display: inline-flex;
@@ -29,9 +29,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dark Theme Support
-// ============================================
+// ------
 
 [data-theme="dark"] .hk-number-input-wrapper,
 [data-theme="tairitsu"] .hk-number-input-wrapper {

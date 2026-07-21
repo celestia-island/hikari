@@ -3,15 +3,15 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Radio Component
 // Features: FUI styling, smooth transitions, glow effects
 // Uses Layer 2 CSS variables (--hi-component-selection-*)
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Radio Group
-// ============================================
+// ------
 
 .hk-radio-group {
   display: flex;
@@ -27,9 +27,9 @@
   align-items: center;
 }
 
-// ============================================
+// ------
 // Radio Label (wraps input + indicator + text)
-// ============================================
+// ------
 
 .hk-radio-label {
   display: inline-flex;
@@ -45,9 +45,9 @@
   }
 }
 
-// ============================================
+// ------
 // Hidden native input
-// ============================================
+// ------
 
 .hk-radio-label input[type="radio"] {
   position: absolute;
@@ -59,10 +59,10 @@
   padding: 0;
 }
 
-// ============================================
+// ------
 // Custom radio indicator (circle)
 // Uses Layer 2 variables
-// ============================================
+// ------
 
 .hk-radio-indicator {
   position: relative;
@@ -77,9 +77,9 @@
   box-sizing: border-box;
 }
 
-// ============================================
+// ------
 // Inner dot (uses Layer 2 gradient)
-// ============================================
+// ------
 
 .hk-radio-dot {
   position: absolute;
@@ -93,9 +93,9 @@
   transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-// ============================================
+// ------
 // Checked state - dot becomes visible
-// ============================================
+// ------
 
 .hk-radio-label input[type="radio"]:checked + .hk-radio-indicator {
   border-color: var(--hi-primary);
@@ -108,9 +108,9 @@
   transform: translate(-50%, -50%) scale(1);
 }
 
-// ============================================
+// ------
 // Hover effect on checked
-// ============================================
+// ------
 
 .hk-radio-label:hover input[type="radio"]:checked + .hk-radio-indicator {
   box-shadow:
@@ -118,9 +118,9 @@
     inset 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
-// ============================================
+// ------
 // Disabled state
-// ============================================
+// ------
 
 .hk-radio-label input[type="radio"]:disabled + .hk-radio-indicator {
   opacity: 0.4;
@@ -132,9 +132,9 @@
   opacity: 0.6;
 }
 
-// ============================================
+// ------
 // Label text
-// ============================================
+// ------
 
 .hk-radio-text {
   font-family: vars.$hikari-font-family-sans;

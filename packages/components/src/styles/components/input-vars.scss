@@ -4,14 +4,14 @@
 // This file defines component-level CSS variables for the Input component.
 // These variables can be overridden at runtime via AnimationBuilder.
 
-// ============================================
+// ------
 // Base Input Variables
-// ============================================
+// ------
 
 .hk-input {
-  // ============================================
+  // ------
   // 1. Color System
-  // ============================================
+  // ------
 
   // Text Colors
   --hi-input-text-color: var(--hi-color-text-primary);
@@ -37,15 +37,15 @@
   --hi-input-shadow-active: 0 0 0 2px var(--hi-color-primary), 0 0 12px var(--hi-glow-color);
   --hi-input-glow: var(--hi-glow-color);
 
-  // ============================================
+  // ------
   // 2. Border Radius System
-  // ============================================
+  // ------
 
   --hi-input-radius: 4px;
 
-  // ============================================
+  // ------
   // 3. Animation System
-  // ============================================
+  // ------
 
   // Duration
   --hi-input-duration: var(--hi-duration-fast);
@@ -56,31 +56,31 @@
   // Transition
   --hi-input-transition: all var(--hi-input-duration) var(--hi-input-easing);
 
-  // ============================================
+  // ------
   // 4. Spacing System
-  // ============================================
+  // ------
 
   --hi-input-padding-x: 0.75rem;
   --hi-input-padding-y: 0.5rem;
 
-  // ============================================
+  // ------
   // 5. Border System
-  // ============================================
+  // ------
 
   --hi-input-border-width: 1px;
   --hi-input-border-style: solid;
 
-  // ============================================
+  // ------
   // 6. Typography System
-  // ============================================
+  // ------
 
   --hi-input-font-size: var(--hi-font-size-sm);
   --hi-input-line-height: 1.5;
 }
 
-// ============================================
+// ------
 // Input Wrapper Variables
-// ============================================
+// ------
 
 .hk-input-wrapper {
   // Colors
@@ -100,9 +100,9 @@
   --hi-input-wrapper-blur: blur(4px);
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-input-sm,
 .hk-input-wrapper-sm {
@@ -128,9 +128,9 @@
   --hi-input-radius: 4px;
 }
 
-// ============================================
+// ------
 // State Variants
-// ============================================
+// ------
 
 .hk-input-error {
   --hi-input-border-color: var(--hi-color-danger);
@@ -142,9 +142,9 @@
   --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-success), 0 0 12px var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Prefix/Suffix Variables
-// ============================================
+// ------
 
 .hk-input-prefix,
 .hk-input-suffix {

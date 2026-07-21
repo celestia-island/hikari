@@ -9,9 +9,9 @@
 @use 'glass';
 @use 'scrollbar';
 
-// ============================================
+// ------
 // 1. Color System
-// ============================================
+// ------
 
 // Text Colors
 :root {
@@ -41,9 +41,9 @@
   --hi-shadow-color: rgba(0, 0, 0, 0.1);
   --hi-glow-color: rgba(255, 79, 0, 0.5);
 
-  // ============================================
+  // ------
   // 2. Border Radius System
-  // ============================================
+  // ------
 
   // Base Radius
   --hi-radius-none: 0;
@@ -63,9 +63,9 @@
   --hi-icon-radius: var(--hi-radius-sm);
   --hi-badge-radius: var(--hi-radius-full);
 
-  // ============================================
+  // ------
   // 3. Animation System
-  // ============================================
+  // ------
 
   // Duration
   --hi-duration-instant: 0ms;
@@ -87,9 +87,9 @@
   --hi-delay-medium: 200ms;
   --hi-delay-long: 300ms;
 
-  // ============================================
+  // ------
   // 4. Background System
-  // ============================================
+  // ------
 
   // Solid Background
   --hi-bg-solid-primary: var(--hi-color-primary);
@@ -105,9 +105,9 @@
   --hi-bg-blur-md: blur(20px);
   --hi-bg-blur-lg: blur(30px);
 
-  // ============================================
+  // ------
   // 5. SVG System
-  // ============================================
+  // ------
 
   // Fill
   --hi-icon-fill: currentColor;
@@ -125,9 +125,9 @@
   --hi-icon-size-lg: 20px;
   --hi-icon-size-xl: 24px;
 
-  // ============================================
+  // ------
   // 6. Spacing System
-  // ============================================
+  // ------
 
   --hi-spacing-xs: 0.25rem;
   --hi-spacing-sm: 0.5rem;
@@ -136,27 +136,27 @@
   --hi-spacing-xl: 2rem;
   --hi-spacing-2xl: 3rem;
 
-  // ============================================
+  // ------
   // 7. Shadow System
-  // ============================================
+  // ------
 
   --hi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
   --hi-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --hi-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --hi-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
 
-  // ============================================
+  // ------
   // 8. Border System
-  // ============================================
+  // ------
 
   --hi-border-width: 1px;
   --hi-border-width-focus: 2px;
   --hi-border-style: solid;
   --hi-border-style-dashed: dashed;
 
-  // ============================================
+  // ------
   // 9. Z-Index System
-  // ============================================
+  // ------
 
   --hi-z-index-dropdown: 1000;
   --hi-z-index-sticky: 1020;
@@ -167,9 +167,9 @@
   --hi-z-index-tooltip: 1070;
 }
 
-// ============================================
+// ------
 // Dark Theme Overrides
-// ============================================
+// ------
 
 [data-theme="dark"] {
   --hi-color-text-primary: #ffffff;
@@ -183,9 +183,9 @@
   --hi-border-color-disabled: rgba(255, 255, 255, 0.05);
 }
 
-// ============================================
+// ------
 // Light Theme Overrides
-// ============================================
+// ------
 
 [data-theme="light"] {
   --hi-color-text-primary: #1a1a1a;

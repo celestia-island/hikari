@@ -1,9 +1,9 @@
 // hikari-extra-components/styles/components/audio_waveform.scss
 // Audio waveform component styles with
 
-// ============================================
+// ------
 // Audio Waveform Container
-// ============================================
+// ------
 
 .hk-audio-waveform {
     width: 100%;
@@ -20,9 +20,9 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-// ============================================
+// ------
 // Waveform Display
-// ============================================
+// ------
 
 .hk-waveform-container {
     margin: 16px 0;
@@ -48,9 +48,9 @@
     transition: all 0.2s ease;
 }
 
-// ============================================
+// ------
 // Waveform Color Variants
-// ============================================
+// ------
 
 .hk-waveform-Primary .hk-waveform-bar {
     background: var(--hi-color-primary);
@@ -68,9 +68,9 @@
     background: var(--hi-color-error);
 }
 
-// ============================================
+// ------
 // Audio Controls
-// ============================================
+// ------
 
 .hk-audio-controls {
     display: flex;

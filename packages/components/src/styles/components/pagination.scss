@@ -2,12 +2,12 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari // Hikari // Hikari // Hikari // Hikari Pagination Component - FUI Styling Component Component Component Component
 
-// ============================================
+// ------
 // Base Pagination Styles
-// ============================================
+// ------
 
 .hk-pagination {
   // Layout - ensure proper horizontal alignment
@@ -27,9 +27,9 @@
   // DISABLED - migrated to JS animation
 }
 
-// ============================================
+// ------
 // Pagination Items
-// ============================================
+// ------
 
 // Pages container - ensure horizontal layout
 .hk-pagination-pages {
@@ -153,9 +153,9 @@
   }
 }
 
-// ============================================
+// ------
 // Navigation Buttons
-// ============================================
+// ------
 
 // Previous button
 .hk-pagination-prev {
@@ -177,9 +177,9 @@
   @extend .hk-pagination-item;
 }
 
-// ============================================
+// ------
 // Page Jump Animation (Fade + Scale)
-// ============================================
+// ------
 
 .hk-pagination-jump {
   // DISABLED - migrated to JS animation
@@ -203,9 +203,9 @@
 //   }
 // }
 
-// ============================================
+// ------
 // Smooth Page Change Transitions
-// ============================================
+// ------
 
 .hk-pagination-animate {
   .hk-pagination-item {
@@ -244,9 +244,9 @@
 //   }
 // }
 
-// ============================================
+// ------
 // Ellipsis (for large page counts)
-// ============================================
+// ------
 
 .hk-pagination-ellipsis {
   // Layout - FIXED: Match button size (28px)
@@ -284,9 +284,9 @@
   }
 }
 
-// ============================================
+// ------
 // Page Size Selector
-// ============================================
+// ------
 
 .hk-pagination-size-selector {
   // Layout
@@ -351,9 +351,9 @@
   }
 }
 
-// ============================================
+// ------
 // Total Count Display
-// ============================================
+// ------
 
 .hk-pagination-total {
   // Layout
@@ -382,9 +382,9 @@
   }
 }
 
-// ============================================
+// ------
 // Input Jump to Page
-// ============================================
+// ------
 
 .hk-pagination-jumper {
   // Layout
@@ -487,9 +487,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 // Small size
 .hk-pagination-sm {
@@ -614,9 +614,9 @@
   }
 }
 
-// ============================================
+// ------
 // Compact Mode (Mobile)
-// ============================================
+// ------
 
 @mixin pagination-compact {
   // Layout
@@ -661,9 +661,9 @@
   @include pagination-compact;
 }
 
-// ============================================
+// ------
 // Simple Mode (Only Prev/Next/Active)
-// ============================================
+// ------
 
 .hk-pagination-simple {
   .hk-pagination-item:not(.hk-pagination-prev):not(.hk-pagination-next):not(.hk-pagination-active) {
@@ -675,9 +675,9 @@
   }
 }
 
-// ============================================
+// ------
 // Responsive Behavior
-// ============================================
+// ------
 
 @include mix.mobile {
   .pagination {
@@ -731,9 +731,9 @@
   }
 }
 
-// ============================================
+// ------
 // Loading State
-// ============================================
+// ------
 
 .hk-pagination-loading {
   pointer-events: none;
@@ -767,9 +767,9 @@
 //   }
 // }
 
-// ============================================
+// ------
 // Alignment Variants
-// ============================================
+// ------
 
 // Left aligned
 .hk-pagination-left {
@@ -786,9 +786,9 @@
   justify-content: center;
 }
 
-// ============================================
+// ------
 // Accessibility
-// ============================================
+// ------
 
 // Focus visible
 .hk-pagination-item:focus-visible {
@@ -834,9 +834,9 @@
   }
 }
 
-// ============================================
+// ------
 // Print Styles
-// ============================================
+// ------
 
 @media print {
   .pagination {
@@ -858,9 +858,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dark Mode Specific Enhancements
-// ============================================
+// ------
 
 @media (prefers-color-scheme: dark) {
   .hk-pagination-item {

@@ -63,9 +63,9 @@ packages/components/src/styles/components/*-vars.scss
 
 ```scss
 .hi-button {
-  // ============================================
+  // ------
   // 1. 颜色系统
-  // ============================================
+  // ------
 
   // 图标颜色
   --hi-button-icon-color: var(--hi-icon-color);
@@ -90,31 +90,31 @@ packages/components/src/styles/components/*-vars.scss
   --hi-button-border-color-hover: var(--hi-color-border);
   --hi-button-border-color-focus: var(--hi-color-primary);
 
-  // ============================================
+  // ------
   // 2. 圆角系统
-  // ============================================
+  // ------
 
   --hi-button-radius: var(--hi-radius-md);
 
-  // ============================================
+  // ------
   // 3. 动画系统
-  // ============================================
+  // ------
 
   --hi-button-duration: var(--hi-duration-fast);
   --hi-button-easing: var(--hi-ease-default);
   --hi-button-transition: all var(--hi-button-duration) var(--hi-button-easing);
 
-  // ============================================
+  // ------
   // 4. 间距系统
-  // ============================================
+  // ------
 
   --hi-button-padding-x: 1rem;
   --hi-button-padding-y: 0.5rem;
   --hi-button-gap: 0.5rem;
 
-  // ============================================
+  // ------
   // 5. 变换系统
-  // ============================================
+  // ------
 
   --hi-button-transform: none;
   --hi-button-transform-hover: none;

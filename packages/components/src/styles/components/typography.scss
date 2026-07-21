@@ -2,14 +2,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Typography Component
 // Unified text rendering: headings, body, caption, code, muted
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Base Typography
-// ============================================
+// ------
 
 .hk-typography {
     font-family: vars.$hikari-font-family-sans;
@@ -18,9 +18,9 @@
     margin: 0;
 }
 
-// ============================================
+// ------
 // Heading Variants (H1–H6)
-// ============================================
+// ------
 
 .hk-typography-h1 {
     font-size: vars.$hikari-font-size-3xl;
@@ -61,18 +61,18 @@
     line-height: 1.5;
 }
 
-// ============================================
+// ------
 // Body Text
-// ============================================
+// ------
 
 .hk-typography-body {
     font-size: vars.$hikari-font-size-base;
     line-height: 1.5;
 }
 
-// ============================================
+// ------
 // Caption / Small Text
-// ============================================
+// ------
 
 .hk-typography-caption {
     font-size: vars.$hikari-font-size-sm;
@@ -80,9 +80,9 @@
     line-height: 1.5;
 }
 
-// ============================================
+// ------
 // Inline Code
-// ============================================
+// ------
 
 .hk-typography-code {
     font-family: vars.$hikari-font-family-mono;
@@ -93,9 +93,9 @@
     white-space: nowrap;
 }
 
-// ============================================
+// ------
 // Muted Text
-// ============================================
+// ------
 
 .hk-typography-muted {
     font-size: vars.$hikari-font-size-base;
@@ -103,9 +103,9 @@
     line-height: 1.5;
 }
 
-// ============================================
+// ------
 // Overline
-// ============================================
+// ------
 
 .hk-typography-overline {
     font-size: vars.$hikari-font-size-xs;

@@ -3,9 +3,9 @@
 // These styles enable icons to inherit theme colors and support
 // custom color overrides.
 
-// ============================================
+// ------
 // Base Icon Styles
-// ============================================
+// ------
 
 .hk-icon {
   display: inline-flex;
@@ -26,9 +26,9 @@
   }
 }
 
-// ============================================
+// ------
 // Icon Size Variants
-// ============================================
+// ------
 
 .hk-icon-16 {
   width: 1rem;
@@ -65,9 +65,9 @@
   height: 4rem;
 }
 
-// ============================================
+// ------
 // Icon Color Variants
-// ============================================
+// ------
 
 // Use theme primary color
 .hk-icon-primary {
@@ -104,9 +104,9 @@
   color: var(--hi-color-text-secondary);
 }
 
-// ============================================
+// ------
 // Transitions
-// ============================================
+// ------
 
 .hk-icon-transition {
   transition: color 150ms ease-in-out;

@@ -44,8 +44,8 @@ export default defineComponent({
         {{
           default: () => (
             <div class="hk-confirm-dialog">
-              <p class="hk-confirm-dialog__message">{props.message}</p>
-              <div class="hk-confirm-dialog__actions">
+              <p class="hk-confirm-dialog-message">{props.message}</p>
+              <div class="hk-confirm-dialog-actions">
                 <HkButton
                   variant="secondary"
                   size="sm"

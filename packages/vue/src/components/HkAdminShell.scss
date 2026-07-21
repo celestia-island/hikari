@@ -7,17 +7,17 @@
   background: var(--hi-color-background);
 }
 
-.hk-admin-shell__header {
+.hk-admin-shell-header {
   flex-shrink: 0;
   z-index: 30;
 }
 
-.hk-admin-shell__footer {
+.hk-admin-shell-footer {
   flex-shrink: 0;
   z-index: 10;
 }
 
-.hk-admin-shell__body {
+.hk-admin-shell-body {
   display: flex;
   flex: 1;
   min-height: 0;
@@ -25,7 +25,7 @@
   position: relative;
 }
 
-.hk-admin-shell__sidebar {
+.hk-admin-shell-sidebar {
   flex-shrink: 0;
   overflow: hidden;
   transition: width var(--hi-duration-normal, 0.3s) ease;
@@ -33,24 +33,24 @@
   border-right: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 
-.hk-admin-shell__sidebar--collapsed {
+.hk-admin-shell-sidebar--collapsed {
   border-right-color: transparent;
 }
 
-.hk-admin-shell__sidebar-inner {
+.hk-admin-shell-sidebar-inner {
   width: v-bind("props.sidebarWidth");
   height: 100%;
   min-height: 0;
 }
 
-.hk-admin-shell__main {
+.hk-admin-shell-main {
   flex: 1;
   min-width: 0;
   overflow: auto;
   background: var(--hi-color-background);
 }
 
-.hk-admin-shell__drawer {
+.hk-admin-shell-drawer {
   position: fixed;
   top: 0;
   bottom: 0;
@@ -65,12 +65,12 @@
   overflow-y: auto;
 }
 
-.hk-admin-shell__drawer--open {
+.hk-admin-shell-drawer--open {
   transform: translateX(0);
   box-shadow: 0 8px 32px rgb(0 0 0 / 0.16);
 }
 
-.hk-admin-shell__drawer-overlay {
+.hk-admin-shell-drawer-overlay {
   position: fixed;
   inset: 0;
   z-index: 39;

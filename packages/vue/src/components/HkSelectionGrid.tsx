@@ -32,10 +32,10 @@ export default defineComponent({
       return (
         <div class="hk-selection-grid">
           {props.groupTitle && (
-            <h4 class="hk-selection-grid__title">{props.groupTitle}</h4>
+            <h4 class="hk-selection-grid-title">{props.groupTitle}</h4>
           )}
           <div
-            class="hk-selection-grid__grid"
+            class="hk-selection-grid-grid"
             data-cols={props.columns}
             data-dense={props.dense || undefined}
           >
@@ -48,7 +48,7 @@ export default defineComponent({
                   key={item.id}
                   role="button"
                   tabindex={0}
-                  class="hk-selection-grid__item"
+                  class="hk-selection-grid-item"
                   data-selected={isSelected || undefined}
                   aria-selected={isSelected}
                   onClick={() => emit("select", item)}
@@ -59,23 +59,23 @@ export default defineComponent({
                     }
                   }}
                 >
-                  <div class="hk-selection-grid__check">
+                  <div class="hk-selection-grid-check">
                     {isSelected && <Check size={14} />}
                   </div>
-                  <div class="hk-selection-grid__content">
-                    <div class="hk-selection-grid__header">
+                  <div class="hk-selection-grid-content">
+                    <div class="hk-selection-grid-header">
                       {ItemIcon && (
                         <ItemIcon
                           size={16}
-                          class="hk-selection-grid__icon"
+                          class="hk-selection-grid-icon"
                         />
                       )}
-                      <span class="hk-selection-grid__name">
+                      <span class="hk-selection-grid-name">
                         {item.title}
                       </span>
                       {item.badge && (
                         <span
-                          class="hk-selection-grid__badge"
+                          class="hk-selection-grid-badge"
                           data-variant={item.badgeVariant || undefined}
                         >
                           {item.badge}
@@ -83,7 +83,7 @@ export default defineComponent({
                       )}
                     </div>
                     {item.description && (
-                      <p class="hk-selection-grid__desc">
+                      <p class="hk-selection-grid-desc">
                         {item.description}
                       </p>
                     )}

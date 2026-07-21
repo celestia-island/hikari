@@ -4,20 +4,20 @@
   gap: 0.5rem;
 }
 
-.hk-draggable-grid__row {
+.hk-draggable-grid-row {
   display: flex;
   flex-wrap: nowrap;
   gap: 0.5rem;
 }
 
-.hk-draggable-grid__row--phantom {
+.hk-draggable-grid-row--phantom {
   min-height: 44px;
   border: 1px dashed var(--hi-color-primary, #58a6ff);
   border-radius: 4px;
   background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.04);
 }
 
-.hk-draggable-grid__cell {
+.hk-draggable-grid-cell {
   flex: 0 0 calc((100% - (var(--hk-grid-cols, 3) - 1) * 0.5rem) / var(--hk-grid-cols, 3));
   display: flex;
   align-items: center;
@@ -66,17 +66,17 @@
   }
 }
 
-.hk-draggable-grid__row[data-placeholder-row="after"] {
+.hk-draggable-grid-row[data-placeholder-row="after"] {
   box-shadow: inset -2px 0 0 0 var(--hi-color-primary, #58a6ff);
 }
 
-.hk-draggable-grid__cell--placeholder-target {
+.hk-draggable-grid-cell--placeholder-target {
   border: none;
   background: transparent;
   min-height: 44px;
 }
 
-.hk-draggable-grid__handle {
+.hk-draggable-grid-handle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,7 +95,7 @@
   }
 }
 
-.hk-draggable-grid__content {
+.hk-draggable-grid-content {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -103,7 +103,7 @@
   gap: 0.5rem;
 }
 
-.hk-draggable-grid__ghost {
+.hk-draggable-grid-ghost {
   position: fixed;
   top: 0;
   left: 0;
@@ -120,7 +120,7 @@
   z-index: 9999;
   will-change: transform;
 
-  > .hk-draggable-grid__cell {
+  > .hk-draggable-grid-cell {
     margin: 0;
     border-color: transparent;
     background: transparent;

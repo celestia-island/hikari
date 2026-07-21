@@ -66,9 +66,9 @@ export default defineComponent({
           onMouseleave: scheduleHide,
         },
         [
-          h("span", { class: "hk-hover-reveal__main" }, slots.default?.()),
+          h("span", { class: "hk-hover-reveal-main" }, slots.default?.()),
           slots.extension
-            ? h("span", { class: "hk-hover-reveal__extension" }, slots.extension({ revealed: revealed.value }))
+            ? h("span", { class: "hk-hover-reveal-extension" }, slots.extension({ revealed: revealed.value }))
             : null,
         ].filter(Boolean),
       );

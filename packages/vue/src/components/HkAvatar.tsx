@@ -19,7 +19,7 @@ export default defineComponent({
         {props.src ? (
           <img src={props.src} alt={props.name} />
         ) : (
-          <span class="hikari-avatar__fallback">{props.name?.charAt(0)?.toUpperCase() ?? "?"}</span>
+          <span class="hikari-avatar-fallback">{props.name?.charAt(0)?.toUpperCase() ?? "?"}</span>
         )}
       </div>
     );

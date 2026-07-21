@@ -55,13 +55,13 @@ export default defineComponent({
       >
         {props.loading ? <HkSpinner size="xs" tone="current" /> : null}
         {!props.loading && props.icon ? (
-          <span class="hikari-btn__icon">
+          <span class="hikari-btn-icon">
             <HkIcon name={props.icon} size={16} />
           </span>
         ) : null}
         {slots.default?.()}
         {props.suffix ? (
-          <span class="hikari-btn__suffix">
+          <span class="hikari-btn-suffix">
             <HkIcon name={props.suffix} size={16} />
           </span>
         ) : null}

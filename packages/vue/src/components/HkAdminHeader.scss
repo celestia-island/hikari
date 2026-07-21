@@ -11,14 +11,14 @@
   border-bottom: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 
-.hk-admin-header__left {
+.hk-admin-header-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
 }
 
-.hk-admin-header__title {
+.hk-admin-header-title {
   font-weight: 600;
   font-size: var(--hi-text-lg, 1.125rem);
   color: var(--hi-color-text-primary);
@@ -27,20 +27,20 @@
   text-overflow: ellipsis;
 }
 
-.hk-admin-header__right {
+.hk-admin-header-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
 }
 
-.hk-admin-header__user {
+.hk-admin-header-user {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.hk-admin-header__avatar {
+.hk-admin-header-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -48,7 +48,7 @@
   flex-shrink: 0;
 }
 
-.hk-admin-header__avatar-placeholder {
+.hk-admin-header-avatar-placeholder {
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -62,7 +62,7 @@
   flex-shrink: 0;
 }
 
-.hk-admin-header__username {
+.hk-admin-header-username {
   font-size: var(--hi-text-sm, 0.875rem);
   color: var(--hi-color-text-primary);
   white-space: nowrap;

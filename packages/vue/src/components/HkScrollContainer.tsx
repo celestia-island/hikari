@@ -339,7 +339,7 @@ export default defineComponent({
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";
       const content = props.autoFollow ? (
-        <div ref={autoFollowContent} class="hk-scroll-container__autofollow-content">
+        <div ref={autoFollowContent} class="hk-scroll-container-autofollow-content">
           {slots.default?.()}
         </div>
       ) : (
@@ -347,11 +347,11 @@ export default defineComponent({
       );
       return (
         <Tag class="hk-scroll-container" data-axis={props.axis}>
-          <div ref={viewportRef} class="hk-scroll-container__viewport">
+          <div ref={viewportRef} class="hk-scroll-container-viewport">
             {content}
           </div>
           {showAutoTag.value && (
-            <span class="hk-scroll-container__autotag" aria-hidden="true">Auto</span>
+            <span class="hk-scroll-container-autotag" aria-hidden="true">Auto</span>
           )}
         </Tag>
       );

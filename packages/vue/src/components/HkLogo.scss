@@ -13,13 +13,13 @@ a.hk-logo {
   text-decoration: none;
 }
 
-.hk-logo__img {
+.hk-logo-img {
   display: block;
   border-radius: var(--hi-radius-md, 8px);
   object-fit: contain;
 }
 
-.hk-logo__placeholder {
+.hk-logo-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,7 +28,7 @@ a.hk-logo {
   border-radius: var(--hi-radius-md, 8px);
 }
 
-.hk-logo__initial {
+.hk-logo-initial {
   font-weight: 700;
   font-size: 50%;
   line-height: 1;

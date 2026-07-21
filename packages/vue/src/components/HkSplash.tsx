@@ -21,19 +21,19 @@ export default defineComponent({
 
     return () => (
       <div class="hk-splash">
-        <main class="hk-splash__main">
-          {props.logo ? <img class="hk-splash__logo" src={props.logo} alt={props.title || "logo"} /> : null}
-          <h1 class="hk-splash__title">{props.title || slots.title?.()}</h1>
-          {props.subtitle ? <p class="hk-splash__subtitle">{props.subtitle}</p> : null}
-          {slots.description ? <div class="hk-splash__description">{slots.description?.()}</div> : null}
-          <div class="hk-splash__status">
+        <main class="hk-splash-main">
+          {props.logo ? <img class="hk-splash-logo" src={props.logo} alt={props.title || "logo"} /> : null}
+          <h1 class="hk-splash-title">{props.title || slots.title?.()}</h1>
+          {props.subtitle ? <p class="hk-splash-subtitle">{props.subtitle}</p> : null}
+          {slots.description ? <div class="hk-splash-description">{slots.description?.()}</div> : null}
+          <div class="hk-splash-status">
             <HkBadge variant={statusVariant[props.status] || "primary"} size="md">
               {props.statusLabel || props.status}
             </HkBadge>
           </div>
-          {slots.actions ? <div class="hk-splash__actions">{slots.actions?.()}</div> : null}
+          {slots.actions ? <div class="hk-splash-actions">{slots.actions?.()}</div> : null}
         </main>
-        {slots.footer ? <footer class="hk-splash__footer">{slots.footer?.()}</footer> : null}
+        {slots.footer ? <footer class="hk-splash-footer">{slots.footer?.()}</footer> : null}
       </div>
     );
   },

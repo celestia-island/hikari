@@ -8,7 +8,7 @@
   }
 }
 
-.hk-number-input__inner {
+.hk-number-input-inner {
   display: flex;
   align-items: center;
   background: var(--hi-color-surface);
@@ -30,7 +30,7 @@
   }
 }
 
-.hk-number-input__field {
+.hk-number-input-field {
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -56,8 +56,8 @@
   }
 }
 
-.hk-number-input__prefix,
-.hk-number-input__suffix {
+.hk-number-input-prefix,
+.hk-number-input-suffix {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -65,22 +65,22 @@
   font-size: 0.875rem;
 }
 
-.hk-number-input__prefix {
+.hk-number-input-prefix {
   padding-left: 0.75rem;
 }
 
-.hk-number-input__suffix {
+.hk-number-input-suffix {
   padding-right: 0.5rem;
 }
 
-.hk-number-input__steppers {
+.hk-number-input-steppers {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   border-left: 1px solid var(--hi-color-border);
 }
 
-.hk-number-input__step {
+.hk-number-input-step {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,42 +113,42 @@
 
 /* --- Size variants --- */
 
-.hk-number-input--sm .hk-number-input__field {
+.hk-number-input--sm .hk-number-input-field {
   font-size: 0.75rem;
   padding: 0 0.5rem;
   height: 1.75rem;
 }
 
-.hk-number-input--sm .hk-number-input__step {
+.hk-number-input--sm .hk-number-input-step {
   width: 1.25rem;
 }
 
-.hk-number-input--sm .hk-number-input__step svg {
+.hk-number-input--sm .hk-number-input-step svg {
   width: 12px;
   height: 12px;
 }
 
-.hk-number-input--md .hk-number-input__field {
+.hk-number-input--md .hk-number-input-field {
   font-size: 0.875rem;
   padding: 0 0.75rem;
   height: 2.25rem;
 }
 
-.hk-number-input--md .hk-number-input__step {
+.hk-number-input--md .hk-number-input-step {
   width: 1.5rem;
 }
 
-.hk-number-input--lg .hk-number-input__field {
+.hk-number-input--lg .hk-number-input-field {
   font-size: 1rem;
   padding: 0 1rem;
   height: 2.75rem;
 }
 
-.hk-number-input--lg .hk-number-input__step {
+.hk-number-input--lg .hk-number-input-step {
   width: 1.75rem;
 }
 
-.hk-number-input--lg .hk-number-input__step svg {
+.hk-number-input--lg .hk-number-input-step svg {
   width: 16px;
   height: 16px;
 }

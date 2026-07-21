@@ -1,11 +1,11 @@
-.hk-confirm-dialog__message {
+.hk-confirm-dialog-message {
   margin: 0 0 1.5rem;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
   font-size: var(--hi-text-sm, 0.875rem);
   line-height: 1.5;
 }
 
-.hk-confirm-dialog__actions {
+.hk-confirm-dialog-actions {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;

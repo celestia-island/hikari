@@ -82,8 +82,8 @@ export default defineComponent({
     const boxClass = computed(() => [
       "hk-input-box",
       `hk-input-box--${props.size}`,
-      props.error ? "hk-input-box--error" : "",
-      props.disabled ? "hk-input-box--disabled" : "",
+      props.error ? "hk-input-box-error" : "",
+      props.disabled ? "hk-input-box-disabled" : "",
     ]);
 
     const isText = !isTextarea.value;
@@ -144,7 +144,7 @@ export default defineComponent({
               class={[
                 "hk-input-element",
                 "hk-input-textarea",
-                isAutoGrow.value ? "hk-input-textarea--autogrow" : "",
+                isAutoGrow.value ? "hk-input-textarea-autogrow" : "",
               ]}
               {...filteredAttrs.value}
               onInput={onInput}

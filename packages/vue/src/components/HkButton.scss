@@ -30,96 +30,96 @@
 
 /* ---- Size variants ---- */
 
-.hk-btn--sm {
+.hk-btn-sm {
   padding: var(--space-6) var(--space-12);
   font-size: var(--text-xs);
 }
 
-.hk-btn--md {
+.hk-btn-md {
   padding: var(--space-8) var(--space-16);
   font-size: var(--text-base);
 }
 
-.hk-btn--lg {
+.hk-btn-lg {
   padding: var(--space-10) var(--space-24);
   font-size: var(--text-md);
 }
 
 /* ---- Primary ---- */
 
-.hk-btn--primary {
+.hk-btn-primary {
   background: rgb(var(--color-primary));
   color: rgb(var(--color-on-solid));
 }
 
-.hk-btn--primary:hover:not(:disabled) {
+.hk-btn-primary:hover:not(:disabled) {
   filter: brightness(1.1);
   box-shadow: var(--shadow-button);
 }
 
-.hk-btn--primary:active:not(:disabled) {
+.hk-btn-primary:active:not(:disabled) {
   filter: brightness(0.95);
 }
 
 /* ---- Secondary ---- */
 
-.hk-btn--secondary {
+.hk-btn-secondary {
   background: rgb(var(--color-surface));
   color: rgb(var(--color-text));
   border-color: rgb(var(--color-border) / 20%);
   backdrop-filter: blur(var(--blur-sm));
 }
 
-.hk-btn--secondary:hover:not(:disabled) {
+.hk-btn-secondary:hover:not(:disabled) {
   background: rgb(var(--color-surface));
   border-color: var(--c-primary-strong);
 }
 
 /* ---- Outline ---- */
 
-.hk-btn--outline {
+.hk-btn-outline {
   background: transparent;
   color: rgb(var(--color-primary));
   border-color: var(--c-primary-intense);
 }
 
-.hk-btn--outline:hover:not(:disabled) {
+.hk-btn-outline:hover:not(:disabled) {
   background: var(--c-primary-light);
   border-color: rgb(var(--color-primary));
 }
 
 /* ---- Ghost ---- */
 
-.hk-btn--ghost {
+.hk-btn-ghost {
   background: transparent;
   color: rgb(var(--color-text));
   border-color: transparent;
 }
 
-.hk-btn--ghost:hover:not(:disabled) {
+.hk-btn-ghost:hover:not(:disabled) {
   background: var(--c-primary-light);
 }
 
 /* ---- Danger ---- */
 
-.hk-btn--danger {
+.hk-btn-danger {
   background: rgb(var(--color-error));
   color: rgb(var(--color-on-solid));
 }
 
-.hk-btn--danger:hover:not(:disabled) {
+.hk-btn-danger:hover:not(:disabled) {
   filter: brightness(1.1);
   box-shadow: var(--shadow-button-danger);
 }
 
 /* ---- Block ---- */
 
-.hk-btn--block {
+.hk-btn-block {
   width: 100%;
 }
 
 /* ---- Loading ---- */
 
-.hk-btn--loading {
+.hk-btn-loading {
   pointer-events: none;
 }

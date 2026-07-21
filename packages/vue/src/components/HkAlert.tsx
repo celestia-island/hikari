@@ -33,8 +33,8 @@ export default defineComponent({
       "hk-alert",
       `hk-alert--${props.variant}`,
       `hk-alert--${props.size}`,
-      props.banner ? "hk-alert--banner" : "",
-      !props.title ? "hk-alert--no-title" : "",
+      props.banner ? "hk-alert-banner" : "",
+      !props.title ? "hk-alert-no-title" : "",
     ]);
 
     function onClose() {

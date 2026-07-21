@@ -67,10 +67,10 @@ pub fn DragDropTree(props: DragDropTreeProps) -> Element {
     let drag_over_key = use_signal(|| Option::<String>::None);
 
     rsx! {
-        div { class: format!("hi-drag-drop-tree {}", props.class),
+        div { class: format!("hk-drag-drop-tree {}", props.class),
 
             if drop_target.read().is_some() {
-                div { class: "hi-drop-indicator", id: "drop-indicator" }
+                div { class: "hk-drop-indicator", id: "drop-indicator" }
             }
 
             for node in &props.data {
@@ -252,25 +252,25 @@ fn RenderDragNode(props: RenderDragNodeProps) -> Element {
             ondragleave,
             ondrop,
 
-            div { class: "hi-drag-handle",
+            div { class: "hk-drag-handle",
 
                 if props.draggable && !props.node.disabled {
-                    span { class: "hi-drag-handle-icon", "⋮⋮" }
+                    span { class: "hk-drag-handle-icon", "⋮⋮" }
                 }
 
-                div { class: "hi-node-content", "{node_title}" }
+                div { class: "hk-node-content", "{node_title}" }
 
                 if is_dragging {
-                    div { class: "hi-drag-ghost", key: "drag-ghost" }
+                    div { class: "hk-drag-ghost", key: "drag-ghost" }
                 }
             }
 
             if is_drag_over && props.drop_allowed {
-                div { class: "hi-drop-line", key: "drop-line" }
+                div { class: "hk-drop-line", key: "drop-line" }
             }
 
             if !props.node.node_children.is_empty() {
-                div { class: "hi-node-children",
+                div { class: "hk-node-children",
 
                     for child in &props.node.node_children {
                         RenderDragNode {

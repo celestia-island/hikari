@@ -156,7 +156,7 @@ pub fn Select(props: SelectProps) -> Element {
                     if let Some(target_el) =
                         platform::get_target_element_from_event(e.client_x, e.client_y)
                     {
-                        platform::get_bounding_rect_by_class_impl("hi-select-trigger", &target_el)
+                        platform::get_bounding_rect_by_class_impl("hk-select-trigger", &target_el)
                             .map(|rect| (rect.x, rect.y, rect.width, rect.height))
                     } else {
                         None
@@ -176,7 +176,7 @@ pub fn Select(props: SelectProps) -> Element {
 
             let menu_content = rsx! {
                 div {
-                    class: "hi-select-dropdown",
+                    class: "hk-select-dropdown",
                     // Match trigger width via inline style if we have the rect
                     style: if let Some((_, _, w, _)) = trigger_rect_opt { format!("width: {w}px;") } else { String::new() },
 
@@ -208,7 +208,7 @@ pub fn Select(props: SelectProps) -> Element {
                                     intensity: crate::GlowIntensity::Soft,
 
                                     div {
-                                        class: if is_selected { "hi-select-option hi-select-option-selected" } else { "hi-select-option" },
+                                        class: if is_selected { "hk-select-option hi-select-option-selected" } else { "hk-select-option" },
                                         onclick: click_handler,
                                         "{label}"
                                     }
@@ -244,13 +244,13 @@ pub fn Select(props: SelectProps) -> Element {
 
             div { class: trigger_classes, onclick: handle_trigger_click,
 
-                span { class: if selected_label.is_some() { "hi-select-value" } else { "hi-select-placeholder" },
+                span { class: if selected_label.is_some() { "hk-select-value" } else { "hk-select-placeholder" },
                     "{if let Some(label) = &selected_label { label.clone() } else { props.placeholder.clone().unwrap_or_else(|| \"请选择\".to_string()) }}"
                 }
 
                 // Chevron arrow
                 span {
-                    class: "hi-select-arrow",
+                    class: "hk-select-arrow",
                     Icon { icon: MdiIcon::ChevronDown, size: 16, class: String::new(), color: String::new() }
                 }
             }

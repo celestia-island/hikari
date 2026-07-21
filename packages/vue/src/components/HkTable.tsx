@@ -109,23 +109,23 @@ export default defineComponent({
             <tr class="hk-table-header-row">
               {props.selectable && (
                 <th class="hk-table-header-cell" style={{ width: "40px" }}>
-                  <label class="hk-checkbox-label">
+                  <label class="hk-table-checkbox-label">
                     <input
                       type="checkbox"
-                      class="hk-checkbox-input"
+                      class="hk-table-checkbox-input"
                       checked={allChecked.value}
                       onChange={toggleAll}
                     />
                     <span
                       class={[
-                        "hk-checkbox",
-                        "hk-checkbox--md",
-                        allChecked.value ? "hk-checkbox--checked" : "",
+                        "hk-table-checkbox",
+                        "hk-table-checkbox--md",
+                        allChecked.value ? "hk-table-checkbox--checked" : "",
                       ]}
                     >
                       {allChecked.value && (
                         <svg
-                          class="hk-checkbox-icon"
+                          class="hk-table-checkbox-icon"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -190,23 +190,23 @@ export default defineComponent({
                   <tr key={rowKey} class="hk-table-row">
                     {props.selectable && (
                       <td class="hk-table-cell" style={{ width: "40px" }}>
-                        <label class="hk-checkbox-label">
+                        <label class="hk-table-checkbox-label">
                           <input
                             type="checkbox"
-                            class="hk-checkbox-input"
+                            class="hk-table-checkbox-input"
                             checked={selectedRowKeys.value.has(rowKey)}
                             onChange={() => toggleRow(row, index)}
                           />
                           <span
                             class={[
-                              "hk-checkbox",
-                              "hk-checkbox--md",
-                              selectedRowKeys.value.has(rowKey) ? "hk-checkbox--checked" : "",
+                              "hk-table-checkbox",
+                              "hk-table-checkbox--md",
+                              selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox--checked" : "",
                             ]}
                           >
                             {selectedRowKeys.value.has(rowKey) && (
                               <svg
-                                class="hk-checkbox-icon"
+                                class="hk-table-checkbox-icon"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"

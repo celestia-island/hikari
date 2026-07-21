@@ -554,14 +554,14 @@ mod wasm_impl {
 
     #[wasm_bindgen(js_name = initAllScrollbarContainers)]
     pub fn init_all() {
-        init(".hi-aside-content");
-        init(".hi-layout-aside-content");
-        init(".hi-layout-content");
-        init(".hi-layout-scrollable");
-        init(".hi-tree-virtual");
-        init(".hi-tabs-nav");
-        init(".hi-table-container");
-        init(".hi-sidebar");
+        init(".hk-aside-content");
+        init(".hk-layout-aside-content");
+        init(".hk-layout-content");
+        init(".hk-layout-scrollable");
+        init(".hk-tree-virtual");
+        init(".hk-tabs-nav");
+        init(".hk-table-container");
+        init(".hk-sidebar");
         init(".sidebar-nav");
         init(".showcase-table-container");
         init(".custom-scrollbar-content-vdom");

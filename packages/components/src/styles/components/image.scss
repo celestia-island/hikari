@@ -5,20 +5,20 @@
 // Hikari Image Component
 // ============================================
 
-.hi-image-container {
+.hk-image-container {
   position: relative;
   display: inline-block;
   overflow: hidden;
 }
 
-.hi-image {
+.hk-image {
   display: block;
   max-width: 100%;
   height: auto;
   transition: opacity 0.3s ease;
 }
 
-.hi-logo {
+.hk-logo {
   display: inline-block;
   width: auto;
 }
@@ -27,7 +27,7 @@
 // Image Placeholder Styles
 // ============================================
 
-.hi-image-placeholder {
+.hk-image-placeholder {
   position: absolute;
   top: 0;
   left: 0;
@@ -39,7 +39,7 @@
   z-index: 1;
 }
 
-.hi-image-skeleton {
+.hk-image-skeleton {
   background: linear-gradient(
     90deg,
     var(--hi-color-surface) 0%,
@@ -59,7 +59,7 @@
   }
 }
 
-.hi-image-icon-placeholder {
+.hk-image-icon-placeholder {
   background-color: var(--hi-color-surface);
   border-radius: vars.$hikari-radius-fui-sm;
 
@@ -69,12 +69,12 @@
   }
 }
 
-.hi-image-container:hover .hi-image-icon-placeholder svg {
+.hk-image-container:hover .hk-image-icon-placeholder svg {
   opacity: 0.7;
 }
 
 // Dark mode adjustments
-[data-theme="dark"] .hi-image-skeleton {
+[data-theme="dark"] .hk-image-skeleton {
   background: linear-gradient(
     90deg,
     var(--hi-surface) 0%,

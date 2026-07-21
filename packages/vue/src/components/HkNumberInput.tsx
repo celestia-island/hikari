@@ -79,14 +79,14 @@ export default defineComponent({
 
     return () => (
       <div class={wrapperClass.value}>
-        <div class="hk-number-input__inner">
+        <div class="hk-number-input-inner">
           {slots.prefix ? (
-            <span class="hk-number-input__prefix">{slots.prefix()}</span>
+            <span class="hk-number-input-prefix">{slots.prefix()}</span>
           ) : null}
           <input
             ref={inputRef}
             type="number"
-            class="hk-number-input__field"
+            class="hk-number-input-field"
             value={props.modelValue}
             min={props.min}
             max={props.max}
@@ -98,12 +98,12 @@ export default defineComponent({
             }
           />
           {slots.suffix ? (
-            <span class="hk-number-input__suffix">{slots.suffix()}</span>
+            <span class="hk-number-input-suffix">{slots.suffix()}</span>
           ) : null}
-          <div class="hk-number-input__steppers">
+          <div class="hk-number-input-steppers">
             <button
               type="button"
-              class="hk-number-input__step hk-number-input__step--up"
+              class="hk-number-input-step hk-number-input-step--up"
               disabled={!canIncrement.value || props.disabled}
               onMousedown={(e: MouseEvent) => {
                 e.preventDefault();
@@ -129,7 +129,7 @@ export default defineComponent({
             </button>
             <button
               type="button"
-              class="hk-number-input__step hk-number-input__step--down"
+              class="hk-number-input-step hk-number-input-step--down"
               disabled={!canDecrement.value || props.disabled}
               onMousedown={(e: MouseEvent) => {
                 e.preventDefault();

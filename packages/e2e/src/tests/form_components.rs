@@ -29,7 +29,7 @@ impl FormComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let form = driver.find(By::Css(".hi-form")).await.map_err(|e| {
+        let form = driver.find(By::Css(".hk-form")).await.map_err(|e| {
             info!("Form element not found: {}", e);
             anyhow::anyhow!("Form element not found: {}", e)
         })?;
@@ -43,7 +43,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for form"))?;
 
-        if !class_attr.contains("hi-form") {
+        if !class_attr.contains("hk-form") {
             return Ok(TestResult::failure(
                 "Form",
                 "Form element missing 'hi-form' class",
@@ -75,7 +75,7 @@ impl FormComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let select = driver.find(By::Css(".hi-select")).await.map_err(|e| {
+        let select = driver.find(By::Css(".hk-select")).await.map_err(|e| {
             info!("Select element not found: {}", e);
             anyhow::anyhow!("Select element not found: {}", e)
         })?;
@@ -97,7 +97,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for select"))?;
 
-        if !class_attr.contains("hi-select") {
+        if !class_attr.contains("hk-select") {
             return Ok(TestResult::failure(
                 "Select",
                 "Select element missing 'hi-select' class",
@@ -129,7 +129,7 @@ impl FormComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let checkbox = driver.find(By::Css(".hi-checkbox")).await.map_err(|e| {
+        let checkbox = driver.find(By::Css(".hk-checkbox")).await.map_err(|e| {
             info!("Checkbox element not found: {}", e);
             anyhow::anyhow!("Checkbox element not found: {}", e)
         })?;
@@ -149,7 +149,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for checkbox"))?;
 
-        if !class_attr.contains("hi-checkbox") {
+        if !class_attr.contains("hk-checkbox") {
             return Ok(TestResult::failure(
                 "Checkbox",
                 "Checkbox element missing 'hi-checkbox' class",
@@ -181,7 +181,7 @@ impl FormComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let radio = driver.find(By::Css(".hi-radio")).await.map_err(|e| {
+        let radio = driver.find(By::Css(".hk-radio")).await.map_err(|e| {
             info!("Radio element not found: {}", e);
             anyhow::anyhow!("Radio element not found: {}", e)
         })?;
@@ -201,7 +201,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for radio"))?;
 
-        if !class_attr.contains("hi-radio") {
+        if !class_attr.contains("hk-radio") {
             return Ok(TestResult::failure(
                 "Radio",
                 "Radio element missing 'hi-radio' class",
@@ -233,7 +233,7 @@ impl FormComponentsTests {
 
         tokio::time::sleep(Duration::from_millis(500)).await;
 
-        let switch = driver.find(By::Css(".hi-switch")).await.map_err(|e| {
+        let switch = driver.find(By::Css(".hk-switch")).await.map_err(|e| {
             info!("Switch element not found: {}", e);
             anyhow::anyhow!("Switch element not found: {}", e)
         })?;
@@ -253,7 +253,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for switch"))?;
 
-        if !class_attr.contains("hi-switch") {
+        if !class_attr.contains("hk-switch") {
             return Ok(TestResult::failure(
                 "Switch",
                 "Switch element missing 'hi-switch' class",
@@ -287,7 +287,7 @@ impl FormComponentsTests {
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Verify Carousel element exists
-        let carousel = driver.find(By::Css(".hi-carousel")).await.map_err(|e| {
+        let carousel = driver.find(By::Css(".hk-carousel")).await.map_err(|e| {
             info!("Carousel element not found: {}", e);
             anyhow::anyhow!("Carousel element not found: {}", e)
         })?;
@@ -301,7 +301,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for carousel"))?;
 
-        if !class_attr.contains("hi-carousel") {
+        if !class_attr.contains("hk-carousel") {
             return Ok(TestResult::failure(
                 "Carousel",
                 "Carousel element missing 'hi-carousel' class",
@@ -310,7 +310,7 @@ impl FormComponentsTests {
 
         // Verify carousel track exists
         driver
-            .find(By::Css(".hi-carousel-track"))
+            .find(By::Css(".hk-carousel-track"))
             .await
             .map_err(|e| {
                 info!("Carousel track not found: {}", e);
@@ -321,7 +321,7 @@ impl FormComponentsTests {
 
         // Verify carousel items exist
         let carousel_items = driver
-            .find_all(By::Css(".hi-carousel-item"))
+            .find_all(By::Css(".hk-carousel-item"))
             .await
             .map_err(|e| {
                 info!("Carousel items not found: {}", e);
@@ -342,7 +342,7 @@ impl FormComponentsTests {
 
         // Click next button to test navigation
         let next_button = driver
-            .find(By::Css(".hi-carousel-arrow-next"))
+            .find(By::Css(".hk-carousel-arrow-next"))
             .await
             .map_err(|e| {
                 info!("Next button not found: {}", e);
@@ -359,7 +359,7 @@ impl FormComponentsTests {
 
         // Click previous button to test navigation
         let prev_button = driver
-            .find(By::Css(".hi-carousel-arrow-prev"))
+            .find(By::Css(".hk-carousel-arrow-prev"))
             .await
             .map_err(|e| {
                 info!("Previous button not found: {}", e);
@@ -376,7 +376,7 @@ impl FormComponentsTests {
 
         // Verify carousel dots exist
         let carousel_dots = driver
-            .find_all(By::Css(".hi-carousel-dot"))
+            .find_all(By::Css(".hk-carousel-dot"))
             .await
             .map_err(|e| {
                 info!("Carousel dots not found: {}", e);
@@ -398,7 +398,7 @@ impl FormComponentsTests {
 
         // Verify active dot exists
         driver
-            .find(By::Css(".hi-carousel-dot-active"))
+            .find(By::Css(".hk-carousel-dot-active"))
             .await
             .map_err(|e| {
                 info!("Active carousel dot not found: {}", e);
@@ -438,7 +438,7 @@ impl FormComponentsTests {
         tokio::time::sleep(Duration::from_millis(500)).await;
 
         // Verify Stepper element exists
-        let stepper = driver.find(By::Css(".hi-stepper")).await.map_err(|e| {
+        let stepper = driver.find(By::Css(".hk-stepper")).await.map_err(|e| {
             info!("Stepper element not found: {}", e);
             anyhow::anyhow!("Stepper element not found: {}", e)
         })?;
@@ -452,7 +452,7 @@ impl FormComponentsTests {
         let class_attr =
             class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found for stepper"))?;
 
-        if !class_attr.contains("hi-stepper") {
+        if !class_attr.contains("hk-stepper") {
             return Ok(TestResult::failure(
                 "Stepper",
                 "Stepper element missing 'hi-stepper' class",
@@ -461,7 +461,7 @@ impl FormComponentsTests {
 
         // Verify step numbers exist
         let step_numbers = driver
-            .find_all(By::Css(".hi-step-number"))
+            .find_all(By::Css(".hk-step-number"))
             .await
             .map_err(|e| {
                 info!("Step numbers not found: {}", e);
@@ -481,7 +481,7 @@ impl FormComponentsTests {
         }
 
         // Verify active step exists
-        let active_step = driver.find(By::Css(".hi-step-active")).await.map_err(|e| {
+        let active_step = driver.find(By::Css(".hk-step-active")).await.map_err(|e| {
             info!("Active step not found: {}", e);
             anyhow::anyhow!("Active step not found: {}", e)
         })?;
@@ -496,7 +496,7 @@ impl FormComponentsTests {
         let active_class_attr = active_class_attr
             .ok_or_else(|| anyhow::anyhow!("No class attribute found for active step"))?;
 
-        if !active_class_attr.contains("hi-step-active") {
+        if !active_class_attr.contains("hk-step-active") {
             return Ok(TestResult::failure(
                 "Stepper",
                 "Active step missing 'hi-step-active' class",
@@ -505,7 +505,7 @@ impl FormComponentsTests {
 
         // Verify connectors exist
         let connectors = driver
-            .find_all(By::Css(".hi-step-connector"))
+            .find_all(By::Css(".hk-step-connector"))
             .await
             .map_err(|e| {
                 info!("Connectors not found: {}", e);

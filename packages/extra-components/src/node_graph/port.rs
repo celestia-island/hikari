@@ -88,10 +88,10 @@ impl Port {
     /// Get the CSS class string
     pub fn class_string(&self) -> String {
         format!(
-            "hi-node-graph-port hi-node-port-{} {} {}",
+            "hk-node-graph-port hi-node-port-{} {} {}",
             self.port_type.as_str(),
-            if self.disabled { "hi-port-disabled" } else { "" },
-            if self.connected { "hi-port-connected" } else { "" }
+            if self.disabled { "hk-port-disabled" } else { "" },
+            if self.connected { "hk-port-connected" } else { "" }
         )
     }
 
@@ -157,9 +157,9 @@ mod tests {
             .with_connected(true);
 
         let class = port.class_string();
-        assert!(class.contains("hi-node-port-input"));
-        assert!(class.contains("hi-port-disabled"));
-        assert!(class.contains("hi-port-connected"));
+        assert!(class.contains("hk-node-port-input"));
+        assert!(class.contains("hk-port-disabled"));
+        assert!(class.contains("hk-port-connected"));
     }
 
     #[test]

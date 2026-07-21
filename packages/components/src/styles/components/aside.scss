@@ -6,10 +6,10 @@
 // Icon color inheritance for theme support
 // ============================================
 
-.hi-aside,
-.hi-sidebar,
-.hi-sidebar-item,
-.hi-sidebar-link {
+.hk-aside,
+.hk-sidebar,
+.hk-sidebar-item,
+.hk-sidebar-link {
   // SVG icons inherit theme color via CSS color property
   svg {
     color: inherit;
@@ -25,7 +25,7 @@
 // Base Aside Styles
 // ============================================
 
-.hi-aside {
+.hk-aside {
   // Layout
   display: flex;
   flex-direction: column;
@@ -45,20 +45,20 @@
   padding: 0;
 
   // Fixed/flush variant (no border radius, full height)
-  &.hi-aside-fixed {
+  &.hk-aside-fixed {
     min-height: 100vh;
   }
 
   // Collapsed state
-  &.hi-aside-collapsed {
+  &.hk-aside-collapsed {
     width: 64px;
     padding: vars.$hikari-spacing-md vars.$hikari-spacing-sm;
 
     // Hide text elements
-    .hi-aside-logo-text,
-    .hi-menu-item-label,
-    .hi-menu-group-title,
-    .hi-menu-item-shortcut {
+    .hk-aside-logo-text,
+    .hk-menu-item-label,
+    .hk-menu-group-title,
+    .hk-menu-item-shortcut {
       opacity: 0;
       pointer-events: none;
       width: 0;
@@ -66,23 +66,23 @@
     }
 
     // Center align icons
-    .hi-menu-item {
+    .hk-menu-item {
       justify-content: center;
       padding: 0.75rem;
 
-      .hi-menu-item-icon {
+      .hk-menu-item-icon {
         margin: 0;
       }
     }
 
     // Rotate arrows to point down (for submenus)
-    .hi-menu-item-arrow {
+    .hk-menu-item-arrow {
       transform: rotate(90deg);
     }
   }
 
   // Expanded state (default)
-  &.hi-aside-expanded {
+  &.hk-aside-expanded {
     width: 260px;
 
     @include mix.mobile {
@@ -96,7 +96,7 @@
 // Aside Header (Logo Area)
 // ============================================
 
-.hi-aside-header {
+.hk-aside-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -115,7 +115,7 @@
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Logo
-  .hi-aside-logo {
+  .hk-aside-logo {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -125,7 +125,7 @@
     min-width: 0;
 
     // Logo icon
-    .hi-aside-logo-icon {
+    .hk-aside-logo-icon {
       width: 2rem;
       height: 2rem;
       flex-shrink: 0;
@@ -150,7 +150,7 @@
     }
 
     // Logo text
-    .hi-aside-logo-text {
+    .hk-aside-logo-text {
       font-family: vars.$hikari-font-family-sans;
       font-size: vars.$hikari-font-size-lg;
       font-weight: 700;
@@ -170,7 +170,7 @@
     }
 
     // Hover state
-    &:hover .hi-aside-logo-icon {
+    &:hover .hk-aside-logo-icon {
       box-shadow:
         0 0 20px var(--hi-primary),
         inset 0 0 12px var(--hi-primary);
@@ -179,7 +179,7 @@
   }
 
   // Collapse toggle button
-  .hi-aside-toggle {
+  .hk-aside-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -233,15 +233,15 @@
   }
 
   // Mobile-only toggle button (hidden on desktop)
-  .hi-aside-toggle-mobile {
+  .hk-aside-toggle-mobile {
     @include mix.desktop {
       display: none;
     }
   }
 
   // Rotate toggle icon when collapsed
-  .hi-aside-collapsed & {
-    .hi-aside-toggle svg {
+  .hk-aside-collapsed & {
+    .hk-aside-toggle svg {
       transform: rotate(180deg);
     }
   }
@@ -251,7 +251,7 @@
 // Aside Content (Scrollable Menu Area)
 // ============================================
 
-.hi-aside-content {
+.hk-aside-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -318,14 +318,14 @@
 // Aside Menu Items
 // ============================================
 
-.hi-aside-menu {
+.hk-aside-menu {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
 // Menu item
-.hi-aside-menu-item {
+.hk-aside-menu-item {
   // Glow effect variables (fixed position for aside)
   --glow-x: 50%;
   --glow-y: 50%;
@@ -386,7 +386,7 @@
   }
 
   // Icon
-  .hi-aside-menu-item-icon {
+  .hk-aside-menu-item-icon {
     flex-shrink: 0;
     width: 1.125rem;
     height: 1.125rem;
@@ -401,7 +401,7 @@
   }
 
   // Label
-  .hi-aside-menu-item-label {
+  .hk-aside-menu-item-label {
     flex: 1;
 
     // Transition for collapsed state
@@ -411,7 +411,7 @@
   }
 
   // Badge/counter
-  .hi-aside-menu-item-badge {
+  .hk-aside-menu-item-badge {
     margin-left: auto;
     padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
@@ -426,7 +426,7 @@
   }
 
   // Submenu indicator arrow
-  .hi-aside-menu-item-arrow {
+  .hk-aside-menu-item-arrow {
     flex-shrink: 0;
     width: 0.75rem;
     height: 0.75rem;
@@ -453,17 +453,17 @@
       opacity: 0.2;
     }
 
-    .hi-aside-menu-item-icon {
+    .hk-aside-menu-item-icon {
       color: var(--hi-color-text-primary);
     }
 
-    .hi-aside-menu-item-arrow {
+    .hk-aside-menu-item-arrow {
       color: var(--hi-color-text-secondary);
     }
   }
 
   // Disabled state
-  &.hi-aside-menu-item-disabled {
+  &.hk-aside-menu-item-disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
@@ -478,11 +478,11 @@
 // Aside Menu Groups (Collapsible Sections)
 // ============================================
 
-.hi-aside-menu-group {
+.hk-aside-menu-group {
   padding-bottom: 0.5rem;
 
   // Group title
-  .hi-aside-menu-group-title {
+  .hk-aside-menu-group-title {
     padding: 0.5rem 0.875rem;
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
@@ -499,8 +499,8 @@
   }
 
   // Collapsible group
-  &.hi-aside-menu-group-collapsible {
-    .hi-aside-menu-group-title {
+  &.hk-aside-menu-group-collapsible {
+    .hk-aside-menu-group-title {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -531,19 +531,19 @@
     }
 
     // Expanded state
-    &.hi-aside-menu-group-expanded {
-      .hi-aside-menu-group-title::after {
+    &.hk-aside-menu-group-expanded {
+      .hk-aside-menu-group-title::after {
         transform: rotate(225deg);
       }
     }
 
     // Collapsed state
-    &.hi-aside-menu-group-collapsed {
-      .hi-aside-menu-group-title::after {
+    &.hk-aside-menu-group-collapsed {
+      .hk-aside-menu-group-title::after {
         transform: rotate(45deg);
       }
 
-      .hi-aside-menu-group-content {
+      .hk-aside-menu-group-content {
         max-height: 0;
         opacity: 0;
         overflow: hidden;
@@ -552,7 +552,7 @@
   }
 
   // Group content (menu items)
-  .hi-aside-menu-group-content {
+  .hk-aside-menu-group-content {
     max-height: 1000px;
     opacity: 1;
     overflow: visible;
@@ -566,28 +566,28 @@
 // Aside Submenu (Nested Navigation)
 // ============================================
 
-.hi-aside-submenu {
+.hk-aside-submenu {
   position: relative;
 
   // Submenu trigger
-  .hi-aside-submenu-trigger {
-    @extend .hi-aside-menu-item;
+  .hk-aside-submenu-trigger {
+    @extend .hk-aside-menu-item;
 
     // Arrow points right by default
-    .hi-aside-menu-item-arrow {
+    .hk-aside-menu-item-arrow {
       transform: rotate(0deg);
     }
 
     // Expanded state - arrow points down
-    &.hi-aside-submenu-open {
-      .hi-aside-menu-item-arrow {
+    &.hk-aside-submenu-open {
+      .hk-aside-menu-item-arrow {
         transform: rotate(90deg);
       }
     }
   }
 
   // Nested submenu list
-  .hi-aside-submenu-list {
+  .hk-aside-submenu-list {
     padding: 0.5rem 0.5rem 0.5rem 2rem;
     border-left: 2px solid var(--hi-primary);
     list-style: none;
@@ -606,7 +606,7 @@
     // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
     // Collapsed state
-    &.hi-aside-submenu-collapsed {
+    &.hk-aside-submenu-collapsed {
       opacity: 0;
       max-height: 0;
       overflow: hidden;
@@ -615,7 +615,7 @@
     }
 
     // Nested menu items (smaller indentation)
-    .hi-aside-menu-item {
+    .hk-aside-menu-item {
       font-size: 0.875rem;
       padding: 0.5rem 0.75rem;
     }
@@ -626,7 +626,7 @@
 // Aside Footer
 // ============================================
 
-.hi-aside-footer {
+.hk-aside-footer {
   margin-top: vars.$hikari-spacing-md;
   padding-top: vars.$hikari-spacing-lg;
   padding-bottom: vars.$hikari-spacing-lg;
@@ -637,14 +637,14 @@
   // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
   // Language label styling
-  .hi-aside-footer-lang-label {
+  .hk-aside-footer-lang-label {
     font-size: vars.$hikari-font-size-xs;
     font-weight: 600;
     letter-spacing: 0.05em;
   }
 
   // User info section
-  .hi-aside-user {
+  .hk-aside-user {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -656,7 +656,7 @@
     // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
     // Avatar
-    .hi-aside-user-avatar {
+    .hk-aside-user-avatar {
       width: 2rem;
       height: 2rem;
       border-radius: vars.$hikari-radius-fui-sm;
@@ -671,7 +671,7 @@
     }
 
     // User info
-    .hi-aside-user-info {
+    .hk-aside-user-info {
       flex: 1;
       min-width: 0;
       display: flex;
@@ -684,7 +684,7 @@
       // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
       // Username
-      .hi-aside-user-name {
+      .hk-aside-user-name {
         font-size: vars.$hikari-font-size-sm;
         font-weight: 500;
         color: var(--hi-color-text-primary);
@@ -692,7 +692,7 @@
       }
 
       // User role/status
-      .hi-aside-user-role {
+      .hk-aside-user-role {
         font-size: 0.75rem;
         color: var(--hi-color-text-secondary);
         @include mix.text-ellipsis;
@@ -703,7 +703,7 @@
     &:hover {
       background: var(--hi-primary);
 
-      .hi-aside-user-avatar {
+      .hk-aside-user-avatar {
         border-color: var(--hi-primary);
         --hi-glow-transparent: false;
         --hi-glow-bg-color: var(--hi-primary);
@@ -717,7 +717,7 @@
 // Aside Mobile Drawer Behavior
 // ============================================
 
-.hi-aside-drawer {
+.hk-aside-drawer {
   @include mix.mobile {
     position: fixed;
     top: 0;
@@ -734,7 +734,7 @@
     // transition: transform vars.$hikari-duration-normal vars.$hikari-ease-smooth;
 
     // Open state
-    &.hi-aside-drawer-open {
+    &.hk-aside-drawer-open {
       transform: translateX(0);
     }
 
@@ -756,7 +756,7 @@
       // transition: opacity vars.$hikari-duration-normal vars.$hikari-ease-smooth;
     }
 
-    &.hi-aside-drawer-open::after {
+    &.hk-aside-drawer-open::after {
       opacity: 1;
       pointer-events: auto;
     }
@@ -767,44 +767,44 @@
 // Aside Size Variants
 // ============================================
 
-.hi-aside-sm {
+.hk-aside-sm {
   width: 200px;
 
-  &.hi-aside-collapsed {
+  &.hk-aside-collapsed {
     width: 56px;
   }
 
-  .hi-aside-menu-item {
+  .hk-aside-menu-item {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
 
-    .hi-aside-menu-item-icon {
+    .hk-aside-menu-item-icon {
       width: 1rem;
       height: 1rem;
     }
   }
 }
 
-.hi-aside-md {
+.hk-aside-md {
   width: 260px;
 
-  &.hi-aside-collapsed {
+  &.hk-aside-collapsed {
     width: 64px;
   }
 }
 
-.hi-aside-lg {
+.hk-aside-lg {
   width: 320px;
 
-  &.hi-aside-collapsed {
+  &.hk-aside-collapsed {
     width: 72px;
   }
 
-  .hi-aside-menu-item {
+  .hk-aside-menu-item {
     padding: 0.75rem 1rem;
     font-size: 0.9375rem;
 
-    .hi-aside-menu-item-icon {
+    .hk-aside-menu-item-icon {
       width: 1.25rem;
       height: 1.25rem;
     }
@@ -816,12 +816,12 @@
 // ============================================
 
 // Dark variant (default)
-.hi-aside-dark {
+.hk-aside-dark {
   background: var(--hi-card-bg);
 }
 
 // Light variant
-.hi-aside-light {
+.hk-aside-light {
   background: var(--hi-surface);
 
   &::before {
@@ -835,17 +835,17 @@
     );
   }
 
-  .hi-aside-menu-item {
+  .hk-aside-menu-item {
     color: var(--hi-color-text-primary);
 
-    &.hi-aside-menu-item-active {
+    &.hk-aside-menu-item-active {
       background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
     }
   }
 }
 
 // Primary variant
-.hi-aside-primary {
+.hk-aside-primary {
   background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
   border-color: var(--hi-white-20, rgba(255, 255, 255, 0.2));
 
@@ -864,7 +864,7 @@
 // ============================================
 
 // Slide in from left
-.hi-aside-animate-in {
+.hk-aside-animate-in {
   // DISABLED - migrated to JS animation
 
   // animation: aside-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -883,7 +883,7 @@
 // }
 
 // Fade in
-.hi-aside-fade-in {
+.hk-aside-fade-in {
   // DISABLED - migrated to JS animation
 
   // animation: aside-fade-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -900,8 +900,8 @@
 // }
 
 // Stagger animation for menu items
-.hi-aside-stagger {
-  .hi-aside-menu-item {
+.hk-aside-stagger {
+  .hk-aside-menu-item {
     opacity: 0;
     // DISABLED - migrated to JS animation
 
@@ -928,7 +928,7 @@
 // }
 
 // Ripple effect on click
-.hi-aside-menu-item-ripple {
+.hk-aside-menu-item-ripple {
   &::after {
     content: '';
     position: absolute;
@@ -955,7 +955,7 @@
 // ============================================
 
 @media print {
-  .hi-aside {
+  .hk-aside {
     display: none;
   }
 }

@@ -9,7 +9,7 @@
 // Base Transfer Styles
 // ============================================
 
-.hi-transfer {
+.hk-transfer {
     display: flex;
     align-items: stretch;
     gap: 1rem;
@@ -20,7 +20,7 @@
 // Transfer Panel
 // ============================================
 
-.hi-transfer-panel {
+.hk-transfer-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -38,7 +38,7 @@
 // Panel Header
 // ============================================
 
-.hi-transfer-panel-header {
+.hk-transfer-panel-header {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -47,13 +47,13 @@
     border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
 }
 
-.hi-transfer-panel-checkbox {
+.hk-transfer-panel-checkbox {
     width: 1rem;
     height: 1rem;
     cursor: pointer;
 }
 
-.hi-transfer-panel-title {
+.hk-transfer-panel-title {
     flex: 1;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
@@ -61,7 +61,7 @@
     color: var(--hi-color-text-primary);
 }
 
-.hi-transfer-panel-count {
+.hk-transfer-panel-count {
     font-size: vars.$hikari-font-size-xs;
     color: var(--hi-color-text-secondary);
     padding: 0.125rem 0.375rem;
@@ -73,12 +73,12 @@
 // Panel Search
 // ============================================
 
-.hi-transfer-panel-search {
+.hk-transfer-panel-search {
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--hi-input-border, rgba(255, 255, 255, 0.1));
 }
 
-.hi-transfer-panel-input {
+.hk-transfer-panel-input {
     width: 100%;
     padding: 0.375rem 0.625rem;
     font-family: vars.$hikari-font-family-sans;
@@ -107,7 +107,7 @@
 // Panel List
 // ============================================
 
-.hi-transfer-panel-list {
+.hk-transfer-panel-list {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
@@ -125,7 +125,7 @@
 // Panel Item
 // ============================================
 
-.hi-transfer-panel-item {
+.hk-transfer-panel-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -150,7 +150,7 @@
             inset 0 0 6px var(--hi-glow-color);
     }
 
-    &.hi-transfer-panel-item-selected {
+    &.hk-transfer-panel-item-selected {
         background: var(--hi-primary);
         color: var(--hi-color-primary);
         font-weight: 500;
@@ -159,21 +159,21 @@
             inset 0 0 8px var(--hi-primary);
     }
 
-    &.hi-transfer-panel-item-disabled {
+    &.hk-transfer-panel-item-disabled {
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
     }
 }
 
-.hi-transfer-item-checkbox {
+.hk-transfer-item-checkbox {
     width: 1rem;
     height: 1rem;
     flex-shrink: 0;
     cursor: pointer;
 }
 
-.hi-transfer-item-label {
+.hk-transfer-item-label {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -182,7 +182,7 @@
     @include mix.text-ellipsis;
 }
 
-.hi-transfer-panel-empty {
+.hk-transfer-panel-empty {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -195,14 +195,14 @@
 // Transfer Operations
 // ============================================
 
-.hi-transfer-operations {
+.hk-transfer-operations {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     align-self: center;
 }
 
-.hi-transfer-operation {
+.hk-transfer-operation {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -247,12 +247,12 @@
 // Focus Styles
 // ============================================
 
-.hi-transfer-panel-item:focus-visible {
+.hk-transfer-panel-item:focus-visible {
     outline: 2px solid var(--hi-color-primary);
     outline-offset: -2px;
 }
 
-.hi-transfer-operation:focus-visible {
+.hk-transfer-operation:focus-visible {
     outline: 2px solid var(--hi-color-primary);
     outline-offset: 2px;
 }
@@ -261,7 +261,7 @@
 // Animation
 // ============================================
 
-.hi-transfer-panel-item {
+.hk-transfer-panel-item {
     animation: transfer-item-in vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 }
 
@@ -281,22 +281,22 @@
 // ============================================
 
 @include mix.mobile {
-    .hi-transfer {
+    .hk-transfer {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .hi-transfer-panel {
+    .hk-transfer-panel {
         max-width: 100%;
         min-width: 100%;
     }
 
-    .hi-transfer-operations {
+    .hk-transfer-operations {
         flex-direction: row;
         justify-content: center;
     }
 
-    .hi-transfer-operations .hi-transfer-operation {
+    .hk-transfer-operations .hk-transfer-operation {
         transform: rotate(90deg);
 
         &:last-child {
@@ -310,11 +310,11 @@
 // ============================================
 
 @media (prefers-reduced-motion: reduce) {
-    .hi-transfer,
-    .hi-transfer-panel,
-    .hi-transfer-panel-item,
-    .hi-transfer-operation,
-    .hi-transfer-panel-input {
+    .hk-transfer,
+    .hk-transfer-panel,
+    .hk-transfer-panel-item,
+    .hk-transfer-operation,
+    .hk-transfer-panel-input {
         transition: none;
         animation: none;
     }
@@ -325,19 +325,19 @@
 // ============================================
 
 @media (prefers-contrast: high) {
-    .hi-transfer-panel {
+    .hk-transfer-panel {
         border-width: 2px;
     }
 
-    .hi-transfer-panel-item {
+    .hk-transfer-panel-item {
         border: 1px solid transparent;
     }
 
-    .hi-transfer-panel-item.hi-transfer-panel-item-selected {
+    .hk-transfer-panel-item.hk-transfer-panel-item-selected {
         border-width: 2px;
     }
 
-    .hi-transfer-operation {
+    .hk-transfer-operation {
         border-width: 2px;
     }
 }

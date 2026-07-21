@@ -124,7 +124,7 @@ pub fn ZoomControls(props: ZoomControlsProps) -> Element {
 impl StyledComponent for ZoomControlsComponent {
     fn styles() -> &'static str {
         r#"
-.hi-zoom-controls {
+.hk-zoom-controls {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -134,11 +134,11 @@ impl StyledComponent for ZoomControlsComponent {
     border-radius: 8px;
 }
 
-[data-theme="dark"] .hi-zoom-controls {
+[data-theme="dark"] .hk-zoom-controls {
     background-color: var(--hi-surface);
 }
 
-.hi-zoom-controls-button {
+.hk-zoom-controls-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -153,22 +153,22 @@ impl StyledComponent for ZoomControlsComponent {
     transition: all 0.2s ease;
 }
 
-.hi-zoom-controls-button:hover:not(.hi-zoom-controls-button-disabled) {
+.hk-zoom-controls-button:hover:not(.hk-zoom-controls-button-disabled) {
     background-color: var(--hi-color-hover);
     color: var(--hi-text-primary);
 }
 
-.hi-zoom-controls-button:active:not(.hi-zoom-controls-button-disabled) {
+.hk-zoom-controls-button:active:not(.hk-zoom-controls-button-disabled) {
     background-color: var(--hi-color-primary);
     color: white;
 }
 
-.hi-zoom-controls-button-disabled {
+.hk-zoom-controls-button-disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.hi-zoom-controls-percentage {
+.hk-zoom-controls-percentage {
     min-width: 50px;
     text-align: center;
     font-size: 13px;
@@ -177,7 +177,7 @@ impl StyledComponent for ZoomControlsComponent {
     font-variant-numeric: tabular-nums;
 }
 
-.hi-zoom-controls-slider {
+.hk-zoom-controls-slider {
     flex: 1;
     min-width: 80px;
 }

@@ -123,7 +123,7 @@ pub fn QRCode(props: QRCodeProps) -> Element {
 impl StyledComponent for QRCodeComponent {
     fn styles() -> &'static str {
         r#"
-.hi-qrcode-container {
+.hk-qrcode-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -133,7 +133,7 @@ impl StyledComponent for QRCodeComponent {
     border: 1px solid var(--hi-color-border);
 }
 
-.hi-qrcode-title {
+.hk-qrcode-title {
     margin: 0 0 0.75rem 0;
     font-size: 0.875rem;
     font-weight: 600;
@@ -141,7 +141,7 @@ impl StyledComponent for QRCodeComponent {
     text-align: center;
 }
 
-.hi-qrcode-wrapper {
+.hk-qrcode-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -149,7 +149,7 @@ impl StyledComponent for QRCodeComponent {
     overflow: hidden;
 }
 
-.hi-qrcode-image {
+.hk-qrcode-image {
     display: block;
     border: 1px solid var(--hi-color-border);
     border-radius: 4px;

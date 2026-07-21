@@ -2,7 +2,7 @@
 // Slide-out panel from screen edges
 
 // Mask/overlay
-.hi-drawer-mask {
+.hk-drawer-mask {
     position: fixed;
     top: 0;
     left: 0;
@@ -13,13 +13,13 @@
     opacity: 0;
     transition: opacity 0.3s ease;
 
-    &.hi-drawer-mask-visible {
+    &.hk-drawer-mask-visible {
         opacity: 1;
     }
 }
 
 // Base drawer container
-.hi-drawer {
+.hk-drawer {
     position: fixed;
     z-index: 1001;
     background-color: var(--hi-surface, #ffffff);
@@ -30,56 +30,56 @@
 }
 
 // Position variants
-.hi-drawer-right {
+.hk-drawer-right {
     top: 0;
     right: 0;
     height: 100vh;
     width: 256px;
     transform: translateX(100%);
 
-    &.hi-drawer-open {
+    &.hk-drawer-open {
         transform: translateX(0);
     }
 }
 
-.hi-drawer-left {
+.hk-drawer-left {
     top: 0;
     left: 0;
     height: 100vh;
     width: 256px;
     transform: translateX(-100%);
 
-    &.hi-drawer-open {
+    &.hk-drawer-open {
         transform: translateX(0);
     }
 }
 
-.hi-drawer-top {
+.hk-drawer-top {
     top: 0;
     left: 0;
     width: 100vw;
     height: 256px;
     transform: translateY(-100%);
 
-    &.hi-drawer-open {
+    &.hk-drawer-open {
         transform: translateY(0);
     }
 }
 
-.hi-drawer-bottom {
+.hk-drawer-bottom {
     bottom: 0;
     left: 0;
     width: 100vw;
     height: 256px;
     transform: translateY(100%);
 
-    &.hi-drawer-open {
+    &.hk-drawer-open {
         transform: translateY(0);
     }
 }
 
 // Drawer header
-.hi-drawer-header {
+.hk-drawer-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -87,14 +87,14 @@
     border-bottom: 1px solid var(--hi-border, rgba(0, 0, 0, 0.1));
 }
 
-.hi-drawer-title {
+.hk-drawer-title {
     font-size: 16px;
     font-weight: 600;
     color: var(--hi-text-primary, #333);
     margin: 0;
 }
 
-.hi-drawer-close {
+.hk-drawer-close {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -118,7 +118,7 @@
 }
 
 // Drawer body
-.hi-drawer-body {
+.hk-drawer-body {
     flex: 1;
     padding: 24px;
     overflow-y: auto;
@@ -146,7 +146,7 @@
 }
 
 // Drawer footer
-.hi-drawer-footer {
+.hk-drawer-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--hi-border, rgba(0, 0, 0, 0.1));
     display: flex;
@@ -155,24 +155,24 @@
 }
 
 // Dark theme adjustments
-[data-theme="dark"] .hi-drawer,
-[data-theme="tairitsu"] .hi-drawer {
+[data-theme="dark"] .hk-drawer,
+[data-theme="tairitsu"] .hk-drawer {
     background-color: rgba(0, 0, 0, 0.95);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .hi-drawer-header,
-[data-theme="tairitsu"] .hi-drawer-header {
+[data-theme="dark"] .hk-drawer-header,
+[data-theme="tairitsu"] .hk-drawer-header {
     border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] .hi-drawer-title,
-[data-theme="tairitsu"] .hi-drawer-title {
+[data-theme="dark"] .hk-drawer-title,
+[data-theme="tairitsu"] .hk-drawer-title {
     color: var(--hi-text-primary, #e0e0e0);
 }
 
-[data-theme="dark"] .hi-drawer-close,
-[data-theme="tairitsu"] .hi-drawer-close {
+[data-theme="dark"] .hk-drawer-close,
+[data-theme="tairitsu"] .hk-drawer-close {
     color: var(--hi-text-secondary, #b0b0b0);
 
     &:hover {
@@ -185,54 +185,54 @@
     }
 }
 
-[data-theme="dark"] .hi-drawer-body,
-[data-theme="tairitsu"] .hi-drawer-body {
+[data-theme="dark"] .hk-drawer-body,
+[data-theme="tairitsu"] .hk-drawer-body {
     color: var(--hi-text-primary, #e0e0e0);
 }
 
-[data-theme="dark"] .hi-drawer-footer,
-[data-theme="tairitsu"] .hi-drawer-footer {
+[data-theme="dark"] .hk-drawer-footer,
+[data-theme="tairitsu"] .hk-drawer-footer {
     border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 // High contrast mode support
 @media (prefers-contrast: high) {
-    .hi-drawer {
+    .hk-drawer {
         border: 2px solid var(--hi-color-border, #000);
     }
 
-    .hi-drawer-header,
-    .hi-drawer-footer {
+    .hk-drawer-header,
+    .hk-drawer-footer {
         border-width: 2px;
     }
 }
 
 // Accessibility: respect prefers-reduced-motion
 @media (prefers-reduced-motion: reduce) {
-    .hi-drawer,
-    .hi-drawer-mask {
+    .hk-drawer,
+    .hk-drawer-mask {
         transition: opacity 0.1s ease, transform 0.1s ease;
     }
 }
 
 // Responsive width adjustments
 @media (max-width: 768px) {
-    .hi-drawer-right,
-    .hi-drawer-left {
+    .hk-drawer-right,
+    .hk-drawer-left {
         width: 80vw;
         max-width: 300px;
     }
 
-    .hi-drawer-top,
-    .hi-drawer-bottom {
+    .hk-drawer-top,
+    .hk-drawer-bottom {
         height: 40vh;
         max-height: 300px;
     }
 }
 
 @media (max-width: 480px) {
-    .hi-drawer-right,
-    .hi-drawer-left {
+    .hk-drawer-right,
+    .hk-drawer-left {
         width: 100vw;
     }
 }

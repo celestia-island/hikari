@@ -12,26 +12,26 @@
   user-select: none;
 }
 
-.hk-status-bar__left {
+.hk-status-bar-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
 }
 
-.hk-status-bar__right {
+.hk-status-bar-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
 }
 
-.hk-status-bar__version {
+.hk-status-bar-version {
   white-space: nowrap;
   opacity: 0.7;
 }
 
-.hk-status-bar__connection {
+.hk-status-bar-connection {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -56,38 +56,38 @@
   }
 }
 
-.hk-status-bar__dot {
+.hk-status-bar-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--dot-color, var(--hi-color-muted));
   flex-shrink: 0;
 
-  .hk-status-bar__connection--reconnecting & {
+  .hk-status-bar-connection--reconnecting & {
     animation: hk-status-pulse 1.5s ease-in-out infinite;
   }
 
-  .hk-status-bar__connection--disconnected & {
+  .hk-status-bar-connection--disconnected & {
     opacity: 0.5;
   }
 }
 
-.hk-status-bar__stat {
+.hk-status-bar-stat {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   white-space: nowrap;
 }
 
-.hk-status-bar__stat-label {
+.hk-status-bar-stat-label {
   opacity: 0.6;
 }
 
-.hk-status-bar__stat-label::after {
+.hk-status-bar-stat-label::after {
   content: ":";
 }
 
-.hk-status-bar__stat-value {
+.hk-status-bar-stat-value {
   font-weight: 600;
   color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;

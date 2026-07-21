@@ -75,7 +75,7 @@ pub fn Empty(props: EmptyProps) -> Element {
 impl StyledComponent for EmptyComponent {
     fn styles() -> &'static str {
         r#"
-.hi-empty-container {
+.hk-empty-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -86,13 +86,13 @@ impl StyledComponent for EmptyComponent {
     min-height: 200px;
 }
 
-.hi-empty-image {
+.hk-empty-image {
     width: 100%;
     max-width: 400px;
     margin-bottom: 0.5rem;
 }
 
-.hi-empty-img {
+.hk-empty-img {
     width: 100%;
     height: auto;
     max-height: 200px;
@@ -100,14 +100,14 @@ impl StyledComponent for EmptyComponent {
     opacity: 0.8;
 }
 
-.hi-empty-title {
+.hk-empty-title {
     margin: 0;
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--hi-color-text-primary);
 }
 
-.hi-empty-description {
+.hk-empty-description {
     margin: 0;
     font-size: 0.875rem;
     color: var(--hi-color-text-secondary);
@@ -115,7 +115,7 @@ impl StyledComponent for EmptyComponent {
     line-height: 1.5;
 }
 
-.hi-empty-action {
+.hk-empty-action {
     margin-top: 0.5rem;
 }
 "#

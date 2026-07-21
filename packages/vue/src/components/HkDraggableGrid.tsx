@@ -71,7 +71,7 @@ export default defineComponent({
       if (e.button !== 0) return;
       if (isLocked(item.key)) return;
       const handle = (e.currentTarget as HTMLElement);
-      const isHandle = handle.classList.contains("hk-draggable-grid__handle");
+      const isHandle = handle.classList.contains("hk-draggable-grid-handle");
       if (!isHandle) {
         const target = e.target as HTMLElement | null;
         if (target && target.closest("button, a, input, textarea, select, [contenteditable]")) {
@@ -112,7 +112,7 @@ export default defineComponent({
     function attachGhost(sourceRect: DOMRect, html: string) {
       detachGhost();
       const node = document.createElement("div");
-      node.className = "hk-draggable-grid__ghost";
+      node.className = "hk-draggable-grid-ghost";
       node.innerHTML = html;
       node.style.width = `${sourceRect.width}px`;
       node.style.transform = `translate3d(${sourceRect.left}px, ${sourceRect.top}px, 0)`;
@@ -232,7 +232,7 @@ export default defineComponent({
               <div
                 key={row}
                 ref={(el) => setRowEl(row, el as Element | null)}
-                class="hk-draggable-grid__row"
+                class="hk-draggable-grid-row"
                 data-cols={cols}
                 data-placeholder-row={isPhRowAfter ? "after" : undefined}
                 style={{ "--hk-grid-cols": cols }}
@@ -245,14 +245,14 @@ export default defineComponent({
                     <div
                       key={item.key}
                       ref={(el) => setCellEl(row, col, el as Element | null)}
-                      class="hk-draggable-grid__cell"
+                      class="hk-draggable-grid-cell"
                       data-locked={locked || undefined}
                       data-dragging={isSource || undefined}
                       data-placeholder={isPhBefore ? "before" : undefined}
                       onPointerdown={(e: PointerEvent) => onPointerDown(e, row, col, item)}
                     >
                       <span
-                        class="hk-draggable-grid__handle"
+                        class="hk-draggable-grid-handle"
                         data-hidden={locked || undefined}
                         onPointerdown={(e: PointerEvent) => {
                           e.stopPropagation();
@@ -270,7 +270,7 @@ export default defineComponent({
                           </svg>
                         )}
                       </span>
-                      <div class="hk-draggable-grid__content">
+                      <div class="hk-draggable-grid-content">
                         {slots.cell?.({ item, row, col, locked })}
                       </div>
                     </div>
@@ -280,8 +280,8 @@ export default defineComponent({
             );
           })}
           {s != null && phRow != null && phRow >= props.rows.length && (
-            <div class="hk-draggable-grid__row hk-draggable-grid__row--phantom" data-cols={1}>
-              <div class="hk-draggable-grid__cell hk-draggable-grid__cell--placeholder-target" />
+            <div class="hk-draggable-grid-row hk-draggable-grid-row--phantom" data-cols={1}>
+              <div class="hk-draggable-grid-cell hk-draggable-grid-cell--placeholder-target" />
             </div>
           )}
         </div>

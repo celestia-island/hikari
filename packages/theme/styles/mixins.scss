@@ -771,13 +771,13 @@
 
 /// Pagination compact variant
 @mixin pagination-compact {
-    .hi-pagination-size-selector,
-    .hi-pagination-total,
-    .hi-pagination-jumper {
+    .hk-pagination-size-selector,
+    .hk-pagination-total,
+    .hk-pagination-jumper {
         display: none;
     }
 
-    .hi-pagination-item {
+    .hk-pagination-item {
         min-width: 1.75rem;
         height: 1.75rem;
         padding: 0 0.5rem;

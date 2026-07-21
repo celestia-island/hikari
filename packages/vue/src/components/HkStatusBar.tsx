@@ -26,15 +26,15 @@ export default defineComponent({
   setup(props, { slots, emit }) {
     return () => (
       <footer class="hk-status-bar">
-        <div class="hk-status-bar__left">
+        <div class="hk-status-bar-left">
           {props.version && (
-            <span class="hk-status-bar__version">v{props.version}</span>
+            <span class="hk-status-bar-version">v{props.version}</span>
           )}
           {props.connectionStatus && (
             <button
               class={[
-                "hk-status-bar__connection",
-                `hk-status-bar__connection--${props.connectionStatus}`,
+                "hk-status-bar-connection",
+                `hk-status-bar-connection--${props.connectionStatus}`,
               ]}
               style={{
                 "--dot-color": connectionColors[props.connectionStatus] ?? connectionColors.disconnected,
@@ -50,18 +50,18 @@ export default defineComponent({
               type="button"
               disabled={props.connectionStatus === "connected"}
             >
-              <span class="hk-status-bar__dot" />
+              <span class="hk-status-bar-dot" />
               <span>{props.connectionStatus}</span>
             </button>
           )}
           {props.stats?.map((stat) => (
-            <span class="hk-status-bar__stat" key={stat.label}>
-              <span class="hk-status-bar__stat-label">{stat.label}</span>
-              <span class="hk-status-bar__stat-value">{stat.value}</span>
+            <span class="hk-status-bar-stat" key={stat.label}>
+              <span class="hk-status-bar-stat-label">{stat.label}</span>
+              <span class="hk-status-bar-stat-value">{stat.value}</span>
             </span>
           ))}
         </div>
-        <div class="hk-status-bar__right">
+        <div class="hk-status-bar-right">
           {slots.default?.()}
         </div>
       </footer>

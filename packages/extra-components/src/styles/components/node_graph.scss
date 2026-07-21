@@ -7,7 +7,7 @@
 // Canvas
 // ============================================
 
-.hi-node-graph-canvas {
+.hk-node-graph-canvas {
     position: relative;
     overflow: hidden;
     background-color: var(--hi-color-background);
@@ -21,7 +21,7 @@
     }
 }
 
-.hi-node-graph-svg-layer {
+.hk-node-graph-svg-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -31,13 +31,13 @@
     }
 }
 
-.hi-node-graph-nodes {
+.hk-node-graph-nodes {
     position: absolute;
     inset: 0;
     transform-origin: 0 0;
 }
 
-.hi-node-graph-overlay-layer {
+.hk-node-graph-overlay-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -48,7 +48,7 @@
 // Node
 // ============================================
 
-.hi-node-graph-node {
+.hk-node-graph-node {
     position: absolute;
     min-width: 120px;
     background-color: var(--hi-color-surface);
@@ -68,19 +68,19 @@
     }
 }
 
-.hi-node-selected {
+.hk-node-selected {
     border-color: var(--hi-color-primary);
     box-shadow: $hikari-shadow-lg, 0 0 20px rgba(var(--hi-color-primary-rgb, 255, 179, 167), 0.3);
 }
 
-.hi-node-minimized {
-    .hi-node-body,
-    .hi-node-ports {
+.hk-node-minimized {
+    .hk-node-body,
+    .hk-node-ports {
         display: none;
     }
 }
 
-.hi-node-header {
+.hk-node-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -93,19 +93,19 @@
     color: var(--hi-color-text-primary);
 }
 
-.hi-node-title {
+.hk-node-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 160px;
 }
 
-.hi-node-minimized-icon {
+.hk-node-minimized-icon {
     font-size: $hikari-font-size-xs;
     color: var(--hi-color-text-secondary);
 }
 
-.hi-node-body {
+.hk-node-body {
     padding: $hikari-spacing-sm $hikari-spacing-md;
     font-size: $hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
@@ -115,14 +115,14 @@
 // Ports
 // ============================================
 
-.hi-node-ports {
+.hk-node-ports {
     display: flex;
     flex-direction: column;
     gap: $hikari-spacing-xs;
     padding: $hikari-spacing-xs $hikari-spacing-sm $hikari-spacing-sm;
 }
 
-.hi-node-port {
+.hk-node-port {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-sm;
@@ -138,16 +138,16 @@
     }
 }
 
-.hi-port-input {
+.hk-port-input {
     flex-direction: row;
 }
 
-.hi-port-output {
+.hk-port-output {
     flex-direction: row-reverse;
     text-align: right;
 }
 
-.hi-port-dot {
+.hk-port-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -162,12 +162,12 @@
     }
 }
 
-.hi-port-dot-connected {
+.hk-port-dot-connected {
     background-color: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
 }
 
-.hi-port-label {
+.hk-port-label {
     font-size: $hikari-font-size-xs;
 }
 
@@ -175,7 +175,7 @@
 // Connections
 // ============================================
 
-.hi-connection-path {
+.hk-connection-path {
     stroke: var(--hi-color-border);
     stroke-width: 2;
     fill: none;
@@ -187,7 +187,7 @@
     }
 }
 
-.hi-connection-selected {
+.hk-connection-selected {
     stroke: var(--hi-color-primary);
     stroke-width: 2.5;
     filter: drop-shadow(0 0 6px rgba(var(--hi-color-primary-rgb, 255, 179, 167), 0.5));
@@ -197,7 +197,7 @@
 // Controls
 // ============================================
 
-.hi-node-graph-controls {
+.hk-node-graph-controls {
     position: absolute;
     bottom: $hikari-spacing-md;
     left: $hikari-spacing-md;
@@ -206,7 +206,7 @@
     z-index: 100;
 }
 
-.hi-controls-group {
+.hk-controls-group {
     display: flex;
     gap: $hikari-spacing-xs;
     padding: $hikari-spacing-xs;
@@ -217,7 +217,7 @@
     backdrop-filter: blur(8px);
 }
 
-.hi-control-btn {
+.hk-control-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -250,7 +250,7 @@
 // Minimap
 // ============================================
 
-.hi-minimap {
+.hk-minimap {
     position: absolute;
     bottom: $hikari-spacing-md;
     right: $hikari-spacing-md;
@@ -269,19 +269,19 @@
     }
 }
 
-.hi-minimap-nodes {
+.hk-minimap-nodes {
     position: absolute;
     inset: 0;
 }
 
-.hi-minimap-node {
+.hk-minimap-node {
     position: absolute;
     background-color: rgba(var(--hi-color-primary-rgb, 255, 179, 167), 0.6);
     border: 1px solid var(--hi-color-primary);
     border-radius: 2px;
 }
 
-.hi-minimap-viewport {
+.hk-minimap-viewport {
     position: absolute;
     border: 2px solid var(--hi-color-primary);
     background-color: rgba(var(--hi-color-primary-rgb, 255, 179, 167), 0.1);
@@ -289,7 +289,7 @@
     pointer-events: none;
 }
 
-.hi-minimap-connections {
+.hk-minimap-connections {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -299,7 +299,7 @@
 // Viewport Info
 // ============================================
 
-.hi-viewport-info {
+.hk-viewport-info {
     display: flex;
     align-items: center;
     gap: $hikari-spacing-sm;
@@ -309,7 +309,7 @@
     color: var(--hi-color-text-secondary);
 }
 
-.hi-viewport-zoom {
+.hk-viewport-zoom {
     min-width: 40px;
     text-align: center;
     font-weight: 600;
@@ -320,8 +320,8 @@
 // Grid Pattern (SVG)
 // ============================================
 
-.hi-node-graph-svg {
-    .hi-node-graph-connections {
+.hk-node-graph-svg {
+    .hk-node-graph-connections {
         pointer-events: auto;
     }
 }
@@ -331,18 +331,18 @@
 // ============================================
 
 @include mobile {
-    .hi-node-graph-controls {
+    .hk-node-graph-controls {
         flex-direction: column;
         bottom: $hikari-spacing-sm;
         left: $hikari-spacing-sm;
     }
 
-    .hi-minimap {
+    .hk-minimap {
         width: 120px;
         height: 90px;
     }
 
-    .hi-control-btn {
+    .hk-control-btn {
         padding: $hikari-spacing-xs;
         font-size: $hikari-font-size-xs;
     }

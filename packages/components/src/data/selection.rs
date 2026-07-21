@@ -173,7 +173,7 @@ pub fn Selection(props: SelectionProps) -> Element {
                             class: {SelectionClassNew::SelectionCheckbox.as_class()},
                             r#type: get_input_type(),
                             checked,
-                            name: if selection_type == SelectionType::Radio { "hi-selection-radio-group" } else { "" },
+                            name: if selection_type == SelectionType::Radio { "hk-selection-radio-group" } else { "" },
                             onchange: handle_change,
                         }
                         "{key}"
@@ -251,7 +251,7 @@ pub fn RowSelection(props: RowSelectionProps) -> Element {
     let show_checkbox_icon = is_checkbox && is_selected;
     let show_radio_dot = is_radio && is_selected;
     let input_name = if is_radio {
-        "hi-selection-radio-group"
+        "hk-selection-radio-group"
     } else {
         ""
     };

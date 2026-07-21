@@ -67,7 +67,7 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     });
 
     // Use CSS class for icon visibility - no inline styles needed
-    // The CSS .hi-checkbox-icon already handles opacity properly via classes
+    // The CSS .hk-checkbox-icon already handles opacity properly via classes
 
     let handle_click = {
         let on_change = props.on_change;
@@ -82,17 +82,17 @@ pub fn Checkbox(props: CheckboxProps) -> Element {
     };
 
     rsx! {
-        label { class: "hi-checkbox-label",
+        label { class: "hk-checkbox-label",
             input {
-                class: "hi-checkbox-input",
+                class: "hk-checkbox-input",
                 r#type: "checkbox",
                 checked: props.checked,
                 disabled: props.disabled,
             }
             div { class: checkbox_classes, onclick: handle_click,
-                Icon { icon: MdiIcon::Check, size: 16, class: "hi-checkbox-icon".to_string(), color: String::new() }
+                Icon { icon: MdiIcon::Check, size: 16, class: "hk-checkbox-icon".to_string(), color: String::new() }
             }
-            span { class: "hi-checkbox-text", {props.children} }
+            span { class: "hk-checkbox-text", {props.children} }
         }
     }
 }

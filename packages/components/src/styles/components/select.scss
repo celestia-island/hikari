@@ -11,7 +11,7 @@
 // Trigger (the always-visible "button")
 // ============================================
 
-.hi-select-trigger {
+.hk-select-trigger {
   // Layout
   display: inline-flex;
   align-items: center;
@@ -49,7 +49,7 @@
     box-shadow vars.$hikari-duration-fast vars.$hikari-ease-smooth,
     background vars.$hikari-duration-fast vars.$hikari-ease-smooth;
 
-  &:hover:not(.hi-select-disabled) {
+  &:hover:not(.hk-select-disabled) {
     border-color: var(--hi-color-primary);
     box-shadow:
       0 1px 3px rgba(0, 0, 0, 0.08),
@@ -57,7 +57,7 @@
   }
 
   // Open state — accent border + lifted shadow
-  &.hi-select-open {
+  &.hk-select-open {
     border-color: var(--hi-color-primary);
     box-shadow:
       0 0 0 2px rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.15),
@@ -65,7 +65,7 @@
   }
 
   // Disabled
-  &.hi-select-disabled {
+  &.hk-select-disabled {
     opacity: 0.45;
     cursor: not-allowed;
     pointer-events: none;
@@ -76,7 +76,7 @@
 // Value & Placeholder text
 // ============================================
 
-.hi-select-value {
+.hk-select-value {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,7 +84,7 @@
   color: var(--hi-color-text-primary);
 }
 
-.hi-select-placeholder {
+.hk-select-placeholder {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -97,7 +97,7 @@
 // Arrow icon
 // ============================================
 
-.hi-select-arrow {
+.hk-select-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -111,7 +111,7 @@
   }
 }
 
-.hi-select-open .hi-select-arrow {
+.hk-select-open .hk-select-arrow {
   transform: rotate(180deg);
 }
 
@@ -119,31 +119,31 @@
 // Size Variants
 // ============================================
 
-.hi-select-sm {
+.hk-select-sm {
   padding: 0.3rem 0.625rem;
   font-size: 0.8125rem;
   min-width: 140px;
   border-radius: vars.$hikari-radius-fui-sm;
 
-  .hi-select-arrow svg {
+  .hk-select-arrow svg {
     width: 14px;
     height: 14px;
   }
 }
 
-.hi-select-md {
+.hk-select-md {
   padding: 0.5rem 0.75rem;
   font-size: vars.$hikari-font-size-base;
   min-width: 180px;
 }
 
-.hi-select-lg {
+.hk-select-lg {
   padding: 0.625rem 1rem;
   font-size: 1.0625rem;
   min-width: 220px;
   border-radius: vars.$hikari-radius-fui-md;
 
-  .hi-select-arrow svg {
+  .hk-select-arrow svg {
     width: 18px;
     height: 18px;
   }
@@ -153,7 +153,7 @@
 // Dropdown Panel (rendered in Portal overlay)
 // ============================================
 
-.hi-select-dropdown {
+.hk-select-dropdown {
   background: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
   border-radius: vars.$hikari-radius-fui-sm;
@@ -187,7 +187,7 @@
 // Option Items
 // ============================================
 
-.hi-select-option {
+.hk-select-option {
   display: flex;
   align-items: center;
   width: 100%;
@@ -204,7 +204,7 @@
 // Focus visible (keyboard navigation)
 // ============================================
 
-.hi-select-trigger:focus-visible {
+.hk-select-trigger:focus-visible {
   outline: 2px solid var(--hi-color-primary);
   outline-offset: 2px;
 }

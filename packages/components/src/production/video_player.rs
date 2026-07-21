@@ -69,7 +69,7 @@ pub fn VideoPlayer(props: VideoPlayerProps) -> Element {
 impl StyledComponent for VideoPlayerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-video-player {
+.hk-video-player {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
@@ -77,18 +77,18 @@ impl StyledComponent for VideoPlayerComponent {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.hi-video-player video {
+.hk-video-player video {
     width: 100%;
     display: block;
     background-color: #000;
 }
 
-.hi-video-player video::-webkit-media-controls-panel {
+.hk-video-player video::-webkit-media-controls-panel {
     background-color: var(--hi-color-bg-elevated);
 }
 
-.hi-video-player video::-webkit-media-controls-current-time-display,
-.hi-video-player video::-webkit-media-controls-time-remaining-display {
+.hk-video-player video::-webkit-media-controls-current-time-display,
+.hk-video-player video::-webkit-media-controls-time-remaining-display {
     color: var(--hi-color-text-primary);
 }
 "#

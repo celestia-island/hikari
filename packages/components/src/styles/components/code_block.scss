@@ -1,7 +1,7 @@
 // website/src/styles/code_block.scss
 // Code block component styles
 
-.hi-code-block {
+.hk-code-block {
     background-color: var(--hi-color-surface);
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
@@ -10,7 +10,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.hi-code-block-header {
+.hk-code-block-header {
     background-color: var(--hi-color-surface-secondary);
     border-bottom: 1px solid var(--hi-color-border);
     padding: 0.5rem 1rem;
@@ -19,7 +19,7 @@
     justify-content: space-between;
 }
 
-.hi-code-block-language {
+.hk-code-block-language {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--hi-color-text-secondary);
@@ -28,13 +28,13 @@
     font-family: 'Courier New', monospace;
 }
 
-.hi-code-block-content {
+.hk-code-block-content {
     padding: 1rem;
     overflow-x: auto;
     background-color: var(--hi-color-surface);
 }
 
-.hi-code-block-code {
+.hk-code-block-code {
     display: block;
     font-family: 'Courier New', monospace;
     font-size: 0.875rem;

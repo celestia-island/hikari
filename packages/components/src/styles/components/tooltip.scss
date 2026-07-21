@@ -11,12 +11,12 @@
 // Tooltip Wrapper (trigger container)
 // ============================================
 
-.hi-tooltip-wrapper {
+.hk-tooltip-wrapper {
   display: inline-block;
   position: relative;
 }
 
-.hi-tooltip-trigger {
+.hk-tooltip-trigger {
   display: inline-block;
 }
 
@@ -24,7 +24,7 @@
 // Base Tooltip Styles - Card-like appearance
 // ============================================
 
-.hi-tooltip {
+.hk-tooltip {
   // Layout
   position: fixed;
   z-index: 10000;
@@ -80,7 +80,7 @@
 // Visible State - animated entrance
 // ============================================
 
-.hi-tooltip-visible {
+.hk-tooltip-visible {
   opacity: 1;
   transform: scale(1);
 }
@@ -90,7 +90,7 @@
 // ============================================
 
 // Top
-.hi-tooltip-top {
+.hk-tooltip-top {
   &::before {
     bottom: -10px;
     left: 50%;
@@ -100,7 +100,7 @@
 }
 
 // Bottom
-.hi-tooltip-bottom {
+.hk-tooltip-bottom {
   &::before {
     top: -10px;
     left: 50%;
@@ -110,7 +110,7 @@
 }
 
 // Left
-.hi-tooltip-left {
+.hk-tooltip-left {
   &::before {
     right: -10px;
     top: 50%;
@@ -120,7 +120,7 @@
 }
 
 // Right
-.hi-tooltip-right {
+.hk-tooltip-right {
   &::before {
     left: -10px;
     top: 50%;
@@ -133,7 +133,7 @@
 // Tooltip Content
 // ============================================
 
-.hi-tooltip-content {
+.hk-tooltip-content {
   position: relative;
   z-index: 1;
 }
@@ -142,7 +142,7 @@
 // Size Variants
 // ============================================
 
-.hi-tooltip-sm {
+.hk-tooltip-sm {
   padding: 0.375rem 0.5rem;
   font-size: 0.75rem;
   border-radius: 3px;
@@ -152,13 +152,13 @@
   }
 }
 
-.hi-tooltip-md {
+.hk-tooltip-md {
   padding: 0.5rem 0.75rem;
   font-size: vars.$hikari-font-size-sm;
   border-radius: vars.$hikari-radius-fui-sm;
 }
 
-.hi-tooltip-lg {
+.hk-tooltip-lg {
   padding: 0.625rem 1rem;
   font-size: 0.9375rem;
   border-radius: vars.$hikari-radius-fui-md;
@@ -173,7 +173,7 @@
 // ============================================
 
 // Primary (Blue)
-.hi-tooltip-primary {
+.hk-tooltip-primary {
   border-color: rgba(59, 130, 246, 0.5);
   box-shadow:
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
@@ -182,7 +182,7 @@
 }
 
 // Success (Green)
-.hi-tooltip-success {
+.hk-tooltip-success {
   border-color: rgba(14, 184, 64, 0.5);
   box-shadow:
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
@@ -191,7 +191,7 @@
 }
 
 // Warning (Yellow)
-.hi-tooltip-warning {
+.hk-tooltip-warning {
   border-color: rgba(245, 158, 11, 0.5);
   box-shadow:
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
@@ -200,7 +200,7 @@
 }
 
 // Error (Red)
-.hi-tooltip-error {
+.hk-tooltip-error {
   border-color: rgba(255, 76, 0, 0.5);
   box-shadow:
     0 1px 3px var(--hi-black-10, rgba(0, 0, 0, 0.08)),
@@ -212,12 +212,12 @@
 // With Icon
 // ============================================
 
-.hi-tooltip-with-icon {
+.hk-tooltip-with-icon {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 
-  .hi-tooltip-icon {
+  .hk-tooltip-icon {
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
@@ -233,7 +233,7 @@
 // Multiline Tooltip
 // ============================================
 
-.hi-tooltip-multiline {
+.hk-tooltip-multiline {
   white-space: normal;
   max-width: 250px;
 }
@@ -242,18 +242,18 @@
 // Rich Content Tooltip
 // ============================================
 
-.hi-tooltip-rich {
+.hk-tooltip-rich {
   white-space: normal;
   max-width: 300px;
 
-  .hi-tooltip-title {
+  .hk-tooltip-title {
     margin: 0 0 0.25rem 0;
     font-size: vars.$hikari-font-size-sm;
     font-weight: 600;
     color: var(--hi-color-text-primary);
   }
 
-  .hi-tooltip-content {
+  .hk-tooltip-content {
     margin: 0;
     font-size: vars.$hikari-font-size-sm;
     color: var(--hi-color-text-secondary);
@@ -266,53 +266,53 @@
 // ============================================
 
 // Top - slide up + fade
-.hi-tooltip-top {
+.hk-tooltip-top {
   transform-origin: bottom center;
 
-  &.hi-tooltip-visible {
+  &.hk-tooltip-visible {
     transform: scale(1) translateY(0);
   }
 
-  &:not(.hi-tooltip-visible) {
+  &:not(.hk-tooltip-visible) {
     transform: scale(0.95) translateY(4px);
   }
 }
 
 // Bottom - slide down + fade
-.hi-tooltip-bottom {
+.hk-tooltip-bottom {
   transform-origin: top center;
 
-  &.hi-tooltip-visible {
+  &.hk-tooltip-visible {
     transform: scale(1) translateY(0);
   }
 
-  &:not(.hi-tooltip-visible) {
+  &:not(.hk-tooltip-visible) {
     transform: scale(0.95) translateY(-4px);
   }
 }
 
 // Left - slide left + fade
-.hi-tooltip-left {
+.hk-tooltip-left {
   transform-origin: right center;
 
-  &.hi-tooltip-visible {
+  &.hk-tooltip-visible {
     transform: scale(1) translateX(0);
   }
 
-  &:not(.hi-tooltip-visible) {
+  &:not(.hk-tooltip-visible) {
     transform: scale(0.95) translateX(4px);
   }
 }
 
 // Right - slide right + fade
-.hi-tooltip-right {
+.hk-tooltip-right {
   transform-origin: left center;
 
-  &.hi-tooltip-visible {
+  &.hk-tooltip-visible {
     transform: scale(1) translateX(0);
   }
 
-  &:not(.hi-tooltip-visible) {
+  &:not(.hk-tooltip-visible) {
     transform: scale(0.95) translateX(-4px);
   }
 }

@@ -82,7 +82,7 @@ pub fn Comment(props: CommentProps) -> Element {
 impl StyledComponent for CommentComponent {
     fn styles() -> &'static str {
         r#"
-.hi-comment {
+.hk-comment {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -92,50 +92,50 @@ impl StyledComponent for CommentComponent {
     border: 1px solid var(--hi-color-border);
 }
 
-.hi-comment-header {
+.hk-comment-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
-.hi-comment-avatar {
+.hk-comment-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
 }
 
-.hi-comment-meta {
+.hk-comment-meta {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.hi-comment-author {
+.hk-comment-author {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--hi-color-text-primary);
 }
 
-.hi-comment-datetime {
+.hk-comment-datetime {
     font-size: 0.75rem;
     color: var(--hi-color-text-secondary);
 }
 
-.hi-comment-content {
+.hk-comment-content {
     font-size: 0.875rem;
     line-height: 1.6;
     color: var(--hi-color-text-primary);
     word-wrap: break-word;
 }
 
-.hi-comment-actions {
+.hk-comment-actions {
     display: flex;
     gap: 0.5rem;
     margin-top: 0.25rem;
 }
 
-.hi-comment-nested {
+.hk-comment-nested {
     margin-left: 2rem;
     padding-left: 1rem;
     border-left: 2px solid var(--hi-color-border);

@@ -55,9 +55,9 @@ pub fn FormField(props: FormFieldProps) -> Element {
 
     let status_class = match props.status {
         FormFieldStatus::Default => "",
-        FormFieldStatus::Error => "hi-form-field-error",
-        FormFieldStatus::Warning => "hi-form-field-warning",
-        FormFieldStatus::Success => "hi-form-field-success",
+        FormFieldStatus::Error => "hk-form-field-error",
+        FormFieldStatus::Warning => "hk-form-field-warning",
+        FormFieldStatus::Success => "hk-form-field-success",
     };
 
     let full_classes = if status_class.is_empty() {
@@ -74,13 +74,13 @@ pub fn FormField(props: FormFieldProps) -> Element {
     let label_el = if has_label {
         let required_marker = if props.required {
             rsx! {
-                span { class: "hi-form-field-required", " *" }
+                span { class: "hk-form-field-required", " *" }
             }
         } else {
             VNode::empty()
         };
         Some(rsx! {
-            label { class: "hi-form-field-label",
+            label { class: "hk-form-field-label",
                 "{props.label.clone()}"
                 {required_marker}
             }
@@ -92,11 +92,11 @@ pub fn FormField(props: FormFieldProps) -> Element {
     // Build help/error text conditionally
     let help_el = if has_help {
         Some(rsx! {
-            div { class: "hi-form-field-help", "{props.help_text.as_ref().unwrap()}" }
+            div { class: "hk-form-field-help", "{props.help_text.as_ref().unwrap()}" }
         })
     } else if props.show_status && has_error {
         Some(rsx! {
-            div { class: "hi-form-field-error-msg", "{props.error_message.as_ref().unwrap()}" }
+            div { class: "hk-form-field-error-msg", "{props.error_message.as_ref().unwrap()}" }
         })
     } else {
         None
@@ -120,14 +120,14 @@ pub fn FormField(props: FormFieldProps) -> Element {
 impl StyledComponent for FormFieldComponent {
     fn styles() -> &'static str {
         r#"
-.hi-form-field {
+.hk-form-field {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
-.hi-form-field-label {
+.hk-form-field-label {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--hi-color-text-primary);
@@ -136,40 +136,40 @@ impl StyledComponent for FormFieldComponent {
     gap: 0.25rem;
 }
 
-.hi-form-field-required {
+.hk-form-field-required {
     color: var(--hi-color-error);
     font-weight: 700;
 }
 
-.hi-form-field-help {
+.hk-form-field-help {
     font-size: 0.75rem;
     color: var(--hi-color-text-secondary);
 }
 
-.hi-form-field-error-msg {
+.hk-form-field-error-msg {
     font-size: 0.75rem;
     color: var(--hi-color-error);
 }
 
-.hi-form-field-warning-msg {
+.hk-form-field-warning-msg {
     font-size: 0.75rem;
     color: var(--hi-color-warning);
 }
 
-.hi-form-field-success-msg {
+.hk-form-field-success-msg {
     font-size: 0.75rem;
     color: var(--hi-color-success);
 }
 
-.hi-form-field-error .hi-form-field-label {
+.hk-form-field-error .hk-form-field-label {
     color: var(--hi-color-error);
 }
 
-.hi-form-field-warning .hi-form-field-label {
+.hk-form-field-warning .hk-form-field-label {
     color: var(--hi-color-warning);
 }
 
-.hi-form-field-success .hi-form-field-label {
+.hk-form-field-success .hk-form-field-label {
     color: var(--hi-color-success);
 }
 "#

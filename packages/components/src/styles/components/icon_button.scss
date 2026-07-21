@@ -13,7 +13,7 @@
 // NOTE: Hover effects are handled by Glow wrapper, not here
 // ============================================
 
-.hi-icon-button {
+.hk-icon-button {
   // Layer2 variables are defined in icon-button-vars.scss
 
   // Layout
@@ -66,7 +66,7 @@
     outline-offset: 2px;
     color: var(--hi-icon-button-icon-color);
 
-    .hi-icon-button-icon {
+    .hk-icon-button-icon {
       color: var(--hi-icon-button-icon-color);
     }
   }
@@ -85,11 +85,11 @@
   // Size Variants - Variables defined in icon-button-vars.scss
   // ============================================
 
-  &.hi-icon-button-16,
-  &.hi-icon-button-24,
-  &.hi-icon-button-32,
-  &.hi-icon-button-36,
-  &.hi-icon-button-40 {
+  &.hk-icon-button-16,
+  &.hk-icon-button-24,
+  &.hk-icon-button-32,
+  &.hk-icon-button-36,
+  &.hk-icon-button-40 {
     // Size variables are already set by the classes in icon-button-vars.scss
   }
 
@@ -97,8 +97,8 @@
   // Variant: Ghost (default - transparent)
   // ============================================
 
-  &.hi-icon-button-ghost,
-  &.hi-icon-button-borderless {
+  &.hk-icon-button-ghost,
+  &.hk-icon-button-borderless {
     // Variables defined in icon-button-vars.scss
   }
 
@@ -106,7 +106,7 @@
   // Variant: Primary (solid primary color)
   // ============================================
 
-  &.hi-icon-button-primary {
+  &.hk-icon-button-primary {
     // Variables defined in icon-button-vars.scss
   }
 
@@ -114,7 +114,7 @@
   // Variant: Secondary (solid secondary color)
   // ============================================
 
-  &.hi-icon-button-secondary {
+  &.hk-icon-button-secondary {
     // Variables defined in icon-button-vars.scss
   }
 
@@ -122,7 +122,7 @@
   // Variant: Danger (solid danger color)
   // ============================================
 
-  &.hi-icon-button-danger {
+  &.hk-icon-button-danger {
     // Variables defined in icon-button-vars.scss
   }
 
@@ -130,7 +130,7 @@
   // Variant: Success (solid success color)
   // ============================================
 
-  &.hi-icon-button-success {
+  &.hk-icon-button-success {
     // Variables defined in icon-button-vars.scss
   }
 
@@ -138,7 +138,7 @@
   // Icon Styles - Use CSS Variables
   // ============================================
 
-  .hi-icon-button-icon {
+  .hk-icon-button-icon {
     width: var(--hi-icon-button-icon-size);
     height: var(--hi-icon-button-icon-size);
     display: inline-flex;
@@ -156,16 +156,16 @@
   }
 
   // Active state for icon
-  &:active:not(:disabled) .hi-icon-button-icon {
+  &:active:not(:disabled) .hk-icon-button-icon {
     color: var(--hi-icon-button-icon-color-active);
   }
 
   // Disabled state for icon
-  &:disabled .hi-icon-button-icon {
+  &:disabled .hk-icon-button-icon {
     color: var(--hi-icon-button-icon-color-disabled);
   }
 
-  .hi-icon-button-disabled {
+  .hk-icon-button-disabled {
     opacity: 0.3;
   }
 }

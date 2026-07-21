@@ -222,12 +222,12 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
 impl StyledComponent for AutoCompleteComponent {
     fn styles() -> &'static str {
         r#"
-.hi-autocomplete-wrapper {
+.hk-autocomplete-wrapper {
     position: relative;
     width: 100%;
 }
 
-.hi-autocomplete-input {
+.hk-autocomplete-input {
     width: 100%;
     padding: 0.5rem 0.75rem;
     padding-right: 2rem;
@@ -240,21 +240,21 @@ impl StyledComponent for AutoCompleteComponent {
     transition: all 0.2s ease;
 }
 
-.hi-autocomplete-input:focus {
+.hk-autocomplete-input:focus {
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.hi-autocomplete-input:disabled {
+.hk-autocomplete-input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.hi-autocomplete-input::placeholder {
+.hk-autocomplete-input::placeholder {
     color: var(--hi-color-text-secondary);
 }
 
-.hi-autocomplete-clear {
+.hk-autocomplete-clear {
     position: absolute;
     right: 0.5rem;
     top: 50%;
@@ -275,12 +275,12 @@ impl StyledComponent for AutoCompleteComponent {
     transition: all 0.2s ease;
 }
 
-.hi-autocomplete-clear:hover {
+.hk-autocomplete-clear:hover {
     background-color: var(--hi-color-background);
     color: var(--hi-color-text-primary);
 }
 
-.hi-autocomplete-dropdown {
+.hk-autocomplete-dropdown {
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
@@ -298,13 +298,13 @@ impl StyledComponent for AutoCompleteComponent {
     transition: all 0.2s ease;
 }
 
-.hi-autocomplete-dropdown.hi-autocomplete-show {
+.hk-autocomplete-dropdown.hk-autocomplete-show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
 
-.hi-autocomplete-option {
+.hk-autocomplete-option {
     padding: 0.5rem 0.75rem;
     color: var(--hi-color-text-primary);
     font-size: 0.875rem;
@@ -312,8 +312,8 @@ impl StyledComponent for AutoCompleteComponent {
     transition: all 0.15s ease;
 }
 
-.hi-autocomplete-option:hover,
-.hi-autocomplete-option.hi-autocomplete-option-focused {
+.hk-autocomplete-option:hover,
+.hk-autocomplete-option.hk-autocomplete-option-focused {
     background-color: var(--hi-color-primary);
     color: var(--hi-color-text-on-primary, #ffffff);
 }

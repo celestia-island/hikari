@@ -78,24 +78,24 @@ pub struct SpaceComponent;
 impl crate::styled::StyledComponent for SpaceComponent {
     fn styles() -> &'static str {
         r#"
-.hi-space {
+.hk-space {
   display: inline-flex;
 }
 
-.hi-space-wrap {
+.hk-space-wrap {
   display: flex;
 }
 
-.hi-space-horizontal {
+.hk-space-horizontal {
   display: inline-flex;
 }
 
-.hi-space-vertical {
+.hk-space-vertical {
   display: inline-flex;
   flex-direction: column;
 }
 
-.hi-space-both {
+.hk-space-both {
   display: inline-flex;
   flex-direction: column;
 }

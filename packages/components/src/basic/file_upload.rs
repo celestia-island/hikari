@@ -183,17 +183,17 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 
                 // Upload area
                 div {
-                    class: "hi-file-upload-area",
+                    class: "hk-file-upload-area",
                     style: "pointer-events: none;",
 
-                    Icon { icon: MdiIcon::Upload, size: 32, class: "hi-file-upload-icon".to_string(), color: String::new() }
+                    Icon { icon: MdiIcon::Upload, size: 32, class: "hk-file-upload-icon".to_string(), color: String::new() }
 
-                    p { class: "hi-file-upload-text", "{props.upload_text}" }
+                    p { class: "hk-file-upload-text", "{props.upload_text}" }
 
                     if props.show_preview && !files.get().is_empty() {
-                        div { class: "hi-file-upload-preview",
+                        div { class: "hk-file-upload-preview",
                             for file in files.get().iter() {
-                                div { class: "hi-file-upload-file", "{file}" }
+                                div { class: "hk-file-upload-file", "{file}" }
                             }
                         }
                     }
@@ -206,11 +206,11 @@ pub fn FileUpload(props: FileUploadProps) -> Element {
 impl StyledComponent for FileUploadComponent {
     fn styles() -> &'static str {
         r#"
-.hi-file-upload-wrapper {
+.hk-file-upload-wrapper {
     width: 100%;
 }
 
-.hi-file-upload {
+.hk-file-upload {
     border: 2px dashed var(--hi-color-border);
     border-radius: 8px;
     padding: 2rem;
@@ -221,53 +221,53 @@ impl StyledComponent for FileUploadComponent {
     position: relative;
 }
 
-.hi-file-upload-dragging {
+.hk-file-upload-dragging {
     border-color: var(--hi-color-primary);
     background-color: rgba(var(--hi-color-primary-rgb), 0.05);
     transform: scale(1.02);
 }
 
-.hi-file-upload-uploading {
+.hk-file-upload-uploading {
     opacity: 0.6;
     pointer-events: none;
 }
 
-.hi-file-upload-success {
+.hk-file-upload-success {
     border-color: var(--hi-color-success);
     background-color: rgba(var(--hi-color-success-rgb), 0.05);
 }
 
-.hi-file-upload-error {
+.hk-file-upload-error {
     border-color: var(--hi-color-error);
     background-color: rgba(var(--hi-color-error-rgb), 0.05);
 }
 
-.hi-file-upload-area {
+.hk-file-upload-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
 }
 
-.hi-file-upload-icon {
+.hk-file-upload-icon {
     width: 48px;
     height: 48px;
     color: var(--hi-color-text-secondary);
     transition: all 0.3s ease;
 }
 
-.hi-file-upload-dragging .hi-file-upload-icon {
+.hk-file-upload-dragging .hk-file-upload-icon {
     color: var(--hi-color-primary);
     transform: translateY(-4px);
 }
 
-.hi-file-upload-text {
+.hk-file-upload-text {
     font-size: 0.875rem;
     color: var(--hi-color-text-primary);
     margin: 0;
 }
 
-.hi-file-upload-preview {
+.hk-file-upload-preview {
     margin-top: 1rem;
     width: 100%;
     display: flex;
@@ -276,7 +276,7 @@ impl StyledComponent for FileUploadComponent {
     align-items: center;
 }
 
-.hi-file-upload-file {
+.hk-file-upload-file {
     padding: 0.5rem 1rem;
     background-color: var(--hi-color-surface);
     border-radius: 4px;
@@ -288,7 +288,7 @@ impl StyledComponent for FileUploadComponent {
     white-space: nowrap;
 }
 
-.hi-file-upload-success .hi-file-upload-file {
+.hk-file-upload-success .hk-file-upload-file {
     color: var(--hi-color-success);
 }
 "#

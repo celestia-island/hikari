@@ -45,8 +45,8 @@ export default defineComponent({
     function renderTriggers() {
       if (props.hideTriggers) return null;
       return (
-        <div class="hk-morphing-tabs__triggers" role="tablist">
-          <div class="hk-morphing-tabs__indicator" style={indicatorStyle.value} />
+        <div class="hk-morphing-tabs-triggers" role="tablist">
+          <div class="hk-morphing-tabs-indicator" style={indicatorStyle.value} />
           {props.tabs.map((tab) => {
             const isActive = activeKey.value === tab.key;
             return (
@@ -58,8 +58,8 @@ export default defineComponent({
                 tabindex={isActive ? 0 : -1}
                 disabled={tab.disabled}
                 class={[
-                  "hk-morphing-tabs__trigger",
-                  { "hk-morphing-tabs__trigger--active": isActive },
+                  "hk-morphing-tabs-trigger",
+                  { "hk-morphing-tabs-trigger--active": isActive },
                 ]}
                 onClick={() => emit("update:modelValue", tab.key)}
               >
@@ -80,14 +80,14 @@ export default defineComponent({
           {props.teleportTo ? (
             ready.value && <Teleport to={props.teleportTo}>{triggerContent}</Teleport>
           ) : (
-            <div class="hk-morphing-tabs__header">{triggerContent}</div>
+            <div class="hk-morphing-tabs-header">{triggerContent}</div>
           )}
 
-          <div class="hk-morphing-tabs__content">
+          <div class="hk-morphing-tabs-content">
             <Transition name="hk-morphing-crossfade" mode="out-in" appear>
               <div
                 key={activeKey.value}
-                class="hk-morphing-tabs__panel"
+                class="hk-morphing-tabs-panel"
                 role="tabpanel"
                 id={`hk-morphing-tabpanel-${activeKey.value}`}
                 aria-label={props.tabs.find((t) => t.key === activeKey.value)?.label}
@@ -98,9 +98,9 @@ export default defineComponent({
           </div>
 
           {slots.footer && (
-            <div class="hk-morphing-tabs__footer">
+            <div class="hk-morphing-tabs-footer">
               <Transition name="hk-morphing-bar" mode="out-in" appear>
-                <div key={activeKey.value} class="hk-morphing-tabs__footer-inner">
+                <div key={activeKey.value} class="hk-morphing-tabs-footer-inner">
                   {slots.footer({ activeKey: activeKey.value })}
                 </div>
               </Transition>

@@ -86,11 +86,11 @@ export default defineComponent({
 
     return () => (
       <div class={wrapperClass}>
-        <span class="hk-search-input__icon">{searchIcon}</span>
+        <span class="hk-search-input-icon">{searchIcon}</span>
         <input
           ref={inputRef}
           type="search"
-          class="hk-search-input__field"
+          class="hk-search-input-field"
           value={props.modelValue}
           placeholder={props.placeholder ?? "Search..."}
           disabled={props.disabled}
@@ -100,7 +100,7 @@ export default defineComponent({
         {props.modelValue && !props.disabled ? (
           <button
             type="button"
-            class="hk-search-input__clear"
+            class="hk-search-input-clear"
             onClick={clearValue}
             tabindex={-1}
             aria-label="Clear search"

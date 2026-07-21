@@ -28,22 +28,22 @@ export default defineComponent({
 
     return () => (
       <div class="hk-admin-shell">
-        <div class="hk-admin-shell__header">
+        <div class="hk-admin-shell-header">
           {slots.header?.()}
         </div>
-        <div class="hk-admin-shell__body">
+        <div class="hk-admin-shell-body">
           {props.mobile ? (
             <>
               {props.drawerOpen && (
                 <div
-                  class="hk-admin-shell__drawer-overlay"
+                  class="hk-admin-shell-drawer-overlay"
                   onClick={onOverlayClick}
                 />
               )}
               <aside
                 class={[
-                  "hk-admin-shell__drawer",
-                  props.drawerOpen ? "hk-admin-shell__drawer--open" : "",
+                  "hk-admin-shell-drawer",
+                  props.drawerOpen ? "hk-admin-shell-drawer--open" : "",
                 ]}
               >
                 {slots.sidebar?.()}
@@ -52,21 +52,21 @@ export default defineComponent({
           ) : (
             <aside
               class={[
-                "hk-admin-shell__sidebar",
-                props.sidebarCollapsed ? "hk-admin-shell__sidebar--collapsed" : "",
+                "hk-admin-shell-sidebar",
+                props.sidebarCollapsed ? "hk-admin-shell-sidebar--collapsed" : "",
               ]}
               style={sidebarStyle.value}
             >
-              <div class="hk-admin-shell__sidebar-inner">
+              <div class="hk-admin-shell-sidebar-inner">
                 {slots.sidebar?.()}
               </div>
             </aside>
           )}
-          <main class="hk-admin-shell__main">
+          <main class="hk-admin-shell-main">
             {slots.default?.()}
           </main>
         </div>
-        <div class="hk-admin-shell__footer">
+        <div class="hk-admin-shell-footer">
           {slots.footer?.()}
         </div>
       </div>

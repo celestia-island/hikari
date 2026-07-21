@@ -19,9 +19,9 @@ export default defineComponent({
   setup(props) {
     return () => {
       const cls = [
-        "hikari-icon",
-        `hikari-icon-${props.size}`,
-        props.color ? `hikari-icon-${props.color}` : "",
+        "hk-icon",
+        `hk-icon-${props.size}`,
+        props.color ? `hk-icon-${props.color}` : "",
       ];
 
       const pName = pascalCase(props.name);

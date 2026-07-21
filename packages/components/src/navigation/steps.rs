@@ -263,20 +263,20 @@ fn StepItem(props: StepItemProps) -> Element {
 impl StyledComponent for StepsComponent {
     fn styles() -> &'static str {
         r#"
-.hi-steps-wrapper {
+.hk-steps-wrapper {
     display: flex;
     width: 100%;
 }
 
-.hi-steps-horizontal {
+.hk-steps-horizontal {
     flex-direction: row;
 }
 
-.hi-steps-vertical {
+.hk-steps-vertical {
     flex-direction: column;
 }
 
-.hi-step-item {
+.hk-step-item {
     display: flex;
     align-items: flex-start;
     position: relative;
@@ -284,51 +284,51 @@ impl StyledComponent for StepsComponent {
     padding: 0.5rem 1rem;
 }
 
-.hi-step-item:not(:last-child)::after {
+.hk-step-item:not(:last-child)::after {
     content: '';
     position: absolute;
     background-color: var(--hi-color-border);
 }
 
-.hi-steps-horizontal .hi-step-item:not(:last-child)::after {
+.hk-steps-horizontal .hk-step-item:not(:last-child)::after {
     top: 1.5rem;
     left: 2rem;
     right: 1rem;
     height: 1px;
 }
 
-.hi-steps-vertical .hi-step-item:not(:last-child)::after {
+.hk-steps-vertical .hk-step-item:not(:last-child)::after {
     top: 1.5rem;
     left: 1.5rem;
     bottom: 0;
     width: 1px;
 }
 
-.hi-step-process .hi-step-icon .hi-step-number-process {
+.hk-step-process .hk-step-icon .hk-step-number-process {
     background-color: var(--hi-color-primary);
     color: white;
     box-shadow: 0 0 8px rgba(var(--hi-color-primary-rgb), 0.5);
 }
 
-.hi-step-finish .hi-step-icon .hi-step-number-finish {
+.hk-step-finish .hk-step-icon .hk-step-number-finish {
     color: var(--hi-color-primary);
     width: 1.5rem;
     height: 1.5rem;
 }
 
-.hi-step-error .hi-step-icon .hi-step-number-error {
+.hk-step-error .hk-step-icon .hk-step-number-error {
     color: var(--hi-color-error);
     width: 1.5rem;
     height: 1.5rem;
 }
 
-.hi-step-icon {
+.hk-step-icon {
     position: relative;
     z-index: 1;
     margin-right: 0.75rem;
 }
 
-.hi-step-number {
+.hk-step-number {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -343,35 +343,35 @@ impl StyledComponent for StepsComponent {
     transition: all 0.3s ease;
 }
 
-.hi-step-content {
+.hk-step-content {
     flex: 1;
 }
 
-.hi-step-title {
+.hk-step-title {
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--hi-color-text-primary);
     margin-bottom: 0.25rem;
 }
 
-.hi-step-description {
+.hk-step-description {
     font-size: 0.75rem;
     color: var(--hi-color-text-secondary);
 }
 
-.hi-step-process .hi-step-title {
+.hk-step-process .hk-step-title {
     color: var(--hi-color-primary);
 }
 
-.hi-step-finish .hi-step-title {
+.hk-step-finish .hk-step-title {
     color: var(--hi-color-text-primary);
 }
 
-.hi-step-wait .hi-step-title {
+.hk-step-wait .hk-step-title {
     color: var(--hi-color-text-secondary);
 }
 
-.hi-step-error .hi-step-title {
+.hk-step-error .hk-step-title {
     color: var(--hi-color-error);
 }
 "#

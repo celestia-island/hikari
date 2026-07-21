@@ -38,12 +38,12 @@
   font-size: 0.625rem;
   letter-spacing: 0.04em;
   color: var(--hi-color-muted);
-  background: rgb(var(--hi-color-surface, 255 255 255) / 78%);
-  border: 1px solid rgb(var(--hi-color-border, 255 255 255) / 12%);
-  border-radius: var(--radius-full, 9999px);
+  background: color-mix(in srgb, var(--hi-color-surface) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 12%, transparent);
+  border-radius: var(--hi-radius-full, 9999px);
   backdrop-filter: blur(4px);
   opacity: 0.85;
-  transition: opacity var(--duration-short, 0.15s) ease;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }
 
 .hk-scrollbar-track {
@@ -52,7 +52,7 @@
   background: transparent;
   pointer-events: auto;
   opacity: 0;
-  transition: opacity var(--duration-short, 0.15s) ease;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
 
   &[data-axis="horizontal"] {
     left: 4px;
@@ -77,12 +77,12 @@
 .hk-scrollbar-thumb {
   position: absolute;
   border-radius: 3px;
-  background: rgb(var(--hi-color-muted, 128 128 128) / 0.35);
-  transition: background var(--duration-short, 0.15s) ease;
+  background: color-mix(in srgb, var(--hi-color-muted) 35%, transparent);
+  transition: background var(--hi-duration-fast, 0.15s) ease;
 
   .is-hovering &,
   &.is-dragging {
-    background: rgb(var(--hi-color-muted, 128 128 128) / 0.55);
+    background: color-mix(in srgb, var(--hi-color-muted) 55%, transparent);
   }
 }
 

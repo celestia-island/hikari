@@ -1,9 +1,9 @@
 .hk-search-input {
   display: flex;
   align-items: center;
-  background: rgb(var(--color-surface));
-  border: 1px solid rgb(var(--color-border));
-  border-radius: var(--radius-md, 6px);
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: var(--hi-radius-md, 6px);
   overflow: hidden;
   transition:
     background-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
@@ -11,12 +11,12 @@
     box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));
 
   &:hover {
-    border-color: rgb(var(--color-primary));
+    border-color: var(--hi-color-primary);
   }
 
   &:focus-within {
-    border-color: rgb(var(--color-primary));
-    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.12);
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
   }
 
   &--disabled {
@@ -31,7 +31,7 @@
   justify-content: center;
   flex-shrink: 0;
   padding-left: 0.75rem;
-  color: rgb(var(--color-muted));
+  color: var(--hi-color-muted);
 
   svg {
     width: 16px;
@@ -45,14 +45,14 @@
   background: transparent;
   border: none;
   outline: none;
-  color: rgb(var(--color-text));
+  color: var(--hi-color-text-primary);
   font-family: inherit;
   font-size: 0.875rem;
   line-height: 1.5;
   padding: 0 0.5rem;
 
   &::placeholder {
-    color: rgb(var(--color-muted));
+    color: var(--hi-color-muted);
     opacity: 0.6;
   }
 
@@ -74,7 +74,7 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  color: rgb(var(--color-muted));
+  color: var(--hi-color-muted);
   cursor: pointer;
   transition:
     background-color var(--hi-duration-fast, 0.15s) ease,
@@ -86,8 +86,8 @@
   }
 
   &:hover {
-    background: rgb(var(--color-surface) / 0.6);
-    color: rgb(var(--color-text));
+    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+    color: var(--hi-color-text-primary);
   }
 }
 

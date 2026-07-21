@@ -113,17 +113,17 @@ def hover_el(page, selector):
 def get_scroll_height(page):
     return page.evaluate("document.documentElement.scrollHeight")
 
-# ============================================================
+# ------
 # TEST PLAN: (route, description, actions list)
 # Each action: ('type', args...) where type is one of:
 #   'snap_viewport', 'snap_full', 'snap_el',
 #   'scroll_to', 'scroll_by',
 #   'click', 'type_in', 'hover',
 #   'press_key', 'eval'
-# ============================================================
+# ------
 
 TEST_PLAN = [
-    # ===== HOME PAGE (/) =====
+    # ------ HOME PAGE (/) ------
     ("/", "home", [
         ("snap_viewport", "nav_home_0,0-1920,1080_initial"),
         ("snap_full", "nav_home_fullpage_full"),
@@ -136,7 +136,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== COMPONENTS OVERVIEW =====
+    # ------ COMPONENTS OVERVIEW ------
     ("/components", "components-overview", [
         ("snap_viewport", "nav_components_0,0-1920,1080_initial"),
         ("snap_full", "nav_components_fullpage_full"),
@@ -147,7 +147,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== LAYER1 (Basic Components) =====
+    # ------ LAYER1 (Basic Components) ------
     ("/components/layer1", "layer1-basic", [
         ("snap_viewport", "nav_layer1_0,0-1920,1080_initial"),
         ("snap_full", "nav_layer1_fullpage_full"),
@@ -160,7 +160,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== LAYER2 (Data/Entry) =====
+    # ------ LAYER2 (Data/Entry) ------
     ("/components/layer2", "layer2-data-entry", [
         ("snap_viewport", "nav_layer2_0,0-1920,1080_initial"),
         ("snap_full", "nav_layer2_fullpage_full"),
@@ -171,7 +171,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== LAYER3 (Advanced) =====
+    # ------ LAYER3 (Advanced) ------
     ("/components/layer3", "layer3-advanced", [
         ("snap_viewport", "nav_layer3_0,0-1920,1080_initial"),
         ("snap_full", "nav_layer3_fullpage_full"),
@@ -182,7 +182,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== BUTTON PAGE =====
+    # ------ BUTTON PAGE ------
     ("/button", "button-demos", [
         ("snap_viewport", "nav_button_0,0-1920,1080_initial"),
         ("snap_full", "nav_button_fullpage_full"),
@@ -197,7 +197,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== INPUT PAGE =====
+    # ------ INPUT PAGE ------
     ("/input", "input-demos", [
         ("snap_viewport", "nav_input_0,0-1920,1080_initial"),
         ("snap_full", "nav_input_fullpage_full"),
@@ -214,7 +214,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== CARD PAGE =====
+    # ------ CARD PAGE ------
     ("/card", "card-demos", [
         ("snap_viewport", "nav_card_0,0-1920,1080_initial"),
         ("snap_full", "nav_card_fullpage_full"),
@@ -228,7 +228,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== TABLE PAGE =====
+    # ------ TABLE PAGE ------
     ("/table", "table-demos", [
         ("snap_viewport", "nav_table_0,0-1920,1080_initial"),
         ("snap_full", "nav_table_fullpage_full"),
@@ -242,7 +242,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== SWITCH PAGE =====
+    # ------ SWITCH PAGE ------
     ("/switch", "switch-demos", [
         ("snap_viewport", "nav_switch_0,0-1920,1080_initial"),
         ("snap_full", "nav_switch_fullpage_full"),
@@ -257,7 +257,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== PALETTE PAGE =====
+    # ------ PALETTE PAGE ------
     ("/palette", "palette-colors", [
         ("snap_viewport", "nav_palette_0,0-1920,1080_initial"),
         ("snap_full", "nav_palette_fullpage_full"),
@@ -270,7 +270,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== NAVIGATION PAGE =====
+    # ------ NAVIGATION PAGE ------
     ("/navigation", "navigation-demos", [
         ("snap_viewport", "nav_navigation_0,0-1920,1080_initial"),
         ("snap_full", "nav_navigation_fullpage_full"),
@@ -282,7 +282,7 @@ TEST_PLAN = [
         ("scroll_to", 0),
     ]),
 
-    # ===== GETTING STARTED GUIDE =====
+    # ------ GETTING STARTED GUIDE ------
     ("/guides/getting-started", "guide-getting-started", [
         ("snap_viewport", "nav_guide_0,0-1920,1080_initial"),
         ("snap_full", "nav_guide_fullpage_full"),
@@ -300,9 +300,9 @@ TEST_PLAN = [
     ]),
 ]
 
-# ============================================================
+# ------
 # RUN
-# ============================================================
+# ------
 
 print(f"Output: {OUT_DIR}")
 print(f"URL:    {BASE_URL}")

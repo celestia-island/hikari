@@ -2,9 +2,9 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Glow Component - Single Glow Color System
-// ============================================
+// ------
 //
 // IMPORTANT: All glow states are controlled by AnimationBuilder via inline styles.
 // CSS does NOT provide any default hover/active/focus behavior.
@@ -59,9 +59,9 @@
   }
 }
 
-// ============================================
+// ------
 // Glow Intensity Levels (Opacity & Spread)
-// ============================================
+// ------
 
 // These classes define the BASE opacity for different glow intensities
 // The actual visibility is controlled by --glow-intensity-scale (0 = hidden, 1 = full intensity)
@@ -115,9 +115,9 @@
   overflow: visible;
 }
 
-// ============================================
+// ------
 // Button Enhancement (Managed by AnimationBuilder)
-// ============================================
+// ------
 
 // Remove transform translateY from button hover when wrapped in glow
 .hk-glow-wrapper .hk-button:hover {
@@ -140,9 +140,9 @@
   // No hover effect - handled by glow overlay
 }
 
-// ============================================
+// ------
 // Glow Animation Presets
-// ============================================
+// ------
 //
 // These presets add continuous animation effects to the glow component.
 // They are activated by adding the corresponding class to the wrapper.

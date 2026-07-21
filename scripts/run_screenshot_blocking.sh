@@ -14,11 +14,11 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo "=========================================="
+echo "------"
 echo "Hikari Blocking E2E Screenshot Test Runner"
-echo "=========================================="
+echo "------"
 echo "Total routes: $TOTAL_ROUTES"
-echo "=========================================="
+echo "------"
 echo ""
 
 # Remove old containers
@@ -48,7 +48,7 @@ docker run --rm \
     /usr/local/bin/hikari-screenshot
 
 echo ""
-echo "=========================================="
+echo "------"
 
 # Count screenshots
 screenshot_count=$(ls -lh target/e2e_screenshots/*.png 2>/dev/null | wc -l)

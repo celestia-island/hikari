@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     info!("Starting Hikari SSR E2E Tests");
-    info!("================================");
+    info!("------");
 
     // Get base URL from environment or use default
     let base_url =
@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
     // Summary
     println!("\n================================");
     println!("SSR E2E Test Summary");
-    println!("================================");
+    println!("------");
     let total = results.len();
     let passed = results
         .iter()

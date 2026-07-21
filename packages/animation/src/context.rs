@@ -97,7 +97,7 @@ impl AnimationContext {
         &self.window
     }
 
-    // ===== Element Dimensions =====
+    // ------ Element Dimensions ------
 
     /// Get element width in pixels (including padding, but not border)
     pub fn element_width(&self) -> f64 {
@@ -134,7 +134,7 @@ impl AnimationContext {
         self.element.get_bounding_client_rect()
     }
 
-    // ===== Element Position =====
+    // ------ Element Position ------
 
     /// Get element offset left relative to offset parent
     pub fn offset_left(&self) -> f64 {
@@ -166,7 +166,7 @@ impl AnimationContext {
         self.bounding_rect().bottom()
     }
 
-    // ===== Mouse Position =====
+    // ------ Mouse Position ------
 
     /// Get mouse X position relative to viewport
     pub fn mouse_x_viewport(&self) -> f64 {
@@ -210,7 +210,7 @@ impl AnimationContext {
         }
     }
 
-    // ===== Scroll Position =====
+    // ------ Scroll Position ------
 
     /// Get element scroll X position
     pub fn scroll_x(&self) -> f64 {
@@ -270,7 +270,7 @@ impl AnimationContext {
         }
     }
 
-    // ===== Window Dimensions =====
+    // ------ Window Dimensions ------
 
     /// Get window inner width
     pub fn window_width(&self) -> f64 {
@@ -290,7 +290,7 @@ impl AnimationContext {
             .unwrap_or(0.0)
     }
 
-    // ===== Time =====
+    // ------ Time ------
 
     /// Get current timestamp in milliseconds
     pub fn now(&self) -> f64 {
@@ -321,7 +321,7 @@ impl AnimationContext {
         }
     }
 
-    // ===== Helpers =====
+    // ------ Helpers ------
 
     /// Get the document reference
     fn document(&self) -> Option<web_sys::Document> {

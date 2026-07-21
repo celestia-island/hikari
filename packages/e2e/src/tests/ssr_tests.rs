@@ -477,7 +477,7 @@ impl SsrTests {
         results
     }
 
-    // ========== E2E Tests with WebDriver ==========
+    // ------ E2E Tests with WebDriver ------
 
     /// Get the base URL for testing
     fn base_url() -> String {

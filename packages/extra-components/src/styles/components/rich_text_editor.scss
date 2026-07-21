@@ -1,9 +1,9 @@
 // hikari-extra-components/styles/components/rich_text_editor.scss
 // Rich text editor component styles with
 
-// ============================================
+// ------
 // Editor Container
-// ============================================
+// ------
 
 .hk-editor {
     width: 100%;
@@ -23,9 +23,9 @@
     box-shadow: 0 0 2px var(--hi-color-primary-glow);
 }
 
-// ============================================
+// ------
 // Editor Toolbar
-// ============================================
+// ------
 
 .hk-editor-toolbar {
     display: flex;
@@ -41,9 +41,9 @@
     border-bottom-color: var(--hi-border);
 }
 
-// ============================================
+// ------
 // Toolbar Divider
-// ============================================
+// ------
 
 .hk-editor-divider {
     width: 1px;
@@ -56,9 +56,9 @@
     background: var(--hi-border);
 }
 
-// ============================================
+// ------
 // Editor Content Area
-// ============================================
+// ------
 
 .hk-editor-content {
     padding: 16px;
@@ -85,9 +85,9 @@
     outline: none;
 }
 
-// ============================================
+// ------
 // Editor States
-// ============================================
+// ------
 
 .hk-editor-readonly {
     opacity: 0.7;

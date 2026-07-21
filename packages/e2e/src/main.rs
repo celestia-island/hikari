@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
     info!(
         "Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)"
     );
-    info!("====================");
+    info!("------");
     info!("Total: 24 components tested");
 
     Ok(())

@@ -398,7 +398,7 @@ impl<'a> AnimationBuilder<'a> {
     }
 }
 
-// ===== Backward compatibility =====
+// ------ Backward compatibility ------
 
 /// Create a new AnimationBuilder (backward compatibility function)
 pub fn new_animation_builder(elements: &HashMap<String, JsValue>) -> AnimationBuilder<'_> {

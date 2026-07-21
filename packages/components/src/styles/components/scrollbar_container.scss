@@ -10,10 +10,10 @@
 //         └── track (absolute, right: 0)  ← fixed scrollbar track
 //               └── thumb (absolute)     ← draggable thumb
 
-// ============================================================================
+// ------
 // IMPORTANT: Hide native scrollbars IMMEDIATELY on page load
 // This prevents the flash of native scrollbar before custom one is set up
-// ============================================================================
+// ------
 
 // Target elements that will get custom scrollbars
 .hk-aside-content,
@@ -38,9 +38,9 @@
     scrollbar-width: none;  // Firefox
 }
 
-// ============================================================================
+// ------
 // Custom scrollbar styles (applied after JS wraps elements)
-// ============================================================================
+// ------
 
 // Container with custom scrollbar
 .custom-scrollbar-container {

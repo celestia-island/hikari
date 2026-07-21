@@ -2,12 +2,12 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Sidebar Component - Multi-level Navigation
 
-// ============================================
+// ------
 // Base Sidebar Styles
-// ============================================
+// ------
 
 .hk-sidebar {
   // Layout
@@ -31,9 +31,9 @@
   @include mix.scrollbar-hidden;
 }
 
-// ============================================
+// ------
 // Sidebar Section - Top-level collapsible category
-// ============================================
+// ------
 
 .hk-sidebar-section {
   // Layout
@@ -144,9 +144,9 @@
   }
 }
 
-// ============================================
+// ------
 // Sidebar Item - Clickable navigation item
-// ============================================
+// ------
 
 .hk-sidebar-item {
   // Layout
@@ -280,9 +280,9 @@
   }
 }
 
-// ============================================
+// ------
 // Sidebar Leaf - Terminal item without children
-// ============================================
+// ------
 
 .hk-sidebar-leaf {
   // Border between items
@@ -354,9 +354,9 @@
   }
 }
 
-// ============================================
+// ------
 // Active State Support
-// ============================================
+// ------
 
 // Add active state styling to item content when parent has data-active
 .hk-sidebar-item[data-active="true"] > .hk-sidebar-item-header > .hk-sidebar-item-content {
@@ -368,9 +368,9 @@
   margin-left: -3px;
 }
 
-// ============================================
+// ------
 // Nested Level Indentation
-// ============================================
+// ------
 
 // Each nested level adds indentation
 .hk-sidebar-item-children .hk-sidebar-item-header {
@@ -385,9 +385,9 @@
   padding-left: 3rem;
 }
 
-// ============================================
+// ------
 // Icon Alignment
-// ============================================
+// ------
 
 // Fix Icon component wrapper alignment in flex containers
 .hk-sidebar-item-content .hk-icon,
@@ -433,9 +433,9 @@
   color: currentColor;
 }
 
-// ============================================
+// ------
 // Responsive Variants
-// ============================================
+// ------
 
 // Compact variant
 .hk-sidebar-compact {

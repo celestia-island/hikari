@@ -4,14 +4,14 @@
 // This file defines component-level CSS variables for the Card component.
 // These variables can be overridden at runtime via AnimationBuilder.
 
-// ============================================
+// ------
 // Base Card Variables
-// ============================================
+// ------
 
 .hk-card {
-  // ============================================
+  // ------
   // 1. Color System
-  // ============================================
+  // ------
 
   // Text Colors
   --hi-card-title-color: var(--hi-color-text-primary);
@@ -34,23 +34,23 @@
   --hi-card-shadow-hover: 0 4px 12px var(--hi-black-15, rgba(0, 0, 0, 0.12));
   --hi-card-glow: var(--hi-glow-color);
 
-  // ============================================
+  // ------
   // 2. Border Radius System
-  // ============================================
+  // ------
 
   --hi-card-radius: var(--hi-radius-lg);
 
-  // ============================================
+  // ------
   // 3. Animation System
-  // ============================================
+  // ------
 
   --hi-card-duration: var(--hi-duration-normal);
   --hi-card-easing: var(--hi-ease-default);
   --hi-card-transition: all var(--hi-card-duration) var(--hi-card-easing);
 
-  // ============================================
+  // ------
   // 4. Spacing System
-  // ============================================
+  // ------
 
   --hi-card-padding: 1.25rem;
   --hi-card-padding-header: 1rem 1.25rem;
@@ -58,16 +58,16 @@
   --hi-card-padding-footer: 1rem 1.25rem;
   --hi-card-gap: 0.75rem;
 
-  // ============================================
+  // ------
   // 5. Border System
-  // ============================================
+  // ------
 
   --hi-card-border-width: 1px;
   --hi-card-border-style: solid;
 
-  // ============================================
+  // ------
   // 6. Typography System
-  // ============================================
+  // ------
 
   --hi-card-title-font-size: var(--hi-font-size-lg);
   --hi-card-title-font-weight: 600;
@@ -75,16 +75,16 @@
   --hi-card-body-font-size: var(--hi-font-size-sm);
   --hi-card-body-line-height: 1.6;
 
-  // ============================================
+  // ------
   // 7. Blur System
-  // ============================================
+  // ------
 
   --hi-card-blur: blur(4px);
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-card-sm {
   --hi-card-radius: var(--hi-radius-sm);
@@ -113,27 +113,27 @@
   --hi-card-title-font-size: var(--hi-font-size-xl);
 }
 
-// ============================================
+// ------
 // Variant: Bordered
-// ============================================
+// ------
 
 .hk-card-bordered {
   --hi-card-border-width: 2px;
   --hi-card-shadow: 0 2px 4px var(--hi-black-20, rgba(0, 0, 0, 0.15)), 0 0 0 1px var(--hi-white-8, rgba(255, 255, 255, 0.08)) inset;
 }
 
-// ============================================
+// ------
 // Variant: Flat
-// ============================================
+// ------
 
 .hk-card-flat {
   --hi-card-shadow: none;
   --hi-card-border-color: var(--hi-color-border);
 }
 
-// ============================================
+// ------
 // Variant: Hoverable
-// ============================================
+// ------
 
 .hk-card-hoverable {
   --hi-card-border-color-hover: rgba(59, 130, 246, 0.3);

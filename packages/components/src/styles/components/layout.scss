@@ -2,14 +2,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Layout Component
 // Features: Ambient patterns, grid effects, acrylic materials
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Base Layout Container
-// ============================================
+// ------
 
 .hk-layout {
   // Full viewport layout
@@ -52,9 +52,9 @@
 //   }
 // }
 
-// ============================================
+// ------
 // Layout Header Area
-// ============================================
+// ------
 
 .hk-layout-header {
   position: sticky;
@@ -76,9 +76,9 @@
   }
 }
 
-// ============================================
+// ------
 // Layout Content Area (Main)
-// ============================================
+// ------
 
 // Layout Body - contains Aside and Main side by side
 .hk-layout-body {
@@ -117,9 +117,9 @@
   }
 }
 
-// ============================================
+// ------
 // Layout with Sidebar
-// ============================================
+// ------
 
 .hk-layout-has-sidebar {
   display: flex;
@@ -146,9 +146,9 @@
   }
 }
 
-// ============================================
+// ------
 // Layout Aside (Sidebar)
-// ============================================
+// ------
 
 .hk-layout-aside {
   // No outer padding - padding should be inside scrollable content
@@ -228,9 +228,9 @@
   }
 }
 
-// ============================================
+// ------
 // Layout Footer
-// ============================================
+// ------
 
 .hk-layout-footer {
   // Simple background only
@@ -251,9 +251,9 @@
   }
 }
 
-// ============================================
+// ------
 // Container Variants
-// ============================================
+// ------
 
 // Fluid container (full width)
 .hk-layout-fluid {
@@ -294,9 +294,9 @@
   }
 }
 
-// ============================================
+// ------
 // Layout Background Variants
-// ============================================
+// ------
 
 // Default dark theme (transparent - let Background component handle it)
 .hk-layout-dark {
@@ -332,9 +332,9 @@
   }
 }
 
-// ============================================
+// ------
 // Responsive Layout Modifiers
-// ============================================
+// ------
 
 // Hide sidebar on mobile
 .hk-layout-mobile-sidebar-hidden {
@@ -391,9 +391,9 @@
   }
 }
 
-// ============================================
+// ------
 // Animation Classes
-// ============================================
+// ------
 
 // Fade in animation for layout content
 .hk-layout-animate-in {
@@ -433,9 +433,9 @@
 //   }
 // }
 
-// ============================================
+// ------
 // Layout Transitions
-// ============================================
+// ------
 
 // Smooth transition when sidebar collapses/expands
 .hk-layout-sidebar-transition {
@@ -450,9 +450,9 @@
   }
 }
 
-// ============================================
+// ------
 // Utility Classes
-// ============================================
+// ------
 
 // Full height layout
 .hk-layout-full-height {
@@ -482,9 +482,9 @@
   overflow: hidden;
 }
 
-// ============================================
+// ------
 // Responsive Grid Column Classes
-// ============================================
+// ------
 
 // Generate col-span classes for 1-12
 @for $i from 1 through 12 {
@@ -510,9 +510,9 @@
   }
 }
 
-// ============================================
+// ------
 // Print Styles
-// ============================================
+// ------
 
 @media print {
   .hk-layout {
@@ -536,9 +536,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dropdown Portal Styles
-// ============================================
+// ------
 
 .dropdown-overlay {
   position: fixed;

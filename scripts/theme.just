@@ -6,9 +6,9 @@
 
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
-# ============================================================================
+# ------
 # Theme build tasks
-# ============================================================================
+# ------
 
 default:
     @just --list
@@ -37,9 +37,9 @@ watch:
     @echo "Watch mode not yet implemented for theme"
     @echo "Use 'just rebuild' to rebuild after changes"
 
-# ============================================================================
+# ------
 # Development tasks
-# ============================================================================
+# ------
 
 # Build theme in debug mode
 dev: fetch
@@ -57,9 +57,9 @@ clippy:
 fmt:
     @cargo fmt -p hikari-theme
 
-# ============================================================================
+# ------
 # Utilities
-# ============================================================================
+# ------
 
 # Check if Tailwind CSS needs to be regenerated
 check:

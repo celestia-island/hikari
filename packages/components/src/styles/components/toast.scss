@@ -2,15 +2,15 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Toast Component - Emphasis Style
 // Features: Solid accent color backgrounds, white text
 // Distinct from Alert component (which uses surface background)
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Toast Container
-// ============================================
+// ------
 
 .hk-toast-container {
   position: fixed;
@@ -59,10 +59,10 @@
   }
 }
 
-// ============================================
+// ------
 // Base Toast Styles - Emphasis color background
 // No static shadow - glow handled by GlowWrapper
-// ============================================
+// ------
 
 .hk-toast {
   // Layout
@@ -153,9 +153,9 @@
   }
 }
 
-// ============================================
+// ------
 // Progress Bar - white/transparent (using palette)
-// ============================================
+// ------
 
 .hk-toast-progress {
   position: absolute;
@@ -176,11 +176,11 @@
   }
 }
 
-// ============================================
+// ------
 // Color Variants - Solid accent color backgrounds
 // All use white text for consistency
 // No static glow - dynamic glow handled by GlowWrapper
-// ============================================
+// ------
 
 // Success (Green) - 葱倩
 .hk-toast-success {
@@ -222,9 +222,9 @@
   }
 }
 
-// ============================================
+// ------
 // Hover State - no static effects, glow handled by wrapper
-// ============================================
+// ------
 
 .hk-toast {
   &:hover {
@@ -237,9 +237,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-toast-sm {
   padding: 0.75rem 1rem;
@@ -282,9 +282,9 @@
   }
 }
 
-// ============================================
+// ------
 // Clickable Toast
-// ============================================
+// ------
 
 .hk-toast-clickable {
   cursor: pointer;

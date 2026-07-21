@@ -3,9 +3,9 @@
 
 @use '../../../../theme/styles/variables' as vars;
 
-// ============================================
+// ------
 // Search Wrapper
-// ============================================
+// ------
 
 .hk-search-wrapper {
   position: relative;
@@ -23,9 +23,9 @@
   }
 }
 
-// ============================================
+// ------
 // Input Container
-// ============================================
+// ------
 
 .hk-search-input-container {
   position: relative;
@@ -82,9 +82,9 @@
   }
 }
 
-// ============================================
+// ------
 // Loading Spinner
-// ============================================
+// ------
 
 .hk-search-spinner {
   animation: hi-search-spin 1s linear infinite;
@@ -99,9 +99,9 @@
   }
 }
 
-// ============================================
+// ------
 // Suggestions Dropdown (Portal-based)
-// ============================================
+// ------
 
 .hk-search-suggestions-dropdown {
   max-height: 240px;
@@ -135,9 +135,9 @@
   color: var(--hi-color-text-secondary);
 }
 
-// ============================================
+// ------
 // Dark Theme Support
-// ============================================
+// ------
 
 [data-theme="dark"] .hk-search-suggestions-dropdown,
 [data-theme="tairitsu"] .hk-search-suggestions-dropdown {

@@ -3,18 +3,18 @@
 @use '../../../../theme/styles/mixins' as mix;
 @use './input-vars.scss' as input-vars;
 
-// ============================================
+// ------
 // Hikari Input Component
 // Features: Acrylic focus, glowing borders, smooth transitions
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (input-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Base Input Styles
-// ============================================
+// ------
 
 .hk-input {
   // Layer2 variables are defined in input-vars.scss
@@ -96,9 +96,9 @@
   }
 }
 
-// ============================================
+// ------
 // Input with Wrapper (for icons, prefixes, suffixes)
-// ============================================
+// ------
 
 .hk-input-wrapper {
   position: relative;
@@ -205,9 +205,9 @@
   }
 }
 
-// ============================================
+// ------
 // Textarea Variant
-// ============================================
+// ------
 
 .hk-input-textarea {
   min-height: 80px;
@@ -215,9 +215,9 @@
   font-family: vars.$hikari-font-family-sans;
 }
 
-// ============================================
+// ------
 // Search Input
-// ============================================
+// ------
 
 .hk-input-search {
   .hk-input-suffix {
@@ -229,9 +229,9 @@
   }
 }
 
-// ============================================
+// ------
 // Password Input
-// ============================================
+// ------
 
 .hk-input-password {
   .hk-input-suffix {
@@ -243,9 +243,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants - Variables defined in input-vars.scss
-// ============================================
+// ------
 
 .hk-input-sm,
 .hk-input-wrapper-sm {
@@ -295,9 +295,9 @@
   }
 }
 
-// ============================================
+// ------
 // Input Group
-// ============================================
+// ------
 
 .hk-input-group {
   display: flex;
@@ -328,9 +328,9 @@
   }
 }
 
-// ============================================
+// ------
 // Character Counter
-// ============================================
+// ------
 
 .hk-input-counter {
   position: absolute;
@@ -346,9 +346,9 @@
   }
 }
 
-// ============================================
+// ------
 // Animations
-// ============================================
+// ------
 
 .hk-input-animate-in {
   // Animation handled by JS
@@ -358,9 +358,9 @@
   // Animation handled by JS
 }
 
-// ============================================
+// ------
 // Spotlight Effect (Mouse-following glow)
-// ============================================
+// ------
 
 .hk-input-spotlight-wrapper {
   position: relative;

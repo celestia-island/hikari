@@ -3,7 +3,7 @@
 @use '../../../../theme/styles/mixins' as mix;
 @use './icon-button-vars.scss' as icon-button-vars;
 
-// ============================================
+// ------
 // Hikari IconButton Component - FUI Styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
@@ -11,7 +11,7 @@
 // - Custom: Runtime overrides via AnimationBuilder
 //
 // NOTE: Hover effects are handled by Glow wrapper, not here
-// ============================================
+// ------
 
 .hk-icon-button {
   // Layer2 variables are defined in icon-button-vars.scss
@@ -81,9 +81,9 @@
 
   // No active state - controlled by AnimationBuilder via Glow wrapper
 
-  // ============================================
+  // ------
   // Size Variants - Variables defined in icon-button-vars.scss
-  // ============================================
+  // ------
 
   &.hk-icon-button-16,
   &.hk-icon-button-24,
@@ -93,50 +93,50 @@
     // Size variables are already set by the classes in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Variant: Ghost (default - transparent)
-  // ============================================
+  // ------
 
   &.hk-icon-button-ghost,
   &.hk-icon-button-borderless {
     // Variables defined in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Variant: Primary (solid primary color)
-  // ============================================
+  // ------
 
   &.hk-icon-button-primary {
     // Variables defined in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Variant: Secondary (solid secondary color)
-  // ============================================
+  // ------
 
   &.hk-icon-button-secondary {
     // Variables defined in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Variant: Danger (solid danger color)
-  // ============================================
+  // ------
 
   &.hk-icon-button-danger {
     // Variables defined in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Variant: Success (solid success color)
-  // ============================================
+  // ------
 
   &.hk-icon-button-success {
     // Variables defined in icon-button-vars.scss
   }
 
-  // ============================================
+  // ------
   // Icon Styles - Use CSS Variables
-  // ============================================
+  // ------
 
   .hk-icon-button-icon {
     width: var(--hi-icon-button-icon-size);

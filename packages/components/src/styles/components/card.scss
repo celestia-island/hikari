@@ -3,18 +3,18 @@
 @use '../../../../theme/styles/mixins' as mix;
 @use './card-vars.scss' as card-vars;
 
-// ============================================
+// ------
 // Hikari Card Component
 // Features: Elevated shadows, hover accent bar, smooth transitions
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (card-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Icon color inheritance for theme support
-// ============================================
+// ------
 
 .hk-card,
 .hk-card-header,
@@ -25,9 +25,9 @@
   }
 }
 
-// ============================================
+// ------
 // Base Card Styles
-// ============================================
+// ------
 
 .hk-card {
   // Layer2 variables are defined in card-vars.scss
@@ -59,9 +59,9 @@
   transition: var(--hi-card-transition);
 }
 
-// ============================================
+// ------
 // Card Header
-// ============================================
+// ------
 
 .hk-card-header {
   position: relative;
@@ -125,9 +125,9 @@
   color: var(--hi-card-subtitle-color);
 }
 
-// ============================================
+// ------
 // Card Body
-// ============================================
+// ------
 
 .hk-card-body {
   position: relative;
@@ -139,9 +139,9 @@
   line-height: var(--hi-card-body-line-height);
 }
 
-// ============================================
+// ------
 // Card Footer
-// ============================================
+// ------
 
 .hk-card-footer {
   position: relative;
@@ -159,9 +159,9 @@
   }
 }
 
-// ============================================
+// ------
 // Card Media (images/videos)
-// ============================================
+// ------
 
 .hk-card-media {
   width: 100%;
@@ -170,9 +170,9 @@
   display: block;
 }
 
-// ============================================
+// ------
 // Card Actions (MUI-style footer)
-// ============================================
+// ------
 
 .hk-card-actions {
   display: flex;
@@ -186,9 +186,9 @@
   }
 }
 
-// ============================================
+// ------
 // Cover Image
-// ============================================
+// ------
 
 .hk-card-cover {
   width: 100%;
@@ -197,9 +197,9 @@
   border-bottom: 1px solid var(--hi-card-divider-color);
 }
 
-// ============================================
+// ------
 // Hoverable Card
-// ============================================
+// ------
 
 .hk-card-hoverable {
   cursor: pointer;
@@ -210,9 +210,9 @@
   }
 }
 
-// ============================================
+// ------
 // Loading State
-// ============================================
+// ------
 
 .hk-card-loading {
   position: relative;
@@ -235,9 +235,9 @@
   }
 }
 
-// ============================================
+// ------
 // Card Variants - Variables defined in card-vars.scss
-// ============================================
+// ------
 
 .hk-card-bordered {
   // Variables defined in card-vars.scss
@@ -253,9 +253,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants - Variables defined in card-vars.scss
-// ============================================
+// ------
 
 .hk-card-sm,
 .hk-card-md,
@@ -275,9 +275,9 @@
   height: 280px;
 }
 
-// ============================================
+// ------
 // Grid Layout for Multiple Cards
-// ============================================
+// ------
 
 .hk-card-grid {
   display: grid;
@@ -304,9 +304,9 @@
   }
 }
 
-// ============================================
+// ------
 // Animations
-// ============================================
+// ------
 
 .hk-card-animate-in {
   // Animation handled by JS
@@ -319,9 +319,9 @@
   }
 }
 
-// ============================================
+// ------
 // Glow Effect (Mouse-following spotlight)
-// ============================================
+// ------
 
 .hk-card-glow {
   position: absolute;

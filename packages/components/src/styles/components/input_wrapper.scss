@@ -10,9 +10,9 @@
 
 @use '../../../../theme/styles/variables' as vars;
 
-// ============================================
+// ------
 // Wrapper Container
-// ============================================
+// ------
 
 .hk-input-wrapper {
   display: inline-flex;
@@ -64,9 +64,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-input-wrapper-sm {
   height: 32px;
@@ -100,9 +100,9 @@
   }
 }
 
-// ============================================
+// ------
 // Left/Right Sections
-// ============================================
+// ------
 
 .hk-input-wrapper-left,
 .hk-input-wrapper-right {
@@ -121,9 +121,9 @@
   padding-right: 4px;
 }
 
-// ============================================
+// ------
 // Side Items (IconButtons)
-// ============================================
+// ------
 
 .hk-input-wrapper-item {
   display: inline-flex;
@@ -140,9 +140,9 @@
   }
 }
 
-// ============================================
+// ------
 // Input Section
-// ============================================
+// ------
 
 .hk-input-wrapper-input {
   flex: 1;
@@ -196,9 +196,9 @@
   }
 }
 
-// ============================================
+// ------
 // Multi-Icon Layout States
-// ============================================
+// ------
 
 // When multiple icons are present in a section
 .hk-input-wrapper-left:has(> .hk-input-wrapper-item + .hk-input-wrapper-item),
@@ -207,9 +207,9 @@
   gap: 2px;
 }
 
-// ============================================
+// ------
 // Icon States (Visual Feedback)
-// ============================================
+// ------
 
 // Default state - inherited from IconButton
 // Use higher specificity to override button.scss styles
@@ -247,9 +247,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dark Theme Support
-// ============================================
+// ------
 
 [data-theme="dark"] .hk-input-wrapper,
 [data-theme="tairitsu"] .hk-input-wrapper {

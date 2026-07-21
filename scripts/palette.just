@@ -6,9 +6,9 @@
 
 set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 
-# ============================================================================
+# ------
 # Palette build tasks
-# ============================================================================
+# ------
 
 default:
     @just --list
@@ -38,9 +38,9 @@ rebuild: generate
     @cargo clean -p hikari-palette
     @cargo build -p hikari-palette
 
-# ============================================================================
+# ------
 # Development tasks
-# ============================================================================
+# ------
 
 # Build palette in debug mode
 dev: generate
@@ -58,9 +58,9 @@ clippy:
 fmt:
     @cargo fmt -p hikari-palette
 
-# ============================================================================
+# ------
 # Utilities
-# ============================================================================
+# ------
 
 # Check if palette colors need to be regenerated
 check:

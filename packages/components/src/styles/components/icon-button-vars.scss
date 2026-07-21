@@ -7,14 +7,14 @@
 // NOTE: Hover effects are handled by Glow wrapper, not here.
 // Only base, active, and disabled states are defined.
 
-// ============================================
+// ------
 // Base IconButton Variables
-// ============================================
+// ------
 
 .hk-icon-button {
-  // ============================================
+  // ------
   // 1. Color System
-  // ============================================
+  // ------
 
   // Icon Colors
   --hi-icon-button-icon-color: var(--hi-icon-color);
@@ -33,15 +33,15 @@
   // Shadow & Glow (used by Glow wrapper)
   --hi-icon-button-glow: var(--hi-glow-color);
 
-  // ============================================
+  // ------
   // 2. Border Radius System
-  // ============================================
+  // ------
 
   --hi-icon-button-radius: 4px;
 
-  // ============================================
+  // ------
   // 3. Animation System
-  // ============================================
+  // ------
 
   // Duration
   --hi-icon-button-duration: var(--hi-duration-fast);
@@ -55,24 +55,24 @@
     background-color var(--hi-icon-button-duration) var(--hi-icon-button-easing),
     transform var(--hi-icon-button-duration-active) var(--hi-icon-button-easing);
 
-  // ============================================
+  // ------
   // 4. Size System
-  // ============================================
+  // ------
 
   --hi-icon-button-size: 40px;
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 
-  // ============================================
+  // ------
   // 5. Transform System
-  // ============================================
+  // ------
 
   --hi-icon-button-transform: none;
   --hi-icon-button-transform-active: scale(0.95);
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-icon-button-16 {
   --hi-icon-button-size: 16px;
@@ -99,9 +99,9 @@
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }
 
-// ============================================
+// ------
 // Ghost Variant Variables
-// ============================================
+// ------
 
 .hk-icon-button-ghost,
 .hk-icon-button-borderless {
@@ -115,9 +115,9 @@
   --hi-icon-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Primary Variant Variables
-// ============================================
+// ------
 
 .hk-icon-button-primary {
   --hi-icon-button-icon-color: var(--hi-color-text-on-primary);
@@ -130,9 +130,9 @@
   --hi-icon-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Secondary Variant Variables
-// ============================================
+// ------
 
 .hk-icon-button-secondary {
   --hi-icon-button-icon-color: var(--hi-color-text-on-secondary);
@@ -145,9 +145,9 @@
   --hi-icon-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Danger Variant Variables
-// ============================================
+// ------
 
 .hk-icon-button-danger {
   --hi-icon-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
@@ -160,9 +160,9 @@
   --hi-icon-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Success Variant Variables
-// ============================================
+// ------
 
 .hk-icon-button-success {
   --hi-icon-button-icon-color: var(--hi-color-text-on-success, #ffffff);

@@ -2,14 +2,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Select Component — Custom FUI Dropdown
 // Portal-based: trigger + overlay dropdown
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Trigger (the always-visible "button")
-// ============================================
+// ------
 
 .hk-select-trigger {
   // Layout
@@ -72,9 +72,9 @@
   }
 }
 
-// ============================================
+// ------
 // Value & Placeholder text
-// ============================================
+// ------
 
 .hk-select-value {
   flex: 1;
@@ -93,9 +93,9 @@
   font-style: normal;
 }
 
-// ============================================
+// ------
 // Arrow icon
-// ============================================
+// ------
 
 .hk-select-arrow {
   display: inline-flex;
@@ -115,9 +115,9 @@
   transform: rotate(180deg);
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-select-sm {
   padding: 0.3rem 0.625rem;
@@ -149,9 +149,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dropdown Panel (rendered in Portal overlay)
-// ============================================
+// ------
 
 .hk-select-dropdown {
   background: var(--hi-color-surface);
@@ -183,9 +183,9 @@
   }
 }
 
-// ============================================
+// ------
 // Option Items
-// ============================================
+// ------
 
 .hk-select-option {
   display: flex;
@@ -200,9 +200,9 @@
   white-space: nowrap;
 }
 
-// ============================================
+// ------
 // Focus visible (keyboard navigation)
-// ============================================
+// ------
 
 .hk-select-trigger:focus-visible {
   outline: 2px solid var(--hi-color-primary);

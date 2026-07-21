@@ -1,9 +1,9 @@
 // hikari-extra-components/styles/components/user_guide.scss
 // User guide component styles with
 
-// ============================================
+// ------
 // User Guide Backdrop
-// ============================================
+// ------
 
 .hk-user-guide-backdrop {
     position: fixed;
@@ -16,9 +16,9 @@
     transition: opacity 0.3s ease;
 }
 
-// ============================================
+// ------
 // User Guide Container
-// ============================================
+// ------
 
 .hk-user-guide {
     position: relative;
@@ -37,9 +37,9 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-// ============================================
+// ------
 // User Guide Header
-// ============================================
+// ------
 
 .hk-user-guide-header {
     display: flex;
@@ -55,9 +55,9 @@
     border-bottom-color: var(--hi-border);
 }
 
-// ============================================
+// ------
 // User Guide Close Button
-// ============================================
+// ------
 
 .hk-user-guide-close {
     display: flex;
@@ -84,9 +84,9 @@
     }
 }
 
-// ============================================
+// ------
 // User Guide Title & Description
-// ============================================
+// ------
 
 .hk-user-guide-title {
     font-size: 18px;
@@ -110,17 +110,17 @@
     color: var(--hi-text-secondary);
 }
 
-// ============================================
+// ------
 // User Guide Content
-// ============================================
+// ------
 
 .hk-user-guide-content {
     padding: 0 20px 20px;
 }
 
-// ============================================
+// ------
 // User Guide Step
-// ============================================
+// ------
 
 .hk-user-guide-step {
     padding: 12px 0;
@@ -135,9 +135,9 @@
     border-bottom-color: var(--hi-border);
 }
 
-// ============================================
+// ------
 // User Guide Navigation
-// ============================================
+// ------
 
 .hk-user-guide-navigation {
     display: flex;
@@ -153,9 +153,9 @@
     border-top-color: var(--hi-border);
 }
 
-// ============================================
+// ------
 // Position Variants
-// ============================================
+// ------
 
 .hk-user-guide-position-center {
     .hk-user-guide-backdrop {
@@ -200,9 +200,9 @@
     }
 }
 
-// ============================================
+// ------
 // Animations
-// ============================================
+// ------
 
 @keyframes hi-guide-enter {
     from {

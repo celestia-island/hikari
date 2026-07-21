@@ -7,14 +7,14 @@
 // NOTE: Hover effects are handled by Glow wrapper, not here.
 // Only base and active states are defined.
 
-// ============================================
+// ------
 // Base Button Variables
-// ============================================
+// ------
 
 .hk-button {
-  // ============================================
+  // ------
   // 1. Color System
-  // ============================================
+  // ------
 
   // Text Colors
   --hi-button-text-color: var(--hi-color-text-primary);
@@ -39,15 +39,15 @@
   // Shadow & Glow (used by Glow wrapper)
   --hi-button-glow: var(--hi-glow-color);
 
-  // ============================================
+  // ------
   // 2. Border Radius System
-  // ============================================
+  // ------
 
   --hi-button-radius: 4px;
 
-  // ============================================
+  // ------
   // 3. Animation System
-  // ============================================
+  // ------
 
   // Duration
   --hi-button-duration: var(--hi-duration-normal);
@@ -62,46 +62,46 @@
     border-color var(--hi-button-duration) var(--hi-button-easing),
     transform var(--hi-button-duration-active) var(--hi-button-easing);
 
-  // ============================================
+  // ------
   // 4. Background System
-  // ============================================
+  // ------
 
   --hi-button-bg-blur: none;
 
-  // ============================================
+  // ------
   // 5. SVG System
-  // ============================================
+  // ------
 
   --hi-button-icon-fill: var(--hi-icon-fill);
   --hi-button-icon-fill-opacity: var(--hi-icon-fill-opacity);
   --hi-button-icon-size: var(--hi-icon-size-sm);
 
-  // ============================================
+  // ------
   // 6. Spacing System
-  // ============================================
+  // ------
 
   --hi-button-padding-x: var(--hi-spacing-md);
   --hi-button-padding-y: var(--hi-spacing-sm);
   --hi-button-gap: var(--hi-spacing-xs);
 
-  // ============================================
+  // ------
   // 7. Border System
-  // ============================================
+  // ------
 
   --hi-button-border-width: var(--hi-border-width);
   --hi-button-border-width-focus: var(--hi-border-width-focus);
   --hi-button-border-style: var(--hi-border-style);
 
-  // ============================================
+  // ------
   // 8. Transform System
-  // ============================================
+  // ------
 
   --hi-button-transform: none;
   --hi-button-transform-active: scale(0.98);
 
-  // ============================================
+  // ------
   // 9. Typography System
-  // ============================================
+  // ------
 
   --hi-button-font-size: 0.8125rem;
   --hi-button-font-weight: 500;
@@ -109,9 +109,9 @@
   --hi-button-letter-spacing: 0.01em;
 }
 
-// ============================================
+// ------
 // Primary Variant Variables
-// ============================================
+// ------
 
 .hk-button-primary {
   --hi-button-text-color: var(--hi-color-text-on-primary);
@@ -129,9 +129,9 @@
   --hi-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Secondary Variant Variables
-// ============================================
+// ------
 
 .hk-button-secondary {
   --hi-button-text-color: var(--hi-color-text-on-secondary);
@@ -149,9 +149,9 @@
   --hi-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Ghost Variant Variables
-// ============================================
+// ------
 
 .hk-button-ghost {
   --hi-button-text-color: var(--hi-color-text-secondary);
@@ -169,9 +169,9 @@
   --hi-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Danger Variant Variables
-// ============================================
+// ------
 
 .hk-button-danger {
   --hi-button-text-color: var(--hi-color-text-on-danger, #ffffff);
@@ -189,9 +189,9 @@
   --hi-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Success Variant Variables
-// ============================================
+// ------
 
 .hk-button-success {
   --hi-button-text-color: var(--hi-color-text-on-success, #ffffff);
@@ -209,9 +209,9 @@
   --hi-button-glow: var(--hi-glow-color);
 }
 
-// ============================================
+// ------
 // Size Variant Variables
-// ============================================
+// ------
 
 .hk-button-sm {
   --hi-button-padding-x: var(--hi-spacing-sm);

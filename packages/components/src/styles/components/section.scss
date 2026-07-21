@@ -2,9 +2,9 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Section Component
-// ============================================
+// ------
 
 .hk-section {
   // Base spacing
@@ -47,9 +47,9 @@
   // Content styles
 }
 
-// ============================================
+// ------
 // Hikari Spacer Component
-// ============================================
+// ------
 
 .hk-spacer {
   display: block;

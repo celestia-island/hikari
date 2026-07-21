@@ -59,17 +59,17 @@ website_manifest := "examples/website/Cargo.toml"
 lagrange_root := `celestia-devtools locate --crate lagrange 2>/dev/null || python -m celestia_devtools locate --crate lagrange 2>/dev/null || echo "../lagrange"`
 lagrange_bin := lagrange_root + if os_family() == "windows" { "/target/release/lagrange.exe" } else { "/target/release/lagrange" }
 
-# ============================================================================
+# ------
 # Core tasks
-# ============================================================================
+# ------
 
 
 default:
     @just --list
 
-# ============================================================================
+# ------
 # Infrastructure setup
-# ============================================================================
+# ------
 
 # Check that tairitsu-packager is available from sibling repository
 check-tairitsu-packager:
@@ -80,9 +80,9 @@ fetch-icons:
     @echo "  →  Fetching MDI icons..."
     @{{py}} scripts/icons/fetch_mdi_icons.py 2>&1 | grep -E "(OK:|ERROR:|WARNING:)" || true
 
-# ============================================================================
+# ------
 # Build tasks
-# ============================================================================
+# ------
 
 # Complete build (Debug mode)
 build-dev: fetch-icons
@@ -101,9 +101,9 @@ build-website: _check-lagrange
     @echo "  ╰──────────────────────────────────────────────────╯"
     {{lagrange_bin}} build --src docs --out dist
 
-# ============================================================================
+# ------
 # Development
-# ============================================================================
+# ------
 
 # Verify the lagrange binary exists, with a helpful error if not.
 _check-lagrange:
@@ -166,9 +166,9 @@ watch-dev:
 
 run: dev
 
-# ============================================================================
+# ------
 # Code quality
-# ============================================================================
+# ------
 
 # Format code with rustfmt
 fmt:
@@ -181,9 +181,9 @@ clippy:
     @echo "  →  Running Clippy..."
     @cargo clippy --all-targets --all-features -- -D warnings
 
-# ============================================================================
+# ------
 # Cleaning
-# ============================================================================
+# ------
 
 # Clean build artifacts
 [linux]
@@ -197,9 +197,9 @@ clean:
 clean:
     @pwsh.exe -NoLogo -Command "echo '  →  Cleaning...'; cargo clean; if (Test-Path examples/website/dist) { Remove-Item -Recurse -Force examples/website/dist }; if (Test-Path packages/builder/src/generated) { Remove-Item -Recurse -Force packages/builder/src/generated }; if (Test-Path public) { Remove-Item -Recurse -Force public }; echo '  ✓  Clean completed'"
 
-# ============================================================================
+# ------
 # E2E Testing
-# ============================================================================
+# ------
 
 # Run E2E screenshots in parallel
 e2e-parallel:
@@ -211,9 +211,9 @@ e2e-parallel:
 e2e-test route="":
     @docker run --rm --network host -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" -v "$(pwd)/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}" > /dev/null
 
-# ============================================================================
+# ------
 # Unit Testing
-# ============================================================================
+# ------
 
 # Run all tests
 test:
@@ -224,9 +224,9 @@ test:
 test-verbose:
     @cargo test --workspace -- --nocapture
 
-# ============================================================================
+# ------
 # Utilities
-# ============================================================================
+# ------
 
 # Update dependencies
 update:
@@ -237,9 +237,9 @@ update:
 generate-scss:
     @cargo build --manifest-path packages/builder/Cargo.toml
 
-# ============================================================================
+# ------
 # Browser Debug (for AI agents)
-# ============================================================================
+# ------
 
 build-debug:
     @cargo build --release --package hikari-e2e --bin hikari-browser-debug

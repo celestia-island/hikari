@@ -87,7 +87,7 @@ impl AnimationDataStore {
         self.values.clear();
     }
 
-    // ===== Typed getters with defaults =====
+    // ------ Typed getters with defaults ------
 
     /// Get f64 value with default
     pub fn get_f64(&self, key: &str, default: f64) -> f64 {
@@ -137,7 +137,7 @@ impl AnimationDataStore {
         }
     }
 
-    // ===== Convenient setters =====
+    // ------ Convenient setters ------
 
     /// Set f64 value
     pub fn set_f64(&mut self, key: &str, value: f64) {
@@ -164,7 +164,7 @@ impl AnimationDataStore {
         self.set(key, StateValue::String(value.to_string()));
     }
 
-    // ===== Math operations =====
+    // ------ Math operations ------
 
     /// Add to f64 value (creating if doesn't exist)
     pub fn add_f64(&mut self, key: &str, delta: f64) {
@@ -190,7 +190,7 @@ impl AnimationDataStore {
         self.set_bool(key, !current);
     }
 
-    // ===== Advanced operations =====
+    // ------ Advanced operations ------
 
     /// Lerp between two f64 values based on t (0.0 to 1.0)
     pub fn lerp_f64(&self, from_key: &str, to_key: &str, t: f64) -> f64 {

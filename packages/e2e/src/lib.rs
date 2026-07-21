@@ -88,7 +88,7 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     info!(
         "Layer 3 (Advanced): VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls, UserGuide, Timeline (10 components)"
     );
-    info!("====================");
+    info!("------");
     info!("Total: 24 components tested");
 
     Ok(results)
@@ -132,7 +132,7 @@ pub async fn run_interactive_tests(
     info!(
         "Layer 3 (Extra): Timeline, UserGuide, ZoomControls, Collapsible, VideoPlayer, RichTextEditor, CodeHighlighter, DragLayer (8 components)"
     );
-    info!("======================");
+    info!("------");
     info!("Total: 22 components with multi-step interactive tests");
 
     Ok(results)
@@ -172,7 +172,7 @@ pub fn run_ssr_tests() -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
     info!("Page Rendering: Verifies all 5 pages (home, components, system, demos, 404)");
     info!("CSS Classes: Checks layout, button, hero, card, and navigation classes");
     info!("No-JS Content: Ensures critical content is in HTML (not loaded via JS)");
-    info!("===================");
+    info!("------");
     info!("Total: 4 SSR tests");
 
     Ok(results)
@@ -219,7 +219,7 @@ pub async fn run_ssr_e2e_tests(
     info!("  2. No-JS Visibility - Verifies content visible without JavaScript");
     info!("  3. Hydration - Confirms interactive features work after hydration");
     info!("  4. SEO Metadata - Checks proper meta tags and semantic HTML");
-    info!("========================");
+    info!("------");
     info!(
         "Total: {} routes × 4 tests = {} test cases",
         results.len(),

@@ -1,9 +1,9 @@
 // hikari-extra-components/styles/components/video_player.scss
 // Video player component styles with
 
-// ============================================
+// ------
 // Video Player Container
-// ============================================
+// ------
 
 .hk-video-player {
     width: 100%;
@@ -11,9 +11,9 @@
     margin: 0 auto;
 }
 
-// ============================================
+// ------
 // Video Container
-// ============================================
+// ------
 
 .hk-video-container {
     position: relative;
@@ -28,9 +28,9 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-// ============================================
+// ------
 // Video Title
-// ============================================
+// ------
 
 .hk-video-title {
     padding: 12px 16px;
@@ -45,9 +45,9 @@
     border-bottom-color: var(--hi-border);
 }
 
-// ============================================
+// ------
 // Video Wrapper & Element
-// ============================================
+// ------
 
 .hk-video-wrapper {
     position: relative;
@@ -60,9 +60,9 @@
     background-color: #000;
 }
 
-// ============================================
+// ------
 // Video Controls
-// ============================================
+// ------
 
 .hk-video-controls {
     display: flex;
@@ -89,9 +89,9 @@
     color: var(--hi-text-secondary);
 }
 
-// ============================================
+// ------
 // Video Progress
-// ============================================
+// ------
 
 .hk-video-progress {
     flex: 1;

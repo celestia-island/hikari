@@ -12,18 +12,10 @@ categories = ["gui", "wasm"]
 doctest = true
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
+
 yuuka = "^0.6"
 
-# Color collections are NOT Cargo features. The consuming workspace declares
-# which collections it wants in its root Cargo.toml:
-#
-#   [workspace.metadata.hikari]
-#   collections = ["chinese"]
-#
-# The build script reads that, emits `cargo:rustc-cfg=hikari_collection_<name>`
-# per collection, and generates the corresponding `pub const` block from
-# data/<name>.toml. Source modules are gated on those cfg flags.
-
+serde = { workspace = true, features = ["derive"] }
 [build-dependencies]
+
 regex-lite = "^0.1"

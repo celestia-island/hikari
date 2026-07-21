@@ -9,41 +9,32 @@ autobins = false
 
 [dependencies]
 
-# Selenium WebDriver for E2E testing
-thirtyfour = { version = "^0.34", features = ["reqwest"] }
-
+# Utilities
+anyhow = "^1"
 # Chromiumoxide for headless Chrome screenshots - updated for Chrome 144 compatibility
 chromiumoxide = { version = "^0.9" }
-
-# HTML parsing and assertions
-scraper = "^0.20"
-
+chrono = "^0.4"
+# Command line parsing
+clap = { version = "^4", features = ["derive"] }
+futures = "^0.3"
+# Logging and tracing
+log = "^0.4"
 # HTTP client for direct SSR HTML fetch in no-JS tests
 reqwest = { version = "^0.13", features = [
   "rustls-no-provider",
 ], default-features = false }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
-
-# Async runtime
-tokio = { version = "^1", features = ["full"] }
-
-# Logging and tracing
-log = "^0.4"
-tracing = "^0.1"
-tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
-
+# HTML parsing and assertions
+scraper = "^0.20"
 # Serde for config
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
-
-# Utilities
-anyhow = "^1"
-chrono = "^0.4"
-futures = "^0.3"
-
-# Command line parsing
-clap = { version = "^4", features = ["derive"] }
-
+# Selenium WebDriver for E2E testing
+thirtyfour = { version = "^0.34", features = ["reqwest"] }
+# Async runtime
+tokio = { version = "^1", features = ["full"] }
+tracing = "^0.1"
+tracing-subscriber = { version = "^0.3", features = ["env-filter"] }
 [[bin]]
 name = "hikari-e2e"
 path = "src/main.rs"

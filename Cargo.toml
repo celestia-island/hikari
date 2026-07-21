@@ -50,54 +50,47 @@ collections = ["chinese", "tailwind"]
 dynamic-fetch = false
 
 [workspace.dependencies]
+
+yuuka = "^0.6"
+
 # =================================================================
 # Basic language and tools
 # =================================================================
 anyhow = "^1"
-thiserror = "^2"
-futures = "^0.3"
-yuuka = "^0.6"
-
-# =================================================================
-# Data and serialization
-# =================================================================
-chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
-serde = { version = "^1", features = ["derive"] }
-serde_json = { version = "^1" }
-uuid = { version = "^1", features = ["v7", "fast-rng", "macro-diagnostics", "serde"] }
-
-# =================================================================
-# Async runtime
-# =================================================================
-tokio = { version = "^1", features = ["full"] }
-
-# =================================================================
-# Logging and tracing
-# =================================================================
-log = "^0.4"
-tracing = "^0.1"
-
 # =================================================================
 # Server-side dependencies (for SSR)
 # =================================================================
 axum = { version = "^0.8", features = ["macros", "ws"] }
 axum-extra = { version = "^0.12", features = ["typed-header"] }
-tower = { version = "^0.5", features = ["full"] }
-tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
+# =================================================================
+# Data and serialization
+# =================================================================
+chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+futures = "^0.3"
 gloo = "^0.11"
 gloo-net = "^0.6"
-
+# =================================================================
+# Logging and tracing
+# =================================================================
+log = "^0.4"
+once_cell = "^1"
+quick-xml = "^0.30"
+reqwest = { version = "^0.12", features = ["json"] }
 # =================================================================
 # Data serialization and processing
 # =================================================================
 ron = "^0.8"
-once_cell = "^1"
-quick-xml = "^0.30"
-reqwest = { version = "^0.12", features = ["json"] }
-
+serde = { version = "^1", features = ["derive"] }
+serde_json = { version = "^1" }
+thiserror = "^2"
 # =================================================================
-# Profile settings
+# Async runtime
 # =================================================================
+tokio = { version = "^1", features = ["full"] }
+tower = { version = "^0.5", features = ["full"] }
+tower-http = { version = "^0.6", features = ["cors", "fs", "trace"] }
+tracing = "^0.1"
+uuid = { version = "^1", features = ["v7", "fast-rng", "macro-diagnostics", "serde"] }
 [profile.release]
 opt-level = 3
 lto = true

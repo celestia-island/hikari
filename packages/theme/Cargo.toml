@@ -14,17 +14,18 @@ default = ["scss"]
 scss = []  # SCSS compilation
 
 [dependencies]
+
 # Hikari palette
 hikari-palette = { version = "^0.3", path = "../palette" }
 
+tairitsu-hooks = "^0.5"
+tairitsu-macros = "^0.5"
 # Tairitsu framework (for theme context)
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
 tairitsu-vdom = "^0.5"
-tairitsu-hooks = "^0.5"
-tairitsu-macros = "^0.5"
-
 [build-dependencies]
+
+anyhow = "^1"
 # Use grass directly for SCSS compilation — avoids pulling tairitsu-packager
 # (which transitively depends on wasmtime) into every consumer's build.
 grass = "^0.13"
-anyhow = "^1"

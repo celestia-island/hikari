@@ -10,19 +10,19 @@ keywords = ["animation", "easing", "tween", "state-machine", "design-system"]
 categories = ["gui", "wasm"]
 
 [dependencies]
+
+js-sys = { version = "^0.3", optional = true }
+once_cell = "^1.17"
 # Core dependencies
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 slotmap = "^1.0"
-once_cell = "^1.17"
-
-# Tairitsu framework integration
-# Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
-tairitsu-vdom = "^0.5"
 tairitsu-hooks = "^0.5"
 tairitsu-macros = "^0.5"
 tairitsu-style = "^0.5"
-
+# Tairitsu framework integration
+# Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
+tairitsu-vdom = "^0.5"
 # WASM dependencies (for wasm feature)
 wasm-bindgen = { version = "^0.2", optional = true }
 web-sys = { version = "^0.3", optional = true, features = [
@@ -38,8 +38,6 @@ web-sys = { version = "^0.3", optional = true, features = [
     "MediaQueryList",
     "DomTokenList",
 ] }
-js-sys = { version = "^0.3", optional = true }
-
 [features]
 default = []
 wasm = ["dep:wasm-bindgen", "dep:web-sys", "dep:js-sys"]

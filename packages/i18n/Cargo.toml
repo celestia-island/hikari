@@ -10,11 +10,12 @@ description = "Internationalization utilities for the Hikari design system"
 doctest = false
 
 [dependencies]
+
+yuuka = { workspace = true }
+
+anyhow = { workspace = true }
 # Workspace dependencies
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-anyhow = { workspace = true }
-yuuka = { workspace = true }
-
 # For TOML parsing
 toml = "^0.8"

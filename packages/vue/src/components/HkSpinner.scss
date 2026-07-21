@@ -1,22 +1,25 @@
+/* HkSpinner — pure-CSS infinite spinner. */
 .hk-spinner-wrapper {
   display: flex;
   align-items: center;
-  gap: var(--hk-space-8, 8px);
+  gap: var(--space-8);
 }
 
 .hk-spinner-centered {
   justify-content: center;
-  padding: var(--hk-space-32, 32px) 0;
+  padding: var(--space-32) 0;
 }
 
 .hk-spinner {
-  border: 2px solid rgb(var(--hk-color-border, 48 54 61) / 20%);
-  border-top-color: var(--hk-c-primary, rgb(88 166 255));
+  border: 2px solid rgb(var(--color-border) / 20%);
+  border-top-color: rgb(var(--color-primary));
   border-radius: 50%;
   animation: hk-spinner-rotate 0.7s linear infinite;
-  box-sizing: border-box;
 }
 
+/* tone="current" — same shape/duration as the default, but colored with
+   currentcolor so the spinner matches surrounding text (e.g. inside a
+   colored HkButton). Track = faded currentcolor, arc = full currentcolor. */
 .hk-spinner-current {
   border-color: color-mix(in srgb, currentcolor 30%, transparent);
   border-top-color: currentcolor;
@@ -53,8 +56,8 @@
 }
 
 .hk-spinner-text {
-  font-size: var(--hk-text-base, 0.875rem);
-  color: color-mix(in srgb, rgb(var(--hk-c-muted, 139 148 158)) 70%, rgb(var(--hk-color-background, 13 17 23)));
+  font-size: var(--text-base);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
 }
 
 @keyframes hk-spinner-rotate {

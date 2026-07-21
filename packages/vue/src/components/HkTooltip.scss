@@ -1,3 +1,5 @@
+/* HkTooltip — lightweight tooltip. Colours are intentionally decoupled from
+   theme tokens so the tooltip stays legible on any wallpaper. */
 .hk-tooltip-wrapper {
   position: relative;
   display: inline-flex;
@@ -10,17 +12,20 @@
 
 .hk-tooltip-popup {
   position: fixed;
-  z-index: var(--hk-z-tooltip, 10000);
-  padding: var(--hk-space-4, 4px) var(--hk-space-8, 8px);
-  border-radius: var(--hk-radius-sm, 4px);
-  font-size: var(--hk-text-xs, 0.75rem);
+  z-index: var(--z-tooltip);
+  padding: var(--space-4) var(--space-8);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   line-height: 1.4;
   white-space: normal;
   word-break: break-word;
   pointer-events: none;
   opacity: 0;
-  transition: opacity var(--hk-duration-short, 0.15s) ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: opacity var(--duration-short) ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  color: #000000;
 }
 
 .hk-tooltip-popup.hk-tooltip-visible {
@@ -34,24 +39,9 @@
 [data-mode="light"] .hk-tooltip-popup {
   background: #ffffff;
   color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-[data-mode="light"] [data-mode="light"] .hk-tooltip-popup {
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 [data-mode="dark"] .hk-tooltip-popup {
-  background: #3a3a3a;
+  background: #4b4b4b;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Default (no data-mode set) — dark fallback */
-.hk-tooltip-popup {
-  background: #333333;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }

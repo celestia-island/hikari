@@ -4,6 +4,16 @@ import "./HkNavItem.scss";
 // vue-router is an optional peer dependency.
 // When unavailable, fall back to a plain <a> element.
 let RouterLink: any = "a";
+let useRouterLink = false;
+try {
+  const vueRouter = require("vue-router");
+  if (vueRouter && vueRouter.RouterLink) {
+    RouterLink = vueRouter.RouterLink;
+    useRouterLink = true;
+  }
+} catch {
+  // vue-router not installed — use plain <a>
+}
 
 function buildClass(props: { active: boolean; disabled: boolean }, extra: string[] = []) {
   return [
@@ -56,8 +66,9 @@ export default defineComponent({
             aria-disabled={props.disabled}
             custom
           >
-            {({ navigate, isActive, isExactActive }: any) => {
-              const active = isActive || isExactActive || props.active;
+            {(slotProps: any) => {
+              const navigate = slotProps?.navigate ?? ((e: MouseEvent) => { window.location.href = props.to!; });
+              const active = slotProps?.isActive || slotProps?.isExactActive || props.active;
               const cls = buildClass({ active, disabled: props.disabled }, ["hk-nav-item--link"]);
               return (
                 <a

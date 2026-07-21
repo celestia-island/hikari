@@ -3,14 +3,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Checkbox Component
 // Features: FUI styling, smooth transitions, glow effects
 // Uses Layer 2 CSS variables (--hi-component-selection-*)
-// ============================================
+// ------
 
 // Label wrapper
-// ============================================
+// ------
 .hk-checkbox-label {
     display: inline-flex;
     align-items: center;
@@ -25,9 +25,9 @@
     }
 }
 
-// ============================================
+// ------
 // Hidden native input
-// ============================================
+// ------
 
 .hk-checkbox-input {
     position: absolute;
@@ -39,10 +39,10 @@
     padding: 0;
 }
 
-// ============================================
+// ------
 // Custom checkbox box
 // Uses Layer 2 variables
-// ============================================
+// ------
 
 .hk-checkbox {
     position: relative;
@@ -57,9 +57,9 @@
     box-sizing: border-box;
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-checkbox-sm {
     width: 16px;
@@ -76,10 +76,10 @@
     height: 24px;
 }
 
-// ============================================
+// ------
 // Checkmark icon (SVG)
 // Uses Layer 2 icon color
-// ============================================
+// ------
 
 .hk-checkbox-icon {
     color: var(--hi-component-selection-icon);
@@ -103,10 +103,10 @@
     transform: scale(1);
 }
 
-// ============================================
+// ------
 // Checked state
 // Uses Layer 2 gradient background
-// ============================================
+// ------
 
 .hk-checkbox-checked {
     background: var(--hi-component-selection-bg);
@@ -116,9 +116,9 @@
         inset 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
-// ============================================
+// ------
 // Hover effect on checked
-// ============================================
+// ------
 
 .hk-checkbox-label:hover .hk-checkbox-checked:not(.hk-checkbox-disabled) {
     box-shadow:
@@ -127,9 +127,9 @@
     transform: scale(1.05);
 }
 
-// ============================================
+// ------
 // Disabled state
-// ============================================
+// ------
 
 .hk-checkbox-disabled {
     opacity: 0.4;
@@ -139,9 +139,9 @@
     border-color: var(--hi-component-selection-border);
 }
 
-// ============================================
+// ------
 // Label text
-// ============================================
+// ------
 
 .hk-checkbox-text {
     font-family: vars.$hikari-font-family-sans;
@@ -152,9 +152,9 @@
     white-space: nowrap;
 }
 
-// ============================================
+// ------
 // Disabled label
-// ============================================
+// ------
 
 .hk-checkbox-label:has(.hk-checkbox-disabled) {
     cursor: not-allowed;

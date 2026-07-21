@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables' as vars;
 
-// ============================================
+// ------
 // Hikari Arrow Component - FUI Styling
-// ============================================
+// ------
 
 .hk-arrow {
   display: inline-flex;
@@ -28,9 +28,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-arrow-14 {
   width: vars.$hikari-icon-size-sm;
@@ -47,9 +47,9 @@
   height: vars.$hikari-icon-size-lg;
 }
 
-// ============================================
+// ------
 // Transitions
-// ============================================
+// ------
 
 // DISABLED - avoid unwanted animations when using with Glow
 // .hk-arrow {

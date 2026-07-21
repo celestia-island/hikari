@@ -2,14 +2,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Alert Component
 // Features: Glowing icons, smooth transitions, no static borders
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Base Alert Styles
-// ============================================
+// ------
 
 .hk-alert {
   // Layout
@@ -103,9 +103,9 @@
   // No hover transform or border effects - Glow handled by wrapper
 }
 
-// ============================================
+// ------
 // Color Variants - subtle accent only
-// ============================================
+// ------
 
 // Success (Green)
 .hk-alert-success {
@@ -143,9 +143,9 @@
   }
 }
 
-// ============================================
+// ------
 // Variant Types
-// ============================================
+// ------
 
 // Solid variant - uses surface background, glow handled by wrapper
 .hk-alert-solid {
@@ -180,9 +180,9 @@
   }
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-alert-sm {
   padding: 0.75rem 1rem;
@@ -222,9 +222,9 @@
   }
 }
 
-// ============================================
+// ------
 // Banner Variant (full width, no border radius)
-// ============================================
+// ------
 
 .hk-alert-banner {
   border-radius: 0;
@@ -232,9 +232,9 @@
   border-right: none;
 }
 
-// ============================================
+// ------
 // Center-aligned content
-// ============================================
+// ------
 
 .hk-alert-center {
   text-align: center;
@@ -247,9 +247,9 @@
   }
 }
 
-// ============================================
+// ------
 // Without Title
-// ============================================
+// ------
 
 .hk-alert-no-title {
   .hk-alert-description {
@@ -257,9 +257,9 @@
   }
 }
 
-// ============================================
+// ------
 // With Action Button
-// ============================================
+// ------
 
 .hk-alert-action {
   .hk-alert-actions {
@@ -269,9 +269,9 @@
   }
 }
 
-// ============================================
+// ------
 // Closable State
-// ============================================
+// ------
 
 .hk-alert-closable {
   cursor: pointer;

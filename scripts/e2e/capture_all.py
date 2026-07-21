@@ -72,9 +72,9 @@ def eval_js(expr):
     r = browser.evaluate(expr)
     return r.get("success", False), r
 
-# ============================================================
+# ------
 # TEST PLAN
-# ============================================================
+# ------
 tests = []
 
 # --- Route 1: Home Page (/) ---
@@ -255,9 +255,9 @@ tests.append(("Getting Started Guide", [
     ("scroll", 0),
 ]))
 
-# ============================================================
+# ------
 # EXECUTE
-# ============================================================
+# ------
 print(f"Output directory: {OUT_DIR}")
 print(f"Base URL: {BASE_URL}")
 print(f"Debug port: {DEBUG_PORT}")

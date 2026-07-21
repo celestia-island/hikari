@@ -3,17 +3,17 @@
 @use '../../../../theme/styles/mixins' as mix;
 @use './modal-vars.scss' as modal-vars;
 
-// ============================================
+// ------
 // Hikari Modal Component - FUI Styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
 // - Layer2: Component variables (modal-vars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Modal Overlay
-// ============================================
+// ------
 
 .hk-modal-overlay {
   position: fixed;
@@ -47,9 +47,9 @@
   }
 }
 
-// ============================================
+// ------
 // Modal Container
-// ============================================
+// ------
 
 .hk-modal {
   position: relative;
@@ -99,9 +99,9 @@
     margin-top: 4rem;
   }
 
-  // ============================================
+  // ------
   // Modal Header
-  // ============================================
+  // ------
 
   .hk-modal-header {
     display: flex;
@@ -150,9 +150,9 @@
     }
   }
 
-  // ============================================
+  // ------
   // Modal Body
-  // ============================================
+  // ------
 
   .hk-modal-body {
     flex: 1;
@@ -186,9 +186,9 @@
     }
   }
 
-  // ============================================
+  // ------
   // Modal Footer
-  // ============================================
+  // ------
 
   .hk-modal-footer {
     display: flex;
@@ -201,9 +201,9 @@
   }
 }
 
-// ============================================
+// ------
 // Responsive
-// ============================================
+// ------
 
 @media (max-width: 768px) {
   .hk-modal {
@@ -240,9 +240,9 @@
   }
 }
 
-// ============================================
+// ------
 // Focus Styles
-// ============================================
+// ------
 
 .hk-modal-close:focus-visible {
   outline: 2px solid var(--hi-color-primary);

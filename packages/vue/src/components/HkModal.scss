@@ -6,9 +6,9 @@
 // colors, spacing, and typography. Component-specific overrides
 // use the --hk-modal-* namespace.
 
-// ============================================
+// ------
 // Root wrapper — positioned via popup-manager z-index
-// ============================================
+// ------
 
 .hk-modal-root {
   position: fixed;
@@ -16,9 +16,9 @@
   pointer-events: none;
 }
 
-// ============================================
+// ------
 // Overlay (backdrop)
-// ============================================
+// ------
 
 .hk-modal-overlay {
   position: fixed;
@@ -43,9 +43,9 @@
   opacity: 0;
 }
 
-// ============================================
+// ------
 // Content frame
-// ============================================
+// ------
 
 .hk-modal-content {
   position: fixed;
@@ -68,14 +68,14 @@
   flex-direction: column;
 }
 
-// ============================================
+// ------
 // Content enter/leave transitions
 //
 // Height-clipped reveal: the frame grows from 80% of its
 // natural height to full height while fading in. Content
 // children are pinned at natural size (not squashed) —
 // overflow: hidden on the frame clips the viewport.
-// ============================================
+// ------
 
 .hk-modal-content-enter-active {
   transition:
@@ -114,9 +114,9 @@
   height: auto;
 }
 
-// ============================================
+// ------
 // Header
-// ============================================
+// ------
 
 .hk-modal-header {
   display: flex;
@@ -176,9 +176,9 @@
   }
 }
 
-// ============================================
+// ------
 // Sub-header (caller-provided slot)
-// ============================================
+// ------
 
 .hk-modal-subheader {
   padding: var(--hk-modal-padding-subheader, 0.75rem 1.5rem 0.75rem);
@@ -187,9 +187,9 @@
   flex-shrink: 0;
 }
 
-// ============================================
+// ------
 // Body (scroll region)
-// ============================================
+// ------
 
 .hk-modal-body {
   max-height: 70vh;
@@ -236,9 +236,9 @@
   padding: var(--hk-modal-padding-body, 1.5rem);
 }
 
-// ============================================
+// ------
 // Auto-follow indicator bar
-// ============================================
+// ------
 
 .hk-modal-autofollow-bar {
   position: absolute;
@@ -271,9 +271,9 @@
   }
 }
 
-// ============================================
+// ------
 // Footer
-// ============================================
+// ------
 
 .hk-modal-footer {
   padding: var(--hk-modal-padding-footer, 0.75rem 1.5rem);
@@ -285,9 +285,9 @@
   flex-shrink: 0;
 }
 
-// ============================================
+// ------
 // Responsive — full-screen on narrow viewports
-// ============================================
+// ------
 
 @media (max-width: 640px) {
   .hk-modal-content {

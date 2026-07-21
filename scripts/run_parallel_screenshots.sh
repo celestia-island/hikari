@@ -16,13 +16,13 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo "=========================================="
+echo "------"
 echo "Hikari Parallel E2E Screenshot Test Runner"
-echo "=========================================="
+echo "------"
 echo "Total routes: $TOTAL_ROUTES"
 echo "Number of containers: $NUM_CONTAINERS"
 echo "Routes per container: $ROUTES_PER_CONTAINER"
-echo "=========================================="
+echo "------"
 echo ""
 
 # Remove old containers
@@ -105,13 +105,13 @@ for pid in "${container_pids[@]}"; do
 done
 
 echo ""
-echo "=========================================="
+echo "------"
 if [ "$all_success" = true ]; then
     echo -e "${GREEN}✓ All containers completed successfully${NC}"
 else
     echo -e "${RED}✗ Some containers failed${NC}"
 fi
-echo "=========================================="
+echo "------"
 echo ""
 
 # Count screenshots

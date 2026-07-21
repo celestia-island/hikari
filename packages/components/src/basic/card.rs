@@ -113,9 +113,9 @@ impl StyledComponent for CardComponent {
     }
 }
 
-// ============================================
+// ------
 // CardHeader - Optional header with title, subtitle, and actions
-// ============================================
+// ------
 
 #[define_props]
 pub struct CardHeaderProps {
@@ -198,9 +198,9 @@ pub fn CardHeader(props: CardHeaderProps) -> Element {
     }
 }
 
-// ============================================
+// ------
 // CardContent - Main content area
-// ============================================
+// ------
 
 #[define_props]
 pub struct CardContentProps {
@@ -224,9 +224,9 @@ pub fn CardContent(props: CardContentProps) -> Element {
     }
 }
 
-// ============================================
+// ------
 // CardActions - Footer with action buttons
-// ============================================
+// ------
 
 #[define_props]
 pub struct CardActionsProps {
@@ -253,9 +253,9 @@ pub fn CardActions(props: CardActionsProps) -> Element {
     }
 }
 
-// ============================================
+// ------
 // CardMedia - Optional media container (images/videos)
-// ============================================
+// ------
 
 #[define_props]
 pub struct CardMediaProps {

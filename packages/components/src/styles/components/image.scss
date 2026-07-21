@@ -1,9 +1,9 @@
 // Use theme variables with namespace to avoid conflicts
 @use '../../../../theme/styles/variables' as vars;
 
-// ============================================
+// ------
 // Hikari Image Component
-// ============================================
+// ------
 
 .hk-image-container {
   position: relative;
@@ -23,9 +23,9 @@
   width: auto;
 }
 
-// ============================================
+// ------
 // Image Placeholder Styles
-// ============================================
+// ------
 
 .hk-image-placeholder {
   position: absolute;

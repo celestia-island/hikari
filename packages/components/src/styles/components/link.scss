@@ -2,11 +2,11 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Link Component
 // Styled anchor with full state coverage,
 // size variants, icon support, and glow
-// ============================================
+// ------
 
 .hk-link {
     display: inline-flex;

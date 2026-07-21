@@ -2,14 +2,14 @@
 @use '../../../../theme/styles/variables' as vars;
 @use '../../../../theme/styles/mixins' as mix;
 
-// ============================================
+// ------
 // Hikari Badge Component
 // Features: Glowing variants, pulse animations, smooth transitions
-// ============================================
+// ------
 
-// ============================================
+// ------
 // Base Badge Styles (Standalone labels)
-// ============================================
+// ------
 
 .hk-badge {
   display: inline-flex;
@@ -32,9 +32,9 @@
   letter-spacing: 0.02em;
 }
 
-// ============================================
+// ------
 // Color Variants - 使用调色板上下文颜色
-// ============================================
+// ------
 
 // Primary (牡丹粉红)
 .hk-badge-primary {
@@ -96,9 +96,9 @@
   color: var(--hi-color-text-on-info);
 }
 
-// ============================================
+// ------
 // Positioning (for count/dot badges on children)
-// ============================================
+// ------
 
 .hk-badge-wrapper {
   position: relative;
@@ -118,9 +118,9 @@
   }
 }
 
-// ============================================
+// ------
 // Dot Variant (Small indicator)
-// ============================================
+// ------
 
 .hk-badge-dot {
   width: 8px !important;
@@ -174,9 +174,9 @@
   box-shadow: 0 0 4px var(--hi-color-gray-30);
 }
 
-// ============================================
+// ------
 // Size Variants
-// ============================================
+// ------
 
 .hk-badge-sm {
   padding: 0.125rem 0.375rem;
@@ -190,9 +190,9 @@
   border-radius: vars.$hikari-radius-fui-md;
 }
 
-// ============================================
+// ------
 // Status Badge (for Avatar integration)
-// ============================================
+// ------
 
 .hk-badge-status {
   width: 10px !important;

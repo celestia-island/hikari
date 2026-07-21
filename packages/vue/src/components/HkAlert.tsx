@@ -31,8 +31,8 @@ export default defineComponent({
 
     const rootCls = computed(() => [
       "hk-alert",
-      `hk-alert--${props.variant}`,
-      `hk-alert--${props.size}`,
+      `hk-alert-${props.variant}`,
+      `hk-alert-${props.size}`,
       props.banner ? "hk-alert-banner" : "",
       !props.title ? "hk-alert-no-title" : "",
     ]);

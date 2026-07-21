@@ -360,7 +360,7 @@ export default defineComponent({
               ref={panelRef}
               class={[
                 "hk-popover-panel",
-                `hk-popover--${resolvedPlacement.value}`,
+                `hk-popover-${resolvedPlacement.value}`,
                 props.glass ? "hii-dropdown-content" : "",
               ]}
               style={panelStyle.value}

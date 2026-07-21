@@ -43,7 +43,7 @@ export default defineComponent({
     }
 
     return () => {
-      const cls = buildClass(props, ["hk-nav-item--link"]);
+      const cls = buildClass(props, ["hk-nav-item-link"]);
 
       if (props.to) {
         return (

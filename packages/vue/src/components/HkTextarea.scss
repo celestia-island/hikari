@@ -37,7 +37,7 @@
     opacity: 0.6;
   }
 
-  &:hover:not(:disabled):not(.hk-textarea--disabled &) {
+  &:hover:not(:disabled):not(.hk-textarea-disabled &) {
     border-color: var(--hi-color-primary);
   }
 
@@ -52,7 +52,7 @@
   }
 }
 
-.hk-textarea-field--autogrow {
+.hk-textarea-field-autogrow {
   resize: none;
   overflow: hidden;
 }
@@ -66,7 +66,7 @@
   user-select: none;
 }
 
-.hk-textarea-count--over {
+.hk-textarea-count-over {
   color: var(--hi-color-danger);
   font-weight: 600;
 }

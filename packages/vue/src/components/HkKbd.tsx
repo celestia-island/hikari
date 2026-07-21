@@ -11,7 +11,7 @@ export default defineComponent({
 
     return () => (
       <kbd
-        class={["hk-kbd", `hk-kbd--${props.size}`]}
+        class={["hk-kbd", `hk-kbd-${props.size}`]}
         aria-hidden="true"
       >
         {chunks.value.map((key, i) => (

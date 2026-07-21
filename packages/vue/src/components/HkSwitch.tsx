@@ -31,8 +31,8 @@ export default defineComponent({
       <label
         class={[
           "hk-switch",
-          `hk-switch--${props.size}`,
-          `hk-switch--${props.color}`,
+          `hk-switch-${props.size}`,
+          `hk-switch-${props.color}`,
         ]}
         data-checked={props.modelValue ? "" : undefined}
         data-disabled={props.disabled ? "" : undefined}

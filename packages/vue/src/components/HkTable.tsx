@@ -93,7 +93,7 @@ export default defineComponent({
 
     const tableCls = computed(() => [
       "hk-table",
-      `hk-table--${props.size}`,
+      `hk-table-${props.size}`,
       props.bordered ? "hk-table-bordered" : "",
       props.striped ? "hk-table-striped" : "",
       props.hover ? "hk-table-hover" : "",
@@ -147,7 +147,7 @@ export default defineComponent({
                     key={col.key}
                     class={[
                       "hk-table-header-cell",
-                      col.align ? `hk-text--${col.align}` : "",
+                      col.align ? `hk-text-${col.align}` : "",
                       canSort ? "hk-table-header-sortable" : "",
                       canSort && sortKey.value === col.key ? "hk-table-header-sorted" : "",
                     ]}
@@ -224,7 +224,7 @@ export default defineComponent({
                     {props.columns.map((col) => (
                       <td
                         key={col.key}
-                        class={["hk-table-cell", col.align ? `hk-text--${col.align}` : ""]}
+                        class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
                       >
                         {slots[`cell-${col.key}`]
                           ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })

@@ -73,7 +73,7 @@ export default defineComponent({
 
     const wrapperClass = computed(() => [
       "hk-number-input",
-      `hk-number-input--${props.size}`,
+      `hk-number-input-${props.size}`,
       props.disabled ? "hk-number-input-disabled" : "",
     ]);
 

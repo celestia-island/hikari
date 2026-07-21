@@ -34,7 +34,7 @@ export default defineComponent({
             <button
               class={[
                 "hk-status-bar-connection",
-                `hk-status-bar-connection--${props.connectionStatus}`,
+                `hk-status-bar-connection-${props.connectionStatus}`,
               ]}
               style={{
                 "--dot-color": connectionColors[props.connectionStatus] ?? connectionColors.disconnected,

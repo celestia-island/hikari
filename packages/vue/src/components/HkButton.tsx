@@ -35,8 +35,8 @@ export default defineComponent({
 
     const buttonClass = computed(() => [
       "hk-btn",
-      `hk-btn--${props.variant}`,
-      `hk-btn--${props.size}`,
+      `hk-btn-${props.variant}`,
+      `hk-btn-${props.size}`,
       props.block ? "hk-btn-block" : "",
       props.loading ? "hk-btn-loading" : "",
       props.shortcut ? "hk-btn-has-shortcut" : "",

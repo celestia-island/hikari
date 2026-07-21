@@ -8,7 +8,7 @@
 
 .hk-tabs-list {
   display: flex;
-  gap: var(--hi-space-2);
+  gap: var(--space-2);
 }
 
 .hk-tabs-list[data-variant="pill"] {
@@ -16,50 +16,50 @@
   display: inline-flex;
   gap: 0;
   padding: 2px;
-  border-radius: var(--hi-radius-sm);
-  border: 1px solid var(--hi-color-border);
-  background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-faint);
+  background: rgb(var(--color-surface) / 60%);
 }
 
 /* === Shared trigger === */
 
 .hk-tabs-trigger {
   font-weight: 500;
-  color: var(--hi-color-muted);
+  color: rgb(var(--color-muted));
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: inherit;
   outline: none;
-  transition: color var(--hi-duration-fast) ease;
+  transition: color var(--duration-short) ease;
 
   &:hover {
-    color: var(--hi-color-text-primary);
+    color: rgb(var(--color-text));
   }
 
   &[data-active] {
-    color: var(--hi-color-primary);
+    color: rgb(var(--color-primary));
   }
 }
 
 /* === Underline variant === */
 
 .hk-tabs[data-variant="underline"] .hk-tabs-list {
-  border-bottom: 1px solid color-mix(in srgb, var(--hi-color-border) 15%, transparent);
+  border-bottom: 1px solid rgb(var(--color-border) / 15%);
 }
 
 .hk-tabs[data-variant="underline"] .hk-tabs-trigger {
-  padding: var(--hi-space-8) var(--hi-space-16);
-  font-size: var(--hi-text-base);
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-base);
   border-bottom: 2px solid transparent;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--hi-duration-normal) ease;
+  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) ease;
 
   &:hover {
-    background: color-mix(in srgb, var(--hi-color-primary) 4%, transparent);
+    background: var(--c-primary-faint);
   }
 
   &[data-active] {
-    border-bottom-color: var(--hi-color-primary);
+    border-bottom-color: rgb(var(--color-primary));
   }
 }
 
@@ -71,12 +71,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--hi-space-6);
+  gap: var(--space-6);
   flex: none;
-  padding: var(--hi-space-4) var(--hi-space-12);
-  font-size: var(--hi-text-sm);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-sm);
   font-weight: 600;
-  border-radius: var(--hi-radius-sm);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
@@ -86,12 +86,12 @@
   position: absolute;
   top: 2px;
   height: calc(100% - 4px);
-  border-radius: var(--hi-radius-sm);
-  background: color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-primary) / 12%);
   pointer-events: none;
   z-index: 0;
-  transition: left var(--hi-duration-normal) var(--hi-ease-default),
-              width var(--hi-duration-normal) var(--hi-ease-default);
+  transition: left var(--duration-normal) var(--ease-standard),
+              width var(--duration-normal) var(--ease-standard);
 }
 
 /* === Panel === */
@@ -105,5 +105,5 @@
 }
 
 .hk-tabs[data-variant="underline"] .hk-tabs-panel {
-  padding: var(--hi-space-16) 0;
+  padding: var(--space-16) 0;
 }

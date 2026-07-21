@@ -4,37 +4,37 @@
 .hk-card {
   display: block;
   overflow: hidden;
-  background: color-mix(in srgb, var(--hi-color-surface) 92%, transparent);
-  backdrop-filter: blur(var(--hi-blur-md));
-  border: 1px solid var(--hi-color-border);
-  border-radius: var(--hi-radius-md);
-  box-shadow: var(--hi-shadow-elevated);
+  background: rgb(var(--color-surface) / var(--opacity-half));
+  backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elevated);
 }
 
 .hk-card--hoverable {
   cursor: pointer;
   transition:
-    box-shadow var(--hi-duration-normal) ease,
-    border-color var(--hi-duration-normal) ease;
+    box-shadow var(--duration-normal) ease,
+    border-color var(--duration-normal) ease;
 }
 
 .hk-card--hoverable:hover {
-  box-shadow: var(--hi-shadow-elevated);
-  border-color: color-mix(in srgb, var(--hi-color-primary) 40%, transparent);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--c-primary-intense);
 }
 
 .hk-card-header {
-  padding: var(--hi-space-12) var(--hi-space-16);
-  border-bottom: 1px solid var(--hi-color-border);
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .hk-card-title {
-  font-size: var(--hi-text-base);
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
 .hk-card-body {
-  padding: var(--hi-space-16);
+  padding: var(--space-16);
 }
 
 .hk-card-body--unpadded {
@@ -42,6 +42,6 @@
 }
 
 .hk-card-footer {
-  padding: var(--hi-space-12) var(--hi-space-16);
-  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+  padding: var(--space-12) var(--space-16);
+  border-top: 1px solid rgb(var(--color-border) / 10%);
 }

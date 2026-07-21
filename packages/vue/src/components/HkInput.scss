@@ -5,50 +5,50 @@
 
 .hk-input-label {
   display: block;
-  font-size: var(--hi-text-base);
+  font-size: var(--text-base);
   font-weight: 500;
-  margin-bottom: var(--hi-space-6);
-  color: var(--hi-color-text-primary);
+  margin-bottom: var(--space-6);
+  color: rgb(var(--color-text));
 }
 
 .hk-input-required {
-  margin-left: var(--hi-space-2);
-  color: var(--hi-color-danger);
+  margin-left: var(--space-2);
+  color: rgb(var(--color-error));
 }
 
 .hk-input-box {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--hi-space-6);
-  padding: var(--hi-space-8) var(--hi-space-12);
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-12);
   min-height: 2.5rem;
-  background: color-mix(in srgb, var(--hi-color-surface) 92%, transparent);
-  backdrop-filter: blur(var(--hi-blur-sm));
-  border: 1px solid var(--hi-color-border);
-  border-radius: var(--hi-radius-sm);
+  background: rgb(var(--color-surface) / var(--opacity-half));
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--hi-duration-normal) var(--hi-ease-default);
-  color: var(--hi-color-text-primary);
+  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  color: rgb(var(--color-text));
 
   &:hover:not(.hk-input-box--disabled) {
-    border-color: color-mix(in srgb, var(--hi-color-primary) 30%, transparent);
+    border-color: var(--c-primary-strong);
   }
 }
 
 .hk-input-box:focus-within {
-  border-color: var(--hi-color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
-  background: var(--hi-color-surface);
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
 }
 
 .hk-input-box--error {
-  border-color: color-mix(in srgb, var(--hi-color-danger) 50%, transparent);
+  border-color: var(--c-error-strong);
 }
 
 .hk-input-box--error:focus-within {
-  border-color: var(--hi-color-danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-danger) 12%, transparent);
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
 }
 
 .hk-input-box--disabled {
@@ -71,11 +71,11 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: var(--hi-text-base);
+  font-size: var(--text-base);
   line-height: 1.5;
-  color: var(--hi-color-text-primary);
+  color: rgb(var(--color-text));
   text-align: center;
-  padding: var(--hi-space-8) var(--hi-space-12);
+  padding: var(--space-8) var(--space-12);
 }
 
 .hk-input-element.hk-input-textarea {
@@ -86,7 +86,7 @@
   flex: 1;
   min-width: 0;
   text-align: start;
-  padding: var(--hi-space-8) var(--hi-space-12);
+  padding: var(--space-8) var(--space-12);
 }
 
 .hk-input-textarea {
@@ -119,22 +119,22 @@
 .hk-input-affix {
   display: flex;
   align-items: center;
-  color: color-mix(in srgb, var(--hi-color-muted) 70%, var(--hi-color-background));
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
 
 .hk-input-error-msg {
-  margin-top: var(--hi-space-4);
-  font-size: var(--hi-text-xs);
-  color: var(--hi-color-danger);
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
 }
 
 .hk-input-hint {
-  margin-top: var(--hi-space-4);
-  font-size: var(--hi-text-xs);
-  color: color-mix(in srgb, var(--hi-color-muted) 70%, var(--hi-color-background));
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
 }
 
 /* Autofill overrides */
@@ -150,21 +150,21 @@
 .hk-input-box textarea:-webkit-autofill,
 .hk-input-box textarea:-webkit-autofill:hover,
 .hk-input-box textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--hi-color-text-primary) !important;
-  -webkit-box-shadow: 0 0 0 1000px var(--hi-color-surface) inset !important;
-  caret-color: var(--hi-color-text-primary);
+  -webkit-text-fill-color: rgb(var(--color-text)) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+  caret-color: rgb(var(--color-text));
 }
 
 .hk-input-box input:-webkit-autofill::first-line,
 .hk-input-box textarea:-webkit-autofill::first-line {
   font-size: inherit !important;
   font-family: inherit !important;
-  color: var(--hi-color-text-primary);
+  color: rgb(var(--color-text));
 }
 
 .hk-input-box input:-internal-autofill-previewed,
 .hk-input-box input:-internal-autofill-selected {
-  -webkit-text-fill-color: var(--hi-color-text-primary) !important;
-  -webkit-box-shadow: 0 0 0 1000px var(--hi-color-surface) inset !important;
-  caret-color: var(--hi-color-text-primary);
+  -webkit-text-fill-color: rgb(var(--color-text)) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+  caret-color: rgb(var(--color-text));
 }

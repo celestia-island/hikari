@@ -13,16 +13,16 @@
 .hk-tooltip-popup {
   position: fixed;
   z-index: var(--z-tooltip);
-  padding: var(--hi-space-4) var(--hi-space-8);
+  padding: var(--space-4) var(--space-8);
   border: none;
-  border-radius: var(--hi-radius-sm);
-  font-size: var(--hi-text-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   line-height: 1.4;
   white-space: normal;
   word-break: break-word;
   pointer-events: none;
   opacity: 0;
-  transition: opacity var(--hi-duration-fast) ease;
+  transition: opacity var(--duration-short) ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   background: #ffffff;
   color: #000000;

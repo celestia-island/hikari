@@ -2,17 +2,17 @@
 .hk-spinner-wrapper {
   display: flex;
   align-items: center;
-  gap: var(--hi-space-8);
+  gap: var(--space-8);
 }
 
 .hk-spinner-centered {
   justify-content: center;
-  padding: var(--hi-space-32) 0;
+  padding: var(--space-32) 0;
 }
 
 .hk-spinner {
-  border: 2px solid color-mix(in srgb, var(--hi-color-border) 20%, transparent);
-  border-top-color: var(--hi-color-primary);
+  border: 2px solid rgb(var(--color-border) / 20%);
+  border-top-color: rgb(var(--color-primary));
   border-radius: 50%;
   animation: hk-spinner-rotate 0.7s linear infinite;
 }
@@ -56,8 +56,8 @@
 }
 
 .hk-spinner-text {
-  font-size: var(--hi-text-base);
-  color: color-mix(in srgb, var(--hi-color-muted) 70%, var(--hi-color-background));
+  font-size: var(--text-base);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
 }
 
 @keyframes hk-spinner-rotate {

@@ -14,11 +14,11 @@
 
   display: inline-flex;
   align-items: center;
-  gap: var(--hi-space-4);
-  font-size: var(--hi-text-xs);
+  gap: var(--space-4);
+  font-size: var(--text-xs);
   font-weight: 600;
-  padding: var(--hi-space-2) var(--hi-space-8);
-  border-radius: var(--hi-radius-full);
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--radius-full);
   border: 1px solid var(--hk-badge-border);
   background: var(--hk-badge-bg);
   color: var(--hk-badge-text);
@@ -28,23 +28,23 @@
 
 /* ---------- size ---------- */
 .hk-badge[data-size="sm"] {
-  font-size: var(--hi-text-2xs);
-  padding: var(--hi-space-1) var(--hi-space-6);
+  font-size: var(--text-2xs);
+  padding: var(--space-1) var(--space-6);
 }
 
 .hk-badge[data-size="md"] {
-  font-size: var(--hi-text-xs);
-  padding: var(--hi-space-2) var(--hi-space-8);
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-8);
 }
 
 /* ---------- shape ---------- */
 .hk-badge[data-pill="false"] {
-  border-radius: var(--hi-radius-sm);
+  border-radius: var(--radius-sm);
 }
 
 /* ---------- typography ---------- */
 .hk-badge[data-mono] {
-  font-family: var(--hi-font-mono);
+  font-family: var(--font-mono);
   font-weight: 600;
 }
 
@@ -75,43 +75,43 @@
    ================================================================== */
 
 .hk-badge-default {
-  --hk-badge-text: var(--hi-color-text-primary);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-surface) 92%, transparent);
-  --hk-badge-border: var(--hi-color-border);
+  --hk-badge-text: rgb(var(--color-text));
+  --hk-badge-bg: rgb(var(--color-surface) / var(--opacity-half));
+  --hk-badge-border: var(--border-input);
 }
 
 .hk-badge-primary {
-  --hk-badge-text: var(--hi-color-primary);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-primary) 20%, transparent);
+  --hk-badge-text: rgb(var(--color-primary));
+  --hk-badge-bg: var(--c-primary-dim);
+  --hk-badge-border: var(--c-primary-overlay);
 }
 
 .hk-badge-success {
-  --hk-badge-text: var(--hi-color-success);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-success) 10%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-success) 20%, transparent);
+  --hk-badge-text: rgb(var(--color-success));
+  --hk-badge-bg: rgb(var(--color-success) / 10%);
+  --hk-badge-border: rgb(var(--color-success) / 20%);
 }
 
 .hk-badge-error {
-  --hk-badge-text: var(--hi-color-danger);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-danger) 10%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-danger) 20%, transparent);
+  --hk-badge-text: rgb(var(--color-error));
+  --hk-badge-bg: var(--c-error-dim);
+  --hk-badge-border: var(--c-error-overlay);
 }
 
 .hk-badge-warning {
-  --hk-badge-text: var(--hi-color-warning);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-warning) 10%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-warning) 20%, transparent);
+  --hk-badge-text: rgb(var(--color-warning));
+  --hk-badge-bg: rgb(var(--color-warning) / 10%);
+  --hk-badge-border: rgb(var(--color-warning) / 20%);
 }
 
 .hk-badge-info {
-  --hk-badge-text: var(--hi-color-info);
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-info) 10%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-info) 20%, transparent);
+  --hk-badge-text: rgb(var(--color-info));
+  --hk-badge-bg: rgb(var(--color-info) / 10%);
+  --hk-badge-border: rgb(var(--color-info) / 20%);
 }
 
 .hk-badge-muted {
-  --hk-badge-text: color-mix(in srgb, var(--hi-color-muted) 70%, var(--hi-color-background));
-  --hk-badge-bg: color-mix(in srgb, var(--hi-color-muted) 8%, transparent);
-  --hk-badge-border: color-mix(in srgb, var(--hi-color-muted) 12%, transparent);
+  --hk-badge-text: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  --hk-badge-bg: rgb(var(--color-muted) / 8%);
+  --hk-badge-border: rgb(var(--color-muted) / 12%);
 }

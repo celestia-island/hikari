@@ -1,12 +1,12 @@
 .hk-alert {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-12, 12px);
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-radius: var(--radius-md, 8px);
+  gap: var(--hi-space-12, 12px);
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  border-radius: var(--hi-radius-md, 8px);
   border: 1px solid transparent;
   border-left-width: 4px;
-  color: rgb(var(--color-text));
+  color: var(--hi-color-text-primary);
 }
 
 .hk-alert--banner {
@@ -20,52 +20,52 @@
 /* ── Sizes ─────────────────────────────────────── */
 
 .hk-alert--sm {
-  padding: var(--space-8, 8px) var(--space-12, 12px);
-  font-size: var(--text-xs, 0.75rem);
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  font-size: var(--hi-text-xs, 0.75rem);
 }
 
 .hk-alert--md {
-  padding: var(--space-12, 12px) var(--space-16, 16px);
-  font-size: var(--text-sm, 0.875rem);
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  font-size: var(--hi-text-sm, 0.875rem);
 }
 
 .hk-alert--lg {
-  padding: var(--space-16, 16px) var(--space-24, 24px);
-  font-size: var(--text-base, 1rem);
+  padding: var(--hi-space-16, 16px) var(--hi-space-24, 24px);
+  font-size: var(--hi-text-base, 1rem);
 }
 
 /* ── Variants ──────────────────────────────────── */
 
 .hk-alert--error {
-  background: rgb(var(--color-error) / 0.08);
-  border-color: rgb(var(--color-error) / 0.15);
-  border-left-color: rgb(var(--color-error));
+  background: color-mix(in srgb, var(--hi-color-danger) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
+  border-left-color: var(--hi-color-danger);
 
-  .hk-alert__icon { color: rgb(var(--color-error)); }
+  .hk-alert__icon { color: var(--hi-color-danger); }
 }
 
 .hk-alert--warning {
-  background: rgb(var(--color-warning) / 0.08);
-  border-color: rgb(var(--color-warning) / 0.15);
-  border-left-color: rgb(var(--color-warning));
+  background: color-mix(in srgb, var(--hi-color-warning) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-warning) 15%, transparent);
+  border-left-color: var(--hi-color-warning);
 
-  .hk-alert__icon { color: rgb(var(--color-warning)); }
+  .hk-alert__icon { color: var(--hi-color-warning); }
 }
 
 .hk-alert--info {
-  background: rgb(var(--color-primary) / 0.08);
-  border-color: rgb(var(--color-primary) / 0.15);
-  border-left-color: rgb(var(--color-primary));
+  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+  border-left-color: var(--hi-color-primary);
 
-  .hk-alert__icon { color: rgb(var(--color-primary)); }
+  .hk-alert__icon { color: var(--hi-color-primary); }
 }
 
 .hk-alert--success {
-  background: rgb(var(--color-success) / 0.08);
-  border-color: rgb(var(--color-success) / 0.15);
-  border-left-color: rgb(var(--color-success));
+  background: color-mix(in srgb, var(--hi-color-success) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-success) 15%, transparent);
+  border-left-color: var(--hi-color-success);
 
-  .hk-alert__icon { color: rgb(var(--color-success)); }
+  .hk-alert__icon { color: var(--hi-color-success); }
 }
 
 /* ── Icon ──────────────────────────────────────── */
@@ -94,7 +94,7 @@
 .hk-alert__text {
   margin: 0;
   line-height: 1.5;
-  color: rgb(var(--color-text-secondary, var(--color-text)) / 0.85);
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
 }
 
 /* ── Close button ──────────────────────────────── */
@@ -108,14 +108,14 @@
   height: 22px;
   border: 0;
   background: transparent;
-  border-radius: var(--radius-sm, 4px);
-  color: rgb(var(--color-muted));
+  border-radius: var(--hi-radius-sm, 4px);
+  color: var(--hi-color-muted);
   cursor: pointer;
   padding: 0;
-  transition: background var(--duration-short, 0.15s) ease, color var(--duration-short, 0.15s) ease;
+  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover {
-    background: rgb(var(--color-surface));
-    color: rgb(var(--color-text));
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
   }
 }

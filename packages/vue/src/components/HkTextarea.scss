@@ -7,8 +7,8 @@
   }
 
   &--overlimit .hk-textarea__field {
-    border-color: rgb(var(--color-error));
-    box-shadow: 0 0 0 3px rgb(var(--color-error) / 0.15);
+    border-color: var(--hi-color-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
   }
 }
 
@@ -17,10 +17,10 @@
   width: 100%;
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgb(var(--color-surface));
-  border: 1px solid rgb(var(--color-border));
-  border-radius: var(--radius-md, 6px);
-  color: rgb(var(--color-text));
+  background: var(--hi-color-surface);
+  border: 1px solid var(--hi-color-border);
+  border-radius: var(--hi-radius-md, 6px);
+  color: var(--hi-color-text-primary);
   font-family: inherit;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -33,17 +33,17 @@
     box-shadow var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1));
 
   &::placeholder {
-    color: rgb(var(--color-muted));
+    color: var(--hi-color-muted);
     opacity: 0.6;
   }
 
   &:hover:not(:disabled):not(.hk-textarea--disabled &) {
-    border-color: rgb(var(--color-primary));
+    border-color: var(--hi-color-primary);
   }
 
   &:focus {
-    border-color: rgb(var(--color-primary));
-    box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.12);
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
   }
 
   &:disabled {
@@ -61,12 +61,12 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 0.25rem;
-  font-size: var(--text-xs, 0.75rem);
-  color: rgb(var(--color-muted));
+  font-size: var(--hi-text-xs, 0.75rem);
+  color: var(--hi-color-muted);
   user-select: none;
 }
 
 .hk-textarea__count--over {
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger);
   font-weight: 600;
 }

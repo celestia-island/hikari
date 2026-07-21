@@ -5,10 +5,10 @@
   height: 3rem;
   padding: 0 1rem;
   flex-shrink: 0;
-  background: rgb(var(--color-surface) / 0.85);
+  background: color-mix(in srgb, var(--hi-color-surface) 85%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgb(var(--color-border) / 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 
 .hk-admin-header__left {
@@ -20,8 +20,8 @@
 
 .hk-admin-header__title {
   font-weight: 600;
-  font-size: var(--text-lg, 1.125rem);
-  color: rgb(var(--color-text));
+  font-size: var(--hi-text-lg, 1.125rem);
+  color: var(--hi-color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -52,7 +52,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgb(var(--color-primary));
+  background: var(--hi-color-primary);
   color: #fff;
   display: flex;
   align-items: center;
@@ -63,8 +63,8 @@
 }
 
 .hk-admin-header__username {
-  font-size: var(--text-sm, 0.875rem);
-  color: rgb(var(--color-text));
+  font-size: var(--hi-text-sm, 0.875rem);
+  color: var(--hi-color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

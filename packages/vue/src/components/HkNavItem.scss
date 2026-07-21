@@ -3,8 +3,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md, 6px);
-  color: rgb(var(--color-muted));
+  border-radius: var(--hi-radius-md, 6px);
+  color: var(--hi-color-muted);
   font-size: 0.875rem;
   font-family: inherit;
   line-height: 1.4;
@@ -20,13 +20,13 @@
   user-select: none;
 
   &:hover:not([data-disabled]) {
-    background: rgb(var(--color-surface) / 0.6);
-    color: rgb(var(--color-text));
+    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+    color: var(--hi-color-text-primary);
   }
 
   &[data-active] {
-    background: rgb(var(--color-primary) / 0.15);
-    color: rgb(var(--color-primary));
+    background: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
+    color: var(--hi-color-primary);
     font-weight: 600;
   }
 
@@ -40,14 +40,14 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
+    outline: 2px solid var(--hi-color-primary);
     outline-offset: 2px;
   }
 }
 
 .hk-nav-item--link {
   &:focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
+    outline: 2px solid var(--hi-color-primary);
     outline-offset: 2px;
   }
 }

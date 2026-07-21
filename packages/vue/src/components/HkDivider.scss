@@ -16,11 +16,11 @@
 }
 
 .hk-divider-faint {
-  --hk-divider-color: var(--hi-color-border-faint, rgba(0, 0, 0, 0.06));
+  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.06));
 }
 
 .hk-divider-input {
-  --hk-divider-color: var(--hi-color-border-input, rgba(0, 0, 0, 0.15));
+  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.15));
 }
 
 .hk-divider-dashed.hk-divider-vertical {

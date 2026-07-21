@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--hi-radius-md, 8px);
   overflow: hidden;
   flex-shrink: 0;
   user-select: none;
@@ -15,7 +15,7 @@ a.hk-logo {
 
 .hk-logo__img {
   display: block;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--hi-radius-md, 8px);
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
@@ -24,9 +24,9 @@ a.hk-logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(var(--color-primary));
+  background: var(--hi-color-primary);
   color: #fff;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--hi-radius-md, 8px);
   filter: drop-shadow(0 2px 8px rgb(0 0 0 / 0.3));
 }
 

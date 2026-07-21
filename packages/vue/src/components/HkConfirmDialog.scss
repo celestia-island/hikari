@@ -1,7 +1,7 @@
 .hk-confirm-dialog__message {
   margin: 0 0 1.5rem;
-  color: rgb(var(--color-text-secondary, var(--color-text)) / 0.85);
-  font-size: var(--text-sm, 0.875rem);
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
+  font-size: var(--hi-text-sm, 0.875rem);
   line-height: 1.5;
 }
 

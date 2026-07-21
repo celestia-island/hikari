@@ -1,18 +1,18 @@
 .hk-skeleton {
   display: inline-block;
-  background: rgb(88 166 255 / 8%);
+  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
 }
 
 .hk-skeleton[data-tone="muted"] {
-  background: rgb(139 148 158 / 12%);
+  background: color-mix(in srgb, var(--hi-color-text-primary) 12%, transparent);
 }
 
 .hk-skeleton[data-animated] {
   background: linear-gradient(
     90deg,
-    rgb(88 166 255 / 8%) 25%,
-    rgb(88 166 255 / 18%) 50%,
-    rgb(88 166 255 / 8%) 75%
+    color-mix(in srgb, var(--hi-color-primary) 8%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-primary) 18%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-primary) 8%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;
@@ -21,9 +21,9 @@
 .hk-skeleton[data-tone="muted"][data-animated] {
   background: linear-gradient(
     90deg,
-    rgb(139 148 158 / 10%) 25%,
-    rgb(139 148 158 / 22%) 50%,
-    rgb(139 148 158 / 10%) 75%
+    color-mix(in srgb, var(--hi-color-text-primary) 10%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-text-primary) 22%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-text-primary) 10%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;

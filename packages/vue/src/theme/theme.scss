@@ -1,7 +1,77 @@
-// Essential theme CSS variables applied via [data-mode="dark"] / [data-mode="light"]
-// These are set by useTheme.applyTheme() which writes --color-* vars on :root
+// Essential theme CSS variables for hikari-vue components
+// All tokens use --hi-* prefix to avoid collision with shittim-chest tokens
 
 :root {
+<<<<<<< HEAD
+  /* === Core Colors === */
+  --hi-color-primary: #ff6b9d;
+  --hi-color-surface: #ffffff;
+  --hi-color-border: rgb(0 0 0 / 15%);
+  --hi-color-text-primary: rgb(0 0 0);
+  --hi-color-text-on-primary: #ffffff;
+  --hi-color-text-secondary: rgb(0 0 0 / 60%);
+  --hi-color-muted: rgb(0 0 0 / 45%);
+  --hi-color-background: #f6f6f6;
+  --hi-color-danger: #c83232;
+  --hi-color-success: #009632;
+  --hi-color-warning: #c89600;
+  --hi-color-info: #ff6b9d;
+
+  /* === Radius === */
+  --hi-radius-sm: 4px;
+  --hi-radius-md: 8px;
+  --hi-radius-lg: 12px;
+  --hi-radius-xs: 4px;
+  --hi-radius-full: 9999px;
+
+  /* === Typography Scale === */
+  --hi-text-2xs: 0.625rem;
+  --hi-text-xs: 0.75rem;
+  --hi-text-sm: 0.8125rem;
+  --hi-text-base: 0.875rem;
+  --hi-text-md: 1rem;
+  --hi-text-lg: 1.125rem;
+
+  /* === Spacing Scale === */
+  --hi-space-1: 0.0625rem;
+  --hi-space-2: 0.125rem;
+  --hi-space-4: 0.25rem;
+  --hi-space-6: 0.375rem;
+  --hi-space-8: 0.5rem;
+  --hi-space-10: 0.625rem;
+  --hi-space-12: 0.75rem;
+  --hi-space-14: 0.875rem;
+  --hi-space-16: 1rem;
+  --hi-space-24: 1.5rem;
+  --hi-space-28: 1.75rem;
+  --hi-space-32: 2rem;
+  --hi-space-40: 2.5rem;
+
+  /* === Duration === */
+  --hi-duration-normal: 0.3s;
+  --hi-duration-fast: 0.15s;
+  --hi-duration-short: 0.15s;
+
+  /* === Easing === */
+  --hi-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --hi-ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --hi-ease-in-expo: cubic-bezier(0.95, 0.05, 0.795, 0.035);
+
+  /* === Blur === */
+  --hi-blur-sm: 4px;
+  --hi-blur-md: 16px;
+
+  /* === Shadows === */
+  --hi-shadow-button: 0 4px 14px rgb(255 107 157 / 35%);
+  --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
+
+  /* === Opacity === */
+  --hi-opacity-faded: 0.45;
+
+  /* === Font Families === */
+  --hi-font-sans: "Inter", sans-serif;
+  --hi-font-mono: ui-monospace, monospace;
+=======
   /* === Radius === */
   --radius: 12px;
   --radius-lg: 12px;
@@ -67,10 +137,24 @@
   --border-faint: rgb(var(--color-border) / 10%);
   --border-subtle: rgb(var(--color-border) / 12%);
   --border-input: rgb(var(--color-border) / 15%);
+>>>>>>> origin/master
 
   /* === Z-Index === */
   --z-above: 1;
   --z-tooltip: 10000;
+<<<<<<< HEAD
+}
+
+[data-mode="light"] {
+  --hi-color-surface: #ffffff;
+  --hi-color-border: rgb(0 0 0 / 15%);
+  --hi-color-text-primary: rgb(0 0 0);
+  --hi-color-text-secondary: rgb(0 0 0 / 60%);
+  --hi-color-muted: rgb(0 0 0 / 45%);
+  --hi-color-background: #f6f6f6;
+  --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
+  --hi-opacity-faded: 0.5;
+=======
 
   /* === Shadows === */
   --shadow-focus: 0 0 0 3px rgb(var(--color-primary) / 12%);
@@ -92,6 +176,7 @@
   --shadow-dropdown: 0 4px 24px rgb(0 0 0 / 8%), 0 0 0 1px rgb(var(--color-primary) / 4%);
   --shadow-tooltip: 0 4px 16px rgb(0 0 0 / 8%), 0 0 0 1px rgb(var(--color-primary) / 4%);
   --shadow-header: 0 1px 3px rgb(0 0 0 / 4%), 0 1px 2px rgb(0 0 0 / 2%);
+>>>>>>> origin/master
 }
 
 [data-mode="dark"] body {
@@ -101,6 +186,8 @@
 [data-mode="light"] body {
   color-scheme: light;
 }
+<<<<<<< HEAD
+=======
 
 /* === Color Opacity Cascade ===
    r = reference (full), then a 9-step alpha ladder from faint to bright */
@@ -136,3 +223,4 @@
   --c-error-bright: rgb(var(--color-error) / 85%);
   --c-error-vivid: rgb(var(--color-error) / 90%);
 }
+>>>>>>> origin/master

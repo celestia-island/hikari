@@ -259,7 +259,7 @@ export default defineComponent({
                 semanticResults.value.map((r) => (
                   <button
                     key={r.key}
-                    class="hk-kw-search-result hk-kw-search-result--semantic"
+                    class="hk-kw-search-result hk-kw-search-result-semantic"
                     type="button"
                     onClick={() => pick(r.raw)}
                   >

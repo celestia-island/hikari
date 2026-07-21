@@ -11,14 +11,14 @@
   box-shadow: var(--shadow-elevated);
 }
 
-.hk-card--hoverable {
+.hk-card-hoverable {
   cursor: pointer;
   transition:
     box-shadow var(--duration-normal) ease,
     border-color var(--duration-normal) ease;
 }
 
-.hk-card--hoverable:hover {
+.hk-card-hoverable:hover {
   box-shadow: var(--shadow-elevated);
   border-color: var(--c-primary-intense);
 }
@@ -37,7 +37,7 @@
   padding: var(--space-16);
 }
 
-.hk-card-body--unpadded {
+.hk-card-body-unpadded {
   padding: 0;
 }
 

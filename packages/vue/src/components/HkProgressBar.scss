@@ -37,15 +37,15 @@
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.3;
 
-  &--loading {
+  &-loading {
     background: rgb(var(--color-primary));
   }
 
-  &--done {
+  &-done {
     background: rgb(var(--color-success));
   }
 
-  &--error {
+  &-error {
     background: rgb(var(--color-error));
   }
 }
@@ -56,15 +56,15 @@
   border-radius: var(--radius-full);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &--loading {
+  &-loading {
     background: rgb(var(--color-primary));
   }
 
-  &--done {
+  &-done {
     background: rgb(var(--color-success));
   }
 
-  &--error {
+  &-error {
     background: rgb(var(--color-error));
   }
 }
@@ -76,17 +76,17 @@
   position: absolute;
   animation: hk-progress-indeterminate 1.4s ease-in-out infinite;
 
-  &--loading {
+  &-loading {
     background: rgb(var(--color-primary));
   }
 
-  &--done {
+  &-done {
     background: rgb(var(--color-success));
     animation: none;
     width: 100%;
   }
 
-  &--error {
+  &-error {
     background: rgb(var(--color-error));
     animation: none;
     width: 100%;

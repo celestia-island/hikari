@@ -36,8 +36,8 @@ export default defineComponent({
       <div
         class={[
           "hk-radio-group",
-          `hk-radio-group--${props.direction}`,
-          `hk-radio-group--${props.size}`,
+          `hk-radio-group-${props.direction}`,
+          `hk-radio-group-${props.size}`,
         ]}
       >
         {props.options.map((opt) => {

@@ -93,10 +93,10 @@ export default defineComponent({
 
     const tableCls = computed(() => [
       "hk-table",
-      `hk-table--${props.size}`,
-      props.bordered ? "hk-table--bordered" : "",
-      props.striped ? "hk-table--striped" : "",
-      props.hover ? "hk-table--hover" : "",
+      `hk-table-${props.size}`,
+      props.bordered ? "hk-table-bordered" : "",
+      props.striped ? "hk-table-striped" : "",
+      props.hover ? "hk-table-hover" : "",
     ]);
 
     const totalCols = computed(() => props.columns.length + (props.selectable ? 1 : 0));
@@ -119,8 +119,8 @@ export default defineComponent({
                     <span
                       class={[
                         "hk-table-checkbox",
-                        "hk-table-checkbox--md",
-                        allChecked.value ? "hk-table-checkbox--checked" : "",
+                        "hk-table-checkbox-md",
+                        allChecked.value ? "hk-table-checkbox-checked" : "",
                       ]}
                     >
                       {allChecked.value && (
@@ -147,9 +147,9 @@ export default defineComponent({
                     key={col.key}
                     class={[
                       "hk-table-header-cell",
-                      col.align ? `hk-text--${col.align}` : "",
-                      canSort ? "hk-table-header--sortable" : "",
-                      canSort && sortKey.value === col.key ? "hk-table-header--sorted" : "",
+                      col.align ? `hk-text-${col.align}` : "",
+                      canSort ? "hk-table-header-sortable" : "",
+                      canSort && sortKey.value === col.key ? "hk-table-header-sorted" : "",
                     ]}
                     style={{ width: col.width }}
                     onClick={() => canSort && toggleSort(col.key)}
@@ -159,7 +159,7 @@ export default defineComponent({
                       <svg
                         class={[
                           "hk-table-sort-icon",
-                          sortDirection.value === "desc" ? "hk-table-sort-icon--desc" : "",
+                          sortDirection.value === "desc" ? "hk-table-sort-icon-desc" : "",
                         ]}
                         viewBox="0 0 24 24"
                         fill="none"
@@ -200,8 +200,8 @@ export default defineComponent({
                           <span
                             class={[
                               "hk-table-checkbox",
-                              "hk-table-checkbox--md",
-                              selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox--checked" : "",
+                              "hk-table-checkbox-md",
+                              selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox-checked" : "",
                             ]}
                           >
                             {selectedRowKeys.value.has(rowKey) && (
@@ -224,7 +224,7 @@ export default defineComponent({
                     {props.columns.map((col) => (
                       <td
                         key={col.key}
-                        class={["hk-table-cell", col.align ? `hk-text--${col.align}` : ""]}
+                        class={["hk-table-cell", col.align ? `hk-text-${col.align}` : ""]}
                       >
                         {slots[`cell-${col.key}`]
                           ? slots[`cell-${col.key}`]!({ row, value: row[col.key], index })

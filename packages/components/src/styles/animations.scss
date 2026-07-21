@@ -12,7 +12,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 // ── Hover Animations ───────────────────────────────────────────────────────────
 
 // Hover Scale - Subtle grow effect on hover
-.hk-anim--hover-scale {
+.hk-anim-hover-scale {
   transition: transform $animation-duration-normal $animation-easing-default;
 
   &:hover {
@@ -21,7 +21,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Hover Glow - Glow intensifies on hover
-.hk-anim--hover-glow {
+.hk-anim-hover-glow {
   --glow-intensity: 0.3;
   --glow-spread: 10px;
   transition: box-shadow $animation-duration-slow $animation-easing-default;
@@ -45,7 +45,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Hover Lift - Element lifts up with shadow on hover
-.hk-anim--hover-lift {
+.hk-anim-hover-lift {
   transition:
     transform 250ms $animation-easing-bounce,
     box-shadow 250ms $animation-easing-default;
@@ -57,7 +57,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Hover Shine - Sweeping light effect on hover
-.hk-anim--hover-shine {
+.hk-anim-hover-shine {
   position: relative;
   overflow: hidden;
 
@@ -95,14 +95,14 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--focus-pulse {
+.hk-anim-focus-pulse {
   &:focus {
     animation: focus-pulse 2s ease-in-out infinite;
   }
 }
 
 // Focus Glow - Blue glow appears on focus
-.hk-anim--focus-glow {
+.hk-anim-focus-glow {
   transition: box-shadow $animation-duration-normal $animation-easing-default;
 
   &:focus {
@@ -112,7 +112,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Focus Border - Border animates on focus
-.hk-anim--focus-border {
+.hk-anim-focus-border {
   position: relative;
   transition: border-color $animation-duration-normal $animation-easing-default;
 
@@ -134,7 +134,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 // ── State Transition Animations ───────────────────────────────────────────────
 
 // Press Scale - Shrink on press (active state)
-.hk-anim--press-scale {
+.hk-anim-press-scale {
   transition: transform $animation-duration-fast $animation-easing-default;
 
   &:active {
@@ -143,7 +143,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 // Press Glow - Glow intensifies on press
-.hk-anim--press-glow {
+.hk-anim-press-glow {
   --press-glow-opacity: 0;
   transition: box-shadow $animation-duration-fast $animation-easing-default;
 
@@ -166,12 +166,12 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--breathing {
+.hk-anim-breathing {
   animation: breathing 3s ease-in-out infinite;
 }
 
 // Pulse - Continuous pulse animation
-.hk-anim--pulse {
+.hk-anim-pulse {
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -185,7 +185,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--shimmer {
+.hk-anim-shimmer {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -213,7 +213,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--neon-flicker {
+.hk-anim-neon-flicker {
   animation: neon-flicker 1.5s infinite alternate;
   color: var(--hi-anim-neon-flicker-color, #ff00ff);
   font-weight: bold;
@@ -234,7 +234,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   100% { transform: translate(0); }
 }
 
-.hk-anim--neon-buzz {
+.hk-anim-neon-buzz {
   animation: neon-buzz 0.15s linear infinite;
   color: var(--hi-anim-neon-buzz-color, #00ffff);
   text-shadow: 0 0 5px rgba(0, 255, 255, 0.7),
@@ -247,7 +247,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   100% { background-position: 0 100%; }
 }
 
-.hk-anim--neon-scanline {
+.hk-anim-neon-scanline {
   position: relative;
   color: var(--hi-anim-neon-scanline-color, #00ff41);
 
@@ -306,7 +306,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--tech-glitch {
+.hk-anim-tech-glitch {
   animation: tech-glitch 0.8s steps(1) infinite;
 }
 
@@ -316,7 +316,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   50% { border-right-color: transparent; }
 }
 
-.hk-anim--tech-typing {
+.hk-anim-tech-typing {
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid currentColor;
@@ -335,7 +335,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--tech-data-flow {
+.hk-anim-tech-data-flow {
   position: relative;
   overflow: hidden;
 
@@ -384,7 +384,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--transition-fade-slide-in {
+.hk-anim-transition-fade-slide-in {
   animation: transition-fade-slide-in 0.8s ease-out both;
 }
 
@@ -402,7 +402,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--transition-scale-blur-in {
+.hk-anim-transition-scale-blur-in {
   animation: transition-scale-blur-in 1s ease-out both;
 }
 
@@ -418,6 +418,6 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
-.hk-anim--transition-rotate-zoom-in {
+.hk-anim-transition-rotate-zoom-in {
   animation: transition-rotate-zoom-in 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }

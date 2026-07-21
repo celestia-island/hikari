@@ -2,20 +2,20 @@
   display: flex;
   gap: 1rem;
 
-  &--horizontal {
+  &-horizontal {
     flex-direction: row;
     flex-wrap: wrap;
   }
 
-  &--vertical {
+  &-vertical {
     flex-direction: column;
   }
 
-  &--sm {
+  &-sm {
     gap: 0.5rem;
   }
 
-  &--lg {
+  &-lg {
     gap: 1.25rem;
   }
 }

@@ -18,7 +18,7 @@ export default defineComponent({
       <div
         class={[
           "hk-card",
-          props.hoverable ? "hk-card--hoverable" : "",
+          props.hoverable ? "hk-card-hoverable" : "",
           props.class,
         ]}
         onClick={(e) => emit("click", e)}
@@ -28,7 +28,7 @@ export default defineComponent({
             {slots.header ? slots.header() : <h3 class="hk-card-title">{props.title}</h3>}
           </div>
         ) : null}
-        <div class={["hk-card-body", !props.padded ? "hk-card-body--unpadded" : ""]}>
+        <div class={["hk-card-body", !props.padded ? "hk-card-body-unpadded" : ""]}>
           {slots.default?.()}
         </div>
         {slots.footer ? <div class="hk-card-footer">{slots.footer()}</div> : null}

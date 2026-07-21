@@ -103,7 +103,7 @@ export default defineComponent({
           <div class="hk-number-input-steppers">
             <button
               type="button"
-              class="hk-number-input-step hk-number-input-step--up"
+              class="hk-number-input-step hk-number-input-step-up"
               disabled={!canIncrement.value || props.disabled}
               onMousedown={(e: MouseEvent) => {
                 e.preventDefault();
@@ -129,7 +129,7 @@ export default defineComponent({
             </button>
             <button
               type="button"
-              class="hk-number-input-step hk-number-input-step--down"
+              class="hk-number-input-step hk-number-input-step-down"
               disabled={!canDecrement.value || props.disabled}
               onMousedown={(e: MouseEvent) => {
                 e.preventDefault();

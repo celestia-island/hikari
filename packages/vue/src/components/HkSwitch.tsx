@@ -53,12 +53,12 @@ export default defineComponent({
         >
           <span class="hk-switch-thumb" />
           {props.uncheckedContent && !props.modelValue ? (
-            <span class="hk-switch-content hk-switch-content--off">
+            <span class="hk-switch-content hk-switch-content-off">
               {props.uncheckedContent}
             </span>
           ) : null}
           {props.checkedContent && props.modelValue ? (
-            <span class="hk-switch-content hk-switch-content--on">
+            <span class="hk-switch-content hk-switch-content-on">
               {props.checkedContent}
             </span>
           ) : null}

@@ -198,7 +198,7 @@ pub struct PopoverComponent;
 impl StyledComponent for PopoverComponent {
     fn styles() -> &'static str {
         r#"
-.hi-popover {
+.hk-popover {
   position: fixed;
   z-index: 1050;
   background: var(--hi-color-surface);
@@ -214,7 +214,7 @@ impl StyledComponent for PopoverComponent {
   flex-direction: column;
 }
 
-.hi-popover::before {
+.hk-popover::before {
   content: '';
   position: absolute;
   top: 0;
@@ -236,13 +236,13 @@ impl StyledComponent for PopoverComponent {
   }
 }
 
-[data-theme="dark"] .hi-popover {
+[data-theme="dark"] .hk-popover {
   background: var(--hi-color-surface);
   border-color: var(--hi-color-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-.hi-popover-title {
+.hk-popover-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--hi-color-text-primary);
@@ -251,7 +251,7 @@ impl StyledComponent for PopoverComponent {
   border-bottom: 1px solid var(--hi-color-border);
 }
 
-.hi-popover-content {
+.hk-popover-content {
   font-size: 14px;
   color: var(--hi-color-text-primary);
   line-height: 1.6;
@@ -260,7 +260,7 @@ impl StyledComponent for PopoverComponent {
   width: 100%;
 }
 
-.hi-popover-backdrop {
+.hk-popover-backdrop {
   position: fixed;
   top: 0;
   left: 0;

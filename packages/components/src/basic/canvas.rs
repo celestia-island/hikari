@@ -20,9 +20,9 @@ pub fn Canvas(
     #[props(default)] style: String,
 ) -> Element {
     let class_str = if class.is_empty() {
-        "hi-canvas".to_string()
+        "hk-canvas".to_string()
     } else {
-        format!("hi-canvas {}", class)
+        format!("hk-canvas {}", class)
     };
 
     rsx! {
@@ -38,7 +38,7 @@ pub fn Canvas(
 impl StyledComponent for CanvasComponent {
     fn styles() -> &'static str {
         r#"
-.hi-canvas {
+.hk-canvas {
     display: block;
     border-radius: 4px;
     background-color: transparent;

@@ -188,7 +188,7 @@
 //! The theme system generates CSS variables for easy access in styles:
 //!
 //! ```css
-//! .hi-theme-provider[data-theme="hikari"] {
+//! .hk-theme-provider[data-theme="hikari"] {
 //!     --hi-primary: #00A0E9;
 //!     --hi-secondary: #E94B35;
 //!     --hi-accent: #F8B62D;

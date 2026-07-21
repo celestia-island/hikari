@@ -9,7 +9,7 @@
 // Base Tabs Styles
 // ============================================
 
-.hi-tabs {
+.hk-tabs {
   // Layout
   display: flex;
   flex-direction: column;
@@ -27,7 +27,7 @@
 // Tabs Header (Navigation)
 // ============================================
 
-.hi-tabs-header {
+.hk-tabs-header {
   // Layout
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
 // Tabs Nav (List)
 // ============================================
 
-.hi-tabs-nav {
+.hk-tabs-nav {
   // Layout
   display: flex;
   align-items: center;
@@ -74,7 +74,7 @@
 // Tab Item
 // ============================================
 
-.hi-tab {
+.hk-tab {
   // Layout
   display: flex;
   align-items: center;
@@ -111,7 +111,7 @@
   position: relative;
 
   // Icon
-  .hi-tabs-tab-icon {
+  .hk-tabs-tab-icon {
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
@@ -126,12 +126,12 @@
   }
 
   // Label
-  .hi-tabs-tab-label {
+  .hk-tabs-tab-label {
     flex: 1;
   }
 
   // Close button
-  .hi-tab-close {
+  .hk-tab-close {
     flex-shrink: 0;
     width: 0.875rem;
     height: 0.875rem;
@@ -164,36 +164,36 @@
     color: var(--hi-color-text-primary);
     background: var(--hi-primary);
 
-    .hi-tabs-tab-icon {
+    .hk-tabs-tab-icon {
       color: var(--hi-color-primary);
       filter: drop-shadow(0 0 4px var(--hi-primary));
     }
 
-    .hi-tab-close {
+    .hk-tab-close {
       opacity: 1;
     }
   }
 
   // Active state
-  &.hi-tab-active {
+  &.hk-tab-active {
     color: var(--hi-color-text-primary);
     background: var(--hi-primary);
     box-shadow:
       0 0 12px var(--hi-primary),
       inset 0 0 8px var(--hi-primary);
 
-    .hi-tabs-tab-icon {
+    .hk-tabs-tab-icon {
       color: var(--hi-color-primary);
       filter: drop-shadow(0 0 6px var(--hi-primary));
     }
 
-    .hi-tab-close {
+    .hk-tab-close {
       opacity: 1;
     }
   }
 
   // Disabled state
-  &.hi-tab-disabled {
+  &.hk-tab-disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
@@ -212,7 +212,7 @@
 // Glowing Indicator (for active tab)
 // ============================================
 
-.hi-tabs-indicator {
+.hk-tabs-indicator {
   // Layout
   position: absolute;
   bottom: 0;
@@ -245,7 +245,7 @@
 // Tabs Content
 // ============================================
 
-.hi-tabs-content {
+.hk-tabs-content {
   // Layout
   position: relative;
 
@@ -260,7 +260,7 @@
 // Tab Panel
 // ============================================
 
-.hi-tab-panel {
+.hk-tab-panel {
   // Layout
   display: none;
 
@@ -269,7 +269,7 @@
   transform: translateX(16px);
 
   // Active state
-  &.hi-tab-panel-active {
+  &.hk-tab-panel-active {
     display: block;
     // DISABLED - migrated to JS animation
 
@@ -294,27 +294,27 @@
 // ============================================
 
 // Top (default)
-.hi-tabs-top {
-  .hi-tabs-header {
+.hk-tabs-top {
+  .hk-tabs-header {
     border-bottom: 1px solid var(--hi-color-border);
   }
 
-  .hi-tabs-indicator {
+  .hk-tabs-indicator {
     bottom: 0;
     border-radius: 2px 2px 0 0;
   }
 }
 
 // Bottom
-.hi-tabs-bottom {
+.hk-tabs-bottom {
   flex-direction: column-reverse;
 
-  .hi-tabs-header {
+  .hk-tabs-header {
     border-top: 1px solid var(--hi-color-border);
     border-bottom: none;
   }
 
-  .hi-tabs-indicator {
+  .hk-tabs-indicator {
     top: 0;
     bottom: auto;
     border-radius: 0 0 2px 2px;
@@ -322,27 +322,27 @@
 }
 
 // Left
-.hi-tabs-left {
+.hk-tabs-left {
   flex-direction: row;
 
-  .hi-tabs-header {
+  .hk-tabs-header {
     flex-direction: column;
     border-right: 1px solid var(--hi-color-border);
     border-bottom: none;
     min-width: 200px;
   }
 
-  .hi-tabs-nav {
+  .hk-tabs-nav {
     flex-direction: column;
     width: 100%;
   }
 
-  .hi-tab {
+  .hk-tab {
     width: 100%;
     justify-content: flex-start;
   }
 
-  .hi-tabs-indicator {
+  .hk-tabs-indicator {
     top: 0;
     left: 0;
     right: auto;
@@ -353,27 +353,27 @@
 }
 
 // Right
-.hi-tabs-right {
+.hk-tabs-right {
   flex-direction: row-reverse;
 
-  .hi-tabs-header {
+  .hk-tabs-header {
     flex-direction: column;
     border-left: 1px solid var(--hi-color-border);
     border-bottom: none;
     min-width: 200px;
   }
 
-  .hi-tabs-nav {
+  .hk-tabs-nav {
     flex-direction: column;
     width: 100%;
   }
 
-  .hi-tab {
+  .hk-tab {
     width: 100%;
     justify-content: flex-start;
   }
 
-  .hi-tabs-indicator {
+  .hk-tabs-indicator {
     top: 0;
     right: 0;
     left: auto;
@@ -388,7 +388,7 @@
 // ============================================
 
 // Card type (with background and border)
-.hi-tabs-type-card {
+.hk-tabs-type-card {
   background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 1px solid var(--hi-color-border);
@@ -397,17 +397,17 @@
     0 4px 8px rgba(214, 236, 240, 0.5),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
-  .hi-tabs-header {
+  .hk-tabs-header {
     background: rgba(214, 236, 240, 0.5);
     border-radius: vars.$hikari-radius-fui-md vars.$hikari-radius-fui-md 0 0;
     margin: 0;
   }
 
-  .hi-tab {
+  .hk-tab {
     border-radius: vars.$hikari-radius-fui-sm;
     margin: 0.25rem;
 
-    &.hi-tab-active {
+    &.hk-tab-active {
       background: var(--hi-primary);
       box-shadow:
         0 0 12px var(--hi-primary),
@@ -415,13 +415,13 @@
     }
   }
 
-  .hi-tabs-content {
+  .hk-tabs-content {
     border-radius: 0 0 vars.$hikari-radius-fui-md vars.$hikari-radius-fui-md;
   }
 }
 
 // Border card type (more prominent border)
-.hi-tabs-type-border-card {
+.hk-tabs-type-border-card {
   background: var(--hi-surface);
   backdrop-filter: blur(4px);
   border: 2px solid var(--hi-color-border);
@@ -430,15 +430,15 @@
     0 4px 8px rgba(214, 236, 240, 0.5),
     0 0 0 1px var(--hi-white-5, rgba(255, 255, 255, 0.05)) inset;
 
-  .hi-tabs-header {
+  .hk-tabs-header {
     background: rgba(214, 236, 240, 0.5);
   }
 
-  .hi-tab {
+  .hk-tab {
     border: 1px solid transparent;
     margin: 0.25rem;
 
-    &.hi-tab-active {
+    &.hk-tab-active {
       background: var(--hi-primary);
       border-color: var(--hi-primary);
       box-shadow:
@@ -449,8 +449,8 @@
 }
 
 // Segment type (pill-shaped)
-.hi-tabs-type-segment {
-  .hi-tabs-header {
+.hk-tabs-type-segment {
+  .hk-tabs-header {
     background: rgba(23, 89, 168, 0.15);
     border-radius: vars.$hikari-radius-fui-md;
     border: none;
@@ -458,10 +458,10 @@
     margin-bottom: 0.5rem;
   }
 
-  .hi-tab {
+  .hk-tab {
     border-radius: vars.$hikari-radius-fui-sm;
 
-    &.hi-tab-active {
+    &.hk-tab-active {
       background: linear-gradient(135deg, var(--hi-primary), rgba(109, 40, 217, 0.9));
       box-shadow:
         0 0 12px var(--hi-primary),
@@ -469,7 +469,7 @@
     }
   }
 
-  .hi-tabs-indicator {
+  .hk-tabs-indicator {
     display: none;
   }
 }
@@ -478,45 +478,45 @@
 // Size Variants
 // ============================================
 
-.hi-tabs-sm {
-  .hi-tab {
+.hk-tabs-sm {
+  .hk-tab {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
 
-    .hi-tab-icon {
+    .hk-tab-icon {
       width: 0.875rem;
       height: 0.875rem;
     }
   }
 
-  .hi-tabs-content {
+  .hk-tabs-content {
     padding: 0.75rem;
   }
 }
 
-.hi-tabs-md {
-  .hi-tab {
+.hk-tabs-md {
+  .hk-tab {
     padding: 0.625rem 1rem;
     font-size: vars.$hikari-font-size-sm;
   }
 
-  .hi-tabs-content {
+  .hk-tabs-content {
     padding: 1rem;
   }
 }
 
-.hi-tabs-lg {
-  .hi-tab {
+.hk-tabs-lg {
+  .hk-tab {
     padding: 0.75rem 1.25rem;
     font-size: 0.9375rem;
 
-    .hi-tab-icon {
+    .hk-tab-icon {
       width: 1.125rem;
       height: 1.125rem;
     }
   }
 
-  .hi-tabs-content {
+  .hk-tabs-content {
     padding: 1.5rem;
   }
 }
@@ -525,7 +525,7 @@
 // Add/Remove Actions
 // ============================================
 
-.hi-tabs-add-button {
+.hk-tabs-add-button {
   // Layout
   display: flex;
   align-items: center;
@@ -574,9 +574,9 @@
 // ============================================
 
 // Slide animation for tab content
-.hi-tabs-animated {
-  .hi-tab-panel {
-    &.hi-tab-panel-active {
+.hk-tabs-animated {
+  .hk-tab-panel {
+    &.hk-tab-panel-active {
       // DISABLED - migrated to JS animation
 
       // animation: tab-panel-slide-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -597,9 +597,9 @@
 // }
 
 // Fade animation
-.hi-tabs-fade {
-  .hi-tab-panel {
-    &.hi-tab-panel-active {
+.hk-tabs-fade {
+  .hk-tab-panel {
+    &.hk-tab-panel-active {
       // DISABLED - migrated to JS animation
 
       // animation: tab-panel-fade-only vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -618,9 +618,9 @@
 // }
 
 // Zoom animation
-.hi-tabs-zoom {
-  .hi-tab-panel {
-    &.hi-tab-panel-active {
+.hk-tabs-zoom {
+  .hk-tab-panel {
+    &.hk-tab-panel-active {
       // DISABLED - migrated to JS animation
 
       // animation: tab-panel-zoom-in vars.$hikari-duration-normal vars.$hikari-ease-smooth forwards;
@@ -644,8 +644,8 @@
 // Scrollable Tabs
 // ============================================
 
-.hi-tabs-scrollable {
-  .hi-tabs-header {
+.hk-tabs-scrollable {
+  .hk-tabs-header {
     &::before,
     &::after {
       content: '';
@@ -672,14 +672,14 @@
     }
   }
 
-  &.hi-tabs-scroll-left .hi-tabs-header::before,
-  &.hi-tabs-scroll-right .hi-tabs-header::after {
+  &.hk-tabs-scroll-left .hk-tabs-header::before,
+  &.hk-tabs-scroll-right .hk-tabs-header::after {
     opacity: 1;
   }
 }
 
 // Navigation buttons for scrollable tabs
-.hi-tabs-nav-button {
+.hk-tabs-nav-button {
   // Layout
   display: flex;
   align-items: center;

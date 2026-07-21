@@ -26,7 +26,7 @@ pub fn icon_vnode(name: &str, size: u32) -> VNode {
     );
     VNode::Element(Box::new(
         VElement::new("span")
-            .class("hi-icon-inline")
+            .class("hk-icon-inline")
             .attr(
                 "style",
                 format!("display:inline-flex;align-items:center;width:{size}px;height:{size}px"),

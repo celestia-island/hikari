@@ -176,19 +176,19 @@ impl ZoomControlsState {
     /// Get the CSS position class name
     pub fn position_class(&self) -> &'static str {
         match self.position {
-            ZoomPosition::TopRight => "hi-zoom-top-right",
-            ZoomPosition::TopLeft => "hi-zoom-top-left",
-            ZoomPosition::BottomRight => "hi-zoom-bottom-right",
-            ZoomPosition::BottomLeft => "hi-zoom-bottom-left",
+            ZoomPosition::TopRight => "hk-zoom-top-right",
+            ZoomPosition::TopLeft => "hk-zoom-top-left",
+            ZoomPosition::BottomRight => "hk-zoom-bottom-right",
+            ZoomPosition::BottomLeft => "hk-zoom-bottom-left",
         }
     }
 
     /// Get the CSS class string
     pub fn class_string(&self) -> String {
         if self.class.is_empty() {
-            format!("hi-zoom-controls {}", self.position_class())
+            format!("hk-zoom-controls {}", self.position_class())
         } else {
-            format!("hi-zoom-controls {} {}", self.position_class(), self.class)
+            format!("hk-zoom-controls {} {}", self.position_class(), self.class)
         }
     }
 }
@@ -314,10 +314,10 @@ mod tests {
     #[test]
     fn test_position_class() {
         let state = ZoomControlsState::new();
-        assert_eq!(state.position_class(), "hi-zoom-top-right");
+        assert_eq!(state.position_class(), "hk-zoom-top-right");
 
         let state = state.with_position(ZoomPosition::BottomLeft);
-        assert_eq!(state.position_class(), "hi-zoom-bottom-left");
+        assert_eq!(state.position_class(), "hk-zoom-bottom-left");
     }
 
     #[test]

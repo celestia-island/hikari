@@ -37,17 +37,17 @@ pub struct TypographyProps {
 #[component]
 pub fn Typography(props: TypographyProps) -> Element {
     let variant_class = match props.variant {
-        TextVariant::H1 => "hi-typography hi-typography-h1",
-        TextVariant::H2 => "hi-typography hi-typography-h2",
-        TextVariant::H3 => "hi-typography hi-typography-h3",
-        TextVariant::H4 => "hi-typography hi-typography-h4",
-        TextVariant::H5 => "hi-typography hi-typography-h5",
-        TextVariant::H6 => "hi-typography hi-typography-h6",
-        TextVariant::Body => "hi-typography hi-typography-body",
-        TextVariant::Caption => "hi-typography hi-typography-caption",
-        TextVariant::Code => "hi-typography hi-typography-code",
-        TextVariant::Muted => "hi-typography hi-typography-muted",
-        TextVariant::Overline => "hi-typography hi-typography-overline",
+        TextVariant::H1 => "hk-typography hi-typography-h1",
+        TextVariant::H2 => "hk-typography hi-typography-h2",
+        TextVariant::H3 => "hk-typography hi-typography-h3",
+        TextVariant::H4 => "hk-typography hi-typography-h4",
+        TextVariant::H5 => "hk-typography hi-typography-h5",
+        TextVariant::H6 => "hk-typography hi-typography-h6",
+        TextVariant::Body => "hk-typography hi-typography-body",
+        TextVariant::Caption => "hk-typography hi-typography-caption",
+        TextVariant::Code => "hk-typography hi-typography-code",
+        TextVariant::Muted => "hk-typography hi-typography-muted",
+        TextVariant::Overline => "hk-typography hi-typography-overline",
     };
 
     let tag = match props.variant {

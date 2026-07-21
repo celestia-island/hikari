@@ -44,7 +44,7 @@ pub fn Tree(props: TreeProps) -> Element {
     let mut _focused_key = use_signal(String::new);
 
     let line_class = if props.show_line {
-        "hi-tree-show-line"
+        "hk-tree-show-line"
     } else {
         ""
     };

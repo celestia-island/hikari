@@ -10,7 +10,7 @@
 // Table Wrapper
 // ============================================
 
-.hi-table-wrapper {
+.hk-table-wrapper {
   display: inline-block;
   width: fit-content;
   max-width: 100%;
@@ -22,7 +22,7 @@
 // Base Table Element
 // ============================================
 
-.hi-table {
+.hk-table {
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
@@ -39,25 +39,25 @@
 // Size Variants
 // ============================================
 
-.hi-table-sm {
-  .hi-table-header-cell,
-  .hi-table-cell {
+.hk-table-sm {
+  .hk-table-header-cell,
+  .hk-table-cell {
     padding: 0.5rem 0.75rem;
     font-size: 0.8125rem;
   }
 }
 
-.hi-table-md {
-  .hi-table-header-cell,
-  .hi-table-cell {
+.hk-table-md {
+  .hk-table-header-cell,
+  .hk-table-cell {
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
   }
 }
 
-.hi-table-lg {
-  .hi-table-header-cell,
-  .hi-table-cell {
+.hk-table-lg {
+  .hk-table-header-cell,
+  .hk-table-cell {
     padding: 0.875rem 1rem;
     font-size: 0.9375rem;
   }
@@ -67,9 +67,9 @@
 // Table Bordered
 // ============================================
 
-.hi-table-bordered {
-  .hi-table-header-cell,
-  .hi-table-cell {
+.hk-table-bordered {
+  .hk-table-header-cell,
+  .hk-table-cell {
     border: 1px solid var(--hi-color-border);
   }
 }
@@ -78,8 +78,8 @@
 // Table Striped
 // ============================================
 
-.hi-table-striped {
-  .hi-table-row:nth-child(even) {
+.hk-table-striped {
+  .hk-table-row:nth-child(even) {
     background: var(--hi-color-gray-40);
   }
 }
@@ -88,8 +88,8 @@
 // Table Hover
 // ============================================
 
-.hi-table-hover {
-  .hi-table-row:hover {
+.hk-table-hover {
+  .hk-table-row:hover {
     background: var(--hi-color-surface-secondary);
   }
 }
@@ -98,7 +98,7 @@
 // Table Header Row
 // ============================================
 
-.hi-table-header-row {
+.hk-table-header-row {
   display: table-row;
 }
 
@@ -106,7 +106,7 @@
 // Table Header Cell
 // ============================================
 
-.hi-table-header-cell {
+.hk-table-header-cell {
   padding: 0.625rem 0.875rem;
   text-align: left;
   font-weight: 600;
@@ -121,7 +121,7 @@
 // Table Body
 // ============================================
 
-.hi-table-body {
+.hk-table-body {
   display: table-row-group;
 }
 
@@ -129,7 +129,7 @@
 // Table Row
 // ============================================
 
-.hi-table-row {
+.hk-table-row {
   display: table-row;
   transition: background 0.15s ease;
 }
@@ -138,7 +138,7 @@
 // Table Cell
 // ============================================
 
-.hi-table-cell {
+.hk-table-cell {
   padding: 0.625rem 0.875rem;
   text-align: left;
   color: var(--hi-color-text-primary);
@@ -151,15 +151,15 @@
 // Text Alignment
 // ============================================
 
-.hi-text-left {
+.hk-text-left {
   text-align: left;
 }
 
-.hi-text-center {
+.hk-text-center {
   text-align: center;
 }
 
-.hi-text-right {
+.hk-text-right {
   text-align: right;
 }
 
@@ -167,13 +167,13 @@
 // Empty State
 // ============================================
 
-.hi-table-empty {
+.hk-table-empty {
   padding: 2rem;
   text-align: center;
   color: var(--hi-color-text-secondary);
 }
 
-.hi-table-empty-content {
+.hk-table-empty-content {
   font-size: vars.$hikari-font-size-sm;
 }
 
@@ -181,7 +181,7 @@
 // Sortable
 // ============================================
 
-.hi-table-sortable {
+.hk-table-sortable {
   cursor: pointer;
   user-select: none;
 
@@ -190,13 +190,13 @@
   }
 }
 
-.hi-table-sort-icon {
+.hk-table-sort-icon {
   margin-left: 0.5rem;
   font-size: 0.75rem;
   color: var(--hi-color-text-secondary);
 }
 
-.hi-table-sort-active {
+.hk-table-sort-active {
   color: var(--hi-color-primary);
   background: var(--hi-color-surface);
 }

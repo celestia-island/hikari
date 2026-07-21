@@ -113,12 +113,12 @@ pub fn TimelineItem(props: TimelineItemProps) -> Element {
 impl StyledComponent for TimelineComponent {
     fn styles() -> &'static str {
         r#"
-.hi-timeline {
+.hk-timeline {
     position: relative;
     padding: 1rem 0;
 }
 
-.hi-timeline::before {
+.hk-timeline::before {
     content: '';
     position: absolute;
     top: 0;
@@ -133,29 +133,29 @@ impl StyledComponent for TimelineComponent {
     transform: translateX(-50%);
 }
 
-.hi-timeline-alternate .hi-timeline-item:nth-child(odd) {
+.hk-timeline-alternate .hk-timeline-item:nth-child(odd) {
     flex-direction: row-reverse;
 }
 
-.hi-timeline-left .hi-timeline-item,
-.hi-timeline-right .hi-timeline-item {
+.hk-timeline-left .hk-timeline-item,
+.hk-timeline-right .hk-timeline-item {
     flex-direction: row;
 }
 
-.hi-timeline-left .hi-timeline-item {
+.hk-timeline-left .hk-timeline-item {
     text-align: left;
 }
 
-.hi-timeline-right .hi-timeline-item {
+.hk-timeline-right .hk-timeline-item {
     text-align: right;
     flex-direction: row-reverse;
 }
 
-.hi-timeline-no-line::before {
+.hk-timeline-no-line::before {
     display: none;
 }
 
-.hi-timeline-item {
+.hk-timeline-item {
     display: flex;
     align-items: flex-start;
     gap: 1.5rem;
@@ -163,11 +163,11 @@ impl StyledComponent for TimelineComponent {
     position: relative;
 }
 
-.hi-timeline-item:last-child {
+.hk-timeline-item:last-child {
     margin-bottom: 0;
 }
 
-.hi-timeline-dot {
+.hk-timeline-dot {
     position: relative;
     display: flex;
     align-items: center;
@@ -184,13 +184,13 @@ impl StyledComponent for TimelineComponent {
     transition: all 0.3s ease;
 }
 
-.hi-timeline-dot:hover {
+.hk-timeline-dot:hover {
     transform: scale(1.2);
     box-shadow: 0 0 0 2px var(--hi-color-primary),
                 0 0 16px var(--hi-color-primary-glow);
 }
 
-.hi-timeline-content {
+.hk-timeline-content {
     flex: 1;
     padding: 1rem;
     background-color: var(--hi-color-bg-elevated);
@@ -199,27 +199,27 @@ impl StyledComponent for TimelineComponent {
     transition: all 0.3s ease;
 }
 
-.hi-timeline-content:hover {
+.hk-timeline-content:hover {
     border-color: var(--hi-color-primary);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
                 0 0 8px var(--hi-color-primary-glow);
 }
 
-.hi-timeline-time {
+.hk-timeline-time {
     font-size: 0.75rem;
     color: var(--hi-color-text-secondary);
     margin-bottom: 0.25rem;
     font-weight: 500;
 }
 
-.hi-timeline-title {
+.hk-timeline-title {
     font-size: 1rem;
     font-weight: 600;
     color: var(--hi-color-text-primary);
     margin-bottom: 0.5rem;
 }
 
-.hi-timeline-last::after {
+.hk-timeline-last::after {
     display: none;
 }
 "#

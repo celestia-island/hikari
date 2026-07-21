@@ -458,7 +458,7 @@ fn collect_from_dir(dir: &Path, out: &mut BTreeMap<String, Vec<String>>) {
         };
 
         let group_name = stem.replace('-', "_");
-        let prefix = format!("hi-{stem}-");
+        let prefix = format!("hk-{stem}-");
         let hikari_prefix = format!("hikari-{stem}-");
 
         let classes = extract_classes(&content, &prefix, &hikari_prefix);
@@ -498,7 +498,7 @@ fn extract_classes(scss: &str, prefix: &str, hikari_prefix: &str) -> Vec<String>
 
 fn class_to_variant(class: &str) -> String {
     let stripped = class
-        .strip_prefix("hi-")
+        .strip_prefix("hk-")
         .or_else(|| class.strip_prefix("hikari-"))
         .unwrap_or(class);
     stripped

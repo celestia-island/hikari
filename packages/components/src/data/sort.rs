@@ -36,8 +36,8 @@ impl SortDirection {
     pub fn class(&self) -> &'static str {
         match self {
             SortDirection::None => "",
-            SortDirection::Ascending => "hi-sort-asc",
-            SortDirection::Descending => "hi-sort-desc",
+            SortDirection::Ascending => "hk-sort-asc",
+            SortDirection::Descending => "hk-sort-desc",
         }
     }
 }

@@ -1,5 +1,5 @@
 // Component demo block — live preview + source with a segmented toggle in
-// the header. Pure style family (same convention as .hi-code-block): no
+// the header. Pure style family (same convention as .hk-code-block): no
 // Rust emitter in this crate; downstream emitters (static site generators,
 // markdown renderers) output the markup:
 //
@@ -15,7 +15,7 @@
 //     <div class="hi-component-demo-source" hidden>…a code block…</div>
 //   </div>
 
-.hi-component-demo {
+.hk-component-demo {
     background-color: var(--hi-color-bg-container, var(--hi-color-surface));
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
@@ -24,7 +24,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.hi-component-demo-header {
+.hk-component-demo-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -34,7 +34,7 @@
     border-bottom: 1px solid var(--hi-color-border);
 }
 
-.hi-component-demo-badge {
+.hk-component-demo-badge {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--hi-color-text-secondary);
@@ -44,7 +44,7 @@
 }
 
 // Segmented preview/source toggle (pill variant of the Tabs language).
-.hi-component-demo-toggle {
+.hk-component-demo-toggle {
     display: inline-flex;
     align-items: center;
     gap: 2px;
@@ -54,7 +54,7 @@
     border-radius: 999px;
 }
 
-.hi-component-demo-toggle-btn {
+.hk-component-demo-toggle-btn {
     appearance: none;
     border: none;
     background: transparent;
@@ -71,7 +71,7 @@
         color: var(--hi-color-text-primary);
     }
 
-    &.hi-component-demo-toggle-active {
+    &.hk-component-demo-toggle-active {
         background: var(--hi-color-bg-container, var(--hi-color-surface));
         color: var(--hi-color-text-primary);
         font-weight: 600;
@@ -79,7 +79,7 @@
     }
 }
 
-.hi-component-demo-preview {
+.hk-component-demo-preview {
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -96,9 +96,9 @@
 // The source pane hosts a regular code block; strip its outer chrome so it
 // sits flush inside the demo container (its own header keeps the copy
 // button reachable).
-.hi-component-demo-source {
-    > .hi-code-highlight,
-    > .hi-code-block {
+.hk-component-demo-source {
+    > .hk-code-highlight,
+    > .hk-code-block {
         border: none;
         border-radius: 0;
         margin: 0;
@@ -107,7 +107,7 @@
 }
 
 // Render-failure notice shown in place of (or above) the preview.
-.hi-component-demo-error {
+.hk-component-demo-error {
     margin: 1rem 1.5rem 0;
     padding: 0.75rem 1rem;
     background-color: rgba(233, 75, 53, 0.1);

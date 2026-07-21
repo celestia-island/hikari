@@ -79,14 +79,14 @@ pub fn DragLayer(props: DragLayerProps) -> Element {
 impl StyledComponent for DragLayerComponent {
     fn styles() -> &'static str {
         r#"
-.hi-drag-layer {
+.hk-drag-layer {
     position: fixed;
     inset: 0;
     z-index: 9999;
     pointer-events: none;
 }
 
-.hi-drag-layer-drop-zone-overlay {
+.hk-drag-layer-drop-zone-overlay {
     position: absolute;
     inset: 0;
     display: flex;
@@ -95,7 +95,7 @@ impl StyledComponent for DragLayerComponent {
     padding: 16px;
 }
 
-.hi-drag-layer-drop-zone {
+.hk-drag-layer-drop-zone {
     position: absolute;
     min-width: 100px;
     min-height: 60px;
@@ -110,12 +110,12 @@ impl StyledComponent for DragLayerComponent {
     transition: all 0.2s ease;
 }
 
-.hi-drag-layer-drop-zone:hover {
+.hk-drag-layer-drop-zone:hover {
     background-color: rgba(var(--hi-color-primary-rgb), 0.15);
     border-style: solid;
 }
 
-.hi-drag-layer-drag-preview {
+.hk-drag-layer-drag-preview {
     position: fixed;
     transform: translate(-50%, -50%);
     pointer-events: none;
@@ -133,7 +133,7 @@ impl StyledComponent for DragLayerComponent {
     }
 }
 
-.hi-drag-layer-drag-preview-content {
+.hk-drag-layer-drag-preview-content {
     background-color: var(--hi-color-bg-container);
     border: 1px solid var(--hi-color-border);
     border-radius: 8px;
@@ -145,17 +145,17 @@ impl StyledComponent for DragLayerComponent {
     min-width: 120px;
 }
 
-[data-theme="dark"] .hi-drag-layer-drag-preview-content {
+[data-theme="dark"] .hk-drag-layer-drag-preview-content {
     background-color: var(--hi-surface);
 }
 
-.hi-drag-layer-drag-preview-label {
+.hk-drag-layer-drag-preview-label {
     font-size: 14px;
     font-weight: 600;
     color: var(--hi-text-primary);
 }
 
-.hi-drag-layer-drag-preview-type {
+.hk-drag-layer-drag-preview-type {
     font-size: 12px;
     color: var(--hi-text-secondary);
 }

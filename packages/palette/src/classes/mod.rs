@@ -23,7 +23,7 @@
 //!     .add(components::Header::HeaderMain)
 //!     .build();
 //!
-//! // Output: "hi-flex hi-flex-row hi-gap-4 hi-header-main"
+//! // Output: "hk-flex hi-flex-row hi-gap-4 hi-header-main"
 //! ```
 
 pub mod colors;
@@ -58,7 +58,7 @@ pub trait UtilityClass {
 
     /// Get the full CSS class name (with `hi-` prefix)
     fn as_class(&self) -> String {
-        format!("hi-{}", self.as_suffix())
+        format!("hk-{}", self.as_suffix())
     }
 
     /// Get multiple class names (for compound utilities)
@@ -132,7 +132,7 @@ impl ClassesBuilder {
     ///     .add(Display::Flex)
     ///     .add_if(FlexDirection::Row, || is_active)
     ///     .build();
-    /// // Output: "hi-flex hi-flex-row" (only if is_active is true)
+    /// // Output: "hk-flex hi-flex-row" (only if is_active is true)
     /// ```
     pub fn add_if<T: UtilityClass>(mut self, class: T, condition: impl Fn() -> bool) -> Self {
         if condition() {
@@ -176,7 +176,7 @@ impl ClassesBuilder {
 /// use palette::classes::{Display, FlexDirection};
 ///
 /// let classes = build_classes(&[Display::Flex, FlexDirection::Row]);
-/// // Returns: "hi-flex hi-flex-row"
+/// // Returns: "hk-flex hi-flex-row"
 /// ```
 pub fn build_classes(classes: &[impl UtilityClass]) -> String {
     ClassesBuilder::new().add_all(classes).build()
@@ -239,7 +239,7 @@ mod tests {
     fn test_builder_single() {
         let classes = ClassesBuilder::new().add(Display::Flex).build();
 
-        assert_eq!(classes, "hi-flex");
+        assert_eq!(classes, "hk-flex");
     }
 
     #[test]
@@ -249,7 +249,7 @@ mod tests {
             .add(FlexDirection::Row)
             .build();
 
-        assert_eq!(classes, "hi-flex hi-flex-row");
+        assert_eq!(classes, "hk-flex hi-flex-row");
     }
 
     #[test]
@@ -259,6 +259,6 @@ mod tests {
             .add_raw("my-custom-class")
             .build();
 
-        assert_eq!(classes, "hi-flex my-custom-class");
+        assert_eq!(classes, "hk-flex my-custom-class");
     }
 }

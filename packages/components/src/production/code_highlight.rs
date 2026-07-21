@@ -245,7 +245,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         .map(|i| {
             VNode::Element(Box::new(
                 VElement::new("div")
-                    .class("hi-code-highlight-line-number")
+                    .class("hk-code-highlight-line-number")
                     .child(VNode::Text(VText::new(&i.to_string()))),
             ))
         })
@@ -319,7 +319,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
 impl StyledComponent for CodeHighlightComponent {
     fn styles() -> &'static str {
         r#"
-.hi-code-highlight {
+.hk-code-highlight {
     background-color: var(--hi-color-bg-container, #ffffff);
     border: 1px solid var(--hi-color-border, #e2e8f0);
     border-radius: 8px;
@@ -327,7 +327,7 @@ impl StyledComponent for CodeHighlightComponent {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.hi-code-highlight-header {
+.hk-code-highlight-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -336,7 +336,7 @@ impl StyledComponent for CodeHighlightComponent {
     border-bottom: 1px solid var(--hi-color-border, #e2e8f0);
 }
 
-.hi-code-highlight-language {
+.hk-code-highlight-language {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--hi-color-primary, #3b82f6);
@@ -344,7 +344,7 @@ impl StyledComponent for CodeHighlightComponent {
     letter-spacing: 0.05em;
 }
 
-.hi-code-highlight-copy {
+.hk-code-highlight-copy {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -359,19 +359,19 @@ impl StyledComponent for CodeHighlightComponent {
     transition: all 0.2s ease;
 }
 
-.hi-code-highlight-copy svg {
+.hk-code-highlight-copy svg {
     display: block;
 }
 
-.hi-code-highlight-copy:hover {
+.hk-code-highlight-copy:hover {
     background-color: var(--hi-color-primary, #3b82f6);
     color: white;
     border-color: var(--hi-color-primary, #3b82f6);
     box-shadow: 0 0 8px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
 }
 
-.hi-code-highlight-copy.hi-code-highlight-copy-copied,
-.hi-code-highlight-copy.copied {
+.hk-code-highlight-copy.hk-code-highlight-copy-copied,
+.hk-code-highlight-copy.copied {
     background-color: var(--hi-color-primary, #3b82f6);
     color: white;
     box-shadow: 0 0 12px var(--hi-color-primary-glow, rgba(59, 130, 246, 0.35));
@@ -379,28 +379,28 @@ impl StyledComponent for CodeHighlightComponent {
 }
 
 /* Icon-only copy buttons: swap clipboard → check while `.copied` is set. */
-.hi-code-highlight-copy-icon {
+.hk-code-highlight-copy-icon {
     display: inline-flex;
 }
 
-.hi-code-highlight-check {
+.hk-code-highlight-check {
     display: none;
 }
 
-.hi-code-highlight-copy.copied .hi-code-highlight-copy-icon {
+.hk-code-highlight-copy.copied .hk-code-highlight-copy-icon {
     display: none;
 }
 
-.hi-code-highlight-copy.copied .hi-code-highlight-check {
+.hk-code-highlight-copy.copied .hk-code-highlight-check {
     display: inline-flex;
 }
 
-.hi-code-highlight-content {
+.hk-code-highlight-content {
     display: flex;
     background-color: var(--hi-color-bg-container, #ffffff);
 }
 
-.hi-code-highlight-line-numbers {
+.hk-code-highlight-line-numbers {
     flex-shrink: 0;
     padding: 1rem 0.5rem;
     background-color: var(--hi-color-bg-elevated, #f6f8fa);
@@ -409,7 +409,7 @@ impl StyledComponent for CodeHighlightComponent {
     user-select: none;
 }
 
-.hi-code-highlight-line-number {
+.hk-code-highlight-line-number {
     font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
@@ -422,7 +422,7 @@ impl StyledComponent for CodeHighlightComponent {
    strut (inherited family/size/line-height, e.g. body sans at 1.65) both
    stretches every line box and shifts its baseline, drifting code away
    from the gutter numbers. */
-.hi-code-highlight-code {
+.hk-code-highlight-code {
     flex: 1;
     margin: 0;
     padding: 1rem;
@@ -434,7 +434,7 @@ impl StyledComponent for CodeHighlightComponent {
     line-height: 1.6;
 }
 
-.hi-code-highlight-code code {
+.hk-code-highlight-code code {
     font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.875rem;
     line-height: 1.6;

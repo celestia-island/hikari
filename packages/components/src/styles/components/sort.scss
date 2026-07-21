@@ -1,7 +1,7 @@
 // Sort component styles
 // Column sort with direction indicator
 
-.hi-sort-trigger {
+.hk-sort-trigger {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -16,7 +16,7 @@
   }
 }
 
-.hi-sort-icon {
+.hk-sort-icon {
   width: 16px;
   height: 16px;
   color: var(--hi-color-text-secondary, #666666);
@@ -25,21 +25,21 @@
   display: inline-block;
 }
 
-.hi-sort-trigger:hover .hi-sort-icon {
+.hk-sort-trigger:hover .hk-sort-icon {
   color: var(--hi-color-primary, #00a0e9);
 }
 
-.hi-sort-asc .hi-sort-icon {
+.hk-sort-asc .hk-sort-icon {
   transform: rotate(0deg);
   color: var(--hi-color-primary, #00a0e9);
 }
 
-.hi-sort-desc .hi-sort-icon {
+.hk-sort-desc .hk-sort-icon {
   transform: rotate(180deg);
   color: var(--hi-color-primary, #00a0e9);
 }
 
-.hi-sort-clear-btn {
+.hk-sort-clear-btn {
   padding: 2px 6px;
   border: none;
   background: transparent;

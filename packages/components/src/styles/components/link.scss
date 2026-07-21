@@ -8,7 +8,7 @@
 // size variants, icon support, and glow
 // ============================================
 
-.hi-link {
+.hk-link {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
@@ -55,24 +55,24 @@
 }
 
 // Size variants
-.hi-link-xs {
+.hk-link-xs {
     font-size: vars.$hikari-font-size-xs;
 }
 
-.hi-link-sm {
+.hk-link-sm {
     font-size: vars.$hikari-font-size-sm;
 }
 
-.hi-link-md {
+.hk-link-md {
     font-size: vars.$hikari-font-size-base;
 }
 
-.hi-link-lg {
+.hk-link-lg {
     font-size: vars.$hikari-font-size-lg;
 }
 
 // Color variants
-.hi-link-default {
+.hk-link-default {
     color: var(--hi-color-primary, var(--hi-primary, #FFB3A7));
 
     &:hover {
@@ -84,7 +84,7 @@
     }
 }
 
-.hi-link-secondary {
+.hk-link-secondary {
     color: var(--hi-secondary, #519A73);
 
     &:hover {
@@ -96,7 +96,7 @@
     }
 }
 
-.hi-link-danger {
+.hk-link-danger {
     color: var(--hi-danger, #FF4C00);
 
     &:hover {
@@ -109,11 +109,11 @@
 }
 
 // Icon variant (link with leading icon)
-.hi-link-icon {
+.hk-link-icon {
     gap: 0.375rem;
 
     svg,
-    .hi-icon {
+    .hk-icon {
         width: 1em;
         height: 1em;
         flex-shrink: 0;
@@ -121,13 +121,13 @@
     }
 
     &:hover svg,
-    &:hover .hi-icon {
+    &:hover .hk-icon {
         transform: translateX(2px);
     }
 }
 
 // Underline mode (always underlined)
-.hi-link-underlined {
+.hk-link-underlined {
     text-decoration: underline;
     text-underline-offset: 3px;
 
@@ -137,7 +137,7 @@
 }
 
 // Ghost variant (subtle, no underline until hover)
-.hi-link-ghost {
+.hk-link-ghost {
     color: var(--hi-text-primary, #262626);
 
     &:hover {
@@ -148,7 +148,7 @@
 }
 
 // External link indicator
-.hi-link-external::after {
+.hk-link-external::after {
     content: "";
     display: inline-block;
     width: 14px;
@@ -162,22 +162,22 @@
     transition: opacity vars.$hikari-transition-fast;
 }
 
-.hi-link-external:hover::after {
+.hk-link-external:hover::after {
     opacity: 1;
 }
 
 // Reduced motion support
 @media (prefers-reduced-motion: reduce) {
-    .hi-link {
+    .hk-link {
         transition: none;
     }
 
-    .hi-link:active {
+    .hk-link:active {
         transform: none;
     }
 
-    .hi-link-icon:hover svg,
-    .hi-link-icon:hover .hi-icon {
+    .hk-link-icon:hover svg,
+    .hk-link-icon:hover .hk-icon {
         transform: none;
     }
 }

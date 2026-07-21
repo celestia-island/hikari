@@ -12,7 +12,7 @@
 // Toast Container
 // ============================================
 
-.hi-toast-container {
+.hk-toast-container {
   position: fixed;
   z-index: 9999;
   display: flex;
@@ -21,38 +21,38 @@
   pointer-events: none;
 
   // Top-right (default)
-  &.hi-toast-top-right {
+  &.hk-toast-top-right {
     top: 1rem;
     right: 1rem;
   }
 
   // Top-left
-  &.hi-toast-top-left {
+  &.hk-toast-top-left {
     top: 1rem;
     left: 1rem;
   }
 
   // Bottom-right
-  &.hi-toast-bottom-right {
+  &.hk-toast-bottom-right {
     bottom: 1rem;
     right: 1rem;
   }
 
   // Bottom-left
-  &.hi-toast-bottom-left {
+  &.hk-toast-bottom-left {
     bottom: 1rem;
     left: 1rem;
   }
 
   // Top-center
-  &.hi-toast-top-center {
+  &.hk-toast-top-center {
     top: 1rem;
     left: 50%;
     transform: translateX(-50%);
   }
 
   // Bottom-center
-  &.hi-toast-bottom-center {
+  &.hk-toast-bottom-center {
     bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
@@ -64,7 +64,7 @@
 // No static shadow - glow handled by GlowWrapper
 // ============================================
 
-.hi-toast {
+.hk-toast {
   // Layout
   display: flex;
   align-items: flex-start;
@@ -92,7 +92,7 @@
   pointer-events: auto;
 
   // Icon - always white
-  .hi-toast-icon {
+  .hk-toast-icon {
     flex-shrink: 0;
     width: 1.25rem;
     height: 1.25rem;
@@ -106,13 +106,13 @@
   }
 
   // Content
-  .hi-toast-content {
+  .hk-toast-content {
     flex: 1;
     min-width: 0;
   }
 
   // Title - always white
-  .hi-toast-title {
+  .hk-toast-title {
     margin: 0 0 0.25rem 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
@@ -122,7 +122,7 @@
   }
 
   // Message - always white with slight transparency
-  .hi-toast-message {
+  .hk-toast-message {
     margin: 0;
     font-family: vars.$hikari-font-family-sans;
     font-size: vars.$hikari-font-size-sm;
@@ -132,7 +132,7 @@
   }
 
   // Close button - always white (layer2 toast style), simple icon button
-  .hi-toast-close {
+  .hk-toast-close {
     flex-shrink: 0;
     align-self: flex-start;
     width: 1.25rem;
@@ -157,7 +157,7 @@
 // Progress Bar - white/transparent (using palette)
 // ============================================
 
-.hi-toast-progress {
+.hk-toast-progress {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -183,30 +183,30 @@
 // ============================================
 
 // Success (Green) - 葱倩
-.hi-toast-success {
+.hk-toast-success {
   background: var(--hi-color-success);
 }
 
 // Info (Blue) - 魁卵青
-.hi-toast-info {
+.hk-toast-info {
   background: var(--hi-color-info);
 }
 
 // Warning (Yellow) - 鹅黄 (use darker variant for white text readability)
-.hi-toast-warning {
+.hk-toast-warning {
   background: var(--hi-button-warning-dark);
 }
 
 // Error (Red) - 朱红
-.hi-toast-error {
+.hk-toast-error {
   background: var(--hi-color-danger);
 }
 
 // Loading (Blue with spinner)
-.hi-toast-loading {
+.hk-toast-loading {
   background: var(--hi-color-info);
 
-  .hi-toast-icon {
+  .hk-toast-icon {
     svg {
       animation: toast-spin 1s linear infinite;
     }
@@ -226,10 +226,10 @@
 // Hover State - no static effects, glow handled by wrapper
 // ============================================
 
-.hi-toast {
+.hk-toast {
   &:hover {
     // Pause progress animation on hover
-    .hi-toast-progress {
+    .hk-toast-progress {
       &::after {
         animation-play-state: paused;
       }
@@ -241,43 +241,43 @@
 // Size Variants
 // ============================================
 
-.hi-toast-sm {
+.hk-toast-sm {
   padding: 0.75rem 1rem;
   min-width: 280px;
 
-  .hi-toast-icon {
+  .hk-toast-icon {
     width: 1rem;
     height: 1rem;
   }
 
-  .hi-toast-title {
+  .hk-toast-title {
     font-size: 0.875rem;
   }
 
-  .hi-toast-message {
+  .hk-toast-message {
     font-size: 0.75rem;
   }
 }
 
-.hi-toast-md {
+.hk-toast-md {
   padding: 1rem 1.25rem;
   min-width: 320px;
 }
 
-.hi-toast-lg {
+.hk-toast-lg {
   padding: 1.25rem 1.5rem;
   min-width: 400px;
 
-  .hi-toast-icon {
+  .hk-toast-icon {
     width: 1.5rem;
     height: 1.5rem;
   }
 
-  .hi-toast-title {
+  .hk-toast-title {
     font-size: 1rem;
   }
 
-  .hi-toast-message {
+  .hk-toast-message {
     font-size: 0.9375rem;
   }
 }
@@ -286,7 +286,7 @@
 // Clickable Toast
 // ============================================
 
-.hi-toast-clickable {
+.hk-toast-clickable {
   cursor: pointer;
 
   &:hover {

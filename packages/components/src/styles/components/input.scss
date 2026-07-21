@@ -16,7 +16,7 @@
 // Base Input Styles
 // ============================================
 
-.hi-input {
+.hk-input {
   // Layer2 variables are defined in input-vars.scss
 
   // Layout
@@ -78,7 +78,7 @@
   }
 
   // Error state - use CSS variables
-  &.hi-input-error {
+  &.hk-input-error {
     border-color: var(--hi-input-border-color-error);
 
     &:focus {
@@ -87,7 +87,7 @@
   }
 
   // Success state - use CSS variables
-  &.hi-input-success {
+  &.hk-input-success {
     border-color: var(--hi-input-border-color-success);
 
     &:focus {
@@ -100,7 +100,7 @@
 // Input with Wrapper (for icons, prefixes, suffixes)
 // ============================================
 
-.hi-input-wrapper {
+.hk-input-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -123,27 +123,27 @@
       box-shadow: var(--hi-input-wrapper-shadow-active);
     }
 
-    .hi-input:focus {
+    .hk-input:focus {
       box-shadow: none;
     }
 
-    .hi-input:focus:active {
+    .hk-input:focus:active {
       box-shadow: none;
     }
 
     // 确保 IconButton 在 Input focus 时不改变颜色
     // 保持 secondary 颜色，不使用 --hi-icon-button-icon-color（ghost 变体中指向 primary）
-    .hi-icon-button {
+    .hk-icon-button {
       color: var(--hi-color-text-secondary) !important;
 
-      .hi-icon-button-icon,
+      .hk-icon-button-icon,
       .hikari-icon {
         color: var(--hi-color-text-secondary) !important;
       }
     }
   }
 
-  .hi-input {
+  .hk-input {
     flex: 1;
     border: none;
     background: transparent;
@@ -171,8 +171,8 @@
 }
 
 // Prefix and Suffix - use CSS variables
-.hi-input-prefix,
-.hi-input-suffix {
+.hk-input-prefix,
+.hk-input-suffix {
   display: inline-flex;
   align-items: center;
   padding: var(--hi-input-affix-padding);
@@ -180,16 +180,16 @@
   font-size: var(--hi-input-affix-font-size);
 }
 
-.hi-input-prefix {
+.hk-input-prefix {
   border-right: 1px solid var(--hi-input-affix-border-color);
 }
 
-.hi-input-suffix {
+.hk-input-suffix {
   border-left: 1px solid var(--hi-input-affix-border-color);
 }
 
 // Clear button
-.hi-input-clear {
+.hk-input-clear {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -209,7 +209,7 @@
 // Textarea Variant
 // ============================================
 
-.hi-input-textarea {
+.hk-input-textarea {
   min-height: 80px;
   resize: vertical;
   font-family: vars.$hikari-font-family-sans;
@@ -219,8 +219,8 @@
 // Search Input
 // ============================================
 
-.hi-input-search {
-  .hi-input-suffix {
+.hk-input-search {
+  .hk-input-suffix {
     cursor: pointer;
 
     &:hover {
@@ -233,8 +233,8 @@
 // Password Input
 // ============================================
 
-.hi-input-password {
-  .hi-input-suffix {
+.hk-input-password {
+  .hk-input-suffix {
     cursor: pointer;
 
     &:hover {
@@ -247,49 +247,49 @@
 // Size Variants - Variables defined in input-vars.scss
 // ============================================
 
-.hi-input-sm,
-.hi-input-wrapper-sm {
+.hk-input-sm,
+.hk-input-wrapper-sm {
   height: 24px;
 
-  .hi-input {
+  .hk-input {
     padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
     font-size: var(--hi-input-font-size);
   }
 
-  .hi-input-prefix,
-  .hi-input-suffix {
+  .hk-input-prefix,
+  .hk-input-suffix {
     padding: 0 0.375rem;
     font-size: var(--hi-input-font-size);
   }
 }
 
-.hi-input-md,
-.hi-input-wrapper-md {
+.hk-input-md,
+.hk-input-wrapper-md {
   height: 32px;
 
-  .hi-input {
+  .hk-input {
     padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
     font-size: var(--hi-input-font-size);
   }
 
-  .hi-input-prefix,
-  .hi-input-suffix {
+  .hk-input-prefix,
+  .hk-input-suffix {
     padding: var(--hi-input-affix-padding);
     font-size: var(--hi-input-affix-font-size);
   }
 }
 
-.hi-input-lg,
-.hi-input-wrapper-lg {
+.hk-input-lg,
+.hk-input-wrapper-lg {
   height: 40px;
 
-  .hi-input {
+  .hk-input {
     padding: var(--hi-input-padding-y) var(--hi-input-padding-x);
     font-size: var(--hi-input-font-size);
   }
 
-  .hi-input-prefix,
-  .hi-input-suffix {
+  .hk-input-prefix,
+  .hk-input-suffix {
     padding: 0 0.75rem;
     font-size: var(--hi-input-font-size);
   }
@@ -299,11 +299,11 @@
 // Input Group
 // ============================================
 
-.hi-input-group {
+.hk-input-group {
   display: flex;
   width: 100%;
 
-  .hi-input-wrapper {
+  .hk-input-wrapper {
     flex: 1;
     max-width: none;
 
@@ -332,7 +332,7 @@
 // Character Counter
 // ============================================
 
-.hi-input-counter {
+.hk-input-counter {
   position: absolute;
   right: 0.75rem;
   bottom: 0.25rem;
@@ -341,7 +341,7 @@
   pointer-events: none;
   opacity: 0.8;
 
-  &.hi-input-counter-limit {
+  &.hk-input-counter-limit {
     color: var(--hi-color-danger);
   }
 }
@@ -350,11 +350,11 @@
 // Animations
 // ============================================
 
-.hi-input-animate-in {
+.hk-input-animate-in {
   // Animation handled by JS
 }
 
-.hi-input-shake {
+.hk-input-shake {
   // Animation handled by JS
 }
 
@@ -362,7 +362,7 @@
 // Spotlight Effect (Mouse-following glow)
 // ============================================
 
-.hi-input-spotlight-wrapper {
+.hk-input-spotlight-wrapper {
   position: relative;
   display: inline-block;
   width: 100%;
@@ -386,8 +386,8 @@
     transition: opacity 0.1s ease-out;
   }
 
-  .hi-input,
-  .hi-input-wrapper {
+  .hk-input,
+  .hk-input-wrapper {
     position: relative;
     z-index: 2;
   }

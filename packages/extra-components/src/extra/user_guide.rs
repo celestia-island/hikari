@@ -248,11 +248,11 @@ impl UserGuideState {
     /// Get the position class name
     pub fn position_class(&self) -> &'static str {
         match self.position {
-            GuidePosition::Center => "hi-user-guide-position-center",
-            GuidePosition::TopLeft => "hi-user-guide-position-top-left",
-            GuidePosition::TopRight => "hi-user-guide-position-top-right",
-            GuidePosition::BottomLeft => "hi-user-guide-position-bottom-left",
-            GuidePosition::BottomRight => "hi-user-guide-position-bottom-right",
+            GuidePosition::Center => "hk-user-guide-position-center",
+            GuidePosition::TopLeft => "hk-user-guide-position-top-left",
+            GuidePosition::TopRight => "hk-user-guide-position-top-right",
+            GuidePosition::BottomLeft => "hk-user-guide-position-bottom-left",
+            GuidePosition::BottomRight => "hk-user-guide-position-bottom-right",
         }
     }
 }
@@ -362,10 +362,10 @@ mod tests {
     #[test]
     fn test_position_classes() {
         let state = UserGuideState::new("Title".to_string(), "Desc".to_string());
-        assert_eq!(state.position_class(), "hi-user-guide-position-center");
+        assert_eq!(state.position_class(), "hk-user-guide-position-center");
 
         let state = state.with_position(GuidePosition::TopLeft);
-        assert_eq!(state.position_class(), "hi-user-guide-position-top-left");
+        assert_eq!(state.position_class(), "hk-user-guide-position-top-left");
     }
 
     #[test]

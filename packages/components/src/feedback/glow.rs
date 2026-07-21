@@ -209,7 +209,7 @@ pub fn Glow(props: GlowProps) -> Element {
 
                 if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                        get_element_by_class_upward("hk-glow-wrapper", &target_el)
                     {
                         if let Some(rect) = get_bounding_client_rect(&wrapper) {
                             let relative_x = client_x as f64 - rect.x;
@@ -247,7 +247,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                        get_element_by_class_upward("hk-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
                     }
@@ -265,7 +265,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                        get_element_by_class_upward("hk-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "0");
                     }
@@ -283,7 +283,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                        get_element_by_class_upward("hk-glow-wrapper", &target_el)
                     {
                         set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
                     }
@@ -301,7 +301,7 @@ pub fn Glow(props: GlowProps) -> Element {
                 let client_y = event.client_y;
                 if let Some(target_el) = element_from_point(client_x, client_y) {
                     if let Some(wrapper) =
-                        get_element_by_class_upward("hi-glow-wrapper", &target_el)
+                        get_element_by_class_upward("hk-glow-wrapper", &target_el)
                     {
                         let target = get_intensity_for_state(*state_clone.borrow());
                         set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());

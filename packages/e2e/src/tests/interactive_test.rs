@@ -196,7 +196,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get button attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-button") {
+        if !class_attr.contains("hk-button") {
             return Ok(InteractiveTestResult::failure(
                 "Button",
                 "Button element missing 'hi-button' class",
@@ -288,7 +288,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get input attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-input") {
+        if !class_attr.contains("hk-input") {
             return Ok(InteractiveTestResult::failure(
                 "Input",
                 "Input element missing 'hi-input' class",
@@ -416,7 +416,7 @@ impl InteractiveTests {
         info!("Starting interactive component tests");
 
         // Test Button component
-        match self.test_button_interactive(driver, ".hi-button").await {
+        match self.test_button_interactive(driver, ".hk-button").await {
             Ok(result) => {
                 info!("Button test: {}", result.status);
                 results.push(result);
@@ -428,7 +428,7 @@ impl InteractiveTests {
         }
 
         // Test Input component
-        match self.test_input_interactive(driver, ".hi-input").await {
+        match self.test_input_interactive(driver, ".hk-input").await {
             Ok(result) => {
                 info!("Input test: {}", result.status);
                 results.push(result);
@@ -452,7 +452,7 @@ impl InteractiveTests {
         }
 
         // Test Alert component
-        match self.test_alert_interactive(driver, ".hi-alert").await {
+        match self.test_alert_interactive(driver, ".hk-alert").await {
             Ok(result) => {
                 info!("Alert test: {}", result.status);
                 results.push(result);
@@ -464,7 +464,7 @@ impl InteractiveTests {
         }
 
         // Test Tabs component
-        match self.test_tabs_interactive(driver, ".hi-tabs").await {
+        match self.test_tabs_interactive(driver, ".hk-tabs").await {
             Ok(result) => {
                 info!("Tabs test: {}", result.status);
                 results.push(result);
@@ -476,7 +476,7 @@ impl InteractiveTests {
         }
 
         // Test Card component
-        match self.test_card_interactive(driver, ".hi-card").await {
+        match self.test_card_interactive(driver, ".hk-card").await {
             Ok(result) => {
                 info!("Card test: {}", result.status);
                 results.push(result);
@@ -786,7 +786,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get alert attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-alert") {
+        if !class_attr.contains("hk-alert") {
             return Ok(InteractiveTestResult::failure(
                 "Alert",
                 "Alert element missing 'hi-alert' class",
@@ -856,7 +856,7 @@ impl InteractiveTests {
 
         // Find and click second tab
         let second_tab = tabs
-            .find(By::Css(".hi-tab:nth-child(2)"))
+            .find(By::Css(".hk-tab:nth-child(2)"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find second tab: {}", e))?;
 
@@ -882,7 +882,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get tabs attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-tabs") {
+        if !class_attr.contains("hk-tabs") {
             return Ok(InteractiveTestResult::failure(
                 "Tabs",
                 "Tabs element missing 'hi-tabs' class",
@@ -977,7 +977,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get card attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-card") {
+        if !class_attr.contains("hk-card") {
             return Ok(InteractiveTestResult::failure(
                 "Card",
                 "Card element missing 'hi-card' class",
@@ -1024,7 +1024,7 @@ impl InteractiveTests {
         });
 
         // Find table element
-        let table = driver.find(By::Css(".hi-table")).await.map_err(|e| {
+        let table = driver.find(By::Css(".hk-table")).await.map_err(|e| {
             warn!("Table element not found: {}", e);
             anyhow::anyhow!("Table element not found: {}", e)
         })?;
@@ -1043,7 +1043,7 @@ impl InteractiveTests {
 
         // Find and click table header for sorting
         let header = table
-            .find(By::Css(".hi-table-header"))
+            .find(By::Css(".hk-table-header"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find table header: {}", e))?;
 
@@ -1070,7 +1070,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get table attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-table") {
+        if !class_attr.contains("hk-table") {
             return Ok(InteractiveTestResult::failure(
                 "Table",
                 "Table element missing 'hi-table' class",
@@ -1117,7 +1117,7 @@ impl InteractiveTests {
         });
 
         // Find tree element
-        let tree = driver.find(By::Css(".hi-tree")).await.map_err(|e| {
+        let tree = driver.find(By::Css(".hk-tree")).await.map_err(|e| {
             warn!("Tree element not found: {}", e);
             anyhow::anyhow!("Tree element not found: {}", e)
         })?;
@@ -1136,7 +1136,7 @@ impl InteractiveTests {
 
         // Find and click tree node to expand
         let node = tree
-            .find(By::Css(".hi-tree-node"))
+            .find(By::Css(".hk-tree-node"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find tree node: {}", e))?;
 
@@ -1161,7 +1161,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get tree attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-tree") {
+        if !class_attr.contains("hk-tree") {
             return Ok(InteractiveTestResult::failure(
                 "Tree",
                 "Tree element missing 'hi-tree' class",
@@ -1208,7 +1208,7 @@ impl InteractiveTests {
         });
 
         // Find menu element
-        let menu = driver.find(By::Css(".hi-menu")).await.map_err(|e| {
+        let menu = driver.find(By::Css(".hk-menu")).await.map_err(|e| {
             warn!("Menu element not found: {}", e);
             anyhow::anyhow!("Menu element not found: {}", e)
         })?;
@@ -1227,7 +1227,7 @@ impl InteractiveTests {
 
         // Find and click menu item
         let menu_item = menu
-            .find(By::Css(".hi-menu-item"))
+            .find(By::Css(".hk-menu-item"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find menu item: {}", e))?;
 
@@ -1253,7 +1253,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get menu attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-menu") {
+        if !class_attr.contains("hk-menu") {
             return Ok(InteractiveTestResult::failure(
                 "Menu",
                 "Menu element missing 'hi-menu' class",
@@ -1303,7 +1303,7 @@ impl InteractiveTests {
         });
 
         // Find pagination element
-        let pagination = driver.find(By::Css(".hi-pagination")).await.map_err(|e| {
+        let pagination = driver.find(By::Css(".hk-pagination")).await.map_err(|e| {
             warn!("Pagination element not found: {}", e);
             anyhow::anyhow!("Pagination element not found: {}", e)
         })?;
@@ -1322,7 +1322,7 @@ impl InteractiveTests {
 
         // Find and click next page button
         let next_btn = pagination
-            .find(By::Css(".hi-pagination-next"))
+            .find(By::Css(".hk-pagination-next"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find next page button: {}", e))?;
 
@@ -1349,7 +1349,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get pagination attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-pagination") {
+        if !class_attr.contains("hk-pagination") {
             return Ok(InteractiveTestResult::failure(
                 "Pagination",
                 "Pagination element missing 'hi-pagination' class",
@@ -1434,7 +1434,7 @@ impl InteractiveTests {
         });
 
         // Find modal element
-        let modal = driver.find(By::Css(".hi-modal")).await.map_err(|e| {
+        let modal = driver.find(By::Css(".hk-modal")).await.map_err(|e| {
             warn!("Modal element not found: {}", e);
             anyhow::anyhow!("Modal element not found: {}", e)
         })?;
@@ -1446,7 +1446,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get modal attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-modal") {
+        if !class_attr.contains("hk-modal") {
             return Ok(InteractiveTestResult::failure(
                 "Modal",
                 "Modal element missing 'hi-modal' class",
@@ -1493,7 +1493,7 @@ impl InteractiveTests {
         });
 
         // Find dropdown element
-        let dropdown = driver.find(By::Css(".hi-dropdown")).await.map_err(|e| {
+        let dropdown = driver.find(By::Css(".hk-dropdown")).await.map_err(|e| {
             warn!("Dropdown element not found: {}", e);
             anyhow::anyhow!("Dropdown element not found: {}", e)
         })?;
@@ -1534,7 +1534,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get dropdown attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-dropdown") {
+        if !class_attr.contains("hk-dropdown") {
             return Ok(InteractiveTestResult::failure(
                 "Dropdown",
                 "Dropdown element missing 'hi-dropdown' class",
@@ -1619,7 +1619,7 @@ impl InteractiveTests {
         });
 
         // Find drawer element
-        let drawer = driver.find(By::Css(".hi-drawer")).await.map_err(|e| {
+        let drawer = driver.find(By::Css(".hk-drawer")).await.map_err(|e| {
             warn!("Drawer element not found: {}", e);
             anyhow::anyhow!("Drawer element not found: {}", e)
         })?;
@@ -1631,7 +1631,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get drawer attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-drawer") {
+        if !class_attr.contains("hk-drawer") {
             return Ok(InteractiveTestResult::failure(
                 "Drawer",
                 "Drawer element missing 'hi-drawer' class",
@@ -1681,7 +1681,7 @@ impl InteractiveTests {
         });
 
         // Find breadcrumb element
-        let breadcrumb = driver.find(By::Css(".hi-breadcrumb")).await.map_err(|e| {
+        let breadcrumb = driver.find(By::Css(".hk-breadcrumb")).await.map_err(|e| {
             warn!("Breadcrumb element not found: {}", e);
             anyhow::anyhow!("Breadcrumb element not found: {}", e)
         })?;
@@ -1700,7 +1700,7 @@ impl InteractiveTests {
 
         // Find and click breadcrumb item
         let breadcrumb_item = breadcrumb
-            .find(By::Css(".hi-breadcrumb-item"))
+            .find(By::Css(".hk-breadcrumb-item"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find breadcrumb item: {}", e))?;
 
@@ -1727,7 +1727,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get breadcrumb attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-breadcrumb") {
+        if !class_attr.contains("hk-breadcrumb") {
             return Ok(InteractiveTestResult::failure(
                 "Breadcrumb",
                 "Breadcrumb element missing 'hi-breadcrumb' class",
@@ -1774,7 +1774,7 @@ impl InteractiveTests {
         });
 
         // Find steps element
-        let steps_el = driver.find(By::Css(".hi-steps")).await.map_err(|e| {
+        let steps_el = driver.find(By::Css(".hk-steps")).await.map_err(|e| {
             warn!("Steps element not found: {}", e);
             anyhow::anyhow!("Steps element not found: {}", e)
         })?;
@@ -1793,7 +1793,7 @@ impl InteractiveTests {
 
         // Find and click step to activate
         let step_item = steps_el
-            .find(By::Css(".hi-step"))
+            .find(By::Css(".hk-step"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find step item: {}", e))?;
 
@@ -1820,7 +1820,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get steps attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-steps") {
+        if !class_attr.contains("hk-steps") {
             return Ok(InteractiveTestResult::failure(
                 "Steps",
                 "Steps element missing 'hi-steps' class",
@@ -1867,7 +1867,7 @@ impl InteractiveTests {
         });
 
         // Find timeline element
-        let timeline = driver.find(By::Css(".hi-timeline")).await.map_err(|e| {
+        let timeline = driver.find(By::Css(".hk-timeline")).await.map_err(|e| {
             warn!("Timeline element not found: {}", e);
             anyhow::anyhow!("Timeline element not found: {}", e)
         })?;
@@ -1886,7 +1886,7 @@ impl InteractiveTests {
 
         // Find and click timeline item
         let timeline_item = timeline
-            .find(By::Css(".hi-timeline-item"))
+            .find(By::Css(".hk-timeline-item"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find timeline item: {}", e))?;
 
@@ -1913,7 +1913,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get timeline attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-timeline") {
+        if !class_attr.contains("hk-timeline") {
             return Ok(InteractiveTestResult::failure(
                 "Timeline",
                 "Timeline element missing 'hi-timeline' class",
@@ -1963,7 +1963,7 @@ impl InteractiveTests {
         });
 
         // Find user guide element
-        let user_guide = driver.find(By::Css(".hi-user-guide")).await.map_err(|e| {
+        let user_guide = driver.find(By::Css(".hk-user-guide")).await.map_err(|e| {
             warn!("UserGuide element not found: {}", e);
             anyhow::anyhow!("UserGuide element not found: {}", e)
         })?;
@@ -2009,7 +2009,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get user guide attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-user-guide") {
+        if !class_attr.contains("hk-user-guide") {
             return Ok(InteractiveTestResult::failure(
                 "UserGuide",
                 "UserGuide element missing 'hi-user-guide' class",
@@ -2060,7 +2060,7 @@ impl InteractiveTests {
 
         // Find zoom controls element
         let zoom_controls = driver
-            .find(By::Css(".hi-zoom-controls"))
+            .find(By::Css(".hk-zoom-controls"))
             .await
             .map_err(|e| {
                 warn!("ZoomControls element not found: {}", e);
@@ -2108,7 +2108,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get zoom controls attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-zoom-controls") {
+        if !class_attr.contains("hk-zoom-controls") {
             return Ok(InteractiveTestResult::failure(
                 "ZoomControls",
                 "ZoomControls element missing 'hi-zoom-controls' class",
@@ -2158,7 +2158,7 @@ impl InteractiveTests {
         });
 
         // Find collapsible element
-        let collapsible = driver.find(By::Css(".hi-collapsible")).await.map_err(|e| {
+        let collapsible = driver.find(By::Css(".hk-collapsible")).await.map_err(|e| {
             warn!("Collapsible element not found: {}", e);
             anyhow::anyhow!("Collapsible element not found: {}", e)
         })?;
@@ -2204,7 +2204,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get collapsible attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-collapsible") {
+        if !class_attr.contains("hk-collapsible") {
             return Ok(InteractiveTestResult::failure(
                 "Collapsible",
                 "Collapsible element missing 'hi-collapsible' class",
@@ -2255,7 +2255,7 @@ impl InteractiveTests {
 
         // Find video player element
         let video_player = driver
-            .find(By::Css(".hi-video-player"))
+            .find(By::Css(".hk-video-player"))
             .await
             .map_err(|e| {
                 warn!("VideoPlayer element not found: {}", e);
@@ -2303,7 +2303,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get video player attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-video-player") {
+        if !class_attr.contains("hk-video-player") {
             return Ok(InteractiveTestResult::failure(
                 "VideoPlayer",
                 "VideoPlayer element missing 'hi-video-player' class",
@@ -2353,7 +2353,7 @@ impl InteractiveTests {
         });
 
         // Find rich text editor element
-        let editor = driver.find(By::Css(".hi-editor")).await.map_err(|e| {
+        let editor = driver.find(By::Css(".hk-editor")).await.map_err(|e| {
             warn!("RichTextEditor element not found: {}", e);
             anyhow::anyhow!("RichTextEditor element not found: {}", e)
         })?;
@@ -2372,7 +2372,7 @@ impl InteractiveTests {
 
         // Find and click in editor
         let editor_body = editor
-            .find(By::Css(".hi-editor-body"))
+            .find(By::Css(".hk-editor-body"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find editor body: {}", e))?;
 
@@ -2406,7 +2406,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get editor attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-editor") {
+        if !class_attr.contains("hk-editor") {
             return Ok(InteractiveTestResult::failure(
                 "RichTextEditor",
                 "RichTextEditor element missing 'hi-editor' class",
@@ -2457,7 +2457,7 @@ impl InteractiveTests {
 
         // Find code highlighter element
         let code_highlighter = driver
-            .find(By::Css(".hi-code-highlighter"))
+            .find(By::Css(".hk-code-highlighter"))
             .await
             .map_err(|e| {
                 warn!("CodeHighlighter element not found: {}", e);
@@ -2478,7 +2478,7 @@ impl InteractiveTests {
 
         // Find and hover over code
         let code_block = code_highlighter
-            .find(By::Css(".hi-code-block"))
+            .find(By::Css(".hk-code-block"))
             .await
             .map_err(|e| anyhow::anyhow!("Failed to find code block: {}", e))?;
 
@@ -2509,7 +2509,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get code highlighter attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-code-highlighter") {
+        if !class_attr.contains("hk-code-highlighter") {
             return Ok(InteractiveTestResult::failure(
                 "CodeHighlighter",
                 "CodeHighlighter element missing 'hi-code-highlighter' class",
@@ -2559,7 +2559,7 @@ impl InteractiveTests {
         });
 
         // Find drag layer element
-        let drag_layer = driver.find(By::Css(".hi-drag-layer")).await.map_err(|e| {
+        let drag_layer = driver.find(By::Css(".hk-drag-layer")).await.map_err(|e| {
             warn!("DragLayer element not found: {}", e);
             anyhow::anyhow!("DragLayer element not found: {}", e)
         })?;
@@ -2629,7 +2629,7 @@ impl InteractiveTests {
             .map_err(|e| anyhow::anyhow!("Failed to get drag layer attributes: {}", e))?;
         let class_attr = class_attr.ok_or_else(|| anyhow::anyhow!("No class attribute found"))?;
 
-        if !class_attr.contains("hi-drag-layer") {
+        if !class_attr.contains("hk-drag-layer") {
             return Ok(InteractiveTestResult::failure(
                 "DragLayer",
                 "DragLayer element missing 'hi-drag-layer' class",

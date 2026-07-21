@@ -5,7 +5,7 @@
 // Overlay
 // ============================================
 
-.hi-pagination-jump-modal-overlay {
+.hk-pagination-jump-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -33,7 +33,7 @@
 // Modal Content
 // ============================================
 
-.hi-pagination-jump-modal-content {
+.hk-pagination-jump-modal-content {
   background: var(--hi-card-bg, #ffffff);
   border: 1px solid var(--hi-color-border, #e5e7eb);
   border-radius: var(--hi-radius-fui-md, 8px);
@@ -60,7 +60,7 @@
 // Header
 // ============================================
 
-.hi-pagination-jump-modal-header {
+.hk-pagination-jump-modal-header {
   padding: 1rem;
   border-bottom: 1px solid var(--hi-color-border, #e5e7eb);
   font-family: var(--hi-font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
@@ -73,14 +73,14 @@
 // Body
 // ============================================
 
-.hi-pagination-jump-modal-body {
+.hk-pagination-jump-modal-body {
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.hi-pagination-jump-modal-input {
+.hk-pagination-jump-modal-input {
   flex: 1;
   padding: 0.625rem 0.75rem;
   font-family: var(--hi-font-family-mono, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace);
@@ -108,7 +108,7 @@
   }
 }
 
-.hi-pagination-jump-modal-button {
+.hk-pagination-jump-modal-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,7 +150,7 @@
 // Footer
 // ============================================
 
-.hi-pagination-jump-modal-footer {
+.hk-pagination-jump-modal-footer {
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--hi-color-border, #e5e7eb);
   font-family: var(--hi-font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);

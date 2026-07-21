@@ -15,7 +15,7 @@
 // ============================================
 
 // Base button styles
-.hi-button {
+.hk-button {
   // Layout
   display: inline-flex;
   align-items: center;
@@ -79,7 +79,7 @@
   }
 
   // Loading state
-  &.hi-button-loading {
+  &.hk-button-loading {
     pointer-events: none;
   }
 }
@@ -88,7 +88,7 @@
 // Variant: Primary
 // ============================================
 
-.hi-button-primary {
+.hk-button-primary {
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
@@ -98,7 +98,7 @@
 // Variant: Secondary
 // ============================================
 
-.hi-button-secondary {
+.hk-button-secondary {
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
@@ -108,7 +108,7 @@
 // Variant: Ghost
 // ============================================
 
-.hi-button-ghost {
+.hk-button-ghost {
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
@@ -118,7 +118,7 @@
 // Variant: Borderless
 // ============================================
 
-.hi-button-borderless {
+.hk-button-borderless {
   background-color: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border: none;
@@ -128,7 +128,7 @@
 // Variant: Danger
 // ============================================
 
-.hi-button-danger {
+.hk-button-danger {
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
@@ -138,7 +138,7 @@
 // Variant: Success
 // ============================================
 
-.hi-button-success {
+.hk-button-success {
   background: var(--hi-button-bg);
   color: var(--hi-button-text-color);
   border-color: var(--hi-button-border-color);
@@ -148,9 +148,9 @@
 // Size Variants - Use CSS Variables
 // ============================================
 
-.hi-button-sm,
-.hi-button-md,
-.hi-button-lg {
+.hk-button-sm,
+.hk-button-md,
+.hk-button-lg {
   // Variables already defined in button-vars.scss
 }
 
@@ -158,7 +158,7 @@
 // Block Variant
 // ============================================
 
-.hi-button-block {
+.hk-button-block {
   display: flex;
   width: 100%;
 }
@@ -167,7 +167,7 @@
 // Loading Spinner
 // ============================================
 
-.hi-button-spinner {
+.hk-button-spinner {
   display: inline-block;
   width: 1rem;
   height: 1rem;
@@ -182,17 +182,17 @@
 // Icon styling - Use CSS Variables
 // ============================================
 
-button.hi-button .hikari-icon {
+button.hk-button .hikari-icon {
   color: var(--hi-button-icon-color);
   fill: var(--hi-button-icon-fill);
   opacity: var(--hi-button-icon-fill-opacity);
 }
 
-button.hi-button:active .hikari-icon {
+button.hk-button:active .hikari-icon {
   color: var(--hi-button-icon-color-active);
 }
 
-button.hi-button:disabled .hikari-icon {
+button.hk-button:disabled .hikari-icon {
   color: var(--hi-button-icon-color-disabled);
 }
 
@@ -212,8 +212,8 @@ button .hikari-icon svg line {
 // Icon and Suffix wrappers - Use CSS Variables
 // ============================================
 
-button.hi-button:not(.hi-icon-button) {
-  .hi-button-icon {
+button.hk-button:not(.hk-icon-button) {
+  .hk-button-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -232,18 +232,18 @@ button.hi-button:not(.hi-icon-button) {
     }
   }
 
-  .hi-button-suffix {
+  .hk-button-suffix {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
 
-    .hi-arrow {
+    .hk-arrow {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }
 
-    .hi-arrow svg {
+    .hk-arrow svg {
       width: var(--hi-button-icon-size);
       height: var(--hi-button-icon-size);
     }
@@ -264,17 +264,17 @@ button.hi-button:not(.hi-icon-button) {
 // Space-between layout (icon + text + suffix)
 // ============================================
 
-button.hi-button-space-between {
+button.hk-button-space-between {
   justify-content: space-between;
 
-  > *:not(.hi-button-icon):not(.hi-button-suffix) {
+  > *:not(.hk-button-icon):not(.hk-button-suffix) {
     flex: 1;
     text-align: center;
     line-height: var(--hi-button-line-height);
   }
 
-  .hi-button-icon,
-  .hi-button-suffix {
+  .hk-button-icon,
+  .hk-button-suffix {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -286,19 +286,19 @@ button.hi-button-space-between {
 // Button width variants
 // ============================================
 
-.hi-button-width-auto {
+.hk-button-width-auto {
   width: auto;
 }
 
-.hi-button-width-120 {
+.hk-button-width-120 {
   width: 120px;
 }
 
-.hi-button-width-140 {
+.hk-button-width-140 {
   width: 140px;
 }
 
-.hi-button-width-160 {
+.hk-button-width-160 {
   width: 160px;
 }
 

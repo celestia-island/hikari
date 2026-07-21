@@ -140,65 +140,65 @@ impl SsrTests {
     <link rel="stylesheet" href="/assets/hikari.css">
 </head>
 <body data-theme="light">
-    <div id="hikari-app" class="hi-layout hi-layout-light hi-layout-has-sidebar">
-        <header class="hi-layout-header">
-            <div class="hi-layout-brand">
-                <span class="hi-brand-logo">Hikari</span>
+    <div id="hikari-app" class="hk-layout hi-layout-light hi-layout-has-sidebar">
+        <header class="hk-layout-header">
+            <div class="hk-layout-brand">
+                <span class="hk-brand-logo">Hikari</span>
             </div>
-            <nav class="hi-layout-nav">
-                <a href="/components" class="hi-nav-link">Components</a>
-                <a href="/system" class="hi-nav-link">Design System</a>
-                <a href="/demos" class="hi-nav-link">Demos</a>
+            <nav class="hk-layout-nav">
+                <a href="/components" class="hk-nav-link">Components</a>
+                <a href="/system" class="hk-nav-link">Design System</a>
+                <a href="/demos" class="hk-nav-link">Demos</a>
             </nav>
         </header>
-        <div class="hi-layout-body">
-            <div id="drawer-overlay" class="hi-layout-overlay"></div>
-            <aside class="hi-layout-aside">
-                <nav class="hi-side-nav">
-                    <div class="hi-side-nav-group">
-                        <div class="hi-side-nav-title">Getting Started</div>
-                        <a href="/intro" class="hi-side-nav-link">Introduction</a>
-                        <a href="/install" class="hi-side-nav-link">Installation</a>
+        <div class="hk-layout-body">
+            <div id="drawer-overlay" class="hk-layout-overlay"></div>
+            <aside class="hk-layout-aside">
+                <nav class="hk-side-nav">
+                    <div class="hk-side-nav-group">
+                        <div class="hk-side-nav-title">Getting Started</div>
+                        <a href="/intro" class="hk-side-nav-link">Introduction</a>
+                        <a href="/install" class="hk-side-nav-link">Installation</a>
                     </div>
-                    <div class="hi-side-nav-group">
-                        <div class="hi-side-nav-title">Components</div>
-                        <a href="/components/button" class="hi-side-nav-link">Button</a>
-                        <a href="/components/input" class="hi-side-nav-link">Input</a>
-                        <a href="/components/card" class="hi-side-nav-link">Card</a>
+                    <div class="hk-side-nav-group">
+                        <div class="hk-side-nav-title">Components</div>
+                        <a href="/components/button" class="hk-side-nav-link">Button</a>
+                        <a href="/components/input" class="hk-side-nav-link">Input</a>
+                        <a href="/components/card" class="hk-side-nav-link">Card</a>
                     </div>
                 </nav>
             </aside>
-            <main class="hi-layout-main">
-                <div class="hi-layout-content">
+            <main class="hk-layout-main">
+                <div class="hk-layout-content">
                     <!-- Home Page -->
                     <div id="page-home" class="hikari-page is-active">
                         <section class="page-hero">
-                            <div class="page-hero__inner">
-                                <h1 class="page-hero__title">Hikari</h1>
-                                <p class="page-hero__subtitle">A comprehensive Rust UI component library</p>
-                                <p class="page-hero__desc">
+                            <div class="page-hero-inner">
+                                <h1 class="page-hero-title">Hikari</h1>
+                                <p class="page-hero-subtitle">A comprehensive Rust UI component library</p>
+                                <p class="page-hero-desc">
                                     Built with a reactive virtual DOM, compiled to WebAssembly.
                                 </p>
-                                <div class="page-hero__actions">
-                                    <a href="/components" class="hi-btn hi-btn--primary hi-btn--lg">Explore Components</a>
-                                    <a href="/system" class="hi-btn hi-btn--secondary hi-btn--lg">Design System</a>
+                                <div class="page-hero-actions">
+                                    <a href="/components" class="hk-btn hi-btn--primary hi-btn--lg">Explore Components</a>
+                                    <a href="/system" class="hk-btn hi-btn--secondary hi-btn--lg">Design System</a>
                                 </div>
                             </div>
                         </section>
                         <section class="page-section">
-                            <h2 class="page-section__title">What is Hikari?</h2>
+                            <h2 class="page-section-title">What is Hikari?</h2>
                             <div class="card-grid">
                                 <div class="card">
-                                    <h3 class="card__title">Component Library</h3>
-                                    <p class="card__body">Layered architecture with rich components.</p>
+                                    <h3 class="card-title">Component Library</h3>
+                                    <p class="card-body">Layered architecture with rich components.</p>
                                 </div>
                                 <div class="card">
-                                    <h3 class="card__title">Design System</h3>
-                                    <p class="card__body">500+ traditional Chinese colours.</p>
+                                    <h3 class="card-title">Design System</h3>
+                                    <p class="card-body">500+ traditional Chinese colours.</p>
                                 </div>
                                 <div class="card">
-                                    <h3 class="card__title">WebAssembly First</h3>
-                                    <p class="card__body">No JavaScript framework required.</p>
+                                    <h3 class="card-title">WebAssembly First</h3>
+                                    <p class="card-body">No JavaScript framework required.</p>
                                 </div>
                             </div>
                         </section>
@@ -210,8 +210,8 @@ impl SsrTests {
                             <div class="component-list">
                                 <div class="component-item">
                                     <h3>Button</h3>
-                                    <p class="hi-btn hi-btn--primary">Primary Button</p>
-                                    <p class="hi-btn hi-btn--secondary">Secondary Button</p>
+                                    <p class="hk-btn hi-btn--primary">Primary Button</p>
+                                    <p class="hk-btn hi-btn--secondary">Secondary Button</p>
                                 </div>
                             </div>
                         </section>
@@ -235,8 +235,8 @@ impl SsrTests {
                     <!-- 404 Page -->
                     <div id="page-404" class="hikari-page">
                         <section class="page-hero">
-                            <h1 class="page-hero__title">404</h1>
-                            <p class="page-hero__subtitle">Page not found</p>
+                            <h1 class="page-hero-title">404</h1>
+                            <p class="page-hero-subtitle">Page not found</p>
                         </section>
                     </div>
                 </div>
@@ -330,21 +330,21 @@ impl SsrTests {
 
         // Verify layout classes
         assertions
-            .assert_has_class("#hikari-app", "hi-layout")
+            .assert_has_class("#hikari-app", "hk-layout")
             .map_err(|e| anyhow::anyhow!("App root missing hi-layout class: {}", e))?;
         assertions
-            .assert_has_class("#hikari-app", "hi-layout-light")
+            .assert_has_class("#hikari-app", "hk-layout-light")
             .map_err(|e| anyhow::anyhow!("App root missing hi-layout-light class: {}", e))?;
 
         // Verify button classes
         assertions
-            .assert_has_class(".hi-btn--primary", "hi-btn")
+            .assert_has_class(".hk-btn--primary", "hk-btn")
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn class: {}", e))?;
         assertions
-            .assert_has_class(".hi-btn--primary", "hi-btn--primary")
+            .assert_has_class(".hk-btn--primary", "hk-btn--primary")
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--primary class: {}", e))?;
         assertions
-            .assert_has_class(".hi-btn--primary", "hi-btn--lg")
+            .assert_has_class(".hk-btn--primary", "hk-btn--lg")
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--lg class: {}", e))?;
 
         // Verify hero section classes
@@ -352,7 +352,7 @@ impl SsrTests {
             .assert_exists(".page-hero")
             .map_err(|e| anyhow::anyhow!("Hero section not found: {}", e))?;
         assertions
-            .assert_exists(".page-hero__title")
+            .assert_exists(".page-hero-title")
             .map_err(|e| anyhow::anyhow!("Hero title not found: {}", e))?;
 
         // Verify card classes
@@ -360,15 +360,15 @@ impl SsrTests {
             .assert_count(".card", 3)
             .map_err(|e| anyhow::anyhow!("Expected 3 cards: {}", e))?;
         assertions
-            .assert_exists(".card__title")
+            .assert_exists(".card-title")
             .map_err(|e| anyhow::anyhow!("Card title not found: {}", e))?;
 
         // Verify navigation classes
         assertions
-            .assert_exists(".hi-layout-nav")
+            .assert_exists(".hk-layout-nav")
             .map_err(|e| anyhow::anyhow!("Layout nav not found: {}", e))?;
         assertions
-            .assert_count(".hi-nav-link", 3)
+            .assert_count(".hk-nav-link", 3)
             .map_err(|e| anyhow::anyhow!("Expected 3 nav links: {}", e))?;
 
         Ok(SsrTestResult::success(
@@ -388,31 +388,31 @@ impl SsrTests {
 
         // Verify important content is in HTML (not loaded via JS)
         assertions
-            .assert_text_contains(".page-hero__title", "Hikari")
+            .assert_text_contains(".page-hero-title", "Hikari")
             .map_err(|e| anyhow::anyhow!("Hero title not in HTML: {}", e))?;
         assertions
-            .assert_text_contains(".page-hero__subtitle", "Rust UI component library")
+            .assert_text_contains(".page-hero-subtitle", "Rust UI component library")
             .map_err(|e| anyhow::anyhow!("Hero subtitle not in HTML: {}", e))?;
 
         // Verify card content is present
         assertions
-            .assert_text_contains(".card:nth-child(1) .card__title", "Component Library")
+            .assert_text_contains(".card:nth-child(1) .card-title", "Component Library")
             .map_err(|e| anyhow::anyhow!("Card 1 title not in HTML: {}", e))?;
         assertions
-            .assert_text_contains(".card:nth-child(2) .card__title", "Design System")
+            .assert_text_contains(".card:nth-child(2) .card-title", "Design System")
             .map_err(|e| anyhow::anyhow!("Card 2 title not in HTML: {}", e))?;
         assertions
-            .assert_text_contains(".card:nth-child(3) .card__title", "WebAssembly First")
+            .assert_text_contains(".card:nth-child(3) .card-title", "WebAssembly First")
             .map_err(|e| anyhow::anyhow!("Card 3 title not in HTML: {}", e))?;
 
         // Verify button text is present
         assertions
-            .assert_text_contains(".hi-btn--primary", "Explore Components")
+            .assert_text_contains(".hk-btn--primary", "Explore Components")
             .map_err(|e| anyhow::anyhow!("Primary button text not in HTML: {}", e))?;
 
         // Verify navigation links are present
         assertions
-            .assert_attr_eq(".hi-nav-link[href='/components']", "href", "/components")
+            .assert_attr_eq(".hk-nav-link[href='/components']", "href", "/components")
             .map_err(|e| anyhow::anyhow!("Components nav link not in HTML: {}", e))?;
 
         Ok(SsrTestResult::success(
@@ -563,7 +563,7 @@ impl SsrTests {
         }
 
         // Check 2: Layout classes present
-        match assertions.assert_has_class("#hikari-app", "hi-layout") {
+        match assertions.assert_has_class("#hikari-app", "hk-layout") {
             Ok(_) => checks_passed.push("Layout class".to_string()),
             Err(e) => {
                 checks_failed.push(format!("Layout class: {}", e));
@@ -571,7 +571,7 @@ impl SsrTests {
         }
 
         // Check 3: Header/navigation present
-        match assertions.assert_exists(".hi-layout-header") {
+        match assertions.assert_exists(".hk-layout-header") {
             Ok(_) => checks_passed.push("Header element".to_string()),
             Err(e) => {
                 checks_failed.push(format!("Header element: {}", e));
@@ -579,7 +579,7 @@ impl SsrTests {
         }
 
         // Check 4: Main content area present
-        match assertions.assert_exists(".hi-layout-content") {
+        match assertions.assert_exists(".hk-layout-content") {
             Ok(_) => checks_passed.push("Main content area".to_string()),
             Err(e) => {
                 checks_failed.push(format!("Main content area: {}", e));
@@ -587,7 +587,7 @@ impl SsrTests {
         }
 
         // Check 5: Sidebar present
-        match assertions.assert_exists(".hi-layout-aside") {
+        match assertions.assert_exists(".hk-layout-aside") {
             Ok(_) => checks_passed.push("Sidebar element".to_string()),
             Err(e) => {
                 checks_failed.push(format!("Sidebar element: {}", e));
@@ -718,20 +718,20 @@ impl SsrTests {
         }
 
         // Check 2: Component classes present in raw HTML
-        if raw_html.contains("hi-") {
+        if raw_html.contains("hk-") {
             checks_passed.push("Component classes present in raw HTML".to_string());
         } else {
             checks_failed.push("No component classes found in raw HTML".to_string());
         }
 
         // Check 3: Navigation is in raw HTML
-        match assertions.assert_exists(".hi-layout-header") {
+        match assertions.assert_exists(".hk-layout-header") {
             Ok(_) => checks_passed.push("Navigation in raw HTML".to_string()),
             Err(e) => checks_failed.push(format!("Navigation in raw HTML: {}", e)),
         }
 
         // Check 4: Main content area has meaningful text
-        if let Ok(sel) = Selector::parse(".hi-layout-content") {
+        if let Ok(sel) = Selector::parse(".hk-layout-content") {
             let parsed = Html::parse_document(&raw_html);
             if let Some(element) = parsed.select(&sel).next() {
                 let text = element.text().collect::<String>();
@@ -878,7 +878,7 @@ impl SsrTests {
 
         // Check 3: Event listeners are attached (try clicking something)
         // Look for interactive elements like buttons
-        let button_result = driver.find(By::Css(".hi-button, .hi-btn")).await;
+        let button_result = driver.find(By::Css(".hk-button, .hk-btn")).await;
 
         match button_result {
             Ok(button) => {

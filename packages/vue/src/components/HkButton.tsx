@@ -34,12 +34,12 @@ export default defineComponent({
     const attrs = useAttrs();
 
     const buttonClass = computed(() => [
-      "hikari-btn",
-      `hikari-btn--${props.variant}`,
-      `hikari-btn--${props.size}`,
-      props.block ? "hikari-btn--block" : "",
-      props.loading ? "hikari-btn--loading" : "",
-      props.shortcut ? "hikari-btn--has-shortcut" : "",
+      "hk-btn",
+      `hk-btn--${props.variant}`,
+      `hk-btn--${props.size}`,
+      props.block ? "hk-btn--block" : "",
+      props.loading ? "hk-btn--loading" : "",
+      props.shortcut ? "hk-btn--has-shortcut" : "",
     ]);
 
     return () => (
@@ -55,13 +55,13 @@ export default defineComponent({
       >
         {props.loading ? <HkSpinner size="xs" tone="current" /> : null}
         {!props.loading && props.icon ? (
-          <span class="hikari-btn-icon">
+          <span class="hk-btn-icon">
             <HkIcon name={props.icon} size={16} />
           </span>
         ) : null}
         {slots.default?.()}
         {props.suffix ? (
-          <span class="hikari-btn-suffix">
+          <span class="hk-btn-suffix">
             <HkIcon name={props.suffix} size={16} />
           </span>
         ) : null}

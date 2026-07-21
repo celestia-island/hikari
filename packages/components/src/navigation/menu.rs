@@ -47,9 +47,9 @@ pub enum MenuItemHeight {
 impl MenuItemHeight {
     pub fn as_str(&self) -> &'static str {
         match self {
-            MenuItemHeight::Default => "hi-menu-height-default",
-            MenuItemHeight::Compact => "hi-menu-height-compact",
-            MenuItemHeight::ExtraCompact => "hi-menu-height-extra-compact",
+            MenuItemHeight::Default => "hk-menu-height-default",
+            MenuItemHeight::Compact => "hk-menu-height-compact",
+            MenuItemHeight::ExtraCompact => "hk-menu-height-extra-compact",
         }
     }
 }
@@ -238,18 +238,18 @@ pub fn MenuItem(props: MenuItemProps) -> Element {
                 }
             },
 
-            div { class: "hi-menu-item-inner",
+            div { class: "hk-menu-item-inner",
                 if let Some(icon) = props.icon {
-                    span { class: "hi-menu-item-icon", {icon} }
+                    span { class: "hk-menu-item-icon", {icon} }
                 }
 
-                span { class: "hi-menu-item-content", {props.children} }
+                span { class: "hk-menu-item-content", {props.children} }
             }
         }
     };
 
     if should_glow {
-        let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
+        let wrapper_class = format!("hk-menu-item-wrapper {}", props.height.as_str());
         rsx! {
             div {
                 class: wrapper_class,
@@ -307,23 +307,23 @@ pub fn SubMenu(props: SubMenuProps) -> Element {
                 }
             },
 
-            div { class: "hi-menu-submenu-title-inner",
+            div { class: "hk-menu-submenu-title-inner",
                 if let Some(icon) = props.icon {
-                    span { class: "hi-menu-item-icon", {icon} }
+                    span { class: "hk-menu-item-icon", {icon} }
                 }
 
-                span { class: "hi-menu-item-content", "{props.title}" }
+                span { class: "hk-menu-item-content", "{props.title}" }
 
                 Arrow {
                     direction: if is_open.read() { ArrowDirection::Down } else { ArrowDirection::Right },
                     size: 14,
-                    class: if is_open.read() { "hi-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hi-menu-item-arrow".to_string() },
+                    class: if is_open.read() { "hk-menu-item-arrow hi-menu-submenu-arrow-open".to_string() } else { "hk-menu-item-arrow".to_string() },
                 }
             }
         }
     };
 
-    let wrapper_class = format!("hi-menu-item-wrapper {}", props.height.as_str());
+    let wrapper_class = format!("hk-menu-item-wrapper {}", props.height.as_str());
     let title_with_glow = rsx! {
         div { class: wrapper_class, style: "width: 100%; position: relative;",
             Glow {

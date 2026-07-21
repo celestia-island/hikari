@@ -36,14 +36,14 @@ pub fn TreeNodeArrow(props: TreeNodeArrowProps) -> Element {
     if props.disabled {
         // Disabled state - show placeholder
         rsx! {
-            span { class: "hi-tree-node-arrow-placeholder" }
+            span { class: "hk-tree-node-arrow-placeholder" }
         }
     } else {
         // Active state - show clickable arrow
         let arrow_class = format!(
-            "hi-tree-node-arrow {} {}",
+            "hk-tree-node-arrow {} {}",
             if props.expanded {
-                "hi-tree-node-arrow-expanded"
+                "hk-tree-node-arrow-expanded"
             } else {
                 { "" }
             },

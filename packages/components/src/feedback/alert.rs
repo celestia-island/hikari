@@ -118,7 +118,7 @@ pub fn Alert(props: AlertProps) -> Element {
 
     rsx! {
         Glow {
-            class: "hi-alert-glow-wrapper".to_string(),
+            class: "hk-alert-glow-wrapper".to_string(),
             blur: GlowBlur::Light,
             color: glow_color,
             intensity: GlowIntensity::Soft,
@@ -144,7 +144,7 @@ pub fn Alert(props: AlertProps) -> Element {
                         icon: MdiIcon::Close,
                         size: IconButtonSize::Small,
                         variant: IconButtonVariant::Ghost,
-                        class: "hi-alert-close".to_string(),
+                        class: "hk-alert-close".to_string(),
                         glow: false,
                         onclick: Some(
                             EventHandler::new(move |e| {

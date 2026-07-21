@@ -10,8 +10,8 @@ export default defineComponent({
   },
   setup(props) {
     const cls = computed(() => [
-      "hikari-avatar",
-      `hikari-avatar--${props.size}`,
+      "hk-avatar",
+      `hk-avatar--${props.size}`,
     ]);
 
     return () => (
@@ -19,7 +19,7 @@ export default defineComponent({
         {props.src ? (
           <img src={props.src} alt={props.name} />
         ) : (
-          <span class="hikari-avatar-fallback">{props.name?.charAt(0)?.toUpperCase() ?? "?"}</span>
+          <span class="hk-avatar-fallback">{props.name?.charAt(0)?.toUpperCase() ?? "?"}</span>
         )}
       </div>
     );

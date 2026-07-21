@@ -252,7 +252,7 @@ pub fn ThemeProvider(props: ThemeProviderProps) -> Element {
 
     rsx! {
         div {
-            class: "hi-theme-provider",
+            class: "hk-theme-provider",
             "data-theme": theme_name,
             dir: dir,
             style: css_vars,

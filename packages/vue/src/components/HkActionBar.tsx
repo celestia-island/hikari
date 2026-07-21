@@ -7,7 +7,7 @@ export default defineComponent({
   },
   setup(props, { slots }) {
     return () => (
-      <div class="hi-action-bar" style={{ gap: props.gap }}>
+      <div class="hk-action-bar" style={{ gap: props.gap }}>
         {slots.default?.()}
       </div>
     );

@@ -14,7 +14,7 @@
 // Wrapper Container
 // ============================================
 
-.hi-input-wrapper {
+.hk-input-wrapper {
   display: inline-flex;
   align-items: center;
   border-radius: vars.$hikari-radius-fui-lg;
@@ -27,7 +27,7 @@
   box-sizing: border-box;
 
   // Focus state - applied when any child input is focused
-  &:has(.hi-input-wrapper-input input:focus) {
+  &:has(.hk-input-wrapper-input input:focus) {
     border-color: var(--hi-color-primary);
     box-shadow:
       0 0 0 1px var(--hi-color-primary),
@@ -35,31 +35,31 @@
 
     // 确保图标按钮在输入框聚焦时保持默认颜色
     // 使用多个选择器来覆盖所有可能的样式来源
-    .hi-input-wrapper-item,
-    .hi-input-wrapper-item .hi-button,
-    .hi-input-wrapper-item .hi-icon-button,
-    .hi-input-wrapper-item .hi-button.hi-icon-button,
-    .hi-input-wrapper-item .hi-glow-wrapper,
-    .hi-input-wrapper-item .hi-glow-wrapper .hi-button,
-    .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button {
+    .hk-input-wrapper-item,
+    .hk-input-wrapper-item .hk-button,
+    .hk-input-wrapper-item .hk-icon-button,
+    .hk-input-wrapper-item .hk-button.hk-icon-button,
+    .hk-input-wrapper-item .hk-glow-wrapper,
+    .hk-input-wrapper-item .hk-glow-wrapper .hk-button,
+    .hk-input-wrapper-item .hk-glow-wrapper .hk-icon-button {
       color: var(--hi-color-text-secondary) !important;
     }
 
-    .hi-input-wrapper-item .hi-icon-button-icon,
-    .hi-input-wrapper-item .hi-icon-button .hikari-icon,
-    .hi-input-wrapper-item .hi-glow-wrapper .hikari-icon,
-    .hi-input-wrapper-item .hi-glow-wrapper .hi-icon-button-icon,
-    .hi-input-wrapper-item .hikari-icon {
+    .hk-input-wrapper-item .hk-icon-button-icon,
+    .hk-input-wrapper-item .hk-icon-button .hikari-icon,
+    .hk-input-wrapper-item .hk-glow-wrapper .hikari-icon,
+    .hk-input-wrapper-item .hk-glow-wrapper .hk-icon-button-icon,
+    .hk-input-wrapper-item .hikari-icon {
       color: var(--hi-color-text-secondary) !important;
     }
   }
 }
 
-.hi-input-wrapper-disabled {
+.hk-input-wrapper-disabled {
   opacity: 0.5;
   cursor: not-allowed;
 
-  .hi-input-wrapper-input input {
+  .hk-input-wrapper-input input {
     cursor: not-allowed;
   }
 }
@@ -68,32 +68,32 @@
 // Size Variants
 // ============================================
 
-.hi-input-wrapper-sm {
+.hk-input-wrapper-sm {
   height: 32px;
   border-radius: vars.$hikari-radius-fui-md;
 
-  .hi-input-wrapper-item {
+  .hk-input-wrapper-item {
     // 24px icon button size
     width: 24px;
     height: 24px;
   }
 }
 
-.hi-input-wrapper-md {
+.hk-input-wrapper-md {
   height: 40px;
 
-  .hi-input-wrapper-item {
+  .hk-input-wrapper-item {
     // 32px icon button size
     width: 32px;
     height: 32px;
   }
 }
 
-.hi-input-wrapper-lg {
+.hk-input-wrapper-lg {
   height: 48px;
   border-radius: vars.$hikari-radius-fui-lg;
 
-  .hi-input-wrapper-item {
+  .hk-input-wrapper-item {
     // 40px icon button size
     width: 40px;
     height: 40px;
@@ -104,8 +104,8 @@
 // Left/Right Sections
 // ============================================
 
-.hi-input-wrapper-left,
-.hi-input-wrapper-right {
+.hk-input-wrapper-left,
+.hk-input-wrapper-right {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -113,11 +113,11 @@
   gap: 4px; // Consistent 4px gap between items
 }
 
-.hi-input-wrapper-left {
+.hk-input-wrapper-left {
   padding-left: 4px;
 }
 
-.hi-input-wrapper-right {
+.hk-input-wrapper-right {
   padding-right: 4px;
 }
 
@@ -125,7 +125,7 @@
 // Side Items (IconButtons)
 // ============================================
 
-.hi-input-wrapper-item {
+.hk-input-wrapper-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -134,7 +134,7 @@
   line-height: 1;
 
   // IconButton is already styled, just ensure proper sizing
-  .hi-icon-button {
+  .hk-icon-button {
     width: 100%;
     height: 100%;
   }
@@ -144,7 +144,7 @@
 // Input Section
 // ============================================
 
-.hi-input-wrapper-input {
+.hk-input-wrapper-input {
   flex: 1;
   display: flex;
   align-items: center;
@@ -201,8 +201,8 @@
 // ============================================
 
 // When multiple icons are present in a section
-.hi-input-wrapper-left:has(> .hi-input-wrapper-item + .hi-input-wrapper-item),
-.hi-input-wrapper-right:has(> .hi-input-wrapper-item + .hi-input-wrapper-item) {
+.hk-input-wrapper-left:has(> .hk-input-wrapper-item + .hk-input-wrapper-item),
+.hk-input-wrapper-right:has(> .hk-input-wrapper-item + .hk-input-wrapper-item) {
   // Ensure proper spacing between multiple icons
   gap: 2px;
 }
@@ -213,7 +213,7 @@
 
 // Default state - inherited from IconButton
 // Use higher specificity to override button.scss styles
-.hi-input-wrapper-item .hi-button.hi-icon-button {
+.hk-input-wrapper-item .hk-button.hk-icon-button {
   // Ghost variant default styles
   color: var(--hi-color-text-secondary);
   background-color: transparent;
@@ -228,7 +228,7 @@
   &:focus-visible {
     color: var(--hi-color-text-secondary) !important;
 
-    .hi-icon-button-icon,
+    .hk-icon-button-icon,
     .hikari-icon {
       color: var(--hi-color-text-secondary) !important;
     }
@@ -251,14 +251,14 @@
 // Dark Theme Support
 // ============================================
 
-[data-theme="dark"] .hi-input-wrapper,
-[data-theme="tairitsu"] .hi-input-wrapper {
+[data-theme="dark"] .hk-input-wrapper,
+[data-theme="tairitsu"] .hk-input-wrapper {
   background-color: var(--hi-surface);
   border-color: var(--hi-border);
 }
 
-[data-theme="dark"] .hi-input-wrapper-item .hi-button.hi-icon-button,
-[data-theme="tairitsu"] .hi-input-wrapper-item .hi-button.hi-icon-button {
+[data-theme="dark"] .hk-input-wrapper-item .hk-button.hk-icon-button,
+[data-theme="tairitsu"] .hk-input-wrapper-item .hk-button.hk-icon-button {
   color: var(--hi-text-secondary);
 
   &:hover:not(:disabled) {
@@ -270,7 +270,7 @@
   &:focus-visible {
     color: var(--hi-text-secondary) !important;
 
-    .hi-icon-button-icon,
+    .hk-icon-button-icon,
     .hikari-icon {
       color: var(--hi-text-secondary) !important;
     }
@@ -281,8 +281,8 @@
   }
 }
 
-[data-theme="dark"] .hi-input-wrapper-input input,
-[data-theme="tairitsu"] .hi-input-wrapper-input input {
+[data-theme="dark"] .hk-input-wrapper-input input,
+[data-theme="tairitsu"] .hk-input-wrapper-input input {
   color: var(--hi-text-primary);
 
   &::placeholder {

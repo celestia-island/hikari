@@ -149,7 +149,7 @@ fn get_theme_colors() -> (String, String) {
 
         // Get current theme from DOM
         let current_theme = match document
-            .query_selector(".hi-theme-provider[data-theme]")
+            .query_selector(".hk-theme-provider[data-theme]")
             .ok()
             .flatten()
             .and_then(|el| el.get_attribute("data-theme"))

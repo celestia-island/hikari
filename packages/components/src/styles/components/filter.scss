@@ -1,17 +1,17 @@
 // Filter component styles
 // Column filter with multiple options
 
-.hi-filter {
+.hk-filter {
   display: inline-block;
   position: relative;
 }
 
-.hi-filter-container {
+.hk-filter-container {
   position: relative;
   display: inline-block;
 }
 
-.hi-filter-trigger {
+.hk-filter-trigger {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -29,24 +29,24 @@
     border-color: var(--hi-color-primary, #00a0e9);
   }
 
-  &.hi-filter-trigger-active {
+  &.hk-filter-trigger-active {
     background: var(--hi-color-primary-light, rgba(0, 160, 233, 0.1));
     border-color: var(--hi-color-primary, #00a0e9);
   }
 }
 
-.hi-filter-icon {
+.hk-filter-icon {
   width: 16px;
   height: 16px;
   color: var(--hi-color-text-secondary, #666666);
   transition: transform 0.2s ease;
 }
 
-.hi-filter-trigger-active .hi-filter-icon {
+.hk-filter-trigger-active .hk-filter-icon {
   color: var(--hi-color-primary, #00a0e9);
 }
 
-.hi-filter-badge {
+.hk-filter-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,14 +60,14 @@
   font-weight: 500;
 }
 
-.hi-filter-dropdown-icon {
+.hk-filter-dropdown-icon {
   width: 16px;
   height: 16px;
   color: var(--hi-color-text-secondary, #666666);
   transition: transform 0.2s ease;
 }
 
-.hi-filter-dropdown {
+.hk-filter-dropdown {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -80,7 +80,7 @@
   z-index: 1000;
 }
 
-.hi-filter-header {
+.hk-filter-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -88,13 +88,13 @@
   border-bottom: 1px solid var(--hi-color-border-light, #f3f4f6);
 }
 
-.hi-filter-title {
+.hk-filter-title {
   font-size: 14px;
   font-weight: 500;
   color: var(--hi-color-text, #333333);
 }
 
-.hi-filter-clear-btn {
+.hk-filter-clear-btn {
   padding: 4px 8px;
   border: none;
   background: transparent;
@@ -109,12 +109,12 @@
   }
 }
 
-.hi-filter-options {
+.hk-filter-options {
   max-height: 300px;
   overflow-y: auto;
 }
 
-.hi-filter-option {
+.hk-filter-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -128,13 +128,13 @@
   }
 }
 
-.hi-filter-checkbox {
+.hk-filter-checkbox {
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
 
-.hi-filter-label {
+.hk-filter-label {
   flex: 1;
   font-size: 14px;
   color: var(--hi-color-text, #333333);

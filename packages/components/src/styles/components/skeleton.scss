@@ -2,7 +2,7 @@
 // Loading placeholder styles for various content types
 
 // Base skeleton wrapper
-.hi-skeleton-wrapper {
+.hk-skeleton-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -10,7 +10,7 @@
 }
 
 // Base skeleton element
-.hi-skeleton {
+.hk-skeleton {
     background: linear-gradient(
         90deg,
         var(--hi-surface, #f0f0f0) 25%,
@@ -23,7 +23,7 @@
 }
 
 // Active animation state
-.hi-skeleton-active {
+.hk-skeleton-active {
     animation: hi-skeleton-loading 1.5s ease-in-out infinite;
 }
 
@@ -33,7 +33,7 @@
 }
 
 // Text skeleton - for paragraphs and lines
-.hi-skeleton-text {
+.hk-skeleton-text {
     height: 16px;
     margin-bottom: 8px;
     border-radius: 4px;
@@ -43,93 +43,93 @@
     }
 
     // Variant widths for more natural look
-    &.hi-skeleton-text-sm { width: 60%; }
-    &.hi-skeleton-text-md { width: 80%; }
-    &.hi-skeleton-text-lg { width: 100%; }
+    &.hk-skeleton-text-sm { width: 60%; }
+    &.hk-skeleton-text-md { width: 80%; }
+    &.hk-skeleton-text-lg { width: 100%; }
 }
 
 // Avatar skeleton - circular placeholder
-.hi-skeleton-avatar {
+.hk-skeleton-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     flex-shrink: 0;
 
-    &.hi-skeleton-avatar-sm {
+    &.hk-skeleton-avatar-sm {
         width: 24px;
         height: 24px;
     }
 
-    &.hi-skeleton-avatar-md {
+    &.hk-skeleton-avatar-md {
         width: 32px;
         height: 32px;
     }
 
-    &.hi-skeleton-avatar-lg {
+    &.hk-skeleton-avatar-lg {
         width: 48px;
         height: 48px;
     }
 }
 
 // Image/cover skeleton - rectangular placeholder
-.hi-skeleton-image {
+.hk-skeleton-image {
     width: 100%;
     aspect-ratio: 16 / 9;
     border-radius: 8px;
 }
 
 // Button skeleton - for interactive elements
-.hi-skeleton-button {
+.hk-skeleton-button {
     height: 32px;
     width: 80px;
     border-radius: 4px;
 
-    &.hi-skeleton-button-sm {
+    &.hk-skeleton-button-sm {
         height: 24px;
         width: 60px;
     }
 
-    &.hi-skeleton-button-md {
+    &.hk-skeleton-button-md {
         height: 32px;
         width: 80px;
     }
 
-    &.hi-skeleton-button-lg {
+    &.hk-skeleton-button-lg {
         height: 40px;
         width: 100px;
     }
 }
 
 // Input skeleton - for form elements
-.hi-skeleton-input {
+.hk-skeleton-input {
     height: 32px;
     width: 100%;
     border-radius: 4px;
 }
 
 // Rect skeleton - generic rectangular placeholder
-.hi-skeleton-rect {
+.hk-skeleton-rect {
     display: inline-block;
 
-    &.hi-skeleton-rect-sm {
+    &.hk-skeleton-rect-sm {
         width: 60px;
         height: 20px;
     }
 
-    &.hi-skeleton-rect-md {
+    &.hk-skeleton-rect-md {
         width: 120px;
         height: 24px;
     }
 
-    &.hi-skeleton-rect-lg {
+    &.hk-skeleton-rect-lg {
         width: 200px;
         height: 32px;
     }
 }
 
 // Dark theme adjustments
-[data-theme="dark"] .hi-skeleton,
-[data-theme="tairitsu"] .hi-skeleton {
+[data-theme="dark"] .hk-skeleton,
+[data-theme="tairitsu"] .hk-skeleton {
     background: linear-gradient(
         90deg,
         rgba(255, 255, 255, 0.05) 25%,
@@ -141,7 +141,7 @@
 
 // Accessibility: respect prefers-reduced-motion
 @media (prefers-reduced-motion: reduce) {
-    .hi-skeleton-active {
+    .hk-skeleton-active {
         animation: none;
     }
 }

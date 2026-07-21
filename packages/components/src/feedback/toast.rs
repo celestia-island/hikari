@@ -105,7 +105,7 @@ pub fn Toast(props: ToastProps) -> Element {
 
     rsx! {
         Glow {
-            class: "hi-toast-glow-wrapper".to_string(),
+            class: "hk-toast-glow-wrapper".to_string(),
             blur: GlowBlur::Medium,
             color: glow_color,
             intensity: GlowIntensity::Soft,
@@ -127,7 +127,7 @@ pub fn Toast(props: ToastProps) -> Element {
                         icon: MdiIcon::Close,
                         size: IconButtonSize::Small,
                         variant: IconButtonVariant::Ghost,
-                        class: "hi-toast-close".to_string(),
+                        class: "hk-toast-close".to_string(),
                         icon_color: Some("var(--hi-color-white-100)".to_string()),
                         glow: false,
                         onclick: Some(

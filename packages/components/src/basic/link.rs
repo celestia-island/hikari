@@ -24,9 +24,9 @@ pub struct LinkProps {
 #[component]
 pub fn Link(props: LinkProps) -> Element {
     let classes = if props.class.is_empty() {
-        "hi-link".to_string()
+        "hk-link".to_string()
     } else {
-        format!("hi-link {}", props.class)
+        format!("hk-link {}", props.class)
     };
 
     rsx! {

@@ -1,11 +1,11 @@
 // Anchor component styles
 // In-page navigation with smooth scrolling
 
-.hi-anchor-wrapper {
+.hk-anchor-wrapper {
   position: relative;
 }
 
-.hi-anchor-right {
+.hk-anchor-right {
   position: fixed;
   right: 20px;
   top: 50%;
@@ -17,7 +17,7 @@
   z-index: 1000;
 }
 
-.hi-anchor-left {
+.hk-anchor-left {
   position: fixed;
   left: 20px;
   top: 50%;
@@ -29,7 +29,7 @@
   z-index: 1000;
 }
 
-.hi-anchor-link {
+.hk-anchor-link {
   display: block;
   width: 100%;
   padding: 8px 12px;
@@ -58,7 +58,7 @@
   }
 }
 
-.hi-anchor-active {
+.hk-anchor-active {
   background: var(--hi-color-primary, #00a0e9);
   color: white;
   font-weight: 500;

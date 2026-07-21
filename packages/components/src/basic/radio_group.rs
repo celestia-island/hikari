@@ -59,10 +59,10 @@ pub fn RadioButton(props: RadioButtonProps) -> Element {
                 disabled,
                 onchange: handle_change,
             }
-            div { class: "hi-radio-indicator",
-                div { class: "hi-radio-dot" }
+            div { class: "hk-radio-indicator",
+                div { class: "hk-radio-dot" }
             }
-            span { class: "hi-radio-text", {props.children} }
+            span { class: "hk-radio-text", {props.children} }
         }
     }
 }

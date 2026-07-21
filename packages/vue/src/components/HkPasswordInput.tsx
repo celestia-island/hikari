@@ -29,6 +29,10 @@ export default defineComponent({
     name: { type: String, default: undefined },
     autocomplete: { type: String, default: undefined },
     strength: { type: Boolean, default: false },
+    passwordEnteredText: { type: String, default: "Password entered" },
+    allSelectedText: { type: String, default: "All selected" },
+    capsLockText: { type: String, default: "Caps Lock is on" },
+    fullWidthWarningText: { type: String, default: "Full-width characters not allowed" },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -454,11 +458,11 @@ export default defineComponent({
                 clearAndFocus();
               }}
             >
-              Password entered
+              {props.passwordEnteredText}
             </span>
           ) : null}
           {focused.value && allSelected.value ? (
-            <span class="hk-pwd-select-hint">All selected</span>
+            <span class="hk-pwd-select-hint">{props.allSelectedText}</span>
           ) : null}
           {revealing.value ? (
             <span class="hk-pwd-reveal-text">{props.modelValue}</span>
@@ -499,14 +503,14 @@ export default defineComponent({
           <HkListTransition tag="div">
             {capsLock.value ? (
               <span key="caps" class="hk-pwd-hint" data-variant="caps">
-                Caps Lock is on
+                {props.capsLockText}
               </span>
             ) : null}
           </HkListTransition>
           <HkListTransition tag="div">
             {fullWidthPaused.value ? (
               <span key="fw" class="hk-pwd-hint" data-variant="fw">
-                Full-width characters not allowed
+                {props.fullWidthWarningText}
               </span>
             ) : null}
           </HkListTransition>

@@ -1,9 +1,7 @@
 // Essential theme CSS variables for hikari-vue components
-// All tokens use --hi-* prefix.
-// Color/radius/space/text tokens are intentionally NOT defined here —
-// they come from the consumer's theme (e.g. shittim-chest bridge).
+// Color/radius/space/text tokens are NOT defined here —
+// they come from the consumer's theme bridge.
 // Component SCSS has fallback values in every var() call.
-// Defining them at :root here would conflict with the consumer's bridge.
 
 :root {
   --hi-z-above: 1;

@@ -1,21 +1,21 @@
 .hk-progress-bar {
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-4, 0.25rem);
+  gap: var(--space-4);
   width: 100%;
 }
 
 .hk-progress-bar-label {
-  font-size: var(--hi-text-xs, 0.625rem);
-  color: var(--hi-color-text-secondary, #666);
+  font-size: var(--text-2xs);
+  color: rgb(var(--color-muted));
   line-height: 1;
 }
 
 .hk-progress-bar-track {
   width: 100%;
   height: 4px;
-  border-radius: var(--hi-radius-full, 9999px);
-  background: var(--hk-progress-track-bg, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
+  border-radius: var(--radius-full);
+  background: rgb(var(--color-muted) / 15%);
   overflow: hidden;
   position: relative;
 }
@@ -33,61 +33,61 @@
   top: 0;
   left: 0;
   height: 100%;
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.3;
 
   &--loading {
-    background: var(--hi-color-primary, #58a6ff);
+    background: rgb(var(--color-primary));
   }
 
   &--done {
-    background: var(--hi-color-success, #3fb950);
+    background: rgb(var(--color-success));
   }
 
   &--error {
-    background: var(--hi-color-danger, #f85149);
+    background: rgb(var(--color-error));
   }
 }
 
 .hk-progress-bar-fill {
   position: relative;
   height: 100%;
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &--loading {
-    background: var(--hi-color-primary, #58a6ff);
+    background: rgb(var(--color-primary));
   }
 
   &--done {
-    background: var(--hi-color-success, #3fb950);
+    background: rgb(var(--color-success));
   }
 
   &--error {
-    background: var(--hi-color-danger, #f85149);
+    background: rgb(var(--color-error));
   }
 }
 
 .hk-progress-bar-indeterminate {
   height: 100%;
   width: 40%;
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full);
   position: absolute;
   animation: hk-progress-indeterminate 1.4s ease-in-out infinite;
 
   &--loading {
-    background: var(--hi-color-primary, #58a6ff);
+    background: rgb(var(--color-primary));
   }
 
   &--done {
-    background: var(--hi-color-success, #3fb950);
+    background: rgb(var(--color-success));
     animation: none;
     width: 100%;
   }
 
   &--error {
-    background: var(--hi-color-danger, #f85149);
+    background: rgb(var(--color-error));
     animation: none;
     width: 100%;
   }

@@ -43,11 +43,7 @@ export default defineComponent({
               <aside
                 class={[
                   "hk-admin-shell-drawer",
-<<<<<<< HEAD
                   props.drawerOpen ? "hk-admin-shell-drawer-open" : "",
-=======
-                  props.drawerOpen ? "hk-admin-shell-drawer--open" : "",
->>>>>>> origin/master
                 ]}
               >
                 {slots.sidebar?.()}
@@ -57,11 +53,7 @@ export default defineComponent({
             <aside
               class={[
                 "hk-admin-shell-sidebar",
-<<<<<<< HEAD
                 props.sidebarCollapsed ? "hk-admin-shell-sidebar-collapsed" : "",
-=======
-                props.sidebarCollapsed ? "hk-admin-shell-sidebar--collapsed" : "",
->>>>>>> origin/master
               ]}
               style={sidebarStyle.value}
             >

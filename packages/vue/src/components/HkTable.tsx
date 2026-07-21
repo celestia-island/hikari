@@ -119,13 +119,8 @@ export default defineComponent({
                     <span
                       class={[
                         "hk-table-checkbox",
-<<<<<<< HEAD
                         "hk-table-checkbox-md",
                         allChecked.value ? "hk-table-checkbox-checked" : "",
-=======
-                        "hk-table-checkbox--md",
-                        allChecked.value ? "hk-table-checkbox--checked" : "",
->>>>>>> origin/master
                       ]}
                     >
                       {allChecked.value && (
@@ -205,13 +200,8 @@ export default defineComponent({
                           <span
                             class={[
                               "hk-table-checkbox",
-<<<<<<< HEAD
                               "hk-table-checkbox-md",
                               selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox-checked" : "",
-=======
-                              "hk-table-checkbox--md",
-                              selectedRowKeys.value.has(rowKey) ? "hk-table-checkbox--checked" : "",
->>>>>>> origin/master
                             ]}
                           >
                             {selectedRowKeys.value.has(rowKey) && (

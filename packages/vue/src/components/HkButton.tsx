@@ -37,15 +37,9 @@ export default defineComponent({
       "hk-btn",
       `hk-btn--${props.variant}`,
       `hk-btn--${props.size}`,
-<<<<<<< HEAD
       props.block ? "hk-btn-block" : "",
       props.loading ? "hk-btn-loading" : "",
       props.shortcut ? "hk-btn-has-shortcut" : "",
-=======
-      props.block ? "hk-btn--block" : "",
-      props.loading ? "hk-btn--loading" : "",
-      props.shortcut ? "hk-btn--has-shortcut" : "",
->>>>>>> origin/master
     ]);
 
     return () => (

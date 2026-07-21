@@ -341,17 +341,10 @@ impl SsrTests {
             .assert_has_class(".hk-btn--primary", "hk-btn")
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn class: {}", e))?;
         assertions
-<<<<<<< HEAD
             .assert_has_class(".hk-btn--primary", "hk-btn-primary")
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--primary class: {}", e))?;
         assertions
             .assert_has_class(".hk-btn--primary", "hk-btn-lg")
-=======
-            .assert_has_class(".hk-btn--primary", "hk-btn--primary")
-            .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--primary class: {}", e))?;
-        assertions
-            .assert_has_class(".hk-btn--primary", "hk-btn--lg")
->>>>>>> origin/master
             .map_err(|e| anyhow::anyhow!("Primary button missing hi-btn--lg class: {}", e))?;
 
         // Verify hero section classes

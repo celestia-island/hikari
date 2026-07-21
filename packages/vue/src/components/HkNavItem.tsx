@@ -47,21 +47,14 @@ export default defineComponent({
 
       if (props.to) {
         return (
-<<<<<<< HEAD
           <RouterLink
             to={props.to}
             class={buildClass(props, ["hk-nav-item-link"])}
-=======
-          <a
-            href={props.to}
-            class={cls}
->>>>>>> origin/master
             {...dataAttrs.value}
             aria-disabled={props.disabled}
             aria-current={props.active ? "page" : undefined}
             onClick={onClick}
           >
-<<<<<<< HEAD
             {({ navigate, isActive, isExactActive }: any) => {
               const active = isActive || isExactActive || props.active;
               const cls = buildClass({ active, disabled: props.disabled }, ["hk-nav-item-link"]);
@@ -87,10 +80,6 @@ export default defineComponent({
               );
             }}
           </RouterLink>
-=======
-            {content()}
-          </a>
->>>>>>> origin/master
         );
       }
 
@@ -98,11 +87,7 @@ export default defineComponent({
         return (
           <a
             href={props.href}
-<<<<<<< HEAD
             class={buildClass(props, ["hk-nav-item-link"])}
-=======
-            class={cls}
->>>>>>> origin/master
             {...dataAttrs.value}
             aria-disabled={props.disabled}
             onClick={onClick}

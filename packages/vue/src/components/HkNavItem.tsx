@@ -5,8 +5,8 @@ function buildClass(props: { active: boolean; disabled: boolean }, extra: string
   return [
     "hk-nav-item",
     ...extra,
-    props.active ? "hk-nav-item--active" : "",
-    props.disabled ? "hk-nav-item--disabled" : "",
+    props.active ? "hk-nav-item-active" : "",
+    props.disabled ? "hk-nav-item-disabled" : "",
   ];
 }
 
@@ -43,7 +43,7 @@ export default defineComponent({
     }
 
     return () => {
-      const cls = buildClass(props, ["hk-nav-item--link"]);
+      const cls = buildClass(props, ["hk-nav-item-link"]);
 
       if (props.to) {
         return (
@@ -77,7 +77,7 @@ export default defineComponent({
       return (
         <button
           type="button"
-          class={buildClass(props, ["hk-nav-item--button"])}
+          class={buildClass(props, ["hk-nav-item-button"])}
           {...dataAttrs.value}
           disabled={props.disabled}
           onClick={(e: MouseEvent) => emit("click", e)}

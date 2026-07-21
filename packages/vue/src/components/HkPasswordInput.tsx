@@ -431,7 +431,7 @@ export default defineComponent({
           <div
             class={[
               "hk-pwd-lock",
-              props.modelValue ? "hk-pwd-lock--filled" : "hk-pwd-lock--empty",
+              props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
             ]}
             data-revealing={revealing.value || undefined}
             onPointerdown={(e: PointerEvent) => {

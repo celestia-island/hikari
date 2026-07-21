@@ -71,8 +71,8 @@ export default defineComponent({
 
     const wrapperClass = computed(() => [
       "hk-textarea",
-      props.disabled ? "hk-textarea--disabled" : "",
-      isOverLimit.value ? "hk-textarea--overlimit" : "",
+      props.disabled ? "hk-textarea-disabled" : "",
+      isOverLimit.value ? "hk-textarea-overlimit" : "",
     ]);
 
     return () => (
@@ -81,7 +81,7 @@ export default defineComponent({
           ref={textareaRef}
           class={[
             "hk-textarea-field",
-            props.autoGrow ? "hk-textarea-field--autogrow" : "",
+            props.autoGrow ? "hk-textarea-field-autogrow" : "",
           ]}
           value={props.modelValue}
           placeholder={props.placeholder}
@@ -92,7 +92,7 @@ export default defineComponent({
         />
         {props.showCount && props.maxLength != null ? (
           <div class="hk-textarea-count">
-            <span class={isOverLimit.value ? "hk-textarea-count--over" : ""}>
+            <span class={isOverLimit.value ? "hk-textarea-count-over" : ""}>
               {charCount.value}
             </span>
             <span> / {props.maxLength}</span>

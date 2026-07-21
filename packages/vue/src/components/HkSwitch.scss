@@ -34,37 +34,37 @@
   flex-shrink: 0;
   overflow: hidden;
 
-  .hk-switch--sm & {
+  .hk-switch-sm & {
     width: 2rem;
     height: 1.125rem;
   }
 
-  .hk-switch--md & {
+  .hk-switch-md & {
     width: 2.5rem;
     height: 1.375rem;
   }
 
-  .hk-switch--lg & {
+  .hk-switch-lg & {
     width: 3rem;
     height: 1.625rem;
   }
 
-  .hk-switch--primary[data-checked] & {
+  .hk-switch-primary[data-checked] & {
     background: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
   }
 
-  .hk-switch--secondary[data-checked] & {
+  .hk-switch-secondary[data-checked] & {
     background: var(--hi-color-secondary);
     border-color: var(--hi-color-secondary);
   }
 
-  .hk-switch--danger[data-checked] & {
+  .hk-switch-danger[data-checked] & {
     background: var(--hi-color-danger);
     border-color: var(--hi-color-danger);
   }
 
-  .hk-switch--warning[data-checked] & {
+  .hk-switch-warning[data-checked] & {
     background: var(--hi-color-warning);
     border-color: var(--hi-color-warning);
   }
@@ -80,33 +80,33 @@
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 
-  .hk-switch--sm & {
+  .hk-switch-sm & {
     width: 0.75rem;
     height: 0.75rem;
     left: 2px;
   }
 
-  .hk-switch--md & {
+  .hk-switch-md & {
     width: 0.9375rem;
     height: 0.9375rem;
     left: 2px;
   }
 
-  .hk-switch--lg & {
+  .hk-switch-lg & {
     width: 1.125rem;
     height: 1.125rem;
     left: 2px;
   }
 
-  .hk-switch--sm[data-checked] & {
+  .hk-switch-sm[data-checked] & {
     transform: translateX(0.813rem);
   }
 
-  .hk-switch--md[data-checked] & {
+  .hk-switch-md[data-checked] & {
     transform: translateX(1.12rem);
   }
 
-  .hk-switch--lg[data-checked] & {
+  .hk-switch-lg[data-checked] & {
     transform: translateX(1.375rem);
   }
 }
@@ -122,20 +122,20 @@
   z-index: 0;
   transition: opacity 0.2s ease;
 
-  .hk-switch--sm & {
+  .hk-switch-sm & {
     font-size: 0.4375rem;
   }
 
-  .hk-switch--lg & {
+  .hk-switch-lg & {
     font-size: 0.625rem;
   }
 
-  &--off {
+  &-off {
     right: 4px;
     color: var(--hi-color-text-secondary);
   }
 
-  &--on {
+  &-on {
     left: 4px;
     color: var(--hi-color-text-on-primary, #fff);
   }
@@ -147,11 +147,11 @@
   font-size: 0.875rem;
   color: var(--hi-color-text-primary);
 
-  .hk-switch--sm & {
+  .hk-switch-sm & {
     font-size: 0.75rem;
   }
 
-  .hk-switch--lg & {
+  .hk-switch-lg & {
     font-size: 1rem;
   }
 }

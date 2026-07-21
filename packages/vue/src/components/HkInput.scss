@@ -31,7 +31,7 @@
   transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
   color: rgb(var(--color-text));
 
-  &:hover:not(.hk-input-box--disabled) {
+  &:hover:not(.hk-input-box-disabled) {
     border-color: var(--c-primary-strong);
   }
 }
@@ -42,16 +42,16 @@
   background: rgb(var(--color-surface));
 }
 
-.hk-input-box--error {
+.hk-input-box-error {
   border-color: var(--c-error-strong);
 }
 
-.hk-input-box--error:focus-within {
+.hk-input-box-error:focus-within {
   border-color: rgb(var(--color-error));
   box-shadow: var(--shadow-focus-error);
 }
 
-.hk-input-box--disabled {
+.hk-input-box-disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

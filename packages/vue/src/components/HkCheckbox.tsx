@@ -46,7 +46,7 @@ export default defineComponent({
         <label
           class={[
             "hk-checkbox",
-            `hk-checkbox--${props.size}`,
+            `hk-checkbox-${props.size}`,
           ]}
           data-type={inputType}
           data-disabled={props.disabled ? "" : undefined}

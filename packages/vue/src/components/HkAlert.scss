@@ -9,34 +9,34 @@
   color: var(--hi-color-text-primary);
 }
 
-.hk-alert--banner {
+.hk-alert-banner {
   border-radius: 0;
 }
 
-.hk-alert--no-title {
+.hk-alert-no-title {
   align-items: center;
 }
 
 /* ── Sizes ─────────────────────────────────────── */
 
-.hk-alert--sm {
+.hk-alert-sm {
   padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
   font-size: var(--hi-text-xs, 0.75rem);
 }
 
-.hk-alert--md {
+.hk-alert-md {
   padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
   font-size: var(--hi-text-sm, 0.875rem);
 }
 
-.hk-alert--lg {
+.hk-alert-lg {
   padding: var(--hi-space-16, 16px) var(--hi-space-24, 24px);
   font-size: var(--hi-text-base, 1rem);
 }
 
 /* ── Variants ──────────────────────────────────── */
 
-.hk-alert--error {
+.hk-alert-error {
   background: color-mix(in srgb, var(--hi-color-danger) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
   border-left-color: var(--hi-color-danger);
@@ -44,7 +44,7 @@
   .hk-alert-icon { color: var(--hi-color-danger); }
 }
 
-.hk-alert--warning {
+.hk-alert-warning {
   background: color-mix(in srgb, var(--hi-color-warning) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-warning) 15%, transparent);
   border-left-color: var(--hi-color-warning);
@@ -52,7 +52,7 @@
   .hk-alert-icon { color: var(--hi-color-warning); }
 }
 
-.hk-alert--info {
+.hk-alert-info {
   background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
   border-left-color: var(--hi-color-primary);
@@ -60,7 +60,7 @@
   .hk-alert-icon { color: var(--hi-color-primary); }
 }
 
-.hk-alert--success {
+.hk-alert-success {
   background: color-mix(in srgb, var(--hi-color-success) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-success) 15%, transparent);
   border-left-color: var(--hi-color-success);

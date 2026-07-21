@@ -24,11 +24,11 @@
     stroke 0.3s ease;
 }
 
-.hk-progress-ring--success .hk-progress-ring-fill {
+.hk-progress-ring-success .hk-progress-ring-fill {
   stroke: var(--hi-color-success, #3fb950);
 }
 
-.hk-progress-ring--exception .hk-progress-ring-fill {
+.hk-progress-ring-exception .hk-progress-ring-fill {
   stroke: var(--hi-color-danger, #f85149);
 }
 

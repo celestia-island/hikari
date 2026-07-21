@@ -10,7 +10,7 @@
   gap: 0.5rem;
 }
 
-.hk-draggable-grid-row--phantom {
+.hk-draggable-grid-row-phantom {
   min-height: 44px;
   border: 1px dashed var(--hi-color-primary, #58a6ff);
   border-radius: 4px;
@@ -70,7 +70,7 @@
   box-shadow: inset -2px 0 0 0 var(--hi-color-primary, #58a6ff);
 }
 
-.hk-draggable-grid-cell--placeholder-target {
+.hk-draggable-grid-cell-placeholder-target {
   border: none;
   background: transparent;
   min-height: 44px;

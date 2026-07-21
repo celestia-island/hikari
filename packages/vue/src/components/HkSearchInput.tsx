@@ -80,8 +80,8 @@ export default defineComponent({
 
     const wrapperClass = [
       "hk-search-input",
-      `hk-search-input--${props.size}`,
-      props.disabled ? "hk-search-input--disabled" : "",
+      `hk-search-input-${props.size}`,
+      props.disabled ? "hk-search-input-disabled" : "",
     ];
 
     return () => (

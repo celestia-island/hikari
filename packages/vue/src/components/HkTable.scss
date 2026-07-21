@@ -26,7 +26,7 @@
   user-select: none;
 }
 
-.hk-table-header--sortable {
+.hk-table-header-sortable {
   cursor: pointer;
   transition: color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
 
@@ -35,7 +35,7 @@
   }
 }
 
-.hk-table-header--sorted {
+.hk-table-header-sorted {
   color: var(--hi-color-primary, #58a6ff);
 }
 
@@ -53,7 +53,7 @@
   transition: transform var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
-.hk-table-sort-icon--desc {
+.hk-table-sort-icon-desc {
   transform: rotate(180deg);
 }
 
@@ -63,15 +63,15 @@
   }
 }
 
-.hk-table--hover .hk-table-row:hover {
+.hk-table-hover .hk-table-row:hover {
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.04));
 }
 
-.hk-table--striped .hk-table-row:nth-child(even) {
+.hk-table-striped .hk-table-row:nth-child(even) {
   background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.03));
 }
 
-.hk-table--bordered {
+.hk-table-bordered {
   border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
   border-radius: var(--hi-radius-md, 8px);
 
@@ -92,7 +92,7 @@
 }
 
 /* Size variants */
-.hk-table--sm {
+.hk-table-sm {
   .hk-table-header-cell,
   .hk-table-cell {
     padding: var(--hi-space-4, 4px) var(--hi-space-8, 8px);
@@ -100,14 +100,14 @@
   }
 }
 
-.hk-table--md {
+.hk-table-md {
   .hk-table-header-cell,
   .hk-table-cell {
     padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
   }
 }
 
-.hk-table--lg {
+.hk-table-lg {
   .hk-table-header-cell,
   .hk-table-cell {
     padding: var(--hi-space-16, 16px) var(--hi-space-24, 24px);
@@ -121,15 +121,15 @@
 }
 
 /* Alignment helpers */
-.hk-text--left {
+.hk-text-left {
   text-align: left;
 }
 
-.hk-text--center {
+.hk-text-center {
   text-align: center;
 }
 
-.hk-text--right {
+.hk-text-right {
   text-align: right;
 }
 
@@ -161,12 +161,12 @@
     background-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
     border-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
 
-  &--md {
+  &-md {
     width: 16px;
     height: 16px;
   }
 
-  &--checked {
+  &-checked {
     background: var(--hi-color-primary, #58a6ff);
     border-color: var(--hi-color-primary, #58a6ff);
   }

@@ -105,6 +105,11 @@ export default defineComponent({
               {slots.prefix()}
             </span>
           )}
+          {slots.prefixIcon && !slots.prefix && (
+            <span class="hk-input-affix hk-input-prefix">
+              {slots.prefixIcon()}
+            </span>
+          )}
           {isText ? (
             <input
               ref={inputRef}
@@ -151,6 +156,11 @@ export default defineComponent({
           {slots.suffix && (
             <span class="hk-input-affix hk-input-suffix">
               {slots.suffix()}
+            </span>
+          )}
+          {slots.suffixIcon && !slots.suffix && (
+            <span class="hk-input-affix hk-input-suffix">
+              {slots.suffixIcon()}
             </span>
           )}
         </div>

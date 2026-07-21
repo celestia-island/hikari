@@ -1,10 +1,14 @@
+/* HkTabs — unified underline / pill tab component */
+
 .hk-tabs {
   width: 100%;
 }
 
+/* === Shared list === */
+
 .hk-tabs-list {
   display: flex;
-  gap: 2px;
+  gap: var(--space-2);
 }
 
 .hk-tabs-list[data-variant="pill"] {
@@ -12,64 +16,54 @@
   display: inline-flex;
   gap: 0;
   padding: 2px;
-  border-radius: var(--hi-radius-sm, 4px);
-  border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
-  background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-faint);
+  background: rgb(var(--color-surface) / 60%);
 }
+
+/* === Shared trigger === */
 
 .hk-tabs-trigger {
   font-weight: 500;
-  color: var(--hi-color-text-secondary, #8b949e);
+  color: rgb(var(--color-muted));
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: inherit;
   outline: none;
-  transition: color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: color var(--duration-short) ease;
 
-  &:hover:not(:disabled) {
-    color: var(--hi-color-text-primary, #c9d1d9);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  &:hover {
+    color: rgb(var(--color-text));
   }
 
   &[data-active] {
-    color: var(--hi-color-primary, #58a6ff);
+    color: rgb(var(--color-primary));
   }
 }
 
-/* Underline variant */
+/* === Underline variant === */
 
 .hk-tabs[data-variant="underline"] .hk-tabs-list {
-  border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid rgb(var(--color-border) / 15%);
 }
 
 .hk-tabs[data-variant="underline"] .hk-tabs-trigger {
-  padding: var(--hi-space-8, 8px) var(--hi-space-16, 16px);
-  font-size: var(--hi-text-base, 1rem);
+  padding: var(--space-8) var(--space-16);
+  font-size: var(--text-base);
   border-bottom: 2px solid transparent;
-  transition:
-    background-color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    border-color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    color var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    box-shadow var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    opacity var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    transform var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    filter var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) ease;
 
-  &:hover:not(:disabled) {
-    background: var(--hi-color-bg-subtle, rgba(255, 255, 255, 0.05));
+  &:hover {
+    background: var(--c-primary-faint);
   }
 
   &[data-active] {
-    border-bottom-color: var(--hi-color-primary, #58a6ff);
+    border-bottom-color: rgb(var(--color-primary));
   }
 }
 
-/* Pill variant */
+/* === Pill variant — mirrors SMorphingTabs exactly === */
 
 .hk-tabs[data-variant="pill"] .hk-tabs-trigger {
   position: relative;
@@ -77,32 +71,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-6);
   flex: none;
-  padding: var(--hi-space-4, 4px) var(--hi-space-12, 12px);
-  font-size: var(--hi-text-sm, 0.875rem);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-sm);
   font-weight: 600;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
-/* Pill sliding indicator */
+/* === Pill sliding indicator === */
 
 .hk-tabs-indicator {
   position: absolute;
   top: 2px;
   height: calc(100% - 4px);
-  border-radius: var(--hi-radius-sm, 4px);
-  background: var(--hi-color-primary, #58a6ff);
-  opacity: 0.12;
+  border-radius: var(--radius-sm);
+  background: rgb(var(--color-primary) / 12%);
   pointer-events: none;
   z-index: 0;
-  transition:
-    left var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    width var(--hi-duration-normal, 0.3s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: left var(--duration-normal) var(--ease-standard),
+              width var(--duration-normal) var(--ease-standard);
 }
 
-/* Panel */
+/* === Panel === */
 
 .hk-tabs-panel {
   outline: none;
@@ -113,5 +105,5 @@
 }
 
 .hk-tabs[data-variant="underline"] .hk-tabs-panel {
-  padding: var(--hi-space-16, 16px) 0;
+  padding: var(--space-16) 0;
 }

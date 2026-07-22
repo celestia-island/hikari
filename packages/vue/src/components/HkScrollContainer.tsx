@@ -8,6 +8,7 @@ import {
   type PropType,
 } from "vue";
 
+import { useHikariI18n } from "../i18n/context";
 import "./HkScrollContainer.scss";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
@@ -45,6 +46,7 @@ export default defineComponent({
     overscanScreens: { type: Number, default: 1 },
   },
   setup(props, { slots, expose }) {
+    const { t } = useHikariI18n();
     const viewportRef = ref<HTMLElement>();
     let ro: ResizeObserver;
     let scheduled: AnimationHandle | null = null;
@@ -351,7 +353,7 @@ export default defineComponent({
             {content}
           </div>
           {showAutoTag.value && (
-            <span class="hk-scroll-container-autotag" aria-hidden="true">Auto</span>
+            <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hk.scrollContainer.auto", "Auto")}</span>
           )}
         </Tag>
       );

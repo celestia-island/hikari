@@ -101,3 +101,10 @@ export {
   type ToastType,
   type UseAsyncDataReturn,
 } from "./runtime";
+
+// i18n
+export {
+  useHikariI18n,
+  setHikariLocale,
+  mergeHikariMessages,
+} from "./i18n/context";

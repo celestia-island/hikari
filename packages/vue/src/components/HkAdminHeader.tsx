@@ -1,5 +1,6 @@
 import { defineComponent } from "vue";
 import HkButton from "./HkButton";
+import { useHikariI18n } from "../i18n/context";
 import "./HkAdminHeader.scss";
 
 const sunMoonIcon = (
@@ -19,16 +20,21 @@ const sunMoonIcon = (
 export default defineComponent({
   name: "HkAdminHeader",
   props: {
-    title: { type: String, default: "Admin" },
+    title: { type: String, default: "" },
     username: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
     authenticated: { type: Boolean, default: false },
+    logoutLabel: { type: String, default: "" },
+    loginLabel: { type: String, default: "" },
+    themeToggleAriaLabel: { type: String, default: "" },
   },
   emits: {
     logout: () => true,
+    login: () => true,
     toggleTheme: () => true,
   },
   setup(props, { slots, emit }) {
+    const { t } = useHikariI18n();
     return () => (
       <header class="hk-admin-header">
         <div class="hk-admin-header-left">
@@ -40,7 +46,7 @@ export default defineComponent({
           <HkButton
             variant="ghost"
             size="sm"
-            ariaLabel="Toggle theme"
+            ariaLabel={props.themeToggleAriaLabel || t("hk.adminHeader.toggleTheme", "Toggle theme")}
             onClick={() => emit("toggleTheme")}
           >
             {sunMoonIcon}
@@ -60,12 +66,12 @@ export default defineComponent({
               )}
               <span class="hk-admin-header-username">{props.username}</span>
               <HkButton variant="ghost" size="sm" onClick={() => emit("logout")}>
-                Logout
+                {props.logoutLabel || t("hk.adminHeader.logout", "Logout")}
               </HkButton>
             </div>
           ) : (
-            <HkButton variant="primary" size="sm" onClick={() => emit("logout")}>
-              Login
+            <HkButton variant="primary" size="sm" onClick={() => emit("login")}>
+              {props.loginLabel || t("hk.adminHeader.login", "Login")}
             </HkButton>
           )}
         </div>

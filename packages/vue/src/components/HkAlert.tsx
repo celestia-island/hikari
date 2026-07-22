@@ -1,4 +1,5 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
+import { useHikariI18n } from "../i18n/context";
 import { AlertTriangle, CheckCircle, Info, X } from "lucide-vue-next";
 
 import "./HkAlert.scss";
@@ -27,6 +28,7 @@ export default defineComponent({
     close: () => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useHikariI18n();
     const isDismissed = ref(false);
 
     const rootCls = computed(() => [
@@ -70,7 +72,7 @@ export default defineComponent({
             <button
               class="hk-alert-close"
               type="button"
-              aria-label="Close"
+              aria-label={t("hk.alert.close", "Close")}
               onClick={onClose}
             >
               <X size={14} />

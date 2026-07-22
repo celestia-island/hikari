@@ -6,7 +6,12 @@ import "./HkModalBreadcrumb.scss";
 
 export default defineComponent({
   name: "HkModalBreadcrumb",
-  setup() {
+  props: {
+    appRootId: { type: String, default: "app" },
+    headerSelector: { type: String, default: ".hk-glass-header" },
+    headerFallbackHeight: { type: Number, default: 48 },
+  },
+  setup(props) {
     const manager = usePopupManager();
 
     const modalEntries = computed(() => {
@@ -30,11 +35,11 @@ export default defineComponent({
 
     const topPx = ref(24);
     function resyncTop() {
-      const app = document.getElementById("app");
+      const app = document.getElementById(props.appRootId);
       if (!app) return;
       const appTop = parseFloat(getComputedStyle(app).top) || 0;
-      const header = app.querySelector(".hk-glass-header") as HTMLElement | null;
-      const headerH = header ? header.getBoundingClientRect().height : 48;
+      const header = app.querySelector(props.headerSelector) as HTMLElement | null;
+      const headerH = header ? header.getBoundingClientRect().height : props.headerFallbackHeight;
       topPx.value = appTop + headerH / 2;
     }
 

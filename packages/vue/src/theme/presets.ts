@@ -268,6 +268,7 @@ export function tokensToCSSVars(
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
+    "--color-on-solid": "255 255 255",
     "--color-secondary": `${tokens.secondary.r} ${tokens.secondary.g} ${tokens.secondary.b}`,
     "--color-accent": `${tokens.accent.r} ${tokens.accent.g} ${tokens.accent.b}`,
     "--color-text": `${tokens.text.r} ${tokens.text.g} ${tokens.text.b}`,

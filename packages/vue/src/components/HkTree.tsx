@@ -209,17 +209,6 @@ const TreeNodeRow = ({
 };
 
 function renderLabel(label: string) {
-  const pos = label.indexOf("::");
-  if (pos === -1) return label;
-  const agent = label.slice(0, pos);
-  const skill = label.slice(pos + 2);
-  if (agent.length > 0 && /^[a-zA-Z0-9]+$/.test(agent)) {
-    return [
-      <span class="hk-tree-label-agent">{agent}</span>,
-      <span class="hk-tree-label-sep">::</span>,
-      <span class="hk-tree-label-skill">{skill}</span>,
-    ];
-  }
   return label;
 }
 

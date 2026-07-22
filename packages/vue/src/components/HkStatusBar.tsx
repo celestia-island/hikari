@@ -19,6 +19,7 @@ export default defineComponent({
       type: Array as PropType<{ label: string; value: string }[]>,
       default: undefined,
     },
+    mockMode: { type: Boolean, default: false },
   },
   emits: {
     retry: () => true,
@@ -29,6 +30,9 @@ export default defineComponent({
         <div class="hk-status-bar-left">
           {props.version && (
             <span class="hk-status-bar-version">v{props.version}</span>
+          )}
+          {props.mockMode && (
+            <span class="hk-status-bar-mock">MOCK</span>
           )}
           {props.connectionStatus && (
             <button

@@ -31,6 +31,20 @@
   opacity: 0.7;
 }
 
+.hk-status-bar-mock {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--hi-radius-sm, 4px);
+  background: color-mix(in srgb, var(--hi-color-warning, rgb(200 150 0)) 15%, transparent);
+  color: var(--hi-color-warning, rgb(200 150 0));
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
 .hk-status-bar-connection {
   display: inline-flex;
   align-items: center;

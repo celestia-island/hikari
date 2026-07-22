@@ -10,12 +10,12 @@ interface LocaleModule {
 // Files: res/i18n/locales/{lang}/{domain}.json → flat key-value per domain.
 // Consumer apps add their own domain files; hikari provides components.json.
 const localeModules = import.meta.glob<LocaleModule>(
-  "/res/i18n/locales/**/*.json",
+  "./locales/**/*.json",
   { eager: true },
 );
 
 function buildLocaleMessages(locale: string): Messages {
-  const prefix = `/res/i18n/locales/${locale}/`;
+  const prefix = `./locales/${locale}/`;
   const merged: Messages = {};
 
   for (const [path, mod] of Object.entries(localeModules)) {

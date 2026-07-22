@@ -1,4 +1,5 @@
 import { defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
+import { useHikariI18n } from "../i18n/context";
 import "./HkSearchInput.scss";
 
 const searchIcon = (
@@ -26,6 +27,7 @@ export default defineComponent({
       default: "md",
     },
     debounce: { type: Number, default: 0 },
+    clearAriaLabel: { type: String, default: "" },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -33,6 +35,7 @@ export default defineComponent({
     clear: () => true,
   },
   setup(props, { emit }) {
+    const { t } = useHikariI18n();
     const inputRef = ref<HTMLInputElement | null>(null);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -103,7 +106,7 @@ export default defineComponent({
             class="hk-search-input-clear"
             onClick={clearValue}
             tabindex={-1}
-            aria-label="Clear search"
+            aria-label={props.clearAriaLabel || t("hk.searchInput.clear", "Clear search")}
           >
             {clearIcon}
           </button>

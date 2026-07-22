@@ -1,6 +1,7 @@
 import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch, type PropType } from "vue";
 import { ArrowLeft, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-vue-next";
 
+import { useHikariI18n } from "../i18n/context";
 import "./HkDateTimePicker.scss";
 import HkPopover from "./HkPopover";
 
@@ -51,6 +52,7 @@ export default defineComponent({
     confirm: () => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useHikariI18n();
     const viewYear = ref(props.modelValue.getFullYear());
     const viewMonth = ref(props.modelValue.getMonth());
     const view = ref<ViewKind>("days");
@@ -195,16 +197,16 @@ export default defineComponent({
         return (
           <div class="hk-dtp-header">
             <div class="hk-dtp-header-side">
-              <button class="hk-dtp-back" type="button" aria-label="Back" onClick={goBack}>
+              <button class="hk-dtp-back" type="button" aria-label={t("hk.dateTimePicker.back", "Back")} onClick={goBack}>
                 <ArrowLeft size={15} />
               </button>
-              <button class="hk-dtp-nav" type="button" aria-label="Previous years" onClick={() => shiftYear(-12)}>
+              <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.prevYears", "Previous years")} onClick={() => shiftYear(-12)}>
                 <ChevronLeft size={16} />
               </button>
             </div>
             <div class="hk-dtp-title">{yearBlockStart.value}–{yearBlockStart.value + 11}</div>
             <div class="hk-dtp-header-side" data-side="right">
-              <button class="hk-dtp-nav" type="button" aria-label="Next years" onClick={() => shiftYear(12)}>
+              <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.nextYears", "Next years")} onClick={() => shiftYear(12)}>
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -216,7 +218,7 @@ export default defineComponent({
         return (
           <div class="hk-dtp-header">
             <div class="hk-dtp-header-side">
-              <button class="hk-dtp-back" type="button" aria-label="Back" onClick={goBack}>
+              <button class="hk-dtp-back" type="button" aria-label={t("hk.dateTimePicker.back", "Back")} onClick={goBack}>
                 <ArrowLeft size={15} />
               </button>
             </div>
@@ -233,7 +235,7 @@ export default defineComponent({
       return (
         <div class="hk-dtp-header">
           <div class="hk-dtp-header-side">
-            <button class="hk-dtp-nav" type="button" aria-label="Previous month" onClick={() => shiftMonth(-1)}>
+            <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.prevMonth", "Previous month")} onClick={() => shiftMonth(-1)}>
               <ChevronLeft size={16} />
             </button>
           </div>
@@ -242,7 +244,7 @@ export default defineComponent({
             <button class="hk-dtp-title-btn" type="button" onClick={() => drillTo("years")}>{viewYear.value}</button>
           </div>
           <div class="hk-dtp-header-side" data-side="right">
-            <button class="hk-dtp-nav" type="button" aria-label="Next month" onClick={() => shiftMonth(1)}>
+            <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.nextMonth", "Next month")} onClick={() => shiftMonth(1)}>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -353,13 +355,13 @@ export default defineComponent({
                 <div class="hk-dtp-time">
                   {props.showTime ? (
                     <>
-                      {stepper("Hour", props.modelValue.getHours(), () => bump("h", 1), () => bump("h", -1))}
+                      {stepper(t("hk.dateTimePicker.hour", "Hour"), props.modelValue.getHours(), () => bump("h", 1), () => bump("h", -1))}
                       <span class="hk-dtp-time-sep">:</span>
-                      {stepper("Minute", props.modelValue.getMinutes(), () => bump("m", 1), () => bump("m", -1))}
+                      {stepper(t("hk.dateTimePicker.minute", "Minute"), props.modelValue.getMinutes(), () => bump("m", 1), () => bump("m", -1))}
                     </>
                   ) : null}
                   <button class="hk-dtp-today" type="button" onClick={jumpToday}>
-                    Today
+                    {t("hk.dateTimePicker.today", "Today")}
                   </button>
                 </div>
               )}
@@ -371,7 +373,7 @@ export default defineComponent({
 
     return () => {
       const body = (
-        <div class="hk-dtp" role="group" aria-label="Pick a date and time">
+        <div class="hk-dtp" role="group" aria-label={t("hk.dateTimePicker.pickDate", "Pick a date and time")}>
           {renderBody()}
           {props.mode === "popup" && props.confirmLabel && (
             <div class="hk-dtp-popup-foot">

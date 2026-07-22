@@ -2,6 +2,7 @@ import { computed, defineComponent, ref, Teleport, Transition, TransitionGroup, 
 import { AlertTriangle, CheckCircle, Copy, Info, X, XCircle } from "lucide-vue-next";
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
+import { useHikariI18n } from "../i18n/context";
 import "./HkToast.scss";
 
 const LONG_THRESHOLD = 50;
@@ -42,6 +43,7 @@ const HkToastItem = defineComponent({
     remove: (_id: number) => true,
   },
   setup(props, { emit }) {
+    const { t } = useHikariI18n();
     const clipboard = useClipboard();
     const displayedMsgId = ref<number | null>(null);
     const animating = ref(false);
@@ -121,7 +123,7 @@ const HkToastItem = defineComponent({
           {props.toast.copyable && (
             <button
               class="hk-toast-copy-btn"
-              title="Copy"
+              title={t("hk.toast.copy", "Copy")}
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopy();
@@ -132,7 +134,7 @@ const HkToastItem = defineComponent({
           )}
           <button
             class="hk-toast-close"
-            aria-label="Close"
+            aria-label={t("hk.toast.close", "Close")}
             onClick={(e) => {
               e.stopPropagation();
               handleClose();

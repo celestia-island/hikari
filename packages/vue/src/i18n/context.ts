@@ -23,12 +23,23 @@ function buildLocaleMessages(locale: string): Messages {
     const domain = mod.default;
     for (const [_section, keys] of Object.entries(domain)) {
       if (typeof keys === "object" && keys !== null) {
-        Object.assign(merged, keys);
+        flatten(keys, "", merged);
       }
     }
   }
 
   return merged;
+}
+
+function flatten(obj: Record<string, unknown>, parentKey: string, out: Messages) {
+  for (const [k, v] of Object.entries(obj)) {
+    const fullKey = parentKey ? `${parentKey}.${k}` : k;
+    if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+      flatten(v as Record<string, unknown>, fullKey, out);
+    } else if (typeof v === "string") {
+      out[fullKey] = v;
+    }
+  }
 }
 
 // Pre-load en as the default fallback

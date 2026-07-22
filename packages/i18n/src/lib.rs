@@ -197,26 +197,40 @@ pub fn t_lang(dotted_key: &str, fallback: &str) -> (String, Language) {
 
 // ── hikari built-in component strings ─────────────────────────────────────
 
-/// Returns the default translation keys for hikari's own component strings
-/// in the given language. These are namespaced under `hikari.*` to avoid
-/// collision with the user's app strings.
-///
-/// Users can override any of these by providing the same key in their own
-/// translation table passed to [`provide_i18n`].
+use include_dir::{include_dir, Dir};
+
+static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../res/i18n/locales");
+
 fn hikari_default_keys(language: &Language) -> I18nKeys {
-    let toml_str = match language {
-        Language::ChineseSimplified => include_str!("../locales/zh-CHS/hikari_components.toml"),
-        Language::ChineseTraditional => include_str!("../locales/zh-CHT/hikari_components.toml"),
-        Language::Japanese => include_str!("../locales/ja-JP/hikari_components.toml"),
-        Language::Korean => include_str!("../locales/ko-KR/hikari_components.toml"),
-        Language::French => include_str!("../locales/fr-FR/hikari_components.toml"),
-        Language::Spanish => include_str!("../locales/es-ES/hikari_components.toml"),
-        Language::Russian => include_str!("../locales/ru-RU/hikari_components.toml"),
-        Language::Arabic => include_str!("../locales/ar-SA/hikari_components.toml"),
-        // English and unknown → default English
-        Language::English => include_str!("../locales/en-US/hikari_components.toml"),
+    let lang_dir_name = match language {
+        Language::ChineseSimplified => "zhs",
+        Language::ChineseTraditional => "zht",
+        Language::Japanese => "ja",
+        Language::Korean => "ko",
+        Language::French => "fr",
+        Language::Spanish => "es",
+        Language::Russian => "ru",
+        Language::Arabic => "ar",
+        Language::English => "en",
+        Language::German => "en",
+        Language::Portuguese => "en",
     };
-    toml::from_str(toml_str).unwrap_or_default()
+
+    let mut keys = I18nKeys::new();
+    if let Some(lang_dir) = LOCALES_DIR.get_dir(lang_dir_name) {
+        for file in lang_dir.files() {
+            if file.path().extension().map_or(false, |e| e == "toml") {
+                if let Some(content) = file.contents_utf8() {
+                    if let Ok(parsed) = toml::from_str::<I18nKeys>(content) {
+                        for (k, v) in parsed {
+                            keys.insert(k, v);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    keys
 }
 
 /// Recursively merge `overlay` into `base`. Values in `overlay` override

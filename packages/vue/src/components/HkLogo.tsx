@@ -1,4 +1,5 @@
 import { defineComponent, type PropType } from "vue";
+import { useHikariI18n } from "../i18n/context";
 import "./HkLogo.scss";
 
 const sizeMap: Record<string, string> = {
@@ -32,6 +33,7 @@ export default defineComponent({
     click: (_e: MouseEvent) => true,
   },
   setup(props, { emit }) {
+    const { t } = useHikariI18n();
     const logoSize = () => sizeMap[props.size] ?? sizeMap.md;
 
     const renderLogo = () => {
@@ -54,7 +56,7 @@ export default defineComponent({
             height: logoSize(),
           }}
           role="img"
-          aria-label={props.alt || "Logo"}
+          aria-label={props.alt || t("hk.logo.fallbackAlt", "Logo")}
         >
           {props.alt ? (
             <span class="hk-logo-initial">{props.alt.charAt(0).toUpperCase()}</span>

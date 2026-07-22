@@ -3,6 +3,7 @@ import { defineComponent } from "vue";
 import "./HkConfirmDialog.scss";
 import HkButton from "./HkButton";
 import HkModal from "./HkModal";
+import { useHikariI18n } from "../i18n/context";
 
 export default defineComponent({
   name: "HkConfirmDialog",
@@ -10,12 +11,12 @@ export default defineComponent({
     open: { type: Boolean, required: true },
     title: { type: String, default: "" },
     message: { type: String, default: "" },
-    confirmLabel: { type: String, default: undefined },
+    confirmLabel: { type: String, default: "" },
     confirmVariant: {
       type: String as () => "primary" | "danger",
       default: "danger",
     },
-    cancelLabel: { type: String, default: undefined },
+    cancelLabel: { type: String, default: "" },
     loading: { type: Boolean, default: false },
   },
   emits: {
@@ -24,6 +25,8 @@ export default defineComponent({
     "update:open": (_value: boolean) => true,
   },
   setup(props, { emit }) {
+    const { t } = useHikariI18n();
+
     function onConfirm() {
       emit("confirm");
       emit("update:open", false);
@@ -52,7 +55,7 @@ export default defineComponent({
                   disabled={props.loading}
                   onClick={onCancel}
                 >
-                  {props.cancelLabel || "Cancel"}
+                  {props.cancelLabel || t("hk.confirmDialog.cancel", "Cancel")}
                 </HkButton>
                 <HkButton
                   variant={props.confirmVariant}
@@ -60,7 +63,7 @@ export default defineComponent({
                   loading={props.loading}
                   onClick={onConfirm}
                 >
-                  {props.confirmLabel || "Confirm"}
+                  {props.confirmLabel || t("hk.confirmDialog.confirm", "Confirm")}
                 </HkButton>
               </div>
             </div>

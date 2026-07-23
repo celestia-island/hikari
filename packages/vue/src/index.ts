@@ -60,6 +60,12 @@ export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfa
 
 export { default as HkLogo } from "./components/HkLogo";
 
+// Component types
+export { type ModalAction } from "./components/HkModal";
+export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
+export { type DragListItem } from "./components/HkDraggableList";
+export { type GridItem } from "./components/HkDraggableGrid";
+
 // Theme system
 export {
   initTheme, useTheme, themePresets, tokensToCSSVars,

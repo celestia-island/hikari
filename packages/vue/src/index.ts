@@ -58,7 +58,6 @@ export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
 
-export { default as HkAdminShell } from "./components/HkAdminShell";
 export { default as HkLogo } from "./components/HkLogo";
 
 // Theme system

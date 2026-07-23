@@ -1,5 +1,6 @@
-import { defineComponent } from "vue";
+import { defineComponent, ref, type PropType } from "vue";
 import HkButton from "./HkButton";
+import HkLocalePickerPopup from "./HkLocalePickerPopup";
 import { useHikariI18n } from "../i18n/context";
 import "./HkAdminHeader.scss";
 
@@ -27,14 +28,21 @@ export default defineComponent({
     logoutLabel: { type: String, default: "" },
     loginLabel: { type: String, default: "" },
     themeToggleAriaLabel: { type: String, default: "" },
+    locales: { type: Array as PropType<{ code: string; labelKey: string; flag?: string }[]>, default: () => [] },
+    currentLocale: { type: String, default: "" },
+    tLocale: { type: Function as PropType<(key: string) => string>, default: ((k: string) => k) as (key: string) => string },
   },
   emits: {
     logout: () => true,
     login: () => true,
     toggleTheme: () => true,
+    localeSelect: (_code: string) => true,
   },
   setup(props, { slots, emit }) {
     const { t } = useHikariI18n();
+    const localeBtnRef = ref<HTMLElement | null>(null);
+    const localeMenuOpen = ref(false);
+    const hasLocales = () => props.locales.length > 0;
     return () => (
       <header class="hk-admin-header">
         <div class="hk-admin-header-left">
@@ -51,6 +59,29 @@ export default defineComponent({
           >
             {sunMoonIcon}
           </HkButton>
+          {hasLocales() && (
+            <>
+              <span ref={localeBtnRef} style={{ display: "inline-flex" }}>
+                <HkButton
+                  variant="ghost"
+                  size="sm"
+                  ariaLabel="Switch language"
+                  onClick={() => { localeMenuOpen.value = !localeMenuOpen.value; }}
+                >
+                  <span style={{ fontSize: "14px" }}>{props.currentLocale.toUpperCase()}</span>
+                </HkButton>
+              </span>
+              <HkLocalePickerPopup
+                open={localeMenuOpen.value}
+                onUpdate:open={(v: boolean) => { localeMenuOpen.value = v; }}
+                triggerRef={localeBtnRef.value}
+                locales={props.locales}
+                currentLocale={props.currentLocale}
+                t={props.tLocale}
+                onSelect={(code: string) => emit("localeSelect", code)}
+              />
+            </>
+          )}
           {props.authenticated ? (
             <div class="hk-admin-header-user">
               {props.avatarUrl ? (

@@ -30,3 +30,52 @@
   opacity: 0;
   transform: translateY(4px) scale(0.97);
 }
+
+/* Glass dropdown content — used when `glass` prop is true */
+.hii-dropdown-content,
+.hk-popover-panel.hii-dropdown-content {
+  background: rgb(var(--color-surface));
+  backdrop-filter: blur(var(--blur-lg)) saturate(1.2);
+  border: 1px solid rgb(var(--color-border) / 20%);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-dropdown);
+}
+
+/* Locale picker menu items */
+.hk-popup-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-14);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: inherit;
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition: background var(--duration-normal) ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  outline: none;
+  border-radius: var(--radius-sm);
+}
+
+.hk-popup-menu-item:hover {
+  background: var(--c-primary-subtle);
+}
+
+.hk-popup-menu-item[data-active] {
+  color: rgb(var(--color-primary));
+  font-weight: 600;
+}
+
+.hk-locale-submenu {
+  min-width: 140px;
+  padding: var(--space-6);
+}
+
+.hk-locale-flag {
+  font-size: var(--text-base);
+  line-height: 1;
+}

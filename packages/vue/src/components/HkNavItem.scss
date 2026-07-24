@@ -57,12 +57,25 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .hk-nav-item-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.hk-nav-item-arrow {
+  transition: transform 0.2s;
+}
+
+.hk-nav-item-arrow-expanded {
+  transform: rotate(90deg);
+}
+
+.hk-nav-item-children {
+  padding-left: 1rem;
+  overflow: hidden;
 }

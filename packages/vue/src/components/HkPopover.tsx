@@ -8,6 +8,7 @@ import {
   ref,
   Teleport,
   Transition,
+  useAttrs,
   watch,
   type PropType,
 } from "vue";
@@ -52,7 +53,8 @@ export default defineComponent({
   emits: {
     "update:modelValue": (_v: boolean) => true,
   },
-  setup(props, { emit, slots, attrs }) {
+  setup(props, { emit, slots }) {
+    const attrs = useAttrs();
     const manager = usePopupManager();
     const handle = ref<PopupHandle | null>(null);
     const panelRef = ref<HTMLElement>();
@@ -362,7 +364,12 @@ export default defineComponent({
                 "hk-popover-panel",
                 `hk-popover-${resolvedPlacement.value}`,
                 props.glass ? "hii-dropdown-content" : "",
-                (attrs.class as string) || "",
+                ...(typeof attrs.class === "string" ? [attrs.class]
+                  : Array.isArray(attrs.class) ? attrs.class as string[]
+                  : attrs.class && typeof attrs.class === "object"
+                    ? Object.entries(attrs.class as Record<string, unknown>)
+                        .filter(([, v]) => v).map(([k]) => k)
+                  : []),
               ]}
               style={panelStyle.value}
               role="dialog"

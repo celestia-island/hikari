@@ -29,6 +29,7 @@
   min-height: 0;
   overflow-y: auto;
   padding-block: 20px 4px;
+  padding-inline: var(--space-12);
 
   &::-webkit-scrollbar {
     width: 4px;

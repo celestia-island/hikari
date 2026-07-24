@@ -58,10 +58,13 @@ export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
 
-export { default as HkAdminShell } from "./components/HkAdminShell";
-export { default as HkAdminHeader } from "./components/HkAdminHeader";
-export { default as HkStatusBar } from "./components/HkStatusBar";
 export { default as HkLogo } from "./components/HkLogo";
+
+// Component types
+export { type ModalAction } from "./components/HkModal";
+export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
+export { type DragListItem } from "./components/HkDraggableList";
+export { type GridItem } from "./components/HkDraggableGrid";
 
 // Theme system
 export {

@@ -52,7 +52,7 @@ export default defineComponent({
   emits: {
     "update:modelValue": (_v: boolean) => true,
   },
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     const manager = usePopupManager();
     const handle = ref<PopupHandle | null>(null);
     const panelRef = ref<HTMLElement>();
@@ -362,6 +362,7 @@ export default defineComponent({
                 "hk-popover-panel",
                 `hk-popover-${resolvedPlacement.value}`,
                 props.glass ? "hii-dropdown-content" : "",
+                (attrs.class as string) || "",
               ]}
               style={panelStyle.value}
               role="dialog"

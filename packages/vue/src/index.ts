@@ -59,6 +59,7 @@ export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
 
 export { default as HkLogo } from "./components/HkLogo";
+export { default as HkLocalePickerPopup } from "./components/HkLocalePickerPopup";
 
 // Component types
 export { type ModalAction } from "./components/HkModal";

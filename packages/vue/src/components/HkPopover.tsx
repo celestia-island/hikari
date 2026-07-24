@@ -8,6 +8,7 @@ import {
   ref,
   Teleport,
   Transition,
+  useAttrs,
   watch,
   type PropType,
 } from "vue";
@@ -53,6 +54,7 @@ export default defineComponent({
     "update:modelValue": (_v: boolean) => true,
   },
   setup(props, { emit, slots }) {
+    const attrs = useAttrs();
     const manager = usePopupManager();
     const handle = ref<PopupHandle | null>(null);
     const panelRef = ref<HTMLElement>();
@@ -60,6 +62,31 @@ export default defineComponent({
     const coords = ref<{ top?: number; left?: number; bottom?: number; right?: number }>({});
 
     const animBus = useReportedTransition(300);
+
+    // Suppress native browser tooltip on the anchor while the popover is open.
+    let savedTitle: string | null = null;
+    watch(
+      () => props.modelValue,
+      (open) => {
+        const el = props.anchorRef;
+        if (!el) return;
+        if (open) {
+          savedTitle = el.getAttribute("title");
+          if (savedTitle !== null && savedTitle !== "") {
+            el.setAttribute("title", "");
+          } else {
+            savedTitle = null;
+          }
+        } else {
+          if (savedTitle !== null) {
+            el.setAttribute("title", savedTitle);
+          } else if (savedTitle === null && el.getAttribute("title") === "") {
+            el.removeAttribute("title");
+          }
+          savedTitle = null;
+        }
+      },
+    );
 
     function close() {
       emit("update:modelValue", false);
@@ -362,6 +389,12 @@ export default defineComponent({
                 "hk-popover-panel",
                 `hk-popover-${resolvedPlacement.value}`,
                 props.glass ? "hii-dropdown-content" : "",
+                ...(typeof attrs.class === "string" ? [attrs.class]
+                  : Array.isArray(attrs.class) ? attrs.class as string[]
+                  : attrs.class && typeof attrs.class === "object"
+                    ? Object.entries(attrs.class as Record<string, unknown>)
+                        .filter(([, v]) => v).map(([k]) => k)
+                  : []),
               ]}
               style={panelStyle.value}
               role="dialog"

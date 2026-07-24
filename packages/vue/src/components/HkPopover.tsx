@@ -63,6 +63,31 @@ export default defineComponent({
 
     const animBus = useReportedTransition(300);
 
+    // Suppress native browser tooltip on the anchor while the popover is open.
+    let savedTitle: string | null = null;
+    watch(
+      () => props.modelValue,
+      (open) => {
+        const el = props.anchorRef;
+        if (!el) return;
+        if (open) {
+          savedTitle = el.getAttribute("title");
+          if (savedTitle !== null && savedTitle !== "") {
+            el.setAttribute("title", "");
+          } else {
+            savedTitle = null;
+          }
+        } else {
+          if (savedTitle !== null) {
+            el.setAttribute("title", savedTitle);
+          } else if (savedTitle === null && el.getAttribute("title") === "") {
+            el.removeAttribute("title");
+          }
+          savedTitle = null;
+        }
+      },
+    );
+
     function close() {
       emit("update:modelValue", false);
     }

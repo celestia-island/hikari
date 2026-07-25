@@ -1,9 +1,9 @@
 import { defineComponent, nextTick, ref, watch } from "vue";
 
 import { useProgressDialog } from "../composables/useProgressDialog";
-import Modal from "./HkModal";
-import ProgressBar from "./HkProgressBar";
-import Spinner from "./HkSpinner";
+import HModal from "./HkModal";
+import HProgressBar from "./HkProgressBar";
+import HSpinner from "./HkSpinner";
 
 export default defineComponent({
   name: "HkProgressDialog",
@@ -22,7 +22,7 @@ export default defineComponent({
     );
 
     return () => (
-      <Modal
+      <HModal
         modelValue={state.open}
         onUpdate:modelValue={() => {
           /* non-closable */
@@ -33,10 +33,10 @@ export default defineComponent({
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", padding: "0.25rem 0" }}>
           {state.value !== null ? (
-            <ProgressBar value={state.value} max={state.max} showLabel size="sm" />
+            <HProgressBar value={state.value} max={state.max} showLabel size="sm" />
           ) : (
             <div style={{ display: "flex", justifyContent: "center", padding: "0.5rem 0" }}>
-              <Spinner />
+              <HSpinner />
             </div>
           )}
           {state.logs.length > 0 ? (
@@ -61,7 +61,7 @@ export default defineComponent({
             </div>
           ) : null}
         </div>
-      </Modal>
+      </HModal>
     );
   },
 });

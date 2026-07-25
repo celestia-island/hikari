@@ -3,7 +3,7 @@ import { ArrowLeft, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp 
 
 import { useHikariI18n } from "../i18n/context";
 import "./HkDateTimePicker.scss";
-import Popover from "./HkPopover";
+import HPopover from "./HkPopover";
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -390,7 +390,7 @@ export default defineComponent({
       }
 
       return (
-        <Popover
+        <HPopover
           modelValue={open.value}
           onUpdate:modelValue={(v: boolean) => { open.value = v; }}
         >
@@ -417,7 +417,7 @@ export default defineComponent({
               </div>
             ),
           }}
-        </Popover>
+        </HPopover>
       );
     };
   },

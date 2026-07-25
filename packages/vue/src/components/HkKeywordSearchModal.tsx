@@ -1,7 +1,7 @@
 import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import "./HkKeywordSearchModal.scss";
-import HkModal from "./HkModal";
+import Modal from "./HkModal";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 
 interface FuzzyMatch {
@@ -187,7 +187,7 @@ export default defineComponent({
     }
 
     return () => (
-      <HkModal
+      <Modal
         modelValue={props.modelValue}
         onUpdate:modelValue={(v: boolean) => emit("update:modelValue", v)}
         title={props.title ?? "Search"}
@@ -302,7 +302,7 @@ export default defineComponent({
             )}
           </div>
         </div>
-      </HkModal>
+      </Modal>
     );
   },
 });

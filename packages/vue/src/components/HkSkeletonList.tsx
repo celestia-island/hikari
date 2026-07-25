@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import HkSkeleton from "./HkSkeleton";
+import Skeleton from "./HkSkeleton";
 import type { SkeletonTone } from "./HkSkeleton";
 import "./HkSkeleton.scss";
 
@@ -21,7 +21,7 @@ export default defineComponent({
         aria-hidden="true"
       >
         {items.map((i) => (
-          <HkSkeleton
+          <Skeleton
             key={i}
             width="100%"
             height={props.itemHeight}

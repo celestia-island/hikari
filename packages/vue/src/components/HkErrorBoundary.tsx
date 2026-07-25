@@ -2,8 +2,8 @@ import { defineComponent, onErrorCaptured, ref, type PropType, type VNode } from
 import { AlertTriangle, Copy, RefreshCw } from "lucide-vue-next";
 import { useClipboard } from "../runtime/useClipboard";
 import { useHikariI18n } from "../i18n/context";
-import HkButton from "./HkButton";
-import HkScrollContainer from "./HkScrollContainer";
+import Button from "./HkButton";
+import ScrollContainer from "./HkScrollContainer";
 import "./HkErrorBoundary.scss";
 
 export default defineComponent({
@@ -59,20 +59,20 @@ export default defineComponent({
             </div>
             <div class="hk-error-boundary-msg">
               <div style={{ maxHeight: "12rem" }}>
-                <HkScrollContainer>
+                <ScrollContainer>
                   {error.value}
-                </HkScrollContainer>
+                </ScrollContainer>
               </div>
             </div>
             <div class="hk-error-boundary-actions">
-              <HkButton variant="ghost" size="sm" onClick={copyError}>
+              <Button variant="ghost" size="sm" onClick={copyError}>
                 <Copy size={12} />
                 {props.copyErrorLabel || t("hk.errorBoundary.copyError", "Copy Error")}
-              </HkButton>
-              <HkButton variant="outline" size="sm" onClick={retry}>
+              </Button>
+              <Button variant="outline" size="sm" onClick={retry}>
                 <RefreshCw size={12} />
                 {props.retryLabel || t("hk.errorBoundary.retry", "Retry")}
-              </HkButton>
+              </Button>
             </div>
           </div>
         </div>

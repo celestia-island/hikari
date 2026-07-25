@@ -15,8 +15,8 @@ import { useHikariI18n } from "../i18n/context";
 import "./HkModal.scss";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
-import HkButton from "./HkButton";
-import HkSpinner from "./HkSpinner";
+import Button from "./HkButton";
+import Spinner from "./HkSpinner";
 
 export interface ModalAction {
   label: string;
@@ -329,7 +329,7 @@ export default defineComponent({
         return (
           <div class="hk-modal-footer">
             {props.footerActions.map((action, i) => (
-              <HkButton
+              <Button
                 key={i}
                 variant={action.variant ?? "secondary"}
                 size="sm"
@@ -338,7 +338,7 @@ export default defineComponent({
                 onClick={action.onClick}
               >
                 {action.label}
-              </HkButton>
+              </Button>
             ))}
           </div>
         );

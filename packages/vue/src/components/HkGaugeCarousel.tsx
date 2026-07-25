@@ -42,24 +42,28 @@ export default defineComponent({
 
     const stageStyle = computed(() => {
       const n = total.value;
+      // Each item = 50% of viewport minus half gap; stage must hold N items + N-1 gaps
+      const gap = 6;
+      const itemW = `calc(50% - ${gap / 2}px)`;
+      const stageW = `calc(${n} * ${itemW} + ${(n - 1) * gap}px)`;
       return {
-        width: `${n * 50}%`,
+        width: stageW,
         display: "flex",
         flexWrap: "nowrap" as const,
-        gap: "var(--p-gc-gap, 8px)",
-        transform: `translateX(${-((page.value % n) * stepPct.value)}%)`,
+        gap: `${gap}px`,
+        transform: `translateX(${-((page.value % n) * 50)}%)`,
         transition: transitioning.value
           ? "transform 0.35s var(--ease-out-expo, ease-out)"
           : "none",
       };
     });
 
-    const itemStyle = computed(() => ({
-      flex: `0 0 calc(100% / ${total.value} - ${(total.value - 1) / total.value} * var(--hk-gc-gap, 6px))`,
-      display: "flex" as const,
-      alignItems: "center" as const,
-      justifyContent: "center" as const,
-    }));
+    const itemStyle = {
+      flex: "0 0 calc(50% - 3px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    } as const;
 
     return () => (
       <div class="hk-gauge-carousel">

@@ -55,9 +55,10 @@ export default defineComponent({
     });
 
     const itemStyle = computed(() => ({
-      flex: `0 0 calc(100% / ${total.value} - ${(total.value - 1) / total.value} * var(--p-gc-gap, 8px))`,
+      flex: `0 0 calc(100% / ${total.value} - ${(total.value - 1) / total.value} * var(--hk-gc-gap, 6px))`,
       display: "flex" as const,
       alignItems: "center" as const,
+      justifyContent: "center" as const,
     }));
 
     return () => (

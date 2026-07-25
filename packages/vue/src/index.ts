@@ -24,6 +24,8 @@ export { default as HkNumberInput } from "./components/HkNumberInput";
 export { default as HkPasswordInput } from "./components/HkPasswordInput";
 export { default as HkPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HkGaugeRing } from "./components/HkGaugeRing";
+export { default as HkGaugeCarousel } from "./components/HkGaugeCarousel";
+export type { HkGaugeItem } from "./components/HkGaugeCarousel";
 export { default as HkHoverRevealAction } from "./components/HkHoverRevealAction";
 export { default as HkKeywordSearchModal } from "./components/HkKeywordSearchModal";
 export { default as HkModalBreadcrumb } from "./components/HkModalBreadcrumb";

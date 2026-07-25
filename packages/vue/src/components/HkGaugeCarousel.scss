@@ -1,0 +1,19 @@
+.hk-gauge-carousel {
+  width: 100%;
+}
+
+.hk-gauge-carousel__track {
+  display: flex;
+  gap: var(--hk-gc-gap, 6px);
+}
+
+.hk-gauge-carousel__viewport {
+  overflow: hidden;
+  width: 100%;
+}
+
+.hk-gauge-carousel__stage {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--hk-gc-gap, 6px);
+}

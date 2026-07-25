@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import HkBadge from "./HkBadge";
+import Badge from "./HkBadge";
 import "./HkSplash.scss";
 
 export default defineComponent({
@@ -27,9 +27,9 @@ export default defineComponent({
           {props.subtitle ? <p class="hk-splash-subtitle">{props.subtitle}</p> : null}
           {slots.description ? <div class="hk-splash-description">{slots.description?.()}</div> : null}
           <div class="hk-splash-status">
-            <HkBadge variant={statusVariant[props.status] || "primary"} size="md">
+            <Badge variant={statusVariant[props.status] || "primary"} size="md">
               {props.statusLabel || props.status}
-            </HkBadge>
+            </Badge>
           </div>
           {slots.actions ? <div class="hk-splash-actions">{slots.actions?.()}</div> : null}
         </main>

@@ -42,16 +42,12 @@ export default defineComponent({
 
     const stageStyle = computed(() => {
       const n = total.value;
-      const itemW = 120;
-      const gap = 8;
-      const stagePx = n * itemW + (n - 1) * gap;
-      const shiftPx = -(page.value % n) * (itemW + gap);
       return {
-        width: `${stagePx}px`,
+        width: `${n * 50}%`,
         display: "flex",
         flexWrap: "nowrap" as const,
-        gap: `${gap}px`,
-        transform: `translateX(${shiftPx}px)`,
+        gap: "4px",
+        transform: `translateX(${-((page.value % n) * 50)}%)`,
         transition: transitioning.value
           ? "transform 0.35s var(--ease-out-expo, ease-out)"
           : "none",
@@ -59,7 +55,7 @@ export default defineComponent({
     });
 
     const itemStyle = {
-      flex: "0 0 120px",
+      flex: "0 0 calc(50% - 2px)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",

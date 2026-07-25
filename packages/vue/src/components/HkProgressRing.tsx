@@ -6,13 +6,16 @@ export default defineComponent({
   name: "HkProgressRing",
   props: {
     value: { type: Number, default: 0 },
+    pct: { type: Number, default: undefined },
     size: { type: Number, default: 120 },
     strokeWidth: { type: Number, default: 8 },
     variant: { type: String as PropType<"normal" | "success" | "exception">, default: "normal" },
     showLabel: { type: Boolean, default: false },
+    /** Whether to render the background track circle. Set false for overlay-only use. */
+    showTrack: { type: Boolean, default: true },
   },
-  setup(props) {
-    const clampedValue = computed(() => Math.min(100, Math.max(0, props.value)));
+  setup(props, { slots }) {
+    const clampedValue = computed(() => Math.min(100, Math.max(0, props.pct ?? props.value)));
 
     const radius = computed(() => (props.size - props.strokeWidth) / 2);
     const circumference = computed(() => 2 * Math.PI * radius.value);
@@ -38,16 +41,18 @@ export default defineComponent({
         aria-valuemax={100}
       >
         <svg class="hk-progress-ring-svg" viewBox={`0 0 ${props.size} ${props.size}`}>
-          <circle
-            class="hk-progress-ring-track"
-            cx={center.value}
-            cy={center.value}
-            r={radius.value}
-            fill="none"
-            stroke="currentColor"
-            stroke-width={props.strokeWidth}
-            stroke-linecap="round"
-          />
+          {props.showTrack && (
+            <circle
+              class="hk-progress-ring-track"
+              cx={center.value}
+              cy={center.value}
+              r={radius.value}
+              fill="none"
+              stroke="currentColor"
+              stroke-width={props.strokeWidth}
+              stroke-linecap="round"
+            />
+          )}
           <circle
             class="hk-progress-ring-fill"
             cx={center.value}
@@ -61,9 +66,14 @@ export default defineComponent({
             transform={`rotate(-90 ${center.value} ${center.value})`}
           />
         </svg>
-        {props.showLabel && (
+        {props.showLabel && !slots.default && (
           <span class="hk-progress-ring-label" style={{ fontSize: `${textSize.value}px` }}>
             {Math.round(clampedValue.value)}%
+          </span>
+        )}
+        {slots.default && (
+          <span class="hk-progress-ring-overlay">
+            {slots.default()}
           </span>
         )}
       </div>

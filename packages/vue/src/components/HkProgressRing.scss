@@ -43,3 +43,14 @@
   user-select: none;
   pointer-events: none;
 }
+
+.hk-progress-ring-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+}

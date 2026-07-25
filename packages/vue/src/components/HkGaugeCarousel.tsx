@@ -42,16 +42,16 @@ export default defineComponent({
 
     const stageStyle = computed(() => {
       const n = total.value;
-      // Each item = 50% of viewport minus half gap; stage must hold N items + N-1 gaps
-      const gap = 6;
-      const itemW = `calc(50% - ${gap / 2}px)`;
-      const stageW = `calc(${n} * ${itemW} + ${(n - 1) * gap}px)`;
+      const itemW = 120;
+      const gap = 8;
+      const stagePx = n * itemW + (n - 1) * gap;
+      const shiftPx = -(page.value % n) * (itemW + gap);
       return {
-        width: stageW,
+        width: `${stagePx}px`,
         display: "flex",
         flexWrap: "nowrap" as const,
         gap: `${gap}px`,
-        transform: `translateX(${-((page.value % n) * 50)}%)`,
+        transform: `translateX(${shiftPx}px)`,
         transition: transitioning.value
           ? "transform 0.35s var(--ease-out-expo, ease-out)"
           : "none",
@@ -59,7 +59,7 @@ export default defineComponent({
     });
 
     const itemStyle = {
-      flex: "0 0 calc(50% - 3px)",
+      flex: "0 0 120px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",

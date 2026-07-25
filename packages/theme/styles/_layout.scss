@@ -1,0 +1,98 @@
+// _layout.scss — Shared unprefixed design tokens for hikari + plana components.
+// Originally sourced from shittim-chest's theme system; extracted here so
+// any project importing @celestia-island/hikari/styles gets them automatically.
+//
+// Prefixed --hi-* equivalents exist in _tokens.scss and foundation.scss;
+// these unprefixed tokens are what hikari Hk* components and plana Plana*
+// components reference at call sites (with var(--token, fallback) pattern).
+
+:root {
+  // ── Typography scale (HkTabs, HkButton, and plana components depend on these) ─
+  --text-2xs: 0.625rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  // ── Font families (body text, mono for version/numbers) ─
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+
+  // ── Spacing scale (0—96, named by px value for self-documenting call sites) ─
+  --space-1: 0.0625rem;
+  --space-2: 0.125rem;
+  --space-4: 0.25rem;
+  --space-6: 0.375rem;
+  --space-8: 0.5rem;
+  --space-10: 0.625rem;
+  --space-12: 0.75rem;
+  --space-14: 0.875rem;
+  --space-16: 1rem;
+  --space-20: 1.25rem;
+  --space-24: 1.5rem;
+  --space-28: 1.75rem;
+  --space-32: 2rem;
+  --space-40: 2.5rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+  --space-80: 5rem;
+  --space-96: 6rem;
+
+  // ── Border radius scale ─
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  // ── Blur scale (glass/backdrop effects) ─
+  --blur-xs: 4px;
+  --blur-sm: 8px;
+  --blur-md: 16px;
+  --blur-lg: 24px;
+
+  // ── Opacity tiers ─
+  --opacity-faded: 0.45;
+  --opacity-less: 0.85;
+  --opacity-half: 0.92;
+  --opacity-more: 0.96;
+
+  // ── Z-index hierarchy ─
+  --z-base: 0;
+  --z-above: 1;
+  --z-overlay: 2;
+  --z-top: 3;
+  --z-content: 10;
+  --z-header: 30;
+  --z-sidebar: 40;
+  --z-floating: 50;
+  --z-header-popup: 150;
+  --z-modal: 1000;
+  --z-modal-base: 1000;
+  --z-modal-step: 2;
+  --z-toast: 9999;
+  --z-tooltip: 10000;
+
+  // ── Layout dimensions ─
+  --s-header-height: 3rem;
+  --s-footer-height: 3rem;
+
+  // ── Semantic border tokens ─
+  --border-faint: rgb(var(--color-border) / 10%);
+  --border-subtle: rgb(var(--color-border) / 12%);
+
+  // ── Duration / easing ─
+  --duration-short: 0.15s;
+  --duration-normal: 0.3s;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+
+  // ── Semantic accent colors (used by plana components) ─
+  --c-primary: rgb(var(--color-primary));
+  --c-primary-light: rgb(var(--color-primary) / 15%);
+  --c-primary-subtle: rgb(var(--color-primary) / 8%);
+  --c-primary-overlay: rgb(var(--color-primary) / 15%);
+}

@@ -1,7 +1,7 @@
 import { defineComponent, onErrorCaptured, ref, type PropType, type VNode } from "vue";
 import { AlertTriangle, Copy, RefreshCw } from "lucide-vue-next";
 import { useClipboard } from "../runtime/useClipboard";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import HButton from "./HkButton";
 import HScrollContainer from "./HkScrollContainer";
 import "./HkErrorBoundary.scss";
@@ -17,7 +17,7 @@ export default defineComponent({
   },
   setup(props, { slots }) {
     const clipboard = useClipboard();
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const error = ref<string | null>(null);
 
     onErrorCaptured((err) => {

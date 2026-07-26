@@ -3,7 +3,7 @@ import { defineComponent } from "vue";
 import "./HkConfirmDialog.scss";
 import HButton from "./HkButton";
 import HModal from "./HkModal";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 
 export default defineComponent({
   name: "HkConfirmDialog",
@@ -25,7 +25,7 @@ export default defineComponent({
     "update:open": (_value: boolean) => true,
   },
   setup(props, { emit }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
 
     function onConfirm() {
       emit("confirm");

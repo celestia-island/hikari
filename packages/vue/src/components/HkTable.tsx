@@ -1,6 +1,6 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
 
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkTable.scss";
 
 interface Column {
@@ -30,7 +30,7 @@ export default defineComponent({
     "update:selectedRows": (_rows: Record<string, unknown>[]) => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const sortKey = ref<string | null>(null);
     const sortDirection = ref<"asc" | "desc">("asc");
     const selectedRowKeys = ref<Set<string>>(new Set());

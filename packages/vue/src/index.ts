@@ -108,7 +108,7 @@ export {
 
 // i18n
 export {
-  useHikariI18n,
-  setHikariLocale,
-  mergeHikariMessages,
+  useI18n,
+  setLocale,
+  mergeMessages,
 } from "./i18n/context";

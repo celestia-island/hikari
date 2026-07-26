@@ -1,9 +1,9 @@
 import { computed, defineComponent, useAttrs, type PropType } from "vue";
 
 import "./HkButton.scss";
-import Icon from "./HkIcon";
-import Kbd from "./HkKbd";
-import Spinner from "./HkSpinner";
+import HIcon from "./HkIcon";
+import HKbd from "./HkKbd";
+import HSpinner from "./HkSpinner";
 
 export type ButtonVariant =
   | "primary"
@@ -53,20 +53,20 @@ export default defineComponent({
         aria-busy={props.loading || undefined}
         onClick={(e) => emit("click", e)}
       >
-        {props.loading ? <Spinner size="xs" tone="current" /> : null}
+        {props.loading ? <HSpinner size="xs" tone="current" /> : null}
         {!props.loading && props.icon ? (
           <span class="hk-btn-icon">
-            <Icon name={props.icon} size={16} />
+            <HIcon name={props.icon} size={16} />
           </span>
         ) : null}
         {slots.default?.()}
         {props.suffix ? (
           <span class="hk-btn-suffix">
-            <Icon name={props.suffix} size={16} />
+            <HIcon name={props.suffix} size={16} />
           </span>
         ) : null}
         {props.shortcut ? (
-          <Kbd keys={props.shortcut!} size="sm" />
+          <HKbd keys={props.shortcut!} size="sm" />
         ) : null}
       </button>
     );

@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkLogo.scss";
 
 const sizeMap: Record<string, string> = {
@@ -33,7 +33,7 @@ export default defineComponent({
     click: (_e: MouseEvent) => true,
   },
   setup(props, { emit }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const logoSize = () => sizeMap[props.size] ?? sizeMap.md;
 
     const renderLogo = () => {

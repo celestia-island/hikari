@@ -11,7 +11,7 @@ import {
   type PropType,
 } from "vue";
 
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkDrawer.scss";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
@@ -32,7 +32,7 @@ export default defineComponent({
     "update:modelValue": (_value: boolean) => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const manager = usePopupManager();
     const overlayHook = useOverlay({ name: "hk-drawer" });
 

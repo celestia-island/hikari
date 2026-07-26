@@ -1,9 +1,9 @@
 import { defineComponent } from "vue";
 
 import "./HkConfirmDialog.scss";
-import Button from "./HkButton";
-import Modal from "./HkModal";
-import { useHikariI18n } from "../i18n/context";
+import HButton from "./HkButton";
+import HModal from "./HkModal";
+import { useI18n } from "../i18n/context";
 
 export default defineComponent({
   name: "HkConfirmDialog",
@@ -25,7 +25,7 @@ export default defineComponent({
     "update:open": (_value: boolean) => true,
   },
   setup(props, { emit }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
 
     function onConfirm() {
       emit("confirm");
@@ -38,7 +38,7 @@ export default defineComponent({
     }
 
     return () => (
-      <Modal
+      <HModal
         modelValue={props.open}
         title={props.title}
         closable={!props.loading}
@@ -49,27 +49,27 @@ export default defineComponent({
             <div class="hk-confirm-dialog">
               <p class="hk-confirm-dialog-message">{props.message}</p>
               <div class="hk-confirm-dialog-actions">
-                <Button
+                <HButton
                   variant="secondary"
                   size="sm"
                   disabled={props.loading}
                   onClick={onCancel}
                 >
                   {props.cancelLabel || t("hk.confirmDialog.cancel", "Cancel")}
-                </Button>
-                <Button
+                </HButton>
+                <HButton
                   variant={props.confirmVariant}
                   size="sm"
                   loading={props.loading}
                   onClick={onConfirm}
                 >
                   {props.confirmLabel || t("hk.confirmDialog.confirm", "Confirm")}
-                </Button>
+                </HButton>
               </div>
             </div>
           ),
         }}
-      </Modal>
+      </HModal>
     );
   },
 });

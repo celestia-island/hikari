@@ -1,5 +1,5 @@
 import { computed, defineComponent, ref, watch } from "vue";
-import Spinner from "./HkSpinner";
+import HSpinner from "./HkSpinner";
 import "./HkMarkdownRenderer.scss";
 
 let _marked: any = null;
@@ -114,7 +114,7 @@ export default defineComponent({
         <div class="hk-markdown-body" innerHTML={renderedHtml.value} />
         {props.loading && (
           <div class="hk-markdown-overlay">
-            <Spinner center />
+            <HSpinner center />
           </div>
         )}
       </div>

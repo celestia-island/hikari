@@ -2,7 +2,7 @@ import { computed, defineComponent, ref, Teleport, Transition, TransitionGroup, 
 import { AlertTriangle, CheckCircle, Copy, Info, X, XCircle } from "lucide-vue-next";
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkToast.scss";
 
 const LONG_THRESHOLD = 50;
@@ -43,7 +43,7 @@ const HkToastItem = defineComponent({
     remove: (_id: number) => true,
   },
   setup(props, { emit }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const clipboard = useClipboard();
     const displayedMsgId = ref<number | null>(null);
     const animating = ref(false);

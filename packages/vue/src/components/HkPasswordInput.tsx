@@ -7,7 +7,7 @@ import {
   watch,
 } from "vue";
 
-import ListTransition from "./HkListTransition";
+import HListTransition from "./HkListTransition";
 import "./HkPasswordInput.scss";
 
 interface Ripple {
@@ -507,20 +507,20 @@ export default defineComponent({
           ) : null}
         </div>
         <div class="hk-pwd-hints">
-          <ListTransition tag="div">
+          <HListTransition tag="div">
             {capsLock.value ? (
               <span key="caps" class="hk-pwd-hint" data-variant="caps">
                 {props.capsLockText}
               </span>
             ) : null}
-          </ListTransition>
-          <ListTransition tag="div">
+          </HListTransition>
+          <HListTransition tag="div">
             {fullWidthPaused.value ? (
               <span key="fw" class="hk-pwd-hint" data-variant="fw">
                 {props.fullWidthWarningText}
               </span>
             ) : null}
-          </ListTransition>
+          </HListTransition>
         </div>
         {props.error ? (
           <p class="hk-pwd-error">{props.error}</p>

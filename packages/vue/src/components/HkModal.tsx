@@ -11,12 +11,12 @@ import {
   type PropType,
 } from "vue";
 
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkModal.scss";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
-import Button from "./HkButton";
-import Spinner from "./HkSpinner";
+import HButton from "./HkButton";
+import HSpinner from "./HkSpinner";
 
 export interface ModalAction {
   label: string;
@@ -72,7 +72,7 @@ export default defineComponent({
     afterLeave: () => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const manager = usePopupManager();
     const overlay = useOverlay({ name: "hk-modal" });
 
@@ -329,7 +329,7 @@ export default defineComponent({
         return (
           <div class="hk-modal-footer">
             {props.footerActions.map((action, i) => (
-              <Button
+              <HButton
                 key={i}
                 variant={action.variant ?? "secondary"}
                 size="sm"
@@ -338,7 +338,7 @@ export default defineComponent({
                 onClick={action.onClick}
               >
                 {action.label}
-              </Button>
+              </HButton>
             ))}
           </div>
         );

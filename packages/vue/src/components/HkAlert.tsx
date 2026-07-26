@@ -1,5 +1,5 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import { AlertTriangle, CheckCircle, Info, X } from "lucide-vue-next";
 
 import "./HkAlert.scss";
@@ -28,7 +28,7 @@ export default defineComponent({
     close: () => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const isDismissed = ref(false);
 
     const rootCls = computed(() => [

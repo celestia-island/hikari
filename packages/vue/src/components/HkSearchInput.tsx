@@ -1,5 +1,5 @@
 import { defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkSearchInput.scss";
 
 const searchIcon = (
@@ -35,7 +35,7 @@ export default defineComponent({
     clear: () => true,
   },
   setup(props, { emit }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const inputRef = ref<HTMLInputElement | null>(null);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 

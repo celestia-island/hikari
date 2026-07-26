@@ -1,5 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "../../../components/src/styles/components/breadcrumb.scss";
 
 export default defineComponent({
@@ -10,7 +10,7 @@ export default defineComponent({
     size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
   },
   setup(props) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const cls = computed(() => ["hk-breadcrumb", `hk-breadcrumb-${props.size}`]);
 
     return () => (

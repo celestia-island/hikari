@@ -1,9 +1,9 @@
 import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch, type PropType } from "vue";
 import { ArrowLeft, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-vue-next";
 
-import { useHikariI18n } from "../i18n/context";
+import { useI18n } from "../i18n/context";
 import "./HkDateTimePicker.scss";
-import Popover from "./HkPopover";
+import HPopover from "./HkPopover";
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -52,7 +52,7 @@ export default defineComponent({
     confirm: () => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useHikariI18n();
+    const { t } = useI18n();
     const viewYear = ref(props.modelValue.getFullYear());
     const viewMonth = ref(props.modelValue.getMonth());
     const view = ref<ViewKind>("days");
@@ -390,7 +390,7 @@ export default defineComponent({
       }
 
       return (
-        <Popover
+        <HPopover
           modelValue={open.value}
           onUpdate:modelValue={(v: boolean) => { open.value = v; }}
         >
@@ -417,7 +417,7 @@ export default defineComponent({
               </div>
             ),
           }}
-        </Popover>
+        </HPopover>
       );
     };
   },

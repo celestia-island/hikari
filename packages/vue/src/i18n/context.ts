@@ -38,16 +38,41 @@ const state = reactive({
 const localeCache = new Map<string, Messages>();
 localeCache.set("en", enFallback);
 
+// Merged-in messages survive locale switches (plana, apps register here).
+// Stored per-locale so layer-2 components can register translations for
+// every language without knowing which locale is currently active.
+let mergedMessages: Record<string, Messages> = {};
+
 export async function setLocale(locale: string): Promise<void> {
   if (!localeCache.has(locale)) {
     localeCache.set(locale, buildLocaleMessages(locale));
   }
   state.locale = locale;
-  state.messages = { ...enFallback, ...localeCache.get(locale)! };
+  state.messages = {
+    ...enFallback,
+    ...localeCache.get(locale)!,
+    ...(mergedMessages["en"] ?? {}),
+    ...(mergedMessages[locale] ?? {}),
+  };
 }
 
-export function mergeMessages(userMessages: Messages): void {
-  state.messages = { ...state.messages, ...userMessages };
+export function mergeMessages(userMessages: Messages, locale?: string): void {
+  if (locale) {
+    mergedMessages[locale] = { ...(mergedMessages[locale] ?? {}), ...userMessages };
+  } else {
+    // Backward-compatible: no locale = merge into every locale bucket
+    for (const loc of Object.keys(mergedMessages)) {
+      mergedMessages[loc] = { ...mergedMessages[loc], ...userMessages };
+    }
+    // Also set for current locale
+    mergedMessages[state.locale] = { ...(mergedMessages[state.locale] ?? {}), ...userMessages };
+  }
+  state.messages = {
+    ...enFallback,
+    ...(localeCache.get(state.locale) ?? {}),
+    ...(mergedMessages["en"] ?? {}),
+    ...(mergedMessages[state.locale] ?? {}),
+  };
 }
 
 export function useI18n() {

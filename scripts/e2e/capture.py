@@ -400,7 +400,7 @@ PLAN = [
         ("wait", 1.5),
         ("sv", "nav_i18n_0,0-1920,1080_initial"),
         ("ck", ".hi-select-trigger", "open-lang-dropdown-2"),
-        ("ck", ".hi-select-option[data-value='zhs']", "switch-to-zhs"),
+        ("ck", ".hi-select-option[data-value='zh-Hans']", "switch-to-zh-Hans"),
         ("wait", 1.5),
         ("sv", "nav_i18n_after-lang-change_0,0-1920,1080"),
         ("sf", "nav_i18n_fullpage_full"),

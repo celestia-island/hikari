@@ -62,6 +62,7 @@ export { default as HSelectionWaterfall } from "./components/HkSelectionWaterfal
 export { default as HLogo } from "./components/HkLogo";
 
 // Component types
+export { type BadgeVariant } from "./components/HkBadge";
 export { type ModalAction } from "./components/HkModal";
 export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
 export { type DragListItem } from "./components/HkDraggableList";

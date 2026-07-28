@@ -3,8 +3,8 @@
 
 Locale mapping (short code -> BCP 47):
   en   -> en-US
-  zhs  -> zh-CHS
-  zht  -> zh-CHT
+  zh-Hans  -> zh-Hans
+  zh-Hant  -> zh-Hant
   ja   -> ja-JP
   ko   -> ko-KR
   fr   -> fr-FR
@@ -19,8 +19,8 @@ from pathlib import Path
 
 LOCALE_MAP = {
     "en": "en-US",
-    "zhs": "zh-CHS",
-    "zht": "zh-CHT",
+    "zh-Hans": "zh-Hans",
+    "zh-Hant": "zh-Hant",
     "ja": "ja-JP",
     "ko": "ko-KR",
     "fr": "fr-FR",

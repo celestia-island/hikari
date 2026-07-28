@@ -5,4 +5,4 @@ description = "A modern Rust UI framework blending traditional Chinese aesthetic
 cname = "hikari.docs.celestia.world"
 [languages]
 default = "en"
-order = ["en", "zhs", "zht", "ja", "ko", "fr", "es", "ru", "ar"]
+order = ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "es", "ru", "ar"]

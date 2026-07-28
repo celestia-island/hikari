@@ -70,12 +70,12 @@ impl Language {
         Self::Arabic,
     ];
 
-    /// Directory identifier used across the ecosystem's docs (`en`, `zhs`, …).
+    /// Directory identifier used across the ecosystem's docs (`en`, `zh-Hans`, …).
     pub fn code(&self) -> &'static str {
         match self {
             Self::English => "en",
-            Self::ChineseSimplified => "zhs",
-            Self::ChineseTraditional => "zht",
+            Self::ChineseSimplified => "zh-Hans",
+            Self::ChineseTraditional => "zh-Hant",
             Self::Japanese => "ja",
             Self::Korean => "ko",
             Self::French => "fr",
@@ -203,8 +203,8 @@ static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../res/i18n/lo
 
 fn hikari_default_keys(language: &Language) -> I18nKeys {
     let lang_dir_name = match language {
-        Language::ChineseSimplified => "zhs",
-        Language::ChineseTraditional => "zht",
+        Language::ChineseSimplified => "zh-Hans",
+        Language::ChineseTraditional => "zh-Hant",
         Language::Japanese => "ja",
         Language::Korean => "ko",
         Language::French => "fr",

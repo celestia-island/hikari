@@ -1,0 +1,37 @@
+.hk-rolling-number {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+
+  [data-el="char"] {
+    display: inline-block;
+  }
+
+  [data-el="slot"] {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    vertical-align: baseline;
+    height: 1em;
+  }
+
+  [data-el="roll"] {
+    display: flex;
+    flex-direction: column;
+    animation: hk-rolling-number-up var(--hi-duration-instant, 0.1s) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  [data-el="digit"] {
+    display: block;
+    height: 1em;
+  }
+}
+
+@keyframes hk-rolling-number-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1em);
+  }
+}

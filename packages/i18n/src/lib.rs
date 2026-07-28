@@ -212,8 +212,6 @@ fn hikari_default_keys(language: &Language) -> I18nKeys {
         Language::Russian => "ru",
         Language::Arabic => "ar",
         Language::English => "en",
-        Language::German => "en",
-        Language::Portuguese => "en",
     };
 
     let mut keys = I18nKeys::new();

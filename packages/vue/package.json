@@ -35,6 +35,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit",
+    "build:docs": "vite build",
     "lint": "echo ok",
     "prepublishOnly": "vue-tsc --noEmit"
   },

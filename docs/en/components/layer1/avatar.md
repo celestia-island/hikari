@@ -6,7 +6,7 @@ Avatar component is used to display user or entity avatar images.
 
 Supports five sizes: Xs, Sm, Md, Lg, Xl.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:8px;padding:1rem;align-items:center;",
         div { style: "width:16px;height:16px;border-radius:50%;background:#3a6ea5;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;", "XS" }
@@ -17,12 +17,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HAvatar name="Hikari" size="md" />
+```
 
 ## Shape Variants
 
 Supports three shapes: Circular, Rounded, Square.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:12px;padding:1rem;align-items:center;",
         div { style: "width:40px;height:40px;border-radius:50%;background:#3a6ea5;display:flex;align-items:center;justify-content:center;color:#fff;", "A" }
@@ -31,17 +34,23 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HAvatar name="Hikari" size="md" />
+```
 
 ## Text Fallback
 
 When no image is available, displays initials or custom text.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:8px;padding:1rem;",
         div { style: "width:40px;height:40px;border-radius:50%;background:#3a6ea5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;", "JD" }
     }
 }
+```
+```hikari:tsx
+<HAvatar name="Hikari" size="md" />
 ```
 
 ## API

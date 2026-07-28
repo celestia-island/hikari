@@ -4,7 +4,7 @@ Number Input component for numeric input with stepper support.
 
 ## Basic Usage
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         div { style: "display:inline-flex;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;",
@@ -15,12 +15,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HNumberInput placeholder="Enter number" style="width:200px" />
+```
 
 ## Sizes
 
 Three sizes available: Small, Medium (default), and Large.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:12px;padding:1rem;align-items:center;",
         input { type: "text", value: "1", style: "padding:4px 8px;width:50px;border:1px solid #ccc;border-radius:4px;font-size:12px;text-align:center;" }
@@ -29,10 +32,13 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HNumberInput placeholder="Enter number" style="width:200px" />
+```
 
 ## Disabled State
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         div { style: "display:inline-flex;border:1px solid #d9d9d9;border-radius:6px;overflow:hidden;opacity:0.5;",
@@ -43,12 +49,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HNumberInput placeholder="Enter number" style="width:200px" />
+```
 
 ## Stepper with Range
 
 You can set minimum value, maximum value, and step size.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         div { style: "display:inline-flex;border:1px solid #d9d9d9;border-radius:6px;",
@@ -58,6 +67,9 @@ rsx! {
         }
     }
 }
+```
+```hikari:tsx
+<HNumberInput placeholder="Enter number" style="width:200px" />
 ```
 
 ## API

@@ -8,7 +8,7 @@ Buttons are used to trigger actions or events, such as submitting forms, opening
 
 Supports four variants: Primary, Secondary, Ghost, and Danger.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:8px;padding:1rem;flex-wrap:wrap;",
         button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;cursor:pointer;", "Primary" }
@@ -18,12 +18,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HButton variant="primary">Primary</HButton>
+```
 
 ## Disabled State
 
 Buttons can be disabled, in which case they are not clickable.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:8px;padding:1rem;",
         button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;", "Normal" }
@@ -31,12 +34,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HButton variant="primary">Primary</HButton>
+```
 
 ## Icon Button Sizes
 
 Icon buttons support three sizes: small (24px), medium (32px), and large (40px).
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:12px;padding:1rem;align-items:center;",
         button { style: "width:24px;height:24px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
@@ -45,12 +51,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HButton variant="primary">Primary</HButton>
+```
 
 ## Icon Button Variants
 
 Icon buttons support five color variants: Ghost, Primary, Secondary, Danger, and Success.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:8px;padding:1rem;",
         button { style: "width:32px;height:32px;border:none;border-radius:4px;background:transparent;color:#666;cursor:pointer;", "G" }
@@ -60,6 +69,9 @@ rsx! {
         button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;", "✓" }
     }
 }
+```
+```hikari:tsx
+<HButton variant="primary">Primary</HButton>
 ```
 
 ## API

@@ -6,7 +6,7 @@ Basic data display components.
 
 Badge component for displaying status or count.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "display:flex;gap:16px;padding:1rem;align-items:center;",
         div { style: "position:relative;",
@@ -16,12 +16,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HBadge>Default</HBadge>
+```
 
 ## Divider
 
 Divider component for separating content.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         p { style: "margin:0 0 16px;", "Content above" }
@@ -30,16 +33,22 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HBadge>Default</HBadge>
+```
 
 ## Card
 
 Card component for grouping and displaying content.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;border:1px solid #e2e2ea;border-radius:8px;max-width:300px;background:#fff;",
         h3 { style: "margin:0 0 8px;font-size:16px;", "Card Title" }
         p { style: "margin:0;color:#666;font-size:14px;", "Card content goes here." }
     }
 }
+```
+```hikari:tsx
+<HBadge>Default</HBadge>
 ```

@@ -197,7 +197,7 @@ pub fn t_lang(dotted_key: &str, fallback: &str) -> (String, Language) {
 
 // ── hikari built-in component strings ─────────────────────────────────────
 
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 
 static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../res/i18n/locales");
 

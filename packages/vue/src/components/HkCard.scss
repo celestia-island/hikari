@@ -1,3 +1,5 @@
+@use "../tokens";
+
 /* HkCard — canonical surface card. Hover effect mirrors the node card:
    only box-shadow and border-color animate. No transforms, so the card
    never displaces its neighbors or triggers layout reflow. */

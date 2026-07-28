@@ -12,24 +12,30 @@ The Input component supports a three-layer CSS variable configuration architectu
 
 ## Basic Usage
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         input { type: "text", placeholder: "Basic input", style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;" }
     }
 }
 ```
+```hikari:tsx
+<HInput placeholder="Type something..." style="width:280px" />
+```
 
 ## Disabled State
 
 The input can be disabled, making it non-editable when disabled.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         input { type: "text", placeholder: "Disabled", disabled: true, style: "padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;background:#f5f5f5;color:#999;" }
     }
 }
+```
+```hikari:tsx
+<HInput placeholder="Type something..." style="width:280px" />
 ```
 
 ## Custom Colors

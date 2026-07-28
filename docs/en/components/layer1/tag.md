@@ -4,7 +4,7 @@ Tag component for displaying labels or marks.
 
 ## Basic Usage
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:8px;flex-wrap:wrap;",
         span { style: "padding:2px 8px;border-radius:4px;background:#f0f0f0;font-size:12px;color:#333;", "Default" }
@@ -15,15 +15,21 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<HTag>Default</HTag>
+```
 
 ## Closable Tag
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:8px;",
         span { style: "padding:2px 8px;border-radius:4px;background:rgba(58,110,165,0.1);color:#3a6ea5;font-size:12px;display:flex;align-items:center;gap:4px;", "Tag ✕" }
     }
 }
+```
+```hikari:tsx
+<HTag>Default</HTag>
 ```
 
 ## API

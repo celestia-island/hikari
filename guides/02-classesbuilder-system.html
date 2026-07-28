@@ -4096,9 +4096,9 @@ rsx! {
 <script>
 (function(){
  var D=JSON.parse(document.getElementById('lg-data').textContent);
- var N={"ar":"العربية","en":"English","es":"Español","fr":"Français","ja":"日本語","ko":"한국어","ru":"Русский","zhs":"简体中文","zht":"繁體中文"};
+ var N={"ar":"العربية","en":"English","es":"Español","fr":"Français","ja":"日本語","ko":"한국어","ru":"Русский","zh-Hans":"简体中文","zh-Hant":"繁體中文"};
  var DL='en',CUR='en';
- var BL={'zh':'zhs','zh-CN':'zhs','zh-Hans':'zhs','zh-TW':'zht','zh-Hant':'zht','zh-HK':'zht'};
+ var BL={'zh':'zh-Hans','zh-CN':'zh-Hans','zh-Hans':'zh-Hans','zh-TW':'zh-Hant','zh-Hant':'zh-Hant','zh-HK':'zh-Hant'};
  function gL(){var q=new URLSearchParams(location.search).get('lang');if(q&&D[q])return q;var s=localStorage['lagrange-lang'];if(s&&D[s])return s;var bl=navigator.language||'';if(BL[bl])return BL[bl];var sh=bl.split('-')[0];if(BL[sh])return BL[sh];return D[sh]?sh:DL}
  function sL(l){if(!D[l])l=DL;CUR=l;localStorage['lagrange-lang']=l;var u=new URL(location);u.searchParams.set('lang',l);history.replaceState(null,'',u);rL(l)}
  function rL(l){

@@ -19,7 +19,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 LOCALES_DIR = ROOT / "res" / "i18n" / "locales"
 
-ALL_LOCALES = ["en", "zhs", "zht", "ja", "ko", "de", "fr", "es", "pt", "ar", "ru"]
+ALL_LOCALES = ["en", "zh-Hans", "zh-Hant", "ja", "ko", "de", "fr", "es", "pt", "ar", "ru"]
 
 
 def collect_json_keys(path: Path) -> dict[str, str]:

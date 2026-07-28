@@ -198,7 +198,7 @@ hikari/
 │   │   ├── design/
 │   │   ├── components/
 │   │   └── system/
-│   └── zhs/                     # Other locales follow the same layout
+│   └── zh-Hans/                 # Other locales follow the same layout
 │
 ├── Cargo.toml                   # Workspace configuration
 ├── PLAN.md                      # Implementation plan

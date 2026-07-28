@@ -1,0 +1,319 @@
+[package]
+name = "live-block-workspace"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# Standalone workspace so cargo doesn't try to merge this into lagrange's
+# workspace (the temp crate lives under lagrange's output dir).
+[workspace]
+
+[[bin]]
+name = "live-block-lb7ba2048cab5584ad"
+path = "src/lb7ba2048cab5584ad.rs"
+
+[[bin]]
+name = "live-block-lb3a90b81526bb38b2"
+path = "src/lb3a90b81526bb38b2.rs"
+
+[[bin]]
+name = "live-block-lbd655cc6996a84ef6"
+path = "src/lbd655cc6996a84ef6.rs"
+
+[[bin]]
+name = "live-block-lb3bf87263456ac646"
+path = "src/lb3bf87263456ac646.rs"
+
+[[bin]]
+name = "live-block-lb00609a999b4641db"
+path = "src/lb00609a999b4641db.rs"
+
+[[bin]]
+name = "live-block-lb927ccb3d151e9df0"
+path = "src/lb927ccb3d151e9df0.rs"
+
+[[bin]]
+name = "live-block-lbdb864c2ef4053d7c"
+path = "src/lbdb864c2ef4053d7c.rs"
+
+[[bin]]
+name = "live-block-lb828ec6d384749365"
+path = "src/lb828ec6d384749365.rs"
+
+[[bin]]
+name = "live-block-lbc234fa4dab70d0d2"
+path = "src/lbc234fa4dab70d0d2.rs"
+
+[[bin]]
+name = "live-block-lb2ac29db2c421a9fe"
+path = "src/lb2ac29db2c421a9fe.rs"
+
+[[bin]]
+name = "live-block-lb7b591fe72c09c8e2"
+path = "src/lb7b591fe72c09c8e2.rs"
+
+[[bin]]
+name = "live-block-lb1e0d82f170b973ac"
+path = "src/lb1e0d82f170b973ac.rs"
+
+[[bin]]
+name = "live-block-lb68d4959e4bd6e800"
+path = "src/lb68d4959e4bd6e800.rs"
+
+[[bin]]
+name = "live-block-lb48116bdecb3f4120"
+path = "src/lb48116bdecb3f4120.rs"
+
+[[bin]]
+name = "live-block-lb1ca3bdc0f97c9aa5"
+path = "src/lb1ca3bdc0f97c9aa5.rs"
+
+[[bin]]
+name = "live-block-lb49cff06bf37849de"
+path = "src/lb49cff06bf37849de.rs"
+
+[[bin]]
+name = "live-block-lb587e59a656128d97"
+path = "src/lb587e59a656128d97.rs"
+
+[[bin]]
+name = "live-block-lbff8304015480b8aa"
+path = "src/lbff8304015480b8aa.rs"
+
+[[bin]]
+name = "live-block-lb7da38acdf15c4095"
+path = "src/lb7da38acdf15c4095.rs"
+
+[[bin]]
+name = "live-block-lb1b00bced6bd8a335"
+path = "src/lb1b00bced6bd8a335.rs"
+
+[[bin]]
+name = "live-block-lbc8cc11726659f2ee"
+path = "src/lbc8cc11726659f2ee.rs"
+
+[[bin]]
+name = "live-block-lbb5db7fef7e389b46"
+path = "src/lbb5db7fef7e389b46.rs"
+
+[[bin]]
+name = "live-block-lb46db83c417ad02fc"
+path = "src/lb46db83c417ad02fc.rs"
+
+[[bin]]
+name = "live-block-lb3170f80e732872c3"
+path = "src/lb3170f80e732872c3.rs"
+
+[[bin]]
+name = "live-block-lbd0278246effacf3a"
+path = "src/lbd0278246effacf3a.rs"
+
+[[bin]]
+name = "live-block-lb5669bd931c7c058f"
+path = "src/lb5669bd931c7c058f.rs"
+
+[[bin]]
+name = "live-block-lb6915bdf637484b74"
+path = "src/lb6915bdf637484b74.rs"
+
+[[bin]]
+name = "live-block-lbc59a74c6f02a25dc"
+path = "src/lbc59a74c6f02a25dc.rs"
+
+[[bin]]
+name = "live-block-lb661a4fccef7fa073"
+path = "src/lb661a4fccef7fa073.rs"
+
+[[bin]]
+name = "live-block-lb04919bf417ae528e"
+path = "src/lb04919bf417ae528e.rs"
+
+[[bin]]
+name = "live-block-lb3c7c3214d8cc8612"
+path = "src/lb3c7c3214d8cc8612.rs"
+
+[[bin]]
+name = "live-block-lb4edd1d9e9c371388"
+path = "src/lb4edd1d9e9c371388.rs"
+
+[[bin]]
+name = "live-block-lbad8880171b86b28d"
+path = "src/lbad8880171b86b28d.rs"
+
+[[bin]]
+name = "live-block-lba11eb0f3ce7de760"
+path = "src/lba11eb0f3ce7de760.rs"
+
+[[bin]]
+name = "live-block-lb4d6a3b6899b5d68a"
+path = "src/lb4d6a3b6899b5d68a.rs"
+
+[[bin]]
+name = "live-block-lb92b871e632d006f5"
+path = "src/lb92b871e632d006f5.rs"
+
+[[bin]]
+name = "live-block-lbf1edf4d1f70bec72"
+path = "src/lbf1edf4d1f70bec72.rs"
+
+[[bin]]
+name = "live-block-lbbe647d02d66aefd1"
+path = "src/lbbe647d02d66aefd1.rs"
+
+[[bin]]
+name = "live-block-lb2892a41b78d4a54d"
+path = "src/lb2892a41b78d4a54d.rs"
+
+[[bin]]
+name = "live-block-lbda87c9316223d6b6"
+path = "src/lbda87c9316223d6b6.rs"
+
+[[bin]]
+name = "live-block-lbd7538f5d6bc26a1e"
+path = "src/lbd7538f5d6bc26a1e.rs"
+
+[[bin]]
+name = "live-block-lbdf1d5f71df7be8e7"
+path = "src/lbdf1d5f71df7be8e7.rs"
+
+[[bin]]
+name = "live-block-lb602c87190369ba61"
+path = "src/lb602c87190369ba61.rs"
+
+[[bin]]
+name = "live-block-lb150d62caa48ce481"
+path = "src/lb150d62caa48ce481.rs"
+
+[[bin]]
+name = "live-block-lbfc1af6b04c029fe5"
+path = "src/lbfc1af6b04c029fe5.rs"
+
+[[bin]]
+name = "live-block-lbce668b0be3bda37b"
+path = "src/lbce668b0be3bda37b.rs"
+
+[[bin]]
+name = "live-block-lb1f2fbe632a6121e1"
+path = "src/lb1f2fbe632a6121e1.rs"
+
+[[bin]]
+name = "live-block-lb97346d8695e52ce7"
+path = "src/lb97346d8695e52ce7.rs"
+
+[[bin]]
+name = "live-block-lb182316760857d5cf"
+path = "src/lb182316760857d5cf.rs"
+
+[[bin]]
+name = "live-block-lb195778d98cb2a3bd"
+path = "src/lb195778d98cb2a3bd.rs"
+
+[[bin]]
+name = "live-block-lbf12da1c1e6364bc5"
+path = "src/lbf12da1c1e6364bc5.rs"
+
+[[bin]]
+name = "live-block-lb636d4904d6d1e7d5"
+path = "src/lb636d4904d6d1e7d5.rs"
+
+[[bin]]
+name = "live-block-lb6ecaba6290fa673a"
+path = "src/lb6ecaba6290fa673a.rs"
+
+[[bin]]
+name = "live-block-lb9a14c01542ed1c25"
+path = "src/lb9a14c01542ed1c25.rs"
+
+[[bin]]
+name = "live-block-lb72cbab1fc06ac2e8"
+path = "src/lb72cbab1fc06ac2e8.rs"
+
+[[bin]]
+name = "live-block-lb2891b5ba9075b5d0"
+path = "src/lb2891b5ba9075b5d0.rs"
+
+[[bin]]
+name = "live-block-lb7d563509d0ab26d3"
+path = "src/lb7d563509d0ab26d3.rs"
+
+[[bin]]
+name = "live-block-lbf66a3f82bc205751"
+path = "src/lbf66a3f82bc205751.rs"
+
+[[bin]]
+name = "live-block-lbd825463ca87ef178"
+path = "src/lbd825463ca87ef178.rs"
+
+[[bin]]
+name = "live-block-lbce7660d6a6639e76"
+path = "src/lbce7660d6a6639e76.rs"
+
+[[bin]]
+name = "live-block-lbca5da48f4c98a076"
+path = "src/lbca5da48f4c98a076.rs"
+
+[[bin]]
+name = "live-block-lb9c5e28a6029763cb"
+path = "src/lb9c5e28a6029763cb.rs"
+
+[[bin]]
+name = "live-block-lbe4dc2cafe28484ef"
+path = "src/lbe4dc2cafe28484ef.rs"
+
+[[bin]]
+name = "live-block-lbe8f2e045412f18cc"
+path = "src/lbe8f2e045412f18cc.rs"
+
+[[bin]]
+name = "live-block-lb3c6db7215e1fa727"
+path = "src/lb3c6db7215e1fa727.rs"
+
+[[bin]]
+name = "live-block-lb23ecf1819ae76ce9"
+path = "src/lb23ecf1819ae76ce9.rs"
+
+[[bin]]
+name = "live-block-lb1c236d9f1ef6528e"
+path = "src/lb1c236d9f1ef6528e.rs"
+
+[[bin]]
+name = "live-block-lbfd49066a7e2dbcf4"
+path = "src/lbfd49066a7e2dbcf4.rs"
+
+[[bin]]
+name = "live-block-lbc891b52c9fadb392"
+path = "src/lbc891b52c9fadb392.rs"
+
+[[bin]]
+name = "live-block-lb0b525296496c8b7c"
+path = "src/lb0b525296496c8b7c.rs"
+
+[[bin]]
+name = "live-block-lb199e8aa0e03b7bbd"
+path = "src/lb199e8aa0e03b7bbd.rs"
+
+[[bin]]
+name = "live-block-lb738df5aa7e6745c3"
+path = "src/lb738df5aa7e6745c3.rs"
+
+[[bin]]
+name = "live-block-lb3fe1fcd919df3460"
+path = "src/lb3fe1fcd919df3460.rs"
+
+[[bin]]
+name = "live-block-lb581dd959aee0af6a"
+path = "src/lb581dd959aee0af6a.rs"
+
+[[bin]]
+name = "live-block-lb78e02a1d378b1776"
+path = "src/lb78e02a1d378b1776.rs"
+
+[[bin]]
+name = "live-block-lb39c5d8aee793028a"
+path = "src/lb39c5d8aee793028a.rs"
+
+[dependencies]
+tairitsu-vdom = "0.5"
+tairitsu-hooks = "0.5"
+tairitsu-macros = "0.5"
+hikari-components = "0.3"

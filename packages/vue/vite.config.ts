@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       '@celestia-island/hikari': resolve(__dirname, 'src'),
       '@celestia-island/plana-ui': resolve(__dirname, '../../../plana/packages/ui/src'),
+      'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },
   build: {
@@ -17,12 +18,14 @@ export default defineConfig({
     emptyOutDir: true,
     cssCodeSplit: false,
     rollupOptions: {
-      input: resolve(__dirname, 'index.html'),
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        render: resolve(__dirname, 'render.html'),
+      },
       output: {
         manualChunks: undefined,
-        inlineDynamicImports: true,
         assetFileNames: 'assets/[name].[ext]',
-        entryFileNames: 'assets/index.js',
+        entryFileNames: 'assets/[name].js',
       },
     },
   },

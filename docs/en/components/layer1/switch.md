@@ -6,7 +6,7 @@ Switch components provide toggle functionality with multiple colors and variants
 
 Supports multiple colors: Success, Primary, Secondary, Danger, Warning, Info.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
         div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
@@ -18,12 +18,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
+```
 
 ## Switch Icon Variant
 
 Switch with icons, default provides ✓ and ✗ symbols.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
         span { style: "font-size:16px;", "🌙" }
@@ -33,12 +36,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
+```
 
 ## Switch Text Variant
 
 Switch with text labels, automatically adjusts slider width.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
         span { style: "font-size:14px;color:#666;", "Off" }
@@ -48,12 +54,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
+```
 
 ## Switch Size Variant
 
 Supports Small, Medium, Large sizes.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
         div { style: "width:28px;height:16px;border-radius:8px;background:#3a6ea5;position:relative;",
@@ -65,12 +74,15 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
+```
 
 ## Progress
 
 Progress bar component for displaying operation progress.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         div { style: "width:200px;height:6px;background:#e2e2ea;border-radius:3px;overflow:hidden;",
@@ -79,17 +91,23 @@ rsx! {
     }
 }
 ```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
+```
 
 ## Slider
 
 Slider component for numeric selection.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         input { type: "range", min: "0", max: "100", value: "60", style: "width:200px;" }
     }
 }
+```
+```hikari:tsx
+<div><HSwitch v-model:model-value="true" label="Toggle me" /></div>
 ```
 
 ## API

@@ -4,19 +4,22 @@ Search component for search input.
 
 ## Basic Usage
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;",
         input { type: "search", placeholder: "Search...", style: "padding:8px 12px 8px 36px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;width:240px;" }
     }
 }
 ```
+```hikari:tsx
+<HSearchInput placeholder="Search..." style="width:280px" />
+```
 
 ## With Suggestions
 
 Search with suggestion dropdown.
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;position:relative;width:240px;",
         input { type: "search", placeholder: "Search...", value: "ru", style: "padding:8px 12px;border:1px solid #3a6ea5;border-radius:6px;font-size:14px;width:100%;" }
@@ -26,6 +29,9 @@ rsx! {
         }
     }
 }
+```
+```hikari:tsx
+<HSearchInput placeholder="Search..." style="width:280px" />
 ```
 
 ## API

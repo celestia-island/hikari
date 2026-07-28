@@ -4,7 +4,7 @@ Comment component for displaying comment content.
 
 ## Basic Usage
 
-```hikari
+```hikari:rust
 rsx! {
     div { style: "padding:1rem;border:1px solid #e2e2ea;border-radius:8px;max-width:400px;",
         div { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;",
@@ -15,6 +15,9 @@ rsx! {
         p { style: "margin:0;color:#333;font-size:14px;", "This is a great component!" }
     }
 }
+```
+```hikari:tsx
+<HSpinner size="md" />
 ```
 
 ## API

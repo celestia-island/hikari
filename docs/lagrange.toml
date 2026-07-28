@@ -6,3 +6,6 @@ cname = "hikari.docs.celestia.world"
 [languages]
 default = "en"
 order = ["en", "zh-Hans", "zh-Hant", "ja", "ko", "fr", "es", "ru", "ar"]
+
+[live]
+preview_url = "/static/"

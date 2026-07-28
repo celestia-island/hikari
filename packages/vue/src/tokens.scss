@@ -1,0 +1,11 @@
+/* hikari color aliases — fallback values for theme tokens.
+   These CSS variables are used by hikari components (HkButton, HkCard,
+   HkInput, HkSelect, etc.) and are expected to be overridden by
+   consuming apps via initTheme() or custom theme CSS. */
+:root {
+  --c-primary-intense: rgb(var(--color-primary, 122 162 247) / 40%);
+  --c-primary-strong: rgb(var(--color-primary, 122 162 247) / 40%);
+  --c-primary-light: rgb(var(--color-primary, 122 162 247) / 15%);
+  --shadow-button: 0 4px 14px rgb(var(--color-primary, 122 162 247) / 35%);
+  --shadow-button-danger: 0 4px 14px rgb(var(--color-error, 247 118 142) / 35%);
+}

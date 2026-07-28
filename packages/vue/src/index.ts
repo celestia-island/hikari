@@ -7,6 +7,7 @@ export { default as HButton } from "./components/HkButton";
 export { default as HCard } from "./components/HkCard";
 export { default as HCheckbox } from "./components/HkCheckbox";
 export { default as HCollapse } from "./components/HkCollapse";
+export { default as HColorPicker } from "./components/HkColorPicker";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HDivider } from "./components/HkDivider";
 export { default as HDrawer } from "./components/HkDrawer";
@@ -25,6 +26,7 @@ export { default as HPasswordInput } from "./components/HkPasswordInput";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HGaugeRing } from "./components/HkGaugeRing";
 export { default as HProgressRing } from "./components/HkProgressRing";
+export { default as HRollingNumber } from "./components/HkRollingNumber";
 export { default as HLocalePickerPopup } from "./components/HkLocalePickerPopup";
 export { default as HHoverRevealAction } from "./components/HkHoverRevealAction";
 export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModal";
@@ -96,6 +98,9 @@ export {
   isOverlayOpen,
   TOAST_DURATION,
   type AnimationHandle,
+  useReportedTransition,
+  type ReportedTransition,
+  type ReportedTransitionTrack,
   type CronHandle,
   type FrameContext,
   type OverlayHandle,

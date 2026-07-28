@@ -282,8 +282,8 @@ pub struct PackedIcon {
 pub fn read_packed_icons(path: &Path) -> Result<BTreeMap<String, PackedIcon>> {
     use std::io::Read as _;
 
-    let compressed = fs::read(path)
-        .with_context(|| format!("Failed to read packed icon archive: {path:?}"))?;
+    let compressed =
+        fs::read(path).with_context(|| format!("Failed to read packed icon archive: {path:?}"))?;
     let mut raw = Vec::new();
     flate2::read::GzDecoder::new(&compressed[..])
         .read_to_end(&mut raw)

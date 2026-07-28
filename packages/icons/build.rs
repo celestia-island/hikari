@@ -149,9 +149,10 @@ fn packed_selection(
     config: &IconBuildConfig,
 ) -> Option<Vec<String>> {
     if let Some(names) = &config.explicit_set
-        && !names.is_empty() {
-            return Some(names.clone());
-        }
+        && !names.is_empty()
+    {
+        return Some(names.clone());
+    }
     let root = workspace_root.as_ref()?;
     auto_discovery::scan_icon_usage(root)
         .ok()

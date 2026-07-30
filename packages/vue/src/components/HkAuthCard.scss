@@ -1,0 +1,141 @@
+@use "../tokens";
+
+.hk-auth-card {
+  max-width: 28rem;
+  width: 100%;
+  background: rgb(var(--color-surface, 255 255 255) / var(--opacity-half, 0.5));
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-sm, 4px);
+  box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
+  animation: hk-auth-card-in 0.45s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)) both;
+}
+
+@keyframes hk-auth-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hk-auth-card input {
+  transition:
+    color calc(infinity * 1s) step-end,
+    background-color calc(infinity * 1s) step-end;
+}
+
+/* autofill overrides */
+.hk-auth-card input:-webkit-autofill,
+.hk-auth-card input:-webkit-autofill:hover,
+.hk-auth-card input:-webkit-autofill:focus,
+.hk-auth-card input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--hi-color-text-primary, #333) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--hi-color-surface, #fff) inset !important;
+  caret-color: var(--hi-color-text-primary, #333);
+}
+
+.hk-auth-card input:-webkit-autofill::first-line {
+  font-size: inherit !important;
+  font-family: inherit !important;
+  color: var(--hi-color-text-primary, #333);
+}
+
+.hk-auth-card-header {
+  padding: var(--space-32, 2rem) var(--space-32, 2rem) 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-auth-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--hi-color-text-primary, #333);
+  margin: 0 0 var(--space-4, 0.25rem);
+}
+
+.hk-auth-card-subtitle {
+  font-size: var(--text-base, 0.875rem);
+  color: var(--hi-color-muted, #666);
+  margin: 0;
+}
+
+.hk-auth-card-body {
+  padding: var(--space-24, 1.5rem) var(--space-32, 2rem) var(--space-32, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.hk-auth-card-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8, 0.5rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-danger, #f85149);
+  background: color-mix(in srgb, var(--hi-color-danger, #ef4444) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, #ef4444) 20%, transparent);
+  border-radius: 6px;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  margin: 0 var(--space-32, 2rem);
+}
+
+.hk-auth-card-error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--hi-color-danger, #ef4444);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hk-auth-card-body > form,
+.hk-auth-card-body > * {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.hk-auth-card-body .hk-tabs,
+.hk-auth-card-body .s-tabs {
+  margin-bottom: var(--space-12, 0.75rem);
+  display: flex;
+  justify-content: center;
+}
+
+.hk-auth-card-footer {
+  margin-top: var(--space-16, 1rem);
+  text-align: center;
+  padding: 0 var(--space-32, 2rem) var(--space-24, 1.5rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted, #666);
+}
+
+@media (max-width: 480px) {
+  .hk-auth-card-header {
+    padding-left: var(--space-16, 1rem);
+    padding-right: var(--space-16, 1rem);
+  }
+  .hk-auth-card-body {
+    padding: var(--space-20, 1.25rem) var(--space-16, 1rem) var(--space-24, 1.5rem);
+  }
+  .hk-auth-card-error {
+    margin: 0 var(--space-16, 1rem);
+  }
+  .hk-auth-card-footer {
+    padding-left: var(--space-16, 1rem);
+    padding-right: var(--space-16, 1rem);
+  }
+}

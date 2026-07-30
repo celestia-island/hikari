@@ -52,6 +52,10 @@
   --hi-shadow-dropdown: 0 4px 24px rgb(0 0 0 / 12%), 0 0 0 1px rgb(255 255 255 / 4%);
   --hi-shadow-tooltip: 0 2px 8px rgb(0 0 0 / 20%);
   --hi-shadow-focus: 0 0 0 3px rgb(255 107 157 / 12%);
+  --hi-shadow-focus-ring: 0 0 0 2px rgb(240 244 248), 0 0 0 4px rgb(238 162 164);
+  --hi-shadow-focus-ring-error: 0 0 0 2px rgb(240 244 248), 0 0 0 4px rgb(255 76 0);
+  --hi-shadow-button: 0 4px 14px rgb(238 162 164 / 35%);
+  --hi-shadow-button-danger: 0 4px 14px rgb(255 76 0 / 35%);
 
   // ── Scrollbar Geometry (overlay scrollbar system) ───────────────
   --hi-scroll-inset: 4px;

@@ -10,7 +10,6 @@ export default defineComponent({
     variant: { type: String as PropType<TagVariant>, default: "default" },
     size: { type: String as PropType<"sm" | "md">, default: "md" },
     closable: { type: Boolean, default: false },
-    icon: { type: String, default: undefined },
   },
   emits: {
     close: () => true,
@@ -24,11 +23,9 @@ export default defineComponent({
 
     return () => (
       <span class={cls.value}>
-        {props.icon && (
+        {slots.icon && (
           <span class="hk-tag-icon">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-            </svg>
+            {slots.icon()}
           </span>
         )}
         {slots.default?.()}

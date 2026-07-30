@@ -3,9 +3,24 @@
    HkInput, HkSelect, etc.) and are expected to be overridden by
    consuming apps via initTheme() or custom theme CSS. */
 :root {
-  --c-primary-intense: rgb(var(--color-primary, 122 162 247) / 40%);
-  --c-primary-strong: rgb(var(--color-primary, 122 162 247) / 40%);
+  --c-primary-faint: rgb(var(--color-primary, 122 162 247) / 5%);
+  --c-primary-subtle: rgb(var(--color-primary, 122 162 247) / 8%);
+  --c-primary-dim: rgb(var(--color-primary, 122 162 247) / 10%);
   --c-primary-light: rgb(var(--color-primary, 122 162 247) / 15%);
+  --c-primary-overlay: rgb(var(--color-primary, 122 162 247) / 15%);
+  --c-primary-medium: rgb(var(--color-primary, 122 162 247) / 25%);
+  --c-primary-strong: rgb(var(--color-primary, 122 162 247) / 40%);
+  --c-primary-intense: rgb(var(--color-primary, 122 162 247) / 40%);
+  --c-error-dim: rgb(var(--color-error, 247 118 142) / 10%);
+  --c-error-overlay: rgb(var(--color-error, 247 118 142) / 20%);
+  --c-error-strong: rgb(var(--color-error, 247 118 142) / 50%);
+  --shadow-elevated: 0 8px 32px rgb(0 0 0 / 15%);
+  --shadow-dropdown: 0 4px 24px rgb(0 0 0 / 12%), 0 0 0 1px rgb(255 255 255 / 4%);
   --shadow-button: 0 4px 14px rgb(var(--color-primary, 122 162 247) / 35%);
   --shadow-button-danger: 0 4px 14px rgb(var(--color-error, 247 118 142) / 35%);
+  --shadow-focus: 0 0 0 3px rgb(var(--color-primary, 122 162 247) / 12%);
+  --shadow-focus-error: 0 0 0 3px rgb(var(--color-error, 247 118 142) / 12%);
+  --border-input: rgb(var(--color-border, 100 100 100) / 15%);
+  --border-faint: rgb(var(--color-border, 100 100 100) / 10%);
+  --border-subtle: rgb(var(--color-border, 100 100 100) / 12%);
 }

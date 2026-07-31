@@ -29,9 +29,9 @@
     <section>
       <h2>HIconButton</h2>
       <div class="row">
-        <HIconButton icon="search" variant="ghost" size="sm" />
-        <HIconButton icon="settings" variant="outline" size="md" />
-        <HIconButton icon="heart" variant="primary" size="lg" />
+        <HIconButton icon="search" variant="ghost" :size="16" />
+        <HIconButton icon="settings" variant="secondary" :size="24" />
+        <HIconButton icon="heart" variant="primary" :size="40" />
       </div>
     </section>
 
@@ -61,7 +61,7 @@
         <HTag>Default</HTag>
         <HTag variant="success">Success</HTag>
         <HTag variant="warning">Warning</HTag>
-        <HTag variant="error">Error</HTag>
+        <HTag variant="danger">Danger</HTag>
         <HTag closable @close="() => {}">Closable</HTag>
       </div>
     </section>
@@ -80,8 +80,8 @@
 
     <section>
       <h2>HProgressBar / HProgressRing / HGaugeRing</h2>
-      <div class="row"><HProgressBar :model-value="65" style="width:200px" /></div>
-      <div class="row"><HProgressRing :model-value="75" :size="80" /><HGaugeRing :model-value="45" :size="80" label="CPU" /></div>
+      <div class="row"><HProgressBar :value="65" style="width:200px" /></div>
+      <div class="row"><HProgressRing :value="75" :size="80" /><HGaugeRing :rings="gaugeRings" :size="80" center-label="CPU" /></div>
     </section>
 
     <section>
@@ -92,7 +92,7 @@
         <HSearchInput v-model="form.search" placeholder="Search..." />
         <HNumberInput v-model="form.number" placeholder="Number" />
         <HPasswordInput v-model="form.password" placeholder="Password" />
-        <HTextarea v-model="form.textarea" placeholder="Textarea" rows="3" />
+        <HTextarea v-model="form.textarea" placeholder="Textarea" :rows="3" />
       </div>
       <p class="result" v-if="anyForm">Form: {{ anyForm }}</p>
     </section>
@@ -103,8 +103,7 @@
         <HCheckbox v-model="flags.a">Option A</HCheckbox>
         <HCheckbox v-model="flags.b">Option B</HCheckbox>
         <HSwitch v-model="flags.on" label="Toggle" />
-        <HRadio v-model="flags.radio" value="x" label="X" />
-        <HRadio v-model="flags.radio" value="y" label="Y" />
+        <HRadio v-model="flags.radio" :options="radioOpts" />
       </div>
     </section>
 
@@ -116,8 +115,8 @@
     <section>
       <h2>HSkeleton / HSkeletonList</h2>
       <div class="row">
-        <HSkeleton :width="100" :height="24" />
-        <HSkeletonList :rows="3" :width="300" />
+        <HSkeleton width="100px" height="24px" />
+        <HSkeletonList :count="3" style="width:300px" />
       </div>
     </section>
 
@@ -139,18 +138,20 @@
       <h2>HDivider</h2>
       <HDivider />
       <p style="opacity:0.5;text-align:center;padding:8px 0">Section above divider</p>
-      <HDivider label="OR" />
+      <HDivider />
       <p style="opacity:0.5;text-align:center;padding:8px 0">Section below divider</p>
     </section>
 
     <section>
       <h2>HAlert</h2>
-      <div class="col"><HAlert>Default info alert</HAlert><HAlert variant="success">Success alert</HAlert><HAlert variant="warning">Warning alert</HAlert><HAlert variant="error">Error alert</HAlert></div>
+      <div class="col"><HAlert message="Default info alert" /><HAlert variant="success" message="Success alert" /><HAlert variant="warning" message="Warning alert" /><HAlert variant="error" message="Error alert" /></div>
     </section>
 
     <section>
       <h2>HEmptyState</h2>
-      <HEmptyState icon="inbox" title="No items" description="Nothing to show here yet." />
+      <HEmptyState title="No items" description="Nothing to show here yet.">
+        <template #icon><HIcon name="inbox" :size="48" /></template>
+      </HEmptyState>
     </section>
 
     <section>
@@ -162,10 +163,10 @@
 
     <section>
       <h2>HTabs / HMorphingTabs</h2>
-      <HTabs v-model="tabs.active" :items="tabs.items" />
+      <HTabs v-model="tabs.active" :tabs="tabs.items" />
       <p class="result" style="margin-top:8px">Active tab: {{ tabs.active }}</p>
       <div style="margin-top:12px" />
-      <HMorphingTabs v-model="morphTabs.active" :items="morphTabs.items" />
+      <HMorphingTabs v-model="morphTabs.active" :tabs="morphTabs.items" />
     </section>
 
     <section>
@@ -189,7 +190,7 @@
 
     <section>
       <h2>HTimeline</h2>
-      <HTimeline :items="timelineItems" />
+      <HTimeline :steps="timelineSteps" current-key="v2" />
     </section>
 
     <section>
@@ -200,7 +201,7 @@
     </section>
 
     <section class="demo-footer">
-      <p>Hikari v0.4.0 — Powered by celestia-island</p>
+      <p>Hikari v0.4.1 — Powered by celestia-island</p>
     </section>
   </div>
 </template>
@@ -224,16 +225,18 @@ const icons = ['home', 'settings', 'user', 'search', 'bell', 'heart', 'star', 'm
 const form = ref({ text: '', search: '', number: 0, password: '', textarea: '' })
 const anyForm = computed(() => Object.values(form.value).filter(v => v !== '' && v !== 0).join(', ') || null)
 const flags = ref({ a: true, b: false, on: false, radio: 'x' })
+const radioOpts = [{ value: 'x', label: 'X' }, { value: 'y', label: 'Y' }]
+const gaugeRings = [{ pct: 45, color: 'rgb(var(--color-primary, 122 162 247))', trackColor: 'rgba(122, 162, 247, 0.15)' }]
 const select = ref({ val: '', opts: [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }, { value: 'c', label: 'Gamma' }] })
 const tabs = ref({ active: 'tab1', items: [{ key: 'tab1', label: 'Overview' }, { key: 'tab2', label: 'Details' }, { key: 'tab3', label: 'Settings' }] })
 const morphTabs = ref({ active: 'm1', items: [{ key: 'm1', label: 'Read' }, { key: 'm2', label: 'Write' }, { key: 'm3', label: 'Preview' }] })
 
-const tableCols = [{ key: 'name', label: 'Name' }, { key: 'role', label: 'Role' }]
+const tableCols = [{ key: 'name', title: 'Name' }, { key: 'role', title: 'Role' }]
 const tableRows = [{ name: 'Alice', role: 'Admin' }, { name: 'Bob', role: 'Editor' }, { name: 'Charlie', role: 'Viewer' }]
-const timelineItems = [
-  { title: 'v1.0 Released', description: 'Initial release', time: '2024-01' },
-  { title: 'v1.1', description: 'Added dark mode', time: '2024-03' },
-  { title: 'v2.0', description: 'Major rewrite', time: '2025-06' },
+const timelineSteps = [
+  { key: 'v1', label: 'v1.0 Released' },
+  { key: 'v11', label: 'v1.1' },
+  { key: 'v2', label: 'v2.0' },
 ]
 </script>
 

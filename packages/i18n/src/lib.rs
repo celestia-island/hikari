@@ -199,7 +199,7 @@ pub fn t_lang(dotted_key: &str, fallback: &str) -> (String, Language) {
 
 use include_dir::{Dir, include_dir};
 
-static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../res/i18n/locales");
+static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../res/i18n/locales");
 
 fn hikari_default_keys(language: &Language) -> I18nKeys {
     let lang_dir_name = match language {
@@ -217,13 +217,12 @@ fn hikari_default_keys(language: &Language) -> I18nKeys {
     let mut keys = I18nKeys::new();
     if let Some(lang_dir) = LOCALES_DIR.get_dir(lang_dir_name) {
         for file in lang_dir.files() {
-            if file.path().extension().map_or(false, |e| e == "toml") {
-                if let Some(content) = file.contents_utf8() {
-                    if let Ok(parsed) = toml::from_str::<I18nKeys>(content) {
-                        for (k, v) in parsed {
-                            keys.insert(k, v);
-                        }
-                    }
+            if file.path().extension().is_some_and(|e| e == "toml")
+                && let Some(content) = file.contents_utf8()
+                && let Ok(parsed) = toml::from_str::<I18nKeys>(content)
+            {
+                for (k, v) in parsed {
+                    keys.insert(k, v);
                 }
             }
         }

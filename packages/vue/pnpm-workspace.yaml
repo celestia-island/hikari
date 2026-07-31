@@ -4,3 +4,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@vue/language-core@3.3.9'
   - vue-tsc@3.3.9
+overrides:
+  typescript: ~6.0

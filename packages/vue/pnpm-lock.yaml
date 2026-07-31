@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  typescript: ~6.0
+
 importers:
 
   .:
@@ -31,7 +34,7 @@ importers:
         specifier: ^*
         version: 1.102.0
       typescript:
-        specifier: ^*
+        specifier: ~6.0
         version: 6.0.3
       vite:
         specifier: ^*
@@ -763,12 +766,12 @@ packages:
     resolution: {integrity: sha512-TS3Y1ux/IRoE8OCP2PpACAeOseuIs0UvWrcr7u+w3PmfY+SlCfEf8zjrBgnQksHUgLpthi5vHlffcQTQTdPBZA==}
     hasBin: true
     peerDependencies:
-      typescript: '>=5.0.0'
+      typescript: ~6.0
 
   vue@3.5.40:
     resolution: {integrity: sha512-+8PJ4SJXdn/cHGImF4CKdxlWHIN5Dkt7DoufRREM6h6uVCx2m7QxgcEQmmzyOK8A9mcafg7sFbJFYsdFVubTig==}
     peerDependencies:
-      typescript: '*'
+      typescript: ~6.0
     peerDependenciesMeta:
       typescript:
         optional: true

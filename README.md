@@ -1,9 +1,9 @@
 <div align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/master/res/logo/hikari.png" /></div>
 <h1 align="center">Hikari</h1>
 <div align="center">
- <strong>
-   The Frontend of Everything
- </strong>
+  <strong>
+    The Frontend of Everything
+  </strong>
 </div>
 
 <br />
@@ -14,9 +14,9 @@
     <img src="https://img.shields.io/github/actions/workflow/status/celestia-island/hikari/ci.yml"
       alt="CI Status" />
   </a>
-  <!-- Built with -->
-  <a href="https://sagiegurari.github.io/cargo-make">
-    <img src="https://sagiegurari.github.io/cargo-make/assets/badges/cargo-make.svg" alt="Built with cargo-make">
+  <!-- Built with tairitsu -->
+  <a href="https://github.com/celestia-island/tairitsu">
+    <img src="https://img.shields.io/badge/tairitsu-0.5-blue.svg" alt="Built on tairitsu">
   </a>
   <!-- License -->
   <a href="LICENSE">
@@ -24,11 +24,15 @@
   </a>
   <!-- Rust -->
   <a href="https://www.rust-lang.org/">
-    <img src="https://img.shields.io/badge/rust-1.52+-orange.svg" alt="Rust 1.52+">
+    <img src="https://img.shields.io/badge/rust-1.85-orange.svg" alt="Rust 1.85">
   </a>
-  <!-- Dioxus -->
-  <a href="https://dioxuslabs.com/">
-    <img src="https://img.shields.io/badge/dioxus-0.7-blue.svg" alt="Dioxus 0.7">
+  <!-- crates.io -->
+  <a href="https://crates.io/crates/hikari-components">
+    <img src="https://img.shields.io/badge/crates.io-0.3-orange.svg" alt="crates.io">
+  </a>
+  <!-- docs.rs -->
+  <a href="https://docs.rs/hikari-components">
+    <img src="https://docs.rs/hikari-components/badge.svg" alt="docs.rs" />
   </a>
 </div>
 
@@ -42,8 +46,8 @@
       Quick Start
     </a>
     <span> | </span>
-    <a href="#examples">
-      Examples
+    <a href="docs/en/">
+      Documentation
     </a>
     <span> | </span>
     <a href="docs/en/guides/ARCHITECTURE.md">
@@ -54,9 +58,9 @@
 
 <br/>
 
-> A modern Rust UI framework blending traditional Chinese aesthetics with futuristic sci-fi design
+> A modern UI component library blending traditional Chinese aesthetics with futuristic sci-fi design
 
-**Hikari** (光 - "Light") is a comprehensive UI framework built with [Dioxus](https://dioxuslabs.com/), featuring a unique design system inspired by Arknights' clean aesthetics, FUI (Futuristic User Interface) elements, and a rich palette of traditional Chinese colors. The name "Hikari" comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/).
+**Hikari** (光 - "Light") is a component library built on the [tairitsu](https://github.com/celestia-island/tairitsu) framework (`tairitsu-vdom`, `tairitsu-hooks`, `tairitsu-macros`, `tairitsu-style` ^0.5.18), sharing SCSS styles across a Rust/WASM implementation and a Vue 3 port. The design system draws from Arknights' clean aesthetics, FUI (Futuristic User Interface) elements, and a rich palette of traditional Chinese colors. The name "Hikari" comes from the rhythm game [Arcaea](https://arcaea.lowiro.com/).
 
 ## Vision
 
@@ -68,275 +72,149 @@ Hikari embodies three core design philosophies:
 
 The result is a UI framework that feels both ancient and futuristic, professional yet approachable, with a distinctive visual identity that stands out from conventional component libraries.
 
+## Packages
+
+| Package | Description |
+| --- | --- |
+| `hikari-palette` | 500+ traditional Chinese colors with rich metadata and type-safe constants |
+| `hikari-theme` | Theme context/provider, CSS variables, built-in themes, SCSS mixins |
+| `hikari-animation` | Animation engine (Tween, Motion, States) used by components |
+| `hikari-components` | Core UI components: layout, buttons, inputs, table, tree, feedback, navigation |
+| `hikari-extra-components` | Advanced components: node graph, collapsible, drag layer, zoom controls |
+| `hikari-icons` | Icon set with compile-time discovery (auto-discovers used icons) |
+| `hikari-builder` | Build-time ClassesBuilder system |
+| `hikari-i18n` | Locale resources |
+| `@celestia-island/hikari` | Vue 3 port (`packages/vue`), sharing the same SCSS design system |
+
+The Rust crates are published to [crates.io](https://crates.io/search?q=hikari) (current 0.3.x) with docs on [docs.rs](https://docs.rs/hikari-components).
+
 ## Tech Stack
 
-- **Frontend**: Dioxus 0.7 (WebAssembly)
-- **Styling**: Grass (SCSS compiler) + SCSS
+- **Framework**: [tairitsu](https://github.com/celestia-island/tairitsu) — tairitsu-vdom/hooks/macros/style ^0.5.18 (compiles to `wasm32` / WASI)
+- **Styling**: SCSS compiled via `grass` + `scss!` compile-time stylesheets
 - **Server**: Axum 0.8 (optional SSR support)
-- **Language**: Rust 1.52+
+- **Language**: Rust 1.85 (edition 2024)
+- **Web port**: Vue 3 (TypeScript, `packages/vue`, npm package `@celestia-island/hikari`)
 - **Build System**: Justfile
-- **Tooling**: Python 3.11+ (formatting and linting)
-
-## Features
-
-### hikari-palette
-
-- 500+ traditional Chinese colors
-- Rich color metadata (hex, RGB, CMYK, historical notes)
-- Pre-defined palettes for different design systems
-- Type-safe color constants with Chinese names
-
-### hikari-theme
-
-- Theme context and provider
-- CSS variables system
-- Multiple built-in themes (Primary, FUI Dark, Arknights, Fresh)
-- SCSS mixins and utilities
-- Responsive design utilities
-
-### hikari-components
-
-- **Layout System**: Layout, Header, Aside, Content, Container, Grid, Row, Col, Section, Spacer
-- **Basic Components**: Button, Input, Card, Badge
-- **Feedback**: Alert, Toast, Tooltip
-- **Navigation**: Menu, Tabs, Breadcrumb
-- **Data Display**: Table (modular with pagination, sort, filter, selection)
-- **Data Display**: Tree (modular with virtual scroll, drag-drop, collapse)
-
-### hikari-extra-components
-
-- **Node Graph System**: Canvas, nodes, ports, connections, minimap, context menu
-- **Advanced Utilities**: Collapsible, DragLayer, ZoomControls
-- Perfect for visual editors, workflow builders, and data visualization
-
-### hikari-render-service
-
-- Server-Side Rendering support
-- Easy Axum integration
-- Static asset serving
-- Type-safe router builder
-- Production-ready error handling
-- Style service with CSS injection
 
 ## Quick Start
 
-### Installation
+### Rust (tairitsu)
 
-Add Hikari to your `Cargo.toml`:
+Add the crates to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-hikari-palette = "0.1.0"
-hikari-theme = "0.1.0"
-hikari-components = "0.1.0"
+tairitsu-vdom = "^0.5.18"
+tairitsu-hooks = "^0.5.18"
+tairitsu-macros = "^0.5.18"
+hikari-palette = "^0.3"
+hikari-theme = "^0.3"
+hikari-animation = "^0.3"
+hikari-icons = "^0.3"
+hikari-i18n = "^0.3"
+hikari-components = { version = "^0.3", features = ["basic", "feedback", "navigation", "layout", "data"] }
 ```
 
-### Basic Usage
+or with `cargo add`:
+
+```bash
+cargo add tairitsu-vdom@^0.5.18 tairitsu-hooks@^0.5.18 tairitsu-macros@^0.5.18
+cargo add hikari-palette@^0.3 hikari-theme@^0.3 hikari-animation@^0.3 hikari-icons@^0.3 hikari-i18n@^0.3
+cargo add hikari-components@^0.3
+```
+
+Component features are organized in groups — `basic`, `feedback`, `navigation`, `layout`, `data`, `display`, `entry`, `production` — each enabling a set of individual component features (e.g. `button`, `table`, `tree`, `toast`). The default feature set covers all groups.
+
+Basic usage:
 
 ```rust
-use dioxus::prelude::*;
+use tairitsu_macros::{component, rsx};
+use tairitsu_vdom::VNode;
 use hikari_theme::ThemeProvider;
-use hikari_components::Button;
+use hikari_components::*;
 
-fn app() -> Element {
+#[component]
+fn App() -> VNode {
     rsx! {
-        ThemeProvider { palette: "arknights".to_string(),
+        ThemeProvider { initial_palette: "hikari".to_string(),
             div { class: "container",
-                h1 { "Welcome to Hikari" }
-                p { "A fusion of tradition and technology" }
-
-                Button {
-                    variant: ButtonVariant::Primary,
-                    onclick: |_| println!("Clicked!"),
-                    "Get Started"
-                }
+                Button { variant: ButtonVariant::Primary, "Get Started" }
             }
         }
     }
 }
 ```
 
-### With Chinese Colors
+> Note: `hikari-components` and the tairitsu crates are published on crates.io. Local development can point the tairitsu crates at working copies via `[patch.crates-io]` in `~/.cargo/config.toml`.
 
-```rust
-use hikari_palette::{石青, 朱砂, 藤黄};
+### Vue 3
 
-fn customize_theme() {
-    let primary = 石青;
-    let secondary = 朱砂;
-    let accent = 藤黄;
+The Vue port ships as `@celestia-island/hikari` (0.4.x, `packages/vue`). It is not yet published to the npm registry; consumers wire it up via a local link — this is what arona and shittim-chest use:
 
-    println!("Primary: {} ({})", primary.name, primary.hex);
-    // Output: Primary: 石青 (#1759A8)
+```json
+// package.json
+{
+  "dependencies": {
+    "@celestia-island/hikari": "link:../hikari/packages/vue"
+  }
 }
 ```
 
-## Package Structure
+or, with pnpm workspaces, list the local package in `pnpm-workspace.yaml` and depend on it with `workspace:*`:
 
-```
-hikari/
-├── packages/
-│   ├── palette/                 # Chinese color system
-│   ├── theme/                   # Theme system + SCSS
-│   ├── components/              # Basic components
-│   ├── extra-components/        # Advanced components
-│   ├── animation/               # Animation utilities
-│   ├── icons/                   # Icon set
-│   ├── builder/                 # Build-time live component compiler
-│   └── i18n/                    # Locale resources
-│
-├── examples/
-│   ├── website/                 # Comprehensive website
-│   ├── table-demo/              # Table component demo
-│   ├── tree-demo/               # Tree component demo
-│   ├── node-graph-demo/         # Node graph demo
-│   └── ssr-demo/                # SSR example
-│
-├── docs/
-│   ├── en/
-│   │   ├── guides/
-│   │   ├── design/
-│   │   ├── components/
-│   │   └── system/
-│   └── zh-Hans/                 # Other locales follow the same layout
-│
-├── Cargo.toml                   # Workspace configuration
-├── PLAN.md                      # Implementation plan
-└── README.md                    # This file
+```yaml
+packages:
+  - 'packages/*'
+  - '../hikari/packages/vue'
 ```
 
-## Examples
+Once published to npm, installation will simply be `pnpm add @celestia-island/hikari`. Import the styles once in your app entry point, then use the `Hk*` components (HkButton, HkCard, HkInput, HkModal, ...) in your templates:
 
-### Layout Component
-
-```rust
-use hikari_components::layout::{Layout, Header, Aside};
-
-rsx! {
-    Layout {
-        header: rsx! {
-            Header {
-                h1 { "My Application" }
-            }
-        },
-        aside: rsx! {
-            Aside {
-                nav {
-                    a { "Home" }
-                    a { "About" }
-                    a { "Contact" }
-                }
-            }
-        },
-        main {
-            p { "Main content goes here..." }
-        }
-    }
-}
+```ts
+import "@celestia-island/hikari/styles";
 ```
 
-### Button Component
+## Documentation
 
-```rust
-rsx! {
-    Button {
-        variant: ButtonVariant::Primary,
-        size: ButtonSize::Large,
-        onclick: |_| println!("Clicked!"),
-        "Click Me"
-    }
+The full documentation lives under `docs/` in 9 languages:
 
-    Button {
-        variant: ButtonVariant::Ghost,
-        icon: rsx! { Icon { name: "search" } },
-        "Search"
-    }
+- [English](docs/en/) · [简体中文](docs/zh-Hans/) · [繁體中文](docs/zh-Hant/) · [日本語](docs/ja/) · [한국어](docs/ko/)
+- [Español](docs/es/) · [Français](docs/fr/) · [Русский](docs/ru/) · [العربية](docs/ar/)
 
-    Button {
-        variant: ButtonVariant::Danger,
-        loading: true,
-        "Processing..."
-    }
-}
-```
+Key pages:
 
-### Theme Provider
+- [Architecture Overview](docs/en/guides/ARCHITECTURE.md)
+- [Contributing Guidelines](docs/en/guides/CONTRIBUTING.md)
+- [Design Overview](docs/en/design/overview.md)
+- [System Overview](docs/en/system/overview.md)
 
-```rust
-rsx! {
-    ThemeProvider {
-        palette: "fui-dark".to_string(),
-        // All components automatically use the FUI Dark theme
-        Button { "FUI Button" }
-    }
-}
-```
+Package-level docs:
 
-### SSR Integration
-
-```rust
-use hikari_render_service::HikariRenderServicePlugin;
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let app = HikariRenderServicePlugin::new()
-        .add_route("/api/health", health_handler)
-        .static_assets("./dist")
-        .build()?;
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    axum::serve(listener, app).await?;
-    Ok(())
-}
-```
-
-## Design Philosophy
-
-### Arknights Flat Design
-
-- Clean, sharp lines and edges
-- Clear information hierarchy
-- High contrast for readability
-- Minimalist without being boring
-
-### FUI Sci-Fi Aesthetics
-
-- Subtle glow effects (`box-shadow`, `text-shadow`)
-- Dynamic indicators (breathing lights, pulse animations)
-- Fine 1px semi-transparent borders
-- Geometric patterns (hexagons, grids)
-
-### Animation Principles
-
-- Subtle transitions (150ms ease)
-- Functional animations over decorative
-- Smooth, natural motion curves
-- No jarring or distracting effects
-
-### Chinese Color System
-
-- **Primary Colors**: Stone Cyan (石青), Cinnabar (朱砂), Vine Yellow (藤黄), Indigo (靛蓝)
-- **Neutral Colors**: Moon White (月白), Ink Black (墨色), Silk Gray (缟色)
-- **Functional Colors**: Scallion Green (葱倩 - success), Goosling Yellow (鹅黄 - warning), Cinnabar (朱砂 - danger)
-
-Each color carries historical significance, adding cultural depth to your applications.
+- [hikari-palette](packages/palette/README.md)
+- [hikari-theme](packages/theme/README.md)
+- [hikari-animation](packages/animation/README.md)
+- [hikari-components](packages/components/README.md)
+- [hikari-extra-components](packages/extra-components/README.md)
+- [hikari-icons](packages/icons/README.md)
+- [hikari-vue (@celestia-island/hikari)](packages/vue/README.md)
 
 ## Development
 
 ### Prerequisites
 
-- Rust 1.52+
-- Python 3.11+ (for tooling scripts)
-- Just (command runner)
+- Rust 1.85+ (edition 2024)
+- `just` (command runner) — `cargo install just`
+- Node.js + pnpm (for the Vue port)
 
 ### Build Commands
 
 ```bash
-# Install just
-cargo install just
-
-# Build all packages
+# Build all packages (release)
 just build
+
+# Build for development
+just build-dev
 
 # Run tests
 just test
@@ -344,34 +222,16 @@ just test
 # Format code
 just fmt
 
-# Run linter
-just lint
+# Run clippy lints
+just clippy
 
-# Start development server
+# Start the development server
 just dev
 ```
 
-### Package Status
-
-- [x] hikari-palette - Complete
-- [x] hikari-theme - Complete
-- [x] hikari-components - Basic components complete
-- [ ] hikari-extra-components - In progress
-
-See the [Contributing guide](docs/en/guides/CONTRIBUTING.md) for how to get involved.
-
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](docs/en/guides/CONTRIBUTING.md) for guidelines.
-
-## Documentation
-
-- [Architecture Overview](docs/en/guides/ARCHITECTURE.md)
-- [Contributing Guidelines](docs/en/guides/CONTRIBUTING.md)
-- [hikari-palette Documentation](packages/palette/README.md)
-- [hikari-theme Documentation](packages/theme/README.md)
-- [hikari-components Documentation](packages/components/README.md)
-- [hikari-extra-components Documentation](packages/extra-components/README.md)
+We welcome contributions! Please see the [Contributing guide](docs/en/guides/CONTRIBUTING.md) for guidelines.
 
 ## License
 
@@ -381,10 +241,9 @@ Hikari is licensed under the [Synthetic Source License (SySL), Version 1.0](./LI
 
 Inspired by and built upon:
 
-- [Dioxus](https://dioxuslabs.com/) - The Rust UI framework
+- [Tairitsu](https://github.com/celestia-island/tairitsu) - The full-stack framework Hikari is built on
 - [Arknights](https://www.arknights.global/) - Design language inspiration
 - [ChineseColors](https://github.com/zhaoolee/ChineseColors) - Traditional color palette
-- [tairitsu](https://github.com/TairitsuMC/tairitsu) - Architecture patterns
 - [akasha](https://github.com/TairitsuMC/akasha) - Node graph system reference
 
 ## Name

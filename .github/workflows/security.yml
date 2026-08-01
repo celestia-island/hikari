@@ -1,6 +1,7 @@
 name: Security Audit
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - '.github/workflows/security.yml'
@@ -14,7 +15,7 @@ on:
 jobs:
   audit:
     name: cargo audit
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +27,7 @@ jobs:
 
   deny:
     name: cargo deny
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v4
 

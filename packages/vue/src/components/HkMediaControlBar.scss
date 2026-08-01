@@ -1,0 +1,65 @@
+.hk-media-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-10);
+  background: rgb(var(--color-surface) / 0.85);
+  backdrop-filter: blur(var(--blur-sm));
+  border-top: 1px solid var(--border-faint);
+  color: rgb(var(--color-text));
+}
+
+.hk-media-btn.hk-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.hk-media-play.hk-btn {
+  background: rgb(var(--color-primary) / 0.14);
+  color: rgb(var(--color-primary));
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.24);
+  }
+}
+
+.hk-media-controls-seek {
+  flex: 1;
+  min-width: 0;
+}
+
+.hk-media-time {
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+  user-select: none;
+}
+
+.hk-media-volume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hk-media-controls-vol {
+  width: 64px;
+}
+
+.hk-media-rate {
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Mobile responsive ─────────────────────────────────────────────
+// On a phone the play button + time labels + 64px volume slider leave
+// almost no room for the seek bar to be usable. Phone volume is set via
+// hardware keys, so hide the volume control on narrow screens and let
+// the seek bar reclaim that width.
+@media (max-width: 600px) {
+  .hk-media-volume {
+    display: none;
+  }
+}

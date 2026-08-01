@@ -193,8 +193,64 @@
       <HTimeline :steps="timelineSteps" current-key="v2" />
     </section>
 
+    <section>
+      <h2>HMediaSlider</h2>
+      <div class="row" style="width:min(420px,100%)">
+        <HMediaSlider v-model:ratio="mediaSliderRatio" :buffered="0.85" />
+        <span style="font-size:0.7rem;opacity:0.6">{{ Math.round(mediaSliderRatio * 100) }}%</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>HMediaPlayer (audio)</h2>
+      <HMediaPlayer type="audio" :src="demoAudioSrc" style="max-width:560px" />
+    </section>
+
+    <section>
+      <h2>HImageViewer</h2>
+      <HImageViewer :src="demoImageSrc" alt="Hikari demo image" />
+    </section>
+
+    <section>
+      <h2>HZoomToolbar / HMinimap</h2>
+      <div style="position:relative;height:200px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.35)">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.75rem;opacity:0.5">
+          Host surface — zoom {{ zoomState.zoom.toFixed(2) }}x, pan ({{ Math.round(zoomState.panX) }}, {{ Math.round(zoomState.panY) }})
+        </div>
+        <HZoomToolbar
+          :zoom="zoomState.zoom"
+          :can-zoom-in="zoomState.canIn"
+          :can-zoom-out="zoomState.canOut"
+          :is-zoomed="zoomState.zoomed"
+          @zoom-in="zoomIn"
+          @zoom-out="zoomOut"
+          @reset="zoomReset"
+        />
+        <HMinimap
+          :boxes="zoomBoxes"
+          :hub-pos="zoomHub"
+          :zoom="zoomState.zoom"
+          :pan-x="zoomState.panX"
+          :pan-y="zoomState.panY"
+          :viewport-width="800"
+          :viewport-height="200"
+          :content-bounds="zoomContent"
+          :zoom-percent="Math.round(zoomState.zoom * 100)"
+          :can-zoom-in="zoomState.canIn"
+          :can-zoom-out="zoomState.canOut"
+          show-reset
+          @pan-delta="panBy"
+        />
+      </div>
+    </section>
+
+    <section>
+      <h2>HTrendChart</h2>
+      <HTrendChart :pens="trendPens" height="260px" style="max-width:760px" />
+    </section>
+
     <section class="demo-footer">
-      <p>Hikari v0.4.3 — Powered by celestia-island</p>
+      <p>Hikari v0.4.4 — Powered by celestia-island</p>
     </section>
   </div>
 </template>
@@ -209,9 +265,12 @@ import {
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HCollapse,
   HTabs, HMorphingTabs, HCard, HTable, HTimeline,
+  HMediaSlider, HMediaPlayer, HImageViewer,
+  HZoomToolbar, HMinimap, HTrendChart,
+  type TrendPen, type MinimapBox,
 } from '@celestia-island/hikari'
 
-const totalComponents = 56
+const totalComponents = 64
 
 const icons = ['home', 'settings', 'user', 'search', 'bell', 'heart', 'star', 'mail', 'download', 'upload', 'trash', 'edit', 'plus', 'check', 'x']
 
@@ -230,6 +289,98 @@ const timelineSteps = [
   { key: 'v1', label: 'v1.0 Released' },
   { key: 'v11', label: 'v1.1' },
   { key: 'v2', label: 'v2.0' },
+]
+
+const mediaSliderRatio = ref(0.42)
+
+function makeSilentWav(seconds = 2, sampleRate = 8000): string {
+  const frames = seconds * sampleRate
+  const bytes = 44 + frames
+  const buf = new Uint8Array(bytes)
+  const v = new DataView(buf.buffer)
+  v.setUint32(0, 0x52494646, false) // "RIFF"
+  v.setUint32(4, bytes - 8, true)
+  v.setUint32(8, 0x57415645, false) // "WAVE"
+  v.setUint32(12, 0x666d7420, false) // "fmt "
+  v.setUint32(16, 16, true)
+  v.setUint16(20, 1, true)
+  v.setUint16(22, 1, true)
+  v.setUint32(24, sampleRate, true)
+  v.setUint32(28, sampleRate, true)
+  v.setUint16(32, 1, true)
+  v.setUint16(34, 8, true)
+  v.setUint32(36, 0x64617461, false) // "data"
+  v.setUint32(40, frames, true)
+  return 'data:audio/wav;base64,' + btoa(String.fromCharCode(...buf))
+}
+const demoAudioSrc = makeSilentWav()
+
+const demoImageSrc =
+  'data:image/svg+xml;base64,' +
+  btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
+    <rect width="1600" height="900" fill="#1b2333"/>
+    <g stroke="#2c3a55" stroke-width="1">
+      ${Array.from({ length: 15 }, (_, i) => `<line x1="${i * 110}" y1="0" x2="${i * 110}" y2="900"/>`).join('')}
+      ${Array.from({ length: 9 }, (_, i) => `<line x1="0" y1="${i * 110}" x2="1600" y2="${i * 110}"/>`).join('')}
+    </g>
+    <circle cx="800" cy="450" r="180" fill="rgba(122,162,247,0.35)" stroke="#7aa2f7" stroke-width="3"/>
+    <circle cx="800" cy="450" r="90" fill="rgba(122,162,247,0.2)" stroke="#7aa2f7" stroke-width="2" stroke-dasharray="6 4"/>
+    <circle cx="800" cy="450" r="12" fill="#f7768e"/>
+    <text x="800" y="700" fill="#9aa5ce" font-family="monospace" font-size="28" text-anchor="middle">Hikari — zoom / pan demo</text>
+  </svg>`)
+
+const zoomState = ref({ zoom: 1.6, panX: -40, panY: -18, canIn: true, canOut: true, zoomed: true })
+const zoomBoxes: MinimapBox[] = [
+  { id: 'a', bounds: { x: 60, y: 40, w: 200, h: 90 }, color: 'rgb(var(--color-info, 59 130 246))' },
+  { id: 'b', bounds: { x: 340, y: 40, w: 200, h: 90 }, color: 'rgb(var(--color-success, 34 197 94))' },
+  { id: 'c', bounds: { x: 200, y: 160, w: 200, h: 90 }, color: 'rgb(var(--color-warning, 245 158 11))' },
+]
+const zoomHub = { x: 300, y: 210 }
+const zoomContent = { x: 0, y: 0, w: 600, h: 300 }
+function zoomIn() {
+  zoomState.value.zoom = Math.min(8, zoomState.value.zoom * 1.2)
+  syncZoom()
+}
+function zoomOut() {
+  zoomState.value.zoom = Math.max(1, zoomState.value.zoom / 1.2)
+  syncZoom()
+}
+function zoomReset() {
+  zoomState.value.zoom = 1
+  zoomState.value.panX = 0
+  zoomState.value.panY = 0
+  syncZoom()
+}
+function panBy(dx: number, dy: number) {
+  zoomState.value.panX += dx
+  zoomState.value.panY += dy
+  syncZoom()
+}
+function syncZoom() {
+  const z = zoomState.value
+  z.zoomed = z.zoom > 1
+  z.canIn = z.zoom < 8
+  z.canOut = z.zoom > 1
+}
+
+const now = Date.now()
+const trendPens: TrendPen[] = [
+  {
+    label: 'CPU',
+    thresholds: { h: 70, l: 15 },
+    data: Array.from({ length: 40 }, (_, i) => ({
+      time: now - (40 - i) * 15_000,
+      value: 30 + Math.sin(i / 3) * 18 + (i % 7) * 2,
+    })),
+  },
+  {
+    label: 'Memory',
+    thresholds: { hh: 90 },
+    data: Array.from({ length: 40 }, (_, i) => ({
+      time: now - (40 - i) * 15_000,
+      value: 48 + Math.cos(i / 4) * 10,
+    })),
+  },
 ]
 </script>
 

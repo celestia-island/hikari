@@ -1,0 +1,76 @@
+.hk-minimap {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 50;
+  width: 160px;
+  background: rgb(var(--color-surface) / 0.82);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(var(--blur-md));
+  cursor: pointer;
+  overflow: hidden;
+  pointer-events: auto;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 0.3);
+  }
+
+  &[data-dragging] {
+    cursor: grabbing;
+  }
+}
+
+.hk-minimap-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hk-mm-zoom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-top: 1px solid var(--border-faint);
+  pointer-events: auto;
+}
+
+.hk-mm-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.1);
+    color: rgb(var(--color-primary));
+  }
+
+  &:disabled {
+    color: rgb(var(--color-muted) / 40%);
+    cursor: not-allowed;
+  }
+}
+
+.hk-mm-zoom-reset-btn svg {
+  stroke-width: 2px;
+}
+
+.hk-mm-zoom-label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-muted));
+  min-width: 30px;
+  text-align: center;
+  user-select: none;
+}

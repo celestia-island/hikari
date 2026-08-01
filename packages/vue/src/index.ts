@@ -56,6 +56,20 @@ export { default as HWindowedItem } from "./components/HkWindowedItem";
 export { default as HDateTimePicker } from "./components/HkDateTimePicker";
 export { default as HTimeline } from "./components/HkTimeline";
 
+// Media player kit
+export { default as HMediaPlayer, MEDIA_RATES } from "./components/HkMediaPlayer";
+export { default as HMediaControlBar, formatMediaTime } from "./components/HkMediaControlBar";
+export { default as HMediaSlider } from "./components/HkMediaSlider";
+export { default as HMediaVisualizer } from "./components/HkMediaVisualizer";
+
+// Image viewer kit
+export { default as HImageViewer } from "./components/HkImageViewer";
+export { default as HZoomToolbar } from "./components/HkZoomToolbar";
+export { default as HMinimap } from "./components/HkMinimap";
+
+// Charts
+export { default as HTrendChart } from "./components/HkTrendChart";
+
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
@@ -70,6 +84,8 @@ export { type ModalAction } from "./components/HkModal";
 export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
 export { type DragListItem } from "./components/HkDraggableList";
 export { type GridItem } from "./components/HkDraggableGrid";
+export { type MinimapBox, type MinimapRect } from "./components/HkMinimap";
+export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./components/HkTrendChart";
 
 // Theme system
 export {

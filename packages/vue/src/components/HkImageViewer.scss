@@ -1,0 +1,33 @@
+.hk-image-viewer {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  min-height: 18rem;
+  overflow: hidden;
+  background: rgb(0 0 0 / 45%);
+  border-radius: var(--radius-sm);
+  touch-action: none;
+  user-select: none;
+}
+
+.hk-image-viewer-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  max-height: none;
+  will-change: transform;
+  transition: transform 0.12s ease-out;
+
+  &.is-loading {
+    opacity: 0;
+  }
+}
+
+.hk-image-viewer-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

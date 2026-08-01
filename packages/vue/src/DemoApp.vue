@@ -193,15 +193,8 @@
       <HTimeline :steps="timelineSteps" current-key="v2" />
     </section>
 
-    <section>
-      <h2>HAuthCard</h2>
-      <div class="row">
-        <HAuthCard title="Sign In" subtitle="Welcome back to celestia.world" />
-      </div>
-    </section>
-
     <section class="demo-footer">
-      <p>Hikari v0.4.1 — Powered by celestia-island</p>
+      <p>Hikari v0.4.3 — Powered by celestia-island</p>
     </section>
   </div>
 </template>
@@ -215,10 +208,10 @@ import {
   HCheckbox, HSwitch, HRadio, HSelect,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HCollapse,
-  HTabs, HMorphingTabs, HCard, HTable, HTimeline, HAuthCard,
+  HTabs, HMorphingTabs, HCard, HTable, HTimeline,
 } from '@celestia-island/hikari'
 
-const totalComponents = 57
+const totalComponents = 56
 
 const icons = ['home', 'settings', 'user', 'search', 'bell', 'heart', 'star', 'mail', 'download', 'upload', 'trash', 'edit', 'plus', 'check', 'x']
 

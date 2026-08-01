@@ -37,21 +37,18 @@ Generated: 2026-07-20T15:52:13.335Z
 | 31 | HkEmptyState | OK | `<div class="hk-empty-state"><div class="hk-empty-icon">[SVG]</div><p class="hk-empty-title">Nothing here</p><p class="hk-empty-desc">Add some data</p><div class="hk-empty-action"></div></div>` |
 | 32 | HkSidebar | OK | `<aside class="hk-sidebar" style="width:280px;"><nav class="hk-sidebar-panel" style="width:280px;"><div class="hk-sidebar-body">Nav items</div></nav></aside>` |
 | 33 | HkLogo | OK | `<div class="hk-logo" style="line-height:0;"><div class="hk-logo__placeholder" style="width:2rem;height:2rem;" role="img" aria-label="MyApp"><span class="hk-logo__initial">M</span></div></div>` |
-| 34 | HkStatusBar | OK | `<footer class="hk-status-bar"><div class="hk-status-bar__left"><span class="hk-status-bar__version">v1.0.0</span></div><div class="hk-status-bar__right"></div></footer>` |
-| 35 | HkGaugeRing | OK | `<div class="hk-gauge-ring" style="width:140px;height:140px;">[SVG]<div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><div class="text-lg font-bold text-text le` |
-| 36 | HkSelectionGrid | OK | `<div class="hk-selection-grid"><div class="hk-selection-grid__grid" data-cols="2"><div role="button" tabindex="0" class="hk-selection-grid__item" data-selected="true" aria-selected="true"><div class="` |
-| 37 | HkAdminShell | OK | `<div class="hk-admin-shell"><div class="hk-admin-shell__header">Header</div><div class="hk-admin-shell__body"><aside class="hk-admin-shell__sidebar" style="width:240px;"><div class="hk-admin-shell__si` |
-| 38 | HkAdminHeader | OK | `<header class="hk-admin-header"><div class="hk-admin-header__left"><span class="hk-admin-header__title">Admin</span></div><div class="hk-admin-header__right"><button type="button" class="hikari-btn hi` |
-| 39 | HkNavItem | OK | `<button type="button" class="hk-nav-item hk-nav-item--button hk-nav-item--active" data-active><span class="hk-nav-item__icon">📊</span><span class="hk-nav-item__label">Dashboard</span></button>` |
-| 40 | HkNumberInput | OK | `<div class="hk-number-input hk-number-input--md"><div class="hk-number-input__inner"><input type="number" class="hk-number-input__field" value="42" step="1"><div class="hk-number-input__steppers"><but` |
-| 41 | HkSearchInput | OK | `<div class="hk-search-input hk-search-input--md"><span class="hk-search-input__icon">[SVG]</span><input type="search" class="hk-search-input__field" value placeholder="Search..."></div>` |
-| 42 | HkTextarea | OK | `<div class="hk-textarea"><textarea class="hk-textarea__field" placeholder="Enter text" rows="3"></textarea></div>` |
-| 43 | HkSkeletonList | OK | `<div class="hk-skeleton-list" style="gap:8px;" aria-hidden="true"><div class="hk-skeleton" data-tone="primary" data-animated="true" style="width:100%;height:40px;border-radius:var(--hk-radius-sm, 4px)` |
-| 44 | HkHoverRevealAction | OK | `<span class="hk-hover-reveal" data-placement="right"><span class="hk-hover-reveal__main">Trigger</span><span class="hk-hover-reveal__extension">Action</span></span>` |
-| 45 | HkSelectionWaterfall | OK | `<div class="hk-selection-waterfall"><div class="hk-selection-waterfall__flow"><div role="button" tabindex="0" class="hk-selection-waterfall__item" aria-selected="false"><span class="hk-selection-water` |
+| 34 | HkGaugeRing | OK | `<div class="hk-gauge-ring" style="width:140px;height:140px;">[SVG]<div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"><div class="text-lg font-bold text-text le` |
+| 35 | HkSelectionGrid | OK | `<div class="hk-selection-grid"><div class="hk-selection-grid__grid" data-cols="2"><div role="button" tabindex="0" class="hk-selection-grid__item" data-selected="true" aria-selected="true"><div class="` |
+| 36 | HkNavItem | OK | `<button type="button" class="hk-nav-item hk-nav-item--button hk-nav-item--active" data-active><span class="hk-nav-item__icon">📊</span><span class="hk-nav-item__label">Dashboard</span></button>` |
+| 37 | HkNumberInput | OK | `<div class="hk-number-input hk-number-input--md"><div class="hk-number-input__inner"><input type="number" class="hk-number-input__field" value="42" step="1"><div class="hk-number-input__steppers"><but` |
+| 38 | HkSearchInput | OK | `<div class="hk-search-input hk-search-input--md"><span class="hk-search-input__icon">[SVG]</span><input type="search" class="hk-search-input__field" value placeholder="Search..."></div>` |
+| 39 | HkTextarea | OK | `<div class="hk-textarea"><textarea class="hk-textarea__field" placeholder="Enter text" rows="3"></textarea></div>` |
+| 40 | HkSkeletonList | OK | `<div class="hk-skeleton-list" style="gap:8px;" aria-hidden="true"><div class="hk-skeleton" data-tone="primary" data-animated="true" style="width:100%;height:40px;border-radius:var(--hk-radius-sm, 4px)` |
+| 41 | HkHoverRevealAction | OK | `<span class="hk-hover-reveal" data-placement="right"><span class="hk-hover-reveal__main">Trigger</span><span class="hk-hover-reveal__extension">Action</span></span>` |
+| 42 | HkSelectionWaterfall | OK | `<div class="hk-selection-waterfall"><div class="hk-selection-waterfall__flow"><div role="button" tabindex="0" class="hk-selection-waterfall__item" aria-selected="false"><span class="hk-selection-water` |
 
 ## Summary
 
-- **Passed**: 45
+- **Passed**: 42
 - **Failed**: 0
-- **Total**: 45
+- **Total**: 42

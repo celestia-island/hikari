@@ -60,9 +60,6 @@ import HkDraggableList from "../src/components/HkDraggableList";
 import HkDraggableGrid from "../src/components/HkDraggableGrid";
 import HkModalBreadcrumb from "../src/components/HkModalBreadcrumb";
 import HkProgressDialog from "../src/components/HkProgressDialog";
-import HkAdminShell from "../src/components/HkAdminShell";
-import HkAdminHeader from "../src/components/HkAdminHeader";
-import HkStatusBar from "../src/components/HkStatusBar";
 import HkKeywordSearchModal from "../src/components/HkKeywordSearchModal";
 
 async function renderComponent(name: string, comp: any, props: Record<string, unknown>, slots?: Record<string, any>) {
@@ -213,10 +210,6 @@ async function main() {
   // HkLogo
   results.push(await renderComponent("HkLogo", HkLogo,
     { alt: "MyApp", size: "md" }));
-
-  // HkStatusBar
-  results.push(await renderComponent("HkStatusBar", HkStatusBar,
-    { version: "1.0.0", connectionStatus: "connected" }));
 
   // HkGaugeRing
   results.push(await renderComponent("HkGaugeRing", HkGaugeRing,

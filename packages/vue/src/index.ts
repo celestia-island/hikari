@@ -1,6 +1,5 @@
 export { default as HActionBar } from "./components/HkActionBar";
 export { default as HAlert } from "./components/HkAlert";
-export { default as HAuthCard } from "./components/HkAuthCard";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";

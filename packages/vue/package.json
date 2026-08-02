@@ -4,7 +4,7 @@
   "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
-  "license": "BUSL-1.1",
+  "license": "SySL-1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/celestia-island/hikari"

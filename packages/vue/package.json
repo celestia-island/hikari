@@ -56,5 +56,8 @@
     "typescript": "^*",
     "vite": "^*",
     "vue-tsc": "^*"
+  },
+  "overrides": {
+    "typescript": "~6.0"
   }
 }

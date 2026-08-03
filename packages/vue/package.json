@@ -53,7 +53,7 @@
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",
     "sass": "^*",
-    "typescript": "^*",
+    "typescript": "~6.0",
     "vite": "^*",
     "vue-tsc": "^*"
   },

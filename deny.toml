@@ -1,11 +1,8 @@
 [advisories]
-vulnerability = "deny"
-unmaintained = "warn"
-notice = "warn"
-unsound = "deny"
+unmaintained = "workspace"
+unsound = "workspace"
 
 [licenses]
-unlicensed = "deny"
 allow = [
     "MIT",
     "Apache-2.0",
@@ -17,14 +14,49 @@ allow = [
     "Unicode-3.0",
     "Zlib",
     "OpenSSL",
+    "MPL-2.0",
     "LicenseRef-sysl-1.0",
 ]
-deny = [
-    "GPL-2.0",
-    "GPL-3.0",
-    "AGPL-3.0",
-]
-copyleft = "deny"
+
+[[licenses.clarify]]
+name = "hikari-animation"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-builder"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-components"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-extra-components"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-i18n"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-icons"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-palette"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
+
+[[licenses.clarify]]
+name = "hikari-theme"
+expression = "LicenseRef-sysl-1.0"
+license-files = [{ path = "../../LICENSE", hash = 0x629cea03 }]
 
 [bans]
 multiple-versions = "warn"

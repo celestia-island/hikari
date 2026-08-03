@@ -20,11 +20,12 @@ jobs:
           set -euo pipefail
           VERSION="${NOA_VERSION:-latest}"
           if [ "$VERSION" = "latest" ]; then
-            URL="https://github.com/celestia-island/noa/releases/latest/download/noa-x86_64-unknown-linux-gnu"
+            URL="https://github.com/celestia-island/noa/releases/latest/download/noa-linux-x86_64.tar.gz"
           else
-            URL="https://github.com/celestia-island/noa/releases/download/${VERSION}/noa-x86_64-unknown-linux-gnu"
+            URL="https://github.com/celestia-island/noa/releases/download/${VERSION}/noa-linux-x86_64.tar.gz"
           fi
-          curl -fsSL "$URL" -o /usr/local/bin/noa
+          curl -fsSL "$URL" -o /tmp/noa.tar.gz
+          tar -xzf /tmp/noa.tar.gz -C /usr/local/bin noa
           chmod +x /usr/local/bin/noa
 
       - name: Check PR title

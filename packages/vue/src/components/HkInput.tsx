@@ -1,4 +1,5 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { Eye, EyeOff } from "lucide-vue-next";
 import "./HkInput.scss";
 
 export default defineComponent({
@@ -19,6 +20,16 @@ export default defineComponent({
     rows: { type: Number, default: 3 },
     autoGrow: { type: Boolean, default: false },
     size: { type: String as () => "sm" | "md" | "lg", default: "md" },
+    /**
+     * Input variant. `password` renders a password field with a built-in
+     * visibility toggle (HPasswordInput layers strength / caps-lock /
+     * full-width extras on top of this base behavior). `number` maps to the
+     * numeric input type. Defaults to "text".
+     */
+    variant: {
+      type: String as () => "text" | "password" | "number",
+      default: "text",
+    },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -29,6 +40,15 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
     const inputRef = ref<HTMLElement>();
+
+    const revealing = ref(false);
+    const resolvedType = computed(() => {
+      if (props.variant === "password") {
+        return revealing.value ? "text" : "password";
+      }
+      if (props.variant === "number") return "number";
+      return props.type;
+    });
 
     const filteredAttrs = computed(() => {
       const { class: _, style: __, ...rest } = attrs as Record<string, unknown>;
@@ -113,7 +133,7 @@ export default defineComponent({
           {isText ? (
             <input
               ref={inputRef}
-              type={props.type}
+              type={resolvedType.value}
               value={props.modelValue}
               placeholder={props.placeholder}
               disabled={props.disabled}
@@ -161,6 +181,18 @@ export default defineComponent({
           {slots.suffixIcon && !slots.suffix && (
             <span class="hk-input-affix hk-input-suffix">
               {slots.suffixIcon()}
+            </span>
+          )}
+          {props.variant === "password" && !slots.suffix && !slots.suffixIcon && (
+            <span class="hk-input-affix hk-input-suffix">
+              <button
+                type="button"
+                class="hk-input-password-toggle"
+                aria-label={revealing.value ? "Hide password" : "Show password"}
+                onClick={() => { revealing.value = !revealing.value; }}
+              >
+                {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
             </span>
           )}
         </div>

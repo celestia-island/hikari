@@ -170,3 +170,19 @@
   -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
   caret-color: rgb(var(--color-text));
 }
+
+/* Password-variant visibility toggle */
+.hk-input-password-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary, #888);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text-primary, #222);
+  }
+}

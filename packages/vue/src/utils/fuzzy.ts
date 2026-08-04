@@ -35,33 +35,43 @@ export function fuzzyScore(query: string, haystack: string): FuzzyMatch {
   return { matched: true, score };
 }
 
-/** Score an object across several string fields (weighted sum). */
+/** Score an object across several text fields (weighted sum). */
 export function fuzzyScoreFields(
   query: string,
-  fields: Array<[string, number]>,
+  fields: Array<{ text: string; weight?: number }>,
 ): FuzzyMatch {
   let total = 0;
   let any = false;
-  for (const [field, weight] of fields) {
-    const m = fuzzyScore(query, field);
+  for (const field of fields) {
+    const m = fuzzyScore(query, field.text);
     if (m.matched) {
       any = true;
-      total += m.score * weight;
+      total += m.score * (field.weight ?? 1);
     }
   }
   return any ? { matched: true, score: total } : { matched: false, score: 0 };
 }
 
-/** Filter + rank a list by fuzzy query over the given field getters. */
+/** Filter + rank a list by fuzzy query; returns scored matches. */
 export function fuzzySearch<T>(
   query: string,
-  items: T[],
-  getFields: (item: T) => Array<[string, number]>,
-): T[] {
-  if (!query.trim()) return items;
-  return items
-    .map((item) => ({ item, m: fuzzyScoreFields(query, getFields(item)) }))
-    .filter(({ m }) => m.matched)
-    .sort((a, b) => b.m.score - a.m.score)
-    .map(({ item }) => item);
+  records: T[],
+  fieldsOf: (rec: T) => Array<{ text: string; weight?: number }>,
+): Array<{ record: T; score: number }> {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) {
+    return records.map((record) => ({ record, score: 0 }));
+  }
+  return records
+    .map((record) => {
+      let total = 0;
+      for (const term of terms) {
+        const m = fuzzyScoreFields(term, fieldsOf(record));
+        if (!m.matched) return null;
+        total += m.score;
+      }
+      return { record, score: total };
+    })
+    .filter((x): x is { record: T; score: number } => x !== null)
+    .sort((a, b) => b.score - a.score);
 }

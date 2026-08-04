@@ -135,3 +135,9 @@ export {
   setLocale,
   mergeMessages,
 } from "./i18n/context";
+
+// ── Generic utils ───────────────────────────────────────────────
+export { fuzzyScore, fuzzyScoreFields, fuzzySearch } from "./utils/fuzzy";
+export type { FuzzyMatch } from "./utils/fuzzy";
+export { validatePassword, passwordLevel } from "./utils/password";
+export type { PasswordValidationResult, PasswordLevel } from "./utils/password";

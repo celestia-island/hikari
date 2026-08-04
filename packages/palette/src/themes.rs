@@ -8,7 +8,8 @@
 //! The hex values below mirror the colors that the old chinese-constant-based
 //! themes referenced, so the visual output is unchanged.
 
-use std::{collections::HashMap, sync::RwLock};
+use std::collections::HashMap;
+use std::sync::RwLock;
 
 use super::colors::*;
 

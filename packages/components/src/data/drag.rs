@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, DragDropTreeClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct DragComponent;
 

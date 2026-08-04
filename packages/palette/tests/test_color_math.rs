@@ -3,7 +3,6 @@
 #![cfg(hikari_collection_chinese)]
 
 use hikari_palette::collections::chinese::*;
-
 use hikari_palette::color_math::*;
 use hikari_palette::colors::*;
 

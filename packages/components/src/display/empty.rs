@@ -6,7 +6,8 @@ use hikari_palette::classes::{
     TextAlign, UtilityClass,
 };
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct EmptyComponent;
 

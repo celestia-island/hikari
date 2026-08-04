@@ -5,12 +5,10 @@
 use hikari_icons::MdiIcon;
 use hikari_palette::classes::{ClassesBuilder, Display, NumberInputClass};
 
-use crate::{
-    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
-    feedback::{GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::basic::{InputWrapper, InputWrapperItem, InputWrapperSize};
+use crate::feedback::{GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct NumberInputComponent;
 

@@ -3,11 +3,9 @@
 
 use hikari_palette::classes::{ClassesBuilder, DrawerClass, UtilityClass};
 
-use crate::{
-    prelude::*,
-    style_builder::{CssProperty, StyleStringBuilder},
-    styled::StyledComponent,
-};
+use crate::prelude::*;
+use crate::style_builder::{CssProperty, StyleStringBuilder};
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum DrawerPlacement {

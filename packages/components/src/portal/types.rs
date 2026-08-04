@@ -1,11 +1,9 @@
 // hi-components/src/portal/types.rs
 // Type definitions for the portal system
 
-use crate::{
-    feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition, ModalSize},
-    prelude::*,
-};
+use crate::feedback::PopoverPlacement;
+use crate::modal::{MaskMode, ModalPosition, ModalSize};
+use crate::prelude::*;
 
 pub static PORTAL_ID_COUNTER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 

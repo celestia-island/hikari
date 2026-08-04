@@ -7,11 +7,9 @@
 
 use hikari_palette::classes::{ButtonClass, ClassesBuilder, JustifyContent};
 
-use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum ButtonAnimation {

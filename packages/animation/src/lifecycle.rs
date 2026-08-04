@@ -8,12 +8,14 @@
 //! - WeakRef-based target element monitoring
 //! - Animation state callbacks (onComplete, onError, onCancel)
 
-use std::{collections::HashMap, rc::Weak};
+use std::collections::HashMap;
+use std::rc::Weak;
 
 use wasm_bindgen::JsValue;
 use web_sys::HtmlElement;
 
-use super::{builder::AnimationBuilder, state::AnimationDataStore as AnimationState};
+use super::builder::AnimationBuilder;
+use super::state::AnimationDataStore as AnimationState;
 
 /// Callback types for animation lifecycle events
 pub enum LifecycleCallback {

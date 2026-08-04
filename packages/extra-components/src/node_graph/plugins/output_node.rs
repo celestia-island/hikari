@@ -1,10 +1,8 @@
 // node_graph/plugins/output_node.rs
 // Output node plugin - displays output data
 
-use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
-    value::NodeValue,
-};
+use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Output node plugin
 ///

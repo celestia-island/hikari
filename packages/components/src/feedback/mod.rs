@@ -20,15 +20,13 @@ pub mod tooltip;
 pub use alert::*;
 pub use drawer::*;
 pub use glow::*;
+// Re-exports for backward compatibility
+pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMode};
 pub use modal::*;
+// Modal re-exports for external components
+pub use modal::{ModalConfig, ModalContent, ModalController, ModalPosition, use_modal};
 pub use popover::*;
 pub use progress::*;
 pub use spin::*;
 pub use toast::*;
 pub use tooltip::*;
-
-// Re-exports for backward compatibility
-pub use glow::{Glow as Acrylic, GlowBlur as AcrylicBlur, GlowColor as AcrylicMode};
-
-// Modal re-exports for external components
-pub use modal::{ModalConfig, ModalContent, ModalController, ModalPosition, use_modal};

@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, FileUploadClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct FileUploadComponent;
 

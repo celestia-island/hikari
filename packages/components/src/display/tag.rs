@@ -5,7 +5,8 @@ use hikari_palette::classes::{
     AlignItems, ClassesBuilder, Display, Flex, Gap, TagClass, UtilityClass,
 };
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TagComponent;
 

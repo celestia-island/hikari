@@ -6,7 +6,8 @@ use hikari_palette::classes::{
 };
 use qrcode::{Color, QrCode};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct QRCodeComponent;
 

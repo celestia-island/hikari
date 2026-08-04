@@ -344,7 +344,7 @@ mod tests {
 
         state.start_drag(100.0, 100.0);
         state.update_drag(-50.0, -50.0); // Try to go negative
-        assert_eq!(state.position, (50.0, 50.0)); // Should be constrained to 0
+        assert_eq!(state.position, (0.0, 0.0)); // Should be constrained to 0
 
         state.update_drag(300.0, 300.0); // Try to go beyond bounds
         assert_eq!(state.position, (200.0, 200.0)); // Should be constrained to 200

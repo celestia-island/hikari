@@ -124,7 +124,7 @@ impl ZoomControlsState {
 
     /// Zoom in by one step
     pub fn zoom_in(&mut self) -> bool {
-        let new_zoom = (self.zoom + self.zoom_step).min(self.max_zoom);
+        let new_zoom = (((self.zoom + self.zoom_step) * 100.0).round() / 100.0).min(self.max_zoom);
         let changed = new_zoom != self.zoom;
         self.zoom = new_zoom;
         changed
@@ -132,7 +132,7 @@ impl ZoomControlsState {
 
     /// Zoom out by one step
     pub fn zoom_out(&mut self) -> bool {
-        let new_zoom = (self.zoom - self.zoom_step).max(self.min_zoom);
+        let new_zoom = (((self.zoom - self.zoom_step) * 100.0).round() / 100.0).max(self.min_zoom);
         let changed = new_zoom != self.zoom;
         self.zoom = new_zoom;
         changed

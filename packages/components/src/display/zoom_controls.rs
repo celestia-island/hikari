@@ -4,7 +4,8 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, UtilityClass, ZoomControlsClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct ZoomControlsComponent;
 

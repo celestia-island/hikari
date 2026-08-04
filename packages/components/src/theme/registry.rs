@@ -1,6 +1,7 @@
 //! Theme registry for managing registered themes
 
-use std::{collections::HashMap, sync::RwLock};
+use std::collections::HashMap;
+use std::sync::RwLock;
 
 use hikari_palette::*;
 

@@ -13,6 +13,7 @@ import {
 
 import { useI18n } from "../i18n/context";
 import "./HkModal.scss";
+import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import HButton from "./HkButton";
@@ -29,28 +30,6 @@ export interface ModalAction {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function trapFocus(container: HTMLElement, e: KeyboardEvent): void {
-  const focusable = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-  if (focusable.length === 0) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (e.shiftKey) {
-    if (document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    }
-  } else {
-    if (document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }
-}
-
-function focusFirst(container: HTMLElement): void {
-  const el = container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-  if (el) el.focus();
-}
 
 export default defineComponent({
   name: "HkModal",

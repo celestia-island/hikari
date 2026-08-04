@@ -91,10 +91,10 @@ export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./componen
 export {
   initTheme, useTheme, themePresets, tokensToCSSVars, getThemeTokens,
   loadCustomThemes, saveCustomThemes, addCustomTheme, removeCustomTheme,
-  useBackgroundLuminance,
+  startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
-  type ThemeId, type CustomThemePreset, type TimePeriod,
+  type ThemeId, type ThemeTokens, type CustomThemePreset, type TimePeriod,
 } from "./theme";
 
 // Runtime systems
@@ -106,6 +106,7 @@ export {
   scheduleAfter,
   scheduleCron,
   scheduleCronAfter,
+  reportTransition,
   setReducedMotion,
   notifyScrollStart,
   useOverlay,

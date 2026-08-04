@@ -89,8 +89,12 @@ export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./componen
 
 // Theme system
 export {
-  initTheme, useTheme, themePresets, tokensToCSSVars,
-  type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode, type ThemeId,
+  initTheme, useTheme, themePresets, tokensToCSSVars, getThemeTokens,
+  loadCustomThemes, saveCustomThemes, addCustomTheme, removeCustomTheme,
+  useBackgroundLuminance,
+  getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
+  type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
+  type ThemeId, type CustomThemePreset, type TimePeriod,
 } from "./theme";
 
 // Runtime systems

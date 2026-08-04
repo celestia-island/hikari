@@ -8,7 +8,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, RichTextEditorClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct RichTextEditorComponent;
 

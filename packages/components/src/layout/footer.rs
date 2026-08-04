@@ -1,7 +1,8 @@
 // hi-components/src/layout/footer.rs
 // Footer component for application footer
 
-use hikari_palette::classes::{ClassesBuilder, components::Footer as FooterClass};
+use hikari_palette::classes::ClassesBuilder;
+use hikari_palette::classes::components::Footer as FooterClass;
 
 use crate::prelude::*;
 

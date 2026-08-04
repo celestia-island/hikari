@@ -250,7 +250,7 @@
     </section>
 
     <section class="demo-footer">
-      <p>Hikari v0.4.4 — Powered by celestia-island</p>
+      <p>Hikari v0.4.5 — Powered by celestia-island</p>
     </section>
   </div>
 </template>

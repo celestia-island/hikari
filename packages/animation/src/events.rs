@@ -3,15 +3,16 @@
 //! Provides high-level bindings between DOM events and animations,
 //! supporting both continuous and state-machine-based triggers.
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
-use wasm_bindgen::{JsCast, JsValue, closure::Closure};
+use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlElement;
 
-use super::{
-    context::AnimationContext,
-    style::{CssProperty, StyleBuilder},
-};
+use super::context::AnimationContext;
+use super::style::{CssProperty, StyleBuilder};
 
 /// Trigger mode for event-driven animations
 #[derive(Clone, Copy, PartialEq, Debug)]

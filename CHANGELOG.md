@@ -10,12 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 hikari currently carries two version lines, plus one stale tag:
 
 - **Rust crates (`hikari-*`)** — the `0.3.x` line. The workspace is at
-  `0.3.18` on master; versions up to `0.3.14` have been published to
+  `0.3.19` on master; versions up to `0.3.14` have been published to
   crates.io. Git tags `v0.1.0` … `v0.3.14` track these releases. Releases
   `v0.3.0`–`v0.3.2` and `v0.3.4` were published to crates.io without git
-  tags, and `v0.3.15`–`v0.3.18` are unpublished master changes.
+  tags, and `v0.3.15`–`v0.3.19` are unpublished master changes.
 - **Vue port (`@celestia-island/hikari`)** — the `0.4.x` line. The npm
-  package is at `0.4.4` on master but has **never been published** to npm;
+  package is at `0.4.5` on master but has **never been published** to npm;
   publication is pending (A3).
 - **Tag `v0.4.0` is a stale tag.** It was created on an early Vue-port
   commit (2026-07-21) before the npm package version line was established,
@@ -24,7 +24,7 @@ hikari currently carries two version lines, plus one stale tag:
 
 ## [Unreleased]
 
-Current master, Rust workspace `0.3.18`.
+Current master, Rust workspace `0.3.19`.
 
 ### Added
 
@@ -57,6 +57,12 @@ Current master, Rust workspace `0.3.18`.
 
 - Fix i18n include_dir path and sync DemoApp with component APIs. (#85)
 - Remove dead Language variants in i18n crate.
+- Make layout component optional props genuinely optional (`#[props(default)]`
+  instead of the no-op `#[props(optional)]`) so Header/Section/Aside/Layout
+  render without panic when props are omitted.
+- Fix CI gates: nightly fmt drift, apt non-interactive install, stale website
+  build job, `just` install via GitHub API 404, and squash-message-clean git
+  identity. (#100)
 
 ### Removed
 

@@ -2,10 +2,8 @@
 //!
 //! Generates component constants and compiles SCSS using tairitsu-packager
 
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 fn main() {
     if let Err(e) = build() {

@@ -34,14 +34,12 @@ pub mod mdi_minimal;
 /// so calling it is always safe regardless of build target.
 pub mod dynamic_fetch;
 pub use dynamic_fetch::fetch_and_cache_icon;
-
+// Re-export MDI icon enum
+pub use mdi_minimal::MdiIcon;
 #[cfg(feature = "tairitsu")]
 use tairitsu_macros::{define_props, rsx};
 #[cfg(feature = "tairitsu")]
 use tairitsu_vdom::VNode as Element;
-
-// Re-export MDI icon enum
-pub use mdi_minimal::MdiIcon;
 
 // Re-export icon data types. The selected-icon data is generated at build time
 // into OUT_DIR (see build.rs) and included here, so no `src/generated/*` needs

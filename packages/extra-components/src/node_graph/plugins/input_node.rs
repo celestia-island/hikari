@@ -1,10 +1,8 @@
 // node_graph/plugins/input_node.rs
 // Input node plugin - accepts user input or external data
 
-use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
-    value::NodeValue,
-};
+use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Input node plugin
 ///

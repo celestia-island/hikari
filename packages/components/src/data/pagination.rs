@@ -4,14 +4,12 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, PaginationClass};
 
-use crate::{
-    basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize},
-    feedback::{
-        Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
-    },
-    prelude::*,
-    styled::StyledComponent,
+use crate::basic::{Arrow, ArrowDirection, IconButton, IconButtonSize, Input, InputSize};
+use crate::feedback::{
+    Glow, GlowBlur, GlowColor, GlowIntensity, Popover, PopoverPlacement, PopoverPositioning,
 };
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct PaginationComponent;
 

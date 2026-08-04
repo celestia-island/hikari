@@ -45,7 +45,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install just
-        uses: extractions/setup-just@v3
+        run: |
+          curl -sSL https://github.com/casey/just/releases/download/1.55.1/just-1.55.1-x86_64-unknown-linux-musl.tar.gz | tar xz
+          sudo mv just /usr/local/bin/just
 
       - name: Run tests
         run: just test

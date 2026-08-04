@@ -46,11 +46,15 @@ impl Viewport {
         }
     }
 
-    /// Set zoom level (clamped)
+    /// Set zoom level (clamped). Returns false when the requested zoom is out
+    /// of bounds and was clamped instead.
     pub fn set_zoom(&mut self, zoom: f64) -> bool {
-        let new_zoom = zoom.clamp(self.min_zoom, self.max_zoom);
-        let changed = new_zoom != self.zoom;
-        self.zoom = new_zoom;
+        if !(self.min_zoom..=self.max_zoom).contains(&zoom) {
+            self.zoom = zoom.clamp(self.min_zoom, self.max_zoom);
+            return false;
+        }
+        let changed = zoom != self.zoom;
+        self.zoom = zoom;
         changed
     }
 
@@ -208,7 +212,7 @@ mod tests {
             zoom: 1.5,
             ..Default::default()
         };
-        assert_eq!(viewport.zoom_text(), "1x");
+        assert_eq!(viewport.zoom_text(), "2x");
 
         let viewport = Viewport {
             zoom: 2.7,

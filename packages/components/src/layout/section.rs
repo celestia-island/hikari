@@ -26,9 +26,9 @@ use crate::prelude::*;
 pub fn Section(
     children: Element,
 
-    #[props(optional)] title: Option<String>,
+    #[props(default)] title: Option<String>,
 
-    #[props(optional)] description: Option<String>,
+    #[props(default)] description: Option<String>,
 
     #[props(default = "md".to_string())] size: String,
 

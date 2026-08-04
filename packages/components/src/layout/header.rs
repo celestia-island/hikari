@@ -16,9 +16,11 @@
 //! }
 //! ```
 
-use hikari_palette::{ClassesBuilder, classes::*};
+use hikari_palette::ClassesBuilder;
+use hikari_palette::classes::*;
 
-use crate::{prelude::*, theme::use_layout_direction};
+use crate::prelude::*;
+use crate::theme::use_layout_direction;
 
 ///
 ///
@@ -30,7 +32,7 @@ pub fn Header(
 
     #[props(default = false)] show_menu_toggle: bool,
 
-    on_menu_toggle: Option<EventHandler<MouseEvent>>,
+    #[props(default)] on_menu_toggle: Option<EventHandler<MouseEvent>>,
 
     #[props(default)] rtl: Option<bool>,
 

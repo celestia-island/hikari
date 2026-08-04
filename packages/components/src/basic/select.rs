@@ -3,17 +3,15 @@
 
 use hikari_palette::classes::{ClassesBuilder, Display, Position, SelectClass};
 
+use crate::feedback::{Glow, GlowProps};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
-use crate::{
-    feedback::{Glow, GlowProps},
-    portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
-    },
-    prelude::*,
-    styled::StyledComponent,
+use crate::portal::{
+    PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+    use_portal,
 };
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SelectComponent;
 

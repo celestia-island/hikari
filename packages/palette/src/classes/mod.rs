@@ -249,7 +249,7 @@ mod tests {
             .add(FlexDirection::Row)
             .build();
 
-        assert_eq!(classes, "hk-flex hi-flex-row");
+        assert_eq!(classes, "hk-flex hk-flex-row");
     }
 
     #[test]

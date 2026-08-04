@@ -1,7 +1,8 @@
 // packages/components/src/basic/canvas.rs
 // Canvas component with requestAnimationFrame integration
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct CanvasComponent;
 

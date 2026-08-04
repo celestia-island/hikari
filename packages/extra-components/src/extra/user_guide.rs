@@ -338,6 +338,9 @@ mod tests {
         assert!(state.previous());
         assert_eq!(state.current_step, 1);
 
+        assert!(state.previous());
+        assert_eq!(state.current_step, 0);
+
         assert!(!state.previous()); // Can't go before 0
         assert_eq!(state.current_step, 0);
     }

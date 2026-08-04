@@ -149,3 +149,7 @@ export type { PasswordValidationResult, PasswordLevel } from "./utils/password";
 
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
+
+export { useZoomPan } from "./composables/useZoomPan";
+export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
+export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, fileIcon } from "./utils/fileType";

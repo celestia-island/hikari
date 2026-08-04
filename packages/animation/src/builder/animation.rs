@@ -41,20 +41,19 @@
 //!     .start_continuous_animation();
 //! ```
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
 
-use wasm_bindgen::{JsCast, JsValue, closure::Closure};
+use wasm_bindgen::closure::Closure;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::HtmlElement;
 
-use super::{
-    super::{
-        context::AnimationContext,
-        state::AnimationDataStore as StructAnimationState,
-        style::{CssProperty, StyleBuilder},
-    },
-    action::AnimationAction,
-    value::DynamicValue,
-};
+use super::super::context::AnimationContext;
+use super::super::state::AnimationDataStore as StructAnimationState;
+use super::super::style::{CssProperty, StyleBuilder};
+use super::action::AnimationAction;
+use super::value::DynamicValue;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::global_manager::global_animation_manager;
 

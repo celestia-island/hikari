@@ -221,7 +221,7 @@ impl TimelineState {
         };
 
         if self.show_line {
-            format!("{} hi-timeline-line", base)
+            format!("{} hk-timeline-line", base)
         } else {
             base
         }

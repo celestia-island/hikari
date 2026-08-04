@@ -3,11 +3,9 @@
 
 use hikari_palette::classes::{ClassesBuilder, TreeClassNew};
 
-use crate::{
-    data::node::{TreeNode, TreeNodeData, TreeNodeProps},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::data::node::{TreeNode, TreeNodeData, TreeNodeProps};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TreeComponent;
 

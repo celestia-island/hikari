@@ -21,13 +21,13 @@
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod wasm_impl {
 
-    use std::{cell::RefCell, rc::Rc};
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
-    use hikari_animation::{
-        TimerManager,
-        style::{AttributeBuilder, CssProperty, StyleBuilder},
-    };
-    use wasm_bindgen::{JsCast, prelude::*};
+    use hikari_animation::TimerManager;
+    use hikari_animation::style::{AttributeBuilder, CssProperty, StyleBuilder};
+    use wasm_bindgen::JsCast;
+    use wasm_bindgen::prelude::*;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum ScrollbarAnimationState {

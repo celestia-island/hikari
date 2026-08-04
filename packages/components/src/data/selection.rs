@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, SelectionClassNew, UtilityClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SelectionComponent;
 

@@ -152,7 +152,7 @@ mod tests {
     #[test]
     fn test_viewport_rect() {
         let mut minimap = NodeGraphMinimap::new(200.0, 150.0);
-        minimap.update_view(1.0, (0.0, 0.0));
+        minimap.update_view(2.0, (0.0, 0.0));
 
         let (x, y, w, h) = minimap.viewport_rect(1200.0, 800.0);
         assert_eq!(x, 0.0);

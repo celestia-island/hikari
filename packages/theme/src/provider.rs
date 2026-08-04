@@ -8,10 +8,8 @@
 //! - `"hikari"` - Light theme (光)
 //! - `"tairitsu"` - Dark theme (tairitsu)
 
-use crate::{
-    context::{LayoutDirection, ThemeContext},
-    prelude::*,
-};
+use crate::context::{LayoutDirection, ThemeContext};
+use crate::prelude::*;
 
 /// Theme Provider Props
 #[derive(Debug, Clone)]

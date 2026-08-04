@@ -8,9 +8,12 @@
 //! - Debouncing and throttling
 //! - requestAnimationFrame-based animations
 
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
 
-use wasm_bindgen::{JsCast, prelude::*};
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 
 /// Timer ID for tracking scheduled timers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

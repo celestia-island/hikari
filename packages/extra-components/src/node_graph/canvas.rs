@@ -3,7 +3,10 @@
 
 use std::collections::HashMap;
 
-use crate::node_graph::{ connection::{Connection, ConnectionId}, history::{HistoryAction, HistoryState}, node::{Node, NodeId, NodeState, NodeType, PortPosition}, serialization::SerializedNodeGraph, };
+use crate::node_graph::connection::{Connection, ConnectionId};
+use crate::node_graph::history::{HistoryAction, HistoryState};
+use crate::node_graph::node::{Node, NodeId, NodeState, NodeType, PortPosition};
+use crate::node_graph::serialization::SerializedNodeGraph;
 
 /// Node graph state
 ///
@@ -241,7 +244,11 @@ impl NodeGraphCanvasConfig {
 #[derive(Clone, PartialEq, Debug)]
 pub enum NodeGraphEvent {
     /// A node was added
-    NodeAdded { id: String, node_type: NodeType, position: (f64, f64) },
+    NodeAdded {
+        id: String,
+        node_type: NodeType,
+        position: (f64, f64),
+    },
 
     /// A node was selected
     NodeSelected(String),
@@ -253,7 +260,13 @@ pub enum NodeGraphEvent {
     NodeDeleted(String),
 
     /// A connection was created
-    ConnectionCreated { id: ConnectionId, from_node: String, from_port: String, to_node: String, to_port: String },
+    ConnectionCreated {
+        id: ConnectionId,
+        from_node: String,
+        from_port: String,
+        to_node: String,
+        to_port: String,
+    },
 
     /// A connection was deleted
     ConnectionDeleted(ConnectionId),

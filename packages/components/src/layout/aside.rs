@@ -25,9 +25,11 @@
 //! }
 //! ```
 
-use hikari_palette::{ClassesBuilder, UtilityClass, classes::components::*};
+use hikari_palette::classes::components::*;
+use hikari_palette::{ClassesBuilder, UtilityClass};
 
-use crate::{prelude::*, theme::use_layout_direction};
+use crate::prelude::*;
+use crate::theme::use_layout_direction;
 
 ///
 ///
@@ -35,9 +37,9 @@ use crate::{prelude::*, theme::use_layout_direction};
 pub fn Aside(
     children: Element,
 
-    #[props(optional)] header: Option<Element>,
+    #[props(default)] header: Option<Element>,
 
-    #[props(optional)] footer: Option<Element>,
+    #[props(default)] footer: Option<Element>,
 
     #[props(default = "md".to_string())] width: String,
 

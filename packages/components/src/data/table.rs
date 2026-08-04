@@ -5,11 +5,10 @@ use std::collections::HashMap;
 
 use hikari_palette::classes::{ClassesBuilder, TableClass, UtilityClass};
 
-pub use super::{
-    column::{ColumnAlign, ColumnDef},
-    sort::{SortConfig, SortDirection},
-};
-use crate::{prelude::*, styled::StyledComponent};
+pub use super::column::{ColumnAlign, ColumnDef};
+pub use super::sort::{SortConfig, SortDirection};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub type TableFilters = HashMap<String, Vec<String>>;
 

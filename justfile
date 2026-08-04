@@ -19,11 +19,11 @@ set windows-shell := ["bash.exe", "-c"]
 set unstable
 set lists
 
-# Shared celestia-devtools recipes — NOT in git. This justfile references shared
-# variables, so the import is REQUIRED. Bootstrap once: celestia-devtools init
-# (or `just fetch` if already staged). Refresh after upgrades.
+# Shared celestia-devtools recipes — NOT in git. `import?` silently skips when
+# absent, so this justfile parses pre-fetch. Bootstrap once: celestia-devtools
+# init (or `just fetch` if already staged). Refresh after upgrades.
 import? "./.just/git-bash-interop.just"
-import "./.just/celestia-devtools.just"
+import? "./.just/celestia-devtools.just"
 
 # Stage shared celestia-devtools recipes into .just/ (gitignored).
 # Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
@@ -43,7 +43,7 @@ fetch URL='':
       cp "$src" "$out"
     else
       echo "[fetch] github raw -> $out"
-      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just" -o "$out"
+      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/master/src/celestia_devtools/common.just" -o "$out"
     fi
     echo "[fetch] wrote $out"
 
@@ -136,7 +136,7 @@ dev:
       err "run: cd {{lagrange_root}} && cargo build --release"
       exit 1
     fi
-    malkuth="{{malkuth_bin}}"
+    malkuth="${MALKUTH_BIN:-$(command -v malkuth 2>/dev/null || echo ../malkuth/target/release/malkuth)}"
     if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
       malkuth="../malkuth/target/release/malkuth.exe"
     fi

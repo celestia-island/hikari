@@ -3,12 +3,11 @@
 //! This module scans the workspace for all MdiIcon usage and automatically
 //! generates a selection list for the build system.
 
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::path::Path;
+
 use anyhow::{Context, Result};
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    path::Path,
-};
 
 /// Scanned icon usage information
 #[derive(Debug, Clone)]

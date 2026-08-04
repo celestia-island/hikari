@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, InputClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum TextareaSize {

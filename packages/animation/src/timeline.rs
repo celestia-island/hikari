@@ -3,7 +3,9 @@
 //! This module provides a timeline system that allows sequencing and
 //! coordinating multiple tween animations with precise timing control.
 
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
 
 use slotmap::SlotMap;
 

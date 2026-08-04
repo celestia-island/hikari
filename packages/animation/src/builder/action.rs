@@ -3,11 +3,10 @@
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 
-use super::{
-    super::style::{CssProperty, StyleBuilder},
-    value::DynamicValue,
-};
-use crate::{context::AnimationContext, state::AnimationDataStore as StructAnimationState};
+use super::super::style::{CssProperty, StyleBuilder};
+use super::value::DynamicValue;
+use crate::context::AnimationContext;
+use crate::state::AnimationDataStore as StructAnimationState;
 
 /// Enhanced animation action that can be applied to an element
 ///

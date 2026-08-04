@@ -4,10 +4,8 @@
 use std::sync::atomic::Ordering;
 
 use super::render::{PortalRender, PortalRenderProps};
-use crate::{
-    portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry},
-    prelude::*,
-};
+use crate::portal::types::{ModalAnimationState, PORTAL_ID_COUNTER, PortalEntry};
+use crate::prelude::*;
 
 #[derive(Clone)]
 pub struct PortalContext {

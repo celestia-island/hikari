@@ -72,10 +72,8 @@ use hikari_palette::*;
 use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::scripts::scrollbar_container::init_all as init_scrollbars;
-use crate::theme::{
-    css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette},
-    registry::{get_default_theme, get_registered_theme},
-};
+use crate::theme::css::{ComponentOverrides, ComponentPalette, PaletteOverrides, ThemePalette};
+use crate::theme::registry::{get_default_theme, get_registered_theme};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum LayoutDirection {
@@ -276,9 +274,10 @@ pub fn use_layout_direction() -> LayoutDirection {
 
 #[cfg(test)]
 mod tests {
+    use hikari_palette::{Hikari, Tairitsu};
+
     use super::*;
     use crate::theme::css::{PaletteOverrides, ThemePalette};
-    use hikari_palette::{Hikari, Tairitsu};
 
     #[test]
     fn test_theme_palette_from_palette() {

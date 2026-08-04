@@ -26,5 +26,7 @@ jobs:
             exit 0
           fi
           SUBJECT=$(git log -1 --format='%s')
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit --amend -m "$SUBJECT"
           git push --force-with-lease

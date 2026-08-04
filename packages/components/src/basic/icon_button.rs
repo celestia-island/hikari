@@ -6,13 +6,12 @@
 // - Custom: Runtime overrides via icon_color, animation_id
 
 use hikari_icons::{Icon, IconProps, MdiIcon};
-use hikari_palette::classes::{ClassesBuilder, components::ButtonClass};
+use hikari_palette::classes::ClassesBuilder;
+use hikari_palette::classes::components::ButtonClass;
 
-use crate::{
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity, GlowProps};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum IconButtonSize {

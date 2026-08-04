@@ -1,7 +1,8 @@
 // hi-components/src/navigation/tabs.rs
 // Tabs component with Arknights + FUI styling
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TabsComponent;
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
@@ -122,7 +123,8 @@ impl StyledComponent for TabsComponent {
 
 #[component]
 pub fn TabPane(props: TabPaneProps) -> Element {
-    use hikari_palette::classes::{ClassesBuilder, components::TabsClass};
+    use hikari_palette::classes::ClassesBuilder;
+    use hikari_palette::classes::components::TabsClass;
 
     let active_key = use_context::<Signal<String>>().expect("TabsContext not found");
     let item_key = props.item_key.clone();

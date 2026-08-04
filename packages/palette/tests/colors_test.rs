@@ -3,10 +3,8 @@
 #![cfg(hikari_collection_chinese)]
 
 use hikari_palette::collections::chinese::*;
-
 // hikari-palette/tests/colors_test.rs
 // 中国传统色库单元测试
-
 use hikari_palette::*;
 
 #[test]

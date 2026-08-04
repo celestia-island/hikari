@@ -153,3 +153,7 @@ export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useZoomPan } from "./composables/useZoomPan";
 export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
 export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon } from "./utils/fileType";
+
+export { useReducedMotion } from "./composables/useReducedMotion";
+export { probeOrigin } from "./utils/connectivity";
+export type { OriginProbe } from "./utils/connectivity";

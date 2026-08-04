@@ -16,8 +16,10 @@ export async function probeOrigin(
 ): Promise<OriginProbe> {
   const fetchFn = opts?.fetchFn ?? fetch;
   try {
-    const resp = await fetchFn(url, { credentials: "include", mode: "cors" });
-    return { ok: resp.ok };
+    // A successful credentialed fetch means reachable + CORS-whitelisted,
+    // regardless of the HTTP status code (4xx/5xx still prove the origin).
+    await fetchFn(url, { credentials: "include", mode: "cors" });
+    return { ok: true };
   } catch {
     // no-cors probe: still reports success if the server is reachable,
     // just without reading the response.

@@ -157,3 +157,9 @@ export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFil
 export { useReducedMotion } from "./composables/useReducedMotion";
 export { probeOrigin } from "./utils/connectivity";
 export type { OriginProbe } from "./utils/connectivity";
+
+export { highlight, useHighlight } from "./composables/useHighlight";
+export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
+export { iconByName } from "./composables/iconRegistry";
+export { useMessaging, registerTransport, registerNativeBridge } from "./composables/messaging";
+export type { MessagePayload, MessageSeverity, MessageTransport, NotifyOptions, TransportName } from "./composables/messaging";

@@ -1,10 +1,8 @@
 // node_graph/plugins/processor.rs
 // Processor node plugin - performs data transformations
 
-use crate::node_graph::{
-    node::{NodePlugin, NodePort, NodeType, PortId, PortPosition},
-    value::NodeValue,
-};
+use crate::node_graph::node::{NodePlugin, NodePort, NodeType, PortId, PortPosition};
+use crate::node_graph::value::NodeValue;
 
 /// Processor operation types
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

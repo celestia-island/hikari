@@ -4,12 +4,10 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{AlertClass, ClassesBuilder, UtilityClass};
 
-use crate::{
-    basic::{IconButton, IconButtonSize, IconButtonVariant},
-    feedback::{Glow, GlowBlur, GlowColor, GlowIntensity},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
+use crate::feedback::{Glow, GlowBlur, GlowColor, GlowIntensity};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct AlertComponent;
 

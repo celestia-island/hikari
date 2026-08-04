@@ -34,21 +34,21 @@
 //! }
 //! ```
 
-use hikari_palette::classes::{
-    AppLayoutClass, ClassesBuilder, UtilityClass, components::Layout as LayoutClass,
-};
+use hikari_palette::classes::components::Layout as LayoutClass;
+use hikari_palette::classes::{AppLayoutClass, ClassesBuilder, UtilityClass};
 
-use crate::{basic::Background, prelude::*};
+use crate::basic::Background;
+use crate::prelude::*;
 
 ///
 ///
 #[component]
 pub fn Layout(
-    #[props(optional)] header: Option<Element>,
+    #[props(default)] header: Option<Element>,
 
-    #[props(optional)] aside: Option<Element>,
+    #[props(default)] aside: Option<Element>,
 
-    #[props(optional)] footer: Option<Element>,
+    #[props(default)] footer: Option<Element>,
 
     children: Element,
 

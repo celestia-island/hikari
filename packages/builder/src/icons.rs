@@ -27,13 +27,11 @@
 pub mod auto_discovery;
 mod svg_parser;
 
-use anyhow::{Context, Result, anyhow};
-use std::{
-    collections::{BTreeMap, HashSet},
-    fs,
-    path::{Path, PathBuf},
-};
+use std::collections::{BTreeMap, HashSet};
+use std::fs;
+use std::path::{Path, PathBuf};
 
+use anyhow::{Context, Result, anyhow};
 pub use svg_parser::{IconData, PathData, PathElement, SvgElem, SvgElement, SvgIcon};
 
 /// Icon style variant for Material Design Icons
@@ -303,7 +301,7 @@ pub fn read_packed_icons(path: &Path) -> Result<BTreeMap<String, PackedIcon>> {
         cur += name_len;
         let vb = raw.get(cur..cur + 16).ok_or_else(truncated)?;
         let mut view_box = [0f32; 4];
-        for (slot, bytes) in view_box.iter_mut().zip(vb.chunks_exact(4)) {
+        for (slot, bytes) in view_box.iter_mut().zip(vb.as_chunks::<4>().0) {
             *slot = f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
         }
         cur += 16;

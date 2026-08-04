@@ -48,9 +48,10 @@ pub mod timeline;
 pub mod tween;
 
 // Pure Rust modules (no wasm-bindgen required)
+pub use core::*;
+
 pub use breathing::*;
 pub use config::AnimationConfig;
-pub use core::*;
 pub use easing::*;
 pub use presets::*;
 pub use state::*;
@@ -110,16 +111,15 @@ pub mod global_manager;
 pub use glow::Glow;
 #[cfg(feature = "wasm")]
 pub use hooks::*;
-#[cfg(feature = "wasm")]
-pub use provider::{
-    AnimationContext as AnimationProviderContext, AnimationProvider, try_use_animation_config,
-    use_animation_config, use_animation_duration_scale, use_animation_enabled,
-    use_animation_reduced_motion,
-};
-
 // Re-export transition presets for convenience (only available with wasm feature)
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use presets::transition::{
     SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
     slide_out, zoom_in, zoom_out,
+};
+#[cfg(feature = "wasm")]
+pub use provider::{
+    AnimationContext as AnimationProviderContext, AnimationProvider, try_use_animation_config,
+    use_animation_config, use_animation_duration_scale, use_animation_enabled,
+    use_animation_reduced_motion,
 };

@@ -90,8 +90,16 @@ impl Port {
         format!(
             "hk-node-graph-port hi-node-port-{} {} {}",
             self.port_type.as_str(),
-            if self.disabled { "hk-port-disabled" } else { "" },
-            if self.connected { "hk-port-connected" } else { "" }
+            if self.disabled {
+                "hk-port-disabled"
+            } else {
+                ""
+            },
+            if self.connected {
+                "hk-port-connected"
+            } else {
+                ""
+            }
         )
     }
 

@@ -8,21 +8,17 @@ use hikari_palette::classes::{
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use super::provider::use_portal;
+use crate::feedback::PopoverPlacement;
+use crate::modal::{MaskMode, ModalPosition, ModalSize};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform::{element_closest, element_from_point, request_animation_frame, set_timeout};
-use crate::{
-    feedback::PopoverPlacement,
-    modal::{MaskMode, ModalPosition, ModalSize},
-    platform::{inner_height, inner_width, log},
-    portal::{
-        positioning::calculate_position,
-        types::{
-            ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy,
-            ToastPosition, TriggerPlacement,
-        },
-    },
-    prelude::*,
+use crate::platform::{inner_height, inner_width, log};
+use crate::portal::positioning::calculate_position;
+use crate::portal::types::{
+    ModalAnimationState, PortalEntry, PortalMaskMode, PortalPositionStrategy, ToastPosition,
+    TriggerPlacement,
 };
+use crate::prelude::*;
 
 fn use_animated_portal_entry(
     id: String,

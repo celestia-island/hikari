@@ -14,7 +14,8 @@ use wasm_bindgen::prelude::*;
 
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::platform;
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 // Helper function to copy text to clipboard (WASM only)
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]

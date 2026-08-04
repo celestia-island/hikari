@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install apt dependencies
-        run: sudo apt-get install libasound2-dev libudev-dev
+        run: sudo apt-get install -y libasound2-dev libudev-dev
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@nightly
@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install apt dependencies
-        run: sudo apt-get install libasound2-dev libudev-dev
+        run: sudo apt-get install -y libasound2-dev libudev-dev
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install apt dependencies
-        run: sudo apt-get install libasound2-dev libudev-dev
+        run: sudo apt-get install -y libasound2-dev libudev-dev
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -82,31 +82,3 @@ jobs:
         run: cargo check --workspace --exclude hikari-render-service --exclude hikari-e2e --all-features --target wasm32-wasip2
         env:
           RUSTFLAGS: '--cfg releasing'
-
-  website-build:
-    name: Build website with tairitsu-packager
-    runs-on: [self-hosted, linux, x64, local]
-    steps:
-      - name: Checkout Project
-        uses: actions/checkout@v4
-
-      - name: Checkout tairitsu
-        run: git clone --depth 1 https://github.com/celestia-island/tairitsu.git ../tairitsu
-
-      - name: Install apt dependencies
-        run: sudo apt-get install libasound2-dev libudev-dev python3 python3-pip
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-          targets: wasm32-wasip2
-
-      - name: Restore Rust Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Compile website SCSS
-        run: python3 scripts/build/compile_scss.py
-
-      - name: Build website
-        run: cd examples/website && cargo run --manifest-path ../../../tairitsu/packages/packager/Cargo.toml -- --manifest-path Cargo.toml build

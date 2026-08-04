@@ -8,9 +8,10 @@
 use hikari_palette::Color;
 use hikari_palette::classes::{BackgroundClass, UtilityClass};
 
+use crate::prelude::*;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::style_builder::StyleBuilder;
-use crate::{prelude::*, styled::StyledComponent};
+use crate::styled::StyledComponent;
 
 pub struct BackgroundComponent;
 
@@ -46,6 +47,7 @@ pub fn Background(props: BackgroundProps) -> Element {
 fn start_gradient_animation() -> Box<dyn FnOnce()> {
     use std::cell::RefCell;
     use std::rc::Rc;
+
     use wasm_bindgen::JsCast;
     use wasm_bindgen::closure::Closure;
 

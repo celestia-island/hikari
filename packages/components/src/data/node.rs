@@ -3,10 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, TreeNodeClass};
 
-use crate::{
-    data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel},
-    prelude::*,
-};
+use crate::data::{TreeNodeArrow, TreeNodeContent, TreeNodeLabel};
+use crate::prelude::*;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TreeNodeData {

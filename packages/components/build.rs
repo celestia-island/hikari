@@ -4,7 +4,8 @@
 // This build script only handles the fallback case when theme styles
 // are unavailable (crates.io consumption without workspace layout).
 
-use std::{env, fs, path::Path};
+use std::path::Path;
+use std::{env, fs};
 
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();

@@ -6,16 +6,14 @@
 use hikari_icons::{Icon, MdiIcon};
 use hikari_palette::classes::{ClassesBuilder, SearchClass};
 
-use crate::{
-    basic::{InputWrapper, InputWrapperItem, InputWrapperSize},
-    feedback::{GlowBlur, GlowColor, GlowIntensity},
-    portal::{
-        PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
-        use_portal,
-    },
-    prelude::*,
-    styled::StyledComponent,
+use crate::basic::{InputWrapper, InputWrapperItem, InputWrapperSize};
+use crate::feedback::{GlowBlur, GlowColor, GlowIntensity};
+use crate::portal::{
+    PortalEntry, PortalMaskMode, PortalPositionStrategy, TriggerPlacement, generate_portal_id,
+    use_portal,
 };
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct SearchComponent;
 

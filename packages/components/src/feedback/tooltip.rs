@@ -3,13 +3,11 @@
 
 use hikari_palette::classes::{ClassesBuilder, TooltipClass, UtilityClass};
 
+use crate::portal::provider::{generate_portal_id, use_portal};
 #[cfg(target_arch = "wasm32")]
 use crate::portal::{PortalEntry, TriggerPlacement};
-use crate::{
-    portal::provider::{generate_portal_id, use_portal},
-    prelude::*,
-    styled::StyledComponent,
-};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct TooltipComponent;
 

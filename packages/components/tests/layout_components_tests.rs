@@ -363,16 +363,13 @@ mod tests {
     fn test_section_with_header() {
         let props = SectionProps {
             children: Some(VNode::empty()),
-            title: Some(Some("Welcome".to_string())),
-            description: Some(Some("A description".to_string())),
+            title: Some("Welcome".to_string()),
+            description: Some("A description".to_string()),
             size: "lg".to_string(),
             class: "hero-section".to_string(),
         };
-        assert_eq!(props.title.flatten().as_deref(), Some("Welcome"));
-        assert_eq!(
-            props.description.flatten().as_deref(),
-            Some("A description")
-        );
+        assert_eq!(props.title.as_deref(), Some("Welcome"));
+        assert_eq!(props.description.as_deref(), Some("A description"));
         assert_eq!(props.size, "lg");
     }
 
@@ -431,7 +428,7 @@ mod tests {
             children: Some(VNode::empty()),
             bordered: false,
             show_menu_toggle: true,
-            on_menu_toggle: Some(Some(Callback::new(|_| {}))),
+            on_menu_toggle: Some(Callback::new(|_| {})),
             right_content: Some(VNode::empty()),
             ..Default::default()
         };
@@ -461,8 +458,8 @@ mod tests {
     fn test_aside_with_options() {
         let props = AsideProps {
             children: Some(VNode::empty()),
-            header: Some(Some(VNode::empty())),
-            footer: Some(Some(VNode::empty())),
+            header: Some(VNode::empty()),
+            footer: Some(VNode::empty()),
             width: "lg".to_string(),
             variant: "light".to_string(),
             collapsible: false,

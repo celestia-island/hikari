@@ -6,7 +6,8 @@ use tairitsu_hooks::{provide_context, use_context, use_memo, use_signal};
 use tairitsu_macros::{component, define_props, rsx};
 use tairitsu_vdom::{Callback, Signal, VNode as Element};
 
-use crate::{config::AnimationConfig, prefers_reduced_motion::prefers_reduced_motion};
+use crate::config::AnimationConfig;
+use crate::prefers_reduced_motion::prefers_reduced_motion;
 
 /// Animation context for accessing configuration
 ///

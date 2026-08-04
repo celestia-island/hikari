@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, RadioClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone)]
 pub struct RadioContext {

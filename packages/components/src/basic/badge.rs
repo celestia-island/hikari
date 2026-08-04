@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{BadgeClass, ClassesBuilder, Display};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 pub struct BadgeComponent;
 

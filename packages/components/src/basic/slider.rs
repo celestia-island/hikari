@@ -3,7 +3,8 @@
 
 use hikari_palette::classes::{ClassesBuilder, SliderClass};
 
-use crate::{prelude::*, styled::StyledComponent};
+use crate::prelude::*;
+use crate::styled::StyledComponent;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum SliderSize {

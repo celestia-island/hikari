@@ -62,7 +62,7 @@ Current master, Rust workspace `0.3.19`.
   render without panic when props are omitted.
 - Fix CI gates: nightly fmt drift, apt non-interactive install, stale website
   build job, `just` install via GitHub API 404, and squash-message-clean git
-  identity. (#100)
+  identity. (#99)
 
 ### Removed
 

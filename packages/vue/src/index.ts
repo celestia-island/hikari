@@ -141,3 +141,6 @@ export { fuzzyScore, fuzzyScoreFields, fuzzySearch } from "./utils/fuzzy";
 export type { FuzzyMatch } from "./utils/fuzzy";
 export { validatePassword, passwordLevel } from "./utils/password";
 export type { PasswordValidationResult, PasswordLevel } from "./utils/password";
+
+export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
+export { useDeferredTransition } from "./composables/useDeferredTransition";

@@ -20,7 +20,13 @@ jobs:
           components: rustfmt, clippy
 
       - name: Restore Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run cargo fmt -- --check
         run: cargo +nightly fmt --all -- --check --unstable-features
@@ -42,7 +48,13 @@ jobs:
           targets: wasm32-wasip2
 
       - name: Restore Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run cargo clippy
         run: cargo clippy --all --all-features
@@ -71,7 +83,13 @@ jobs:
           targets: wasm32-wasip2
 
       - name: Restore Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run cargo test
         run: cargo test --all-features --all

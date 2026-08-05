@@ -1,6 +1,6 @@
 import { computed, defineComponent, type PropType } from "vue";
-import "../../../components/src/styles/components/icon_button.scss";
-import "../../../components/src/styles/components/icon-button-vars.scss";
+import "./HkIconButton.scss";
+import "./HkIconButtonVars.scss";
 
 export default defineComponent({
   name: "HkIconButton",

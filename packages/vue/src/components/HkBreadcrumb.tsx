@@ -1,6 +1,6 @@
 import { computed, defineComponent, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
-import "../../../components/src/styles/components/breadcrumb.scss";
+import "./HkBreadcrumb.scss";
 
 export default defineComponent({
   name: "HkBreadcrumb",

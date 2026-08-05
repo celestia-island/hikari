@@ -1,6 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 import * as LucideIcons from "lucide-vue-next";
-import "../../../components/src/styles/components/icon.scss";
+import "./HkIcon.scss";
 
 function pascalCase(str: string): string {
   const camel = str.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());

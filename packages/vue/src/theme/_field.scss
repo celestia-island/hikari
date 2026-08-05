@@ -1,0 +1,117 @@
+@mixin field-wrapper {
+  display: block;
+  width: 100%;
+}
+
+@mixin field-label {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 500;
+  margin-bottom: var(--space-6);
+  color: rgb(var(--color-text));
+}
+
+@mixin field-required {
+  margin-left: var(--space-2);
+  color: rgb(var(--color-error));
+}
+
+@mixin field-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-12);
+  min-height: 2.5rem;
+  background: rgb(var(--color-surface) / var(--opacity-half));
+  backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  color: rgb(var(--color-text));
+}
+
+@mixin field-box-hover($disabled-selector) {
+  &:hover:not(#{$disabled-selector}) {
+    border-color: var(--c-primary-strong);
+  }
+}
+
+@mixin field-box-focused {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+@mixin field-box-error {
+  border-color: var(--c-error-strong);
+}
+
+@mixin field-box-error-focused {
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
+}
+
+@mixin field-box-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@mixin field-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+  font-size: var(--text-base);
+  padding: var(--space-8) var(--space-12);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+}
+
+@mixin field-error-msg {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: rgb(var(--color-error));
+}
+
+@mixin field-hint {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+}
+
+@mixin field-autofill-overrides($box-class) {
+  .#{$box-class} input,
+  .#{$box-class} textarea {
+    transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
+  }
+
+  .#{$box-class} input:-webkit-autofill,
+  .#{$box-class} input:-webkit-autofill:hover,
+  .#{$box-class} input:-webkit-autofill:focus,
+  .#{$box-class} input:-webkit-autofill:active,
+  .#{$box-class} textarea:-webkit-autofill,
+  .#{$box-class} textarea:-webkit-autofill:hover,
+  .#{$box-class} textarea:-webkit-autofill:focus {
+    -webkit-text-fill-color: rgb(var(--color-text)) !important;
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+    caret-color: rgb(var(--color-text));
+  }
+
+  .#{$box-class} input:-webkit-autofill::first-line,
+  .#{$box-class} textarea:-webkit-autofill::first-line {
+    font-size: inherit !important;
+    font-family: inherit !important;
+    color: rgb(var(--color-text));
+  }
+
+  .#{$box-class} input:-internal-autofill-previewed,
+  .#{$box-class} input:-internal-autofill-selected {
+    -webkit-text-fill-color: rgb(var(--color-text)) !important;
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset !important;
+    caret-color: rgb(var(--color-text));
+  }
+}

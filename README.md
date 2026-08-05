@@ -175,6 +175,24 @@ Once published to npm, installation will simply be `pnpm add @celestia-island/hi
 import "@celestia-island/hikari/styles";
 ```
 
+### Theme initialization
+
+Components consume the theme through CSS variables (`--color-*`, `--hi-*`). Call `initTheme()` once at app startup to inject the active preset (synthwave84 by default) with light/dark mode and custom-theme support:
+
+```ts
+import { initTheme } from "@celestia-island/hikari";
+
+initTheme();
+```
+
+Components render correctly even without `initTheme()` — `packages/vue/src/tokens.scss` ships a static default light theme, and `initTheme()` overrides it at runtime via inline styles. For runtime theme/mode switching (e.g. a `HkThemeToggle`), use `useTheme()`:
+
+```ts
+import { useTheme } from "@celestia-island/hikari";
+
+const { currentTheme, currentMode, setTheme, setMode, toggleMode } = useTheme();
+```
+
 ## Documentation
 
 The full documentation lives under `docs/` in 9 languages:

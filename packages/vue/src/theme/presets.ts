@@ -265,6 +265,7 @@ export function tokensToCSSVars(
 ): Record<string, string> {
   const onPrimary = contrastColor(tokens.primary);
   const textSecondary = mixToken(tokens.text, tokens.muted, 0.25);
+  const textTertiary = mixToken(tokens.text, tokens.muted, 0.5);
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
@@ -273,6 +274,7 @@ export function tokensToCSSVars(
     "--color-accent": `${tokens.accent.r} ${tokens.accent.g} ${tokens.accent.b}`,
     "--color-text": `${tokens.text.r} ${tokens.text.g} ${tokens.text.b}`,
     "--color-text-secondary": `${textSecondary.r} ${textSecondary.g} ${textSecondary.b}`,
+    "--color-text-tertiary": `${textTertiary.r} ${textTertiary.g} ${textTertiary.b}`,
     "--color-muted": `${tokens.muted.r} ${tokens.muted.g} ${tokens.muted.b}`,
     "--color-border": `${tokens.border.r} ${tokens.border.g} ${tokens.border.b}`,
     "--color-focused-border": `${tokens.focusedBorder.r} ${tokens.focusedBorder.g} ${tokens.focusedBorder.b}`,

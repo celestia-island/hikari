@@ -24,3 +24,41 @@
   --border-faint: rgb(var(--color-border, 100 100 100) / 10%);
   --border-subtle: rgb(var(--color-border, 100 100 100) / 12%);
 }
+
+/* Static default light theme — renders correctly even without initTheme().
+   initTheme() overrides these at runtime via inline styles on
+   documentElement, which beat stylesheet :root declarations. */
+:root {
+  --color-primary: 122 162 247;
+  --color-on-primary: 255 255 255;
+  --color-on-solid: 255 255 255;
+  --color-secondary: 81 154 115;
+  --color-accent: 247 181 0;
+  --color-text: 30 30 30;
+  --color-text-secondary: 102 102 102;
+  --color-text-tertiary: 140 140 140;
+  --color-muted: 108 108 108;
+  --color-border: 100 100 100;
+  --color-focused-border: 122 162 247;
+  --color-background: 214 236 240;
+  --color-surface: 240 244 248;
+  --color-success: 14 184 64;
+  --color-error: 247 118 142;
+  --color-warning: 238 214 119;
+  --color-info: 106 190 214;
+
+  --hi-color-primary: rgb(var(--color-primary));
+  --hi-color-secondary: rgb(var(--color-secondary));
+  --hi-color-surface: rgb(var(--color-surface));
+  --hi-color-background: rgb(var(--color-background));
+  --hi-color-border: rgb(var(--color-border));
+  --hi-color-text-primary: rgb(var(--color-text));
+  --hi-color-text-secondary: rgb(var(--color-text-secondary));
+  --hi-color-muted: rgb(var(--color-muted));
+  --hi-color-on-primary: rgb(var(--color-on-primary));
+  --hi-color-text-on-primary: rgb(var(--color-on-primary));
+  --hi-color-success: rgb(var(--color-success));
+  --hi-color-error: rgb(var(--color-error));
+  --hi-color-warning: rgb(var(--color-warning));
+  --hi-color-info: rgb(var(--color-info));
+}

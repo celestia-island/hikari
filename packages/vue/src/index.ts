@@ -170,3 +170,5 @@ export { bytesToBase64, base64ToBytes, blobToBase64 } from "./utils/base64";
 export { THEME_MODE_STORAGE_KEY } from "./theme/useTheme";
 
 export { isTauri } from "./runtime/env";
+
+export { deepMerge, isPlainObject, getPath, setPath, delPath } from "./utils/objectPath";

@@ -106,3 +106,17 @@ export function fileIcon(type: string, name: string): LucideIcon {
   if (isArchiveFile(name)) return FileArchive;
   return FileText;
 }
+
+const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".avif"]);
+const VID_EXT = new Set([".mp4", ".webm", ".mov", ".mkv", ".avi", ".ogv"]);
+const AUD_EXT = new Set([".mp3", ".wav", ".ogg", ".flac", ".m4a", ".opus", ".aac"]);
+
+/** Media kind by file extension (no MIME available). */
+export function mediaKindOf(name: string): "image" | "video" | "audio" | "text" | "other" {
+  const ext = extOf(name).toLowerCase();
+  if (IMG_EXT.has(ext)) return "image";
+  if (VID_EXT.has(ext)) return "video";
+  if (AUD_EXT.has(ext)) return "audio";
+  if (isTextFile(name, "")) return "text";
+  return "other";
+}

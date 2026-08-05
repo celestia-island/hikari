@@ -31,3 +31,21 @@ export async function probeOrigin(
     }
   }
 }
+
+/**
+ * Like `probeOrigin` but captures the response body when the credentialed
+ * fetch succeeds — for identity assertions (e.g. checking a product field)
+ * without re-implementing the probe ladder.
+ */
+export async function probeOriginWithBody(
+  url: string,
+  opts?: { fetchFn?: typeof fetch },
+): Promise<{ ok: boolean; body?: string }> {
+  const fetchFn = opts?.fetchFn ?? fetch;
+  try {
+    const resp = await fetchFn(url, { credentials: "include", mode: "cors" });
+    return { ok: true, body: await resp.text().catch(() => undefined) };
+  } catch {
+    return { ok: false };
+  }
+}

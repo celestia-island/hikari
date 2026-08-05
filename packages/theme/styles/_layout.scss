@@ -42,6 +42,7 @@
   --space-96: 6rem;
 
   // ── Border radius scale ─
+  --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -84,6 +85,7 @@
   --border-subtle: rgb(var(--color-border) / 12%);
 
   // ── Duration / easing ─
+  --duration-fast: 0.15s;
   --duration-short: 0.15s;
   --duration-normal: 0.3s;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -95,4 +97,7 @@
   --c-primary-light: rgb(var(--color-primary) / 15%);
   --c-primary-subtle: rgb(var(--color-primary) / 8%);
   --c-primary-overlay: rgb(var(--color-primary) / 15%);
+
+  // ── Shadow scale ─
+  --shadow-modal: 0 12px 40px rgb(0 0 0 / 20%), 0 0 0 1px rgb(255 255 255 / 4%);
 }

@@ -6,7 +6,7 @@ import './demo.scss'
 localStorage.setItem('hikari-theme', 'tokyonight')
 initTheme()
 
-const tpl = new URLSearchParams(location.search).get('tpl') || (window as any).__TEMPLATE__ || '<div style="padding:1rem;color:var(--fg-sec)">No template provided</div>'
+const tpl = new URLSearchParams(location.search).get('tpl') || (window as any).__TEMPLATE__ || '<div style="padding:1rem;color:var(--color-text-secondary)">No template provided</div>'
 
 const app = createApp({ template: tpl })
 // Register all hikari components globally

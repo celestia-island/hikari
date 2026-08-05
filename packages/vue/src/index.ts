@@ -165,3 +165,4 @@ export type { MessagePayload, MessageSeverity, MessageTransport, NotifyOptions, 
 export { useResourceListModal } from "./composables/useResourceListModal";
 
 export { downloadBlob, downloadTextAsFile } from "./utils/download";
+export { bytesToBase64 } from "./utils/base64";

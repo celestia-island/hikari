@@ -51,6 +51,11 @@ export default defineComponent({
     /** Show the reset/fit button in the zoom bar (chest only rendered it
      *  when a reset handler was wired up). */
     showReset: { type: Boolean, default: false },
+    /** Optional prop-callback surface (alternative to the emits). */
+    onZoomIn: { type: Function as PropType<() => void>, default: undefined },
+    onZoomOut: { type: Function as PropType<() => void>, default: undefined },
+    onReset: { type: Function as PropType<() => void>, default: undefined },
+    onPanDelta: { type: Function as PropType<(dx: number, dy: number) => void>, default: undefined },
   },
   emits: {
     zoomIn: () => true,

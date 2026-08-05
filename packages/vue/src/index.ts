@@ -163,3 +163,5 @@ export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
 export { iconByName } from "./composables/iconRegistry";
 export { useMessaging, registerTransport, registerNativeBridge } from "./composables/messaging";
 export type { MessagePayload, MessageSeverity, MessageTransport, NotifyOptions, TransportName } from "./composables/messaging";
+
+export { useResourceListModal } from "./composables/useResourceListModal";

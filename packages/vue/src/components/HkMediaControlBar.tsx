@@ -6,12 +6,6 @@ import { useI18n } from "../i18n/context";
 import HMediaSlider from "./HkMediaSlider";
 import "./HkMediaControlBar.scss";
 
-export function formatMediaTime(sec: number): string {
-  if (!Number.isFinite(sec) || sec < 0) sec = 0;
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 /**
  * Shared transport controls for any media controller — the same bar is used
@@ -19,6 +13,13 @@ export function formatMediaTime(sec: number): string {
  * controller state via props and forwards intents via events. `HMediaSlider`
  * backs both the seek track and the volume track.
  */
+export function formatMediaTime(sec: number): string {
+  if (!Number.isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default defineComponent({
   name: "HkMediaControlBar",
   props: {

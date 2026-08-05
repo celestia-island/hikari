@@ -149,10 +149,10 @@ export { useDeferredTransition } from "./composables/useDeferredTransition";
 
 export { useZoomPan } from "./composables/useZoomPan";
 export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
-export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon } from "./utils/fileType";
+export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon, mediaKindOf } from "./utils/fileType";
 
 export { useReducedMotion } from "./composables/useReducedMotion";
-export { probeOrigin } from "./utils/connectivity";
+export { probeOrigin, probeOriginWithBody } from "./utils/connectivity";
 export type { OriginProbe } from "./utils/connectivity";
 
 export { highlight, useHighlight } from "./composables/useHighlight";
@@ -162,3 +162,5 @@ export { useMessaging, registerTransport, registerNativeBridge } from "./composa
 export type { MessagePayload, MessageSeverity, MessageTransport, NotifyOptions, TransportName } from "./composables/messaging";
 
 export { useResourceListModal } from "./composables/useResourceListModal";
+
+export { downloadBlob, downloadTextAsFile } from "./utils/download";

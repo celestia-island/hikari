@@ -112,10 +112,8 @@ export {
   useOverlay,
   usePopupManager,
   useToast,
-  useConfirm,
   useBreakpoint,
   useClipboard,
-  useAsyncData,
   closeAll,
   isOverlayOpen,
   TOAST_DURATION,
@@ -131,7 +129,6 @@ export {
   type ToastItem,
   type ToastMessage,
   type ToastType,
-  type UseAsyncDataReturn,
 } from "./runtime";
 
 // i18n

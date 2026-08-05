@@ -1,5 +1,5 @@
 import { computed, defineComponent, ref, watch, type PropType } from "vue";
-import "../../../components/src/styles/components/collapse.scss";
+import "./HkCollapse.scss";
 
 export default defineComponent({
   name: "HkCollapse",

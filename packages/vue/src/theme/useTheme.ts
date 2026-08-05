@@ -7,7 +7,8 @@ import { getTimePeriod, DEFAULT_GEO_LOCATION, type TimePeriod } from "./useSolar
 
 const DEFAULT_THEME = "synthwave84";
 const STORAGE_THEME_KEY = "hikari-theme";
-const STORAGE_MODE_KEY = "hikari-theme-mode";
+export const THEME_MODE_STORAGE_KEY = "hikari-theme-mode";
+const STORAGE_MODE_KEY = THEME_MODE_STORAGE_KEY;
 
 const currentTheme = ref<ThemeId>(
   localStorage.getItem(STORAGE_THEME_KEY) || DEFAULT_THEME,

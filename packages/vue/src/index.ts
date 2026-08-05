@@ -112,6 +112,7 @@ export {
   useOverlay,
   usePopupManager,
   useToast,
+  useConfirm,
   useBreakpoint,
   useClipboard,
   closeAll,

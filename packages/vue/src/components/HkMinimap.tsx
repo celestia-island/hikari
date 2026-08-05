@@ -35,7 +35,7 @@ export default defineComponent({
     /** Optional image rendered as the minimap background (image navigator).
      *  When set, the minimap renders even with no boxes. */
     imageSrc: { type: String, default: undefined },
-    imageBounds: { type: Object as PropType<MinimapRect>, default: undefined },
+    imageBounds: { type: Object as PropType<MinimapRect | undefined>, default: undefined },
     zoom: { type: Number, default: 1 },
     panX: { type: Number, default: 0 },
     panY: { type: Number, default: 0 },

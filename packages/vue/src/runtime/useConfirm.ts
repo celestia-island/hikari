@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
 
 export function useConfirm() {
   const resolveRef = ref<((value: boolean) => void) | null>(null);
@@ -30,6 +30,12 @@ export function useConfirm() {
     resolveRef.value?.(false);
     resolveRef.value = null;
   }
+
+  onUnmounted(() => {
+    resolveRef.value?.(false);
+    resolveRef.value = null;
+    open.value = false;
+  });
 
   return { open, title, message, confirmText, cancelText, confirm, onConfirm, onCancel };
 }

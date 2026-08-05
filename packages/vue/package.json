@@ -26,8 +26,7 @@
     },
     "./styles": {
       "import": "./src/styles/index.scss"
-    },
-    "./theme/*": "./src/theme/*"
+    }
   },
   "files": [
     "src/",

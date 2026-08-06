@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: |
-            ${{ env.CARGO_HOME }}
+            ~/.cargo
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: |
-            ${{ env.CARGO_HOME }}
+            ~/.cargo
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
@@ -86,7 +86,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: |
-            ${{ env.CARGO_HOME }}
+            ~/.cargo
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-

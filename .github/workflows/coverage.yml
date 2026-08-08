@@ -52,7 +52,9 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov@0.8.7
 
       - name: Generate coverage report (HTML + lcov)
         run: |

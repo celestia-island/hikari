@@ -3,6 +3,7 @@ name: Tests
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, reopened, ready_for_review]
     paths:
       - '.github/workflows/test.yml'
       - 'packages/**/*'

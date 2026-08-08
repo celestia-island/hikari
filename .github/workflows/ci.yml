@@ -1,7 +1,12 @@
 ---
 name: Run Tests
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  workflow_dispatch:
 
 jobs:
   rustfmt:

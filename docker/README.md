@@ -12,7 +12,7 @@ This directory contains Docker configurations for running Hikari E2E tests with 
 ### Start Testing Environment
 
 ```bash
-cd /mnt/sdb1/hikari
+cd /opt/hikari
 
 # Build and start all services
 docker-compose up --build
@@ -28,7 +28,7 @@ docker-compose logs -f
 
 ```bash
 # In a new terminal, run E2E tests
-cd /mnt/sdb1/hikari/packages/e2e
+cd /opt/hikari/packages/e2e
 
 # Set Chrome remote address
 export CHROME_REMOTE_ADDRESS=chrome:4444

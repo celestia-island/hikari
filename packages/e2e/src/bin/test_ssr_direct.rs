@@ -13,7 +13,7 @@ fn main() -> Result<()> {
     info!("==========================================\n");
 
     // Read the WASM file
-    let wasm_path = "/mnt/sdb1/hikari/public/website.wasm";
+    let wasm_path = "/opt/hikari/public/website.wasm";
     let wasm_bytes = fs::read(wasm_path)?;
     info!("Loaded {} bytes from {}", wasm_bytes.len(), wasm_path);
 

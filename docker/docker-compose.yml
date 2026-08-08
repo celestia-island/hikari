@@ -2,7 +2,7 @@ services:
   # Hikari Website
   website:
     build:
-      context: /mnt/sdb1/hikari
+      context: /opt/hikari
       dockerfile: docker/website.Dockerfile
     container_name: hikari-website
     ports:

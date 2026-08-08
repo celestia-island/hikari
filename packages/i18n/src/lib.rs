@@ -199,7 +199,7 @@ pub fn t_lang(dotted_key: &str, fallback: &str) -> (String, Language) {
 
 use include_dir::{Dir, include_dir};
 
-static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../res/i18n/locales");
+static LOCALES_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/src/locales");
 
 fn hikari_default_keys(language: &Language) -> I18nKeys {
     let lang_dir_name = match language {

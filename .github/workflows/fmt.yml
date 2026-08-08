@@ -2,13 +2,14 @@ name: Format
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, reopened, ready_for_review]
     paths:
       - '.github/workflows/fmt.yml'
       - 'packages/**/*'
       - 'examples/**/*'
       - 'Cargo.toml'
   push:
-    branches: [master, dev]
+    branches: [master]
 
 jobs:
   format:

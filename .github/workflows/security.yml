@@ -3,12 +3,13 @@ name: Security Audit
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, reopened, ready_for_review]
     paths:
       - '.github/workflows/security.yml'
       - '**/Cargo.toml'
       - '**/Cargo.lock'
   push:
-    branches: [master, dev]
+    branches: [master]
   schedule:
     - cron: '0 6 * * 1'
 

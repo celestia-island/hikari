@@ -3,8 +3,9 @@ name: Coverage
 on:
   workflow_dispatch:
   push:
-    branches: [master, dev]
+    branches: [master]
   pull_request:
+    types: [opened, reopened, ready_for_review]
     paths:
       - '.github/workflows/coverage.yml'
       - 'packages/**/*'

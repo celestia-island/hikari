@@ -5,6 +5,7 @@ on:
   push:
     branches: [master, dev]
   pull_request:
+    types: [opened, reopened, ready_for_review]
     paths:
       - '.github/workflows/coverage.yml'
       - 'packages/**/*'

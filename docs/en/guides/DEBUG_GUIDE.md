@@ -13,7 +13,7 @@
 persistent-terminal_startService(
     name="hikari-dev",
     command="just dev",
-    cwd="/mnt/sdb1/hikari",
+    cwd="/opt/hikari",
     readyPatterns=["Server running", "listening on"]
 )
 ```
@@ -45,13 +45,13 @@ just debug-generate "/" "/components" "/components/layer1/basic"
 
 ```
 zai-mcp-server_ui_to_artifact(
-    image_source="/mnt/sdb1/hikari/scripts/dev/screenshots/components.png",
+    image_source="/opt/hikari/scripts/dev/screenshots/components.png",
     output_type="description",
     prompt="分析这个 UI 组件页面的布局和样式是否正确"
 )
 
 zai-mcp-server_diagnose_error_screenshot(
-    image_source="/mnt/sdb1/hikari/scripts/dev/screenshots/error_page.png",
+    image_source="/opt/hikari/scripts/dev/screenshots/error_page.png",
     prompt="分析这个错误截图，识别可能的问题"
 )
 ```

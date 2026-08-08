@@ -13,7 +13,7 @@ fn main() -> Result<()> {
     info!("===========================\n");
 
     // Read WASM file
-    let wasm_bytes = fs::read("/mnt/sdb1/hikari/public/website.wasm")?;
+    let wasm_bytes = fs::read("/opt/hikari/public/website.wasm")?;
     info!("Loaded {} bytes of WASM", wasm_bytes.len());
 
     // Try to load tairitsu_ssr dynamically

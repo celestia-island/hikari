@@ -13,11 +13,11 @@ fn main() -> Result<()> {
     info!("===========================\n");
 
     // Read WASM file
-    let wasm_bytes = fs::read("/mnt/sdb1/hikari/public/website.wasm")?;
+    let wasm_bytes = fs::read("/opt/hikari/public/website.wasm")?;
     info!("Loaded {} bytes of WASM", wasm_bytes.len());
 
     // Try to load tairitsu_ssr dynamically
-    let dynamic_lib = std::ffi::CString::new("/mnt/sdb1/tairitsu/target/debug/libtairitsu_ssr-1e71b4c225e205fd.rlib")?;
+    let dynamic_lib = std::ffi::CString::new("/opt/tairitsu/target/debug/libtairitsu_ssr-1e71b4c225e205fd.rlib")?;
     info!("Looking for library: {}", dynamic_lib.to_string_lossy());
 
     Ok(())

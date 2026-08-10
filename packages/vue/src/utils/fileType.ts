@@ -1,4 +1,8 @@
-import { FileArchive, FileAudio, FileCode, FileImage, FileText, FileVideo, type LucideIcon } from "lucide-vue-next";
+import FileArchive from "lucide-vue-next/dist/esm/icons/file-archive";
+import FileCode from "lucide-vue-next/dist/esm/icons/file-code";
+import FileImage from "lucide-vue-next/dist/esm/icons/file-image";
+import FileText from "lucide-vue-next/dist/esm/icons/file-text";
+import type { LucideIcon } from "lucide-vue-next";
 
 const CODE_EXT: Record<string, string> = {
   js: "javascript",
@@ -100,8 +104,8 @@ export function isTextFile(name: string, type: string): boolean {
 
 export function fileIcon(type: string, name: string): LucideIcon {
   if (type.startsWith("image/")) return FileImage;
-  if (type.startsWith("video/")) return FileVideo;
-  if (type.startsWith("audio/")) return FileAudio;
+  if (type.startsWith("video/")) return FileText;
+  if (type.startsWith("audio/")) return FileText;
   if (isCodeFile(name)) return FileCode;
   if (isArchiveFile(name)) return FileArchive;
   return FileText;

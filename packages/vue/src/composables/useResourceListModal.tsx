@@ -4,7 +4,7 @@ import { useI18n } from "../i18n/context";
 
 
 import { HEmptyState, HInput, HListTransition, HModal, HScrollContainer, HSpinner } from "../index";
-import { Search } from "lucide-vue-next";
+import Search from "lucide-vue-next/dist/esm/icons/search";
 
 interface ResourceItem {
   name: string;

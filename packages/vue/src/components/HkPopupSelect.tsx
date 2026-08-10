@@ -1,5 +1,5 @@
 import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch, type PropType } from "vue";
-import { ChevronDown } from "lucide-vue-next";
+import ChevronDown from "lucide-vue-next/dist/esm/icons/chevron-down";
 import HkPopover from "./HkPopover";
 import HkScrollContainer from "./HkScrollContainer";
 import "./HkPopupSelect.scss";

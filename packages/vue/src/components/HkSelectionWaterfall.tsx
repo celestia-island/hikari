@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import { Check } from "lucide-vue-next";
+import Check from "lucide-vue-next/dist/esm/icons/check";
 import "./HkSelectionWaterfall.scss";
 
 export interface WaterfallItem {

@@ -1,0 +1,11 @@
+# cargo-audit configuration — mirrors the advisory ignore in deny.toml.
+#
+# RUSTSEC-2026-0235 (rkyv 0.7.x): fix exists only in the 0.8 line, but the
+# sole consumer parcel_sourcemap 2.1.1 (max stable, transitively via
+# lazy_static) pins ^0.7. rkyv is internal to parcel_sourcemap; hikari never
+# deserializes attacker-controlled archives. Upgrade tracked with the
+# parcel_sourcemap dependency refresh.
+[advisories]
+ignore = [
+    "RUSTSEC-2026-0235",
+]

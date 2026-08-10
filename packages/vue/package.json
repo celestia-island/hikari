@@ -54,11 +54,14 @@
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",
     "sass": "^*",
-    "typescript": "~6.0",
+    "typescript": "^*",
     "vite": "^*",
     "vue-tsc": "^*"
   },
-  "overrides": {
-    "typescript": "~6.0"
+  "pnpm": {
+    "overrides": {
+      "typescript": "~6.0",
+      "vue-tsc": "~3.3.9"
+    }
   }
 }

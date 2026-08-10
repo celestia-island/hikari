@@ -26,9 +26,9 @@
   width: 100%;
   padding: var(--space-8) var(--space-32) var(--space-8) var(--space-12);
   min-height: 2.5rem;
-  background: rgb(var(--color-surface) / var(--opacity-half));
-  backdrop-filter: blur(var(--blur-sm));
-  border: 1px solid var(--border-input);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--radius-md);
   font-family: inherit;
   font-size: var(--text-base);
@@ -97,7 +97,7 @@
   padding: var(--space-4);
   border-radius: var(--radius-md);
   overflow-y: auto;
-  background: rgb(var(--color-surface) / var(--opacity-half));
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   backdrop-filter: blur(var(--blur-md));
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-dropdown);

@@ -17,6 +17,9 @@ importers:
       echarts:
         specifier: ^*
         version: 6.1.0
+      highlight.js:
+        specifier: ^*
+        version: 11.11.1
       lucide-vue-next:
         specifier: ^*
         version: 1.0.0(vue@3.5.40(typescript@6.0.3))
@@ -533,6 +536,10 @@ packages:
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
+
+  highlight.js@11.11.1:
+    resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
+    engines: {node: '>=12.0.0'}
 
   immutable@5.1.9:
     resolution: {integrity: sha512-m8nVez3rwrgmWxtLMt1ZYXB2Lv7OKYn/disyxAlSDYAlKSlFoPPfIAmAM/M5xqL4m4C/wAPw7S2/CNaUii1Hxg==}
@@ -1299,6 +1306,8 @@ snapshots:
     optional: true
 
   gensync@1.0.0-beta.2: {}
+
+  highlight.js@11.11.1: {}
 
   immutable@5.1.9: {}
 

@@ -6,7 +6,7 @@
 .hk-card {
   display: block;
   overflow: hidden;
-  background: rgb(var(--color-surface) / var(--opacity-half));
+  background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
   backdrop-filter: blur(var(--blur-md));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);

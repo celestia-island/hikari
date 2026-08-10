@@ -23,9 +23,8 @@
   gap: var(--space-6);
   padding: var(--space-8) var(--space-12);
   min-height: 2.5rem;
-  background: rgb(var(--color-surface) / var(--opacity-half));
-  backdrop-filter: blur(var(--blur-sm));
-  border: 1px solid var(--border-input);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);

@@ -1,6 +1,15 @@
 [advisories]
 unmaintained = "workspace"
 unsound = "workspace"
+# RUSTSEC-2026-0235 (rkyv 0.7.x): out-of-bounds read in archives containing
+# Rc/Arc with forged slice metadata. Fix exists only in the 0.8 line, but the
+# sole consumer in this graph — parcel_sourcemap 2.1.1 (max stable, pulled in
+# transitively by lazy_static) — pins rkyv ^0.7. rkyv is an internal
+# implementation detail of parcel_sourcemap; hikari never deserializes
+# attacker-controlled archives through it.
+ignore = [
+    "RUSTSEC-2026-0235",
+]
 
 [licenses]
 allow = [

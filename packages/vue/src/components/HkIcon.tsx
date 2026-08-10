@@ -1,13 +1,6 @@
 import { defineComponent, type PropType } from "vue";
-import * as LucideIcons from "lucide-vue-next";
+import { iconByName } from "../composables/iconRegistry";
 import "./HkIcon.scss";
-
-function pascalCase(str: string): string {
-  const camel = str.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
-  return camel.charAt(0).toUpperCase() + camel.slice(1);
-}
-
-const icons = LucideIcons as Record<string, any>;
 
 export default defineComponent({
   name: "HkIcon",
@@ -24,20 +17,11 @@ export default defineComponent({
         props.color ? `hk-icon-${props.color}` : "",
       ];
 
-      const pName = pascalCase(props.name);
-      const IconComp = icons[pName] || icons[props.name];
-
-      if (IconComp) {
-        return <span class={cls}><IconComp /></span>;
-      }
-
-      return (
-        <span class={cls}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        </span>
-      );
+      // Resolve through the explicit registry: a wildcard import of
+      // lucide-vue-next here defeated tree-shaking and shipped the whole
+      // ~1500-icon library in the shared bundle of every consumer.
+      const IconComp = iconByName(props.name) as any;
+      return <span class={cls}><IconComp /></span>;
     };
   },
 });

@@ -10,13 +10,27 @@ const STORAGE_THEME_KEY = "hikari-theme";
 export const THEME_MODE_STORAGE_KEY = "hikari-theme-mode";
 const STORAGE_MODE_KEY = THEME_MODE_STORAGE_KEY;
 
-const currentTheme = ref<ThemeId>(
-  localStorage.getItem(STORAGE_THEME_KEY) || DEFAULT_THEME,
-);
 const currentMode = ref<ThemeMode>(
   (localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode) || "system",
 );
 const customThemes = ref<CustomThemePreset[]>(loadCustomThemes());
+
+function storedThemeId(): ThemeId {
+  const stored = localStorage.getItem(STORAGE_THEME_KEY);
+  if (stored) {
+    const known = new Set<string>([
+      ...Object.keys(themePresets),
+      ...customThemes.value.map((c) => c.id),
+    ]);
+    if (known.has(stored)) return stored as ThemeId;
+    // Stale/invalid theme id (e.g. written by an older build): drop it so
+    // applyTheme() never silently bails and leaves the page unthemed.
+    localStorage.removeItem(STORAGE_THEME_KEY);
+  }
+  return DEFAULT_THEME;
+}
+
+const currentTheme = ref<ThemeId>(storedThemeId());
 
 const currentPeriod = ref<TimePeriod>(
   getTimePeriod(DEFAULT_GEO_LOCATION.lat, DEFAULT_GEO_LOCATION.lng),

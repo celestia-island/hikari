@@ -91,10 +91,10 @@ export default defineComponent({
     const GAP = 8;
     const DOT_R = 2.2;
     const SIGMA = 2.8;
-    const R_SPEED = 0.22;
+    const R_SPEED = 13.2;
     const R_WIDTH = 1.3;
     const R_BOOST = 0.7;
-    const PEAK_SPEED = 0.02;
+    const PEAK_SPEED = 1.2;
 
     let COLS = 11;
     let dists: number[][] = [];
@@ -166,7 +166,7 @@ export default defineComponent({
       rebuildGrid(cols);
     }
 
-    function draw() {
+    function draw(dt: number) {
       const cv = dotCanvasRef.value;
       if (!cv) return;
       const ctx = cv.getContext("2d");
@@ -227,8 +227,8 @@ export default defineComponent({
 
       for (let i = ripples.length - 1; i >= 0; i--) {
         const rp = ripples[i];
-        rp.radius += R_SPEED;
-        rp.peak = Math.max(0, rp.peak - PEAK_SPEED);
+        rp.radius += R_SPEED * dt;
+        rp.peak = Math.max(0, rp.peak - PEAK_SPEED * dt);
         if (rp.radius > MAX_D + R_WIDTH + 0.5 && rp.peak <= 0) {
           ripples.splice(i, 1);
         }
@@ -236,16 +236,20 @@ export default defineComponent({
     }
 
     let running = false;
+    let lastTime = 0;
 
-    function loop() {
-      draw();
+    function loop(ts: number) {
+      if (!lastTime) lastTime = ts;
+      const dt = Math.min(0.1, (ts - lastTime) / 1000);
+      lastTime = ts;
+      draw(dt);
       rafId = requestAnimationFrame(loop);
     }
 
     function startLoop() {
       if (running) return;
       running = true;
-      loop();
+      loop(performance.now());
     }
 
     function stopLoop() {

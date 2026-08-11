@@ -63,5 +63,9 @@
       "typescript": "~6.0",
       "vue-tsc": "~3.3.9"
     }
-  }
+  },
+  "sideEffects": [
+    "**/*.scss",
+    "**/*.css"
+  ]
 }

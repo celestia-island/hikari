@@ -8,7 +8,8 @@ import {
   type PropType,
   Teleport,
 } from "vue";
-import { ChevronDown, Search } from "lucide-vue-next";
+import ChevronDown from "lucide-vue-next/dist/esm/icons/chevron-down";
+import Search from "lucide-vue-next/dist/esm/icons/search";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {

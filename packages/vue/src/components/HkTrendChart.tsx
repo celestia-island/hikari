@@ -1,19 +1,11 @@
 import { defineComponent, onMounted, onUnmounted, ref, watch, type PropType } from "vue";
 
-import { LineChart } from "echarts/charts";
-import { DataZoomComponent, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent } from "echarts/components";
-import * as echarts from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
-
-echarts.use([
-  LineChart,
-  GridComponent,
-  TooltipComponent,
-  LegendComponent,
-  DataZoomComponent,
-  MarkLineComponent,
-  CanvasRenderer,
-]);
+// echarts is loaded lazily (dynamic import in onMounted) so a consumer that
+// merely imports this component — or anything else from the hikari package —
+// never pays for echarts in the initial bundle. The static import graph
+// previously dragged the whole echarts module tree into the shared chunk,
+// which every entry page (e.g. the login screen) had to download and parse.
+import type { ECharts } from "echarts/core";
 
 export interface TrendPoint {
   time: number;
@@ -50,7 +42,7 @@ export default defineComponent({
   },
   setup(props) {
     const chartEl = ref<HTMLElement>();
-    let chart: echarts.ECharts | null = null;
+    let chart: ECharts | null = null;
     let resizeCleanup: (() => void) | undefined;
 
     function renderChart() {
@@ -141,8 +133,27 @@ export default defineComponent({
       chart?.resize();
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       if (chartEl.value) {
+        const echarts = await import("echarts/core");
+        const { LineChart } = await import("echarts/charts");
+        const {
+          DataZoomComponent,
+          GridComponent,
+          LegendComponent,
+          MarkLineComponent,
+          TooltipComponent,
+        } = await import("echarts/components");
+        const { CanvasRenderer } = await import("echarts/renderers");
+        echarts.use([
+          LineChart,
+          GridComponent,
+          TooltipComponent,
+          LegendComponent,
+          DataZoomComponent,
+          MarkLineComponent,
+          CanvasRenderer,
+        ]);
         chart = echarts.init(chartEl.value);
         renderChart();
         // Keep the canvas in sync with its container. echarts doesn't

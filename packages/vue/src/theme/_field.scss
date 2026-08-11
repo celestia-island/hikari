@@ -24,7 +24,7 @@
   padding: var(--space-8) var(--space-12);
   min-height: 2.5rem;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
-  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border: none;
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);

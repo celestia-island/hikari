@@ -1,5 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
-import { X } from "lucide-vue-next";
+import X from "lucide-vue-next/dist/esm/icons/x";
 import "./HkTag.scss";
 
 export type TagVariant = "default" | "primary" | "success" | "warning" | "danger" | "info";

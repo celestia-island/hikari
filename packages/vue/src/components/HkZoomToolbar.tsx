@@ -1,5 +1,7 @@
 import { defineComponent } from "vue";
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-vue-next";
+import Maximize2 from "lucide-vue-next/dist/esm/icons/maximize-2";
+import ZoomIn from "lucide-vue-next/dist/esm/icons/zoom-in";
+import ZoomOut from "lucide-vue-next/dist/esm/icons/zoom-out";
 
 import HButton from "./HkButton";
 import { useI18n } from "../i18n/context";

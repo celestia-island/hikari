@@ -10,6 +10,39 @@ const STORAGE_THEME_KEY = "hikari-theme";
 export const THEME_MODE_STORAGE_KEY = "hikari-theme-mode";
 const STORAGE_MODE_KEY = THEME_MODE_STORAGE_KEY;
 
+// Page-declared brand themes (optional): a site may declare
+// window.__celestiaThemes (extra theme ids) and window.__celestiaDefaultTheme
+// in its index.html before this module loads. Honor them when resolving the
+// stored theme id so a brand id like "endfield" is not dropped as unknown.
+// Both helpers are no-ops when the globals are absent, keeping every other
+// consumer's behavior unchanged.
+interface PageDeclaredThemeGlobals {
+  __celestiaThemes?: Record<string, unknown>;
+  __celestiaDefaultTheme?: string;
+}
+
+function pageDeclaredThemes(): Record<string, unknown> {
+  if (typeof window === "undefined") return {};
+  return (window as Window & PageDeclaredThemeGlobals).__celestiaThemes ?? {};
+}
+
+function pageDeclaredDefaultTheme(): string | null {
+  if (typeof window === "undefined") return null;
+  const declared = (window as Window & PageDeclaredThemeGlobals).__celestiaDefaultTheme;
+  return typeof declared === "string" ? declared : null;
+}
+
+function resolveDefaultTheme(): ThemeId {
+  const declared = pageDeclaredDefaultTheme();
+  if (
+    declared &&
+    (declared in themePresets || declared in pageDeclaredThemes())
+  ) {
+    return declared as ThemeId;
+  }
+  return DEFAULT_THEME;
+}
+
 const currentMode = ref<ThemeMode>(
   (localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode) || "system",
 );
@@ -20,6 +53,7 @@ function storedThemeId(): ThemeId {
   if (stored) {
     const known = new Set<string>([
       ...Object.keys(themePresets),
+      ...Object.keys(pageDeclaredThemes()),
       ...customThemes.value.map((c) => c.id),
     ]);
     if (known.has(stored)) return stored as ThemeId;
@@ -27,7 +61,7 @@ function storedThemeId(): ThemeId {
     // applyTheme() never silently bails and leaves the page unthemed.
     localStorage.removeItem(STORAGE_THEME_KEY);
   }
-  return DEFAULT_THEME;
+  return resolveDefaultTheme();
 }
 
 const currentTheme = ref<ThemeId>(storedThemeId());
@@ -136,7 +170,7 @@ export function useTheme() {
     removeCustomThemeFromStorage(id);
     customThemes.value = loadCustomThemes();
     if (currentTheme.value === id) {
-      setTheme(DEFAULT_THEME);
+      setTheme(resolveDefaultTheme());
     }
   }
 

@@ -6,6 +6,9 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [vue(), vueJsx()],
   base: '/',
+  test: {
+    environment: 'happy-dom',
+  },
   resolve: {
     alias: {
       '@celestia-island/hikari': resolve(__dirname, 'src'),

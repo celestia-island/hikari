@@ -1,6 +1,7 @@
+import { ChevronRight } from "lucide-vue-next";
 import { defineComponent, computed, ref, type PropType } from "vue";
 import type { Component } from "vue";
-import ChevronRight from "lucide-vue-next/dist/esm/icons/chevron-right";
+
 import "./HkNavItem.scss";
 
 interface NavItemChild {

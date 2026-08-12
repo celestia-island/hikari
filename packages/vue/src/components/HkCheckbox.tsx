@@ -1,5 +1,6 @@
+import { Check } from "lucide-vue-next";
 import { defineComponent, ref, type PropType } from "vue";
-import Check from "lucide-vue-next/dist/esm/icons/check";
+
 import "./HkCheckbox.scss";
 
 export default defineComponent({

@@ -1,10 +1,11 @@
+import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from "lucide-vue-next";
 import { defineComponent } from "vue";
-import Maximize from "lucide-vue-next/dist/esm/icons/maximize";
-import Minimize from "lucide-vue-next/dist/esm/icons/minimize";
-import Pause from "lucide-vue-next/dist/esm/icons/pause";
-import Play from "lucide-vue-next/dist/esm/icons/play";
-import Volume2 from "lucide-vue-next/dist/esm/icons/volume-2";
-import VolumeX from "lucide-vue-next/dist/esm/icons/volume-x";
+
+
+
+
+
+
 
 import HButton from "./HkButton";
 import { useI18n } from "../i18n/context";

@@ -1,7 +1,8 @@
+import { Copy, RefreshCw, TriangleAlert as AlertTriangle } from "lucide-vue-next";
 import { defineComponent, onErrorCaptured, ref, type PropType, type VNode } from "vue";
-import AlertTriangle from "lucide-vue-next/dist/esm/icons/triangle-alert";
-import Copy from "lucide-vue-next/dist/esm/icons/copy";
-import RefreshCw from "lucide-vue-next/dist/esm/icons/refresh-cw";
+
+
+
 import { useClipboard } from "../runtime/useClipboard";
 import { useI18n } from "../i18n/context";
 import HButton from "./HkButton";

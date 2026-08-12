@@ -1,10 +1,8 @@
+import { CircleX as XCircle, X } from "lucide-vue-next";
 import { computed, defineComponent, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
-import AlertTriangle from "lucide-vue-next/dist/esm/icons/triangle-alert";
-import CheckCircle from "lucide-vue-next/dist/esm/icons/circle-check";
-import Copy from "lucide-vue-next/dist/esm/icons/copy";
-import Info from "lucide-vue-next/dist/esm/icons/info";
-import X from "lucide-vue-next/dist/esm/icons/x";
-import XCircle from "lucide-vue-next/dist/esm/icons/circle-x";
+import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
+
+
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
 import { useI18n } from "../i18n/context";

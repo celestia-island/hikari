@@ -54,6 +54,7 @@ export default defineComponent({
     const composing = ref(false);
     const preComposeValue = ref("");
     const revealing = ref(false);
+    let lastInputAt = 0;
 
     const level = computed(() => {
       if (!props.strength || !props.modelValue) return null;
@@ -304,6 +305,7 @@ export default defineComponent({
 
     function onInput(e: Event) {
       const t = e.target as HTMLInputElement;
+      lastInputAt = performance.now();
       if (composing.value) return;
       const v = t.value;
       if (FW_RE.test(v)) {
@@ -359,6 +361,18 @@ export default defineComponent({
 
     function onBlur(e: FocusEvent) {
       focused.value = false;
+      // If the blur lands within a short window after the last input
+      // event (e.g. an extension/IME yanks focus when the field is
+      // cleared to empty), reclaim focus — a deliberate user click away
+      // never follows an input this tightly.
+      if (
+        performance.now() - lastInputAt < 300 &&
+        !props.disabled &&
+        !props.readonly
+      ) {
+        const el = inputRef.value;
+        if (el) setTimeout(() => el.focus(), 0);
+      }
       capsLock.value = false;
       fullWidthPaused.value = false;
       allSelected.value = false;

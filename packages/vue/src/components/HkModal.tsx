@@ -425,7 +425,7 @@ export default defineComponent({
                         >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
-                        <span>Auto</span>
+                        <span>{t("hk.modal.auto", "Auto")}</span>
                       </div>
                     )}
                   </div>

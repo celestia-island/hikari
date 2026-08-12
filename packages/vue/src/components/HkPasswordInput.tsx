@@ -7,6 +7,8 @@ import {
   watch,
 } from "vue";
 
+import { useI18n } from "../i18n/context";
+
 import HListTransition from "./HkListTransition";
 import "./HkPasswordInput.scss";
 
@@ -29,10 +31,10 @@ export default defineComponent({
     name: { type: String, default: undefined },
     autocomplete: { type: String, default: undefined },
     strength: { type: Boolean, default: false },
-    passwordEnteredText: { type: String, default: "Password entered" },
-    allSelectedText: { type: String, default: "All selected" },
-    capsLockText: { type: String, default: "Caps Lock is on" },
-    fullWidthWarningText: { type: String, default: "Full-width characters not allowed" },
+    passwordEnteredText: { type: String, default: undefined },
+    allSelectedText: { type: String, default: undefined },
+    capsLockText: { type: String, default: undefined },
+    fullWidthWarningText: { type: String, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -41,6 +43,7 @@ export default defineComponent({
     keydown: (_e: KeyboardEvent) => true,
   },
   setup(props, { emit }) {
+    const { t } = useI18n();
     const inputRef = ref<HTMLInputElement>();
     const dotCanvasRef = ref<HTMLCanvasElement>();
     const boxRef = ref<HTMLElement>();
@@ -70,7 +73,9 @@ export default defineComponent({
     const levelLabel = computed(() => {
       const lv = level.value;
       if (!lv) return "";
-      return lv.charAt(0).toUpperCase() + lv.slice(1);
+      if (lv === "weak") return t("hikari::passwordInput.strengthWeak", "Weak");
+      if (lv === "fair") return t("hikari::passwordInput.strengthFair", "Fair");
+      return t("hikari::passwordInput.strengthStrong", "Strong");
     });
 
     function startReveal() {
@@ -91,12 +96,16 @@ export default defineComponent({
     const GAP = 8;
     const DOT_R = 2.2;
     const SIGMA = 2.8;
-    const R_SPEED = 13.2;
+    // Time-driven animation budget: the ripple ring sweeps the whole dot
+    // grid and its peak fades out within 0.3s, regardless of box size.
+    const RIPPLE_SWEEP_S = 0.3;
+    const PEAK_DECAY_S = 0.3;
     const R_WIDTH = 1.3;
     const R_BOOST = 0.7;
-    const PEAK_SPEED = 1.2;
+    const PEAK_SPEED = 1 / PEAK_DECAY_S;
 
     let COLS = 11;
+    let R_SPEED = 0;
     let dists: number[][] = [];
     let MAX_D = 1;
     let rgb: [number, number, number] = [88, 166, 255];
@@ -117,6 +126,7 @@ export default defineComponent({
         }
       }
       MAX_D = Math.sqrt(cc * cc + cr * cr);
+      R_SPEED = (MAX_D + R_WIDTH + 0.5) / RIPPLE_SWEEP_S;
     }
 
     rebuildGrid(11);
@@ -469,11 +479,14 @@ export default defineComponent({
                 clearAndFocus();
               }}
             >
-              {props.passwordEnteredText}
+              {props.passwordEnteredText ??
+                t("hikari::passwordInput.passwordEntered")}
             </span>
           ) : null}
           {focused.value && allSelected.value ? (
-            <span class="hk-pwd-select-hint">{props.allSelectedText}</span>
+            <span class="hk-pwd-select-hint">
+              {props.allSelectedText ?? t("hikari::passwordInput.allSelected")}
+            </span>
           ) : null}
           {revealing.value ? (
             <span class="hk-pwd-reveal-text">{props.modelValue}</span>
@@ -514,14 +527,15 @@ export default defineComponent({
           <HListTransition tag="div">
             {capsLock.value ? (
               <span key="caps" class="hk-pwd-hint" data-variant="caps">
-                {props.capsLockText}
+                {props.capsLockText ?? t("hikari::passwordInput.capsLock")}
               </span>
             ) : null}
           </HListTransition>
           <HListTransition tag="div">
             {fullWidthPaused.value ? (
               <span key="fw" class="hk-pwd-hint" data-variant="fw">
-                {props.fullWidthWarningText}
+                {props.fullWidthWarningText ??
+                  t("hikari::passwordInput.fullWidth")}
               </span>
             ) : null}
           </HListTransition>

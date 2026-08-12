@@ -1,6 +1,7 @@
+import { Eye, EyeOff } from "lucide-vue-next";
 import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
-import Eye from "lucide-vue-next/dist/esm/icons/eye";
-import EyeOff from "lucide-vue-next/dist/esm/icons/eye-off";
+
+
 import "./HkInput.scss";
 
 export default defineComponent({

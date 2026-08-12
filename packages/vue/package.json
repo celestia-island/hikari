@@ -56,13 +56,8 @@
     "sass": "^*",
     "typescript": "^*",
     "vite": "^*",
-    "vue-tsc": "^*"
-  },
-  "pnpm": {
-    "overrides": {
-      "typescript": "~6.0",
-      "vue-tsc": "~3.3.9"
-    }
+    "vue-tsc": "^*",
+    "vitest": "^*"
   },
   "sideEffects": [
     "**/*.scss",

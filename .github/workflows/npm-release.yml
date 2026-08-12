@@ -26,10 +26,15 @@ jobs:
           node-version: "22"
           registry-url: https://registry.npmjs.org/
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11
+
       - name: Install dependencies
         run: |
           cd packages/vue
-          npm install
+          pnpm install --frozen-lockfile
 
       - name: Resolve version
         id: ver
@@ -52,6 +57,6 @@ jobs:
       - name: Publish
         run: |
           cd packages/vue
-          npm publish --access public --provenance
+          pnpm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

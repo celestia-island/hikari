@@ -350,6 +350,19 @@ export default defineComponent({
       capsLock.value = false;
       fullWidthPaused.value = false;
       allSelected.value = false;
+      // Some IMEs never fire compositionend when the field loses focus
+      // mid-composition (or after deleting the whole composed text). A
+      // stuck `composing` flag swallows every later onInput — the user
+      // clears the field, the placeholder never comes back and typing
+      // stops working. Reset the flag and sync any uncommitted value so
+      // the model stays in lockstep with the real input.
+      if (composing.value) {
+        composing.value = false;
+        const el = inputRef.value;
+        if (el && el.value !== props.modelValue) {
+          emit("update:modelValue", el.value);
+        }
+      }
       checkAutofill();
       emit("blur", e);
     }

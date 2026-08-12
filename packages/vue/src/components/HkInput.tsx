@@ -1,6 +1,7 @@
 import { Eye, EyeOff } from "lucide-vue-next";
 import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
 
+import { useI18n } from "../i18n/context";
 
 import "./HkInput.scss";
 
@@ -40,6 +41,7 @@ export default defineComponent({
     keydown: (_e: KeyboardEvent) => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useI18n();
     const attrs = useAttrs();
     const inputRef = ref<HTMLElement>();
 
@@ -190,7 +192,11 @@ export default defineComponent({
               <button
                 type="button"
                 class="hk-input-password-toggle"
-                aria-label={revealing.value ? "Hide password" : "Show password"}
+                aria-label={
+                  revealing.value
+                    ? t("hikari::input.hidePassword", "Hide password")
+                    : t("hikari::input.showPassword", "Show password")
+                }
                 onClick={() => { revealing.value = !revealing.value; }}
               >
                 {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}

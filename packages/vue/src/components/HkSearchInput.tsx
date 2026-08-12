@@ -20,7 +20,7 @@ export default defineComponent({
   name: "HkSearchInput",
   props: {
     modelValue: { type: String, default: "" },
-    placeholder: { type: String, default: "Search..." },
+    placeholder: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     size: {
       type: String as PropType<"sm" | "md" | "lg">,
@@ -95,7 +95,7 @@ export default defineComponent({
           type="search"
           class="hk-search-input-field"
           value={props.modelValue}
-          placeholder={props.placeholder ?? "Search..."}
+          placeholder={props.placeholder ?? t("hk.searchInput.placeholder", "Search…")}
           disabled={props.disabled}
           onInput={onInput}
           onKeydown={onKeydown}

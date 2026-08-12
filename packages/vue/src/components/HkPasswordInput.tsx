@@ -469,7 +469,18 @@ export default defineComponent({
           </div>
           <canvas ref={dotCanvasRef} class="hk-pwd-dots" />
           {!props.modelValue && !revealing.value ? (
-            <span class="hk-pwd-placeholder">{props.placeholder}</span>
+            <span
+              class="hk-pwd-placeholder"
+              onPointerdown={(e: PointerEvent) => {
+                // Tapping the placeholder refocuses the field — after a
+                // browser password-manager bubble steals focus the input
+                // otherwise stops responding to typing.
+                e.preventDefault();
+                inputRef.value?.focus();
+              }}
+            >
+              {props.placeholder}
+            </span>
           ) : null}
           {props.modelValue && !focused.value && !revealing.value ? (
             <span

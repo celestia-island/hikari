@@ -318,6 +318,18 @@ export default defineComponent({
       allSelected.value = false;
       emit("update:modelValue", v);
       flash();
+      if (!v) {
+        // Deleting down to empty can lose focus to an extension/IME bubble
+        // in real browsers. Reclaim focus if nothing else has it.
+        const el = inputRef.value;
+        if (el && document.activeElement !== el) {
+          queueMicrotask(() => {
+            if (document.activeElement !== el && !props.disabled) {
+              el.focus();
+            }
+          });
+        }
+      }
     }
 
     function onKeydown(e: KeyboardEvent) {
@@ -383,6 +395,18 @@ export default defineComponent({
       allSelected.value = false;
       emit("update:modelValue", v);
       flash();
+      if (!v) {
+        // Deleting down to empty can lose focus to an extension/IME bubble
+        // in real browsers. Reclaim focus if nothing else has it.
+        const el = inputRef.value;
+        if (el && document.activeElement !== el) {
+          queueMicrotask(() => {
+            if (document.activeElement !== el && !props.disabled) {
+              el.focus();
+            }
+          });
+        }
+      }
     }
 
     function onSelect() {
@@ -472,14 +496,16 @@ export default defineComponent({
             <span
               class="hk-pwd-placeholder"
               onPointerdown={(e: PointerEvent) => {
-                // Tapping the placeholder refocuses the field — after a
-                // browser password-manager bubble steals focus the input
-                // otherwise stops responding to typing.
+                // Tapping the placeholder refocuses the field — after an
+                // extension or IME steals focus the input otherwise stops
+                // responding to typing.
                 e.preventDefault();
                 inputRef.value?.focus();
               }}
             >
-              {props.placeholder}
+              {focused.value
+                ? t("hikari::passwordInput.focusedPlaceholder")
+                : props.placeholder}
             </span>
           ) : null}
           {props.modelValue && !focused.value && !revealing.value ? (

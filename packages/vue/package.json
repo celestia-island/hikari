@@ -53,6 +53,7 @@
     "@vitejs/plugin-vue": "^*",
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/server-renderer": "^*",
+    "happy-dom": "^*",
     "sass": "^*",
     "typescript": "^*",
     "vite": "^*",

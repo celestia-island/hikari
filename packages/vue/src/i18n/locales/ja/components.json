@@ -43,6 +43,7 @@
     "hikari::toast.close": "閉じる",
     "hikari::modal.auto": "自動",
     "hikari::scrollContainer.auto": "自動",
-    "hikari::avatar.fallback": "？"
+    "hikari::avatar.fallback": "？",
+    "hikari::passwordInput.focusedPlaceholder": "フォーカス中、パスワードを入力してください"
   }
 }

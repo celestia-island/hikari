@@ -43,6 +43,7 @@
     "hikari::toast.close": "关闭",
     "hikari::modal.auto": "自动",
     "hikari::scrollContainer.auto": "自动",
-    "hikari::avatar.fallback": "?"
+    "hikari::avatar.fallback": "?",
+    "hikari::passwordInput.focusedPlaceholder": "已聚焦，请输入密码"
   }
 }

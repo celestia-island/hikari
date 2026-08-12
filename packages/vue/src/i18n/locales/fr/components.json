@@ -43,6 +43,7 @@
     "hikari::toast.close": "Close",
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
-    "hikari::avatar.fallback": "?"
+    "hikari::avatar.fallback": "?",
+    "hikari::passwordInput.focusedPlaceholder": "Champ actif, saisissez votre mot de passe"
   }
 }

@@ -43,6 +43,7 @@
     "hikari::toast.close": "닫기",
     "hikari::modal.auto": "자동",
     "hikari::scrollContainer.auto": "자동",
-    "hikari::avatar.fallback": "?"
+    "hikari::avatar.fallback": "?",
+    "hikari::passwordInput.focusedPlaceholder": "포커스됨, 비밀번호를 입력하세요"
   }
 }

@@ -1,9 +1,6 @@
 import { computed, defineComponent, ref, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
-import AlertTriangle from "lucide-vue-next/dist/esm/icons/triangle-alert";
-import CheckCircle from "lucide-vue-next/dist/esm/icons/circle-check";
-import Info from "lucide-vue-next/dist/esm/icons/info";
-import X from "lucide-vue-next/dist/esm/icons/x";
+import { AlertTriangle, CheckCircle, Info, X } from "lucide-vue-next";
 
 import "./HkAlert.scss";
 

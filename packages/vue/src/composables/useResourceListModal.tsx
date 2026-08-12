@@ -1,10 +1,11 @@
+import { Search } from "lucide-vue-next";
 import { computed, ref, shallowRef, watch } from "vue";
 import { useI18n } from "../i18n/context";
 // @ts-ignore JSX namespace
 
 
 import { HEmptyState, HInput, HListTransition, HModal, HScrollContainer, HSpinner } from "../index";
-import Search from "lucide-vue-next/dist/esm/icons/search";
+
 
 interface ResourceItem {
   name: string;

@@ -1,7 +1,8 @@
-import FileArchive from "lucide-vue-next/dist/esm/icons/file-archive";
-import FileCode from "lucide-vue-next/dist/esm/icons/file-code";
-import FileImage from "lucide-vue-next/dist/esm/icons/file-image";
-import FileText from "lucide-vue-next/dist/esm/icons/file-text";
+
+
+
+
+import { FileArchive, FileCode, FileImage, FileText } from "lucide-vue-next";
 import type { LucideIcon } from "lucide-vue-next";
 
 const CODE_EXT: Record<string, string> = {

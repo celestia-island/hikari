@@ -28,7 +28,7 @@
   min-height: 2.5rem;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   
-  border: none;
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--radius-md);
   font-family: inherit;
   font-size: var(--text-base);

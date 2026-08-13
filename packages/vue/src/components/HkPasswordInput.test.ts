@@ -87,7 +87,7 @@ describe("HkPasswordInput refocus", () => {
 
     expect(placeholderText(container)).toBeNull();
     expect(blurHintText(container)).toBe(
-      "Entered, click to clear the existing password",
+      "Entered, click to focus and clear the existing password",
     );
   });
 

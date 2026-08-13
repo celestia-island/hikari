@@ -30,7 +30,7 @@
     "hikari::table.noData": "No data",
     "hikari::confirmDialog.cancel": "Cancel",
     "hikari::confirmDialog.confirm": "Confirm",
-    "hikari::passwordInput.passwordEntered": "Introducida, haga clic para borrar la contraseña existente",
+    "hikari::passwordInput.passwordEntered": "Introducida, al hacer clic se enfoca y borra la contraseña existente",
     "hikari::passwordInput.allSelected": "All selected",
     "hikari::passwordInput.capsLock": "Caps Lock is on",
     "hikari::passwordInput.fullWidth": "Full-width characters not allowed",

@@ -30,7 +30,7 @@
     "hikari::table.noData": "No data",
     "hikari::confirmDialog.cancel": "Cancel",
     "hikari::confirmDialog.confirm": "Confirm",
-    "hikari::passwordInput.passwordEntered": "Введён, нажмите, чтобы очистить текущий пароль",
+    "hikari::passwordInput.passwordEntered": "Введён, клик сфокусирует и очистит текущий пароль",
     "hikari::passwordInput.allSelected": "All selected",
     "hikari::passwordInput.capsLock": "Caps Lock is on",
     "hikari::passwordInput.fullWidth": "Full-width characters not allowed",

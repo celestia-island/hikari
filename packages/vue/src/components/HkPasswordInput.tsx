@@ -398,12 +398,14 @@ export default defineComponent({
       pendingClear.value = false;
       // If the blur lands within a short window after the last input
       // event (e.g. an extension/IME yanks focus when the field is
-      // cleared to empty), reclaim focus — a deliberate user click away
-      // never follows an input this tightly.
+      // cleared to empty), reclaim focus. A blur that hands focus to
+      // another element (Tab navigation or a click on a focusable
+      // control) is deliberate and must not be reclaimed.
       if (
         performance.now() - lastInputAt < 300 &&
         !props.disabled &&
-        !props.readonly
+        !props.readonly &&
+        !e.relatedTarget
       ) {
         const el = inputRef.value;
         if (el) setTimeout(() => el.focus(), 0);

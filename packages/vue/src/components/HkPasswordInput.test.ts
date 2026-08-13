@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
 import HkPasswordInput from "./HkPasswordInput";
@@ -154,5 +154,31 @@ describe("HkPasswordInput refocus", () => {
     input.dispatchEvent(new FocusEvent("focus"));
     await nextTick();
     expect(placeholderText(container)).toBe("Focused, enter your password");
+  });
+
+  it("reclaims focus on a stray blur right after input", async () => {
+    const { input } = mountPasswordInput("");
+    fireInput(input, "a");
+    const focusSpy = vi.spyOn(input, "focus");
+
+    input.dispatchEvent(new FocusEvent("blur", { relatedTarget: null }));
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(focusSpy).toHaveBeenCalled();
+  });
+
+  it("lets Tab navigation hand focus to another element", async () => {
+    const { input } = mountPasswordInput("");
+    const next = document.createElement("input");
+    document.body.appendChild(next);
+
+    fireInput(input, "a");
+    const focusSpy = vi.spyOn(input, "focus");
+
+    input.dispatchEvent(new FocusEvent("blur", { relatedTarget: next }));
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(focusSpy).not.toHaveBeenCalled();
+    next.remove();
   });
 });

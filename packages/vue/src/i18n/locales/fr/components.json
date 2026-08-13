@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "Champ actif, saisissez votre mot de passe"
+    "hikari::passwordInput.focusedPlaceholder": "Champ actif, saisissez votre mot de passe",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Champ actif, la saisie effacera le mot de passe actuel"
   }
 }

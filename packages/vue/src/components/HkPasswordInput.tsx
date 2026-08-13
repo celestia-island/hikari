@@ -54,6 +54,7 @@ export default defineComponent({
     const composing = ref(false);
     const preComposeValue = ref("");
     const revealing = ref(false);
+    const pendingClear = ref(false);
     let lastInputAt = 0;
 
     const level = computed(() => {
@@ -307,6 +308,17 @@ export default defineComponent({
       const t = e.target as HTMLInputElement;
       lastInputAt = performance.now();
       if (composing.value) return;
+      if (pendingClear.value) {
+        // Fallback for engines without beforeinput: keep only the part
+        // typed beyond the old password, or start over on any other edit.
+        pendingClear.value = false;
+        const old = props.modelValue;
+        if (old && t.value.startsWith(old) && t.value.length > old.length) {
+          t.value = t.value.slice(old.length);
+        } else {
+          t.value = "";
+        }
+      }
       const v = t.value;
       if (FW_RE.test(v)) {
         const clean = v.replace(FW_RE, "");
@@ -347,13 +359,35 @@ export default defineComponent({
       checkSelection();
     }
 
+    function onBeforeinput(e: InputEvent) {
+      if (!pendingClear.value) return;
+      const inputType = e.inputType || "";
+      if (!inputType.startsWith("insert") && !inputType.startsWith("delete")) {
+        return;
+      }
+      const el = inputRef.value;
+      if (!el) return;
+      pendingClear.value = false;
+      // The old password is only a placeholder for the next input: typing
+      // (or pasting) starts from an empty field, and deleting clears the
+      // whole field instead of nibbling one dot of the old value.
+      el.value = "";
+      emit("update:modelValue", "");
+      if (inputType.startsWith("delete")) {
+        e.preventDefault();
+        kickRipple();
+      }
+    }
+
     function onFocus(e: FocusEvent) {
       focused.value = true;
-      if (props.modelValue && !props.readonly) {
-        emit("update:modelValue", "");
-        if (inputRef.value) inputRef.value.value = "";
-        kickRipple();
+      if (props.modelValue && !props.readonly && !props.disabled) {
+        // Keep the entered password on refocus instead of wiping it: the
+        // field now shows a focused placeholder and clears the old value
+        // only once the user actually starts typing.
+        pendingClear.value = true;
       } else {
+        pendingClear.value = false;
         checkAutofill();
       }
       emit("focus", e);
@@ -361,6 +395,7 @@ export default defineComponent({
 
     function onBlur(e: FocusEvent) {
       focused.value = false;
+      pendingClear.value = false;
       // If the blur lands within a short window after the last input
       // event (e.g. an extension/IME yanks focus when the field is
       // cleared to empty), reclaim focus — a deliberate user click away
@@ -410,7 +445,19 @@ export default defineComponent({
 
     function onCompositionEnd() {
       composing.value = false;
-      const v = inputRef.value?.value ?? "";
+      let v = inputRef.value?.value ?? "";
+      if (pendingClear.value) {
+        // Same fallback as onInput for engines without beforeinput.
+        pendingClear.value = false;
+        const old = props.modelValue;
+        if (old && v.startsWith(old) && v.length > old.length) {
+          v = v.slice(old.length);
+          if (inputRef.value) inputRef.value.value = v;
+        } else if (old) {
+          v = "";
+          if (inputRef.value) inputRef.value.value = "";
+        }
+      }
       if (FW_RE.test(v.slice(preComposeValue.value.length))) {
         if (inputRef.value) inputRef.value.value = preComposeValue.value;
         emit("update:modelValue", preComposeValue.value);
@@ -455,8 +502,11 @@ export default defineComponent({
 
     let autofillInterval: ReturnType<typeof setInterval> | null = null;
 
-    watch([() => props.modelValue, focused, revealing], () => {
-      // kick a draw on state change
+    watch(() => props.modelValue, (v) => {
+      // An external clear (or the blur hint's clear-and-focus) must drop
+      // the pending-clear state so the placeholder falls back to the
+      // waiting-for-input message.
+      if (!v) pendingClear.value = false;
     });
 
     onMounted(() => {
@@ -519,7 +569,8 @@ export default defineComponent({
             </svg>
           </div>
           <canvas ref={dotCanvasRef} class="hk-pwd-dots" />
-          {!props.modelValue && !revealing.value ? (
+          {(!props.modelValue || (pendingClear.value && focused.value)) &&
+          !revealing.value ? (
             <span
               class="hk-pwd-placeholder"
               onPointerdown={(e: PointerEvent) => {
@@ -530,12 +581,17 @@ export default defineComponent({
                 inputRef.value?.focus();
               }}
             >
-              {focused.value
-                ? t("hikari::passwordInput.focusedPlaceholder")
-                : props.placeholder}
+              {pendingClear.value && props.modelValue
+                ? t("hikari::passwordInput.focusedHasValuePlaceholder")
+                : focused.value
+                  ? t("hikari::passwordInput.focusedPlaceholder")
+                  : props.placeholder}
             </span>
           ) : null}
-          {props.modelValue && !focused.value && !revealing.value ? (
+          {props.modelValue &&
+          !focused.value &&
+          !revealing.value &&
+          !pendingClear.value ? (
             <span
               class="hk-pwd-blur-hint"
               onPointerdown={(e: PointerEvent) => {
@@ -568,6 +624,7 @@ export default defineComponent({
             required={props.required}
             class="hk-pwd-input"
             onInput={onInput}
+            onBeforeinput={onBeforeinput}
             onFocus={onFocus}
             onBlur={onBlur}
             onKeydown={onKeydown}

@@ -44,6 +44,7 @@
     "hikari::modal.auto": "自动",
     "hikari::scrollContainer.auto": "自动",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "已聚焦，请输入密码"
+    "hikari::passwordInput.focusedPlaceholder": "已聚焦，请输入密码",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "已聚焦，继续输入将清空原密码"
   }
 }

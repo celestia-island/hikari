@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "Focused, enter your password"
+    "hikari::passwordInput.focusedPlaceholder": "Focused, enter your password",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Focused, typing will clear the current password"
   }
 }

@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "Focado, digite sua senha"
+    "hikari::passwordInput.focusedPlaceholder": "Focado, digite sua senha",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Focado, digitar apagará a senha atual"
   }
 }

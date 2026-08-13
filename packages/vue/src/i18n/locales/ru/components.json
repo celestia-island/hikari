@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "В фокусе, введите пароль"
+    "hikari::passwordInput.focusedPlaceholder": "В фокусе, введите пароль",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "В фокусе, ввод очистит текущий пароль"
   }
 }

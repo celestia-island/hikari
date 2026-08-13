@@ -44,6 +44,7 @@
     "hikari::modal.auto": "자동",
     "hikari::scrollContainer.auto": "자동",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "포커스됨, 비밀번호를 입력하세요"
+    "hikari::passwordInput.focusedPlaceholder": "포커스됨, 비밀번호를 입력하세요",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "포커스됨, 입력을 계속하면 현재 비밀번호가 지워집니다"
   }
 }

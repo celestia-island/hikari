@@ -30,7 +30,7 @@
     "hikari::table.noData": "No data",
     "hikari::confirmDialog.cancel": "Cancel",
     "hikari::confirmDialog.confirm": "Confirm",
-    "hikari::passwordInput.passwordEntered": "Password entered",
+    "hikari::passwordInput.passwordEntered": "Entered, click to focus and clear the existing password",
     "hikari::passwordInput.allSelected": "All selected",
     "hikari::passwordInput.capsLock": "Caps Lock is on",
     "hikari::passwordInput.fullWidth": "Full-width characters not allowed",
@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "Focused, enter your password"
+    "hikari::passwordInput.focusedPlaceholder": "Focused, enter your password",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Focused, typing will clear the current password"
   }
 }

@@ -30,7 +30,7 @@
     "hikari::table.noData": "데이터 없음",
     "hikari::confirmDialog.cancel": "취소",
     "hikari::confirmDialog.confirm": "확인",
-    "hikari::passwordInput.passwordEntered": "비밀번호 입력됨",
+    "hikari::passwordInput.passwordEntered": "입력됨, 클릭하여 포커스하면 기존 비밀번호가 지워집니다",
     "hikari::passwordInput.allSelected": "전체 선택",
     "hikari::passwordInput.capsLock": "CapsLock 켜짐",
     "hikari::passwordInput.fullWidth": "전각 문자 불가",
@@ -44,6 +44,7 @@
     "hikari::modal.auto": "자동",
     "hikari::scrollContainer.auto": "자동",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "포커스됨, 비밀번호를 입력하세요"
+    "hikari::passwordInput.focusedPlaceholder": "포커스됨, 비밀번호를 입력하세요",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "포커스됨, 입력을 계속하면 현재 비밀번호가 지워집니다"
   }
 }

@@ -30,7 +30,7 @@
     "hikari::table.noData": "No data",
     "hikari::confirmDialog.cancel": "Cancel",
     "hikari::confirmDialog.confirm": "Confirm",
-    "hikari::passwordInput.passwordEntered": "Password entered",
+    "hikari::passwordInput.passwordEntered": "Inserida, clique para focar e apagar a senha existente",
     "hikari::passwordInput.allSelected": "All selected",
     "hikari::passwordInput.capsLock": "Caps Lock is on",
     "hikari::passwordInput.fullWidth": "Full-width characters not allowed",
@@ -44,6 +44,7 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
-    "hikari::passwordInput.focusedPlaceholder": "Focado, digite sua senha"
+    "hikari::passwordInput.focusedPlaceholder": "Focado, digite sua senha",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Focado, digitar apagará a senha atual"
   }
 }

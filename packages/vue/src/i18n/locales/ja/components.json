@@ -30,7 +30,7 @@
     "hikari::table.noData": "データなし",
     "hikari::confirmDialog.cancel": "キャンセル",
     "hikari::confirmDialog.confirm": "確認",
-    "hikari::passwordInput.passwordEntered": "パスワード入力済み",
+    "hikari::passwordInput.passwordEntered": "入力済み、クリックでフォーカスし既存のパスワードを消去します",
     "hikari::passwordInput.allSelected": "全選択",
     "hikari::passwordInput.capsLock": "CapsLock オン",
     "hikari::passwordInput.fullWidth": "全角文字不可",
@@ -44,6 +44,7 @@
     "hikari::modal.auto": "自動",
     "hikari::scrollContainer.auto": "自動",
     "hikari::avatar.fallback": "？",
-    "hikari::passwordInput.focusedPlaceholder": "フォーカス中、パスワードを入力してください"
+    "hikari::passwordInput.focusedPlaceholder": "フォーカス中、パスワードを入力してください",
+    "hikari::passwordInput.focusedHasValuePlaceholder": "フォーカス中、入力を続けると現在のパスワードは消去されます"
   }
 }

@@ -65,4 +65,4 @@ fn main() {
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

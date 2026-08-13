@@ -180,7 +180,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for 
 
 ## License
 
-[MIT License](../../../LICENSE)
+[Synthetic Source License (SySL), Version 1.0](../../../LICENSE)
 
 ## Acknowledgments
 

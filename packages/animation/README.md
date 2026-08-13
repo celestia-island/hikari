@@ -98,4 +98,4 @@ For complete API documentation, easing functions, and performance tips, see [doc
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

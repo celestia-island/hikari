@@ -30,7 +30,7 @@
     "hikari::table.noData": "暂无数据",
     "hikari::confirmDialog.cancel": "取消",
     "hikari::confirmDialog.confirm": "确认",
-    "hikari::passwordInput.passwordEntered": "已输入密码",
+    "hikari::passwordInput.passwordEntered": "已输入，点击以消除现有密码",
     "hikari::passwordInput.allSelected": "已全选",
     "hikari::passwordInput.capsLock": "大写锁定已开启",
     "hikari::passwordInput.fullWidth": "全角字符不可用",

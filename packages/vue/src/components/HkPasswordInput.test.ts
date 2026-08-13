@@ -86,7 +86,9 @@ describe("HkPasswordInput refocus", () => {
     await nextTick();
 
     expect(placeholderText(container)).toBeNull();
-    expect(blurHintText(container)).toBe("Password entered");
+    expect(blurHintText(container)).toBe(
+      "Entered, click to clear the existing password",
+    );
   });
 
   it("starts the next input from an empty field after beforeinput", async () => {

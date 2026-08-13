@@ -9,6 +9,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify-versions:
+    name: Verify version consistency
+    uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@master
+
   rustfmt:
     name: Check Formatting
     runs-on: [self-hosted, linux, x64, local]

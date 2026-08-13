@@ -180,7 +180,7 @@ AnimationBuilder::new(&elements)
 
 ## 라이선스
 
-[MIT 라이선스](../../../LICENSE)
+[Synthetic Source License (SySL), Version 1.0](../../../LICENSE)
 
 ## 감사의 말
 

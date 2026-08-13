@@ -51,4 +51,4 @@ For complete API documentation, theme customization, and nested theming, see [do
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

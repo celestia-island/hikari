@@ -180,7 +180,7 @@ AnimationBuilder::new(&elements)
 
 ## ライセンス
 
-[MIT License](../../../LICENSE)
+[Synthetic Source License (SySL), Version 1.0](../../../LICENSE)
 
 ## 謝辞
 

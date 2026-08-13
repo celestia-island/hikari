@@ -51,4 +51,4 @@ import { HkButton, HkCard, HkInput } from "@celestia-island/hikari";
 
 ## License
 
-BUSL-1.1
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

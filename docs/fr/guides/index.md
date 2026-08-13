@@ -180,7 +180,7 @@ Les contributions sont les bienvenues ! Veuillez lire [CONTRIBUTING.md](../../en
 
 ## Licence
 
-[Licence MIT](../../../LICENSE)
+[Synthetic Source License (SySL), Version 1.0](../../../LICENSE)
 
 ## Remerciements
 

@@ -38,4 +38,4 @@ For complete API documentation and examples, see [docs.rs](https://docs.rs/hikar
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

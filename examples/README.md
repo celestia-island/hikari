@@ -216,7 +216,7 @@ When adding new examples:
 
 ## 📝 License
 
-All examples are licensed under the same terms as the Hikari project (MIT OR Apache-2.0).
+All examples are licensed under the same terms as the Hikari project — the [Synthetic Source License (SySL), Version 1.0](../LICENSE).
 
 ## 🙏 Acknowledgments
 

@@ -212,7 +212,7 @@ For full E2E testing:
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).
 
 ## Contributing
 

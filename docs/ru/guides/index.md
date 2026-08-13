@@ -180,7 +180,7 @@ AnimationBuilder::new(&elements)
 
 ## Лицензия
 
-[MIT License](../../../LICENSE)
+[Synthetic Source License (SySL), Version 1.0](../../../LICENSE)
 
 ## Благодарности
 

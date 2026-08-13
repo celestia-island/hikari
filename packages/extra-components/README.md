@@ -58,4 +58,4 @@ For complete API documentation, node graph system, and examples, see [docs.rs](h
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under the [Synthetic Source License (SySL), Version 1.0](../../LICENSE).

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick, ref } from "vue";
+import { createApp, h, nextTick, ref, type Slot } from "vue";
 
 import HkPasswordInput from "./HkPasswordInput";
 
@@ -12,19 +12,27 @@ interface Mounted {
 
 const mounts: Mounted[] = [];
 
-function mountPasswordInput(initial = ""): Mounted {
+function mountPasswordInput(
+  initial = "",
+  props: Record<string, unknown> = {},
+  slots: Record<string, Slot> = {},
+): Mounted {
   const model = ref(initial);
   const container = document.createElement("div");
   document.body.appendChild(container);
   const app = createApp({
     render() {
-      return h(HkPasswordInput, {
-        modelValue: model.value,
-        placeholder: "Enter password",
-        "onUpdate:modelValue": (v: string) => {
-          model.value = v;
+      return h(
+        HkPasswordInput,
+        {
+          ...props,
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
         },
-      });
+        slots,
+      );
     },
   });
   app.mount(container);
@@ -180,5 +188,55 @@ describe("HkPasswordInput refocus", () => {
 
     expect(focusSpy).not.toHaveBeenCalled();
     next.remove();
+  });
+});
+
+describe("HkPasswordInput variants and icons", () => {
+  it("defaults to the password variant with the lock icon and i18n placeholder", () => {
+    const { container } = mountPasswordInput("");
+    expect(placeholderText(container)).toBe("Enter your password");
+    expect(
+      container.querySelector(".hk-pwd-lock")?.getAttribute("data-icon"),
+    ).toBe("password");
+    expect(
+      container
+        .querySelector(".hk-pwd-lock")
+        ?.classList.contains("hk-pwd-lock-empty"),
+    ).toBe(true);
+  });
+
+  it("renders the confirm icon and confirm placeholder for the confirm variant", () => {
+    const { container } = mountPasswordInput("", { variant: "confirm" });
+    expect(placeholderText(container)).toBe("Confirm your password");
+    expect(
+      container.querySelector(".hk-pwd-lock")?.getAttribute("data-icon"),
+    ).toBe("confirm");
+    // The built-in lock icon must not render for the confirm variant.
+    expect(container.querySelector(".hk-pwd-lock rect")).toBeNull();
+  });
+
+  it("renders the icon slot for the custom icon instead of a built-in svg", () => {
+    const { container } = mountPasswordInput(
+      "",
+      { icon: "custom" },
+      {
+        icon: () => [h("span", { class: "custom-icon" }, "custom-✓")],
+      },
+    );
+    expect(
+      container.querySelector(".hk-pwd-lock")?.getAttribute("data-icon"),
+    ).toBe("custom");
+    expect(container.querySelector(".custom-icon")?.textContent).toBe(
+      "custom-✓",
+    );
+    expect(container.querySelector(".hk-pwd-lock svg")).toBeNull();
+  });
+
+  it("lets an explicit placeholder override the variant default", () => {
+    const { container } = mountPasswordInput("", {
+      variant: "confirm",
+      placeholder: "Confirm password (custom)",
+    });
+    expect(placeholderText(container)).toBe("Confirm password (custom)");
   });
 });

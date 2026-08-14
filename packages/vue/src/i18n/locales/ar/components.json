@@ -44,6 +44,8 @@
     "hikari::modal.auto": "Auto",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
+    "hikari::passwordInput.placeholderPassword": "أدخل كلمة المرور",
+    "hikari::passwordInput.placeholderConfirm": "تأكيد كلمة المرور",
     "hikari::passwordInput.focusedPlaceholder": "تم التركيز، أدخل كلمة المرور",
     "hikari::passwordInput.focusedHasValuePlaceholder": "تم التركيز، ستؤدي الكتابة إلى مسح كلمة المرور الحالية"
   }

@@ -5,6 +5,7 @@ import {
   onUnmounted,
   ref,
   watch,
+  type PropType,
 } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -17,11 +18,35 @@ interface Ripple {
   peak: number;
 }
 
+type PasswordVariant = "password" | "confirm";
+type PasswordIcon = PasswordVariant | "custom";
+
 export default defineComponent({
   name: "HkPasswordInput",
   props: {
     modelValue: { type: String, default: "" },
+    /**
+     * Placeholder shown when the field is empty and unfocused. When empty,
+     * the component falls back to the `variant` default from hikari's own
+     * i18n (`hikari::passwordInput.placeholderPassword` /
+     * `hikari::passwordInput.placeholderConfirm`). Custom text is usually
+     * obtained from the caller's i18n `t()` function, e.g.
+     * `:placeholder="t('auth.register.confirmPassword')"`.
+     */
     placeholder: { type: String, default: "" },
+    /**
+     * Selects the default placeholder text and default icon. Only a
+     * fallback: an explicit `placeholder` or `icon` prop overrides the
+     * variant default. `confirm` pairs the confirm placeholder with a
+     * shield-with-check icon so a second field can be visually distinct.
+     */
+    variant: { type: String as PropType<PasswordVariant>, default: "password" },
+    /**
+     * Overrides the leading icon. `password` renders the lock, `confirm`
+     * renders a shield-with-check, and `custom` renders the `#icon` slot so
+     * callers can inject any SVG. Defaults to following `variant`.
+     */
+    icon: { type: String as PropType<PasswordIcon>, default: undefined },
     label: { type: String, default: undefined },
     error: { type: String, default: undefined },
     hint: { type: String, default: undefined },
@@ -42,7 +67,7 @@ export default defineComponent({
     blur: (_e: FocusEvent) => true,
     keydown: (_e: KeyboardEvent) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     const { t } = useI18n();
     const inputRef = ref<HTMLInputElement>();
     const dotCanvasRef = ref<HTMLCanvasElement>();
@@ -79,6 +104,16 @@ export default defineComponent({
       if (lv === "fair") return t("hikari::passwordInput.strengthFair", "Fair");
       return t("hikari::passwordInput.strengthStrong", "Strong");
     });
+
+    const resolvedIcon = computed<PasswordIcon>(
+      () => props.icon ?? props.variant,
+    );
+
+    const variantPlaceholderKey = computed(() =>
+      props.variant === "confirm"
+        ? "hikari::passwordInput.placeholderConfirm"
+        : "hikari::passwordInput.placeholderPassword",
+    );
 
     function startReveal() {
       if (!props.modelValue || props.disabled) return;
@@ -550,25 +585,44 @@ export default defineComponent({
               "hk-pwd-lock",
               props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
             ]}
+            data-icon={resolvedIcon.value}
             data-revealing={revealing.value || undefined}
             onPointerdown={(e: PointerEvent) => {
               e.preventDefault();
               startReveal();
             }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              width="16"
-              height="16"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+            {resolvedIcon.value === "custom" ? (
+              slots.icon?.()
+            ) : resolvedIcon.value === "confirm" ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                width="16"
+                height="16"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                width="16"
+                height="16"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            )}
           </div>
           <canvas ref={dotCanvasRef} class="hk-pwd-dots" />
           {(!props.modelValue || (pendingClear.value && focused.value)) &&
@@ -587,7 +641,7 @@ export default defineComponent({
                 ? t("hikari::passwordInput.focusedHasValuePlaceholder")
                 : focused.value
                   ? t("hikari::passwordInput.focusedPlaceholder")
-                  : props.placeholder}
+                  : props.placeholder || t(variantPlaceholderKey.value)}
             </span>
           ) : null}
           {props.modelValue &&

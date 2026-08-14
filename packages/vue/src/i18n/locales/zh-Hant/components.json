@@ -44,6 +44,8 @@
     "hikari::modal.auto": "自動",
     "hikari::scrollContainer.auto": "自動",
     "hikari::avatar.fallback": "?",
+    "hikari::passwordInput.placeholderPassword": "輸入密碼",
+    "hikari::passwordInput.placeholderConfirm": "確認密碼",
     "hikari::passwordInput.focusedPlaceholder": "已聚焦，請輸入密碼",
     "hikari::passwordInput.focusedHasValuePlaceholder": "已聚焦，繼續輸入將清除原密碼"
   }

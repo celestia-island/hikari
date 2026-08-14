@@ -1,0 +1,25 @@
+{
+  "connection": {
+    "hikari::statusBar.panel": "Panel",
+    "hikari::statusBar.connected": "Connected",
+    "hikari::statusBar.connecting": "Connecting...",
+    "hikari::statusBar.reconnecting": "Reconnecting",
+    "hikari::statusBar.disconnected": "Disconnected",
+    "hikari::statusBar.retrying": "Retrying {retryCount} / {maxRetries}",
+    "hikari::statusBar.clickReconnect": "Click to retry",
+    "hikari::statusBar.protocol": "Protocol",
+    "hikari::statusBar.latency": "Latency",
+    "hikari::statusBar.network": "Network",
+    "hikari::statusBar.local": "Local",
+    "hikari::statusBar.fetching": "Fetching connection info...",
+    "hikari::statusBar.tier.local": "HTTP local",
+    "hikari::statusBar.tier.ws": "WebSocket",
+    "hikari::statusBar.tier.sse": "SSE stream",
+    "hikari::statusBar.tier.poll": "HTTP poll",
+    "hikari::statusBar.backend.ok": "OK",
+    "hikari::statusBar.backend.warn": "Degraded",
+    "hikari::statusBar.backend.error": "Error",
+    "hikari::statusBar.backend.unknown": "Unknown",
+    "hikari::tablePage.emptyTitle": "No data"
+  }
+}

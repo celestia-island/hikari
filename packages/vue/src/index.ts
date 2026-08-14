@@ -172,3 +172,29 @@ export { THEME_MODE_STORAGE_KEY } from "./theme/useTheme";
 export { isTauri } from "./runtime/env";
 
 export { deepMerge, isPlainObject, getPath, setPath, delPath } from "./utils/objectPath";
+
+// ── Admin panel pieces (ported from plana-ui) ────────────────────────────
+export { HkAdminShell as HAdminShell } from "./components/HkAdminShell";
+export { HkAdminHeader as HAdminHeader } from "./components/HkAdminHeader";
+export { HkNavSidebar as HNavSidebar } from "./components/HkNavSidebar";
+export { HkConnectionStatus as HConnectionStatus } from "./components/HkConnectionStatus";
+export type { HBackendStatus } from "./components/HkConnectionStatus";
+export { HkThemeToggle as HThemeToggle } from "./components/HkThemeToggle";
+export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
+export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
+export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
+export { provideActionBar, useActionBar } from "./composables/useActionBar";
+export type { ActionBarRenderer } from "./composables/useActionBar";
+export { setProbeEndpoint, useConnectionProbe } from "./composables/useConnectionProbe";
+export type { ProbeResult } from "./composables/useConnectionProbe";
+export { useEngineHealth } from "./composables/useEngineHealth";
+export type { EngineHealth, EngineNetworkInfo } from "./composables/useEngineHealth";
+export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./utils/pow";
+export type { PowChallenge, PowSolution } from "./utils/pow";
+export { HkLocalePicker as HLocalePicker } from "./components/HkLocalePicker";
+export { fetchChallenge, negotiateNonce } from "./utils/powNonce";
+export type { ChallengeDescriptor } from "./utils/powNonce";
+export { HkAdminTablePage as HAdminTablePage } from "./components/HkAdminTablePage";
+export type { HTableColumn } from "./components/HkAdminTablePage";
+export { HkPageHeader as HPageHeader } from "./components/HkPageHeader";
+export { HkSecretRevealModal as HSecretRevealModal } from "./components/HkSecretRevealModal";

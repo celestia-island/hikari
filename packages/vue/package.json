@@ -3,7 +3,7 @@
   "version": "0.4.5",
   "private": false,
   "type": "module",
-  "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
+  "description": "Hikari Vue 3 component library \u2014 production-grade UI components based on shittim-chest design system",
   "license": "SySL-1.0",
   "repository": {
     "type": "git",
@@ -26,6 +26,10 @@
     },
     "./styles": {
       "import": "./src/styles/index.scss"
+    },
+    "./plugins": {
+      "import": "./src/plugins/index.ts",
+      "types": "./src/plugins/index.ts"
     }
   },
   "files": [
@@ -58,7 +62,8 @@
     "typescript": "^*",
     "vite": "^*",
     "vue-tsc": "^*",
-    "vitest": "^*"
+    "vitest": "^*",
+    "@types/node": "^*"
   },
   "sideEffects": [
     "**/*.scss",

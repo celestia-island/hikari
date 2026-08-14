@@ -162,6 +162,11 @@
   /* Match the value's opacity: a faded label next to the version value
      reads as a different typeface/weight, especially with CJK fallback. */
   opacity: 0.85;
+  /* CJK flex items have a one-character min-content — without nowrap the
+     label stacks vertically when the status tag is squeezed. Keep the
+     label on one line and let only the version pair wrap. */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .s-status-bar-tag-value {

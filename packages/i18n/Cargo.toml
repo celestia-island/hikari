@@ -18,4 +18,4 @@ yuuka = { workspace = true }
 include_dir = { workspace = true }
 
 # For TOML parsing
-toml = "^0.8"
+toml = "^1.1"

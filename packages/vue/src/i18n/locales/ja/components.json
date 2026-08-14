@@ -44,6 +44,8 @@
     "hikari::modal.auto": "自動",
     "hikari::scrollContainer.auto": "自動",
     "hikari::avatar.fallback": "？",
+    "hikari::passwordInput.placeholderPassword": "パスワードを入力",
+    "hikari::passwordInput.placeholderConfirm": "パスワードを確認",
     "hikari::passwordInput.focusedPlaceholder": "フォーカス中、パスワードを入力してください",
     "hikari::passwordInput.focusedHasValuePlaceholder": "フォーカス中、入力を続けると現在のパスワードは消去されます"
   }

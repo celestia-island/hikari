@@ -22,6 +22,9 @@
   line-height: 1.5;
   color: rgb(var(--color-muted));
   white-space: nowrap;
+  // Match the native placeholder's centered posture (HkInput's element is
+  // text-align: center) so the two modes do not shift horizontally.
+  text-align: center;
   // The strip is wider than the window; the JS offset drives translateX.
   will-change: transform;
 

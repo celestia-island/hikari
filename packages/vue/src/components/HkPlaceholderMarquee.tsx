@@ -15,6 +15,10 @@ import { onFrame } from "../runtime/animationBus";
  */
 export type PlaceholderVariant = "marquee" | "truncate";
 
+/** Horizontal spacing between repeated copies — mirrors the scss copy
+ * padding-right; kept in sync so overflow detection measures reality. */
+const COPY_SPACING = 24;
+
 export const HkPlaceholderMarquee = defineComponent({
   name: "HkPlaceholderMarquee",
   props: {
@@ -22,9 +26,7 @@ export const HkPlaceholderMarquee = defineComponent({
     variant: { type: String as PropType<PlaceholderVariant>, default: "marquee" },
     /** Pixels per second of strip travel. Negative scrolls rightward. */
     speed: { type: Number, default: 24 },
-    /** Extra horizontal padding (px) between the repeated copies. */
-    gap: { type: Number, default: 24 },
-    /** Park offset (px) while focused — small lead-in before scrolling. */
+    /** Park delay (ms) while focused — small hold before scrolling resumes. */
     focusHoldMs: { type: Number, default: 600 },
   },
   setup(props, { expose }) {
@@ -42,17 +44,21 @@ export const HkPlaceholderMarquee = defineComponent({
       const host = hostEl.value;
       const strip = stripEl.value;
       if (!host || !strip) return;
-      // One copy = a third of the strip (three identical spans + gaps).
+      // One copy = a third of the strip (three identical spans + the CSS
+      // copy spacing), so copyWidth already includes the 24px gap.
       const total = strip.scrollWidth;
       copyWidth = total / 3;
-      overflowing.value = copyWidth - props.gap > host.clientWidth;
+      overflowing.value = copyWidth - COPY_SPACING > host.clientWidth;
       if (!overflowing.value) offset.value = 0;
     };
 
-    const frame = (ctx: { now: number }) => {
+    const frame = (ctx: { now: number; delta: number }) => {
       if (!overflowing.value || focused.value || copyWidth <= 0) return;
       if (ctx.now < holdUntil) return;
-      offset.value = (offset.value - props.speed * (16 / 1000)) % copyWidth;
+      // delta is in seconds, matching the animation bus FrameContext —
+      // nominal speed holds regardless of the bus's normal-priority frame
+      // budget (33ms) or the display's refresh rate.
+      offset.value = (offset.value - props.speed * ctx.delta) % copyWidth;
     };
 
     onMounted(() => {

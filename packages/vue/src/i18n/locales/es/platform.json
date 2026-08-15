@@ -19,7 +19,7 @@
     "hikari::theme.mode": "Modo de tema",
     "hikari::theme.modeLight": "Claro",
     "hikari::theme.modeDark": "Oscuro",
-    "hikari::theme.modeAuto": "Auto",
+    "hikari::theme.modeAuto": "Automático",
     "hikari::theme.themes": "Temas de color",
     "hikari::theme.editScheme": "Editar esquema de color…",
     "hikari::theme.themeName": "Nombre del tema",
@@ -46,5 +46,8 @@
     "hikari::log.copy": "Copiar",
     "hikari::log.copied": "Copiado",
     "hikari::log.clear": "Limpiar"
+  },
+  "auth": {
+    "hikari::auth.solvingChallenge": "Verificando el desafío…"
   }
 }

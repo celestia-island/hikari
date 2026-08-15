@@ -62,6 +62,12 @@ Current master, Rust workspace `0.3.19`.
 
 ### Fixed
 
+- Fix HkNavItem hover erasing the active state: the `:hover:not([data-disabled])`
+  selector outranked `[data-active]` (0,3,0 vs 0,2,0), so hovering the selected
+  sidebar item wiped its background tint and primary text color. Hover now
+  excludes `[data-active]` everywhere and shows a primary 10% wash with neutral
+  text — hue and font-weight never change on hover (active > hover precedence,
+  applied to HkNavItem, HkPopover menu items, and the theme toggle as well).
 - Fix i18n include_dir path and sync DemoApp with component APIs. (#85)
 - Remove dead Language variants in i18n crate.
 - Make layout component optional props genuinely optional (`#[props(default)]`

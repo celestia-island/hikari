@@ -27,6 +27,10 @@ export default defineComponent({
     closable: { type: Boolean, default: true },
     overlay: { type: Boolean, default: true },
     size: { type: String, default: "320px" },
+    /** Extra classes for the floating panel — lets consumers scope
+     *  body/footer padding overrides (attrs fallthrough cannot reach a
+     *  Teleported panel). */
+    panelClass: { type: String, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
@@ -119,7 +123,7 @@ export default defineComponent({
           {props.modelValue ? (
             <div
               ref={panelRef}
-              class={["hk-drawer-panel", `hk-drawer-${props.side}`]}
+              class={["hk-drawer-panel", `hk-drawer-${props.side}`, props.panelClass]}
               style={panelStyle.value}
               role="dialog"
               aria-label={props.title}

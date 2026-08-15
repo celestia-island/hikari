@@ -93,6 +93,10 @@ export default defineComponent({
     const preComposeValue = ref("");
     const revealing = ref(false);
     const pendingClear = ref(false);
+    // Flipped by the opt-in marquee overlay when the placeholder actually
+    // overflows — the static text below is then hidden so the scrolling
+    // copies do not overprint it.
+    const marqueeOverflow = ref(false);
     let lastInputAt = 0;
 
     const level = computed(() => {
@@ -650,11 +654,20 @@ export default defineComponent({
                 inputRef.value?.focus();
               }}
             >
-              {pendingClear.value && props.modelValue
-                ? t("hikari::passwordInput.focusedHasValuePlaceholder")
-                : focused.value
-                  ? t("hikari::passwordInput.focusedPlaceholder")
-                  : props.placeholder || t(variantPlaceholderKey.value)}
+              <span
+                class="hk-pwd-placeholder-text"
+                style={
+                  props.placeholderVariant === "marquee" && marqueeOverflow.value
+                    ? { visibility: "hidden" }
+                    : undefined
+                }
+              >
+                {pendingClear.value && props.modelValue
+                  ? t("hikari::passwordInput.focusedHasValuePlaceholder")
+                  : focused.value
+                    ? t("hikari::passwordInput.focusedPlaceholder")
+                    : props.placeholder || t(variantPlaceholderKey.value)}
+              </span>
               {props.placeholderVariant === "marquee" && (
                 <HkPlaceholderMarquee
                   text={
@@ -663,6 +676,9 @@ export default defineComponent({
                       : props.placeholder || t(variantPlaceholderKey.value)
                   }
                   variant={props.placeholderVariant}
+                  onOverflowChange={(v: boolean) => {
+                    marqueeOverflow.value = v;
+                  }}
                 />
               )}
             </span>

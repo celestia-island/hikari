@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "./HkPlaceholderMarquee" as placeholder-marquee;
 
 .hk-input-wrapper {
   display: block;

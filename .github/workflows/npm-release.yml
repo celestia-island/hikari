@@ -57,6 +57,6 @@ jobs:
       - name: Publish
         run: |
           cd packages/vue
-          pnpm publish --access public --provenance --no-git-checks
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -67,9 +67,13 @@
 .hk-drawer-right-enter-active,
 .hk-drawer-top-enter-active,
 .hk-drawer-bottom-enter-active {
+  /* No overshoot on the transform: a back-out curve (y > 1) slides the
+     panel PAST its resting position and snaps back — on a left drawer
+     that briefly opens a gap between the panel edge and the screen
+     edge. Both properties use the same plain ease-out. */
   transition:
     opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-drawer-left-leave-active,

@@ -19,8 +19,19 @@
     color var(--hi-duration-fast, 0.15s) ease;
   user-select: none;
 
-  &:hover:not([data-disabled]) {
-    background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
+  /* Interaction-state precedence: ACTIVE > HOVER > NONE.
+     - none: muted text, transparent background
+     - hover (non-active only): primary 10% background wash — the single
+       hover signal — text lifts to the neutral text color; hue and
+       font-weight never change on hover
+     - active: primary wash + primary text + weight 600; hovering an
+       active item changes NOTHING (selection is stable)
+     Hover selectors must exclude [data-active]: the previous
+     `:hover:not([data-disabled])` form outranked `[data-active]`
+     (0,3,0 vs 0,2,0), so hovering the selected item erased both its
+     background tint and its primary text color. */
+  &:hover:not([data-disabled]):not([data-active]) {
+    background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
     color: var(--hi-color-text-primary);
   }
 

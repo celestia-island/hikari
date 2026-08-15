@@ -62,7 +62,9 @@
   border-radius: var(--radius-sm);
 }
 
-.hk-popup-menu-item:hover {
+/* Hover = background wash only, never on the active item (active >
+   hover precedence — see HkNavItem.scss for the spec). */
+.hk-popup-menu-item:hover:not([data-active]) {
   background: var(--c-primary-subtle);
 }
 

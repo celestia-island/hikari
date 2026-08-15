@@ -20,7 +20,7 @@
 
 .s-theme-toggle-btn:hover {
   background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-primary));
+  color: rgb(var(--color-text));
 }
 
 .s-theme-toggle-btn[data-variant="main"] {
@@ -66,9 +66,9 @@
   cursor: pointer;
 }
 
-.s-theme-mode-btn:hover {
+.s-theme-mode-btn:hover:not([data-active]) {
   background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-primary));
+  color: rgb(var(--color-text));
 }
 
 .s-theme-mode-btn[data-active] {
@@ -99,9 +99,9 @@
   cursor: pointer;
 }
 
-.s-theme-item-btn:hover {
+.s-theme-item-btn:hover:not([data-active]) {
   background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-primary));
+  color: rgb(var(--color-text));
 }
 
 .s-theme-item-btn[data-active] {

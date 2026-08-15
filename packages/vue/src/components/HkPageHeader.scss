@@ -1,0 +1,79 @@
+.hk-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16, 1rem);
+  /* Breathing room to the page body below; the scroll container above
+     already pads the top. */
+  margin-block-end: var(--space-16, 1rem);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.hk-page-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
+
+.hk-page-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  margin: 0;
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgb(var(--color-text));
+  min-width: 0;
+}
+
+.hk-page-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm, 6px);
+  background: rgb(var(--color-primary) / 10%);
+  color: rgb(var(--color-primary));
+}
+
+.hk-page-header-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-page-header-subtitle {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  line-height: 1.5;
+}
+
+.hk-page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  flex-shrink: 0;
+  /* Align the tool row with the title baseline; wrapped rows (narrow
+     screens) fall back to stretch alignment via flex-wrap. */
+  padding-block-end: var(--space-2, 0.125rem);
+}
+
+/* Dense variant — tighter pages (tables that need every pixel). */
+.hk-page-header-dense {
+  margin-block-end: var(--space-12, 0.75rem);
+
+  .hk-page-header-title {
+    font-size: var(--text-md, 1rem);
+  }
+
+  .hk-page-header-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}

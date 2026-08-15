@@ -68,6 +68,13 @@ Current master, Rust workspace `0.3.19`.
   excludes `[data-active]` everywhere and shows a primary 10% wash with neutral
   text — hue and font-weight never change on hover (active > hover precedence,
   applied to HkNavItem, HkPopover menu items, and the theme toggle as well).
+- Stop HkButton's base min-height from applying to every size: sm buttons were
+  2.5rem (40px) tall regardless of their compact padding — each size variant
+  now carries its own min-height (sm 1.75rem, md 2.5rem, lg 2.75rem).
+- Upgrade HkPageHeader from the inline-styled stub to the full page shell:
+  big title with optional leading icon and subtitle on the left, right-aligned
+  `actions` slot, optional dense variant, and a scoped stylesheet (consumed by
+  the chest admin redesign).
 - Fix i18n include_dir path and sync DemoApp with component APIs. (#85)
 - Remove dead Language variants in i18n crate.
 - Make layout component optional props genuinely optional (`#[props(default)]`

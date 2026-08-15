@@ -46,5 +46,8 @@
     "hikari::log.copy": "Копировать",
     "hikari::log.copied": "Скопировано",
     "hikari::log.clear": "Очистить"
+  },
+  "auth": {
+    "hikari::auth.solvingChallenge": "Проверка задания…"
   }
 }

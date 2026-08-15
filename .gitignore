@@ -37,7 +37,7 @@ packages/*/src/generated/
 packages/*/generated/
 
 # Node.js
-node_modules/
+node_modules
 package-lock.json
 yarn.lock
 pnpm-lock.yaml

@@ -46,5 +46,8 @@
     "hikari::log.copy": "복사",
     "hikari::log.copied": "복사됨",
     "hikari::log.clear": "지우기"
+  },
+  "auth": {
+    "hikari::auth.solvingChallenge": "챌린지 검증 중…"
   }
 }

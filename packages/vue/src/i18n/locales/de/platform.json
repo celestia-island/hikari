@@ -19,7 +19,7 @@
     "hikari::theme.mode": "Design-Modus",
     "hikari::theme.modeLight": "Hell",
     "hikari::theme.modeDark": "Dunkel",
-    "hikari::theme.modeAuto": "Auto",
+    "hikari::theme.modeAuto": "Automatisch",
     "hikari::theme.themes": "Farbschemata",
     "hikari::theme.editScheme": "Farbschema bearbeiten…",
     "hikari::theme.themeName": "Designname",
@@ -46,5 +46,8 @@
     "hikari::log.copy": "Kopieren",
     "hikari::log.copied": "Kopiert",
     "hikari::log.clear": "Leeren"
+  },
+  "auth": {
+    "hikari::auth.solvingChallenge": "Proof-of-Work wird gelöst…"
   }
 }

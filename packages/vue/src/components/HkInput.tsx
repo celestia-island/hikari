@@ -3,6 +3,7 @@ import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, u
 
 import { useI18n } from "../i18n/context";
 
+import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
 import "./HkInput.scss";
 
 export default defineComponent({
@@ -33,6 +34,18 @@ export default defineComponent({
       type: String as () => "text" | "password" | "number",
       default: "text",
     },
+    /**
+     * Overflow strategy for a placeholder longer than the input line:
+     * `marquee` (default) scrolls it like a storefront sign — the text is
+     * rendered three times inside a clipping window and the strip is
+     * translated through the hikari animation bus; `truncate` hard-cuts it
+     * with an ellipsis. The marquee parks while the input is focused or
+     * holds a value, and under reduced-motion the strip stays parked.
+     */
+    placeholderVariant: {
+      type: String as () => "marquee" | "truncate",
+      default: "marquee",
+    },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -46,6 +59,16 @@ export default defineComponent({
     const inputRef = ref<HTMLElement>();
 
     const revealing = ref(false);
+    const marqueeRef = ref<{
+      setActive(active: boolean): void;
+      measure(): void;
+    }>();
+    const isEmpty = computed(() => String(props.modelValue ?? "") === "");
+
+    const forwardFocus = (active: boolean) => {
+      marqueeRef.value?.setActive(active);
+    };
+
     const resolvedType = computed(() => {
       if (props.variant === "password") {
         return revealing.value ? "text" : "password";
@@ -139,7 +162,7 @@ export default defineComponent({
               ref={inputRef}
               type={resolvedType.value}
               value={props.modelValue}
-              placeholder={props.placeholder}
+              placeholder={props.placeholderVariant === "truncate" ? props.placeholder : ""}
               disabled={props.disabled}
               readonly={props.readonly}
               name={props.name}
@@ -149,15 +172,15 @@ export default defineComponent({
               class="hk-input-element"
               {...filteredAttrs.value}
               onInput={onInput}
-              onFocus={(e) => emit("focus", e)}
-              onBlur={(e) => emit("blur", e)}
+              onFocus={(e) => { forwardFocus(true); emit("focus", e); }}
+              onBlur={(e) => { forwardFocus(false); emit("blur", e); }}
               onKeydown={(e) => emit("keydown", e)}
             />
           ) : (
             <textarea
               ref={inputRef}
               value={props.modelValue}
-              placeholder={props.placeholder}
+              placeholder={props.placeholderVariant === "truncate" ? props.placeholder : ""}
               disabled={props.disabled}
               readonly={props.readonly}
               rows={props.rows}
@@ -172,11 +195,21 @@ export default defineComponent({
               ]}
               {...filteredAttrs.value}
               onInput={onInput}
-              onFocus={(e) => emit("focus", e)}
-              onBlur={(e) => emit("blur", e)}
+              onFocus={(e) => { forwardFocus(true); emit("focus", e); }}
+              onBlur={(e) => { forwardFocus(false); emit("blur", e); }}
               onKeydown={(e) => emit("keydown", e)}
             />
           )}
+          {props.placeholder &&
+            props.placeholderVariant === "marquee" &&
+            isEmpty.value &&
+            !props.disabled && (
+              <HkPlaceholderMarquee
+                ref={marqueeRef}
+                text={props.placeholder}
+                variant={props.placeholderVariant}
+              />
+            )}
           {slots.suffix && (
             <span class="hk-input-affix hk-input-suffix">
               {slots.suffix()}

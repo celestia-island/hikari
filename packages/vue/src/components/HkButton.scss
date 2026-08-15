@@ -17,7 +17,6 @@
   user-select: none;
   outline: none;
   position: relative;
-  min-height: 2.5rem;
 }
 
 .hk-btn:focus-visible {
@@ -32,20 +31,26 @@
 }
 
 /* ---- Size variants ---- */
+/* Height scales WITH the size: a single base min-height made every sm
+   button 2.5rem (40px) tall — comically oversized next to page-header
+   text and toolbar rows. */
 
 .hk-btn-sm {
   padding: var(--space-6) var(--space-12);
   font-size: var(--text-xs);
+  min-height: 1.75rem;
 }
 
 .hk-btn-md {
   padding: var(--space-8) var(--space-16);
   font-size: var(--text-base);
+  min-height: 2.5rem;
 }
 
 .hk-btn-lg {
   padding: var(--space-10) var(--space-24);
   font-size: var(--text-md);
+  min-height: 2.75rem;
 }
 
 /* ---- Primary ---- */

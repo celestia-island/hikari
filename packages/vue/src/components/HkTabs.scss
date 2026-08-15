@@ -4,6 +4,23 @@
   width: 100%;
 }
 
+/* === Scrollable variant === */
+
+/* The scroller (a horizontal HkScrollContainer) bounds the list: it
+   sizes to the content up to the available width, then the list
+   scrolls inside with safe centering. min-width: 0 lets the whole
+   chain shrink inside constrained flex parents (status bars, header
+   centres). */
+.hk-tabs[data-scrollable] {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.hk-tabs-scroller {
+  width: 100%;
+}
+
 /* === Shared list === */
 
 .hk-tabs-list {

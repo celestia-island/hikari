@@ -11,6 +11,7 @@ import {
 import { useI18n } from "../i18n/context";
 
 import HListTransition from "./HkListTransition";
+import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
 import "./HkPasswordInput.scss";
 
 interface Ripple {
@@ -34,6 +35,18 @@ export default defineComponent({
      * `:placeholder="t('auth.register.confirmPassword')"`.
      */
     placeholder: { type: String, default: "" },
+    /**
+     * Overflow strategy when the placeholder text is longer than the field:
+     * `marquee` scrolls it like a storefront sign (three copies through a
+     * clipping window, driven by the animation bus — same semantics as
+     * HkInput); `truncate` hard-cuts it with an ellipsis. Defaults to
+     * `truncate` because the password field already renders a custom
+     * centered placeholder layer with its own focus states.
+     */
+    placeholderVariant: {
+      type: String as () => PlaceholderVariant,
+      default: "truncate",
+    },
     /**
      * Selects the default placeholder text and default icon. Only a
      * fallback: an explicit `placeholder` or `icon` prop overrides the
@@ -642,6 +655,16 @@ export default defineComponent({
                 : focused.value
                   ? t("hikari::passwordInput.focusedPlaceholder")
                   : props.placeholder || t(variantPlaceholderKey.value)}
+              {props.placeholderVariant === "marquee" && (
+                <HkPlaceholderMarquee
+                  text={
+                    pendingClear.value && props.modelValue
+                      ? t("hikari::passwordInput.focusedHasValuePlaceholder")
+                      : props.placeholder || t(variantPlaceholderKey.value)
+                  }
+                  variant={props.placeholderVariant}
+                />
+              )}
             </span>
           ) : null}
           {props.modelValue &&

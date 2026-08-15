@@ -18,13 +18,9 @@ function mountMarquee(props: Record<string, unknown> = {}): Mounted<InstanceType
   const app = createApp({ render: () => h(HkPlaceholderMarquee, { ...props }) });
   app.mount(container);
   mounts.push({ app, container });
-  const root = app._container.firstElementChild
-    ? (app as unknown as { _instance?: { proxy?: InstanceType<typeof HkPlaceholderMarquee> } })._instance?.proxy
-    : undefined;
-  void root;
-  // The component root instance: mount() renders a single root node owned by
-  // HkPlaceholderMarquee, so the app's root proxy IS the marquee instance.
-  const vm = (app._instance as unknown as { proxy: InstanceType<typeof HkPlaceholderMarquee> } | undefined)?.proxy;
+  // mount() renders a single root node owned by HkPlaceholderMarquee, so
+  // the app's root proxy IS the marquee instance.
+  const vm = (app._instance as unknown as { proxy?: InstanceType<typeof HkPlaceholderMarquee> } | undefined)?.proxy;
   return { app, container, vm: vm! };
 }
 

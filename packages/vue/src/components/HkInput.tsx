@@ -64,10 +64,28 @@ export default defineComponent({
       measure(): void;
     }>();
     const isEmpty = computed(() => String(props.modelValue ?? "") === "");
+    // Flipped by the marquee overlay once it measures the placeholder
+    // actually overflowing the input line. While false, the native
+    // placeholder does the showing and the overlay stays a hidden probe.
+    const placeholderOverflows = ref(false);
+    watch([isEmpty, () => props.disabled], ([empty, disabled]) => {
+      // The overlay unmounts on these flips — drop the stale overflow flag
+      // so the native placeholder returns the moment the field is cleared.
+      if (!empty || disabled) placeholderOverflows.value = false;
+    });
 
     const forwardFocus = (active: boolean) => {
       marqueeRef.value?.setActive(active);
     };
+
+    // In marquee mode the native placeholder is suppressed only while the
+    // scrolling overlay is actually needed (overflowing); the truncate
+    // variant always keeps it native.
+    const nativePlaceholder = computed(() =>
+      props.placeholderVariant === "truncate" || !placeholderOverflows.value
+        ? props.placeholder
+        : "",
+    );
 
     const resolvedType = computed(() => {
       if (props.variant === "password") {
@@ -162,7 +180,7 @@ export default defineComponent({
               ref={inputRef}
               type={resolvedType.value}
               value={props.modelValue}
-              placeholder={props.placeholderVariant === "truncate" ? props.placeholder : ""}
+              placeholder={nativePlaceholder.value}
               disabled={props.disabled}
               readonly={props.readonly}
               name={props.name}
@@ -180,7 +198,7 @@ export default defineComponent({
             <textarea
               ref={inputRef}
               value={props.modelValue}
-              placeholder={props.placeholderVariant === "truncate" ? props.placeholder : ""}
+              placeholder={nativePlaceholder.value}
               disabled={props.disabled}
               readonly={props.readonly}
               rows={props.rows}
@@ -208,6 +226,9 @@ export default defineComponent({
                 ref={marqueeRef}
                 text={props.placeholder}
                 variant={props.placeholderVariant}
+                onOverflowChange={(v: boolean) => {
+                  placeholderOverflows.value = v;
+                }}
               />
             )}
           {slots.suffix && (

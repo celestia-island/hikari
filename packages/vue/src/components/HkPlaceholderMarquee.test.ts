@@ -48,7 +48,36 @@ function mountInput(props: Record<string, unknown> = {}) {
   return { model, app, container };
 }
 
+type MarqueeExposed = {
+  setActive?(a: boolean): void;
+  measure?(): void;
+};
+
+function marqueeExposed(container: HTMLElement): MarqueeExposed | undefined {
+  const el = container.querySelector(".hk-placeholder-marquee") as (HTMLElement & {
+    __vueParentComponent?: { exposed?: MarqueeExposed };
+  }) | null;
+  return el?.__vueParentComponent?.exposed;
+}
+
+/** Simulate real layout for the clipping window and the first copy, then
+ * re-run the component's measurement so the render reflects the geometry. */
+async function forceGeometry(
+  container: HTMLElement,
+  copyWidth: number,
+  hostWidth: number,
+) {
+  const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+  const copy = container.querySelector(".hk-placeholder-marquee__copy") as HTMLElement;
+  expect(host && copy).toBeTruthy();
+  Object.defineProperty(host, "clientWidth", { configurable: true, get: () => hostWidth });
+  vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: copyWidth } as DOMRect);
+  marqueeExposed(container)?.measure?.();
+  await nextTick();
+}
+
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const m of mounts.splice(0)) {
     m.app.unmount();
     m.container.remove();
@@ -56,8 +85,21 @@ afterEach(() => {
 });
 
 describe("HkPlaceholderMarquee", () => {
-  it("renders three identical copies for the seamless wrap", () => {
+  it("stays a hidden single-copy probe while the text fits", () => {
+    const { container } = mountMarquee({ text: "用户名" });
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    const copies = [...container.querySelectorAll(".hk-placeholder-marquee__copy")];
+    // No layout in jsdom → nothing overflows → one measuring copy, layer
+    // hidden; the host input's native placeholder does the actual showing.
+    expect(copies).toHaveLength(1);
+    expect(copies[0].textContent).toBe("用户名");
+    expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(true);
+  });
+
+  it("renders three identical copies for the seamless wrap once the text overflows", async () => {
     const { container } = mountMarquee({ text: "a very long placeholder" });
+    await forceGeometry(container, /* copy incl. spacing */ 500, /* window */ 200);
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
     const copies = [...container.querySelectorAll(".hk-placeholder-marquee__copy")];
     expect(copies).toHaveLength(3);
     expect(copies.map((c) => c.textContent)).toEqual([
@@ -65,6 +107,17 @@ describe("HkPlaceholderMarquee", () => {
       "a very long placeholder",
       "a very long placeholder",
     ]);
+    expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(false);
+  });
+
+  it("collapses back to a hidden probe when the window grows past the text", async () => {
+    const { container } = mountMarquee({ text: "shrinking story" });
+    await forceGeometry(container, 500, 200);
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(3);
+    await forceGeometry(container, 500, 800);
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(1);
+    expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(true);
   });
 
   it("renders a single ellipsis copy in truncate variant", () => {
@@ -81,19 +134,14 @@ describe("HkPlaceholderMarquee", () => {
   it("exposes setActive without throwing in both directions", async () => {
     const { container } = mountMarquee({ text: "scrolls" });
     await nextTick();
-    // The exposed API lives on the component's setup result; reach it through
-    // the root element's __vueParentComponent wiring jsdom provides.
-    const el = container.querySelector(".hk-placeholder-marquee") as HTMLElement & {
-      __vueParentComponent?: { exposed?: { setActive?(a: boolean): void } };
-    };
-    const exposed = el?.__vueParentComponent?.exposed;
+    const exposed = marqueeExposed(container);
     expect(exposed).toBeTruthy();
     expect(typeof exposed!.setActive).toBe("function");
     expect(() => exposed!.setActive!(true)).not.toThrow();
     expect(() => exposed!.setActive!(false)).not.toThrow();
   });
 
-  it("re-renders the copies when the text prop changes", async () => {
+  it("re-renders the copy when the text prop changes", async () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const textRef = ref("first");
@@ -105,7 +153,7 @@ describe("HkPlaceholderMarquee", () => {
     textRef.value = "second";
     await nextTick();
     const copies = [...container.querySelectorAll(".hk-placeholder-marquee__copy")];
-    expect(copies.map((c) => c.textContent?.trim())).toEqual(["second", "second", "second"]);
+    expect(copies.map((c) => c.textContent?.trim())).toEqual(["second"]);
   });
 });
 
@@ -120,15 +168,42 @@ describe("HkInput placeholder-variant", () => {
     expect(container.querySelector(".hk-placeholder-marquee")).toBeNull();
   });
 
-  it("hides the native placeholder and mounts the marquee overlay by default", () => {
+  it("keeps the native placeholder and mounts only a hidden probe while the text fits", () => {
     const { container } = mountInput({
-      placeholder: "marquee is the default overflow behavior",
+      placeholder: "short placeholder that fits",
     });
     const input = container.querySelector("input")!;
+    // Not overflowing → the native placeholder shows; the overlay is a
+    // hidden one-copy measuring probe, never visible.
+    expect(input.getAttribute("placeholder")).toBe("short placeholder that fits");
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    expect(host).toBeTruthy();
+    expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(true);
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(1);
+  });
+
+  it("swaps to the visible marquee and blanks the native placeholder on overflow", async () => {
+    const model = ref("");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render() {
+        return h(HkInput, {
+          placeholder: "an extremely long placeholder text",
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
+        });
+      },
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    const input = container.querySelector("input") as HTMLInputElement;
+    expect(input.getAttribute("placeholder")).toBe("an extremely long placeholder text");
+    await forceGeometry(container, 500, 200);
     expect(input.getAttribute("placeholder")).toBe("");
-    expect(container.querySelector(".hk-placeholder-marquee")).toBeTruthy();
-    const copies = [...container.querySelectorAll(".hk-placeholder-marquee__copy")];
-    expect(copies).toHaveLength(3);
+    expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(3);
   });
 
   it("drops the overlay once the input holds a value", async () => {

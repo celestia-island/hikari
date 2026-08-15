@@ -4,13 +4,18 @@ import { onFrame } from "../runtime/animationBus";
 /**
  * Overflow strategy for a placeholder that does not fit its input.
  *
- * - `marquee` (default): render the text three times side by side inside a
- *   clipping window and translate the strip leftward in a loop — the classic
- *   scrolling storefront sign. The strip content is identical in all three
- *   copies so the wrap-around is seamless. Animation runs through the hikari
- *   animation bus, so it participates in the unified frame scheduling, pauses
- *   under reduced-motion, and parks the strip at the natural position when
- *   the host input is focused or the text fits.
+ * - `marquee` (default): while the text fits, the overlay stays in the DOM
+ *   only as an invisible measuring probe and the host input shows its NATIVE
+ *   placeholder (crisp, accessible, zero animation). When the text overflows
+ *   the input line, the overlay becomes visible, renders the text three
+ *   times side by side inside a clipping window, and translates the strip
+ *   leftward in a loop — the classic scrolling storefront sign. The strip
+ *   content is identical in all three copies so the wrap-around is seamless.
+ *   Animation runs through the hikari animation bus, so it participates in
+ *   the unified frame scheduling, pauses under reduced-motion, and parks the
+ *   strip at the natural position when the host input is focused. The
+ *   `overflowChange` event tells the host when to swap its native
+ *   placeholder for the scrolling overlay.
  * - `truncate`: hard-cut the text at the container edge with an ellipsis.
  */
 export type PlaceholderVariant = "marquee" | "truncate";
@@ -29,9 +34,12 @@ export const HkPlaceholderMarquee = defineComponent({
     /** Park delay (ms) while focused — small hold before scrolling resumes. */
     focusHoldMs: { type: Number, default: 600 },
   },
-  setup(props, { expose }) {
+  emits: {
+    overflowChange: (_overflowing: boolean) => true,
+  },
+  setup(props, { emit, expose }) {
     const hostEl = ref<HTMLElement | null>(null);
-    const stripEl = ref<HTMLElement | null>(null);
+    const firstCopyEl = ref<HTMLElement | null>(null);
     const offset = ref(0);
     const overflowing = ref(false);
     const focused = ref(false);
@@ -42,14 +50,17 @@ export const HkPlaceholderMarquee = defineComponent({
 
     const measure = () => {
       const host = hostEl.value;
-      const strip = stripEl.value;
-      if (!host || !strip) return;
-      // One copy = a third of the strip (three identical spans + the CSS
-      // copy spacing), so copyWidth already includes the 24px gap.
-      const total = strip.scrollWidth;
-      copyWidth = total / 3;
+      const copy = firstCopyEl.value;
+      if (!host || !copy) return;
+      // Measure ONE copy's laid-out width directly (it includes the 24px
+      // copy spacing as trailing padding). Reading the first copy element —
+      // instead of stripWidth / 3 — stays correct in the fitting case,
+      // where the strip holds a single copy, and through overflow flips,
+      // where the copy count changes under the same strip.
+      copyWidth = copy.getBoundingClientRect().width;
       overflowing.value = copyWidth - COPY_SPACING > host.clientWidth;
       if (!overflowing.value) offset.value = 0;
+      emit("overflowChange", overflowing.value);
     };
 
     const frame = (ctx: { now: number; delta: number }) => {
@@ -104,11 +115,25 @@ export const HkPlaceholderMarquee = defineComponent({
         );
       }
       return (
-        <span ref={hostEl} class="hk-placeholder-marquee" aria-hidden="true">
-          <span ref={stripEl} class="hk-placeholder-marquee__strip" style={stripStyle.value}>
-            <span class="hk-placeholder-marquee__copy">{props.text}</span>
-            <span class="hk-placeholder-marquee__copy">{props.text}</span>
-            <span class="hk-placeholder-marquee__copy">{props.text}</span>
+        <span
+          ref={hostEl}
+          class={[
+            "hk-placeholder-marquee",
+            // While the text fits the overlay stays hidden (but laid out,
+            // so the probe keeps measuring) and the input's NATIVE
+            // placeholder does the showing.
+            overflowing.value ? "" : "hk-placeholder-marquee--hidden",
+          ].filter(Boolean).join(" ")}
+          aria-hidden="true"
+        >
+          <span class="hk-placeholder-marquee__strip" style={stripStyle.value}>
+            <span ref={firstCopyEl} class="hk-placeholder-marquee__copy">{props.text}</span>
+            {overflowing.value && (
+              <>
+                <span class="hk-placeholder-marquee__copy">{props.text}</span>
+                <span class="hk-placeholder-marquee__copy">{props.text}</span>
+              </>
+            )}
           </span>
         </span>
       );

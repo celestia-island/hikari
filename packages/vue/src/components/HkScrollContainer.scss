@@ -21,6 +21,60 @@
   overflow-y: hidden;
 }
 
+/* ── Safe centering (align="center") ─────────────────────────────
+   The viewport becomes a row flex container whose single item is the
+   aligner wrapper. Auto inline margins absorb free space (content
+   centered) and collapse to zero when the content overflows, so the
+   content falls back to the inline-start edge and stays fully
+   reachable by scrolling — unlike justify-content: center, which
+   clips the overflowing start. Horizontal axis only (axis="both"
+   would re-introduce cross-axis center-clipping, so it is excluded). */
+.hk-scroll-container[data-align="center"][data-axis="horizontal"] > .hk-scroll-container-viewport {
+  display: flex;
+  flex-direction: row;
+}
+
+.hk-scroll-container-aligner {
+  flex: none;
+  margin-inline: auto;
+}
+
+/* ── Optional edge fades (fade=true) ──────────────────────────────
+   Pure CSS driven by the sensed overflow state the component mirrors
+   onto the root (data-h-overflow). Only the sides with hidden
+   content fade. The fade size custom property is declared on the
+   root so consumers can override it from the container element. */
+.hk-scroll-container[data-fade="true"] {
+  --hk-scroll-fade-size: 24px;
+}
+
+.hk-scroll-container[data-fade="true"][data-h-overflow="end"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+  mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+}
+
+.hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+}
+
+.hk-scroll-container[data-fade="true"][data-h-overflow="both"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-fade-size),
+    #000 calc(100% - var(--hk-scroll-fade-size)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--hk-scroll-fade-size),
+    #000 calc(100% - var(--hk-scroll-fade-size)),
+    transparent 100%
+  );
+}
+
 .hk-scroll-container-autofollow-content {
   display: block;
   flex-shrink: 0;

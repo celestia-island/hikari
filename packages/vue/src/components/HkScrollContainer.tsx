@@ -5,6 +5,7 @@ import {
   onMounted,
   ref,
   shallowRef,
+  watch,
   type PropType,
 } from "vue";
 
@@ -16,6 +17,8 @@ import { notifyScrollStart, onceFrame, scheduleFrame, type AnimationHandle } fro
 
 type ScrollAxis = "vertical" | "horizontal" | "both";
 type ScrollMode = "traditional" | "windowed";
+type ScrollAlign = "start" | "center";
+type OverflowSense = "none" | "start" | "end" | "both";
 
 interface AxisState {
   track: HTMLElement;
@@ -35,6 +38,21 @@ interface DragHandlers {
   onLeave: () => void;
 }
 
+/** Which edges of an axis still hide content, derived from live scroll
+ *  geometry. "end" = content continues past the end edge (can scroll
+ *  towards larger offsets), "start" = content hides before the start
+ *  edge, "both" = either side, "none" = everything fits. */
+function computeOverflow(scrollSize: number, clientSize: number, scrollPos: number): OverflowSense {
+  if (scrollSize <= clientSize + 1) return "none";
+  const max = scrollSize - clientSize;
+  const atStart = scrollPos <= 1;
+  const atEnd = scrollPos >= max - 1;
+  if (atStart && atEnd) return "none";
+  if (atStart) return "end";
+  if (atEnd) return "start";
+  return "both";
+}
+
 export default defineComponent({
   name: "HkScrollContainer",
   props: {
@@ -44,6 +62,18 @@ export default defineComponent({
     scrollbar: { type: Boolean, default: true },
     autoFollow: { type: Boolean, default: false },
     overscanScreens: { type: Number, default: 1 },
+    /** Inline-axis alignment of the content when it fits the viewport.
+     *  "center" wraps the slot in an auto-margin aligner: content that
+     *  fits stays centered while overflowing content falls back to the
+     *  inline-start edge (scrollable, never clipped) — the safe
+     *  centering `justify-content: center` cannot provide. Applies to
+     *  horizontal-axis containers (toggling at runtime is supported);
+     *  ignored for vertical-only and axis="both" containers (the
+     *  latter would re-introduce cross-axis center-clipping). */
+    align: { type: String as PropType<ScrollAlign>, default: "start" },
+    /** Fade the viewport's inline edges (CSS mask) on the sides where
+     *  the sensed overflow (`data-h-overflow`) reports hidden content. */
+    fade: { type: Boolean, default: false },
   },
   setup(props, { slots, expose }) {
     const { t } = useI18n();
@@ -54,6 +84,15 @@ export default defineComponent({
     let hState: AxisState | null = null;
     let vDrag: DragHandlers | null = null;
     let hDrag: DragHandlers | null = null;
+
+    // Sensed overflow mirrored onto the root as data-h-overflow /
+    // data-v-overflow so consumers can style edge affordances in pure
+    // CSS. Attributes are only touched on change to avoid DOM churn.
+    let lastHOverflow: OverflowSense | null = null;
+    let lastVOverflow: OverflowSense | null = null;
+
+    const alignerRef = shallowRef<HTMLElement | null>(null);
+    let alignRO: ResizeObserver | null = null;
 
     const pinned = ref(true);
     const FOLLOW_THRESHOLD = 24;
@@ -67,6 +106,41 @@ export default defineComponent({
 
     const hasV = () => props.axis !== "horizontal";
     const hasH = () => props.axis !== "vertical";
+    // Safe centering applies to horizontal-axis containers only; the
+    // rendered aligner + flex overlay are both gated on this.
+    const alignCenter = () => props.align === "center" && props.axis === "horizontal";
+
+    function setAligner(el: unknown) {
+      const prev = alignerRef.value;
+      if (prev && alignRO) alignRO.unobserve(prev);
+      alignerRef.value = el instanceof HTMLElement ? el : null;
+      // Content growth changes the sensed overflow but not the
+      // viewport box, so the viewport-only ResizeObserver never fires
+      // for it — observe the aligner as the content-size proxy.
+      if (alignerRef.value && alignRO) alignRO.observe(alignerRef.value);
+      // A render that just created the aligner (align toggled on after
+      // mount) needs the observer created lazily here.
+      syncAlignObserver();
+    }
+
+    /** (Re)create or drop the content-size observer so runtime toggles
+     *  of the align/axis props keep sensing accurate (a container that
+     *  switches to align="center" after mount still gets an aligner
+     *  observer; switching back stops it). */
+    function syncAlignObserver() {
+      if (alignCenter() && !alignRO && alignerRef.value) {
+        alignRO = new ResizeObserver(scheduleUpdate);
+        alignRO.observe(alignerRef.value);
+      } else if (!alignCenter() && alignRO) {
+        alignRO.disconnect();
+        alignRO = null;
+      }
+    }
+
+    watch(() => [props.align, props.axis] as const, () => {
+      syncAlignObserver();
+      scheduleUpdate();
+    }, { flush: "post" });
 
     function recomputePinned() {
       const vp = viewportRef.value;
@@ -129,6 +203,25 @@ export default defineComponent({
       if (!vp) return;
       if (vState) updateAxis(vp, vState, false);
       if (hState) updateAxis(vp, hState, true);
+      senseOverflow(vp);
+    }
+
+    /** Mirror the live scroll geometry onto the root element as
+     *  data-h-overflow / data-v-overflow. Runs on every scheduled
+     *  update (scroll, resize, content resize via the aligner). */
+    function senseOverflow(vp: HTMLElement) {
+      const root = vp.parentElement;
+      if (!root) return;
+      const h = hasH() ? computeOverflow(vp.scrollWidth, vp.clientWidth, vp.scrollLeft) : "none";
+      const v = hasV() ? computeOverflow(vp.scrollHeight, vp.clientHeight, vp.scrollTop) : "none";
+      if (h !== lastHOverflow) {
+        lastHOverflow = h;
+        root.setAttribute("data-h-overflow", h);
+      }
+      if (v !== lastVOverflow) {
+        lastVOverflow = v;
+        root.setAttribute("data-v-overflow", v);
+      }
     }
 
     function updateAxis(vp: HTMLElement, s: AxisState, horizontal: boolean) {
@@ -279,6 +372,8 @@ export default defineComponent({
       ro = new ResizeObserver(scheduleUpdate);
       ro.observe(vp);
 
+      syncAlignObserver();
+
       if (props.autoFollow && autoFollowContent.value) {
         pinned.value = true;
         onceFrame(() => {
@@ -309,6 +404,8 @@ export default defineComponent({
       ro?.disconnect();
       followRO?.disconnect();
       followRO = null;
+      alignRO?.disconnect();
+      alignRO = null;
     });
 
     function scrollTo(top: number, behavior: ScrollBehavior = "auto") {
@@ -336,19 +433,47 @@ export default defineComponent({
       return viewportRef.value?.scrollTop ?? 0;
     }
 
-    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop });
+    /** Re-run the scrollbar + overflow sensing pass. Public escape
+     *  hatch for content mutations the observers cannot see (e.g. the
+     *  slot's own children resizing without the aligner box changing,
+     *  or non-align consumers swapping content). */
+    function refresh(): void {
+      update();
+    }
+
+    /** Current sensed overflow per axis, same values as the mirrored
+     *  data attributes. */
+    function getOverflow(): { horizontal: OverflowSense; vertical: OverflowSense } {
+      return {
+        horizontal: lastHOverflow ?? "none",
+        vertical: lastVOverflow ?? "none",
+      };
+    }
+
+    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow });
 
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";
-      const content = props.autoFollow ? (
+      let content = props.autoFollow ? (
         <div ref={autoFollowContent} class="hk-scroll-container-autofollow-content">
           {slots.default?.()}
         </div>
       ) : (
         slots.default?.()
       );
+      // The aligner is the single flex item of the (row) viewport; its
+      // auto inline margins center it when it fits and collapse to
+      // zero when it overflows — see HkScrollContainer.scss.
+      if (alignCenter()) {
+        content = <div ref={setAligner} class="hk-scroll-container-aligner">{content}</div>;
+      }
       return (
-        <Tag class="hk-scroll-container" data-axis={props.axis}>
+        <Tag
+          class="hk-scroll-container"
+          data-axis={props.axis}
+          data-align={alignCenter() ? "center" : undefined}
+          data-fade={props.fade ? "true" : undefined}
+        >
           <div ref={viewportRef} class="hk-scroll-container-viewport">
             {content}
           </div>

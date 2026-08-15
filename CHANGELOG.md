@@ -15,7 +15,7 @@ hikari currently carries two version lines, plus one stale tag:
   `v0.3.0`–`v0.3.2` and `v0.3.4` were published to crates.io without git
   tags, and `v0.3.15`–`v0.3.19` are unpublished master changes.
 - **Vue port (`@celestia-island/hikari`)** — the `0.4.x` line. The npm
-  package is at `0.4.5` on master but has **never been published** to npm;
+  package is at `0.4.7` on master but has **never been published** to npm;
   publication is pending (A3).
 - **Tag `v0.4.0` is a stale tag.** It was created on an early Vue-port
   commit (2026-07-21) before the npm package version line was established,
@@ -28,6 +28,13 @@ Current master, Rust workspace `0.3.19`.
 
 ### Added
 
+- Add safe centering and overflow sensing to HkScrollContainer (`align="center"`
+  wraps the slot in an auto-margin aligner; `data-h-overflow` /
+  `data-v-overflow` mirror sensed overflow; optional `fade` masks the edges
+  with hidden content; `refresh()` / `getOverflow()` join the exposed API).
+- Add `scrollable` mode to HkTabs — the tab list rides a centered horizontal
+  HkScrollContainer, keeps center alignment while it fits, scrolls when it
+  overflows, fades its hidden edges and scrolls the active tab into view.
 - Port media, zoom and chart components to Vue. (#89)
 - Add Phase 6 theme bridge — CSS variable bridge for hikari components. (#83)
 - Migrate PopupSelect component from shittim-chest to hikari.

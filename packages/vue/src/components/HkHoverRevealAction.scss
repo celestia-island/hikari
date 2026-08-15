@@ -2,12 +2,18 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  /* Let the reveal chain shrink inside width-constrained flex parents
+     (mobile status bars / header centres) so a scrollable main slot
+     can take over the overflow instead of the wrapper clipping it. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hk-hover-reveal-main {
   display: inline-flex;
   align-items: center;
   min-width: 0;
+  max-width: 100%;
 }
 
 .hk-hover-reveal-extension {

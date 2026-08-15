@@ -1,0 +1,54 @@
+@use "../tokens";
+
+/**
+ * Placeholder overflow layer shared by text inputs.
+ *
+ * The marquee variant is a clipping window: the strip (three identical text
+ * copies, laid out in a row) translates leftward through it, so the sign
+ * scrolls seamlessly. The real <input> keeps its native placeholder hidden
+ * and sits on top; this layer only renders when the text overflows and the
+ * input is empty.
+ */
+.hk-placeholder-marquee {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  // Same typography as the input element so measurements match.
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: rgb(var(--color-muted));
+  white-space: nowrap;
+  // The strip is wider than the window; the JS offset drives translateX.
+  will-change: transform;
+
+  &__strip {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__copy {
+    padding-right: 24px;
+  }
+
+  &--truncate &__text {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+}
+
+// Reduced motion: the bus is parked by setReducedMotion(true); park the
+// strip at its natural position too so no transform jumps remain.
+@media (prefers-reduced-motion: reduce) {
+  .hk-placeholder-marquee__strip {
+    transform: none !important;
+  }
+}

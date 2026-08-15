@@ -3,11 +3,11 @@
 /**
  * Placeholder overflow layer shared by text inputs.
  *
- * The marquee variant is a clipping window: the strip (three identical text
- * copies, laid out in a row) translates leftward through it, so the sign
- * scrolls seamlessly. The real <input> keeps its native placeholder hidden
- * and sits on top; this layer only renders when the text overflows and the
- * input is empty.
+ * The marquee variant is a clipping window: while the text overflows, the
+ * strip (three identical text copies, laid out in a row) translates leftward
+ * through it, so the sign scrolls seamlessly. While the text fits, the whole
+ * layer is merely a hidden measuring probe — the host input shows its native
+ * placeholder instead (the component reports the flip via `overflowChange`).
  */
 .hk-placeholder-marquee {
   position: absolute;
@@ -36,6 +36,14 @@
 
   &__copy {
     padding-right: 24px;
+  }
+
+  // Hidden probe mode (text fits): visibility keeps the element laid out —
+  // clientWidth and the copy's bounding rect still measure reality for the
+  // ResizeObserver loop — while the native placeholder of the host input
+  // does the actual showing.
+  &--hidden {
+    visibility: hidden;
   }
 
   &--truncate &__text {

@@ -58,6 +58,14 @@
 .hk-spinner-text {
   font-size: var(--text-base);
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  /* Transient status, not content: selecting it mid-drag produces
+     accidental clipboard noise. The circle itself stays selectable-free
+     via the wrapper below. */
+  user-select: none;
+}
+
+.hk-spinner-wrapper {
+  user-select: none;
 }
 
 @keyframes hk-spinner-rotate {

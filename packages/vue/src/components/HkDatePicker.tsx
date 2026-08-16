@@ -2,6 +2,7 @@ import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-vue-next";
 import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import HkButton from "./HkButton";
 import HPopover from "./HkPopover";
 import "./HkDatePicker.scss";
@@ -70,12 +71,20 @@ export default defineComponent({
     min: { type: String as PropType<string | undefined>, default: undefined },
     /** Inclusive upper bound as an ISO date; later days render disabled. */
     max: { type: String as PropType<string | undefined>, default: undefined },
+    /** Render the OS native `<input type="date">` on touch-sized viewports. */
+    nativeOnMobile: { type: Boolean, default: true },
   },
   emits: {
     "update:modelValue": (_value: string | null) => true,
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+    const { isMobile } = useBreakpoint();
+
+    // On touch devices the OS picker beats a custom popup: swap the whole
+    // chrome for a native date input (the model already speaks its ISO wire
+    // format) and keep the custom calendar on desktop widths only.
+    const useNative = computed(() => props.nativeOnMobile && isMobile.value);
 
     const selected = computed(() => parseISODate(props.modelValue));
     const hasValue = computed(() => selected.value !== null);
@@ -218,7 +227,48 @@ export default defineComponent({
       emit("update:modelValue", null);
     }
 
-    return () => (
+    // ── Native mobile input ─────────────────────────────────────────
+    function onNativeInput(e: Event) {
+      const el = e.target as HTMLInputElement;
+      if (!el.value) {
+        if (props.modelValue !== null) emit("update:modelValue", null);
+        return;
+      }
+      const d = parseISODate(el.value);
+      if (!d || isDisabledDay(d)) {
+        // Out-of-range or malformed: re-sync the field to the model so the
+        // visible value can never drift from what the parent owns.
+        el.value = props.modelValue ?? "";
+        return;
+      }
+      emit("update:modelValue", toISODate(d));
+    }
+
+    function renderNative() {
+      return (
+        <input
+          class="hk-dp-native"
+          type="date"
+          value={props.modelValue ?? ""}
+          min={props.min}
+          max={props.max}
+          disabled={props.disabled || undefined}
+          aria-label={t("hk.datePicker.pickDate", "Pick a date")}
+          onInput={onNativeInput}
+        />
+      );
+    }
+
+    return () => {
+      if (useNative.value) {
+        return (
+          <div class={["hk-dp", props.disabled ? "is-disabled" : ""].filter(Boolean).join(" ")}>
+            {renderNative()}
+          </div>
+        );
+      }
+
+      return (
       <div class={["hk-dp", props.disabled ? "is-disabled" : ""].filter(Boolean).join(" ")}>
         <div
           ref={triggerRef}
@@ -322,6 +372,7 @@ export default defineComponent({
           </div>
         </HPopover>
       </div>
-    );
+      );
+    };
   },
 });

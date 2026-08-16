@@ -28,6 +28,16 @@ Current master, Rust workspace `0.3.19`.
 
 ### Added
 
+- Add mobile native pass-through to both date pickers and localize the
+  datetime picker: HkDateTimePicker now derives month/weekday names and the
+  trigger label from `Intl.DateTimeFormat` on the active locale (week start
+  from `Intl.Locale` weekInfo, Sunday fallback) instead of hardcoded English
+  tables, its previously dead popup mode renders a real trigger anchored to
+  HPopover (`placement`/`offset` finally wired), and both HkDateTimePicker
+  and HkDatePicker gain `nativeOnMobile` (default true) which swaps the
+  custom popup for the OS `<input type="datetime-local">`/`type="date"`
+  control below the 768px breakpoint with Date-to-wire-format conversion,
+  min/max clamping and model re-sync on rejected edits.
 - Add safe centering and overflow sensing to HkScrollContainer (`align="center"`
   wraps the slot in an auto-margin aligner; `data-h-overflow` /
   `data-v-overflow` mirror sensed overflow; optional `fade` masks the edges

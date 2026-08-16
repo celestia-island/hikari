@@ -359,3 +359,36 @@
   &:hover { filter: brightness(1.08); }
   &:focus-visible { outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent); outline-offset: 2px; }
 }
+
+/* ── Native mobile input ─────────────────────────────────────── */
+
+.hk-dtp-native {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  background: var(--hi-color-surface);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
+  border-radius: var(--hi-radius-sm, 4px);
+  color: var(--hi-color-text-primary);
+  font-family: inherit;
+  font-size: var(--hi-text-sm, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--hi-color-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--hi-color-primary) 35%, transparent);
+  }
+}
+
+.hk-dtp-popup-root {
+  display: inline-flex;
+}

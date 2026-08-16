@@ -267,3 +267,40 @@
   padding-top: var(--hi-space-6, 6px);
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
+
+/* ── Native mobile input ─────────────────────────────────────── */
+
+.hk-dp-native {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--hi-radius-sm, 4px);
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: var(--hi-text-sm, 0.875rem);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--hi-duration-fast, 0.15s) ease,
+    border-color var(--hi-duration-fast, 0.15s) ease,
+    box-shadow var(--hi-duration-fast, 0.15s) ease;
+}
+
+.hk-dp:not(.is-disabled) .hk-dp-native:hover,
+.hk-dp-native:focus-visible {
+  border-color: rgb(var(--color-focused-border));
+}
+
+.hk-dp-native:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-dp.is-disabled .hk-dp-native {
+  cursor: not-allowed;
+}

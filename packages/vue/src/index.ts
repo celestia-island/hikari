@@ -55,6 +55,7 @@ export { default as HTooltip } from "./components/HkTooltip";
 export { default as HTree } from "./components/HkTree";
 export { default as HWindowedItem } from "./components/HkWindowedItem";
 export { default as HDateTimePicker } from "./components/HkDateTimePicker";
+export { default as HDatePicker } from "./components/HkDatePicker";
 export { default as HTimeline } from "./components/HkTimeline";
 
 // Media player kit

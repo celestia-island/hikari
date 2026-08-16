@@ -1,0 +1,268 @@
+/* ── HkDatePicker ───────────────────────────────────────────────
+ * Input-like trigger (mirrors HkInput chrome) + HkPopover calendar.
+ * Uses the shared --hi-* design tokens. */
+
+.hk-dp {
+  display: block;
+  width: 100%;
+}
+
+.hk-dp.is-disabled {
+  opacity: 0.5;
+}
+
+/* ── Trigger ─────────────────────────────────────────────────── */
+
+.hk-dp-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--hi-space-6, 6px);
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--hi-radius-sm, 4px);
+  color: rgb(var(--color-text));
+  font-family: inherit;
+  font-size: var(--hi-text-sm, 0.875rem);
+  line-height: 1.5;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--hi-duration-fast, 0.15s) ease,
+    border-color var(--hi-duration-fast, 0.15s) ease,
+    box-shadow var(--hi-duration-fast, 0.15s) ease;
+}
+
+.hk-dp:not(.is-disabled) .hk-dp-trigger:hover,
+.hk-dp-trigger:focus-visible {
+  border-color: rgb(var(--color-focused-border));
+}
+
+.hk-dp.is-disabled .hk-dp-trigger {
+  cursor: not-allowed;
+
+  &:focus-visible {
+    border-color: color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+    box-shadow: none;
+    background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  }
+}
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    background: rgb(var(--color-surface));
+  }
+
+  &.is-open {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.hk-dp-trigger-sm {
+  min-height: 2rem;
+  padding: var(--hi-space-4, 4px) var(--hi-space-10, 10px);
+  font-size: var(--hi-text-xs, 0.75rem);
+}
+
+.hk-dp-value {
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+
+  &[data-empty] {
+    color: var(--hi-color-muted);
+  }
+}
+
+.hk-dp-clear {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--hi-radius-sm, 4px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+
+  .hk-dp-trigger:hover &,
+  .hk-dp-trigger:focus &,
+  .hk-dp-trigger:focus-visible &,
+  .hk-dp-clear:focus-visible {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: var(--hi-color-text-primary);
+  }
+}
+
+.hk-dp-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--hi-color-muted);
+  pointer-events: none;
+}
+
+/* ── Calendar panel ──────────────────────────────────────────── */
+
+.hk-dp-popover.hk-popover-panel {
+  padding: var(--hi-space-10, 10px) var(--hi-space-12, 12px) var(--hi-space-8, 8px);
+}
+
+.hk-dp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hi-space-8, 8px);
+  min-width: 17.5rem;
+  user-select: none;
+  color: var(--hi-color-text-primary);
+}
+
+.hk-dp-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--hi-space-4, 4px);
+}
+
+.hk-dp-nav {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--hi-radius-sm, 4px);
+  color: var(--hi-color-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+}
+
+.hk-dp-header > .hk-dp-nav:first-child {
+  justify-self: start;
+}
+
+.hk-dp-header > .hk-dp-nav:last-child {
+  justify-self: end;
+}
+
+.hk-dp-title {
+  font-size: var(--hi-text-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--hi-color-text-primary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.hk-dp-weekdays,
+.hk-dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.hk-dp-wd {
+  text-align: center;
+  font-size: var(--hi-text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--hi-color-muted);
+  padding: var(--hi-space-2, 2px) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.hk-dp-cell {
+  position: relative;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: var(--hi-radius-sm, 4px);
+  aspect-ratio: 1 / 1;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
+  cursor: pointer;
+  font-size: var(--hi-text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+
+  &:hover:not(:disabled):not(.is-selected) {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: -1px;
+  }
+
+  &.is-out {
+    opacity: 0.32;
+  }
+
+  &.is-disabled {
+    cursor: default;
+    opacity: 0.25;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  &.is-today:not(.is-selected) {
+    font-weight: 700;
+    color: var(--hi-color-text-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+  }
+
+  &.is-selected {
+    background: var(--hi-color-primary);
+    color: var(--hi-color-text-on-primary);
+    font-weight: 600;
+
+    &:hover {
+      background: var(--hi-color-primary);
+    }
+  }
+}
+
+.hk-dp-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--hi-space-6, 6px);
+  border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
+}

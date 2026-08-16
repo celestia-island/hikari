@@ -20,8 +20,8 @@ export default defineComponent({
     readonly: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
     name: { type: String, default: undefined },
-  /** Submit intent on Enter (no modifiers) — see HkPasswordInput. */
-  submitOnEnter: { type: Function, default: undefined },
+    /** Submit intent on Enter (no modifiers) — see HkPasswordInput. */
+    submitOnEnter: { type: Function, default: undefined },
     autocomplete: { type: String, default: "off" },
     rows: { type: Number, default: 3 },
     autoGrow: { type: Boolean, default: false },
@@ -197,6 +197,7 @@ export default defineComponent({
               onKeydown={(e) => {
                 if (
                   e.key === "Enter" &&
+                  !e.isComposing &&
                   !e.ctrlKey &&
                   !e.metaKey &&
                   !e.altKey &&
@@ -204,6 +205,7 @@ export default defineComponent({
                   !props.disabled &&
                   !props.readonly
                 ) {
+                  e.preventDefault();
                   props.submitOnEnter?.();
                 }
                 emit("keydown", e);
@@ -233,6 +235,7 @@ export default defineComponent({
               onKeydown={(e) => {
                 if (
                   e.key === "Enter" &&
+                  !e.isComposing &&
                   !e.ctrlKey &&
                   !e.metaKey &&
                   !e.altKey &&
@@ -240,6 +243,7 @@ export default defineComponent({
                   !props.disabled &&
                   !props.readonly
                 ) {
+                  e.preventDefault();
                   props.submitOnEnter?.();
                 }
                 emit("keydown", e);

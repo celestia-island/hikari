@@ -412,6 +412,7 @@ export default defineComponent({
       }
       if (
         e.key === "Enter" &&
+        !e.isComposing &&
         !e.ctrlKey &&
         !e.metaKey &&
         !e.altKey &&
@@ -419,6 +420,7 @@ export default defineComponent({
         !props.disabled &&
         !props.readonly
       ) {
+        e.preventDefault();
         props.submitOnEnter?.();
       }
       emit("keydown", e);

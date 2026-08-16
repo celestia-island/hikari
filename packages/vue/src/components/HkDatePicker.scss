@@ -50,16 +50,17 @@
     background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   }
 }
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-    background: rgb(var(--color-surface));
-  }
 
-  &.is-open {
-    border-color: rgb(var(--color-focused-border));
-    box-shadow: var(--shadow-focus);
-  }
+/* Focus ring + open state live on the trigger itself. */
+.hk-dp-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  background: rgb(var(--color-surface));
+}
+
+.hk-dp-trigger.is-open {
+  border-color: rgb(var(--color-focused-border));
+  box-shadow: var(--shadow-focus);
 }
 
 .hk-dp-trigger-sm {

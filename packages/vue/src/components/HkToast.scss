@@ -16,7 +16,13 @@
 
 .hk-toast-item {
   display: flex;
-  align-items: flex-start;
+  /* Center, not flex-start: the icon and close action boxes are 1.5rem
+     tall while a single text line is ~1.2rem — top alignment parked the
+     text high, stranded dead space under it (the "fat bottom" on
+     one-line toasts), and made the close glyph sit visibly lower than
+     the text. Centering aligns all three optical axes and distributes
+     the height symmetrically for single- and multi-line bodies alike. */
+  align-items: center;
   gap: var(--hi-space-8, 8px);
   padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
   border-radius: var(--hi-radius-sm, 4px);
@@ -129,7 +135,10 @@
 .hk-toast-enter-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
   transition-duration: var(--hi-duration-normal, 0.3s);
-  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Plain ease-out: the previous back-overshoot spring (1.56 y) is the
+     same family the drawer animation was corrected away from — toasts
+     slide in and settle, they do not bounce. */
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .hk-toast-leave-active {

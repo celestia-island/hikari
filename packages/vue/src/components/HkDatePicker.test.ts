@@ -238,6 +238,45 @@ describe("HkDatePicker", () => {
     expect(panel()?.querySelectorAll(".hk-dp-cell.is-today").length).toBe(todayInView ? 1 : 0);
   });
 
+  it("treats an invalid ISO modelValue as empty and shows the placeholder", () => {
+    const p = mountPicker({ modelValue: "2026-02-31" });
+    const value = p.container.querySelector<HTMLElement>(".hk-dp-value");
+    expect(value?.getAttribute("data-empty")).not.toBeNull();
+    expect(value?.textContent).toContain("Pick a date");
+    expect(p.container.querySelector(".hk-dp-clear")).toBeNull();
+  });
+
+  it("emits a leap-day ISO date when selecting February 29", async () => {
+    const p = mountPicker({ modelValue: "2028-02-01" });
+    openViaEnter(p);
+    await nextTick();
+    clickDay(29);
+    await nextTick();
+    expect(p.emitted).toEqual(["2028-02-29"]);
+  });
+
+  it("rolls over December to January of the next year via the arrows", async () => {
+    const p = mountPicker({ modelValue: "2026-12-15" });
+    openViaEnter(p);
+    await nextTick();
+    const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
+    expect(panel()?.querySelector<HTMLElement>(".hk-dp-title")?.textContent).toContain(
+      fmt.format(new Date(2026, 11, 1)),
+    );
+    const navs = () => panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-nav");
+    navs()?.[1].click();
+    await nextTick();
+    expect(panel()?.querySelector<HTMLElement>(".hk-dp-title")?.textContent).toContain(
+      fmt.format(new Date(2027, 0, 1)),
+    );
+    // Back across the year boundary again.
+    navs()?.[0].click();
+    await nextTick();
+    expect(panel()?.querySelector<HTMLElement>(".hk-dp-title")?.textContent).toContain(
+      fmt.format(new Date(2026, 11, 1)),
+    );
+  });
+
   it("jumps to today from the footer button", async () => {
     const p = mountPicker({ modelValue: "2026-08-16" });
     openViaEnter(p);

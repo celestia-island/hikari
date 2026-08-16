@@ -81,8 +81,10 @@ export default defineComponent({
     const hasValue = computed(() => selected.value !== null);
 
     // ── View state ──────────────────────────────────────────────────
-    const today = new Date();
-    const anchorDate = computed(() => selected.value ?? today);
+    // Refreshed on every popup open so the today highlight and the
+    // footer button cannot go stale on pages that live past midnight.
+    const today = ref(new Date());
+    const anchorDate = computed(() => selected.value ?? today.value);
     const viewYear = ref(anchorDate.value.getFullYear());
     const viewMonth = ref(anchorDate.value.getMonth());
 
@@ -170,7 +172,7 @@ export default defineComponent({
     }
 
     function jumpToday() {
-      const tgt = isDisabledDay(today) ? null : today;
+      const tgt = isDisabledDay(today.value) ? null : today.value;
       if (!tgt) return;
       viewYear.value = tgt.getFullYear();
       viewMonth.value = tgt.getMonth();
@@ -185,6 +187,7 @@ export default defineComponent({
       if (props.disabled) return;
       open.value = !open.value;
       if (open.value) {
+        today.value = new Date();
         viewYear.value = anchorDate.value.getFullYear();
         viewMonth.value = anchorDate.value.getMonth();
       }
@@ -290,7 +293,7 @@ export default defineComponent({
                 const outOfMonth = d.getMonth() !== viewMonth.value;
                 const disabled = isDisabledDay(d);
                 const isSelected = selected.value !== null && sameDay(d, selected.value);
-                const isToday = sameDay(d, today);
+                const isToday = sameDay(d, today.value);
                 return (
                   <button
                     key={i}
@@ -312,7 +315,7 @@ export default defineComponent({
               })}
             </div>
             <div class="hk-dp-footer">
-              <HkButton size="sm" disabled={isDisabledDay(today)} onClick={jumpToday}>
+              <HkButton size="sm" disabled={isDisabledDay(today.value)} onClick={jumpToday}>
                 {t("hk.datePicker.today", "Today")}
               </HkButton>
             </div>

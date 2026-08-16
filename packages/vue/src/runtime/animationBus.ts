@@ -1,3 +1,5 @@
+import { setCssAnimationsEnabled } from "../animation/registerAnimations";
+
 export interface FrameContext {
   delta: number;
   elapsed: number;
@@ -164,6 +166,11 @@ function halt() {
 }
 
 export function setReducedMotion(flag: boolean) {
+  // Reduced motion parks the JS frame scheduler AND the pure-CSS
+  // animations registered with the CSS animation registrar. Re-assert
+  // the switch on every call so a direct setCssAnimationsEnabled(false)
+  // from a performance-context caller is undone when motion resumes.
+  setCssAnimationsEnabled(!flag);
   if (paused === flag) return;
   paused = flag;
   if (flag) {

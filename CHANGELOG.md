@@ -62,6 +62,11 @@ Current master, Rust workspace `0.3.19`.
 
 ### Fixed
 
+- Add admin KPI widgets: HkStatCard (label/value/hint with a tone DOT —
+  text hue never changes, per the interaction-state precedence), HkStatusPill
+  (compact ok/warn/error/unknown pill with optional latency + version, gentle
+  pulse on live state, reduced-motion aware), and HkShareBar (label + share
+  bar + caption row for usage/quota breakdowns).
 - Fix HkNavItem hover erasing the active state: the `:hover:not([data-disabled])`
   selector outranked `[data-active]` (0,3,0 vs 0,2,0), so hovering the selected
   sidebar item wiped its background tint and primary text color. Hover now

@@ -72,6 +72,13 @@ export default defineComponent({
     passwordEnteredText: { type: String, default: undefined },
     allSelectedText: { type: String, default: undefined },
     capsLockText: { type: String, default: undefined },
+    /**
+     * Submit intent on Enter (no modifiers). Auth forms wire this to their
+     * submit handler so pressing Enter in the password field logs in —
+     * the native form-submit path does not fire because the visible action
+     * button is type="button".
+     */
+    submitOnEnter: { type: Function, default: undefined },
     fullWidthWarningText: { type: String, default: undefined },
   },
   emits: {
@@ -402,6 +409,19 @@ export default defineComponent({
       if (e.getModifierState) capsLock.value = e.getModifierState("CapsLock");
       if (e.ctrlKey || e.metaKey) {
         requestAnimationFrame(() => checkSelection());
+      }
+      if (
+        e.key === "Enter" &&
+        !e.isComposing &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey &&
+        !props.disabled &&
+        !props.readonly
+      ) {
+        e.preventDefault();
+        props.submitOnEnter?.();
       }
       emit("keydown", e);
     }

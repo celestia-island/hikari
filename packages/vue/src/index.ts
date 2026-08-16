@@ -198,4 +198,7 @@ export type { ChallengeDescriptor } from "./utils/powNonce";
 export { HkAdminTablePage as HAdminTablePage } from "./components/HkAdminTablePage";
 export type { HTableColumn } from "./components/HkAdminTablePage";
 export { HkPageHeader as HPageHeader } from "./components/HkPageHeader";
+export { HkStatCard as HStatCard, type StatTone } from "./components/HkStatCard";
+export { HkStatusPill as HStatusPill, type PillState } from "./components/HkStatusPill";
+export { HkShareBar as HShareBar } from "./components/HkShareBar";
 export { HkSecretRevealModal as HSecretRevealModal } from "./components/HkSecretRevealModal";

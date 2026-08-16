@@ -1,0 +1,73 @@
+.hk-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-md, 0.5rem);
+  background: rgb(var(--color-surface));
+  min-width: 0;
+}
+
+.hk-stat-card-clickable {
+  cursor: pointer;
+  transition: border-color var(--duration-normal, 0.2s) ease;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 35%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+.hk-stat-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-stat-card-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tone lives on the dot ONLY — the value text stays neutral so tone
+   never reads as selection (interaction-state precedence). */
+.hk-stat-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hk-stat-card-dot-success { background: rgb(var(--color-success)); }
+.hk-stat-card-dot-warning { background: rgb(var(--color-warning)); }
+.hk-stat-card-dot-error { background: rgb(var(--color-error)); }
+.hk-stat-card-dot-info { background: rgb(var(--color-info, rgb(var(--color-primary)))); }
+.hk-stat-card-dot-primary { background: rgb(var(--color-primary)); }
+.hk-stat-card-dot-muted { background: rgb(var(--color-muted)); }
+
+.hk-stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-stat-card-hint {
+  font-size: var(--text-2xs, 0.6875rem);
+  color: rgb(var(--color-muted) / 70%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

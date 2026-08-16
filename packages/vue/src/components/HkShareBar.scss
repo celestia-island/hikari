@@ -1,0 +1,40 @@
+.hk-share-bar {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) minmax(4rem, 2fr) auto;
+  align-items: center;
+  gap: var(--space-10, 0.625rem);
+  min-width: 0;
+}
+
+.hk-share-bar-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-share-bar-track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(var(--color-border) / 15%);
+  overflow: hidden;
+  min-width: 4rem;
+}
+
+.hk-share-bar-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: 3px;
+  background: rgb(var(--color-primary) / 70%);
+  transition: width var(--duration-normal, 0.2s) ease;
+}
+
+.hk-share-bar-caption {
+  font-size: var(--text-2xs, 0.6875rem);
+  color: rgb(var(--color-muted));
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}

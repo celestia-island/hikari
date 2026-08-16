@@ -1,15 +1,10 @@
 import { ArrowLeft, Calendar, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-vue-next";
-import { computed, defineComponent, onBeforeUnmount, ref, Transition, watch, type PropType } from "vue";
-
-
-
-
-
-
+import { computed, defineComponent, ref, Transition, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import "./HkDateTimePicker.scss";
-import HPopover from "./HkPopover";
+import HPopover, { type PopupPlacement } from "./HkPopover";
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -25,19 +20,67 @@ function dayKeyOf(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+
+// Wire format of the mobile native input: `YYYY-MM-DD` with an optional
+// `THH:mm` (some engines also append `:ss`, which we tolerate and drop).
+const NATIVE_INPUT_RE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::\d{2})?)?$/;
+
+/** Serialize a Date to the local-time wire format of the native input. */
+function toNativeInputValue(d: Date, withTime: boolean): string {
+  const date = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  return withTime ? `${date}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` : date;
+}
+
+/**
+ * Parse a native-input value (`YYYY-MM-DD` + optional `THH:mm`) into its
+ * parts, rejecting rollovers such as 2026-02-31 (Date normalizes them).
+ */
+function parseNativeInputValue(value: string): { y: number; m: number; d: number; hh: number | null; mm: number | null } | null {
+  const match = NATIVE_INPUT_RE.exec(value);
+  if (!match) return null;
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  const probe = new Date(y, m - 1, d);
+  if (probe.getFullYear() !== y || probe.getMonth() !== m - 1 || probe.getDate() !== d) {
+    return null;
+  }
+  return {
+    y,
+    m,
+    d,
+    hh: match[4] !== undefined ? Number(match[4]) : null,
+    mm: match[5] !== undefined ? Number(match[5]) : null,
+  };
+}
+
+/**
+ * First day of the week (0 = Sunday … 6 = Saturday) for a locale, taken from
+ * `Intl.Locale#weekInfo` (or the older `getInfo`) when the runtime provides
+ * it and defaulting to Sunday.
+ */
+function firstWeekdayOf(locale: string): number {
+  try {
+    const loc = new Intl.Locale(locale) as Intl.Locale & {
+      weekInfo?: { firstDay?: number | string };
+      getInfo?: () => { firstDayOfWeek?: string };
+    };
+    if (loc.weekInfo) {
+      const n = Number(loc.weekInfo.firstDay);
+      if (Number.isInteger(n) && n >= 0 && n <= 6) return n;
+    }
+    if (typeof loc.getInfo === "function") {
+      const n = Number(loc.getInfo().firstDayOfWeek);
+      if (Number.isInteger(n) && n >= 0 && n <= 6) return n;
+    }
+  } catch {
+    // Fall through to the Sunday default.
+  }
+  return 0;
+}
+
 type ViewKind = "days" | "months" | "years";
-
-const MONTH_NAMES = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-const MONTH_NAMES_LONG = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const WEEKDAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export default defineComponent({
   name: "HkDateTimePicker",
@@ -47,10 +90,12 @@ export default defineComponent({
     max: { type: [Date, null] as unknown as PropType<Date | null>, default: null },
     markedDays: { type: Set as unknown as PropType<Set<string>>, default: () => new Set<string>() },
     mode: { type: String as PropType<"inline" | "popup">, default: "inline" },
-    placement: { type: String, default: "bottom-start" },
+    placement: { type: String as PropType<PopupPlacement>, default: "bottom-start" },
     offset: { type: Number, default: 6 },
     confirmLabel: { type: String, default: undefined },
     showTime: { type: Boolean, default: true },
+    /** Render the OS native `<input type="datetime-local">` on touch-sized viewports. */
+    nativeOnMobile: { type: Boolean, default: true },
   },
   emits: {
     "update:modelValue": (_d: Date) => true,
@@ -59,6 +104,13 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    const { isMobile } = useBreakpoint();
+
+    // On touch devices the OS picker beats a custom popup: swap the whole
+    // chrome for a native datetime-local input and keep the custom UI on
+    // desktop widths only.
+    const useNative = computed(() => props.nativeOnMobile && isMobile.value);
+
     const viewYear = ref(props.modelValue.getFullYear());
     const viewMonth = ref(props.modelValue.getMonth());
     const view = ref<ViewKind>("days");
@@ -86,8 +138,37 @@ export default defineComponent({
       },
     );
 
+    // ── Localization (all derived from the active locale, no tables) ──
+    const locale = computed(() => useI18n().locale);
+    const firstDay = computed(() => firstWeekdayOf(locale.value));
+
+    const formatters = computed(() => {
+      const loc = locale.value;
+      return {
+        monthShort: new Intl.DateTimeFormat(loc, { month: "short" }),
+        monthLong: new Intl.DateTimeFormat(loc, { month: "long" }),
+        weekday: new Intl.DateTimeFormat(loc, { weekday: "short" }),
+        // h23 keeps the trigger in the same 24-hour form as the time steppers.
+        triggerDateTime: new Intl.DateTimeFormat(loc, {
+          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+        }),
+        triggerDate: new Intl.DateTimeFormat(loc, { year: "numeric", month: "short", day: "numeric" }),
+      };
+    });
+
+    const monthNames = computed(() =>
+      Array.from({ length: 12 }, (_, i) => formatters.value.monthShort.format(new Date(2024, i, 15))),
+    );
+
     const monthName = computed(() =>
-      MONTH_NAMES_LONG[viewMonth.value],
+      formatters.value.monthLong.format(new Date(viewYear.value, viewMonth.value, 1)),
+    );
+
+    // 2024-01-07 is a Sunday; offset by the locale's first weekday so the
+    // label column follows the locale instead of a hardcoded week start.
+    const weekdayLabels = computed(() =>
+      Array.from({ length: 7 }, (_, i) =>
+        formatters.value.weekday.format(new Date(2024, 0, 7 + ((firstDay.value + i) % 7)))),
     );
 
     const yearBlockStart = computed(() =>
@@ -97,7 +178,7 @@ export default defineComponent({
     const cells = computed(() => {
       const first = new Date(viewYear.value, viewMonth.value, 1);
       const start = new Date(first);
-      start.setDate(first.getDate() - first.getDay());
+      start.setDate(first.getDate() - ((first.getDay() - firstDay.value + 7) % 7));
       const out: Date[] = [];
       for (let i = 0; i < 42; i++) {
         const d = new Date(start);
@@ -163,15 +244,13 @@ export default defineComponent({
       selectDay(tgt);
     }
 
-    const pad = (n: number) => (n < 10 ? `0${n}` : String(n));
-
     function stepper(label: string, value: number, onUp: () => void, onDown: () => void) {
       return (
         <div class="hk-dtp-step">
           <button class="hk-dtp-step-btn" type="button" aria-label={`${label} +`} onClick={onUp}>
             <ChevronUp size={13} />
           </button>
-          <span class="hk-dtp-step-val">{pad(value)}</span>
+          <span class="hk-dtp-step-val">{pad2(value)}</span>
           <button class="hk-dtp-step-btn" type="button" aria-label={`${label} -`} onClick={onDown}>
             <ChevronDown size={13} />
           </button>
@@ -181,20 +260,56 @@ export default defineComponent({
 
     // ── Popup-mode state ────────────────────────────────────────────
     const open = ref(false);
+    // HPopover renders no trigger slot of its own — the wrap below is the
+    // real DOM anchor and must live outside the teleported popover.
+    const triggerWrapRef = ref<HTMLElement | null>(null);
     function toggleOpen() { open.value = !open.value; if (open.value) emit("open"); }
     function onConfirm() { emit("confirm"); open.value = false; }
 
-    const triggerLabel = computed(() => {
-      const d = props.modelValue;
-      const month = MONTH_NAMES[d.getMonth()];
-      const day = d.getDate();
-      if (props.showTime) {
-        const h = pad(d.getHours());
-        const m = pad(d.getMinutes());
-        return `${month} ${day}, ${h}:${m}`;
+    const triggerLabel = computed(() =>
+      props.showTime
+        ? formatters.value.triggerDateTime.format(props.modelValue)
+        : formatters.value.triggerDate.format(props.modelValue),
+    );
+
+    // ── Native mobile input ─────────────────────────────────────────
+    function onNativeInput(e: Event) {
+      const el = e.target as HTMLInputElement;
+      if (!el.value) {
+        // The model is a required Date with no null semantics — a cleared
+        // field must fall back to it instead of silently drifting.
+        el.value = toNativeInputValue(props.modelValue, props.showTime);
+        return;
       }
-      return `${month} ${day}, ${d.getFullYear()}`;
-    });
+      const parsed = parseNativeInputValue(el.value);
+      if (!parsed) return;
+      // Without a time part (showTime=false) keep the model's clock time,
+      // mirroring how the custom grid preserves it across day selection.
+      const cur = props.modelValue;
+      const next = new Date(
+        parsed.y, parsed.m - 1, parsed.d,
+        parsed.hh ?? cur.getHours(), parsed.mm ?? cur.getMinutes(),
+      );
+      if (isDisabled(next)) {
+        el.value = toNativeInputValue(cur, props.showTime);
+        return;
+      }
+      emit("update:modelValue", next);
+    }
+
+    function renderNative() {
+      return (
+        <input
+          class="hk-dtp-native"
+          type={props.showTime ? "datetime-local" : "date"}
+          value={toNativeInputValue(props.modelValue, props.showTime)}
+          min={props.min ? toNativeInputValue(props.min, props.showTime) : undefined}
+          max={props.max ? toNativeInputValue(props.max, props.showTime) : undefined}
+          aria-label={t("hk.dateTimePicker.pickDate", "Pick a date and time")}
+          onInput={onNativeInput}
+        />
+      );
+    }
 
     // ── Header ──────────────────────────────────────────────────────
 
@@ -262,7 +377,7 @@ export default defineComponent({
       if (view.value === "months") {
         return (
           <div class="hk-dtp-grid" data-variant="pick">
-            {MONTH_NAMES.map((name, i) => {
+            {monthNames.value.map((name, i) => {
               const selected = viewYear.value === props.modelValue.getFullYear() && i === props.modelValue.getMonth();
               const isNow = viewYear.value === now.getFullYear() && i === now.getMonth();
               return (
@@ -315,7 +430,7 @@ export default defineComponent({
       return (
         <>
           <div class="hk-dtp-weekdays">
-            {WEEKDAY_NAMES.map((w, i) => (
+            {weekdayLabels.value.map((w, i) => (
               <span key={i} class="hk-dtp-wd">{w}</span>
             ))}
           </div>
@@ -378,6 +493,10 @@ export default defineComponent({
     }
 
     return () => {
+      if (useNative.value) {
+        return renderNative();
+      }
+
       const body = (
         <div class="hk-dtp" role="group" aria-label={t("hk.dateTimePicker.pickDate", "Pick a date and time")}>
           {renderBody()}
@@ -396,34 +515,33 @@ export default defineComponent({
       }
 
       return (
-        <HPopover
-          modelValue={open.value}
-          onUpdate:modelValue={(v: boolean) => { open.value = v; }}
-        >
-          {{
-            trigger: () => (
-              <div class="hk-dtp-trigger-wrap" onClick={toggleOpen}>
-                {slots.trigger
-                  ? slots.trigger({ open: open.value })
-                  : (
-                    <button class="hk-dtp-trigger" type="button" aria-expanded={open.value}>
-                      <Calendar size={14} class="hk-dtp-trigger-icon" />
-                      <span class="hk-dtp-trigger-val">{triggerLabel.value}</span>
-                      <ChevronDown
-                        size={14}
-                        class={["hk-dtp-trigger-chev", open.value ? "is-open" : ""].filter(Boolean).join(" ")}
-                      />
-                    </button>
-                  )}
-              </div>
-            ),
-            default: () => (
-              <div class="hk-dtp-popup">
-                {body}
-              </div>
-            ),
-          }}
-        </HPopover>
+        <div class="hk-dtp-popup-root">
+          <div ref={triggerWrapRef} class="hk-dtp-trigger-wrap" onClick={toggleOpen}>
+            {slots.trigger
+              ? slots.trigger({ open: open.value })
+              : (
+                <button class="hk-dtp-trigger" type="button" aria-expanded={open.value}>
+                  <Calendar size={14} class="hk-dtp-trigger-icon" />
+                  <span class="hk-dtp-trigger-val">{triggerLabel.value}</span>
+                  <ChevronDown
+                    size={14}
+                    class={["hk-dtp-trigger-chev", open.value ? "is-open" : ""].filter(Boolean).join(" ")}
+                  />
+                </button>
+              )}
+          </div>
+          <HPopover
+            modelValue={open.value}
+            onUpdate:modelValue={(v: boolean) => { open.value = v; }}
+            anchorRef={triggerWrapRef.value ?? null}
+            placement={props.placement}
+            offset={props.offset}
+          >
+            <div class="hk-dtp-popup">
+              {body}
+            </div>
+          </HPopover>
+        </div>
       );
     };
   },

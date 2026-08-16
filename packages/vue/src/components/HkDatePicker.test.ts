@@ -6,6 +6,7 @@ import { setLocale } from "../i18n/context";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
+const originalWidth = window.innerWidth;
 
 interface PickerHarness {
   container: HTMLElement;
@@ -61,10 +62,20 @@ function clickDay(day: number) {
   target?.click();
 }
 
+/** Pretend the viewport is touch-sized so `useBreakpoint` reports mobile. */
+function useMobileViewport() {
+  (window as unknown as { innerWidth: number }).innerWidth = 375;
+}
+
+function nativeInput(root: ParentNode): HTMLInputElement | null {
+  return root.querySelector<HTMLInputElement>("input.hk-dp-native");
+}
+
 afterEach(async () => {
   for (const app of mounts.splice(0)) app.unmount();
   for (const el of containers.splice(0)) el.remove();
   document.querySelectorAll(".hk-dp-panel, .hk-popover-backdrop").forEach((el) => el.remove());
+  (window as unknown as { innerWidth: number }).innerWidth = originalWidth;
   await setLocale("en");
 });
 
@@ -287,5 +298,64 @@ describe("HkDatePicker", () => {
     const now = new Date();
     const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     expect(p.emitted).toEqual([expected]);
+  });
+
+  // ── Mobile pass-through to the native OS control ────────────────
+
+  it("renders a native date input instead of the calendar on mobile", () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    const input = nativeInput(p.container);
+    expect(input).not.toBeNull();
+    expect(input?.type).toBe("date");
+    expect(input?.value).toBe("2026-08-16");
+    expect(p.container.querySelector(".hk-dp-trigger")).toBeNull();
+    expect(p.container.querySelector(".hk-dp-panel")).toBeNull();
+  });
+
+  it("keeps the custom calendar on mobile when nativeOnMobile is false", async () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16", nativeOnMobile: false });
+    expect(p.container.querySelector(".hk-dp-trigger")).not.toBeNull();
+    expect(nativeInput(p.container)).toBeNull();
+    openViaEnter(p);
+    await nextTick();
+    // The custom panel is portaled to the body, not the container.
+    expect(panel()).not.toBeNull();
+  });
+
+  it("passes min/max through to the native input", () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16", min: "2026-08-10", max: "2026-08-20" });
+    const input = nativeInput(p.container);
+    expect(input?.min).toBe("2026-08-10");
+    expect(input?.max).toBe("2026-08-20");
+  });
+
+  it("native input edits emit the ISO date and clearing emits null", async () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    const input = nativeInput(p.container);
+    input!.value = "2026-08-20";
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(p.emitted).toEqual(["2026-08-20"]);
+    expect(input?.value).toBe("2026-08-20");
+
+    input!.value = "";
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(p.emitted).toEqual(["2026-08-20", null]);
+  });
+
+  it("native input edits outside the bounds are rejected and re-synced", async () => {
+    useMobileViewport();
+    const p = mountPicker({ modelValue: "2026-08-16", max: "2026-08-20" });
+    const input = nativeInput(p.container);
+    input!.value = "2026-09-01";
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(p.emitted).toEqual([]);
+    expect(input?.value).toBe("2026-08-16");
   });
 });

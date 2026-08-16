@@ -82,9 +82,22 @@
   color: #fff;
 }
 
+/* Warning toasts use a light, saturated amber background where white text
+ * lands at ~2.6:1 contrast (unreadable). Dark text keeps >= 4.5:1 on the
+ * amber in BOTH color schemes; the copy/close buttons inherit it. */
 .hk-toast-warning {
   background: var(--hi-color-warning, #d29922);
-  color: #fff;
+  color: #1c1c1e;
+}
+
+.hk-toast-warning .hk-toast-copy-btn,
+.hk-toast-warning .hk-toast-close {
+  color: #1c1c1e;
+}
+
+.hk-toast-warning .hk-toast-copy-btn:hover,
+.hk-toast-warning .hk-toast-close:hover {
+  background: rgb(0 0 0 / 12%);
 }
 
 .hk-toast-info {

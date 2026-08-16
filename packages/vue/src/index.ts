@@ -154,6 +154,13 @@ export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
 export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon, mediaKindOf } from "./utils/fileType";
 
 export { useReducedMotion } from "./composables/useReducedMotion";
+export {
+  registerCssAnimation,
+  listCssAnimations,
+  setCssAnimationsEnabled,
+  isCssAnimationsEnabled,
+} from "./animation/registerAnimations";
+export type { CssAnimationOptions, RegisteredCssAnimation } from "./animation/registerAnimations";
 export { probeOrigin, probeOriginWithBody } from "./utils/connectivity";
 export type { OriginProbe } from "./utils/connectivity";
 

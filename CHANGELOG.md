@@ -86,6 +86,9 @@ Current master, Rust workspace `0.3.19`.
 
 ### Fixed
 
+- Raise select/input caption labels from 60% to 72% text alpha (dark-theme
+  tinted surfaces kept the 60% captions below comfortable contrast);
+  `--hk-field-label-alpha` overrides per app.
 - Theme every scrollable menu/select surface: `HkSelect` popouts, the
   `HkPopupSelect` viewport (whose hidden scrollbar now shows as a themed
   thin bar) and `HkMenu` panels/sheets use a 6px themed scrollbar instead

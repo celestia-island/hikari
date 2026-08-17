@@ -12,7 +12,9 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   margin-bottom: var(--space-4);
-  color: rgb(var(--color-text) / 60%);
+  /* 72% keeps the caption hierarchy while surviving dark-theme tinted
+   * surfaces; override per-app with --hk-field-label-alpha. */
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
 }
 
 .hk-input-required {

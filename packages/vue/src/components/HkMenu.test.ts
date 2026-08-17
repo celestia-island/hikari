@@ -402,4 +402,57 @@ describe("HkMenu sidebar variant", () => {
     await settle();
     expect(container.textContent).not.toContain("Products");
   });
+
+  it("lets the user collapse the active group and keeps siblings independent", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: [
+            ...navItems,
+            {
+              key: "system",
+              label: "System",
+              children: [{ key: "general", label: "General" }],
+            },
+          ],
+          activeKey: "listings",
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    const toggleOf = (label: string) =>
+      Array.from(container.querySelectorAll(".hk-menu-sidebar-group-toggle")).find(
+        (r) => r.textContent?.includes(label),
+      ) as HTMLButtonElement;
+
+    // Active group auto-expanded at mount.
+    expect(container.textContent).toContain("Products");
+
+    // First toggle COLLAPSES it (regression: it used to be a no-op).
+    toggleOf("Shop").click();
+    await settle();
+    expect(container.textContent).not.toContain("Products");
+
+    // Re-expand; expanding a sibling must not collapse the active group.
+    toggleOf("Shop").click();
+    await settle();
+    expect(container.textContent).toContain("Products");
+    toggleOf("System").click();
+    await settle();
+    expect(container.textContent).toContain("Products");
+    expect(container.textContent).toContain("General");
+
+    // Collapsing the sibling keeps the active group open.
+    toggleOf("System").click();
+    await settle();
+    expect(container.textContent).toContain("Products");
+    expect(container.textContent).not.toContain("General");
+  });
 });

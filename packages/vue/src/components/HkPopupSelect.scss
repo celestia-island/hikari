@@ -108,7 +108,7 @@
   scrollbar-color: rgb(var(--color-border) / 45%) transparent;
 
   &::-webkit-scrollbar {
-    display: block;
+    display: block !important;
     width: 6px;
   }
 

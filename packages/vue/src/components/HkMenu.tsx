@@ -420,8 +420,10 @@ export default defineComponent({
     }
 
     // ── sidebar variant ─────────────────────────────────────────────
-    /** Expanded group keys (items whose children are shown). */
-    const expandedGroups = ref<string[]>([]);
+    /** Group keys the USER has expanded or collapsed (their word wins). */
+    const userGroups = ref<Set<string>>(new Set());
+    /** Groups auto-expanded at mount because they contain the active row. */
+    const autoGroups = ref<Set<string>>(new Set());
 
     function isGroup(item: HkMenuItem): boolean {
       return !!item.children?.length;
@@ -432,10 +434,48 @@ export default defineComponent({
       return (item.children ?? []).some(containsActive);
     }
 
+    /** Keys the user explicitly collapsed (overrides the auto set). */
+    const userCollapsed = ref<Set<string>>(new Set());
+
+    function isGroupExpanded(key: string): boolean {
+      if (userGroups.value.has(key)) return true;
+      if (autoGroups.value.has(key)) return !userCollapsed.value.has(key);
+      return false;
+    }
+
+    /** Seed the auto set whenever the active key or items change: groups
+     *  the user has not touched yet default open when they contain the
+     *  active row (a fresh sidebar shows where you are); touched groups
+     *  keep the user's word — auto-expand is a default, never a
+     *  resurrection. */
+    watch(
+      () => [props.activeKey, props.items] as const,
+      () => {
+        const actives = new Set(
+          props.items
+            .filter((it) => isGroup(it) && containsActive(it))
+            .map((it) => it.key),
+        );
+        autoGroups.value = new Set(
+          [...actives].filter(
+            (k) => !userGroups.value.has(k) && !userCollapsed.value.has(k),
+          ),
+        );
+      },
+      { immediate: true },
+    );
+
     function toggleGroup(key: string): void {
-      expandedGroups.value = expandedGroups.value.includes(key)
-        ? expandedGroups.value.filter((k) => k !== key)
-        : [...expandedGroups.value, key];
+      const wasExpanded = isGroupExpanded(key);
+      // Move the key fully into the user set — auto defaults stop applying.
+      autoGroups.value.delete(key);
+      if (wasExpanded) {
+        userGroups.value.delete(key);
+        userCollapsed.value.add(key);
+      } else {
+        userCollapsed.value.delete(key);
+        userGroups.value.add(key);
+      }
     }
 
     function renderSidebarRow(item: HkMenuItem, depth: number) {
@@ -464,18 +504,21 @@ export default defineComponent({
 
     function renderSidebarItem(item: HkMenuItem, depth: number) {
       if (!isGroup(item)) return renderSidebarRow(item, depth);
-      // Root groups default to expanded when they contain the active row
-      // (a freshly mounted sidebar shows where you are); user toggles win.
-      const expanded =
-        expandedGroups.value.includes(item.key) ||
-        (expandedGroups.value.length === 0 && containsActive(item));
+      // Auto-expanded when containing the active row (fresh mount shows
+      // where you are); the user's first toggle on a group takes over.
+      const expanded = isGroupExpanded(item.key);
       return (
         <div key={item.key} class="hk-menu-sidebar-group" data-open={expanded || undefined}>
           <button
             type="button"
             class="hk-menu-sidebar-row hk-menu-sidebar-group-toggle"
-            aria-expanded={expanded || undefined}
-            onClick={() => toggleGroup(item.key)}
+            data-disabled={item.disabled || undefined}
+            aria-expanded={expanded}
+            aria-haspopup="true"
+            onClick={() => {
+              if (item.disabled) return;
+              toggleGroup(item.key);
+            }}
           >
             {item.icon && h(item.icon, { size: 16 })}
             <span class="hk-menu-label">{item.label}</span>

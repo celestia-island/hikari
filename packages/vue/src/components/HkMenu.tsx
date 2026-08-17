@@ -40,6 +40,8 @@ export interface HkMenuItem {
   checked?: boolean;
   disabled?: boolean;
   danger?: boolean;
+  /** Right-aligned count pill (sidebar variant nav rows). */
+  badge?: string;
   children?: HkMenuItem[];
 }
 
@@ -58,6 +60,15 @@ function viewportIsMobile(breakpoint: number): boolean {
 export default defineComponent({
   name: "HkMenu",
   props: {
+    /**
+     * Presentation: "popup" = the anchored cascading menu (desktop panels /
+     * mobile sheets, driven by `open`); "sidebar" = an inline vertical nav
+     * list — always rendered, no popover, no history — where root items
+     * carrying `children` render as collapsible groups.
+     */
+    variant: { type: String as PropType<"popup" | "sidebar">, default: "popup" },
+    /** Key of the currently active row (sidebar variant). */
+    activeKey: { type: String, default: undefined },
     /** Panel title (mobile sheet header / desktop a11y label root). */
     title: { type: String, default: "" },
     items: { type: Array as PropType<HkMenuItem[]>, required: true },
@@ -184,9 +195,13 @@ export default defineComponent({
       if (!mobileMode.value && props.open) void nextTick(refreshGeometry);
     }
 
-    onMounted(() => window.addEventListener("popstate", onPopState));
-    onMounted(() => window.addEventListener("resize", onResize));
+    onMounted(() => {
+      if (props.variant === "sidebar") return; // no popover machinery
+      window.addEventListener("popstate", onPopState);
+      window.addEventListener("resize", onResize);
+    });
     onBeforeUnmount(() => {
+      if (props.variant === "sidebar") return;
       window.removeEventListener("popstate", onPopState);
       window.removeEventListener("resize", onResize);
       restoreHistory();
@@ -199,8 +214,10 @@ export default defineComponent({
      */
     watch(
       // String key: fires on real state changes only, not on every resize tick.
-      () => `${props.open ? 1 : 0}:${mobileMode.value ? 1 : 0}`,
+      // The sidebar variant owns no history at all.
+      () => (props.variant === "sidebar" ? "sidebar" : `${props.open ? 1 : 0}:${mobileMode.value ? 1 : 0}`),
       (key) => {
+        if (key === "sidebar") return;
         const openNow = key.startsWith("1");
         const mobile = key.endsWith("1");
         if (!openNow) {
@@ -402,7 +419,136 @@ export default defineComponent({
       );
     }
 
+    // ── sidebar variant ─────────────────────────────────────────────
+    /** Group keys the USER has expanded or collapsed (their word wins). */
+    const userGroups = ref<Set<string>>(new Set());
+    /** Groups auto-expanded at mount because they contain the active row. */
+    const autoGroups = ref<Set<string>>(new Set());
+
+    function isGroup(item: HkMenuItem): boolean {
+      return !!item.children?.length;
+    }
+
+    function containsActive(item: HkMenuItem): boolean {
+      if (item.key === props.activeKey) return true;
+      return (item.children ?? []).some(containsActive);
+    }
+
+    /** Keys the user explicitly collapsed (overrides the auto set). */
+    const userCollapsed = ref<Set<string>>(new Set());
+
+    function isGroupExpanded(key: string): boolean {
+      if (userGroups.value.has(key)) return true;
+      if (autoGroups.value.has(key)) return !userCollapsed.value.has(key);
+      return false;
+    }
+
+    /** Seed the auto set whenever the active key or items change: groups
+     *  the user has not touched yet default open when they contain the
+     *  active row (a fresh sidebar shows where you are); touched groups
+     *  keep the user's word — auto-expand is a default, never a
+     *  resurrection. */
+    watch(
+      () => [props.activeKey, props.items] as const,
+      () => {
+        const actives = new Set(
+          props.items
+            .filter((it) => isGroup(it) && containsActive(it))
+            .map((it) => it.key),
+        );
+        autoGroups.value = new Set(
+          [...actives].filter(
+            (k) => !userGroups.value.has(k) && !userCollapsed.value.has(k),
+          ),
+        );
+      },
+      { immediate: true },
+    );
+
+    function toggleGroup(key: string): void {
+      const wasExpanded = isGroupExpanded(key);
+      // Move the key fully into the user set — auto defaults stop applying.
+      autoGroups.value.delete(key);
+      if (wasExpanded) {
+        userGroups.value.delete(key);
+        userCollapsed.value.add(key);
+      } else {
+        userCollapsed.value.delete(key);
+        userGroups.value.add(key);
+      }
+    }
+
+    function renderSidebarRow(item: HkMenuItem, depth: number) {
+      const active = item.key === props.activeKey;
+      return (
+        <button
+          key={item.key}
+          type="button"
+          class="hk-menu-sidebar-row"
+          data-depth={depth || undefined}
+          data-active={active || undefined}
+          data-danger={item.danger || undefined}
+          data-disabled={item.disabled || undefined}
+          style={
+            depth > 0
+              ? { paddingLeft: `calc(var(--space-12, 12px) + ${16 * depth}px)` }
+              : undefined
+          }
+          onClick={() => {
+            if (item.disabled) return;
+            emit("select", item.key, item);
+          }}
+        >
+          {item.icon && h(item.icon, { size: 16 })}
+          {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
+          <span class="hk-menu-label">{item.label}</span>
+          {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
+        </button>
+      );
+    }
+
+    function renderSidebarItem(item: HkMenuItem, depth: number) {
+      if (!isGroup(item)) return renderSidebarRow(item, depth);
+      // Auto-expanded when containing the active row (fresh mount shows
+      // where you are); the user's first toggle on a group takes over.
+      const expanded = isGroupExpanded(item.key);
+      return (
+        <div key={item.key} class="hk-menu-sidebar-group" data-open={expanded || undefined}>
+          <button
+            type="button"
+            class="hk-menu-sidebar-row hk-menu-sidebar-group-toggle"
+            data-disabled={item.disabled || undefined}
+            aria-expanded={expanded}
+            aria-haspopup="true"
+            onClick={() => {
+              if (item.disabled) return;
+              toggleGroup(item.key);
+            }}
+          >
+            {item.icon && h(item.icon, { size: 16 })}
+            <span class="hk-menu-label">{item.label}</span>
+            {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
+            <ChevronRight size={14} class="hk-menu-more" />
+          </button>
+          {expanded && (
+            <div class="hk-menu-sidebar-children">
+              {item.children!.map((child) => renderSidebarItem(child, depth + 1))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function renderSidebar() {
+      return (
+        <nav class="hk-menu-sidebar" aria-label={props.title || "menu"}>
+          {props.items.map((it) => renderSidebarItem(it, 0))}
+        </nav>
+      );
+    }
+
     return () => {
+      if (props.variant === "sidebar") return renderSidebar();
       if (!props.open) return null;
 
       // Both modes render through a Teleport: `position: fixed` children of

@@ -9,10 +9,11 @@
 
 .hk-select-label {
   display: block;
-  font-size: var(--text-base);
-  font-weight: 500;
-  margin-bottom: var(--space-6);
-  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / 60%);
 }
 
 .hk-select-required {
@@ -94,6 +95,7 @@
   max-height: 240px;
   display: flex;
   flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-4);
   border-radius: var(--radius-md);
   overflow-y: auto;
@@ -101,6 +103,23 @@
   backdrop-filter: blur(var(--blur-md));
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-dropdown);
+
+  /* Themed scrollbar — never the browser-native chrome. */
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border) / 45%);
+    border-radius: 3px;
+  }
 }
 
 .hk-select-option {

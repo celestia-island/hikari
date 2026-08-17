@@ -68,6 +68,123 @@
   opacity: 0.55;
 }
 
+/* Themed scrollbars for every scrollable menu surface (panels, sheets). */
+.hk-menu-panel,
+.hk-menu-sheet-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border) / 45%);
+    border-radius: 3px;
+  }
+}
+
+/* ── sidebar variant ────────────────────────────────────────────── */
+/* Inline vertical nav list — always rendered, no popover machinery.
+ * Rows share the popup row's interaction grammar (hover wash, active
+ * tint + weight, disabled/danger) but with nav-appropriate rhythm:
+ * a consistent 4px gap between rows so rounded hover pills never touch,
+ * deeper levels indenting under their group. */
+
+.hk-menu-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  width: 100%;
+}
+
+.hk-menu-sidebar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  width: 100%;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: rgb(var(--color-text) / 82%);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  .hk-menu-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.hk-menu-sidebar-row:hover:not([data-disabled]):not([data-active]) {
+  background: rgb(var(--color-primary) / 10%);
+  color: rgb(var(--color-text));
+}
+
+.hk-menu-sidebar-row[data-active] {
+  background: rgb(var(--color-primary) / 14%);
+  color: rgb(var(--color-primary));
+  font-weight: 600;
+}
+
+.hk-menu-sidebar-row[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hk-menu-sidebar-row[data-danger] {
+  color: rgb(var(--color-danger, 240 70 80));
+}
+
+.hk-menu-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+}
+
+.hk-menu-sidebar-group-toggle .hk-menu-more {
+  transition: transform var(--duration-fast, 0.15s) ease;
+}
+
+.hk-menu-sidebar-group[data-open] .hk-menu-sidebar-group-toggle .hk-menu-more {
+  transform: rotate(90deg);
+}
+
+.hk-menu-sidebar-children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  margin-top: var(--space-2, 2px);
+}
+
+.hk-menu-sidebar-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-4, 4px);
+  border-radius: 999px;
+  background: rgb(var(--color-error, 240 70 80));
+  color: #fff;
+  font-size: var(--text-2xs, 10px);
+  font-weight: 700;
+  line-height: 1;
+}
+
 /* ── desktop panels ─────────────────────────────────────────────── */
 
 .hk-menu-desktop {
@@ -96,7 +213,7 @@
   box-shadow: var(--shadow-dropdown, 0 8px 24px rgb(0 0 0 / 18%));
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-2, 2px);
 }
 
 /* ── mobile fullscreen sheets ───────────────────────────────────── */
@@ -165,7 +282,7 @@
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-2, 2px);
 }
 
 .hk-menu-sheet-body .hk-menu-row {

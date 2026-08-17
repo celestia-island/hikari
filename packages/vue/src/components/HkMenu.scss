@@ -1,0 +1,183 @@
+/* ── HkMenu — generic cascading menu ─────────────────────────────────
+ * Desktop: floating panels (root anchored to the trigger, submenus
+ * cascading to the right of their anchor row). Mobile: fullscreen
+ * sheets, one per level, stacked with the system back gesture. */
+
+/* rows are shared by both modes */
+.hk-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: rgb(var(--color-text));
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition: background 0.12s ease;
+}
+
+.hk-menu-row:hover {
+  background: rgb(var(--color-primary) / 10%);
+}
+
+.hk-menu-row[data-active] {
+  background: rgb(var(--color-primary) / 14%);
+  font-weight: 600;
+}
+
+.hk-menu-row[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hk-menu-row[data-danger] {
+  color: rgb(var(--color-danger, 240 70 80));
+}
+
+.hk-menu-row[data-danger]:hover {
+  background: rgb(var(--color-danger, 240 70 80) / 12%);
+}
+
+.hk-menu-flag {
+  flex-shrink: 0;
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+.hk-menu-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-menu-check {
+  color: rgb(var(--color-primary));
+  font-weight: 700;
+}
+
+.hk-menu-more {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+/* ── desktop panels ─────────────────────────────────────────────── */
+
+.hk-menu-desktop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-popover, 1100);
+  pointer-events: none;
+}
+
+.hk-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.hk-menu-panel {
+  position: fixed;
+  pointer-events: auto;
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--radius-md, 8px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 96%, transparent);
+  backdrop-filter: blur(var(--blur-md, 12px)) saturate(1.15);
+  border: 1px solid rgb(var(--color-border) / 14%);
+  box-shadow: var(--shadow-dropdown, 0 8px 24px rgb(0 0 0 / 18%));
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── mobile fullscreen sheets ───────────────────────────────────── */
+
+.hk-menu-mobile-stack {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1200);
+}
+
+.hk-menu-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 97%, rgb(0 0 0 / 0%) 100%);
+  backdrop-filter: blur(var(--blur-lg, 16px)) saturate(1.1);
+  animation: hk-menu-sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hk-menu-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hk-menu-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-bottom: 1px solid rgb(var(--color-border) / 12%);
+  flex-shrink: 0;
+}
+
+.hk-menu-sheet-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--color-text));
+  cursor: pointer;
+}
+
+.hk-menu-sheet-back:hover {
+  background: rgb(var(--color-primary) / 10%);
+}
+
+.hk-menu-sheet-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.hk-menu-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hk-menu-sheet-body .hk-menu-row {
+  padding: 12px 10px;
+  font-size: var(--text-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-menu-sheet {
+    animation: none;
+  }
+  .hk-menu-row {
+    transition: none;
+  }
+}

@@ -33,6 +33,7 @@ export { default as HHoverRevealAction } from "./components/HkHoverRevealAction"
 export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModal";
 export { default as HModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HPopover, type PopupPlacement } from "./components/HkPopover";
+export { default as HMenu, type HkMenuItem } from "./components/HkMenu";
 export { default as HPopupSelect, isAnyPopupOpen, closeAllPopups, type HkPopupSelectOption } from "./components/HkPopupSelect";
 export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";

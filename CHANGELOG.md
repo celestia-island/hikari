@@ -28,6 +28,27 @@ Current master, Rust workspace `0.3.19`.
 
 ### Added
 
+- Generalize the admin shell/header with the specializations proven in
+  shittim-chest's plana-legacy fork: `HkAdminShell` gains an
+  `onOpenDrawer` header-slot prop (a header trigger such as the avatar
+  can open the mobile nav drawer), a `userPanel` slot riding the drawer
+  footer beside the nav, an `inDrawer` flag on the drawer's sidebar slot
+  so the nav can fill the drawer width, `drawerPanelClass` for
+  consumer-side nesting adjustments, and a `contentPadding` prop applied
+  through an inner wrapper inside the scroll viewport so card
+  box-shadows are never clipped at the viewport edges.
+- `HkAdminHeader`: `title` is now optional and an empty title hides the
+  node entirely (the in-page HPageHeader convention); `avatarAction`
+  selects between "menu" (desktop dropdown) and "drawer" (emits
+  `avatarClick` for the shell to open its nav drawer, username hidden);
+  an empty identity renders a signing-in placeholder with a
+  force-sign-out escape hatch; the user menu leads with the full
+  identity block (name/email/permission badges via the new shared
+  `s-user-header` styles); the locale trigger passes its ref OBJECT
+  through the `locale-picker` slot so pickers anchor to the button
+  instead of freezing a null snapshot; closing the outer menu now also
+  closes the locale submenu; the popover widens to `w-56` to fit the
+  identity block.
 - Add a `variant="sidebar"` mode to `HkMenu`: an inline vertical nav list
   (no popover, no history) where rows carry icon/flag/badge/active states
   with a consistent 4px rhythm, and root items with `children` render as

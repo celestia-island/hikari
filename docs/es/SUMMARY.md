@@ -1,29 +1,29 @@
 - [Hikari](./README.md)
 
-# Guides
-- [Architecture](./guides/ARCHITECTURE.md)
-- [Contributing](./guides/CONTRIBUTING.md)
-- [Animation System](./guides/01-animation-system.md)
-- [ClassesBuilder System](./guides/02-classesbuilder-system.md)
-- [StyleStringBuilder System](./guides/03-stylestringbuilder-system.md)
-- [Migration Guide](./guides/07-migration-guide.md)
-- [Dependency Style](./guides/dependency_style.md)
+# Guías
+- [Arquitectura](./guides/ARCHITECTURE.md)
+- [Contribución](./guides/CONTRIBUTING.md)
+- [Sistema de animación](./guides/01-animation-system.md)
+- [Sistema ClassesBuilder](./guides/02-classesbuilder-system.md)
+- [Sistema StyleStringBuilder](./guides/03-stylestringbuilder-system.md)
+- [Guía de migración](./guides/07-migration-guide.md)
+- [Estilo de dependencias](./guides/dependency_style.md)
 - [I18n](./guides/i18n.md)
-- [Static Assets Guide](./guides/static_assets_guide.md)
+- [Guía de recursos estáticos](./guides/static_assets_guide.md)
 
-# Design
-- [Overview](./design/overview.md)
+# Diseño
+- [Descripción general](./design/overview.md)
 
-# System
-- [Overview](./system/overview.md)
-- [Animation](./system/animation.md)
+# Sistema
+- [Descripción general](./system/overview.md)
+- [Animación](./system/animation.md)
 - [CSS](./system/css.md)
 - [I18n](./system/i18n.md)
-- [Icons](./system/icons.md)
-- [Palette](./system/palette.md)
-- [Theme](./system/theme.md)
+- [Iconos](./system/icons.md)
+- [Paleta](./system/palette.md)
+- [Tema](./system/theme.md)
 
-# Components — Layer 1
+# Componentes — Capa 1
 - [Avatar](./components/layer1/avatar.md)
 - [Button](./components/layer1/button.md)
 - [Comment](./components/layer1/comment.md)
@@ -38,7 +38,7 @@
 - [Switch](./components/layer1/switch.md)
 - [Tag](./components/layer1/tag.md)
 
-# Components — Layer 2
+# Componentes — Capa 2
 - [Cascader](./components/layer2/cascader.md)
 - [Collapsible](./components/layer2/collapsible.md)
 - [Data](./components/layer2/data.md)
@@ -52,7 +52,7 @@
 - [Transfer](./components/layer2/transfer.md)
 - [Tree](./components/layer2/tree.md)
 
-# Components — Layer 3
+# Componentes — Capa 3
 - [Editor](./components/layer3/editor.md)
 - [Media](./components/layer3/media.md)
 - [User Guide](./components/layer3/user_guide.md)

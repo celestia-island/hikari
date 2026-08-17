@@ -1,4 +1,5 @@
 import { defineComponent, type PropType } from "vue";
+import "./HkLocalePickerPopup.scss";
 import type { Ref } from "vue";
 
 const HkLocalePickerPopup = defineComponent({

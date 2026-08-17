@@ -27,20 +27,31 @@ const HkLocalePickerPopup = defineComponent({
       flag: loc.flag,
       checked: loc.code === props.currentLocale,
     }));
-    const anchor =
-      props.triggerRef && "value" in (props.triggerRef as Ref<HTMLElement | null>)
-        ? (props.triggerRef as Ref<HTMLElement | null>).value
-        : (props.triggerRef as HTMLElement | null);
-    return () => (
+    return () => {
+      const raw = props.triggerRef;
+      const anchor =
+        raw && "value" in (raw as Ref<HTMLElement | null>)
+          ? (raw as Ref<HTMLElement | null>).value
+          : (raw as HTMLElement | null);
+      return (
       <HkMenu
         open={props.open}
         anchorRef={anchor}
-        title={props.t("locale.title") || "Language"}
+        placement={
+          props.placement === "left-start" || props.placement === "right-start"
+            ? props.placement
+            : "right-start"
+        }
+        title={(() => {
+          const tt = props.t("locale.title");
+          return tt && tt !== "locale.title" ? tt : "Language";
+        })()}
         items={items}
         onUpdate:open={(v: boolean) => emit("update:open", v)}
         onSelect={(key: string) => emit("select", key)}
       />
-    );
+      );
+    };
   },
 });
 

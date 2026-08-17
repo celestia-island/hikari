@@ -161,7 +161,7 @@ export default defineComponent({
     const currentLevel = computed(() => desktopPath.value.length);
 
     // ── desktop popover geometry ────────────────────────────────────
-    const panelStyle = ref<Record<string, string>>({});
+    const panelStyle = ref<Record<string, string>>({ width: "224px" });
 
     function positionPanel(): void {
       const anchor = props.anchorRef;
@@ -169,12 +169,22 @@ export default defineComponent({
       const r = anchor.getBoundingClientRect();
       const panelW = 224;
       const panelH = Math.min(320, Math.max(120, currentItems.value.length * 34 + 16));
-      let top = r.bottom + props.offset;
-      let left = r.left;
-      if (props.placement.endsWith("-end")) left = r.right - panelW;
-      if (props.placement.startsWith("top-")) top = r.top - panelH - props.offset;
-      if (top + panelH > window.innerHeight - 8) top = Math.max(8, r.top - panelH - props.offset);
-      if (left + panelW > window.innerWidth - 8) left = Math.max(8, r.left - panelW);
+      let top: number;
+      let left: number;
+      if (props.placement.startsWith("right-")) {
+        // cascade from the anchor's RIGHT edge (traditional submenu):
+        left = r.right + props.offset;
+        top = r.top;
+        if (left + panelW > window.innerWidth - 8) left = Math.max(8, r.left - panelW - props.offset);
+      } else if (props.placement.startsWith("left-")) {
+        left = Math.max(8, r.left - panelW - props.offset);
+        top = r.top;
+      } else {
+        top = r.bottom + props.offset;
+        left = props.placement.endsWith("-end") ? r.right - panelW : r.left;
+        if (props.placement.startsWith("top-")) top = r.top - panelH - props.offset;
+      }
+      if (top + panelH > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - panelH);
       panelStyle.value = {
         position: "fixed",
         top: `${Math.round(top)}px`,
@@ -214,7 +224,7 @@ export default defineComponent({
 
     // reposition on open + on level change (after the DOM settles)
     watch(
-      () => [props.open, desktopPath.value.length, currentItems.value] as const,
+      () => [props.open, desktopPath.value.length, currentItems.value, props.anchorRef] as const,
       () => {
         void nextTick(refreshGeometry);
       },

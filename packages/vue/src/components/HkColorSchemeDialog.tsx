@@ -1,14 +1,23 @@
-import { computed, defineComponent, nextTick, reactive, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, reactive, ref, watch, type PropType, type VNode } from "vue";
 import {
   HColorPicker,
+  HCollapse,
   HInput,
   HModal,
   HMorphingTabs,
-  
+
   useI18n,
   useTheme,
+  clampToSlot,
+  getTokenGroups,
+  resolveGroupTokens,
+  tokenGroupsVersion,
   type ModalAction,
   type ThemeSchemeTokens,
+  type ThemeTokenGroupModes,
+  type ThemeTokenGroupValues,
+  type TokenGroupDefinition,
+  type TokenGroupSlot,
 } from "@celestia-island/hikari";
 
 import "./HkColorSchemeDialog.scss";
@@ -93,6 +102,8 @@ export interface HCustomTheme {
   name: string;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
+  /** Extension token group values (both modes), present when groups are registered. */
+  groups?: ThemeTokenGroupModes;
 }
 
 /**
@@ -100,10 +111,12 @@ export interface HCustomTheme {
  * presets/custom themes.
  *
  * Edits the seven accent tokens (primary/secondary/accent/success/error/
- * warning/info) per mode (dark/light); surface tokens are derived. Emits
- * `confirm` with a `HCustomTheme` (a hikari `CustomThemePreset`); the
- * caller persists it via `useTheme().addCustomTheme()` and applies it
- * with `setTheme()`.
+ * warning/info) per mode (dark/light); surface tokens are derived. When
+ * extension token groups are registered (`registerTokenGroup`), an
+ * expandable section per group edits their slots with hue-clamped pickers
+ * and rides the values along in the emitted theme. Emits `confirm` with a
+ * `HCustomTheme` (a hikari `CustomThemePreset`); the caller persists it
+ * via `useTheme().addCustomTheme()` and applies it with `setTheme()`.
  */
 export const HColorSchemeDialog = defineComponent({
   name: "HkColorSchemeDialog",
@@ -113,6 +126,8 @@ export const HColorSchemeDialog = defineComponent({
     initialDark: { type: Object, default: undefined },
     /** Prefill light tokens; defaults to the hikari synthwave light scheme. */
     initialLight: { type: Object, default: undefined },
+    /** Prefill extension token groups (per mode); defaults to registry defaults. */
+    initialGroups: { type: Object as PropType<ThemeTokenGroupModes>, default: undefined },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -127,7 +142,33 @@ export const HColorSchemeDialog = defineComponent({
     const dark = reactive<ThemeSchemeTokens>({ ...defaultDark });
     const light = reactive<ThemeSchemeTokens>({ ...defaultLight });
 
+    // Extension token groups, edited per mode like the accent tokens.
+    // Seeded from the prefilled custom theme (if any) falling back to the
+    // registry defaults; empty (and rendered nowhere) while no downstream
+    // app has registered a group.
+    const groupDark = reactive<ThemeTokenGroupValues>({});
+    const groupLight = reactive<ThemeTokenGroupValues>({});
+    // Depends on the registry's reactive version so groups registered
+    // after this dialog first rendered appear without a remount.
+    const registeredGroups = computed<readonly TokenGroupDefinition[]>(() => {
+      void tokenGroupsVersion.value;
+      return getTokenGroups();
+    });
+
     const currentTokens = computed(() => (modeTab.value === "dark" ? dark : light));
+    const currentGroupValues = computed(() => (modeTab.value === "dark" ? groupDark : groupLight));
+
+    function seedGroups(
+      target: ThemeTokenGroupValues,
+      mode: "dark" | "light",
+      overrides?: ThemeTokenGroupValues,
+    ) {
+      const resolved = resolveGroupTokens(mode, overrides);
+      for (const key of Object.keys(target)) delete target[key];
+      for (const [groupId, slots] of Object.entries(resolved)) {
+        target[groupId] = slots;
+      }
+    }
 
     function rederiveSurface() {
       const target = modeTab.value === "dark" ? dark : light;
@@ -158,6 +199,9 @@ export const HColorSchemeDialog = defineComponent({
         const initialLight = props.initialLight as ThemeSchemeTokens | undefined;
         Object.assign(dark, initialDark ?? defaultDark);
         Object.assign(light, initialLight ?? defaultLight);
+        const initialGroups = props.initialGroups as ThemeTokenGroupModes | undefined;
+        seedGroups(groupDark, "dark", initialGroups?.dark);
+        seedGroups(groupLight, "light", initialGroups?.light);
         rederiveSurface();
       },
     );
@@ -167,6 +211,29 @@ export const HColorSchemeDialog = defineComponent({
       target[key] = { ...rgb };
     }
 
+    function updateGroupToken(groupId: string, slot: TokenGroupSlot, rgb: { r: number; g: number; b: number }) {
+      const values = currentGroupValues.value;
+      const group = values[groupId] ?? (values[groupId] = {});
+      // Defense in depth: the picker already clamps, clamp again on write.
+      group[slot.key] = clampToSlot(slot, rgb);
+    }
+
+    function clampGroups(
+      source: ThemeTokenGroupValues,
+      mode: "dark" | "light",
+    ): ThemeTokenGroupValues {
+      const out: ThemeTokenGroupValues = {};
+      for (const group of registeredGroups.value) {
+        const slots: Record<string, { r: number; g: number; b: number }> = {};
+        for (const slot of group.slots) {
+          const value = source[group.id]?.[slot.key] ?? slot.defaults[mode];
+          slots[slot.key] = clampToSlot(slot, value);
+        }
+        out[group.id] = slots;
+      }
+      return out;
+    }
+
     function handleConfirm() {
       const id = `custom-theme-${Date.now()}`;
       emit("confirm", {
@@ -174,6 +241,9 @@ export const HColorSchemeDialog = defineComponent({
         name: themeName.value || t("hikari::theme.customThemeName"),
         dark: { ...dark },
         light: { ...light },
+        ...(registeredGroups.value.length > 0
+          ? { groups: { dark: clampGroups(groupDark, "dark"), light: clampGroups(groupLight, "light") } }
+          : {}),
       });
       emit("update:modelValue", false);
     }
@@ -195,6 +265,55 @@ export const HColorSchemeDialog = defineComponent({
       { key: "dark", label: t("hikari::theme.modeDark") },
       { key: "light", label: t("hikari::theme.modeLight") },
     ]);
+
+    function renderGroupSlot(group: TokenGroupDefinition, slot: TokenGroupSlot) {
+      const mode = modeTab.value === "dark" ? "dark" : "light";
+      const rgb = currentGroupValues.value[group.id]?.[slot.key] ?? slot.defaults[mode];
+      return (
+        <HColorPicker
+          key={slot.key}
+          r={rgb.r}
+          g={rgb.g}
+          b={rgb.b}
+          label={t(`hikari::theme.groups.${group.id}.${slot.key}`, slot.label)}
+          hueClamp={slot.hueClamp}
+          sRange={slot.sRange}
+          lRange={slot.lRange}
+          onChange={(next: { r: number; g: number; b: number }) => updateGroupToken(group.id, slot, next)}
+        />
+      );
+    }
+
+    /** One picker per slot; `pairWith` slots share one combined row (e.g. PE a/b stripes). */
+    function renderGroupRows(group: TokenGroupDefinition) {
+      const rendered = new Set<string>();
+      const rows: VNode[] = [];
+      for (const slot of group.slots) {
+        if (rendered.has(slot.key)) continue;
+        rendered.add(slot.key);
+        // Pairing is symmetric: either side may declare `pairWith` —
+        // combine on the first of the two encountered, skip the second.
+        const pairKey = [
+          slot.pairWith,
+          ...group.slots.filter((s) => s.pairWith === slot.key).map((s) => s.key),
+        ].find((key) => key && key !== slot.key);
+        const pair = pairKey
+          ? group.slots.find((s) => s.key === pairKey && !rendered.has(s.key))
+          : undefined;
+        if (pair) {
+          rendered.add(pair.key);
+          rows.push(
+            <div key={`${slot.key}-${pair.key}`} class="s-scheme-group-row">
+              {renderGroupSlot(group, slot)}
+              {renderGroupSlot(group, pair)}
+            </div>,
+          );
+        } else {
+          rows.push(renderGroupSlot(group, slot));
+        }
+      }
+      return rows;
+    }
 
     return () => (
       <HModal
@@ -230,6 +349,23 @@ export const HColorSchemeDialog = defineComponent({
               />
             ))}
           </div>
+          {registeredGroups.value.length > 0 && (
+            <div class="s-scheme-groups">
+              <div class="s-scheme-groups-title">
+                {t("hikari::theme.extendedColors", "Extended colors")}
+              </div>
+              {registeredGroups.value.map((group) => (
+                <HCollapse
+                  key={group.id}
+                  title={t(`hikari::theme.groups.${group.id}.title`, group.label)}
+                >
+                  <div class="s-scheme-group-slots">
+                    {renderGroupRows(group)}
+                  </div>
+                </HCollapse>
+              ))}
+            </div>
+          )}
         </div>
       </HModal>
     );

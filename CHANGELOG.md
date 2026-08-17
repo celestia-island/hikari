@@ -15,7 +15,7 @@ hikari currently carries two version lines, plus one stale tag:
   `v0.3.0`–`v0.3.2` and `v0.3.4` were published to crates.io without git
   tags, and `v0.3.15`–`v0.3.19` are unpublished master changes.
 - **Vue port (`@celestia-island/hikari`)** — the `0.4.x` line. The npm
-  package is at `0.4.7` on master but has **never been published** to npm;
+  package is at `0.4.18` on master but has **never been published** to npm;
   publication is pending (A3).
 - **Tag `v0.4.0` is a stale tag.** It was created on an early Vue-port
   commit (2026-07-21) before the npm package version line was established,
@@ -132,6 +132,35 @@ Current master, Rust workspace `0.3.19`.
 ### Removed
 
 - Remove dead HAuthCard and stale HkStatusBar references. (#88)
+
+## [v0.4.18] - 2026-08-17
+
+### Added
+
+- Add theme extension token groups for industrial/SCADA theming: downstream
+  apps register namespaced color slot groups (`registerTokenGroup`, e.g. a
+  `scada` group with `power-l1`/`pipe-h2` slots) and hikari emits them as
+  `--<group>-<slot>: "r g b"` CSS vars on every theme apply — preset and
+  custom-theme `groups` overrides win per mode and registry defaults are the
+  final fallback, so the vars exist even when no preset defines them. The
+  values round-trip through custom-theme storage (old saves without groups
+  still load), and `HkColorSchemeDialog` grows an expandable section per
+  registered group (an `HCollapse` titled via
+  `hikari::theme.groups.<id>.title` with the definition label as fallback,
+  plus a localized "Extended colors" header in every locale) editing every
+  slot per mode, with `pairWith` slots sharing one combined row for two-tone
+  wires. `HkColorPicker` gains optional `hueClamp`/`sRange`/`lRange` props
+  that clamp every emitted value into the allowed hue arc (circular
+  center±range math) and saturation/lightness bands — a green wire cannot
+  be picked red — showing the allowed hue band as a swatch strip inside the
+  popover; clamping is re-applied on dialog writes and on save as defense
+  in depth. Groups registered after the theme is live re-apply the current
+  theme immediately (microtask-coalesced through a re-apply hook that
+  useTheme injects into the registry, keeping tokenGroups.ts
+  import-cycle-free), and the registry carries a reactive version ref so
+  the dialog's group sections appear without a remount. Non-industrial
+  consumers are unaffected: nothing renders and no groups ship when
+  nothing is registered.
 
 ## [v0.3.14] - 2026-07-18
 

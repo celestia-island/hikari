@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "错误",
     "hikari::theme.tokens.warning": "警告",
     "hikari::theme.tokens.info": "信息",
+    "hikari::theme.extendedColors": "扩展配色",
     "hikari::secret.title": "密钥",
     "hikari::secret.notice": "此密钥仅显示一次，请先复制并妥善保存。",
     "hikari::secret.copy": "复制",

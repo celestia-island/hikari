@@ -23,11 +23,25 @@ export interface ThemeSchemeTokens {
   info: ThemeTokenRGB;
 }
 
+/**
+ * Extension token group values riding along with a preset/custom theme,
+ * keyed by group id then slot key (see ./tokenGroups.ts). Optional and
+ * additive: presets and saved custom themes without groups keep working —
+ * the registry defaults are the final fallback.
+ */
+export type ThemeTokenGroupValues = Record<string, Record<string, ThemeTokenRGB>>;
+
+export interface ThemeTokenGroupModes {
+  dark?: ThemeTokenGroupValues;
+  light?: ThemeTokenGroupValues;
+}
+
 export interface ThemePreset {
   id: string;
   name: string;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
+  groups?: ThemeTokenGroupModes;
 }
 
 export type ThemeId = string;
@@ -38,6 +52,7 @@ export interface CustomThemePreset {
   name: string;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
+  groups?: ThemeTokenGroupModes;
 }
 
 const CUSTOM_STORAGE_KEY = "hikari-custom-themes";
@@ -260,8 +275,15 @@ function mixToken(a: ThemeTokenRGB, b: ThemeTokenRGB, t: number): ThemeTokenRGB 
   };
 }
 
+/**
+ * Build the cssvar map for a scheme. `groupVars` (optional, from
+ * `groupTokensToCSSVars(resolveGroupTokens(...))`) is merged in so
+ * extension token groups ship alongside the fixed tokens; callers that
+ * omit it get the exact previous behavior.
+ */
 export function tokensToCSSVars(
   tokens: ThemeSchemeTokens,
+  groupVars?: Record<string, string>,
 ): Record<string, string> {
   const onPrimary = contrastColor(tokens.primary);
   const textSecondary = mixToken(tokens.text, tokens.muted, 0.25);
@@ -305,5 +327,6 @@ export function tokensToCSSVars(
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",
     "--hi-secondary-bg": "rgb(var(--color-surface) / 0.5)",
+    ...groupVars,
   };
 }

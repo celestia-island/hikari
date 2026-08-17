@@ -94,10 +94,16 @@ export { type TrendPen, type TrendPoint, type AlarmThresholds } from "./componen
 export {
   initTheme, useTheme, themePresets, tokensToCSSVars, getThemeTokens,
   loadCustomThemes, saveCustomThemes, addCustomTheme, removeCustomTheme,
+  registerTokenGroup, getTokenGroups, resolveGroupTokens, clampToSlot,
+  clampRgbToBands, clampHue, hueDelta, wrapHue, groupTokensToCSSVars, rgbToHsl, hslToRgb,
+  tokenGroupsVersion,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
   type ThemeId, type ThemeTokens, type CustomThemePreset, type TimePeriod,
+  type ThemeTokenGroupValues, type ThemeTokenGroupModes,
+  type TokenGroupDefinition, type TokenGroupSlot, type HueClamp,
+  type ResolvedGroupTokens, type ColorHSL,
 } from "./theme";
 
 // Runtime systems

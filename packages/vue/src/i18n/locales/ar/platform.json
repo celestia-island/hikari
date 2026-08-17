@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "خطأ",
     "hikari::theme.tokens.warning": "تحذير",
     "hikari::theme.tokens.info": "معلومات",
+    "hikari::theme.extendedColors": "ألوان موسعة",
     "hikari::secret.title": "سر",
     "hikari::secret.notice": "يُعرض هذا السر مرة واحدة فقط. انسخه واحفظه قبل الإغلاق.",
     "hikari::secret.copy": "نسخ",

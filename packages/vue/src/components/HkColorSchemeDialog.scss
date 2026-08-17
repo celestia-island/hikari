@@ -14,3 +14,29 @@
   justify-content: center;
   gap: var(--space-10, 0.625rem);
 }
+
+.s-scheme-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-scheme-groups-title {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted));
+}
+
+.s-scheme-group-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-10, 0.625rem);
+  padding: var(--space-8, 0.5rem) var(--space-4, 0.25rem) 0;
+}
+
+.s-scheme-group-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-8, 0.5rem);
+}

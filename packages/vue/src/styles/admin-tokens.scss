@@ -287,7 +287,9 @@
 /* ── Mobile responsive ── */
 @media (max-width: 767px) {
   .s-status-bar {
-    padding: 0 var(--space-6);
+    /* Keep a visible margin at both ends on phones: 6px read as flush
+       against the screen edge, especially for the right-side tray. */
+    padding: 0 var(--space-12);
   }
 
   /* Shrink-flex layout: the center tab strip owns the flexible space and

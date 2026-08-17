@@ -6,6 +6,7 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
+  Teleport,
   watch,
   type Component,
   type PropType,
@@ -389,6 +390,9 @@ export default defineComponent({
     return () => {
       if (!props.open) return null;
 
+      // Both modes render through a Teleport: `position: fixed` children of
+      // an ancestor with backdrop-filter/filter/transform (glass popovers,
+      // drawers) are positioned relative to THAT ancestor, not the viewport.
       if (mobileMode.value) {
         // Root sheet is level 0; every pushed submenu level stacks above it.
         const sheets = [
@@ -399,7 +403,11 @@ export default defineComponent({
             }),
           ),
         ];
-        return <div class="hk-menu-mobile-stack">{sheets}</div>;
+        return (
+          <Teleport to="body">
+            <div class="hk-menu-mobile-stack">{sheets}</div>
+          </Teleport>
+        );
       }
 
       // Desktop: root panel + one popover per open submenu level.
@@ -419,10 +427,12 @@ export default defineComponent({
         );
       }
       return (
-        <div class="hk-menu-desktop">
-          <div class="hk-menu-backdrop" onClick={() => closeAll()} />
-          {panels}
-        </div>
+        <Teleport to="body">
+          <div class="hk-menu-desktop">
+            <div class="hk-menu-backdrop" onClick={() => closeAll()} />
+            {panels}
+          </div>
+        </Teleport>
       );
     };
   },

@@ -37,6 +37,16 @@ const siblingItems: HkMenuItem[] = [
   },
 ];
 
+interface MountedMenu {
+  container: HTMLElement;
+  unmount: () => void;
+}
+
+/**
+ * Menus render through a Teleport to body, so queries go to the document.
+ * Keep at most one OPEN menu mounted at a time (unmount via the returned
+ * handle) — body queries cannot tell instances apart.
+ */
 function mountMenu(
   openRef = ref(true),
   menuItems: HkMenuItem[] = items,
@@ -44,7 +54,7 @@ function mountMenu(
     onSelect?: (key: string) => void;
     onUpdateOpen?: (v: boolean) => void;
   } = {},
-): HTMLElement {
+): MountedMenu {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
@@ -66,7 +76,30 @@ function mountMenu(
   const app = createApp(Wrapper);
   mounts.push(app);
   app.mount(container);
-  return container;
+  return {
+    container,
+    unmount: () => {
+      const i = mounts.indexOf(app);
+      if (i >= 0) mounts.splice(i, 1);
+      app.unmount();
+    },
+  };
+}
+
+function rows(): HTMLButtonElement[] {
+  return Array.from(document.querySelectorAll(".hk-menu-row")) as HTMLButtonElement[];
+}
+
+function rowByLabel(label: string): HTMLButtonElement | undefined {
+  return rows().find((r) => r.textContent?.includes(label));
+}
+
+function panels(): Element[] {
+  return Array.from(document.querySelectorAll(".hk-menu-panel"));
+}
+
+function sheets(): Element[] {
+  return Array.from(document.querySelectorAll(".hk-menu-sheet"));
 }
 
 async function settle(): Promise<void> {
@@ -95,32 +128,31 @@ afterEach(async () => {
 
 describe("HkMenu", () => {
   it("renders the root rows when open and nothing when closed", () => {
-    const c = mountMenu(ref(false));
-    expect(c.textContent ?? "").toBe("");
-    const c2 = mountMenu(ref(true));
-    expect(c2.textContent ?? "").toContain("Language");
-    expect(c2.textContent ?? "").toContain("Log out");
+    mountMenu(ref(false));
+    expect(document.querySelector(".hk-menu-panel")).toBeNull();
+    expect(document.querySelector(".hk-menu-sheet")).toBeNull();
+    mountMenu(ref(true));
+    expect(document.body.textContent ?? "").toContain("Language");
+    expect(document.body.textContent ?? "").toContain("Log out");
   });
 
   it("cascades into children on the desktop path and emits select on leaves", async () => {
     const selected: string[] = [];
     const closes: boolean[] = [];
     const openRef = ref(true);
-    const container = mountMenu(openRef, items, {
+    mountMenu(openRef, items, {
       onSelect: (key) => selected.push(key),
       onUpdateOpen: (v) => closes.push(v),
     });
     await settle();
 
-    const rows = Array.from(container.querySelectorAll(".hk-menu-row")) as HTMLButtonElement[];
-    rows.find((r) => r.textContent?.includes("Language"))!.click();
+    rowByLabel("Language")!.click();
     await settle();
-    const panels = Array.from(container.querySelectorAll(".hk-menu-panel"));
-    expect(panels.length).toBe(2);
-    expect(panels[1].textContent).toContain("中文");
+    expect(panels().length).toBe(2);
+    expect(panels()[1].textContent).toContain("中文");
 
-    const leaf = Array.from(panels[1].querySelectorAll(".hk-menu-row")).find(
-      (r) => r.textContent?.includes("中文"),
+    const leaf = Array.from(panels()[1].querySelectorAll(".hk-menu-row")).find((r) =>
+      r.textContent?.includes("中文"),
     ) as HTMLButtonElement;
     leaf.click();
     await settle();
@@ -129,72 +161,50 @@ describe("HkMenu", () => {
   });
 
   it("switches the cascade when a sibling branch is clicked", async () => {
-    const container = mountMenu(ref(true), siblingItems);
+    mountMenu(ref(true), siblingItems);
     await settle();
 
-    const rowByLabel = (label: string) =>
-      Array.from(container.querySelectorAll(".hk-menu-row")).find((r) =>
-        r.textContent?.includes(label),
-      ) as HTMLButtonElement;
-
-    rowByLabel("Branch One").click();
+    rowByLabel("Branch One")!.click();
     await settle();
-    let panels = Array.from(container.querySelectorAll(".hk-menu-panel"));
-    expect(panels.length).toBe(2);
-    expect(panels[1].textContent).toContain("One A");
+    expect(panels().length).toBe(2);
+    expect(panels()[1].textContent).toContain("One A");
 
     // Clicking the sibling in the ROOT panel must replace the open submenu,
     // not nest under it.
-    rowByLabel("Branch Two").click();
+    rowByLabel("Branch Two")!.click();
     await settle();
-    panels = Array.from(container.querySelectorAll(".hk-menu-panel"));
-    expect(panels.length).toBe(2);
-    expect(panels[1].textContent).toContain("Two A");
-    expect(panels[1].textContent).not.toContain("One A");
-    const active = Array.from(container.querySelectorAll(".hk-menu-row[data-active]"));
+    expect(panels().length).toBe(2);
+    expect(panels()[1].textContent).toContain("Two A");
+    expect(panels()[1].textContent).not.toContain("One A");
+    const active = Array.from(document.querySelectorAll(".hk-menu-row[data-active]"));
     expect(active.length).toBe(1);
     expect(active[0].textContent).toContain("Branch Two");
   });
 
   it("switches submenu on sibling hover and collapses on leaf hover", async () => {
-    const container = mountMenu(ref(true), siblingItems);
+    const first = mountMenu(ref(true), siblingItems);
     await settle();
 
-    const rootPanel = () => Array.from(container.querySelectorAll(".hk-menu-panel"))[0];
-    const rowByLabel = (label: string) =>
-      Array.from(rootPanel().querySelectorAll(".hk-menu-row")).find((r) =>
-        r.textContent?.includes(label),
-      ) as HTMLButtonElement;
-
-    rowByLabel("Branch One").click();
+    rowByLabel("Branch One")!.click();
     await settle();
-    expect(Array.from(container.querySelectorAll(".hk-menu-panel")).length).toBe(2);
+    expect(panels().length).toBe(2);
 
-    rowByLabel("Branch Two").dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    rowByLabel("Branch Two")!.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
     await settle();
-    const panels = Array.from(container.querySelectorAll(".hk-menu-panel"));
-    expect(panels.length).toBe(2);
-    expect(panels[1].textContent).toContain("Two A");
+    expect(panels().length).toBe(2);
+    expect(panels()[1].textContent).toContain("Two A");
 
     // Hovering a plain leaf row in the root panel collapses deeper levels.
-    const leafOnly = mountMenu(ref(true), [
-      ...siblingItems,
-      { key: "plain", label: "Plain Leaf" },
-    ]);
+    first.unmount();
     await settle();
-    const rootRows2 = Array.from(
-      Array.from(leafOnly.querySelectorAll(".hk-menu-panel"))[0].querySelectorAll(
-        ".hk-menu-row",
-      ),
-    ) as HTMLButtonElement[];
-    rootRows2.find((r) => r.textContent?.includes("Branch One"))!.click();
+    mountMenu(ref(true), [...siblingItems, { key: "plain", label: "Plain Leaf" }]);
     await settle();
-    expect(Array.from(leafOnly.querySelectorAll(".hk-menu-panel")).length).toBe(2);
-    rootRows2
-      .find((r) => r.textContent?.includes("Plain Leaf"))!
-      .dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    rowByLabel("Branch One")!.click();
     await settle();
-    expect(Array.from(leafOnly.querySelectorAll(".hk-menu-panel")).length).toBe(1);
+    expect(panels().length).toBe(2);
+    rowByLabel("Plain Leaf")!.dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }));
+    await settle();
+    expect(panels().length).toBe(1);
   });
 });
 
@@ -202,29 +212,23 @@ describe("HkMenu mobile sheets", () => {
   it("opens one fullscreen sheet per level and back closes exactly one level", async () => {
     window.innerWidth = 390;
     const openRef = ref(true);
-    const container = mountMenu(openRef, siblingItems);
+    mountMenu(openRef, siblingItems);
     await settle();
 
     // Root sheet only, with its own history entry.
-    let sheets = Array.from(container.querySelectorAll(".hk-menu-sheet"));
-    expect(sheets.length).toBe(1);
+    expect(sheets().length).toBe(1);
     expect(window.history.state?.__hkMenuDepth).toBe(0);
 
     // Enter the first branch → two stacked sheets + a new history entry.
-    const branchRow = Array.from(container.querySelectorAll(".hk-menu-row")).find((r) =>
-      r.textContent?.includes("Branch One"),
-    ) as HTMLButtonElement;
-    branchRow.click();
+    rowByLabel("Branch One")!.click();
     await settle();
-    sheets = Array.from(container.querySelectorAll(".hk-menu-sheet"));
-    expect(sheets.length).toBe(2);
+    expect(sheets().length).toBe(2);
     expect(window.history.state?.__hkMenuDepth).toBe(1);
 
     // Browser/system back closes ONE level: back to the root sheet.
     window.history.back();
     await settle();
-    sheets = Array.from(container.querySelectorAll(".hk-menu-sheet"));
-    expect(sheets.length).toBe(1);
+    expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
     expect(window.history.state?.__hkMenuDepth).toBe(0);
 
@@ -232,29 +236,26 @@ describe("HkMenu mobile sheets", () => {
     window.history.back();
     await settle();
     expect(openRef.value).toBe(false);
-    expect(container.querySelector(".hk-menu-sheet")).toBeNull();
+    expect(document.querySelector(".hk-menu-sheet")).toBeNull();
     expect(window.history.state?.__hkMenuId).toBeUndefined();
   });
 
   it("keeps the root sheet when a pushed level is dismissed via its back button", async () => {
     window.innerWidth = 390;
     const openRef = ref(true);
-    const container = mountMenu(openRef, siblingItems);
+    mountMenu(openRef, siblingItems);
     await settle();
 
-    const branchRow = Array.from(container.querySelectorAll(".hk-menu-row")).find((r) =>
-      r.textContent?.includes("Branch One"),
-    ) as HTMLButtonElement;
-    branchRow.click();
+    rowByLabel("Branch One")!.click();
     await settle();
-    expect(Array.from(container.querySelectorAll(".hk-menu-sheet")).length).toBe(2);
+    expect(sheets().length).toBe(2);
 
-    const backBtn = Array.from(container.querySelectorAll(".hk-menu-sheet-back")).at(
+    const backBtn = Array.from(document.querySelectorAll(".hk-menu-sheet-back")).at(
       -1,
     ) as HTMLButtonElement;
     backBtn.click();
     await settle();
-    expect(Array.from(container.querySelectorAll(".hk-menu-sheet")).length).toBe(1);
+    expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
     expect(window.history.state?.__hkMenuDepth).toBe(0);
   });
@@ -263,25 +264,19 @@ describe("HkMenu mobile sheets", () => {
     window.innerWidth = 390;
     const selected: string[] = [];
     const openRef = ref(true);
-    const container = mountMenu(openRef, siblingItems, {
+    mountMenu(openRef, siblingItems, {
       onSelect: (key) => selected.push(key),
     });
     await settle();
 
-    const leafRow = Array.from(container.querySelectorAll(".hk-menu-row")).find((r) =>
-      r.textContent?.includes("Branch Two"),
-    ) as HTMLButtonElement;
-    leafRow.click();
+    rowByLabel("Branch Two")!.click();
     await settle();
-    const leaf = Array.from(container.querySelectorAll(".hk-menu-row")).find((r) =>
-      r.textContent?.includes("Two B"),
-    ) as HTMLButtonElement;
-    leaf.click();
+    rowByLabel("Two B")!.click();
     await settle();
 
     expect(selected).toEqual(["two-b"]);
     expect(openRef.value).toBe(false);
-    expect(container.querySelector(".hk-menu-sheet")).toBeNull();
+    expect(document.querySelector(".hk-menu-sheet")).toBeNull();
     await until(() => window.history.state?.__hkMenuId === undefined);
     expect(window.history.state?.__hkMenuId).toBeUndefined();
   });
@@ -289,9 +284,9 @@ describe("HkMenu mobile sheets", () => {
   it("follows live viewport changes without closing the menu", async () => {
     window.innerWidth = 390;
     const openRef = ref(true);
-    const container = mountMenu(openRef, siblingItems);
+    mountMenu(openRef, siblingItems);
     await settle();
-    expect(container.querySelectorAll(".hk-menu-sheet").length).toBe(1);
+    expect(sheets().length).toBe(1);
     expect(window.history.state?.__hkMenuDepth).toBe(0);
 
     // Rotate/grow to desktop while open: sheets become desktop panels and
@@ -300,8 +295,8 @@ describe("HkMenu mobile sheets", () => {
     window.dispatchEvent(new Event("resize"));
     await settle();
     expect(openRef.value).toBe(true);
-    expect(container.querySelectorAll(".hk-menu-sheet").length).toBe(0);
-    expect(container.querySelectorAll(".hk-menu-panel").length).toBe(1);
+    expect(sheets().length).toBe(0);
+    expect(panels().length).toBe(1);
     await until(() => window.history.state?.__hkMenuId === undefined);
     expect(window.history.state?.__hkMenuId).toBeUndefined();
 
@@ -310,7 +305,7 @@ describe("HkMenu mobile sheets", () => {
     window.dispatchEvent(new Event("resize"));
     await settle();
     expect(openRef.value).toBe(true);
-    expect(container.querySelectorAll(".hk-menu-sheet").length).toBe(1);
+    expect(sheets().length).toBe(1);
     expect(window.history.state?.__hkMenuDepth).toBe(0);
   });
 });

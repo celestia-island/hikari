@@ -148,10 +148,6 @@
   color: rgb(var(--color-danger, 240 70 80));
 }
 
-.hk-menu-sidebar-row[data-depth] {
-  padding-left: calc(var(--space-12, 12px) + var(--space-16, 16px));
-}
-
 .hk-menu-sidebar-group {
   display: flex;
   flex-direction: column;

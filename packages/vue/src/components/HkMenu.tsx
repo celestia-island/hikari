@@ -489,6 +489,11 @@ export default defineComponent({
           data-active={active || undefined}
           data-danger={item.danger || undefined}
           data-disabled={item.disabled || undefined}
+          style={
+            depth > 0
+              ? { paddingLeft: `calc(var(--space-12, 12px) + ${16 * depth}px)` }
+              : undefined
+          }
           onClick={() => {
             if (item.disabled) return;
             emit("select", item.key, item);

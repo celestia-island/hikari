@@ -1,7 +1,14 @@
 import { defineComponent, type PropType } from "vue";
-import "./HkLocalePickerPopup.scss";
 import type { Ref } from "vue";
 
+import HkMenu, { type HkMenuItem } from "./HkMenu";
+
+/**
+ * Locale picking on top of the generic HkMenu: one menu tree whose leaf
+ * items are the supported locales. Desktop cascades from the trigger;
+ * mobile opens fullscreen sheets with back-gesture navigation — all
+ * inherited from HkMenu, nothing locale-specific here but the mapping.
+ */
 const HkLocalePickerPopup = defineComponent({
   name: "HkLocalePickerPopup",
   props: {
@@ -14,27 +21,35 @@ const HkLocalePickerPopup = defineComponent({
   },
   emits: ["update:open", "select"],
   setup(props, { emit }) {
+    const items: HkMenuItem[] = props.locales.map((loc) => ({
+      key: loc.code,
+      label: loc.label,
+      flag: loc.flag,
+      checked: loc.code === props.currentLocale,
+    }));
     return () => {
-      if (!props.open) return null;
+      const raw = props.triggerRef;
+      const anchor =
+        raw && "value" in (raw as Ref<HTMLElement | null>)
+          ? (raw as Ref<HTMLElement | null>).value
+          : (raw as HTMLElement | null);
       return (
-        <div class="hk-locale-picker-popup" role="listbox">
-          {props.locales.map((loc) => (
-            <button
-              key={loc.code}
-              class="hk-locale-picker-item"
-              data-selected={loc.code === props.currentLocale || undefined}
-              role="option"
-              aria-selected={loc.code === props.currentLocale}
-              onClick={() => {
-                emit("select", loc.code);
-                emit("update:open", false);
-              }}
-            >
-              {loc.flag && <span class="hk-locale-picker-flag">{loc.flag}</span>}
-              <span class="hk-locale-picker-label">{loc.label}</span>
-            </button>
-          ))}
-        </div>
+      <HkMenu
+        open={props.open}
+        anchorRef={anchor}
+        placement={
+          props.placement === "left-start" || props.placement === "right-start"
+            ? props.placement
+            : "right-start"
+        }
+        title={(() => {
+          const tt = props.t("locale.title");
+          return tt && tt !== "locale.title" ? tt : "Language";
+        })()}
+        items={items}
+        onUpdate:open={(v: boolean) => emit("update:open", v)}
+        onSelect={(key: string) => emit("select", key)}
+      />
       );
     };
   },

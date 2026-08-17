@@ -200,6 +200,14 @@ The full documentation lives under `docs/` in 9 languages:
 - [English](docs/en/) · [简体中文](docs/zh-Hans/) · [繁體中文](docs/zh-Hant/) · [日本語](docs/ja/) · [한국어](docs/ko/)
 - [Español](docs/es/) · [Français](docs/fr/) · [Русский](docs/ru/) · [العربية](docs/ar/)
 
+Live component pages from the docs (rendered by the hikari components
+themselves):
+
+<p align="center">
+  <img src="res/readme-components-button.png" alt="hikari buttons — flat design with glow accents" width="45%" />
+  <img src="res/readme-components-form.png" alt="hikari form controls — inputs and selection" width="45%" />
+</p>
+
 Key pages:
 
 - [Architecture Overview](docs/en/guides/ARCHITECTURE.md)

@@ -321,6 +321,57 @@
   font-weight: 600;
 }
 
+/* ── User identity header (shared) ─ */
+/* One identity block for every account surface — the admin user
+   dropdown's header, a mobile drawer's user panel footer — so all
+   account surfaces read identically: nickname, login email, then
+   permission badges. Consumers that nest it inside their own padded
+   container (a drawer footer) drop the padding via context
+   overrides. */
+.s-user-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  /* In menus this aligns with .s-popup-menu-item's own space-14 (menu
+     padding applies equally to both); bare surfaces (the popover
+     wrapper) rely on it entirely. Vertical breathing keeps the block
+     off the menu's top edge and the divider below. */
+  padding: var(--space-10) var(--space-14) var(--space-12);
+}
+
+/* Pending variant (identity not yet hydrated): spinner beside the
+   label reads as "actively working", not a frozen panel. */
+.s-user-header--pending {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8, 8px);
+}
+
+.s-user-header-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-user-header-email {
+  font-size: var(--text-2xs);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-user-header-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 4px);
+  margin-top: var(--space-4, 4px);
+}
+
 /* ── Nav sidebar ─ */
 .s-nav-item-content {
   display: flex;

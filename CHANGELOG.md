@@ -86,6 +86,11 @@ Current master, Rust workspace `0.3.19`.
 
 ### Fixed
 
+- Align the remaining field labels with the caption family:
+  `HkPasswordInput`'s label drops its legacy full-size style (0.875rem/500)
+  and `HkColorPicker`'s label gains the 600 weight and the shared
+  `--hk-field-label-alpha` (72%) — every labeled hikari form control now
+  reads identically.
 - Raise select/input caption labels from 60% to 72% text alpha (dark-theme
   tinted surfaces kept the 60% captions below comfortable contrast);
   `--hk-field-label-alpha` overrides per app.

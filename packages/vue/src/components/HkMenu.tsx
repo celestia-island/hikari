@@ -109,10 +109,17 @@ export default defineComponent({
 
     function restoreHistory(): void {
       // Single multi-step traversal: consecutive back() calls can be
-      // coalesced (happy-dom) or racy (browsers), go(-n) cannot.
-      if (pushedDepth > 0) {
+      // coalesced (happy-dom) or racy (browsers), go(-n) cannot. Depth is
+      // only trusted while our entry is still current — a foreign pushState
+      // while open (router navigation, another component) invalidates the
+      // count, so fall back to a marker-seek replace instead of guessing.
+      if (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
         suppressPop++;
         window.history.go(-pushedDepth);
+      } else if (pushedDepth > 0) {
+        // Our entries are still buried below the foreign top; replacing the
+        // current entry releases ownership without touching live history.
+        window.history.replaceState(null, "");
       }
       pushedDepth = 0;
     }
@@ -137,8 +144,15 @@ export default defineComponent({
         mobileStack.value = props.open ? mobileStack.value.slice(0, depth) : [];
         desktopPath.value = [];
         pushedDepth = depth + 1;
+        if (!props.open) {
+          // Forward gesture into a spent stack while closed: release the
+          // ownership marker so a closed menu never owns live history.
+          window.history.replaceState(null, "");
+          pushedDepth = 0;
+        }
         return;
       }
+      if (!props.open && pushedDepth === 0) return; // idle; nothing to do
       // Landed outside our stack — collapse whatever remains.
       pushedDepth = 0;
       mobileStack.value = [];
@@ -165,6 +179,8 @@ export default defineComponent({
 
     function onResize(): void {
       viewportTick.value++;
+      // Desktop panels are viewport-fixed; a same-mode resize strands them.
+      if (!mobileMode.value && props.open) void nextTick(refreshGeometry);
     }
 
     onMounted(() => window.addEventListener("popstate", onPopState));

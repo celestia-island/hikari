@@ -169,6 +169,23 @@ describe("HkAdminShell", () => {
     expect(c.querySelector(".s-drawer-user-panel")).toBeNull();
   });
 
+  it("honors a custom mobileBreakpoint for the desktop takeover", async () => {
+    // Default 1024: 900px reads as mobile (drawer path).
+    setWidth(900);
+    const narrow = mount(shellNode(
+      { navTitle: "Navigation" },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect(narrow.querySelector("aside .nav-mock")).toBeNull();
+
+    // Custom 768: the same 900px reads as desktop (inline sidebar).
+    const wide = mount(shellNode(
+      { navTitle: "Navigation", mobileBreakpoint: 768 },
+      { header: () => null, sidebar: NAV, content: CONTENT },
+    ));
+    expect(wide.querySelector("aside .nav-mock")).toBeTruthy();
+  });
+
   it("applies the content padding inside the scroll viewport so shadows are not clipped", () => {
     setWidth(1024);
     const c = mount(shellNode(

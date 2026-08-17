@@ -7,6 +7,10 @@ export const HkAdminShell = defineComponent({
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
+    // NOTE: not yet wired — the desktop/mobile split currently follows
+    // useBreakpoint()'s shared 1024px threshold regardless of this value.
+    // Kept for API compatibility; wiring it needs a threshold param on
+    // useBreakpoint (follow-up).
     mobileBreakpoint: { type: Number, default: 768 },
     footerHeight: { type: String, default: "var(--s-footer-height)" },
     navTitle: { type: String, default: "Navigation" },
@@ -94,7 +98,7 @@ export const HkAdminShell = defineComponent({
                 default: () =>
                   slots.sidebar?.({ collapsed: false, onNavigate: closeSidebar, inDrawer: true }),
                 footer: slots.userPanel
-                  ? () => <div>{slots.userPanel!()}</div>
+                  ? () => slots.userPanel!()
                   : undefined,
               }}
             </HDrawer>

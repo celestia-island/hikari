@@ -179,7 +179,8 @@ describe("HkAdminShell", () => {
     // padding on the container itself).
     const viewport = c.querySelector(".hk-scroll-container-viewport")
       ?? c.querySelector(".hk-scroll-container");
-    const inner = viewport?.querySelector("div[style*='2rem']");
+    const inner = viewport?.firstElementChild as HTMLElement | null | undefined;
     expect(inner).toBeTruthy();
+    expect(inner?.style.padding).toBe("2rem");
   });
 });

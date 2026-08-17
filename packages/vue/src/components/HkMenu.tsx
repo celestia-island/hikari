@@ -24,11 +24,13 @@ import "./HkMenu.scss";
  * - Desktop: popover panel anchored to the trigger; rows carrying children
  *   cascade to the RIGHT of the anchor row (flipping to the left when the
  *   viewport runs out) — the traditional application menubar behavior.
- * - Mobile: every level opens as its own fullscreen sheet, stacked. Each
- *   pushed level also pushes a history entry, so the system/browser back
- *   gesture closes exactly one level (Android modal navigation mode).
+ *   Clicking (or hovering) a sibling row switches the open submenu to that
+ *   row, like a classic menubar.
+ * - Mobile: every level — including the root — opens as its own fullscreen
+ *   sheet, stacked. Every level pushes a history entry, so the system/browser
+ *   back gesture closes exactly one level (Android modal navigation mode);
+ *   closing the last level closes the menu.
  */
-
 export interface HkMenuItem {
   key: string;
   label: string;
@@ -48,8 +50,8 @@ interface MenuHistoryState {
 
 const MENU_ID = "__hkMenu";
 
-function isMobileViewport(): boolean {
-  return typeof window !== "undefined" && window.innerWidth < 768;
+function viewportIsMobile(breakpoint: number): boolean {
+  return typeof window !== "undefined" && window.innerWidth < breakpoint;
 }
 
 export default defineComponent({
@@ -77,14 +79,42 @@ export default defineComponent({
   setup(props, { emit }) {
     /** Open submenu path on desktop, e.g. ["theme", "dark"] → panel chain. */
     const desktopPath = ref<string[]>([]);
-    /** Stacked sheet chain on mobile: each entry is the items of that level. */
+    /** Pushed sheet chain on mobile: each entry is one submenu level. */
     const mobileStack = ref<{ title: string; items: HkMenuItem[] }[]>([]);
     const instanceId = `${MENU_ID}-${Math.random().toString(36).slice(2, 8)}`;
+    /**
+     * History entries this instance pushed above the page's base entry —
+     * also the number of back() calls needed to reach the base again.
+     * History depth 0 (the root sheet) counts, so this is depth + 1.
+     */
     let pushedDepth = 0;
+    /** Popstate events produced by our own restoreHistory — not user backs. */
+    let suppressPop = 0;
+    /** Bumped on viewport resize so an open menu re-renders in the right mode. */
+    const viewportTick = ref(0);
 
-    const mobileMode = computed(
-      () => typeof window !== "undefined" && window.innerWidth < props.mobileBreakpoint,
-    );
+    const mobileMode = computed(() => {
+      void viewportTick.value; // re-evaluate when the viewport changes
+      return viewportIsMobile(props.mobileBreakpoint);
+    });
+
+    function pushHistoryEntry(depth: number): void {
+      window.history.pushState(
+        { __hkMenuId: instanceId, __hkMenuDepth: depth } satisfies MenuHistoryState,
+        "",
+      );
+      pushedDepth = depth + 1;
+    }
+
+    function restoreHistory(): void {
+      // Single multi-step traversal: consecutive back() calls can be
+      // coalesced (happy-dom) or racy (browsers), go(-n) cannot.
+      if (pushedDepth > 0) {
+        suppressPop++;
+        window.history.go(-pushedDepth);
+      }
+      pushedDepth = 0;
+    }
 
     function closeAll(): void {
       desktopPath.value = [];
@@ -93,58 +123,114 @@ export default defineComponent({
       emit("update:open", false);
     }
 
-    function restoreHistory(): void {
-      while (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
-        window.history.back();
-        pushedDepth--;
-      }
-    }
-
     function onPopState(e: PopStateEvent): void {
+      if (suppressPop > 0) {
+        // Our own restore traversal landing — not a user back gesture.
+        suppressPop--;
+        return;
+      }
       const st = e.state as MenuHistoryState | null;
-      if (st?.__hkMenuId === instanceId) return; // still one of ours
-      // Back landed outside our stack — collapse whatever remains.
+      if (st?.__hkMenuId === instanceId) {
+        // Landed on one of our own entries — close exactly one level.
+        const depth = Math.max(0, st.__hkMenuDepth ?? 0);
+        mobileStack.value = props.open ? mobileStack.value.slice(0, depth) : [];
+        desktopPath.value = [];
+        pushedDepth = depth + 1;
+        return;
+      }
+      // Landed outside our stack — collapse whatever remains.
       pushedDepth = 0;
-      if (mobileStack.value.length > 0) mobileStack.value = [];
-      if (desktopPath.value.length > 0) desktopPath.value = [];
+      mobileStack.value = [];
+      desktopPath.value = [];
       emit("update:open", false);
     }
 
     function pushLevel(title: string, items: HkMenuItem[]): void {
       mobileStack.value.push({ title, items });
-      window.history.pushState(
-        { __hkMenuId: instanceId, __hkMenuDepth: ++pushedDepth } satisfies MenuHistoryState,
-        "",
-      );
+      pushHistoryEntry(mobileStack.value.length);
     }
 
     function popLevel(): boolean {
       if (mobileStack.value.length === 0) return false;
-      mobileStack.value.pop();
       if (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
+        // The popstate handler (ours, depth-1) truncates the stack — one
+        // source of truth for both drivers (in-app back and browser back).
         window.history.back();
-        pushedDepth--;
+      } else {
+        mobileStack.value.pop();
       }
       return true;
     }
 
+    function onResize(): void {
+      viewportTick.value++;
+    }
+
     onMounted(() => window.addEventListener("popstate", onPopState));
+    onMounted(() => window.addEventListener("resize", onResize));
     onBeforeUnmount(() => {
       window.removeEventListener("popstate", onPopState);
+      window.removeEventListener("resize", onResize);
       restoreHistory();
     });
 
-    function onItem(item: HkMenuItem): void {
+    /**
+     * Keep the history chain in sync with the open state and the active
+     * mode: a menu opened on mobile owns one root entry; a menu that ends
+     * up on desktop releases every entry it pushed.
+     */
+    watch(
+      // String key: fires on real state changes only, not on every resize tick.
+      () => `${props.open ? 1 : 0}:${mobileMode.value ? 1 : 0}`,
+      (key) => {
+        const openNow = key.startsWith("1");
+        const mobile = key.endsWith("1");
+        if (!openNow) {
+          if (pushedDepth > 0 || mobileStack.value.length > 0 || desktopPath.value.length > 0) {
+            desktopPath.value = [];
+            mobileStack.value = [];
+            restoreHistory();
+          }
+          return;
+        }
+        if (mobile) {
+          // Normalize: exactly one fresh root entry above the page's history.
+          if (pushedDepth !== 0) restoreHistory();
+          pushHistoryEntry(0);
+        } else if (pushedDepth > 0) {
+          desktopPath.value = [];
+          mobileStack.value = [];
+          restoreHistory();
+        }
+      },
+      { immediate: true, flush: "sync" },
+    );
+
+    function onItem(item: HkMenuItem, level: number): void {
       if (item.disabled) return;
       if (item.children?.length) {
-        if (mobileMode.value) pushLevel(item.label, item.children);
-        else {
-          desktopPath.value = [...desktopPath.value.slice(0, currentLevel.value), item.key];
+        if (mobileMode.value) {
+          pushLevel(item.label, item.children);
+        } else {
+          // Replace the path at the clicked row's level — clicking a
+          // sibling in a shallower panel switches the cascade to it.
+          desktopPath.value = [...desktopPath.value.slice(0, level), item.key];
         }
         return;
       }
       emit("select", item.key, item);
       closeAll();
+    }
+
+    /** Classic menubar hover semantics: hovering a row at a level collapses
+     *  everything deeper; hovering a sibling branch switches to it. */
+    function onRowEnter(item: HkMenuItem, level: number): void {
+      if (mobileMode.value) return;
+      if (desktopPath.value.length <= level) return;
+      if (desktopPath.value[level] === item.key) return;
+      desktopPath.value = item.children?.length
+        ? [...desktopPath.value.slice(0, level), item.key]
+        : desktopPath.value.slice(0, level);
     }
 
     /** Which items the currently deepest desktop panel shows. */
@@ -183,6 +269,7 @@ export default defineComponent({
         top = r.bottom + props.offset;
         left = props.placement.endsWith("-end") ? r.right - panelW : r.left;
         if (props.placement.startsWith("top-")) top = r.top - panelH - props.offset;
+        if (left + panelW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - panelW);
       }
       if (top + panelH > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - panelH);
       panelStyle.value = {
@@ -193,13 +280,13 @@ export default defineComponent({
       };
     }
 
-    // Rows the deepest submenu anchors from (each open row element).
-    const rowRefs = ref<Record<number, HTMLElement | null>>({});
+    /** Anchor row elements of the open cascade, keyed `<level>:<itemKey>`. */
+    const rowRefs = ref<Record<string, HTMLElement | null>>({});
     const subStyles = ref<Record<number, Record<string, string>>>({});
 
     function positionSubmenus(): void {
       for (let d = 0; d < desktopPath.value.length; d++) {
-        const row = rowRefs.value[d];
+        const row = rowRefs.value[`${d}:${desktopPath.value[d]}`];
         if (!row) continue;
         const r = row.getBoundingClientRect();
         const w = 224;
@@ -253,7 +340,7 @@ export default defineComponent({
           ref={
             hasKids
               ? (el: unknown) => {
-                  rowRefs.value[level] = el as HTMLElement | null;
+                  rowRefs.value[`${level}:${item.key}`] = el as HTMLElement | null;
                 }
               : undefined
           }
@@ -261,12 +348,8 @@ export default defineComponent({
           data-checked={item.checked || undefined}
           data-danger={item.danger || undefined}
           data-disabled={item.disabled || undefined}
-          onClick={() => onItem(item)}
-          onMouseenter={() => {
-            if (!hasKids && desktopPath.value.length > level) {
-              desktopPath.value = desktopPath.value.slice(0, level);
-            }
-          }}
+          onClick={() => onItem(item, level)}
+          onMouseenter={() => onRowEnter(item, level)}
         >
           {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
           {item.icon && h(item.icon, { size: 15 })}
@@ -277,60 +360,46 @@ export default defineComponent({
       );
     }
 
+    function renderSheet(
+      level: number,
+      sheetTitle: string,
+      list: HkMenuItem[],
+      onBack: () => void,
+    ) {
+      return (
+        <div
+          key={level}
+          class="hk-menu-sheet"
+          data-level={level}
+          style={{ zIndex: `${1200 + level}` }}
+        >
+          <div class="hk-menu-sheet-header">
+            <button type="button" class="hk-menu-sheet-back" aria-label="Back" onClick={onBack}>
+              <ChevronLeft size={18} />
+            </button>
+            <span class="hk-menu-sheet-title">{sheetTitle || props.title}</span>
+          </div>
+          <div class="hk-menu-sheet-body">
+            {list.map((it, idx) => renderRow(it, level, idx))}
+          </div>
+        </div>
+      );
+    }
+
     return () => {
       if (!props.open) return null;
 
-      if (isMobileViewport()) {
-        const top = mobileStack.value[mobileStack.value.length - 1];
-        const sheets = mobileStack.value;
-        return (
-          <div class="hk-menu-mobile-stack">
-            {sheets.map((sheet, i) => (
-              <div
-                key={i}
-                class="hk-menu-sheet"
-                data-level={i}
-                style={{ zIndex: `${1200 + i}` }}
-              >
-                <div class="hk-menu-sheet-header">
-                  <button
-                    type="button"
-                    class="hk-menu-sheet-back"
-                    aria-label="Back"
-                    onClick={() => {
-                      if (!popLevel()) closeAll();
-                    }}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <span class="hk-menu-sheet-title">{sheet.title || props.title}</span>
-                </div>
-                <div class="hk-menu-sheet-body">
-                  {sheet.items.map((it) => renderRow(it, i, i))}
-                </div>
-              </div>
-            ))}
-            {/* level-0 sheet when no submenu is open */}
-            {sheets.length === 0 && (
-              <div class="hk-menu-sheet" data-level={0} style={{ zIndex: "1200" }}>
-                <div class="hk-menu-sheet-header">
-                  <button
-                    type="button"
-                    class="hk-menu-sheet-back"
-                    aria-label="Back"
-                    onClick={() => closeAll()}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <span class="hk-menu-sheet-title">{props.title}</span>
-                </div>
-                <div class="hk-menu-sheet-body">
-                  {props.items.map((it, idx) => renderRow(it, 0, idx))}
-                </div>
-              </div>
-            )}
-          </div>
-        );
+      if (mobileMode.value) {
+        // Root sheet is level 0; every pushed submenu level stacks above it.
+        const sheets = [
+          renderSheet(0, props.title, props.items, () => closeAll()),
+          ...mobileStack.value.map((entry, i) =>
+            renderSheet(i + 1, entry.title, entry.items, () => {
+              if (!popLevel()) closeAll();
+            }),
+          ),
+        ];
+        return <div class="hk-menu-mobile-stack">{sheets}</div>;
       }
 
       // Desktop: root panel + one popover per open submenu level.

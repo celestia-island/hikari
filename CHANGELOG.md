@@ -15,7 +15,7 @@ hikari currently carries two version lines, plus one stale tag:
   `v0.3.0`–`v0.3.2` and `v0.3.4` were published to crates.io without git
   tags, and `v0.3.15`–`v0.3.19` are unpublished master changes.
 - **Vue port (`@celestia-island/hikari`)** — the `0.4.x` line. The npm
-  package is at `0.4.18` on master but has **never been published** to npm;
+  package is at `0.4.19` on master but has **never been published** to npm;
   publication is pending (A3).
 - **Tag `v0.4.0` is a stale tag.** It was created on an early Vue-port
   commit (2026-07-21) before the npm package version line was established,

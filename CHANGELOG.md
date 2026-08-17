@@ -28,6 +28,14 @@ Current master, Rust workspace `0.3.19`.
 
 ### Added
 
+- Add a generic cascading menu component `HkMenu` (`items` tree with
+  icons/flags/checked/danger/disabled rows) plus `HkLocalePickerPopup`
+  rebuilt as a thin config over it: desktop anchors the root panel to the
+  trigger and cascades submenu panels to the right of their anchor row
+  (flipping left on viewport overflow), switching or collapsing on sibling
+  hover like a classic menubar; mobile renders one fullscreen sheet per
+  level — the root included — where every level pushes a history entry so
+  the system/browser back gesture closes exactly one level.
 - Add mobile native pass-through to both date pickers and localize the
   datetime picker: HkDateTimePicker now derives month/weekday names and the
   trigger label from `Intl.DateTimeFormat` on the active locale (week start

@@ -9,10 +9,11 @@
 
 .hk-popup-select-label {
   display: block;
-  font-size: var(--text-base);
-  font-weight: 500;
-  margin-bottom: var(--space-6);
-  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / 60%);
 }
 
 .hk-popup-select-required {
@@ -96,9 +97,29 @@
   overflow: hidden;
 }
 
-.hk-popup-select-viewport {
-  flex: 1;
-  min-height: 0;
+/* The viewport is an HkScrollContainer; items live in its inner scroller,
+ * whose default hides the bar — a themed thin bar beats the native chrome. */
+.hk-popup-select-viewport .hk-scroll-container-viewport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  scrollbar-width: thin !important;
+  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
+
+  &::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border) / 45%);
+    border-radius: 3px;
+  }
 }
 
 .hk-popup-select-item {

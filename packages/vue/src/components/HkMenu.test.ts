@@ -309,3 +309,97 @@ describe("HkMenu mobile sheets", () => {
     expect(window.history.state?.__hkMenuDepth).toBe(0);
   });
 });
+
+describe("HkMenu sidebar variant", () => {
+  const navItems: HkMenuItem[] = [
+    { key: "dashboard", label: "Dashboard" },
+    {
+      key: "shop",
+      label: "Shop",
+      children: [
+        { key: "products", label: "Products" },
+        { key: "listings", label: "Listings", badge: "3" },
+      ],
+    },
+    { key: "logout", label: "Log out", danger: true },
+  ];
+
+  it("renders an inline nav list with active row, badge and groups", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          title: "Navigation",
+          items: navItems,
+          activeKey: "listings",
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+
+    // Inline render: no teleport, no panels, no history ownership.
+    expect(document.querySelector(".hk-menu-panel")).toBeNull();
+    expect(document.querySelector(".hk-menu-sheet")).toBeNull();
+    expect(window.history.state?.__hkMenuId).toBeUndefined();
+
+    const nav = container.querySelector(".hk-menu-sidebar");
+    expect(nav).not.toBeNull();
+    expect(nav!.getAttribute("aria-label")).toBe("Navigation");
+
+    // Group containing the active row starts expanded.
+    expect(container.textContent).toContain("Products");
+    expect(container.textContent).toContain("Listings");
+
+    const active = container.querySelector(".hk-menu-sidebar-row[data-active]");
+    expect(active?.textContent).toContain("Listings");
+
+    const badge = container.querySelector(".hk-menu-sidebar-badge");
+    expect(badge?.textContent).toBe("3");
+  });
+
+  it("emits select on leaf rows and toggles groups without selecting", async () => {
+    const selected: string[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: navItems,
+          onSelect: (key: string) => selected.push(key),
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    // Groups default collapsed when nothing active inside them.
+    expect(container.textContent).not.toContain("Products");
+
+    const toggle = container.querySelector(
+      ".hk-menu-sidebar-group-toggle",
+    ) as HTMLButtonElement;
+    toggle.click();
+    await settle();
+    expect(container.textContent).toContain("Products");
+    expect(selected).toEqual([]); // toggling is navigation, not selection
+
+    const leaf = [...container.querySelectorAll(".hk-menu-sidebar-row")].find(
+      (r) => r.textContent?.includes("Products"),
+    ) as HTMLButtonElement;
+    leaf.click();
+    await settle();
+    expect(selected).toEqual(["products"]);
+
+    // Collapse again — children disappear.
+    toggle.click();
+    await settle();
+    expect(container.textContent).not.toContain("Products");
+  });
+});

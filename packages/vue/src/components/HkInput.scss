@@ -8,10 +8,11 @@
 
 .hk-input-label {
   display: block;
-  font-size: var(--text-base);
-  font-weight: 500;
-  margin-bottom: var(--space-6);
-  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / 60%);
 }
 
 .hk-input-required {

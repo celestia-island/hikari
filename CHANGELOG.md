@@ -28,6 +28,12 @@ Current master, Rust workspace `0.3.19`.
 
 ### Added
 
+- Add a `variant="sidebar"` mode to `HkMenu`: an inline vertical nav list
+  (no popover, no history) where rows carry icon/flag/badge/active states
+  with a consistent 4px rhythm, and root items with `children` render as
+  collapsible groups (defaulting open when they contain the `activeKey`
+  row; deeper levels indent). `HkMenuItem` gains `badge` for sidebar count
+  pills. Built for admin sidebars and mobile nav drawers.
 - Add a generic cascading menu component `HkMenu` (`items` tree with
   icons/flags/checked/danger/disabled rows) plus `HkLocalePickerPopup`
   rebuilt as a thin config over it: desktop anchors the root panel to the
@@ -80,6 +86,14 @@ Current master, Rust workspace `0.3.19`.
 
 ### Fixed
 
+- Theme every scrollable menu/select surface: `HkSelect` popouts, the
+  `HkPopupSelect` viewport (whose hidden scrollbar now shows as a themed
+  thin bar) and `HkMenu` panels/sheets use a 6px themed scrollbar instead
+  of the browser-native chrome.
+- Restyle `HkSelect` / `HkPopupSelect` / `HkInput` labels as small muted
+  captions (xs, 600, 60% text) instead of full-size text, and give
+  dropdown option rows a consistent 2px rhythm so rounded hover pills
+  never touch.
 - Add admin KPI widgets: HkStatCard (label/value/hint with a tone DOT —
   text hue never changes, per the interaction-state precedence), HkStatusPill
   (compact ok/warn/error/unknown pill with optional latency + version, gentle

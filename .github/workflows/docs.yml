@@ -2,7 +2,7 @@ name: Deploy Documentation
 
 on:
   push:
-    branches: [master, dev]
+    branches: [master]
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yml'
@@ -19,13 +19,26 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install --git https://github.com/celestia-island/lagrange --branch dev lagrange-library --locked
-      - run: lagrange build --src docs --out _site
+      # The old recipe (hosted runner + cargo install --branch dev) has failed
+      # on every run since 2026-07-28: the lagrange dev branch no longer
+      # builds. Use the preinstalled binary on the self-hosted pool instead
+      # (crates.io 0.2.6 == git master), with a cargo-install fallback.
+      - name: Install lagrange
+        run: |
+          set -euo pipefail
+          if [ -x /mnt/work/runner-shared/lagrange/bin/lagrange ]; then
+            /mnt/work/runner-shared/lagrange/bin/lagrange --version
+            echo "/mnt/work/runner-shared/lagrange/bin" >> "$GITHUB_PATH"
+          else
+            cargo install lagrange-library --locked \
+              || cargo install --git https://github.com/celestia-island/lagrange --branch master lagrange-library
+          fi
+      - name: Build docs
+        run: lagrange build --src docs --out _site
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -33,7 +46,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

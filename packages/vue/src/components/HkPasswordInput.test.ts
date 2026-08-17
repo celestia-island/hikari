@@ -240,3 +240,42 @@ describe("HkPasswordInput variants and icons", () => {
     expect(placeholderText(container)).toBe("Confirm password (custom)");
   });
 });
+
+describe("HkPasswordInput placeholder layers on Tab focus", () => {
+  it("shows exactly one placeholder text on focus of an empty field", async () => {
+    const { container, input } = mountPasswordInput("", {});
+    expect(placeholderText(container)).toBeTruthy();
+    const before = placeholderText(container);
+    input.focus();
+    await nextTick();
+    await nextTick();
+    // Exactly one .hk-pwd-placeholder node, holding ONE of the valid texts.
+    const nodes = container.querySelectorAll(".hk-pwd-placeholder");
+    expect(nodes.length).toBe(1);
+    const txt = nodes[0].textContent ?? "";
+    expect([before, "已聚焦，请输入密码", "Focused, enter your password"]).toContain(txt);
+    // No hint/blur overlays doubled on top.
+    expect(container.querySelectorAll(".hk-pwd-blur-hint").length).toBe(0);
+    expect(container.querySelectorAll(".hk-pwd-select-hint").length).toBe(0);
+  });
+
+  it("keeps the marquee overlay text in lockstep with the static layer on focus", async () => {
+    const { container, input } = mountPasswordInput("", {
+      placeholder: "输入密码",
+      placeholderVariant: "marquee",
+    });
+    input.focus();
+    await nextTick();
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    await nextTick();
+    const staticText = container.querySelector(".hk-pwd-placeholder-text")
+      ?.textContent;
+    const marqueeText = container
+      .querySelector(".hk-placeholder-marquee__copy")
+      ?.textContent;
+    // Both layers must carry the SAME resolved text (the focused prompt)
+    // so their visibility handshake never shows two different strings.
+    expect(staticText).toBeTruthy();
+    expect(marqueeText).toBe(staticText);
+  });
+});

@@ -2,6 +2,7 @@ import { computed, ref, watch } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
+import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
 import { getTimePeriod, DEFAULT_GEO_LOCATION, type TimePeriod } from "./useSolarTime";
 
@@ -92,7 +93,13 @@ function applyTheme() {
 
   const effectiveMode = resolveEffectiveMode(currentMode.value);
   const tokens = effectiveMode === "dark" ? preset.dark : preset.light;
-  const vars = tokensToCSSVars(tokens);
+  // Extension token groups always emit their cssvars: preset/custom-theme
+  // overrides win, registry defaults are the final fallback, so consumers
+  // can rely on `--<group>-<slot>` existing once the group is registered.
+  const groupVars = groupTokensToCSSVars(
+    resolveGroupTokens(effectiveMode, preset.groups?.[effectiveMode]),
+  );
+  const vars = tokensToCSSVars(tokens, groupVars);
 
   invalidateLuminanceCache();
 
@@ -109,6 +116,14 @@ function applyTheme() {
     transitionTimer = null;
   }, THEME_TRANSITION_DURATION);
 }
+
+// Late token-group registrations re-apply the current theme so their
+// cssvars land immediately (microtask-coalesced) instead of waiting for
+// the next theme/mode switch. The registry lives in tokenGroups.ts and
+// must not import this module (that would be a cycle), so it calls back
+// through this injected hook. Hikari wires it once on module load;
+// applications never call setTokenGroupsReapply themselves.
+setTokenGroupsReapply(() => applyTheme());
 
 function getAllThemePresets(): Record<string, ThemePreset> {
   const result: Record<string, ThemePreset> = { ...themePresets };

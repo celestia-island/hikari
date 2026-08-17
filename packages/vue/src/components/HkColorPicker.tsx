@@ -1,5 +1,6 @@
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineComponent, ref, type PropType } from "vue";
 
+import { clampRgbToBands, hueDelta, rgbToHsl, wrapHue, type HueClamp } from "../theme/tokenGroups";
 import HInput from "./HkInput";
 import HPopover from "./HkPopover";
 import "./HkColorPicker.scss";
@@ -108,6 +109,12 @@ export default defineComponent({
     g: { type: Number, required: true },
     b: { type: Number, required: true },
     label: { type: String, default: "" },
+    /** Optional physical-color clamp: hue locked to center±range (degrees, circular). */
+    hueClamp: { type: Object as PropType<HueClamp>, default: undefined },
+    /** Optional saturation safe band, 0–1. */
+    sRange: { type: Array as unknown as PropType<[number, number]>, default: undefined },
+    /** Optional lightness safe band, 0–1. */
+    lRange: { type: Array as unknown as PropType<[number, number]>, default: undefined },
   },
   emits: {
     change: (_rgb: { r: number; g: number; b: number }) => true,
@@ -119,21 +126,48 @@ export default defineComponent({
     const hex = computed(() => rgbToHex(props.r, props.g, props.b));
     const hexDisplay = computed(() => hex.value.replace(/^#/, ""));
 
+    // Defense in depth: every emitted value passes through the same band
+    // clamping the host applies on save.
+    function clampRGB(rgb: { r: number; g: number; b: number }) {
+      return clampRgbToBands(rgb, props.hueClamp, props.sRange, props.lRange);
+    }
+
     function updateChannel(ch: Channel, value: number) {
       const next = { r: props.r, g: props.g, b: props.b };
       next[ch] = clamp(value);
-      emit("change", next);
+      emit("change", clampRGB(next));
     }
 
     function onHexInput(v: string) {
       if (/^[0-9a-fA-F]{0,6}$/.test(v) && v.length === 6) {
-        emit("change", {
+        emit("change", clampRGB({
           r: parseInt(v.slice(0, 2), 16),
           g: parseInt(v.slice(2, 4), 16),
           b: parseInt(v.slice(4, 6), 16),
-        });
+        }));
       }
     }
+
+    // Visual affordance for the allowed hue band: a swatch strip of the
+    // permitted arc with the current color sitting at its position.
+    const hueBand = computed(() => {
+      const hc = props.hueClamp;
+      if (!hc || hc.range <= 0) return null;
+      const center = wrapHue(hc.center);
+      const from = center - hc.range;
+      const to = center + hc.range;
+      const gradient = `linear-gradient(to right, hsl(${from}, 70%, 50%), hsl(${center}, 70%, 50%), hsl(${to}, 70%, 50%))`;
+      const delta = Math.max(-hc.range, Math.min(hc.range, hueDelta(rgbToHsl({ r: props.r, g: props.g, b: props.b }).h, center)));
+      const pct = ((delta + hc.range) / (2 * hc.range)) * 100;
+      return { gradient, pct: Math.max(0, Math.min(100, pct)) };
+    });
+
+    const bandCaption = computed(() => {
+      const parts: string[] = [];
+      if (props.sRange) parts.push(`S ${Math.round(props.sRange[0] * 100)}–${Math.round(props.sRange[1] * 100)}%`);
+      if (props.lRange) parts.push(`L ${Math.round(props.lRange[0] * 100)}–${Math.round(props.lRange[1] * 100)}%`);
+      return parts.length > 0 ? parts.join(" · ") : null;
+    });
 
     return () => (
       <div class="hk-color-picker">
@@ -195,6 +229,30 @@ export default defineComponent({
                   }}
                 </HInput>
               </div>
+
+              {hueBand.value && (
+                <div class="hk-color-picker-band">
+                  <div
+                    class="hk-color-picker-hue-band"
+                    style={{ background: hueBand.value.gradient }}
+                  >
+                    <div
+                      class="hk-color-picker-hue-band-thumb"
+                      style={{ left: `${hueBand.value.pct}%`, background: hex.value }}
+                    />
+                  </div>
+                  {bandCaption.value && (
+                    <div class="hk-color-picker-band-caption">
+                      {bandCaption.value}
+                    </div>
+                  )}
+                </div>
+              )}
+              {!hueBand.value && bandCaption.value && (
+                <div class="hk-color-picker-band-caption">
+                  {bandCaption.value}
+                </div>
+              )}
             </div>
           </div>
         </HPopover>

@@ -198,9 +198,35 @@ fn compile_scss_bundle(workspace_root: &Path) -> anyhow::Result<()> {
     // through tairitsu-packager, which dragged in the whole WASM toolchain
     // (wasmtime) for icon-only consumers like hikari-icons; grass is a pure-Rust
     // Sass compiler and is all this build step needs.
+    // Component SCSS references theme partials with bare load-path imports
+    // (`@use 'variables'`), which resolve in both layouts: monorepo
+    // (`packages/theme/styles`) and crates.io (sibling `hikari-theme-*`
+    // under the same registry index).
+    let mut load_paths: Vec<std::path::PathBuf> = Vec::new();
+    let theme_styles = workspace_root.join("packages/theme/styles");
+    if theme_styles.is_dir() {
+        load_paths.push(theme_styles);
+    }
+    if let Some(parent) = workspace_root.parent() {
+        // crates.io: workspace_root here is the extracted crate root; theme
+        // styles live in a sibling `hikari-theme-<ver>` directory.
+        if let Ok(entries) = fs::read_dir(parent) {
+            for entry in entries.flatten() {
+                let name = entry.file_name().to_string_lossy().into_owned();
+                if name.starts_with("hikari-theme-") {
+                    let styles = entry.path().join("styles");
+                    if styles.is_dir() {
+                        load_paths.push(styles);
+                        break;
+                    }
+                }
+            }
+        }
+    }
     let opts = grass::Options::default()
         .style(grass::OutputStyle::Compressed)
-        .input_syntax(grass::InputSyntax::Scss);
+        .input_syntax(grass::InputSyntax::Scss)
+        .load_paths(&load_paths);
     let css_content = grass::from_path(&index_scss, &opts)
         .map_err(|e| anyhow::anyhow!("Failed to compile SCSS {:?}: {}", index_scss, e))?;
 

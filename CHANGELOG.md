@@ -24,7 +24,20 @@ hikari currently carries two version lines, plus one stale tag:
 
 ## [Unreleased]
 
-Current master, Rust workspace `0.3.19`.
+Current master, Rust workspace `0.3.20`.
+
+### Fixed (0.3.20)
+
+- Fix component SCSS imports for crates.io consumption: all 39 component
+  stylesheets referenced theme partials with relative URLs
+  (`@use '../../../../theme/styles/variables'`), which only resolve inside
+  the monorepo layout. Published crates resolve them to a nonexistent
+  `theme/styles` sibling and grass compiles every `styles()` call to a
+  `/* CSS generation failed */` comment — downstream SSR (lagrange docs
+  sites) shipped with all `hi-*` component styles missing. Imports are now
+  bare (`@use 'variables'`), resolved through grass load paths in both
+  layouts; `hikari-builder`'s bundle build script gained the same theme
+  load-path discovery.
 
 ### Added
 

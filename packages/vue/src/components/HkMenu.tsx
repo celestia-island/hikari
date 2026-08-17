@@ -112,7 +112,8 @@ export default defineComponent({
       // coalesced (happy-dom) or racy (browsers), go(-n) cannot. Depth is
       // only trusted while our entry is still current — a foreign pushState
       // while open (router navigation, another component) invalidates the
-      // count, so fall back to a marker-seek replace instead of guessing.
+      // count, so release ownership by de-marking the current entry instead
+      // of traversing a count we can no longer trust.
       if (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
         suppressPop++;
         window.history.go(-pushedDepth);
@@ -260,8 +261,6 @@ export default defineComponent({
       }
       return list;
     });
-
-    const currentLevel = computed(() => desktopPath.value.length);
 
     // ── desktop popover geometry ────────────────────────────────────
     const panelStyle = ref<Record<string, string>>({ width: "224px" });

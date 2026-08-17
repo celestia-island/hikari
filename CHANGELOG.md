@@ -41,6 +41,17 @@ Current master, Rust workspace `0.3.20`.
 
 ### Added
 
+- Align the admin tokens with shittim-chest's advanced status-bar
+  rules: hover wash never applies to the active popup-menu item
+  (`:not([data-active])`), the center strip is shrink-flex (wide tab
+  strips hand overflow to the HTabs scroller instead of a 45% cap with
+  raw overflow-x), the version tag renders as a two-column grid with a
+  compact dot-only variant, and the system tray centers with a calmer
+  gap. Consumers on both sides now read one stylesheet.
+- `HkAdminShell.mobileBreakpoint` is wired: the desktop takeover width
+  follows the prop (default 1024, the shared lg breakpoint) instead of
+  silently ignoring it.
+
 - Generalize the admin shell/header with the specializations proven in
   shittim-chest's plana-legacy fork: `HkAdminShell` gains an
   `onOpenDrawer` header-slot prop (a header trigger such as the avatar

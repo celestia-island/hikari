@@ -1,4 +1,4 @@
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
 import { HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { provideActionBar } from "../composables/useActionBar";
 
@@ -7,11 +7,11 @@ export const HkAdminShell = defineComponent({
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
-    // NOTE: not yet wired — the desktop/mobile split currently follows
-    // useBreakpoint()'s shared 1024px threshold regardless of this value.
-    // Kept for API compatibility; wiring it needs a threshold param on
-    // useBreakpoint (follow-up).
-    mobileBreakpoint: { type: Number, default: 768 },
+    /** Viewport width at which the desktop layout takes over (below it
+     *  the nav collapses into the mobile drawer). Defaults to the shared
+     *  1024px "lg" breakpoint; lower it (e.g. 768) for tablet-friendly
+     *  admins that keep the sidebar at md widths. */
+    mobileBreakpoint: { type: Number, default: 1024 },
     footerHeight: { type: String, default: "var(--s-footer-height)" },
     navTitle: { type: String, default: "Navigation" },
     /** Extra class for the mobile nav drawer's panel — lets consumers zero
@@ -24,7 +24,8 @@ export const HkAdminShell = defineComponent({
     contentPadding: { type: String, default: "1.5rem" },
   },
   setup(props, { slots }) {
-    const { isDesktop } = useBreakpoint();
+    const { width: viewportWidth } = useBreakpoint();
+    const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
 
     const actionBar = provideActionBar();

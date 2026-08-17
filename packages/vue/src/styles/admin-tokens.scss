@@ -120,7 +120,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  /* Shrinkable with a floor so a wide tab strip hands its overflow to
+     the HTabs scroller (scrollable mode) instead of pushing the footer
+     past the viewport. No effect while the strip fits. */
+  flex-shrink: 1;
+  min-width: 0;
 
   .s-tabs,
   .hk-tabs {
@@ -137,11 +141,13 @@
 .s-status-bar-tag {
   display: inline-flex;
   align-items: center;
-  /* min-height + auto so the pill can grow a second line when the version
-     pair wraps on narrow screens instead of clipping/overlapping text. */
+  /* min-height + auto so the pill can grow with the stacked two-row
+     version block instead of clipping/overlapping text. */
   min-height: 24px;
   height: auto;
-  gap: 5px;
+  /* The version block stacks two rows tall, so the small status dot
+     needs more than the old 5px to read as separated from the text. */
+  gap: 10px;
   padding: 3px 8px;
   border-radius: var(--radius-md);
   font-size: var(--text-2xs);
@@ -162,9 +168,9 @@
   /* Match the value's opacity: a faded label next to the version value
      reads as a different typeface/weight, especially with CJK fallback. */
   opacity: 0.85;
-  /* CJK flex items have a one-character min-content — without nowrap the
-     label stacks vertically when the status tag is squeezed. Keep the
-     label on one line and let only the version pair wrap. */
+  /* CJK flex/grid items have a one-character min-content — without nowrap
+     the label ("面板") stacks vertically when the status tag is squeezed.
+     Keep the label on one line. */
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -173,12 +179,40 @@
   font-family: var(--font-mono);
   color: rgb(var(--color-text));
   opacity: 0.85;
-  /* Version parts wrap as whole tokens: wide = one line, narrow = the
-     engine version moves to its own line. */
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--space-4);
+  /* Version block as a two-column grid: row 1 = panel label + version,
+     row 2 = engine label + version. Labels form one left-aligned column
+     and values another, so the two rows share a true left edge — no
+     separator, no wrap-dependent layout. */
+  display: inline-grid;
+  grid-auto-flow: row;
+  grid-template-columns: auto auto;
+  column-gap: 5px;
+  row-gap: 2px;
+  align-items: baseline;
+  justify-items: start;
+  line-height: 1.25;
+}
+
+.s-status-bar-tag-value .s-status-bar-tag-label {
+  color: rgb(var(--color-muted));
+  opacity: 1;
+}
+
+.s-status-bar-version {
+  white-space: nowrap;
+}
+
+/* Compact traffic light (logged-in mobile footers): drop the version
+   rows, keep a finger-sized dot-only pill. Versions stay reachable
+   through the hover/tap popover and the aria label. */
+.s-status-bar-tag[data-compact] {
+  gap: 0;
+  padding: 8px;
+  min-height: 28px;
+
+  .s-status-bar-tag-value {
+    display: none;
+  }
 }
 
 .s-status-bar-version,
@@ -253,24 +287,26 @@
 /* ── Mobile responsive ── */
 @media (max-width: 767px) {
   .s-status-bar {
-    padding: 0 var(--space-6);
+    /* Keep a visible margin at both ends on phones: 6px read as flush
+       against the screen edge, especially for the right-side tray. */
+    padding: 0 var(--space-12);
   }
 
+  /* Shrink-flex layout: the center tab strip owns the flexible space and
+     hands its overflow via the HTabs scroller — no more 45% cap + raw
+     overflow-x on this wrapper. */
   .s-status-bar-left {
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
   }
 
   .s-status-bar-center {
-    flex-shrink: 0;
-    max-width: 45%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .s-status-bar-right {
-    flex-shrink: 0;
+    flex: 0 0 auto;
   }
 
   .s-status-bar-gamepad {
@@ -312,7 +348,9 @@
   border-radius: var(--radius-sm);
 }
 
-.s-popup-menu-item:hover {
+/* Hover = background wash only, never on the active item (active >
+   hover precedence — hue and font-weight never change on hover). */
+.s-popup-menu-item:hover:not([data-active]) {
   background: var(--c-primary-subtle);
 }
 
@@ -407,9 +445,9 @@
 .s-status-bar-system-tray {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: var(--space-4, 4px);
 }
 
 .s-status-bar-gamepad {

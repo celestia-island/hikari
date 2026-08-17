@@ -135,6 +135,11 @@ describe("HkAdminHeader", () => {
     expect(withoutTitle.querySelector("h2")).toBeNull();
   });
 
+  it("renders no emergency-stop control by default", () => {
+    const c = mount(headerNode({ username: "alice" }));
+    expect(c.textContent.toLowerCase()).not.toContain("emergency");
+  });
+
   it("passes the locale trigger ref OBJECT through the slot so the picker anchors to the button", async () => {
     let captured: unknown = null;
     const c = mount(headerNode(

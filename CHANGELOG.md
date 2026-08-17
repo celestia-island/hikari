@@ -15,7 +15,7 @@ hikari currently carries two version lines, plus one stale tag:
   `v0.3.0`–`v0.3.2` and `v0.3.4` were published to crates.io without git
   tags, and `v0.3.15`–`v0.3.19` are unpublished master changes.
 - **Vue port (`@celestia-island/hikari`)** — the `0.4.x` line. The npm
-  package is at `0.4.18` on master but has **never been published** to npm;
+  package is at `0.4.19` on master but has **never been published** to npm;
   publication is pending (A3).
 - **Tag `v0.4.0` is a stale tag.** It was created on an early Vue-port
   commit (2026-07-21) before the npm package version line was established,
@@ -40,6 +40,17 @@ Current master, Rust workspace `0.3.20`.
   load-path discovery.
 
 ### Added
+
+- Align the admin tokens with shittim-chest's advanced status-bar
+  rules: hover wash never applies to the active popup-menu item
+  (`:not([data-active])`), the center strip is shrink-flex (wide tab
+  strips hand overflow to the HTabs scroller instead of a 45% cap with
+  raw overflow-x), the version tag renders as a two-column grid with a
+  compact dot-only variant, and the system tray centers with a calmer
+  gap. Consumers on both sides now read one stylesheet.
+- `HkAdminShell.mobileBreakpoint` is wired: the desktop takeover width
+  follows the prop (default 1024, the shared lg breakpoint) instead of
+  silently ignoring it.
 
 - Generalize the admin shell/header with the specializations proven in
   shittim-chest's plana-legacy fork: `HkAdminShell` gains an

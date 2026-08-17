@@ -13,6 +13,8 @@ import {
 
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
+import "./HkMenu.scss";
+
 /**
  * Generic cascading menu.
  *

@@ -117,4 +117,38 @@ describe("HkSignInCard", () => {
     const img = c.querySelector(".s-auth-header img") as HTMLImageElement;
     expect(img.getAttribute("src")).toBe("/logo.webp");
   });
+
+  it("renders top slot content above the form but outside it", () => {
+    const c = mount(
+      h(HkSignInCard, { title: "T" }, { top: () => h("div", { id: "top-slot" }, "tabs") }),
+    );
+    const top = c.querySelector("#top-slot") as HTMLElement;
+    expect(top).toBeTruthy();
+    // The top slot must not be inside the <form> — tab clicks must never
+    // trigger a submit.
+    expect(top.closest("form")).toBeNull();
+    // And it sits above the credential fields.
+    const form = c.querySelector("form") as HTMLElement;
+    expect(
+      top.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("overrides the username type and placeholder", () => {
+    const c = mount(
+      h(HkSignInCard, {
+        title: "T",
+        usernameType: "email",
+        usernamePlaceholder: "name@example.com",
+      }),
+    );
+    const field = usernameField(c);
+    expect(field.getAttribute("type")).toBe("email");
+    expect(field.getAttribute("placeholder")).toBe("name@example.com");
+  });
+
+  it("keeps the locale username placeholder by default", () => {
+    const c = mount(h(HkSignInCard, { title: "T" }));
+    expect(usernameField(c).getAttribute("placeholder")).toBeTruthy();
+  });
 });

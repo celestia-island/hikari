@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "Introduzca la contraseña",
     "hikari::passwordInput.placeholderConfirm": "Confirme la contraseña",
     "hikari::passwordInput.focusedPlaceholder": "Enfocado, introduzca su contraseña",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "Enfocado, escribir borrará la contraseña actual"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Enfocado, escribir borrará la contraseña actual",
+    "hikari::signIn.usernamePlaceholder": "Usuario",
+    "hikari::signIn.passwordPlaceholder": "Contraseña",
+    "hikari::signIn.submit": "Iniciar sesión"
   }
 }

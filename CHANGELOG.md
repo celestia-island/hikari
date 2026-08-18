@@ -41,6 +41,18 @@ Current master, Rust workspace `0.3.20`.
 
 ### Added
 
+- Move the legacy theme's global reset out of the `:root` token block
+  and pin its specificity at zero with `:where(*)`. Nested inside
+  `:root`, the reset compiled to `:root *` — class-level specificity
+  that silently overrode equal-specificity component rules loaded later
+  in the cascade (e.g. `.hk-toast-item` padding zeroed in consumers who
+  bundle the styles index). Top-level `:where()` keeps the reset as a
+  default while letting every component rule win.
+- Hoist the base `html`/`body`/typography/form element rules out of the
+  same `:root` block — they compiled to `:root <element>` (class-level
+  specificity) and overrode component rules the same way; at top level
+  they carry element specificity, so consumer component rules win.
+
 - Align the admin tokens with shittim-chest's advanced status-bar
   rules: hover wash never applies to the active popup-menu item
   (`:not([data-active])`), the center strip is shrink-flex (wide tab

@@ -178,6 +178,17 @@ Current master, Rust workspace `0.3.20`.
 
 - Remove dead HAuthCard and stale HkStatusBar references. (#88)
 
+## [v0.4.20] - 2026-08-18
+
+### ✨ New
+
+- **HSignInCard** — the shared controlled credential form composing the auth
+  kit (HkAuthCard shell + HkInput with user-icon prefix + HkPasswordInput
+  with the full hint surface from hikari's own i18n + block HkAuthSubmitButton).
+  Fields live inside the card; consumers inject 
+  and feed back .  locale keys ship for all 11
+  languages.
+
 ## [v0.4.18] - 2026-08-17
 
 ### Added

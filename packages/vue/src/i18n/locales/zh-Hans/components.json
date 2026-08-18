@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "输入密码",
     "hikari::passwordInput.placeholderConfirm": "确认密码",
     "hikari::passwordInput.focusedPlaceholder": "已聚焦，请输入密码",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "已聚焦，继续输入将清空原密码"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "已聚焦，继续输入将清空原密码",
+    "hikari::signIn.usernamePlaceholder": "用户名",
+    "hikari::signIn.passwordPlaceholder": "密码",
+    "hikari::signIn.submit": "登录"
   }
 }

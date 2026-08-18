@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "Passwort eingeben",
     "hikari::passwordInput.placeholderConfirm": "Passwort bestätigen",
     "hikari::passwordInput.focusedPlaceholder": "Fokussiert, Passwort eingeben",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "Fokussiert, weitere Eingaben löschen das bisherige Passwort"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Fokussiert, weitere Eingaben löschen das bisherige Passwort",
+    "hikari::signIn.usernamePlaceholder": "Benutzername",
+    "hikari::signIn.passwordPlaceholder": "Passwort",
+    "hikari::signIn.submit": "Anmelden"
   }
 }

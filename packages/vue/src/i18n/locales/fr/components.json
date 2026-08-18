@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "Saisissez le mot de passe",
     "hikari::passwordInput.placeholderConfirm": "Confirmez le mot de passe",
     "hikari::passwordInput.focusedPlaceholder": "Champ actif, saisissez votre mot de passe",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "Champ actif, la saisie effacera le mot de passe actuel"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "Champ actif, la saisie effacera le mot de passe actuel",
+    "hikari::signIn.usernamePlaceholder": "Nom d'utilisateur",
+    "hikari::signIn.passwordPlaceholder": "Mot de passe",
+    "hikari::signIn.submit": "Se connecter"
   }
 }

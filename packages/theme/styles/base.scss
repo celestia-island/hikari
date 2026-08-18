@@ -263,14 +263,12 @@
 // ------
 // 全局重置
 // ------
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+// `:where()` keeps the specificity at ZERO: consumers bundle this file
+// through the styles index, and minifiers may rewrite the bare `*`
+// selectors into `:root *` (specificity of a class), which then silently
+// overrides equal-specificity component rules that load later in the
+// cascade (e.g. `.hk-toast-item` padding). Zero specificity means the
+// reset still applies as a default, but ANY component rule wins.
 
 html {
     font-size: 16px;
@@ -390,6 +388,24 @@ textarea {
     min-height: 80px;
     resize: vertical;
 }
+}
+// ------
+// 全局重置
+// ------
+// TOP-LEVEL, OUTSIDE `:root`: the legacy theme wraps its tokens in
+// `:root`, and a reset nested there compiles to `:root *` — class-level
+// specificity that silently overrides equal-specificity component rules
+// loaded later in the cascade (e.g. `.hk-toast-item` padding after the
+// consumer minifier rewrites `*` into `:root *`). `:where()` pins the
+// specificity at ZERO: the reset stays a default, and every component
+// rule wins over it.
+:where(*),
+
+:where(*::before),
+:where(*::after) {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 // ------

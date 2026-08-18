@@ -85,7 +85,3 @@ registerCssAnimation("hk-progress-indeterminate", { infinite: true });
 registerCssAnimation("hk-pwd-flash");
 // components/HkPasswordInput.scss — breathing hint glow (loops forever).
 registerCssAnimation("hk-pwd-breathe", { infinite: true });
-// components/HkCountdownDigit.tsx — flip digit out (plays once, both).
-registerCssAnimation("plana-flip-out");
-// components/HkCountdownDigit.tsx — flip digit in (plays once, both).
-registerCssAnimation("plana-flip-in");

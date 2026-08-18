@@ -193,8 +193,6 @@ export { deepMerge, isPlainObject, getPath, setPath, delPath } from "./utils/obj
 export { HkAdminShell as HAdminShell } from "./components/HkAdminShell";
 export { HkAdminHeader as HAdminHeader } from "./components/HkAdminHeader";
 export { HkNavSidebar as HNavSidebar } from "./components/HkNavSidebar";
-export { HkConnectionStatus as HConnectionStatus } from "./components/HkConnectionStatus";
-export type { HBackendStatus } from "./components/HkConnectionStatus";
 export { HkThemeToggle as HThemeToggle } from "./components/HkThemeToggle";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";

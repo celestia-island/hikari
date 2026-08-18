@@ -292,32 +292,21 @@
     padding: 0 var(--space-12);
   }
 
-  /* Balanced-wing layout: both side wings grow from the SAME basis so the
-     center tab strip stays pinned to the true viewport middle regardless of
-     how wide the left connection tag or the right tray grows. The previous
-     shrink-flex split (left 0 1 auto / center 1 1 auto / right 0 0 auto)
-     centered the strip inside the leftover space, which shifted it sideways
-     whenever the wings were unequal (compact left vs time-right on phones
-     pushed the tab group off-centre). Wings now shrink symmetrically; the
-     center strip keeps its natural width and hands overflow to the HTabs
-     scroller when the strip alone would exceed the wings. */
-  .s-status-bar-left,
-  .s-status-bar-right {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
+  /* Shrink-flex layout: the center tab strip owns the flexible space and
+     hands its overflow via the HTabs scroller — no more 45% cap + raw
+     overflow-x on this wrapper. */
   .s-status-bar-left {
-    justify-content: flex-start;
-  }
-
-  .s-status-bar-right {
-    justify-content: flex-end;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   .s-status-bar-center {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .s-status-bar-right {
+    flex: 0 0 auto;
   }
 
   .s-status-bar-gamepad {

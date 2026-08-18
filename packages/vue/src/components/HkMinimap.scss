@@ -11,10 +11,6 @@
   cursor: pointer;
   overflow: hidden;
   pointer-events: auto;
-  /* The minimap owns its own drag gestures — the surrounding pannable
-     surface must never claim them (mobile browsers would otherwise fire
-     pointercancel and kill the drag). */
-  touch-action: none;
 
   &:hover {
     border-color: rgb(var(--color-primary) / 0.3);

@@ -16,6 +16,7 @@
 // ------
 
 :root {
+
     // 默认浅色主题（作为 fallback）
     --hi-color-background: #D6ECF0;  // 月白
     --hi-color-surface: #F0F4F8;  // 更亮的白色
@@ -258,18 +259,6 @@
     --hi-shadow-lg: 0 10px 15px -3px var(--hi-color-black-10);
     --hi-shadow-xl: 0 20px 25px -5px var(--hi-color-black-10);
 
-
-
-// ------
-// 全局重置
-// ------
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
 html {
@@ -343,7 +332,6 @@ a {
     }
 }
 
-
 code {
     font-family: $hikari-font-family-mono;
     font-size: 0.9em;
@@ -390,6 +378,14 @@ textarea {
     min-height: 80px;
     resize: vertical;
 }
+
+:where(*),
+
+:where(*::before),
+:where(*::after) {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 // ------
@@ -426,7 +422,6 @@ textarea {
         --hi-card-bg-light: rgba(0, 0, 0, 0.95);
     }
 }
-
 
 select {
     appearance: none;

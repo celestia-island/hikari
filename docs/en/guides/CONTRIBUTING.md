@@ -372,7 +372,6 @@ Examples should be:
 3. **Documentation**:
    - Update relevant README files
    - Add/update code documentation
-   - Update CHANGELOG if applicable
 
 ### Creating a Pull Request
 

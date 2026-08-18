@@ -305,9 +305,18 @@ export default defineComponent({
         return <div class="hk-modal-footer">{slots.footer()}</div>;
       }
       if (props.footerActions && props.footerActions.length > 0) {
+        // Per shell UX policy every modal closes via the header X, so
+        // drop caller-provided dismiss actions (Cancel/Close across the
+        // supported locales) instead of rendering a second way out.
+        const CANCEL_LABEL_RE =
+          /^(cancel|close|取消|关闭|キャンセル|閉じる|취소|닫기|abbrechen|schließen|annuler|fermer|cancelar|cerrar|отмена|закрыть|fechar|cancelar)$/i;
+        const actions = props.footerActions.filter(
+          (a) => !CANCEL_LABEL_RE.test(String(a.label ?? "").trim()),
+        );
+        if (actions.length === 0) return null;
         return (
           <div class="hk-modal-footer">
-            {props.footerActions.map((action, i) => (
+            {actions.map((action, i) => (
               <HButton
                 key={i}
                 variant={action.variant ?? "secondary"}

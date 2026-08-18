@@ -68,29 +68,6 @@
   flex-direction: column;
 }
 
-// Mobile / narrow viewports: modals dock to the bottom edge as a sheet.
-// The top of the screen is crowded (breadcrumb overlays from nested
-// flows hover there), and a centered/top sheet wastes the natural thumb
-// zone. The transition transform still animates; the sheet rises from
-// the bottom via the existing height/opacity reveal.
-@media (max-width: 640px) {
-  .hk-modal-content {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(100vh - 2rem);
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-      var(--hk-modal-radius, var(--hi-radius-lg, 12px)) 0 0;
-  }
-}
-
 // ------
 // Content enter/leave transitions
 //
@@ -309,24 +286,18 @@
 }
 
 // ------
-// Responsive — bottom sheet on narrow viewports
+// Responsive — full-screen on narrow viewports
 // ------
 
 @media (max-width: 640px) {
   .hk-modal-content {
     max-width: 100% !important;
-    max-height: calc(100dvh - 2rem);
-    top: auto;
-    bottom: 0;
+    border-radius: 0;
+    max-height: 100vh;
+    top: 0;
     left: 0;
-    right: 0;
     transform: none;
     width: 100%;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-      var(--hk-modal-radius, var(--hi-radius-lg, 12px)) 0 0;
   }
 
   .hk-modal-header {

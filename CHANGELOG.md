@@ -190,6 +190,22 @@ Current master, Rust workspace `0.3.20`.
 
 - Remove dead HAuthCard and stale HkStatusBar references. (#88)
 
+## [v0.4.22] - 2026-08-18
+
+### 🐛 Fixed
+
+- **Tabs pill slider restored on bundle consumers** — the legacy
+  components stylesheet (re-exported through the Vue styles index and
+  bundled by shittim-chest via plana-legacy tokens.scss) still carried a
+  dead `.hk-tabs-indicator` block: a 3px neon underline plus
+  `.hk-tabs-top/bottom/left/right .hk-tabs-indicator` variant overrides.
+  No Rust component ever renders that class (the Rust Tabs emits
+  `.hk-tabs-ink-bar`), but the variant rules' specificity beat the Vue
+  HkTabs pill chunk and squashed the login/status-bar tab slider into a
+  3px strip on dev.celestia.world and demo. All indicator rules are now
+  removed from the legacy stylesheet; the Vue HkTabs.scss is the single
+  authority for `.hk-tabs-indicator`.
+
 ## [v0.4.21] - 2026-08-18
 
 ### ✨ New

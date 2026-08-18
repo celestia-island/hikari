@@ -212,34 +212,17 @@
 // Glowing Indicator (for active tab)
 // ------
 
-.hk-tabs-indicator {
-  // Layout
-  position: absolute;
-  bottom: 0;
-  left: 0;
-
-  // Appearance
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--hi-color-primary) 0%,
-    var(--hi-primary) 50%,
-    var(--hi-color-primary) 100%
-  );
-
-  // Glow effect
-  box-shadow:
-    0 0 8px var(--hi-color-primary),
-    0 0 16px var(--hi-primary);
-
-  // Transitions - smooth sliding animation
-  // DISABLED - migrated to JS animation
-
-  // transition: all vars.$hikari-duration-normal vars.$hikari-ease-smooth;
-
-  // Border radius
-  border-radius: 2px 2px 0 0;
-}
+// REMOVED (.hk-tabs-indicator rules): the Rust Tabs renders the sliding
+// element as `.hk-tabs-ink-bar`, so no Rust markup ever emitted
+// `.hk-tabs-indicator` — the block was dead weight here. Worse, the Vue
+// port's HkTabs (the pill design, own HkTabs.scss chunk) DOES use this
+// class, and consumers that bundle this stylesheet through the vue styles
+// index (shittim-chest via plana-legacy tokens.scss) got both: the pill
+// from the component chunk plus this 3px neon strip and its
+// `.hk-tabs-top/bottom/left/right .hk-tabs-indicator` variant overrides
+// (higher specificity) — which beat the pill and broke the slider. The
+// authoritative `.hk-tabs-indicator` styling lives in the Vue
+// HkTabs.scss only.
 
 // ------
 // Tabs Content
@@ -298,11 +281,6 @@
   .hk-tabs-header {
     border-bottom: 1px solid var(--hi-color-border);
   }
-
-  .hk-tabs-indicator {
-    bottom: 0;
-    border-radius: 2px 2px 0 0;
-  }
 }
 
 // Bottom
@@ -312,12 +290,6 @@
   .hk-tabs-header {
     border-top: 1px solid var(--hi-color-border);
     border-bottom: none;
-  }
-
-  .hk-tabs-indicator {
-    top: 0;
-    bottom: auto;
-    border-radius: 0 0 2px 2px;
   }
 }
 
@@ -341,15 +313,6 @@
     width: 100%;
     justify-content: flex-start;
   }
-
-  .hk-tabs-indicator {
-    top: 0;
-    left: 0;
-    right: auto;
-    width: 3px;
-    height: auto;
-    border-radius: 0 2px 2px 0;
-  }
 }
 
 // Right
@@ -371,15 +334,6 @@
   .hk-tab {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .hk-tabs-indicator {
-    top: 0;
-    right: 0;
-    left: auto;
-    width: 3px;
-    height: auto;
-    border-radius: 2px 0 0 2px;
   }
 }
 
@@ -467,10 +421,6 @@
         0 0 12px var(--hi-primary),
         inset 0 0 8px var(--hi-white-10, rgba(255, 255, 255, 0.1));
     }
-  }
-
-  .hk-tabs-indicator {
-    display: none;
   }
 }
 

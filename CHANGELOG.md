@@ -190,6 +190,17 @@ Current master, Rust workspace `0.3.20`.
 
 - Remove dead HAuthCard and stale HkStatusBar references. (#88)
 
+## [v0.4.21] - 2026-08-18
+
+### ✨ New
+
+- **HSignInCard** extension points for flows beyond plain username+password:
+  `top` slot (content between the card header and the credential form,
+  rendered outside the `<form>` so channel-tab clicks never submit), plus
+  `usernamePlaceholder` / `usernameType` props for email-identifier logins
+  (placeholder falls back to the `hikari::signIn.usernamePlaceholder`
+  locale). Backward compatible; erp usage unchanged.
+
 ## [v0.4.20] - 2026-08-18
 
 ### ✨ New

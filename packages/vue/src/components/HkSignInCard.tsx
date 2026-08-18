@@ -21,6 +21,16 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
  * own login API (erp `meLogin`, chest's auth, …) while the visual language
  * stays identical everywhere.
  *
+ * Extension points for flows that outgrow plain username+password:
+ * - `top` slot — content between the card header and the credential form
+ *   (channel tabs, SSO buttons, …). Rendered outside the `<form>` so tab
+ *   clicks never trigger a submit.
+ * - `usernamePlaceholder` / `usernameType` — override the username field
+ *   (e.g. email-identifier logins); the placeholder falls back to the
+ *   `hikari::signIn.usernamePlaceholder` locale when unset.
+ * - `footer` slot — content below the submit button (remember-me,
+ *   protocol links, …).
+ *
  * ```tsx
  * <HSignInCard
  *   title="Sign in"
@@ -47,6 +57,10 @@ export const HkSignInCard = defineComponent({
     passwordAutocomplete: { type: String, default: "current-password" },
     /** Submit label; defaults to the hikari::signIn.submit locale. */
     submitLabel: { type: String, default: undefined },
+    /** Username-field type; switch to "email" for identifier logins. */
+    usernameType: { type: String, default: "text" },
+    /** Username placeholder; defaults to the hikari::signIn locale. */
+    usernamePlaceholder: { type: String, default: undefined },
   },
   emits: {
     /** Fired on explicit click or Enter; never with empty fields or while busy. */
@@ -74,17 +88,22 @@ export const HkSignInCard = defineComponent({
               <img class="hk-logo-img" src={props.logoSrc} alt="" style={{ width: "3.5rem", height: "3.5rem" }} />
             ) : null,
           default: () => (
-            <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
-              <HkInput
-                modelValue={username.value}
-                onUpdate:modelValue={(v: string) => (username.value = v)}
-                type="text"
-                name="signin-username"
-                autocomplete={props.usernameAutocomplete}
-                placeholder={t("hikari::signIn.usernamePlaceholder", "Username")}
-                disabled={props.loading || props.disabled}
-                submitOnEnter={attemptSubmit}
-              >
+            <>
+              {slots.top?.()}
+              <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
+                <HkInput
+                  modelValue={username.value}
+                  onUpdate:modelValue={(v: string) => (username.value = v)}
+                  type={props.usernameType}
+                  name="signin-username"
+                  autocomplete={props.usernameAutocomplete}
+                  placeholder={
+                    props.usernamePlaceholder ??
+                    t("hikari::signIn.usernamePlaceholder", "Username")
+                  }
+                  disabled={props.loading || props.disabled}
+                  submitOnEnter={attemptSubmit}
+                >
                 {{
                   prefixIcon: () =>
                     slots.usernameIcon ? (
@@ -125,7 +144,8 @@ export const HkSignInCard = defineComponent({
                 disabled={props.disabled || !username.value.trim() || !password.value}
                 doSubmit={() => Promise.resolve(attemptSubmit())}
               />
-            </form>
+              </form>
+            </>
           ),
           footer: () => slots.footer?.(),
         }}

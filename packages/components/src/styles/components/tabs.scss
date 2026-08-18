@@ -68,6 +68,9 @@
 
   // Min width for scroll support
   min-width: max-content;
+
+  // Positioning context for the sliding ink bar.
+  position: relative;
 }
 
 // ------
@@ -212,17 +215,38 @@
 // Glowing Indicator (for active tab)
 // ------
 
-// REMOVED (.hk-tabs-indicator rules): the Rust Tabs renders the sliding
-// element as `.hk-tabs-ink-bar`, so no Rust markup ever emitted
-// `.hk-tabs-indicator` — the block was dead weight here. Worse, the Vue
-// port's HkTabs (the pill design, own HkTabs.scss chunk) DOES use this
-// class, and consumers that bundle this stylesheet through the vue styles
-// index (shittim-chest via plana-legacy tokens.scss) got both: the pill
-// from the component chunk plus this 3px neon strip and its
-// `.hk-tabs-top/bottom/left/right .hk-tabs-indicator` variant overrides
-// (higher specificity) — which beat the pill and broke the slider. The
-// authoritative `.hk-tabs-indicator` styling lives in the Vue
-// HkTabs.scss only.
+// The Rust Tabs renders its sliding element as `.hk-tabs-ink-bar`. The
+// original neon-slider styling below was authored for a class name that no
+// Rust markup ever emitted (`.hk-tabs-indicator`) — a naming mismatch that
+// left the Rust-side slider unstyled while the dead rules leaked into Vue
+// consumers and squashed the HkTabs pill (fixed in #214). The rules now
+// target the element the component actually renders, restoring the slider
+// this block was always meant to provide. The Vue HkTabs.scss remains the
+// single authority for `.hk-tabs-indicator`.
+
+.hk-tabs-ink-bar {
+  // Layout
+  position: absolute;
+  bottom: 0;
+  left: 0;
+
+  // Appearance
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--hi-color-primary) 0%,
+    var(--hi-primary) 50%,
+    var(--hi-color-primary) 100%
+  );
+
+  // Glow effect
+  box-shadow:
+    0 0 8px var(--hi-color-primary),
+    0 0 16px var(--hi-primary);
+
+  // Border radius
+  border-radius: 2px 2px 0 0;
+}
 
 // ------
 // Tabs Content

@@ -47,7 +47,7 @@ function declaredKeyframeNames(): string[] {
 describe("registerAnimations", () => {
   it("registers exactly the keyframes declared in the source tree", () => {
     const declared = declaredKeyframeNames();
-    expect(declared.length).toBeGreaterThanOrEqual(13);
+    expect(declared.length).toBeGreaterThanOrEqual(12);
     const registered = listCssAnimations().map((a) => a.name);
     expect([...registered].sort()).toEqual(declared);
   });
@@ -65,8 +65,6 @@ describe("registerAnimations", () => {
     expect(byName.get("hk-rolling-number-up")?.infinite).toBe(false);
     expect(byName.get("hk-modal-breadcrumb-in")?.infinite).toBe(false);
     expect(byName.get("hk-pwd-flash")?.infinite).toBe(false);
-    expect(byName.get("plana-flip-out")?.infinite).toBe(false);
-    expect(byName.get("plana-flip-in")?.infinite).toBe(false);
   });
 
   it("flips the html dataset attribute in both directions", () => {

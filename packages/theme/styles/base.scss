@@ -318,9 +318,11 @@ h6 {
     font-size: $hikari-font-size-sm;
 }
 
-p, span, div, label {
-    color: var(--hi-color-text-primary);
-}
+/* NOTE: no element-level color reset here. body already sets
+   --hi-color-text-primary and inheritance flows down; resetting the
+   color on every p/span/div/label broke components that set a color on
+   a parent expecting children to inherit it (e.g. toast variants with
+   white text on colored backgrounds rendered dark-on-green). */
 
 a {
     color: var(--hi-color-text-primary);

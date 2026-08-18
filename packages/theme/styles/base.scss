@@ -16,6 +16,7 @@
 // ------
 
 :root {
+
     // 默认浅色主题（作为 fallback）
     --hi-color-background: #D6ECF0;  // 月白
     --hi-color-surface: #F0F4F8;  // 更亮的白色
@@ -258,17 +259,7 @@
     --hi-shadow-lg: 0 10px 15px -3px var(--hi-color-black-10);
     --hi-shadow-xl: 0 20px 25px -5px var(--hi-color-black-10);
 
-
-
-// ------
-// 全局重置
-// ------
-// `:where()` keeps the specificity at ZERO: consumers bundle this file
-// through the styles index, and minifiers may rewrite the bare `*`
-// selectors into `:root *` (specificity of a class), which then silently
-// overrides equal-specificity component rules that load later in the
-// cascade (e.g. `.hk-toast-item` padding). Zero specificity means the
-// reset still applies as a default, but ANY component rule wins.
+}
 
 html {
     font-size: 16px;
@@ -341,7 +332,6 @@ a {
     }
 }
 
-
 code {
     font-family: $hikari-font-family-mono;
     font-size: 0.9em;
@@ -388,17 +378,7 @@ textarea {
     min-height: 80px;
     resize: vertical;
 }
-}
-// ------
-// 全局重置
-// ------
-// TOP-LEVEL, OUTSIDE `:root`: the legacy theme wraps its tokens in
-// `:root`, and a reset nested there compiles to `:root *` — class-level
-// specificity that silently overrides equal-specificity component rules
-// loaded later in the cascade (e.g. `.hk-toast-item` padding after the
-// consumer minifier rewrites `*` into `:root *`). `:where()` pins the
-// specificity at ZERO: the reset stays a default, and every component
-// rule wins over it.
+
 :where(*),
 
 :where(*::before),
@@ -442,7 +422,6 @@ textarea {
         --hi-card-bg-light: rgba(0, 0, 0, 0.95);
     }
 }
-
 
 select {
     appearance: none;

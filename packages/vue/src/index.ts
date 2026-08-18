@@ -197,6 +197,7 @@ export { HkConnectionStatus as HConnectionStatus } from "./components/HkConnecti
 export type { HBackendStatus } from "./components/HkConnectionStatus";
 export { HkThemeToggle as HThemeToggle } from "./components/HkThemeToggle";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
+export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
 export { provideActionBar, useActionBar } from "./composables/useActionBar";

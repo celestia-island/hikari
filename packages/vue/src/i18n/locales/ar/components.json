@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "أدخل كلمة المرور",
     "hikari::passwordInput.placeholderConfirm": "تأكيد كلمة المرور",
     "hikari::passwordInput.focusedPlaceholder": "تم التركيز، أدخل كلمة المرور",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "تم التركيز، ستؤدي الكتابة إلى مسح كلمة المرور الحالية"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "تم التركيز، ستؤدي الكتابة إلى مسح كلمة المرور الحالية",
+    "hikari::signIn.usernamePlaceholder": "اسم المستخدم",
+    "hikari::signIn.passwordPlaceholder": "كلمة المرور",
+    "hikari::signIn.submit": "تسجيل الدخول"
   }
 }

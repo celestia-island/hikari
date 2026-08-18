@@ -47,6 +47,9 @@
     "hikari::passwordInput.placeholderPassword": "パスワードを入力",
     "hikari::passwordInput.placeholderConfirm": "パスワードを確認",
     "hikari::passwordInput.focusedPlaceholder": "フォーカス中、パスワードを入力してください",
-    "hikari::passwordInput.focusedHasValuePlaceholder": "フォーカス中、入力を続けると現在のパスワードは消去されます"
+    "hikari::passwordInput.focusedHasValuePlaceholder": "フォーカス中、入力を続けると現在のパスワードは消去されます",
+    "hikari::signIn.usernamePlaceholder": "ユーザー名",
+    "hikari::signIn.passwordPlaceholder": "パスワード",
+    "hikari::signIn.submit": "ログイン"
   }
 }

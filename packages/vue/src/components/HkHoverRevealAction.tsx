@@ -9,6 +9,10 @@ export default defineComponent({
   name: "HkHoverRevealAction",
   props: {
     hideDelay: { type: Number, default: 140 },
+    /** How long a touch-revealed extension stays visible after the finger
+     *  lifts. Touch devices have no hover, so a swipe/tap on the host
+     *  reveals the extension and it lingers for this delay before hiding. */
+    touchHideDelay: { type: Number, default: 3000 },
     as: { type: String, default: "span" },
     placement: { type: String as PropType<HoverRevealPlacement>, default: "right" },
     forceRevealed: { type: Boolean, default: false },
@@ -19,6 +23,11 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const revealed = ref(false);
     let hideTimer: CronHandle | null = null;
+    // Touch interactions fire emulated mouseenter/mouseleave a moment
+    // later on touch devices; without this guard the 140ms mouse delay
+    // would instantly undo a touch reveal. Suppress the mouse path for
+    // the duration of the touch linger so the touch timer owns the hide.
+    let suppressMouseUntil = 0;
 
     function clearHideTimer() {
       if (hideTimer) {
@@ -35,7 +44,7 @@ export default defineComponent({
       }
     }
 
-    function scheduleHide() {
+    function scheduleHide(delay: number) {
       if (props.forceRevealed) return;
       clearHideTimer();
       hideTimer = scheduleCronAfter(() => {
@@ -43,14 +52,35 @@ export default defineComponent({
           revealed.value = false;
           emit("revealChange", false);
         }
-      }, props.hideDelay);
+      }, delay);
+    }
+
+    function onTouchStart() {
+      // Any touch (tap or swipe over a scrollable main slot) reveals the
+      // extension; the finger can keep sweeping without it flickering.
+      suppressMouseUntil = Date.now() + props.touchHideDelay;
+      reveal();
+    }
+
+    function onTouchEnd() {
+      suppressMouseUntil = Date.now() + props.touchHideDelay;
+      scheduleHide(props.touchHideDelay);
+    }
+
+    function onMouseEnter() {
+      reveal();
+    }
+
+    function onMouseLeave() {
+      if (Date.now() < suppressMouseUntil) return;
+      scheduleHide(props.hideDelay);
     }
 
     watch(
       () => props.forceRevealed,
       (forced) => {
         if (forced) reveal();
-        else scheduleHide();
+        else scheduleHide(props.hideDelay);
       },
     );
 
@@ -62,8 +92,11 @@ export default defineComponent({
         {
           class: ["hk-hover-reveal", revealed.value && "is-revealed"],
           "data-placement": props.placement,
-          onMouseenter: reveal,
-          onMouseleave: scheduleHide,
+          onMouseenter: onMouseEnter,
+          onMouseleave: onMouseLeave,
+          onTouchstart: onTouchStart,
+          onTouchend: onTouchEnd,
+          onTouchcancel: onTouchEnd,
         },
         [
           h("span", { class: "hk-hover-reveal-main" }, slots.default?.()),

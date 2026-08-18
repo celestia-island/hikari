@@ -49,14 +49,8 @@ export default defineComponent({
             <div class="hk-confirm-dialog">
               <p class="hk-confirm-dialog-message">{props.message}</p>
               <div class="hk-confirm-dialog-actions">
-                <HButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={props.loading}
-                  onClick={onCancel}
-                >
-                  {props.cancelLabel || t("hk.confirmDialog.cancel", "Cancel")}
-                </HButton>
+                {/* Shell UX policy: dialogs dismiss via the header X;
+                 * only the affirmative action stays in the footer. */}
                 <HButton
                   variant={props.confirmVariant}
                   size="sm"

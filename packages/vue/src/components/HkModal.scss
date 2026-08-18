@@ -309,18 +309,24 @@
 }
 
 // ------
-// Responsive — full-screen on narrow viewports
+// Responsive — bottom sheet on narrow viewports
 // ------
 
 @media (max-width: 640px) {
   .hk-modal-content {
     max-width: 100% !important;
-    border-radius: 0;
-    max-height: 100vh;
-    top: 0;
+    max-height: calc(100dvh - 2rem);
+    top: auto;
+    bottom: 0;
     left: 0;
+    right: 0;
     transform: none;
     width: 100%;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+      var(--hk-modal-radius, var(--hi-radius-lg, 12px)) 0 0;
   }
 
   .hk-modal-header {

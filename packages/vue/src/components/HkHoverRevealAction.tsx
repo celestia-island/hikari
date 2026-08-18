@@ -68,6 +68,11 @@ export default defineComponent({
     }
 
     function onMouseEnter() {
+      // Touch devices fire an emulated mouseenter a moment after a tap;
+      // during the touch linger window the touch reveal owns the state and
+      // its hide timer must survive, so do not re-reveal (which would clear
+      // the timer and leave the extension visible forever).
+      if (Date.now() < suppressMouseUntil) return;
       reveal();
     }
 

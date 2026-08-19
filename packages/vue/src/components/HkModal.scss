@@ -23,6 +23,11 @@
 .hk-modal-overlay {
   position: fixed;
   inset: 0;
+  // Explicit stacking inside the root: the content sibling is ALWAYS above
+  // the overlay regardless of the popup-manager base handed to the root
+  // (fixes the blurred overlay painting over the sheet when the manager
+  // handle hasn't resolved yet — zIndex briefly starts at 0).
+  z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
   backdrop-filter: var(--hk-modal-overlay-blur, blur(6px));
   pointer-events: auto;
@@ -49,6 +54,8 @@
 
 .hk-modal-content {
   position: fixed;
+  // Always above the overlay sibling (see overlay note).
+  z-index: 1;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -289,15 +296,62 @@
 // Responsive — full-screen on narrow viewports
 // ------
 
-@media (max-width: 640px) {
+// ------
+// Mobile (≤767px, matches useBreakpoint().isMobile) — EVERY modal docks as a
+// bottom sheet. One unified form factor for all popups on phones:
+//   - rises from the bottom edge (translateY reveal, not height-clip)
+//   - never covers the top band reserved for the secondary-window
+//     breadcrumb strip (--hk-sheet-top-inset; default 4.25rem keeps the
+//     floating breadcrumb visible above the sheet)
+//   - rounded top corners only, full width
+// ------
+@media (max-width: 767px) {
   .hk-modal-content {
     max-width: 100% !important;
-    border-radius: 0;
-    max-height: 100vh;
-    top: 0;
-    left: 0;
-    transform: none;
     width: 100%;
+    top: var(--hk-sheet-top-inset, 4.25rem);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                   var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                   0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    // Top inset + bottom:0 size the sheet; content scrolls inside.
+    max-height: none;
+  }
+
+  // Sheet slide reveal replaces the height-clip reveal on mobile.
+  .hk-modal-content-enter-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.3s) ease-out,
+      transform var(--hk-modal-duration, 0.3s)
+        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+    will-change: transform, opacity;
+  }
+
+  .hk-modal-content-leave-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.25s) ease-in,
+      transform var(--hk-modal-duration, 0.25s)
+        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+    will-change: transform, opacity;
+  }
+
+  .hk-modal-content-enter-from,
+  .hk-modal-content-leave-to {
+    opacity: 0;
+    height: auto;
+    transform: translateY(100%);
+  }
+
+  // Keep children pinned (same reason as desktop) — height stays auto.
+  .hk-modal-content-enter-active > *,
+  .hk-modal-content-leave-active > * {
+    flex: 0 0 auto;
   }
 
   .hk-modal-header {
@@ -313,6 +367,6 @@
   }
 
   .hk-modal-footer {
-    padding: 0.625rem 1rem;
+    padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
   }
 }

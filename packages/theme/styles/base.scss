@@ -435,7 +435,11 @@ textarea:not([class^="hk-"]):not([class*=" hk-"]) {
     }
 }
 
-select {
+// Same hk- exclusion as the input/textarea/select baseline above: hikari
+// components render bare <select>/<label>/<button> interiors that own their
+// chrome, and the element-level :focus-visible ring (0,1,1) would outrank
+// their plain-class styles exactly like the double-border input bug (#232).
+select:not([class^="hk-"]):not([class*=" hk-"]) {
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
     background-repeat: no-repeat;
@@ -443,7 +447,7 @@ select {
     padding-right: 2.5rem;
 }
 
-label {
+label:not([class^="hk-"]):not([class*=" hk-"]) {
     display: block;
     margin-bottom: $hikari-spacing-xs;
     font-weight: 500;
@@ -454,7 +458,7 @@ label {
 // 按钮样式
 // ------
 
-button {
+button:not([class^="hk-"]):not([class*=" hk-"]) {
     @include button-base;
 }
 

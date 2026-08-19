@@ -107,7 +107,8 @@ export const HkAdminShell = defineComponent({
         </div>
 
         {slots.footer && (
-          <footer class="s-status-bar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40 }}>
+          <footer class="s-status-bar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, // Footer band (was a bare 40 — the pre-band chrome value).
+            zIndex: "var(--z-footer, 110)" }}>
             {slots.footer()}
           </footer>
         )}

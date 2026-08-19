@@ -196,19 +196,53 @@ packages/theme/styles/foundation.scss
 }
 ```
 
-### 8. Z-Index 系统
+### 8. Z-Index 系统（分组区间）
+
+Z 层级遵循**单一注册上下文**模型：每个层级家族独占一个分组区间（band），
+区间内成员按 DOM 顺序叠放（浏览器默认行为）；跨组顺序由 token 表统一管理。
 
 ```scss
 :root {
-  --hi-z-index-dropdown: 1000;
-  --hi-z-index-sticky: 1020;
-  --hi-z-index-fixed: 1030;
-  --hi-z-index-modal-backdrop: 1040;
-  --hi-z-index-modal: 1050;
-  --hi-z-index-popover: 1060;
-  --hi-z-index-tooltip: 1070;
+  /* 0–9      局部 — 组件内部自足叠放（自含堆叠上下文） */
+  --z-base: 0;
+  --z-above: 1;
+  --z-overlay: 2;
+  --z-top: 3;
+
+  /* 10–99    内容浮动 — 粘性列、页内提升、小地图 */
+  --z-content: 10;
+  --z-floating: 50;
+
+  /* 100–199  应用框架 — 页眉、页脚、页眉弹层 */
+  --z-header: 100;
+  --z-footer: 110;
+  --z-header-popup: 150;
+
+  /* 200–899  应用覆盖 — 预留给应用级装饰 */
+  /* 900–999  应用 sheet — 抽屉侧栏、底部弹层 */
+  --z-sheet: 900;
+  --z-sidebar: 900;
+
+  /* 1000–1999 弹出层栈 — 由 usePopupManager 注册分配（1000 + 2n，
+   *  栈空归零）。modal / drawer / popover / select 弹层 / 菜单 sheet /
+   *  locale 选择器都必须注册；固定层（toast/tooltip/fatal/titlebar）不注册。 */
+  --z-modal: 1000;
+  --z-modal-base: 1000;
+  --z-modal-step: 2;
+
+  /* 固定层（高于弹出层栈，永不注册） */
+  --z-toast: 9999;     /* 提示 */
+  --z-tooltip: 10000;  /* 气泡提示 */
+  /* --z-fatal: 10001    致命页（消费方定义） */
+  /* --z-titlebar: 100001 原生标题栏（Tauri） */
+  /* --z-breadcrumb: 100002 模态栈面包屑（消费方定义） */
 }
 ```
+
+> 规则：overlay 类组件必须调用 `usePopupManager().register(kind)` 领取
+> z 值（落在 1000–1999 区间），严禁硬编码 1000+ 的数值——否则后打开的
+> modal（1000+2n）会盖住未注册的弹层。同 band 内多个成员依靠 DOM 顺序
+> 自然堆叠，无需手工管理。
 
 ## 主题切换
 

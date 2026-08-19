@@ -14,15 +14,21 @@ export default defineComponent({
   emits: {
     click: (_e: MouseEvent) => true,
   },
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, attrs }) {
     const cls = computed(() => [
       "hk-icon-button",
       `hk-icon-button-${props.size}`,
       `hk-icon-button-${props.variant}`,
+      // inheritAttrs is false, so a caller's class would be silently dropped.
+      // Merge it manually (string or array forms).
+      ...(typeof attrs.class === "string" ? [attrs.class]
+        : Array.isArray(attrs.class) ? attrs.class as string[]
+          : []),
     ]);
 
     return () => (
       <button
+        {...attrs}
         class={cls.value}
         disabled={props.disabled}
         onClick={(e: MouseEvent) => emit("click", e)}

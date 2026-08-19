@@ -32,6 +32,11 @@
         <HIconButton icon="search" variant="ghost" :size="16" />
         <HIconButton icon="settings" variant="secondary" :size="24" />
         <HIconButton icon="heart" variant="primary" :size="40" />
+        <!-- The icon slot accepts any component (lucide etc.); attrs like
+             aria-label now fall through to the button element. -->
+        <HIconButton variant="ghost" :size="24" aria-label="Refresh">
+          <template #icon><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg></template>
+        </HIconButton>
       </div>
     </section>
 
@@ -82,6 +87,17 @@
       <h2>HProgressBar / HProgressRing / HGaugeRing</h2>
       <div class="row"><HProgressBar :value="65" style="width:200px" /></div>
       <div class="row"><HProgressRing :value="75" :size="80" /><HGaugeRing :rings="gaugeRings" :size="80" center-label="CPU" /></div>
+      <!-- Variant API: colors come from the theme palette context; `auto`
+           thresholds (>=90 danger, >=75 warning, else success) fit host
+           resource gauges; `value` is the single-ring convenience. -->
+      <div class="row">
+        <HGaugeRing :value="62" :size="72" :stroke-width="6" variant="auto" center-value="62%" center-label="AUTO" />
+        <HGaugeRing :value="80" :size="72" :stroke-width="6" variant="auto" center-value="80%" center-label="AUTO" />
+        <HGaugeRing :value="95" :size="72" :stroke-width="6" variant="auto" center-value="95%" center-label="AUTO" />
+        <HGaugeRing :value="40" :size="72" :stroke-width="6" variant="primary" center-value="40%" center-label="PRIMARY" />
+        <HGaugeRing :value="40" :size="72" :stroke-width="6" variant="info" center-value="40%" center-label="INFO" />
+        <HGaugeRing :value="40" :size="72" :stroke-width="6" variant="muted" center-value="40%" center-label="MUTED" />
+      </div>
     </section>
 
     <section>

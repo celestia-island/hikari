@@ -2,6 +2,25 @@ import { computed, defineComponent, type PropType } from "vue";
 import "./HkIconButton.scss";
 import "./HkIconButtonVars.scss";
 
+/** Flatten every Vue class-binding form (string | array | object) into
+ *  class-name strings. Object keys whose value is truthy are kept — the
+ *  same normalization Vue itself applies to `class` bindings. */
+function classesOf(raw: unknown): string[] {
+  if (!raw) return [];
+  if (typeof raw === "string") {
+    return raw.split(/\s+/).filter(Boolean);
+  }
+  if (Array.isArray(raw)) {
+    return raw.flatMap((entry) => classesOf(entry));
+  }
+  if (typeof raw === "object") {
+    return Object.entries(raw as Record<string, unknown>)
+      .filter(([, on]) => !!on)
+      .map(([name]) => name);
+  }
+  return [];
+}
+
 export default defineComponent({
   name: "HkIconButton",
   inheritAttrs: false,
@@ -19,11 +38,10 @@ export default defineComponent({
       "hk-icon-button",
       `hk-icon-button-${props.size}`,
       `hk-icon-button-${props.variant}`,
-      // inheritAttrs is false, so a caller's class would be silently dropped.
-      // Merge it manually (string or array forms).
-      ...(typeof attrs.class === "string" ? [attrs.class]
-        : Array.isArray(attrs.class) ? attrs.class as string[]
-          : []),
+      // inheritAttrs is false, so the caller's class would be silently
+      // dropped by the spread below (explicit class wins). Merge every
+      // binding form back in manually.
+      ...classesOf(attrs.class),
     ]);
 
     return () => (

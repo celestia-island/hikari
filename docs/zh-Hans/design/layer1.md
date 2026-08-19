@@ -182,12 +182,12 @@ packages/theme/styles/foundation.scss
 
 ```scss
 :root {
-  // 图标尺寸
+  // 图标尺寸（与 theme/styles/foundation.scss 一致）
   --hi-icon-size-xs: 12px;
-  --hi-icon-size-sm: 16px;
-  --hi-icon-size-md: 20px;
-  --hi-icon-size-lg: 24px;
-  --hi-icon-size-xl: 32px;
+  --hi-icon-size-sm: 14px;
+  --hi-icon-size-md: 16px;
+  --hi-icon-size-lg: 20px;
+  --hi-icon-size-xl: 24px;
 
   // 图标颜色
   --hi-icon-color: var(--hi-color-text-primary);

@@ -43,6 +43,22 @@ describe("HkIconButton", () => {
     expect(btn.classList.contains("s-view-panel-refresh")).toBe(true);
   });
 
+  it("merges array-form and object-form class bindings", () => {
+    // Array form: ["a", { b: true, c: false }]
+    const arr = mountButton({ class: ["alpha", { beta: true, gamma: false }], size: 24 });
+    expect(arr.classList.contains("alpha")).toBe(true);
+    expect(arr.classList.contains("beta")).toBe(true);
+    expect(arr.classList.contains("gamma")).toBe(false);
+
+    // Object form: { delta: true, epsilon: false }
+    const obj = mountButton({ class: { delta: true, epsilon: false }, size: 24 });
+    expect(obj.classList.contains("delta")).toBe(true);
+    expect(obj.classList.contains("epsilon")).toBe(false);
+    // Component classes survive alongside the merged caller classes.
+    expect(obj.classList.contains("hk-icon-button")).toBe(true);
+    expect(obj.classList.contains("hk-icon-button-ghost")).toBe(true);
+  });
+
   it("emits click when the button is activated", async () => {
     let clicked = 0;
     const btn = mountButton({ size: 24, onClick: () => { clicked += 1; } });

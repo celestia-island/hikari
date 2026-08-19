@@ -92,7 +92,7 @@
 
 .hk-select-popout {
   position: fixed;
-  z-index: 1100;
+  /* z-index comes from the popup manager (inline) — registered overlay. */
   min-width: 180px;
   max-height: 240px;
   display: flex;

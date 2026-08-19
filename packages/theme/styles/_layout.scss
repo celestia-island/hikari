@@ -65,16 +65,33 @@
   --opacity-half: 0.92;
   --opacity-more: 0.96;
 
-  // ── Z-index hierarchy ─
+  // ── Z-index hierarchy (group bands) ─
+  // One registered context: every layer family owns a band. Members inside
+  // a band stack by DOM order (browser default) — only the band boundaries
+  // are managed. Overlay-class components (modal/drawer/popover/select
+  // popout/menu sheet/locale picker) MUST register with usePopupManager,
+  // which allocates from the popup band (1000 + 2n, reset when the stack
+  // empties); fixed layers above the stack (toast/tooltip/fatal/titlebar)
+  // never register.
+  //   0–9      local — intra-component stacking (self-contained contexts)
+  //   10–99    content float — sticky columns, in-page lifts, minimaps
+  //   100–199  app chrome — header, footer, header popups
+  //   200–899  app overlay — reserved for app-level decorations
+  //   900–999  app sheet — drawer sidebars, bottom sheets
+  //   1000–1999 popup stack — manager-allocated (modal/drawer/popover/…)
+  //   9999     toast   10000 tooltip   10001 fatal
+  //   100001   native titlebar (Tauri caption)   100002 modal breadcrumb
   --z-base: 0;
   --z-above: 1;
   --z-overlay: 2;
   --z-top: 3;
   --z-content: 10;
-  --z-header: 30;
-  --z-sidebar: 40;
   --z-floating: 50;
+  --z-header: 100;
+  --z-footer: 110;
   --z-header-popup: 150;
+  --z-sheet: 900;
+  --z-sidebar: 900;
   --z-modal: 1000;
   --z-modal-base: 1000;
   --z-modal-step: 2;

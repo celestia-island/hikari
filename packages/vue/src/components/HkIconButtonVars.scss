@@ -81,7 +81,9 @@
 
 .hk-icon-button-24 {
   --hi-icon-button-size: 24px;
-  --hi-icon-button-icon-size: var(--hi-icon-size-xs);
+  // sm (14px), not xs: a 12px glyph inside a 24px hit target reads as a
+  // broken/dotted speck — 14px restores the intended ghost-button balance.
+  --hi-icon-button-icon-size: var(--hi-icon-size-sm);
 }
 
 .hk-icon-button-32 {

@@ -150,7 +150,11 @@
       width: var(--hi-icon-button-icon-size);
       height: var(--hi-icon-button-icon-size);
       display: block;
-      fill: currentColor;
+      // NOTE: no `fill` override. CSS beats SVG presentation attributes, so a
+      // fill here would solid-fill stroke-based icon sets (lucide renders
+      // `fill="none"` on the root and inherits it to the paths — forcing
+      // currentColor turned every lucide glyph into a filled blob). Icons
+      // carry their own fill/stroke intent; the box only fixes geometry.
     }
   }
 

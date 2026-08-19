@@ -380,13 +380,20 @@ li {
 // color reset #215 removed). Excluding any element carrying an `hk-` class
 // keeps the baseline for genuinely bare app markup while leaving every hikari
 // component interior untouched.
-input:not([class^="hk-"]):not([class*=" hk-"]),
-textarea:not([class^="hk-"]):not([class*=" hk-"]),
-select:not([class^="hk-"]):not([class*=" hk-"]) {
+//
+// 2026-08-19: the guards now sit inside :where(...) so they contribute ZERO
+// specificity. The plain :not() form measured (0,1,1) and outranked every
+// single-class button/label/select style in consuming apps (chest's
+// .s-workspace-btn grew a 16px/500 font overnight — hikari #233 fallout);
+// :where() keeps the hk- exclusion at (0,0,1), the exact cascade position
+// the element baseline had before the guards existed (#232/#233).
+input:where(:not([class^="hk-"]):not([class*=" hk-"])),
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"])),
+select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
     @include input-base;
 }
 
-textarea:not([class^="hk-"]):not([class*=" hk-"]) {
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"])) {
     min-height: 80px;
     resize: vertical;
 }
@@ -439,7 +446,7 @@ textarea:not([class^="hk-"]):not([class*=" hk-"]) {
 // components render bare <select>/<label>/<button> interiors that own their
 // chrome, and the element-level :focus-visible ring (0,1,1) would outrank
 // their plain-class styles exactly like the double-border input bug (#232).
-select:not([class^="hk-"]):not([class*=" hk-"]) {
+select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
     background-repeat: no-repeat;
@@ -447,7 +454,7 @@ select:not([class^="hk-"]):not([class*=" hk-"]) {
     padding-right: 2.5rem;
 }
 
-label:not([class^="hk-"]):not([class*=" hk-"]) {
+label:where(:not([class^="hk-"]):not([class*=" hk-"])) {
     display: block;
     margin-bottom: $hikari-spacing-xs;
     font-weight: 500;
@@ -458,7 +465,7 @@ label:not([class^="hk-"]):not([class*=" hk-"]) {
 // 按钮样式
 // ------
 
-button:not([class^="hk-"]):not([class*=" hk-"]) {
+button:where(:not([class^="hk-"]):not([class*=" hk-"])) {
     @include button-base;
 }
 

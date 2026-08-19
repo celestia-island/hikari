@@ -85,6 +85,18 @@
   color: rgb(var(--color-text));
   text-align: center;
   padding: var(--space-8) var(--space-12);
+
+  // The interactive states stay clean too: the shell (.hk-input-box) owns
+  // the focus affordance via :focus-within. Without these overrides any
+  // element-level `input { … :focus-visible { box-shadow } }` baseline
+  // outranks the plain-class `border: none` here and paints a second,
+  // inner ring on top of the shell's border (the double-border bug).
+  &:focus,
+  &:focus-visible {
+    border: none;
+    outline: none;
+    box-shadow: none;
+  }
 }
 
 .hk-input-element.hk-input-textarea {

@@ -63,7 +63,10 @@ export const HkLocalePicker = defineComponent({
               border: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
               borderRadius: "var(--radius-md, 6px)",
               boxShadow: "0 4px 16px rgb(0 0 0 / 12%)",
-              zIndex: 1000,
+              // Local stacking inside the header's own context — the
+              // app-chrome header-popup band documents the intent (this
+              // value is scoped, it never races the popup stack).
+              zIndex: "var(--z-header-popup, 150)",
               overflow: "hidden",
               padding: "4px",
             }}

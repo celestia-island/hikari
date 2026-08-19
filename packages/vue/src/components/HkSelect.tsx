@@ -11,6 +11,7 @@ import {
 
 
 import { ChevronDown, Search } from "lucide-vue-next";
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {
@@ -42,6 +43,13 @@ export default defineComponent({
     const panelRef = ref<HTMLElement>();
     const highlightedIndex = ref(-1);
 
+    // The popout registers with the popup manager so it stacks inside the
+    // shared overlay context (1000+2n) instead of a hardcoded z that later
+    // modals could overtake (select-in-modal used to get covered).
+    const manager = usePopupManager();
+    const handle = ref<PopupHandle | null>(null);
+    const popoutZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
+
     function onDocumentClick(e: MouseEvent) {
       if (!isOpen.value) return;
       const target = e.target as Node;
@@ -52,14 +60,23 @@ export default defineComponent({
 
     watch(isOpen, (open) => {
       if (open) {
+        handle.value = manager.register("dropdown", false);
         document.addEventListener("click", onDocumentClick, true);
       } else {
         document.removeEventListener("click", onDocumentClick, true);
+        if (handle.value) {
+          manager.unregister(handle.value.id);
+          handle.value = null;
+        }
       }
     });
 
     onBeforeUnmount(() => {
       document.removeEventListener("click", onDocumentClick, true);
+      if (handle.value) {
+        manager.unregister(handle.value.id);
+        handle.value = null;
+      }
     });
 
     const normalizedOptions = computed<HkSelectOption[]>(
@@ -199,7 +216,7 @@ export default defineComponent({
             <div
               ref={panelRef}
               class="hk-select-popout"
-              style={triggerCoords.value}
+              style={{ ...triggerCoords.value, zIndex: popoutZ.value }}
               onKeydown={onPopoutKeydown}
             >
               {slots.default

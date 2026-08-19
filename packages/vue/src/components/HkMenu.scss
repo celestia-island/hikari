@@ -190,7 +190,7 @@
 .hk-menu-desktop {
   position: fixed;
   inset: 0;
-  z-index: var(--z-popover, 1100);
+  /* z-index comes from the popup manager (inline) — registered overlay. */
   pointer-events: none;
 }
 
@@ -221,7 +221,7 @@
 .hk-menu-mobile-stack {
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal, 1200);
+  /* z-index comes from the popup manager (inline) — registered overlay. */
 }
 
 .hk-menu-sheet {

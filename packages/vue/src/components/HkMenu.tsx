@@ -14,6 +14,7 @@ import {
 
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import "./HkMenu.scss";
 
 /**
@@ -104,6 +105,13 @@ export default defineComponent({
     let suppressPop = 0;
     /** Bumped on viewport resize so an open menu re-renders in the right mode. */
     const viewportTick = ref(0);
+
+    // Registered overlay: the whole menu (desktop panels + mobile sheets)
+    // stacks inside the shared popup context instead of hardcoded
+    // 1100/1200+n values that later-opened modals could overtake.
+    const manager = usePopupManager();
+    const handle = ref<PopupHandle | null>(null);
+    const menuZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
 
     const mobileMode = computed(() => {
       void viewportTick.value; // re-evaluate when the viewport changes
@@ -201,6 +209,10 @@ export default defineComponent({
       window.addEventListener("resize", onResize);
     });
     onBeforeUnmount(() => {
+      if (handle.value) {
+        manager.unregister(handle.value.id);
+        handle.value = null;
+      }
       if (props.variant === "sidebar") return;
       window.removeEventListener("popstate", onPopState);
       window.removeEventListener("resize", onResize);
@@ -221,12 +233,19 @@ export default defineComponent({
         const openNow = key.startsWith("1");
         const mobile = key.endsWith("1");
         if (!openNow) {
+          if (handle.value) {
+            manager.unregister(handle.value.id);
+            handle.value = null;
+          }
           if (pushedDepth > 0 || mobileStack.value.length > 0 || desktopPath.value.length > 0) {
             desktopPath.value = [];
             mobileStack.value = [];
             restoreHistory();
           }
           return;
+        }
+        if (!handle.value) {
+          handle.value = manager.register("dropdown", false);
         }
         if (mobile) {
           // Normalize: exactly one fresh root entry above the page's history.
@@ -404,7 +423,6 @@ export default defineComponent({
           key={level}
           class="hk-menu-sheet"
           data-level={level}
-          style={{ zIndex: `${1200 + level}` }}
         >
           <div class="hk-menu-sheet-header">
             <button type="button" class="hk-menu-sheet-back" aria-label="Back" onClick={onBack}>
@@ -566,7 +584,7 @@ export default defineComponent({
         ];
         return (
           <Teleport to="body">
-            <div class="hk-menu-mobile-stack">{sheets}</div>
+            <div class="hk-menu-mobile-stack" style={{ zIndex: menuZ.value }}>{sheets}</div>
           </Teleport>
         );
       }
@@ -589,7 +607,7 @@ export default defineComponent({
       }
       return (
         <Teleport to="body">
-          <div class="hk-menu-desktop">
+          <div class="hk-menu-desktop" style={{ zIndex: menuZ.value }}>
             <div class="hk-menu-backdrop" onClick={() => closeAll()} />
             {panels}
           </div>

@@ -370,13 +370,23 @@ li {
 // 表单元素
 // ------
 
-input,
-textarea,
-select {
+// Element-level baseline for BARE app inputs only. Hikari components render
+// their own <input>/<textarea>/<select> inside a styled shell (.hk-input-box
+// etc.) and must not inherit this border/focus ring: the bare-element
+// `input:focus-visible` (0,1,1) outranks the component's `.hk-input-element`
+// (0,1,0) `border: none`, so a focused field showed BOTH the shell's
+// focus-within border AND an inner 2px ring — the "double border" on the
+// add-view wizard's title/purpose fields (same disease class as the element
+// color reset #215 removed). Excluding any element carrying an `hk-` class
+// keeps the baseline for genuinely bare app markup while leaving every hikari
+// component interior untouched.
+input:not([class^="hk-"]):not([class*=" hk-"]),
+textarea:not([class^="hk-"]):not([class*=" hk-"]),
+select:not([class^="hk-"]):not([class*=" hk-"]) {
     @include input-base;
 }
 
-textarea {
+textarea:not([class^="hk-"]):not([class*=" hk-"]) {
     min-height: 80px;
     resize: vertical;
 }

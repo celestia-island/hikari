@@ -18,6 +18,10 @@
    * were unaffected (no touch-action semantics), which is why only
    * the mobile path broke. */
   touch-action: none;
+  /* Long-press text selection would interrupt a held seek drag on
+   * touch devices; the minimap is a control surface, not content. */
+  user-select: none;
+  -webkit-user-select: none;
 
   &:hover {
     border-color: rgb(var(--color-primary) / 0.3);

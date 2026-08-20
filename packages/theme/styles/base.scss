@@ -265,6 +265,13 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
 
+    // Kill the mobile browsers' default tap highlight (the grey/blue flash
+    // on touch). Interactive elements draw their OWN pressed/hover states;
+    // the native highlight flashing whole containers (e.g. an entire
+    // minimap widget) reads as a bug, not feedback. Applied at the root so
+    // every consuming app inherits it once.
+    -webkit-tap-highlight-color: transparent;
+
     // Hide native scrollbar (using custom scrollbar component)
     &::-webkit-scrollbar {
         display: none;

@@ -72,11 +72,38 @@ function rescueTables(content: string): string {
   };
   const isDelimiter = (s: string) =>
     /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(s);
+  const isFence = (s: string) => /^\s*(`{3,}|~{3,})/.test(s);
   const out: string[] = [];
+  // Track fenced code blocks: table-shaped lines inside a fence are literal
+  // content and must never be touched.
+  let fenceOpen = false;
+  let fenceMarker = "";
   for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (fenceOpen) {
+      out.push(line);
+      // Closing fence: same character, at least as many, nothing after.
+      if (line.trimStart().startsWith(fenceMarker[0].repeat(3))) {
+        const t = line.trim();
+        if (
+          (fenceMarker[0] === "`" && /^`{3,}`*\s*$/.test(t)) ||
+          (fenceMarker[0] === "~" && /^~{3,}~*\s*$/.test(t))
+        ) {
+          fenceOpen = false;
+          fenceMarker = "";
+        }
+      }
+      continue;
+    }
+    if (isFence(line)) {
+      fenceMarker = line.trimStart().slice(0, 3);
+      fenceOpen = true;
+      out.push(line);
+      continue;
+    }
     const prev = out.length ? out[out.length - 1] : "";
     const prevIsTable = isTableish(prev);
-    const curIsTable = isTableish(lines[i]);
+    const curIsTable = isTableish(line);
     const nextIsDelimiter =
       i + 1 < lines.length && isDelimiter(lines[i + 1]);
     if (
@@ -87,7 +114,7 @@ function rescueTables(content: string): string {
     ) {
       out.push("");
     }
-    out.push(lines[i]);
+    out.push(line);
   }
   return out.join("\n");
 }

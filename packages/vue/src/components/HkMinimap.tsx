@@ -116,7 +116,14 @@ export default defineComponent({
       e.preventDefault();
       dragging.value = true;
       dragStart.value = { x: e.clientX, y: e.clientY };
-      rootRef.value?.setPointerCapture(e.pointerId);
+      // Capture keeps the drag alive when the pointer leaves the widget;
+      // some engines throw on inactive pointers (synthetic events,
+      // already-captured) — never let that kill the seek drag.
+      try {
+        rootRef.value?.setPointerCapture(e.pointerId);
+      } catch {
+        /* tracking continues while the pointer stays inside */
+      }
     }
     function onMove(e: PointerEvent) {
       if (!dragging.value) return;
@@ -132,7 +139,11 @@ export default defineComponent({
       if (!dragging.value) return;
       e.stopPropagation();
       dragging.value = false;
-      rootRef.value?.releasePointerCapture(e.pointerId);
+      try {
+        rootRef.value?.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released / cancelled — nothing to do */
+      }
     }
 
     onMounted(() => {

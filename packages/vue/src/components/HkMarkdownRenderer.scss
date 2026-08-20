@@ -3,10 +3,20 @@
   line-height: 1.7;
   color: var(--hi-color-text-primary, #c9d1d9);
   position: relative;
+  /* Mobile containment: the renderer often lives inside flex/grid cards.
+     Without min-width:0 a flex child refuses to shrink below its content's
+     intrinsic width, so one long token (URL, JSON string, unbroken CJK-less
+     identifier) blows the card past the viewport. */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .hk-markdown-body {
   min-height: 120px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .hk-markdown h1,
@@ -95,6 +105,21 @@
   width: 100%;
   border-collapse: collapse;
   margin: 0.75em 0;
+}
+
+/* Wide tables scroll horizontally inside the renderer instead of stretching
+   the card beyond the viewport. The wrapper div is emitted by the marked
+   table renderer (see HkMarkdownRenderer.tsx). */
+.hk-md-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.75em 0;
+}
+
+.hk-md-table-wrap table {
+  margin: 0;
+  min-width: fit-content;
 }
 
 .hk-markdown th,

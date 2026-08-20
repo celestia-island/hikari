@@ -53,6 +53,45 @@ function renderPlain(content: string): string {
   return `<pre class="hk-md-plain">${escaped}</pre>`;
 }
 
+/**
+ * Best-effort rescue of GFM tables that follow a non-blank line.
+ *
+ * marked (CommonMark) only recognizes a table when the delimiter row
+ * (`| --- |`) is separated from the preceding block by a blank line. Agent
+ * reports frequently paste a table directly after a prose sentence or a JSON
+ * fragment, which makes marked emit the raw `|` lines as a paragraph. This
+ * pre-pass inserts a blank line between a non-table, non-blank line and a
+ * following line that starts a table (contains `|` and the next line looks
+ * like a delimiter row).
+ */
+function rescueTables(content: string): string {
+  const lines = content.split("\n");
+  const isTableish = (s: string) => {
+    const t = s.trim();
+    return t.includes("|") && (t.startsWith("|") || t.endsWith("|"));
+  };
+  const isDelimiter = (s: string) =>
+    /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(s);
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const prev = out.length ? out[out.length - 1] : "";
+    const prevIsTable = isTableish(prev);
+    const curIsTable = isTableish(lines[i]);
+    const nextIsDelimiter =
+      i + 1 < lines.length && isDelimiter(lines[i + 1]);
+    if (
+      prev.trim() !== "" &&
+      !prevIsTable &&
+      curIsTable &&
+      nextIsDelimiter
+    ) {
+      out.push("");
+    }
+    out.push(lines[i]);
+  }
+  return out.join("\n");
+}
+
 async function renderMarkdown(content: string): Promise<string> {
   const [marked, DOMPurify] = await Promise.all([ensureMarked(), ensureDOMPurify()]);
 
@@ -69,9 +108,19 @@ async function renderMarkdown(content: string): Promise<string> {
     return `<div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div>`;
   };
 
-  const raw = marked.parse(content, { renderer, async: false });
-  const html = typeof raw === "string" ? raw : "";
-  return DOMPurify.sanitize(html);
+  // Wrap tables in a horizontally scrollable container so a wide table
+  // scrolls inside the card instead of stretching the card past the
+  // viewport on mobile. Done as post-processing on the sanitized HTML
+  // rather than a renderer override: marked 18's table renderer receives
+  // structured cell tokens, and re-implementing cell rendering (inline
+  // tokens, alignment) would drift from upstream.
+  const raw = marked.parse(rescueTables(content), { renderer, async: false });
+  const parsed = typeof raw === "string" ? raw : "";
+  const html = DOMPurify.sanitize(parsed);
+  const wrapped = html
+    .replace(/<table>/g, '<div class="hk-md-table-wrap"><table>')
+    .replace(/<\/table>/g, "</table></div>");
+  return wrapped;
 }
 
 export default defineComponent({

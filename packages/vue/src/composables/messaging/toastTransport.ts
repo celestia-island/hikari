@@ -1,4 +1,4 @@
-import { useToast } from "@celestia-island/hikari";
+import { pushViaTransport } from "../../runtime/useToast";
 import type { MessagePayload, MessageTransport } from "./types";
 
 /**
@@ -16,9 +16,7 @@ export const toastTransport: MessageTransport = {
   name: "toast",
   available: () => true,
   send(payload: MessagePayload) {
-    const toast = useToast();
-    toast.show(payload.message, {
-      type: payload.severity,
+    pushViaTransport(payload.severity, payload.message, {
       duration: payload.duration,
       copyable: payload.copyable,
     });

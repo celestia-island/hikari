@@ -1,0 +1,133 @@
+/* ── HkPickerPane (shared by HkDatePicker + HkDateTimePicker) ──────
+ * Fixed-size view stage + direction-aware view transitions.
+ *
+ * Both pickers drill days → months → years through the header title. The
+ * day view is the tallest layout (weekday header row + six fixed-height
+ * day rows), so the stage pins that exact height and every other view
+ * renders inside it — the panel never resizes when a sub-view opens.
+ *
+ * View switches animate through `@keyframes` registered in
+ * `animation/registerAnimations.ts` (hk-picker-pane-{fwd,back}-{in,out});
+ * the global CSS-animation switch and reduced-motion both collapse the
+ * transition to an instant swap. */
+
+/* Day-view geometry the stage height is derived from: a 1.75rem header
+ * row (fixed on .hk-dp-header / .hk-dtp-header) + a 1.25rem weekday row +
+ * six 2rem day rows + five 2px grid gaps. Keep the values in sync with
+ * the .hk-dp-cell / .hk-dtp-cell and .hk-dp-wd / .hk-dtp-wd rules in each
+ * component's stylesheet. */
+.hk-dp-stage,
+.hk-dtp-stage {
+  position: relative;
+  height: calc(1.75rem + 1.25rem + 6 * 2rem + 10px);
+}
+
+.hk-dp-pane,
+.hk-dtp-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Month/year pick grids are shorter than the six-row day grid; they fill
+ * the same stage and center their rows inside it instead of shrinking the
+ * panel. */
+.hk-dp-grid[data-variant="pick"],
+.hk-dtp-grid[data-variant="pick"] {
+  flex: 1;
+  align-content: center;
+}
+
+/* ── View transition (Vue <Transition name="hk-picker-pane">) ─────── */
+
+.hk-picker-pane-enter-active,
+.hk-picker-pane-leave-active {
+  will-change: opacity, transform;
+}
+
+.hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active,
+.hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active {
+  animation: hk-picker-pane-fwd-in var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active,
+.hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active {
+  animation: hk-picker-pane-fwd-out var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-dp-stage[data-dir="back"] > .hk-picker-pane-enter-active,
+.hk-dtp-stage[data-dir="back"] > .hk-picker-pane-enter-active {
+  animation: hk-picker-pane-back-in var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-dp-stage[data-dir="back"] > .hk-picker-pane-leave-active,
+.hk-dtp-stage[data-dir="back"] > .hk-picker-pane-leave-active {
+  animation: hk-picker-pane-back-out var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The leaving pane overlays the fixed stage so the entering pane can take
+ * over the layout slot without a size jump. */
+.hk-picker-pane-leave-active {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Reduced motion / global switch: instant swap, never stuck frames ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-picker-pane-enter-active,
+  .hk-picker-pane-leave-active {
+    animation: none !important;
+  }
+}
+
+html[data-css-animations="0"] .hk-picker-pane-enter-active,
+html[data-css-animations="0"] .hk-picker-pane-leave-active {
+  animation: none !important;
+}
+
+/* ── Keyframes (registered in animation/registerAnimations.ts) ────── */
+
+@keyframes hk-picker-pane-fwd-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hk-picker-pane-fwd-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+@keyframes hk-picker-pane-back-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hk-picker-pane-back-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}

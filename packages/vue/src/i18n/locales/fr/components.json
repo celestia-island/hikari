@@ -52,6 +52,19 @@
     "hikari::passwordInput.focusedHasValuePlaceholder": "Champ actif, la saisie effacera le mot de passe actuel",
     "hikari::signIn.usernamePlaceholder": "Nom d'utilisateur",
     "hikari::signIn.passwordPlaceholder": "Mot de passe",
-    "hikari::signIn.submit": "Se connecter"
+    "hikari::signIn.submit": "Se connecter",
+    "hikari::datePicker.placeholder": "Choisir une date",
+    "hikari::datePicker.pickDate": "Choisir une date",
+    "hikari::datePicker.clear": "Effacer la date",
+    "hikari::datePicker.prevMonth": "Mois précédent",
+    "hikari::datePicker.nextMonth": "Mois suivant",
+    "hikari::datePicker.today": "Aujourd'hui",
+    "hikari::datePicker.back": "Retour",
+    "hikari::datePicker.prevYear": "Année précédente",
+    "hikari::datePicker.nextYear": "Année suivante",
+    "hikari::datePicker.prevYears": "Previous years",
+    "hikari::datePicker.nextYears": "Next years",
+    "hikari::dateTimePicker.prevYear": "Année précédente",
+    "hikari::dateTimePicker.nextYear": "Année suivante"
   }
 }

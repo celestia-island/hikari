@@ -85,3 +85,10 @@ registerCssAnimation("hk-progress-indeterminate", { infinite: true });
 registerCssAnimation("hk-pwd-flash");
 // components/HkPasswordInput.scss — breathing hint glow (loops forever).
 registerCssAnimation("hk-pwd-breathe", { infinite: true });
+// components/HkPickerPane.scss — date/time picker view drill forward
+// (plays once, shared by HkDatePicker and HkDateTimePicker).
+registerCssAnimation("hk-picker-pane-fwd-in");
+registerCssAnimation("hk-picker-pane-fwd-out");
+// components/HkPickerPane.scss — date/time picker view drill back.
+registerCssAnimation("hk-picker-pane-back-in");
+registerCssAnimation("hk-picker-pane-back-out");

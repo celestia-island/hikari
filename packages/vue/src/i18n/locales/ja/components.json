@@ -52,6 +52,19 @@
     "hikari::passwordInput.focusedHasValuePlaceholder": "フォーカス中、入力を続けると現在のパスワードは消去されます",
     "hikari::signIn.usernamePlaceholder": "ユーザー名",
     "hikari::signIn.passwordPlaceholder": "パスワード",
-    "hikari::signIn.submit": "ログイン"
+    "hikari::signIn.submit": "ログイン",
+    "hikari::datePicker.placeholder": "日付を選択",
+    "hikari::datePicker.pickDate": "日付を選択",
+    "hikari::datePicker.clear": "日付をクリア",
+    "hikari::datePicker.prevMonth": "前の月",
+    "hikari::datePicker.nextMonth": "次の月",
+    "hikari::datePicker.today": "今日",
+    "hikari::datePicker.back": "戻る",
+    "hikari::datePicker.prevYear": "前年",
+    "hikari::datePicker.nextYear": "翌年",
+    "hikari::datePicker.prevYears": "前の12年",
+    "hikari::datePicker.nextYears": "次の12年",
+    "hikari::dateTimePicker.prevYear": "前年",
+    "hikari::dateTimePicker.nextYear": "翌年"
   }
 }

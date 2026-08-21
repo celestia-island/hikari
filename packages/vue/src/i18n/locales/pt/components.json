@@ -52,6 +52,19 @@
     "hikari::passwordInput.focusedHasValuePlaceholder": "Focado, digitar apagará a senha atual",
     "hikari::signIn.usernamePlaceholder": "Usuário",
     "hikari::signIn.passwordPlaceholder": "Senha",
-    "hikari::signIn.submit": "Entrar"
+    "hikari::signIn.submit": "Entrar",
+    "hikari::datePicker.placeholder": "Escolher uma data",
+    "hikari::datePicker.pickDate": "Escolher uma data",
+    "hikari::datePicker.clear": "Limpar data",
+    "hikari::datePicker.prevMonth": "Mês anterior",
+    "hikari::datePicker.nextMonth": "Próximo mês",
+    "hikari::datePicker.today": "Hoje",
+    "hikari::datePicker.back": "Voltar",
+    "hikari::datePicker.prevYear": "Ano anterior",
+    "hikari::datePicker.nextYear": "Próximo ano",
+    "hikari::datePicker.prevYears": "Previous years",
+    "hikari::datePicker.nextYears": "Next years",
+    "hikari::dateTimePicker.prevYear": "Ano anterior",
+    "hikari::dateTimePicker.nextYear": "Próximo ano"
   }
 }

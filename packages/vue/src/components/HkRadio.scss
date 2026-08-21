@@ -102,18 +102,3 @@
     height: 5px;
   }
 }
-
-/* --- Label --- */
-
-.hk-radio-label-text {
-  font-size: 0.875rem;
-  color: var(--hi-color-text-primary);
-
-  [data-size="sm"] & {
-    font-size: 0.75rem;
-  }
-
-  [data-size="lg"] & {
-    font-size: 1rem;
-  }
-}

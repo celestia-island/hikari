@@ -17,6 +17,7 @@ export { default as HIconButton } from "./components/HkIconButton";
 export { default as HInput } from "./components/HkInput";
 export { default as HPlaceholderMarquee, type PlaceholderVariant } from "./components/HkPlaceholderMarquee";
 export { default as HKbd } from "./components/HkKbd";
+export { default as HLabel } from "./components/HkLabel";
 export { default as HListTransition } from "./components/HkListTransition";
 export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HModal } from "./components/HkModal";

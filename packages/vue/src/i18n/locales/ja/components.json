@@ -30,6 +30,8 @@
     "hikari::table.noData": "データなし",
     "hikari::confirmDialog.cancel": "キャンセル",
     "hikari::confirmDialog.confirm": "確認",
+    "hikari::blockingToast.cancel": "キャンセル",
+    "hikari::blockingToast.confirm": "確認",
     "hikari::passwordInput.passwordEntered": "入力済み、クリックでフォーカスし既存のパスワードを消去します",
     "hikari::passwordInput.allSelected": "全選択",
     "hikari::passwordInput.capsLock": "CapsLock オン",

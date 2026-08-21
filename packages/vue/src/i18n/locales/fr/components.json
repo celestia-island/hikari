@@ -30,6 +30,8 @@
     "hikari::table.noData": "Aucune donnée",
     "hikari::confirmDialog.cancel": "Annuler",
     "hikari::confirmDialog.confirm": "Confirmer",
+    "hikari::blockingToast.cancel": "Annuler",
+    "hikari::blockingToast.confirm": "Confirmer",
     "hikari::passwordInput.passwordEntered": "Saisi, un clic active le champ et efface le mot de passe existant",
     "hikari::passwordInput.allSelected": "Tout est sélectionné",
     "hikari::passwordInput.capsLock": "Verr. Maj est activé",

@@ -30,6 +30,8 @@
     "hikari::table.noData": "لا توجد بيانات",
     "hikari::confirmDialog.cancel": "إلغاء",
     "hikari::confirmDialog.confirm": "تأكيد",
+    "hikari::blockingToast.cancel": "إلغاء",
+    "hikari::blockingToast.confirm": "تأكيد",
     "hikari::passwordInput.passwordEntered": "تم الإدخال، انقر للتركيز ومسح كلمة المرور الحالية",
     "hikari::passwordInput.allSelected": "تم تحديد الكل",
     "hikari::passwordInput.capsLock": "مفتاح Caps Lock مُفعّل",

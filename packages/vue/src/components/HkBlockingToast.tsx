@@ -66,7 +66,7 @@ const HkBlockingToastCard = defineComponent({
         <div
           class={["hk-blocking-toast-card", `hk-blocking-toast-${item.variant}`]}
           role="alertdialog"
-          aria-label={item.title ?? undefined}
+          aria-label={item.title ?? item.message}
         >
           <span class="hk-blocking-toast-icon">{renderIcon(item.variant)}</span>
           <div class="hk-blocking-toast-body">

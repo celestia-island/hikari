@@ -603,6 +603,15 @@
   color: var(--hi-color-muted, #666);
 }
 
+/* Bottom-of-card extension point (HkAuthCard `below` slot): alternate
+   sign-in methods and similar flows stay INSIDE the card width. The footer
+   already carries the bottom inset, so this block only needs the side
+   padding to align with the footer's text column. */
+.s-auth-below {
+  padding: 0 var(--space-32, 2rem) var(--space-24, 1.5rem);
+  margin-top: calc(-1 * var(--space-8, 0.5rem));
+}
+
 .s-auth-protocol-link {
   color: var(--hi-color-primary, #58a6ff);
   cursor: pointer;

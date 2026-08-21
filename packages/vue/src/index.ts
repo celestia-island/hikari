@@ -1,7 +1,9 @@
 export { default as HActionBar } from "./components/HkActionBar";
+export { default as HAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HAlert } from "./components/HkAlert";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
+export { default as HBlockingToast } from "./components/HkBlockingToast";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HButton } from "./components/HkButton";
 export { default as HCard } from "./components/HkCard";
@@ -125,6 +127,13 @@ export {
   usePopupManager,
   useToast,
   useConfirm,
+  useBlockingToast,
+  showBlockingToast,
+  resolveBlockingToast,
+  clearBlockingToasts,
+  type BlockingToastItem,
+  type BlockingToastOptions,
+  type BlockingToastVariant,
   useBreakpoint,
   useClipboard,
   useMediaQuery,

@@ -30,6 +30,8 @@
     "hikari::table.noData": "Keine Daten",
     "hikari::confirmDialog.cancel": "Abbrechen",
     "hikari::confirmDialog.confirm": "Bestätigen",
+    "hikari::blockingToast.cancel": "Abbrechen",
+    "hikari::blockingToast.confirm": "Bestätigen",
     "hikari::passwordInput.passwordEntered": "Eingegeben, Klicken fokussiert und löscht das vorhandene Passwort",
     "hikari::passwordInput.allSelected": "Alle ausgewählt",
     "hikari::passwordInput.capsLock": "Feststelltaste ist aktiviert",

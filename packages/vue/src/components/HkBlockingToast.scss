@@ -1,0 +1,120 @@
+// HkBlockingToast — the blocking confirmation card host. The container
+// mirrors .hk-toast-container (same fixed top-right column, same
+// --hk-z-toast ceiling, same column gap) so blocking cards and
+// transient toasts read as one stack; the card itself follows the toast
+// item conventions (variant background, icon column, clamped message)
+// with a button row appended. Pointer events pass through the column
+// and re-enable on the card, exactly like toasts.
+
+.hk-blocking-toast-container {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  z-index: var(--hk-z-toast, 9999);
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.hk-blocking-toast-container > div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hi-space-12, 12px);
+}
+
+.hk-blocking-toast-slot {
+  position: relative;
+  pointer-events: auto;
+}
+
+.hk-blocking-toast-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--hi-space-8, 8px);
+  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  border-radius: var(--hi-radius-sm, 4px);
+  font-size: var(--hi-text-base, 0.875rem);
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+}
+
+.hk-blocking-toast-icon {
+  display: flex;
+  align-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.hk-blocking-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hi-space-8, 8px);
+}
+
+.hk-blocking-toast-title {
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.hk-blocking-toast-message {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.hk-blocking-toast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hi-space-8, 8px);
+}
+
+// Variant backgrounds follow the HkToast conventions (including the
+// dark-on-amber warning text for contrast).
+.hk-blocking-toast-info {
+  background: var(--hi-color-info, #58a6ff);
+  color: #fff;
+}
+
+.hk-blocking-toast-warning {
+  background: var(--hi-color-warning, #d29922);
+  color: #1c1c1e;
+}
+
+.hk-blocking-toast-danger {
+  background: var(--hi-color-danger, #f85149);
+  color: #fff;
+}
+
+// Enter/leave mirrors the toast slide (settle, no bounce); leaving
+// cards go absolute so the remaining ones glide up (hk-toast pattern).
+.hk-blocking-toast-enter-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.hk-blocking-toast-leave-active {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
+  position: absolute;
+  width: 100%;
+}
+
+.hk-blocking-toast-enter-from,
+.hk-blocking-toast-leave-to {
+  opacity: 0;
+  transform: translateX(1rem);
+}
+
+.hk-blocking-toast-move {
+  transition: transform var(--hi-duration-normal, 0.3s) ease;
+}

@@ -1,4 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
+import HkLabel from "./HkLabel";
 import "./HkRadio.scss";
 
 export interface HkRadioOption {
@@ -31,7 +32,7 @@ export default defineComponent({
   emits: {
     "update:modelValue": (_value: string | number) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     return () => (
       <div
         class={[
@@ -65,7 +66,9 @@ export default defineComponent({
                 />
                 {isSelected && <span class="hk-radio-dot" />}
               </span>
-              <span class="hk-radio-label-text">{opt.label}</span>
+              <HkLabel size={props.size}>
+                {slots.label?.({ option: opt }) ?? opt.label}
+              </HkLabel>
             </label>
           );
         })}

@@ -1,0 +1,34 @@
+/* HkLabel — unified label shell for control label positions.
+ *
+ * One typography source for every control label (checkbox / radio / switch /
+ * …): plain text via the `text` prop or rich content via the default slot
+ * both render inside this shell, so mixed plain/rich label lists read with
+ * the same font. Links inside a label are the one sanctioned rich-text
+ * element: they get the primary accent so a clickable agreement link is
+ * obviously interactive without any consumer-side styling. */
+
+.hk-label {
+  display: inline;
+  font-size: var(--hi-text-base, 0.875rem);
+  line-height: 1.5;
+  color: var(--hi-color-text-primary, #333);
+
+  &.hk-label-sm {
+    font-size: var(--hi-text-xs, 0.75rem);
+  }
+
+  &.hk-label-lg {
+    font-size: var(--hi-text-md, 1rem);
+  }
+
+  a {
+    color: var(--hi-color-primary, #58a6ff);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

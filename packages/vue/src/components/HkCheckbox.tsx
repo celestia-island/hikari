@@ -1,6 +1,7 @@
 import { Check } from "lucide-vue-next";
 import { defineComponent, ref, type PropType } from "vue";
 
+import HkLabel from "./HkLabel";
 import "./HkCheckbox.scss";
 
 export default defineComponent({
@@ -75,9 +76,9 @@ export default defineComponent({
             ) : null}
           </span>
           {props.label || slots.default ? (
-            <span class="hk-checkbox-label-text">
+            <HkLabel size={props.size}>
               {slots.default?.() ?? props.label}
-            </span>
+            </HkLabel>
           ) : null}
         </label>
       );

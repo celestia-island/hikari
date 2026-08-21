@@ -140,18 +140,3 @@
     color: var(--hi-color-text-on-primary, #fff);
   }
 }
-
-/* --- Label --- */
-
-.hk-switch-label-text {
-  font-size: 0.875rem;
-  color: var(--hi-color-text-primary);
-
-  .hk-switch-sm & {
-    font-size: 0.75rem;
-  }
-
-  .hk-switch-lg & {
-    font-size: 1rem;
-  }
-}

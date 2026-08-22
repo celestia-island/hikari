@@ -30,6 +30,9 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
  *   `hikari::signIn.usernamePlaceholder` locale when unset.
  * - `footer` slot — content below the submit button (remember-me,
  *   protocol links, …).
+ * - `below` slot — content at the very bottom INSIDE the card, after the
+ *   footer (alternate sign-in methods with a divider, …). Rendered inside
+ *   the card shell so it never escapes the card's width.
  *
  * ```tsx
  * <HSignInCard
@@ -148,6 +151,7 @@ export const HkSignInCard = defineComponent({
             </>
           ),
           footer: () => slots.footer?.(),
+          below: () => slots.below?.(),
         }}
       </HkAuthCard>
     );

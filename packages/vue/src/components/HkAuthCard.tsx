@@ -30,6 +30,11 @@ export const HkAuthCard = defineComponent({
             {slots.footer()}
           </div>
         )}
+        {slots.below && (
+          <div class="s-auth-below">
+            {slots.below()}
+          </div>
+        )}
       </div>
     );
   },

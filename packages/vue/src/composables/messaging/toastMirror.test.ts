@@ -6,26 +6,25 @@ import { toastTransport } from "./toastTransport";
 
 type NotificationCtor = new (title: string, options?: NotificationOptions) => Notification;
 
-class FakeNotification implements Notification {
+class FakeNotification implements Partial<Notification> {
   static instances: FakeNotification[] = [];
   static permission: NotificationPermission = "granted";
-  onclick: ((this: Notification, ev: Event) => void) | null = null;
-  onclose: ((this: Notification, ev: Event) => void) | null = null;
-  onerror: ((this: Notification, ev: Event) => void) | null = null;
-  onshow: ((this: Notification, ev: Event) => void) | null = null;
+  onclick: Notification["onclick"] = null;
+  onclose: Notification["onclose"] = null;
+  onerror: Notification["onerror"] = null;
+  onshow: Notification["onshow"] = null;
   tag: string;
   title: string;
-  body: string | undefined;
-  constructor(title: string, options?: NotificationOptions & { body?: string; requireInteraction?: boolean }) {
+  body: string;
+  constructor(title: string, options?: NotificationOptions & { body?: string }) {
     this.title = title;
     this.tag = options?.tag ?? "";
-    this.body = options?.body;
+    this.body = options?.body ?? "";
     FakeNotification.instances.push(this);
   }
   close(): void { /* recorded by instances list */ }
   addEventListener(): void { /* noop */ }
-  removeEventListener(): void { /* noop */
-  }
+  removeEventListener(): void { /* noop */ }
   dispatchEvent(): boolean { return false; }
 }
 

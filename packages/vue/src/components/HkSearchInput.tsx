@@ -95,7 +95,7 @@ export default defineComponent({
           type="search"
           class="hk-search-input-field"
           value={props.modelValue}
-          placeholder={props.placeholder ?? t("hk.searchInput.placeholder", "Search…")}
+          placeholder={props.placeholder ?? t("hikari::searchInput.placeholder", "Search…")}
           disabled={props.disabled}
           onInput={onInput}
           onKeydown={onKeydown}
@@ -106,7 +106,7 @@ export default defineComponent({
             class="hk-search-input-clear"
             onClick={clearValue}
             tabindex={-1}
-            aria-label={props.clearAriaLabel || t("hk.searchInput.clear", "Clear search")}
+            aria-label={props.clearAriaLabel || t("hikari::searchInput.clear", "Clear search")}
           >
             {clearIcon}
           </button>

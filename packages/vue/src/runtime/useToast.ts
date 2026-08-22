@@ -33,6 +33,11 @@ export interface ToastItem {
   copyable?: boolean;
 }
 
+/** Hard cap on stacked messages per toast slot. Beyond it the oldest
+ *  messages are dropped so a noisy caller cannot bury the surface in
+ *  unbounded history. */
+export const MAX_TOASTS_PER_SLOT = 5;
+
 const state = reactive<{ toasts: ToastItem[] }>({ toasts: [] });
 
 let nextSlotId = 0;
@@ -86,8 +91,21 @@ function push(
   } else if (options.copyable === true && !slot.copyable) {
     slot.copyable = true;
   }
-  const msgId = ++nextMsgId;
-  slot.messages.push({ id: msgId, text });
+  let msgId: number;
+  const last = slot.messages[slot.messages.length - 1];
+  if (last && last.text === text) {
+    // Dedupe: an identical consecutive message (same slot + same text in
+    // the current stack) replaces the previous entry instead of appending —
+    // the surface keeps a single entry and the auto-dismiss clock restarts.
+    msgId = last.id;
+  } else {
+    msgId = ++nextMsgId;
+    slot.messages.push({ id: msgId, text });
+  }
+  // Cap: drop the oldest messages beyond the per-slot cap.
+  while (slot.messages.length > MAX_TOASTS_PER_SLOT) {
+    slot.messages.shift();
+  }
   scheduleAutoDismiss(slot);
   return msgId;
 }

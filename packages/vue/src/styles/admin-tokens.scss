@@ -603,13 +603,6 @@
   color: var(--hi-color-muted, #666);
 }
 
-.s-auth-options {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: calc(-1 * var(--space-4, 0.25rem));
-}
-
 .s-auth-protocol-link {
   color: var(--hi-color-primary, #58a6ff);
   cursor: pointer;

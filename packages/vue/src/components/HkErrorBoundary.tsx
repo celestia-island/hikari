@@ -55,7 +55,7 @@ export default defineComponent({
           <div class="hk-error-boundary-card">
             <div class="hk-error-boundary-header">
               <AlertTriangle size={16} class="hk-error-boundary-icon" />
-              <span class="hk-error-boundary-label">{props.errorTitle || t("hk.errorBoundary.title", "Component Error")}</span>
+              <span class="hk-error-boundary-label">{props.errorTitle || t("hikari::errorBoundary.title", "Component Error")}</span>
               {props.name !== "unknown" && (
                 <span class="hk-error-boundary-tag">{props.name}</span>
               )}
@@ -70,11 +70,11 @@ export default defineComponent({
             <div class="hk-error-boundary-actions">
               <HButton variant="ghost" size="sm" onClick={copyError}>
                 <Copy size={12} />
-                {props.copyErrorLabel || t("hk.errorBoundary.copyError", "Copy Error")}
+                {props.copyErrorLabel || t("hikari::errorBoundary.copyError", "Copy Error")}
               </HButton>
               <HButton variant="outline" size="sm" onClick={retry}>
                 <RefreshCw size={12} />
-                {props.retryLabel || t("hk.errorBoundary.retry", "Retry")}
+                {props.retryLabel || t("hikari::errorBoundary.retry", "Retry")}
               </HButton>
             </div>
           </div>

@@ -374,7 +374,7 @@ export default defineComponent({
                         {props.closable && (
                           <button
                             class="hk-modal-close"
-                            aria-label={t("hk.modal.close", "Close")}
+                            aria-label={t("hikari::modal.close", "Close")}
                             onClick={close}
                           >
                             <svg
@@ -425,7 +425,7 @@ export default defineComponent({
                         >
                           <polyline points="6 9 12 15 18 9" />
                         </svg>
-                        <span>{t("hk.modal.auto", "Auto")}</span>
+                        <span>{t("hikari::modal.auto", "Auto")}</span>
                       </div>
                     )}
                   </div>

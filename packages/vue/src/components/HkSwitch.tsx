@@ -1,4 +1,5 @@
 import { computed, defineComponent, type PropType } from "vue";
+import HkLabel from "./HkLabel";
 import "./HkSwitch.scss";
 
 export default defineComponent({
@@ -21,7 +22,7 @@ export default defineComponent({
   emits: {
     "update:modelValue": (_value: boolean) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     function toggle() {
       if (props.disabled) return;
       emit("update:modelValue", !props.modelValue);
@@ -63,8 +64,10 @@ export default defineComponent({
             </span>
           ) : null}
         </span>
-        {props.label ? (
-          <span class="hk-switch-label-text">{props.label}</span>
+        {props.label || slots.default ? (
+          <HkLabel size={props.size}>
+            {slots.default?.() ?? props.label}
+          </HkLabel>
         ) : null}
       </label>
     );

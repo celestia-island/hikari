@@ -1,3 +1,9 @@
+/* ── HkDateTimePicker ──────────────────────────────────────────────
+ * Inline/popup calendar with a time stepper row. The fixed-size view
+ * stage and the direction-aware view transition live in HkPickerPane.scss. */
+
+@use "./HkPickerPane" as picker-pane;
+
 .hk-dtp {
   display: flex;
   flex-direction: column;
@@ -10,6 +16,12 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--hi-space-8, 8px);
+}
+
+.hk-dtp-header {
+  /* Fixed height keeps the header row — and therefore the shared stage
+   * height — identical in every view and locale. */
+  height: 1.75rem;
 }
 
 .hk-dtp-header-side {
@@ -44,6 +56,7 @@
   font-weight: 600;
   color: inherit;
   cursor: pointer;
+  white-space: nowrap;
   border-radius: var(--hi-radius-sm, 4px);
   transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
@@ -96,7 +109,8 @@
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
-  padding: var(--hi-space-2, 2px) 0;
+  height: 1.25rem;
+  line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -107,8 +121,10 @@
   background: transparent;
   border: 0;
   border-radius: var(--hi-radius-sm, 4px);
-  aspect-ratio: 1 / 1;
-  min-height: 2rem;
+  /* Fixed height keeps the six-row day grid — and therefore the shared
+   * stage height — independent of the picker width, so drilling between
+   * views never changes the picker's size. */
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,44 +172,18 @@
   line-height: 1;
 }
 
-/* ── Month / year pick panes ───────────────────── */
+/* ── Month / year pick panes ─────────────────────
+ * The shared pane partial (HkPickerPane.scss) keeps these inside the
+ * fixed day-view stage and centers their three rows vertically. */
 
 .hk-dtp-grid[data-variant="pick"] {
   grid-template-columns: repeat(4, 1fr);
 }
 
 .hk-dtp-cell[data-variant="pick"] {
-  aspect-ratio: auto;
   height: 2.5rem;
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 500;
-}
-
-/* ── Pane cross-fade ───────────────────────────── */
-
-.hk-dtp-stage {
-  position: relative;
-}
-
-.hk-dtp-pane {
-  display: flex;
-  flex-direction: column;
-}
-
-.hk-dtp-pane-enter-active,
-.hk-dtp-pane-leave-active {
-  transition: opacity 0.15s ease;
-  will-change: opacity;
-}
-
-.hk-dtp-pane-enter-from,
-.hk-dtp-pane-leave-to {
-  opacity: 0;
-}
-
-.hk-dtp-pane-leave-active {
-  position: absolute;
-  inset: 0;
 }
 
 /* Dot under marked days */
@@ -217,8 +207,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--hi-space-10, 10px);
-  padding-top: var(--hi-space-8, 8px);
-  margin-top: var(--hi-space-2, 2px);
+  /* Spacing comes from the .hk-dtp gap (the row sits under the fixed
+   * stage in every view); only the separator border remains. */
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 

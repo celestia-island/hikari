@@ -1,4 +1,5 @@
-import { computed, defineComponent, onBeforeUnmount, ref, Teleport, type CSSProperties, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, Teleport, type CSSProperties, type PropType } from "vue";
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import "./HkTooltip.scss";
 
 export default defineComponent({
@@ -14,6 +15,18 @@ export default defineComponent({
     const wrapperRef = ref<HTMLElement | null>(null);
     const tooltipStyle = ref<CSSProperties>({});
     let showTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // Registers with the popup manager (kind "tooltip") so tooltips take
+    // part in the unified z-band ladder; the zIndex lands on the popup
+    // element and overrides the --hi-z-tooltip fallback in the SCSS.
+    const manager = usePopupManager();
+    let popupHandle: PopupHandle | null = null;
+    const zIndex = ref<number | null>(null);
+
+    onMounted(() => {
+      popupHandle = manager.register("tooltip", false);
+      zIndex.value = popupHandle.zIndex;
+    });
 
     function updatePosition() {
       if (!wrapperRef.value) return;
@@ -73,6 +86,10 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       clearShowTimer();
+      if (popupHandle) {
+        manager.unregister(popupHandle.id);
+        popupHandle = null;
+      }
     });
 
     const tooltipCls = computed(() => [
@@ -80,6 +97,11 @@ export default defineComponent({
       `hk-tooltip-${props.placement}`,
       visible.value ? "hk-tooltip-visible" : "",
     ]);
+
+    const popupStyle = computed<CSSProperties>(() => ({
+      ...tooltipStyle.value,
+      ...(zIndex.value != null ? { zIndex: zIndex.value } : {}),
+    }));
 
     return () => (
       <span
@@ -97,7 +119,7 @@ export default defineComponent({
         <Teleport to="body">
           <div
             class={tooltipCls.value}
-            style={tooltipStyle.value}
+            style={popupStyle.value}
           >
             <div class="hk-tooltip-content">{props.text}</div>
           </div>

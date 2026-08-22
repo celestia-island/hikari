@@ -1,6 +1,8 @@
 import { Check } from "lucide-vue-next";
-import { defineComponent, ref, type PropType } from "vue";
+import { defineComponent, onUnmounted, ref, type PropType } from "vue";
 
+import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import HkLabel from "./HkLabel";
 import "./HkCheckbox.scss";
 
 export default defineComponent({
@@ -23,12 +25,16 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const animating = ref(false);
-    let animTimer: ReturnType<typeof setTimeout> | null = null;
+    let animTimer: CronHandle | null = null;
 
     function markActive() {
       animating.value = true;
-      if (animTimer) clearTimeout(animTimer);
-      animTimer = setTimeout(() => {
+      // cronBus one-shot (not the rAF-driven animationBus one): the
+      // flag must always clear, even while the animation bus is parked
+      // under reduced motion.
+      animTimer?.disconnect();
+      animTimer = scheduleCronAfter(() => {
+        animTimer = null;
         animating.value = false;
       }, 300);
     }
@@ -38,6 +44,11 @@ export default defineComponent({
       emit("update:modelValue", (e.target as HTMLInputElement).checked);
       markActive();
     }
+
+    onUnmounted(() => {
+      animTimer?.disconnect();
+      animTimer = null;
+    });
 
     return () => {
       const inputType = props.type === "radio" ? "radio" : "checkbox";
@@ -75,9 +86,9 @@ export default defineComponent({
             ) : null}
           </span>
           {props.label || slots.default ? (
-            <span class="hk-checkbox-label-text">
+            <HkLabel size={props.size}>
               {slots.default?.() ?? props.label}
-            </span>
+            </HkLabel>
           ) : null}
         </label>
       );

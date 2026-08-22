@@ -1,10 +1,11 @@
 import { CircleX as XCircle, X } from "lucide-vue-next";
-import { computed, defineComponent, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
 import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
 
 
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
 import "./HkToast.scss";
 
@@ -31,8 +32,8 @@ function renderIcon(type: ToastType, size = 18) {
   return <Info size={size} />;
 }
 
-function renderCountLabel(count: number) {
-  return `${count} msgs`;
+function renderCountLabel(count: number, unit: string) {
+  return `${count} ${unit}`;
 }
 
 const ACTION_ICON_SIZE = 18;
@@ -120,13 +121,13 @@ const HkToastItem = defineComponent({
               </span>
             </Transition>
             {count > 1 && (
-              <span class="hk-toast-count">{renderCountLabel(count)}</span>
+              <span class="hk-toast-count">{renderCountLabel(count, t("hikari::toast.msgs", "msgs"))}</span>
             )}
           </div>
           {props.toast.copyable && (
             <button
               class="hk-toast-copy-btn"
-              title={t("hk.toast.copy", "Copy")}
+              title={t("hikari::toast.copy", "Copy")}
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopy();
@@ -137,7 +138,7 @@ const HkToastItem = defineComponent({
           )}
           <button
             class="hk-toast-close"
-            aria-label={t("hk.toast.close", "Close")}
+            aria-label={t("hikari::toast.close", "Close")}
             onClick={(e) => {
               e.stopPropagation();
               handleClose();
@@ -155,10 +156,34 @@ export default defineComponent({
   name: "HkToast",
   setup() {
     const { toasts, remove } = useToast();
+    // The toast stack registers with the popup manager so it takes part
+    // in the unified z-band ladder instead of a hardcoded z that later
+    // modals could overtake.
+    const manager = usePopupManager();
+    let popupHandle: PopupHandle | null = null;
+    const containerZ = ref<number | null>(null);
+
+    onMounted(() => {
+      popupHandle = manager.register("toast", false);
+      containerZ.value = popupHandle.zIndex;
+    });
+
+    onUnmounted(() => {
+      if (popupHandle) {
+        manager.unregister(popupHandle.id);
+        popupHandle = null;
+      }
+    });
+
+    const containerStyle = computed<Record<string, string> | undefined>(() =>
+      containerZ.value != null
+        ? { "--hk-z-toast": String(containerZ.value) }
+        : undefined,
+    );
 
     return () => (
       <Teleport to="body">
-        <div class="hk-toast-container">
+        <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
             tag="div"
             name="hk-toast"

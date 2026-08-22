@@ -95,8 +95,3 @@
 .hk-checkbox[data-animating] .hk-checkbox-box {
   will-change: border-color, background;
 }
-
-.hk-checkbox-label-text {
-  font-size: var(--hi-text-sm, 0.8125rem);
-  color: var(--hi-color-text-primary, #333);
-}

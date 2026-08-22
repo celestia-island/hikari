@@ -17,6 +17,7 @@ export { default as HIconButton } from "./components/HkIconButton";
 export { default as HInput } from "./components/HkInput";
 export { default as HPlaceholderMarquee, type PlaceholderVariant } from "./components/HkPlaceholderMarquee";
 export { default as HKbd } from "./components/HkKbd";
+export { default as HLabel } from "./components/HkLabel";
 export { default as HListTransition } from "./components/HkListTransition";
 export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HModal } from "./components/HkModal";
@@ -115,6 +116,8 @@ export {
   scheduleAfter,
   scheduleCron,
   scheduleCronAfter,
+  scheduleInterval,
+  scheduleIntervalAfter,
   reportTransition,
   setReducedMotion,
   notifyScrollStart,
@@ -124,6 +127,12 @@ export {
   useConfirm,
   useBreakpoint,
   useClipboard,
+  useMediaQuery,
+  releaseMediaQuery,
+  usePageLifecycle,
+  onPageLifecycle,
+  pageLifecycleState,
+  useSafeArea,
   closeAll,
   isOverlayOpen,
   TOAST_DURATION,
@@ -132,6 +141,7 @@ export {
   type ReportedTransition,
   type ReportedTransitionTrack,
   type CronHandle,
+  type IntervalHandle,
   type FrameContext,
   type OverlayHandle,
   type PopupHandle,
@@ -139,6 +149,9 @@ export {
   type ToastItem,
   type ToastMessage,
   type ToastType,
+  type PageLifecycleState,
+  type PageLifecycleListener,
+  type SafeAreaInsets,
 } from "./runtime";
 
 // i18n

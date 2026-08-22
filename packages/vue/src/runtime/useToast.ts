@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { mirrorToBrowserIfHidden } from "../composables/messaging/browserTransport";
 
 export type ToastType = "error" | "success" | "warning" | "info" | "loading";
 
@@ -43,6 +44,11 @@ const state = reactive<{ toasts: ToastItem[] }>({ toasts: [] });
 let nextSlotId = 0;
 let nextMsgId = 0;
 
+/** Re-entrancy guard: the messaging router already covers the browser
+ *  surface for payloads it routed, so its toast-transport calls must not
+ *  mirror again (double notification). */
+let suppressMirror = false;
+
 const timers = new Map<number, CronHandle>();
 
 function clearTimer(slotId: number) {
@@ -78,6 +84,7 @@ function push(
   text: string,
   options: { duration?: number; copyable?: boolean } = {},
 ): number {
+  const mirror = !suppressMirror;
   let slot = findSlot(type);
   if (!slot) {
     slot = {
@@ -107,7 +114,30 @@ function push(
     slot.messages.shift();
   }
   scheduleAutoDismiss(slot);
+  // Unified visibility behavior (P59-W5): every actionable toast — not just
+  // the ones that went through useMessaging — also lands as an OS
+  // notification while the page is hidden, so direct useToast callers
+  // (error handlers, RPC layers) are no longer silently dropped when the
+  // user is in another tab. No-op without granted permission.
+  if (mirror) {
+    mirrorToBrowserIfHidden(type, text, slot.duration, slot.copyable);
+  }
   return msgId;
+}
+
+/** Internal: wrap a push in the mirror-suppression guard (used by the
+ *  messaging toast transport so router-routed payloads don't double-fire). */
+export function pushViaTransport(
+  type: ToastType,
+  text: string,
+  options: { duration?: number; copyable?: boolean } = {},
+): number {
+  suppressMirror = true;
+  try {
+    return push(type, text, options);
+  } finally {
+    suppressMirror = false;
+  }
 }
 
 export function useToast() {

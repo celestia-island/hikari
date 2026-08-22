@@ -87,6 +87,10 @@ export default defineComponent({
     // chrome for a native date input (the model already speaks its ISO wire
     // format) and keep the custom calendar on desktop widths only.
     const useNative = computed(() => props.nativeOnMobile && isMobile.value);
+    // The custom calendar renders on touch viewports only when the host
+    // opts out of the native input (e.g. bottom-sheet dialogs); enlarge
+    // the cells there via the `is-touch` geometry variant.
+    const isTouch = computed(() => isMobile.value && !useNative.value);
 
     const selected = computed(() => parseISODate(props.modelValue));
     const hasValue = computed(() => selected.value !== null);
@@ -537,7 +541,7 @@ export default defineComponent({
             backdrop={false}
             class="hk-dp-popover"
           >
-            <div class="hk-dp-panel">
+            <div class={["hk-dp-panel", isTouch.value ? "is-touch" : ""].filter(Boolean).join(" ")}>
               {/* The stage pins the day view's exact size in every view so
                   drilling into months/years never resizes the popup; the
                   drift direction drives the registered pane keyframes. */}

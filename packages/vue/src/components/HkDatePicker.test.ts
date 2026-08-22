@@ -418,6 +418,8 @@ describe("HkDatePicker", () => {
     await nextTick();
     // The custom panel is portaled to the body, not the container.
     expect(panel()).not.toBeNull();
+    // Mobile custom calendar gets the enlarged touch geometry variant.
+    expect(panel()?.classList.contains("is-touch")).toBe(true);
   });
 
   it("passes min/max through to the native input", () => {

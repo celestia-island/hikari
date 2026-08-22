@@ -7,6 +7,7 @@ export { useOverlay, closeAll, isOverlayOpen, type OverlayHandle, type UseOverla
 export { usePopupManager, type PopupHandle, type PopupKind } from "./usePopupManager";
 export { useToast, TOAST_DURATION, type ToastItem, type ToastMessage, type ToastType } from "./useToast";
 export { useConfirm } from "./useConfirm";
+export { useBlockingToast, showBlockingToast, resolveBlockingToast, clearBlockingToasts, type BlockingToastItem, type BlockingToastOptions, type BlockingToastVariant } from "./useBlockingToast";
 export { useBreakpoint } from "./useBreakpoint";
 export { useClipboard } from "./useClipboard";
 export { provideScrollWindow, useScrollWindow, type ScrollWindowContext } from "../composables/useScrollWindow";

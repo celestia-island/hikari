@@ -143,7 +143,7 @@ export default defineComponent({
                   {props.closable ? (
                     <button
                       class="hk-drawer-close"
-                      aria-label={t("hk.drawer.close", "Close")}
+                      aria-label={t("hikari::drawer.close", "Close")}
                       onClick={close}
                     >
                       <svg

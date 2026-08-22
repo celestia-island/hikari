@@ -1,5 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 
+import { useI18n } from "../i18n/context";
 import "./HkStatusPill.scss";
 
 export type PillState = "ok" | "warn" | "error" | "unknown";
@@ -25,12 +26,13 @@ export const HkStatusPill = defineComponent({
     version: { type: String, default: undefined },
   },
   setup(props) {
+    const { t } = useI18n();
     return () => (
       <span class={["hk-status-pill", `hk-status-pill-${props.state}`]} role="status">
         <span class="hk-status-pill-dot" aria-hidden="true" />
         {props.label && <span class="hk-status-pill-label">{props.label}</span>}
         {props.latencyMs != null && (
-          <span class="hk-status-pill-latency">{props.latencyMs} ms</span>
+          <span class="hk-status-pill-latency">{props.latencyMs}{t("hikari::statusPill.ms", " ms")}</span>
         )}
         {props.version && <span class="hk-status-pill-version">{props.version}</span>}
       </span>

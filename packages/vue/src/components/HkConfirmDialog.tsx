@@ -55,7 +55,7 @@ export default defineComponent({
                   disabled={props.loading}
                   onClick={onCancel}
                 >
-                  {props.cancelLabel || t("hk.confirmDialog.cancel", "Cancel")}
+                  {props.cancelLabel || t("hikari::confirmDialog.cancel", "Cancel")}
                 </HButton>
                 <HButton
                   variant={props.confirmVariant}
@@ -63,7 +63,7 @@ export default defineComponent({
                   loading={props.loading}
                   onClick={onConfirm}
                 >
-                  {props.confirmLabel || t("hk.confirmDialog.confirm", "Confirm")}
+                  {props.confirmLabel || t("hikari::confirmDialog.confirm", "Confirm")}
                 </HButton>
               </div>
             </div>

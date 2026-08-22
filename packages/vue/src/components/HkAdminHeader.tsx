@@ -1,6 +1,7 @@
 import { defineComponent, ref, type PropType, type VNode } from "vue";
 import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HDivider, HPopover, HSpinner } from "@celestia-island/hikari";
+import { useI18n } from "../i18n/context";
 
 export interface LocaleOption {
   code: string;
@@ -33,12 +34,12 @@ export const HkAdminHeader = defineComponent({
     /** Placeholder row shown while the identity is still loading (a
      *  fetchUser race on hard refresh) — the action items stay hidden
      *  until there is an identity to act on. */
-    signingInLabel: { type: String, default: "Signing in…" },
+    signingInLabel: { type: String, default: undefined },
     /** Pending-state escape hatch: typically wired to logout (clears
      *  cookies and returns to the login page) when the network wedges
      *  the session restore and the user wants to break out manually. */
     onForceSignOut: { type: Function, default: undefined },
-    forceSignOutLabel: { type: String, default: "Sign out" },
+    forceSignOutLabel: { type: String, default: undefined },
     showEmergencyStop: { type: Boolean, default: false },
     emergencyStopActive: { type: Boolean, default: false },
     emergencyStopActiveLabel: { type: String, default: "" },
@@ -46,12 +47,12 @@ export const HkAdminHeader = defineComponent({
     emergencyStopLabel: { type: String, default: "" },
     emergencyStopTitle: { type: String, default: "" },
     emergencyStopLoading: { type: Boolean, default: false },
-    avatarMenuLabel: { type: String, default: "Avatar" },
+    avatarMenuLabel: { type: String, default: undefined },
     /** Accessible label for the avatar trigger button. */
-    avatarTriggerLabel: { type: String, default: "Account menu" },
-    localeMenuLabel: { type: String, default: "Language" },
-    logoutLabel: { type: String, default: "Logout" },
-    adminGroupLabel: { type: String, default: "Administrators" },
+    avatarTriggerLabel: { type: String, default: undefined },
+    localeMenuLabel: { type: String, default: undefined },
+    logoutLabel: { type: String, default: undefined },
+    adminGroupLabel: { type: String, default: undefined },
   },
   emits: {
     logout: () => true,
@@ -60,6 +61,7 @@ export const HkAdminHeader = defineComponent({
     emergencyStop: () => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useI18n();
     const userMenuOpen = ref(false);
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
@@ -101,7 +103,7 @@ export const HkAdminHeader = defineComponent({
                 ? ""
                 : "bg-primary/10 border-2 border-primary/15 hover:border-primary/30",
             ]}
-            aria-label={props.avatarTriggerLabel}
+            aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
             aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
             aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
             onClick={onAvatarClick}
@@ -152,7 +154,7 @@ export const HkAdminHeader = defineComponent({
             <div>
               <div class="s-user-header s-user-header--pending">
                 <HSpinner size="sm" />
-                <div class="s-user-header-email">{props.signingInLabel}</div>
+                <div class="s-user-header-email">{props.signingInLabel ?? t("hikari::adminHeader.signingIn", "Signing in…")}</div>
               </div>
               <HDivider spacing="sm" />
               <button
@@ -160,7 +162,7 @@ export const HkAdminHeader = defineComponent({
                 onClick={() => props.onForceSignOut?.()}
               >
                 <LogOut size={14} />
-                {props.forceSignOutLabel}
+                {props.forceSignOutLabel ?? t("hikari::adminHeader.forceSignOut", "Sign out")}
               </button>
             </div>
           ) : (
@@ -178,7 +180,9 @@ export const HkAdminHeader = defineComponent({
                         variant={g.name === "Administrators" ? "error" : "primary"}
                         size="sm"
                       >
-                        {g.name === "Administrators" ? props.adminGroupLabel : g.name}
+                        {g.name === "Administrators"
+                          ? (props.adminGroupLabel ?? t("hikari::adminHeader.adminGroup", "Administrators"))
+                          : g.name}
                       </HBadge>
                     ))}
                   </div>
@@ -193,7 +197,7 @@ export const HkAdminHeader = defineComponent({
                 }}
               >
                 <Camera size={14} />
-                {props.avatarMenuLabel}
+                {props.avatarMenuLabel ?? t("hikari::adminHeader.avatar", "Avatar")}
               </button>
               {/* The language trigger owns the locale anchor: the ref sits
                   on the BUTTON itself (not a wrapper div) so the picker
@@ -207,7 +211,7 @@ export const HkAdminHeader = defineComponent({
                 onClick={() => (localeMenuOpen.value = !localeMenuOpen.value)}
               >
                 <Languages size={14} />
-                {props.localeMenuLabel}
+                {props.localeMenuLabel ?? t("hikari::adminHeader.language", "Language")}
               </button>
               {slots["locale-picker"]?.({
                 open: localeMenuOpen.value,
@@ -227,7 +231,7 @@ export const HkAdminHeader = defineComponent({
                 }}
               >
                 <LogOut size={14} />
-                {props.logoutLabel}
+                {props.logoutLabel ?? t("hikari::adminHeader.logout", "Logout")}
               </button>
             </div>
           )}

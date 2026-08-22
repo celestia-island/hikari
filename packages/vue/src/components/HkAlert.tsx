@@ -72,7 +72,7 @@ export default defineComponent({
             <button
               class="hk-alert-close"
               type="button"
-              aria-label={t("hk.alert.close", "Close")}
+              aria-label={t("hikari::alert.close", "Close")}
               onClick={onClose}
             >
               <X size={14} />

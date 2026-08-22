@@ -665,6 +665,7 @@ export default defineComponent({
           {(!props.modelValue || (pendingClear.value && focused.value)) &&
           !revealing.value ? (
             <span
+              key={`ph-${pendingClear.value && props.modelValue ? "has-value" : focused.value ? "focused" : "idle"}`}
               class="hk-pwd-placeholder"
               onPointerdown={(e: PointerEvent) => {
                 // Tapping the placeholder refocuses the field — after an
@@ -693,7 +694,9 @@ export default defineComponent({
                   text={
                     pendingClear.value && props.modelValue
                       ? t("hikari::passwordInput.focusedHasValuePlaceholder")
-                      : props.placeholder || t(variantPlaceholderKey.value)
+                      : focused.value
+                        ? t("hikari::passwordInput.focusedPlaceholder")
+                        : props.placeholder || t(variantPlaceholderKey.value)
                   }
                   variant={props.placeholderVariant}
                   onOverflowChange={(v: boolean) => {

@@ -1,5 +1,5 @@
 import { defaultDurationFor, defaultRequireInteraction, type MessagePayload, type MessageTransport } from "./types";
-import { scheduleCronAfter } from "@celestia-island/hikari";
+import { scheduleCronAfter } from "../../runtime/cronBus";
 
 /**
  * Browser Notifications API transport.
@@ -77,6 +77,40 @@ export const browserTransport: MessageTransport = {
     }
   },
 };
+
+/**
+ * Mirror an in-app toast to the OS notification surface when the page is
+ * hidden and the severity is actionable off-page (P59-W5 unification).
+ * Shared by useToast's push path so DIRECT toast callers get the same
+ * hidden-page behavior as useMessaging callers — one routing policy for
+ * both notification entry points. Silently no-ops when permission is
+ * missing or the page is visible (the toast itself is the surface then).
+ */
+export function mirrorToBrowserIfHidden(
+  severity: "error" | "success" | "warning" | "info" | "loading",
+  message: string,
+  duration?: number,
+  copyable?: boolean,
+): void {
+  if (typeof document !== "undefined" && !document.hidden) return;
+  if (
+    severity !== "error" &&
+    severity !== "warning" &&
+    severity !== "success"
+  ) {
+    return; // info/loading pings don't earn an OS interruption
+  }
+  if (!browserTransport.available()) return;
+  browserTransport.send({
+    id: -1,
+    severity,
+    message,
+    duration,
+    copyable,
+    timestamp: Date.now(),
+    pageHidden: true,
+  });
+}
 
 /**
  * Request browser notification permission. Must be invoked from a user

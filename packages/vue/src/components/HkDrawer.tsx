@@ -39,7 +39,13 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const manager = usePopupManager();
-    const overlayHook = useOverlay({ name: "hk-drawer" });
+    const overlayHook = useOverlay({
+      name: "hk-drawer",
+      // A global closeAll() must be able to actually close this drawer
+      // (not just untrack it) — route it through the same closable
+      // guard as the user-initiated paths.
+      onCloseRequested: () => { if (props.closable) close(); },
+    });
 
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const panelRef = ref<HTMLElement>();

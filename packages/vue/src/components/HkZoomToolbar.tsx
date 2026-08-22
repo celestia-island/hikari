@@ -38,7 +38,7 @@ export default defineComponent({
             size="sm"
             class="hk-zoom-btn"
             disabled={!props.canZoomOut}
-            ariaLabel={t("hk.zoomToolbar.zoomOut", "Zoom out")}
+            ariaLabel={t("hikari::zoomToolbar.zoomOut", "Zoom out")}
             onClick={() => emit("zoomOut")}
           >
             <ZoomOut size={14} />
@@ -49,7 +49,7 @@ export default defineComponent({
             size="sm"
             class="hk-zoom-btn"
             disabled={!props.canZoomIn}
-            ariaLabel={t("hk.zoomToolbar.zoomIn", "Zoom in")}
+            ariaLabel={t("hikari::zoomToolbar.zoomIn", "Zoom in")}
             onClick={() => emit("zoomIn")}
           >
             <ZoomIn size={14} />
@@ -59,7 +59,7 @@ export default defineComponent({
               variant="ghost"
               size="sm"
               class={["hk-zoom-btn", "hk-zoom-reset-btn"]}
-              ariaLabel={t("hk.zoomToolbar.reset", "Reset zoom")}
+              ariaLabel={t("hikari::zoomToolbar.reset", "Reset zoom")}
               onClick={() => emit("reset")}
             >
               <Maximize2 size={14} />

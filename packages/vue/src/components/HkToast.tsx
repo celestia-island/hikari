@@ -31,8 +31,8 @@ function renderIcon(type: ToastType, size = 18) {
   return <Info size={size} />;
 }
 
-function renderCountLabel(count: number) {
-  return `${count} msgs`;
+function renderCountLabel(count: number, unit: string) {
+  return `${count} ${unit}`;
 }
 
 const ACTION_ICON_SIZE = 18;
@@ -120,13 +120,13 @@ const HkToastItem = defineComponent({
               </span>
             </Transition>
             {count > 1 && (
-              <span class="hk-toast-count">{renderCountLabel(count)}</span>
+              <span class="hk-toast-count">{renderCountLabel(count, t("hikari::toast.msgs", "msgs"))}</span>
             )}
           </div>
           {props.toast.copyable && (
             <button
               class="hk-toast-copy-btn"
-              title={t("hk.toast.copy", "Copy")}
+              title={t("hikari::toast.copy", "Copy")}
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopy();
@@ -137,7 +137,7 @@ const HkToastItem = defineComponent({
           )}
           <button
             class="hk-toast-close"
-            aria-label={t("hk.toast.close", "Close")}
+            aria-label={t("hikari::toast.close", "Close")}
             onClick={(e) => {
               e.stopPropagation();
               handleClose();

@@ -57,7 +57,7 @@ export default defineComponent({
           variant="ghost"
           size="sm"
           class="hk-media-btn hk-media-play"
-          ariaLabel={props.playing ? t("hk.mediaPlayer.pause", "Pause") : t("hk.mediaPlayer.play", "Play")}
+          ariaLabel={props.playing ? t("hikari::mediaPlayer.pause", "Pause") : t("hikari::mediaPlayer.play", "Play")}
           onClick={() => emit("togglePlay")}
         >
           {props.playing ? <Pause size={16} /> : <Play size={16} />}
@@ -68,7 +68,7 @@ export default defineComponent({
           ratio={props.progress / 100}
           buffered={props.bufferedPct / 100}
           disabled={props.disabled || props.duration <= 0}
-          ariaLabel={t("hk.mediaPlayer.seek", "Seek")}
+          ariaLabel={t("hikari::mediaPlayer.seek", "Seek")}
           onUpdate:ratio={(r) => emit("seek", r)}
         />
 
@@ -81,7 +81,7 @@ export default defineComponent({
             variant="ghost"
             size="sm"
             class="hk-media-btn"
-            ariaLabel={props.muted ? t("hk.mediaPlayer.unmute", "Unmute") : t("hk.mediaPlayer.mute", "Mute")}
+            ariaLabel={props.muted ? t("hikari::mediaPlayer.unmute", "Unmute") : t("hikari::mediaPlayer.mute", "Mute")}
             onClick={() => emit("toggleMute")}
           >
             {props.muted || props.volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
@@ -90,7 +90,7 @@ export default defineComponent({
             class="hk-media-controls-vol"
             size="sm"
             ratio={props.muted ? 0 : props.volume}
-            ariaLabel={t("hk.mediaPlayer.volume", "Volume")}
+            ariaLabel={t("hikari::mediaPlayer.volume", "Volume")}
             onUpdate:ratio={(v) => emit("setVolume", v)}
           />
         </div>
@@ -99,7 +99,7 @@ export default defineComponent({
           variant="ghost"
           size="sm"
           class="hk-media-btn hk-media-rate"
-          ariaLabel={t("hk.mediaPlayer.speed", "Playback speed")}
+          ariaLabel={t("hikari::mediaPlayer.speed", "Playback speed")}
           onClick={() => emit("cycleRate")}
         >
           {props.rate}x
@@ -110,7 +110,7 @@ export default defineComponent({
             variant="ghost"
             size="sm"
             class="hk-media-btn"
-            ariaLabel={props.isFullscreen ? t("hk.mediaPlayer.exitFullscreen", "Exit fullscreen") : t("hk.mediaPlayer.fullscreen", "Fullscreen")}
+            ariaLabel={props.isFullscreen ? t("hikari::mediaPlayer.exitFullscreen", "Exit fullscreen") : t("hikari::mediaPlayer.fullscreen", "Fullscreen")}
             onClick={() => emit("toggleFullscreen")}
           >
             {props.isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}

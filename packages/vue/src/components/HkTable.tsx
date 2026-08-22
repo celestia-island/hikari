@@ -183,7 +183,7 @@ export default defineComponent({
             {sortedRows.value.length === 0 ? (
               <tr>
                 <td colspan={totalCols.value} class="hk-table-empty">
-                  {slots.empty ? slots.empty() : (props.emptyText || t("hk.table.noData", "No data"))}
+                  {slots.empty ? slots.empty() : (props.emptyText || t("hikari::table.noData", "No data"))}
                 </td>
               </tr>
             ) : (

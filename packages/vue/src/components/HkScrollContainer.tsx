@@ -478,7 +478,7 @@ export default defineComponent({
             {content}
           </div>
           {showAutoTag.value && (
-            <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hk.scrollContainer.auto", "Auto")}</span>
+            <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hikari::scrollContainer.auto", "Auto")}</span>
           )}
         </Tag>
       );

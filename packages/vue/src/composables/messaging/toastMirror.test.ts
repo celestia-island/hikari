@@ -6,7 +6,7 @@ import { toastTransport } from "./toastTransport";
 
 type NotificationCtor = new (title: string, options?: NotificationOptions) => Notification;
 
-class FakeNotification implements Notification {
+class FakeNotification {
   static instances: FakeNotification[] = [];
   static permission: NotificationPermission = "granted";
   onclick: ((this: Notification, ev: Event) => void) | null = null;
@@ -15,11 +15,11 @@ class FakeNotification implements Notification {
   onshow: ((this: Notification, ev: Event) => void) | null = null;
   tag: string;
   title: string;
-  body: string | undefined;
+  body: string;
   constructor(title: string, options?: NotificationOptions & { body?: string; requireInteraction?: boolean }) {
     this.title = title;
     this.tag = options?.tag ?? "";
-    this.body = options?.body;
+    this.body = options?.body ?? "";
     FakeNotification.instances.push(this);
   }
   close(): void { /* recorded by instances list */ }

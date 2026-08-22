@@ -1,6 +1,7 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { clampRgbToBands, hueDelta, rgbToHsl, wrapHue, type HueClamp } from "../theme/tokenGroups";
+import { useOverlay } from "../runtime/useOverlay";
 import HInput from "./HkInput";
 import HPopover from "./HkPopover";
 import "./HkColorPicker.scss";
@@ -122,6 +123,20 @@ export default defineComponent({
   setup(props, { emit }) {
     const isOpen = ref(false);
     const triggerRef = ref<HTMLElement>();
+
+    // Registered with the overlay registry so closeAll()/isOverlayOpen()
+    // see the open popout; the popover inside handles z-stacking via the
+    // popup manager.
+    const overlay = useOverlay({ name: "hk-color-picker" });
+
+    watch(isOpen, (open) => {
+      if (open) overlay.open();
+      else overlay.close();
+    });
+
+    onBeforeUnmount(() => {
+      overlay.close();
+    });
 
     const hex = computed(() => rgbToHex(props.r, props.g, props.b));
     const hexDisplay = computed(() => hex.value.replace(/^#/, ""));

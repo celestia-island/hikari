@@ -1,4 +1,5 @@
 import { computed, defineComponent, onUnmounted, ref, type PropType } from "vue";
+import { scheduleAfter, scheduleEvery, type AnimationHandle } from "../runtime/animationBus";
 import "./HkNumberInput.scss";
 
 export default defineComponent({
@@ -19,8 +20,8 @@ export default defineComponent({
     "update:modelValue": (_value: number) => true,
   },
   setup(props, { emit, slots }) {
-    let holdInterval: ReturnType<typeof setInterval> | null = null;
-    let holdTimeout: ReturnType<typeof setTimeout> | null = null;
+    let holdDelay: AnimationHandle | null = null;
+    let holdRepeat: AnimationHandle | null = null;
     const inputRef = ref<HTMLInputElement | null>(null);
 
     const canIncrement = computed(() =>
@@ -54,8 +55,12 @@ export default defineComponent({
 
     function startHold(dir: "up" | "down") {
       stopHold();
-      holdTimeout = setTimeout(() => {
-        holdInterval = setInterval(() => {
+      // 300ms press threshold, then a 50ms repeat — both on the shared
+      // animation bus so the hold cadence parks with the reduced-motion
+      // switch like every other JS-driven animation.
+      holdDelay = scheduleAfter(() => {
+        holdDelay = null;
+        holdRepeat = scheduleEvery(() => {
           if (dir === "up") increment();
           else decrement();
         }, 50);
@@ -63,10 +68,10 @@ export default defineComponent({
     }
 
     function stopHold() {
-      if (holdTimeout) clearTimeout(holdTimeout);
-      if (holdInterval) clearInterval(holdInterval);
-      holdTimeout = null;
-      holdInterval = null;
+      holdDelay?.disconnect();
+      holdDelay = null;
+      holdRepeat?.disconnect();
+      holdRepeat = null;
     }
 
     onUnmounted(stopHold);

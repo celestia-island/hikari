@@ -1,7 +1,6 @@
 import {
   computed,
   defineComponent,
-  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -13,6 +12,7 @@ import {
 
 import { useI18n } from "../i18n/context";
 import "./HkDrawer.scss";
+import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 
@@ -46,6 +46,7 @@ export default defineComponent({
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const panelRef = ref<HTMLElement>();
     let unmounted = false;
+    let previouslyFocused: HTMLElement | null = null;
 
     const isVertical = computed(
       () => props.side === "left" || props.side === "right",
@@ -75,8 +76,17 @@ export default defineComponent({
       if (props.closable) close();
     }
 
+    function onDrawerAfterEnter() {
+      const el = panelRef.value;
+      if (el) focusFirst(el);
+    }
+
     function onDrawerAfterLeave() {
       cleanup();
+      if (previouslyFocused) {
+        previouslyFocused.focus();
+        previouslyFocused = null;
+      }
       emit("afterLeave");
     }
 
@@ -95,9 +105,7 @@ export default defineComponent({
           cleanup();
           handle.value = manager.register("drawer", true);
           overlayHook.open();
-          nextTick(() => {
-            panelRef.value?.focus();
-          });
+          previouslyFocused = document.activeElement as HTMLElement | null;
         }
       },
       { immediate: true },
@@ -123,7 +131,7 @@ export default defineComponent({
             />
           ) : null}
         </Transition>
-        <Transition name={`hk-drawer-${props.side}`} appear onAfterLeave={onDrawerAfterLeave}>
+        <Transition name={`hk-drawer-${props.side}`} appear onAfterEnter={onDrawerAfterEnter} onAfterLeave={onDrawerAfterLeave}>
           {props.modelValue ? (
             <div
               ref={panelRef}
@@ -135,6 +143,7 @@ export default defineComponent({
               tabindex={-1}
               onKeydown={(e: KeyboardEvent) => {
                 if (e.key === "Escape") onEscape();
+                else if (e.key === "Tab" && panelRef.value) trapFocus(panelRef.value, e);
               }}
             >
               {props.title || slots.header ? (

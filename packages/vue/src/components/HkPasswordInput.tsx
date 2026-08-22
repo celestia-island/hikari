@@ -10,6 +10,10 @@ import {
 
 import { useI18n } from "../i18n/context";
 
+import { onFrame, onceFrame, type AnimationHandle } from "../runtime/animationBus";
+import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
+
 import HListTransition from "./HkListTransition";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
 import "./HkPasswordInput.scss";
@@ -193,7 +197,6 @@ export default defineComponent({
     rebuildGrid(11);
 
     const ripples: Ripple[] = [];
-    let rafId: number | null = null;
     let ro: ResizeObserver | null = null;
 
     function syncColor() {
@@ -306,29 +309,22 @@ export default defineComponent({
       }
     }
 
-    let running = false;
-    let lastTime = 0;
-
-    function loop(ts: number) {
-      if (!lastTime) lastTime = ts;
-      const dt = Math.min(0.1, (ts - lastTime) / 1000);
-      lastTime = ts;
-      draw(dt);
-      rafId = requestAnimationFrame(loop);
-    }
+    let loopHandle: AnimationHandle | null = null;
 
     function startLoop() {
-      if (running) return;
-      running = true;
-      loop(performance.now());
+      if (loopHandle) return;
+      // The ripple canvas runs on the shared animation bus at "normal"
+      // priority so the reduced-motion switch parks it like every other
+      // JS-driven animation. The draw callback clamps the delta exactly
+      // like the old self-scheduling rAF loop did.
+      loopHandle = onFrame((ctx) => {
+        draw(Math.min(0.1, ctx.delta));
+      }, "normal");
     }
 
     function stopLoop() {
-      running = false;
-      if (rafId != null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
+      loopHandle?.disconnect();
+      loopHandle = null;
     }
 
     function kickRipple() {
@@ -341,13 +337,22 @@ export default defineComponent({
       inputRef.value?.focus();
     }
 
+    let flashHandle: CronHandle | null = null;
+
     function flash() {
       const el = boxRef.value;
       if (!el) return;
       el.removeAttribute("data-flash");
       void el.offsetWidth;
       el.setAttribute("data-flash", "");
-      setTimeout(() => el.removeAttribute("data-flash"), 320);
+      // cronBus one-shot (not the rAF-driven animationBus one) so the
+      // attribute cleanup always fires — the animation bus is parked
+      // under reduced motion and the flash must never stick.
+      flashHandle?.disconnect();
+      flashHandle = scheduleCronAfter(() => {
+        flashHandle = null;
+        el.removeAttribute("data-flash");
+      }, 320);
       kickRipple();
     }
 
@@ -408,7 +413,7 @@ export default defineComponent({
     function onKeydown(e: KeyboardEvent) {
       if (e.getModifierState) capsLock.value = e.getModifierState("CapsLock");
       if (e.ctrlKey || e.metaKey) {
-        requestAnimationFrame(() => checkSelection());
+        onceFrame(() => checkSelection());
       }
       if (
         e.key === "Enter" &&
@@ -480,7 +485,15 @@ export default defineComponent({
         !e.relatedTarget
       ) {
         const el = inputRef.value;
-        if (el) setTimeout(() => el.focus(), 0);
+        if (el) {
+          // cronBus one-shot: the reclaim must run even under reduced
+          // motion, where the animation bus is parked.
+          focusReclaimHandle?.disconnect();
+          focusReclaimHandle = scheduleCronAfter(() => {
+            focusReclaimHandle = null;
+            el.focus();
+          }, 0);
+        }
       }
       capsLock.value = false;
       fullWidthPaused.value = false;
@@ -571,10 +584,11 @@ export default defineComponent({
     }
 
     function onPointerup() {
-      requestAnimationFrame(() => checkSelection());
+      onceFrame(() => checkSelection());
     }
 
-    let autofillInterval: ReturnType<typeof setInterval> | null = null;
+    let autofillHandle: IntervalHandle | null = null;
+    let focusReclaimHandle: CronHandle | null = null;
 
     watch(() => props.modelValue, (v) => {
       // An external clear (or the blur hint's clear-and-focus) must drop
@@ -589,14 +603,21 @@ export default defineComponent({
       ro = new ResizeObserver(resize);
       if (boxRef.value) ro.observe(boxRef.value);
       startLoop();
-      autofillInterval = setInterval(() => {
+      // Visibility-aware poll (intervalBus parks while hidden, unlike a
+      // raw setInterval that keeps burning in background tabs).
+      autofillHandle = scheduleInterval(() => {
         if (!focused.value) checkAutofill();
       }, 500);
     });
 
     onUnmounted(() => {
       stopLoop();
-      if (autofillInterval) clearInterval(autofillInterval);
+      autofillHandle?.disconnect();
+      autofillHandle = null;
+      flashHandle?.disconnect();
+      flashHandle = null;
+      focusReclaimHandle?.disconnect();
+      focusReclaimHandle = null;
       if (ro) ro.disconnect();
       endReveal();
     });

@@ -1,6 +1,7 @@
 import { defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useReportedTransition } from "../composables/useReportedTransition";
+import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import "./HkRollingNumber.scss";
 
 export default defineComponent({
@@ -19,6 +20,38 @@ export default defineComponent({
 
     const ROLL_ANIM_MS = 100;
     const rollAnim = useReportedTransition(ROLL_ANIM_MS);
+
+    // Fallback commit: under the global animation switch
+    // (`html[data-css-animations="0"]`, driven by reduced motion /
+    // performance suspension) the roll keyframes are paused at 0% and
+    // `animationend` never fires — the OLD digit would stay visible
+    // forever. A cronBus one-shot always fires (the rAF-driven animation
+    // bus is parked in exactly that situation) and force-commits the
+    // final digit if `animationend` has not fired yet.
+    const ROLL_COMMIT_MS = 350;
+    const fallbacks = new Map<number, CronHandle>();
+
+    function cancelFallback(i: number) {
+      const h = fallbacks.get(i);
+      if (h) {
+        h.disconnect();
+        fallbacks.delete(i);
+      }
+    }
+
+    function armFallback(i: number) {
+      cancelFallback(i);
+      const handle = scheduleCronAfter(() => {
+        fallbacks.delete(i);
+        if (chars.value[i]) chars.value[i].animating = false;
+      }, ROLL_COMMIT_MS);
+      fallbacks.set(i, handle);
+    }
+
+    function cancelAllFallbacks() {
+      for (const h of fallbacks.values()) h.disconnect();
+      fallbacks.clear();
+    }
 
     function update(newStr: string): boolean {
       const newChars = newStr.split("");
@@ -43,6 +76,7 @@ export default defineComponent({
             prev,
             animating: true,
           };
+          armFallback(i);
           anyRolled = true;
         }
       }
@@ -56,9 +90,13 @@ export default defineComponent({
       },
       { immediate: true },
     );
-    onBeforeUnmount(stopWatch);
+    onBeforeUnmount(() => {
+      stopWatch();
+      cancelAllFallbacks();
+    });
 
     function onAnimEnd(i: number) {
+      cancelFallback(i);
       if (chars.value[i]) {
         chars.value[i].animating = false;
       }

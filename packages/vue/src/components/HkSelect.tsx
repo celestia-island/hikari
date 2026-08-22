@@ -12,6 +12,7 @@ import {
 
 import { ChevronDown, Search } from "lucide-vue-next";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { useOverlay } from "../runtime/useOverlay";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {
@@ -50,6 +51,11 @@ export default defineComponent({
     const handle = ref<PopupHandle | null>(null);
     const popoutZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
 
+    // Registered with the overlay registry too so closeAll()/isOverlayOpen()
+    // see the open popout (unique per-instance ids — multiple selects can
+    // share the "hk-select" name without corrupting the registry).
+    const overlay = useOverlay({ name: "hk-select" });
+
     function onDocumentClick(e: MouseEvent) {
       if (!isOpen.value) return;
       const target = e.target as Node;
@@ -61,6 +67,7 @@ export default defineComponent({
     watch(isOpen, (open) => {
       if (open) {
         handle.value = manager.register("dropdown", false);
+        overlay.open();
         document.addEventListener("click", onDocumentClick, true);
       } else {
         document.removeEventListener("click", onDocumentClick, true);
@@ -68,11 +75,13 @@ export default defineComponent({
           manager.unregister(handle.value.id);
           handle.value = null;
         }
+        overlay.close();
       }
     });
 
     onBeforeUnmount(() => {
       document.removeEventListener("click", onDocumentClick, true);
+      overlay.close();
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;

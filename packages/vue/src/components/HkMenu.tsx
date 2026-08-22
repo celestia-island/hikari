@@ -153,6 +153,15 @@ export default defineComponent({
       emit("update:open", false);
     }
 
+    /** Escape collapses the whole cascade — mirrors HkPopover's close-on-
+     *  Escape so keyboard users can dismiss the menu without clicking. */
+    function onMenuKeydown(e: KeyboardEvent): void {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeAll();
+      }
+    }
+
     function onPopState(e: PopStateEvent): void {
       if (suppressPop > 0) {
         // Our own restore traversal landing — not a user back gesture.
@@ -586,7 +595,11 @@ export default defineComponent({
         ];
         return (
           <Teleport to="body">
-            <div class="hk-menu-mobile-stack" style={{ zIndex: menuZ.value }}>{sheets}</div>
+            <div
+              class="hk-menu-mobile-stack"
+              style={{ zIndex: menuZ.value }}
+              onKeydown={onMenuKeydown}
+            >{sheets}</div>
           </Teleport>
         );
       }
@@ -609,7 +622,11 @@ export default defineComponent({
       }
       return (
         <Teleport to="body">
-          <div class="hk-menu-desktop" style={{ zIndex: menuZ.value }}>
+          <div
+            class="hk-menu-desktop"
+            style={{ zIndex: menuZ.value }}
+            onKeydown={onMenuKeydown}
+          >
             <div class="hk-menu-backdrop" onClick={() => closeAll()} />
             {panels}
           </div>

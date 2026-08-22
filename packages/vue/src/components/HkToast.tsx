@@ -1,10 +1,11 @@
 import { CircleX as XCircle, X } from "lucide-vue-next";
-import { computed, defineComponent, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
 import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
 
 
 import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../runtime/useToast";
 import { useClipboard } from "../runtime/useClipboard";
+import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
 import "./HkToast.scss";
 
@@ -155,10 +156,34 @@ export default defineComponent({
   name: "HkToast",
   setup() {
     const { toasts, remove } = useToast();
+    // The toast stack registers with the popup manager so it takes part
+    // in the unified z-band ladder instead of a hardcoded z that later
+    // modals could overtake.
+    const manager = usePopupManager();
+    let popupHandle: PopupHandle | null = null;
+    const containerZ = ref<number | null>(null);
+
+    onMounted(() => {
+      popupHandle = manager.register("toast", false);
+      containerZ.value = popupHandle.zIndex;
+    });
+
+    onUnmounted(() => {
+      if (popupHandle) {
+        manager.unregister(popupHandle.id);
+        popupHandle = null;
+      }
+    });
+
+    const containerStyle = computed<Record<string, string> | undefined>(() =>
+      containerZ.value != null
+        ? { "--hk-z-toast": String(containerZ.value) }
+        : undefined,
+    );
 
     return () => (
       <Teleport to="body">
-        <div class="hk-toast-container">
+        <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
             tag="div"
             name="hk-toast"

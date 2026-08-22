@@ -16,7 +16,9 @@ type Callback = (ctx: FrameContext) => void;
  *  real time elapsed since the entry's OWN last run (clamped to MAX_DELTA),
  *  so motion speed is independent of both the display refresh rate and the
  *  tier's frame budget — only the call cadence differs:
- *  - "sync"  — every animation frame: fine-grained per-frame control, most CPU.
+ *  - "sync"  — every animation frame: fine-grained per-frame control, most
+ *    CPU. Exception: its delta is the raw per-tick inter-frame gap, NOT
+ *    per-entry and NOT clamped — it already runs every frame.
  *  - "normal" — ≈30fps (33ms budget): balanced default for visible motion.
  *  - "idle"  — ≈0.5fps (2000ms budget): cheap background sampling. */
 type Priority = "sync" | "normal" | "idle";

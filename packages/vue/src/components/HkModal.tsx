@@ -53,7 +53,13 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const manager = usePopupManager();
-    const overlay = useOverlay({ name: "hk-modal" });
+    const overlay = useOverlay({
+      name: "hk-modal",
+      // A global closeAll() must be able to actually close this modal
+      // (not just untrack it) — route it through the same closable
+      // guard as the user-initiated paths.
+      onCloseRequested: () => { if (props.closable) close(); },
+    });
 
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const bodyRef = ref<HTMLElement>();

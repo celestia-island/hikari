@@ -318,7 +318,7 @@ export default defineComponent({
       // JS-driven animation. The draw callback clamps the delta exactly
       // like the old self-scheduling rAF loop did.
       loopHandle = onFrame((ctx) => {
-        draw(Math.min(0.1, ctx.delta));
+        draw(ctx.delta); // the bus already clamps per-entry delta to MAX_DELTA
       }, "normal");
     }
 

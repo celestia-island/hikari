@@ -4,6 +4,10 @@ interface OverlayRegistryEntry {
   id: string;
   name: string;
   close: () => void;
+  /** Component-level teardown invoked alongside the internal flip when a
+   *  global/group close fires — lets the owner close its own visible
+   *  popout state (e.g. an open ref bound to the popup manager). */
+  onCloseRequested?: () => void;
   group?: string;
 }
 
@@ -21,17 +25,39 @@ function uid(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+/** Run an entry's full close path: the internal flip AND the component
+ *  onCloseRequested hook, each isolated so a throwing callback cannot abort
+ *  the remaining entries (or the sibling hook). */
+function runEntryClose(entry: OverlayRegistryEntry) {
+  try {
+    entry.close();
+  } catch (err) {
+    console.warn("[useOverlay] overlay close() threw for", entry.name, err);
+  }
+  try {
+    entry.onCloseRequested?.();
+  } catch (err) {
+    console.warn("[useOverlay] overlay onCloseRequested() threw for", entry.name, err);
+  }
+}
+
 function closeGroup(group: string) {
   for (const [, entry] of registry) {
     if (entry.group === group) {
-      entry.close();
+      runEntryClose(entry);
       registry.delete(entry.id);
     }
   }
 }
 
-function register(id: string, name: string, close: () => void, group?: string) {
-  registry.set(id, { id, name, close, group });
+function register(
+  id: string,
+  name: string,
+  close: () => void,
+  group?: string,
+  onCloseRequested?: () => void,
+) {
+  registry.set(id, { id, name, close, group, onCloseRequested });
 }
 
 function unregister(id: string) {
@@ -40,7 +66,7 @@ function unregister(id: string) {
 
 export function closeAll() {
   for (const [, entry] of registry) {
-    entry.close();
+    runEntryClose(entry);
   }
   registry.clear();
 }
@@ -55,6 +81,9 @@ export function isOverlayOpen(name: string): boolean {
 export interface UseOverlayOptions {
   name: string;
   group?: string;
+  /** Component-level teardown run by closeAll()/group-close alongside the
+   *  internal isOpen flip — close the owner's own visible popout state. */
+  onCloseRequested?: () => void;
 }
 
 export interface OverlayHandle {
@@ -73,7 +102,7 @@ export function useOverlay(opts: UseOverlayOptions): OverlayHandle {
     if (isOpen.value) return;
     if (opts.group) closeGroup(opts.group);
     isOpen.value = true;
-    register(id, opts.name, close, opts.group);
+    register(id, opts.name, close, opts.group, opts.onCloseRequested);
   }
 
   function close(): void {

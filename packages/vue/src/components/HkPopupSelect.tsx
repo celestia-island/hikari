@@ -53,8 +53,13 @@ export default defineComponent({
     // Registered with the overlay registry so closeAll()/isOverlayOpen()
     // see the open popout. The popover inside handles z-stacking via the
     // popup manager; the legacy module singleton (activePopupId) stays as
-    // the cross-instance close coordination.
-    const overlay = useOverlay({ name: "hk-popup-select" });
+    // the cross-instance close coordination. The onCloseRequested hook makes
+    // a global closeAll() flip this component's own open ref, which tears
+    // the popover down (the activePopupId cleanup runs in the watcher).
+    const overlay = useOverlay({
+      name: "hk-popup-select",
+      onCloseRequested: () => { isOpen.value = false; },
+    });
 
     watch(isOpen, (open) => {
       if (open) {

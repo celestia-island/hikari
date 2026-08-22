@@ -44,8 +44,21 @@ export function usePopupManager() {
     title?: string,
   ): PopupHandle {
     const id = uid();
+    // Reclaim z bands on assignment: the next z derives from the max z of
+    // the CURRENTLY registered entries, so popups that unregister free
+    // their band for the next popup instead of the ladder drifting upward
+    // forever behind a persistent entry (e.g. HkToast's long-lived toast
+    // stack registration). The registry emptying resets to the base band.
+    if (registry.value.size === 0) {
+      nextZ = Z_BASE;
+    } else {
+      let maxZ = 0;
+      for (const entry of registry.value.values()) {
+        if (entry.zIndex > maxZ) maxZ = entry.zIndex;
+      }
+      nextZ = maxZ + Z_STEP;
+    }
     const zIndex = nextZ;
-    nextZ += Z_STEP;
     const entry: PopupEntry = { id, kind, locksScroll, zIndex, title };
     registry.value.set(id, entry);
     if (locksScroll) {

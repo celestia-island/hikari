@@ -126,8 +126,12 @@ export default defineComponent({
 
     // Registered with the overlay registry so closeAll()/isOverlayOpen()
     // see the open popout; the popover inside handles z-stacking via the
-    // popup manager.
-    const overlay = useOverlay({ name: "hk-color-picker" });
+    // popup manager. The onCloseRequested hook makes a global closeAll()
+    // flip this component's own open ref, which tears the popover down.
+    const overlay = useOverlay({
+      name: "hk-color-picker",
+      onCloseRequested: () => { isOpen.value = false; },
+    });
 
     watch(isOpen, (open) => {
       if (open) overlay.open();

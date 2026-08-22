@@ -104,6 +104,12 @@ export default defineComponent({
           handle.value = manager.register("drawer", true);
           overlayHook.open();
           previouslyFocused = document.activeElement as HTMLElement | null;
+        } else {
+          // Register/unregister WITH the open state so a closed-but-mounted
+          // drawer does not linger in the overlay registry (isOverlayOpen
+          // must reflect reality). The popup manager handle is torn down by
+          // the leave transition or by cleanup() on unmount.
+          overlayHook.close();
         }
       },
       { immediate: true },

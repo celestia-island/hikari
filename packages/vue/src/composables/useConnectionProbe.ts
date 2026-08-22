@@ -1,5 +1,7 @@
 import { onMounted, onUnmounted, ref, type Ref } from "vue";
 
+import { scheduleInterval, scheduleIntervalAfter, type IntervalHandle } from "../runtime/intervalBus";
+
 /** Fetch-based connectivity probe — the hikari-local successor of the
  *  plana-ui probe. Polls `/api/health` (or a custom endpoint set via
  *  `setProbeEndpoint`) and derives the same ProbeResult shape consumers
@@ -53,8 +55,8 @@ export function useConnectionProbe(): {
     countdown: 0,
   });
 
-  let pollTimer: ReturnType<typeof setTimeout> | null = null;
-  let tickTimer: ReturnType<typeof setInterval> | null = null;
+  let pollHandle: IntervalHandle | null = null;
+  let tickHandle: IntervalHandle | null = null;
   let nextAttemptAt = 0;
   let consecutiveFailures = 0;
 
@@ -64,7 +66,8 @@ export function useConnectionProbe(): {
   }
 
   async function probeOnce(): Promise<void> {
-    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    pollHandle?.disconnect();
+    pollHandle = null;
     const attempt = result.value.attemptNumber + 1;
     result.value = {
       ...result.value,
@@ -104,8 +107,15 @@ export function useConnectionProbe(): {
   }
 
   function schedulePoll(): void {
-    if (pollTimer) { clearTimeout(pollTimer); }
-    pollTimer = setTimeout(() => { void probeOnce(); }, DEFAULT_POLL_MS);
+    // Visibility-aware one-shot: the 15s retry window holds while the
+    // page is hidden instead of burning down on a throttled background
+    // timer (intervalBus — this is its designed case: data polling, not
+    // animation).
+    pollHandle?.disconnect();
+    pollHandle = scheduleIntervalAfter(() => {
+      pollHandle = null;
+      void probeOnce();
+    }, DEFAULT_POLL_MS);
   }
 
   function retryNow(): void {
@@ -114,12 +124,14 @@ export function useConnectionProbe(): {
 
   onMounted(() => {
     void probeOnce();
-    tickTimer = setInterval(applyCountdown, 1000);
+    tickHandle = scheduleInterval(applyCountdown, 1000);
   });
 
   onUnmounted(() => {
-    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
-    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    pollHandle?.disconnect();
+    pollHandle = null;
+    tickHandle?.disconnect();
+    tickHandle = null;
   });
 
   return { result, retryNow };

@@ -3,6 +3,7 @@ import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch, type 
 
 import HkPopover from "./HkPopover";
 import HkScrollContainer from "./HkScrollContainer";
+import { useOverlay } from "../runtime/useOverlay";
 import "./HkPopupSelect.scss";
 
 export interface HkPopupSelectOption {
@@ -49,17 +50,26 @@ export default defineComponent({
     const triggerRef = ref<HTMLElement>();
     const highlightedIndex = ref(-1);
 
+    // Registered with the overlay registry so closeAll()/isOverlayOpen()
+    // see the open popout. The popover inside handles z-stacking via the
+    // popup manager; the legacy module singleton (activePopupId) stays as
+    // the cross-instance close coordination.
+    const overlay = useOverlay({ name: "hk-popup-select" });
+
     watch(isOpen, (open) => {
       if (open) {
         activePopupId.value = instanceId;
+        overlay.open();
       } else {
         if (activePopupId.value === instanceId) {
           activePopupId.value = null;
         }
+        overlay.close();
       }
     });
 
     onBeforeUnmount(() => {
+      overlay.close();
       if (activePopupId.value === instanceId) {
         activePopupId.value = null;
       }

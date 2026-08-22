@@ -14,7 +14,7 @@ export default defineComponent({
     const cls = computed(() => ["hk-breadcrumb", `hk-breadcrumb-${props.size}`]);
 
     return () => (
-      <nav aria-label={t("hk.breadcrumb.label", "Breadcrumb")}>
+      <nav aria-label={t("hikari::breadcrumb.label", "Breadcrumb")}>
         <ol class={cls.value}>
           {props.items.map((item, index) => (
             <li key={index} class="hk-breadcrumb-item">

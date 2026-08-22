@@ -21,7 +21,7 @@ export default defineComponent({
         {props.src ? (
           <img src={props.src} alt={props.name} />
         ) : (
-          <span class="hk-avatar-fallback">{props.name?.charAt(0)?.toUpperCase() ?? t("hk.avatar.fallback", "?")}</span>
+          <span class="hk-avatar-fallback">{props.name?.charAt(0)?.toUpperCase() ?? t("hikari::avatar.fallback", "?")}</span>
         )}
       </div>
     );

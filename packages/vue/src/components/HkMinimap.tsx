@@ -239,8 +239,8 @@ export default defineComponent({
               type="button"
               onClick={() => emit("zoomOut")}
               disabled={!props.canZoomOut}
-              aria-label={t("hk.zoomToolbar.zoomOut", "Zoom out")}
-              title={t("hk.zoomToolbar.zoomOut", "Zoom out")}
+              aria-label={t("hikari::zoomToolbar.zoomOut", "Zoom out")}
+              title={t("hikari::zoomToolbar.zoomOut", "Zoom out")}
             >
               <ZoomOut size={12} />
             </button>
@@ -250,8 +250,8 @@ export default defineComponent({
               type="button"
               onClick={() => emit("zoomIn")}
               disabled={!props.canZoomIn}
-              aria-label={t("hk.zoomToolbar.zoomIn", "Zoom in")}
-              title={t("hk.zoomToolbar.zoomIn", "Zoom in")}
+              aria-label={t("hikari::zoomToolbar.zoomIn", "Zoom in")}
+              title={t("hikari::zoomToolbar.zoomIn", "Zoom in")}
             >
               <ZoomIn size={12} />
             </button>
@@ -260,8 +260,8 @@ export default defineComponent({
                 class="hk-mm-zoom-btn hk-mm-zoom-reset-btn"
                 type="button"
                 onClick={() => emit("reset")}
-                aria-label={t("hk.zoomToolbar.reset", "Reset zoom")}
-                title={t("hk.zoomToolbar.reset", "Reset zoom")}
+                aria-label={t("hikari::zoomToolbar.reset", "Reset zoom")}
+                title={t("hikari::zoomToolbar.reset", "Reset zoom")}
               >
                 <Maximize2 size={11} />
               </button>

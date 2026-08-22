@@ -1,5 +1,6 @@
 import { defineComponent, type PropType } from "vue";
 import HBadge from "./HkBadge";
+import { useI18n } from "../i18n/context";
 import "./HkSplash.scss";
 
 export default defineComponent({
@@ -12,6 +13,7 @@ export default defineComponent({
     statusLabel: { type: String, default: "" },
   },
   setup(props, { slots }) {
+    const { t } = useI18n();
     const statusVariant: Record<string, "success" | "error" | "warning" | "primary"> = {
       online: "success",
       offline: "error",
@@ -22,7 +24,7 @@ export default defineComponent({
     return () => (
       <div class="hk-splash">
         <main class="hk-splash-main">
-          {props.logo ? <img class="hk-splash-logo" src={props.logo} alt={props.title || "logo"} /> : null}
+          {props.logo ? <img class="hk-splash-logo" src={props.logo} alt={props.title || t("hikari::logo.fallbackAlt", "Logo")} /> : null}
           <h1 class="hk-splash-title">{props.title || slots.title?.()}</h1>
           {props.subtitle ? <p class="hk-splash-subtitle">{props.subtitle}</p> : null}
           {slots.description ? <div class="hk-splash-description">{slots.description?.()}</div> : null}

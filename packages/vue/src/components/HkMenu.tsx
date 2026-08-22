@@ -15,6 +15,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { useI18n } from "../i18n/context";
 import "./HkMenu.scss";
 
 /**
@@ -90,6 +91,7 @@ export default defineComponent({
   },
   emits: ["update:open", "select"],
   setup(props, { emit }) {
+    const { t } = useI18n();
     /** Open submenu path on desktop, e.g. ["theme", "dark"] → panel chain. */
     const desktopPath = ref<string[]>([]);
     /** Pushed sheet chain on mobile: each entry is one submenu level. */
@@ -425,7 +427,7 @@ export default defineComponent({
           data-level={level}
         >
           <div class="hk-menu-sheet-header">
-            <button type="button" class="hk-menu-sheet-back" aria-label="Back" onClick={onBack}>
+            <button type="button" class="hk-menu-sheet-back" aria-label={t("hikari::menu.back", "Back")} onClick={onBack}>
               <ChevronLeft size={18} />
             </button>
             <span class="hk-menu-sheet-title">{sheetTitle || props.title}</span>

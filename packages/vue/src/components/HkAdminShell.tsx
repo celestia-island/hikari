@@ -1,6 +1,7 @@
 import { computed, defineComponent, ref } from "vue";
 import { HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { provideActionBar } from "../composables/useActionBar";
+import { useI18n } from "../i18n/context";
 
 export const HkAdminShell = defineComponent({
   name: "HkAdminShell",
@@ -13,7 +14,7 @@ export const HkAdminShell = defineComponent({
      *  admins that keep the sidebar at md widths. */
     mobileBreakpoint: { type: Number, default: 1024 },
     footerHeight: { type: String, default: "var(--s-footer-height)" },
-    navTitle: { type: String, default: "Navigation" },
+    navTitle: { type: String, default: undefined },
     /** Extra class for the mobile nav drawer's panel — lets consumers zero
      *  nested paddings so drawer nav rows and a `userPanel` footer share
      *  one left edge. */
@@ -24,6 +25,7 @@ export const HkAdminShell = defineComponent({
     contentPadding: { type: String, default: "1.5rem" },
   },
   setup(props, { slots }) {
+    const { t } = useI18n();
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
@@ -88,7 +90,7 @@ export const HkAdminShell = defineComponent({
               onUpdate:modelValue={(v: boolean) => (sidebarOpen.value = v)}
               side="left"
               size="280px"
-              title={props.navTitle}
+              title={props.navTitle ?? t("hikari::adminShell.navTitle", "Navigation")}
               panelClass={props.drawerPanelClass}
             >
               {/* The drawer body carries the nav; a `userPanel` slot rides

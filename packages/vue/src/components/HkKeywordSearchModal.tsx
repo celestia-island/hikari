@@ -193,7 +193,7 @@ export default defineComponent({
       <HModal
         modelValue={props.modelValue}
         onUpdate:modelValue={(v: boolean) => emit("update:modelValue", v)}
-        title={props.title ?? t("hk.keywordSearch.title", "Search")}
+        title={props.title ?? t("hikari::keywordSearch.title", "Search")}
         width="40rem"
       >
         <div class="hk-kw-search">
@@ -215,7 +215,7 @@ export default defineComponent({
               class="hk-kw-search-input"
               type="text"
               value={query.value}
-              placeholder={props.placeholder ?? t("hk.keywordSearch.placeholder", "Search…")}
+              placeholder={props.placeholder ?? t("hikari::keywordSearch.placeholder", "Search…")}
               onInput={(e: Event) => { query.value = (e.target as HTMLInputElement).value; }}
               autofocus
             />
@@ -223,7 +223,7 @@ export default defineComponent({
               <button
                 class="hk-kw-search-clear"
                 type="button"
-                aria-label={t("hk.keywordSearch.clear", "Clear")}
+                aria-label={t("hikari::keywordSearch.clear", "Clear")}
                 onClick={() => {
                   query.value = "";
                   debouncedQuery.value = "";
@@ -250,13 +250,13 @@ export default defineComponent({
             {semanticActive.value ? (
               semanticLoading.value && semanticResults.value.length === 0 ? (
                 <div class="hk-kw-search-empty">
-                  {props.searchingText ?? t("hk.keywordSearch.searching", "Searching…")}
+                  {props.searchingText ?? t("hikari::keywordSearch.searching", "Searching…")}
                 </div>
               ) : semanticResults.value.length === 0 ? (
                 <div class="hk-kw-search-empty">
                   {debouncedQuery.value
-                    ? (props.emptyText ?? t("hk.keywordSearch.noMatches", "No matches"))
-                    : (props.placeholder ?? t("hk.keywordSearch.placeholder", "Search…"))}
+                    ? (props.emptyText ?? t("hikari::keywordSearch.noMatches", "No matches"))
+                    : (props.placeholder ?? t("hikari::keywordSearch.placeholder", "Search…"))}
                 </div>
               ) : (
                 semanticResults.value.map((r) => (
@@ -289,7 +289,7 @@ export default defineComponent({
               )
             ) : results.value.length === 0 ? (
               <div class="hk-kw-search-empty">
-                {props.emptyText ?? t("hk.keywordSearch.noMatches", "No matches")}
+                {props.emptyText ?? t("hikari::keywordSearch.noMatches", "No matches")}
               </div>
             ) : (
               results.value.map((r) => (

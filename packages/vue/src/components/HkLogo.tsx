@@ -56,7 +56,7 @@ export default defineComponent({
             height: logoSize(),
           }}
           role="img"
-          aria-label={props.alt || t("hk.logo.fallbackAlt", "Logo")}
+          aria-label={props.alt || t("hikari::logo.fallbackAlt", "Logo")}
         >
           {props.alt ? (
             <span class="hk-logo-initial">{props.alt.charAt(0).toUpperCase()}</span>

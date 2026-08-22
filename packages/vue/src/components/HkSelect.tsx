@@ -53,8 +53,14 @@ export default defineComponent({
 
     // Registered with the overlay registry too so closeAll()/isOverlayOpen()
     // see the open popout (unique per-instance ids — multiple selects can
-    // share the "hk-select" name without corrupting the registry).
-    const overlay = useOverlay({ name: "hk-select" });
+    // share the "hk-select" name without corrupting the registry). The
+    // onCloseRequested hook makes a global closeAll() flip this component's
+    // own open ref, which is what actually tears the popout down (the popup
+    // manager unregister happens in the isOpen watcher below).
+    const overlay = useOverlay({
+      name: "hk-select",
+      onCloseRequested: () => { isOpen.value = false; },
+    });
 
     function onDocumentClick(e: MouseEvent) {
       if (!isOpen.value) return;

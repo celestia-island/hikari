@@ -269,6 +269,7 @@ export default defineComponent({
           // Close happens via Transition onAfterLeave,
           // but if modelValue flips to false without Transition
           // (e.g. immediate), clean up now.
+          overlay.close();
         }
       },
       { immediate: true },

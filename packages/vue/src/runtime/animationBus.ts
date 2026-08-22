@@ -11,11 +11,21 @@ export interface AnimationHandle {
 }
 
 type Callback = (ctx: FrameContext) => void;
+
+/** Frame delivery tier. Every tier hands its callback a delta equal to the
+ *  real time elapsed since the entry's OWN last run (clamped to MAX_DELTA),
+ *  so motion speed is independent of both the display refresh rate and the
+ *  tier's frame budget — only the call cadence differs:
+ *  - "sync"  — every animation frame: fine-grained per-frame control, most CPU.
+ *  - "normal" — ≈30fps (33ms budget): balanced default for visible motion.
+ *  - "idle"  — ≈0.5fps (2000ms budget): cheap background sampling. */
 type Priority = "sync" | "normal" | "idle";
 
 interface Entry {
   cb: Callback;
   priority: Priority;
+  /** Timestamp (ms) of this entry's own last run; the per-entry delta is
+   *  derived from it so throttled tiers stay refresh-rate invariant. */
   lastRun: number;
 }
 
@@ -50,6 +60,13 @@ let oneShotRaf = 0;
 
 const NORMAL_FRAME_BUDGET = 33;
 const IDLE_FRAME_BUDGET = 2000;
+
+/** Hard cap (seconds) on the per-entry delta handed to normal/idle
+ *  callbacks. A jank/hiccup spike between two runs must not teleport the
+ *  animation forward — the sweep simply stalls for the spike and resumes at
+ *  the real rate afterwards. Normal operation yields the exact real-time
+ *  delta, which is what makes throttled motion refresh-rate independent. */
+const MAX_DELTA = 0.1;
 
 function uid(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -94,16 +111,21 @@ function tick(now: number) {
   if (!skipNormal) {
     for (const e of normalEntries.values()) {
       if (now - e.lastRun >= NORMAL_FRAME_BUDGET) {
+        // Per-entry real-time delta, clamped so a hiccup spike stalls the
+        // animation instead of teleporting it. Compute BEFORE lastRun moves
+        // so the delta measures exactly the entry's own wait time.
+        const dt = Math.min((now - e.lastRun) / 1000, MAX_DELTA);
         e.lastRun = now;
-        e.cb(ctx);
+        e.cb({ ...ctx, delta: dt });
       }
     }
   }
 
   for (const e of idleEntries.values()) {
     if (now - e.lastRun >= IDLE_FRAME_BUDGET) {
+      const dt = Math.min((now - e.lastRun) / 1000, MAX_DELTA);
       e.lastRun = now;
-      e.cb(ctx);
+      e.cb({ ...ctx, delta: dt });
     }
   }
 

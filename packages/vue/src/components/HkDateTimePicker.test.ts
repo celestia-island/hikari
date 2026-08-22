@@ -144,6 +144,60 @@ describe("HkDateTimePicker", () => {
     expect(cells).toEqual(expected);
   });
 
+  it("keeps the time row and the fixed stage across view drills", async () => {
+    // happy-dom performs no layout, so the geometry contract is asserted
+    // structurally here (persistent stage node, re-keyed panes) and
+    // pixel-verified in the browser demo instead.
+    mountPicker();
+    const stage = picker()?.querySelector<HTMLElement>(".hk-dtp-stage");
+    expect(stage).not.toBeNull();
+    expect(stage?.children.length).toBe(1); // the single days pane
+    const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
+    monthBtn?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("fwd");
+    expect(picker()?.querySelector<HTMLElement>(".hk-dtp-stage")).toBe(stage);
+    expect(stage?.children.length).toBe(1); // one pane at a time after settle
+    // The time row lives outside the transitioned pane and stays in every
+    // view, so the picker's footprint never changes.
+    expect(picker()?.querySelectorAll(".hk-dtp-time").length).toBe(1);
+    expect(picker()?.querySelectorAll(".hk-dtp-step").length).toBe(2);
+    picker()?.querySelector<HTMLButtonElement>(".hk-dtp-back")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("back");
+    expect(dayCells().length).toBe(42);
+  });
+
+  it("shifts the year with the chevrons inside the month view", async () => {
+    mountPicker();
+    const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
+    monthBtn?.click();
+    await settle();
+    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2026");
+    const navs = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-nav");
+    navs?.[1].click();
+    await nextTick();
+    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2027");
+    navs?.[0].click();
+    await nextTick();
+    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2026");
+  });
+
+  it("time stepper bumps keep the drilled month view instead of snapping back", async () => {
+    mountPicker();
+    const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
+    monthBtn?.click();
+    await settle();
+    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']").length).toBe(12);
+    // The first step button is "Hour +"; bumping it changes only the time
+    // part of the model, which must not yank the view back to days.
+    const upBtn = picker()?.querySelector<HTMLButtonElement>(".hk-dtp-step-btn");
+    upBtn?.click();
+    await nextTick();
+    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']").length).toBe(12);
+    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell:not([data-variant])").length).toBe(0);
+  });
+
   it("selecting a day emits a new Date preserving the time of day", async () => {
     const p = mountPicker();
     clickDay(20);

@@ -300,6 +300,102 @@ describe("HkDatePicker", () => {
     expect(p.emitted).toEqual([expected]);
   });
 
+  // ── Month / year drill-down views ──────────────────────────────
+
+  it("drills into the month grid from the header title and back to days", async () => {
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    openViaEnter(p);
+    await nextTick();
+    const stage = panel()?.querySelector<HTMLElement>(".hk-dp-stage");
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("fwd");
+    const picks = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
+    expect(picks.length).toBe(12);
+    expect(picks.map((c) => c.textContent)).toEqual(
+      Array.from({ length: 12 }, (_, i) =>
+        new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(2024, i, 15))),
+    );
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("back");
+    expect(panel()?.querySelectorAll(".hk-dp-cell").length).toBe(42);
+  });
+
+  it("picks a year from the year grid and lands back on days with that year", async () => {
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    openViaEnter(p);
+    await nextTick();
+    // days → months
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    // months → years (the year button is the months-view title)
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    const yearCells = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
+    expect(yearCells.length).toBe(12);
+    // 2027 sits inside the 2016–2027 block of the 2026 view year.
+    const t2027 = yearCells.find((c) => c.textContent === "2027");
+    t2027?.click();
+    await settle();
+    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2027");
+    const months = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
+    months[6]?.click(); // July
+    await settle();
+    expect(panel()?.querySelectorAll(".hk-dp-cell").length).toBe(42);
+    const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
+    expect(panel()?.querySelector<HTMLElement>(".hk-dp-title")?.textContent).toContain(
+      fmt.format(new Date(2027, 6, 1)),
+    );
+  });
+
+  it("shifts the year with the chevrons inside the month view", async () => {
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    openViaEnter(p);
+    await nextTick();
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2026");
+    const navs = () => panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-nav");
+    navs()?.[1].click();
+    await nextTick();
+    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2027");
+    navs()?.[0].click();
+    await nextTick();
+    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2026");
+  });
+
+  it("keeps the same fixed stage node across every view", async () => {
+    // happy-dom performs no layout, so the geometry contract is asserted
+    // structurally here — one persistent stage element, re-keyed panes —
+    // and pixel-verified in the browser demo instead.
+    const p = mountPicker({ modelValue: "2026-08-16" });
+    openViaEnter(p);
+    await nextTick();
+    const stage = panel()?.querySelector<HTMLElement>(".hk-dp-stage");
+    expect(stage).not.toBeNull();
+    expect(stage?.children.length).toBe(1); // the single days pane
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    expect(panel()?.querySelector<HTMLElement>(".hk-dp-stage")).toBe(stage);
+    expect(stage?.getAttribute("data-dir")).toBe("fwd");
+    expect(stage?.children.length).toBe(1); // one pane at a time after settle
+    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("fwd");
+    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    // back steps down the stack one level at a time: years → months → days.
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("back");
+    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
+    await settle();
+    expect(stage?.getAttribute("data-dir")).toBe("back");
+    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length).toBe(42);
+  });
+
   // ── Mobile pass-through to the native OS control ────────────────
 
   it("renders a native date input instead of the calendar on mobile", () => {

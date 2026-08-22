@@ -52,6 +52,19 @@
     "hikari::passwordInput.focusedHasValuePlaceholder": "已聚焦，继续输入将清空原密码",
     "hikari::signIn.usernamePlaceholder": "用户名",
     "hikari::signIn.passwordPlaceholder": "密码",
-    "hikari::signIn.submit": "登录"
+    "hikari::signIn.submit": "登录",
+    "hikari::datePicker.placeholder": "选择日期",
+    "hikari::datePicker.pickDate": "选择日期",
+    "hikari::datePicker.clear": "清除日期",
+    "hikari::datePicker.prevMonth": "上个月",
+    "hikari::datePicker.nextMonth": "下个月",
+    "hikari::datePicker.today": "今天",
+    "hikari::datePicker.back": "返回",
+    "hikari::datePicker.prevYear": "上一年",
+    "hikari::datePicker.nextYear": "下一年",
+    "hikari::datePicker.prevYears": "前12年",
+    "hikari::datePicker.nextYears": "后12年",
+    "hikari::dateTimePicker.prevYear": "上一年",
+    "hikari::dateTimePicker.nextYear": "下一年"
   }
 }

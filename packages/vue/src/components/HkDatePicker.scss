@@ -2,6 +2,8 @@
  * Input-like trigger (mirrors HkInput chrome) + HkPopover calendar.
  * Uses the shared --hi-* design tokens. */
 
+@use "./HkPickerPane" as picker-pane;
+
 .hk-dp {
   display: block;
   width: 100%;
@@ -141,7 +143,25 @@
   gap: var(--hi-space-4, 4px);
 }
 
-.hk-dp-nav {
+.hk-dp-header {
+  /* Fixed height keeps the header row — and therefore the shared stage
+   * height — identical in every view and locale. */
+  height: 1.75rem;
+}
+
+.hk-dp-header-side {
+  display: flex;
+  align-items: center;
+  gap: var(--hi-space-2, 2px);
+  min-width: 0;
+}
+
+.hk-dp-header-side[data-side="right"] {
+  justify-content: flex-end;
+}
+
+.hk-dp-nav,
+.hk-dp-back {
   appearance: none;
   background: transparent;
   border: 0;
@@ -171,20 +191,40 @@
   }
 }
 
-.hk-dp-header > .hk-dp-nav:first-child {
-  justify-self: start;
-}
-
-.hk-dp-header > .hk-dp-nav:last-child {
-  justify-self: end;
-}
-
 .hk-dp-title {
   font-size: var(--hi-text-sm, 0.875rem);
   font-weight: 600;
   color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hi-space-4, 4px);
+}
+
+.hk-dp-title-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--hi-space-2, 2px) var(--hi-space-4, 4px);
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--hi-radius-sm, 4px);
+  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--hi-color-surface);
+    color: var(--hi-color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
 }
 
 .hk-dp-weekdays,
@@ -194,12 +234,19 @@
   gap: 2px;
 }
 
+/* Month/year pick grids sit in the same fixed stage as the day grid and
+ * switch to a 4-column layout; the shared pane partial centers them. */
+.hk-dp-grid[data-variant="pick"] {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .hk-dp-wd {
   text-align: center;
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
-  padding: var(--hi-space-2, 2px) 0;
+  height: 1.25rem;
+  line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -210,8 +257,10 @@
   background: transparent;
   border: 0;
   border-radius: var(--hi-radius-sm, 4px);
-  aspect-ratio: 1 / 1;
-  min-height: 2rem;
+  /* Fixed height keeps the six-row day grid — and therefore the shared
+   * stage height — independent of the panel width, so drilling between
+   * views never changes the popup's size. */
+  height: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -259,6 +308,12 @@
       background: var(--hi-color-primary);
     }
   }
+}
+
+/* Month/year pick cells: wider targets, still inside the fixed stage. */
+.hk-dp-cell[data-variant="pick"] {
+  height: 2.5rem;
+  font-weight: 500;
 }
 
 .hk-dp-footer {

@@ -115,24 +115,37 @@ export default defineComponent({
     const viewMonth = ref(props.modelValue.getMonth());
     const view = ref<ViewKind>("days");
     const viewStack = ref<ViewKind[]>([]);
+    // Drift direction of the last view change — drives the pane keyframes
+    // wired in HkPickerPane.scss.
+    const drift = ref<"fwd" | "back">("fwd");
 
     function drillTo(next: ViewKind) {
+      drift.value = "fwd";
       viewStack.value.push(view.value);
       view.value = next;
     }
 
     function goBack() {
+      drift.value = "back";
       const prev = viewStack.value.pop();
       view.value = prev ?? "days";
     }
 
+    // Time-stepper bumps also update the model, but they must not yank the
+    // user out of the drilled month/year grids — only a real day change
+    // re-anchors the view to the days grid.
+    let lastDayKey = dayKeyOf(props.modelValue);
     watch(
       () => props.modelValue,
       (d) => {
+        const key = dayKeyOf(d);
+        if (key === lastDayKey) return;
+        lastDayKey = key;
         if (d.getFullYear() !== viewYear.value || d.getMonth() !== viewMonth.value) {
           viewYear.value = d.getFullYear();
           viewMonth.value = d.getMonth();
         }
+        drift.value = "back";
         view.value = "days";
         viewStack.value = [];
       },
@@ -241,6 +254,10 @@ export default defineComponent({
       const tgt = props.max && startOfDay(props.max) < startOfDay(now) ? props.max : now;
       viewYear.value = tgt.getFullYear();
       viewMonth.value = tgt.getMonth();
+      // The Today button lives under every view now, so jumping home also
+      // resets the drill-down state to the day grid.
+      view.value = "days";
+      viewStack.value = [];
       selectDay(tgt);
     }
 
@@ -305,7 +322,7 @@ export default defineComponent({
           value={toNativeInputValue(props.modelValue, props.showTime)}
           min={props.min ? toNativeInputValue(props.min, props.showTime) : undefined}
           max={props.max ? toNativeInputValue(props.max, props.showTime) : undefined}
-          aria-label={t("hk.dateTimePicker.pickDate", "Pick a date and time")}
+          aria-label={t("hikari::dateTimePicker.pickDate", "Pick a date and time")}
           onInput={onNativeInput}
         />
       );
@@ -313,21 +330,31 @@ export default defineComponent({
 
     // ── Header ──────────────────────────────────────────────────────
 
+    /** The view swap removes the clicked button from the DOM and drops
+     * focus to <body>; move it onto the incoming pane's primary control
+     * once the transition finishes. Never steal focus from an unrelated
+     * control that kept it through the swap. */
+    function restoreFocusAfterView(el: Element) {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      const target = el.querySelector<HTMLElement>(".hk-dtp-back, .hk-dtp-title-btn");
+      target?.focus();
+    }
+
     function renderHeader() {
       if (view.value === "years") {
         return (
           <div class="hk-dtp-header">
             <div class="hk-dtp-header-side">
-              <button class="hk-dtp-back" type="button" aria-label={t("hk.dateTimePicker.back", "Back")} onClick={goBack}>
+              <button class="hk-dtp-back" type="button" aria-label={t("hikari::dateTimePicker.back", "Back")} onClick={goBack}>
                 <ArrowLeft size={15} />
               </button>
-              <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.prevYears", "Previous years")} onClick={() => shiftYear(-12)}>
+              <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.prevYears", "Previous years")} onClick={() => shiftYear(-12)}>
                 <ChevronLeft size={16} />
               </button>
             </div>
             <div class="hk-dtp-title">{yearBlockStart.value}–{yearBlockStart.value + 11}</div>
             <div class="hk-dtp-header-side" data-side="right">
-              <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.nextYears", "Next years")} onClick={() => shiftYear(12)}>
+              <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.nextYears", "Next years")} onClick={() => shiftYear(12)}>
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -339,8 +366,11 @@ export default defineComponent({
         return (
           <div class="hk-dtp-header">
             <div class="hk-dtp-header-side">
-              <button class="hk-dtp-back" type="button" aria-label={t("hk.dateTimePicker.back", "Back")} onClick={goBack}>
+              <button class="hk-dtp-back" type="button" aria-label={t("hikari::dateTimePicker.back", "Back")} onClick={goBack}>
                 <ArrowLeft size={15} />
+              </button>
+              <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.prevYear", "Previous year")} onClick={() => shiftYear(-1)}>
+                <ChevronLeft size={16} />
               </button>
             </div>
             <div class="hk-dtp-title">
@@ -348,7 +378,11 @@ export default defineComponent({
                 {viewYear.value}
               </button>
             </div>
-            <div class="hk-dtp-header-side" data-side="right" />
+            <div class="hk-dtp-header-side" data-side="right">
+              <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.nextYear", "Next year")} onClick={() => shiftYear(1)}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         );
       }
@@ -356,7 +390,7 @@ export default defineComponent({
       return (
         <div class="hk-dtp-header">
           <div class="hk-dtp-header-side">
-            <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.prevMonth", "Previous month")} onClick={() => shiftMonth(-1)}>
+            <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.prevMonth", "Previous month")} onClick={() => shiftMonth(-1)}>
               <ChevronLeft size={16} />
             </button>
           </div>
@@ -365,7 +399,7 @@ export default defineComponent({
             <button class="hk-dtp-title-btn" type="button" onClick={() => drillTo("years")}>{viewYear.value}</button>
           </div>
           <div class="hk-dtp-header-side" data-side="right">
-            <button class="hk-dtp-nav" type="button" aria-label={t("hk.dateTimePicker.nextMonth", "Next month")} onClick={() => shiftMonth(1)}>
+            <button class="hk-dtp-nav" type="button" aria-label={t("hikari::dateTimePicker.nextMonth", "Next month")} onClick={() => shiftMonth(1)}>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -467,25 +501,14 @@ export default defineComponent({
 
     function renderBody() {
       return (
-        <div class="hk-dtp-stage">
-          <Transition name="hk-dtp-pane">
+        /* The stage pins the day view's exact size in every view (see
+           HkPickerPane.scss) so drilling into months/years never resizes
+           the picker; the drift direction picks the pane keyframes. */
+        <div class="hk-dtp-stage" data-dir={drift.value}>
+          <Transition name="hk-picker-pane" onAfterEnter={restoreFocusAfterView}>
             <div key={view.value} class="hk-dtp-pane">
               {renderHeader()}
               {renderContent()}
-              {view.value === "days" && (
-                <div class="hk-dtp-time">
-                  {props.showTime ? (
-                    <>
-                      {stepper(t("hk.dateTimePicker.hour", "Hour"), props.modelValue.getHours(), () => bump("h", 1), () => bump("h", -1))}
-                      <span class="hk-dtp-time-sep">:</span>
-                      {stepper(t("hk.dateTimePicker.minute", "Minute"), props.modelValue.getMinutes(), () => bump("m", 1), () => bump("m", -1))}
-                    </>
-                  ) : null}
-                  <button class="hk-dtp-today" type="button" onClick={jumpToday}>
-                    {t("hk.dateTimePicker.today", "Today")}
-                  </button>
-                </div>
-              )}
             </div>
           </Transition>
         </div>
@@ -498,8 +521,23 @@ export default defineComponent({
       }
 
       const body = (
-        <div class="hk-dtp" role="group" aria-label={t("hk.dateTimePicker.pickDate", "Pick a date and time")}>
+        <div class="hk-dtp" role="group" aria-label={t("hikari::dateTimePicker.pickDate", "Pick a date and time")}>
           {renderBody()}
+          {/* The time row lives outside the transitioned pane and stays in
+              every view, so the picker's footprint never changes when the
+              month/year grids open. */}
+          <div class="hk-dtp-time">
+            {props.showTime && (
+              <>
+                {stepper(t("hikari::dateTimePicker.hour", "Hour"), props.modelValue.getHours(), () => bump("h", 1), () => bump("h", -1))}
+                <span class="hk-dtp-time-sep">:</span>
+                {stepper(t("hikari::dateTimePicker.minute", "Minute"), props.modelValue.getMinutes(), () => bump("m", 1), () => bump("m", -1))}
+              </>
+            )}
+            <button class="hk-dtp-today" type="button" onClick={jumpToday}>
+              {t("hikari::dateTimePicker.today", "Today")}
+            </button>
+          </div>
           {props.mode === "popup" && props.confirmLabel && (
             <div class="hk-dtp-popup-foot">
               <button class="hk-dtp-popup-confirm" type="button" onClick={onConfirm}>

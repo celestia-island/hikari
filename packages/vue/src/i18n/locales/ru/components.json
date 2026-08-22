@@ -52,6 +52,19 @@
     "hikari::passwordInput.focusedHasValuePlaceholder": "В фокусе, ввод очистит текущий пароль",
     "hikari::signIn.usernamePlaceholder": "Имя пользователя",
     "hikari::signIn.passwordPlaceholder": "Пароль",
-    "hikari::signIn.submit": "Войти"
+    "hikari::signIn.submit": "Войти",
+    "hikari::datePicker.placeholder": "Выбрать дату",
+    "hikari::datePicker.pickDate": "Выбрать дату",
+    "hikari::datePicker.clear": "Очистить дату",
+    "hikari::datePicker.prevMonth": "Предыдущий месяц",
+    "hikari::datePicker.nextMonth": "Следующий месяц",
+    "hikari::datePicker.today": "Сегодня",
+    "hikari::datePicker.back": "Назад",
+    "hikari::datePicker.prevYear": "Предыдущий год",
+    "hikari::datePicker.nextYear": "Следующий год",
+    "hikari::datePicker.prevYears": "Previous years",
+    "hikari::datePicker.nextYears": "Next years",
+    "hikari::dateTimePicker.prevYear": "Предыдущий год",
+    "hikari::dateTimePicker.nextYear": "Следующий год"
   }
 }

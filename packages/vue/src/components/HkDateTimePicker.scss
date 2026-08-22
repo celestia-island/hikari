@@ -20,8 +20,8 @@
 
 .hk-dtp-header {
   /* Fixed height keeps the header row — and therefore the shared stage
-   * height — identical in every view and locale. */
-  height: 1.75rem;
+   * height — identical in every view and locale (enlarged on touch). */
+  height: var(--hk-picker-header);
 }
 
 .hk-dtp-header-side {
@@ -109,8 +109,8 @@
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
-  height: 1.25rem;
-  line-height: 1.25rem;
+  height: var(--hk-picker-wd);
+  line-height: var(--hk-picker-wd);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -123,8 +123,8 @@
   border-radius: var(--hi-radius-sm, 4px);
   /* Fixed height keeps the six-row day grid — and therefore the shared
    * stage height — independent of the picker width, so drilling between
-   * views never changes the picker's size. */
-  height: 2rem;
+   * views never changes the picker's size (enlarged on touch). */
+  height: var(--hk-picker-cell);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -181,7 +181,7 @@
 }
 
 .hk-dtp-cell[data-variant="pick"] {
-  height: 2.5rem;
+  height: var(--hk-picker-pick);
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 500;
 }

@@ -11,15 +11,40 @@
  * the global CSS-animation switch and reduced-motion both collapse the
  * transition to an instant swap. */
 
-/* Day-view geometry the stage height is derived from: a 1.75rem header
- * row (fixed on .hk-dp-header / .hk-dtp-header) + a 1.25rem weekday row +
- * six 2rem day rows + five 2px grid gaps. Keep the values in sync with
+/* Day-view geometry the stage height is derived from: a header row + a
+ * weekday row + six day rows + five 2px grid gaps. The individual metrics
+ * are CSS variables (--hk-picker-*) so the touch variant can enlarge the
+ * cells while the fixed-stage invariant holds per variant — the panel
+ * still never resizes when a sub-view opens. Keep the values in sync with
  * the .hk-dp-cell / .hk-dtp-cell and .hk-dp-wd / .hk-dtp-wd rules in each
  * component's stylesheet. */
+
+/* Geometry tokens. Defined on the panel/body roots because the popover
+ * teleports them away from the picker root (no var inheritance across the
+ * teleport boundary). */
+.hk-dp-panel,
+.hk-dtp {
+  --hk-picker-header: 1.75rem;
+  --hk-picker-wd: 1.25rem;
+  --hk-picker-cell: 2rem;
+  --hk-picker-pick: 2.5rem;
+}
+
+/* Touch variant: bigger cells for bottom-sheet / in-page mobile usage.
+ * Applied via the `is-touch` class when the custom calendar renders on a
+ * touch-sized viewport (nativeOnMobile=false hosts, e.g. the reports
+ * date-jump sheet). */
+.hk-dp-panel.is-touch,
+.hk-dtp.is-touch {
+  --hk-picker-wd: 1.5rem;
+  --hk-picker-cell: 2.5rem;
+  --hk-picker-pick: 3rem;
+}
+
 .hk-dp-stage,
 .hk-dtp-stage {
   position: relative;
-  height: calc(1.75rem + 1.25rem + 6 * 2rem + 10px);
+  height: calc(var(--hk-picker-header) + var(--hk-picker-wd) + 6 * var(--hk-picker-cell) + 10px);
 }
 
 .hk-dp-pane,

@@ -110,6 +110,10 @@ export default defineComponent({
     // chrome for a native datetime-local input and keep the custom UI on
     // desktop widths only.
     const useNative = computed(() => props.nativeOnMobile && isMobile.value);
+    // The custom calendar renders on touch viewports only when the host
+    // opts out of the native input (e.g. bottom-sheet dialogs); enlarge
+    // the cells there via the `is-touch` geometry variant.
+    const isTouch = computed(() => isMobile.value && !useNative.value);
 
     const viewYear = ref(props.modelValue.getFullYear());
     const viewMonth = ref(props.modelValue.getMonth());
@@ -521,7 +525,7 @@ export default defineComponent({
       }
 
       const body = (
-        <div class="hk-dtp" role="group" aria-label={t("hikari::dateTimePicker.pickDate", "Pick a date and time")}>
+        <div class={["hk-dtp", isTouch.value ? "is-touch" : ""].filter(Boolean).join(" ")} role="group" aria-label={t("hikari::dateTimePicker.pickDate", "Pick a date and time")}>
           {renderBody()}
           {/* The time row lives outside the transitioned pane and stays in
               every view, so the picker's footprint never changes when the

@@ -287,6 +287,8 @@ describe("HkDateTimePicker", () => {
     expect(p.container.querySelector(".hk-dtp")).not.toBeNull();
     expect(dayCells().length).toBe(42);
     expect(nativeInput(p.container)).toBeNull();
+    // Mobile custom calendar gets the enlarged touch geometry variant.
+    expect(p.container.querySelector(".hk-dtp")?.classList.contains("is-touch")).toBe(true);
   });
 
   it("native input edits update the model as a local-time Date", async () => {

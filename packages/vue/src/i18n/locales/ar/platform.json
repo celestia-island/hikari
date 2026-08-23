@@ -22,6 +22,7 @@
     "hikari::theme.modeAuto": "تلقائي",
     "hikari::theme.themes": "سمات الألوان",
     "hikari::theme.editScheme": "تعديل نظام الألوان…",
+    "hikari::theme.customize": "تخصيص",
     "hikari::theme.themeName": "اسم السمة",
     "hikari::theme.customThemeName": "سمة مخصصة",
     "hikari::theme.save": "حفظ",

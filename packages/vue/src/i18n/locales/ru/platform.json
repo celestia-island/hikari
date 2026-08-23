@@ -22,6 +22,7 @@
     "hikari::theme.modeAuto": "Авто",
     "hikari::theme.themes": "Цветовые темы",
     "hikari::theme.editScheme": "Изменить цветовую схему…",
+    "hikari::theme.customize": "Настроить",
     "hikari::theme.themeName": "Название темы",
     "hikari::theme.customThemeName": "Пользовательская тема",
     "hikari::theme.save": "Сохранить",

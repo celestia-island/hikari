@@ -1,0 +1,196 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { createApp, h, nextTick } from "vue";
+
+import { HkLocalizedInput } from "./HkLocalizedInput";
+
+const LOCALES = [
+  { code: "en", label: "English" },
+  { code: "zh-Hans", label: "简体中文" },
+  { code: "ja", label: "日本語" },
+];
+
+interface MountOptions {
+  modelValue?: string;
+  sourceLang?: string;
+  translations?: Record<string, string>;
+}
+
+const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+
+function mountInput(opts: MountOptions = {}) {
+  const events = {
+    modelValue: [] as string[],
+    translations: [] as Record<string, string>[],
+    languagechange: [] as string[],
+  };
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const app = createApp({
+    render: () =>
+      h(HkLocalizedInput, {
+        modelValue: opts.modelValue ?? "",
+        sourceLang: opts.sourceLang ?? "en",
+        translations: opts.translations ?? {},
+        localeOptions: LOCALES,
+        "onUpdate:modelValue": (v: string) => {
+          events.modelValue.push(v);
+        },
+        "onUpdate:translations": (v: Record<string, string>) => {
+          events.translations.push(v);
+        },
+        onLanguagechange: (code: string) => {
+          events.languagechange.push(code);
+        },
+      }),
+  });
+  app.mount(container);
+  mounts.push({ app, container });
+  return { events, container };
+}
+
+function queryChip(container: HTMLElement): HTMLButtonElement {
+  const chip = container.querySelector<HTMLButtonElement>(".hk-localized-input-chip");
+  expect(chip, "language chip renders inside the input suffix").toBeTruthy();
+  return chip!;
+}
+
+function queryField(container: HTMLElement): HTMLInputElement {
+  const field = container.querySelector<HTMLInputElement>(".hk-input-element");
+  expect(field).toBeTruthy();
+  return field!;
+}
+
+async function openMenu(container: HTMLElement) {
+  queryChip(container).click();
+  await nextTick();
+  await nextTick();
+}
+
+function menuRows(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLButtonElement>(".hk-menu-row")];
+}
+
+afterEach(() => {
+  for (const { app, container } of mounts.splice(0)) {
+    app.unmount();
+    container.remove();
+  }
+  document.body.innerHTML = "";
+});
+
+describe("HkLocalizedInput", () => {
+  it("shows the app-provided label plus code on the chip", () => {
+    const { container } = mountInput({ modelValue: "Plant overview" });
+    expect(queryChip(container).textContent).toContain("English (en)");
+    expect(queryField(container).value).toBe("Plant overview");
+  });
+
+  it("commits the edited text into translations on every input", async () => {
+    const { events, container } = mountInput({ modelValue: "" });
+    const field = queryField(container);
+    field.value = "Plant overview";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(events.modelValue.at(-1)).toBe("Plant overview");
+    expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
+  });
+
+  it("prunes empty values from the translations map", async () => {
+    const { events, container } = mountInput({ modelValue: "Plant overview" });
+    const field = queryField(container);
+    field.value = "  ";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(events.translations.at(-1)?.en).toBeUndefined();
+  });
+
+  it("lists existing translations and an add-language cascade in the menu", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const labels = menuRows().map((r) => r.textContent ?? "");
+    expect(labels.some((l) => l.includes("简体中文"))).toBe(true);
+    // The currently edited language is not offered as a switch target.
+    expect(labels.some((l) => l.includes("English"))).toBe(false);
+    expect(labels.some((l) => l.includes("Add language"))).toBe(true);
+  });
+
+  it("switches to an existing language: commits text, loads its value, closes the menu", async () => {
+    const { events, container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const row = menuRows().find((r) => (r.textContent ?? "").includes("简体中文"));
+    expect(row).toBeTruthy();
+    row!.click();
+    await nextTick();
+    await nextTick();
+    expect(events.modelValue.at(-1)).toBe("工厂总览");
+    expect(events.languagechange.at(-1)).toBe("zh-Hans");
+    expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
+    expect(queryChip(container).textContent).toContain("简体中文 (zh-Hans)");
+    // Menu closed after the switch.
+    expect(menuRows().length).toBe(0);
+  });
+
+  it("adds a fresh language via the cascade: closes menu, empty field, chip follows", async () => {
+    const { events, container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview" },
+    });
+    await openMenu(container);
+    const addRow = menuRows().find((r) => (r.textContent ?? "").includes("Add language"));
+    expect(addRow).toBeTruthy();
+    addRow!.click();
+    await nextTick();
+    await nextTick();
+    // Cascade child rows render for the not-yet-added languages.
+    const jaRow = menuRows().find((r) => (r.textContent ?? "").includes("日本語"));
+    expect(jaRow).toBeTruthy();
+    jaRow!.click();
+    await nextTick();
+    await nextTick();
+    expect(events.modelValue.at(-1)).toBe("");
+    expect(events.languagechange.at(-1)).toBe("ja");
+    expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
+    expect(queryChip(container).textContent).toContain("日本語 (ja)");
+    expect(menuRows().length).toBe(0);
+  });
+
+  it("disables the chip when the catalog is exhausted", () => {
+    // Single-language catalog with that language already being edited:
+    // nothing to switch to, nothing to add.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkLocalizedInput, {
+          modelValue: "Plant overview",
+          sourceLang: "en",
+          translations: { en: "Plant overview" },
+          localeOptions: [{ code: "en", label: "English" }],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    expect(queryChip(container).disabled).toBe(true);
+  });
+
+  it("keeps edits on the switched-from language when the text is blank", async () => {
+    const { events, container } = mountInput({
+      modelValue: "",
+      translations: { "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const row = menuRows().find((r) => (r.textContent ?? "").includes("简体中文"));
+    row!.click();
+    await nextTick();
+    await nextTick();
+    // No empty "en" key is committed.
+    expect(events.translations.at(-1)?.en).toBeUndefined();
+    expect(events.modelValue.at(-1)).toBe("工厂总览");
+  });
+});

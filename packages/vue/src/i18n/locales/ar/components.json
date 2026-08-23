@@ -106,6 +106,8 @@
     "hikari::adminHeader.avatar": "الصورة الرمزية",
     "hikari::adminHeader.avatarTrigger": "قائمة الحساب",
     "hikari::adminHeader.language": "اللغة",
-    "hikari::adminHeader.adminGroup": "المسؤولون"
+    "hikari::adminHeader.adminGroup": "المسؤولون",
+    "hikari::localizedInput.addLanguage": "إضافة لغة",
+    "hikari::localizedInput.chooseLanguage": "اختر لغة التحرير"
   }
 }

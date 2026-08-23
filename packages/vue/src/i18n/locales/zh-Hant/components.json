@@ -106,6 +106,8 @@
     "hikari::adminHeader.avatar": "頭像",
     "hikari::adminHeader.avatarTrigger": "帳戶選單",
     "hikari::adminHeader.language": "語言",
-    "hikari::adminHeader.adminGroup": "管理員"
+    "hikari::adminHeader.adminGroup": "管理員",
+    "hikari::localizedInput.addLanguage": "新增語言",
+    "hikari::localizedInput.chooseLanguage": "選擇編輯語言"
   }
 }

@@ -41,6 +41,7 @@ export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModa
 export { default as HModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HPopover, type PopupPlacement } from "./components/HkPopover";
 export { default as HMenu, type HkMenuItem } from "./components/HkMenu";
+export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./components/HkLocalizedInput";
 export { default as HPopupSelect, isAnyPopupOpen, closeAllPopups, type HkPopupSelectOption } from "./components/HkPopupSelect";
 export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";

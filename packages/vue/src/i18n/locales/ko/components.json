@@ -106,6 +106,8 @@
     "hikari::adminHeader.avatar": "아바타",
     "hikari::adminHeader.avatarTrigger": "계정 메뉴",
     "hikari::adminHeader.language": "언어",
-    "hikari::adminHeader.adminGroup": "관리자"
+    "hikari::adminHeader.adminGroup": "관리자",
+    "hikari::localizedInput.addLanguage": "언어 추가",
+    "hikari::localizedInput.chooseLanguage": "편집 언어 선택"
   }
 }

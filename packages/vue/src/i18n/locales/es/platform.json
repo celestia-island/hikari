@@ -50,7 +50,11 @@
     "hikari::log.copied": "Copiado",
     "hikari::log.clear": "Limpiar",
     "hikari::cookie.text": "Este sitio utiliza cookies.",
-    "hikari::cookie.ok": "Aceptar"
+    "hikari::cookie.ok": "Aceptar",
+    "hikari::attachment.download": "Descargar",
+    "hikari::attachment.close": "Cerrar",
+    "hikari::attachment.loading": "Cargando…",
+    "hikari::attachment.noPreview": "No hay vista previa disponible."
   },
   "auth": {
     "hikari::auth.solvingChallenge": "Verificando el desafío…"

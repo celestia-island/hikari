@@ -50,7 +50,11 @@
     "hikari::log.copied": "تم النسخ",
     "hikari::log.clear": "مسح",
     "hikari::cookie.text": "يستخدم هذا الموقع ملفات تعريف الارتباط.",
-    "hikari::cookie.ok": "موافق"
+    "hikari::cookie.ok": "موافق",
+    "hikari::attachment.download": "تنزيل",
+    "hikari::attachment.close": "إغلاق",
+    "hikari::attachment.loading": "جارٍ التحميل…",
+    "hikari::attachment.noPreview": "لا تتوفر معاينة."
   },
   "auth": {
     "hikari::auth.solvingChallenge": "جارٍ حل التحدّي…"

@@ -50,7 +50,11 @@
     "hikari::log.copied": "Скопировано",
     "hikari::log.clear": "Очистить",
     "hikari::cookie.text": "Этот сайт использует файлы cookie.",
-    "hikari::cookie.ok": "OK"
+    "hikari::cookie.ok": "OK",
+    "hikari::attachment.download": "Скачать",
+    "hikari::attachment.close": "Закрыть",
+    "hikari::attachment.loading": "Загрузка…",
+    "hikari::attachment.noPreview": "Предпросмотр недоступен."
   },
   "auth": {
     "hikari::auth.solvingChallenge": "Проверка задания…"

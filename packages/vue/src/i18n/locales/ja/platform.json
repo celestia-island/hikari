@@ -50,7 +50,11 @@
     "hikari::log.copied": "コピーしました",
     "hikari::log.clear": "クリア",
     "hikari::cookie.text": "このサイトは Cookie を使用します。",
-    "hikari::cookie.ok": "OK"
+    "hikari::cookie.ok": "OK",
+    "hikari::attachment.download": "ダウンロード",
+    "hikari::attachment.close": "閉じる",
+    "hikari::attachment.loading": "読み込み中…",
+    "hikari::attachment.noPreview": "プレビューは利用できません。"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "チャレンジを検証中…"

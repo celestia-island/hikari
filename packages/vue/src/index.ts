@@ -253,3 +253,10 @@ export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal"
 export { HkAboutModal as HAboutModal, type HAboutLink } from "./components/HkAboutModal";
 export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
 export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";
+export {
+  HkAttachmentModal as HAttachmentModal,
+  previewKindFor,
+  type HAttachmentDetail,
+  type HAttachmentItem,
+  type HAttachmentPreviewType,
+} from "./components/HkAttachmentModal";

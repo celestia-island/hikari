@@ -50,7 +50,11 @@
     "hikari::log.copied": "복사됨",
     "hikari::log.clear": "지우기",
     "hikari::cookie.text": "이 사이트는 쿠키를 사용합니다.",
-    "hikari::cookie.ok": "확인"
+    "hikari::cookie.ok": "확인",
+    "hikari::attachment.download": "다운로드",
+    "hikari::attachment.close": "닫기",
+    "hikari::attachment.loading": "로드 중…",
+    "hikari::attachment.noPreview": "미리보기를 사용할 수 없습니다."
   },
   "auth": {
     "hikari::auth.solvingChallenge": "챌린지 검증 중…"

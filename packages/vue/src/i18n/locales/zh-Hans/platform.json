@@ -50,7 +50,11 @@
     "hikari::log.copied": "已复制",
     "hikari::log.clear": "清空",
     "hikari::cookie.text": "本站使用 Cookie。",
-    "hikari::cookie.ok": "确定"
+    "hikari::cookie.ok": "确定",
+    "hikari::attachment.download": "下载",
+    "hikari::attachment.close": "关闭",
+    "hikari::attachment.loading": "加载中…",
+    "hikari::attachment.noPreview": "没有可用的预览。"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "正在验证挑战…"

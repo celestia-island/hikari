@@ -1,0 +1,49 @@
+.s-attachment-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+}
+
+.s-attachment-modal-text {
+  max-height: 48vh;
+  padding: var(--space-12, 0.75rem);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-md, 8px);
+  background: rgb(var(--color-surface) / 0.5);
+}
+
+.s-attachment-modal-text-empty {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  font-style: italic;
+}
+
+.s-attachment-modal-text-error {
+  margin: var(--space-8, 0.5rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-error));
+}
+
+.s-attachment-modal-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-24, 1.5rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-attachment-modal-file-name {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-attachment-modal-meta {
+  display: flex;
+  gap: var(--space-8, 0.5rem);
+}

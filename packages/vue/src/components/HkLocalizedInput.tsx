@@ -90,9 +90,11 @@ export const HkLocalizedInput = defineComponent({
     const chipRef = ref<HTMLElement | null>(null);
     const rootRef = ref<HTMLElement | null>(null);
 
-    // Follow the app locale while no explicit edit language has been
-    // picked: a locale switch mid-edit commits the current text and
-    // moves the field, exactly like a menu-driven switch.
+    // Follow the app locale: whenever the parent's sourceLang changes
+    // (the app-level language switch moved), commit the current text
+    // and move the field to the new language — same semantics as a
+    // menu-driven switch, minus the focus grab (the user is busy
+    // operating the app-level picker, not this field).
     watch(
       () => props.sourceLang,
       (lang) => {
@@ -189,9 +191,11 @@ export const HkLocalizedInput = defineComponent({
       commitTranslations(editLang.value, props.modelValue);
       editLang.value = code;
       emit("update:modelValue", (props.translations[code] ?? "").trim());
-      if (!opts.viaWatch) menuOpen.value = false;
+      if (!opts.viaWatch) {
+        menuOpen.value = false;
+        focusField();
+      }
       emit("languagechange", code);
-      focusField();
     }
 
     function onMenuSelect(key: string) {

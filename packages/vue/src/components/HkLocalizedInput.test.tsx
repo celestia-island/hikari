@@ -240,4 +240,63 @@ describe("HkLocalizedInput", () => {
     await nextTick();
     expect(events.translations.at(-1)?.en).toBe("Plant overview");
   });
+
+  it("renders menu-row flags when the catalog provides them", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkLocalizedInput, {
+          modelValue: "Plant overview",
+          sourceLang: "en",
+          translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+          localeOptions: [
+            { code: "en", label: "English", flag: "🇬🇧" },
+            { code: "zh-Hans", label: "简体中文", flag: "🇨🇳" },
+          ],
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await openMenu(container);
+    const row = menuRows().find((r) => (r.textContent ?? "").includes("简体中文"));
+    expect(row?.querySelector(".hk-menu-flag")?.textContent).toBe("🇨🇳");
+  });
+
+  it("follows a sourceLang change without stealing focus", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const events: string[] = [];
+    const app = createApp({
+      data: () => ({
+        modelValue: "Plant overview",
+        sourceLang: "en",
+        translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+      }),
+      render() {
+        return h(HkLocalizedInput, {
+          modelValue: this.modelValue,
+          sourceLang: this.sourceLang,
+          translations: this.translations,
+          localeOptions: LOCALES,
+          "onUpdate:modelValue": (v: string) => {
+            this.modelValue = v;
+          },
+          onLanguagechange: (code: string) => events.push(code),
+        });
+      },
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    // Simulate an app-level locale switch mid-edit.
+    const state = app._instance?.proxy as unknown as {
+      sourceLang: string;
+    };
+    state.sourceLang = "zh-Hans";
+    await nextTick();
+    await nextTick();
+    expect(events.at(-1)).toBe("zh-Hans");
+    expect(queryField(container).value).toBe("工厂总览");
+    expect(document.activeElement).not.toBe(queryField(container));
+  });
 });

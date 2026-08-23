@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "Error",
     "hikari::theme.tokens.warning": "Advertencia",
     "hikari::theme.tokens.info": "Información",
+    "hikari::theme.groupCount": "{count} colores",
     "hikari::theme.extendedColors": "Colores extendidos",
     "hikari::secret.title": "Secreto",
     "hikari::secret.notice": "Este secreto se muestra solo una vez. Cópielo y guárdelo antes de cerrar.",

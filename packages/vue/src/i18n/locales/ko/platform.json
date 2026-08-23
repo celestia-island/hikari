@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "오류",
     "hikari::theme.tokens.warning": "경고",
     "hikari::theme.tokens.info": "정보",
+    "hikari::theme.groupCount": "색상 {count}개",
     "hikari::theme.extendedColors": "확장 색상",
     "hikari::secret.title": "비밀",
     "hikari::secret.notice": "이 비밀은 한 번만 표시됩니다. 닫기 전에 복사하여 저장하세요.",

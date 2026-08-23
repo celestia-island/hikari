@@ -11,11 +11,12 @@ import HkBreadcrumb from "../src/components/HkBreadcrumb";
 import HkButton from "../src/components/HkButton";
 import HkCard from "../src/components/HkCard";
 import HkCheckbox from "../src/components/HkCheckbox";
-import HkCollapse from "../src/components/HkCollapse";
+import HkColorPicker from "../src/components/HkColorPicker";
 import HkConfirmDialog from "../src/components/HkConfirmDialog";
 import HkDivider from "../src/components/HkDivider";
 import HkDrawer from "../src/components/HkDrawer";
 import HkEmptyState from "../src/components/HkEmptyState";
+import HkExpansionPanel from "../src/components/HkExpansionPanel";
 import HkErrorBoundary from "../src/components/HkErrorBoundary";
 import HkIcon from "../src/components/HkIcon";
 import HkIconButton from "../src/components/HkIconButton";
@@ -198,6 +199,20 @@ async function main() {
   // HkEmptyState
   results.push(await renderComponent("HkEmptyState", HkEmptyState,
     { title: "Nothing here", description: "Add some data" }));
+
+  // HkColorPicker (stack + row layouts)
+  results.push(await renderComponent("HkColorPicker", HkColorPicker,
+    { r: 255, g: 107, b: 157, label: "Primary" }));
+  results.push(await renderComponent("HkColorPicker (row)", HkColorPicker,
+    { r: 234, g: 179, b: 8, label: "Phase L1 (yellow)", layout: "row" }));
+
+  // HkExpansionPanel (MD3 expansion panel, replaced HkCollapse)
+  results.push(await renderComponent("HkExpansionPanel", HkExpansionPanel,
+    { title: "Electrical power", subtitle: "9 colors" },
+    { default: () => "Panel body" }));
+  results.push(await renderComponent("HkExpansionPanel (open)", HkExpansionPanel,
+    { title: "Process media", subtitle: "11 colors", defaultOpen: true },
+    { default: () => "Panel body" }));
 
   // HkSpinner
   results.push(await renderComponent("HkSpinner (center)", HkSpinner,

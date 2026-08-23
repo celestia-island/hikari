@@ -9,11 +9,15 @@ import {
   type CustomThemePreset,
 } from "./presets";
 import {
+  allGroupSlots,
   clampToSlot,
   getTokenGroups,
   groupTokensToCSSVars,
+  parseTokenGroupConfig,
   registerTokenGroup,
+  registerTokenGroupConfig,
   resolveGroupTokens,
+  resolveLocalizedText,
   rgbToHsl,
   hslToRgb,
   setTokenGroupsReapply,
@@ -59,7 +63,7 @@ const TEST_GROUP: TokenGroupDefinition = {
 };
 
 function slot(key: string) {
-  const found = TEST_GROUP.slots.find((s) => s.key === key);
+  const found = (TEST_GROUP.slots ?? []).find((s) => s.key === key);
   if (!found) throw new Error(`unknown slot ${key}`);
   return found;
 }
@@ -112,12 +116,14 @@ describe("token group registry", () => {
     const groups = getTokenGroups();
     const wires = groups.find((g) => g.id === "test-wires")!;
     wires.label = "Mutated";
-    wires.slots[0].hueClamp = { center: 99, range: 99 };
-    wires.slots[0].defaults.dark = { r: 0, g: 0, b: 0 };
+    const wiresSlots = wires.slots!;
+    wiresSlots[0].hueClamp = { center: 99, range: 99 };
+    wiresSlots[0].defaults.dark = { r: 0, g: 0, b: 0 };
     const again = getTokenGroups().find((g) => g.id === "test-wires")!;
     expect(again.label).toBe("Test wires");
-    expect(again.slots[0].hueClamp).toEqual({ center: 0, range: 20 });
-    expect(again.slots[0].defaults.dark).toEqual({ r: 220, g: 60, b: 60 });
+    const againSlots = again.slots!;
+    expect(againSlots[0].hueClamp).toEqual({ center: 0, range: 20 });
+    expect(againSlots[0].defaults.dark).toEqual({ r: 220, g: 60, b: 60 });
   });
 });
 
@@ -328,5 +334,156 @@ describe("late registration", () => {
     } finally {
       setTokenGroupsReapply(previous);
     }
+  });
+});
+
+// ── LocalizedText + sections + config-file parsing ──────────────────
+
+describe("localized text and sections", () => {
+  it("resolves LocalizedText by locale with en and first-value fallbacks", () => {
+    const map = { en: "Hydrogen", "zh-Hans": "氢气", ja: "水素" };
+    expect(resolveLocalizedText(map, "zh-Hans")).toBe("氢气");
+    expect(resolveLocalizedText(map, "fr")).toBe("Hydrogen");
+    expect(resolveLocalizedText({ de: "Wasserstoff" }, "fr")).toBe("Wasserstoff");
+    expect(resolveLocalizedText("bare string", "zh-Hans")).toBe("bare string");
+  });
+
+  it("resolves section slots through allGroupSlots and resolveGroupTokens", () => {
+    registerTokenGroup({
+      id: "sectioned",
+      label: "Sectioned",
+      sections: [
+        {
+          key: "power",
+          label: "Power",
+          slots: [
+            { key: "l1", label: "L1", defaults: { dark: { r: 1, g: 1, b: 1 }, light: { r: 2, g: 2, b: 2 } } },
+          ],
+        },
+        {
+          key: "media",
+          label: "Media",
+          slots: [
+            { key: "h2", label: "H2", defaults: { dark: { r: 3, g: 3, b: 3 }, light: { r: 4, g: 4, b: 4 } } },
+          ],
+        },
+      ],
+    });
+    const resolved = resolveGroupTokens("dark");
+    expect(resolved.sectioned.l1).toEqual({ r: 1, g: 1, b: 1 });
+    expect(resolved.sectioned.h2).toEqual({ r: 3, g: 3, b: 3 });
+    const group = getTokenGroups().find((g) => g.id === "sectioned")!;
+    expect(allGroupSlots(group).map((s) => s.key)).toEqual(["l1", "h2"]);
+  });
+});
+
+describe("parseTokenGroupConfig", () => {
+  const VALID = {
+    id: "scada",
+    label: { en: "SCADA industrial colors", "zh-Hans": "SCADA 工业配色" },
+    sections: [
+      {
+        key: "power",
+        label: { en: "Electrical power", "zh-Hans": "电力" },
+        slots: [
+          {
+            key: "power-l1",
+            label: { en: "Phase L1 (yellow)", "zh-Hans": "L1 相（黄）" },
+            defaults: { dark: [234, 179, 8], light: [161, 98, 7] },
+            hueClamp: { center: 45, range: 20 },
+            sRange: [0.35, 0.95],
+            lRange: [0.25, 0.75],
+          },
+          {
+            key: "power-pe-a",
+            label: "PE stripe (green)",
+            defaults: { dark: [22, 163, 74], light: [22, 101, 52] },
+            pairWith: "power-pe-b",
+          },
+          {
+            key: "power-pe-b",
+            label: "PE stripe (yellow)",
+            defaults: { dark: [250, 204, 21], light: [202, 138, 4] },
+            pairWith: "power-pe-a",
+          },
+        ],
+      },
+    ],
+  };
+
+  it("parses a valid config into a definition", () => {
+    const result = parseTokenGroupConfig(VALID);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.group.id).toBe("scada");
+    expect(result.group.sections).toHaveLength(1);
+    const slot = result.group.sections![0].slots[0];
+    expect(slot.defaults.dark).toEqual({ r: 234, g: 179, b: 8 });
+    expect(slot.hueClamp).toEqual({ center: 45, range: 20 });
+    expect(slot.sRange).toEqual([0.35, 0.95]);
+    expect(allGroupSlots(result.group)).toHaveLength(3);
+  });
+
+  it("accepts a flat section-less config and a $schema hint", () => {
+    const result = parseTokenGroupConfig({
+      $schema: "https://celestia.example/palette.v1.json",
+      id: "oa-board",
+      label: "OA board",
+      slots: [
+        { key: "todo", label: "Todo", defaults: { dark: [1, 2, 3], light: [4, 5, 6] } },
+      ],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects bad ids, bad rgb, empty slots and reports all errors at once", () => {
+    // Invalid id is rejected up-front (the group has no usable identity).
+    const idRejected = parseTokenGroupConfig({ id: "Bad Id", label: "x", slots: [] });
+    expect(idRejected.ok).toBe(false);
+
+    const result = parseTokenGroupConfig({
+      id: "bad-values",
+      label: "x",
+      sections: [
+        {
+          key: "s",
+          label: "s",
+          slots: [
+            { key: "ok", label: "ok", defaults: { dark: [1, 2, 3], light: [4, 5, 6] } },
+            { key: "bad-rgb", label: "x", defaults: { dark: [1, 2], light: [4, 5, 6] } },
+            { key: "band-swap", label: "x", defaults: { dark: [1, 2, 3], light: [4, 5, 6] }, sRange: [0.9, 0.1] },
+          ],
+        },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.some((e) => e.includes("slots[1].defaults.dark"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("slots[2].sRange"))).toBe(true);
+  });
+
+  it("flags dangling pairWith and duplicate slot keys", () => {
+    const result = parseTokenGroupConfig({
+      id: "dangling",
+      label: "x",
+      slots: [
+        { key: "a", label: "a", defaults: { dark: [1, 2, 3], light: [4, 5, 6] }, pairWith: "ghost" },
+        { key: "a", label: "a2", defaults: { dark: [1, 2, 3], light: [4, 5, 6] } },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.some((e) => e.includes("ghost"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("duplicate slot key"))).toBe(true);
+  });
+
+  it("registerTokenGroupConfig registers valid configs and skips invalid ones", () => {
+    const bad = registerTokenGroupConfig({ id: "also-bad", label: "x", slots: [] });
+    expect(bad.ok).toBe(false);
+    expect(getTokenGroups().some((g) => g.id === "also-bad")).toBe(false);
+
+    const good = registerTokenGroupConfig(VALID);
+    expect(good.ok).toBe(true);
+    expect(getTokenGroups().some((g) => g.id === "scada")).toBe(true);
   });
 });

@@ -8,12 +8,15 @@ export { default as HBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HButton } from "./components/HkButton";
 export { default as HCard } from "./components/HkCard";
 export { default as HCheckbox } from "./components/HkCheckbox";
-export { default as HCollapse } from "./components/HkCollapse";
+// HCollapse was removed (v0.5.0): its tree-node-grade styling and
+// broken max-height animation never met the MD3 bar. Use HExpansionPanel.
 export { default as HColorPicker } from "./components/HkColorPicker";
+export { HColorSchemeDialog, type HCustomTheme } from "./components/HkColorSchemeDialog";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HDivider } from "./components/HkDivider";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEmptyState } from "./components/HkEmptyState";
+export { default as HExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HIcon } from "./components/HkIcon";
 export { default as HIconButton } from "./components/HkIconButton";
 export { default as HInput } from "./components/HkInput";
@@ -100,13 +103,15 @@ export {
   registerTokenGroup, getTokenGroups, resolveGroupTokens, clampToSlot,
   clampRgbToBands, clampHue, hueDelta, wrapHue, groupTokensToCSSVars, rgbToHsl, hslToRgb,
   tokenGroupsVersion,
+  allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
   startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache,
   getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION,
   type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
   type ThemeId, type ThemeTokens, type CustomThemePreset, type TimePeriod,
   type ThemeTokenGroupValues, type ThemeTokenGroupModes,
-  type TokenGroupDefinition, type TokenGroupSlot, type HueClamp,
+  type TokenGroupDefinition, type TokenGroupSlot, type TokenGroupSection, type HueClamp,
   type ResolvedGroupTokens, type ColorHSL,
+  type LocalizedText, type ParseTokenGroupResult,
 } from "./theme";
 
 // Runtime systems

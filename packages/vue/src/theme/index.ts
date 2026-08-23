@@ -6,8 +6,13 @@ export {
   registerTokenGroup, getTokenGroups, resolveGroupTokens, clampToSlot,
   clampRgbToBands, clampHue, hueDelta, groupTokensToCSSVars, rgbToHsl, hslToRgb, wrapHue,
   tokenGroupsVersion, setTokenGroupsReapply,
+  allGroupSlots, resolveLocalizedText, parseTokenGroupConfig, registerTokenGroupConfig,
 } from "./tokenGroups";
-export type { TokenGroupDefinition, TokenGroupSlot, HueClamp, ResolvedGroupTokens, ColorHSL, TokenGroupsReapplyFn } from "./tokenGroups";
+export type {
+  TokenGroupDefinition, TokenGroupSlot, TokenGroupSection, HueClamp,
+  ResolvedGroupTokens, ColorHSL, TokenGroupsReapplyFn,
+  LocalizedText, ParseTokenGroupResult,
+} from "./tokenGroups";
 export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION } from "./useSolarTime";
 export { startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache } from "./useBackgroundLuminance";
 export type { TimePeriod } from "./useSolarTime";

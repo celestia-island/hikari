@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "エラー",
     "hikari::theme.tokens.warning": "警告",
     "hikari::theme.tokens.info": "情報",
+    "hikari::theme.groupCount": "{count} 色",
     "hikari::theme.extendedColors": "拡張カラー",
     "hikari::secret.title": "シークレット",
     "hikari::secret.notice": "このシークレットは一度だけ表示されます。閉じる前にコピーして保存してください。",

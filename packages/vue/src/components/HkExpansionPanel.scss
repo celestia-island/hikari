@@ -1,0 +1,143 @@
+// HkExpansionPanel — Material Design 3 expansion panel styles.
+//
+// Body animation uses the grid-rows 0fr→1fr technique: the body is a
+// one-row grid whose single track collapses smoothly regardless of the
+// content height (no max-height guessing, no measured JS height). The
+// inner content wrapper carries `min-height: 0` + `overflow: hidden` so
+// the track can actually collapse, and stays visible (delayed) for the
+// whole closing animation before flipping to hidden — collapsed bodies
+// never leak focus or hit-testing.
+
+.hk-expansion-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgb(var(--color-surface));
+  transition: border-color var(--duration-short) var(--ease-standard);
+}
+
+.hk-expansion-panel[data-open] {
+  border-color: var(--c-primary-dim);
+}
+
+.hk-expansion-panel[data-disabled] {
+  opacity: 0.55;
+}
+
+.hk-expansion-panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-8) var(--space-12);
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: rgb(var(--color-text));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+
+  &:hover {
+    background: var(--c-primary-faint);
+  }
+
+  &:focus-visible {
+    box-shadow: var(--shadow-focus);
+  }
+
+  &[disabled] {
+    cursor: default;
+
+    &:hover {
+      background: none;
+    }
+  }
+}
+
+.hk-expansion-panel-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hk-expansion-panel-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-expansion-panel-subtitle {
+  font-size: var(--text-xs);
+  color: rgb(var(--color-text-secondary));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-expansion-panel-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.hk-expansion-panel-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: rgb(var(--color-text-secondary));
+  transition: transform var(--duration-normal) var(--ease-standard);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.hk-expansion-panel[data-open] .hk-expansion-panel-chevron {
+  transform: rotate(180deg);
+}
+
+.hk-expansion-panel-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-normal) var(--ease-standard);
+}
+
+.hk-expansion-panel[data-open] .hk-expansion-panel-body {
+  grid-template-rows: 1fr;
+}
+
+.hk-expansion-panel-content {
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  // Stays visible while the closing animation runs, then hides.
+  transition: visibility 0s linear var(--duration-normal);
+}
+
+.hk-expansion-panel[data-open] .hk-expansion-panel-content {
+  visibility: visible;
+  // Opens flip to visible immediately.
+  transition: visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-expansion-panel-chevron,
+  .hk-expansion-panel-body,
+  .hk-expansion-panel-content {
+    transition: none;
+  }
+}

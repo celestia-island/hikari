@@ -21,9 +21,17 @@ export const HkThemeToggle = defineComponent({
   props: {
     /** Popover placement. */
     popoverPlacement: { type: String as PropType<PopupPlacement>, default: "bottom-end" },
+    /**
+     * When true, the "Customize" button emits `open-customize` and closes
+     * the popover instead of opening the built-in HColorSchemeDialog — the
+     * host app then owns the customization surface (e.g. its own tabs
+     * dialog). The internal dialog is not rendered in this mode.
+     */
+    externalCustomize: { type: Boolean, default: false },
   },
   emits: {
     "update:scheme": (_theme: HCustomTheme) => true,
+    "open-customize": () => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
@@ -140,20 +148,29 @@ export const HkThemeToggle = defineComponent({
             <button
               type="button"
               class="s-theme-item-btn"
-              onClick={() => { schemeDialogOpen.value = true; menuOpen.value = false; }}
+              onClick={() => {
+                menuOpen.value = false;
+                if (props.externalCustomize) {
+                  emit("open-customize");
+                } else {
+                  schemeDialogOpen.value = true;
+                }
+              }}
             >
               <Palette size={14} />
-              <span>{t("hikari::theme.editScheme")}</span>
+              <span>{t("hikari::theme.customize")}</span>
             </button>
           </div>
           {slots["menu-extra"]?.()}
         </HPopover>
 
-        <HColorSchemeDialog
-          modelValue={schemeDialogOpen.value}
-          onUpdate:modelValue={(v: boolean) => { schemeDialogOpen.value = v; }}
-          onConfirm={onConfirmScheme}
-        />
+        {!props.externalCustomize && (
+          <HColorSchemeDialog
+            modelValue={schemeDialogOpen.value}
+            onUpdate:modelValue={(v: boolean) => { schemeDialogOpen.value = v; }}
+            onConfirm={onConfirmScheme}
+          />
+        )}
       </div>
     );
   },

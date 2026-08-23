@@ -12,6 +12,7 @@ export { default as HCheckbox } from "./components/HkCheckbox";
 // broken max-height animation never met the MD3 bar. Use HExpansionPanel.
 export { default as HColorPicker } from "./components/HkColorPicker";
 export { HColorSchemeDialog, type HCustomTheme } from "./components/HkColorSchemeDialog";
+export { HkColorSchemeEditor } from "./components/HkColorSchemeEditor";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HDivider } from "./components/HkDivider";
 export { default as HDrawer } from "./components/HkDrawer";

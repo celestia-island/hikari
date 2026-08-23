@@ -22,6 +22,7 @@
     "hikari::theme.modeAuto": "Auto",
     "hikari::theme.themes": "Color themes",
     "hikari::theme.editScheme": "Edit color scheme…",
+    "hikari::theme.customize": "Customize",
     "hikari::theme.themeName": "Theme name",
     "hikari::theme.customThemeName": "Custom theme",
     "hikari::theme.save": "Save",

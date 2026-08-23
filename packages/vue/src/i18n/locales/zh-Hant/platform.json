@@ -22,6 +22,7 @@
     "hikari::theme.modeAuto": "自動",
     "hikari::theme.themes": "配色主題",
     "hikari::theme.editScheme": "編輯配色方案…",
+    "hikari::theme.customize": "自訂",
     "hikari::theme.themeName": "主題名稱",
     "hikari::theme.customThemeName": "自訂主題",
     "hikari::theme.save": "儲存",

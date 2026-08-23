@@ -22,6 +22,7 @@
     "hikari::theme.modeAuto": "Automático",
     "hikari::theme.themes": "Temas de cores",
     "hikari::theme.editScheme": "Editar esquema de cores…",
+    "hikari::theme.customize": "Personalizar",
     "hikari::theme.themeName": "Nome do tema",
     "hikari::theme.customThemeName": "Tema personalizado",
     "hikari::theme.save": "Salvar",

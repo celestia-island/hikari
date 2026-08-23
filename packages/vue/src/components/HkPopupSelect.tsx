@@ -1,5 +1,5 @@
-import { ChevronDown } from "lucide-vue-next";
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch, type PropType } from "vue";
+import { ChevronDown, Check } from "lucide-vue-next";
+import { Teleport, computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 
 import HkPopover from "./HkPopover";
 import HkScrollContainer from "./HkScrollContainer";
@@ -40,6 +40,14 @@ export default defineComponent({
       type: Array as PropType<HkPopupSelectOption[]>,
       default: undefined,
     },
+    /** Render the option list as a bottom sheet (instead of the anchored
+     *  popover) at viewport widths <= this breakpoint. Matches the HkMenu /
+     *  HkModal mobile convention so every dropdown opens from the bottom on
+     *  phones. */
+    mobileBreakpoint: { type: Number, default: 768 },
+    /** Sheet header above the option list (mobile form only). Defaults to
+     *  the field label, or the placeholder when no label exists. */
+    sheetTitle: { type: String, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -97,6 +105,10 @@ export default defineComponent({
       );
       return opt?.label ?? props.modelValue;
     });
+
+    const sheetTitle = computed(
+      () => props.sheetTitle ?? props.label ?? props.placeholder ?? "",
+    );
 
     function toggle() {
       if (props.disabled) return;
@@ -157,6 +169,19 @@ export default defineComponent({
       scrollToHighlighted();
     });
 
+    /** Mobile form: option list renders as a teleported bottom sheet. The
+     *  check re-evaluates on resize so an open control re-renders in the
+     *  right mode; the sheet itself keys on isOpen like the popover. */
+    const viewportTick = ref(0);
+    const isMobile = computed(() => {
+      void viewportTick.value;
+      if (typeof window === "undefined") return false;
+      return window.innerWidth <= props.mobileBreakpoint;
+    });
+    function onResize() { viewportTick.value += 1; }
+    onMounted(() => window.addEventListener("resize", onResize));
+    onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+
     return () => (
       <div class="hk-popup-select-wrapper">
         {props.label ? (
@@ -181,17 +206,21 @@ export default defineComponent({
           </span>
           <ChevronDown size={16} class="hk-popup-select-arrow" />
         </button>
-        <HkPopover
-          modelValue={isOpen.value}
-          onUpdate:modelValue={(v: boolean) => { isOpen.value = v; }}
-          anchorRef={triggerRef.value ?? null}
-          placement="bottom"
-          offset={4}
-          backdrop={false}
-          class="hk-popup-select-content"
-        >
-          <HkScrollContainer class="hk-popup-select-viewport">
-            {slots.default
+        {isMobile.value && isOpen.value
+          ? (
+            <Teleport to="body">
+              <div class="hk-popup-select-sheet" role="dialog" aria-modal="true">
+                <div
+                  class="hk-popup-select-sheet__scrim"
+                  onClick={() => { isOpen.value = false; }}
+                />
+                <div class="hk-popup-select-sheet__panel">
+                  <div class="hk-popup-select-sheet__grabber" />
+                  {sheetTitle.value && (
+                    <div class="hk-popup-select-sheet__title">{sheetTitle.value}</div>
+                  )}
+                  <HkScrollContainer class="hk-popup-select-viewport">
+                    {slots.default
               ? slots.default()
               : normalizedOptions.value.map((opt, i) => (
                   <div
@@ -203,11 +232,49 @@ export default defineComponent({
                     onClick={() => select(opt.value)}
                     onPointerenter={() => { highlightedIndex.value = i; }}
                   >
-                    <span>{opt.label}</span>
+                    <span class="hk-popup-select-item__label">{opt.label}</span>
+                    {opt.value === props.modelValue && (
+                      <Check size={16} class="hk-popup-select-item__check" />
+                    )}
                   </div>
                 ))}
-          </HkScrollContainer>
-        </HkPopover>
+                  </HkScrollContainer>
+                </div>
+              </div>
+            </Teleport>
+          )
+          : (
+            <HkPopover
+              modelValue={isOpen.value}
+              onUpdate:modelValue={(v: boolean) => { isOpen.value = v; }}
+              anchorRef={triggerRef.value ?? null}
+              placement="bottom"
+              offset={4}
+              backdrop={false}
+              class="hk-popup-select-content"
+            >
+              <HkScrollContainer class="hk-popup-select-viewport">
+                {slots.default
+              ? slots.default()
+              : normalizedOptions.value.map((opt, i) => (
+                  <div
+                    key={opt.value}
+                    class="hk-popup-select-item"
+                    data-highlighted={highlightedIndex.value === i || undefined}
+                    data-select-index={i}
+                    data-checked={opt.value === props.modelValue || undefined}
+                    onClick={() => select(opt.value)}
+                    onPointerenter={() => { highlightedIndex.value = i; }}
+                  >
+                    <span class="hk-popup-select-item__label">{opt.label}</span>
+                    {opt.value === props.modelValue && (
+                      <Check size={16} class="hk-popup-select-item__check" />
+                    )}
+                  </div>
+                ))}
+              </HkScrollContainer>
+            </HkPopover>
+          )}
         {props.error ? <p class="hk-popup-select-error">{props.error}</p> : null}
       </div>
     );

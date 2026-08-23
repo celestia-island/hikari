@@ -92,3 +92,5 @@ registerCssAnimation("hk-picker-pane-fwd-out");
 // components/HkPickerPane.scss — date/time picker view drill back.
 registerCssAnimation("hk-picker-pane-back-in");
 registerCssAnimation("hk-picker-pane-back-out");
+// components/HkPopupSelect.scss — mobile bottom-sheet entrance (plays once).
+registerCssAnimation("hk-popup-select-sheet-in");

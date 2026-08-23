@@ -157,3 +157,88 @@
   font-size: var(--text-xs);
   color: rgb(var(--color-error));
 }
+
+/* ── Mobile bottom sheet (form mode ≤ mobileBreakpoint) ──────────────── */
+.hk-popup-select-sheet {
+  position: fixed;
+  inset: 0;
+  /* Above the shell chrome but below HkModal's sheet reserve. */
+  z-index: calc(var(--hk-z-popup, 1000) + 40);
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+}
+
+.hk-popup-select-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+}
+
+.hk-popup-select-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: rgb(var(--hk-surface, 255 255 255));
+  border-radius: 16px 16px 0 0;
+  padding: 8px 0 12px;
+  /* Slide-up reveal; the sheet-reserve inset keeps it below the status bar. */
+  padding-top: calc(8px + var(--hk-sheet-top-inset, 0px) * 0);
+  animation: hk-popup-select-sheet-in 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes hk-popup-select-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.hk-popup-select-sheet__grabber {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(var(--hk-text-muted, 120 120 128) / 35%);
+  margin: 4px auto 8px;
+  flex: none;
+}
+
+.hk-popup-select-sheet__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--hk-text, 20 20 26));
+  padding: 0 16px 8px;
+}
+
+.hk-popup-select-sheet__panel .hk-popup-select-viewport {
+  max-height: calc(70vh - 56px);
+}
+
+/* Touch-sized rows with trailing check (matches the HkMenu sheet items). */
+.hk-popup-select-sheet .hk-popup-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 16px;
+  font-size: 15px;
+  border-radius: 0;
+}
+
+.hk-popup-select-item__check {
+  color: rgb(var(--hk-primary, 60 120 240));
+  flex: none;
+}
+
+/* Desktop popover items keep the compact single-line form but gain the
+ * trailing check too (checked state was previously tint-only). */
+.hk-popup-select-item {
+  gap: 10px;
+}
+.hk-popup-select-item__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

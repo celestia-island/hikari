@@ -260,3 +260,13 @@ export {
   type HAttachmentItem,
   type HAttachmentPreviewType,
 } from "./components/HkAttachmentModal";
+export { HkStatusBar as HStatusBar } from "./components/HkStatusBar";
+export { useConnectionInfo } from "./components/HkConnectionInfo";
+export type { ConnectionStateInput, HkConnectionInfo } from "./components/HkConnectionInfo";
+export { HkCountdownDigit as HCountdownDigit } from "./components/HkCountdownDigit";
+export {
+  HkConnectionStatus as HConnectionStatus,
+  HK_CONNECTION_PROBE,
+  type HkBackendStatus,
+  type HkConnectionProbeSource,
+} from "./components/HkConnectionStatus";

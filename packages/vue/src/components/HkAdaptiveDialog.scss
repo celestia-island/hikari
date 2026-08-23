@@ -1,0 +1,22 @@
+// HkAdaptiveDialog — only the seams the two shells cannot provide
+// themselves: the composed drawer header (title + sub-header stacked in
+// HkDrawer's header slot, which otherwise replaces the title) and the
+// footerActions HButton row rendered inside HkDrawer's footer (HkModal
+// already renders that row itself; HkDrawer has no footerActions prop).
+// Everything visual (overlay, panel, transitions, footer padding and
+// divider) comes from HkModal.scss / HkDrawer.scss.
+
+.hk-adaptive-dialog-drawer-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hi-space-4, 4px);
+  flex: 1;
+  min-width: 0;
+}
+
+.hk-adaptive-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hi-space-8, 8px);
+}

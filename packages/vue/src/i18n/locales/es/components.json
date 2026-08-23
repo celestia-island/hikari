@@ -30,6 +30,8 @@
     "hikari::table.noData": "Sin datos",
     "hikari::confirmDialog.cancel": "Cancelar",
     "hikari::confirmDialog.confirm": "Confirmar",
+    "hikari::blockingToast.cancel": "Cancelar",
+    "hikari::blockingToast.confirm": "Confirmar",
     "hikari::passwordInput.passwordEntered": "Introducida, al hacer clic se enfoca y borra la contraseña existente",
     "hikari::passwordInput.allSelected": "Todo seleccionado",
     "hikari::passwordInput.capsLock": "Bloq Mayús está activado",

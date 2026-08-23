@@ -34,6 +34,8 @@ export default defineComponent({
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
+    // Mirrors HkModal.afterLeave so adaptive shells (HkAdaptiveDialog)
+    // can forward a uniform "the panel finished leaving" signal.
     afterLeave: () => true,
   },
   setup(props, { emit, slots }) {

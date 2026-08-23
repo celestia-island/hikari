@@ -157,3 +157,16 @@
   font-size: var(--text-xs);
   color: rgb(var(--color-error));
 }
+
+// Mobile sheet form (HPopover sheetOnMobile): full-width option list with
+// touch-sized rows.
+.hk-popover-panel.hk-is-sheet.hk-popup-select-content {
+  .hk-popup-select-viewport {
+    max-height: min(56vh, 24rem);
+  }
+
+  .hk-popup-select-item {
+    padding: var(--space-14) var(--space-16);
+    font-size: var(--text-base);
+  }
+}

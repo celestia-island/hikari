@@ -14,6 +14,7 @@ import {
 } from "vue";
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import { useReportedTransition } from "../composables/useReportedTransition";
 import { onceFrame } from "../runtime/animationBus";
 import "./HkPopover.scss";
@@ -49,6 +50,15 @@ export default defineComponent({
     closeOnEscape: { type: Boolean, default: true },
     glass: { type: Boolean, default: true },
     anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
+    /**
+     * Dock the panel as a bottom sheet on mobile-width viewports (<768px,
+     * useBreakpoint().isMobile): scrim (click closes) + full-width sheet
+     * rising from the bottom edge, instead of the anchored popup. The
+     * desktop path is untouched; z-order still rides the popup manager
+     * either way. The mode flips live with the viewport — an open popover
+     * closes when crossing the breakpoint rather than hanging mid-morph.
+     */
+    sheetOnMobile: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -60,6 +70,18 @@ export default defineComponent({
     const panelRef = ref<HTMLElement>();
     const resolvedPlacement = ref<PopupPlacement>(props.placement);
     const coords = ref<{ top?: number; left?: number; bottom?: number; right?: number }>({});
+
+    const { isMobile } = useBreakpoint();
+    const sheetMode = computed(() => props.sheetOnMobile && isMobile.value);
+
+    // Crossing the mobile/desktop breakpoint mid-flight would leave a
+    // SHEET-mode panel hung between two form factors — close it and let
+    // the user reopen in the shape the viewport now calls for. Consumers
+    // that never opted into sheetOnMobile keep the historic behavior
+    // (stay open, reposition on the resize).
+    watch(isMobile, () => {
+      if (props.sheetOnMobile && props.modelValue) close();
+    });
 
     const animBus = useReportedTransition(300);
 
@@ -294,13 +316,19 @@ export default defineComponent({
         if (open) {
           fullCleanup();
           handle.value = manager.register("dropdown", false);
-          computeInitialCoords();
-          attachObservers();
-          attachOutsideClickShield();
-          nextTick(() => {
-            computePosition();
-            schedulePosition();
-          });
+          if (sheetMode.value) {
+            // Bottom sheet: nothing to anchor-measure; the scrim handles
+            // dismissal (the outside-click shield is desktop-only).
+            nextTick(() => { panelRef.value?.focus?.(); });
+          } else {
+            computeInitialCoords();
+            attachObservers();
+            attachOutsideClickShield();
+            nextTick(() => {
+              computePosition();
+              schedulePosition();
+            });
+          }
         } else {
           detachObservers();
           detachOutsideClickShield();
@@ -354,6 +382,20 @@ export default defineComponent({
     const panelZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
 
     const panelStyle = computed(() => {
+      if (sheetMode.value) {
+        // Bottom sheet: pinned to the bottom edge, full width, inside the
+        // top inset reserved for the secondary-window breadcrumb strip
+        // (same convention as the modal mobile docking).
+        return {
+          left: "0",
+          right: "0",
+          bottom: "0",
+          top: "auto" as const,
+          position: "fixed" as const,
+          pointerEvents: "auto" as const,
+          zIndex: panelZ.value,
+        };
+      }
       const c = coords.value;
       return {
         ...(c.top != null ? { top: `${c.top}px` } : {}),
@@ -368,14 +410,21 @@ export default defineComponent({
 
     return () => (
       <Teleport to="body">
-        {props.backdrop && props.modelValue && (
+        {sheetMode.value && props.modelValue && props.closeOnBackdrop && (
+          <div
+            class="hk-popover-scrim"
+            style={{ zIndex: backdropZ.value }}
+            onClick={() => close()}
+          />
+        )}
+        {props.backdrop && !sheetMode.value && props.modelValue && (
           <div
             class="hk-popover-backdrop"
             style={{ zIndex: backdropZ.value }}
           />
         )}
         <Transition
-          name="hk-popover"
+          name={sheetMode.value ? "hk-popover-sheet" : "hk-popover"}
           appear
           onBeforeEnter={() => animBus.run()}
           onAfterEnter={() => animBus.cancel()}
@@ -387,7 +436,7 @@ export default defineComponent({
               ref={panelRef}
               class={[
                 "hk-popover-panel",
-                `hk-popover-${resolvedPlacement.value}`,
+                ...(sheetMode.value ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),
                 props.glass ? "hii-dropdown-content" : "",
                 ...(typeof attrs.class === "string" ? [attrs.class]
                   : Array.isArray(attrs.class) ? attrs.class as string[]
@@ -398,8 +447,13 @@ export default defineComponent({
               ]}
               style={panelStyle.value}
               role="dialog"
+              aria-modal={sheetMode.value ? "true" : undefined}
+              tabindex={sheetMode.value ? "-1" : undefined}
               onKeydown={onPanelKeydown}
             >
+              {sheetMode.value && (
+                <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
+              )}
               {slots.default?.()}
             </div>
           ) : null}

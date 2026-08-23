@@ -7,12 +7,14 @@ import {
   watch,
   type PropType,
   Teleport,
+  Transition,
 } from "vue";
 
 
 import { ChevronDown, Search } from "lucide-vue-next";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {
@@ -62,8 +64,17 @@ export default defineComponent({
       onCloseRequested: () => { isOpen.value = false; },
     });
 
+    // Form factor: anchored popout on desktop, bottom sheet on phones.
+    // Crossing the breakpoint mid-flight closes the sheet rather than
+    // leaving it hung between shapes.
+    const { isMobile } = useBreakpoint();
+    const sheetMode = computed(() => isMobile.value);
+    watch(isMobile, () => {
+      if (isOpen.value) isOpen.value = false;
+    });
+
     function onDocumentClick(e: MouseEvent) {
-      if (!isOpen.value) return;
+      if (!isOpen.value || sheetMode.value) return;
       const target = e.target as Node;
       if (triggerRef.value?.contains(target)) return;
       if (panelRef.value?.contains(target)) return;
@@ -74,7 +85,9 @@ export default defineComponent({
       if (open) {
         handle.value = manager.register("dropdown", false);
         overlay.open();
-        document.addEventListener("click", onDocumentClick, true);
+        if (!sheetMode.value) {
+          document.addEventListener("click", onDocumentClick, true);
+        }
       } else {
         document.removeEventListener("click", onDocumentClick, true);
         if (handle.value) {
@@ -226,8 +239,56 @@ export default defineComponent({
           <span class="hk-select-value">{displayLabel.value || props.placeholder}</span>
           <ChevronDown size={16} class="hk-select-arrow" />
         </button>
-        {isOpen.value && (
-          <Teleport to="body">
+        <Teleport to="body">
+          {sheetMode.value && isOpen.value && (
+            <div
+              class="hk-select-sheet-scrim"
+              style={{ zIndex: popoutZ.value - 1 }}
+              onClick={() => { isOpen.value = false; }}
+            />
+          )}
+          <Transition name="hk-select-sheet" appear>
+            {sheetMode.value && isOpen.value ? (
+              <div
+                ref={panelRef}
+                class="hk-select-sheet-panel"
+                style={{ zIndex: popoutZ.value }}
+                role="dialog"
+                aria-modal="true"
+                tabindex="-1"
+                onKeydown={onPopoutKeydown}
+              >
+                <div
+                  class="hk-select-sheet-grabber"
+                  aria-hidden="true"
+                  onClick={() => { isOpen.value = false; }}
+                />
+                {props.label ? (
+                  <div class="hk-select-sheet-title">{props.label}</div>
+                ) : null}
+                <div class="hk-select-sheet-list">
+                  {slots.default
+                    ? slots.default()
+                    : normalizedOptions.value.map((opt, i) => (
+                        <div
+                          key={opt.value}
+                          class="hk-select-option"
+                          data-highlighted={highlightedIndex.value === i || undefined}
+                          data-select-index={i}
+                          data-checked={opt.value === props.modelValue || undefined}
+                          data-disabled={opt.disabled || undefined}
+                          onClick={() => {
+                            if (!opt.disabled) select(opt.value);
+                          }}
+                        >
+                          <span>{opt.label}</span>
+                        </div>
+                      ))}
+                </div>
+              </div>
+            ) : null}
+          </Transition>
+          {!sheetMode.value && isOpen.value ? (
             <div
               ref={panelRef}
               class="hk-select-popout"
@@ -255,8 +316,8 @@ export default defineComponent({
                     </div>
                   ))}
             </div>
-          </Teleport>
-        )}
+          ) : null}
+        </Teleport>
         {props.error ? <p class="hk-select-error">{props.error}</p> : null}
       </div>
     );

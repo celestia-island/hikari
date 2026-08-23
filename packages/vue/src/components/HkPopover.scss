@@ -82,3 +82,76 @@
   font-size: var(--text-base);
   line-height: 1;
 }
+
+// ------
+// Mobile bottom-sheet mode (`sheetOnMobile`) — the panel docks to the
+// bottom edge on <768px viewports instead of anchoring: a real scrim
+// (click closes), rounded top corners only, slide-up reveal. Same visual
+// contract as the modal mobile docking (top inset keeps the secondary-
+// window breadcrumb strip visible).
+// ------
+.hk-popover-scrim {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: rgb(0 0 0 / 40%);
+}
+
+.hk-popover-panel.hk-is-sheet {
+  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                 var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                 0 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  max-height: min(72vh, calc(100vh - var(--hk-sheet-top-inset, 4.25rem)));
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 0;
+}
+
+.hk-popover-sheet-grabber {
+  flex-shrink: 0;
+  // Grabber zone: tap target tall enough for a thumb, bar visually small.
+  padding: 14px 0 20px;
+  margin: 0 auto;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    width: 2.25rem;
+    height: 4px;
+    border-radius: 999px;
+    background: rgb(var(--color-border, 100 100 100) / 40%);
+  }
+}
+
+.hk-popover-sheet-enter-active {
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-popover-sheet-leave-active {
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-popover-sheet-enter-from,
+.hk-popover-sheet-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-popover-sheet-enter-active,
+  .hk-popover-sheet-leave-active {
+    transition: none;
+  }
+}

@@ -603,41 +603,6 @@
   color: var(--hi-color-muted, #666);
 }
 
-.s-auth-protocol-link {
-  color: var(--hi-color-primary, #58a6ff);
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.s-auth-protocol-link:hover {
-  text-decoration: underline;
-}
-
-.s-auth-protocol-agree {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-8, 0.5rem);
-  flex-wrap: wrap;
-  padding: var(--space-4, 0.25rem) 0;
-}
-
-.s-auth-protocol-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-8, 0.5rem);
-  margin-bottom: var(--space-12, 0.75rem);
-  text-align: center;
-}
-
-.s-auth-protocol-text {
-  font-size: var(--text-xs, 0.75rem);
-  color: var(--hi-color-text-secondary, color-mix(in srgb, #000 60%, transparent));
-  line-height: 1.5;
-}
-
 .s-auth-link {
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-text-secondary, #999);

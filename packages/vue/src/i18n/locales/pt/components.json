@@ -106,6 +106,8 @@
     "hikari::adminHeader.avatar": "Avatar",
     "hikari::adminHeader.avatarTrigger": "Menu da conta",
     "hikari::adminHeader.language": "Idioma",
-    "hikari::adminHeader.adminGroup": "Administradores"
+    "hikari::adminHeader.adminGroup": "Administradores",
+    "hikari::localizedInput.addLanguage": "Adicionar idioma",
+    "hikari::localizedInput.chooseLanguage": "Escolher idioma de edição"
   }
 }

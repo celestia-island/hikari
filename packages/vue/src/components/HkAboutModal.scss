@@ -1,0 +1,92 @@
+.s-about-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.s-about-modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+}
+
+.s-about-modal-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg, 12px);
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 700;
+}
+
+.s-about-modal-name {
+  margin: 0;
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: 700;
+  color: rgb(var(--color-text));
+}
+
+.s-about-modal-version {
+  margin: var(--space-4, 0.25rem) 0 0;
+  font-size: var(--text-sm, 0.8125rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-about-modal-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-about-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-about-modal-row-label {
+  font-size: var(--text-sm, 0.8125rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-about-modal-row-value {
+  font-size: var(--text-sm, 0.8125rem);
+  color: rgb(var(--color-text));
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+}
+
+.s-about-modal-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-about-modal-links-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8, 0.5rem);
+}
+
+.s-about-modal-link {
+  padding: var(--space-4, 0.25rem) var(--space-8, 0.5rem);
+  border-radius: var(--radius-sm, 6px);
+  background: rgb(var(--color-primary) / 12%);
+  color: rgb(var(--color-primary));
+  font-size: var(--text-xs, 0.75rem);
+  text-decoration: none;
+}
+
+.s-about-modal-link:hover {
+  background: rgb(var(--color-primary) / 20%);
+}
+
+.s-about-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}

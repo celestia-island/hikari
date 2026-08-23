@@ -1,0 +1,22 @@
+.s-cookie-consent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.625rem;
+  color: rgb(var(--color-muted));
+}
+
+.s-cookie-consent-ok {
+  background: transparent;
+  border: none;
+  color: rgb(var(--color-primary));
+  cursor: pointer;
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.s-cookie-consent-icon {
+  color: rgb(var(--color-success));
+  opacity: 0.5;
+  cursor: default;
+}

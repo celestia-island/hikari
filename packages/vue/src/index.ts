@@ -41,6 +41,7 @@ export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModa
 export { default as HModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HPopover, type PopupPlacement } from "./components/HkPopover";
 export { default as HMenu, type HkMenuItem } from "./components/HkMenu";
+export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./components/HkLocalizedInput";
 export { default as HPopupSelect, isAnyPopupOpen, closeAllPopups, type HkPopupSelectOption } from "./components/HkPopupSelect";
 export { default as HProgressBar } from "./components/HkProgressBar";
 export { default as HProgressDialog } from "./components/HkProgressDialog";
@@ -246,3 +247,16 @@ export { HkStatCard as HStatCard, type StatTone } from "./components/HkStatCard"
 export { HkStatusPill as HStatusPill, type PillState } from "./components/HkStatusPill";
 export { HkShareBar as HShareBar } from "./components/HkShareBar";
 export { HkSecretRevealModal as HSecretRevealModal } from "./components/HkSecretRevealModal";
+export { HkCaptchaWidget as HCaptchaWidget, type HkCaptchaProvider } from "./components/HkCaptchaWidget";
+export { HkCaptchaModal as HCaptchaModal } from "./components/HkCaptchaModal";
+export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal";
+export { HkAboutModal as HAboutModal, type HAboutLink } from "./components/HkAboutModal";
+export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
+export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";
+export {
+  HkAttachmentModal as HAttachmentModal,
+  previewKindFor,
+  type HAttachmentDetail,
+  type HAttachmentItem,
+  type HAttachmentPreviewType,
+} from "./components/HkAttachmentModal";

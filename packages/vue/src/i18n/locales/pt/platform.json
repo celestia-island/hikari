@@ -48,7 +48,13 @@
     "hikari::log.autoscroll": "Rolagem automática",
     "hikari::log.copy": "Copiar",
     "hikari::log.copied": "Copiado",
-    "hikari::log.clear": "Limpar"
+    "hikari::log.clear": "Limpar",
+    "hikari::cookie.text": "Este site usa cookies.",
+    "hikari::cookie.ok": "OK",
+    "hikari::attachment.download": "Baixar",
+    "hikari::attachment.close": "Fechar",
+    "hikari::attachment.loading": "Carregando…",
+    "hikari::attachment.noPreview": "Nenhuma pré-visualização disponível."
   },
   "auth": {
     "hikari::auth.solvingChallenge": "A verificar o desafio…"

@@ -106,6 +106,8 @@
     "hikari::adminHeader.avatar": "Аватар",
     "hikari::adminHeader.avatarTrigger": "Меню учётной записи",
     "hikari::adminHeader.language": "Язык",
-    "hikari::adminHeader.adminGroup": "Администраторы"
+    "hikari::adminHeader.adminGroup": "Администраторы",
+    "hikari::localizedInput.addLanguage": "Добавить язык",
+    "hikari::localizedInput.chooseLanguage": "Выбрать язык редактирования"
   }
 }

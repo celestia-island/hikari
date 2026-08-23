@@ -1,0 +1,52 @@
+.hk-localized-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+/* The wrapped language chip riding the input's right edge. A button so
+ * it is focusable/AT-reachable, but it must never steal the field's
+ * click-to-edit: pointer events stop at the chip boundary (handled in
+ * TSX) and mousedown is suppressed to keep focus inside the input. */
+.hk-localized-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  border-radius: var(--radius-sm, 999px);
+  transition: color 0.15s ease;
+
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    color: rgb(var(--color-text));
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  /* Dim while no translation exists yet — same affordance level as an
+   * empty field; brightens the moment content lands. */
+  &[data-empty] {
+    opacity: 0.6;
+  }
+}
+
+.hk-localized-input-chip-badge {
+  /* Keep the badge compact inside the field's suffix slot. */
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-localized-input-chip-caret {
+  flex: none;
+  opacity: 0.6;
+}

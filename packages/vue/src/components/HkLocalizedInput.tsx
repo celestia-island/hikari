@@ -1,4 +1,4 @@
-import { computed, defineComponent, nextTick, ref, type PropType } from "vue";
+import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 
 import { ChevronDown } from "lucide-vue-next";
 
@@ -16,6 +16,9 @@ export interface HkLocaleOption {
    *  switcher shows (e.g. the autonym "简体中文" / "English"), so the
    *  chip and the system picker never disagree. */
   label: string;
+  /** Optional flag glyph rendered in the menu rows, matching the app's
+   *  language switcher rows when they carry one. */
+  flag?: string;
 }
 
 /** Marker key for the "Add language" cascade root (never a real locale). */
@@ -85,7 +88,17 @@ export const HkLocalizedInput = defineComponent({
     const editLang = ref(props.sourceLang);
     const menuOpen = ref(false);
     const chipRef = ref<HTMLElement | null>(null);
-    const inputRef = ref<{ focus: () => void } | HTMLElement | null>(null);
+    const rootRef = ref<HTMLElement | null>(null);
+
+    // Follow the app locale while no explicit edit language has been
+    // picked: a locale switch mid-edit commits the current text and
+    // moves the field, exactly like a menu-driven switch.
+    watch(
+      () => props.sourceLang,
+      (lang) => {
+        if (lang && lang !== editLang.value) switchLanguage(lang, { viaWatch: true });
+      },
+    );
 
     /** Non-empty translation codes, insertion-ordered. */
     const filledCodes = computed(() =>
@@ -123,6 +136,7 @@ export const HkLocalizedInput = defineComponent({
       ...switchableCodes.value.map((code) => ({
         key: code,
         label: localeLabel(code),
+        flag: props.localeOptions.find((o) => o.code === code)?.flag,
       })),
       ...(addableOptions.value.length > 0
         ? [
@@ -132,6 +146,7 @@ export const HkLocalizedInput = defineComponent({
               children: addableOptions.value.map((o) => ({
                 key: o.code,
                 label: o.label,
+                flag: o.flag,
               })),
             },
           ]
@@ -142,7 +157,9 @@ export const HkLocalizedInput = defineComponent({
       const next = { ...props.translations };
       const trimmed = value.trim();
       if (trimmed) {
-        next[code] = value;
+        // Store trimmed so the stored map and the field content can
+        // never diverge on whitespace-only padding.
+        next[code] = trimmed;
       } else {
         delete next[code];
       }
@@ -156,20 +173,23 @@ export const HkLocalizedInput = defineComponent({
 
     function focusField() {
       nextTick(() => {
-        const el = inputRef.value as HTMLElement | null;
-        el?.focus?.();
+        // HkInput does not expose a focus method; its element is the
+        // only input/textarea inside this component's root (the menu
+        // teleports to body), so a scoped query resolves it reliably.
+        const el = rootRef.value?.querySelector<HTMLElement>("input, textarea");
+        el?.focus();
       });
     }
 
     /** Switch the edited language (existing row or freshly added one):
      *  commit the current text, swap the field to the target language,
      *  close the menu, and resume editing focused. */
-    function switchLanguage(code: string) {
+    function switchLanguage(code: string, opts: { viaWatch?: boolean } = {}) {
       if (!code || code === editLang.value || code === ADD_LANGUAGE_KEY) return;
       commitTranslations(editLang.value, props.modelValue);
       editLang.value = code;
       emit("update:modelValue", (props.translations[code] ?? "").trim());
-      menuOpen.value = false;
+      if (!opts.viaWatch) menuOpen.value = false;
       emit("languagechange", code);
       focusField();
     }
@@ -179,17 +199,14 @@ export const HkLocalizedInput = defineComponent({
     }
 
     return () => (
-      <div class="hk-localized-input">
-        {props.label && (
-          <label class="hk-localized-input-label">{props.label}</label>
-        )}
+      <div class="hk-localized-input" ref={rootRef}>
         <HkInput
-          ref={inputRef}
           modelValue={props.modelValue}
           onUpdate:modelValue={onInput}
           placeholder={props.placeholder}
           disabled={props.disabled}
           size={props.size}
+          label={props.label}
         >
           {{
             suffix: () => (
@@ -201,6 +218,8 @@ export const HkLocalizedInput = defineComponent({
                 class="hk-localized-input-chip"
                 disabled={props.disabled || menuItems.value.length === 0}
                 data-empty={filledCodes.value.length === 0 || undefined}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen.value}
                 aria-label={t(
                   "hikari::localizedInput.chooseLanguage",
                   "Choose editing language",

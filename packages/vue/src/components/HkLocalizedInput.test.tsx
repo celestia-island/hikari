@@ -193,4 +193,51 @@ describe("HkLocalizedInput", () => {
     expect(events.translations.at(-1)?.en).toBeUndefined();
     expect(events.modelValue.at(-1)).toBe("工厂总览");
   });
+
+  it("focuses the field after switching languages", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const row = menuRows().find((r) => (r.textContent ?? "").includes("简体中文"));
+    row!.click();
+    await nextTick();
+    await nextTick();
+    await nextTick();
+    expect(document.activeElement).toBe(queryField(container));
+  });
+
+  it("edits the switched-to language: new keystrokes land on it", async () => {
+    const { events, container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview" },
+    });
+    await openMenu(container);
+    const addRow = menuRows().find((r) => (r.textContent ?? "").includes("Add language"));
+    addRow!.click();
+    await nextTick();
+    await nextTick();
+    const jaRow = menuRows().find((r) => (r.textContent ?? "").includes("日本語"));
+    jaRow!.click();
+    await nextTick();
+    await nextTick();
+    const field = queryField(container);
+    field.value = "プラント概覧";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(events.translations.at(-1)).toMatchObject({
+      en: "Plant overview",
+      ja: "プラント概覧",
+    });
+  });
+
+  it("trims values on commit so storage never diverges from display", async () => {
+    const { events, container } = mountInput({ modelValue: "" });
+    const field = queryField(container);
+    field.value = "  Plant overview  ";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(events.translations.at(-1)?.en).toBe("Plant overview");
+  });
 });

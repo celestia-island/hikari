@@ -9,6 +9,11 @@
   flex-direction: column;
   gap: var(--hi-space-8, 8px);
   user-select: none;
+  /* Fill the host (inline sheets/dialogs) instead of collapsing to the
+   * grid's min-content width — a bottom-sheet calendar should use the
+   * space it is given, not shrink to a cramped block. */
+  width: 100%;
+  min-width: 17.5rem;
 }
 
 .hk-dtp-header {

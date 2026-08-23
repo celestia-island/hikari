@@ -130,6 +130,10 @@
     "hikari::statusBar.backend.ok": "正常",
     "hikari::statusBar.backend.warn": "降级",
     "hikari::statusBar.backend.error": "错误",
-    "hikari::statusBar.backend.unknown": "未知"
+    "hikari::statusBar.backend.unknown": "未知",
+    "hikari::statusBar.region.CN": "中国大陆",
+    "hikari::statusBar.region.TW": "中国台湾",
+    "hikari::statusBar.region.HK": "中国香港",
+    "hikari::statusBar.region.MO": "中国澳门"
   }
 }

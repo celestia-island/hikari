@@ -22,15 +22,28 @@ import { HkCountdownDigit } from "./HkCountdownDigit";
  * `styles/admin-tokens.scss` (the `[data-compact]` rules hide the inline
  * version block); everything else is inline.
  */
-const regionLabel: Record<string, string> = {
-  CN: "\u4e2d\u56fd\u5927\u9646", JP: "\u65e5\u672c", KR: "\u97e9\u56fd",
-  US: "\u7f8e\u56fd", GB: "\u82f1\u56fd", DE: "\u5fb7\u56fd",
-  FR: "\u6cd5\u56fd", SA: "\u6c99\u7279", TW: "\u4e2d\u56fd\u53f0\u6e7e",
-  HK: "\u4e2d\u56fd\u9999\u6e2f", MO: "\u4e2d\u56fd\u6fb3\u95e8",
-  BR: "\u5df4\u897f", RU: "\u4fc4\u7f57\u65af",
-  CA: "\u52a0\u62ff\u5927", AU: "\u6fb3\u5927\u5229\u4e9a",
-  PT: "\u8461\u8404\u7259", ES: "\u897f\u73ed\u7259",
-};
+/** Locale-aware region name: the political-name i18n keys first (they
+ * carry the deliberate political naming per language, e.g. zh-Hans
+ * 中国台湾 for TW), Intl.DisplayNames as the generic fallback, raw code
+ * last. Replaces a hardcoded Chinese-only map that showed 中国大陆 to
+ * English/French/... users regardless of their locale. (Upstreamed from
+ * shittim-chest's plana-legacy layer.) */
+function regionDisplayName(
+  region: string,
+  locale: string,
+  t: (key: string, fallback?: string) => string,
+): string {
+  if (!region) return region;
+  const keyed = t(`hikari::statusBar.region.${region}`, "");
+  if (keyed) return keyed;
+  try {
+    const name = new Intl.DisplayNames([locale], { type: "region" }).of(region);
+    if (name && name !== region) return name;
+  } catch {
+    // Intl.DisplayNames unsupported, or invalid locale/region code.
+  }
+  return region;
+}
 
 function latencyColor(ms: number | null): string {
   if (ms === null) return "var(--color-muted)";
@@ -110,7 +123,7 @@ export const HkStatusBar = defineComponent({
     }
 
     return () => {
-      const { t } = useI18n();
+      const { t, locale } = useI18n();
       const info = props.connectionInfo;
       const latency = props.latencyMs ?? info?.latencyMs ?? null;
       const mode = props.connectionStatus;
@@ -257,7 +270,7 @@ export const HkStatusBar = defineComponent({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.network", "Network")}</span>
-                    <span>{regionLabel[info.region] ?? info.region}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
+                    <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
                   </div>
                 </>
               ) : (

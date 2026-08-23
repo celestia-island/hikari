@@ -155,10 +155,14 @@
     </section>
 
     <section>
-      <h2>HCollapse</h2>
-      <HCollapse title="Click to expand section">
-        <p style="padding:12px">This content is collapsible. It can contain any children.</p>
-      </HCollapse>
+      <h2>HExpansionPanel</h2>
+      <HExpansionPanel title="Electrical power" subtitle="9 colors">
+        <p style="padding:12px">Material Design 3 expansion panel — animated body, aria-expanded header.</p>
+      </HExpansionPanel>
+      <div style="height:8px" />
+      <HExpansionPanel title="Disabled panel" subtitle="cannot toggle" :disabled="true">
+        <p style="padding:12px">Never opens.</p>
+      </HExpansionPanel>
     </section>
 
     <section>
@@ -263,7 +267,7 @@ import {
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
   HCheckbox, HSwitch, HRadio, HSelect,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
-  HAlert, HEmptyState, HCollapse,
+  HAlert, HEmptyState, HExpansionPanel,
   HTabs, HMorphingTabs, HCard, HTable, HTimeline,
   HMediaSlider, HMediaPlayer, HImageViewer,
   HZoomToolbar, HMinimap, HTrendChart,

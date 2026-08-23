@@ -1,5 +1,33 @@
 .hk-color-picker {
   display: inline-flex;
+  min-width: 0;
+}
+
+// Row layout — dense grids that must show full color names: swatch left,
+// single-line label right, ellipsis when the name outgrows the cell.
+// Grid/flex children sizing needs min-width: 0 on every ancestor to let
+// text-overflow actually engage.
+.hk-color-picker[data-layout="row"] {
+  .hk-color-picker-swatch-btn {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-8);
+    width: 100%;
+  }
+
+  .hk-color-picker-swatch {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hk-color-picker-label {
+    margin-bottom: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
 }
 
 .hk-color-picker-trigger {

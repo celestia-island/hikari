@@ -33,6 +33,7 @@
     "hikari::theme.tokens.error": "Ошибка",
     "hikari::theme.tokens.warning": "Предупреждение",
     "hikari::theme.tokens.info": "Информация",
+    "hikari::theme.groupCount": "Цветов: {count}",
     "hikari::theme.extendedColors": "Расширенные цвета",
     "hikari::secret.title": "Секрет",
     "hikari::secret.notice": "Этот секрет показывается только один раз. Скопируйте и сохраните его до закрытия.",

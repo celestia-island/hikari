@@ -110,6 +110,12 @@ export default defineComponent({
     g: { type: Number, required: true },
     b: { type: Number, required: true },
     label: { type: String, default: "" },
+    /**
+     * Trigger layout: "stack" (swatch above label — dialogs with few
+     * colors) or "row" (swatch left, single-line label right with
+     * ellipsis — dense grids that must show full color names).
+     */
+    layout: { type: String as PropType<"stack" | "row">, default: "stack" },
     /** Optional physical-color clamp: hue locked to center±range (degrees, circular). */
     hueClamp: { type: Object as PropType<HueClamp>, default: undefined },
     /** Optional saturation safe band, 0–1. */
@@ -189,7 +195,7 @@ export default defineComponent({
     });
 
     return () => (
-      <div class="hk-color-picker">
+      <div class="hk-color-picker" data-layout={props.layout}>
         <button
           ref={triggerRef}
           type="button"

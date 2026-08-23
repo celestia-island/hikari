@@ -1,22 +1,25 @@
-import { computed, defineComponent, nextTick, reactive, ref, watch, type PropType, type VNode } from "vue";
+import { computed, defineComponent, nextTick, reactive, ref, watch, type PropType } from "vue";
 import {
   HColorPicker,
-  HCollapse,
+  HExpansionPanel,
   HInput,
   HModal,
   HMorphingTabs,
 
   useI18n,
   useTheme,
+  allGroupSlots,
   clampToSlot,
   getTokenGroups,
   resolveGroupTokens,
+  resolveLocalizedText,
   tokenGroupsVersion,
   type ModalAction,
   type ThemeSchemeTokens,
   type ThemeTokenGroupModes,
   type ThemeTokenGroupValues,
   type TokenGroupDefinition,
+  type TokenGroupSection,
   type TokenGroupSlot,
 } from "@celestia-island/hikari";
 
@@ -112,11 +115,14 @@ export interface HCustomTheme {
  *
  * Edits the seven accent tokens (primary/secondary/accent/success/error/
  * warning/info) per mode (dark/light); surface tokens are derived. When
- * extension token groups are registered (`registerTokenGroup`), an
- * expandable section per group edits their slots with hue-clamped pickers
- * and rides the values along in the emitted theme. Emits `confirm` with a
- * `HCustomTheme` (a hikari `CustomThemePreset`); the caller persists it
- * via `useTheme().addCustomTheme()` and applies it with `setTheme()`.
+ * extension token groups are registered (`registerTokenGroup` /
+ * `registerTokenGroupConfig`), the "Extended colors" section renders one
+ * Material expansion panel per group — sub-sectioned groups (config-file
+ * palettes like chest's scada set) get one panel per section — with the
+ * slots laid out on a 2–3 column grid of hue-clamped pickers showing
+ * full localized color names. Emits `confirm` with a `HCustomTheme`
+ * (a hikari `CustomThemePreset`); the caller persists it via
+ * `useTheme().addCustomTheme()` and applies it with `setTheme()`.
  */
 export const HColorSchemeDialog = defineComponent({
   name: "HkColorSchemeDialog",
@@ -135,6 +141,10 @@ export const HColorSchemeDialog = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
+    // Reactive locale: `locale` from useI18n() is a snapshot string, but
+    // runtime setLocale() swaps messages reactively — resolve LocalizedText
+    // through a computed so config-file labels follow the live locale.
+    const activeLocale = computed(() => useI18n().locale);
     const { effectiveMode } = useTheme();
     const modeTab = ref<string>(effectiveMode.value);
     const themeName = ref("");
@@ -225,7 +235,7 @@ export const HColorSchemeDialog = defineComponent({
       const out: ThemeTokenGroupValues = {};
       for (const group of registeredGroups.value) {
         const slots: Record<string, { r: number; g: number; b: number }> = {};
-        for (const slot of group.slots) {
+        for (const slot of allGroupSlots(group)) {
           const value = source[group.id]?.[slot.key] ?? slot.defaults[mode];
           slots[slot.key] = clampToSlot(slot, value);
         }
@@ -266,6 +276,36 @@ export const HColorSchemeDialog = defineComponent({
       { key: "light", label: t("hikari::theme.modeLight") },
     ]);
 
+    // ── Extension group rendering ────────────────────────────────────
+    // Label resolution order: hikari i18n message (apps may override via
+    // mergeMessages) → LocalizedText entry for the active locale → the
+    // definition's `en` → first defined locale.
+
+    function slotLabel(groupId: string, slot: TokenGroupSlot): string {
+      return t(
+        `hikari::theme.groups.${groupId}.${slot.key}`,
+        resolveLocalizedText(slot.label, activeLocale.value),
+      );
+    }
+
+    function sectionLabel(groupId: string, section: TokenGroupSection): string {
+      return t(
+        `hikari::theme.groups.${groupId}.sections.${section.key}`,
+        resolveLocalizedText(section.label, activeLocale.value),
+      );
+    }
+
+    function groupLabel(group: TokenGroupDefinition): string {
+      return t(
+        `hikari::theme.groups.${group.id}.title`,
+        resolveLocalizedText(group.label, activeLocale.value),
+      );
+    }
+
+    function countLabel(count: number): string {
+      return t("hikari::theme.groupCount", "{count} colors").replace("{count}", String(count));
+    }
+
     function renderGroupSlot(group: TokenGroupDefinition, slot: TokenGroupSlot) {
       const mode = modeTab.value === "dark" ? "dark" : "light";
       const rgb = currentGroupValues.value[group.id]?.[slot.key] ?? slot.defaults[mode];
@@ -275,7 +315,8 @@ export const HColorSchemeDialog = defineComponent({
           r={rgb.r}
           g={rgb.g}
           b={rgb.b}
-          label={t(`hikari::theme.groups.${group.id}.${slot.key}`, slot.label)}
+          label={slotLabel(group.id, slot)}
+          layout="row"
           hueClamp={slot.hueClamp}
           sRange={slot.sRange}
           lRange={slot.lRange}
@@ -284,35 +325,38 @@ export const HColorSchemeDialog = defineComponent({
       );
     }
 
-    /** One picker per slot; `pairWith` slots share one combined row (e.g. PE a/b stripes). */
-    function renderGroupRows(group: TokenGroupDefinition) {
-      const rendered = new Set<string>();
-      const rows: VNode[] = [];
-      for (const slot of group.slots) {
-        if (rendered.has(slot.key)) continue;
-        rendered.add(slot.key);
-        // Pairing is symmetric: either side may declare `pairWith` —
-        // combine on the first of the two encountered, skip the second.
-        const pairKey = [
-          slot.pairWith,
-          ...group.slots.filter((s) => s.pairWith === slot.key).map((s) => s.key),
-        ].find((key) => key && key !== slot.key);
-        const pair = pairKey
-          ? group.slots.find((s) => s.key === pairKey && !rendered.has(s.key))
-          : undefined;
-        if (pair) {
-          rendered.add(pair.key);
-          rows.push(
-            <div key={`${slot.key}-${pair.key}`} class="s-scheme-group-row">
-              {renderGroupSlot(group, slot)}
-              {renderGroupSlot(group, pair)}
-            </div>,
-          );
-        } else {
-          rows.push(renderGroupSlot(group, slot));
-        }
+    function renderSlotGrid(group: TokenGroupDefinition, slots: TokenGroupSlot[]) {
+      return (
+        <div class="s-scheme-group-grid">
+          {slots.map((slot) => renderGroupSlot(group, slot))}
+        </div>
+      );
+    }
+
+    /** One expansion panel per section, then one for any flat slots. */
+    function renderGroup(group: TokenGroupDefinition) {
+      const panels = (group.sections ?? []).map((section) => (
+        <HExpansionPanel
+          key={`${group.id}--${section.key}`}
+          title={sectionLabel(group.id, section)}
+          subtitle={countLabel(section.slots.length)}
+        >
+          {renderSlotGrid(group, section.slots)}
+        </HExpansionPanel>
+      ));
+      const flat = group.slots ?? [];
+      if (flat.length > 0) {
+        panels.push(
+          <HExpansionPanel
+            key={`${group.id}--flat`}
+            title={groupLabel(group)}
+            subtitle={countLabel(flat.length)}
+          >
+            {renderSlotGrid(group, flat)}
+          </HExpansionPanel>,
+        );
       }
-      return rows;
+      return panels;
     }
 
     return () => (
@@ -354,16 +398,9 @@ export const HColorSchemeDialog = defineComponent({
               <div class="s-scheme-groups-title">
                 {t("hikari::theme.extendedColors", "Extended colors")}
               </div>
-              {registeredGroups.value.map((group) => (
-                <HCollapse
-                  key={group.id}
-                  title={t(`hikari::theme.groups.${group.id}.title`, group.label)}
-                >
-                  <div class="s-scheme-group-slots">
-                    {renderGroupRows(group)}
-                  </div>
-                </HCollapse>
-              ))}
+              <div class="s-scheme-group-panels">
+                {registeredGroups.value.map((group) => renderGroup(group))}
+              </div>
             </div>
           )}
         </div>

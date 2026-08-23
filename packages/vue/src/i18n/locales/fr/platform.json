@@ -48,7 +48,9 @@
     "hikari::log.autoscroll": "Défilement auto",
     "hikari::log.copy": "Copier",
     "hikari::log.copied": "Copié",
-    "hikari::log.clear": "Vider"
+    "hikari::log.clear": "Vider",
+    "hikari::cookie.text": "Ce site utilise des cookies.",
+    "hikari::cookie.ok": "OK"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "Résolution du défi de preuve de travail…"

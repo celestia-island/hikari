@@ -48,7 +48,9 @@
     "hikari::log.autoscroll": "Autoscroll",
     "hikari::log.copy": "Kopieren",
     "hikari::log.copied": "Kopiert",
-    "hikari::log.clear": "Leeren"
+    "hikari::log.clear": "Leeren",
+    "hikari::cookie.text": "Diese Seite verwendet Cookies.",
+    "hikari::cookie.ok": "OK"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "Proof-of-Work wird gelöst…"

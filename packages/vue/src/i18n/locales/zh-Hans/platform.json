@@ -48,7 +48,9 @@
     "hikari::log.autoscroll": "自动滚动",
     "hikari::log.copy": "复制",
     "hikari::log.copied": "已复制",
-    "hikari::log.clear": "清空"
+    "hikari::log.clear": "清空",
+    "hikari::cookie.text": "本站使用 Cookie。",
+    "hikari::cookie.ok": "确定"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "正在验证挑战…"

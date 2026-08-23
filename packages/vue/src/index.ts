@@ -247,3 +247,9 @@ export { HkStatCard as HStatCard, type StatTone } from "./components/HkStatCard"
 export { HkStatusPill as HStatusPill, type PillState } from "./components/HkStatusPill";
 export { HkShareBar as HShareBar } from "./components/HkShareBar";
 export { HkSecretRevealModal as HSecretRevealModal } from "./components/HkSecretRevealModal";
+export { HkCaptchaWidget as HCaptchaWidget, type HkCaptchaProvider } from "./components/HkCaptchaWidget";
+export { HkCaptchaModal as HCaptchaModal } from "./components/HkCaptchaModal";
+export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal";
+export { HkAboutModal as HAboutModal, type HAboutLink } from "./components/HkAboutModal";
+export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
+export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";

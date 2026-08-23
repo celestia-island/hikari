@@ -1,0 +1,30 @@
+.s-captcha-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  min-height: 4rem;
+}
+
+.s-captcha-widget-loading {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-captcha-widget-host {
+  display: flex;
+  justify-content: center;
+}
+
+.s-captcha-widget-placeholder {
+  justify-content: center;
+  min-height: 4rem;
+  padding: var(--space-16, 1rem);
+  border: 1px dashed var(--border-faint, rgb(var(--color-border) / 15%));
+  border-radius: var(--radius-md, 8px);
+  color: rgb(var(--color-muted));
+  font-size: var(--text-xs, 0.75rem);
+  text-align: center;
+  max-width: 22rem;
+}

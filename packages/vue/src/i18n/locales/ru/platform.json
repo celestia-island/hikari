@@ -48,7 +48,9 @@
     "hikari::log.autoscroll": "Автопрокрутка",
     "hikari::log.copy": "Копировать",
     "hikari::log.copied": "Скопировано",
-    "hikari::log.clear": "Очистить"
+    "hikari::log.clear": "Очистить",
+    "hikari::cookie.text": "Этот сайт использует файлы cookie.",
+    "hikari::cookie.ok": "OK"
   },
   "auth": {
     "hikari::auth.solvingChallenge": "Проверка задания…"

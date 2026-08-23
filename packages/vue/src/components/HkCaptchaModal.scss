@@ -1,0 +1,14 @@
+.s-captcha-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+  padding: var(--space-8, 0.5rem) 0;
+}
+
+.s-captcha-modal-prompt {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  color: rgb(var(--color-muted));
+  text-align: center;
+}

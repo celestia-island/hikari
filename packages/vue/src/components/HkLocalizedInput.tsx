@@ -59,7 +59,7 @@ export const HkLocalizedInput = defineComponent({
   props: {
     modelValue: { type: String, default: "" },
     /** Language the field edits until the user picks another from the
-     *  chip menu. Defaults to `sourceLang` (usually the app locale). */
+     *  chip menu. Defaults to the app locale ("en" when unset). */
     sourceLang: { type: String, default: "en" },
     /** Per-language values. Keys follow the app's locale codes. */
     translations: {

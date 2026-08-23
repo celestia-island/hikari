@@ -9,7 +9,7 @@ export { useToast, TOAST_DURATION, type ToastItem, type ToastMessage, type Toast
 export { useConfirm } from "./useConfirm";
 export { useBlockingToast, showBlockingToast, resolveBlockingToast, clearBlockingToasts, type BlockingToastItem, type BlockingToastOptions, type BlockingToastVariant } from "./useBlockingToast";
 export { useBreakpoint } from "./useBreakpoint";
-export { useClipboard } from "./useClipboard";
+export { useClipboard, useClipboardWithToast } from "./useClipboard";
 export { provideScrollWindow, useScrollWindow, type ScrollWindowContext } from "../composables/useScrollWindow";
 export { useReportedTransition, type ReportedTransition, type ReportedTransitionTrack } from "../composables/useReportedTransition";
 export { showProgressDialog, useProgressDialog, type ProgressDialogHandle, type ProgressDialogState } from "../composables/useProgressDialog";

@@ -1,0 +1,128 @@
+// One joined badge: `#tag` segment + name segment separated by a divider
+// line at the seam — zero gap, square inner corners, rounded outer corners
+// only. The group itself may shrink to the container width (max-width:
+// 100% + min-width: 0) so the name segment can ellipsize instead of
+// forcing the container to overflow (the #008 / qwen3-coder-plus case).
+.s-model-tag-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  max-width: 100%;
+  min-width: 0;
+}
+
+// Number segment: keeps its left rounding, square right edge at the seam.
+// (The extra .hk-badge term out-specifies hikari's own
+// `.hk-badge[data-pill="false"]` radius so import order cannot flip it.)
+.s-model-tag-group .hk-badge.s-model-tag-num {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  border-right: none;
+  flex-shrink: 0;
+}
+
+// Name segment: square left edge at the seam — its own left border IS the
+// divider line (darkened a notch so the seam reads clearly against both
+// badge fills). Must be allowed to shrink so the text can ellipsize.
+.s-model-tag-group .hk-badge.s-model-tag-name {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left-color: rgb(var(--color-muted) / 35%);
+  min-width: 0;
+  overflow: hidden;
+}
+
+// No `#tag` segment (bare model id): the name badge stands alone and
+// keeps the full badge radius — the divider/seam styling never shows.
+.s-model-tag-group .hk-badge.s-model-tag-name:only-child {
+  border-radius: var(--radius-sm);
+}
+
+.s-model-tag-name-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  // Floor so a squeezed pill keeps ~3 characters + the ellipsis legible
+  // instead of collapsing to nothing; the shrink itself is driven by the
+  // min-width: 0 / max-width: 100% chain above.
+  min-width: 3ch;
+}
+
+// Inside the hover card the full model name must be visible — that is the
+// whole point of hovering a truncated pill.
+.s-model-tag-group[data-expanded] .s-model-tag-name-text {
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 0;
+}
+
+.s-model-tag {
+  display: inline-flex;
+  cursor: default;
+  // Let the whole tag shrink inside any flex/inline host so the name
+  // segment ellipsizes instead of overflowing the host container.
+  max-width: 100%;
+  min-width: 0;
+}
+
+.s-model-card {
+  min-width: 220px;
+  padding: var(--space-12, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-text));
+}
+
+.s-model-card-title {
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+.s-model-card-stats {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2px var(--space-10, 0.625rem);
+  align-items: baseline;
+}
+
+.s-model-card-col1 {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-2xs, 0.625rem);
+}
+
+.s-model-card-col2 {
+  text-align: right;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.s-model-card-col3 {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-2xs, 0.625rem);
+}
+
+.s-model-card-italic {
+  font-style: italic;
+}
+
+.s-model-card-caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+  margin-top: var(--space-8, 0.5rem);
+}
+
+.s-model-card-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-6, 0.375rem);
+  border-radius: var(--radius-sm, 4px);
+  background: rgb(var(--color-primary) / 10%);
+  color: rgb(var(--color-primary));
+  font-size: var(--text-2xs, 0.625rem);
+}
+
+.s-model-card-empty {
+  margin-top: var(--space-8, 0.5rem);
+  color: rgb(var(--color-muted));
+  font-style: italic;
+  font-size: var(--text-2xs, 0.625rem);
+}

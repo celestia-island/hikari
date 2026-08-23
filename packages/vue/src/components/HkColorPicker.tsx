@@ -58,26 +58,49 @@ const ColorSlider = defineComponent({
     let dragging = false;
 
     function getValueFromX(clientX: number): number {
-      const el = trackRef.value;
-      if (!el) return props.value;
-      const rect = el.getBoundingClientRect();
+      // Live rect per event: the panel is position:fixed and the slider
+      // carries touch-action:none, so reads are cheap and stay correct even
+      // if a desktop window resize repositions the popover mid-drag.
+      const rect = trackRef.value?.getBoundingClientRect();
+      if (!rect || rect.width === 0) return props.value;
       const pct = clamp((clientX - rect.left) / rect.width, 0, 1);
       return Math.round(pct * 255);
     }
 
+    // Move/up listeners live on the WINDOW (added on down, removed on
+    // up/cancel). setPointerCapture alone should route every move to the
+    // slider, but mobile Safari has long-standing capture quirks under
+    // compositing; window-level listeners make the drag track the finger
+    // regardless. pointercancel (browser reclaims the gesture) must reset
+    // dragging or the slider sticks to the next stray move.
+    function onWindowPointerMove(e: PointerEvent) {
+      if (!dragging) return;
+      e.preventDefault();
+      emit("change", getValueFromX(e.clientX));
+    }
+
+    function endDrag() {
+      dragging = false;
+      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    }
+
+    // A drag in flight must never leak listeners past unmount (e.g. the
+    // sheet closing mid-drag tears the panel down).
+    onBeforeUnmount(endDrag);
+
     function onPointerDown(e: PointerEvent) {
       dragging = true;
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      } catch {
+        // Capture is best-effort; the window listeners carry the drag.
+      }
+      window.addEventListener("pointermove", onWindowPointerMove, { passive: false });
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
       emit("change", getValueFromX(e.clientX));
-    }
-
-    function onPointerMove(e: PointerEvent) {
-      if (!dragging) return;
-      emit("change", getValueFromX(e.clientX));
-    }
-
-    function onPointerUp() {
-      dragging = false;
     }
 
     const pct = computed(() => (props.value / 255) * 100);
@@ -86,8 +109,8 @@ const ColorSlider = defineComponent({
       <div
         class="hk-color-picker-channel-slider"
         onPointerdown={onPointerDown}
-        onPointermove={onPointerMove}
-        onPointerup={onPointerUp}
+        onPointerup={endDrag}
+        onPointercancel={endDrag}
       >
         <div
           ref={trackRef}
@@ -217,6 +240,7 @@ export default defineComponent({
           placement="bottom-start"
           offset={6}
           backdrop={false}
+          sheetOnMobile
           class="hk-color-picker-panel"
         >
           <div class="hk-color-picker-body">

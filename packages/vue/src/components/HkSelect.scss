@@ -162,3 +162,95 @@
   font-size: var(--text-xs);
   color: rgb(var(--color-error));
 }
+
+// ------
+// Mobile bottom sheet (useBreakpoint().isMobile) — the popout docks to the
+// bottom edge: scrim (click closes) + grabber + label + touch-sized option
+// rows. Desktop popout above is untouched. Same visual contract as the
+// popover/modal mobile dockings.
+// ------
+.hk-select-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  background: rgb(0 0 0 / 40%);
+}
+
+.hk-select-sheet-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(72vh, calc(100vh - var(--hk-sheet-top-inset, 4.25rem)));
+  background: rgb(var(--color-surface));
+  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                 var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                 0 0;
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 20%);
+  outline: none;
+}
+
+.hk-select-sheet-grabber {
+  flex-shrink: 0;
+  padding: 14px 0 20px;
+  margin: 0 auto;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    width: 2.25rem;
+    height: 4px;
+    border-radius: 999px;
+    background: rgb(var(--color-border, 100 100 100) / 40%);
+  }
+}
+
+.hk-select-sheet-title {
+  flex-shrink: 0;
+  padding: 0 var(--space-16) var(--space-8);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted));
+}
+
+.hk-select-sheet-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--space-16);
+
+  .hk-select-option {
+    padding: var(--space-14) var(--space-16);
+    font-size: var(--text-base);
+  }
+}
+
+.hk-select-sheet-enter-active {
+  transition:
+    opacity 0.25s ease-out,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-select-sheet-leave-active {
+  transition:
+    opacity 0.2s ease-in,
+    transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hk-select-sheet-enter-from,
+.hk-select-sheet-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-select-sheet-enter-active,
+  .hk-select-sheet-leave-active {
+    transition: none;
+  }
+}

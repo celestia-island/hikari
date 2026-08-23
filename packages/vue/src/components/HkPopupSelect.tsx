@@ -188,6 +188,7 @@ export default defineComponent({
           placement="bottom"
           offset={4}
           backdrop={false}
+          sheetOnMobile
           class="hk-popup-select-content"
         >
           <HkScrollContainer class="hk-popup-select-viewport">

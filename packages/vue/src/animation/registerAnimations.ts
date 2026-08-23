@@ -92,3 +92,7 @@ registerCssAnimation("hk-picker-pane-fwd-out");
 // components/HkPickerPane.scss — date/time picker view drill back.
 registerCssAnimation("hk-picker-pane-back-in");
 registerCssAnimation("hk-picker-pane-back-out");
+// components/HkCountdownDigit.tsx — countdown digit flip swap (plays
+// once; keyframes ride the component's inline <style>).
+registerCssAnimation("hk-flip-out");
+registerCssAnimation("hk-flip-in");

@@ -156,7 +156,10 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--hi-space-16, 1rem);
+  /* Consumers nesting a self-padded menu (HkMenuPanel) zero this via
+     --hk-drawer-body-padding so nav rows and the footer menu share one
+     left edge. */
+  padding: var(--hk-drawer-body-padding, var(--hi-space-16, 1rem));
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -173,7 +176,9 @@
 }
 
 .hk-drawer-footer {
-  padding: var(--hi-space-12, 0.75rem) var(--hi-space-16, 1rem);
+  /* HkMenuPanel carries its own inset; zero this variable when the
+     footer hosts one so both edges align. */
+  padding: var(--hk-drawer-footer-padding, var(--hi-space-12, 0.75rem) var(--hi-space-16, 1rem));
   border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
 }

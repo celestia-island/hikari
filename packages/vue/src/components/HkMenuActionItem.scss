@@ -1,0 +1,58 @@
+/* ── Standard menu action row (HkMenuActionItem) ────────────────
+ * Shares the nav row grammar (`.hk-menu-sidebar-row`): same padding,
+ * gap, typography and hover wash, so a menu panel of these rows reads
+ * as one list with the navigation above it. */
+
+.hk-menu-action-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 8px);
+  width: 100%;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  border: 0;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: rgb(var(--color-text) / 82%);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+    color: rgb(var(--color-text));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hk-menu-action-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hk-menu-action-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-menu-action-item--danger {
+  color: rgb(var(--color-error, 200 50 50) / 90%);
+
+  &:hover:not(:disabled) {
+    background: rgb(var(--color-error, 200 50 50) / 10%);
+    color: rgb(var(--color-error, 200 50 50));
+  }
+}

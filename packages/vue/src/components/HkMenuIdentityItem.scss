@@ -1,0 +1,70 @@
+/* ── Standard menu identity row (HkMenuIdentityItem) ────────────
+ * Avatar beside name/subtitle/badges, aligned with HkMenuActionItem
+ * rows: same padding and left edge, so a menu panel reads as one list. */
+
+.hk-menu-identity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10, 10px);
+  width: 100%;
+  padding: var(--space-8, 8px) var(--space-12, 12px);
+  border-radius: var(--radius-sm, 4px);
+  min-width: 0;
+}
+
+.hk-menu-identity-item__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--color-primary) / 10%);
+  border: 2px solid rgb(var(--color-primary) / 15%);
+}
+
+.hk-menu-identity-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hk-menu-identity-item__fallback {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: rgb(var(--color-primary) / 70%);
+}
+
+.hk-menu-identity-item__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.hk-menu-identity-item__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-menu-identity-item__subtitle {
+  font-size: var(--text-xs);
+  color: rgb(var(--color-text) / 55%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hk-menu-identity-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 2px);
+  margin-top: 2px;
+}

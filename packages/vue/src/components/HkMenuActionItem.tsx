@@ -1,4 +1,4 @@
-import { defineComponent, type PropType, type VNode } from "vue";
+import { defineComponent } from "vue";
 import "./HkMenuActionItem.scss";
 
 /**
@@ -11,8 +11,10 @@ import "./HkMenuActionItem.scss";
 export default defineComponent({
   name: "HkMenuActionItem",
   props: {
-    /** Leading icon node (e.g. `<Camera size={14} />`). */
-    icon: { type: Object as PropType<VNode>, default: undefined },
+    /** Leading icon node (e.g. `<Camera size={14} />`). Typed loosely
+     *  (plain Object) so consumers building on a different vue copy than
+     *  hikari's own node_modules never hit VNode type identity errors. */
+    icon: { type: Object, default: undefined },
     label: { type: String, required: true },
     /** Destructive styling (logout, delete…). */
     danger: { type: Boolean, default: false },

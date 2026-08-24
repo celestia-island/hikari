@@ -6,10 +6,12 @@ import { defineComponent, type PropType } from "vue";
  * form body.
  *
  * Slot layout contract:
- * - `footer` renders into `.s-auth-footer`, a CENTERED FLEX COLUMN — each
- *   slot child is its own row (remember-me, protocol consent, a sign-in
- *   link…). Children must not assume a shared inline line; content that
- *   must sit on one row belongs inside one child element.
+ * - `footer` renders into `.s-auth-footer`, a flex column sized to its
+ *   widest row and centered in the card: every slot child is its own row
+ *   (remember-me, protocol consent, a sign-in link…) and the rows share
+ *   one left edge. Children must not assume a shared inline line or
+ *   per-row centering; content that must sit on one row belongs inside
+ *   one child element.
  * - `logo` swaps the header's logo slot; `default` is the form body.
  */
 export const HkAuthCard = defineComponent({

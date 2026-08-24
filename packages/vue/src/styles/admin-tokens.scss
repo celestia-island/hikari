@@ -596,23 +596,38 @@
 }
 
 .s-auth-footer {
-  margin-top: var(--space-16, 1rem);
   /* Stack footer rows (remember-me, protocol consent, sign-in link…) the
-     same way the header stacks its children. A plain block left the rows
-     as inline-level siblings sharing one text line-box: HkCheckbox (and
-     any short inline row) next to another short row jammed side by side
-     whenever their combined width fit the card — the login card showed
-     "Remember login" and the agreement row fused into one line after the
-     8-23 de-customization dropped the per-row wrapper divs. Flex column
-     guarantees one row per child at every card width and locale. */
+     same way the header stacks its children: one row per child at every
+     card width and locale (a plain block left the rows as inline-level
+     siblings sharing one text line-box, so two short rows fused onto one
+     line after the 8-23 de-customization dropped the per-row wrappers).
+     The rows share one LEFT edge and the group is centered as a whole:
+     fit-content sizes the block to the widest row and auto side margins
+     center it, so individually centering each row no longer scatters
+     their left edges when the labels differ in width. */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-8, 0.5rem);
-  text-align: center;
+  width: fit-content;
+  margin: var(--space-16, 1rem) auto 0;
+  text-align: start;
   padding: 0 var(--space-32, 2rem) var(--space-24, 1.5rem);
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-muted, #666);
+}
+
+/* When a footer follows the form, collapse the form's bottom padding so
+   the whitespace around the footer rows stays symmetric — last field →
+   first row (8px + the footer's 16px top margin = 24px) equals last row
+   → card edge (the footer's 24px bottom padding). Without this the form
+   padding stacks onto the footer margin and the rows sit visibly closer
+   to the card's bottom edge. Specificity (0,2,0) also beats the ≤480px
+   media-query re-declaration, keeping the rhythm symmetric at both
+   breakpoints. Browsers without :has keep the previous padding — a
+   graceful, spacing-only degradation. */
+.s-auth-form:has(+ .s-auth-footer) {
+  padding-bottom: var(--space-8, 0.5rem);
 }
 
 .s-auth-link {

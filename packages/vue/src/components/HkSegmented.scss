@@ -1,0 +1,98 @@
+.hk-segmented {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: rgb(var(--hk-surface-muted, 240 240 244) / 60%);
+  /* Match the surrounding form controls' focus ring token where defined. */
+  --hk-segmented-h: 34px;
+}
+
+.hk-segmented[data-size="sm"] {
+  --hk-segmented-h: 28px;
+  border-radius: 8px;
+}
+
+.hk-segmented[data-block="true"] {
+  display: flex;
+  width: 100%;
+}
+
+.hk-segmented__segment {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--hk-text-muted, 90 90 100));
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  height: var(--hk-segmented-h);
+  padding: 0 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.hk-segmented[data-size="sm"] .hk-segmented__segment {
+  font-size: 12px;
+  padding: 0 10px;
+  border-radius: 6px;
+}
+
+.hk-segmented__segment:hover:not(:disabled) {
+  color: rgb(var(--hk-text, 20 20 26));
+}
+
+.hk-segmented__segment[data-checked="true"] {
+  background: rgb(var(--hk-surface, 255 255 255));
+  color: rgb(var(--hk-text, 20 20 26));
+  /* Soft elevation keeps the active pill legible on the muted track. */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.hk-segmented__segment:disabled,
+.hk-segmented[data-disabled="true"] .hk-segmented__segment {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hk-segmented__segment:focus-visible {
+  outline: 2px solid rgb(var(--hk-primary, 60 120 240));
+  outline-offset: 1px;
+}
+
+.hk-segmented__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.hk-segmented__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Touch form: full-bleed tappable segments ─────────────────────────── */
+@media (max-width: 767px) {
+  .hk-segmented {
+    display: flex;
+    width: 100%;
+    gap: 0;
+    border-radius: 10px;
+  }
+
+  .hk-segmented__segment {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 40px;
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 0 6px;
+  }
+}

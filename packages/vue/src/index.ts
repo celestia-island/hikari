@@ -84,6 +84,8 @@ export { default as HTrendChart } from "./components/HkTrendChart";
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
+export { default as HkSegmented } from "./components/HkSegmented";
+export type { HkSegmentedOption } from "./components/HkSegmented";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HSelectionWaterfall } from "./components/HkSelectionWaterfall";
 

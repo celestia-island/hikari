@@ -26,15 +26,20 @@
   display: flex;
   align-items: center;
   min-width: 0;
-
-  .hk-timeline-step {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
 }
 
-// The trailing side mirrors the step so its connector leads from the center
-// node out to the neighbour: [—— connector ——][label][node].
+// Each side cell holds a single step that stretches across its whole 1fr
+// column so the connector fills the distance to the centre. The step must
+// NOT carry [data-last] (its flex:0 0 auto override would squash the
+// stretch and kill the fade) — the component only sets it in full mode.
+.hk-timeline-window .hk-timeline-step {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// The after side mirrors the step so its connector leads from the centre
+// node out to the neighbour: [—— connector ——][label][node], node at the
+// outer edge — exactly where the fade mask sits.
 .hk-timeline-window[data-side="after"] .hk-timeline-step {
   flex-direction: row-reverse;
 }

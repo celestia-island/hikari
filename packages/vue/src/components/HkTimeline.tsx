@@ -66,6 +66,31 @@ export function computeTimelineWindow(
   };
 }
 
+/**
+ * Measure the row's natural (unshrunk) width.
+ *
+ * Summing the laid-out step rects is useless here: the steps are flex items
+ * with `min-width: 0`, so when the row overflows they simply shrink to the
+ * host's width and their rects always sum to ≈ `clientWidth` — the overflow
+ * only shows as overlapping labels. The reliable way is an offscreen clone
+ * sized to `max-content`, which lets the flex items keep their natural
+ * widths (labels are `white-space: nowrap; flex-shrink: 0`).
+ */
+function naturalRowWidth(el: HTMLElement): number {
+  const probe = el.cloneNode(true) as HTMLElement;
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  probe.style.width = "max-content";
+  probe.style.whiteSpace = "nowrap";
+  const parent = el.parentElement;
+  if (!parent) return el.scrollWidth;
+  parent.appendChild(probe);
+  const width = probe.getBoundingClientRect().width;
+  probe.remove();
+  return Math.ceil(width);
+}
+
 export default defineComponent({
   name: "HkTimeline",
   props: {
@@ -132,13 +157,7 @@ export default defineComponent({
         }
         return;
       }
-      const natural = Math.ceil(
-        Array.from(el.children).reduce(
-          (width, child) =>
-            width + (child as HTMLElement).getBoundingClientRect().width,
-          0,
-        ),
-      );
+      const natural = naturalRowWidth(el);
       if (natural > el.clientWidth + 1) {
         fullNaturalWidth = natural;
         collapsed.value = true;
@@ -174,7 +193,7 @@ export default defineComponent({
       },
     );
 
-    function renderStep(idx: number, connector: "trail" | "none") {
+    function renderStep(idx: number, opts: { connector: boolean; last: boolean }) {
       const step = props.steps[idx];
       const status: TimelineStepStatus =
         idx < currentIndex.value
@@ -183,14 +202,12 @@ export default defineComponent({
             ? "active"
             : "pending";
 
-      const showConnector = connector === "trail";
-
       return (
         <div
           key={step.key}
           class="hk-timeline-step"
           data-status={status}
-          data-last={!showConnector || undefined}
+          data-last={opts.last || undefined}
           data-clickable={(props.clickable && status === "completed") || undefined}
           role={props.clickable ? "button" : undefined}
           tabindex={props.clickable && status === "completed" ? 0 : undefined}
@@ -221,7 +238,7 @@ export default defineComponent({
             )}
           </span>
           <span data-el="label">{step.label}</span>
-          {showConnector && (
+          {opts.connector && (
             <div data-el="connector" />
           )}
         </div>
@@ -230,6 +247,13 @@ export default defineComponent({
 
     return () => {
       if (windowed.value) {
+        // Window-mode connector layout: the PREVIOUS step trails its
+        // connector rightward into the current node, and the NEXT step is
+        // row-reversed (see SCSS) so its connector leads leftward from the
+        // current node out to the neighbour — both fill their 1fr grid
+        // columns. The current step itself carries no connector (both sides
+        // are drawn by the neighbours), so no `data-last` flex override ever
+        // applies inside the window and every window step stretches.
         return (
           <div
             ref={host}
@@ -243,14 +267,11 @@ export default defineComponent({
               data-fade={win.value.fadeBefore || undefined}
             >
               {win.value.beforeIndex >= 0
-                ? renderStep(win.value.beforeIndex, "trail")
+                ? renderStep(win.value.beforeIndex, { connector: true, last: false })
                 : null}
             </div>
             <div class="hk-timeline-window" data-side="current">
-              {renderStep(
-                currentIndex.value,
-                win.value.afterIndex >= 0 ? "trail" : "none",
-              )}
+              {renderStep(currentIndex.value, { connector: false, last: false })}
             </div>
             <div
               class="hk-timeline-window"
@@ -258,7 +279,7 @@ export default defineComponent({
               data-fade={win.value.fadeAfter || undefined}
             >
               {win.value.afterIndex >= 0
-                ? renderStep(win.value.afterIndex, "none")
+                ? renderStep(win.value.afterIndex, { connector: true, last: false })
                 : null}
             </div>
           </div>
@@ -274,7 +295,7 @@ export default defineComponent({
         >
           {props.steps.map((_step, idx) => {
             const isLast = idx === props.steps.length - 1;
-            return renderStep(idx, isLast ? "none" : "trail");
+            return renderStep(idx, { connector: !isLast, last: isLast });
           })}
         </div>
       );

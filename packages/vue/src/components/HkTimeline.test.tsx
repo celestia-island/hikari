@@ -162,16 +162,21 @@ describe("HkTimeline window mode", () => {
     expect(current?.querySelector('[data-el="num"]')?.textContent).toBe("3");
   });
 
-  it("keeps connectors drawn between the window cells", () => {
+  it("draws the window connectors on the neighbour cells, never the center", () => {
     const t = mountTimeline({ currentKey: "c", collapse: "always" });
     const before = t.container.querySelector('.hk-timeline-window[data-side="before"]');
     const current = t.container.querySelector('.hk-timeline-window[data-side="current"]');
     const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
-    // Previous step trails a connector toward the center; the current step
-    // trails one toward the neighbour; the last visible step does not.
+    // The previous step trails its connector toward the centre; the next
+    // step (row-reversed) leads its connector back from the centre; the
+    // current step owns no connector at all — both bonds are drawn by the
+    // neighbours, and no [data-last] flex override may apply (the fade and
+    // the connector stretch live on these cells).
     expect(before?.querySelector('[data-el="connector"]')).not.toBeNull();
-    expect(current?.querySelector('[data-el="connector"]')).not.toBeNull();
-    expect(after?.querySelector('[data-el="connector"]')).toBeNull();
+    expect(after?.querySelector('[data-el="connector"]')).not.toBeNull();
+    expect(current?.querySelector('[data-el="connector"]')).toBeNull();
+    expect(current?.querySelector(".hk-timeline-step")?.hasAttribute("data-last")).toBe(false);
+    expect(after?.querySelector(".hk-timeline-step")?.hasAttribute("data-last")).toBe(false);
   });
 
   it("empties the left cell on the first step and the right cell on the last", async () => {

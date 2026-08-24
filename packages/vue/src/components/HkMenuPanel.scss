@@ -1,0 +1,20 @@
+/* ── Detachable menu container (HkMenuPanel) ─────────────────────
+ * Owns the layout constraint that used to live in consumer CSS hacks:
+ * the panel's inline inset matches the nav sidebar body inset
+ * (--space-12), and every item type inside carries the nav row's own
+ * 8px/12px padding. A drawer footer that zeroes its own padding
+ * (--hk-drawer-footer-padding) then aligns footer items with the nav
+ * items above automatically.
+ *
+ * The same container works in popovers, dropdowns or anywhere else —
+ * nothing here depends on a drawer. */
+
+.hk-menu-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 4px);
+  /* Inset matches .hk-sidebar-body's inline padding so items share the
+     nav text edge; override --hk-menu-panel-inset to re-anchor. */
+  padding: var(--space-8, 8px) var(--hk-menu-panel-inset, var(--space-12, 12px));
+  min-width: 0;
+}

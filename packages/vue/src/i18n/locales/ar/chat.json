@@ -32,6 +32,7 @@
     "hikari::model.cached": "مخزن",
     "hikari::model.context": "السياق",
     "hikari::model.pricing": "التسعير",
-    "hikari::model.noData": "لا توجد مواصفات"
+    "hikari::model.noData": "لا توجد مواصفات",
+    "hikari::chat.removeAttachment": "حذف"
   }
 }

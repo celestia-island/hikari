@@ -32,6 +32,7 @@
     "hikari::model.cached": "缓存",
     "hikari::model.context": "上下文",
     "hikari::model.pricing": "定价",
-    "hikari::model.noData": "暂无规格信息"
+    "hikari::model.noData": "暂无规格信息",
+    "hikari::chat.removeAttachment": "删除"
   }
 }

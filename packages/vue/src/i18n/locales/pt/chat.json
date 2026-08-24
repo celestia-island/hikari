@@ -32,6 +32,7 @@
     "hikari::model.cached": "Em cache",
     "hikari::model.context": "Contexto",
     "hikari::model.pricing": "Preços",
-    "hikari::model.noData": "Nenhuma especificação disponível"
+    "hikari::model.noData": "Nenhuma especificação disponível",
+    "hikari::chat.removeAttachment": "Excluir"
   }
 }

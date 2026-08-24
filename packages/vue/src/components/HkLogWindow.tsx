@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 import { Copy, Eraser, Pause, Play, ScrollText } from "lucide-vue-next";
 import { HModal, HScrollContainer, useClipboard } from "@celestia-island/hikari";
 
@@ -10,6 +10,12 @@ export interface HLogTab {
   key: string;
   title: string;
   lines: string[];
+}
+
+/** Public surface HScrollContainer exposes via setup expose() —
+ *  InstanceType does not carry expose() members, so type it structurally. */
+interface ScrollContainerPublic {
+  getScrollElement: () => HTMLElement | undefined;
 }
 
 function levelOf(line: string): "error" | "warn" | "debug" | "info" {
@@ -72,6 +78,19 @@ export const HkLogWindow = defineComponent({
       },
       { immediate: true },
     );
+
+    const scrollRef = ref<ScrollContainerPublic | null>(null);
+
+    // Log viewers follow the newest-line convention: switching tabs
+    // tail-jumps to the bottom of the new tab's lines (nextTick so
+    // the swapped body has rendered before measuring scrollHeight;
+    // landing at the bottom also re-arms autoFollow's pinned zone).
+    watch(activeTab, () => {
+      void nextTick(() => {
+        const el = scrollRef.value?.getScrollElement();
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    });
 
     const currentTab = computed(() => props.tabs.find((tab) => tab.key === activeTab.value) ?? null);
     const currentLines = computed(() => currentTab.value?.lines ?? []);
@@ -154,7 +173,11 @@ export const HkLogWindow = defineComponent({
               </button>
             </div>
           </div>
-          <HScrollContainer class="s-log-viewer-scroll" autoFollow={autoscroll.value && !paused.value}>
+          <HScrollContainer
+            class="s-log-viewer-scroll"
+            autoFollow={autoscroll.value && !paused.value}
+            ref={scrollRef}
+          >
             {currentLines.value.length === 0 ? (
               <div class="s-log-empty">{t("hikari::log.empty", "No log lines yet.")}</div>
             ) : (

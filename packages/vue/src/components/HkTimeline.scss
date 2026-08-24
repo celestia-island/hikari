@@ -10,6 +10,53 @@
   align-items: flex-start;
 }
 
+// ── Compact window mode ────────────────────────────────────────────────
+// Engaged automatically (collapse="auto") when the full row cannot fit the
+// host: a three-cell grid keeps the current step dead-center, reveals at
+// most one neighbour per side, and fades the side outward where further
+// hidden steps continue — the connector gains the space the crowded full
+// row was denying it.
+.hk-timeline[data-mode="window"] {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.hk-timeline-window {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+// Each side cell holds a single step that stretches across its whole 1fr
+// column so the connector fills the distance to the centre. The step must
+// NOT carry [data-last] (its flex:0 0 auto override would squash the
+// stretch and kill the fade) — the component only sets it in full mode.
+.hk-timeline-window .hk-timeline-step {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// The after side mirrors the step so its connector leads from the centre
+// node out to the neighbour: [—— connector ——][label][node], node at the
+// outer edge — exactly where the fade mask sits.
+.hk-timeline-window[data-side="after"] .hk-timeline-step {
+  flex-direction: row-reverse;
+}
+
+// A side fades toward its outer edge only when hidden steps continue past
+// the window — the "about to disappear" hint that more steps lie beyond.
+.hk-timeline-window[data-side="before"][data-fade] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 55%);
+  mask-image: linear-gradient(to right, transparent 0, #000 55%);
+}
+
+.hk-timeline-window[data-side="after"][data-fade] {
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 55%);
+  mask-image: linear-gradient(to left, transparent 0, #000 55%);
+}
+
+
 .hk-timeline-step {
   display: flex;
   align-items: center;

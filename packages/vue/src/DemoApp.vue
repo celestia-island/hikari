@@ -195,6 +195,14 @@
     <section>
       <h2>HTimeline</h2>
       <HTimeline :steps="timelineSteps" current-key="v2" />
+      <h3>Narrow host → auto window (prev / current / next, edges fade)</h3>
+      <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:8px">
+        <HTimeline :steps="wizardSteps" current-key="vendor" />
+      </div>
+      <h3>collapse="always" at the first step</h3>
+      <div style="max-width:280px;padding:8px;border:1px dashed var(--hi-color-border, #888);border-radius:8px">
+        <HTimeline :steps="wizardSteps" current-key="type" collapse="always" />
+      </div>
     </section>
 
     <section>
@@ -293,6 +301,12 @@ const timelineSteps = [
   { key: 'v1', label: 'v1.0 Released' },
   { key: 'v11', label: 'v1.1' },
   { key: 'v2', label: 'v2.0' },
+]
+const wizardSteps = [
+  { key: 'type', label: 'Type' },
+  { key: 'vendor', label: 'Vendor' },
+  { key: 'apiKey', label: 'API key' },
+  { key: 'models', label: 'Models' },
 ]
 
 const mediaSliderRatio = ref(0.42)

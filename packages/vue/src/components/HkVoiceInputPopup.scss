@@ -1,0 +1,77 @@
+.s-voice-popup-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10, 0.625rem);
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
+  min-width: 180px;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-text));
+
+  &[data-phase="install"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8, 0.5rem);
+  }
+}
+
+.s-voice-popup-text {
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+.s-voice-popup-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  color: rgb(var(--color-primary));
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── Waveform (listening phase) ─────────────────────────────────── */
+.s-voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+}
+
+.s-voice-wave-bar {
+  width: 3px;
+  height: 40%;
+  border-radius: 2px;
+  background: rgb(var(--color-primary));
+  animation: s-voice-wave-bounce 1.2s ease-in-out infinite;
+
+  &:nth-child(2) { animation-delay: 0.15s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+  &:nth-child(4) { animation-delay: 0.45s; }
+  &:nth-child(5) { animation-delay: 0.6s; }
+}
+
+[data-phase="transcribing"] .s-voice-wave-bar {
+  animation: none;
+  height: 25%;
+  opacity: 0.4;
+}
+
+@keyframes s-voice-wave-bounce {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1); }
+}
+
+.s-voice-popup-spinner {
+  display: inline-flex;
+}
+
+.s-voice-popup-hint {
+  opacity: 0.7;
+  white-space: nowrap;
+}

@@ -35,3 +35,31 @@ export function useClipboard() {
 
   return { copied, copy };
 }
+
+/**
+ * Clipboard copy with a toast on success/failure.
+ * (Upstreamed from shittim-chest's plana-legacy layer.)
+ *
+ * Wraps the base `useClipboard` above (which already falls back to
+ * `execCommand` outside secure contexts) and adds toast feedback;
+ * `copied` reflects the 2s copied state. The `toast` argument matches
+ * hikari's `useToast()` surface (`success` / `error` message pushers).
+ */
+export function useClipboardWithToast(
+  toast: { success: (msg: string) => void; error: (msg: string) => void },
+  defaultSuccessMessage?: () => string,
+  defaultErrorMessage?: () => string,
+) {
+  const { copy: baseCopy, copied } = useClipboard();
+
+  async function copy(text: string, successMessage?: string) {
+    const ok = await baseCopy(text);
+    if (ok) {
+      toast.success(successMessage ?? defaultSuccessMessage?.() ?? "Copied");
+    } else {
+      toast.error(defaultErrorMessage?.() ?? "Copy failed");
+    }
+  }
+
+  return { copy, copied };
+}

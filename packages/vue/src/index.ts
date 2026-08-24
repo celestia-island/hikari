@@ -143,6 +143,7 @@ export {
   type BlockingToastVariant,
   useBreakpoint,
   useClipboard,
+  useClipboardWithToast,
   useMediaQuery,
   releaseMediaQuery,
   usePageLifecycle,
@@ -270,3 +271,53 @@ export {
   type HkBackendStatus,
   type HkConnectionProbeSource,
 } from "./components/HkConnectionStatus";
+
+// ── Chat kit (upstreamed from shittim-chest's plana-legacy layer) ──────────
+export { HkRichInput as HRichInput } from "./components/HkRichInput";
+export { HkVoiceInputPopup as HVoiceInputPopup } from "./components/HkVoiceInputPopup";
+export {
+  HkToolBlock as HToolBlock,
+  parseToolCallText,
+  extractExecCode,
+  buildHighlightedLines,
+  buildJsonTree,
+  type HParsedToolCall,
+  type HToolBlockVariant,
+  type HHighlightedLine,
+  type HJsonNode,
+} from "./components/HkToolBlock";
+export { HkTokenUsageBadge as HTokenUsageBadge } from "./components/HkTokenUsageBadge";
+export { HkTokenUsagePanel as HTokenUsagePanel } from "./components/HkTokenUsagePanel";
+export { HkModelTag as HModelTag } from "./components/HkModelTag";
+export {
+  getModelMeta,
+  registerModelCatalog,
+  splitModelId,
+  type HModelPricing,
+  type HModelMeta,
+  type HModelCatalog,
+} from "./components/HkModelCatalog";
+export type {
+  HChatRole,
+  HToolCall,
+  HToolCallStatus,
+  HVoicePopupMode,
+  HVoiceState,
+  HModelUsageEntry,
+  HModelCosts,
+} from "./components/HkChatTypes";
+export { useSendShortcut } from "./composables/useSendShortcut";
+export type { SendShortcutMode } from "./composables/useSendShortcut";
+export { useAttachments } from "./composables/useAttachments";
+export type { HkUploadedFile } from "./composables/useAttachments";
+
+export {
+  formatTokenCount,
+  formatNumber,
+  formatBytes,
+  formatPriceUsd,
+  formatRelativeTime,
+  formatDateTime,
+  formatMs,
+  type RelativeTimeT,
+} from "./utils/format";

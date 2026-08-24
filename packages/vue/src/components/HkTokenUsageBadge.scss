@@ -1,0 +1,39 @@
+.s-token-usage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-10, 0.625rem);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-2xs, 0.625rem);
+  color: rgb(var(--color-muted));
+
+  &[data-fixed] {
+    width: 100px;
+    justify-content: space-between;
+  }
+}
+
+.s-token-usage-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.s-token-usage-arrow {
+  &[data-direction="in"]  { color: rgb(var(--color-warning)); }
+  &[data-direction="out"] { color: rgb(var(--color-success)); }
+}
+
+.s-token-usage-val {
+  color: rgb(var(--color-text));
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.s-token-usage-icon-tool {
+  color: rgb(var(--color-muted));
+}
+
+.s-token-usage-duration {
+  color: rgb(var(--color-muted));
+  opacity: 0.8;
+}

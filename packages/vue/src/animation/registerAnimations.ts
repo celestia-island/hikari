@@ -96,3 +96,6 @@ registerCssAnimation("hk-picker-pane-back-out");
 // once; keyframes ride the component's inline <style>).
 registerCssAnimation("hk-flip-out");
 registerCssAnimation("hk-flip-in");
+// components/HkVoiceInputPopup.scss — voice waveform bounce (loops
+// forever while listening; upstreamed from chest's plana-legacy).
+registerCssAnimation("s-voice-wave-bounce", { infinite: true });

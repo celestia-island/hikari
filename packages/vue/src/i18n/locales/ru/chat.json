@@ -32,6 +32,7 @@
     "hikari::model.cached": "Кэш",
     "hikari::model.context": "Контекст",
     "hikari::model.pricing": "Цены",
-    "hikari::model.noData": "Нет данных о модели"
+    "hikari::model.noData": "Нет данных о модели",
+    "hikari::chat.removeAttachment": "Удалить"
   }
 }

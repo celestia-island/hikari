@@ -192,7 +192,7 @@ export const HkRichInput = defineComponent({
                           )}
                         </div>
                         <HButton variant="ghost" size="sm" class="s-rich-input-attachment-remove"
-                          ariaLabel={t("common.actions.delete", "Delete")}
+                          ariaLabel={t("hikari::chat.removeAttachment", "Delete")}
                           onClick={(e: MouseEvent) => { e.stopPropagation(); emit("removeAttachment", a.id); }}>
                           <X size={12} />
                         </HButton>
@@ -214,7 +214,7 @@ export const HkRichInput = defineComponent({
                           <span class="s-rich-input-attachment-chip-size">{formatBytes(a.size)}</span>
                         </div>
                         <HButton variant="ghost" size="sm" class="s-rich-input-attachment-remove"
-                          ariaLabel={t("common.actions.delete", "Delete")}
+                          ariaLabel={t("hikari::chat.removeAttachment", "Delete")}
                           onClick={(e: MouseEvent) => { e.stopPropagation(); emit("removeAttachment", a.id); }}>
                           <X size={10} />
                         </HButton>

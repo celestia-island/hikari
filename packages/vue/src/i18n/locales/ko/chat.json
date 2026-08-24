@@ -32,6 +32,7 @@
     "hikari::model.cached": "캐시",
     "hikari::model.context": "컨텍스트",
     "hikari::model.pricing": "가격",
-    "hikari::model.noData": "사양 정보 없음"
+    "hikari::model.noData": "사양 정보 없음",
+    "hikari::chat.removeAttachment": "삭제"
   }
 }

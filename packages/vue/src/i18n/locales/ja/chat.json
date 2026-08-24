@@ -32,6 +32,7 @@
     "hikari::model.cached": "キャッシュ",
     "hikari::model.context": "コンテキスト",
     "hikari::model.pricing": "価格",
-    "hikari::model.noData": "仕様情報がありません"
+    "hikari::model.noData": "仕様情報がありません",
+    "hikari::chat.removeAttachment": "削除"
   }
 }

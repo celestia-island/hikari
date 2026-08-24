@@ -159,8 +159,13 @@ export default defineComponent({
       }
     }
 
+    const resultsRef = ref<HTMLDivElement | null>(null);
+
     watch(debouncedQuery, (q) => {
       if (semanticActive.value) void runSemantic(q);
+      // New results replace the list (fuzzy + semantic paths both
+      // recompute from debouncedQuery): return the viewport to the top.
+      resultsRef.value?.scrollTo({ top: 0 });
     });
 
     const results = computed(() => {
@@ -246,7 +251,7 @@ export default defineComponent({
             )}
           </div>
 
-          <div class="hk-kw-search-results">
+          <div class="hk-kw-search-results" ref={resultsRef}>
             {semanticActive.value ? (
               semanticLoading.value && semanticResults.value.length === 0 ? (
                 <div class="hk-kw-search-empty">

@@ -20,10 +20,8 @@ export const HkProtocolModal = defineComponent({
     modelValue: { type: Boolean, default: false },
     /** Modal title (defaults to "Agreement"). */
     title: { type: String, default: undefined },
-    /** Markdown content to render (or plain text when `plain`). */
+    /** Markdown content to render — protocols always render as markdown. */
     content: { type: String, default: "" },
-    /** Render `content` as escaped plain text instead of markdown. */
-    plain: { type: Boolean, default: false },
     /** Accept button label override. */
     acceptLabel: { type: String, default: undefined },
     /** Decline button label override. */
@@ -78,7 +76,7 @@ export const HkProtocolModal = defineComponent({
           style={props.bodyHeight ? { maxHeight: props.bodyHeight, overflowY: "auto" } : undefined}
         >
           {copied.value && <p class="s-protocol-modal-copied">{t("hikari::protocol.copied", "Copied")}</p>}
-          <HMarkdownRenderer content={props.content} plain={props.plain} />
+          <HMarkdownRenderer content={props.content} />
         </div>
       </HModal>
     );

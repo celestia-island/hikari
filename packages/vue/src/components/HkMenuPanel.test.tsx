@@ -27,12 +27,12 @@ describe("HkMenuPanel facility", () => {
     app.mount(el);
     await nextTick();
 
-    const panel = el.querySelector(".hk-menu-panel") as HTMLElement;
+    const panel = el.querySelector(".hk-menu-list") as HTMLElement;
     expect(panel).not.toBeNull();
     expect(panel.getAttribute("role")).toBe("menu");
     expect(panel.getAttribute("aria-label")).toBe("Account");
     expect(panel.querySelectorAll(".hk-menu-action-item").length).toBe(2);
-    expect(panel.classList.contains("hk-menu-panel")).toBe(true);
+    expect(panel.classList.contains("hk-menu-list")).toBe(true);
 
     app.unmount();
   });

@@ -24,7 +24,7 @@ export default defineComponent({
   },
   setup(props, { slots }) {
     return () => (
-      <div class="hk-menu-panel" role="menu" aria-label={props.label}>
+      <div class="hk-menu-list" role="menu" aria-label={props.label}>
         {slots.default?.()}
       </div>
     );

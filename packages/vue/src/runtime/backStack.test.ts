@@ -174,6 +174,30 @@ describe("createBackGuard", () => {
     b.destroy();
   });
 
+  it("normalizes a same-tick release-then-push to exactly one entry (N1)", async () => {
+    // HkMenu's normalizer: a desktop→mobile flip releases the desktop
+    // residue (deferred rewind) and pushes a fresh root in the SAME
+    // tick. The rewind claim must survive the push, or the stale entry
+    // strands and one back turns into two.
+    const onBack = vi.fn();
+    const g = createBackGuard({ onBack });
+
+    g.push(); // mobile root
+    g.release(); // desktop flip: rewind deferred
+    g.push(); // back to mobile, same tick
+
+    await settle();
+    expect(g.entries).toBe(1);
+    expect((window.history.state as Record<string, unknown>)[BACK_GUARD_DEPTH]).toBe(0);
+
+    // One back closes the menu entirely — not two.
+    window.history.back();
+    await until(() => onBack.mock.calls.length > 0);
+    expect(onBack).toHaveBeenCalledWith(null);
+    expect(g.entries).toBe(0);
+    g.destroy();
+  });
+
   it("unmounting while a traversal is in flight never swallows the next real gesture", async () => {
     // B1 regression: listener teardown with a stale suppression must
     // reset the expectation, or the FIRST genuine back of the next

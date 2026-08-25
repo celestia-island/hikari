@@ -11,6 +11,7 @@ export default defineComponent({
     step: { type: Number, default: 1 },
     disabled: { type: Boolean, default: false },
     placeholder: { type: String, default: undefined },
+    label: { type: String, default: undefined },
     size: {
       type: String as PropType<"sm" | "md" | "lg">,
       default: "md",
@@ -84,6 +85,7 @@ export default defineComponent({
 
     return () => (
       <div class={wrapperClass.value}>
+        {props.label && <label class="hk-input-label">{props.label}</label>}
         <div class="hk-number-input-inner">
           {slots.prefix ? (
             <span class="hk-number-input-prefix">{slots.prefix()}</span>

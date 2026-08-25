@@ -1,3 +1,15 @@
+/* Field caption, mirroring .hk-input-label in HkInput.scss (the number
+   input carries its own copy so it does not depend on HInput's stylesheet
+   being loaded too). */
+.hk-input-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
 .hk-number-input {
   display: block;
   width: 100%;

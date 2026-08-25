@@ -2,6 +2,13 @@ export * from "./animationBus";
 export * from "./cronBus";
 export * from "./intervalBus";
 export * from "./pageLifecycle";
+export {
+  createBackGuard,
+  BACK_GUARD_MARKER,
+  BACK_GUARD_DEPTH,
+  type BackGuard,
+  type BackGuardOptions,
+} from "./backStack";
 export { useMediaQuery, releaseMediaQuery } from "./useMediaQuery";
 export { useOverlay, closeAll, isOverlayOpen, type OverlayHandle, type UseOverlayOptions } from "./useOverlay";
 export { usePopupManager, type PopupHandle, type PopupKind } from "./usePopupManager";

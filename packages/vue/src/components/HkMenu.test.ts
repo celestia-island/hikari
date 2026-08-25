@@ -121,7 +121,7 @@ afterEach(async () => {
   while (mounts.length) mounts.pop()?.unmount();
   // Unmounting restores history asynchronously; wait for it to land so a
   // pending traversal cannot pop the NEXT test's freshly pushed entries.
-  await until(() => window.history.state?.__hkMenuId === undefined);
+  await until(() => window.history.state?.__hkBack === undefined);
   while (containers.length) containers.pop()?.remove();
   window.innerWidth = 1024;
 });
@@ -217,27 +217,27 @@ describe("HkMenu mobile sheets", () => {
 
     // Root sheet only, with its own history entry.
     expect(sheets().length).toBe(1);
-    expect(window.history.state?.__hkMenuDepth).toBe(0);
+    expect(window.history.state?.__hkBackDepth).toBe(0);
 
     // Enter the first branch → two stacked sheets + a new history entry.
     rowByLabel("Branch One")!.click();
     await settle();
     expect(sheets().length).toBe(2);
-    expect(window.history.state?.__hkMenuDepth).toBe(1);
+    expect(window.history.state?.__hkBackDepth).toBe(1);
 
     // Browser/system back closes ONE level: back to the root sheet.
     window.history.back();
     await settle();
     expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
-    expect(window.history.state?.__hkMenuDepth).toBe(0);
+    expect(window.history.state?.__hkBackDepth).toBe(0);
 
     // Back from the root closes the menu entirely.
     window.history.back();
     await settle();
     expect(openRef.value).toBe(false);
     expect(document.querySelector(".hk-menu-sheet")).toBeNull();
-    expect(window.history.state?.__hkMenuId).toBeUndefined();
+    expect(window.history.state?.__hkBack).toBeUndefined();
   });
 
   it("keeps the root sheet when a pushed level is dismissed via its back button", async () => {
@@ -257,7 +257,7 @@ describe("HkMenu mobile sheets", () => {
     await settle();
     expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
-    expect(window.history.state?.__hkMenuDepth).toBe(0);
+    expect(window.history.state?.__hkBackDepth).toBe(0);
   });
 
   it("selecting a leaf on mobile closes every sheet and restores history", async () => {
@@ -277,8 +277,8 @@ describe("HkMenu mobile sheets", () => {
     expect(selected).toEqual(["two-b"]);
     expect(openRef.value).toBe(false);
     expect(document.querySelector(".hk-menu-sheet")).toBeNull();
-    await until(() => window.history.state?.__hkMenuId === undefined);
-    expect(window.history.state?.__hkMenuId).toBeUndefined();
+    await until(() => window.history.state?.__hkBack === undefined);
+    expect(window.history.state?.__hkBack).toBeUndefined();
   });
 
   it("follows live viewport changes without closing the menu", async () => {
@@ -287,7 +287,7 @@ describe("HkMenu mobile sheets", () => {
     mountMenu(openRef, siblingItems);
     await settle();
     expect(sheets().length).toBe(1);
-    expect(window.history.state?.__hkMenuDepth).toBe(0);
+    expect(window.history.state?.__hkBackDepth).toBe(0);
 
     // Rotate/grow to desktop while open: sheets become desktop panels and
     // the pushed history entry is released — but the menu stays open.
@@ -297,8 +297,8 @@ describe("HkMenu mobile sheets", () => {
     expect(openRef.value).toBe(true);
     expect(sheets().length).toBe(0);
     expect(panels().length).toBe(1);
-    await until(() => window.history.state?.__hkMenuId === undefined);
-    expect(window.history.state?.__hkMenuId).toBeUndefined();
+    await until(() => window.history.state?.__hkBack === undefined);
+    expect(window.history.state?.__hkBack).toBeUndefined();
 
     // Shrink back: the root sheet returns with a fresh root entry.
     window.innerWidth = 390;
@@ -306,7 +306,7 @@ describe("HkMenu mobile sheets", () => {
     await settle();
     expect(openRef.value).toBe(true);
     expect(sheets().length).toBe(1);
-    expect(window.history.state?.__hkMenuDepth).toBe(0);
+    expect(window.history.state?.__hkBackDepth).toBe(0);
   });
 });
 
@@ -344,7 +344,7 @@ describe("HkMenu sidebar variant", () => {
     // Inline render: no teleport, no panels, no history ownership.
     expect(document.querySelector(".hk-menu-panel")).toBeNull();
     expect(document.querySelector(".hk-menu-sheet")).toBeNull();
-    expect(window.history.state?.__hkMenuId).toBeUndefined();
+    expect(window.history.state?.__hkBack).toBeUndefined();
 
     const nav = container.querySelector(".hk-menu-sidebar");
     expect(nav).not.toBeNull();

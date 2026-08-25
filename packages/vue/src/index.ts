@@ -158,6 +158,9 @@ export {
   closeAll,
   isOverlayOpen,
   TOAST_DURATION,
+  createBackGuard,
+  BACK_GUARD_MARKER,
+  BACK_GUARD_DEPTH,
   type AnimationHandle,
   useReportedTransition,
   type ReportedTransition,
@@ -174,6 +177,8 @@ export {
   type PageLifecycleState,
   type PageLifecycleListener,
   type SafeAreaInsets,
+  type BackGuard,
+  type BackGuardOptions,
 } from "./runtime";
 
 // i18n

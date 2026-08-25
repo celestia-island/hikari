@@ -15,6 +15,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { createBackGuard } from "../runtime/backStack";
 import { useI18n } from "../i18n/context";
 import "./HkMenu.scss";
 
@@ -46,14 +47,6 @@ export interface HkMenuItem {
   badge?: string;
   children?: HkMenuItem[];
 }
-
-/** Marker we stamp into history.state for levels this instance pushed. */
-interface MenuHistoryState {
-  __hkMenuId?: string;
-  __hkMenuDepth?: number;
-}
-
-const MENU_ID = "__hkMenu";
 
 function viewportIsMobile(breakpoint: number): boolean {
   return typeof window !== "undefined" && window.innerWidth < breakpoint;
@@ -96,15 +89,6 @@ export default defineComponent({
     const desktopPath = ref<string[]>([]);
     /** Pushed sheet chain on mobile: each entry is one submenu level. */
     const mobileStack = ref<{ title: string; items: HkMenuItem[] }[]>([]);
-    const instanceId = `${MENU_ID}-${Math.random().toString(36).slice(2, 8)}`;
-    /**
-     * History entries this instance pushed above the page's base entry —
-     * also the number of back() calls needed to reach the base again.
-     * History depth 0 (the root sheet) counts, so this is depth + 1.
-     */
-    let pushedDepth = 0;
-    /** Popstate events produced by our own restoreHistory — not user backs. */
-    let suppressPop = 0;
     /** Bumped on viewport resize so an open menu re-renders in the right mode. */
     const viewportTick = ref(0);
 
@@ -120,36 +104,37 @@ export default defineComponent({
       return viewportIsMobile(props.mobileBreakpoint);
     });
 
-    function pushHistoryEntry(depth: number): void {
-      window.history.pushState(
-        { __hkMenuId: instanceId, __hkMenuDepth: depth } satisfies MenuHistoryState,
-        "",
-      );
-      pushedDepth = depth + 1;
-    }
-
-    function restoreHistory(): void {
-      // Single multi-step traversal: consecutive back() calls can be
-      // coalesced (happy-dom) or racy (browsers), go(-n) cannot. Depth is
-      // only trusted while our entry is still current — a foreign pushState
-      // while open (router navigation, another component) invalidates the
-      // count, so release ownership by de-marking the current entry instead
-      // of traversing a count we can no longer trust.
-      if (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
-        suppressPop++;
-        window.history.go(-pushedDepth);
-      } else if (pushedDepth > 0) {
-        // Our entries are still buried below the foreign top; replacing the
-        // current entry releases ownership without touching live history.
-        window.history.replaceState(null, "");
-      }
-      pushedDepth = 0;
-    }
+    /**
+     * History ownership rides the shared back-guard service: every
+     * pushed sheet level is one marked entry, user back gestures are
+     * dispatched window-first (topmost surface consumes them), and
+     * programmatic closes rewind our entries via suppressed
+     * traversals. See runtime/backStack.ts.
+     */
+    let backGuard: ReturnType<typeof createBackGuard>;
+    backGuard = createBackGuard({
+      onBack: (depth) => {
+        desktopPath.value = [];
+        if (depth === null) {
+          // Landed outside our stack — collapse whatever remains.
+          mobileStack.value = [];
+          emit("update:open", false);
+          return;
+        }
+        // Landed on one of our own entries — close exactly one level.
+        mobileStack.value = props.open ? mobileStack.value.slice(0, depth) : [];
+        if (!props.open) {
+          // Forward gesture into a spent stack while closed: release the
+          // ownership marker so a closed menu never owns live history.
+          backGuard.forget();
+        }
+      },
+    });
 
     function closeAll(): void {
       desktopPath.value = [];
       mobileStack.value = [];
-      restoreHistory();
+      backGuard.release();
       emit("update:open", false);
     }
 
@@ -162,46 +147,19 @@ export default defineComponent({
       }
     }
 
-    function onPopState(e: PopStateEvent): void {
-      if (suppressPop > 0) {
-        // Our own restore traversal landing — not a user back gesture.
-        suppressPop--;
-        return;
-      }
-      const st = e.state as MenuHistoryState | null;
-      if (st?.__hkMenuId === instanceId) {
-        // Landed on one of our own entries — close exactly one level.
-        const depth = Math.max(0, st.__hkMenuDepth ?? 0);
-        mobileStack.value = props.open ? mobileStack.value.slice(0, depth) : [];
-        desktopPath.value = [];
-        pushedDepth = depth + 1;
-        if (!props.open) {
-          // Forward gesture into a spent stack while closed: release the
-          // ownership marker so a closed menu never owns live history.
-          window.history.replaceState(null, "");
-          pushedDepth = 0;
-        }
-        return;
-      }
-      if (!props.open && pushedDepth === 0) return; // idle; nothing to do
-      // Landed outside our stack — collapse whatever remains.
-      pushedDepth = 0;
-      mobileStack.value = [];
-      desktopPath.value = [];
-      emit("update:open", false);
-    }
-
     function pushLevel(title: string, items: HkMenuItem[]): void {
       mobileStack.value.push({ title, items });
-      pushHistoryEntry(mobileStack.value.length);
+      backGuard.push();
     }
 
     function popLevel(): boolean {
       if (mobileStack.value.length === 0) return false;
-      if (pushedDepth > 0 && window.history.state?.__hkMenuId === instanceId) {
-        // The popstate handler (ours, depth-1) truncates the stack — one
-        // source of truth for both drivers (in-app back and browser back).
-        window.history.back();
+      if (backGuard.entries > 0 && backGuard.ownsCurrent()) {
+        // The suppressed history.back() inside the guard lands without
+        // re-entering dispatch — truncate our visual stack here so
+        // in-app back and browser back stay in lockstep.
+        mobileStack.value = mobileStack.value.slice(0, -1);
+        backGuard.pop();
       } else {
         mobileStack.value.pop();
       }
@@ -216,7 +174,6 @@ export default defineComponent({
 
     onMounted(() => {
       if (props.variant === "sidebar") return; // no popover machinery
-      window.addEventListener("popstate", onPopState);
       window.addEventListener("resize", onResize);
     });
     onBeforeUnmount(() => {
@@ -224,10 +181,12 @@ export default defineComponent({
         manager.unregister(handle.value.id);
         handle.value = null;
       }
+      // Every variant registers its guard (the service is cheap for a
+      // never-pushed guard) — every variant must destroy it too, or
+      // sidebar mounts leak records and pin the module listener.
+      backGuard.destroy();
       if (props.variant === "sidebar") return;
-      window.removeEventListener("popstate", onPopState);
       window.removeEventListener("resize", onResize);
-      restoreHistory();
     });
 
     /**
@@ -248,10 +207,10 @@ export default defineComponent({
             manager.unregister(handle.value.id);
             handle.value = null;
           }
-          if (pushedDepth > 0 || mobileStack.value.length > 0 || desktopPath.value.length > 0) {
+          if (backGuard.entries > 0 || mobileStack.value.length > 0 || desktopPath.value.length > 0) {
             desktopPath.value = [];
             mobileStack.value = [];
-            restoreHistory();
+            backGuard.release();
           }
           return;
         }
@@ -260,12 +219,12 @@ export default defineComponent({
         }
         if (mobile) {
           // Normalize: exactly one fresh root entry above the page's history.
-          if (pushedDepth !== 0) restoreHistory();
-          pushHistoryEntry(0);
-        } else if (pushedDepth > 0) {
+          if (backGuard.entries !== 0) backGuard.release();
+          backGuard.push();
+        } else if (backGuard.entries > 0) {
           desktopPath.value = [];
           mobileStack.value = [];
-          restoreHistory();
+          backGuard.release();
         }
       },
       { immediate: true, flush: "sync" },

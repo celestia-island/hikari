@@ -14,9 +14,11 @@ import { HkCountdownDigit } from "./HkCountdownDigit";
  * A traffic-light dot plus a two-column-grid version block (panel row,
  * engine row). Hovering/tapping the pill opens an HPopover with the
  * quality icon, latency, retry countdown and protocol/network rows.
- * With `compact` the pill collapses to the bare dot + translated status
- * text (mobile logged-in footers): the version rows move into the
- * popover and ride the aria-label for assistive tech.
+ * With `compact` the pill collapses to the bare status dot (mobile
+ * logged-in footers): no text at all — the light speaks for itself, and
+ * tapping it opens the popover with the full connection details. The
+ * version rows move into the popover and ride the aria-label for
+ * assistive tech.
  *
  * Styling rides the shared `s-status-bar*` classes from
  * `styles/admin-tokens.scss` (the `[data-compact]` rules hide the inline
@@ -173,12 +175,6 @@ export const HkStatusBar = defineComponent({
             <span class="s-status-bar-dot" style={{
               background: dotColorMap[mode] ?? dotColorMap.disconnected,
             }} />
-            {props.compact && (
-              /* Compact (mobile): surface the translated connection state
-               * next to the dot — the version block alone read as a version
-               * chip with no connection feedback. */
-              <span class="s-status-bar-tag-label" style={{ marginLeft: "2px" }}>{statusText}</span>
-            )}
             <span class="s-status-bar-tag-value">
               <span class="s-status-bar-tag-label">{t("hikari::statusBar.panel", "Panel")}</span>
               <span class="s-status-bar-version">{pv}</span>

@@ -67,7 +67,7 @@ describe("HkStatusBar", () => {
     expect(panel!.textContent).toContain("HTTP poll");
   });
 
-  it("compact mode collapses the tag to the dot + translated status text", async () => {
+  it("compact mode shows the bare status dot with no text", async () => {
     const container = mountBar({
       version: "1.2.3",
       engineVersion: "9.8.7",
@@ -79,12 +79,15 @@ describe("HkStatusBar", () => {
 
     const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
     expect(tag.getAttribute("data-compact")).toBe("true");
-    // Translated connection state surfaces next to the dot.
-    const label = tag.querySelector<HTMLElement>(".s-status-bar-tag-label");
-    expect(label?.textContent).toBe("Connected");
-    // The version rows leave the visible pill: they are hidden inline by
-    // the [data-compact] CSS (styles/admin-tokens.scss) and the versions
-    // ride the aria-label for assistive tech instead.
+    // No translated status text next to the dot — the light alone, and
+    // tapping it opens the popover with the details.
+    const dot = tag.querySelector<HTMLElement>(".s-status-bar-dot");
+    expect(dot, "the status dot must render").toBeTruthy();
+    expect(dot!.style.background).toContain("rgb");
+    // No translated status text next to the dot (the version rows stay in
+    // the DOM but are visually hidden by the [data-compact] CSS).
+    expect(tag.textContent).not.toContain("Connected");
+    // Details ride the aria-label for assistive tech.
     expect(tag.getAttribute("aria-label")).toBe("Connected · 1.2.3 · 9.8.7");
   });
 });

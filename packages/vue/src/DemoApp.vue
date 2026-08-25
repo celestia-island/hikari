@@ -113,6 +113,30 @@
     </section>
 
     <section>
+      <h2>HSelectPanel</h2>
+      <div class="row">
+        <span style="align-self:center;color:var(--color-muted, gray)">custom trigger + checkbox rows:</span>
+        <span ref="panelAnchor" style="display:inline-flex">
+          <HButton @click="panel.open = !panel.open">Filter ▲</HButton>
+        </span>
+        <HSelectPanel
+          :open="panel.open"
+          @update:open="(v: boolean) => panel.open = v"
+          :anchor-ref="panelAnchor ?? null"
+          title="Filters"
+          placement="top-start"
+        >
+          <HCheckbox
+            v-for="opt in panel.opts"
+            :key="opt.key"
+            :model-value="panel.checked.includes(opt.key)"
+            @update:model-value="(v: boolean) => togglePanelOpt(opt.key, v)"
+          >{{ opt.label }}</HCheckbox>
+        </HSelectPanel>
+      </div>
+    </section>
+
+    <section>
       <h2>HSkeleton / HSkeletonList</h2>
       <div class="row">
         <HSkeleton width="100px" height="24px" />
@@ -273,7 +297,7 @@ import {
   HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
-  HCheckbox, HSwitch, HRadio, HSelect,
+  HCheckbox, HSwitch, HRadio, HSelect, HSelectPanel,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HExpansionPanel,
   HTabs, HMorphingTabs, HCard, HTable, HTimeline,
@@ -292,6 +316,21 @@ const flags = ref({ a: true, b: false, on: false, radio: 'x' })
 const radioOpts = [{ value: 'x', label: 'X' }, { value: 'y', label: 'Y' }]
 const gaugeRings = [{ pct: 45, color: 'rgb(var(--color-primary, 122 162 247))', trackColor: 'rgba(122, 162, 247, 0.15)' }]
 const select = ref({ val: '', opts: [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }, { value: 'c', label: 'Gamma' }] })
+const panelAnchor = ref<HTMLElement | null>(null)
+const panel = ref({
+  open: false,
+  checked: ['a'] as string[],
+  opts: [
+    { key: 'a', label: 'Recent' },
+    { key: 'b', label: 'Starred' },
+    { key: 'c', label: 'Archived' },
+  ],
+})
+function togglePanelOpt(key: string, v: boolean) {
+  panel.value.checked = v
+    ? [...panel.value.checked, key]
+    : panel.value.checked.filter((k) => k !== key)
+}
 const tabs = ref({ active: 'tab1', items: [{ key: 'tab1', label: 'Overview' }, { key: 'tab2', label: 'Details' }, { key: 'tab3', label: 'Settings' }] })
 const morphTabs = ref({ active: 'm1', items: [{ key: 'm1', label: 'Read' }, { key: 'm2', label: 'Write' }, { key: 'm3', label: 'Preview' }] })
 

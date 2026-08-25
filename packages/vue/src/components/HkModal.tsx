@@ -16,6 +16,7 @@ import "./HkModal.scss";
 import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
+import { createBackGuard } from "../runtime/backStack";
 import HButton from "./HkButton";
 import HSpinner from "./HkSpinner";
 
@@ -45,6 +46,14 @@ export default defineComponent({
     windowed: { type: Boolean, default: false },
     overscanScreens: { type: Number, default: 1 },
     autoFollow: { type: Boolean, default: false },
+    /**
+     * Consume the browser/system back gesture while open (window-first
+     * back priority): a marked history entry is pushed on open so back
+     * closes the modal instead of leaving the page. Only meaningful
+     * together with `closable`; disable for surfaces that manage their
+     * own history entries.
+     */
+    backGuard: { type: Boolean, default: true },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
@@ -82,6 +91,20 @@ export default defineComponent({
     const isFollowing = ref(true);
     let userScrolled = false;
     const scrollContainerRef = ref<HTMLElement>();
+
+    /**
+     * Window-first back priority: while this modal is the topmost open
+     * window, the back gesture (mobile back button/gesture, desktop
+     * browser back) closes it instead of navigating the page. Disabled
+     * for non-closable modals — back must not be swallowed by a surface
+     * it cannot close.
+     */
+    const backGuardEnabled = () => props.closable && props.backGuard;
+    const backGuard = createBackGuard({
+      onBack: () => {
+        if (backGuardEnabled()) close();
+      },
+    });
 
     function close() {
       emit("update:modelValue", false);
@@ -271,14 +294,30 @@ export default defineComponent({
           shouldRender.value = true;
           handle.value = manager.register("modal", true, props.title);
           overlay.open();
+          if (backGuardEnabled() && backGuard.entries === 0) {
+            backGuard.push();
+          }
         } else {
           // Close happens via Transition onAfterLeave,
           // but if modelValue flips to false without Transition
           // (e.g. immediate), clean up now.
           overlay.close();
+          backGuard.release();
         }
       },
       { immediate: true },
+    );
+
+    // closable/backGuard may flip while open (submit flows disable
+    // closing): keep the owned entry in lockstep so back is never a
+    // dead gesture on a surface it can no longer close.
+    watch(
+      backGuardEnabled,
+      (enabled) => {
+        if (unmounted || !props.modelValue) return;
+        if (enabled && backGuard.entries === 0) backGuard.push();
+        else if (!enabled && backGuard.entries > 0) backGuard.release();
+      },
     );
 
     watch(
@@ -298,6 +337,7 @@ export default defineComponent({
       unmounted = true;
       teardownWindowed();
       teardownAutoFollow();
+      backGuard.destroy();
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;

@@ -15,6 +15,7 @@ import "./HkDrawer.scss";
 import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
+import { createBackGuard } from "../runtime/backStack";
 
 type DrawerSide = "left" | "right" | "top" | "bottom";
 
@@ -31,6 +32,14 @@ export default defineComponent({
      *  body/footer padding overrides (attrs fallthrough cannot reach a
      *  Teleported panel). */
     panelClass: { type: String, default: undefined },
+    /**
+     * Consume the browser/system back gesture while open (window-first
+     * back priority): a marked history entry is pushed on open so back
+     * closes the drawer instead of leaving the page. Only meaningful
+     * together with `closable`; disable for surfaces that manage their
+     * own history entries.
+     */
+    backGuard: { type: Boolean, default: true },
   },
   emits: {
     "update:modelValue": (_value: boolean) => true,
@@ -53,6 +62,19 @@ export default defineComponent({
     const panelRef = ref<HTMLElement>();
     let unmounted = false;
     let previouslyFocused: HTMLElement | null = null;
+
+    /**
+     * Window-first back priority: while this drawer is the topmost open
+     * window, the back gesture closes it instead of navigating the
+     * page. Disabled for non-closable drawers — back must not be
+     * swallowed by a surface it cannot close.
+     */
+    const backGuardEnabled = () => props.closable && props.backGuard;
+    const backGuard = createBackGuard({
+      onBack: () => {
+        if (backGuardEnabled()) close();
+      },
+    });
 
     const isVertical = computed(
       () => props.side === "left" || props.side === "right",
@@ -112,15 +134,31 @@ export default defineComponent({
           handle.value = manager.register("drawer", true);
           overlayHook.open();
           previouslyFocused = document.activeElement as HTMLElement | null;
+          if (backGuardEnabled() && backGuard.entries === 0) {
+            backGuard.push();
+          }
         } else {
           // Register/unregister WITH the open state so a closed-but-mounted
           // drawer does not linger in the overlay registry (isOverlayOpen
           // must reflect reality). The popup manager handle is torn down by
           // the leave transition or by cleanup() on unmount.
           overlayHook.close();
+          backGuard.release();
         }
       },
       { immediate: true },
+    );
+
+    // closable/backGuard may flip while open (submit flows disable
+    // closing): keep the owned entry in lockstep so back is never a
+    // dead gesture on a surface it can no longer close.
+    watch(
+      backGuardEnabled,
+      (enabled) => {
+        if (unmounted || !props.modelValue) return;
+        if (enabled && backGuard.entries === 0) backGuard.push();
+        else if (!enabled && backGuard.entries > 0) backGuard.release();
+      },
     );
 
     onMounted(() => {
@@ -129,6 +167,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       unmounted = true;
+      backGuard.destroy();
       cleanup();
     });
 

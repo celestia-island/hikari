@@ -1,12 +1,52 @@
+// HkConfirmDialog.scss
+//
+// Compact confirmation sheet — sized like a dropdown popover (24rem) so
+// short messages do not float in a half-empty 32rem modal. The message
+// block centers vertically between the title and the actions; the two
+// buttons share the row equally (no right-clustering of tiny sm buttons),
+// and on touch-width viewports they grow to the 44px thumb standard.
+
+.hk-confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 4rem;
+  gap: var(--hk-confirm-gap, 1.25rem);
+}
+
 .hk-confirm-dialog-message {
-  margin: 0 0 1.5rem;
+  margin: 0;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
   font-size: var(--hi-text-sm, 0.875rem);
-  line-height: 1.5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .hk-confirm-dialog-actions {
   display: flex;
   gap: 0.75rem;
-  justify-content: flex-end;
+  justify-content: stretch;
+}
+
+.hk-confirm-dialog-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Touch-width viewports: thumb-friendly actions — full-width halves with
+   the 44px minimum hit target; the dialog keeps its centered popover
+   sizing but with slimmer side insets so the buttons get the width. */
+@media (max-width: 640px) {
+  .hk-confirm-dialog {
+    gap: 1rem;
+  }
+
+  .hk-confirm-dialog-btn {
+    min-height: 44px;
+    font-size: 0.9375rem;
+  }
+
+  .hk-confirm-dialog-actions {
+    gap: 0.625rem;
+  }
 }

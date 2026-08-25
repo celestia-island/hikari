@@ -42,6 +42,7 @@ export default defineComponent({
         modelValue={props.open}
         title={props.title}
         closable={!props.loading}
+        width="24rem"
         onUpdate:modelValue={(v: boolean) => emit("update:open", v)}
       >
         {{
@@ -50,16 +51,18 @@ export default defineComponent({
               <p class="hk-confirm-dialog-message">{props.message}</p>
               <div class="hk-confirm-dialog-actions">
                 <HButton
+                  class="hk-confirm-dialog-btn"
                   variant="secondary"
-                  size="sm"
+                  size="md"
                   disabled={props.loading}
                   onClick={onCancel}
                 >
                   {props.cancelLabel || t("hikari::confirmDialog.cancel", "Cancel")}
                 </HButton>
                 <HButton
+                  class="hk-confirm-dialog-btn"
                   variant={props.confirmVariant}
-                  size="sm"
+                  size="md"
                   loading={props.loading}
                   onClick={onConfirm}
                 >

@@ -144,6 +144,18 @@
 }
 
 .hk-color-picker-slider-thumb {
+  // Absolute INSIDE the slider container (the track is the only in-flow
+  // flex child and spans the full width, so `left: N%` of the container
+  // is N% of the track). Without this the thumb was a static flex item:
+  // the inline `left` from HkColorPicker.tsx is ignored on static
+  // elements and the thumb sat parked after the flex:1 track at the
+  // right edge on every layout, never following the value.
+  position: absolute;
+  top: 50%;
+  left: 0;
+  // Center the thumb ON the value point; hover scale must extend (not
+  // replace) this transform or the thumb would jump back half its size.
+  transform: translate(-50%, -50%);
   display: block;
   width: 14px;
   height: 14px;
@@ -157,7 +169,7 @@
   touch-action: none;
   -webkit-touch-callout: none;
 
-  &:hover { transform: scale(1.15); }
+  &:hover { transform: translate(-50%, -50%) scale(1.15); }
   &:active { cursor: grabbing; }
 }
 

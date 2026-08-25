@@ -2,19 +2,15 @@ import {
   computed,
   defineComponent,
   nextTick,
-  onBeforeUnmount,
   ref,
   watch,
   type PropType,
-  Teleport,
-  Transition,
 } from "vue";
 
 
-import { ChevronDown, Search } from "lucide-vue-next";
-import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
-import { useOverlay } from "../runtime/useOverlay";
+import { ChevronDown } from "lucide-vue-next";
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import HkSelectPanel from "./HkSelectPanel";
 import "./HkSelect.scss";
 
 export interface HkSelectOption {
@@ -23,6 +19,12 @@ export interface HkSelectOption {
   disabled?: boolean;
 }
 
+/**
+ * Dropdown select. The opened panel — desktop popout and mobile sheet —
+ * lives in HkSelectPanel, the dropdown surface custom triggers may also
+ * invoke directly; this component owns the field chrome (label, trigger
+ * button, error) and the option model with keyboard navigation.
+ */
 export default defineComponent({
   name: "HkSelect",
   props: {
@@ -43,69 +45,14 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const isOpen = ref(false);
     const triggerRef = ref<HTMLElement>();
-    const panelRef = ref<HTMLElement>();
+    /** The panel surface (HkSelectPanel) — row queries stay scoped to it. */
+    const panelExpose = ref<{ panelEl: () => HTMLElement | null }>();
     const highlightedIndex = ref(-1);
 
-    // The popout registers with the popup manager so it stacks inside the
-    // shared overlay context (1000+2n) instead of a hardcoded z that later
-    // modals could overtake (select-in-modal used to get covered).
-    const manager = usePopupManager();
-    const handle = ref<PopupHandle | null>(null);
-    const popoutZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
-
-    // Registered with the overlay registry too so closeAll()/isOverlayOpen()
-    // see the open popout (unique per-instance ids — multiple selects can
-    // share the "hk-select" name without corrupting the registry). The
-    // onCloseRequested hook makes a global closeAll() flip this component's
-    // own open ref, which is what actually tears the popout down (the popup
-    // manager unregister happens in the isOpen watcher below).
-    const overlay = useOverlay({
-      name: "hk-select",
-      onCloseRequested: () => { isOpen.value = false; },
-    });
-
-    // Form factor: anchored popout on desktop, bottom sheet on phones.
-    // Crossing the breakpoint mid-flight closes the sheet rather than
-    // leaving it hung between shapes.
+    // Pointer-hover highlighting only applies to the desktop popout —
+    // master's sheet rows never had it (spurious tap-highlight on touch).
     const { isMobile } = useBreakpoint();
     const sheetMode = computed(() => isMobile.value);
-    watch(isMobile, () => {
-      if (isOpen.value) isOpen.value = false;
-    });
-
-    function onDocumentClick(e: MouseEvent) {
-      if (!isOpen.value || sheetMode.value) return;
-      const target = e.target as Node;
-      if (triggerRef.value?.contains(target)) return;
-      if (panelRef.value?.contains(target)) return;
-      isOpen.value = false;
-    }
-
-    watch(isOpen, (open) => {
-      if (open) {
-        handle.value = manager.register("dropdown", false);
-        overlay.open();
-        if (!sheetMode.value) {
-          document.addEventListener("click", onDocumentClick, true);
-        }
-      } else {
-        document.removeEventListener("click", onDocumentClick, true);
-        if (handle.value) {
-          manager.unregister(handle.value.id);
-          handle.value = null;
-        }
-        overlay.close();
-      }
-    });
-
-    onBeforeUnmount(() => {
-      document.removeEventListener("click", onDocumentClick, true);
-      overlay.close();
-      if (handle.value) {
-        manager.unregister(handle.value.id);
-        handle.value = null;
-      }
-    });
 
     const normalizedOptions = computed<HkSelectOption[]>(
       () => props.options ?? [],
@@ -179,6 +126,17 @@ export default defineComponent({
       }
     }
 
+    function scrollToHighlighted() {
+      // Scoped to OUR panel surface — a document-scoped query could hit
+      // another concurrently open panel's rows (HkPopupSelect rows carry
+      // the same data attribute).
+      const root = panelExpose.value?.panelEl();
+      const el = root?.querySelector(
+        `[data-select-index="${highlightedIndex.value}"]`,
+      );
+      el?.scrollIntoView({ block: "nearest" });
+    }
+
     watch(isOpen, (open) => {
       if (open) {
         const idx = normalizedOptions.value.findIndex(
@@ -193,28 +151,8 @@ export default defineComponent({
       }
     });
 
-    function scrollToHighlighted() {
-      const el = panelRef.value?.querySelector(
-        `[data-select-index="${highlightedIndex.value}"]`,
-      );
-      if (el) {
-        el.scrollIntoView({ block: "nearest" });
-      }
-    }
-
     watch(highlightedIndex, () => {
       scrollToHighlighted();
-    });
-
-    const triggerCoords = computed(() => {
-      if (!triggerRef.value) return {};
-      const rect = triggerRef.value.getBoundingClientRect();
-      return {
-        position: "fixed" as const,
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        minWidth: `${rect.width}px`,
-      };
     });
 
     return () => (
@@ -239,85 +177,37 @@ export default defineComponent({
           <span class="hk-select-value">{displayLabel.value || props.placeholder}</span>
           <ChevronDown size={16} class="hk-select-arrow" />
         </button>
-        <Teleport to="body">
-          {sheetMode.value && isOpen.value && (
-            <div
-              class="hk-select-sheet-scrim"
-              style={{ zIndex: popoutZ.value - 1 }}
-              onClick={() => { isOpen.value = false; }}
-            />
-          )}
-          <Transition name="hk-select-sheet" appear>
-            {sheetMode.value && isOpen.value ? (
-              <div
-                ref={panelRef}
-                class="hk-select-sheet-panel"
-                style={{ zIndex: popoutZ.value }}
-                role="dialog"
-                aria-modal="true"
-                tabindex="-1"
-                onKeydown={onPopoutKeydown}
-              >
+        <HkSelectPanel
+          ref={panelExpose}
+          open={isOpen.value}
+          onUpdate:open={(v: boolean) => { isOpen.value = v; }}
+          anchorRef={triggerRef.value ?? null}
+          title={props.label ?? ""}
+          placement="bottom-start"
+          offset={4}
+          onKeydown={onPopoutKeydown}
+        >
+          {slots.default
+            ? slots.default()
+            : normalizedOptions.value.map((opt, i) => (
                 <div
-                  class="hk-select-sheet-grabber"
-                  aria-hidden="true"
-                  onClick={() => { isOpen.value = false; }}
-                />
-                {props.label ? (
-                  <div class="hk-select-sheet-title">{props.label}</div>
-                ) : null}
-                <div class="hk-select-sheet-list">
-                  {slots.default
-                    ? slots.default()
-                    : normalizedOptions.value.map((opt, i) => (
-                        <div
-                          key={opt.value}
-                          class="hk-select-option"
-                          data-highlighted={highlightedIndex.value === i || undefined}
-                          data-select-index={i}
-                          data-checked={opt.value === props.modelValue || undefined}
-                          data-disabled={opt.disabled || undefined}
-                          onClick={() => {
-                            if (!opt.disabled) select(opt.value);
-                          }}
-                        >
-                          <span>{opt.label}</span>
-                        </div>
-                      ))}
+                  key={opt.value}
+                  class="hk-select-option"
+                  data-highlighted={highlightedIndex.value === i || undefined}
+                  data-select-index={i}
+                  data-checked={opt.value === props.modelValue || undefined}
+                  data-disabled={opt.disabled || undefined}
+                  onClick={() => {
+                    if (!opt.disabled) select(opt.value);
+                  }}
+                  {...(isOpen.value && !sheetMode.value
+                    ? { onPointerenter: () => { highlightedIndex.value = i; } }
+                    : {})}
+                >
+                  <span>{opt.label}</span>
                 </div>
-              </div>
-            ) : null}
-          </Transition>
-          {!sheetMode.value && isOpen.value ? (
-            <div
-              ref={panelRef}
-              class="hk-select-popout"
-              style={{ ...triggerCoords.value, zIndex: popoutZ.value }}
-              onKeydown={onPopoutKeydown}
-            >
-              {slots.default
-                ? slots.default()
-                : normalizedOptions.value.map((opt, i) => (
-                    <div
-                      key={opt.value}
-                      class="hk-select-option"
-                      data-highlighted={highlightedIndex.value === i || undefined}
-                      data-select-index={i}
-                      data-checked={opt.value === props.modelValue || undefined}
-                      data-disabled={opt.disabled || undefined}
-                      onClick={() => {
-                        if (!opt.disabled) select(opt.value);
-                      }}
-                      onPointerenter={() => {
-                        highlightedIndex.value = i;
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                    </div>
-                  ))}
-            </div>
-          ) : null}
-        </Teleport>
+              ))}
+        </HkSelectPanel>
         {props.error ? <p class="hk-select-error">{props.error}</p> : null}
       </div>
     );

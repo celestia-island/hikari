@@ -53,6 +53,7 @@ export { default as HScrollContainer } from "./components/HkScrollContainer";
 export { default as HSearchInput } from "./components/HkSearchInput";
 export { default as HSplash } from "./components/HkSplash";
 export { default as HSelect } from "./components/HkSelect";
+export { default as HSelectPanel, type SelectPanelPlacement } from "./components/HkSelectPanel";
 export { default as HSidebar } from "./components/HkSidebar";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";

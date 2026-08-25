@@ -79,6 +79,15 @@ describe("HkColorPicker slider touch drag", () => {
     await nextTick();
     expect(rgb.value.r).toBeGreaterThanOrEqual(188);
     expect(rgb.value.r).toBeLessThanOrEqual(194);
+
+    // The thumb's inline left% must track the channel value: the CSS
+    // (position:absolute) turns this binding into the thumb's on-track
+    // position. Losing either half parks the thumb at the row's edge.
+    const thumb = rSlider.querySelector<HTMLElement>(".hk-color-picker-slider-thumb")!;
+    const pct = parseFloat(thumb.style.left);
+    expect(Number.isFinite(pct)).toBe(true);
+    expect(pct).toBeGreaterThan(73);
+    expect(pct).toBeLessThan(79);
   });
 
   it("stops tracking after pointercancel reclaims the gesture", async () => {

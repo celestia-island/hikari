@@ -14,9 +14,13 @@ import { HkCountdownDigit } from "./HkCountdownDigit";
  * A traffic-light dot plus a two-column-grid version block (panel row,
  * engine row). Hovering/tapping the pill opens an HPopover with the
  * quality icon, latency, retry countdown and protocol/network rows.
- * With `compact` the pill collapses to the bare dot + translated status
- * text (mobile logged-in footers): the version rows move into the
- * popover and ride the aria-label for assistive tech.
+ * With `compact` the pill collapses to the BARE DOT only (mobile
+ * logged-in footers) — no inline status text next to the light; that
+ * label is a standing user directive (asked to be removed repeatedly,
+ * re-introduced once by an upstreaming wave and reported again on
+ * 2026-08-25). The state stays reachable via the tap popover and the
+ * compact-mode aria-label; the version rows likewise move into the
+ * popover.
  *
  * Styling rides the shared `s-status-bar*` classes from
  * `styles/admin-tokens.scss` (the `[data-compact]` rules hide the inline
@@ -81,9 +85,10 @@ export const HkStatusBar = defineComponent({
     },
     standalone: { type: Boolean, default: true },
     /** Collapse the tag to the bare traffic-light dot (mobile logged-in
-     *  footers where the centered tab strip needs the width). The
-     *  version rows move into the hover/tap popover, and the versions
-     *  ride the aria-label for assistive tech. */
+     *  footers where the centered tab strip needs the width). NO inline
+     *  status text renders next to the dot (standing user directive);
+     *  the connection state rides the aria-label, and the version rows
+     *  move into the hover/tap popover. */
     compact: { type: Boolean, default: false },
     onRetry: { type: Function as PropType<() => void>, default: undefined },
     latencyMs: { type: Number, default: null },
@@ -173,12 +178,6 @@ export const HkStatusBar = defineComponent({
             <span class="s-status-bar-dot" style={{
               background: dotColorMap[mode] ?? dotColorMap.disconnected,
             }} />
-            {props.compact && (
-              /* Compact (mobile): surface the translated connection state
-               * next to the dot — the version block alone read as a version
-               * chip with no connection feedback. */
-              <span class="s-status-bar-tag-label" style={{ marginLeft: "2px" }}>{statusText}</span>
-            )}
             <span class="s-status-bar-tag-value">
               <span class="s-status-bar-tag-label">{t("hikari::statusBar.panel", "Panel")}</span>
               <span class="s-status-bar-version">{pv}</span>

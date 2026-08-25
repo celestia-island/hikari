@@ -67,7 +67,7 @@ describe("HkStatusBar", () => {
     expect(panel!.textContent).toContain("HTTP poll");
   });
 
-  it("compact mode collapses the tag to the dot + translated status text", async () => {
+  it("compact mode collapses the tag to the bare dot with no inline status text", async () => {
     const container = mountBar({
       version: "1.2.3",
       engineVersion: "9.8.7",
@@ -79,9 +79,16 @@ describe("HkStatusBar", () => {
 
     const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
     expect(tag.getAttribute("data-compact")).toBe("true");
-    // Translated connection state surfaces next to the dot.
-    const label = tag.querySelector<HTMLElement>(".s-status-bar-tag-label");
-    expect(label?.textContent).toBe("Connected");
+    // Standing user directive: mobile shows ONLY the traffic light — no
+    // translated connection state ("Connected"/"已连接"/…) renders next to
+    // the dot in compact mode. The state rides the aria-label, and the
+    // full status stays reachable through the tap popover.
+    const inlineLabel = tag.querySelector<HTMLElement>(".s-status-bar-tag-label");
+    // The only tag-label left in the tag is the CSS-hidden "Panel" row of
+    // the version block — its text must NOT be a connection state.
+    expect(inlineLabel?.textContent).not.toMatch(/connected|connecting|disconnected/i);
+    // The dot itself renders.
+    expect(tag.querySelector(".s-status-bar-dot"), "traffic-light dot renders").toBeTruthy();
     // The version rows leave the visible pill: they are hidden inline by
     // the [data-compact] CSS (styles/admin-tokens.scss) and the versions
     // ride the aria-label for assistive tech instead.

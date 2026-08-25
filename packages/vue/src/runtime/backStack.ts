@@ -30,6 +30,16 @@
  *   expectation so a stale counter can never swallow a later,
  *   genuine gesture after the guard set changed.
  *
+ * Dead markers (documented trade-off): when a window closes while a
+ * foreign entry sits above it (a router pushed during the window's
+ * lifetime), its markers are buried mid-stack and cannot be removed —
+ * the history API has no delete-entry primitive. They are inert and
+ * self-releasing: the next back that lands on one is treated as plain
+ * navigation (the router re-syncs from the URL) and the marker is
+ * de-marked in place. A back through such a marker can therefore cost
+ * one extra press before the URL actually changes — the unavoidable
+ * price of keeping the router's live state intact.
+ *
  * State markers stamped into history.state:
  *   { __hkBack: <guardId>, __hkBackDepth: <0-based level> }
  */
@@ -202,9 +212,12 @@ function scheduleRewind(record: GuardRecord): void {
   flushScheduled = true;
   setTimeout(() => {
     flushScheduled = false;
-    const candidates = [...rewindQueue];
+    // A record can sit in the rewind queue AND still be registered (the
+    // normalizer's release-then-push), so collect into a Set to visit
+    // each exactly once.
+    const candidates = new Set<GuardRecord>(rewindQueue);
     for (const g of guards) {
-      if (g.count.value > g.desired) candidates.push(g);
+      if (g.count.value > g.desired) candidates.add(g);
     }
     rewindQueue.clear();
     for (const g of candidates) {
@@ -263,7 +276,13 @@ export function createBackGuard(options: BackGuardOptions): BackGuard {
         "",
       );
       record.count.value++;
-      record.desired = record.count.value;
+      // desired advances by ONE level, never snaps to count: a pending
+      // release() (desired = 0, rewind deferred) followed by a same-tick
+      // push — the HkMenu normalizer's "desktop → mobile" flip — must
+      // keep the rewind claim, or the flush sees count == desired and
+      // strands the stale entry (N1). Absolute writes (pop / release /
+      // dispatch landing) remain absolute: they assert a state, not a delta.
+      record.desired++;
       if (record.count.value === 1) {
         // Open order wins over mount order for dispatch priority.
         const i = guards.indexOf(record);

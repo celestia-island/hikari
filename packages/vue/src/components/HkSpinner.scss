@@ -12,7 +12,8 @@
    the circle mid-panel instead of pinning it against the top edge (or,
    uncentered, top-left). Column layout stacks spinner above optional
    text; `gap` then spaces them vertically. Per-site geometry can be
-   tuned with --hk-loading-min-height (or the minHeight prop). */.hk-spinner-centered {
+   tuned with --hk-loading-min-height (or the minHeight prop). */
+.hk-spinner-centered {
   flex-direction: column;
   justify-content: center;
   align-items: center;

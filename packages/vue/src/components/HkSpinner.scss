@@ -5,9 +5,24 @@
   gap: var(--space-8);
 }
 
+/* center — the shared loading-state placement contract: the spinner is
+   centered on BOTH axes relative to whatever panel/page/modal container
+   it is dropped into. The wrapper stretches to fill flexible parents and
+   carries a min-height floor, so even auto-height block parents place
+   the circle mid-panel instead of pinning it against the top edge (or,
+   uncentered, top-left). Column layout stacks spinner above optional
+   text; `gap` then spaces them vertically. Per-site geometry can be
+   tuned with --hk-loading-min-height (or the minHeight prop). */
 .hk-spinner-centered {
+  flex-direction: column;
   justify-content: center;
-  padding: var(--space-32) 0;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 1 0 auto;
+  min-height: var(--hk-loading-min-height, clamp(6rem, 32vh, 14rem));
+  padding: var(--space-24) var(--space-16);
 }
 
 .hk-spinner {

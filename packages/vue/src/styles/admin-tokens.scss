@@ -224,6 +224,20 @@
   .s-status-bar-tag-value {
     display: none;
   }
+
+  /* Invisible touch slop around the pill: the visible light is
+     intentionally tiny, but its tap target must satisfy the same
+     thumb-reach standard as the mobile sheet/confirm controls (the
+     landed effective target is ~35x56px). The tag itself carries
+     position:relative inline, so this pseudo rides along with zero
+     layout shift; vertical slop dominates because corner taps land
+     off-axis, horizontal stays small so the sliver stolen from the
+     footer gap never covers the first tab. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -14px -6px;
+  }
 }
 
 .s-status-bar-version,

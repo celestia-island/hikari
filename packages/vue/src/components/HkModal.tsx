@@ -351,6 +351,21 @@ export default defineComponent({
       }
     }
 
+    /** A press-drag longer than the quiet window would otherwise have
+     *  its flag purged mid-gesture (a mutation frame pins under the
+     *  finger and the rest of the drag can no longer cancel). Moving
+     *  while buttons are held re-stamps freshness; free hovering —
+     *  e.buttons === 0 — must NOT keep a stale flag alive forever. */
+    function onGesturePointermove(e: PointerEvent) {
+      if (e.buttons !== 0) markGesture();
+    }
+
+    /** Touch drags emit touchmove without pointermove on some engines
+     *  (and happy-dom tests synthesize either); belt and suspenders. */
+    function onGestureTouchmove() {
+      markGesture();
+    }
+
     function setupAutoFollow() {
       if (!props.autoFollow || !scrollContainerRef.value) return;
       teardownAutoFollow();
@@ -364,8 +379,10 @@ export default defineComponent({
       const el = scrollContainerRef.value!;
       el.addEventListener("wheel", markGesture, { passive: true });
       el.addEventListener("touchstart", markGesture, { passive: true });
+      el.addEventListener("touchmove", onGestureTouchmove, { passive: true });
       el.addEventListener("keydown", onGestureKeydown);
       el.addEventListener("pointerdown", onGesturePointerdown);
+      el.addEventListener("pointermove", onGesturePointermove, { passive: true });
 
       autoFollowMutationObserver = new MutationObserver(() => {
         if (isFollowing.value && !unmounted) kickSettle();
@@ -387,8 +404,10 @@ export default defineComponent({
       if (el) {
         el.removeEventListener("wheel", markGesture);
         el.removeEventListener("touchstart", markGesture);
+        el.removeEventListener("touchmove", onGestureTouchmove);
         el.removeEventListener("keydown", onGestureKeydown);
         el.removeEventListener("pointerdown", onGesturePointerdown);
+        el.removeEventListener("pointermove", onGesturePointermove);
       }
       cancelSettle();
       isFollowing.value = true;

@@ -1,0 +1,55 @@
+/* HkAltSignIn — alternative sign-in trigger row + entry panel.
+   Token-driven only; mirrors the .s-auth-footer type/color grammar so the
+   row sits inside an auth card without breaking its rhythm. */
+
+.hk-alt-signin {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+.hk-alt-signin__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  padding: var(--space-4, 0.25rem) 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--hi-color-muted, #666);
+  transition:
+    color var(--duration-normal, 0.3s) ease,
+    opacity var(--duration-normal, 0.3s) ease;
+}
+
+.hk-alt-signin__trigger:hover:not(:disabled) {
+  color: var(--hi-color-text-secondary, #999);
+}
+
+.hk-alt-signin__trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Decorative rules flanking the label give the collapsed row the
+   "section divider" read while staying a single focusable button. */
+.hk-alt-signin__rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--hi-color-border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.hk-alt-signin__label {
+  flex: 0 0 auto;
+}
+
+.hk-alt-signin__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+  min-width: 12rem;
+  padding: var(--space-4, 0.25rem) var(--space-4, 0.25rem);
+}

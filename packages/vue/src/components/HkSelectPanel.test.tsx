@@ -14,7 +14,7 @@ afterEach(() => {
   // finish and teleported panels linger on <body> — strip them or the
   // next test's querySelector sees this test's panel.
   document.body
-    .querySelectorAll(".hk-popover-panel, .hk-popover-scrim, .hk-select-sheet-panel, .hk-select-sheet-scrim")
+    .querySelectorAll(".hk-popover-panel, .hk-popover-scrim, .hk-select-popout, .hk-select-sheet-panel, .hk-select-sheet-scrim")
     .forEach((el) => el.remove());
   setViewport(1200);
 });
@@ -275,5 +275,105 @@ describe("HkSelectPanel custom invocation", () => {
     await nextTick();
     const flipped = Number.parseInt(popout.style.top, 10);
     expect(flipped).toBeGreaterThan(8);
+  });
+});
+
+describe("HkSelectPanel back-guard (window-first back priority)", () => {
+  /** nextTick + one macrotask: lets deferred rewinds (setTimeout 0) flush. */
+  async function settle(): Promise<void> {
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+  }
+
+  /** Wait until pred() holds (history navigation settles asynchronously). */
+  async function until(pred: () => boolean, ms = 500): Promise<void> {
+    const deadline = Date.now() + ms;
+    while (!pred() && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await nextTick();
+    }
+  }
+
+  it("back closes the open panel instead of navigating the page", async () => {
+    const { open, container } = mountPanel();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>("button")!.click();
+    await settle();
+
+    // The open panel owns one marked history entry above the page base.
+    expect(
+      (window.history.state as Record<string, unknown>)?.__hkBack,
+    ).toEqual(expect.any(String));
+
+    // Browser/system back: closes the panel, stays on the page.
+    window.history.back();
+    await until(() => open.value === false);
+    await until(() => window.history.state === null);
+    expect(open.value).toBe(false);
+  });
+
+  it("closing via outside click rewinds the pushed entry (no dead back)", async () => {
+    const { open, container } = mountPanel();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>("button")!.click();
+    await settle();
+    expect(
+      (window.history.state as Record<string, unknown>)?.__hkBack,
+    ).toEqual(expect.any(String));
+
+    // An ordinary close (outside click) rewinds the entry so no dead
+    // back remains — assert BOTH the logical close and the history base,
+    // so a broken rewind fails loudly instead of timing out silently.
+    const outside = document.createElement("div");
+    document.body.appendChild(outside);
+    outside.click();
+    outside.remove();
+    await until(() => open.value === false);
+    expect(open.value).toBe(false);
+    await until(() => window.history.state === null);
+    expect(window.history.state).toBeNull();
+  });
+
+  it("unmounting an open panel rewinds its entry (no stranded marker)", async () => {
+    const { container } = mountPanel();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>("button")!.click();
+    await settle();
+    expect(
+      (window.history.state as Record<string, unknown>)?.__hkBack,
+    ).toEqual(expect.any(String));
+
+    // Unmount (e.g. route change) must not strand a dead marker entry.
+    const app = mounts.pop()!;
+    app.unmount();
+    await settle();
+    await until(() => window.history.state === null);
+    expect(window.history.state).toBeNull();
+  });
+
+  it("a same-tick close→reopen keeps the reopened panel guarded", async () => {
+    const { open, container } = mountPanel();
+    await nextTick();
+    container.querySelector<HTMLButtonElement>("button")!.click();
+    await settle();
+
+    // Close, let the watcher's close branch run (release claims the
+    // rewind), then reopen before the deferred flush fires — the flush
+    // must not consume the freshly pushed entry: after it settles the
+    // reopened panel still owns exactly one marked entry.
+    open.value = false;
+    await nextTick();
+    open.value = true;
+    await settle();
+    const st = window.history.state as Record<string, unknown> | null;
+    expect(st?.__hkBack).toEqual(expect.any(String));
+
+    // And the back gesture still closes it (not the page).
+    window.history.back();
+    await until(() => open.value === false);
+    expect(open.value).toBe(false);
+    await until(() => window.history.state === null);
+    expect(window.history.state).toBeNull();
   });
 });

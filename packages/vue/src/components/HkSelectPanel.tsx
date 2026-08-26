@@ -13,6 +13,7 @@ import {
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import { createBackGuard } from "../runtime/backStack";
 import "./HkSelect.scss";
 
 /**
@@ -27,6 +28,12 @@ import "./HkSelect.scss";
  * BEING a dropdown. This component is that surface: give it an anchor
  * element and arbitrary row content, and it behaves exactly like the panel
  * a select would open.
+ *
+ * The panel is one WINDOW layer for the back gesture (the shared
+ * window-first back priority — HkModal/HkMenu convention): opening pushes
+ * one marked history entry, so the first browser/system back closes the
+ * panel instead of navigating the page; any ordinary close (row click,
+ * Escape, outside click, scrim) rewinds the entry so no dead back remains.
  *
  * HkSelect itself delegates here (bottom-start + matched trigger width), so
  * the two can never drift apart. Content is a plain default slot; keyboard
@@ -84,6 +91,15 @@ export default defineComponent({
     const { isMobile } = useBreakpoint();
     const sheetMode = computed(() => props.sheetOnMobile && isMobile.value);
 
+    // Window-first back priority (HkModal convention): while this panel is
+    // the topmost window, the back gesture closes it instead of navigating
+    // the page. The service owns all history bookkeeping — push on open,
+    // rewind on close — so the panel is exactly one back layer wherever it
+    // is opened (real dropdown or custom invocation, popout or sheet).
+    const backGuard = createBackGuard({
+      onBack: () => { close(); },
+    });
+
     // Crossing the mobile/desktop breakpoint mid-flight would leave a sheet
     // hung between two form factors — close and let the user reopen in the
     // shape the viewport now calls for (HkSelect's historic behavior).
@@ -133,6 +149,13 @@ export default defineComponent({
         if (open) {
           handle.value = manager.register("dropdown", false);
           overlay.open();
+          // Release-then-push (the HkMenu normalizer form): a same-tick
+          // close→reopen must not leave the reopened panel unguarded —
+          // release() keeps its rewind claim (desired snaps to 0) and the
+          // following push() re-advances desired by one, so the pending
+          // flush rewinds exactly to the fresh entry instead of past it.
+          if (backGuard.entries > 0) backGuard.release();
+          backGuard.push();
           if (!sheetMode.value) {
             document.addEventListener("click", onDocumentClick, true);
           }
@@ -140,6 +163,7 @@ export default defineComponent({
         } else {
           document.removeEventListener("click", onDocumentClick, true);
           window.removeEventListener("resize", onResize);
+          backGuard.release();
           if (handle.value) {
             manager.unregister(handle.value.id);
             handle.value = null;
@@ -157,6 +181,7 @@ export default defineComponent({
       document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener("resize", onResize);
       overlay.close();
+      backGuard.destroy();
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;

@@ -18,6 +18,11 @@
   justify-content: center;
   align-items: center;
   width: 100%;
+  /* Block-formatting parents have no flex distribution: height:100%
+     claims their definite height directly (flex parents instead satisfy
+     it via stretch/grow below), while auto-height parents treat it as
+     auto and fall back to the min-height floor. */
+  height: 100%;
   box-sizing: border-box;
   align-self: stretch;
   flex: 1 0 auto;

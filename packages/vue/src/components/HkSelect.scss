@@ -98,7 +98,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4);
+  /* 8px panel inset (was 4px): option hover blocks used to run almost
+     edge-to-edge, reading as a glued full-width strip on touch widths. */
+  padding: var(--space-8);
   border-radius: var(--radius-md);
   overflow-y: auto;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
@@ -222,6 +224,10 @@
 .hk-select-sheet-list {
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Side insets so the option blocks (full-row hover pills) read as
+     cards inside the sheet instead of an edge-to-edge strip glued to
+     both screen sides — matching the popover family's breathing room. */
+  padding-inline: var(--space-16);
   padding-bottom: var(--space-16);
 
   .hk-select-option {

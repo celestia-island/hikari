@@ -101,6 +101,9 @@ export default defineComponent({
      * which is why the flag stays set until consumed or cleared.
      */
     let gestureDirty = false;
+    /** performance.now() of the last gesture that raised the flag —
+     *  drives the settle-frame quiet window below. */
+    let gestureAt = 0;
     const scrollContainerRef = ref<HTMLElement>();
 
     /**
@@ -238,6 +241,8 @@ export default defineComponent({
 
     const FOLLOW_THRESHOLD = 32;
     const SETTLE_FRAMES = 4;
+    /** Pending pin frames yield to gestures younger than this. */
+    const GESTURE_QUIET_MS = 250;
 
     let settleRemaining = 0;
     let settleHandle: AnimationHandle | null = null;
@@ -252,9 +257,19 @@ export default defineComponent({
         settleRemaining = 0;
         return;
       }
-      pinToBottom();
-      // Programmatic movement never counts as user intent.
+      if (gestureDirty && performance.now() - gestureAt < GESTURE_QUIET_MS) {
+        // A live gesture is in flight: yield this frame to it and let
+        // the scroll handler judge the resulting position. Stale flags
+        // older than the quiet window fall through and are consumed
+        // below — no stale-flag stall, no fight against the finger.
+        if (settleRemaining > 0) {
+          settleRemaining--;
+          settleHandle = scheduleFrame(runSettleFrame);
+        }
+        return;
+      }
       gestureDirty = false;
+      pinToBottom();
       updateOverflow();
       if (settleRemaining > 0) {
         settleRemaining--;
@@ -317,16 +332,23 @@ export default defineComponent({
 
     function markGesture() {
       gestureDirty = true;
+      gestureAt = performance.now();
     }
 
     function onGestureKeydown(e: KeyboardEvent) {
-      if (GESTURE_KEYS.has(e.key)) gestureDirty = true;
+      if (GESTURE_KEYS.has(e.key)) {
+        gestureDirty = true;
+        gestureAt = performance.now();
+      }
     }
 
     /** Press-and-drag covers mouse/touch before the drag starts; the
      *  flag stays sticky so post-fling momentum still cancels follow. */
     function onGesturePointerdown(e: PointerEvent) {
-      if (e.button === 0) gestureDirty = true;
+      if (e.button === 0) {
+        gestureDirty = true;
+        gestureAt = performance.now();
+      }
     }
 
     function setupAutoFollow() {

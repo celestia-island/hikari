@@ -44,6 +44,7 @@
     "hikari::toast.copy": "Copy",
     "hikari::toast.close": "Close",
     "hikari::modal.auto": "Auto",
+    "hikari::modal.jumpToLatest": "Back to latest",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Enter your password",

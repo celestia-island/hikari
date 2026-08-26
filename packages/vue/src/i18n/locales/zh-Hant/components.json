@@ -44,6 +44,7 @@
     "hikari::toast.copy": "複製",
     "hikari::toast.close": "關閉",
     "hikari::modal.auto": "自動",
+    "hikari::modal.jumpToLatest": "回到最新",
     "hikari::scrollContainer.auto": "自動",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "輸入密碼",

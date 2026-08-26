@@ -44,6 +44,7 @@
     "hikari::toast.copy": "Copiar",
     "hikari::toast.close": "Cerrar",
     "hikari::modal.auto": "Automático",
+    "hikari::modal.jumpToLatest": "Ir al final",
     "hikari::scrollContainer.auto": "Automático",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Introduzca la contraseña",

@@ -1,10 +1,10 @@
 import {
   computed,
   defineComponent,
-  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
+  shallowRef,
   Teleport,
   Transition,
   watch,
@@ -17,7 +17,9 @@ import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
+import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import HButton from "./HkButton";
+import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
 
 export interface ModalAction {
@@ -89,7 +91,16 @@ export default defineComponent({
     // Auto-follow state
     let autoFollowMutationObserver: MutationObserver | null = null;
     const isFollowing = ref(true);
-    let userScrolled = false;
+    /** Body actually scrolls (drives the "Auto" tag visibility). */
+    const hasOverflow = shallowRef(false);
+    /**
+     * Sticky user-intent flag. Set by wheel / touch / drag-press /
+     * scroll-key gestures and consumed by the scroll handler; cleared
+     * by every programmatic movement (which is never user intent).
+     * Fling momentum keeps firing scroll events without new touches,
+     * which is why the flag stays set until consumed or cleared.
+     */
+    let gestureDirty = false;
     const scrollContainerRef = ref<HTMLElement>();
 
     /**
@@ -217,30 +228,105 @@ export default defineComponent({
     }
 
     // --- Auto-follow ---
+    //
+    // Follow policy: ONLY real user motion can cancel following.
+    // Streaming content is pinned with direct scrollTop assignments
+    // drained across a few animation frames (never smooth-scroll
+    // chains), and every programmatic movement clears the sticky
+    // gesture flag — so mid-flight scroll events cannot flip isFollowing
+    // back and forth (the old flicker).
 
-    function scrollToBottom(smooth = false) {
+    const FOLLOW_THRESHOLD = 32;
+    const SETTLE_FRAMES = 4;
+
+    let settleRemaining = 0;
+    let settleHandle: AnimationHandle | null = null;
+
+    function runSettleFrame() {
+      settleHandle = null;
+      // A cancelled follow must not be fought by pending pins: drained
+      // frames bail out immediately (resumeJumpLatest re-kicks). The
+      // reset above must stay first so kickSettle() never sees a stale,
+      // already-consumed handle — that would deadlock all future pins.
+      if (!isFollowing.value) {
+        settleRemaining = 0;
+        return;
+      }
+      pinToBottom();
+      // Programmatic movement never counts as user intent.
+      gestureDirty = false;
+      updateOverflow();
+      if (settleRemaining > 0) {
+        settleRemaining--;
+        settleHandle = scheduleFrame(runSettleFrame);
+      }
+    }
+
+    function kickSettle() {
+      settleRemaining = SETTLE_FRAMES;
+      if (settleHandle) return;
+      settleHandle = scheduleFrame(runSettleFrame);
+    }
+
+    function cancelSettle() {
+      settleHandle?.disconnect();
+      settleHandle = null;
+      settleRemaining = 0;
+    }
+
+    /** Direct assignment — no smooth scrolling, no intermediate events. */
+    function pinToBottom() {
       const el = scrollContainerRef.value;
       if (!el) return;
-      el.scrollTo({
-        top: el.scrollHeight,
-        behavior: smooth ? "smooth" : "instant" as ScrollBehavior,
-      });
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function updateOverflow() {
+      const el = scrollContainerRef.value;
+      if (!el) return;
+      hasOverflow.value = el.scrollHeight > el.clientHeight + 4;
     }
 
     function onBodyScroll() {
       if (!props.autoFollow) return;
       const el = scrollContainerRef.value;
       if (!el) return;
-      const threshold = 32;
+      updateOverflow();
       const distanceFromBottom =
         el.scrollHeight - el.scrollTop - el.clientHeight;
-      if (distanceFromBottom > threshold) {
-        userScrolled = true;
-        isFollowing.value = false;
-      } else {
-        userScrolled = false;
+      if (distanceFromBottom > FOLLOW_THRESHOLD) {
+        // Without a sticky gesture flag nothing cancels here — streaming
+        // pins no longer flash anything.
+        if (gestureDirty) {
+          gestureDirty = false;
+          isFollowing.value = false;
+        }
+      } else if (!isFollowing.value) {
+        // User returned near the bottom (or a pin landed): re-arm naturally.
+        gestureDirty = false;
         isFollowing.value = true;
       }
+      // Sub-threshold events while still following must NOT touch the
+      // flag: a slow upward drag emits many <32px scrolls, and eating
+      // the flag on any of them would make cancellation impossible.
+    }
+
+    const GESTURE_KEYS = new Set([
+      "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " ",
+    ]);
+
+    function markGesture() {
+      gestureDirty = true;
+    }
+
+    function onGestureKeydown(e: KeyboardEvent) {
+      if (GESTURE_KEYS.has(e.key)) gestureDirty = true;
+    }
+
+    /** Press-and-drag covers mouse/touch before the drag starts; the
+     *  flag stays sticky so post-fling momentum still cancels follow. */
+    function onGesturePointerdown(e: PointerEvent) {
+      if (e.button === 0) gestureDirty = true;
     }
 
     function setupAutoFollow() {
@@ -248,16 +334,22 @@ export default defineComponent({
       teardownAutoFollow();
 
       isFollowing.value = true;
-      userScrolled = false;
-      scrollToBottom(false);
+      gestureDirty = false;
+      pinToBottom();
+      updateOverflow();
+      kickSettle();
+
+      const el = scrollContainerRef.value!;
+      el.addEventListener("wheel", markGesture, { passive: true });
+      el.addEventListener("touchstart", markGesture, { passive: true });
+      el.addEventListener("keydown", onGestureKeydown);
+      el.addEventListener("pointerdown", onGesturePointerdown);
 
       autoFollowMutationObserver = new MutationObserver(() => {
-        if (isFollowing.value && !unmounted) {
-          nextTick(() => scrollToBottom(true));
-        }
+        if (isFollowing.value && !unmounted) kickSettle();
       });
 
-      autoFollowMutationObserver.observe(scrollContainerRef.value, {
+      autoFollowMutationObserver.observe(el, {
         childList: true,
         subtree: true,
         characterData: true,
@@ -269,15 +361,24 @@ export default defineComponent({
         autoFollowMutationObserver.disconnect();
         autoFollowMutationObserver = null;
       }
+      const el = scrollContainerRef.value;
+      if (el) {
+        el.removeEventListener("wheel", markGesture);
+        el.removeEventListener("touchstart", markGesture);
+        el.removeEventListener("keydown", onGestureKeydown);
+        el.removeEventListener("pointerdown", onGesturePointerdown);
+      }
+      cancelSettle();
       isFollowing.value = true;
-      userScrolled = false;
+      hasOverflow.value = false;
+      gestureDirty = false;
     }
 
-    function resumeAutoFollow() {
+    function resumeJumpLatest() {
       if (!props.autoFollow) return;
       isFollowing.value = true;
-      userScrolled = false;
-      scrollToBottom(true);
+      pinToBottom();
+      kickSettle();
     }
 
     // --- Lifecycle ---
@@ -456,24 +557,30 @@ export default defineComponent({
                           : slots.default?.()}
                       </div>
                     </div>
-                    {props.autoFollow && !isFollowing.value && (
-                      <div
-                        class="hk-modal-autofollow-bar"
-                        onClick={resumeAutoFollow}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          width="14"
-                          height="14"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                        <span>{t("hikari::modal.auto", "Auto")}</span>
-                      </div>
+                    {props.autoFollow && (
+                      <>
+                        {/* "Auto" marks ACTIVE follow: pinned at bottom
+                            with a body that overflows. Cancelled follow
+                            swaps it for the jump-back FAB instead. */}
+                        {hasOverflow.value && isFollowing.value && (
+                          <span
+                            class="hk-modal-autofollow-tag"
+                            aria-hidden="true"
+                          >
+                            {t("hikari::modal.auto", "Auto")}
+                          </span>
+                        )}
+                        {!isFollowing.value && (
+                          <HFab
+                            class="hk-modal-jump"
+                            positioning="absolute"
+                            corner="bottom-right"
+                            icon="ArrowDown"
+                            ariaLabel={t("hikari::modal.jumpToLatest", "Back to latest")}
+                            onClick={resumeJumpLatest}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                   {renderFooter()}

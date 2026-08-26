@@ -19,6 +19,7 @@ export { default as HDivider } from "./components/HkDivider";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HExpansionPanel } from "./components/HkExpansionPanel";
+export { default as HFab, type HFabAction } from "./components/HkFab";
 export { default as HIcon } from "./components/HkIcon";
 export { default as HIconButton } from "./components/HkIconButton";
 export { default as HInput } from "./components/HkInput";

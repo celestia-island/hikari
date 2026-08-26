@@ -44,6 +44,7 @@
     "hikari::toast.copy": "نسخ",
     "hikari::toast.close": "إغلاق",
     "hikari::modal.auto": "تلقائي",
+    "hikari::modal.jumpToLatest": "الانتقال إلى الأحدث",
     "hikari::scrollContainer.auto": "تلقائي",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "أدخل كلمة المرور",

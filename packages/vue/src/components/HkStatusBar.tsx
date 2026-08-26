@@ -100,6 +100,15 @@ export const HkStatusBar = defineComponent({
     const popupOpen = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
     let closeTimer: ReturnType<typeof setTimeout> | null = null;
+    // Tap-vs-gesture discrimination for the touch activation path below.
+    let touchStartedAt = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    // Whether the CURRENTLY open popover was opened by a touch tap
+    // (instead of a mouse hover). Touch has no hover model, so such a
+    // popover must close on an outside tap rather than on mouseleave —
+    // otherwise it would hang open forever on phones.
+    const touchOpenedPopover = ref(false);
 
     const dotColorMap: Record<string, string> = {
       connected: "rgb(var(--color-success))",
@@ -112,19 +121,88 @@ export const HkStatusBar = defineComponent({
       if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
       popupOpen.value = true;
     }
+    function closePopover() {
+      popupOpen.value = false;
+      // Clear the touch-origin marker on EVERY close path so hybrid
+      // devices never carry it into a later hover-open popover.
+      touchOpenedPopover.value = false;
+    }
     function onTagLeave() {
-      closeTimer = setTimeout(() => { popupOpen.value = false; }, 250);
+      closeTimer = setTimeout(() => { closePopover(); }, 250);
     }
     function onPopupEnter() {
       if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
     }
     function onPopupLeave() {
-      popupOpen.value = false;
+      closePopover();
     }
+    // Belt-and-braces echo guard: preventDefault stops the synthesized
+    // mouse chain on every mainstream engine, but should one slip
+    // through anyway, a synthetic click must never double-fire the
+    // retry behind a touch tap. Real user clicks always arrive later
+    // than this short window.
+    let touchEchoGuardUntil = 0;
     function onTagClick() {
+      if (Date.now() < touchEchoGuardUntil) return;
       if (props.connectionStatus !== "connected") {
         props.onRetry?.();
       }
+    }
+
+    // ── Touch activation ────────────────────────────────────────────
+    // Mobile tap-to-retry used to ride the SYNTHESIZED mouse chain
+    // (touchend → mouseenter → click → mouseleave), which browsers may
+    // reorder or drop around mid-gesture DOM mutations — the popover
+    // flashing open could swallow the very click that should have
+    // re-triggered the reconnect. The pointer path now OWNS taps:
+    // preventDefault stops the synthesis entirely, so one touchend
+    // performs the action deterministically. Mouse hover and keyboard
+    // behavior are untouched.
+    function onTouchStart(e: TouchEvent) {
+      const t0 = e.touches[0];
+      if (!t0) return;
+      touchStartedAt = Date.now();
+      touchStartX = t0.clientX;
+      touchStartY = t0.clientY;
+    }
+
+    // A canceled gesture (palm, system gesture edge, incoming call)
+    // invalidates the pending tap bookkeeping.
+    function onTouchCancel() {
+      touchStartedAt = 0;
+    }
+
+    function onTouchEnd(e: TouchEvent) {
+      // Only single-finger taps count; continuation touches of
+      // multi-finger gestures fall through untouched.
+      if (e.touches.length > 0) return;
+      const t0 = e.changedTouches[0];
+      if (!t0 || touchStartedAt === 0) return;
+      // A scroll/flick that happens to end over the element is not a
+      // tap: require near-zero travel and a short press.
+      const moved = Math.hypot(t0.clientX - touchStartX, t0.clientY - touchStartY);
+      const heldMs = Date.now() - touchStartedAt;
+      touchStartedAt = 0;
+      if (moved > 12 || heldMs > 900) return;
+      if (e.cancelable) e.preventDefault();
+
+      if (popupOpen.value && touchOpenedPopover.value) {
+        // Tapping again toggles the details popover closed. The echo
+        // guard re-arms here too: a late synthetic click after this
+        // close must not fire an unguarded retry.
+        closePopover();
+        touchEchoGuardUntil = Date.now() + 400;
+        return;
+      }
+      touchOpenedPopover.value = true;
+      popupOpen.value = true;
+      // The whole point: a red light answers a tap with an immediate
+      // reconnect attempt plus visible feedback — the popover shows the
+      // probing/retrying rows instead of leaving a seemingly dead dot.
+      // The echo guard arms only AFTER the real activation so it blocks
+      // late synthetic clicks, never the tap itself.
+      onTagClick();
+      touchEchoGuardUntil = Date.now() + 400;
     }
 
     return () => {
@@ -168,6 +246,9 @@ export const HkStatusBar = defineComponent({
             onMouseenter={onTagEnter}
             onMouseleave={onTagLeave}
             onClick={onTagClick}
+            onTouchstart={onTouchStart}
+            onTouchend={onTouchEnd}
+            onTouchcancel={onTouchCancel}
             onKeydown={(e: KeyboardEvent) => {
               if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTagClick(); }
             }}
@@ -195,7 +276,11 @@ export const HkStatusBar = defineComponent({
             onUpdate:modelValue={(v: boolean) => { popupOpen.value = v; }}
             placement="top-start"
             backdrop={false}
-            closeOnBackdrop={false}
+            // Touch has no hover model: a tap-opened popover would only
+            // close via the mouseleave timer that never fires, so it
+            // dismisses on an outside tap instead. Hover-opened
+            // (desktop) popovers keep the leave-timer semantics.
+            closeOnBackdrop={touchOpenedPopover.value}
             anchorRef={anchorRef.value}
           >
             <div

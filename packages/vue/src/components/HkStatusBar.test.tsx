@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import { HkStatusBar } from "./HkStatusBar";
@@ -93,5 +93,85 @@ describe("HkStatusBar", () => {
     // the [data-compact] CSS (styles/admin-tokens.scss) and the versions
     // ride the aria-label for assistive tech instead.
     expect(tag.getAttribute("aria-label")).toBe("Connected · 1.2.3 · 9.8.7");
+  });
+
+  it("a touch tap on a disconnected light fires onRetry exactly once and opens the popover", async () => {
+    const onRetry = vi.fn();
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "disconnected",
+      connectionInfo: INFO,
+      compact: true,
+      onRetry,
+    });
+    await nextTick();
+    const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
+
+    // Simulated one-finger tap without any synthesized mouse events —
+    // the degenerate case this fix exists for (browsers dropping the
+    // click half of the synthesis around mid-gesture DOM mutations).
+    const touch = { clientX: 12, clientY: 700 } as Touch;
+    const tap = () => {
+      tag.dispatchEvent(Object.assign(new Event("touchstart", { bubbles: true, cancelable: true }), {
+        touches: [touch],
+      }));
+      return Object.assign(new Event("touchend", { bubbles: true, cancelable: true }), {
+        touches: [],
+        changedTouches: [touch],
+      });
+    };
+    const endEvent = tap();
+    const preventDefault = vi.spyOn(endEvent, "preventDefault");
+    tag.dispatchEvent(endEvent);
+    await nextTick();
+
+    expect(onRetry, "tap retriggers the reconnect").toHaveBeenCalledTimes(1);
+    expect(preventDefault, "synthesized mouse chain is suppressed").toHaveBeenCalled();
+    // The popover opens so the tap gets visible feedback instead of a
+    // seemingly dead dot; touch-opened popovers dismiss outside.
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel, "popover opens for feedback").toBeTruthy();
+    expect(panel!.textContent).toContain("Protocol");
+
+    // A late synthetic click slipping through the suppression must not
+    // double-fire within the dedup window.
+    tag.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    // A second tap toggles the popover closed WITHOUT another retry.
+    tag.dispatchEvent(tap());
+    await nextTick();
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    // happy-dom never fires transitionend, so the panel may still be
+    // mid leave-animation here; assert closure semantics (leaving or
+    // gone), not DOM removal timing.
+    const tail = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    if (tail) {
+      expect(tail.className).toContain("hk-popover-leave");
+    }
+  });
+
+  it("a scroll-like touch ending over the tag does not retry", async () => {
+    const onRetry = vi.fn();
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "disconnected",
+      connectionInfo: INFO,
+      compact: true,
+      onRetry,
+    });
+    await nextTick();
+    const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
+    const start = { clientX: 12, clientY: 400 } as Touch;
+    tag.dispatchEvent(Object.assign(new Event("touchstart", { bubbles: true, cancelable: true }), {
+      touches: [start],
+    }));
+    tag.dispatchEvent(Object.assign(new Event("touchend", { bubbles: true, cancelable: true }), {
+      touches: [],
+      changedTouches: [{ clientX: 14, clientY: 610 } as Touch],
+    }));
+    await nextTick();
+    expect(onRetry, "flick is not a tap").not.toHaveBeenCalled();
+    expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
   });
 });

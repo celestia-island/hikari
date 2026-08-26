@@ -30,7 +30,7 @@ export default defineComponent({
         : null,
     );
     const centerStyle = computed(() => {
-      if (!props.center || props.minHeight == null) return null;
+      if (!props.center || props.minHeight == null || props.minHeight === "") return null;
       const v =
         typeof props.minHeight === "number" ? `${props.minHeight}px` : props.minHeight;
       return { "--hk-loading-min-height": v };

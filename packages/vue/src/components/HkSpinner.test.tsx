@@ -45,6 +45,16 @@ describe("HkSpinner", () => {
     expect(inline.style.getPropertyValue("--hk-loading-min-height")).toBe("");
   });
 
+  it("centered mode without minHeight leaves the floor fallback in place", () => {
+    const c = mount(h(HkSpinner, { center: true }));
+    const wrapper = c.querySelector(".hk-spinner-wrapper") as HTMLElement;
+    expect(wrapper.style.getPropertyValue("--hk-loading-min-height")).toBe("");
+
+    const empty = mount(h(HkSpinner, { center: true, minHeight: "" }));
+    const emptyWrapper = empty.querySelector(".hk-spinner-wrapper") as HTMLElement;
+    expect(emptyWrapper.style.getPropertyValue("--hk-loading-min-height")).toBe("");
+  });
+
   it("stacks optional text below the wheel", () => {
     const c = mount(h(HkSpinner, { center: true, text: "Loading" }));
     const text = c.querySelector(".hk-spinner-text") as HTMLElement;

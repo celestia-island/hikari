@@ -1,20 +1,42 @@
-import { computed, defineComponent, onMounted, ref, type PropType } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, ref, watch, type PropType } from "vue";
 import { Check, ChevronDown, Monitor, Moon, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
-import { HDivider, HPopover, useI18n, useTheme, type PopupPlacement, type ThemeId } from "@celestia-island/hikari";
+import {
+  DEFAULT_GEO_LOCATION,
+  HDivider,
+  HPopover,
+  getGeolocation,
+  solarAltitude,
+  useI18n,
+  useTheme,
+  type PopupPlacement,
+  type ThemeId,
+} from "@celestia-island/hikari";
 
 import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
+import HkSegmented, { type HkSegmentedOption } from "./HkSegmented";
 import "./HkThemeToggle.scss";
 
+/** One shared geo resolution per page load (component may mount often). */
+let geoPromise: Promise<{ lat: number; lng: number }> | null = null;
+function geoOnce(): Promise<{ lat: number; lng: number }> {
+  geoPromise ??= getGeolocation();
+  return geoPromise;
+}
 
 /**
  * HkThemeToggle — light/dark/auto theme control over hikari's theme engine.
  *
  * Composes hikari's `useTheme()` (theme presets + custom themes + mode
  * persistence); it does NOT reimplement the theme engine. A main button
- * cycles light/dark (auto keeps a Monitor glyph); the popover offers
- * explicit Light/Dark/Auto modes, preset/custom theme selection (custom
- * themes are removable), and opens HColorSchemeDialog to create a new
- * custom scheme.
+ * cycles light/dark (auto keeps a Monitor glyph); the popover offers the
+ * color-mode group and preset/custom theme selection (custom themes are
+ * removable), and opens HColorSchemeDialog to create a new custom scheme.
+ *
+ * Color-mode group: a shared HkSegmented button group (Auto | Light |
+ * Dark). In AUTO mode the Light/Dark halves are covered by a passive
+ * solar-altitude readout strip rendered in the segmented typography: it
+ * looks non-interactive but pressing it resolves to manual, selecting
+ * whichever side auto currently resolves to (day → light, night → dark).
  */
 export const HkThemeToggle = defineComponent({
   name: "HkThemeToggle",
@@ -41,6 +63,53 @@ export const HkThemeToggle = defineComponent({
     const triggerRef = ref<HTMLElement | null>(null);
     const schemeDialogOpen = ref(false);
 
+    // ── Solar-altitude readout (auto-mode overlay) ──────────────────────
+    const geo = ref<{ lat: number; lng: number }>({ ...DEFAULT_GEO_LOCATION });
+    const altTick = ref(0);
+
+    let altTimer: ReturnType<typeof setInterval> | null = null;
+    watch(menuOpen, (open) => {
+      if (open) {
+        if (!altTimer) altTimer = setInterval(() => { altTick.value += 1; }, 60000);
+      } else if (altTimer) {
+        clearInterval(altTimer);
+        altTimer = null;
+      }
+    });
+    onUnmounted(() => {
+      if (altTimer) clearInterval(altTimer);
+    });
+
+    onMounted(() => {
+      // Fire-and-forget: failures keep the timezone fallback and are silent
+      // (the aborting test/happy-dom teardown must not surface rejections).
+      // Memoized per module so remounts (menu reopen, route hops) reuse the
+      // resolved location instead of refetching the geo API.
+      geoOnce()
+        .then((g) => { geo.value = g; })
+        .catch(() => {});
+    });
+
+    /** Current sun altitude formatted like "+32.5°". */
+    const altitudeText = computed(() => {
+      void menuOpen.value;
+      void altTick.value;
+      void geo.value;
+      const alt = solarAltitude(geo.value.lat, geo.value.lng, new Date());
+      return `${alt >= 0 ? "+" : ""}${alt.toFixed(1)}°`;
+    });
+
+    /** Glyph hints which side a press will land on: sun while auto
+     *  resolves light, moon once dusk/night flip it to dark. */
+    const altitudeNight = computed(() => {
+      void menuOpen.value;
+      void altTick.value;
+      void geo.value;
+      return effectiveMode.value === "dark";
+    });
+
+    const isAutoMode = computed(() => currentMode.value === "system");
+
     const modeLabel = computed(() => {
       const map: Record<string, string> = {
         system: t("hikari::theme.modeAuto"),
@@ -50,11 +119,37 @@ export const HkThemeToggle = defineComponent({
       return map[currentMode.value] ?? currentMode.value;
     });
 
-    const modeOptions = computed(() => [
-      { key: "light", label: t("hikari::theme.modeLight"), icon: () => <Sun size={12} /> },
-      { key: "dark", label: t("hikari::theme.modeDark"), icon: () => <Moon size={12} /> },
-      { key: "system", label: t("hikari::theme.modeAuto"), icon: () => <Monitor size={12} /> },
-    ]);
+    /**
+     * Fresh option objects (and fresh icon vnodes) on every call — never
+     * cache icon vnodes across renders, or closing/reopening the popover
+     * would re-mount the same vnode instances.
+     */
+    function modeOptions(): HkSegmentedOption[] {
+      const auto = isAutoMode.value;
+      return [
+        { value: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={12} /> },
+        { value: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} />, disabled: auto },
+        { value: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} />, disabled: auto },
+      ];
+    }
+
+    function onSelectMode(value: string) {
+      setMode(value as "light" | "dark" | "system");
+    }
+
+    /**
+     * Pressing the altitude strip in auto mode drops back to manual and
+     * selects whichever side auto currently resolves to (day → light,
+     * night → dark). Debounced: input synthesis may deliver both a pointer
+     * sequence and a click for one physical press.
+     */
+    let lastManualSwitchAt = 0;
+    function resolveAutoToManual() {
+      const now = Date.now();
+      if (now - lastManualSwitchAt < 700) return;
+      lastManualSwitchAt = now;
+      setMode(effectiveMode.value);
+    }
 
     function onSelectTheme(id: ThemeId) {
       setTheme(id);
@@ -104,18 +199,27 @@ export const HkThemeToggle = defineComponent({
           <div class="s-theme-menu">
             <div class="s-theme-menu-label">{t("hikari::theme.mode")}</div>
             <div class="s-theme-mode-row">
-              {modeOptions.value.map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  class="s-theme-mode-btn"
-                  data-active={currentMode.value === opt.key || undefined}
-                  onClick={() => setMode(opt.key as "light" | "dark" | "system")}
-                >
-                  {opt.icon()}
-                  {opt.label}
-                </button>
-              ))}
+              <div class="s-theme-mode-seg" data-auto={isAutoMode.value || undefined}>
+                <HkSegmented
+                  block
+                  size="sm"
+                  options={modeOptions()}
+                  modelValue={currentMode.value}
+                  onUpdate:modelValue={onSelectMode}
+                />
+                {isAutoMode.value && (
+                  <button
+                    type="button"
+                    class="s-theme-mode-autoalt"
+                    title={t("hikari::theme.autoAltitudeTip")}
+                    aria-label={t("hikari::theme.autoAltitudeTip")}
+                    onClick={resolveAutoToManual}
+                  >
+                    {altitudeNight.value ? <Moon size={12} /> : <Sun size={12} />}
+                    <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <HDivider spacing="md" />
@@ -129,10 +233,10 @@ export const HkThemeToggle = defineComponent({
                   data-active={currentTheme.value === th.id || undefined}
                   onClick={() => onSelectTheme(th.id)}
                 >
-                  <span>{th.name}</span>
-                  {currentTheme.value === th.id && <Check size={14} />}
+                  {currentTheme.value === th.id && <Check size={14} class="s-theme-item-check" />}
+                  <span class="s-theme-item-name">{th.name}</span>
                 </button>
-                {th.isCustom && (
+                {th.isCustom ? (
                   <button
                     type="button"
                     class="s-theme-item-delete"
@@ -141,6 +245,8 @@ export const HkThemeToggle = defineComponent({
                   >
                     <Trash2 size={12} />
                   </button>
+                ) : (
+                  <span class="s-theme-item-slot" aria-hidden="true" />
                 )}
               </div>
             ))}
@@ -158,7 +264,7 @@ export const HkThemeToggle = defineComponent({
               }}
             >
               <Palette size={14} />
-              <span>{t("hikari::theme.customize")}</span>
+              <span class="s-theme-item-name">{t("hikari::theme.customize")}</span>
             </button>
           </div>
           {slots["menu-extra"]?.()}

@@ -1,6 +1,7 @@
 export { default as HActionBar } from "./components/HkActionBar";
 export { default as HAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HAlert } from "./components/HkAlert";
+export { default as HAltSignIn } from "./components/HkAltSignIn";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
 export { default as HBlockingToast } from "./components/HkBlockingToast";

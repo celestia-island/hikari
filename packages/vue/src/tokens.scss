@@ -23,6 +23,31 @@
   --border-input: rgb(var(--color-border, 100 100 100) / 15%);
   --border-faint: rgb(var(--color-border, 100 100 100) / 10%);
   --border-subtle: rgb(var(--color-border, 100 100 100) / 12%);
+
+  /* Icon-button state bridge — HkIconButtonVars references this vocabulary
+     but nothing ever defined it, so every var() without an in-file fallback
+     was invalid at computed-value time: non-ghost variants had no active
+     background, focus rings and glow vanished, and one missing item even
+     invalidated the whole transition shorthand (all icon buttons lost their
+     hover/press animation). Defined once here as live expressions over the
+     theme triplets so they track whichever palette is active; the -dark
+     variants are the pressed-step of their base slot. */
+  --hi-icon-color: rgb(var(--color-text, 30 30 30));
+  --hi-icon-size-xs: 0.75rem;
+  --hi-icon-size-sm: 1rem;
+  --hi-icon-size-md: 1.25rem;
+  --hi-icon-size-lg: 1.5rem;
+  --hi-duration-instant: var(--duration-instant, 0.1s);
+  --hi-border-color-focus: rgb(var(--color-primary, 122 162 247));
+  --hi-glow-color: transparent;
+  --hi-bg-surface-dark: rgb(var(--color-muted, 108 108 108) / 12%);
+  --hi-color-primary-dark: color-mix(in srgb, rgb(var(--color-primary, 122 162 247)) 82%, #000);
+  --hi-color-secondary-dark: color-mix(in srgb, rgb(var(--color-secondary, 81 154 115)) 82%, #000);
+  --hi-color-danger-dark: color-mix(in srgb, rgb(var(--color-error, 200 50 50)) 82%, #000);
+  --hi-color-success-dark: color-mix(in srgb, rgb(var(--color-success, 0 150 0)) 82%, #000);
+  --hi-color-text-on-secondary: rgb(var(--color-on-solid, 255 255 255));
+  --hi-color-text-on-danger: rgb(var(--color-on-solid, 255 255 255));
+  --hi-color-text-on-success: rgb(var(--color-on-solid, 255 255 255));
 }
 
 /* Static default light theme — renders correctly even without initTheme().

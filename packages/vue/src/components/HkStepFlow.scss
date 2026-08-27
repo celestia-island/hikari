@@ -10,6 +10,21 @@
   --hk-stepflow-duration: 0.2s;
 }
 
+// Sticky header mode: keeps the step indicator visible while the body
+// scrolls inside long modal hosts. Surface tint + blur approximate the
+// floating-chrome look; hosts retune through the custom properties.
+.hk-step-flow[data-sticky-header] > .hk-timeline {
+  position: sticky;
+  top: var(--hk-stepflow-sticky-top, 0px);
+  z-index: var(--hk-stepflow-sticky-z, 10);
+  background: var(
+    --hk-stepflow-sticky-bg,
+    color-mix(in srgb, var(--hi-color-surface, #fff) 95%, transparent)
+  );
+  backdrop-filter: blur(6px);
+  padding-bottom: var(--hi-space-8, 8px);
+}
+
 .hk-stepflow-body {
   width: 100%;
 }

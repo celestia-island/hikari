@@ -31,6 +31,12 @@ export default defineComponent({
     hideTimeline: { type: Boolean, default: false },
     /** Passthrough to the header timeline's clickable behaviour. */
     timelineClickable: { type: Boolean, default: false },
+    /**
+     * Pin the header to the top of the nearest scroll container (modal
+     * body hosts) so the step indicator stays visible over long bodies.
+     * Styling knobs: --hk-stepflow-sticky-top/-z/-bg.
+     */
+    stickyHeader: { type: Boolean, default: false },
     collapse: {
       type: String as PropType<TimelineCollapse>,
       default: "auto",
@@ -80,7 +86,10 @@ export default defineComponent({
       const dir = direction.value;
 
       return (
-        <div class="hk-step-flow">
+        <div
+          class="hk-step-flow"
+          data-sticky-header={props.stickyHeader || undefined}
+        >
           {!props.hideTimeline && (
             <HkTimeline
               steps={props.steps}

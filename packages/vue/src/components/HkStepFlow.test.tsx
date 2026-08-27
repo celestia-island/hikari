@@ -211,7 +211,7 @@ describe("HkStepFlow", () => {
     document.body.appendChild(container);
     containers.push(container);
 
-    const current = ref("c");
+    const current = ref("a");
     const steps = ref(STEPS.map((s) => ({ ...s })));
     const app = createApp(defineComponent({
       setup() {
@@ -233,12 +233,14 @@ describe("HkStepFlow", () => {
     steps.value = [...steps.value].reverse().map((s) => ({ ...s }));
     await nextTick();
 
-    // With "c" now at index 1, moving to "a" (index 3) is FORWARD again;
-    // without the resync the stale index (2) would mislabel this as back.
-    current.value = "a";
+    // Discriminating case: WITHOUT the resync watch the remembered index
+    // stays 0 ("a"'s pre-swap slot); landing on "c" (now index 1) would then
+    // compare 1 < 0 and mislabel the move FORWARD. With the resync the
+    // remembered index follows the array to 3, so 1 < 3 correctly reads BACK.
+    current.value = "c";
     await nextTick();
     await settle();
-    expect(seen.at(-1)).toEqual({ key: "a", index: 3, direction: "forward" });
+    expect(seen.at(-1)).toEqual({ key: "c", index: 1, direction: "back" });
     await settle();
   });
 });

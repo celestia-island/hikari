@@ -290,6 +290,12 @@
   justify-content: flex-end;
   gap: 0.5rem;
   flex-shrink: 0;
+
+  // Conditional footer slots (phases without actions, close transitions)
+  // render nothing — never leave a bare bordered strip behind.
+  &:empty {
+    display: none;
+  }
 }
 
 // ------

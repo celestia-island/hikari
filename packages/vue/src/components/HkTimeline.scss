@@ -136,9 +136,10 @@
 
 /* RTL mirrors every bond: logical insets above already place each segment
    correctly along the flipped axis; only the fade DIRECTION remains
-   physical and therefore swaps here. Non-fading bonds inherit nothing. */
+   physical and therefore swaps here. Non-fading bonds inherit nothing.
+   scaleX mirrors paint only — the box is symmetric around its own center. */
 [dir="rtl"] .hk-timeline[data-mode="window"] .hk-timeline-link[data-fade-dir] {
-  filter: fliph;
+  transform: scaleX(-1);
 }
 
 

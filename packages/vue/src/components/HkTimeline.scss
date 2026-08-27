@@ -12,48 +12,123 @@
 
 // ── Compact window mode ────────────────────────────────────────────────
 // Engaged automatically (collapse="auto") when the full row cannot fit the
-// host: a three-cell grid keeps the current step dead-center, reveals at
-// most one neighbour per side, and fades the side outward where further
-// hidden steps continue — the connector gains the space the crowded full
-// row was denying it.
+// host: three FIXED equal thirds keep the geometry stable even when an edge
+// cell is empty, each visible step stacks vertically (indicator circle on
+// top, single-line label below), and horizontal link segments join the
+// neighbouring node centers on an overlay — continuing past a side's edge
+// with a fading gradient where further hidden steps go on.
 .hk-timeline[data-mode="window"] {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+
+  // Geometry contract with the stacked steps above: the node is the 24px
+  // indicator circle at the top of every stack, so its center sits half a
+  // node below the cell top in ALL columns — that is where link segments go.
+  --hk-timeline-node-size: 24px;
+  --hk-timeline-link-clearance: 20px;
+  --hk-timeline-link-thickness: 2px;
+  --hk-timeline-link-top: calc(
+    (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
+  );
 }
 
-.hk-timeline-window {
+.hk-timeline[data-mode="window"] .hk-timeline-window {
   display: flex;
+  flex-direction: column;
   align-items: center;
   min-width: 0;
 }
 
-// Each side cell holds a single step that stretches across its whole 1fr
-// column so the connector fills the distance to the centre. The step must
-// NOT carry [data-last] (its flex:0 0 auto override would squash the
-// stretch and kill the fade) — the component only sets it in full mode.
-.hk-timeline-window .hk-timeline-step {
-  flex: 1 1 auto;
-  min-width: 0;
+// The stacked step itself: node centered horizontally ON TOP, label BELOW as
+// normal horizontal text — one line, ellipsised when too long.
+.hk-timeline[data-mode="window"] .hk-timeline-step {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--hi-space-4, 4px);
+
+  [data-el="label"] {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
 }
 
-// The after side mirrors the step so its connector leads from the centre
-// node out to the neighbour: [—— connector ——][label][node], node at the
-// outer edge — exactly where the fade mask sits.
-.hk-timeline-window[data-side="after"] .hk-timeline-step {
-  flex-direction: row-reverse;
+// Neighbour dimming expresses "previous / upcoming step"; a clickable
+// neighbour brightens back up while pointed at (affordance to jump back).
+.hk-timeline[data-mode="window"] .hk-timeline-window[data-dimmed] {
+  opacity: var(--hk-timeline-neighbor-opacity, 0.55);
+  transition: opacity var(--hi-duration-normal, 0.3s) ease;
+
+  &:has(.hk-timeline-step[data-clickable]):hover {
+    opacity: 1;
+  }
 }
 
-// A side fades toward its outer edge only when hidden steps continue past
-// the window — the "about to disappear" hint that more steps lie beyond.
-.hk-timeline-window[data-side="before"][data-fade] {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 55%);
-  mask-image: linear-gradient(to right, transparent 0, #000 55%);
+// Link segments overlay: invisible to pointers and assistive tech.
+.hk-timeline-links {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-.hk-timeline-window[data-side="after"][data-fade] {
-  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 55%);
-  mask-image: linear-gradient(to left, transparent 0, #000 55%);
+.hk-timeline-link {
+  position: absolute;
+  top: var(--hk-timeline-link-top);
+  height: var(--hk-timeline-link-thickness);
+
+  // Fixed thirds put node centers at 16.6667% / 50% / 83.3333%; each bond
+  // spans between adjacent centers minus a clearance on both ends so it
+  // never touches the circles themselves.
+  &[data-segment="before-current"] {
+    left: calc(16.6667% + var(--hk-timeline-link-clearance));
+    width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+  }
+
+  &[data-segment="current-after"] {
+    left: calc(50% + var(--hk-timeline-link-clearance));
+    width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+  }
+
+  // Continuation hints run from a container edge toward that column's node,
+  // fading out INTO the edge ("more steps exist beyond this side").
+  &[data-segment="edge-before"] {
+    left: 0;
+    width: calc(16.6667% - var(--hk-timeline-link-clearance));
+  }
+
+  &[data-segment="edge-after"] {
+    right: 0;
+    width: calc(16.6667% - var(--hk-timeline-link-clearance));
+  }
+
+  // Bond colors follow the adjacent neighbour's status semantics.
+  &[data-status="completed"] {
+    --_link-color: var(--hi-color-primary);
+  }
+
+  &[data-status="active"],
+  &[data-status="pending"] {
+    --_link-color: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
+  }
+
+  background-color: var(--_link-color);
+
+  // ONE fade mechanism (gradient fill — no mask layering): solid near the
+  // node, transparent at the container edge.
+  &[data-fade-dir="left"] {
+    background-color: transparent;
+    background-image: linear-gradient(to left, var(--_link-color), transparent);
+  }
+
+  &[data-fade-dir="right"] {
+    background-color: transparent;
+    background-image: linear-gradient(to right, var(--_link-color), transparent);
+  }
 }
 
 

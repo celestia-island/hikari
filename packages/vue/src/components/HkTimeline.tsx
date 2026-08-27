@@ -141,6 +141,15 @@ export default defineComponent({
       computeTimelineWindow(props.steps, props.currentKey),
     );
 
+    function statusOf(idx: number): TimelineStepStatus {
+      return idx < currentIndex.value
+        ? "completed"
+        : idx === currentIndex.value
+          ? "active"
+          : "pending";
+    }
+
+
     function measure(): void {
       const el = host.value;
       if (!el || !windowable.value || props.collapse !== "auto") {
@@ -195,12 +204,7 @@ export default defineComponent({
 
     function renderStep(idx: number, opts: { connector: boolean; last: boolean }) {
       const step = props.steps[idx];
-      const status: TimelineStepStatus =
-        idx < currentIndex.value
-          ? "completed"
-          : idx === currentIndex.value
-            ? "active"
-            : "pending";
+      const status = statusOf(idx);
 
       return (
         <div
@@ -208,6 +212,7 @@ export default defineComponent({
           class="hk-timeline-step"
           data-status={status}
           data-last={opts.last || undefined}
+          aria-current={status === "active" ? "step" : undefined}
           data-clickable={(props.clickable && status === "completed") || undefined}
           role={props.clickable ? "button" : undefined}
           tabindex={props.clickable && status === "completed" ? 0 : undefined}
@@ -247,13 +252,14 @@ export default defineComponent({
 
     return () => {
       if (windowed.value) {
-        // Window-mode connector layout: the PREVIOUS step trails its
-        // connector rightward into the current node, and the NEXT step is
-        // row-reversed (see SCSS) so its connector leads leftward from the
-        // current node out to the neighbour — both fill their 1fr grid
-        // columns. The current step itself carries no connector (both sides
-        // are drawn by the neighbours), so no `data-last` flex override ever
-        // applies inside the window and every window step stretches.
+        // Window-mode layout: three fixed equal thirds — previous / current /
+        // next stack VERTICALLY (indicator circle centered on top, single-line
+        // ellipsised label below, see SCSS). Horizontal link segments drawn on
+        // an overlay join the neighbouring node centers (16.6667% → 50% →
+        // 83.3333%) and continue past a side's edge with a fading gradient
+        // where hidden steps go on; edge cells stay empty when no neighbour
+        // exists.
+        const w = win.value;
         return (
           <div
             ref={host}
@@ -261,13 +267,48 @@ export default defineComponent({
             data-orientation={props.orientation}
             data-mode="window"
           >
+            {(w.beforeIndex >= 0 || w.afterIndex >= 0) && (
+              <div class="hk-timeline-links" aria-hidden="true">
+                {w.beforeIndex >= 0 && (
+                  <div
+                    class="hk-timeline-link"
+                    data-segment="before-current"
+                    data-status={statusOf(w.beforeIndex)}
+                  />
+                )}
+                {w.afterIndex >= 0 && (
+                  <div
+                    class="hk-timeline-link"
+                    data-segment="current-after"
+                    data-status={statusOf(w.afterIndex)}
+                  />
+                )}
+                {w.beforeIndex >= 0 && w.fadeBefore && (
+                  <div
+                    class="hk-timeline-link"
+                    data-segment="edge-before"
+                    data-status={statusOf(w.beforeIndex)}
+                    data-fade-dir="left"
+                  />
+                )}
+                {w.afterIndex >= 0 && w.fadeAfter && (
+                  <div
+                    class="hk-timeline-link"
+                    data-segment="edge-after"
+                    data-status={statusOf(w.afterIndex)}
+                    data-fade-dir="right"
+                  />
+                )}
+              </div>
+            )}
             <div
               class="hk-timeline-window"
               data-side="before"
-              data-fade={win.value.fadeBefore || undefined}
+              data-fade={w.fadeBefore || undefined}
+              data-dimmed={(w.beforeIndex >= 0) || undefined}
             >
-              {win.value.beforeIndex >= 0
-                ? renderStep(win.value.beforeIndex, { connector: true, last: false })
+              {w.beforeIndex >= 0
+                ? renderStep(w.beforeIndex, { connector: false, last: false })
                 : null}
             </div>
             <div class="hk-timeline-window" data-side="current">
@@ -276,10 +317,11 @@ export default defineComponent({
             <div
               class="hk-timeline-window"
               data-side="after"
-              data-fade={win.value.fadeAfter || undefined}
+              data-fade={w.fadeAfter || undefined}
+              data-dimmed={(w.afterIndex >= 0) || undefined}
             >
-              {win.value.afterIndex >= 0
-                ? renderStep(win.value.afterIndex, { connector: true, last: false })
+              {w.afterIndex >= 0
+                ? renderStep(w.afterIndex, { connector: false, last: false })
                 : null}
             </div>
           </div>

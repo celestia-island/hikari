@@ -310,7 +310,9 @@
     max-width: 100% !important;
     width: 100%;
     top: var(--hk-sheet-top-inset, 4.25rem);
-    bottom: 0;
+    // --hk-sheet-bottom-gap keeps the docked sheet from touching the very
+    // bottom edge (host-tunable; chest narrows the default visual gap).
+    bottom: var(--hk-sheet-bottom-gap, 0.5rem);
     left: 0;
     right: 0;
     transform: none;
@@ -320,7 +322,7 @@
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
-    // Top inset + bottom:0 size the sheet; content scrolls inside.
+    // Top inset + bottom gap size the sheet; content scrolls inside.
     max-height: none;
   }
 
@@ -367,6 +369,11 @@
   }
 
   .hk-modal-footer {
-    padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
+    // --hk-sheet-footer-gap lets a host app tune how far the docked sheet
+    // sits off the very bottom edge (chest asked for a visibly narrower
+    // gap than body bottom + safe area on phones). Safe area is added ON
+    // TOP of the gap so home-bar devices never lose tappable chrome.
+    padding: 0.625rem 1rem
+      calc(0.5rem + var(--hk-sheet-footer-gap, 0.75rem) + env(safe-area-inset-bottom, 0px));
   }
 }

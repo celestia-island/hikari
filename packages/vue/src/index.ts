@@ -59,6 +59,7 @@ export { default as HSelectPanel, type SelectPanelPlacement } from "./components
 export { default as HSidebar } from "./components/HkSidebar";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";
+export { default as HSlider } from "./components/HkSlider";
 export { default as HSpinner } from "./components/HkSpinner";
 export { default as HSwitch } from "./components/HkSwitch";
 export { default as HTable } from "./components/HkTable";

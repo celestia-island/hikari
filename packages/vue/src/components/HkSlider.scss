@@ -1,0 +1,99 @@
+.hk-slider {
+  position: relative;
+  // Comfortable pointer/touch hit area; the visual track is drawn inside
+  // via ::before so the control stays grabbable without a fat look.
+  height: 18px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+
+.hk-slider::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 6px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full, 999px);
+  background: rgb(var(--color-muted) / 22%);
+}
+
+.hk-slider[data-size="sm"] {
+  height: 14px;
+}
+
+.hk-slider[data-size="sm"]::before {
+  height: 4px;
+}
+
+.hk-slider.is-disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.hk-slider:focus-visible {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 2px rgb(var(--color-primary) / 40%);
+}
+
+.hk-slider-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 6px;
+  transform: translateY(-50%);
+  border-radius: var(--radius-full, 999px);
+  background: rgb(var(--color-primary));
+  pointer-events: none;
+}
+
+.hk-slider[data-size="sm"] .hk-slider-fill {
+  height: 4px;
+}
+
+.hk-slider-tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  margin-left: -1px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgb(var(--color-muted) / 45%);
+  pointer-events: none;
+}
+
+.hk-slider-tick[data-active] {
+  background: rgb(var(--color-primary) / 70%);
+}
+
+.hk-slider-thumb {
+  // The whole point of this variant next to HkMediaSlider: the thumb is
+  // ALWAYS visible — no hover gating — so the control reads as draggable
+  // at first glance, on desktop and touch alike.
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: rgb(var(--color-primary));
+  box-shadow:
+    0 0 0 2px rgb(var(--color-surface, var(--color-background)) / 90%),
+    0 1px 3px rgb(0 0 0 / 35%);
+  transform: translateY(-50%);
+  transition: transform var(--hi-duration-short, 0.15s);
+  pointer-events: none;
+}
+
+.hk-slider:hover .hk-slider-thumb,
+.hk-slider:active .hk-slider-thumb {
+  transform: translateY(-50%) scale(1.15);
+}
+
+.hk-slider[data-size="sm"] .hk-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+}

@@ -130,6 +130,14 @@ describe("HkTimeline full mode", () => {
     expect(t.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("full");
   });
 
+  it("marks exactly the active step with aria-current=step", () => {
+    const t = mountTimeline({ currentKey: "c" });
+    const els = t.container.querySelectorAll(".hk-timeline-step");
+    expect(els[2].getAttribute("aria-current")).toBe("step");
+    expect(els[1].getAttribute("aria-current")).toBeNull();
+    expect(els[3].getAttribute("aria-current")).toBeNull();
+  });
+
   it("keeps vertical orientation in full mode", () => {
     const t = mountTimeline({ currentKey: "b", orientation: "vertical", collapse: "always" });
     expect(t.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("full");
@@ -146,44 +154,113 @@ describe("HkTimeline window mode", () => {
     const current = t.container.querySelector('.hk-timeline-window[data-side="current"]');
     const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
 
+    // Stacked layout: the label lives UNDER the node in every cell, so each
+    // cell still exposes exactly one step with indicator + label.
     expect(before?.querySelector('[data-el="label"]')?.textContent).toBe("Beta");
     expect(current?.querySelector('[data-el="label"]')?.textContent).toBe("Gamma");
     expect(after?.querySelector('[data-el="label"]')?.textContent).toBe("Delta");
+    for (const cell of [before, current, after]) {
+      expect(cell?.querySelectorAll(".hk-timeline-step").length).toBe(1);
+      expect(cell?.querySelector('[data-el="indicator"]')).not.toBeNull();
+    }
 
     // Steps 1 and 5 are hidden entirely.
     expect(t.container.textContent).not.toContain("Alpha");
     expect(t.container.textContent).not.toContain("Epsilon");
 
-    // Both sides continue past the window, so both fade.
-    expect(before?.hasAttribute("data-fade")).toBe(true);
-    expect(after?.hasAttribute("data-fade")).toBe(true);
+    // Both sides continue past the window, so continuation hints fill both
+    // edges on the overlay.
+    const fadeLinks = t.container.querySelectorAll(
+      '.hk-timeline-links [data-segment^="edge-"]',
+    );
+    expect(fadeLinks.length).toBe(2);
 
     // Real ordinal numbers survive the collapse.
     expect(current?.querySelector('[data-el="num"]')?.textContent).toBe("3");
   });
 
-  it("draws the window connectors on the neighbour cells, never the center", () => {
+  it("draws link segments joining neighbour nodes on an overlay, never inline", () => {
     const t = mountTimeline({ currentKey: "c", collapse: "always" });
-    const before = t.container.querySelector('.hk-timeline-window[data-side="before"]');
-    const current = t.container.querySelector('.hk-timeline-window[data-side="current"]');
-    const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
-    // The previous step trails its connector toward the centre; the next
-    // step (row-reversed) leads its connector back from the centre; the
-    // current step owns no connector at all — both bonds are drawn by the
-    // neighbours, and no [data-last] flex override may apply (the fade and
-    // the connector stretch live on these cells).
-    expect(before?.querySelector('[data-el="connector"]')).not.toBeNull();
-    expect(after?.querySelector('[data-el="connector"]')).not.toBeNull();
-    expect(current?.querySelector('[data-el="connector"]')).toBeNull();
-    expect(current?.querySelector(".hk-timeline-step")?.hasAttribute("data-last")).toBe(false);
-    expect(after?.querySelector(".hk-timeline-step")?.hasAttribute("data-last")).toBe(false);
+    const links = t.container.querySelector(".hk-timeline-links");
+    expect(links?.getAttribute("aria-hidden")).toBe("true");
+
+    // prev→current bond takes the previous (completed) status colors; the
+    // current→next bond keeps the pending look.
+    expect(links?.querySelector('[data-segment="before-current"]')?.getAttribute("data-status")).toBe("completed");
+    expect(links?.querySelector('[data-segment="current-after"]')?.getAttribute("data-status")).toBe("pending");
+
+    // Continuation hints fill both fading edges with matching status.
+    expect(links?.querySelector('[data-segment="edge-before"]')?.getAttribute("data-fade-dir")).toBe("left");
+    expect(links?.querySelector('[data-segment="edge-after"]')?.getAttribute("data-fade-dir")).toBe("right");
+
+    // No connector is rendered inline inside any stacked window step.
+    expect(
+      t.container.querySelectorAll('.hk-timeline-window [data-el="connector"]').length,
+    ).toBe(0);
+  });
+
+  it("dims neighbour cells but never the current one", () => {
+    const t = mountTimeline({ currentKey: "c", collapse: "always" });
+    expect(
+      t.container.querySelector('.hk-timeline-window[data-side="before"]')
+        ?.hasAttribute("data-dimmed"),
+    ).toBe(true);
+    expect(
+      t.container.querySelector('.hk-timeline-window[data-side="after"]')
+        ?.hasAttribute("data-dimmed"),
+    ).toBe(true);
+    expect(
+      t.container.querySelector('.hk-timeline-window[data-side="current"]')
+        ?.hasAttribute("data-dimmed"),
+    ).toBe(false);
+  });
+
+  it("omits continuation hints where no hidden steps continue past a side", async () => {
+    // Parked on the second step: left edge is the real start (no hint), the
+    // right side hides steps 4..5 (hint present).
+    const t = mountTimeline({ currentKey: "b", collapse: "always" });
+    const links = t.container.querySelector(".hk-timeline-links");
+    expect(links?.querySelector('[data-segment="edge-before"]')).toBeNull();
+    expect(links?.querySelector('[data-segment="edge-after"]')).not.toBeNull();
+    // The before bond itself still exists — only its outer hint is absent.
+    expect(links?.querySelector('[data-segment="before-current"]')).not.toBeNull();
+
+    // On the first step the left edge draws neither a bond nor a hint.
+    t.setCurrent("a");
+    await nextTick();
+    const linksAfter = t.container.querySelector(".hk-timeline-links");
+    expect(linksAfter?.querySelector('[data-segment="before-current"]')).toBeNull();
+    expect(linksAfter?.querySelector('[data-segment="edge-before"]')).toBeNull();
+    // ...while the right side keeps its live segments toward Beta.
+    expect(linksAfter?.querySelector('[data-segment="current-after"]')).not.toBeNull();
+    expect(linksAfter?.querySelector('[data-segment="edge-after"]')).not.toBeNull();
+  });
+
+  it("marks the active window step with aria-current=step", () => {
+    const t = mountTimeline({ currentKey: "c", collapse: "always" });
+    const current = t.container.querySelector(
+      '.hk-timeline-window[data-side="current"] .hk-timeline-step',
+    );
+    expect(current?.getAttribute("aria-current")).toBe("step");
+    const neighbours = t.container.querySelectorAll(
+      '.hk-timeline-window[data-dimmed] .hk-timeline-step',
+    );
+    expect(neighbours.length).toBe(2);
+    for (const n of neighbours) expect(n.getAttribute("aria-current")).toBeNull();
   });
 
   it("empties the left cell on the first step and the right cell on the last", async () => {
     const t = mountTimeline({ currentKey: "a", collapse: "always" });
     const before = t.container.querySelector('.hk-timeline-window[data-side="before"]');
     expect(before?.querySelector(".hk-timeline-step")).toBeNull();
-    expect(before?.hasAttribute("data-fade")).toBe(false);
+    // The empty edge draws neither a dimmed placeholder nor stray lines.
+    expect(before?.hasAttribute("data-dimmed")).toBe(false);
+    expect(
+      t.container.querySelector('.hk-timeline-links [data-segment="before-current"]'),
+    ).toBeNull();
+    expect(
+      t.container.querySelector('.hk-timeline-links [data-segment="edge-before"]'),
+    ).toBeNull();
     expect(
       t.container.querySelector('.hk-timeline-window[data-side="after"] [data-el="label"]')
         ?.textContent,
@@ -193,7 +270,13 @@ describe("HkTimeline window mode", () => {
     await nextTick();
     const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
     expect(after?.querySelector(".hk-timeline-step")).toBeNull();
-    expect(after?.hasAttribute("data-fade")).toBe(false);
+    expect(after?.hasAttribute("data-dimmed")).toBe(false);
+    expect(
+      t.container.querySelector('.hk-timeline-links [data-segment="current-after"]'),
+    ).toBeNull();
+    expect(
+      t.container.querySelector('.hk-timeline-links [data-segment="edge-after"]'),
+    ).toBeNull();
     expect(
       t.container.querySelector('.hk-timeline-window[data-side="before"] [data-el="label"]')
         ?.textContent,

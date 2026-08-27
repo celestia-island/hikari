@@ -1,0 +1,64 @@
+// Direction-aware step body transitions for HkStepFlow.
+//
+// Forward slides the body leftward (the flow advances to a later step),
+// back mirrors it toward the right. Timings follow the phase-transition
+// family — an expressive ease-out on enter, a sharp ease-in on leave.
+// Duration resolves from one local custom property so consumers can tune
+// every phase at once.
+
+.hk-step-flow {
+  --hk-stepflow-duration: 0.2s;
+}
+
+// Sticky header mode: keeps the step indicator visible while the body
+// scrolls inside long modal hosts. Surface tint + blur approximate the
+// floating-chrome look; hosts retune through the custom properties.
+.hk-step-flow[data-sticky-header] > .hk-timeline {
+  position: sticky;
+  top: var(--hk-stepflow-sticky-top, 0px);
+  z-index: var(--hk-stepflow-sticky-z, 10);
+  background: var(
+    --hk-stepflow-sticky-bg,
+    color-mix(in srgb, var(--hi-color-surface, #fff) 95%, transparent)
+  );
+  backdrop-filter: blur(6px);
+  padding-bottom: var(--hi-space-8, 8px);
+}
+
+.hk-stepflow-body {
+  width: 100%;
+}
+
+.hk-stepflow-fwd-enter-active,
+.hk-stepflow-back-enter-active {
+  transition:
+    opacity var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hk-stepflow-fwd-leave-active,
+.hk-stepflow-back-leave-active {
+  transition:
+    opacity var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.5, 0, 0.75, 0),
+    transform var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+.hk-stepflow-fwd-enter-from {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+.hk-stepflow-fwd-leave-to {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+
+.hk-stepflow-back-enter-from {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+
+.hk-stepflow-back-leave-to {
+  opacity: 0;
+  transform: translateX(24px);
+}

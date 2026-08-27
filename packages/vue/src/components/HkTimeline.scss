@@ -81,28 +81,30 @@
   top: var(--hk-timeline-link-top);
   height: var(--hk-timeline-link-thickness);
 
-  // Fixed thirds put node centers at 16.6667% / 50% / 83.3333%; each bond
-  // spans between adjacent centers minus a clearance on both ends so it
-  // never touches the circles themselves.
+  // Fixed thirds put node centers at one-sixth / half / five-sixths ALONG
+  // THE INLINE AXIS; bonds span between adjacent centers minus a clearance
+  // on both ends so they never touch the circles themselves. Logical
+  // properties keep the overlay aligned when the host document flows RTL
+  // (the grid cells mirror with direction, so must the links).
   &[data-segment="before-current"] {
-    left: calc(16.6667% + var(--hk-timeline-link-clearance));
+    inset-inline-start: calc(16.6667% + var(--hk-timeline-link-clearance));
     width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
   }
 
   &[data-segment="current-after"] {
-    left: calc(50% + var(--hk-timeline-link-clearance));
+    inset-inline-start: calc(50% + var(--hk-timeline-link-clearance));
     width: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
   }
 
   // Continuation hints run from a container edge toward that column's node,
   // fading out INTO the edge ("more steps exist beyond this side").
   &[data-segment="edge-before"] {
-    left: 0;
+    inset-inline-start: 0;
     width: calc(16.6667% - var(--hk-timeline-link-clearance));
   }
 
   &[data-segment="edge-after"] {
-    right: 0;
+    inset-inline-end: 0;
     width: calc(16.6667% - var(--hk-timeline-link-clearance));
   }
 
@@ -119,7 +121,8 @@
   background-color: var(--_link-color);
 
   // ONE fade mechanism (gradient fill — no mask layering): solid near the
-  // node, transparent at the container edge.
+  // node, transparent at the container edge. Gradients are physical, so the
+  // fade directions swap under RTL to keep dissolving into the outer edge.
   &[data-fade-dir="left"] {
     background-color: transparent;
     background-image: linear-gradient(to left, var(--_link-color), transparent);
@@ -129,6 +132,13 @@
     background-color: transparent;
     background-image: linear-gradient(to right, var(--_link-color), transparent);
   }
+}
+
+/* RTL mirrors every bond: logical insets above already place each segment
+   correctly along the flipped axis; only the fade DIRECTION remains
+   physical and therefore swaps here. Non-fading bonds inherit nothing. */
+[dir="rtl"] .hk-timeline[data-mode="window"] .hk-timeline-link[data-fade-dir] {
+  filter: fliph;
 }
 
 

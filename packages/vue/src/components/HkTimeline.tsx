@@ -304,7 +304,6 @@ export default defineComponent({
             <div
               class="hk-timeline-window"
               data-side="before"
-              data-fade={w.fadeBefore || undefined}
               data-dimmed={(w.beforeIndex >= 0) || undefined}
             >
               {w.beforeIndex >= 0
@@ -317,7 +316,6 @@ export default defineComponent({
             <div
               class="hk-timeline-window"
               data-side="after"
-              data-fade={w.fadeAfter || undefined}
               data-dimmed={(w.afterIndex >= 0) || undefined}
             >
               {w.afterIndex >= 0

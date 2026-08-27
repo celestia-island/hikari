@@ -196,4 +196,49 @@ describe("HkStepFlow", () => {
       warnSpy.mockRestore();
     }
   });
+
+  it("pins the collapse option onto the header timeline", () => {
+    const t = mountStepFlow({ collapse: "always" });
+    // Four steps with collapse=always must render the window (compact) form.
+    expect(t.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("window");
+    const bare = mountStepFlow({ collapse: "never" });
+    expect(bare.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("full");
+  });
+
+  it("resyncs the direction memory when the steps array is swapped in place", async () => {
+    const seen: StepFlowSlotProps[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const current = ref("c");
+    const steps = ref(STEPS.map((s) => ({ ...s })));
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(HkStepFlow, {
+            steps: steps.value,
+            modelValue: current.value,
+            "onUpdate:modelValue": (key: string) => { current.value = key; },
+          }, Object.fromEntries(steps.value.map((s) => [
+            s.key,
+            (arg: StepFlowSlotProps) => { seen.push(arg); return h("p", `${s.key}-body`); },
+          ])));
+      },
+    }));
+    mounts.push(app);
+    app.mount(container);
+
+    // Swap the array (same current key) — e.g. a locale switch rebuilding it.
+    steps.value = [...steps.value].reverse().map((s) => ({ ...s }));
+    await nextTick();
+
+    // With "c" now at index 1, moving to "a" (index 3) is FORWARD again;
+    // without the resync the stale index (2) would mislabel this as back.
+    current.value = "a";
+    await nextTick();
+    await settle();
+    expect(seen.at(-1)).toEqual({ key: "a", index: 3, direction: "forward" });
+    await settle();
+  });
 });

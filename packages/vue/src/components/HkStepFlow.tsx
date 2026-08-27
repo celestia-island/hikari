@@ -46,12 +46,14 @@ export default defineComponent({
      * its new index. Unknown keys (-1) degrade gracefully to "forward".
      */
     const direction = ref<"forward" | "back">("forward");
-    let previousIndex = props.steps.findIndex((s) => s.key === props.modelValue);
+    const indexOf = (key: string): number =>
+      props.steps.findIndex((s) => s.key === key);
+    let previousIndex = indexOf(props.modelValue);
 
     watch(
       () => props.modelValue,
       () => {
-        const nextIndex = props.steps.findIndex((s) => s.key === props.modelValue);
+        const nextIndex = indexOf(props.modelValue);
         direction.value =
           previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex
             ? "back"
@@ -60,8 +62,18 @@ export default defineComponent({
       },
     );
 
+    // A steps-array swap while modelValue stays put (locale switch, flow
+    // reconfigured) invalidates the remembered position — resync silently
+    // so the NEXT navigation still compares against reality.
+    watch(
+      () => props.steps.map((s) => s.key).join("\u0000"),
+      () => {
+        previousIndex = indexOf(props.modelValue);
+      },
+    );
+
     return () => {
-      const index = props.steps.findIndex((s) => s.key === props.modelValue);
+      const index = indexOf(props.modelValue);
       // An unknown key finds no slot: the body simply renders empty, no
       // warnings — consumers may briefly park between two known steps.
       const slotFn = index >= 0 ? slots[props.modelValue] : undefined;

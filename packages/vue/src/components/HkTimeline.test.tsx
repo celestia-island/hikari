@@ -168,9 +168,12 @@ describe("HkTimeline window mode", () => {
     expect(t.container.textContent).not.toContain("Alpha");
     expect(t.container.textContent).not.toContain("Epsilon");
 
-    // Both sides continue past the window, so both fade.
-    expect(before?.hasAttribute("data-fade")).toBe(true);
-    expect(after?.hasAttribute("data-fade")).toBe(true);
+    // Both sides continue past the window, so continuation hints fill both
+    // edges on the overlay.
+    const fadeLinks = t.container.querySelectorAll(
+      '.hk-timeline-links [data-segment^="edge-"]',
+    );
+    expect(fadeLinks.length).toBe(2);
 
     // Real ordinal numbers survive the collapse.
     expect(current?.querySelector('[data-el="num"]')?.textContent).toBe("3");
@@ -250,7 +253,6 @@ describe("HkTimeline window mode", () => {
     const t = mountTimeline({ currentKey: "a", collapse: "always" });
     const before = t.container.querySelector('.hk-timeline-window[data-side="before"]');
     expect(before?.querySelector(".hk-timeline-step")).toBeNull();
-    expect(before?.hasAttribute("data-fade")).toBe(false);
     // The empty edge draws neither a dimmed placeholder nor stray lines.
     expect(before?.hasAttribute("data-dimmed")).toBe(false);
     expect(
@@ -268,7 +270,6 @@ describe("HkTimeline window mode", () => {
     await nextTick();
     const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
     expect(after?.querySelector(".hk-timeline-step")).toBeNull();
-    expect(after?.hasAttribute("data-fade")).toBe(false);
     expect(after?.hasAttribute("data-dimmed")).toBe(false);
     expect(
       t.container.querySelector('.hk-timeline-links [data-segment="current-after"]'),

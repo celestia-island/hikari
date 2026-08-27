@@ -195,6 +195,7 @@ export const HkThemeToggle = defineComponent({
           onUpdate:modelValue={(v: boolean) => { menuOpen.value = v; }}
           placement={props.popoverPlacement}
           anchorRef={triggerRef.value ?? null}
+          sheetOnMobile
         >
           <div class="s-theme-menu">
             <div class="s-theme-menu-label">{t("hikari::theme.mode")}</div>

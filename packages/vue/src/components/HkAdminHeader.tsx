@@ -1,6 +1,6 @@
 import { defineComponent, ref, type PropType, type VNode } from "vue";
 import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
-import { HBadge, HButton, HDivider, HPopover, HSpinner } from "@celestia-island/hikari";
+import { HBadge, HButton, HPopover, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 
 export interface LocaleOption {
@@ -144,6 +144,7 @@ export const HkAdminHeader = defineComponent({
           placement="bottom-start"
           anchorRef={userTriggerRef.value ?? null}
           class="w-56"
+          sheetOnMobile
         >
           {/* Empty identity (fetchUser race on a hard refresh): render a
               single subtle placeholder row instead of the action items —
@@ -156,7 +157,6 @@ export const HkAdminHeader = defineComponent({
                 <HSpinner size="sm" />
                 <div class="s-user-header-email">{props.signingInLabel ?? t("hikari::adminHeader.signingIn", "Signing in…")}</div>
               </div>
-              <HDivider spacing="sm" />
               <button
                 class="s-popup-menu-item"
                 onClick={() => props.onForceSignOut?.()}
@@ -188,7 +188,6 @@ export const HkAdminHeader = defineComponent({
                   </div>
                 )}
               </div>
-              <HDivider spacing="sm" />
               <button
                 class="s-popup-menu-item"
                 onClick={() => {
@@ -222,7 +221,6 @@ export const HkAdminHeader = defineComponent({
                 triggerRef: localeTriggerRef,
               })}
               {slots["user-menu-extra"]?.()}
-              <HDivider spacing="sm" />
               <button
                 class="s-popup-menu-item"
                 onClick={() => {

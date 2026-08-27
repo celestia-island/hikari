@@ -31,11 +31,14 @@
   transform: translateY(4px) scale(0.97);
 }
 
-/* Glass dropdown content — used when `glass` prop is true */
+/* Glass dropdown content — used when `glass` prop is true.
+   --hk-popover-bg/--hk-popover-blur let a host app's surface-finish
+   preference (chest html[data-surface]) re-skin this layer; the defaults
+   keep the historical look. */
 .hii-dropdown-content,
 .hk-popover-panel.hii-dropdown-content {
-  background: rgb(var(--color-surface));
-  backdrop-filter: blur(var(--blur-lg)) saturate(1.2);
+  background: var(--hk-popover-bg, rgb(var(--color-surface)));
+  backdrop-filter: var(--hk-popover-blur, blur(var(--blur-lg)) saturate(1.2));
   border: 1px solid rgb(var(--color-border) / 20%);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-dropdown);

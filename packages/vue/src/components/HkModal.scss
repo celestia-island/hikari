@@ -244,38 +244,38 @@
 }
 
 // ------
-// Auto-follow indicator bar
+// Auto-follow indicator chip + jump-to-latest affordance
 // ------
 
-.hk-modal-autofollow-bar {
+// Muted "Auto" pill — visible only while follow is actively pinned at
+// the bottom AND the body actually scrolls. Same visual language as
+// .hk-scroll-container-autotag.
+.hk-modal-autofollow-tag {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  background: var(
-    --hk-modal-autofollow-bg,
-    var(--hi-color-surface, rgba(255, 255, 255, 0.9))
-  );
-  backdrop-filter: blur(8px);
-  border-top: 1px solid
-    var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
-  font-size: 0.75rem;
-  color: var(--hi-color-text-secondary, #666);
-  cursor: pointer;
+  right: 0.75rem;
+  bottom: 0.625rem;
+  z-index: 6;
+  pointer-events: none;
   user-select: none;
-  transition: background 0.15s ease;
+  -webkit-user-select: none;
+  padding: 2px 8px;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  color: var(--hi-color-muted);
+  background: color-mix(in srgb, var(--hi-color-surface) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border) 12%, transparent);
+  border-radius: var(--hi-radius-full, 9999px);
+  backdrop-filter: blur(4px);
+  opacity: 0.85;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+}
 
-  &:hover {
-    background: var(
-      --hi-secondary-bg,
-      rgba(0, 0, 0, 0.04)
-    );
-  }
+// Jump-back FAB (HkFab root) — floats above scroll content while follow
+// is cancelled. The .hk-fab anchor is .hk-modal-body (position:relative);
+// the child selector lifts specificity above the generic .hk-fab
+// z-index default so ordering stays deterministic.
+.hk-modal-body > .hk-modal-jump {
+  z-index: 12;
 }
 
 // ------

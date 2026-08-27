@@ -44,6 +44,7 @@
     "hikari::toast.copy": "Копировать",
     "hikari::toast.close": "Закрыть",
     "hikari::modal.auto": "Авто",
+    "hikari::modal.jumpToLatest": "К последнему",
     "hikari::scrollContainer.auto": "Авто",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Введите пароль",

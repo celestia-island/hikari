@@ -1,0 +1,159 @@
+// HkFab.scss — floating action button + optional speed dial.
+// Attribute-driven positioning: data-positioning (absolute|fixed) +
+// data-corner select the anchored insets; --hk-fab-offset-* extends the
+// safe-area-aware base per instance (set from offsetX / offsetY).
+.hk-fab {
+  position: absolute;
+  z-index: var(--hk-fab-z, 40);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+
+  &[data-positioning="fixed"] { position: fixed; }
+
+  // Layout axis follows the expansion direction (DOM order [actions, main]).
+  &[data-expand="up"] { flex-direction: column; }
+  &[data-expand="down"] { flex-direction: column-reverse; }
+  &[data-expand="left"] { flex-direction: row; }
+  &[data-expand="right"] { flex-direction: row-reverse; }
+
+  // Base insets: safe-area aware, extended by --hk-fab-offset-*.
+  --_hk-fab-x: max(0.875rem, env(safe-area-inset-left, 0px));
+  --_hk-fab-y: max(0.875rem, env(safe-area-inset-bottom, 0px));
+
+  &[data-corner$="-right"] {
+    --_hk-fab-x: max(0.875rem, env(safe-area-inset-right, 0px));
+    right: calc(var(--_hk-fab-x) + var(--hk-fab-offset-x, 0px));
+  }
+
+  &[data-corner$="-left"] {
+    left: calc(var(--_hk-fab-x) + var(--hk-fab-offset-x, 0px));
+  }
+
+  &[data-corner^="top"] {
+    --_hk-fab-y: max(0.875rem, env(safe-area-inset-top, 0px));
+    top: calc(var(--_hk-fab-y) + var(--hk-fab-offset-y, 0px));
+  }
+
+  &[data-corner^="bottom"] {
+    bottom: calc(var(--_hk-fab-y) + var(--hk-fab-offset-y, 0px));
+  }
+}
+
+.hk-fab-button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  border: none;
+  border-radius: var(--hi-radius-full, 9999px);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform var(--hi-duration-fast, 0.15s) ease, box-shadow var(--hi-duration-fast, 0.15s) ease;
+
+  &:active:not(:disabled) { transform: scale(0.94); }
+  &:focus-visible { outline: 2px solid var(--hi-color-primary, #7aa2f7); outline-offset: 2px; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .hk-fab-icon {
+    display: inline-flex;
+    line-height: 0;
+
+    svg { display: block; fill: none; }
+  }
+}
+
+// Size map — px values are part of the component contract.
+$sizes: (sm: 34px, md: 42px, lg: 50px);
+
+@each $name, $dim in $sizes {
+  .hk-fab[data-size="#{$name}"] .hk-fab-button {
+    width: $dim;
+    height: $dim;
+
+    .hk-fab-icon svg {
+      width: calc($dim * 0.48);
+      height: calc($dim * 0.48);
+    }
+  }
+}
+
+.hk-fab[data-variant="glass"] .hk-fab-button {
+  color: var(--hi-color-text-secondary, #555);
+  background: color-mix(in srgb, var(--hi-color-surface, #fff) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.12)) 25%, transparent);
+  backdrop-filter: blur(4px); // chip language shared with autotag pills
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+
+  &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #fff) 92%, transparent); }
+}
+
+.hk-fab[data-variant="primary"] .hk-fab-button {
+  color: var(--hi-color-on-primary, #fff);
+  background: var(--hi-color-primary, #7aa2f7);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+
+  &:hover:not(:disabled) { filter: brightness(1.06); }
+}
+
+// ------
+// Speed-dial stack
+// ------
+
+.hk-fab-actions {
+  display: inherit;
+  flex-direction: inherit;
+  align-items: center;
+  gap: inherit;
+}
+
+.hk-fab-mini {
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 0.5rem;
+  min-width: 2rem;
+  height: 2rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--hi-color-text-secondary, #555);
+  background: color-mix(in srgb, var(--hi-color-surface, #fff) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.12)) 25%, transparent);
+  border-radius: var(--hi-radius-full, 9999px);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity var(--hi-duration-fast, 0.15s) ease, transform var(--hi-duration-fast, 0.15s) ease;
+
+  .hk-fab-mini-icon {
+    display: inline-flex;
+    line-height: 0;
+    svg { width: 14px; height: 14px; display: block; }
+  }
+
+  &:focus-visible { outline: 2px solid var(--hi-color-primary, #7aa2f7); outline-offset: 1px; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+// Staggered reveal while expanded (CSS only, via nth-child delay).
+.hk-fab[data-expanded="true"] .hk-fab-mini {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+
+  @for $i from 1 through 6 {
+    &:nth-child(#{$i}) { transition-delay: #{($i - 1) * 30}ms; }
+  }
+}

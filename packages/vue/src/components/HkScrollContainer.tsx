@@ -14,6 +14,7 @@ import "./HkScrollContainer.scss";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { notifyScrollStart, onceFrame, scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
+import HFab from "./HkFab";
 
 type ScrollAxis = "vertical" | "horizontal" | "both";
 type ScrollMode = "traditional" | "windowed";
@@ -74,6 +75,10 @@ export default defineComponent({
     /** Fade the viewport's inline edges (CSS mask) on the sides where
      *  the sensed overflow (`data-h-overflow`) reports hidden content. */
     fade: { type: Boolean, default: false },
+    /** Additive opt-in: while autoFollow is enabled and the user has
+     *  scrolled away from the bottom, float a small jump-back FAB that
+     *  snaps to the latest content and re-arms follow. */
+    followAffordance: { type: Boolean, default: false },
   },
   setup(props, { slots, expose }) {
     const { t } = useI18n();
@@ -146,6 +151,15 @@ export default defineComponent({
       const vp = viewportRef.value;
       if (!vp) return;
       pinned.value = vp.scrollHeight - vp.scrollTop - vp.clientHeight < FOLLOW_THRESHOLD;
+    }
+
+    /** Jump-back affordance: resume semantics, not pinned-recompute —
+     *  pin first, then sense so follow state agrees with the new offset. */
+    function jumpToLatest() {
+      const vp = viewportRef.value;
+      if (!vp) return;
+      vp.scrollTop = vp.scrollHeight;
+      recomputePinned();
     }
 
     function pinToBottomIfPinned() {
@@ -479,6 +493,17 @@ export default defineComponent({
           </div>
           {showAutoTag.value && (
             <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hikari::scrollContainer.auto", "Auto")}</span>
+          )}
+          {props.autoFollow && props.followAffordance && !pinned.value && (
+            <HFab
+              class="hk-scroll-container-jump"
+              positioning="absolute"
+              corner="bottom-right"
+              icon="ArrowDown"
+              size="sm"
+              ariaLabel={t("hikari::modal.jumpToLatest", "Back to latest")}
+              onClick={jumpToLatest}
+            />
           )}
         </Tag>
       );

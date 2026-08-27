@@ -100,6 +100,11 @@
   transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }
 
+// Jump-back FAB — above the scrollbar tracks (z-index 10).
+.hk-scroll-container > .hk-scroll-container-jump {
+  z-index: 11;
+}
+
 .hk-scrollbar-track {
   position: absolute;
   z-index: 10;

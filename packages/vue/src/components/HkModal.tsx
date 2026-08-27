@@ -278,6 +278,12 @@ export default defineComponent({
     }
 
     function kickSettle() {
+      // hasOverflow gates the "Auto" tag and the jump FAB. It is only
+      // recomputed inside settle frames and scroll events; with windowed
+      // lists the body can grow late (async chunks, virtualized mounts)
+      // without either firing — poll it alongside the settle drain so the
+      // affordances appear on the frame the overflow actually exists.
+      updateOverflow();
       settleRemaining = SETTLE_FRAMES;
       if (settleHandle) return;
       settleHandle = scheduleFrame(runSettleFrame);

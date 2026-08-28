@@ -369,6 +369,13 @@
   background: none;
   width: 100%;
   text-align: left;
+  /* Rows are flex containers (icon + label + optional trailing caret).
+     Without an explicit justification, Chrome's button UA default
+     (justify-content: center) applies — invisible on shrink-to-fit
+     popovers, glaring in full-width mobile sheets where icon+label
+     float to the middle. Pin to flex-start; trailing carets keep
+     parking at the far edge via their own margin-left: auto. */
+  justify-content: flex-start;
   outline: none;
   border-radius: var(--radius-sm);
 }

@@ -98,7 +98,6 @@
     "hikari::theme.themes": "Темы",
     "hikari::tablePage.emptyTitle": "Нет данных",
     "hikari::adminShell.navTitle": "Навигация",
-    "hikari::menu.back": "Назад",
     "hikari::toast.msgs": "сообщений",
     "hikari::statusPill.ms": " мс",
     "hikari::protocol.decline": "Отклонить",

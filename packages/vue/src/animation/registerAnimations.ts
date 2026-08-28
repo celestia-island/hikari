@@ -74,7 +74,6 @@ registerCssAnimation("hk-rolling-number-up");
 registerCssAnimation("hk-spinner-rotate", { infinite: true });
 // components/HkModalBreadcrumb.scss — breadcrumb entrance (plays once).
 registerCssAnimation("hk-modal-breadcrumb-in");
-registerCssAnimation("hk-menu-sheet-in");
 // components/HkToast.scss — toast spinner rotation (loops forever).
 registerCssAnimation("hk-toast-spin", { infinite: true });
 // components/HkSkeleton.scss — skeleton shimmer (loops forever).

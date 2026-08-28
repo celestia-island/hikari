@@ -98,7 +98,6 @@
     "hikari::theme.themes": "السمات",
     "hikari::tablePage.emptyTitle": "لا توجد بيانات",
     "hikari::adminShell.navTitle": "التنقل",
-    "hikari::menu.back": "رجوع",
     "hikari::toast.msgs": "رسائل",
     "hikari::statusPill.ms": " مللي ثانية",
     "hikari::protocol.decline": "رفض",

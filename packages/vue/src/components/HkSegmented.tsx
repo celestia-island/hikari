@@ -1,5 +1,6 @@
-import { defineComponent, type PropType } from "vue";
+import { computed, defineComponent, ref, type PropType } from "vue";
 
+import { useMeasuredHighlight } from "../composables/useMeasuredHighlight";
 import "./HkSegmented.scss";
 
 /** One segment of an [HkSegmented] group. */
@@ -48,6 +49,27 @@ export default defineComponent({
     "update:modelValue": (_value: string) => true,
   },
   setup(props, { emit }) {
+    const rootRef = ref<HTMLElement | null>(null);
+    // -1 (no match, e.g. the default "") clears the thumb instead of
+    // pointing it at the first segment — mirrors aria-checked all-false.
+    const activeIndex = computed(() =>
+      props.options.findIndex((o) => o.value === props.modelValue),
+    );
+    // Sliding thumb geometry from real measurements — options of unequal
+    // label width would drift percentage math. Until a non-zero width is
+    // measured (jsdom/SSR never get there) the per-segment checked styling
+    // below remains as the fallback.
+    const { x, width, ready } = useMeasuredHighlight({
+      container: rootRef,
+      activeIndex,
+      itemSelector: ".hk-segmented__segment",
+      extraSources: [() => props.options],
+    });
+    const thumbStyle = computed(() => ({
+      transform: `translateX(${x.value}px)`,
+      width: `${width.value}px`,
+    }));
+
     function select(v: string) {
       if (props.disabled) return;
       const opt = props.options.find((o) => o.value === v);
@@ -59,11 +81,14 @@ export default defineComponent({
     return () => (
       <div
         class="hk-segmented"
+        ref={rootRef}
         data-size={props.size}
         data-block={props.block || undefined}
         data-disabled={props.disabled || undefined}
+        data-ready={ready.value ? "true" : undefined}
         role="radiogroup"
       >
+        <span class="hk-segmented__thumb" aria-hidden="true" style={thumbStyle.value} />
         {props.options.map((opt) => (
           <button
             key={opt.value}

@@ -208,6 +208,8 @@ export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
 export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon, mediaKindOf } from "./utils/fileType";
 
 export { useReducedMotion } from "./composables/useReducedMotion";
+export { useMeasuredHighlight } from "./composables/useMeasuredHighlight";
+export type { UseMeasuredHighlightOptions, MeasuredHighlight } from "./composables/useMeasuredHighlight";
 export {
   registerCssAnimation,
   listCssAnimations,

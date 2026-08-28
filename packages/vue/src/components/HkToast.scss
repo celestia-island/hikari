@@ -170,9 +170,14 @@
   transform: translateX(1rem);
 }
 
+/* The leaving toast only switches positioning here; its box is frozen
+   by HkToast's before-leave hook (pinLeaveGeometry writes right/top/
+   width/height inline). The fixed stack column is shrink-to-fit, so a
+   percentage width would resolve against the collapsed wrapper once
+   the toast leaves the flow — never size a leaving toast from its
+   parent. */
 .hk-toast-leave-active {
   position: absolute;
-  width: 100%;
 }
 
 .hk-toast-move {

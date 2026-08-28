@@ -105,8 +105,11 @@
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
   transition-duration: var(--hi-duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
+  /* Only the positioning switch lives here; the leaving slot's box is
+     frozen by the before-leave hook (pinLeaveGeometry), same contract
+     as HkToast — the shrink-to-fit fixed column cannot size leaving
+     cards (a percentage width resolves against the collapsed wrapper). */
   position: absolute;
-  width: 100%;
 }
 
 .hk-blocking-toast-enter-from,

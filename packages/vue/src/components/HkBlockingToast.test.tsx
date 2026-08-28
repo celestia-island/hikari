@@ -185,4 +185,37 @@ describe("HkBlockingToast", () => {
     await expect(gate).resolves.toBe(true);
     await setLocale("en");
   });
+
+  it("pins the leaving card slot to its in-flow box before it goes absolute", async () => {
+    mountHost();
+    const gate = showBlockingToast("Confirm me");
+    await settle();
+
+    // happy-dom has no layout engine; feed the leave hook the geometry
+    // a real browser would read from the laid-out stack column.
+    const slot = document.querySelector<HTMLElement>(".hk-blocking-toast-slot");
+    expect(slot).not.toBeNull();
+    const wrapper = slot!.parentElement as HTMLElement;
+    Object.defineProperty(wrapper, "clientWidth", { value: 384, configurable: true });
+    Object.defineProperty(slot!, "offsetParent", { value: wrapper, configurable: true });
+    Object.defineProperty(slot!, "offsetTop", { value: 0, configurable: true });
+    Object.defineProperty(slot!, "offsetLeft", { value: 0, configurable: true });
+    Object.defineProperty(slot!, "offsetWidth", { value: 384, configurable: true });
+    Object.defineProperty(slot!, "offsetHeight", { value: 120, configurable: true });
+
+    actionButtons(cards()[0])[0].click();
+    await nextTick();
+
+    const leaving = document.querySelector<HTMLElement>(".hk-blocking-toast-leave-active");
+    expect(leaving).not.toBeNull();
+    expect(leaving!.style.right).toBe("0px");
+    expect(leaving!.style.top).toBe("0px");
+    expect(leaving!.style.width).toBe("384px");
+    expect(leaving!.style.height).toBe("120px");
+    expect(leaving!.style.boxSizing).toBe("border-box");
+
+    await expect(gate).resolves.toBe(false);
+    await settle();
+    expect(cards().length).toBe(0);
+  });
 });

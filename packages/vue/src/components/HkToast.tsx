@@ -7,6 +7,7 @@ import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../
 import { useClipboard } from "../runtime/useClipboard";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
+import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
 import "./HkToast.scss";
 
 const LONG_THRESHOLD = 50;
@@ -187,6 +188,8 @@ export default defineComponent({
           <TransitionGroup
             tag="div"
             name="hk-toast"
+            onBeforeLeave={pinLeaveGeometry}
+            onLeaveCancelled={clearLeaveGeometry}
           >
             {toasts.map((item) => (
               <HkToastItem

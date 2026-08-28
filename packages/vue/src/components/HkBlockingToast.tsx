@@ -31,6 +31,7 @@ import {
 
 import { useI18n } from "../i18n/context";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
 import {
   resolveBlockingToast,
   useBlockingToast,
@@ -138,7 +139,12 @@ export default defineComponent({
     return () => (
       <Teleport to="body">
         <div class="hk-blocking-toast-container">
-          <TransitionGroup tag="div" name="hk-blocking-toast">
+          <TransitionGroup
+            tag="div"
+            name="hk-blocking-toast"
+            onBeforeLeave={pinLeaveGeometry}
+            onLeaveCancelled={clearLeaveGeometry}
+          >
             {queue.map((item) => (
               <div
                 key={item.id}

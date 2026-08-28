@@ -157,9 +157,9 @@ export default defineComponent({
   name: "HkToast",
   setup() {
     const { toasts, remove } = useToast();
-    // The toast stack registers with the popup manager so it takes part
-    // in the unified z-band ladder instead of a hardcoded z that later
-    // modals could overtake.
+    // The toast stack registers with the popup manager (kind "toast") so
+    // it holds the topmost z band (POPUP_Z_BANDS.toast): toasts stay
+    // above every modal/drawer sheet no matter which opened first.
     const manager = usePopupManager();
     let popupHandle: PopupHandle | null = null;
     const containerZ = ref<number | null>(null);

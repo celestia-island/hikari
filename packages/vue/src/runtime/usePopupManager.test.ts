@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { usePopupManager } from "./usePopupManager";
+import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "./usePopupManager";
 
 const managers: ReturnType<typeof usePopupManager>[] = [];
 
@@ -21,53 +21,94 @@ afterEach(() => {
   document.body.style.overflow = "";
 });
 
-describe("usePopupManager z ladder", () => {
-  it("starts at the base band and steps by Z_STEP while popups stack", () => {
-    const m = freshManager();
-    const a = m.register("dropdown", false);
-    const b = m.register("modal", true);
-
-    expect(a.zIndex).toBe(1000);
-    expect(b.zIndex).toBe(1002);
-    expect(m.isOpen(a.id)).toBe(true);
-    expect(m.isOpen(b.id)).toBe(true);
+describe("usePopupManager z bands", () => {
+  it("bands are ordered overlay < dropdown < tooltip < toast", () => {
+    expect(POPUP_Z_BANDS.modal).toBe(POPUP_Z_BANDS.drawer);
+    expect(POPUP_Z_BANDS.modal).toBeLessThan(POPUP_Z_BANDS.dropdown);
+    expect(POPUP_Z_BANDS.dropdown).toBeLessThan(POPUP_Z_BANDS.tooltip);
+    expect(POPUP_Z_BANDS.tooltip).toBeLessThan(POPUP_Z_BANDS.toast);
   });
 
-  it("reclaims a freed z band instead of drifting upward forever", () => {
+  it("keeps a toast registered first above overlays opened later", () => {
+    // The mobile regression: HkToast mounts once at shell level, so the
+    // old registration-order ladder gave every later modal a higher z and
+    // buried the toast under the phone bottom sheet. Bands must hold the
+    // toast on top regardless of registration order.
     const m = freshManager();
-    // Simulate HkToast's persistent registration: it stays mounted forever,
-    // so the old monotonic counter could never reset.
     const toast = m.register("toast", false);
-    expect(toast.zIndex).toBe(1000);
+    expect(toast.zIndex).toBe(POPUP_Z_BANDS.toast);
 
-    const a = m.register("dropdown", false);
-    expect(a.zIndex).toBe(1002);
-    const b = m.register("dropdown", false);
-    expect(b.zIndex).toBe(1004);
-
-    m.unregister(b.id);
-    // C must reclaim B's band (1004) — NOT drift to 1006.
-    const c = m.register("dropdown", false);
-    expect(c.zIndex).toBe(1004);
-
-    m.unregister(c.id);
-    m.unregister(a.id);
-    // Registry still holds the toast, so the ladder must not reset to base.
-    expect(m.registry.value.size).toBe(1);
-    const d = m.register("tooltip", false);
-    expect(d.zIndex).toBe(1002);
+    const modal = m.register("modal", true);
+    const drawer = m.register("drawer", true);
+    const dropdown = m.register("dropdown", false);
+    expect(modal.zIndex).toBeLessThan(toast.zIndex);
+    expect(drawer.zIndex).toBeLessThan(toast.zIndex);
+    expect(dropdown.zIndex).toBeLessThan(toast.zIndex);
   });
 
-  it("resets to the base band when the registry empties", () => {
+  it("stacks in open order within a band and reclaims freed slots", () => {
     const m = freshManager();
-    const a = m.register("dropdown", false);
-    const b = m.register("dropdown", false);
-    m.unregister(a.id);
-    m.unregister(b.id);
+    const a = m.register("modal", true);
+    const b = m.register("modal", true);
+    expect(a.zIndex).toBe(POPUP_Z_BANDS.modal);
+    expect(b.zIndex).toBe(a.zIndex + POPUP_Z_STEP);
 
-    expect(m.registry.value.size).toBe(0);
-    const c = m.register("tooltip", false);
-    expect(c.zIndex).toBe(1000);
+    m.unregister(b.id);
+    // C must reclaim B's slot — NOT drift upward past it.
+    const c = m.register("modal", true);
+    expect(c.zIndex).toBe(b.zIndex);
+
+    m.unregister(a.id);
+    m.unregister(c.id);
+    // Band empty again → back to the band base.
+    const d = m.register("modal", true);
+    expect(d.zIndex).toBe(POPUP_Z_BANDS.modal);
+  });
+
+  it("shares the overlay band between modal and drawer in open order", () => {
+    const m = freshManager();
+    const modal = m.register("modal", true);
+    const drawer = m.register("drawer", true);
+    // Same band: the drawer opened over the modal paints above it, and a
+    // replacement drawer reclaims the freed slot instead of drifting.
+    expect(modal.zIndex).toBe(POPUP_Z_BANDS.modal);
+    expect(drawer.zIndex).toBe(modal.zIndex + POPUP_Z_STEP);
+
+    m.unregister(drawer.id);
+    const drawer2 = m.register("drawer", true);
+    expect(drawer2.zIndex).toBe(drawer.zIndex);
+  });
+
+  it("keeps a dropdown opened from within an overlay above it", () => {
+    // Select panels portal to <body>; opened from inside a modal they
+    // must paint above the modal that contains them — the whole reason
+    // the dropdown band sits above the overlay band.
+    const m = freshManager();
+    const modal = m.register("modal", true);
+    const panel = m.register("dropdown", false);
+    expect(panel.zIndex).toBeGreaterThan(modal.zIndex);
+
+    m.unregister(panel.id);
+    m.unregister(modal.id);
+
+    // Same guarantee inverted: with the dropdown registered FIRST, the
+    // later modal still lands on its own (lower) overlay band — band
+    // membership, not registration order, decides.
+    const dropdown = m.register("dropdown", false);
+    const modal2 = m.register("modal", true);
+    expect(dropdown.zIndex).toBe(POPUP_Z_BANDS.dropdown);
+    expect(modal2.zIndex).toBe(POPUP_Z_BANDS.modal);
+    expect(modal2.zIndex).toBeLessThan(dropdown.zIndex);
+  });
+
+  it("keeps tooltips above overlays and below toasts", () => {
+    const m = freshManager();
+    const modal = m.register("modal", true);
+    const tooltip = m.register("tooltip", false);
+    const toast = m.register("toast", false);
+    expect(tooltip.zIndex).toBe(POPUP_Z_BANDS.tooltip);
+    expect(tooltip.zIndex).toBeGreaterThan(modal.zIndex);
+    expect(toast.zIndex).toBeGreaterThan(tooltip.zIndex);
   });
 
   it("keeps the scroll lock counter balanced across register/unregister", () => {

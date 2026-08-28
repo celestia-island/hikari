@@ -143,6 +143,8 @@ export {
   notifyScrollStart,
   useOverlay,
   usePopupManager,
+  POPUP_Z_BANDS,
+  POPUP_Z_STEP,
   useToast,
   useConfirm,
   useBlockingToast,

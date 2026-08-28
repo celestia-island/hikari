@@ -2,7 +2,9 @@
   position: fixed;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: var(--hk-breadcrumb-z, 100001);
+  /* Above stacked-modal content (overlay band 1000+), below the dropdown
+     band (2000) so open panels are never covered by the strip. */
+  z-index: var(--hk-breadcrumb-z, 1500);
   display: flex;
   align-items: center;
   gap: var(--hi-space-4, 0.5rem);

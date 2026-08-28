@@ -1,7 +1,11 @@
-import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance, type PropType } from "vue";
+import { defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance, type PropType } from "vue";
 
 import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
+import HkHoverRevealAction from "./HkHoverRevealAction";
+import HkIconButton from "./HkIconButton";
+import { iconByName } from "../composables/iconRegistry";
+import { useI18n } from "../i18n/context";
 
 interface TabItem {
   key: string;
@@ -29,14 +33,35 @@ export default defineComponent({
      *  never clipped), with edge fades hinting at hidden tabs and the
      *  active tab scrolled into view on change. */
     scrollable: { type: Boolean, default: false },
+    /** Show the scroller's auto-hiding overlay scrollbar for the tab
+     *  axis (scrollable only). Off by default — the edge fades alone
+     *  hint at hidden tabs; opt in where a drag affordance helps
+     *  pointer users (dense strips, embedded toolbars). Read once on
+     *  mount (HkScrollContainer builds its track at mount time). */
+    scrollbar: { type: Boolean, default: false },
+    /** Render a trailing "add" button protruding at the right edge of
+     *  the strip — hover-revealed on pointer devices, tap-revealed with
+     *  a linger on touch (the shared HkHoverRevealAction behavior). The
+     *  button lives OUTSIDE the scroll viewport so it never scrolls
+     *  away. Emits `add`. */
+    addable: { type: Boolean, default: false },
+    /** Accessible label / tooltip for the add button (falls back to the
+     *  shared "Add tab" string). */
+    addLabel: { type: String, default: "" },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
+    /** The add button was pressed (addable only). */
+    add: () => true,
   },
   setup(props, { emit, slots }) {
+    const { t } = useI18n();
     const triggerRefs = ref<Map<number, HTMLElement>>(new Map());
     const indicatorStyle = ref<Record<string, string>>({});
     const scrollerRef = ref<ScrollerExpose | null>(null);
+
+    const resolvedAddLabel = (): string =>
+      props.addLabel || t("hikari::tabs.add", "Add tab");
 
     function setTriggerRef(el: Element | ComponentPublicInstance | null, idx: number) {
       if (el instanceof HTMLElement) {
@@ -155,14 +180,18 @@ export default defineComponent({
         </div>
       );
 
-      return (
-        <div class="hk-tabs" data-variant={props.variant} data-scrollable={props.scrollable || undefined}>
+      // Named const, NOT a mutable `strip` binding: the slot closure below
+      // executes during HkHoverRevealAction's render — a closure over a
+      // variable that already holds the wrapper vnode itself would recurse
+      // forever.
+      const stripInner = (
+        <div class="hk-tabs" data-variant={props.variant} data-scrollable={props.scrollable || undefined} data-addable={props.addable || undefined}>
           {props.scrollable ? (
             <HkScrollContainer
               ref={scrollerRef}
               class="hk-tabs-scroller"
               axis="horizontal"
-              scrollbar={false}
+              scrollbar={props.scrollbar}
               align="center"
               fade
             >
@@ -181,6 +210,35 @@ export default defineComponent({
             </div>
           ))}
         </div>
+      );
+
+      // The addable button rides the shared hover-reveal surface: the
+      // whole strip is the reveal host and the "+" is its extension, so
+      // it protrudes at the strip's right edge (outside the scroll
+      // viewport) and appears on hover / touch-tap only.
+      if (!props.addable) return stripInner;
+
+      const PlusIcon = iconByName("Plus") as any;
+      return (
+        <HkHoverRevealAction
+          as="span"
+          class="hk-tabs-addwrap"
+        >
+          {{
+            default: () => stripInner,
+            extension: () => (
+              <HkIconButton
+                variant="ghost"
+                size={24}
+                aria-label={resolvedAddLabel()}
+                {...{ title: resolvedAddLabel() }}
+                onClick={() => emit("add")}
+              >
+                {{ icon: () => (PlusIcon ? h(PlusIcon, { size: 14 }) : null) }}
+              </HkIconButton>
+            ),
+          }}
+        </HkHoverRevealAction>
       );
     };
   },

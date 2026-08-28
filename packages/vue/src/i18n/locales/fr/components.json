@@ -45,6 +45,7 @@
     "hikari::toast.close": "Fermer",
     "hikari::modal.auto": "Auto",
     "hikari::modal.jumpToLatest": "Aller au plus récent",
+    "hikari::tabs.add": "Ajouter un onglet",
     "hikari::scrollContainer.auto": "Auto",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Saisissez le mot de passe",

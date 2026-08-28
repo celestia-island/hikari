@@ -21,7 +21,7 @@
     "hikari::theme.modeDark": "داكن",
     "hikari::theme.modeAuto": "تلقائي",
     "hikari::theme.themes": "سمات الألوان",
-    "hikari::theme.autoAltitudeTip": "يتبع الوضع التلقائي ارتفاع الشمس. اضغط للتبديل إلى الوضع اليدوي",
+    "hikari::theme.autoAltitudeTip": "يتبع الوضع التلقائي ارتفاع الشمس.",
     "hikari::theme.editScheme": "تعديل نظام الألوان…",
     "hikari::theme.customize": "تخصيص",
     "hikari::theme.themeName": "اسم السمة",

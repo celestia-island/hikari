@@ -45,6 +45,7 @@
     "hikari::toast.close": "Schließen",
     "hikari::modal.auto": "Automatisch",
     "hikari::modal.jumpToLatest": "Zum Neuesten",
+    "hikari::tabs.add": "Tab hinzufügen",
     "hikari::scrollContainer.auto": "Automatisch",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Passwort eingeben",

@@ -21,6 +21,29 @@
   width: 100%;
 }
 
+/* === Addable variant === */
+
+/* With addable the whole strip sits inside an HkHoverRevealAction host
+   (`.hk-tabs-addwrap`) and the "+" protrudes at the host's right edge
+   (left:100% in HkHoverRevealAction.scss) — outside the scroll viewport,
+   so it never scrolls away. Shrink-wrap the strip the same way the
+   scrollable variant does, so the hover-reveal chain can cap inside
+   constrained flex parents and the tabs keep their safe centering. */
+.hk-tabs[data-addable] {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* The reveal host itself must be able to shrink below its content and
+   must not be clipped by rigid parents — mirrors HkHoverRevealAction's
+   own min/max rules; no flex shorthand here, the host's natural
+   shrink-wrap keeps the centered-bar geometry of the pre-addable era. */
+.hk-tabs-addwrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* === Shared list === */
 
 .hk-tabs-list {

@@ -21,7 +21,7 @@
     "hikari::theme.modeDark": "Sombre",
     "hikari::theme.modeAuto": "Auto",
     "hikari::theme.themes": "Thèmes de couleurs",
-    "hikari::theme.autoAltitudeTip": "Le mode auto suit la hauteur du soleil. Appuyez pour passer en manuel",
+    "hikari::theme.autoAltitudeTip": "Le mode auto suit l'altitude du soleil.",
     "hikari::theme.editScheme": "Modifier le schéma de couleurs…",
     "hikari::theme.customize": "Personnaliser",
     "hikari::theme.themeName": "Nom du thème",

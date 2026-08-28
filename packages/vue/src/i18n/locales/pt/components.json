@@ -45,6 +45,7 @@
     "hikari::toast.close": "Fechar",
     "hikari::modal.auto": "Automático",
     "hikari::modal.jumpToLatest": "Ir para o mais recente",
+    "hikari::tabs.add": "Adicionar separador",
     "hikari::scrollContainer.auto": "Automático",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Digite a senha",

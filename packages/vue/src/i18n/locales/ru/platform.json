@@ -21,7 +21,7 @@
     "hikari::theme.modeDark": "Тёмная",
     "hikari::theme.modeAuto": "Авто",
     "hikari::theme.themes": "Цветовые темы",
-    "hikari::theme.autoAltitudeTip": "Авто следует высоте солнца. Нажмите, чтобы перейти в ручной режим",
+    "hikari::theme.autoAltitudeTip": "Автоматический режим следует за высотой солнца.",
     "hikari::theme.editScheme": "Изменить цветовую схему…",
     "hikari::theme.customize": "Настроить",
     "hikari::theme.themeName": "Название темы",

@@ -47,77 +47,31 @@
   padding: var(--space-4, 0.25rem) var(--space-6, 0.375rem);
 }
 
-/* ── Color-mode group (shared HkSegmented + auto overlay) ─────────────── */
+/* ── Color-mode group (plain shared HkSegmented + auto hint row) ──────── */
 
 .s-theme-mode-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 0.25rem);
   padding: 0 var(--space-6, 0.375rem) var(--space-4, 0.25rem);
 }
 
-.s-theme-mode-seg {
-  position: relative;
-}
-
-/* Equal thirds so the overlay lands exactly on the Light/Dark halves. */
-.s-theme-mode-seg .hk-segmented[data-block="true"] .hk-segmented__segment {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 /*
- * Auto-mode cover strip: replaces the Light/Dark segments with a passive
- * solar-altitude readout in the segmented typography. Deliberately styled
- * static (no hover affordance) yet pressable — pressing it resolves auto
- * to manual (day → light, night → dark).
- *
- * Geometry (desktop/tablet track): 2px padding each side + two 2px gaps,
- * equal segment widths → second segment starts at
- * calc((100% - 8px) / 3 + 4px). The ≤767px touch form drops the gaps →
- * calc((100% - 4px) / 3 + 2px). NOTE: HkSegmented's mobileBreakpoint prop
- * is currently unwired (its touch form is pure CSS at the same 767px), so
- * these hardcoded calcs stay in lockstep; revisit both if that changes.
- *
- * z-index 2 keeps the strip above the segments, which HkSegmented promotes
- * to position: relative / z-index: 1 so its sliding thumb can slot under
- * them.
+ * Auto-mode altitude readout: a passive caption row BELOW the segmented
+ * group, in the segmented typography. Non-interactive by design — the
+ * group above stays the only control surface (pressing Light/Dark while
+ * auto is active IS the switch to that manual side).
  */
 .s-theme-mode-autoalt {
-  position: absolute;
-  z-index: 2;
-  top: 2px;
-  bottom: 2px;
-  right: 2px;
-  left: calc((100% - 8px) / 3 + 4px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-4, 0.25rem);
-  border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
-  border-radius: 6px;
-  background: rgb(var(--color-surface));
-  color: rgb(var(--color-text-secondary, var(--color-muted)));
-  font: inherit;
+  color: rgb(var(--color-muted));
   font-size: 12px;
   line-height: 1;
-  cursor: default;
   user-select: none;
   -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  appearance: none;
-  padding: 0;
-}
-
-.s-theme-mode-autoalt:hover {
-  background: rgb(var(--color-surface));
-  color: rgb(var(--color-text-secondary, var(--color-muted)));
-}
-
-.s-theme-mode-autoalt:active {
-  background: rgb(var(--color-primary) / 8%);
-}
-
-.s-theme-mode-autoalt:focus-visible {
-  outline: 2px solid rgb(var(--color-primary));
-  outline-offset: 1px;
 }
 
 .s-theme-mode-autoalt-value {
@@ -126,17 +80,11 @@
 }
 
 @media (max-width: 767px) {
-  /* Segments stay equal thirds; recompute the boundary without gaps.
-   * Vertical geometry still stretches between the 2px track paddings,
-   * so no explicit height is needed for the taller touch segments. */
   .s-theme-mode-row {
     padding: 0 0 var(--space-4, 0.25rem);
   }
 
   .s-theme-mode-autoalt {
-    left: calc((100% - 4px) / 3 + 2px);
-    /* Match the touch segments' corner radius. */
-    border-radius: 8px;
     font-size: 14px;
   }
 }

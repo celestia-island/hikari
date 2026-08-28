@@ -45,6 +45,7 @@
     "hikari::toast.close": "닫기",
     "hikari::modal.auto": "자동",
     "hikari::modal.jumpToLatest": "최신으로 이동",
+    "hikari::tabs.add": "탭 추가",
     "hikari::scrollContainer.auto": "자동",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "비밀번호 입력",

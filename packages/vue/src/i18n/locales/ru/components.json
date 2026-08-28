@@ -45,6 +45,7 @@
     "hikari::toast.close": "Закрыть",
     "hikari::modal.auto": "Авто",
     "hikari::modal.jumpToLatest": "К последнему",
+    "hikari::tabs.add": "Добавить вкладку",
     "hikari::scrollContainer.auto": "Авто",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "Введите пароль",

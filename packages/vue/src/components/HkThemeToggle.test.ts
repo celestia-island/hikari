@@ -72,11 +72,11 @@ function paletteButton(): HTMLButtonElement {
 }
 
 function modeSegments(): HTMLButtonElement[] {
-  return [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-mode-seg .hk-segmented__segment")];
+  return [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-mode-row .hk-segmented__segment")];
 }
 
-function altitudeOverlay(): HTMLButtonElement | null {
-  return document.body.querySelector<HTMLButtonElement>(".s-theme-mode-autoalt");
+function altitudeHint(): HTMLElement | null {
+  return document.body.querySelector<HTMLElement>(".s-theme-mode-autoalt");
 }
 
 beforeEach(() => {
@@ -126,7 +126,7 @@ describe("HkThemeToggle external customization", () => {
 });
 
 describe("HkThemeToggle color-mode group", () => {
-  it("renders three segments with the altitude overlay only in auto mode", async () => {
+  it("renders three enabled segments and shows the altitude hint only in auto", async () => {
     useTheme().setMode("dark");
     const { container } = mountToggle(true);
     await settle();
@@ -134,46 +134,48 @@ describe("HkThemeToggle color-mode group", () => {
     openMenu(container);
     await settle();
 
-    // Manual mode: plain three-way group, no cover strip.
+    // Manual mode: plain three-way group, no hint row.
     expect(modeSegments()).toHaveLength(3);
-    expect(altitudeOverlay()).toBeNull();
+    expect(altitudeHint()).toBeNull();
     const dark = modeSegments().find((b) => b.textContent?.includes("Dark"));
     const lightSeg = modeSegments().find((b) => b.textContent?.includes("Light"));
     expect(dark?.getAttribute("aria-checked")).toBe("true");
     expect(lightSeg?.disabled).toBe(false);
 
-    // Back to auto: the cover strip replaces the Light/Dark halves.
+    // Back to auto: the segments stay enabled (a side press IS the switch
+    // to manual) and a passive altitude readout rides below the group.
     modeSegments()
       .find((b) => b.textContent?.includes("Auto"))!
       .click();
     await settle();
 
-    const overlay = altitudeOverlay();
-    expect(overlay).toBeTruthy();
-    expect(overlay!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
-    // Covered segments sit out of the tab order; the overlay is the single
-    // pointer surface while auto is active.
-    expect(lightSeg?.disabled).toBe(true);
-    expect(dark?.disabled).toBe(true);
+    const hint = altitudeHint();
+    expect(hint).toBeTruthy();
+    expect(hint!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
+    expect(lightSeg?.disabled).toBe(false);
+    expect(dark?.disabled).toBe(false);
   });
 
-  it("resolves auto to a manual side when the altitude strip is pressed", async () => {
+  it("switches straight to the pressed manual side while auto is active", async () => {
     useTheme().setMode("system");
     const { container } = mountToggle(true);
     await settle();
 
     openMenu(container);
     await settle();
-    expect(altitudeOverlay()).toBeTruthy();
+    expect(altitudeHint()).toBeTruthy();
 
-    altitudeOverlay()!.click();
+    // Pressing Light directly drops out of auto into manual light —
+    // no intermediate resolve surface involved.
+    modeSegments()
+      .find((b) => b.textContent?.includes("Light"))!
+      .click();
     await settle();
 
-    expect(altitudeOverlay()).toBeNull();
-    const stored = localStorage.getItem(MODE_KEY);
-    expect(["light", "dark"]).toContain(stored);
+    expect(localStorage.getItem(MODE_KEY)).toBe("light");
+    expect(altitudeHint()).toBeNull();
     const active = modeSegments().find((b) => b.getAttribute("aria-checked") === "true");
-    expect(active?.textContent).toContain(stored === "light" ? "Light" : "Dark");
+    expect(active?.textContent).toContain("Light");
   });
 
   it("keeps every theme row footprint uniform for list highlights", async () => {

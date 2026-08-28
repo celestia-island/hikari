@@ -45,6 +45,7 @@
     "hikari::toast.close": "إغلاق",
     "hikari::modal.auto": "تلقائي",
     "hikari::modal.jumpToLatest": "الانتقال إلى الأحدث",
+    "hikari::tabs.add": "إضافة علامة تبويب",
     "hikari::scrollContainer.auto": "تلقائي",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "أدخل كلمة المرور",

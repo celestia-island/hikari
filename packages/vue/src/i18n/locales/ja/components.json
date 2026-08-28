@@ -45,6 +45,7 @@
     "hikari::toast.close": "閉じる",
     "hikari::modal.auto": "自動",
     "hikari::modal.jumpToLatest": "最新へ戻る",
+    "hikari::tabs.add": "タブを追加",
     "hikari::scrollContainer.auto": "自動",
     "hikari::avatar.fallback": "？",
     "hikari::passwordInput.placeholderPassword": "パスワードを入力",

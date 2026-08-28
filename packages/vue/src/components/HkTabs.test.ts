@@ -11,7 +11,7 @@ interface TabsHarness {
   setActive: (key: string) => void;
 }
 
-function mountTabs(props: Record<string, unknown> = {}): TabsHarness {
+function mountTabs(props: Record<string, unknown> = {}, onAdd?: () => void): TabsHarness {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
@@ -24,6 +24,7 @@ function mountTabs(props: Record<string, unknown> = {}): TabsHarness {
           ...props,
           modelValue: active.value,
           "onUpdate:modelValue": (v: string) => { active.value = v; },
+          onAdd: onAdd,
           tabs: [
             { key: "a", label: "Alpha" },
             { key: "b", label: "Beta" },
@@ -81,5 +82,52 @@ describe("HkTabs scrollable", () => {
     // at its last concrete values — the contract under test is that a
     // modelValue change does not break the indicator update pass.
     expect(indicator()).not.toBeNull();
+  });
+
+  it("only mounts the auto-hiding overlay scrollbar when opted in", async () => {
+    const plain = mountTabs({ scrollable: true });
+    await nextTick();
+    expect(plain.container.querySelector(".hk-scrollbar-track[data-axis='horizontal']")).toBeNull();
+
+    const tracked = mountTabs({ scrollable: true, scrollbar: true });
+    await nextTick();
+    expect(tracked.container.querySelector(".hk-scrollbar-track[data-axis='horizontal']")).not.toBeNull();
+  });
+});
+
+describe("HkTabs addable", () => {
+  it("renders the protruding add button only with addable and wires the add emit", async () => {
+    let adds = 0;
+    const t = mountTabs({ addable: true, addLabel: "Add view" }, () => { adds += 1; });
+
+    // The strip is wrapped in the shared hover-reveal surface and the
+    // button lives in its extension slot, outside the tab list.
+    const wrap = t.container.querySelector<HTMLElement>(".hk-tabs-addwrap.hk-hover-reveal");
+    expect(wrap).not.toBeNull();
+    expect(t.container.querySelector(".hk-tabs[data-addable]")).not.toBeNull();
+
+    const addBtn = wrap!.querySelector<HTMLButtonElement>(".hk-hover-reveal-extension button");
+    expect(addBtn).not.toBeNull();
+    expect(addBtn!.getAttribute("aria-label")).toBe("Add view");
+    expect(addBtn!.getAttribute("title")).toBe("Add view");
+    // The "+" lives OUTSIDE the scroll viewport, so it never scrolls away.
+    expect(addBtn!.closest(".hk-scroll-container")).toBeNull();
+    expect(addBtn!.closest(".hk-tabs-addwrap")).not.toBeNull();
+
+    addBtn!.click();
+    await nextTick();
+    expect(adds).toBe(1);
+  });
+
+  it("falls back to the shared label and stays absent without addable", async () => {
+    const bare = mountTabs();
+    expect(bare.container.querySelector(".hk-tabs-addwrap")).toBeNull();
+    expect(bare.container.querySelector(".hk-tabs[data-addable]")).toBeNull();
+
+    const t = mountTabs({ addable: true });
+    const addBtn = t.container.querySelector<HTMLButtonElement>(".hk-hover-reveal-extension button");
+    expect(addBtn).not.toBeNull();
+    // Default i18n string (test env resolves the en locale).
+    expect(addBtn!.getAttribute("aria-label")).toContain("Add");
   });
 });

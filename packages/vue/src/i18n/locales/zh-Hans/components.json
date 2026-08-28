@@ -45,6 +45,7 @@
     "hikari::toast.close": "关闭",
     "hikari::modal.auto": "自动",
     "hikari::modal.jumpToLatest": "回到最新",
+    "hikari::tabs.add": "添加标签页",
     "hikari::scrollContainer.auto": "自动",
     "hikari::avatar.fallback": "?",
     "hikari::passwordInput.placeholderPassword": "输入密码",

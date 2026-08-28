@@ -98,7 +98,6 @@
     "hikari::theme.themes": "テーマ",
     "hikari::tablePage.emptyTitle": "データがありません",
     "hikari::adminShell.navTitle": "ナビゲーション",
-    "hikari::menu.back": "戻る",
     "hikari::toast.msgs": "件のメッセージ",
     "hikari::statusPill.ms": " ミリ秒",
     "hikari::protocol.decline": "辞退",

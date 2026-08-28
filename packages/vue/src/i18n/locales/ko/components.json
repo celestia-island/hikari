@@ -98,7 +98,6 @@
     "hikari::theme.themes": "테마",
     "hikari::tablePage.emptyTitle": "데이터 없음",
     "hikari::adminShell.navTitle": "탐색",
-    "hikari::menu.back": "뒤로",
     "hikari::toast.msgs": "개의 메시지",
     "hikari::statusPill.ms": " 밀리초",
     "hikari::protocol.decline": "거절",

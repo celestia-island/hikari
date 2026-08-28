@@ -98,7 +98,6 @@
     "hikari::theme.themes": "主題",
     "hikari::tablePage.emptyTitle": "暫無資料",
     "hikari::adminShell.navTitle": "導覽",
-    "hikari::menu.back": "返回",
     "hikari::toast.msgs": "則訊息",
     "hikari::statusPill.ms": " 毫秒",
     "hikari::protocol.decline": "拒絕",

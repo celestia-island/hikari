@@ -2,39 +2,48 @@ import {
   computed,
   defineComponent,
   h,
-  nextTick,
   onBeforeUnmount,
-  onMounted,
   ref,
-  Teleport,
   watch,
   type Component,
   type PropType,
+  type VNode,
 } from "vue";
 
-import { ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { ChevronRight } from "lucide-vue-next";
 
-import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
-import { createBackGuard } from "../runtime/backStack";
-import { useI18n } from "../i18n/context";
+import { useBreakpoint } from "../runtime/useBreakpoint";
+import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import "./HkMenu.scss";
 
 /**
  * Generic cascading menu.
  *
  * One primitive for every "menu with submenus" need — locale picking, theme
- * groups, account actions. Two presentation modes driven by a breakpoint:
+ * groups, account actions. The PRESENTATION is not owned here: every level
+ * renders through `HkSelectPanel` (the shared dropdown surface), so menus
+ * and dropdowns are the same implementation — desktop anchored popouts,
+ * mobile bottom sheets (scrim + grabber + title), popup-manager z-stacking,
+ * overlay registration, outside-click/Escape closing, and one back-guard
+ * history entry per open level.
  *
- * - Desktop: popover panel anchored to the trigger; rows carrying children
- *   cascade to the RIGHT of the anchor row (flipping to the left when the
- *   viewport runs out) — the traditional application menubar behavior.
- *   Clicking (or hovering) a sibling row switches the open submenu to that
- *   row, like a classic menubar.
- * - Mobile: every level — including the root — opens as its own fullscreen
- *   sheet, stacked. Every level pushes a history entry, so the system/browser
- *   back gesture closes exactly one level (Android modal navigation mode);
- *   closing the last level closes the menu.
+ * - Desktop: the root panel anchors to the trigger; rows carrying children
+ *   cascade into their own nested `HkSelectPanel` anchored to the parent
+ *   row (to the RIGHT, flipping to the left when the viewport runs out) —
+ *   traditional application menubar behavior. Clicking or hovering a
+ *   sibling row switches the open submenu to that row.
+ * - Mobile: every level — including the root — docks as its own bottom
+ *   sheet layer. Each level owns one back-guard entry (via its panel), so
+ *   the system/browser back gesture closes exactly one level; closing the
+ *   last level closes the menu.
+ * - Sidebar variant: an inline vertical nav list — always rendered, no
+ *   popover machinery, no history.
+ *
+ * Data-driven mode (`items`) and composition mode (default slot) are
+ * mutually exclusive per instance: when a default slot is provided its
+ * content replaces the item model entirely (no cascade).
  */
+
 export interface HkMenuItem {
   key: string;
   label: string;
@@ -48,27 +57,59 @@ export interface HkMenuItem {
   children?: HkMenuItem[];
 }
 
-function viewportIsMobile(breakpoint: number): boolean {
-  return typeof window !== "undefined" && window.innerWidth < breakpoint;
+/** Viewport padding mirrored from HkSelectPanel's popout geometry. */
+const VIEWPORT_PAD = 8;
+/** Width estimate used ONLY to pick a cascade's flip side; the real
+ *  panel box is measured by HkSelectPanel itself. */
+const CASCADE_PANEL_W = 224;
+
+/**
+ * Minimal anchor contract HkSelectPanel actually relies on (rect + hit
+ * containment). Cascade levels anchor to synthetic objects derived from
+ * the parent row's live rect — the panel then does all real positioning.
+ */
+interface PanelAnchor {
+  getBoundingClientRect(): DOMRect;
+  contains(node: Node): boolean;
+}
+
+/** Zero-size rect at a point (cascade anchors have no extent). */
+function pointRect(left: number, top: number): DOMRect {
+  return {
+    x: left,
+    y: top,
+    width: 0,
+    height: 0,
+    top,
+    left,
+    right: left,
+    bottom: top,
+    toJSON: () => ({}),
+  } as DOMRect;
+}
+
+/** Exposed surface of HkSelectPanel this component consumes. */
+interface PanelInstance {
+  panelEl: () => HTMLElement | null;
 }
 
 export default defineComponent({
   name: "HkMenu",
   props: {
     /**
-     * Presentation: "popup" = the anchored cascading menu (desktop panels /
-     * mobile sheets, driven by `open`); "sidebar" = an inline vertical nav
-     * list — always rendered, no popover, no history — where root items
-     * carrying `children` render as collapsible groups.
+     * Presentation: "popup" = the anchored cascading menu (desktop popouts /
+     * mobile sheets via HkSelectPanel, driven by `open`); "sidebar" = an
+     * inline vertical nav list — always rendered, no popover, no history —
+     * where root items carrying `children` render as collapsible groups.
      */
     variant: { type: String as PropType<"popup" | "sidebar">, default: "popup" },
     /** Key of the currently active row (sidebar variant). */
     activeKey: { type: String, default: undefined },
-    /** Panel title (mobile sheet header / desktop a11y label root). */
+    /** Panel title (mobile sheet header / desktop popout a11y label). */
     title: { type: String, default: "" },
     items: { type: Array as PropType<HkMenuItem[]>, required: true },
     open: { type: Boolean, required: true },
-    /** Anchor element for the desktop popover. */
+    /** Anchor element for the desktop popout. */
     anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
     /** Base placement of the desktop panel relative to the anchor. */
     placement: {
@@ -77,164 +118,115 @@ export default defineComponent({
       >,
       default: "bottom-start",
     },
-    /** Override the viewport breakpoint (default 768px). */
+    /**
+     * Deprecated: the shared panel surface decides sheet mode at the
+     * library-wide 768px breakpoint (useBreakpoint). Kept for API
+     * compatibility; the override no longer changes the mode.
+     */
     mobileBreakpoint: { type: Number, default: 768 },
     /** Vertical offset between anchor and the desktop panel. */
     offset: { type: Number, default: 6 },
+    /**
+     * Whether the leading check column is reserved on item rows.
+     * "auto" (default) reserves it when any item at the current level has
+     * `checked !== undefined`; `true`/`false` force it on/off. Rows with
+     * `checked === true` render the mark; the rest get an empty placeholder
+     * so labels stay aligned — plain action menus show no column at all.
+     */
+    selectMode: { type: [String, Boolean] as PropType<"auto" | boolean>, default: "auto" },
+    /**
+     * Desktop popout min-width follows the anchor width (select parity).
+     * Menus default to false — shrink-to-fit. Cascade placements always
+     * shrink to fit.
+     */
+    matchAnchorWidth: { type: Boolean, default: false },
   },
   emits: ["update:open", "select"],
-  setup(props, { emit }) {
-    const { t } = useI18n();
+  setup(props, { emit, slots }) {
+    const { isMobile } = useBreakpoint();
+
     /** Open submenu path on desktop, e.g. ["theme", "dark"] → panel chain. */
     const desktopPath = ref<string[]>([]);
-    /** Pushed sheet chain on mobile: each entry is one submenu level. */
-    const mobileStack = ref<{ title: string; items: HkMenuItem[] }[]>([]);
-    /** Bumped on viewport resize so an open menu re-renders in the right mode. */
-    const viewportTick = ref(0);
+    /** Pushed sheet chain on mobile: the branch item of each level. */
+    const mobileStack = ref<HkMenuItem[]>([]);
 
-    // Registered overlay: the whole menu (desktop panels + mobile sheets)
-    // stacks inside the shared popup context instead of hardcoded
-    // 1100/1200+n values that later-opened modals could overtake.
-    const manager = usePopupManager();
-    const handle = ref<PopupHandle | null>(null);
-    const menuZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
+    // ── outside-click attribution ────────────────────────────────────
+    // Each HkSelectPanel closes on clicks landing outside ITS OWN surface,
+    // so a click inside a deeper cascade panel would wrongly tear down the
+    // shallower panels (the panels are teleported siblings, not nested
+    // DOM). A capture-phase listener registered BEFORE any panel's own
+    // listener records the deepest menu level the click landed in; close
+    // requests from a panel are ignored while the click clearly belongs to
+    // a deeper level. The record clears on a zero-delay macrotask (after
+    // the whole dispatch has completed) so programmatic closes (Escape,
+    // v-model, breakpoint crossing) are never suppressed.
+    const panelInsts = ref<Record<number, PanelInstance | null>>({});
+    const clickLevel = ref(-1);
 
-    const mobileMode = computed(() => {
-      void viewportTick.value; // re-evaluate when the viewport changes
-      return viewportIsMobile(props.mobileBreakpoint);
-    });
+    function deepestPanelAt(target: Node): number {
+      const max = isMobile.value ? mobileStack.value.length : desktopPath.value.length;
+      for (let level = max; level >= 0; level--) {
+        const el = panelInsts.value[level]?.panelEl() ?? null;
+        if (el && el.contains(target)) return level;
+      }
+      return -1;
+    }
 
-    /**
-     * History ownership rides the shared back-guard service: every
-     * pushed sheet level is one marked entry, user back gestures are
-     * dispatched window-first (topmost surface consumes them), and
-     * programmatic closes rewind our entries via suppressed
-     * traversals. See runtime/backStack.ts.
-     */
-    let backGuard: ReturnType<typeof createBackGuard>;
-    backGuard = createBackGuard({
-      onBack: (depth) => {
-        desktopPath.value = [];
-        if (depth === null) {
-          // Landed outside our stack — collapse whatever remains.
-          mobileStack.value = [];
-          emit("update:open", false);
-          return;
-        }
-        // Landed on one of our own entries — close exactly one level.
-        mobileStack.value = props.open ? mobileStack.value.slice(0, depth) : [];
-        if (!props.open) {
-          // Forward gesture into a spent stack while closed: release the
-          // ownership marker so a closed menu never owns live history.
-          backGuard.forget();
-        }
-      },
+    function onDocumentClick(e: MouseEvent): void {
+      clickLevel.value = deepestPanelAt(e.target as Node);
+      // Macrotask clear, NOT a microtask: per HTML spec a microtask
+      // checkpoint runs after EVERY event listener returns (the JS stack
+      // empties between listeners of one dispatch), so a microtask would
+      // wipe the record before the panels' own capture listeners — and
+      // their close requests — ever consult it. A zero-delay timeout only
+      // fires once the whole dispatch (every listener, target handlers
+      // included) has completed.
+      setTimeout(() => {
+        clickLevel.value = -1;
+      }, 0);
+    }
+
+    // Snapshot at setup so add/remove stay exactly symmetric even if the
+    // (effectively static) variant prop were flipped at runtime.
+    const popoverVariant = props.variant !== "sidebar";
+    if (popoverVariant && typeof document !== "undefined") {
+      document.addEventListener("click", onDocumentClick, true);
+    }
+    onBeforeUnmount(() => {
+      if (popoverVariant) {
+        document.removeEventListener("click", onDocumentClick, true);
+      }
     });
 
     function closeAll(): void {
       desktopPath.value = [];
       mobileStack.value = [];
-      backGuard.release();
       emit("update:open", false);
     }
 
-    /** Escape collapses the whole cascade — mirrors HkPopover's close-on-
-     *  Escape so keyboard users can dismiss the menu without clicking. */
-    function onMenuKeydown(e: KeyboardEvent): void {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeAll();
-      }
+    /** Root panel (popout or root sheet) asked to close. */
+    function onRootCloseRequest(): void {
+      if (clickLevel.value > 0) return; // the click belongs to a deeper level
+      closeAll();
     }
 
-    function pushLevel(title: string, items: HkMenuItem[]): void {
-      mobileStack.value.push({ title, items });
-      backGuard.push();
+    /** Desktop sub-panel at `level` asked to close. */
+    function onSubCloseRequest(level: number): void {
+      if (clickLevel.value > level) return; // a deeper panel owns this click
+      desktopPath.value = desktopPath.value.slice(0, level - 1);
     }
 
-    function popLevel(): boolean {
-      if (mobileStack.value.length === 0) return false;
-      if (backGuard.entries > 0 && backGuard.ownsCurrent()) {
-        // The suppressed history.back() inside the guard lands without
-        // re-entering dispatch — truncate our visual stack here so
-        // in-app back and browser back stay in lockstep.
-        mobileStack.value = mobileStack.value.slice(0, -1);
-        backGuard.pop();
-      } else {
-        mobileStack.value.pop();
-      }
-      return true;
+    /** Mobile sheet layer `index` (level = index + 1) asked to close. */
+    function onStackCloseRequest(index: number): void {
+      if (clickLevel.value > index + 1) return;
+      mobileStack.value = mobileStack.value.slice(0, index);
     }
-
-    function onResize(): void {
-      viewportTick.value++;
-      // Desktop panels are viewport-fixed; a same-mode resize strands them.
-      if (!mobileMode.value && props.open) void nextTick(refreshGeometry);
-    }
-
-    onMounted(() => {
-      if (props.variant === "sidebar") return; // no popover machinery
-      window.addEventListener("resize", onResize);
-    });
-    onBeforeUnmount(() => {
-      if (handle.value) {
-        manager.unregister(handle.value.id);
-        handle.value = null;
-      }
-      // Every variant registers its guard (the service is cheap for a
-      // never-pushed guard) — every variant must destroy it too, or
-      // sidebar mounts leak records and pin the module listener.
-      backGuard.destroy();
-      if (props.variant === "sidebar") return;
-      window.removeEventListener("resize", onResize);
-    });
-
-    /**
-     * Keep the history chain in sync with the open state and the active
-     * mode: a menu opened on mobile owns one root entry; a menu that ends
-     * up on desktop releases every entry it pushed.
-     */
-    watch(
-      // String key: fires on real state changes only, not on every resize tick.
-      // The sidebar variant owns no history at all.
-      () => (props.variant === "sidebar" ? "sidebar" : `${props.open ? 1 : 0}:${mobileMode.value ? 1 : 0}`),
-      (key) => {
-        if (key === "sidebar") return;
-        const openNow = key.startsWith("1");
-        const mobile = key.endsWith("1");
-        if (!openNow) {
-          if (handle.value) {
-            manager.unregister(handle.value.id);
-            handle.value = null;
-          }
-          if (backGuard.entries > 0 || mobileStack.value.length > 0 || desktopPath.value.length > 0) {
-            desktopPath.value = [];
-            mobileStack.value = [];
-            backGuard.release();
-          }
-          return;
-        }
-        if (!handle.value) {
-          handle.value = manager.register("dropdown", false);
-        }
-        if (mobile) {
-          // Normalize: exactly one fresh root entry above the page's history.
-          if (backGuard.entries !== 0) backGuard.release();
-          backGuard.push();
-        } else if (backGuard.entries > 0) {
-          desktopPath.value = [];
-          mobileStack.value = [];
-          backGuard.release();
-        }
-      },
-      { immediate: true, flush: "sync" },
-    );
 
     function onItem(item: HkMenuItem, level: number): void {
       if (item.disabled) return;
       if (item.children?.length) {
-        if (mobileMode.value) {
-          pushLevel(item.label, item.children);
+        if (isMobile.value) {
+          mobileStack.value = [...mobileStack.value.slice(0, level), item];
         } else {
           // Replace the path at the clicked row's level — clicking a
           // sibling in a shallower panel switches the cascade to it.
@@ -249,7 +241,7 @@ export default defineComponent({
     /** Classic menubar hover semantics: hovering a row at a level collapses
      *  everything deeper; hovering a sibling branch switches to it. */
     function onRowEnter(item: HkMenuItem, level: number): void {
-      if (mobileMode.value) return;
+      if (isMobile.value) return;
       if (desktopPath.value.length <= level) return;
       if (desktopPath.value[level] === item.key) return;
       desktopPath.value = item.children?.length
@@ -257,101 +249,111 @@ export default defineComponent({
         : desktopPath.value.slice(0, level);
     }
 
-    /** Which items the currently deepest desktop panel shows. */
-    const currentItems = computed<HkMenuItem[]>(() => {
-      let list = props.items;
-      for (const key of desktopPath.value) {
-        const next = list.find((i) => i.key === key)?.children;
-        if (!next) break;
-        list = next;
-      }
-      return list;
-    });
+    // ── cascade anchors ──────────────────────────────────────────────
+    // Row elements of the open cascade, keyed `<level>:<itemKey>`.
+    const rowRefs = ref<Record<string, HTMLElement | null>>({});
+    const anchorCache = new Map<string, PanelAnchor>();
 
-    // ── desktop popover geometry ────────────────────────────────────
-    const panelStyle = ref<Record<string, string>>({ width: "224px" });
-
-    function positionPanel(): void {
-      const anchor = props.anchorRef;
-      if (!anchor) return;
-      const r = anchor.getBoundingClientRect();
-      const panelW = 224;
-      const panelH = Math.min(320, Math.max(120, currentItems.value.length * 34 + 16));
-      let top: number;
-      let left: number;
-      if (props.placement.startsWith("right-")) {
-        // cascade from the anchor's RIGHT edge (traditional submenu):
-        left = r.right + props.offset;
-        top = r.top;
-        if (left + panelW > window.innerWidth - 8) left = Math.max(8, r.left - panelW - props.offset);
-      } else if (props.placement.startsWith("left-")) {
-        left = Math.max(8, r.left - panelW - props.offset);
-        top = r.top;
-      } else {
-        top = r.bottom + props.offset;
-        left = props.placement.endsWith("-end") ? r.right - panelW : r.left;
-        if (props.placement.startsWith("top-")) top = r.top - panelH - props.offset;
-        if (left + panelW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - panelW);
+    /** Synthetic anchor placing a sub-panel beside its parent row:
+     *  popout to the right, flipping to the left when the viewport runs
+     *  out (classic menubar cascade). The rect stays LIVE — HkSelectPanel
+     *  re-reads it on every reposition (open, resize). */
+    function rowAnchor(level: number, key: string): PanelAnchor {
+      const id = `${level}:${key}`;
+      let anchor = anchorCache.get(id);
+      if (!anchor) {
+        anchor = {
+          getBoundingClientRect: () => {
+            const row = rowRefs.value[id];
+            if (!row) return pointRect(0, 0);
+            const r = row.getBoundingClientRect();
+            if (!r.width && !r.height) return pointRect(0, 0); // detached
+            const openRight = r.right + CASCADE_PANEL_W <= window.innerWidth - VIEWPORT_PAD;
+            const left = openRight ? r.right : Math.max(VIEWPORT_PAD, r.left - CASCADE_PANEL_W);
+            return pointRect(left, r.top);
+          },
+          contains: (node) => !!rowRefs.value[id]?.contains(node),
+        };
+        anchorCache.set(id, anchor);
       }
-      if (top + panelH > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - panelH);
-      panelStyle.value = {
-        position: "fixed",
-        top: `${Math.round(top)}px`,
-        left: `${Math.round(left)}px`,
-        width: `${panelW}px`,
+      return anchor;
+    }
+
+    /** Synthetic anchor for root placements HkSelectPanel does not model
+     *  natively (right-/left-start): the panel hangs off the anchor's
+     *  right edge, flipping to the left when out of viewport. */
+    function rootCascadeAnchor(side: "right" | "left"): PanelAnchor {
+      return {
+        getBoundingClientRect: () => {
+          const real = props.anchorRef;
+          if (!real) return pointRect(0, 0);
+          const r = real.getBoundingClientRect();
+          if (!r.width && !r.height) return pointRect(0, 0);
+          const gap = props.offset;
+          const openRight = r.right + gap + CASCADE_PANEL_W <= window.innerWidth - VIEWPORT_PAD;
+          const left =
+            side === "right" && openRight
+              ? r.right + gap
+              : Math.max(VIEWPORT_PAD, r.left - CASCADE_PANEL_W - gap);
+          return pointRect(left, r.top);
+        },
+        contains: (node) => !!props.anchorRef?.contains(node),
       };
     }
 
-    /** Anchor row elements of the open cascade, keyed `<level>:<itemKey>`. */
-    const rowRefs = ref<Record<string, HTMLElement | null>>({});
-    const subStyles = ref<Record<number, Record<string, string>>>({});
-
-    function positionSubmenus(): void {
-      for (let d = 0; d < desktopPath.value.length; d++) {
-        const row = rowRefs.value[`${d}:${desktopPath.value[d]}`];
-        if (!row) continue;
-        const r = row.getBoundingClientRect();
-        const w = 224;
-        const h = 180;
-        const openRight = r.right + w <= window.innerWidth - 8;
-        const left = openRight ? r.right : r.left - w;
-        let top = r.top;
-        if (top + h > window.innerHeight - 8) top = Math.max(8, window.innerHeight - 8 - h);
-        subStyles.value[d] = {
-          position: "fixed",
-          top: `${Math.round(top)}px`,
-          left: `${Math.round(left)}px`,
-          width: `${w}px`,
+    /** Root panel configuration: native placements pass straight through;
+     *  cascade placements go through the synthetic anchor (fixed panel
+     *  offset 0 — the gap lives in the anchor; shrink-to-fit width). */
+    const rootPanelConfig = computed(() => {
+      const p = props.placement;
+      if (p === "right-start" || p === "left-start") {
+        return {
+          anchor: rootCascadeAnchor(p === "right-start" ? "right" : "left"),
+          placement: "bottom-start" as SelectPanelPlacement,
+          offset: 0,
+          match: false,
         };
       }
-    }
+      return {
+        anchor: props.anchorRef,
+        placement: p as SelectPanelPlacement,
+        offset: props.offset,
+        match: props.matchAnchorWidth,
+      };
+    });
 
-    function refreshGeometry(): void {
-      positionPanel();
-      positionSubmenus();
-    }
-
-    // reposition on open + on level change (after the DOM settles)
-    watch(
-      () => [props.open, desktopPath.value.length, currentItems.value, props.anchorRef] as const,
-      () => {
-        void nextTick(refreshGeometry);
-      },
-      { immediate: true },
-    );
-
+    // ── level content ────────────────────────────────────────────────
+    /** Which items the given desktop level shows. */
     function itemsAtLevel(level: number): HkMenuItem[] {
       let list = props.items;
       for (let i = 0; i < level; i++) {
-        const key = desktopPath.value[i];
-        const next = list.find((it) => it.key === key)?.children;
+        const next = list.find((it) => it.key === desktopPath.value[i])?.children;
         if (!next) return [];
         list = next;
       }
       return list;
     }
 
-    function renderRow(item: HkMenuItem, level: number, _index: number) {
+    /** The branch item whose children form desktop `level` (title source). */
+    function branchAt(level: number): HkMenuItem | undefined {
+      let list = props.items;
+      let item: HkMenuItem | undefined;
+      for (let i = 0; i < level; i++) {
+        item = list.find((it) => it.key === desktopPath.value[i]);
+        if (!item?.children) return undefined;
+        list = item.children;
+      }
+      return item;
+    }
+
+    /** Leading check column reservation for one level's items. */
+    function checkReserved(list: HkMenuItem[]): boolean {
+      if (props.selectMode === true) return true;
+      if (props.selectMode === false) return false;
+      return list.some((it) => it.checked !== undefined);
+    }
+
+    function renderRow(item: HkMenuItem, level: number, reserved: boolean): VNode {
       const hasKids = !!item.children?.length;
       const active = desktopPath.value[level] === item.key;
       return (
@@ -373,41 +375,130 @@ export default defineComponent({
           onClick={() => onItem(item, level)}
           onMouseenter={() => onRowEnter(item, level)}
         >
+          {reserved && (
+            <span class="hk-menu-check" data-on={item.checked || undefined} aria-hidden="true">
+              {item.checked ? "✓" : ""}
+            </span>
+          )}
           {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
           {item.icon && h(item.icon, { size: 15 })}
           <span class="hk-menu-label">{item.label}</span>
-          {item.checked && <span class="hk-menu-check">✓</span>}
           {hasKids && <ChevronRight size={14} class="hk-menu-more" />}
         </button>
       );
     }
 
-    function renderSheet(
-      level: number,
-      sheetTitle: string,
-      list: HkMenuItem[],
-      onBack: () => void,
-    ) {
+    /** One level's content inside the shared panel surface: header slot →
+     *  rows (or the consumer's default-slot rows) → footer slot. Custom
+     *  slots ride the root level, where an identity block belongs. */
+    function renderLevelBody(level: number, list: HkMenuItem[]): VNode[] {
+      const head: VNode[] = level === 0 ? (slots.header?.() ?? []) : [];
+      const tail: VNode[] = level === 0 ? (slots.footer?.() ?? []) : [];
+      if (slots.default) {
+        return [...head, ...slots.default(), ...tail];
+      }
+      const reserved = checkReserved(list);
+      return [...head, ...list.map((it) => renderRow(it, level, reserved)), ...tail];
+    }
+
+    function levelSurface(level: number, list: HkMenuItem[]): VNode {
       return (
-        <div
-          key={level}
-          class="hk-menu-sheet"
-          data-level={level}
-        >
-          <div class="hk-menu-sheet-header">
-            <button type="button" class="hk-menu-sheet-back" aria-label={t("hikari::menu.back", "Back")} onClick={onBack}>
-              <ChevronLeft size={18} />
-            </button>
-            <span class="hk-menu-sheet-title">{sheetTitle || props.title}</span>
-          </div>
-          <div class="hk-menu-sheet-body">
-            {list.map((it, idx) => renderRow(it, level, idx))}
-          </div>
+        <div class="hk-menu-level" role="menu">
+          {renderLevelBody(level, list)}
         </div>
       );
     }
 
-    // ── sidebar variant ─────────────────────────────────────────────
+    // ── desktop popouts ──────────────────────────────────────────────
+    function renderPanels(): VNode[] {
+      const cfg = rootPanelConfig.value;
+      const panels: VNode[] = [
+        <HkSelectPanel
+          open={props.open}
+          anchorRef={cfg.anchor as unknown as HTMLElement | null}
+          title={props.title}
+          placement={cfg.placement}
+          offset={cfg.offset}
+          matchAnchorWidth={cfg.match}
+          onUpdate:open={(v: boolean) => {
+            if (!v) onRootCloseRequest();
+          }}
+          ref={(inst: unknown) => {
+            panelInsts.value[0] = inst as PanelInstance | null;
+          }}
+        >
+          {levelSurface(0, props.items)}
+        </HkSelectPanel>,
+      ];
+      if (!slots.default) {
+        for (let level = 1; level <= desktopPath.value.length; level++) {
+          const list = itemsAtLevel(level);
+          if (!list.length) continue;
+          const branch = branchAt(level);
+          panels.push(
+            <HkSelectPanel
+              open
+              anchorRef={
+                rowAnchor(level - 1, desktopPath.value[level - 1]) as unknown as HTMLElement
+              }
+              title={branch?.label ?? props.title}
+              placement="bottom-start"
+              offset={0}
+              onUpdate:open={(v: boolean) => {
+                if (!v) onSubCloseRequest(level);
+              }}
+              ref={(inst: unknown) => {
+                panelInsts.value[level] = inst as PanelInstance | null;
+              }}
+            >
+              {levelSurface(level, list)}
+            </HkSelectPanel>,
+          );
+        }
+      }
+      return panels;
+    }
+
+    // ── mobile sheet layers ──────────────────────────────────────────
+    function renderSheets(): VNode[] {
+      const sheets: VNode[] = [
+        <HkSelectPanel
+          open={props.open}
+          anchorRef={props.anchorRef}
+          title={props.title}
+          onUpdate:open={(v: boolean) => {
+            if (!v) onRootCloseRequest();
+          }}
+          ref={(inst: unknown) => {
+            panelInsts.value[0] = inst as PanelInstance | null;
+          }}
+        >
+          {levelSurface(0, props.items)}
+        </HkSelectPanel>,
+      ];
+      mobileStack.value.forEach((branch, i) => {
+        const level = i + 1;
+        sheets.push(
+          <HkSelectPanel
+            open
+            // Sub-levels carry no title of their own — the parent item's
+            // label names the sheet.
+            title={branch.label}
+            onUpdate:open={(v: boolean) => {
+              if (!v) onStackCloseRequest(i);
+            }}
+            ref={(inst: unknown) => {
+              panelInsts.value[level] = inst as PanelInstance | null;
+            }}
+          >
+            {levelSurface(level, branch.children ?? [])}
+          </HkSelectPanel>,
+        );
+      });
+      return sheets;
+    }
+
+    // ── sidebar variant ──────────────────────────────────────────────
     /** Group keys the USER has expanded or collapsed (their word wins). */
     const userGroups = ref<Set<string>>(new Set());
     /** Groups auto-expanded at mount because they contain the active row. */
@@ -538,59 +629,9 @@ export default defineComponent({
     return () => {
       if (props.variant === "sidebar") return renderSidebar();
       if (!props.open) return null;
-
-      // Both modes render through a Teleport: `position: fixed` children of
-      // an ancestor with backdrop-filter/filter/transform (glass popovers,
-      // drawers) are positioned relative to THAT ancestor, not the viewport.
-      if (mobileMode.value) {
-        // Root sheet is level 0; every pushed submenu level stacks above it.
-        const sheets = [
-          renderSheet(0, props.title, props.items, () => closeAll()),
-          ...mobileStack.value.map((entry, i) =>
-            renderSheet(i + 1, entry.title, entry.items, () => {
-              if (!popLevel()) closeAll();
-            }),
-          ),
-        ];
-        return (
-          <Teleport to="body">
-            <div
-              class="hk-menu-mobile-stack"
-              style={{ zIndex: menuZ.value }}
-              onKeydown={onMenuKeydown}
-            >{sheets}</div>
-          </Teleport>
-        );
-      }
-
-      // Desktop: root panel + one popover per open submenu level.
-      const panels: ReturnType<typeof h>[] = [];
-      panels.push(
-        <div class="hk-menu-panel" role="menu" style={panelStyle.value}>
-          {props.items.map((it, idx) => renderRow(it, 0, idx))}
-        </div>,
-      );
-      for (let level = 0; level < desktopPath.value.length; level++) {
-        const list = itemsAtLevel(level + 1);
-        if (!list.length) continue;
-        panels.push(
-          <div class="hk-menu-panel hk-menu-sub" role="menu" style={subStyles.value[level]}>
-            {list.map((it, idx) => renderRow(it, level + 1, idx))}
-          </div>,
-        );
-      }
-      return (
-        <Teleport to="body">
-          <div
-            class="hk-menu-desktop"
-            style={{ zIndex: menuZ.value }}
-            onKeydown={onMenuKeydown}
-          >
-            <div class="hk-menu-backdrop" onClick={() => closeAll()} />
-            {panels}
-          </div>
-        </Teleport>
-      );
+      // Each level renders through its own HkSelectPanel, which teleports
+      // itself to body — desktop popouts / mobile sheet layers alike.
+      return isMobile.value ? <>{renderSheets()}</> : <>{renderPanels()}</>;
     };
   },
 });

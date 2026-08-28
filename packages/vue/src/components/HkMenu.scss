@@ -1,12 +1,16 @@
 /* ── HkMenu — generic cascading menu ─────────────────────────────────
- * Desktop: floating panels (root anchored to the trigger, submenus
- * cascading to the right of their anchor row). Mobile: fullscreen
- * sheets, one per level, stacked with the system back gesture. */
+ * Presentation is powered by HkSelectPanel (the shared dropdown
+ * surface): desktop anchored popouts, mobile bottom sheets with
+ * scrim/grabber/title, popup-manager z-stacking, back-guard history.
+ * The panel/sheet geometry lives in HkSelect.scss — this file only
+ * owns what HkMenu itself brings to that surface: the row grammar,
+ * the leading check column, and the sidebar variant's inline nav. */
 
-/* rows are shared by both modes */
+/* rows are shared by popout levels and mobile sheet layers */
 .hk-menu-row {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   width: 100%;
   padding: 7px 10px;
@@ -58,9 +62,15 @@
   white-space: nowrap;
 }
 
+/* Leading check column (selectMode). The cell is reserved on EVERY row
+ * of a level while the column is on, so labels stay aligned; only
+ * checked === true shows the mark. */
 .hk-menu-check {
+  flex-shrink: 0;
+  width: 16px;
   color: rgb(var(--color-primary));
   font-weight: 700;
+  text-align: center;
 }
 
 .hk-menu-more {
@@ -68,23 +78,27 @@
   opacity: 0.55;
 }
 
-/* Themed scrollbars for every scrollable menu surface (panels, sheets). */
-.hk-menu-panel,
-.hk-menu-sheet-body {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
+/* One level's surface inside the shared panel (popout body / sheet
+ * list): header slot → rows (or consumer default-slot rows) → footer
+ * slot. */
+.hk-menu-level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 2px);
+  min-width: 0;
+}
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
+/* Touch-sized rows inside the shared mobile sheet surface (the same
+ * grammar HkSelect applies to its own sheet options). */
+.hk-select-sheet-panel .hk-menu-level .hk-menu-row {
+  min-height: 44px;
+  padding: 12px 10px;
+  font-size: var(--text-base);
+}
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgb(var(--color-border) / 45%);
-    border-radius: 3px;
+@media (prefers-reduced-motion: reduce) {
+  .hk-menu-row {
+    transition: none;
   }
 }
 
@@ -183,118 +197,4 @@
   font-size: var(--text-2xs, 10px);
   font-weight: 700;
   line-height: 1;
-}
-
-/* ── desktop panels ─────────────────────────────────────────────── */
-
-.hk-menu-desktop {
-  position: fixed;
-  inset: 0;
-  /* z-index comes from the popup manager (inline) — registered overlay. */
-  pointer-events: none;
-}
-
-.hk-menu-backdrop {
-  position: absolute;
-  inset: 0;
-  pointer-events: auto;
-}
-
-.hk-menu-panel {
-  position: fixed;
-  pointer-events: auto;
-  max-height: 20rem;
-  overflow-y: auto;
-  padding: 4px;
-  border-radius: var(--radius-md, 8px);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 96%, transparent);
-  backdrop-filter: blur(var(--blur-md, 12px)) saturate(1.15);
-  border: 1px solid rgb(var(--color-border) / 14%);
-  box-shadow: var(--shadow-dropdown, 0 8px 24px rgb(0 0 0 / 18%));
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 2px);
-}
-
-/* ── mobile fullscreen sheets ───────────────────────────────────── */
-
-.hk-menu-mobile-stack {
-  position: fixed;
-  inset: 0;
-  /* z-index comes from the popup manager (inline) — registered overlay. */
-}
-
-.hk-menu-sheet {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  background: color-mix(in srgb, rgb(var(--color-surface)) 97%, rgb(0 0 0 / 0%) 100%);
-  backdrop-filter: blur(var(--blur-lg, 16px)) saturate(1.1);
-  animation: hk-menu-sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes hk-menu-sheet-in {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.hk-menu-sheet-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 8px;
-  border-bottom: 1px solid rgb(var(--color-border) / 12%);
-  flex-shrink: 0;
-}
-
-.hk-menu-sheet-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: rgb(var(--color-text));
-  cursor: pointer;
-}
-
-.hk-menu-sheet-back:hover {
-  background: rgb(var(--color-primary) / 10%);
-}
-
-.hk-menu-sheet-title {
-  font-size: var(--text-base);
-  font-weight: 700;
-}
-
-.hk-menu-sheet-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 2px);
-}
-
-.hk-menu-sheet-body .hk-menu-row {
-  padding: 12px 10px;
-  font-size: var(--text-base);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hk-menu-sheet {
-    animation: none;
-  }
-  .hk-menu-row {
-    transition: none;
-  }
 }

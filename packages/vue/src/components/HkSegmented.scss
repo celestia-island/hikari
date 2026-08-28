@@ -5,6 +5,9 @@
   padding: 2px;
   border-radius: 10px;
   background: rgb(var(--hk-surface-muted, 240 240 244) / 60%);
+  /* Anchor the sliding thumb; also makes segment offsetLeft
+   * container-relative for the measurement composable. */
+  position: relative;
   /* Match the surrounding form controls' focus ring token where defined. */
   --hk-segmented-h: 34px;
 }
@@ -17,6 +20,42 @@
 .hk-segmented[data-block="true"] {
   display: flex;
   width: 100%;
+}
+
+/* ── Sliding thumb ──────────────────────────────────────────────────────
+ * Rendered by HkSegmented as the first root child and positioned with real
+ * measurements (useMeasuredHighlight). Invisible (width 0) until a non-zero
+ * width is measured, so the per-segment checked styling below remains the
+ * fallback and there is never a flash of no indicator. */
+.hk-segmented__thumb {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  height: calc(100% - 4px);
+  border-radius: 8px;
+  /* Same pill treatment the checked segment used to carry. Invisible
+   * (opacity 0, width 0) until measured — no mount grow/slide, no
+   * zero-width box-shadow sliver. */
+  background: rgb(var(--hk-surface, 255 255 255));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.2s ease, width 0.2s ease, opacity 0.2s ease;
+  will-change: transform;
+}
+
+.hk-segmented[data-ready="true"] .hk-segmented__thumb {
+  opacity: 1;
+}
+
+/* A disabled group dims its labels and its thumb alike. */
+.hk-segmented[data-disabled="true"] .hk-segmented__thumb {
+  opacity: 0.45;
+}
+
+.hk-segmented[data-size="sm"] .hk-segmented__thumb {
+  border-radius: 6px;
 }
 
 .hk-segmented__segment {
@@ -38,6 +77,9 @@
   transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
   flex: 1 1 auto;
+  /* Keep segments (and their text) painted above the thumb. */
+  position: relative;
+  z-index: 1;
 }
 
 .hk-segmented[data-size="sm"] .hk-segmented__segment {
@@ -55,6 +97,13 @@
   color: rgb(var(--hk-text, 20 20 26));
   /* Soft elevation keeps the active pill legible on the muted track. */
   box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+/* Once the thumb is measured it carries the checked pill — suppress the
+ * per-segment background/shadow (the checked text color stays). */
+.hk-segmented[data-ready="true"] .hk-segmented__segment[data-checked="true"] {
+  background: transparent;
+  box-shadow: none;
 }
 
 .hk-segmented__segment:disabled,
@@ -94,5 +143,14 @@
     font-size: 14px;
     border-radius: 8px;
     padding: 0 6px;
+  }
+
+  /* The thumb keeps working here: top 2px + height calc(100% - 4px)
+   * stretches it over the 40px segments; width/offset stay measured. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-segmented__thumb {
+    transition: none;
   }
 }

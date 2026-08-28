@@ -1,5 +1,6 @@
 import { computed, defineComponent, onMounted, ref, Teleport, Transition, type PropType } from "vue";
 
+import { useMeasuredHighlight } from "../composables/useMeasuredHighlight";
 import "./HkMorphingTabs.scss";
 
 export interface TabItem {
@@ -22,31 +23,43 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const activeKey = computed(() => props.modelValue);
-    const ready = ref(false);
+    // Gates the Teleport (a teleported target only exists after mount).
+    const mounted = ref(false);
 
-    const tabCount = computed(() => props.tabs.length);
-    const tabIndex = computed(() => {
+    const triggersRef = ref<HTMLElement | null>(null);
+    const activeIndex = computed(() => {
       const idx = props.tabs.findIndex((t) => t.key === activeKey.value);
       return idx >= 0 ? idx : 0;
+    });
+
+    // Indicator geometry from real trigger measurements. The old CSS-var
+    // percentage math assumed equal-width triggers, but `flex: 1 1 0` +
+    // `min-width: auto` lets overflowing labels widen some triggers, which
+    // drifted the indicator off the active tab (visible with 4+ tabs).
+    const { x, width, ready } = useMeasuredHighlight({
+      container: triggersRef,
+      activeIndex,
+      itemSelector: ".hk-morphing-tabs-trigger",
+      extraSources: [() => props.tabs],
     });
 
     const indicatorStyle = computed(
       () =>
         ({
-          "--tab-count": tabCount.value,
-          "--tab-index": tabIndex.value,
-        }) as Record<string, string | number>,
+          transform: `translateX(${x.value}px)`,
+          width: `${width.value}px`,
+        }) as Record<string, string>,
     );
 
     onMounted(() => {
-      ready.value = true;
+      mounted.value = true;
     });
 
     function renderTriggers() {
       if (props.hideTriggers) return null;
       return (
-        <div class="hk-morphing-tabs-triggers" role="tablist">
-          <div class="hk-morphing-tabs-indicator" style={indicatorStyle.value} />
+        <div class="hk-morphing-tabs-triggers" ref={triggersRef} role="tablist" data-ready={ready.value ? "true" : undefined}>
+          <div class="hk-morphing-tabs-indicator" aria-hidden="true" style={indicatorStyle.value} />
           {props.tabs.map((tab) => {
             const isActive = activeKey.value === tab.key;
             return (
@@ -78,7 +91,7 @@ export default defineComponent({
       return (
         <Tag class="hk-morphing-tabs">
           {props.teleportTo ? (
-            ready.value && <Teleport to={props.teleportTo}>{triggerContent}</Teleport>
+            mounted.value && <Teleport to={props.teleportTo}>{triggerContent}</Teleport>
           ) : (
             <div class="hk-morphing-tabs-header">{triggerContent}</div>
           )}

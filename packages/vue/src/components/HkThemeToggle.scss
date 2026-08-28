@@ -75,9 +75,14 @@
  * calc((100% - 4px) / 3 + 2px). NOTE: HkSegmented's mobileBreakpoint prop
  * is currently unwired (its touch form is pure CSS at the same 767px), so
  * these hardcoded calcs stay in lockstep; revisit both if that changes.
+ *
+ * z-index 2 keeps the strip above the segments, which HkSegmented promotes
+ * to position: relative / z-index: 1 so its sliding thumb can slot under
+ * them.
  */
 .s-theme-mode-autoalt {
   position: absolute;
+  z-index: 2;
   top: 2px;
   bottom: 2px;
   right: 2px;

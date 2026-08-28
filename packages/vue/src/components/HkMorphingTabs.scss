@@ -23,19 +23,42 @@
   background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
 }
 
+/*
+ * Indicator geometry is measured (useMeasuredHighlight) and applied as
+ * inline transform/width, so unequal trigger widths (overflowing labels
+ * under `flex: 1 1 0`) no longer drift the highlight off the active tab.
+ * `left: 0` + translateX(x) lands on the trigger's own offsetLeft, which is
+ * padding-edge relative — the same reference frame as the old `left: 2px`.
+ * Width 0 + opacity 0 (before the first measurement) keep the indicator
+ * invisible with no mount grow/slide; `data-ready` fades it in once real
+ * layout exists.
+ */
 .hk-morphing-tabs-indicator {
   position: absolute;
   top: 2px;
-  left: 2px;
+  left: 0;
   height: calc(100% - 4px);
-  width: calc((100% - 4px) / var(--tab-count, 1));
+  width: 0;
   border-radius: var(--hi-radius-sm, 4px);
   background: color-mix(in srgb, var(--hi-color-primary) 12%, transparent);
   box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
   pointer-events: none;
   z-index: 0;
-  transform: translateX(calc(var(--tab-index, 0) * 100%));
-  transition: transform var(--hi-duration-normal, 0.3s) ease;
+  opacity: 0;
+  transition:
+    transform var(--hi-duration-normal, 0.3s) ease,
+    width var(--hi-duration-normal, 0.3s) ease,
+    opacity var(--hi-duration-normal, 0.3s) ease;
+}
+
+.hk-morphing-tabs-triggers[data-ready="true"] .hk-morphing-tabs-indicator {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-morphing-tabs-indicator {
+    transition: none;
+  }
 }
 
 .hk-morphing-tabs-trigger {

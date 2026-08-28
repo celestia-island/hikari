@@ -5,7 +5,22 @@
 
 :root {
   --hi-z-above: 1;
-  --hi-z-tooltip: 10000;
+
+  // Popup z bands — MUST mirror POPUP_Z_BANDS in
+  // runtime/usePopupManager.ts (the manager hands out dynamic in-band
+  // values inline; these tokens are the static fallbacks used before a
+  // handle resolves or when a host renders the sheets without JS).
+  // overlay (modal/drawer) < dropdown < tooltip < toast (topmost).
+  --hi-z-overlay: 1000;
+  --hi-z-dropdown: 2000;
+  --hi-z-tooltip: 3000;
+  --hk-z-toast: 4000;
+  // Drag ghosts float above page chrome (--z-sidebar 900) but below
+  // every popup band.
+  --hk-z-drag: 950;
+  // Stacked-modal breadcrumb strip: above stacked modal content, below
+  // the dropdown band.
+  --hk-breadcrumb-z: 1500;
 }
 
 [data-mode="dark"] body {

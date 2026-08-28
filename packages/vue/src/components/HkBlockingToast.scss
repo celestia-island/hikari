@@ -10,7 +10,7 @@
   position: fixed;
   top: 4rem;
   right: 1rem;
-  z-index: var(--hk-z-toast, 9999);
+  z-index: var(--hk-z-toast, 4000);
   max-width: 24rem;
   pointer-events: none;
 }

@@ -117,7 +117,10 @@
   background: var(--hi-color-bg-elevated, #161b22);
   backdrop-filter: blur(2px);
   pointer-events: none;
-  z-index: 9999;
+  /* Drag ghost: above page chrome (--z-sidebar 900) but below every
+     popup band (overlay 1000 < dropdown 2000 < tooltip 3000 < toast 4000)
+     so a drag never buries toasts or open panels. */
+  z-index: var(--hk-z-drag, 950);
   will-change: transform;
 
   > .hk-draggable-grid-cell {

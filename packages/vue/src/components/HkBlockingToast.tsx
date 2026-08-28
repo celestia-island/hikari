@@ -12,13 +12,15 @@
  * Mount once at the shell level, next to `<HToast />`. Self-contained
  * Teleport-to-body host: cards sit in the same fixed top-right column
  * HkToast uses (`--hk-z-toast`), so transient toasts and blocking cards
- * share one visual stack; mount it after `<HToast />` so the blocking
- * host paints above the transient stack and stays clickable when both
- * are visible. While a card is visible it registers with
- * usePopupManager (kind "toast", no scroll lock, with its title) so
- * z-index ordering and popup introspection stay coherent with
- * modals/drawers; the popup handle also fixes card-vs-card stacking
- * (newer cards paint above older ones).
+ * share one visual stack; mount it after `<HToast />` (the established
+ * shell convention) so the blocking host paints above the transient
+ * stack when both are visible — the two containers share the toast band
+ * base, so DOM order breaks the tie. While a card is visible it
+ * registers with usePopupManager (kind "toast", no scroll lock, with
+ * its title) so z-index ordering and popup introspection stay coherent
+ * with modals/drawers; the popup handle also fixes card-vs-card
+ * stacking (newer cards paint above older ones), and the explicit card
+ * z keeps cards clickable under the pointer-transparent toast column.
  */
 import { AlertTriangle, CircleX as XCircle, Info } from "lucide-vue-next";
 import {

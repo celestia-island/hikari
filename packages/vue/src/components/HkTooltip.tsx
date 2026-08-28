@@ -16,9 +16,10 @@ export default defineComponent({
     const tooltipStyle = ref<CSSProperties>({});
     let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Registers with the popup manager (kind "tooltip") so tooltips take
-    // part in the unified z-band ladder; the zIndex lands on the popup
-    // element and overrides the --hi-z-tooltip fallback in the SCSS.
+    // Registers with the popup manager (kind "tooltip") so tooltips hold
+    // the tooltip band (above modal/drawer overlays, below toasts); the
+    // zIndex lands on the popup element and overrides the --hi-z-tooltip
+    // fallback in the SCSS.
     const manager = usePopupManager();
     let popupHandle: PopupHandle | null = null;
     const zIndex = ref<number | null>(null);

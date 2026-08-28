@@ -2,7 +2,9 @@
   position: fixed;
   top: 4rem;
   right: 1rem;
-  z-index: var(--hk-z-toast, 9999);
+  /* Toast band — the topmost popup z band (POPUP_Z_BANDS.toast; mirror in
+     theme.scss). The live value arrives inline from the popup manager. */
+  z-index: var(--hk-z-toast, 4000);
   max-width: 24rem;
   pointer-events: none;
 }

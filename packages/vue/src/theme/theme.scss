@@ -18,9 +18,11 @@
   // Drag ghosts float above page chrome (--z-sidebar 900) but below
   // every popup band.
   --hk-z-drag: 950;
-  // Stacked-modal breadcrumb strip: above stacked modal content, below
-  // the dropdown band.
-  --hk-breadcrumb-z: 1500;
+  // Stacked-modal breadcrumb strip: above every popup band's content and
+  // scrim (modal 1000+, dropdown 2000+; in-band steps of 2 mean real
+  // stacks stay dozens of levels below the strip) but below tooltips
+  // (3000) and toasts (4000).
+  --hk-breadcrumb-z: 2500;
 }
 
 [data-mode="dark"] body {

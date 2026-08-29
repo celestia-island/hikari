@@ -2,9 +2,10 @@
   position: fixed;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* Above stacked-modal content (overlay band 1000+), below the dropdown
-     band (2000) so open panels are never covered by the strip. */
-  z-index: var(--hk-breadcrumb-z, 1500);
+  /* Above every popup band's scrim (modal 1000+, dropdown 2000+; in-band
+     steps of 2 keep real stacks far below this) so multi-layer windows
+     never bury the strip; still below tooltip (3000) / toast (4000). */
+  z-index: var(--hk-breadcrumb-z, 2500);
   display: flex;
   align-items: center;
   gap: var(--hi-space-4, 0.5rem);

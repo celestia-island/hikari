@@ -14,10 +14,18 @@ export default defineComponent({
   setup(props) {
     const manager = usePopupManager();
 
+    /** Every popup band except tooltips/toasts participates in the
+     *  window-stack breadcrumb: modals and drawers (1000-band), and
+     *  menus/sheets/popouts (2000-band). A modal opened from a menu, a
+     *  sheet stacked over a sheet, or a dialog over a dialog are all
+     *  multi-layer situations the user navigates — the strip must show
+     *  where they are. */
+    const STACK_KINDS: ReadonlySet<string> = new Set(["modal", "drawer", "dropdown"]);
+
     const modalEntries = computed(() => {
       const entries: { id: string; zIndex: number; title?: string }[] = [];
       for (const [, entry] of manager.registry.value) {
-        if (entry.kind === "modal") {
+        if (STACK_KINDS.has(entry.kind)) {
           entries.push({ id: entry.id, zIndex: entry.zIndex, title: entry.title });
         }
       }

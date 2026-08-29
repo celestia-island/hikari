@@ -207,9 +207,18 @@
     </section>
 
     <section>
-      <h2>HTabs (pill / underline / segmented)</h2>
+      <h2>HTabs — one look, variants pick the working mode (pill = tablist, segmented = radiogroup)</h2>
       <HTabs v-model="tabs.active" :tabs="tabs.items" />
       <p class="result" style="margin-top:8px">Active tab: {{ tabs.active }}</p>
+      <h3>segmented (option picker) + protruding end actions</h3>
+      <HTabs
+        v-model="tabs.active"
+        :tabs="tabs.items"
+        variant="segmented"
+        :start-action="{ label: 'Back' }"
+        :end-action="{ label: 'Add tab' }"
+        @action="(side: string) => console.log('tabs action', side)"
+      />
       <div style="margin-top:12px" />
     </section>
 

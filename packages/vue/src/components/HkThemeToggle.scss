@@ -54,11 +54,11 @@
 }
 
 /*
- * Auto-mode altitude strip: full-bleed content INSIDE the segmented
- * strip's tail overlay (HTabs' overlay layer supplies the pill
- * chrome — surface, hairline border, radius, shadow). It reads passive
- * in the segmented typography, but a press resolves auto to the manual
- * side it currently renders (day → light, night → dark).
+ * Auto-mode altitude strip: full-bleed content INSIDE the strip's tail
+ * overlay (HTabs' overlay layer supplies the unified pill chrome —
+ * surface, hairline border, radius). It reads passive in the shared
+ * compact typography, but a press resolves auto to the manual side it
+ * currently renders (day → light, night → dark).
  */
 .s-theme-mode-autoalt {
   position: absolute;
@@ -103,10 +103,6 @@
 @media (max-width: 767px) {
   .s-theme-mode-row {
     padding: 0 0 var(--space-4, 0.25rem);
-  }
-
-  .s-theme-mode-autoalt {
-    font-size: 14px;
   }
 }
 

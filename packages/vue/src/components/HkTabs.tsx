@@ -16,6 +16,19 @@ export interface TabItem {
   disabled?: boolean;
 }
 
+/** A protruding icon button at one inline end of the strip (the former
+ *  addable "+" generalized to both ends). Rendered by the shared
+ *  HkHoverRevealAction surface OUTSIDE the scroll viewport, so it never
+ *  scrolls away; hover-revealed on pointer devices, tap-revealed with a
+ *  linger on touch. */
+export interface TabsEndAction {
+  /** Icon vnode — defaults to the Plus glyph (the common add-tab case). */
+  icon?: unknown;
+  /** Accessible label / tooltip (falls back to the shared "Add tab"
+   *  string). */
+  label?: string;
+}
+
 /** Structural stand-in for HkScrollContainer's exposed surface —
  *  imperative expose() types don't flow through render-function
  *  setups, so declare just the method we consume. */
@@ -23,26 +36,35 @@ interface ScrollerExpose {
   getScrollElement?: () => HTMLElement | undefined;
 }
 
-const SEG_GAP = 2;
-const SEG_PAD = 2;
+/** Track geometry constants, kept in sync with HkTabs.scss: the track
+ *  padding (TRACK_PAD) and the inter-trigger gap (TRACK_GAP — 0 in the
+ *  unified chrome). */
+const TRACK_GAP = 0;
+const TRACK_PAD = 2;
 
 /**
- * HTabs — THE button-group / tab-strip primitive. One component carries
- * every extension capability so no parallel implementations can drift
- * apart again:
+ * HTabs — THE button-group / tab-strip primitive. ONE look (the centered
+ * pill strip used by the page-level top/bottom bars) is shared by every
+ * button group, radio group and tab strip; variants only switch the
+ * working mode and layout behaviors, never the visual language:
  *
- * Variants:
- * - `underline` — classic anchored text tabs;
- * - `pill` — the centered pill strip (hairline track, primary-tinted
- *   sliding indicator) used by page-level bars;
- * - `segmented` — the compact mode-picker form (solid sliding thumb on a
- *   muted track) for small mutually exclusive choices. Semantics switch
- *   with it: pill/underline expose `tablist`/`tab`/`aria-selected` while
- *   segmented exposes `radiogroup`/`radio`/`aria-checked`.
+ * Variants (working mode):
+ * - `pill` (default) — tab strip: `tablist`/`tab`/`aria-selected`
+ *   semantics, optional tab panels below;
+ * - `segmented` — mutually exclusive option picker: `radiogroup`/
+ *   `radio`/`aria-checked` semantics, no panels, plus the form-row
+ *   layout extras `size="sm"` (compact) and `block` (fill the row).
  *
  * Capabilities (all variants unless noted):
- * - `scrollable` + `scrollbar` + edge fades (HkScrollContainer) and the
- *   protruding hover-revealed trailing "+" (`addable`, emits `add`);
+ * - `scrollable` (default ON) + `scrollbar` + edge fades
+ *   (HkScrollContainer): the strip stays centered / row-filling while it
+ *   fits and automatically carries the bars' overflow behavior once the
+ *   width runs short — edge fades hint at hidden options, swipe/scroll
+ *   reaches them, and the active tab is scrolled into view on change;
+ * - `startAction` / `endAction` + the `action` emit: optional protruding
+ *   icon buttons at EITHER inline end of the strip (outside the scroll
+ *   viewport), hover/tap-revealed — the page bars' trailing "+" is
+ *   simply `endAction`;
  * - `overlayFrom` + the `#overlay` slot: a measured info layer covering
  *   the track to the right of tab[overlayFrom] — e.g. the theme
  *   toggle's solar-altitude strip replacing the manual halves while
@@ -55,7 +77,10 @@ export default defineComponent({
   props: {
     modelValue: { type: String, required: true },
     tabs: { type: Array as PropType<TabItem[]>, required: true },
-    variant: { type: String as PropType<"underline" | "pill" | "segmented">, default: "underline" },
+    /** Working mode: pill = tab strip (tablist), segmented = mutually
+     *  exclusive option picker (radiogroup). Both share the one unified
+     *  pill chrome. */
+    variant: { type: String as PropType<"pill" | "segmented">, default: "pill" },
     /** Visual size — sm matches form-control heights (segmented). */
     size: { type: String as PropType<"sm" | "md">, default: "md" },
     /** Grow to fill the container width (segmented). */
@@ -65,26 +90,27 @@ export default defineComponent({
     /** Render tab panel slots below the strip. Segmented mode pickers
      *  have no panels — panels are skipped for that variant. */
     renderPanels: { type: Boolean, default: true },
-    /** Wrap the tab list in a horizontal HkScrollContainer. The list
-     *  stays centered while it fits and becomes swipe/scroll-driven
-     *  once it overflows (safe centering — the overflowing start is
-     *  never clipped), with edge fades hinting at hidden tabs and the
-     *  active tab scrolled into view on change. */
-    scrollable: { type: Boolean, default: false },
+    /** Wrap the tab list in a horizontal HkScrollContainer (default ON —
+     *  every strip carries the page bars' overflow behavior). The list
+     *  stays centered (or row-filling with block) while it fits and
+     *  becomes swipe/scroll-driven once it overflows (safe centering —
+     *  the overflowing start is never clipped), with edge fades hinting
+     *  at hidden tabs and the active tab scrolled into view on change.
+     *  Pass false only for a strip that must never scroll. */
+    scrollable: { type: Boolean, default: true },
     /** Show the scroller's auto-hiding overlay scrollbar for the tab
      *  axis (scrollable only). Off by default — the edge fades alone
      *  hint at hidden tabs; opt in where a drag affordance helps
      *  pointer users (dense strips, embedded toolbars). */
     scrollbar: { type: Boolean, default: false },
-    /** Render a trailing "add" button protruding at the right edge of
-     *  the strip — hover-revealed on pointer devices, tap-revealed with
-     *  a linger on touch (the shared HkHoverRevealAction behavior). The
-     *  button lives OUTSIDE the scroll viewport so it never scrolls
-     *  away. Emits `add`. */
-    addable: { type: Boolean, default: false },
-    /** Accessible label / tooltip for the add button (falls back to the
-     *  shared "Add tab" string). */
-    addLabel: { type: String, default: "" },
+    /** Optional protruding icon button at the strip's inline-start end
+     *  (outside the scroll viewport, hover/tap-revealed). Pressing it
+     *  emits `action` with "start". */
+    startAction: { type: Object as PropType<TabsEndAction | null>, default: null },
+    /** Optional protruding icon button at the strip's inline-end end —
+     *  the page bars' trailing "+" (outside the scroll viewport,
+     *  hover/tap-revealed). Pressing it emits `action` with "end". */
+    endAction: { type: Object as PropType<TabsEndAction | null>, default: null },
     /** When ≥ 0 and the `#overlay` slot is provided, render the overlay
      *  layer covering the track to the right of tab[overlayFrom]
      *  (measured geometry; the covered tabs are usually disabled —
@@ -93,8 +119,8 @@ export default defineComponent({
   },
   emits: {
     "update:modelValue": (_value: string) => true,
-    /** The add button was pressed (addable only). */
-    add: () => true,
+    /** A protruding end button was pressed. */
+    action: (_side: "start" | "end") => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
@@ -105,6 +131,7 @@ export default defineComponent({
     const listRef = ref<HTMLElement | null>(null);
 
     const isSegmented = computed(() => props.variant === "segmented");
+    const isBlock = computed(() => isSegmented.value && props.block);
     // No active tab (modelValue matches nothing / active disabled): keep
     // the first enabled trigger tabbable so the group stays reachable —
     // otherwise every trigger would be tabindex=-1.
@@ -115,13 +142,13 @@ export default defineComponent({
       if (hasActive) return -1;
       return props.tabs.findIndex((tb) => !tb.disabled);
     });
-    const hasIndicator = computed(() => props.variant !== "underline");
     const hasOverlay = computed(
       () => props.overlayFrom >= 0 && props.overlayFrom < props.tabs.length - 1 && slots.overlay != null,
     );
 
-    const resolvedAddLabel = (): string =>
-      props.addLabel || t("hikari::tabs.add", "Add tab");
+    function resolvedActionLabel(action: TabsEndAction): string {
+      return action.label || t("hikari::tabs.add", "Add tab");
+    }
 
     function setTriggerRef(el: Element | ComponentPublicInstance | null, idx: number) {
       if (el instanceof HTMLElement) {
@@ -132,7 +159,6 @@ export default defineComponent({
     }
 
     function updateIndicator() {
-      if (!hasIndicator.value) return;
       const idx = props.tabs.findIndex((tb) => tb.key === props.modelValue);
       const el = triggerRefs.value.get(idx >= 0 ? idx : 0);
       if (!el) return;
@@ -150,12 +176,12 @@ export default defineComponent({
       const el = triggerRefs.value.get(props.overlayFrom);
       const list = listRef.value;
       if (!el || !list) return;
-      const leftPx = el.offsetLeft + el.offsetWidth + SEG_GAP;
+      const leftPx = el.offsetLeft + el.offsetWidth + TRACK_GAP;
       const listWidth = list.clientWidth;
-      if (el.offsetWidth > 0 && listWidth > leftPx + SEG_PAD) {
+      if (el.offsetWidth > 0 && listWidth > leftPx + TRACK_PAD) {
         overlayStyle.value = {
           left: `${leftPx}px`,
-          width: `${listWidth - leftPx - SEG_PAD}px`,
+          width: `${listWidth - leftPx - TRACK_PAD}px`,
         };
         return;
       }
@@ -197,12 +223,10 @@ export default defineComponent({
 
     onMounted(() => {
       nextTick(refreshGeometry);
-      if (hasIndicator.value) {
-        resizeObserver = new ResizeObserver(() => refreshGeometry());
-        const firstEl = triggerRefs.value.get(0);
-        if (firstEl?.parentElement) {
-          resizeObserver.observe(firstEl.parentElement);
-        }
+      resizeObserver = new ResizeObserver(() => refreshGeometry());
+      const firstEl = triggerRefs.value.get(0);
+      if (firstEl?.parentElement) {
+        resizeObserver.observe(firstEl.parentElement);
       }
       if (props.scrollable) {
         // The indicator observer watches the content-sized list, so a
@@ -298,15 +322,13 @@ export default defineComponent({
         <div
           class="hk-tabs-list"
           ref={listRef}
-          data-variant={props.variant === "underline" ? undefined : props.variant}
+          data-variant={props.variant}
           data-size={isSegmented.value ? props.size : undefined}
-          data-block={isSegmented.value && props.block ? "true" : undefined}
+          data-block={isBlock.value ? "true" : undefined}
           role={isSegmented.value ? "radiogroup" : "tablist"}
           onKeydown={onKeydown}
         >
-          {hasIndicator.value && (
-            <div class="hk-tabs-indicator" style={indicatorStyle.value} />
-          )}
+          <div class="hk-tabs-indicator" style={indicatorStyle.value} />
           {props.tabs.map((tab, idx) => {
             const active = tab.key === props.modelValue;
             const disabled = tab.disabled;
@@ -344,19 +366,26 @@ export default defineComponent({
         </div>
       );
 
-      // Named const, NOT a mutable `strip` binding: the slot closure below
-      // executes during HkHoverRevealAction's render — a closure over a
-      // variable that already holds the wrapper vnode itself would recurse
-      // forever.
+      // Named const, NOT a mutable `strip` binding: the slot closures
+      // below execute during HkHoverRevealAction's render — a closure
+      // over a variable that already holds the wrapper vnode itself
+      // would recurse forever.
+      const actionsAttr = props.startAction && props.endAction ? "both"
+        : props.startAction ? "start"
+        : props.endAction ? "end"
+        : undefined;
       const stripInner = (
-        <div class="hk-tabs" data-variant={props.variant} data-scrollable={props.scrollable || undefined} data-addable={props.addable || undefined}>
+        <div class="hk-tabs" data-variant={props.variant} data-scrollable={props.scrollable || undefined} data-actions={actionsAttr}>
           {props.scrollable ? (
             <HkScrollContainer
               ref={scrollerRef}
               class="hk-tabs-scroller"
               axis="horizontal"
               scrollbar={props.scrollbar}
-              align="center"
+              // A block (row-filling) strip never needs safe centering —
+              // it stretches to the row while it fits; centering is for
+              // inline strips only.
+              align={isBlock.value ? "start" : "center"}
               fade
             >
               {list}
@@ -376,31 +405,54 @@ export default defineComponent({
         </div>
       );
 
-      // The addable button rides the shared hover-reveal surface: the
-      // whole strip is the reveal host and the "+" is its extension, so
-      // it protrudes at the strip's right edge (outside the scroll
-      // viewport) and appears on hover / touch-tap only.
-      if (!props.addable) return stripInner;
+      // Optional protruding icon buttons at either inline end ride the
+      // shared hover-reveal surface: the strip is the reveal host and the
+      // button is its extension, protruding outside the scroll viewport
+      // and appearing on hover / touch-tap only. With BOTH ends present
+      // the two hosts nest (start outer / end inner) — each closure
+      // captures a DIFFERENT named const (stripInner / withEnd), so no
+      // slot ever re-renders the wrapper that owns it.
+      const actionButton = (side: "start" | "end") => {
+        const action = side === "start" ? props.startAction : props.endAction;
+        if (!action) return null;
+        const label = resolvedActionLabel(action);
+        const PlusIcon = iconByName("Plus") as any;
+        const icon = action.icon != null ? action.icon : (PlusIcon ? h(PlusIcon, { size: 14 }) : null);
+        return (
+          <HkIconButton
+            variant="ghost"
+            size={24}
+            aria-label={label}
+            {...{ title: label }}
+            onClick={() => emit("action", side)}
+          >
+            {{ icon: () => icon }}
+          </HkIconButton>
+        );
+      };
 
-      const PlusIcon = iconByName("Plus") as any;
-      return (
+      const withEnd = props.endAction ? (
         <HkHoverRevealAction
           as="span"
           class="hk-tabs-addwrap"
         >
           {{
             default: () => stripInner,
-            extension: () => (
-              <HkIconButton
-                variant="ghost"
-                size={24}
-                aria-label={resolvedAddLabel()}
-                {...{ title: resolvedAddLabel() }}
-                onClick={() => emit("add")}
-              >
-                {{ icon: () => (PlusIcon ? h(PlusIcon, { size: 14 }) : null) }}
-              </HkIconButton>
-            ),
+            extension: () => actionButton("end"),
+          }}
+        </HkHoverRevealAction>
+      ) : stripInner;
+
+      if (!props.startAction) return withEnd;
+      return (
+        <HkHoverRevealAction
+          as="span"
+          class="hk-tabs-addwrap"
+          placement="left"
+        >
+          {{
+            default: () => withEnd,
+            extension: () => actionButton("start"),
           }}
         </HkHoverRevealAction>
       );

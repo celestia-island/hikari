@@ -24,6 +24,11 @@ export interface HkLocaleOption {
 /** Marker key for the "Add language" cascade root (never a real locale). */
 const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
 
+/** Marker prefix for the "Delete language" cascade: children use the
+ *  synthetic key `<prefix>:<code>` so they can never collide with the
+ *  first-level switch rows (whose keys are bare locale codes). */
+const DELETE_LANGUAGE_KEY = "__hkLocalizedInputDelete";
+
 /**
  * HkLocalizedInput — single-field multilingual text editor.
  *
@@ -37,9 +42,17 @@ const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
  *     behavior to the app-level language switcher):
  *       · rows for every language that already has a translation
  *         (click → switch the field to that language and keep editing);
- *       · last row "Add language" cascades into the full locale catalog;
+ *       · an "Add language" cascade into the full locale catalog;
  *         picking one closes the menu and drops the field straight into
- *         edit state for the freshly added language.
+ *         edit state for the freshly added language;
+ *       · a "Delete language" cascade (shown only when at least one
+ *         translation exists) listing EVERY filled language — including
+ *         the one being edited — as danger rows keyed by the synthetic
+ *         `__hkLocalizedInputDelete:<code>` form. Deleting a language
+ *         removes it from `translations`; when it is the language being
+ *         edited the field falls back to `sourceLang` if that still
+ *         holds a translation, else to the first remaining translation
+ *         (or `sourceLang` itself once the map is empty).
  *
  * The chip label is `{label} ({code})` using the app-provided label, and
  * the popup participates in the shared modal/dropdown stacking contexts
@@ -53,6 +66,10 @@ const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
  *   - switching languages commits the current text, swaps `modelValue`
  *     to the target language's stored text ("" when none), and refocuses
  *     the field.
+ *   - deleting a language emits `update:translations` without that key;
+ *     deleting the language being edited additionally swaps `modelValue`
+ *     and emits `languagechange` for the fallback language (sourceLang
+ *     first, then the first remaining translation, else sourceLang).
  */
 export const HkLocalizedInput = defineComponent({
   name: "HkLocalizedInput",
@@ -134,6 +151,11 @@ export const HkLocalizedInput = defineComponent({
       ),
     );
 
+    /** Key of a delete-cascade child for a locale code. */
+    function deleteKey(code: string): string {
+      return `${DELETE_LANGUAGE_KEY}:${code}`;
+    }
+
     const menuItems = computed<HkMenuItem[]>(() => [
       ...switchableCodes.value.map((code) => ({
         key: code,
@@ -149,6 +171,24 @@ export const HkLocalizedInput = defineComponent({
                 key: o.code,
                 label: o.label,
                 flag: o.flag,
+              })),
+            },
+          ]
+        : []),
+      // Every filled language is deletable — including the one being
+      // edited (deleting it falls back to another language, see
+      // `deleteLanguage`).
+      ...(filledCodes.value.length > 0
+        ? [
+            {
+              key: DELETE_LANGUAGE_KEY,
+              label: t("hikari::localizedInput.deleteLanguage", "Delete language"),
+              danger: true,
+              children: filledCodes.value.map((code) => ({
+                key: deleteKey(code),
+                label: localeLabel(code),
+                flag: props.localeOptions.find((o) => o.code === code)?.flag,
+                danger: true,
               })),
             },
           ]
@@ -198,7 +238,38 @@ export const HkLocalizedInput = defineComponent({
       emit("languagechange", code);
     }
 
+    /** Remove a language's translation via the menu's delete cascade:
+     *  drop the key from `translations`, and when the deleted language
+     *  is the one being edited move the field to a fallback — the
+     *  source language if it still holds a translation, else the first
+     *  remaining translation, else the source language itself. Deleting
+     *  another language never disturbs the edit state. Either way the
+     *  menu closes and the field regains focus. */
+    function deleteLanguage(code: string) {
+      const next = { ...props.translations };
+      delete next[code];
+      emit("update:translations", next);
+      if (code === editLang.value) {
+        const remaining = Object.keys(next).filter(
+          (k) => (next[k] ?? "").trim().length > 0,
+        );
+        const target =
+          (next[props.sourceLang] ?? "").trim().length > 0
+            ? props.sourceLang
+            : (remaining[0] ?? props.sourceLang);
+        editLang.value = target;
+        emit("update:modelValue", (next[target] ?? "").trim());
+        emit("languagechange", target);
+      }
+      menuOpen.value = false;
+      focusField();
+    }
+
     function onMenuSelect(key: string) {
+      if (key.startsWith(`${DELETE_LANGUAGE_KEY}:`)) {
+        deleteLanguage(key.slice(`${DELETE_LANGUAGE_KEY}:`.length));
+        return;
+      }
       switchLanguage(key);
     }
 

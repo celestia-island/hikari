@@ -147,6 +147,41 @@ export default defineComponent({
       scheduleUpdate();
     }, { flush: "post" });
 
+    /** Build the overlay tracks for the enabled axes (scrollbar on). */
+    function mountScrollbars() {
+      const vp = viewportRef.value;
+      if (!vp) return;
+      const containerEl = vp.parentElement;
+      if (!containerEl) return;
+      if (hasV()) {
+        vState = makeState(false);
+        containerEl.appendChild(vState.track);
+        vDrag = makeDragHandlers(vState, false);
+        attachAxis(vState, vDrag);
+      }
+      if (hasH()) {
+        hState = makeState(true);
+        containerEl.appendChild(hState.track);
+        hDrag = makeDragHandlers(hState, true);
+        attachAxis(hState, hDrag);
+      }
+    }
+
+    /** Tear down and rebuild the overlay tracks when the `scrollbar`
+     *  opt-in flips at runtime (HkTabs passes the prop through). */
+    watch(() => props.scrollbar, (on) => {
+      detachAxis(vState, vDrag);
+      detachAxis(hState, hDrag);
+      vState = null;
+      hState = null;
+      vDrag = null;
+      hDrag = null;
+      if (on) {
+        mountScrollbars();
+        update();
+      }
+    }, { flush: "post" });
+
     function recomputePinned() {
       const vp = viewportRef.value;
       if (!vp) return;
@@ -362,22 +397,9 @@ export default defineComponent({
     onMounted(() => {
       const vp = viewportRef.value;
       if (!vp) return;
-      const containerEl = vp.parentElement;
-      if (!containerEl) return;
 
       if (props.scrollbar) {
-        if (hasV()) {
-          vState = makeState(false);
-          containerEl.appendChild(vState.track);
-          vDrag = makeDragHandlers(vState, false);
-          attachAxis(vState, vDrag);
-        }
-        if (hasH()) {
-          hState = makeState(true);
-          containerEl.appendChild(hState.track);
-          hDrag = makeDragHandlers(hState, true);
-          attachAxis(hState, hDrag);
-        }
+        mountScrollbars();
       }
 
       vp.addEventListener("scroll", onScroll, { passive: true });

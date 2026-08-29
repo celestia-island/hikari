@@ -56,9 +56,10 @@
 /*
  * Auto-mode altitude strip: full-bleed content INSIDE the strip's tail
  * overlay (HTabs' overlay layer supplies the unified pill chrome —
- * surface, hairline border, radius). It reads passive in the shared
- * compact typography, but a press resolves auto to the manual side it
- * currently renders (day → light, night → dark).
+ * surface, hairline border, radius). It reads passive in the strip's
+ * own typography (same size/weight as the triggers it covers), but a
+ * press resolves auto to the manual side it currently renders
+ * (day → light, night → dark).
  */
 .s-theme-mode-autoalt {
   position: absolute;
@@ -72,7 +73,8 @@
   background: transparent;
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-sm);
+  font-weight: 600;
   line-height: 1;
   cursor: default;
   user-select: none;

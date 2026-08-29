@@ -3,7 +3,7 @@
  * ONE look (the centered pill strip of the page-level top/bottom bars)
  * is shared by every button group, radio group and tab strip. Variants
  * only switch the working mode (pill = tablist, segmented = radiogroup)
- * and layout extras (size="sm" / block) — never the visual language. */
+ * and layout extras (block) — never the visual language. */
 
 .hk-tabs {
   width: 100%;
@@ -132,13 +132,8 @@
 }
 
 /* === segmented = radiogroup working mode ===
- * Same chrome; only the form-row layout extras live here: compact
- * sizing (size="sm") and row-filling (block). */
-
-.hk-tabs-list[data-variant="segmented"][data-size="sm"] .hk-tabs-trigger {
-  font-size: 12px;
-  padding: var(--space-2, 2px) var(--space-10, 10px);
-}
+ * Same chrome; only the form-row layout extra lives here:
+ * row-filling (block). */
 
 /* block outside the scroller (scrollable opted out): legacy fill —
    triggers may shrink below their content. */

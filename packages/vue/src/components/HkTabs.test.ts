@@ -281,7 +281,7 @@ describe("HkTabs segmented variant", () => {
 
   it("renders a measured tail overlay from overlayFrom with slot content", async () => {
     const { container } = mountLive(
-      { variant: "segmented", size: "sm", overlayFrom: 0 },
+      { variant: "segmented", overlayFrom: 0 },
       { overlay: () => h("button", { type: "button", class: "strip" }, "+32.5°") },
     );
     const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;

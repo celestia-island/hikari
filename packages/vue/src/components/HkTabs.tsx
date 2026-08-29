@@ -60,6 +60,8 @@ export default defineComponent({
     size: { type: String as PropType<"sm" | "md">, default: "md" },
     /** Grow to fill the container width (segmented). */
     block: { type: Boolean, default: false },
+    /** Disable the whole strip (every trigger). */
+    disabled: { type: Boolean, default: false },
     /** Render tab panel slots below the strip. Segmented mode pickers
      *  have no panels — panels are skipped for that variant. */
     renderPanels: { type: Boolean, default: true },
@@ -306,13 +308,13 @@ export default defineComponent({
                 aria-disabled={disabled || undefined}
                 class="hk-tabs-trigger"
                 data-active={active || undefined}
-                data-disabled={disabled || undefined}
+                data-disabled={props.disabled || disabled || undefined}
                 // Roving tabindex: the active trigger joins the page tab
                 // sequence, the others stay arrow-reachable.
                 tabindex={active ? undefined : -1}
-                disabled={disabled}
+                disabled={props.disabled || disabled}
                 onClick={() => {
-                  if (!disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
+                  if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
                 }}
               >
                 {icon}

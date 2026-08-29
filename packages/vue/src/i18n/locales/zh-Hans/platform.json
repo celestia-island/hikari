@@ -21,7 +21,7 @@
     "hikari::theme.modeDark": "深色",
     "hikari::theme.modeAuto": "自动",
     "hikari::theme.themes": "配色主题",
-    "hikari::theme.autoAltitudeTip": "自动模式跟随太阳高度角。",
+    "hikari::theme.autoAltitudeTip": "自动模式跟随太阳高度角，点按切回手动。",
     "hikari::theme.editScheme": "编辑配色方案…",
     "hikari::theme.customize": "自定义",
     "hikari::theme.themeName": "主题名称",

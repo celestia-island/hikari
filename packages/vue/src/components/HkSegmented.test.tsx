@@ -22,10 +22,12 @@ const options = [
  *  assert against the DOM). */
 function mountSegmented(
   props: Record<string, unknown>,
+  slots?: { overlay?: () => unknown },
 ): { root: HTMLElement; unmount: () => void } {
   const Host = defineComponent({
     setup() {
-      return () => h(HkSegmented as never, { options, ...props });
+      return () =>
+        h(HkSegmented as never, { options, ...props }, slots ?? {});
     },
   });
   const el = document.createElement("div");
@@ -94,6 +96,167 @@ describe("HkSegmented", () => {
       .toBe("true");
     expect((segments(r2)[1] as HTMLButtonElement).disabled).toBe(true);
     u2();
+  });
+});
+
+describe("HkSegmented tablist semantics", () => {
+  const cleanups: Array<() => void> = [];
+  afterEach(() => {
+    while (cleanups.length) cleanups.pop()!();
+  });
+
+  function mountTabs(): {
+    root: HTMLElement;
+    modelValue: ReturnType<typeof ref<string>>;
+    unmount: () => void;
+  } {
+    const modelValue = ref("a");
+    const Host = defineComponent({
+      setup() {
+        return () =>
+          h(HkSegmented as never, {
+            options,
+            semantics: "tablist",
+            modelValue: modelValue.value,
+            "onUpdate:modelValue": (v: string) => { modelValue.value = v; },
+          });
+      },
+    });
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    const app = createApp(Host);
+    app.mount(el);
+    return { root: el, modelValue, unmount: () => { app.unmount(); el.remove(); } };
+  }
+
+  function key(el: Element, k: string): void {
+    el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true }));
+  }
+
+  it("exposes tab roles with aria-selected and roving tabindex", () => {
+    const { root, modelValue, unmount } = mountTabs();
+    const group = root.querySelector(".hk-segmented")!;
+    expect(group.getAttribute("role")).toBe("tablist");
+    const segs = segments(root);
+    expect(segs[0].getAttribute("role")).toBe("tab");
+    expect(segs[0].getAttribute("aria-selected")).toBe("true");
+    expect(segs[0].getAttribute("tabindex")).toBeNull();
+    expect(segs[1].getAttribute("aria-selected")).toBe("false");
+    expect(segs[1].getAttribute("tabindex")).toBe("-1");
+    expect(segs[0].getAttribute("aria-checked")).toBeNull();
+    void modelValue;
+    unmount();
+  });
+
+  it("moves selection with arrow keys and skips disabled options", async () => {
+    const { root, modelValue, unmount } = mountTabs();
+    const segs = segments(root);
+    key(segs[0], "ArrowRight");
+    await settle();
+    expect(modelValue.value).toBe("b");
+    // "c" is disabled: a further step wraps around to "a".
+    key(segs[1], "ArrowRight");
+    await settle();
+    expect(modelValue.value).toBe("a");
+    key(segs[0], "ArrowLeft");
+    await settle();
+    expect(modelValue.value).toBe("b");
+    unmount();
+  });
+
+  it("jumps with Home and End", async () => {
+    const { root, modelValue, unmount } = mountTabs();
+    const group = root.querySelector(".hk-segmented")!;
+    key(group, "Home");
+    await settle();
+    expect(modelValue.value).toBe("a");
+    key(group, "End");
+    await settle();
+    // "c" is disabled — End lands on the last enabled option.
+    expect(modelValue.value).toBe("b");
+    unmount();
+  });
+
+  it("also gives radio groups arrow-key navigation", async () => {
+    const modelValue = ref("a");
+    const Host = defineComponent({
+      setup() {
+        return () =>
+          h(HkSegmented as never, {
+            options,
+            modelValue: modelValue.value,
+            "onUpdate:modelValue": (v: string) => { modelValue.value = v; },
+          });
+      },
+    });
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    const app = createApp(Host);
+    app.mount(el);
+    const segs = segments(el);
+    expect(el.querySelector(".hk-segmented")!.getAttribute("role")).toBe("radiogroup");
+    key(segs[0], "ArrowRight");
+    await settle();
+    expect(modelValue.value).toBe("b");
+    app.unmount();
+    el.remove();
+  });
+});
+
+describe("HkSegmented tail overlay", () => {
+  const cleanups: Array<() => void> = [];
+  afterEach(() => {
+    while (cleanups.length) cleanups.pop()!();
+  });
+
+  const overlaySlot = () =>
+    h("button", { type: "button", class: "strip" }, "+32.5°");
+
+  it("renders no overlay by default", () => {
+    const { root, unmount } = mountSegmented({ modelValue: "a" });
+    expect(root.querySelector(".hk-segmented__overlay")).toBeNull();
+    unmount();
+  });
+
+  it("renders the slot content with an equal-share fallback left", () => {
+    const { root, unmount } = mountSegmented(
+      { modelValue: "a", overlayFrom: 0 },
+      { overlay: overlaySlot },
+    );
+    const overlay = root.querySelector(".hk-segmented__overlay") as HTMLElement;
+    expect(overlay).not.toBeNull();
+    // happy-dom has no layout: pre-measurement fallback — after option 0
+    // of 3 ≈ one third of the track.
+    expect(overlay.style.left).toBe("33.3333%");
+    expect(overlay.querySelector(".strip")).not.toBeNull();
+    unmount();
+  });
+
+  it("spans measured geometry from the anchor option to the track end", async () => {
+    const { root, unmount } = mountSegmented(
+      { modelValue: "a", overlayFrom: 0 },
+      { overlay: overlaySlot },
+    );
+    cleanups.push(stubSegmentGeometry(root, [14, 64, 114], 48));
+    const group = root.querySelector(".hk-segmented") as HTMLElement;
+    // Track inner width for the overlay pass (clientWidth on the root).
+    Object.defineProperty(group, "clientWidth", { value: 182, configurable: true });
+    await settle();
+    const overlay = root.querySelector(".hk-segmented__overlay") as HTMLElement;
+    expect(overlay.getAttribute("data-ready")).toBe("true");
+    // From option 0's right edge (14+48) + gap 2 … to 182 - 2 padding.
+    expect(overlay.style.left).toBe("64px");
+    expect(overlay.style.width).toBe("116px");
+    unmount();
+  });
+
+  it("drops the overlay when overlayFrom anchors at the last option", () => {
+    const { root, unmount } = mountSegmented(
+      { modelValue: "a", overlayFrom: 2 },
+      { overlay: overlaySlot },
+    );
+    expect(root.querySelector(".hk-segmented__overlay")).toBeNull();
+    unmount();
   });
 });
 

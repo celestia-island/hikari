@@ -21,7 +21,7 @@
     "hikari::theme.modeDark": "Dunkel",
     "hikari::theme.modeAuto": "Automatisch",
     "hikari::theme.themes": "Farbschemata",
-    "hikari::theme.autoAltitudeTip": "Der Automatikmodus folgt dem Sonnenstand.",
+    "hikari::theme.autoAltitudeTip": "Der Automatikmodus folgt dem Sonnenstand. Zum manuellen Wechsel drücken.",
     "hikari::theme.editScheme": "Farbschema bearbeiten…",
     "hikari::theme.customize": "Anpassen",
     "hikari::theme.themeName": "Designname",

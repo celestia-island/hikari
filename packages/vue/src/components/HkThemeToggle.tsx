@@ -32,13 +32,12 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
  * color-mode group and preset/custom theme selection (custom themes are
  * removable), and opens HColorSchemeDialog to create a new custom scheme.
  *
- * Color-mode group: a plain shared HkSegmented button group (Auto | Light
- * | Dark) — every segment stays enabled, so switching out of auto is a
- * direct segment press (the day/night side is the user's choice, no
- * separate resolve step). While AUTO is active a passive solar-altitude
- * readout rides BELOW the group in the same typography: it explains which
- * side auto currently resolves to and is deliberately non-interactive —
- * the segments remain the only control surface.
+ * Color-mode group: a shared HkSegmented button group (Auto | Light |
+ * Dark). In AUTO mode the Light/Dark half is covered by the group's
+ * built-in tail overlay (`overlayFrom` + `#overlay`): a passive-looking
+ * solar-altitude strip in the segmented typography — pressing it drops
+ * to manual on whichever side auto currently resolves to (day → light,
+ * night → dark), so no separate resolve step is ever needed.
  */
 export const HkThemeToggle = defineComponent({
   name: "HkThemeToggle",
@@ -124,20 +123,36 @@ export const HkThemeToggle = defineComponent({
     /**
      * Fresh option objects (and fresh icon vnodes) on every call — never
      * cache icon vnodes across renders, or closing/reopening the popover
-     * would re-mount the same vnode instances. Every segment stays
-     * enabled: pressing Light/Dark while auto is active is itself the
-     * switch to that manual side (setMode leaves "system").
+     * would re-mount the same vnode instances. In AUTO mode the Light/
+     * Dark segments are disabled: their area is covered by the group's
+     * tail overlay (the altitude strip), and the strip's press resolves
+     * to whichever manual side auto currently renders.
      */
     function modeOptions(): HkSegmentedOption[] {
+      const auto = isAutoMode.value;
       return [
         { value: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={12} /> },
-        { value: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} /> },
-        { value: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} /> },
+        { value: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} />, disabled: auto },
+        { value: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} />, disabled: auto },
       ];
     }
 
     function onSelectMode(value: string) {
       setMode(value as "light" | "dark" | "system");
+    }
+
+    /**
+     * Pressing the altitude strip in auto mode drops back to manual and
+     * selects whichever side auto currently resolves to (day → light,
+     * night → dark). Debounced: input synthesis may deliver both a
+     * pointer sequence and a click for one physical press.
+     */
+    let lastManualSwitchAt = 0;
+    function resolveAutoToManual() {
+      const now = Date.now();
+      if (now - lastManualSwitchAt < 700) return;
+      lastManualSwitchAt = now;
+      setMode(effectiveMode.value);
     }
 
     function onSelectTheme(id: ThemeId) {
@@ -195,13 +210,23 @@ export const HkThemeToggle = defineComponent({
                 options={modeOptions()}
                 modelValue={currentMode.value}
                 onUpdate:modelValue={onSelectMode}
-              />
-              {isAutoMode.value && (
-                <div class="s-theme-mode-autoalt" title={t("hikari::theme.autoAltitudeTip")}>
-                  {altitudeNight.value ? <Moon size={12} /> : <Sun size={12} />}
-                  <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
-                </div>
-              )}
+                overlayFrom={isAutoMode.value ? 0 : -1}
+              >
+                {{
+                  overlay: () => (
+                    <button
+                      type="button"
+                      class="s-theme-mode-autoalt"
+                      title={t("hikari::theme.autoAltitudeTip")}
+                      aria-label={t("hikari::theme.autoAltitudeTip")}
+                      onClick={resolveAutoToManual}
+                    >
+                      {altitudeNight.value ? <Moon size={12} /> : <Sun size={12} />}
+                      <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
+                    </button>
+                  ),
+                }}
+              </HkSegmented>
             </div>
 
             <HDivider spacing="md" />

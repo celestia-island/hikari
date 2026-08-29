@@ -22,6 +22,10 @@ export interface MeasuredHighlight {
   x: Ref<number>;
   /** Measured width (px) of the active item; 0 before a successful measure. */
   width: Ref<number>;
+  /** Inner width (px) of the container, refreshed on every measurement
+   *  pass — lets callers derive end-anchored geometry (e.g. a tail
+   *  overlay spanning to the track end) without a second observer. */
+  containerWidth: Ref<number>;
   /** True once a non-zero width has been measured — i.e. real layout was
    *  available (stays false under jsdom/happy-dom/SSR, where reads are 0). */
   ready: Ref<boolean>;
@@ -72,6 +76,7 @@ function offsetWithin(item: HTMLElement, container: HTMLElement): number {
 export function useMeasuredHighlight(opts: UseMeasuredHighlightOptions): MeasuredHighlight {
   const x = ref(0);
   const width = ref(0);
+  const containerWidth = ref(0);
   const ready = ref(false);
 
   let observer: ResizeObserver | null = null;
@@ -79,6 +84,7 @@ export function useMeasuredHighlight(opts: UseMeasuredHighlightOptions): Measure
   function measure(): void {
     const containerEl = opts.container.value;
     if (!containerEl) return;
+    containerWidth.value = Number.isFinite(containerEl.clientWidth) ? containerEl.clientWidth : 0;
     const items = containerEl.querySelectorAll<HTMLElement>(opts.itemSelector);
     if (items.length === 0) {
       width.value = 0;
@@ -140,5 +146,5 @@ export function useMeasuredHighlight(opts: UseMeasuredHighlightOptions): Measure
     observer = null;
   });
 
-  return { x, width, ready };
+  return { x, width, containerWidth, ready };
 }

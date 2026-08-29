@@ -147,7 +147,10 @@ export default defineComponent({
       () => props.open,
       (open) => {
         if (open) {
-          handle.value = manager.register("dropdown", false);
+          // Register with the panel title so the modal breadcrumb can
+          // label this layer ("User menu / Account security / …") instead
+          // of a generic "Layer N".
+          handle.value = manager.register("dropdown", false, props.title);
           overlay.open();
           // Release-then-push (the HkMenu normalizer form): a same-tick
           // close→reopen must not leave the reopened panel unguarded —

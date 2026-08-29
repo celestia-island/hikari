@@ -11,7 +11,7 @@ interface TabsHarness {
   setActive: (key: string) => void;
 }
 
-function mountTabs(props: Record<string, unknown> = {}, onAdd?: () => void): TabsHarness {
+function mountTabs(props: Record<string, unknown> = {}, onAction?: (side: string) => void): TabsHarness {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
@@ -24,7 +24,7 @@ function mountTabs(props: Record<string, unknown> = {}, onAdd?: () => void): Tab
           ...props,
           modelValue: active.value,
           "onUpdate:modelValue": (v: string) => { active.value = v; },
-          onAdd: onAdd,
+          onAction: onAction,
           tabs: [
             { key: "a", label: "Alpha" },
             { key: "b", label: "Beta" },
@@ -47,16 +47,8 @@ afterEach(() => {
 });
 
 describe("HkTabs scrollable", () => {
-  it("renders a bare list without scrollable", () => {
+  it("wraps the list in a centered horizontal scroller by default", () => {
     const t = mountTabs();
-    expect(t.container.querySelector(".hk-tabs[data-scrollable]")).toBeNull();
-    expect(t.container.querySelector(".hk-tabs-scroller")).toBeNull();
-    const list = t.container.querySelector(".hk-tabs-list");
-    expect(list?.parentElement?.classList.contains("hk-scroll-container-viewport")).toBe(false);
-  });
-
-  it("wraps the list in a centered horizontal scroller with scrollable", () => {
-    const t = mountTabs({ scrollable: true });
     const tabs = t.container.querySelector<HTMLElement>(".hk-tabs[data-scrollable]");
     expect(tabs).not.toBeNull();
     const scroller = t.container.querySelector<HTMLElement>(".hk-tabs-scroller");
@@ -69,8 +61,16 @@ describe("HkTabs scrollable", () => {
     expect(aligner?.querySelector(".hk-tabs-list")).not.toBeNull();
   });
 
+  it("renders a bare list with scrollable opted out", () => {
+    const t = mountTabs({ scrollable: false });
+    expect(t.container.querySelector(".hk-tabs[data-scrollable]")).toBeNull();
+    expect(t.container.querySelector(".hk-tabs-scroller")).toBeNull();
+    const list = t.container.querySelector(".hk-tabs-list");
+    expect(list?.parentElement?.classList.contains("hk-scroll-container-viewport")).toBe(false);
+  });
+
   it("keeps the pill indicator tracking the active tab inside the scroller", async () => {
-    const t = mountTabs({ scrollable: true, variant: "pill" });
+    const t = mountTabs({ variant: "pill" });
     const indicator = () => t.container.querySelector<HTMLElement>(".hk-tabs-indicator");
     expect(indicator()).not.toBeNull();
     t.setActive("c");
@@ -85,46 +85,107 @@ describe("HkTabs scrollable", () => {
   });
 
   it("only mounts the auto-hiding overlay scrollbar when opted in", async () => {
-    const plain = mountTabs({ scrollable: true });
+    const plain = mountTabs();
     await nextTick();
     expect(plain.container.querySelector(".hk-scrollbar-track[data-axis='horizontal']")).toBeNull();
 
-    const tracked = mountTabs({ scrollable: true, scrollbar: true });
+    const tracked = mountTabs({ scrollbar: true });
     await nextTick();
     expect(tracked.container.querySelector(".hk-scrollbar-track[data-axis='horizontal']")).not.toBeNull();
   });
+
+  it("drops safe centering for a block (row-filling) segmented strip", () => {
+    const t = mountTabs({ variant: "segmented", block: true });
+    const scroller = t.container.querySelector<HTMLElement>(".hk-tabs-scroller");
+    expect(scroller).not.toBeNull();
+    // align="start": no center aligner — the list stretches to the row.
+    expect(scroller?.getAttribute("data-align")).toBeNull();
+    expect(scroller?.querySelector(".hk-scroll-container-aligner")).toBeNull();
+    const list = t.container.querySelector<HTMLElement>(".hk-tabs-list");
+    expect(list?.getAttribute("data-block")).toBe("true");
+  });
 });
 
-describe("HkTabs addable", () => {
-  it("renders the protruding add button only with addable and wires the add emit", async () => {
-    let adds = 0;
-    const t = mountTabs({ addable: true, addLabel: "Add view" }, () => { adds += 1; });
+describe("HkTabs end actions", () => {
+  it("renders the protruding end button with endAction and emits action('end')", async () => {
+    const sides: string[] = [];
+    const t = mountTabs({ endAction: { label: "Add view" } }, (side) => { sides.push(side); });
 
     // The strip is wrapped in the shared hover-reveal surface and the
     // button lives in its extension slot, outside the tab list.
     const wrap = t.container.querySelector<HTMLElement>(".hk-tabs-addwrap.hk-hover-reveal");
     expect(wrap).not.toBeNull();
-    expect(t.container.querySelector(".hk-tabs[data-addable]")).not.toBeNull();
+    expect(wrap?.getAttribute("data-placement") ?? "right").toBe("right");
+    expect(t.container.querySelector(".hk-tabs[data-actions='end']")).not.toBeNull();
 
     const addBtn = wrap!.querySelector<HTMLButtonElement>(".hk-hover-reveal-extension button");
     expect(addBtn).not.toBeNull();
     expect(addBtn!.getAttribute("aria-label")).toBe("Add view");
     expect(addBtn!.getAttribute("title")).toBe("Add view");
-    // The "+" lives OUTSIDE the scroll viewport, so it never scrolls away.
+    // The button lives OUTSIDE the scroll viewport, so it never scrolls away.
     expect(addBtn!.closest(".hk-scroll-container")).toBeNull();
     expect(addBtn!.closest(".hk-tabs-addwrap")).not.toBeNull();
 
     addBtn!.click();
     await nextTick();
-    expect(adds).toBe(1);
+    expect(sides).toEqual(["end"]);
   });
 
-  it("falls back to the shared label and stays absent without addable", async () => {
+  it("renders the protruding start button with startAction and emits action('start')", async () => {
+    const sides: string[] = [];
+    const t = mountTabs({ startAction: { label: "Collapse" } }, (side) => { sides.push(side); });
+
+    const wrap = t.container.querySelector<HTMLElement>(".hk-tabs-addwrap.hk-hover-reveal");
+    expect(wrap).not.toBeNull();
+    expect(wrap?.getAttribute("data-placement")).toBe("left");
+    expect(t.container.querySelector(".hk-tabs[data-actions='start']")).not.toBeNull();
+
+    const btn = wrap!.querySelector<HTMLButtonElement>(".hk-hover-reveal-extension button");
+    expect(btn).not.toBeNull();
+    expect(btn!.getAttribute("aria-label")).toBe("Collapse");
+    expect(btn!.closest(".hk-scroll-container")).toBeNull();
+
+    btn!.click();
+    await nextTick();
+    expect(sides).toEqual(["start"]);
+  });
+
+  it("supports both ends at once with nested reveal hosts", async () => {
+    const sides: string[] = [];
+    const t = mountTabs(
+      { startAction: { label: "Back" }, endAction: { label: "Add view" } },
+      (side) => { sides.push(side); },
+    );
+
+    expect(t.container.querySelector(".hk-tabs[data-actions='both']")).not.toBeNull();
+    const wraps = t.container.querySelectorAll<HTMLElement>(".hk-tabs-addwrap.hk-hover-reveal");
+    expect(wraps.length).toBe(2);
+    const placements = Array.from(wraps).map((w) => w.getAttribute("data-placement") ?? "right");
+    expect(placements).toContain("left");
+    expect(placements).toContain("right");
+
+    const labels = Array.from(
+      t.container.querySelectorAll<HTMLButtonElement>(".hk-hover-reveal-extension button"),
+    ).map((b) => b.getAttribute("aria-label"));
+    expect(labels).toContain("Back");
+    expect(labels).toContain("Add view");
+    // Both buttons live outside the scroll viewport.
+    for (const b of t.container.querySelectorAll<HTMLButtonElement>(".hk-hover-reveal-extension button")) {
+      expect(b.closest(".hk-scroll-container")).toBeNull();
+    }
+
+    const [first] = t.container.querySelectorAll<HTMLButtonElement>(".hk-hover-reveal-extension button");
+    first!.click();
+    await nextTick();
+    expect(sides.length).toBe(1);
+  });
+
+  it("falls back to the shared label and stays absent without actions", async () => {
     const bare = mountTabs();
     expect(bare.container.querySelector(".hk-tabs-addwrap")).toBeNull();
-    expect(bare.container.querySelector(".hk-tabs[data-addable]")).toBeNull();
+    expect(bare.container.querySelector(".hk-tabs[data-actions]")).toBeNull();
 
-    const t = mountTabs({ addable: true });
+    const t = mountTabs({ endAction: {} });
     const addBtn = t.container.querySelector<HTMLButtonElement>(".hk-hover-reveal-extension button");
     expect(addBtn).not.toBeNull();
     // Default i18n string (test env resolves the en locale).
@@ -187,10 +248,11 @@ describe("HkTabs segmented variant", () => {
     expect(container.querySelector(".hk-tabs-panel")).toBeNull();
   });
 
-  it("keeps tab semantics for pill and underline", () => {
-    const { container } = mountLive({ variant: "pill" });
+  it("keeps tab semantics for pill (the default)", () => {
+    const { container } = mountLive({});
     const list = container.querySelector(".hk-tabs-list")!;
     expect(list.getAttribute("role")).toBe("tablist");
+    expect(list.getAttribute("data-variant")).toBe("pill");
     const trig = container.querySelectorAll(".hk-tabs-trigger");
     expect(trig[0].getAttribute("role")).toBe("tab");
     expect(trig[0].getAttribute("aria-selected")).toBe("true");
@@ -252,8 +314,9 @@ describe("HkTabs segmented variant", () => {
     Object.defineProperty(list, "clientWidth", { value: 182, configurable: true });
     await settle();
     const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;
-    expect(overlay.style.left).toBe("64px");
-    expect(overlay.style.width).toBe("116px");
+    // Unified chrome: zero inter-trigger gap, 2px track padding.
+    expect(overlay.style.left).toBe("62px");
+    expect(overlay.style.width).toBe("118px");
   });
 
   it("renders a tab icon field before the label", () => {

@@ -32,12 +32,13 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
  * color-mode group and preset/custom theme selection (custom themes are
  * removable), and opens HColorSchemeDialog to create a new custom scheme.
  *
- * Color-mode group: the unified HTabs strip in its segmented form (Auto | Light |
- * Dark). In AUTO mode the Light/Dark half is covered by the strip's
+ * Color-mode group: the unified HTabs strip in segmented (radiogroup)
+ * working mode (Auto | Light | Dark) — same pill chrome as every other
+ * group. In AUTO mode the Light/Dark half is covered by the strip's
  * built-in tail overlay (`overlayFrom` + `#overlay`): a passive-looking
- * solar-altitude strip in the segmented typography — pressing it drops
- * to manual on whichever side auto currently resolves to (day → light,
- * night → dark), so no separate resolve step is ever needed.
+ * solar-altitude strip in the shared compact typography — pressing it
+ * drops to manual on whichever side auto currently resolves to (day →
+ * light, night → dark), so no separate resolve step is ever needed.
  */
 export const HkThemeToggle = defineComponent({
   name: "HkThemeToggle",

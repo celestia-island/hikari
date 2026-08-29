@@ -147,3 +147,140 @@
 .hk-tabs[data-variant="underline"] .hk-tabs-panel {
   padding: var(--space-16) 0;
 }
+
+/* === Segmented variant — the compact mode-picker form ===
+ * Ported from the retired HkSegmented onto the unified strip: a muted
+ * track, equal-weight labels and a solid sliding thumb (the shared
+ * indicator element re-skinned). Semantics switch to radiogroup/radio
+ * in the component. */
+
+.hk-tabs-list[data-variant="segmented"] {
+  --hk-seg-h: 34px;
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: rgb(var(--hk-surface-muted, var(--color-surface, 240 240 244)) / 60%);
+}
+
+.hk-tabs-list[data-variant="segmented"][data-size="sm"] {
+  --hk-seg-h: 28px;
+  border-radius: 8px;
+}
+
+.hk-tabs-list[data-variant="segmented"][data-block="true"] {
+  display: flex;
+  width: 100%;
+}
+
+/* Solid thumb: the shared indicator re-skinned for this variant. */
+.hk-tabs-list[data-variant="segmented"] .hk-tabs-indicator {
+  top: 2px;
+  height: calc(100% - 4px);
+  border-radius: 8px;
+  background: rgb(var(--hk-surface, var(--color-surface, 255 255 255)));
+  border: none;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+}
+
+.hk-tabs-list[data-variant="segmented"][data-size="sm"] .hk-tabs-indicator {
+  border-radius: 6px;
+}
+
+.hk-tabs-list[data-variant="segmented"] .hk-tabs-trigger {
+  height: var(--hk-seg-h);
+  padding: 0 14px;
+  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 400;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  position: relative;
+  z-index: 1;
+  /* Paint above the solid thumb. */
+  color: rgb(var(--hk-text-muted, var(--color-muted, 90 90 100)));
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hk-tabs-list[data-variant="segmented"][data-size="sm"] .hk-tabs-trigger {
+  font-size: 12px;
+  padding: 0 10px;
+  border-radius: 6px;
+}
+
+.hk-tabs-list[data-variant="segmented"] .hk-tabs-trigger:hover:not(:disabled) {
+  color: rgb(var(--hk-text, var(--color-text, 20 20 26)));
+}
+
+.hk-tabs-list[data-variant="segmented"] .hk-tabs-trigger[data-active] {
+  color: rgb(var(--hk-text, var(--color-text, 20 20 26)));
+}
+
+.hk-tabs-list[data-variant="segmented"] .hk-tabs-trigger:focus-visible {
+  outline: 2px solid rgb(var(--hk-primary, var(--color-primary, 60 120 240)));
+  outline-offset: 1px;
+}
+
+.hk-tabs-trigger-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Full-bleed touch form (matches the retired segmented mobile rule). */
+@media (max-width: 767px) {
+  .hk-tabs-list[data-variant="segmented"] {
+    display: flex;
+    width: 100%;
+    gap: 0;
+  }
+
+  .hk-tabs-list[data-variant="segmented"] .hk-tabs-trigger {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 40px;
+    font-size: 14px;
+    padding: 0 6px;
+  }
+}
+
+/* === Tail overlay (option locking / live info) ===
+ * A passive layer covering the track right of tab[overlayFrom]; measured
+ * geometry arrives as inline left/width (equal-share estimate before
+ * measurement). Carries the thumb's pill chrome, sits above triggers,
+ * click-through except for interactive slot content. */
+.hk-tabs-overlay {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  right: 2px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgb(var(--hk-surface, var(--color-surface, 255 255 255)));
+  border: 1px solid rgb(var(--color-border, 100 100 100) / 12%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hk-tabs-list[data-size="sm"] .hk-tabs-overlay {
+  border-radius: 6px;
+}
+
+.hk-tabs-overlay :where(button, a, [role="button"]) {
+  pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+  .hk-tabs-overlay {
+    border-radius: 8px;
+  }
+}

@@ -29,7 +29,6 @@ export { default as HLabel } from "./components/HkLabel";
 export { default as HListTransition } from "./components/HkListTransition";
 export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HModal } from "./components/HkModal";
-export { default as HMorphingTabs } from "./components/HkMorphingTabs";
 export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
 export { default as HPasswordInput } from "./components/HkPasswordInput";
@@ -93,8 +92,6 @@ export { default as HTrendChart } from "./components/HkTrendChart";
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
-export { default as HkSegmented } from "./components/HkSegmented";
-export type { HkSegmentedOption } from "./components/HkSegmented";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HSelectionWaterfall } from "./components/HkSelectionWaterfall";
 

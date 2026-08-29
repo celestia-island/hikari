@@ -39,6 +39,12 @@ import "./HkSelect.scss";
  * the two can never drift apart. Content is a plain default slot; keyboard
  * events on the panel surface are forwarded (`keydown`) so owners that own
  * an option model (like HkSelect) can run their own arrow/enter navigation.
+ *
+ * Mobile sheets also run a duplicate-title filter: content that opens with
+ * a non-interactive heading exactly repeating the panel `title` is hidden
+ * (`.hk-sheet-dup-title`) — the sheet header already names the sheet, and
+ * composition-slot consumers (HkMenu pickers) often carry a section label
+ * with the same word. Desktop popouts draw no header and keep the heading.
  */
 
 export type SelectPanelPlacement =
@@ -107,8 +113,89 @@ export default defineComponent({
       if (props.open) emit("update:open", false);
     });
 
+    // A retitled open sheet must re-judge its duplicate heading — the
+    // exact-text match lives against the CURRENT title, so the filter
+    // restores a heading that stopped matching (and re-hides one that
+    // started, via the observer's characterData window below).
+    watch(
+      () => props.title,
+      () => {
+        if (props.open && sheetMode.value) syncDupTitle();
+      },
+    );
+    // Flipping OUT of sheet mode while open (consumer prop, not the
+    // breakpoint flip — that closes the panel) swaps the render branch
+    // and detaches the sheet list; drop the observer promptly instead
+    // of letting it guard a detached subtree.
+    watch(sheetMode, (mode) => {
+      if (!mode) stopDupTitleSync();
+    });
+
     const panelRef = ref<HTMLElement>();
+    const sheetListRef = ref<HTMLElement>();
     const coords = ref<{ top?: string; left?: string; minWidth?: string }>({});
+
+    // ── sheet duplicate-title filter ───────────────────────────────
+    // Composition-slot consumers often open a sheet whose content
+    // starts with a heading repeating the panel title (a workspace
+    // picker renders its own "Workspaces" section label under a sheet
+    // header that already says "Workspaces"). The desktop popout draws
+    // no header, so that in-content heading is the only one there; on
+    // the mobile sheet it doubles the header and reads as a rendering
+    // bug. While a sheet is open, hide the first non-interactive text
+    // element whose EXACT text equals the title — never interactive
+    // rows (buttons, select options, menu items), which legitimately
+    // may say the same word. A MutationObserver re-syncs while open so
+    // async-loaded content can neither miss a late duplicate nor keep
+    // hiding a node that stopped matching.
+    let hiddenDupTitle: HTMLElement | null = null;
+    let dupTitleObserver: MutationObserver | null = null;
+
+    /** Elements that make a candidate "real content": the candidate
+     *  itself matching one of these, OR containing one in its subtree,
+     *  disqualifies it — otherwise a wrapper div around a single row
+     *  labeled like the title would hide the whole sheet body. */
+    const DUP_TITLE_CONTENT =
+      'button,a,input,select,textarea,[role="option"],[role="menuitem"],.hk-select-option,.hk-menu-row';
+
+    function findDupTitle(): HTMLElement | null {
+      const title = props.title.trim();
+      const list = sheetListRef.value;
+      if (!title || !list) return null;
+      for (const el of list.querySelectorAll<HTMLElement>(
+        "h1,h2,h3,h4,h5,h6,p,div,span,strong",
+      )) {
+        if ((el.textContent ?? "").trim() !== title) continue;
+        if (el.matches(DUP_TITLE_CONTENT)) continue;
+        if (el.closest(DUP_TITLE_CONTENT)) continue;
+        if (el.querySelector(DUP_TITLE_CONTENT)) continue;
+        return el;
+      }
+      return null;
+    }
+
+    function syncDupTitle(): void {
+      const dup = findDupTitle();
+      if (hiddenDupTitle && hiddenDupTitle !== dup) {
+        hiddenDupTitle.classList.remove("hk-sheet-dup-title");
+        hiddenDupTitle = null;
+      }
+      if (dup && dup !== hiddenDupTitle) {
+        dup.classList.add("hk-sheet-dup-title");
+        hiddenDupTitle = dup;
+      }
+    }
+
+    function stopDupTitleSync(): void {
+      dupTitleObserver?.disconnect();
+      dupTitleObserver = null;
+      // Deliberately NOT restoring the class here: close keeps the panel
+      // mounted through its slide-down leave, and un-hiding mid-leave
+      // would flash the duplicate heading back in. The element dies with
+      // the panel right after the transition; live restores happen via
+      // the title watcher while the sheet is open.
+      hiddenDupTitle = null;
+    }
 
     function close(): void {
       emit("update:open", false);
@@ -161,11 +248,36 @@ export default defineComponent({
           backGuard.push();
           if (!sheetMode.value) {
             document.addEventListener("click", onDocumentClick, true);
+          } else {
+            // The sheet body mounts on this very render — run the
+            // duplicate-title filter once it has landed, then keep
+            // re-syncing while open (async slot content swaps).
+            void nextTick(() => {
+              // A same-tick open→close must not arm the observer on the
+              // leaving panel (the close branch already ran).
+              if (!props.open || !sheetMode.value) return;
+              syncDupTitle();
+              if (sheetListRef.value && !dupTitleObserver) {
+                dupTitleObserver = new MutationObserver(syncDupTitle);
+                dupTitleObserver.observe(sheetListRef.value, {
+                  childList: true,
+                  characterData: true,
+                  subtree: true,
+                  // A consumer re-render patching className can wipe
+                  // hk-sheet-dup-title mid-open — class mutations
+                  // re-sync it (adding an existing class mutates
+                  // nothing, so the loop converges).
+                  attributes: true,
+                  attributeFilter: ["class"],
+                });
+              }
+            });
           }
           window.addEventListener("resize", onResize);
         } else {
           document.removeEventListener("click", onDocumentClick, true);
           window.removeEventListener("resize", onResize);
+          stopDupTitleSync();
           backGuard.release();
           if (handle.value) {
             manager.unregister(handle.value.id);
@@ -183,6 +295,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener("resize", onResize);
+      stopDupTitleSync();
       overlay.close();
       backGuard.destroy();
       if (handle.value) {
@@ -285,7 +398,7 @@ export default defineComponent({
                   {props.title ? (
                     <div class="hk-select-sheet-title">{props.title}</div>
                   ) : null}
-                  <div class="hk-select-sheet-list">{slots.default?.()}</div>
+                  <div class="hk-select-sheet-list" ref={sheetListRef}>{slots.default?.()}</div>
                 </div>
               ) : null}
             </Transition>

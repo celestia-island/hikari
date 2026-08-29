@@ -210,7 +210,9 @@ describe("HkTabs segmented variant", () => {
     key(trig[0], "End");
     await settle();
     expect(active.value).toBe("b");
-    key(container.querySelector(".hk-tabs-list")!, "Home");
+    // Keydowns always originate from a trigger in real browsers (the list
+    // itself is not focusable) — Home from the focused trigger.
+    key(trig[1], "Home");
     await settle();
     expect(active.value).toBe("a");
   });

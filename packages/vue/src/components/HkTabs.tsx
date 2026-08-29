@@ -105,6 +105,16 @@ export default defineComponent({
     const listRef = ref<HTMLElement | null>(null);
 
     const isSegmented = computed(() => props.variant === "segmented");
+    // No active tab (modelValue matches nothing / active disabled): keep
+    // the first enabled trigger tabbable so the group stays reachable —
+    // otherwise every trigger would be tabindex=-1.
+    const fallbackTabbableIdx = computed(() => {
+      const hasActive = props.tabs.some(
+        (tb) => tb.key === props.modelValue && !tb.disabled,
+      );
+      if (hasActive) return -1;
+      return props.tabs.findIndex((tb) => !tb.disabled);
+    });
     const hasIndicator = computed(() => props.variant !== "underline");
     const hasOverlay = computed(
       () => props.overlayFrom >= 0 && props.overlayFrom < props.tabs.length - 1 && slots.overlay != null,
@@ -249,6 +259,10 @@ export default defineComponent({
       }
     }
     function onKeydown(e: KeyboardEvent) {
+      // Only drive strip navigation from triggers — interactive overlay
+      // content (inputs, sliders inside the #overlay slot) keeps its keys.
+      const target = e.target as HTMLElement | null;
+      if (!target || !target.closest(".hk-tabs-trigger")) return;
       const current = Math.max(0, props.tabs.findIndex((tb) => tb.key === props.modelValue));
       switch (e.key) {
         case "ArrowRight":
@@ -311,7 +325,7 @@ export default defineComponent({
                 data-disabled={props.disabled || disabled || undefined}
                 // Roving tabindex: the active trigger joins the page tab
                 // sequence, the others stay arrow-reachable.
-                tabindex={active ? undefined : -1}
+                tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}
                 disabled={props.disabled || disabled}
                 onClick={() => {
                   if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);

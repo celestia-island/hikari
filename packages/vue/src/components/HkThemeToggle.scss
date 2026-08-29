@@ -47,31 +47,52 @@
   padding: var(--space-4, 0.25rem) var(--space-6, 0.375rem);
 }
 
-/* ── Color-mode group (plain shared HkSegmented + auto hint row) ──────── */
+/* ── Color-mode group (shared HkSegmented + auto tail overlay) ────────── */
 
 .s-theme-mode-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 0.25rem);
   padding: 0 var(--space-6, 0.375rem) var(--space-4, 0.25rem);
 }
 
 /*
- * Auto-mode altitude readout: a passive caption row BELOW the segmented
- * group, in the segmented typography. Non-interactive by design — the
- * group above stays the only control surface (pressing Light/Dark while
- * auto is active IS the switch to that manual side).
+ * Auto-mode altitude strip: full-bleed content INSIDE the segmented
+ * group's tail overlay (HkSegmented's overlay layer supplies the pill
+ * chrome — surface, hairline border, radius, shadow). It reads passive
+ * in the segmented typography, but a press resolves auto to the manual
+ * side it currently renders (day → light, night → dark).
  */
 .s-theme-mode-autoalt {
+  position: absolute;
+  inset: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-4, 0.25rem);
-  color: rgb(var(--color-muted));
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: rgb(var(--color-text-secondary, var(--color-muted)));
+  font: inherit;
   font-size: 12px;
   line-height: 1;
+  cursor: default;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  padding: 0;
+}
+
+.s-theme-mode-autoalt:hover {
+  color: rgb(var(--color-text));
+}
+
+.s-theme-mode-autoalt:active {
+  background: rgb(var(--color-primary) / 8%);
+}
+
+.s-theme-mode-autoalt:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: -2px;
 }
 
 .s-theme-mode-autoalt-value {

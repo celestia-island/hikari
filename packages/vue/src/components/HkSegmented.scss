@@ -154,3 +154,45 @@
     transition: none;
   }
 }
+
+/* ── Tail overlay ──────────────────────────────────────────────────────
+ * A passive info layer covering everything right of option[overlayFrom]
+ * (geometry measured by the same pass as the thumb). Carries the thumb's
+ * pill chrome so it reads as part of the group, sits above the segments,
+ * and is click-through — interactive content inside the slot re-enables
+ * pointer events per element. The component always supplies an inline
+ * `left`: an equal-share estimate before measurement (SSR/hidden), the
+ * measured px (plus width) once real layout exists — same cadence as the
+ * thumb, so the fallback never fights the measured geometry. */
+.hk-segmented__overlay {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  right: 2px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgb(var(--hk-surface, 255 255 255));
+  border: 1px solid rgb(var(--color-border, 100 100 100) / 12%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hk-segmented[data-size="sm"] .hk-segmented__overlay {
+  border-radius: 6px;
+}
+
+/* Interactive overlay content opts back into hit testing. */
+.hk-segmented__overlay :where(button, a, [role="button"]) {
+  pointer-events: auto;
+}
+
+/* Full-bleed touch form: radius matches the touch segments. */
+@media (max-width: 767px) {
+  .hk-segmented__overlay {
+    border-radius: 8px;
+  }
+}

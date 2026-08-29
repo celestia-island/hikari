@@ -7,7 +7,18 @@
   color: rgb(var(--color-muted));
 
   &[data-fixed] {
-    width: 100px;
+    /* Stable-width mode: short values keep the 100px floor (the
+       `justify-content: space-between` spread and row alignment across
+       sibling lines stay put), but the box must be allowed to hug the
+       content when the rendered digits need more room — a hard 100px
+       cap is narrower than two 6-character values ("197.2k" / "38.9k"
+       plus arrows and the inter-stat gap ≈ 112px), and the invisible
+       spill extends every scrollable ancestor's scrollWidth. In the
+       shittim-chest cruise lane label that grew a native horizontal
+       scrollbar under the model row (`overflow-y: auto` implies
+       `overflow-x: auto`). */
+    min-width: 100px;
+    width: max-content;
     justify-content: space-between;
   }
 }

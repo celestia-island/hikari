@@ -89,6 +89,19 @@
   --hi-color-white-10: rgb(255 255 255 / 0.1);
   --hi-shadow-button: 0 4px 14px rgb(var(--color-primary) / 35%);
   --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
+
+  /* ── Hk component tokens (theme bridge) ─
+   * Chrome-level components (HkSegmented) read these RGB-triplet tokens.
+   * Without a definition they fall back to hardcoded light-theme values
+   * (white surfaces, near-black text, blue focus ring) inside dark
+   * themes. Bridging them to the runtime --color-* tokens keeps the
+   * controls on the active theme; consumer-local definitions still win
+   * by load order. */
+  --hk-surface: var(--color-surface, 255 255 255);
+  --hk-surface-muted: var(--color-surface, 240 240 244);
+  --hk-text: var(--color-text, 20 20 26);
+  --hk-text-muted: var(--color-muted, 90 90 100);
+  --hk-primary: var(--color-primary, 60 120 240);
 }
 
 /* Global reset (opt-in: import this explicitly) */

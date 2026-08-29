@@ -53,7 +53,7 @@ const TRACK_PAD = 2;
  *   semantics, optional tab panels below;
  * - `segmented` — mutually exclusive option picker: `radiogroup`/
  *   `radio`/`aria-checked` semantics, no panels, plus the form-row
- *   layout extras `size="sm"` (compact) and `block` (fill the row).
+ *   layout extra `block` (fill the row).
  *
  * Capabilities (all variants unless noted):
  * - `scrollable` (default ON) + `scrollbar` + edge fades
@@ -81,8 +81,6 @@ export default defineComponent({
      *  exclusive option picker (radiogroup). Both share the one unified
      *  pill chrome. */
     variant: { type: String as PropType<"pill" | "segmented">, default: "pill" },
-    /** Visual size — sm matches form-control heights (segmented). */
-    size: { type: String as PropType<"sm" | "md">, default: "md" },
     /** Grow to fill the container width (segmented). */
     block: { type: Boolean, default: false },
     /** Disable the whole strip (every trigger). */
@@ -323,7 +321,6 @@ export default defineComponent({
           class="hk-tabs-list"
           ref={listRef}
           data-variant={props.variant}
-          data-size={isSegmented.value ? props.size : undefined}
           data-block={isBlock.value ? "true" : undefined}
           role={isSegmented.value ? "radiogroup" : "tablist"}
           onKeydown={onKeydown}

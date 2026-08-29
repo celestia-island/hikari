@@ -36,9 +36,9 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
  * working mode (Auto | Light | Dark) — same pill chrome as every other
  * group. In AUTO mode the Light/Dark half is covered by the strip's
  * built-in tail overlay (`overlayFrom` + `#overlay`): a passive-looking
- * solar-altitude strip in the shared compact typography — pressing it
- * drops to manual on whichever side auto currently resolves to (day →
- * light, night → dark), so no separate resolve step is ever needed.
+ * solar-altitude strip in the strip's own trigger typography — pressing
+ * it drops to manual on whichever side auto currently resolves to (day
+ * → light, night → dark), so no separate resolve step is ever needed.
  */
 export const HkThemeToggle = defineComponent({
   name: "HkThemeToggle",
@@ -132,9 +132,9 @@ export const HkThemeToggle = defineComponent({
     function modeOptions(): TabItem[] {
       const auto = isAutoMode.value;
       return [
-        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={12} /> },
-        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} />, disabled: auto },
-        { key: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} />, disabled: auto },
+        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={14} /> },
+        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={14} />, disabled: auto },
+        { key: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={14} />, disabled: auto },
       ];
     }
 
@@ -208,7 +208,6 @@ export const HkThemeToggle = defineComponent({
               <HTabs
                 variant="segmented"
                 block
-                size="sm"
                 tabs={modeOptions()}
                 modelValue={currentMode.value}
                 onUpdate:modelValue={onSelectMode}
@@ -223,7 +222,7 @@ export const HkThemeToggle = defineComponent({
                       aria-label={t("hikari::theme.autoAltitudeTip")}
                       onClick={resolveAutoToManual}
                     >
-                      {altitudeNight.value ? <Moon size={12} /> : <Sun size={12} />}
+                      {altitudeNight.value ? <Moon size={14} /> : <Sun size={14} />}
                       <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
                     </button>
                   ),

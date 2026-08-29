@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, defineComponent, h, ref } from "vue";
+import { createApp, defineComponent, h, nextTick, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
 
@@ -126,5 +126,35 @@ describe("HkScrollContainer overflow sensing", () => {
     stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
     m.instance?.refresh();
     expect(m.root.getAttribute("data-h-overflow")).toBe("none");
+  });
+});
+
+describe("HkScrollContainer scrollbar reactivity", () => {
+  it("builds and tears down the overlay tracks when the scrollbar prop flips", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const props = reactive<Record<string, unknown>>({ scrollbar: false });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, { ...props }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    const root = container.querySelector<HTMLElement>(".hk-scroll-container")!;
+    expect(root.querySelectorAll(".hk-scrollbar-track").length).toBe(0);
+
+    props.scrollbar = true;
+    await nextTick();
+    expect(root.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
+
+    props.scrollbar = false;
+    await nextTick();
+    expect(root.querySelectorAll(".hk-scrollbar-track").length).toBe(0);
   });
 });

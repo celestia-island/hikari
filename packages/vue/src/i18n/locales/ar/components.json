@@ -109,6 +109,7 @@
     "hikari::adminHeader.language": "اللغة",
     "hikari::adminHeader.adminGroup": "المسؤولون",
     "hikari::localizedInput.addLanguage": "إضافة لغة",
+    "hikari::localizedInput.deleteLanguage": "حذف اللغة",
     "hikari::localizedInput.chooseLanguage": "اختر لغة التحرير",
     "hikari::statusBar.panel": "اللوحة",
     "hikari::statusBar.engine": "المحرك",

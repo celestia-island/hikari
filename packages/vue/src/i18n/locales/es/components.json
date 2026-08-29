@@ -109,6 +109,7 @@
     "hikari::adminHeader.language": "Idioma",
     "hikari::adminHeader.adminGroup": "Administradores",
     "hikari::localizedInput.addLanguage": "Añadir idioma",
+    "hikari::localizedInput.deleteLanguage": "Eliminar idioma",
     "hikari::localizedInput.chooseLanguage": "Elegir idioma de edición",
     "hikari::statusBar.panel": "Panel",
     "hikari::statusBar.engine": "Motor",

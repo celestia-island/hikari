@@ -137,6 +137,23 @@
     </section>
 
     <section>
+      <h2>HLocalizedInput</h2>
+      <div class="row" style="max-width:420px">
+        <HLocalizedInput
+          :model-value="localizedInput.value"
+          @update:model-value="(v: string) => localizedInput.value = v"
+          :source-lang="localizedInput.lang"
+          :translations="localizedInput.translations"
+          @update:translations="(v: Record<string, string>) => localizedInput.translations = v"
+          :locale-options="localeOptions"
+          label="Localized title"
+          placeholder="Localized text..."
+        />
+      </div>
+      <p class="result">Translations: {{ JSON.stringify(localizedInput.translations) }}</p>
+    </section>
+
+    <section>
       <h2>HSkeleton / HSkeletonList</h2>
       <div class="row">
         <HSkeleton width="100px" height="24px" />
@@ -297,6 +314,7 @@ import {
   HProgressBar, HProgressRing, HGaugeRing,
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
   HCheckbox, HSwitch, HRadio, HSelect, HSelectPanel,
+  HLocalizedInput,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HExpansionPanel,
   HTabs, HCard, HTable, HTimeline,
@@ -305,7 +323,7 @@ import {
   type TrendPen, type MinimapBox,
 } from '@celestia-island/hikari'
 
-const totalComponents = 63
+const totalComponents = 64
 
 const icons = ['home', 'settings', 'user', 'search', 'bell', 'heart', 'star', 'mail', 'download', 'upload', 'trash', 'edit', 'plus', 'check', 'x']
 
@@ -315,6 +333,16 @@ const flags = ref({ a: true, b: false, on: false, radio: 'x' })
 const radioOpts = [{ value: 'x', label: 'X' }, { value: 'y', label: 'Y' }]
 const gaugeRings = [{ pct: 45, color: 'rgb(var(--color-primary, 122 162 247))', trackColor: 'rgba(122, 162, 247, 0.15)' }]
 const select = ref({ val: '', opts: [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }, { value: 'c', label: 'Gamma' }] })
+const localizedInput = ref({
+  value: '工厂总览',
+  lang: 'zh-Hans',
+  translations: { en: 'Plant overview', 'zh-Hans': '工厂总览' } as Record<string, string>,
+})
+const localeOptions = [
+  { code: 'en', label: 'English' },
+  { code: 'zh-Hans', label: '简体中文' },
+  { code: 'ja', label: '日本語' },
+]
 const panelAnchor = ref<HTMLElement | null>(null)
 const panel = ref({
   open: false,

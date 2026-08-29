@@ -131,3 +131,148 @@ describe("HkTabs addable", () => {
     expect(addBtn!.getAttribute("aria-label")).toContain("Add");
   });
 });
+
+describe("HkTabs segmented variant", () => {
+  async function settle(): Promise<void> {
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 20));
+    await nextTick();
+  }
+
+  function key(el: Element, k: string): void {
+    el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true }));
+  }
+
+  /** Mount with a live v-model and per-test tabs/slots. */
+  function mountLive(
+    extra: Record<string, unknown>,
+    slots?: Record<string, () => unknown>,
+  ): { container: HTMLElement; active: ReturnType<typeof ref<string>> } {
+    const active = ref("a");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            tabs: [
+              { key: "a", label: "Alpha" },
+              { key: "b", label: "Beta" },
+              { key: "c", label: "Gamma", disabled: true },
+            ],
+            renderPanels: false,
+            ...extra,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+          }, slots ?? {});
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, active };
+  }
+
+  it("exposes radiogroup semantics and never renders panels", () => {
+    const { container } = mountLive({ variant: "segmented" });
+    const list = container.querySelector(".hk-tabs-list")!;
+    expect(list.getAttribute("role")).toBe("radiogroup");
+    expect(list.getAttribute("data-variant")).toBe("segmented");
+    const trig = container.querySelectorAll(".hk-tabs-trigger");
+    expect(trig[0].getAttribute("role")).toBe("radio");
+    expect(trig[0].getAttribute("aria-checked")).toBe("true");
+    expect(trig[0].getAttribute("tabindex")).toBeNull();
+    expect(trig[1].getAttribute("tabindex")).toBe("-1");
+    expect(container.querySelector(".hk-tabs-panel")).toBeNull();
+  });
+
+  it("keeps tab semantics for pill and underline", () => {
+    const { container } = mountLive({ variant: "pill" });
+    const list = container.querySelector(".hk-tabs-list")!;
+    expect(list.getAttribute("role")).toBe("tablist");
+    const trig = container.querySelectorAll(".hk-tabs-trigger");
+    expect(trig[0].getAttribute("role")).toBe("tab");
+    expect(trig[0].getAttribute("aria-selected")).toBe("true");
+    expect(trig[0].getAttribute("aria-checked")).toBeNull();
+  });
+
+  it("navigates with arrows and Home/End, skipping disabled tabs", async () => {
+    const { container, active } = mountLive({ variant: "segmented" });
+    const trig = container.querySelectorAll(".hk-tabs-trigger");
+    key(trig[0], "ArrowRight");
+    await settle();
+    expect(active.value).toBe("b");
+    // "c" disabled: wraps to "a".
+    key(trig[1], "ArrowRight");
+    await settle();
+    expect(active.value).toBe("a");
+    key(trig[0], "End");
+    await settle();
+    expect(active.value).toBe("b");
+    key(container.querySelector(".hk-tabs-list")!, "Home");
+    await settle();
+    expect(active.value).toBe("a");
+  });
+
+  it("renders a measured tail overlay from overlayFrom with slot content", async () => {
+    const { container } = mountLive(
+      { variant: "segmented", size: "sm", overlayFrom: 0 },
+      { overlay: () => h("button", { type: "button", class: "strip" }, "+32.5°") },
+    );
+    const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;
+    expect(overlay).not.toBeNull();
+    expect(overlay.querySelector(".strip")).not.toBeNull();
+    // The geometry pass runs one tick after mount: happy-dom has no
+    // layout, so the equal-share fallback (tab 0 of 3) applies.
+    await settle();
+    expect(overlay.style.left).toBe("33.3333%");
+    // Dropping the anchor disables the layer entirely.
+    const bare = mountLive({ variant: "segmented", overlayFrom: -1 },
+      { overlay: () => h("span", "x") });
+    expect(bare.container.querySelector(".hk-tabs-overlay")).toBeNull();
+    // Anchoring at the last tab leaves no tail to cover.
+    const last = mountLive({ variant: "segmented", overlayFrom: 2 },
+      { overlay: () => h("span", "x") });
+    expect(last.container.querySelector(".hk-tabs-overlay")).toBeNull();
+  });
+
+  it("spans measured geometry once layout exists", async () => {
+    const { container } = mountLive(
+      { variant: "segmented", overlayFrom: 0 },
+      { overlay: () => h("button", { class: "strip" }, "x") },
+    );
+    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    const trig = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger");
+    // Stub layout: trigger 0 at 14px wide 48, list inner width 182.
+    Object.defineProperty(trig[0], "offsetLeft", { value: 14, configurable: true });
+    Object.defineProperty(trig[0], "offsetWidth", { value: 48, configurable: true });
+    Object.defineProperty(list, "clientWidth", { value: 182, configurable: true });
+    await settle();
+    const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;
+    expect(overlay.style.left).toBe("64px");
+    expect(overlay.style.width).toBe("116px");
+  });
+
+  it("renders a tab icon field before the label", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const active = ref("a");
+    const Icon = () => h("i", { class: "glyph" });
+    const Wrapper = defineComponent({
+      setup() {
+        return () => h(HkTabs, {
+          variant: "segmented",
+          renderPanels: false,
+          tabs: [{ key: "a", label: "Alpha", icon: h(Icon) }],
+          modelValue: active.value,
+        });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    expect(container.querySelector(".hk-tabs-trigger-icon .glyph")).not.toBeNull();
+  });
+});

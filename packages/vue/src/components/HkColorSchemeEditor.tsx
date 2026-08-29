@@ -3,7 +3,7 @@ import {
   HColorPicker,
   HExpansionPanel,
   HInput,
-  HMorphingTabs,
+  HTabs,
 
   useI18n,
   useTheme,
@@ -343,8 +343,9 @@ export const HkColorSchemeEditor = defineComponent({
           label={t("hikari::theme.themeName")}
           placeholder={t("hikari::theme.customThemeName")}
         />
-        <HMorphingTabs
-          tag="div"
+        <HTabs
+          variant="segmented"
+          size="sm"
           class="s-scheme-mode-switch"
           modelValue={modeTab.value}
           onUpdate:modelValue={(v: string) => { modeTab.value = v; }}

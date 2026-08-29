@@ -91,7 +91,7 @@
   --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
 
   /* ── Hk component tokens (theme bridge) ─
-   * Chrome-level components (HkSegmented) read these RGB-triplet tokens.
+   * Chrome-level component styles (HTabs segmented variant) read these RGB-triplet tokens.
    * Without a definition they fall back to hardcoded light-theme values
    * (white surfaces, near-black text, blue focus ring) inside dark
    * themes. Bridging them to the runtime --color-* tokens keeps the

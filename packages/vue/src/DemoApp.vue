@@ -190,11 +190,10 @@
     </section>
 
     <section>
-      <h2>HTabs / HMorphingTabs</h2>
+      <h2>HTabs (pill / underline / segmented)</h2>
       <HTabs v-model="tabs.active" :tabs="tabs.items" />
       <p class="result" style="margin-top:8px">Active tab: {{ tabs.active }}</p>
       <div style="margin-top:12px" />
-      <HMorphingTabs v-model="morphTabs.active" :tabs="morphTabs.items" />
     </section>
 
     <section>
@@ -300,13 +299,13 @@ import {
   HCheckbox, HSwitch, HRadio, HSelect, HSelectPanel,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HExpansionPanel,
-  HTabs, HMorphingTabs, HCard, HTable, HTimeline,
+  HTabs, HCard, HTable, HTimeline,
   HMediaSlider, HMediaPlayer, HImageViewer,
   HZoomToolbar, HMinimap, HTrendChart,
   type TrendPen, type MinimapBox,
 } from '@celestia-island/hikari'
 
-const totalComponents = 64
+const totalComponents = 63
 
 const icons = ['home', 'settings', 'user', 'search', 'bell', 'heart', 'star', 'mail', 'download', 'upload', 'trash', 'edit', 'plus', 'check', 'x']
 
@@ -332,7 +331,6 @@ function togglePanelOpt(key: string, v: boolean) {
     : panel.value.checked.filter((k) => k !== key)
 }
 const tabs = ref({ active: 'tab1', items: [{ key: 'tab1', label: 'Overview' }, { key: 'tab2', label: 'Details' }, { key: 'tab3', label: 'Settings' }] })
-const morphTabs = ref({ active: 'm1', items: [{ key: 'm1', label: 'Read' }, { key: 'm2', label: 'Write' }, { key: 'm3', label: 'Preview' }] })
 
 const tableCols = [{ key: 'name', title: 'Name' }, { key: 'role', title: 'Role' }]
 const tableRows = [{ name: 'Alice', role: 'Admin' }, { name: 'Bob', role: 'Editor' }, { name: 'Charlie', role: 'Viewer' }]

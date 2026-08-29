@@ -13,7 +13,7 @@ import {
 } from "@celestia-island/hikari";
 
 import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
-import HkSegmented, { type HkSegmentedOption } from "./HkSegmented";
+import HTabs, { type TabItem } from "./HkTabs";
 import "./HkThemeToggle.scss";
 
 /** One shared geo resolution per page load (component may mount often). */
@@ -32,8 +32,8 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
  * color-mode group and preset/custom theme selection (custom themes are
  * removable), and opens HColorSchemeDialog to create a new custom scheme.
  *
- * Color-mode group: a shared HkSegmented button group (Auto | Light |
- * Dark). In AUTO mode the Light/Dark half is covered by the group's
+ * Color-mode group: the unified HTabs strip in its segmented form (Auto | Light |
+ * Dark). In AUTO mode the Light/Dark half is covered by the strip's
  * built-in tail overlay (`overlayFrom` + `#overlay`): a passive-looking
  * solar-altitude strip in the segmented typography — pressing it drops
  * to manual on whichever side auto currently resolves to (day → light,
@@ -128,12 +128,12 @@ export const HkThemeToggle = defineComponent({
      * tail overlay (the altitude strip), and the strip's press resolves
      * to whichever manual side auto currently renders.
      */
-    function modeOptions(): HkSegmentedOption[] {
+    function modeOptions(): TabItem[] {
       const auto = isAutoMode.value;
       return [
-        { value: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={12} /> },
-        { value: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} />, disabled: auto },
-        { value: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} />, disabled: auto },
+        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={12} /> },
+        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={12} />, disabled: auto },
+        { key: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={12} />, disabled: auto },
       ];
     }
 
@@ -204,10 +204,11 @@ export const HkThemeToggle = defineComponent({
           <div class="s-theme-menu">
             <div class="s-theme-menu-label">{t("hikari::theme.mode")}</div>
             <div class="s-theme-mode-row">
-              <HkSegmented
+              <HTabs
+                variant="segmented"
                 block
                 size="sm"
-                options={modeOptions()}
+                tabs={modeOptions()}
                 modelValue={currentMode.value}
                 onUpdate:modelValue={onSelectMode}
                 overlayFrom={isAutoMode.value ? 0 : -1}
@@ -226,7 +227,7 @@ export const HkThemeToggle = defineComponent({
                     </button>
                   ),
                 }}
-              </HkSegmented>
+              </HTabs>
             </div>
 
             <HDivider spacing="md" />

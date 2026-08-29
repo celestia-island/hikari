@@ -72,7 +72,7 @@ function paletteButton(): HTMLButtonElement {
 }
 
 function modeSegments(): HTMLButtonElement[] {
-  return [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-mode-row .hk-segmented__segment")];
+  return [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-mode-row .hk-tabs-trigger")];
 }
 
 function altitudeOverlay(): HTMLElement | null {
@@ -143,7 +143,7 @@ describe("HkThemeToggle color-mode group", () => {
     expect(lightSeg?.disabled).toBe(false);
 
     // Back to auto: the group's tail overlay covers the Light/Dark halves
-    // with the altitude strip (HkSegmented overlayFrom + #overlay).
+    // with the altitude strip (HTabs overlayFrom + #overlay).
     modeSegments()
       .find((b) => b.textContent?.includes("Auto"))!
       .click();
@@ -153,7 +153,7 @@ describe("HkThemeToggle color-mode group", () => {
     expect(overlay).toBeTruthy();
     expect(overlay!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
     // The overlay rides inside the segmented group's overlay layer.
-    expect(overlay!.closest(".hk-segmented__overlay")).toBeTruthy();
+    expect(overlay!.closest(".hk-tabs-overlay")).toBeTruthy();
     // Covered segments sit out of the tab order; the strip is the single
     // pointer surface while auto is active.
     expect(lightSeg?.disabled).toBe(true);

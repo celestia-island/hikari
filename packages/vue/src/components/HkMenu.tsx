@@ -91,6 +91,8 @@ function pointRect(left: number, top: number): DOMRect {
 /** Exposed surface of HkSelectPanel this component consumes. */
 interface PanelInstance {
   panelEl: () => HTMLElement | null;
+  /** Cancel the panel's pending back-guard rewind (see onItem). */
+  abandonBackGuard?: () => void;
 }
 
 export default defineComponent({
@@ -233,6 +235,17 @@ export default defineComponent({
           desktopPath.value = [...desktopPath.value.slice(0, level), item.key];
         }
         return;
+      }
+      // A leaf selection IS the action: the consumer's select handler
+      // opens a modal or drives an async router navigation. Cancel the
+      // panels' pending back-guard rewinds BEFORE closing — the deferred
+      // go(-n) would otherwise run on the next macrotask, before an async
+      // navigation commits its pushState, and bounce the page back onto
+      // the marker entry (the "Admin Panel menu leaf opens /backend and
+      // silently stays on the chat view" regression). Plain close paths
+      // (overlay tap, Escape, branch collapse) keep the release() rewind.
+      for (const inst of Object.values(panelInsts.value)) {
+        inst?.abandonBackGuard?.();
       }
       emit("select", item.key, item);
       closeAll();

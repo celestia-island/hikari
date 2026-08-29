@@ -359,6 +359,16 @@ export default defineComponent({
      * rows (or HkPopupSelect's) could match first. */
     expose({
       panelEl: () => panelRef.value ?? null,
+      /**
+       * Cancel this panel's pending back-guard rewind. Menu-like hosts
+       * (HkMenu) call it when a row selection ITSELF starts an in-page
+       * action — opening a modal or an async router navigation: the
+       * rewind would otherwise win the race (its flush runs before an
+       * async navigation commits) and yank the page back onto the
+       * panel's marker entry, discarding that navigation. Plain
+       * select/close flows keep the default release() rewind.
+       */
+      abandonBackGuard: () => backGuard.abandon(),
     });
 
     return () => {

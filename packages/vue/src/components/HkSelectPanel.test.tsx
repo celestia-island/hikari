@@ -377,3 +377,170 @@ describe("HkSelectPanel back-guard (window-first back priority)", () => {
     expect(window.history.state).toBeNull();
   });
 });
+
+describe("HkSelectPanel mobile-sheet duplicate-title filter", () => {
+  /** Composition-mode rig with a reactive title and arbitrary slot
+   *  content — the shape HkMenu pickers render on phones. */
+  function mountSheet(opts: {
+    title?: ReturnType<typeof ref<string>>;
+    slot?: () => unknown;
+  } = {}) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const open = ref(false);
+    const anchorEl = ref<HTMLElement | null>(null);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h("div", [
+            h("button", {
+              ref: (el: Element | ComponentPublicInstance | null) => {
+                anchorEl.value = el as HTMLElement | null;
+              },
+              type: "button",
+            }, "anchor"),
+            h(
+              HkSelectPanel,
+              {
+                open: open.value,
+                "onUpdate:open": (v: boolean) => { open.value = v; },
+                anchorRef: anchorEl.value,
+                title: opts.title?.value ?? "Workspaces",
+              },
+              { default: opts.slot ?? (() => h("div", { class: "rows" }, "rows")) },
+            ),
+          ]);
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { open, container };
+  }
+
+  /** Mobile viewport + open, settled past the post-open nextTick sync. */
+  async function openSheet(open: ReturnType<typeof ref<boolean>>): Promise<void> {
+    setViewport(375);
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+  }
+
+  it("hides a leading in-content heading that repeats the sheet title", async () => {
+    const { open } = mountSheet({
+      slot: () =>
+        h("div", { class: "menu" }, [
+          h("div", { class: "menu-label" }, "Workspaces"),
+          h("div", { class: "hint" }, "No workspaces found."),
+        ]),
+    });
+    await openSheet(open);
+
+    const list = document.body.querySelector<HTMLElement>(".hk-select-sheet-list")!;
+    // The repeated heading is filtered; the rest of the content stays.
+    expect(list.querySelector<HTMLElement>(".menu-label")!.classList.contains("hk-sheet-dup-title")).toBe(true);
+    expect(list.querySelector<HTMLElement>(".hint")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+    // The sheet header still names the sheet.
+    expect(document.body.querySelector<HTMLElement>(".hk-select-sheet-title")!.textContent).toBe("Workspaces");
+  });
+
+  it("keeps headings that merely contain the title and non-matching text", async () => {
+    const { open } = mountSheet({
+      slot: () =>
+        h("div", { class: "menu" }, [
+          h("div", { class: "menu-label" }, "Workspaces and devices"),
+          h("div", { class: "hint" }, "pick one"),
+        ]),
+    });
+    await openSheet(open);
+
+    const list = document.body.querySelector<HTMLElement>(".hk-select-sheet-list")!;
+    // Partial ("contains") matches are real content — only an exact,
+    // non-interactive match hides.
+    expect(list.querySelector<HTMLElement>(".menu-label")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+    expect(list.querySelector<HTMLElement>(".hint")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+  });
+
+  it("never hides interactive rows or option blocks that say the title", async () => {
+    const { open } = mountSheet({
+      slot: () =>
+        h("div", { class: "menu" }, [
+          h("button", { class: "row", type: "button" }, "Workspaces"),
+          h("div", { class: "hk-select-option" }, "Workspaces"),
+          h("div", { class: "hk-menu-row" }, "Workspaces"),
+        ]),
+    });
+    await openSheet(open);
+
+    for (const sel of ["button.row", ".hk-select-option", ".hk-menu-row"]) {
+      const el = document.body.querySelector<HTMLElement>(`.hk-select-sheet-list ${sel}`)!;
+      expect(el.classList.contains("hk-sheet-dup-title")).toBe(false);
+    }
+  });
+
+  it("does not hide a wrapper whose text matches only via a contained row", async () => {
+    // Data-driven HkMenu shape: a menu level wrapping a single row whose
+    // label equals the title — the wrapper must survive with its row.
+    const { open } = mountSheet({
+      slot: () =>
+        h("div", { class: "hk-menu-level", role: "menu" }, [
+          h("button", { class: "hk-menu-row", type: "button" }, "Workspaces"),
+        ]),
+    });
+    await openSheet(open);
+
+    const list = document.body.querySelector<HTMLElement>(".hk-select-sheet-list")!;
+    expect(list.querySelector<HTMLElement>(".hk-menu-level")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+    expect(list.querySelector<HTMLElement>("button.hk-menu-row")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+  });
+
+  it("keeps the in-content heading on the desktop popout (no dedupe there)", async () => {
+    setViewport(1200);
+    const { open } = mountSheet({
+      slot: () => h("div", { class: "menu-label" }, "Workspaces"),
+    });
+    await nextTick();
+    open.value = true;
+    await nextTick();
+
+    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.querySelector<HTMLElement>(".menu-label")!.classList.contains("hk-sheet-dup-title")).toBe(false);
+  });
+
+  it("re-syncs when late content adds a duplicate heading while open", async () => {
+    const { open } = mountSheet({
+      slot: () => h("div", { class: "hint" }, "loading…"),
+    });
+    await openSheet(open);
+
+    const list = document.body.querySelector<HTMLElement>(".hk-select-sheet-list")!;
+    const late = document.createElement("div");
+    late.className = "menu-label";
+    late.textContent = "Workspaces";
+    list.appendChild(late);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(late.classList.contains("hk-sheet-dup-title")).toBe(true);
+  });
+
+  it("restores the hidden heading when the open sheet is retitled", async () => {
+    const title = ref("Workspaces");
+    const { open } = mountSheet({
+      title,
+      slot: () => h("div", { class: "menu-label" }, "Workspaces"),
+    });
+    await openSheet(open);
+    const label = document.body.querySelector<HTMLElement>(".hk-select-sheet-list .menu-label")!;
+    expect(label.classList.contains("hk-sheet-dup-title")).toBe(true);
+
+    title.value = "Devices";
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(label.classList.contains("hk-sheet-dup-title")).toBe(false);
+  });
+});

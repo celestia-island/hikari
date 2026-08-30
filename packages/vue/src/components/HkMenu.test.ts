@@ -158,6 +158,11 @@ afterEach(async () => {
   while (mounts.length) mounts.pop()?.unmount();
   // Unmounting restores history asynchronously; wait for it to land so a
   // pending traversal cannot pop the NEXT test's freshly pushed entries.
+  // Leaf-select tests ABANDON their rewind on purpose, so the marker
+  // entry stays current as an inert dead marker — de-mark it in place
+  // (the same way a landing popstate would) or the until() below would
+  // spin to its timeout on an intentionally kept marker.
+  window.history.replaceState(null, "");
   await until(() => window.history.state?.__hkBack === undefined);
   // happy-dom never fires transitionend, so leave transitions never
   // finish and teleported panels linger on <body> — strip them or the
@@ -466,7 +471,7 @@ describe("HkMenu mobile sheets", () => {
     expect(openRef.value).toBe(true);
   });
 
-  it("selecting a leaf on mobile closes every sheet and restores history", async () => {
+  it("selecting a leaf on mobile closes every sheet and abandons the rewind so a later async navigation survives", async () => {
     window.innerWidth = 390;
     const selected: string[] = [];
     const openRef = ref(true);
@@ -483,8 +488,44 @@ describe("HkMenu mobile sheets", () => {
     expect(selected).toEqual(["two-b"]);
     expect(openRef.value).toBe(false);
     await until(() => document.querySelector(".hk-select-sheet-panel") === null);
-    await until(() => window.history.state?.__hkBack === undefined);
-    expect(window.history.state?.__hkBack).toBeUndefined();
+    // The leaf's back-guard rewinds are abandoned (a leaf select IS an
+    // action — typically a modal or an async router navigation), so no
+    // suppressed traversal fires and the marker entry stays current
+    // until the action's own navigation commits on top of it.
+    await settle();
+    expect(window.history.state?.__hkBack).toBeDefined();
+    const len = window.history.length;
+    // Simulate the async router navigation committing after the flush.
+    window.history.pushState({ router: true }, "");
+    await settle();
+    expect(window.history.length).toBe(len + 1);
+    expect(window.history.state?.router).toBe(true);
+  });
+
+  it("a desktop leaf select driving an async navigation is not bounced by the rewind", async () => {
+    const selected: string[] = [];
+    const openRef = ref(true);
+    mountMenu(openRef, items, {
+      onSelect: (key) => selected.push(key),
+    });
+    await settle();
+
+    rowByLabel("Log out")!.click();
+    await settle();
+
+    expect(selected).toEqual(["logout"]);
+    expect(openRef.value).toBe(false);
+    await settle();
+    // The rewind claim was abandoned: history was NOT rewound (no
+    // suppressed go(-n) racing the consumer's router.push), and the
+    // marker entry is still current when the async navigation finally
+    // commits on top of it.
+    expect(window.history.state?.__hkBack).toBeDefined();
+    const len = window.history.length;
+    window.history.pushState({ router: true }, "");
+    await settle();
+    expect(window.history.length).toBe(len + 1);
+    expect(window.history.state?.router).toBe(true);
   });
 
   it("closes when the viewport crosses the breakpoint while open", async () => {

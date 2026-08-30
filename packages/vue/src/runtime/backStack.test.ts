@@ -268,6 +268,61 @@ describe("createBackGuard", () => {
     g.destroy();
   });
 
+  it("abandon cancels a pending release rewind so a later async navigation survives", async () => {
+    const onBack = vi.fn();
+    const g = createBackGuard({ onBack });
+    g.push();
+    // Menu closes: release() queues the deferred rewind...
+    g.release();
+    // ...but the leaf's select handler abandons the claim in the same
+    // tick, because it starts an async router navigation that will only
+    // commit its pushState AFTER the flush macrotask has run.
+    g.abandon();
+    await settle();
+    expect(g.entries).toBe(0);
+    // No traversal fired: the marker entry is still current.
+    expect((window.history.state as Record<string, unknown>)[BACK_GUARD_MARKER]).toBe(g.id);
+    const len = window.history.length;
+    // The async navigation finally commits on top of the marker.
+    window.history.pushState({ router: true }, "");
+    await settle();
+    expect(window.history.length).toBe(len + 1);
+    expect((window.history.state as Record<string, unknown>).router).toBe(true);
+    // The guard never fired a back and its claim is gone.
+    expect(onBack).not.toHaveBeenCalled();
+    g.destroy();
+  });
+
+  it("abandon skips the flush entirely for multi-level claims", async () => {
+    const onBack = vi.fn();
+    const g = createBackGuard({ onBack });
+    g.push();
+    g.push();
+
+    g.abandon();
+    expect(g.entries).toBe(0);
+    const len = window.history.length;
+    await settle();
+    // No go(-2): history untouched, current entry keeps its marker depth.
+    expect(window.history.length).toBe(len);
+    expect((window.history.state as Record<string, unknown>)[BACK_GUARD_DEPTH]).toBe(1);
+    expect(onBack).not.toHaveBeenCalled();
+    g.destroy();
+  });
+
+  it("abandon after release retracts the queued claim (same-tick leaf select)", async () => {
+    const onBack = vi.fn();
+    const g = createBackGuard({ onBack });
+    g.push();
+    g.release(); // close → rewind queued
+    g.abandon(); // select handler cancels it before the flush macrotask
+    await settle();
+    const st = window.history.state as Record<string, unknown> | null;
+    expect(st?.[BACK_GUARD_MARKER]).toBe(g.id);
+    expect(onBack).not.toHaveBeenCalled();
+    g.destroy();
+  });
+
   it("drops the module listener once every guard is gone, and re-adds it later", async () => {
     expect(__backListenerActive()).toBe(false);
     const g = createBackGuard({ onBack: vi.fn() });

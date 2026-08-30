@@ -90,6 +90,19 @@ export interface BackGuard {
    */
   release(): void;
   /**
+   * Drop every entry claim AND cancel any pending rewind WITHOUT
+   * touching history: for a close that is itself the consequence of an
+   * in-page action started from the surface — a menu leaf whose select
+   * handler opens a modal or drives an async router navigation. The
+   * deferred rewind would otherwise win the race (its flush runs on the
+   * next macrotask, before an async navigation commits its pushState)
+   * and yank the page back onto the closed surface's marker entry,
+   * silently discarding the action's navigation. The pushed markers
+   * stay where they lie as inert dead markers — released in place by
+   * the popstate cleanup if a later traversal ever lands on them.
+   */
+  abandon(): void;
+  /**
    * Drop every entry claim WITHOUT touching history: for a surface
    * that is already closed yet finds itself owning the current (spent)
    * marker — de-marks it so a closed window never owns live history.
@@ -311,6 +324,14 @@ export function createBackGuard(options: BackGuardOptions): BackGuard {
       } else {
         record.count.value = 0;
       }
+    },
+    abandon(): void {
+      // Snap both counters to zero and retract any queued rewind claim —
+      // the flush's `count > desired` re-check then skips this record, so
+      // no go(-n) fires and the markers are left buried (inert).
+      record.desired = 0;
+      record.count.value = 0;
+      rewindQueue.delete(record);
     },
     forget(): void {
       record.count.value = 0;

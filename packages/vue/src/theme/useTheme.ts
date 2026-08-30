@@ -55,7 +55,7 @@ function storedThemeId(): ThemeId {
     const known = new Set<string>([
       ...Object.keys(themePresets),
       ...Object.keys(pageDeclaredThemes()),
-      ...customThemes.value.map((c) => c.id),
+      ...customThemes.value.map((c: CustomThemePreset) => c.id),
     ]);
     if (known.has(stored)) return stored as ThemeId;
     // Stale/invalid theme id (e.g. written by an older build): drop it so
@@ -152,7 +152,7 @@ export function useTheme() {
       name: themePresets[id as keyof typeof themePresets].name,
       isCustom: false,
     }));
-    const custom = customThemes.value.map((ct) => ({
+    const custom = customThemes.value.map((ct: CustomThemePreset) => ({
       id: ct.id,
       name: ct.name,
       isCustom: true,

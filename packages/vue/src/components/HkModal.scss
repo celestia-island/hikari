@@ -306,16 +306,24 @@
 // Mobile (≤767px, matches useBreakpoint().isMobile) — EVERY modal docks as a
 // bottom sheet. One unified form factor for all popups on phones:
 //   - rises from the bottom edge (translateY reveal, not height-clip)
-//   - never covers the top band reserved for the secondary-window
+//   - hugs its content: docked at the bottom edge, growing upward, and only
+//     stretching when the content actually needs the room (a three-row
+//     detail sheet never carries a screenful of dead body)
+//   - never grows past the top band reserved for the secondary-window
 //     breadcrumb strip (--hk-sheet-top-inset; default 4.25rem keeps the
-//     floating breadcrumb visible above the sheet)
+//     floating breadcrumb visible above a full-height sheet)
 //   - rounded top corners only, full width
 // ------
 @media (max-width: 767px) {
   .hk-modal-content {
     max-width: 100% !important;
     width: 100%;
-    top: var(--hk-sheet-top-inset, 4.25rem);
+    // Bottom-docked, content-hugging: `top: auto` lets the sheet size
+    // itself from its content instead of stretching from the top inset
+    // down to the bottom gap (2026-08-30 user report: the node-detail
+    // modal rendered ~60vh of blank body under three rows). The top inset
+    // now only bounds the sheet via the max-height cap below.
+    top: auto;
     // --hk-sheet-bottom-gap keeps the docked sheet from touching the very
     // bottom edge (host-tunable; chest narrows the default visual gap).
     bottom: var(--hk-sheet-bottom-gap, 0.375rem);
@@ -328,8 +336,16 @@
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
-    // Top inset + bottom gap size the sheet; content scrolls inside.
-    max-height: none;
+    // The top band + bottom gap only BOUND the sheet now (content scrolls
+    // inside once the cap is hit); they no longer stretch it.
+    // Plain-vh fallback first: dvh-less engines (older Android WebView /
+    // Tauri) would drop the whole dvh calc and leave the sheet uncapped.
+    max-height: calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0.375rem)
+    );
+    max-height: calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0.375rem)
+    );
   }
 
   // Sheet slide reveal replaces the height-clip reveal on mobile.
@@ -374,6 +390,16 @@
     padding: 1rem;
   }
 
+  // Lift the desktop 70vh body cap on phones: with a docked sheet the cap
+  // used to strand the height it refused INSIDE the sheet, below the last
+  // flex item — a phantom empty band under the footer (report reply bar) or
+  // under the log tail when the modal has no footer at all. The sheet's own
+  // max-height above is the only clamp now: the body fills the sheet and
+  // scrolls, and the footer always sits on the sheet's bottom edge.
+  .hk-modal-body {
+    max-height: none;
+  }
+
   .hk-modal-footer {
     // --hk-sheet-footer-gap lets a host app tune how far the docked sheet
     // sits off the very bottom edge (chest asked for a visibly narrower
@@ -381,5 +407,18 @@
     // TOP of the gap so home-bar devices never lose tappable chrome.
     padding: 0.625rem 1rem
       calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px));
+
+    // Footer actions are the sheet's primary touch targets: lift sm/md
+    // buttons one size up to the 44px class regardless of the caller's
+    // size prop (2026-08-30 user report: the docked sheet's bottom-corner
+    // buttons were too small to tap reliably). lg already clears 44px and
+    // keeps its own sizing; the doubled class selector deliberately wins
+    // the cascade over the bare .hk-btn-sm/.hk-btn-md component rules.
+    .hk-btn-sm,
+    .hk-btn-md {
+      min-height: 2.75rem;
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--text-md);
+    }
   }
 }

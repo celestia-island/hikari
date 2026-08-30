@@ -1,5 +1,5 @@
 import { defineComponent, ref, type PropType, type VNode } from "vue";
-import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
+import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HPopover, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 
@@ -53,9 +53,15 @@ export const HkAdminHeader = defineComponent({
     localeMenuLabel: { type: String, default: undefined },
     logoutLabel: { type: String, default: undefined },
     adminGroupLabel: { type: String, default: undefined },
+    /** "Go to frontend" menu row (external-face link, rendered directly
+     *  above logout). Hidden unless a label is provided — admin-only
+     *  panels without a consumer-facing face simply omit the prop and
+     *  keep the menu at avatar/language/logout. */
+    goToFrontendLabel: { type: String, default: undefined },
   },
   emits: {
     logout: () => true,
+    goToFrontend: () => true,
     hamburger: () => true,
     avatarClick: () => true,
     emergencyStop: () => true,
@@ -221,6 +227,22 @@ export const HkAdminHeader = defineComponent({
                 triggerRef: localeTriggerRef,
               })}
               {slots["user-menu-extra"]?.()}
+              {/* Frontend link — mirrors the drawer user panel's
+                  "go to frontend" row (same icon/position: directly
+                  above logout). Opt-in via the label prop so admin-only
+                  panels keep the menu at avatar/language/logout. */}
+              {props.goToFrontendLabel ? (
+                <button
+                  class="s-popup-menu-item"
+                  onClick={() => {
+                    userMenuOpen.value = false;
+                    emit("goToFrontend");
+                  }}
+                >
+                  <ExternalLink size={14} />
+                  {props.goToFrontendLabel}
+                </button>
+              ) : null}
               <button
                 class="s-popup-menu-item"
                 onClick={() => {

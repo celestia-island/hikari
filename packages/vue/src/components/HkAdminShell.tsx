@@ -96,12 +96,16 @@ export const HkAdminShell = defineComponent({
               {/* The drawer body carries the nav; a `userPanel` slot rides
                   the drawer footer (identity + account actions) so mobile
                   gets the same content the desktop user menu exposes.
-                  `inDrawer` lets the sidebar slot fill the drawer width. */}
+                  `inDrawer` lets the sidebar slot fill the drawer width.
+                  The userPanel receives `onNavigate` (closes the drawer)
+                  so its action rows — e.g. "go to frontend", which swaps
+                  the whole layout underneath — can dismiss the drawer
+                  instead of leaving it hovering over the new page. */}
               {{
                 default: () =>
                   slots.sidebar?.({ collapsed: false, onNavigate: closeSidebar, inDrawer: true }),
                 footer: slots.userPanel
-                  ? () => slots.userPanel!()
+                  ? () => slots.userPanel!({ onNavigate: closeSidebar })
                   : undefined,
               }}
             </HDrawer>

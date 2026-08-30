@@ -140,6 +140,30 @@ describe("HkAdminHeader", () => {
     expect(c.textContent.toLowerCase()).not.toContain("emergency");
   });
 
+  it("renders the goToFrontend row above logout and emits goToFrontend", async () => {
+    const onGoToFrontend = vi.fn();
+    const c = mount(headerNode({
+      logoutLabel: "Log out",
+      goToFrontendLabel: "Go to Frontend",
+      onGoToFrontend,
+    }));
+    // Opt-in: absent without the label prop…
+    const bare = mount(headerNode({ logoutLabel: "Log out" }));
+    await click(avatarButton(bare));
+    expect(bare.textContent).not.toContain("Go to Frontend");
+
+    // …and present (directly above logout, mirroring the drawer user
+    // panel's row order) with the label prop.
+    await click(avatarButton(c));
+    const rows = [...c.querySelectorAll(".s-popup-menu-item")];
+    const labels = rows.map((r) => r.textContent?.trim());
+    expect(labels.indexOf("Go to Frontend")).toBeGreaterThan(-1);
+    expect(labels.indexOf("Log out")).toBe(labels.indexOf("Go to Frontend") + 1);
+
+    await click(rows[labels.indexOf("Go to Frontend")]);
+    expect(onGoToFrontend).toHaveBeenCalledTimes(1);
+  });
+
   it("passes the locale trigger ref OBJECT through the slot so the picker anchors to the button", async () => {
     let captured: unknown = null;
     const c = mount(headerNode(

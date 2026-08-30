@@ -329,6 +329,13 @@ export default defineComponent({
         side = "bottom";
         top = r.bottom + props.offset;
       }
+      // One flip never re-checks: taller menu panels (the viewport-relative
+      // CSS cap) made this band reachable — a mid-viewport anchor flips
+      // bottom→top into a negative top that was applied verbatim. Clamp so
+      // the whole panel stays on-screen; when content exceeds the CSS cap
+      // the panel's own internal scroll takes over.
+      const maxTop = Math.max(VIEWPORT_PAD, window.innerHeight - VIEWPORT_PAD - ph);
+      top = Math.min(Math.max(top, VIEWPORT_PAD), maxTop);
       let left = props.placement.endsWith("-end") ? r.right - pw : r.left;
       const maxLeft = Math.max(VIEWPORT_PAD, window.innerWidth - VIEWPORT_PAD - pw);
       left = Math.min(Math.max(left, VIEWPORT_PAD), maxLeft);

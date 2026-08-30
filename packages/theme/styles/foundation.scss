@@ -201,3 +201,18 @@
   --hi-border-color: rgba(0, 0, 0, 0.1);
   --hi-border-color-disabled: rgba(0, 0, 0, 0.05);
 }
+
+// ------
+// 4. Touch & Tap Reset (2026-08-30, mobile web parity)
+// ------
+// Clear the browser's default tap highlight — the translucent blue/gray
+// overlay Android/WebKit paints over tappable elements on touch. It sits
+// ON TOP of hikari's own :active/:hover states and reads as a stale
+// "blue hover mask" on phones. The property is inherited, so declaring it
+// once on the root covers every element (components may still override).
+// Zoom policy (the other half of the mobile contract) is a JS concern:
+// hikari exports applyViewportPolicy() from the runtime for app bootstrap.
+html {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}

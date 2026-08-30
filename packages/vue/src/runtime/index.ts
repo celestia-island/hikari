@@ -2,6 +2,7 @@ export * from "./animationBus";
 export * from "./cronBus";
 export * from "./intervalBus";
 export * from "./pageLifecycle";
+export * from "./mobileViewport";
 export {
   createBackGuard,
   BACK_GUARD_MARKER,

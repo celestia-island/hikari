@@ -25,7 +25,9 @@ describe("HkModal mobile sheet spacing contract", () => {
     const block = src.slice(src.indexOf("@media (max-width: 767px)"));
     expect(block).toContain("bottom: var(--hk-sheet-bottom-gap");
     // Default keeps a small visible gap; hosts may narrow or zero it.
-    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0\.5rem/);
+    // (2026-08-29 user request: the docked sheet sat too far off the
+    // bottom — default tightened from 0.5rem to 0.375rem.)
+    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0\.375rem/);
   });
 
   it("keeps the footer gap host-tunable and stacks the safe-area inset", () => {

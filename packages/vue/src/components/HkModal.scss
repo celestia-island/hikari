@@ -414,11 +414,15 @@
     // buttons were too small to tap reliably). lg already clears 44px and
     // keeps its own sizing; the doubled class selector deliberately wins
     // the cascade over the bare .hk-btn-sm/.hk-btn-md component rules.
+    // The lift is padding/min-height only — font-size stays at the regular
+    // --text-base (Material-Design convention, same wave as HkButton lg),
+    // so a lifted sm footer button reads like every other button instead
+    // of jumping to 16px display text.
     .hk-btn-sm,
     .hk-btn-md {
       min-height: 2.75rem;
       padding: var(--space-8) var(--space-16);
-      font-size: var(--text-md);
+      font-size: var(--text-base);
     }
   }
 }

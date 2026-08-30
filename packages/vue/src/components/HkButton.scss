@@ -33,7 +33,10 @@
 /* ---- Size variants ---- */
 /* Height scales WITH the size: a single base min-height made every sm
    button 2.5rem (40px) tall — comically oversized next to page-header
-   text and toolbar rows. */
+   text and toolbar rows. Font size does NOT scale with the size
+   (2026-08-30 user report, Material-Design convention): md and lg share
+   --text-base and lg only grows padding/min-height for a larger touch
+   target; sm keeps its compact --text-xs. */
 
 .hk-btn-sm {
   padding: var(--space-6) var(--space-12);
@@ -49,7 +52,7 @@
 
 .hk-btn-lg {
   padding: var(--space-10) var(--space-24);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   min-height: 2.75rem;
 }
 

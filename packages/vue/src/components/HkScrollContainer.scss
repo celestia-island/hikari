@@ -75,8 +75,16 @@
   );
 }
 
+/* autoFollow content is bottom-anchored while it fits the viewport: the
+   newest row hugs the bottom edge (a tail-following console, e.g. the
+   agent thinking-step stream) instead of hanging at the top with a dead
+   band below. Once the content overflows, min-height grows with it and
+   the flex-end grouping is a no-op — ordinary scroll + follow resumes. */
 .hk-scroll-container-autofollow-content {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
   flex-shrink: 0;
 }
 

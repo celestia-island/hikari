@@ -318,7 +318,7 @@
     top: var(--hk-sheet-top-inset, 4.25rem);
     // --hk-sheet-bottom-gap keeps the docked sheet from touching the very
     // bottom edge (host-tunable; chest narrows the default visual gap).
-    bottom: var(--hk-sheet-bottom-gap, 0.5rem);
+    bottom: var(--hk-sheet-bottom-gap, 0.375rem);
     left: 0;
     right: 0;
     transform: none;
@@ -380,6 +380,6 @@
     // gap than body bottom + safe area on phones). Safe area is added ON
     // TOP of the gap so home-bar devices never lose tappable chrome.
     padding: 0.625rem 1rem
-      calc(0.5rem + var(--hk-sheet-footer-gap, 0.75rem) + env(safe-area-inset-bottom, 0px));
+      calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px));
   }
 }

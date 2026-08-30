@@ -102,6 +102,79 @@ export default defineComponent({
       return rest;
     });
 
+    // ── affix width reservation ──────────────────────────────────────
+    // The input element overlays the WHOLE box (absolute inset:0) while
+    // the prefix/suffix affixes flow above it — so centered text, the
+    // native placeholder and the placeholder-marquee window would run
+    // underneath the affixes (the localized input's language chip used
+    // to catch the scrolling placeholder). Both affixes are measured
+    // and published as custom properties on the box; the element's
+    // horizontal padding and the marquee window insets consume them,
+    // so the text line always ends short of the chip.
+    const prefixEl = ref<HTMLElement | null>(null);
+    const suffixEl = ref<HTMLElement | null>(null);
+    const affixStartW = ref(0);
+    const affixEndW = ref(0);
+
+    function measureAffixes() {
+      affixStartW.value = prefixEl.value?.offsetWidth ?? 0;
+      affixEndW.value = suffixEl.value?.offsetWidth ?? 0;
+    }
+
+    const affixRO: ResizeObserver | null =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureAffixes) : null;
+    onBeforeUnmount(() => {
+      affixRO?.disconnect();
+    });
+
+    /** Stable ref callback for one affix slot — observes the live span
+     *  so width changes (a longer chip label, a swapped icon) re-publish
+     *  the custom properties without any consumer involvement. */
+    function bindAffix(which: "start" | "end") {
+      const slot = () => (which === "start" ? prefixEl : suffixEl);
+      const set = (node: HTMLElement | null) => {
+        if (which === "start") prefixEl.value = node;
+        else suffixEl.value = node;
+      };
+      return (el: unknown) => {
+        const node = (el as HTMLElement | null) ?? null;
+        const prev = slot().value;
+        if (node == null) {
+          if (!prev) return;
+          // Vue fires ref(null) BEFORE detaching the element (unmount
+          // calls setRef at the top, removes the node at the bottom), and
+          // on a cross-branch swap (suffix ↔ suffixIcon ↔ password
+          // toggle) a trailing null can arrive AFTER a newer element
+          // already took the slot. So neither "is it connected right
+          // now" nor "is the slot still pointing at it" can be judged
+          // synchronously — defer past the patch and clear only when the
+          // tracked element is STILL this one and really detached.
+          void nextTick(() => {
+            const tracked = slot().value;
+            if (tracked !== prev || tracked.isConnected) return;
+            affixRO?.unobserve(prev);
+            set(null);
+            measureAffixes();
+          });
+          return;
+        }
+        if (prev && prev !== node) affixRO?.unobserve(prev);
+        set(node);
+        affixRO?.observe(node);
+        measureAffixes();
+      };
+    }
+    const prefixAffixRef = bindAffix("start");
+    const suffixAffixRef = bindAffix("end");
+
+    const boxVars = computed(
+      () =>
+        ({
+          "--hk-input-affix-start-w": `${affixStartW.value}px`,
+          "--hk-input-affix-end-w": `${affixEndW.value}px`,
+        }) as Record<string, string>,
+    );
+
     function onInput(e: Event) {
       const target = e.target as HTMLInputElement | HTMLTextAreaElement;
       emit("update:modelValue", target.value);
@@ -165,15 +238,16 @@ export default defineComponent({
         )}
         <div
           class={boxClass.value}
+          style={boxVars.value}
           data-autogrow={isAutoGrow.value || undefined}
         >
           {slots.prefix && (
-            <span class="hk-input-affix hk-input-prefix">
+            <span ref={prefixAffixRef} class="hk-input-affix hk-input-prefix">
               {slots.prefix()}
             </span>
           )}
           {slots.prefixIcon && !slots.prefix && (
-            <span class="hk-input-affix hk-input-prefix">
+            <span ref={prefixAffixRef} class="hk-input-affix hk-input-prefix">
               {slots.prefixIcon()}
             </span>
           )}
@@ -264,17 +338,17 @@ export default defineComponent({
               />
             )}
           {slots.suffix && (
-            <span class="hk-input-affix hk-input-suffix">
+            <span ref={suffixAffixRef} class="hk-input-affix hk-input-suffix">
               {slots.suffix()}
             </span>
           )}
           {slots.suffixIcon && !slots.suffix && (
-            <span class="hk-input-affix hk-input-suffix">
+            <span ref={suffixAffixRef} class="hk-input-affix hk-input-suffix">
               {slots.suffixIcon()}
             </span>
           )}
           {props.variant === "password" && !slots.suffix && !slots.suffixIcon && (
-            <span class="hk-input-affix hk-input-suffix">
+            <span ref={suffixAffixRef} class="hk-input-affix hk-input-suffix">
               <button
                 type="button"
                 class="hk-input-password-toggle"

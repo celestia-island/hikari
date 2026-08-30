@@ -232,9 +232,13 @@
 
 // Mobile sheet form (via HPopover sheetOnMobile): the panel spans the full
 // width and its controls get touch-sized spacing — the sliders are the
-// whole point on phones, give them room to hit.
+// whole point on phones, give them room to hit. The bottom padding stacks
+// the home-bar safe-area inset ON TOP of the component's own gap (the
+// shorthand here would otherwise silently override the base sheet rule's
+// env() padding-bottom).
 .hk-popover-panel.hk-is-sheet.hk-color-picker-panel {
-  padding: 0 var(--space-16) var(--space-20);
+  padding: 0 var(--space-16)
+    calc(var(--space-20) + env(safe-area-inset-bottom, 0px));
 
   .hk-color-picker-controls {
     min-width: 0;

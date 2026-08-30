@@ -187,10 +187,20 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* Float off the bottom edge with the SAME host-tunable gap as the
+   * HkModal mobile docking (--hk-sheet-bottom-gap) — every bottom-up
+   * window reads as one sheet family; was glued to bottom: 0, which is
+   * exactly why dropdown sheets read as "not the standard modal". */
+  bottom: var(--hk-sheet-bottom-gap, 0.375rem);
   display: flex;
   flex-direction: column;
-  max-height: min(72vh, calc(100vh - var(--hk-sheet-top-inset, 4.25rem)));
+  max-height: min(
+    72vh,
+    calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0.375rem)
+    )
+  );
   background: rgb(var(--color-surface));
   border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  var(--hk-modal-radius, var(--hi-radius-lg, 12px))
@@ -238,9 +248,13 @@
   overscroll-behavior: contain;
   /* Side insets so the option blocks (full-row hover pills) read as
      cards inside the sheet instead of an edge-to-edge strip glued to
-     both screen sides — matching the popover family's breathing room. */
+     both screen sides — matching the popover family's breathing room.
+     Bottom padding stacks the home-bar safe-area inset ON TOP of the
+     base row gap, so the last row never hides behind the gesture bar
+     on notched phones (the modal footer adds a --hk-sheet-footer-gap
+     on top of this family baseline for its action buttons). */
   padding-inline: var(--space-16);
-  padding-bottom: var(--space-16);
+  padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
 
   .hk-select-option {
     padding: var(--space-14) var(--space-16);

@@ -276,6 +276,43 @@ describe("HkSelectPanel custom invocation", () => {
     const flipped = Number.parseInt(popout.style.top, 10);
     expect(flipped).toBeGreaterThan(8);
   });
+
+  it("clamps a tall flipped popout into the viewport instead of going negative", async () => {
+    // The taller viewport-relative CSS cap admits ~576px panels: anchored
+    // mid-viewport (top 380 / bottom 424 on an 800px-tall viewport), a
+    // bottom-start panel cannot fit below (428 + 576 > 792) and flips
+    // top-side into 380 - 4 - 576 = -200 — the single flip never
+    // re-checks, and the raw negative top used to be applied verbatim.
+    const prevHeight = window.innerHeight;
+    window.innerHeight = 800;
+    try {
+      const { container, open } = mountPanel({ placement: "bottom-start" });
+      await nextTick();
+
+      const anchor = container.querySelector<HTMLButtonElement>("button")!;
+      anchor.getBoundingClientRect = () =>
+        ({ top: 380, bottom: 424, left: 40, right: 140, width: 100, height: 44 }) as DOMRect;
+      open.value = true;
+      await nextTick();
+
+      const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+      // happy-dom lays nothing out (offsetHeight 0 → the 200px fallback in
+      // positionPanel), so fake the near-max-height box the new cap allows
+      // and re-run geometry via the same resize path the cramped test uses.
+      Object.defineProperty(popout, "offsetHeight", { value: 576, configurable: true });
+      window.dispatchEvent(new Event("resize"));
+      await nextTick();
+
+      const top = Number.parseInt(popout.style.top, 10);
+      // Whole panel on-screen: top edge at/inside the viewport pad and the
+      // bottom edge inside it too — overflow beyond that is the panel's
+      // own internal scroll, never off-screen geometry.
+      expect(top).toBeGreaterThanOrEqual(8);
+      expect(top + 576).toBeLessThanOrEqual(800 - 8);
+    } finally {
+      window.innerHeight = prevHeight;
+    }
+  });
 });
 
 describe("HkSelectPanel back-guard (window-first back priority)", () => {

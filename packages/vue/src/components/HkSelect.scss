@@ -94,7 +94,12 @@
   position: fixed;
   /* z-index comes from the popup manager (inline) — registered overlay. */
   min-width: 180px;
-  max-height: 240px;
+  /* Menu/switcher panels overflow a bare 240px cap even on tall viewports
+     (user feedback 2026-08-30: identity header + rows ≈ 320px+). Keep 240px
+     as the floor for select lists on short viewports, otherwise let the
+     panel size to its content up to a viewport-relative ceiling. */
+  max-height: max(240px, min(36rem, calc(100vh - 32px)));
+  max-height: max(240px, min(36rem, calc(100dvh - 32px)));
   display: flex;
   flex-direction: column;
   gap: var(--space-2);

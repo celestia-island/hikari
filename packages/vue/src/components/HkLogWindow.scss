@@ -74,13 +74,16 @@
 }
 
 .s-log-viewer-scroll {
+  /* HScrollContainer root: the VIEWPORT child is the scroller (overlay
+     chrome, native bar hidden) — the root itself must never scroll, so
+     no overflow-y here (the stale `auto` this class used to carry would
+     read as a second, native scroll region). */
   flex: 1;
   min-height: 0;
   padding: var(--space-8, 0.5rem);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
   border-radius: var(--radius-md, 8px);
   background: rgb(var(--color-background) / 0.5);
-  overflow-y: auto;
 }
 
 .s-log-empty {

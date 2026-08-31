@@ -119,6 +119,13 @@ function popouts(): HTMLElement[] {
   return Array.from(document.querySelectorAll(".hk-select-popout")) as HTMLElement[];
 }
 
+/** Fixed positioning wrappers around the popouts — the element that
+ *  carries the inline coords + z-index (and hosts the overlay scrollbar
+ *  tracks) since the popout teleports to body. */
+function popoutHosts(): HTMLElement[] {
+  return Array.from(document.querySelectorAll(".hk-select-popout-host")) as HTMLElement[];
+}
+
 function sheets(): HTMLElement[] {
   return Array.from(document.querySelectorAll(".hk-select-sheet-panel")) as HTMLElement[];
 }
@@ -319,14 +326,14 @@ describe("HkMenu on the HkSelectPanel surface", () => {
       ({ top: 10, bottom: 30, left: 40, right: 140, width: 100, height: 20 }) as DOMRect;
     window.dispatchEvent(new Event("resize"));
     await settle();
-    expect(popouts()[0].style.minWidth).toBe("100px");
+    expect(popoutHosts()[0].style.minWidth).toBe("100px");
     first.unmount();
     await settle();
 
     // Default: shrink-to-fit, no anchor width forced.
     mountMenu(ref(true), items);
     await settle();
-    expect(popouts()[0].style.minWidth).toBe("");
+    expect(popoutHosts()[0].style.minWidth).toBe("");
   });
 });
 

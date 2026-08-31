@@ -1,6 +1,7 @@
 import {
   computed,
   defineComponent,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -16,6 +17,7 @@ import { focusFirst, trapFocus } from "../utils/dom";
 import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 type DrawerSide = "left" | "right" | "top" | "bottom";
 
@@ -60,8 +62,42 @@ export default defineComponent({
 
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const panelRef = ref<HTMLElement>();
+    const bodyRef = ref<HTMLElement>();
+    // Positioned wrapper that contains ONLY the scrolling body — the
+    // overlay rail's host (see the attach call below).
+    const bodyWrapRef = ref<HTMLElement>();
     let unmounted = false;
     let previouslyFocused: HTMLElement | null = null;
+
+    // Overlay scrollbar on the scrolling body (shared chrome). The body
+    // mounts with the panel and survives the leave transition; attach
+    // after the DOM lands, detach on close/unmount so nothing leaks in
+    // the Teleport portal.
+    let bodyScrollbar: OverlayScrollbarHandle | null = null;
+
+    function detachBodyScrollbar(): void {
+      bodyScrollbar?.detach();
+      bodyScrollbar = null;
+    }
+
+    watch(() => props.modelValue, (open) => {
+      if (unmounted) return;
+      if (open) {
+        void nextTick(() => {
+          if (!props.modelValue || !bodyRef.value) return;
+          detachBodyScrollbar();
+          // The wrapper (not the panel) is the track host: the panel also
+          // contains the header/footer bands, and rails spanning those
+          // would light up in the wrong place.
+          bodyScrollbar = attachOverlayScrollbars(bodyRef.value, {
+            axis: "vertical",
+            host: bodyWrapRef.value,
+          });
+        });
+      } else {
+        detachBodyScrollbar();
+      }
+    });
 
     /**
      * Window-first back priority: while this drawer is the topmost open
@@ -167,6 +203,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       unmounted = true;
+      detachBodyScrollbar();
       backGuard.destroy();
       cleanup();
     });
@@ -226,7 +263,9 @@ export default defineComponent({
                   ) : null}
                 </div>
               ) : null}
-              <div class="hk-drawer-body">{slots.default?.()}</div>
+              <div ref={bodyWrapRef} class="hk-drawer-body-wrap">
+                <div ref={bodyRef} class="hk-drawer-body">{slots.default?.()}</div>
+              </div>
               {slots.footer ? (
                 <div class="hk-drawer-footer">{slots.footer()}</div>
               ) : null}

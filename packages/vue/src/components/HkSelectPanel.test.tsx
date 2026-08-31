@@ -14,7 +14,7 @@ afterEach(() => {
   // finish and teleported panels linger on <body> — strip them or the
   // next test's querySelector sees this test's panel.
   document.body
-    .querySelectorAll(".hk-popover-panel, .hk-popover-scrim, .hk-select-popout, .hk-select-sheet-panel, .hk-select-sheet-scrim")
+    .querySelectorAll(".hk-popover-panel, .hk-popover-scrim, .hk-select-popout, .hk-select-popout-host, .hk-select-sheet-panel, .hk-select-sheet-scrim")
     .forEach((el) => el.remove());
   setViewport(1200);
 });
@@ -115,6 +115,28 @@ describe("HkSelectPanel custom invocation", () => {
 
     const box = document.body.querySelector<HTMLInputElement>(".hk-select-popout label.row input")!;
     box.click();
+    await nextTick();
+    expect(open.value).toBe(true);
+  });
+
+  it("scrolling through the overlay track does not dismiss the popout", async () => {
+    const { container, open } = mountPanel();
+    await nextTick();
+
+    container.querySelector<HTMLButtonElement>("button")!.click();
+    await nextTick();
+    await nextTick(); // the overlay attaches on a post-open nextTick
+
+    // The track is appended to the fixed HOST wrapper — a sibling of the
+    // popout panel, NOT contained by it. A click there (which reaches the
+    // capture-phase document dismissal listener before any track handler)
+    // must read as inside the panel, exactly like the native scrollbar it
+    // replaced — native bars never emit page-visible clicks.
+    const track = document.body.querySelector<HTMLElement>(
+      ".hk-select-popout-host > .hk-scrollbar-track",
+    );
+    expect(track).toBeTruthy();
+    track!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextTick();
     expect(open.value).toBe(true);
   });
@@ -246,9 +268,11 @@ describe("HkSelectPanel custom invocation", () => {
     app.mount(container);
     await nextTick();
 
-    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
-    expect(popout).toBeTruthy();
-    const z = Number.parseInt(popout.style.zIndex, 10);
+    // Inline geometry (coords + popup-manager z) lives on the fixed
+    // positioning wrapper that hosts the overlay scrollbar tracks.
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host).toBeTruthy();
+    const z = Number.parseInt(host.style.zIndex, 10);
     expect(z).toBeGreaterThanOrEqual(1000);
   });
 
@@ -262,18 +286,18 @@ describe("HkSelectPanel custom invocation", () => {
     open.value = true;
     await nextTick();
 
-    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
-    const top = Number.parseInt(popout.style.top, 10);
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    const top = Number.parseInt(host.style.top, 10);
     // Anchor bottom at 520 → a top-start panel sits above 520 (minus offset).
     expect(top).toBeLessThan(520);
-    expect(popout.style.minWidth).toBe("100px");
+    expect(host.style.minWidth).toBe("100px");
 
     // Starved top side flips the panel below the anchor instead.
     anchor.getBoundingClientRect = () =>
       ({ top: 0, bottom: 8, left: 40, right: 140, width: 100, height: 8 }) as DOMRect;
     window.dispatchEvent(new Event("resize"));
     await nextTick();
-    const flipped = Number.parseInt(popout.style.top, 10);
+    const flipped = Number.parseInt(host.style.top, 10);
     expect(flipped).toBeGreaterThan(8);
   });
 
@@ -296,14 +320,17 @@ describe("HkSelectPanel custom invocation", () => {
       await nextTick();
 
       const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+      const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
       // happy-dom lays nothing out (offsetHeight 0 → the 200px fallback in
       // positionPanel), so fake the near-max-height box the new cap allows
       // and re-run geometry via the same resize path the cramped test uses.
+      // (positionPanel measures the popout; the applied coords land on the
+      // host wrapper.)
       Object.defineProperty(popout, "offsetHeight", { value: 576, configurable: true });
       window.dispatchEvent(new Event("resize"));
       await nextTick();
 
-      const top = Number.parseInt(popout.style.top, 10);
+      const top = Number.parseInt(host.style.top, 10);
       // Whole panel on-screen: top edge at/inside the viewport pad and the
       // bottom edge inside it too — overflow beyond that is the panel's
       // own internal scroll, never off-screen geometry.

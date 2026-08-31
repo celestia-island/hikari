@@ -90,10 +90,26 @@
   transform: rotate(180deg);
 }
 
-.hk-select-popout {
+/* Fixed positioning wrapper around the desktop popout (HkSelectPanel):
+ * carries the inline anchor coords + popup-manager z-index and is the
+ * track host for the overlay scrollbar (the popout teleports to body,
+ * whose box is no positioning context). Geometry-neutral: the popout
+ * shrink-wraps the host exactly as the popout shrink-wrapped itself
+ * when it was the fixed element. The 180px width floor lives HERE, not
+ * on the popout: matchAnchorWidth's inline `min-width` lands on the host,
+ * and a stylesheet floor on the CHILD would override that match for
+ * anchors narrower than 180px (the floor must lose to the inline style,
+ * which can only happen on the same element). */
+.hk-select-popout-host {
   position: fixed;
-  /* z-index comes from the popup manager (inline) — registered overlay. */
   min-width: 180px;
+}
+
+.hk-select-popout {
+  /* Positioning lives on the host wrapper above — the popout is its
+   * static, box-filling child (width resolves from the host, whose
+   * floor/match rule is documented there). */
+  position: static;
   /* Menu/switcher panels overflow a bare 240px cap even on tall viewports
      (user feedback 2026-08-30: identity header + rows ≈ 320px+). Keep 240px
      as the floor for select lists on short viewports, otherwise let the
@@ -113,21 +129,12 @@
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-dropdown);
 
-  /* Themed scrollbar — never the browser-native chrome. */
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     always hidden, never styled. */
+  scrollbar-width: none;
 
   &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgb(var(--color-border) / 45%);
-    border-radius: 3px;
+    display: none;
   }
 }
 
@@ -243,7 +250,20 @@
   color: rgb(var(--color-muted));
 }
 
+/* Track host for the sheet list's overlay scrollbar — owns the flex
+   slot in the sheet column so the rail hugs the LIST band, not the
+   grabber/title bands above it. */
+.hk-select-sheet-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .hk-select-sheet-list {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   /* Side insets so the option blocks (full-row hover pills) read as
@@ -255,6 +275,13 @@
      on top of this family baseline for its action buttons). */
   padding-inline: var(--space-16);
   padding-bottom: calc(var(--space-16) + env(safe-area-inset-bottom, 0px));
+
+  /* Overlay scrollbar (useOverlayScrollbar) — native chrome hidden. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   .hk-select-option {
     padding: var(--space-14) var(--space-16);

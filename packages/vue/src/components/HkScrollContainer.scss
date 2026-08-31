@@ -9,10 +9,10 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none !important;
+  scrollbar-width: none;
 
   &::-webkit-scrollbar {
-    display: none !important;
+    display: none;
   }
 }
 
@@ -113,56 +113,6 @@
   z-index: 11;
 }
 
-.hk-scrollbar-track {
-  position: absolute;
-  z-index: 10;
-  background: transparent;
-  pointer-events: auto;
-  opacity: 0;
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
-
-  &[data-axis="horizontal"] {
-    left: 4px;
-    right: 4px;
-    bottom: 2px;
-    height: 6px;
-  }
-
-  &:not([data-axis="horizontal"]) {
-    top: 4px;
-    bottom: 4px;
-    right: 2px;
-    width: 6px;
-  }
-
-  &.is-scrolling,
-  &.is-hovering {
-    opacity: 1;
-  }
-}
-
-.hk-scrollbar-thumb {
-  position: absolute;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--hi-color-muted) 35%, transparent);
-  transition: background var(--hi-duration-fast, 0.15s) ease;
-
-  .is-hovering &,
-  &.is-dragging {
-    background: color-mix(in srgb, var(--hi-color-muted) 55%, transparent);
-  }
-}
-
-.hk-scrollbar-track[data-axis="horizontal"] .hk-scrollbar-thumb {
-  top: 0;
-  left: 0;
-  height: 100%;
-  min-width: 20px;
-}
-
-.hk-scrollbar-track:not([data-axis="horizontal"]) .hk-scrollbar-thumb {
-  top: 0;
-  left: 0;
-  width: 100%;
-  min-height: 20px;
-}
+// The overlay track/thumb chrome (.hk-scrollbar-track / .hk-scrollbar-thumb)
+// moved to packages/theme/styles/_scrollbar.scss — the single shared set used
+// by every scroll region (see composables/useOverlayScrollbar.ts).

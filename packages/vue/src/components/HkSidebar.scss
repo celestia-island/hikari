@@ -24,6 +24,16 @@
   align-items: center;
 }
 
+/* Track host for the body's overlay scrollbar — owns the flex slot in
+   the panel column so the rail hugs the BODY band, not header/footer. */
+.hk-sidebar-body-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .hk-sidebar-body {
   flex: 1;
   min-height: 0;
@@ -31,17 +41,12 @@
   padding-block: 20px 4px;
   padding-inline: var(--space-12);
 
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
   &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--hi-color-border, rgba(0, 0, 0, 0.1));
-    border-radius: 2px;
+    display: none;
   }
 }
 

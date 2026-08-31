@@ -77,6 +77,11 @@ export default defineComponent({
 
     return () => (
       <div class={wrapperClass.value}>
+        {/* Editable textarea: the NATIVE scrollbar is deliberately kept.
+         *  It is the only overlay-scrollbar exemption — a live text
+         *  caret, IME composition and drag-selection need the browser's
+         *  own scroller behavior, and no bespoke webkit styling exists
+         *  here to unify (see the 2026-09 overlay-scrollbar wave). */}
         <textarea
           ref={textareaRef}
           class={[

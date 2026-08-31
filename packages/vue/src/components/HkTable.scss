@@ -1,6 +1,25 @@
+/* Track host for the wrapper's horizontal overlay rail — the wrapper is
+   the component root, so its DOM parent is consumer markup the rail
+   must never span. */
+.hk-table-host {
+  position: relative;
+}
+
 .hk-table-wrapper {
   width: 100%;
+  /* Horizontal-only region: the wrapper's height grows with the table, so
+     vertical overflow (and a vertical bar) can never arise — keep it that
+     way if a max-height is ever introduced here, or the overlay's
+     vertical axis must be attached alongside. */
   overflow-x: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-table {

@@ -1,6 +1,7 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import "./HkTable.scss";
 
 interface Column {
@@ -34,6 +35,28 @@ export default defineComponent({
     const sortKey = ref<string | null>(null);
     const sortDirection = ref<"asc" | "desc">("asc");
     const selectedRowKeys = ref<Set<string>>(new Set());
+
+    // Wide tables scroll horizontally in the wrapper — attach the shared
+    // overlay scrollbar (horizontal track) once on mount.
+    const wrapperRef = ref<HTMLElement>();
+    // Positioned wrapper containing ONLY the scrolling box — the rail
+    // host (the wrapper is the component root; its DOM parent is
+    // consumer markup the rail must not span).
+    const wrapperHostRef = ref<HTMLElement>();
+    let wrapperScrollbar: OverlayScrollbarHandle | null = null;
+
+    onMounted(() => {
+      if (!wrapperRef.value) return;
+      wrapperScrollbar = attachOverlayScrollbars(wrapperRef.value, {
+        axis: "horizontal",
+        host: wrapperHostRef.value,
+      });
+    });
+
+    onBeforeUnmount(() => {
+      wrapperScrollbar?.detach();
+      wrapperScrollbar = null;
+    });
 
     function getRowKey(row: Record<string, unknown>, index: number): string {
       if (props.rowKey && row[props.rowKey] != null) return String(row[props.rowKey]);
@@ -105,7 +128,8 @@ export default defineComponent({
     const totalCols = computed(() => props.columns.length + (props.selectable ? 1 : 0));
 
     return () => (
-      <div class="hk-table-wrapper">
+      <div ref={wrapperHostRef} class="hk-table-host">
+        <div ref={wrapperRef} class="hk-table-wrapper">
         <table class={tableCls.value}>
           {props.caption && <caption class="sr-only">{props.caption}</caption>}
           <thead>
@@ -240,6 +264,7 @@ export default defineComponent({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     );
   },

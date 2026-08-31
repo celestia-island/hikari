@@ -1,5 +1,6 @@
-import { computed, defineComponent, ref, watch } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import HSpinner from "./HkSpinner";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import "./HkMarkdownRenderer.scss";
 
 let _marked: any = null;
@@ -66,7 +67,7 @@ async function renderMarkdown(content: string): Promise<string> {
     const highlighted = tryHighlight(tok.text, tok.lang);
     const langAttr = tok.lang ? ` language-${tok.lang}` : "";
     const langLabel = tok.lang ? `<span class="hk-md-code-lang">${tok.lang}</span>` : "";
-    return `<div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div>`;
+    return `<div class="hk-md-code-wrap"><div class="hk-md-code">${langLabel}<pre><code class="hljs${langAttr}">${highlighted}</code></pre></div></div>`;
   };
 
   const raw = marked.parse(content, { renderer, async: false });
@@ -109,9 +110,38 @@ export default defineComponent({
       { immediate: true },
     );
 
+    // Overlay scrollbars (shared chrome) on markdown code blocks. The
+    // body is innerHTML-rendered and fully replaced on every parse, so
+    // the attachment set is reconciled after each render pass: handles
+    // whose block left the DOM detach, fresh blocks attach.
+    const bodyRef = ref<HTMLElement>();
+    const codeScrollbars: Array<{ el: HTMLElement; handle: OverlayScrollbarHandle }> = [];
+
+    function syncCodeScrollbars() {
+      for (let i = codeScrollbars.length - 1; i >= 0; i--) {
+        if (!codeScrollbars[i].el.isConnected) {
+          codeScrollbars[i].handle.detach();
+          codeScrollbars.splice(i, 1);
+        }
+      }
+      for (const el of bodyRef.value?.querySelectorAll<HTMLElement>(".hk-md-code") ?? []) {
+        if (codeScrollbars.some((c) => c.el === el)) continue;
+        codeScrollbars.push({ el, handle: attachOverlayScrollbars(el, { axis: "horizontal" }) });
+      }
+    }
+
+    watch(renderedHtml, () => {
+      void nextTick(syncCodeScrollbars);
+    });
+
+    onBeforeUnmount(() => {
+      for (const c of codeScrollbars) c.handle.detach();
+      codeScrollbars.length = 0;
+    });
+
     return () => (
       <div class="hk-markdown" data-plain={props.plain || undefined} data-loading={props.loading}>
-        <div class="hk-markdown-body" innerHTML={renderedHtml.value} />
+        <div ref={bodyRef} class="hk-markdown-body" innerHTML={renderedHtml.value} />
         {props.loading && (
           <div class="hk-markdown-overlay">
             <HSpinner center />

@@ -1,93 +1,72 @@
-// _scrollbar.scss — Custom overlay scrollbar CSS.
-// Adopted from shittim-chest's SScrollContainer overlay system.
-// This hides native scrollbars and provides CSS for the overlay track/thumb
-// that a JS component (or lagrange's vanilla JS) creates imperatively.
+// _scrollbar.scss — the shared overlay scrollbar chrome.
+//
+// ONE scrollbar system for the whole library: the `.hk-scrollbar-track` /
+// `.hk-scrollbar-thumb` DOM is created imperatively by
+// packages/vue/src/composables/useOverlayScrollbar.ts
+// (attachOverlayScrollbars) and styled here. HkScrollContainer keeps its
+// container-specific rules in HkScrollContainer.scss; every other scroll
+// region in the library attaches the same overlay and hides its native
+// bar with the standard two-liner:
+//
+//   scrollbar-width: none;
+//   &::-webkit-scrollbar { display: none; }
 
-// Hide native scrollbar on any element with .hk-scroll-container
-.hk-scroll-container {
-  overflow: auto;
-  scrollbar-width: none !important;
-
-  &::-webkit-scrollbar {
-    display: none !important;
-  }
-}
-
-// Overlay scrollbar track (vertical)
-.hk-obs-track {
+.hk-scrollbar-track {
   position: absolute;
-  top: var(--hi-scroll-inset, 4px);
-  bottom: var(--hi-scroll-inset, 4px);
-  right: var(--hi-scroll-inset, 4px);
-  width: var(--hi-scroll-size, 8px);
+  z-index: 10;
+  background: transparent;
+  /* Click-through while faded: an invisible rail must never steal
+     clicks from the content beneath it (the track hugs the region's
+     edge, exactly where end-of-line links/buttons live). The rail
+     becomes interactive only while it is visible — the flash window
+     after a scroll (and while hovered/dragged within that window). */
   pointer-events: none;
-  z-index: var(--hi-z-floating, 50);
-  transition: width var(--hi-duration-short, 0.15s) var(--hi-ease-out-expo),
-              opacity var(--hi-duration-short, 0.15s);
   opacity: 0;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
 
-  &:hover,
-  &.hk-obs-active {
-    width: var(--hi-scroll-size-hover, 14px);
+  &[data-axis="horizontal"] {
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 6px;
+  }
+
+  &:not([data-axis="horizontal"]) {
+    top: 4px;
+    bottom: 4px;
+    right: 2px;
+    width: 6px;
+  }
+
+  &.is-scrolling,
+  &.is-hovering {
     opacity: 1;
     pointer-events: auto;
   }
 }
 
-// Overlay scrollbar thumb (vertical)
-.hk-obs-thumb {
+.hk-scrollbar-thumb {
   position: absolute;
-  right: 2px;
-  width: var(--hi-scroll-thumb, 4px);
-  min-height: var(--hi-scroll-thumb-min, 20px);
-  border-radius: var(--hi-radius-full, 9999px);
-  background: rgb(255 255 255 / 25%);
-  cursor: pointer;
-  transition: width var(--hi-duration-short, 0.15s),
-              background var(--hi-duration-short, 0.15s);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--hi-color-muted) 35%, transparent);
+  transition: background var(--hi-duration-fast, 0.15s) ease;
 
-  &:hover {
-    width: var(--hi-scroll-thumb-hover, 6px);
-    background: rgb(255 255 255 / 45%);
-  }
-
-  &:active {
-    background: rgb(255 255 255 / 55%);
+  .is-hovering &,
+  &.is-dragging {
+    background: color-mix(in srgb, var(--hi-color-muted) 55%, transparent);
   }
 }
 
-// Horizontal scrollbar track
-.hk-obs-track-horizontal {
-  position: absolute;
-  left: var(--hi-scroll-inset, 4px);
-  right: var(--hi-scroll-inset, 4px);
-  bottom: var(--hi-scroll-inset, 4px);
-  height: var(--hi-scroll-size, 8px);
-  pointer-events: none;
-  z-index: var(--hi-z-floating, 50);
-  opacity: 0;
-  transition: height var(--hi-duration-short, 0.15s), opacity var(--hi-duration-short, 0.15s);
-
-  &:hover,
-  &.hk-obs-active {
-    height: var(--hi-scroll-size-hover, 14px);
-    opacity: 1;
-    pointer-events: auto;
-  }
+.hk-scrollbar-track[data-axis="horizontal"] .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  height: 100%;
+  min-width: 20px;
 }
 
-.hk-obs-thumb-horizontal {
-  position: absolute;
-  bottom: 2px;
-  height: var(--hi-scroll-thumb, 4px);
-  min-width: var(--hi-scroll-thumb-min, 20px);
-  border-radius: var(--hi-radius-full, 9999px);
-  background: rgb(255 255 255 / 25%);
-  cursor: pointer;
-  transition: height var(--hi-duration-short, 0.15s), background var(--hi-duration-short, 0.15s);
-
-  &:hover {
-    height: var(--hi-scroll-thumb-hover, 6px);
-    background: rgb(255 255 255 / 45%);
-  }
+.hk-scrollbar-track:not([data-axis="horizontal"]) .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 20px;
 }

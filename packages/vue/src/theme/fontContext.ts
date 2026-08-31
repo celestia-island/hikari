@@ -6,34 +6,10 @@ import { ref, type Ref } from "vue";
 // inline CSS vars on document.documentElement, so no app has to restate
 // font-family literals.
 
-// ── Canonical stacks ─────────────────────────────────────────────────
-// CJK faces are matched per-glyph AFTER the Latin faces, so Latin text
-// and digits keep Inter / Fira Code and only CJK glyphs walk the list.
-// The CJK entries are deliberately UI-friendly sans faces: the platform's
-// last-resort fallback is NOT guaranteed to be UI-friendly (real devices
-// have been observed resolving CJK to a KaiTi-style 楷体 face), so the
-// faces we want are listed explicitly.
-//
-// NEVER add kai/serif faces (楷体 / KaiTi / STKaiti / Kaiti SC / 宋体 /
-// SimSun / Songti / Noto Serif …) to these default stacks — the reading
-// slot (HIKARI_FONT_READING) is the opt-in place for a bookish face, and
-// even its default is deliberately the same UI-friendly sans stack.
-//
-// Keep the SCSS defaults in sync (they are duplicated by necessity):
-//   packages/vue/src/styles/admin-tokens.scss  (--font-sans / --font-mono)
-//   packages/vue/src/tokens.scss               (--font-sans / --font-reading)
-//   packages/theme/styles/_layout.scss         (--font-sans / --font-mono)
-//   packages/theme/styles/variables.scss       ($hikari-font-family-*)
-export const HIKARI_FONT_SANS =
-  `"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, ` +
-  `"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Microsoft YaHei UI", "Noto Sans CJK SC", "Source Han Sans SC", "Source Han Sans CN", "WenQuanYi Micro Hei", sans-serif`;
-
-export const HIKARI_FONT_MONO =
-  `"Fira Code", ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", ` +
-  `"Noto Sans Mono CJK SC", "Sarasa Mono SC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "WenQuanYi Micro Hei", monospace`;
-
-// Opt-in 书面/reading slot: exists so an app CAN offer a bookish face
-// later via an override, but the default is deliberately the UI sans.
+// Apple-style system stack; the CJK tail keeps non-Apple platforms off kai-style last-resort fallbacks.
+// Kai/serif faces are deliberately never listed.
+export const HIKARI_FONT_SANS = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`;
+export const HIKARI_FONT_MONO = `ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", monospace`;
 export const HIKARI_FONT_READING = HIKARI_FONT_SANS;
 
 export interface FontContextOverrides {

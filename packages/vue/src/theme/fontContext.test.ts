@@ -149,6 +149,11 @@ describe("fontContext", () => {
     }
   });
 
+  it("default stacks lead with the Apple-style system heads", () => {
+    expect(fc.HIKARI_FONT_SANS.startsWith("-apple-system, BlinkMacSystemFont")).toBe(true);
+    expect(fc.HIKARI_FONT_MONO.startsWith(`ui-monospace, "SF Mono"`)).toBe(true);
+  });
+
   it("default stacks carry the required CJK UI faces", () => {
     const required = ["PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC"];
     for (const stack of [fc.HIKARI_FONT_SANS, fc.HIKARI_FONT_MONO]) {

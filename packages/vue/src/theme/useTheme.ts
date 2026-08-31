@@ -1,10 +1,11 @@
 import { computed, ref, watch } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
 import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
-import { getTimePeriod, DEFAULT_GEO_LOCATION, type TimePeriod } from "./useSolarTime";
+import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
 const DEFAULT_THEME = "synthwave84";
 const STORAGE_THEME_KEY = "hikari-theme";
@@ -68,8 +69,72 @@ function storedThemeId(): ThemeId {
 const currentTheme = ref<ThemeId>(storedThemeId());
 
 const currentPeriod = ref<TimePeriod>(
-  getTimePeriod(DEFAULT_GEO_LOCATION.lat, DEFAULT_GEO_LOCATION.lng),
+  // First paint uses the synchronous timezone-offset estimate; the theme
+  // clock below refines it with a real geolocation fix once that lands.
+  getTimePeriod(timezoneFallback().lat, timezoneFallback().lng),
 );
+
+/**
+ * The theme clock. `system` mode resolves day/night from the sun, so it
+ * needs (a) a real geolocation fix and (b) re-evaluation as time passes —
+ * previously the period was computed once at module init from
+ * DEFAULT_GEO_LOCATION and never refreshed, pinning auto mode to Shanghai's
+ * daylight at load time.
+ */
+const themeGeo = ref<GeoLocation>(timezoneFallback());
+
+/** How often the solar period is recomputed from the cached coordinates
+ *  (dawn/dusk flips while the page stays open). Visibility-aware: the
+ *  interval bus pauses while hidden and catches up once on return. */
+const THEME_CLOCK_TICK_MS = 5 * 60 * 1000;
+
+function updatePeriod() {
+  currentPeriod.value = getTimePeriod(themeGeo.value.lat, themeGeo.value.lng);
+}
+
+let clockStarted = false;
+let clockInterval: IntervalHandle | null = null;
+
+function startThemeClock() {
+  if (clockStarted) return;
+  clockStarted = true;
+  // Fire-and-forget: a failed fix keeps the timezone estimate silently.
+  void getGeolocation()
+    .then((geo) => {
+      themeGeo.value = geo;
+      updatePeriod();
+      if (currentMode.value === "system") applyTheme();
+    })
+    .catch(() => {});
+  clockInterval = scheduleInterval(() => {
+    const before = currentPeriod.value;
+    updatePeriod();
+    // Re-apply only on an actual day↔night flip while in system mode —
+    // manual modes ignore the period entirely.
+    if (currentMode.value === "system" && currentPeriod.value !== before) {
+      applyTheme();
+    }
+  }, THEME_CLOCK_TICK_MS);
+}
+
+/** Re-run the geolocation resolution (and re-apply in system mode). For
+ *  hosts that registered a geolocation provider after initTheme(), or that
+ *  want a manual refresh (network reconnect, wake-from-sleep). */
+export function refreshThemeClock(): Promise<GeoLocation> {
+  return getGeolocation().then((geo) => {
+    themeGeo.value = geo;
+    updatePeriod();
+    if (currentMode.value === "system") applyTheme();
+    return geo;
+  });
+}
+
+/** Stop the theme clock. Host teardown / tests; initTheme() restarts it. */
+export function stopThemeClock() {
+  clockInterval?.disconnect();
+  clockInterval = null;
+  clockStarted = false;
+}
 
 let initialized = false;
 
@@ -141,6 +206,7 @@ export function initTheme() {
     currentMode.value = storedMode;
   }
   applyTheme();
+  startThemeClock();
 }
 
 export function useTheme() {
@@ -193,6 +259,11 @@ export function useTheme() {
     currentTheme,
     currentMode,
     effectiveMode,
+    /** The theme clock's resolved coordinates (timezone estimate until a
+     *  real fix lands). Read-only; refreshThemeClock() updates it. */
+    geo: computed(() => themeGeo.value),
+    /** The current solar period driving system mode. */
+    period: computed(() => currentPeriod.value),
     setTheme,
     setMode,
     toggleMode,

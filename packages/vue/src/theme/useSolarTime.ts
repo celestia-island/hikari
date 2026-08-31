@@ -66,36 +66,111 @@ export function getTimePeriod(
 
 export const DEFAULT_GEO_LOCATION = { lat: 31.23, lng: 121.47 };
 
+/** Resolved geographic coordinates in degrees. */
+export interface GeoLocation {
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Host-supplied geolocation source. Native shells (Tauri 2's geolocation
+ * plugin, Electron IPC, a saved user preference, …) register one with
+ * `setGeolocationProvider` so the theme clock uses the device's real fix
+ * instead of hikari's web cascade. Return the coordinates, or return
+ * null / throw to fall through to the standard cascade (already-granted
+ * browser geolocation → IP lookup → timezone estimate).
+ */
+export type GeoLocationProvider = () => Promise<GeoLocation | null>;
+
+let geoProvider: GeoLocationProvider | null = null;
+
+/** One successful resolution per page is shared by every consumer (theme
+ *  clock, theme toggle readout, wallpaper clock). Reset by
+ *  `setGeolocationProvider` so a late registration is honored on the next
+ *  call; the timezone estimate is never memoized, so a transient offline
+ *  boot can heal on the next `getGeolocation` / `refreshThemeClock`. */
+let geoMemo: Promise<GeoLocation> | null = null;
+
+export function setGeolocationProvider(provider: GeoLocationProvider | null): void {
+  geoProvider = provider;
+  geoMemo = null;
+}
+
 const GEO_API_URL = "https://ipapi.co/json/";
 const GEO_API_TIMEOUT_MS = 4000;
 
-function timezoneFallback(): { lat: number; lng: number } {
+/** Synchronous coarse estimate: default latitude + the timezone-offset
+ *  longitude. No fetch, no permission — the first-paint guess. */
+export function timezoneFallback(): GeoLocation {
   const offsetMin = -new Date().getTimezoneOffset();
   const lng = offsetMin / 4;
   return { lat: DEFAULT_GEO_LOCATION.lat, lng };
 }
 
-export function getGeolocation(): Promise<{ lat: number; lng: number }> {
+async function browserGeolocation(): Promise<GeoLocation> {
+  // Standard web geolocation — but ONLY when the site already holds the
+  // permission: a theme must never be the thing that pops the browser's
+  // location prompt. Prompt/denied/unavailable all fall through to the IP
+  // lookup.
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    throw new Error("navigator.geolocation unavailable");
+  }
+  const perm = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
+  if (!perm || perm.state !== "granted") {
+    throw new Error("geolocation permission not granted");
+  }
+  return new Promise<GeoLocation>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: GEO_API_TIMEOUT_MS, maximumAge: 6 * 60 * 60 * 1000 },
+    );
+  });
+}
+
+async function ipGeolocation(): Promise<GeoLocation> {
   const controller = new AbortController();
   const timer = scheduleCronAfter(() => controller.abort(), GEO_API_TIMEOUT_MS);
-  return fetch(GEO_API_URL, { signal: controller.signal, cache: "no-store" })
+  const d = await fetch(GEO_API_URL, { signal: controller.signal, cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
-    .then(
-      (d: { latitude?: number; longitude?: number } | null) => {
-        timer.disconnect();
-        if (
-          d &&
-          typeof d.latitude === "number" &&
-          typeof d.longitude === "number" &&
-          (Math.abs(d.latitude) > 0.01 || Math.abs(d.longitude) > 0.01)
-        ) {
-          return { lat: d.latitude, lng: d.longitude };
+    .finally(() => timer.disconnect()) as { latitude?: number; longitude?: number } | null;
+  if (
+    d &&
+    typeof d.latitude === "number" &&
+    typeof d.longitude === "number" &&
+    (Math.abs(d.latitude) > 0.01 || Math.abs(d.longitude) > 0.01)
+  ) {
+    return { lat: d.latitude, lng: d.longitude };
+  }
+  throw new Error("ip geolocation unavailable");
+}
+
+export function getGeolocation(): Promise<GeoLocation> {
+  geoMemo ??= (async () => {
+    if (geoProvider) {
+      try {
+        const provided = await geoProvider();
+        if (provided && Number.isFinite(provided.lat) && Number.isFinite(provided.lng)) {
+          return { lat: provided.lat, lng: provided.lng };
         }
-        return timezoneFallback();
-      },
-      () => {
-        timer.disconnect();
-        return timezoneFallback();
-      },
-    );
+      } catch {
+        // Provider failed — fall through to the standard cascade.
+      }
+    }
+    try {
+      return await browserGeolocation();
+    } catch {
+      // No API / not granted / denied — never prompt for a theme.
+    }
+    try {
+      return await ipGeolocation();
+    } catch {
+      // Offline or the lookup service is down.
+    }
+    // Don't pin the estimate for the whole session — drop the memo so the
+    // next call retries the cascade.
+    geoMemo = null;
+    return timezoneFallback();
+  })();
+  return geoMemo;
 }

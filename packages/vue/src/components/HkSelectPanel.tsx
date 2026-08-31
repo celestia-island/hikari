@@ -120,16 +120,23 @@ export default defineComponent({
     // started, via the observer's characterData window below).
     watch(
       () => props.title,
-      () => {
+      (newTitle) => {
+        // A retitled open panel re-labels its breadcrumb layer.
+        if (handle.value && newTitle) {
+          manager.setTitle(handle.value.id, newTitle);
+        }
         if (props.open && sheetMode.value) syncDupTitle();
       },
     );
     // Flipping OUT of sheet mode while open (consumer prop, not the
     // breakpoint flip — that closes the panel) swaps the render branch
     // and detaches the sheet list; drop the observer promptly instead
-    // of letting it guard a detached subtree.
+    // of letting it guard a detached subtree. Blocking follows so the
+    // breadcrumb level tracks the surface's current form even when only
+    // the consumer prop (not the viewport) moved.
     watch(sheetMode, (mode) => {
       if (!mode) stopDupTitleSync();
+      if (handle.value) manager.setBlocking(handle.value.id, mode);
     });
 
     const panelRef = ref<HTMLElement>();
@@ -270,10 +277,16 @@ export default defineComponent({
       () => props.open,
       (open) => {
         if (open) {
-          // Register with the panel title so the modal breadcrumb can
-          // label this layer ("User menu / Account security / …") instead
-          // of a generic "Layer N".
-          handle.value = manager.register("dropdown", false, props.title);
+          // Register with the panel title so the modal breadcrumb labels
+          // this layer by its i18n name. Blocking follows the sheet
+          // decision: the desktop popout is a hidden level, the mobile
+          // bottom sheet is a window layer that must be listed.
+          handle.value = manager.register(
+            "dropdown",
+            false,
+            props.title || undefined,
+            sheetMode.value,
+          );
           overlay.open();
           // Release-then-push (the HkMenu normalizer form): a same-tick
           // close→reopen must not leave the reopened panel unguarded —

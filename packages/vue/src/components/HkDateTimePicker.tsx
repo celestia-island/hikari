@@ -578,6 +578,7 @@ export default defineComponent({
             anchorRef={triggerWrapRef.value ?? null}
             placement={props.placement}
             offset={props.offset}
+            title={t("hikari::dateTimePicker.pickDate")}
           >
             <div class="hk-dtp-popup">
               {body}

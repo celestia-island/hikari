@@ -210,6 +210,9 @@ export const HkThemeToggle = defineComponent({
           placement={props.popoverPlacement}
           anchorRef={triggerRef.value ?? null}
           sheetOnMobile
+          // Names the breadcrumb layer / sheet heading when this menu
+          // blocks as a mobile bottom sheet.
+          title={t("hikari::theme.themes")}
         >
           <div class="s-theme-menu">
             <div class="s-theme-menu-label">{t("hikari::theme.mode")}</div>

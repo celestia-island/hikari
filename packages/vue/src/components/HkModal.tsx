@@ -465,6 +465,8 @@ export default defineComponent({
             manager.unregister(handle.value.id);
           }
           shouldRender.value = true;
+          // Windows always block, so the kind alone lists this layer in
+          // the modal-stack breadcrumb on every form factor.
           handle.value = manager.register("modal", true, props.title);
           overlay.open();
           if (backGuardEnabled() && backGuard.entries === 0) {

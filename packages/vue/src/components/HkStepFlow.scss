@@ -10,6 +10,16 @@
   --hk-stepflow-duration: 0.2s;
 }
 
+// Breathing room between the step indicator and the step body. Without it
+// the timeline row butts directly against the first body element (modal
+// wizards read as cramped). Tune or remove per host through
+// --hk-stepflow-header-gap; the sticky mode folds the gap into the pinned
+// header's own padding so the surface tint stays continuous while the
+// body scrolls underneath.
+.hk-step-flow > .hk-timeline {
+  margin-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
+}
+
 // Sticky header mode: keeps the step indicator visible while the body
 // scrolls inside long modal hosts. Surface tint + blur approximate the
 // floating-chrome look; hosts retune through the custom properties.
@@ -22,7 +32,8 @@
     color-mix(in srgb, var(--hi-color-surface, #fff) 95%, transparent)
   );
   backdrop-filter: blur(6px);
-  padding-bottom: var(--hi-space-8, 8px);
+  margin-bottom: 0;
+  padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
 .hk-stepflow-body {

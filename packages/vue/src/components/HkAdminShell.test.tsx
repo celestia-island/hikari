@@ -148,6 +148,40 @@ describe("HkAdminShell", () => {
     expect(c.querySelector(".drawer-stub.my-drawer")).toBeTruthy();
   });
 
+  it("hands the userPanel slot an onNavigate that closes the drawer", async () => {
+    setWidth(500);
+    let openDrawer: (() => void) | null = null;
+    let userPanelNavigate: (() => void) | null = null;
+    const c = mount(shellNode(
+      { navTitle: "Navigation" },
+      {
+        header: (ctx: { onOpenDrawer: () => void }) => {
+          openDrawer = ctx.onOpenDrawer;
+          return null;
+        },
+        sidebar: NAV,
+        userPanel: (ctx: { onNavigate: () => void }) => {
+          userPanelNavigate = ctx.onNavigate;
+          return h("div", { class: "s-drawer-user-panel" }, "USER-PANEL");
+        },
+        content: CONTENT,
+      },
+    ));
+    openDrawer!();
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".drawer-stub")).toBeTruthy();
+    // The slot scope carries the drawer-close callback (mirrors the
+    // sidebar slot's onNavigate contract)…
+    expect(userPanelNavigate).toBeTruthy();
+    // …and invoking it dismisses the drawer (a "go to frontend" row
+    // must not leave the drawer hovering over the swapped layout).
+    userPanelNavigate!();
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".drawer-stub")).toBeNull();
+  });
+
   it("omits the drawer footer wrapper when no userPanel slot is given", async () => {
     setWidth(500);
     let openDrawer: (() => void) | null = null;

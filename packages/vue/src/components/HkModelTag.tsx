@@ -13,8 +13,9 @@ import "./HkModelTag.scss";
  * divider line at the seam, no gap and no rounding at the junction (outer
  * corners keep the badge radius). The name segment truncates with an
  * ellipsis when the surrounding container is too narrow (min-width floor
- * keeps a couple of characters legible); the native `title` tooltip and
- * the hover card always carry the full model id.
+ * keeps a couple of characters legible). No native `title` here: the
+ * hover card always carries the full model id, and a native tooltip would
+ * fire alongside it (the duplicated-tooltip defect this removed).
  */
 const ModelPill = defineComponent({
   name: "HkModelPill",
@@ -29,7 +30,6 @@ const ModelPill = defineComponent({
       <span
         class="s-model-tag-group"
         data-expanded={props.expanded || undefined}
-        title={props.model}
       >
         {tag && (
           <HBadge variant="primary" size="sm" mono pill={false} class="s-model-tag-num">

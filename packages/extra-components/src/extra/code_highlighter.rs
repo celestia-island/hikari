@@ -363,7 +363,7 @@ impl CodeHighlighterComponent {
   border: 1px solid var(--hi-color-border, #e0e0e0);
   border-radius: 8px;
   overflow: hidden;
-  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
   font-size: 0.875rem;
   line-height: 1.6;
 }

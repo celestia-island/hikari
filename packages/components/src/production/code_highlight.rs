@@ -411,7 +411,7 @@ impl StyledComponent for CodeHighlightComponent {
 }
 
 .hk-code-highlight-line-number {
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
     color: var(--hi-color-text-tertiary, #94a3b8);
@@ -430,13 +430,13 @@ impl StyledComponent for CodeHighlightComponent {
     overflow-x: auto;
     background-color: transparent;
     border: none;
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
 }
 
 .hk-code-highlight-code code {
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
     color: var(--hi-color-text-primary, #1f2328);

@@ -58,7 +58,7 @@
 .s-about-modal-row-value {
   font-size: var(--text-sm, 0.8125rem);
   color: rgb(var(--color-text));
-  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", monospace);
 }
 
 .s-about-modal-links {

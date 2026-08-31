@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance, type PropType } from "vue";
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType } from "vue";
 
 import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
@@ -6,8 +6,12 @@ import HkHoverRevealAction from "./HkHoverRevealAction";
 import HkIconButton from "./HkIconButton";
 import { iconByName } from "../composables/iconRegistry";
 import { useI18n } from "../i18n/context";
+import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 
 export interface TabItem {
+  /** Unique option key. `$indicator` and `$merged` are reserved — they
+   *  key the strip's internal indicator and the merged cell inside the
+   *  swap TransitionGroup. */
   key: string;
   label: string;
   /** Optional icon vnode rendered before the label (the `icon-${key}`
@@ -36,12 +40,6 @@ interface ScrollerExpose {
   getScrollElement?: () => HTMLElement | undefined;
 }
 
-/** Track geometry constants, kept in sync with HkTabs.scss: the track
- *  padding (TRACK_PAD) and the inter-trigger gap (TRACK_GAP — 0 in the
- *  unified chrome). */
-const TRACK_GAP = 0;
-const TRACK_PAD = 2;
-
 /**
  * HTabs — THE button-group / tab-strip primitive. ONE look (the centered
  * pill strip used by the page-level top/bottom bars) is shared by every
@@ -65,10 +63,14 @@ const TRACK_PAD = 2;
  *   icon buttons at EITHER inline end of the strip (outside the scroll
  *   viewport), hover/tap-revealed — the page bars' trailing "+" is
  *   simply `endAction`;
- * - `overlayFrom` + the `#overlay` slot: a measured info layer covering
- *   the track to the right of tab[overlayFrom] — e.g. the theme
- *   toggle's solar-altitude strip replacing the manual halves while
- *   "auto" is active (options "locked" by disabling their tabs);
+ * - `mergeKeys` + the `#merged` slot: DYNAMIC MERGED-OPTION rendering —
+ *   a contiguous run of options collapses into ONE combined cell (e.g.
+ *   the theme toggle's solar-altitude strip replacing the manual halves
+ *   while "auto" is active). The cell is a real flex child of the track
+ *   (never an absolute cover), so it joins layout AND the animation
+ *   context: options/cells fade-swap on merge changes, and the sliding
+ *   indicator measures the cell when the active key is merged. Merged
+ *   options are skipped by keyboard navigation;
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -109,11 +111,21 @@ export default defineComponent({
      *  the page bars' trailing "+" (outside the scroll viewport,
      *  hover/tap-revealed). Pressing it emits `action` with "end". */
     endAction: { type: Object as PropType<TabsEndAction | null>, default: null },
-    /** When ≥ 0 and the `#overlay` slot is provided, render the overlay
-     *  layer covering the track to the right of tab[overlayFrom]
-     *  (measured geometry; the covered tabs are usually disabled —
-     *  "option locking"). -1 disables the layer. */
-    overlayFrom: { type: Number, default: -1 },
+    /** Keys of a contiguous run of options that currently collapse into
+     *  ONE merged cell rendered by the `#merged` slot (dynamic
+     *  merged-option rendering). Merged triggers are not rendered and
+     *  are skipped by keyboard navigation; the cell takes the first
+     *  merged option's place as a real flex child of the track, joining
+     *  layout AND the animation context (swap transitions + the sliding
+     *  indicator measures it when the active key is merged). Pass
+     *  undefined/empty to disable. A single-key run is allowed — note
+     *  the cell is role=presentation, so that option leaves the radio/
+     *  keyboard surface while merged. The keys MUST be a contiguous
+     *  run — non-contiguous keys degrade to plain triggers (no cell).
+     *  Without the `#merged` slot the listed options render as ordinary
+     *  triggers (graceful degradation). In pill mode the merged
+     *  options' panels are not rendered while merged. */
+    mergeKeys: { type: Array as PropType<string[]>, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -124,25 +136,56 @@ export default defineComponent({
     const { t } = useI18n();
     const triggerRefs = ref<Map<number, HTMLElement>>(new Map());
     const indicatorStyle = ref<Record<string, string>>({});
-    const overlayStyle = ref<Record<string, string> | undefined>(undefined);
+    /** The indicator fades in once real geometry first lands (no pop-in
+     *  on mount), then slides via its left/width transition. */
+    const indicatorReady = ref(false);
+    /** The merged cell element — measured by the indicator when the
+     *  active key is one of the merged options. */
+    const mergedCellRef = ref<HTMLElement | null>(null);
     const scrollerRef = ref<ScrollerExpose | null>(null);
     const listRef = ref<HTMLElement | null>(null);
 
     const isSegmented = computed(() => props.variant === "segmented");
     const isBlock = computed(() => isSegmented.value && props.block);
-    // No active tab (modelValue matches nothing / active disabled): keep
-    // the first enabled trigger tabbable so the group stays reachable —
-    // otherwise every trigger would be tabindex=-1.
+    const mergeSet = computed(() => new Set(props.mergeKeys ?? []));
+    /** Merged keys actually present in `tabs`, in tab order. */
+    const mergedRun = computed(() =>
+      props.tabs.filter((tb) => mergeSet.value.has(tb.key)).map((tb) => tb.key),
+    );
+    /** The contract is ONE contiguous run; a scattered selection would
+     *  silently swallow the middle options, so degrade to plain
+     *  triggers instead. */
+    const mergedContiguous = computed(() => {
+      const idxs = props.tabs
+        .map((tb, i) => (mergeSet.value.has(tb.key) ? i : -1))
+        .filter((i) => i >= 0);
+      return idxs.length <= 1 || idxs[idxs.length - 1] - idxs[0] === idxs.length - 1;
+    });
+    /** The merged cell only exists with BOTH keys present in `tabs` (as
+     *  one contiguous run) AND the `#merged` slot provided — otherwise
+     *  the listed options render as ordinary triggers (degradation
+     *  path). */
+    const hasMergedCell = computed(
+      () => mergedRun.value.length > 0 && mergedContiguous.value && slots.merged != null,
+    );
+    function isMergedTab(tab: TabItem): boolean {
+      return hasMergedCell.value && mergeSet.value.has(tab.key);
+    }
+    /** Navigable = rendered trigger: not disabled, not whole-strip
+     *  disabled upstream, and not collapsed into the merged cell. */
+    function isNavigable(tab: TabItem): boolean {
+      return !tab.disabled && !isMergedTab(tab);
+    }
+    // No active tab (modelValue matches nothing / active disabled or
+    // merged): keep the first enabled trigger tabbable so the group
+    // stays reachable — otherwise every trigger would be tabindex=-1.
     const fallbackTabbableIdx = computed(() => {
       const hasActive = props.tabs.some(
-        (tb) => tb.key === props.modelValue && !tb.disabled,
+        (tb) => tb.key === props.modelValue && isNavigable(tb),
       );
       if (hasActive) return -1;
-      return props.tabs.findIndex((tb) => !tb.disabled);
+      return props.tabs.findIndex((tb) => isNavigable(tb));
     });
-    const hasOverlay = computed(
-      () => props.overlayFrom >= 0 && props.overlayFrom < props.tabs.length - 1 && slots.overlay != null,
-    );
 
     function resolvedActionLabel(action: TabsEndAction): string {
       return action.label || t("hikari::tabs.add", "Add tab");
@@ -156,38 +199,33 @@ export default defineComponent({
       }
     }
 
-    function updateIndicator() {
+    function setMergedCellRef(el: Element | ComponentPublicInstance | null) {
+      mergedCellRef.value = el instanceof HTMLElement ? el : null;
+    }
+
+    /** The element the indicator should frame: the merged cell when the
+     *  active option is collapsed into it, otherwise the active trigger
+     *  (falling back to the first option's render — trigger OR cell —
+     *  while no geometry exists). */
+    function activeFrameEl(): HTMLElement | undefined {
       const idx = props.tabs.findIndex((tb) => tb.key === props.modelValue);
-      const el = triggerRefs.value.get(idx >= 0 ? idx : 0);
+      const i = idx >= 0 ? idx : 0;
+      const tab = props.tabs[i];
+      if (tab && isMergedTab(tab)) {
+        return mergedCellRef.value ?? undefined;
+      }
+      return triggerRefs.value.get(i);
+    }
+
+    function updateIndicator() {
+      const el = activeFrameEl();
       if (!el) return;
       const left = `${el.offsetLeft}px`;
       const width = `${el.offsetWidth}px`;
-      if (indicatorStyle.value.left === left && indicatorStyle.value.width === width) return;
-      indicatorStyle.value = { left, width };
-    }
-
-    function updateOverlay() {
-      if (!hasOverlay.value) {
-        overlayStyle.value = undefined;
-        return;
+      if (indicatorStyle.value.left !== left || indicatorStyle.value.width !== width) {
+        indicatorStyle.value = { left, width };
       }
-      const el = triggerRefs.value.get(props.overlayFrom);
-      const list = listRef.value;
-      if (!el || !list) return;
-      const leftPx = el.offsetLeft + el.offsetWidth + TRACK_GAP;
-      const listWidth = list.clientWidth;
-      if (el.offsetWidth > 0 && listWidth > leftPx + TRACK_PAD) {
-        overlayStyle.value = {
-          left: `${leftPx}px`,
-          width: `${listWidth - leftPx - TRACK_PAD}px`,
-        };
-        return;
-      }
-      // Pre-measurement fallback (SSR / hidden / layout-less): cover the
-      // tail by equal-share estimate, like the indicator's zero-geometry
-      // phase — the measured style takes over once real layout exists.
-      const share = (props.overlayFrom + 1) / props.tabs.length;
-      overlayStyle.value = { left: `${(share * 100).toFixed(4)}%` };
+      indicatorReady.value = true;
     }
 
     /** Nudge the scroller so the active trigger is fully visible with
@@ -197,8 +235,7 @@ export default defineComponent({
     function scrollActiveIntoView() {
       const vp = scrollerRef.value?.getScrollElement?.();
       if (!vp) return;
-      const idx = props.tabs.findIndex((tb) => tb.key === props.modelValue);
-      const el = triggerRefs.value.get(idx >= 0 ? idx : 0);
+      const el = activeFrameEl();
       if (!el) return;
       const left = el.offsetLeft;
       const right = left + el.offsetWidth;
@@ -212,7 +249,6 @@ export default defineComponent({
 
     function refreshGeometry() {
       updateIndicator();
-      updateOverlay();
       if (props.scrollable) scrollActiveIntoView();
     }
 
@@ -222,9 +258,10 @@ export default defineComponent({
     onMounted(() => {
       nextTick(refreshGeometry);
       resizeObserver = new ResizeObserver(() => refreshGeometry());
-      const firstEl = triggerRefs.value.get(0);
-      if (firstEl?.parentElement) {
-        resizeObserver.observe(firstEl.parentElement);
+      // Observe the track itself (tab[0] may be merged away, so a
+      // trigger-derived parent is not a reliable anchor anymore).
+      if (listRef.value) {
+        resizeObserver.observe(listRef.value);
       }
       if (props.scrollable) {
         // The indicator observer watches the content-sized list, so a
@@ -253,18 +290,49 @@ export default defineComponent({
       nextTick(refreshGeometry);
     }, { deep: true });
 
-    watch(() => props.overlayFrom, () => nextTick(refreshGeometry));
+    watch(() => props.mergeKeys, () => nextTick(refreshGeometry));
+
+    /** Pre-patch geometry of every track child, refreshed on every
+     *  update (the DOM is still the pre-patch tree at onBeforeUpdate).
+     *  During a multi-option leave (e.g. Light+Dark collapsing into the
+     *  merged cell), Vue's patch lifts the first leaving sibling to
+     *  position:absolute SYNCHRONOUSLY before the next sibling's
+     *  beforeLeave hook runs — a live offset read there would freeze
+     *  the already-reflowed position and overlap the ghosts. */
+    const preSwapBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    onBeforeUpdate(() => {
+      const list = listRef.value;
+      if (!list) return;
+      for (const child of Array.from(list.children)) {
+        const e = child as HTMLElement;
+        preSwapBoxes.set(e, {
+          top: e.offsetTop,
+          left: e.offsetLeft,
+          width: e.offsetWidth,
+          height: e.offsetHeight,
+        });
+      }
+    });
+
+    /** Leaving options/cells are pinned at their in-flow geometry by
+     *  the shared leave-pin util (left-anchored: the track's
+     *  inline-start edge stays put while a middle/tail removal
+     *  collapses the right side) so the absolute leave ghost fades in
+     *  place; a cancelled leave drops the pins again. */
+    function pinLeaving(el: Element) {
+      pinLeaveGeometry(el, { anchorX: "left", box: preSwapBoxes.get(el) });
+    }
 
     // ── Keyboard navigation ─────────────────────────────────────────
     // role=tab/radio buttons have no native arrow behavior — the strip
-    // owns it. Selection follows focus; disabled tabs are skipped;
-    // Home/End jump to the first/last enabled tab.
+    // owns it. Selection follows focus; disabled and merged-away options
+    // are skipped; Home/End jump to the first/last navigable option.
     function focusTrigger(idx: number) {
       void nextTick(() => triggerRefs.value.get(idx)?.focus());
     }
     function selectIndex(idx: number) {
       const tb = props.tabs[idx];
-      if (!tb || tb.disabled || tb.key === props.modelValue) return;
+      if (!tb || !isNavigable(tb) || props.disabled || tb.key === props.modelValue) return;
       emit("update:modelValue", tb.key);
       focusTrigger(idx);
     }
@@ -274,15 +342,16 @@ export default defineComponent({
       let idx = from;
       for (let step = 0; step < n; step += 1) {
         idx = (idx + delta + n) % n;
-        if (!props.tabs[idx].disabled) {
+        if (isNavigable(props.tabs[idx])) {
           selectIndex(idx);
           return;
         }
       }
     }
     function onKeydown(e: KeyboardEvent) {
-      // Only drive strip navigation from triggers — interactive overlay
-      // content (inputs, sliders inside the #overlay slot) keeps its keys.
+      // Only drive strip navigation from triggers — interactive merged
+      // cell content (buttons, inputs inside the #merged slot) keeps
+      // its keys.
       const target = e.target as HTMLElement | null;
       if (!target || !target.closest(".hk-tabs-trigger")) return;
       const current = Math.max(0, props.tabs.findIndex((tb) => tb.key === props.modelValue));
@@ -296,13 +365,13 @@ export default defineComponent({
           moveSelection(current, -1);
           break;
         case "Home": {
-          const first = props.tabs.findIndex((tb) => !tb.disabled);
+          const first = props.tabs.findIndex((tb) => isNavigable(tb));
           if (first >= 0) selectIndex(first);
           break;
         }
         case "End": {
           for (let i = props.tabs.length - 1; i >= 0; i -= 1) {
-            if (!props.tabs[i].disabled) {
+            if (isNavigable(props.tabs[i])) {
               selectIndex(i);
               break;
             }
@@ -316,6 +385,67 @@ export default defineComponent({
     }
 
     return () => {
+      const mergedHead = mergedRun.value[0];
+      const listChildren = [
+        <div
+          key="$indicator"
+          class="hk-tabs-indicator"
+          style={indicatorStyle.value}
+          data-ready={indicatorReady.value || undefined}
+        />,
+      ];
+      props.tabs.forEach((tab, idx) => {
+        if (isMergedTab(tab)) {
+          // The merged run renders as ONE combined cell at its first
+          // option's position — a real flex child of the track (joins
+          // layout and the swap/indicator animation context), never an
+          // absolute cover. role=presentation: the radiogroup's a11y
+          // surface is the remaining triggers; interactive slot content
+          // carries its own semantics.
+          if (tab.key === mergedHead) {
+            listChildren.push(
+              <div
+                key="$merged"
+                class="hk-tabs-merged"
+                ref={setMergedCellRef}
+                role="presentation"
+                data-keys={mergedRun.value.join(" ")}
+                data-disabled={props.disabled || undefined}
+              >
+                {slots.merged?.({ keys: mergedRun.value })}
+              </div>,
+            );
+          }
+          return;
+        }
+        const active = tab.key === props.modelValue;
+        const disabled = tab.disabled;
+        const icon = slots[`icon-${tab.key}`]?.() ?? (tab.icon != null ? <span class="hk-tabs-trigger-icon">{tab.icon as any}</span> : null);
+        listChildren.push(
+          <button
+            key={tab.key}
+            ref={(el) => setTriggerRef(el, idx)}
+            type="button"
+            role={isSegmented.value ? "radio" : "tab"}
+            aria-checked={isSegmented.value ? active : undefined}
+            aria-selected={isSegmented.value ? undefined : active}
+            aria-disabled={disabled || undefined}
+            class="hk-tabs-trigger"
+            data-active={active || undefined}
+            data-disabled={props.disabled || disabled || undefined}
+            // Roving tabindex: the active trigger joins the page tab
+            // sequence, the others stay arrow-reachable.
+            tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}
+            disabled={props.disabled || disabled}
+            onClick={() => {
+              if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
+            }}
+          >
+            {icon}
+            {tab.label && <span>{tab.label}</span>}
+          </button>,
+        );
+      });
       const list = (
         <div
           class="hk-tabs-list"
@@ -325,41 +455,12 @@ export default defineComponent({
           role={isSegmented.value ? "radiogroup" : "tablist"}
           onKeydown={onKeydown}
         >
-          <div class="hk-tabs-indicator" style={indicatorStyle.value} />
-          {props.tabs.map((tab, idx) => {
-            const active = tab.key === props.modelValue;
-            const disabled = tab.disabled;
-            const icon = slots[`icon-${tab.key}`]?.() ?? (tab.icon != null ? <span class="hk-tabs-trigger-icon">{tab.icon as any}</span> : null);
-            return (
-              <button
-                key={tab.key}
-                ref={(el) => setTriggerRef(el, idx)}
-                type="button"
-                role={isSegmented.value ? "radio" : "tab"}
-                aria-checked={isSegmented.value ? active : undefined}
-                aria-selected={isSegmented.value ? undefined : active}
-                aria-disabled={disabled || undefined}
-                class="hk-tabs-trigger"
-                data-active={active || undefined}
-                data-disabled={props.disabled || disabled || undefined}
-                // Roving tabindex: the active trigger joins the page tab
-                // sequence, the others stay arrow-reachable.
-                tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}
-                disabled={props.disabled || disabled}
-                onClick={() => {
-                  if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
-                }}
-              >
-                {icon}
-                {tab.label && <span>{tab.label}</span>}
-              </button>
-            );
-          })}
-          {hasOverlay.value && (
-            <div class="hk-tabs-overlay" style={overlayStyle.value}>
-              {slots.overlay?.()}
-            </div>
-          )}
+          {/* Tagless group: the track stays a plain element (ref/CSS/
+              keydown unchanged) while option/cell inserts and removals
+              run through the hk-tabs-swap transitions. */}
+          <TransitionGroup name="hk-tabs-swap" onBeforeLeave={pinLeaving} onLeaveCancelled={clearLeaveGeometry}>
+            {listChildren}
+          </TransitionGroup>
         </div>
       );
 
@@ -389,7 +490,7 @@ export default defineComponent({
             </HkScrollContainer>
           ) : list}
 
-          {props.renderPanels && !isSegmented.value && props.tabs.map((tab) => (
+          {props.renderPanels && !isSegmented.value && props.tabs.filter((tab) => !isMergedTab(tab)).map((tab) => (
             <div
               key={tab.key}
               role="tabpanel"

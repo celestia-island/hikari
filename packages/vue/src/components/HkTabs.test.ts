@@ -207,7 +207,7 @@ describe("HkTabs segmented variant", () => {
   /** Mount with a live v-model and per-test tabs/slots. */
   function mountLive(
     extra: Record<string, unknown>,
-    slots?: Record<string, () => unknown>,
+    slots?: Record<string, (...args: any[]) => unknown>,
   ): { container: HTMLElement; active: ReturnType<typeof ref<string>> } {
     const active = ref("a");
     const container = document.createElement("div");
@@ -279,44 +279,112 @@ describe("HkTabs segmented variant", () => {
     expect(active.value).toBe("a");
   });
 
-  it("renders a measured tail overlay from overlayFrom with slot content", async () => {
+  it("collapses mergeKeys into one merged cell with slot content", async () => {
     const { container } = mountLive(
-      { variant: "segmented", overlayFrom: 0 },
-      { overlay: () => h("button", { type: "button", class: "strip" }, "+32.5°") },
+      { variant: "segmented", mergeKeys: ["b", "c"] },
+      { merged: ({ keys }: { keys: string[] }) => h("button", { type: "button", class: "strip" }, `merged:${keys.join("+")}`) },
     );
-    const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;
-    expect(overlay).not.toBeNull();
-    expect(overlay.querySelector(".strip")).not.toBeNull();
-    // The geometry pass runs one tick after mount: happy-dom has no
-    // layout, so the equal-share fallback (tab 0 of 3) applies.
     await settle();
-    expect(overlay.style.left).toBe("33.3333%");
-    // Dropping the anchor disables the layer entirely.
-    const bare = mountLive({ variant: "segmented", overlayFrom: -1 },
-      { overlay: () => h("span", "x") });
-    expect(bare.container.querySelector(".hk-tabs-overlay")).toBeNull();
-    // Anchoring at the last tab leaves no tail to cover.
-    const last = mountLive({ variant: "segmented", overlayFrom: 2 },
-      { overlay: () => h("span", "x") });
-    expect(last.container.querySelector(".hk-tabs-overlay")).toBeNull();
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-merged")!;
+    expect(cell).not.toBeNull();
+    expect(cell.getAttribute("data-keys")).toBe("b c");
+    // A real flex child of the track — never an absolute cover layer.
+    expect(cell.parentElement?.classList.contains("hk-tabs-list")).toBe(true);
+    const strip = cell.querySelector<HTMLElement>(".strip");
+    expect(strip?.textContent).toBe("merged:b+c");
+    // The merged options' triggers are gone; only Alpha renders.
+    const triggers = container.querySelectorAll(".hk-tabs-trigger");
+    expect(triggers).toHaveLength(1);
+    expect(triggers[0].textContent).toContain("Alpha");
+    // The retired absolute overlay layer is gone for good.
+    expect(container.querySelector(".hk-tabs-overlay")).toBeNull();
+    // Clearing mergeKeys restores every trigger.
+    const bare = mountLive({ variant: "segmented" },
+      { merged: () => h("span", "x") });
+    expect(bare.container.querySelector(".hk-tabs-merged")).toBeNull();
+    expect(bare.container.querySelectorAll(".hk-tabs-trigger")).toHaveLength(3);
   });
 
-  it("spans measured geometry once layout exists", async () => {
+  it("renders mergeKeys as ordinary triggers without the merged slot", () => {
+    // Graceful degradation: keys listed but no slot → plain group.
+    const { container } = mountLive({ variant: "segmented", mergeKeys: ["b", "c"] });
+    expect(container.querySelector(".hk-tabs-merged")).toBeNull();
+    const triggers = container.querySelectorAll(".hk-tabs-trigger");
+    expect(triggers).toHaveLength(3);
+  });
+
+  it("degrades to plain triggers when mergeKeys are not contiguous", () => {
+    // "a"+"c" skip over "b": a scattered selection would swallow the
+    // middle option, so the group refuses to merge.
     const { container } = mountLive(
-      { variant: "segmented", overlayFrom: 0 },
-      { overlay: () => h("button", { class: "strip" }, "x") },
+      { variant: "segmented", mergeKeys: ["a", "c"] },
+      { merged: () => h("span", "m") },
     );
-    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
-    const trig = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger");
-    // Stub layout: trigger 0 at 14px wide 48, list inner width 182.
-    Object.defineProperty(trig[0], "offsetLeft", { value: 14, configurable: true });
-    Object.defineProperty(trig[0], "offsetWidth", { value: 48, configurable: true });
-    Object.defineProperty(list, "clientWidth", { value: 182, configurable: true });
+    expect(container.querySelector(".hk-tabs-merged")).toBeNull();
+    expect(container.querySelectorAll(".hk-tabs-trigger")).toHaveLength(3);
+  });
+
+  it("skips merged options in keyboard navigation", async () => {
+    const { container, active } = mountLive(
+      {
+        variant: "segmented",
+        tabs: [
+          { key: "a", label: "Alpha" },
+          { key: "b", label: "Beta" },
+          { key: "c", label: "Gamma" },
+        ],
+        mergeKeys: ["b"],
+      },
+      { merged: () => h("span", { class: "strip" }, "m") },
+    );
     await settle();
-    const overlay = container.querySelector<HTMLElement>(".hk-tabs-overlay")!;
-    // Unified chrome: zero inter-trigger gap, 2px track padding.
-    expect(overlay.style.left).toBe("62px");
-    expect(overlay.style.width).toBe("118px");
+    const trig = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger");
+    expect(trig).toHaveLength(2);
+    // ArrowRight from Alpha skips the merged-away Beta and lands Gamma.
+    key(trig[0], "ArrowRight");
+    await settle();
+    expect(active.value).toBe("c");
+    key(trig[1], "ArrowRight");
+    await settle();
+    expect(active.value).toBe("a");
+    // End/Home only consider rendered (navigable) options.
+    key(trig[0], "End");
+    await settle();
+    expect(active.value).toBe("c");
+    key(trig[1], "Home");
+    await settle();
+    expect(active.value).toBe("a");
+    // Keydowns from merged-cell content never drive strip navigation.
+    const stripEl = container.querySelector<HTMLElement>(".hk-tabs-merged .strip")!;
+    key(stripEl, "ArrowRight");
+    await settle();
+    expect(active.value).toBe("a");
+  });
+
+  it("frames the merged cell with the indicator when the active key is merged", async () => {
+    const { container, active } = mountLive(
+      { variant: "segmented", mergeKeys: ["b", "c"] },
+      { merged: () => h("span", { class: "strip" }, "m") },
+    );
+    await settle();
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-merged")!;
+    // Stub layout: the merged cell sits at 96px, 84px wide.
+    Object.defineProperty(cell, "offsetLeft", { value: 96, configurable: true });
+    Object.defineProperty(cell, "offsetWidth", { value: 84, configurable: true });
+    active.value = "b";
+    await settle();
+    const indicator = container.querySelector<HTMLElement>(".hk-tabs-indicator")!;
+    // The sliding indicator measures the cell — the merged render fully
+    // participates in the group's animation context.
+    expect(indicator.style.left).toBe("96px");
+    expect(indicator.style.width).toBe("84px");
+    expect(indicator.hasAttribute("data-ready")).toBe(true);
+    // With the active option merged away, the group stays keyboard
+    // reachable: the first navigable trigger keeps the roving tabindex
+    // slot (no tabindex attribute) and no trigger claims data-active.
+    const alpha = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(alpha.hasAttribute("tabindex")).toBe(false);
+    expect(container.querySelector(".hk-tabs-trigger[data-active]")).toBeNull();
   });
 
   it("renders a tab icon field before the label", () => {

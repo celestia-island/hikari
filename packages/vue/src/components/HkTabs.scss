@@ -84,10 +84,17 @@
   white-space: nowrap;
   cursor: pointer;
   outline: none;
-  transition: color var(--duration-short) ease;
+  transition: color var(--duration-short) ease,
+              transform var(--duration-short) ease;
 
   &:hover {
     color: rgb(var(--color-text));
+  }
+
+  /* Tactile press feedback — every button-group click animates, even
+     before the sliding indicator arrives. */
+  &:active:not([data-disabled]) {
+    transform: scale(0.96);
   }
 
   &[data-active] {
@@ -107,8 +114,9 @@
   align-items: center;
 }
 
-/* === The one shared sliding indicator (every variant) === */
-
+/* === The one shared sliding indicator (every variant) ===
+ * Starts transparent: the first measured frame only fades it in (no
+ * pop-in from a stale corner), later frames slide via left/width. */
 .hk-tabs-indicator {
   position: absolute;
   top: 2px;
@@ -117,8 +125,43 @@
   background: rgb(var(--color-primary) / 12%);
   pointer-events: none;
   z-index: 0;
+  opacity: 0;
   transition: left var(--duration-normal) var(--ease-standard),
-              width var(--duration-normal) var(--ease-standard);
+              width var(--duration-normal) var(--ease-standard),
+              opacity var(--duration-short) ease;
+}
+
+.hk-tabs-indicator[data-ready] {
+  opacity: 1;
+}
+
+/* === Option swap transitions (dynamic options / merged cell) ===
+ * Entering options/cells fade and settle in; leaving ones fade out
+ * absolutely so siblings reflow at once. Geometry motion belongs to
+ * the sliding indicator, so there is deliberately no move FLIP. */
+.hk-tabs-swap-enter-active,
+.hk-tabs-swap-leave-active {
+  transition: opacity var(--duration-short) ease,
+              transform var(--duration-short) ease;
+}
+
+.hk-tabs-swap-enter-from {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.hk-tabs-swap-leave-to {
+  opacity: 0;
+}
+
+/* Child-selector form, NOT the bare `.hk-tabs-swap-leave-active`: the
+   leaving element may be a trigger or the merged cell whose own rules
+   (`.hk-tabs-trigger` / `.hk-tabs-merged`, position:relative) share the
+   same one-class specificity and could win by source order — the
+   two-class selector lifts the ghost to absolute regardless of order. */
+.hk-tabs-list > .hk-tabs-swap-leave-active {
+  position: absolute;
+  z-index: 0;
 }
 
 /* === Panel (pill / tablist mode) === */
@@ -158,29 +201,43 @@
   flex: 1 0 auto;
 }
 
-/* === Tail overlay (option locking / live info) ===
- * A passive layer covering the track right of tab[overlayFrom]; measured
- * geometry arrives as inline left/width (equal-share estimate before
- * measurement). Carries the unified pill chrome (opaque surface so the
- * locked triggers beneath never bleed through, hairline border, the
- * shared radius), sits above triggers, click-through except for
- * interactive slot content. */
-.hk-tabs-overlay {
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  right: 2px;
-  z-index: 2;
+/* === Merged cell (dynamic merged-option rendering) ===
+ * The contiguous run of options listed in `mergeKeys` collapses into ONE
+ * combined cell (the #merged slot) — a REAL flex child of the track,
+ * not an absolute cover: it joins layout and the animation context
+ * (hk-tabs-swap enter/leave + the sliding indicator measures it when
+ * the active option is merged). Chrome follows the unselected-option
+ * grammar: NAKED — no border, no own surface; only the sliding
+ * indicator ever frames the active option, so a merged cell must never
+ * grow a box of its own. Interactive slot content (e.g. the theme
+ * toggle's altitude strip) fills the cell and owns its hover/press. */
+.hk-tabs-merged {
+  position: relative;
+  /* Same layer as the triggers, above the sliding indicator. */
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  background: rgb(var(--hk-surface, var(--color-surface, 255 255 255)));
-  border: 1px solid var(--border-faint);
-  overflow: hidden;
+  flex: none;
+  min-width: 0;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Whole-strip disabled mutes the cell's interactive slot content too —
+   the triggers get the native disabled attribute, the cell gets this. */
+.hk-tabs-merged[data-disabled] {
   pointer-events: none;
 }
 
-.hk-tabs-overlay :where(button, a, [role="button"]) {
-  pointer-events: auto;
+/* block (row-filling) strips: the merged cell shares the triggers'
+   flex growth so it lands on the merged run's share of the row. */
+.hk-tabs-list[data-variant="segmented"][data-block="true"] .hk-tabs-merged {
+  flex: 1 1 auto;
+}
+
+.hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"] .hk-tabs-merged {
+  flex: 1 0 auto;
 }

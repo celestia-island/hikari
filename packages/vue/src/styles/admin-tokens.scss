@@ -91,12 +91,14 @@
   --hi-shadow-elevated: 0 2px 16px rgb(0 0 0 / 8%);
 
   /* ── Hk component tokens (theme bridge) ─
-   * Chrome-level component styles (the HTabs tail overlay) read these RGB-triplet tokens.
+   * Chrome-level component styles read these RGB-triplet tokens.
    * Without a definition they fall back to hardcoded light-theme values
    * (white surfaces, near-black text, blue focus ring) inside dark
    * themes. Bridging them to the runtime --color-* tokens keeps the
    * controls on the active theme; consumer-local definitions still win
-   * by load order. */
+   * by load order. (--hk-surface's only in-tree consumer — the retired
+   * HTabs tail overlay — is gone; the token stays published for
+   * external plana-ui readers.) */
   --hk-surface: var(--color-surface, 255 255 255);
   --hk-primary: var(--color-primary, 60 120 240);
 }

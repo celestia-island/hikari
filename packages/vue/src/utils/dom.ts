@@ -38,6 +38,19 @@ export function scrollToElement(selector: string, opts?: ScrollIntoViewOptions):
   el?.scrollIntoView(opts ?? { block: "nearest" });
 }
 
+/** Pre-measured in-flow box for {@link pinLeaveGeometry}. Snapshot the
+ *  leaving elements BEFORE the patch that removes them (e.g. the host
+ *  component's onBeforeUpdate): during a multi-element removal the
+ *  first sibling's leave-active class (position:absolute) lands
+ *  synchronously in the same patch pass, so a later sibling's live
+ *  offset* read would freeze an already-reflowed position. */
+export interface LeaveBoxSnapshot {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 /**
  * Pin a leaving list item's geometry before its `*-leave-active` rule
  * switches it to `position: absolute`.
@@ -52,21 +65,30 @@ export function scrollToElement(selector: string, opts?: ScrollIntoViewOptions):
  * sliver across the screen while it fades — the closing-toast "flash".
  *
  * Recording the in-flow box makes the leave transition play as a true
- * mirror of the entrance instead. The pin is anchored to the RIGHT
- * inner edge of the containing block (the relative transition-group
- * wrapper, which is also the element's offsetParent): right-anchored
- * hosts keep that edge put while the left edge collapses, so a
- * `right + width` pin survives the collapse that defeats a `left`
- * pin. All metrics come from the offset* family — layout boxes that
- * ignore transforms, so a concurrent FLIP move cannot skew the pin —
- * and the width/height pins are paired with an inline
- * `box-sizing: border-box` so they reproduce the measured border-box
- * exactly for content-box items.
+ * mirror of the entrance instead. The pin is anchored by `anchorX`:
+ * - `"right"` (default): anchored to the RIGHT inner edge of the
+ *   containing block (the relative transition-group wrapper, which is
+ *   also the element's offsetParent). Right-anchored hosts keep that
+ *   edge put while the left edge collapses, so a `right + width` pin
+ *   survives the collapse that defeats a `left` pin (toast columns).
+ * - `"left"`: anchored to the LEFT inner edge — for hosts whose
+ *   inline-start edge stays put in LTR flow (the tab track), where a
+ *   right pin would misplace a middle removal by the removed width.
+ *
+ * Metrics come from `opts.box` when supplied (a pre-patch snapshot —
+ * see {@link LeaveBoxSnapshot}), otherwise from the offset* family —
+ * layout boxes that ignore transforms, so a concurrent FLIP move
+ * cannot skew the pin — and the width/height pins are paired with an
+ * inline `box-sizing: border-box` so they reproduce the measured
+ * border-box exactly for content-box items.
  *
  * No-op when layout information is unavailable (no offsetParent:
  * hidden subtrees, detached nodes, non-layout environments).
  */
-export function pinLeaveGeometry(el: Element): void {
+export function pinLeaveGeometry(
+  el: Element,
+  opts?: { anchorX?: "left" | "right"; box?: LeaveBoxSnapshot },
+): void {
   const node = el as HTMLElement;
   const parent = node.offsetParent as HTMLElement | null;
   if (parent == null) return;
@@ -75,15 +97,19 @@ export function pinLeaveGeometry(el: Element): void {
   // content-box element an intermediate `width` write silently changes
   // the wrap width — a height read after it would freeze a transient
   // rewrap instead of the box the user is looking at.
-  const top = node.offsetTop;
-  const left = node.offsetLeft;
-  const width = node.offsetWidth;
-  const height = node.offsetHeight;
-  // CSS `right` for an absolutely positioned box is measured from the
-  // containing block's right padding-box edge; offsetLeft/offsetWidth
-  // place the item's right border edge within that same padding box.
-  const right = parent.clientWidth - (left + width);
-  node.style.right = `${right}px`;
+  const top = opts?.box?.top ?? node.offsetTop;
+  const left = opts?.box?.left ?? node.offsetLeft;
+  const width = opts?.box?.width ?? node.offsetWidth;
+  const height = opts?.box?.height ?? node.offsetHeight;
+  if (opts?.anchorX === "left") {
+    node.style.left = `${left}px`;
+  } else {
+    // CSS `right` for an absolutely positioned box is measured from the
+    // containing block's right padding-box edge; offsetLeft/offsetWidth
+    // place the item's right border edge within that same padding box.
+    const right = parent.clientWidth - (left + width);
+    node.style.right = `${right}px`;
+  }
   node.style.top = `${top}px`;
   node.style.width = `${width}px`;
   node.style.height = `${height}px`;
@@ -93,12 +119,13 @@ export function pinLeaveGeometry(el: Element): void {
 /**
  * Drop the pins written by {@link pinLeaveGeometry}. Wire this to the
  * transition's leave-cancelled hook: when a leave is aborted and the
- * element re-enters the flow, stale right/width/height pins would
+ * element re-enters the flow, stale left/right/width/height pins would
  * freeze its geometry even as its content changes.
  */
 export function clearLeaveGeometry(el: Element): void {
   const node = el as HTMLElement;
   node.style.right = "";
+  node.style.left = "";
   node.style.top = "";
   node.style.width = "";
   node.style.height = "";

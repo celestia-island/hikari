@@ -1,10 +1,8 @@
-import { computed, defineComponent, onMounted, onUnmounted, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
 import { Check, ChevronDown, Monitor, Moon, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
-  DEFAULT_GEO_LOCATION,
   HDivider,
   HPopover,
-  getGeolocation,
   solarAltitude,
   useI18n,
   useTheme,
@@ -15,13 +13,6 @@ import {
 import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
 import HTabs, { type TabItem } from "./HkTabs";
 import "./HkThemeToggle.scss";
-
-/** One shared geo resolution per page load (component may mount often). */
-let geoPromise: Promise<{ lat: number; lng: number }> | null = null;
-function geoOnce(): Promise<{ lat: number; lng: number }> {
-  geoPromise ??= getGeolocation();
-  return geoPromise;
-}
 
 /** The auto-mode merged run, hoisted: a fresh array literal per render
  *  would re-fire HTabs' mergeKeys watcher (one redundant geometry
@@ -67,14 +58,15 @@ export const HkThemeToggle = defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
-    const { currentTheme, currentMode, effectiveMode, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme } = useTheme();
+    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme } = useTheme();
 
     const menuOpen = ref(false);
     const triggerRef = ref<HTMLElement | null>(null);
     const schemeDialogOpen = ref(false);
 
     // ── Solar-altitude readout (auto-mode merged cell) ──────────────
-    const geo = ref<{ lat: number; lng: number }>({ ...DEFAULT_GEO_LOCATION });
+    // `geo` comes from the theme clock (timezone estimate until the real
+    // fix lands) — the engine and this readout share one resolution.
     const altTick = ref(0);
 
     let altTimer: ReturnType<typeof setInterval> | null = null;
@@ -88,16 +80,6 @@ export const HkThemeToggle = defineComponent({
     });
     onUnmounted(() => {
       if (altTimer) clearInterval(altTimer);
-    });
-
-    onMounted(() => {
-      // Fire-and-forget: failures keep the timezone fallback and are silent
-      // (the aborting test/happy-dom teardown must not surface rejections).
-      // Memoized per module so remounts (menu reopen, route hops) reuse the
-      // resolved location instead of refetching the geo API.
-      geoOnce()
-        .then((g) => { geo.value = g; })
-        .catch(() => {});
     });
 
     /** Current sun altitude formatted like "+32.5°". */

@@ -15,6 +15,8 @@ export type {
   ResolvedGroupTokens, ColorHSL, TokenGroupsReapplyFn,
   LocalizedText, ParseTokenGroupResult,
 } from "./tokenGroups";
-export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION } from "./useSolarTime";
+export { getTimePeriod, getGeolocation, solarAltitude, DEFAULT_GEO_LOCATION, timezoneFallback, setGeolocationProvider } from "./useSolarTime";
+export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
+export { refreshThemeClock, stopThemeClock } from "./useTheme";
 export { startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache } from "./useBackgroundLuminance";
 export type { TimePeriod } from "./useSolarTime";

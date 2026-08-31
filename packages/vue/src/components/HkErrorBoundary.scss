@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .hk-error-boundary {
   display: flex;
   align-items: center;
@@ -43,7 +46,7 @@
   border-radius: 4px;
   background: rgb(from var(--hi-color-error, #f85149) r g b / 0.12);
   color: var(--hi-color-error, #f85149);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
 }
 
 .hk-error-boundary-msg {
@@ -53,7 +56,7 @@
   opacity: 0.85;
   word-break: break-word;
   white-space: pre-wrap;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
 }
 
 .hk-error-boundary-actions {

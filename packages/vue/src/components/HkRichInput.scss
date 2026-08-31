@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .s-rich-input {
   display: flex;
   flex-direction: column;
@@ -81,7 +84,7 @@
 
 .s-rich-input-attachment-chip-size {
   color: rgb(var(--color-muted));
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
 }
 
 .s-rich-input-attachment-remove {

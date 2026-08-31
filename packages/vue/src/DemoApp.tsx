@@ -2,6 +2,7 @@
 // house rule: no SFCs in the tree). Render-only showcase of every exported
 // component; state is local and throwaway.
 import { computed, defineComponent, ref } from "vue";
+import { HIKARI_FONT_MONO } from "./theme/fontContext";
 import {
   HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
@@ -134,7 +135,7 @@ export default defineComponent({
     <circle cx="800" cy="450" r="180" fill="rgba(122,162,247,0.35)" stroke="#7aa2f7" stroke-width="3"/>
     <circle cx="800" cy="450" r="90" fill="rgba(122,162,247,0.2)" stroke="#7aa2f7" stroke-width="2" stroke-dasharray="6 4"/>
     <circle cx="800" cy="450" r="12" fill="#f7768e"/>
-    <text x="800" y="700" fill="#9aa5ce" font-family="monospace" font-size="28" text-anchor="middle">Hikari — zoom / pan demo</text>
+    <text x="800" y="700" fill="#9aa5ce" style="font-family: var(--font-mono, ${HIKARI_FONT_MONO})" font-size="28" text-anchor="middle">Hikari — zoom / pan demo</text>
   </svg>`);
     const zoomState = ref({ zoom: 1.6, panX: -40, panY: -18, canIn: true, canOut: true, zoomed: true });
     function syncZoom() {

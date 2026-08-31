@@ -1,4 +1,6 @@
 $hikari-font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+// Keep in sync with HIKARI_FONT_MONO in packages/vue/src/theme/fontContext.ts.
+$hikari-font-family-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
 $hikari-font-size-sm: 0.875rem;
 $hikari-radius-fui-sm: 4px;
 $hikari-radius-fui-md: 6px;

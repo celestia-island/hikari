@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .hk-status-pill {
   display: inline-flex;
   align-items: center;
@@ -63,7 +66,7 @@
 
 .hk-status-pill-version {
   color: rgb(var(--color-muted) / 80%);
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

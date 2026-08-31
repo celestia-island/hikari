@@ -3,6 +3,8 @@
 // only. The group itself may shrink to the container width (max-width:
 // 100% + min-width: 0) so the name segment can ellipsize instead of
 // forcing the container to overflow (the #008 / qwen3-coder-plus case).
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
 .s-model-tag-group {
   display: inline-flex;
   align-items: center;
@@ -89,7 +91,7 @@
 
 .s-model-card-col2 {
   text-align: right;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-variant-numeric: tabular-nums;
 }
 

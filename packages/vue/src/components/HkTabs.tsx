@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType } from "vue";
+import { cloneVNode, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNode } from "vue";
 
 import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
@@ -18,6 +18,27 @@ export interface TabItem {
    *  slot wins when provided). */
   icon?: unknown;
   disabled?: boolean;
+  /** Relative width weight (flex-grow) for row-filling segmented strips
+   *  (`variant="segmented"` + `block`). Defaults to 1 — every option
+   *  takes an equal share of the free row space, so plain groups render
+   *  exactly as before. A `mergeKeys` merged cell inherits its run's
+   *  SUMMED weight and reserves the run's combined footprint (colspan
+   *  semantics), so replacing N options always occupies N options'
+   *  worth of the row. */
+  grow?: number;
+}
+
+/** Inline style carrying the option's relative width weight as a CSS
+ *  custom property; the block-strip flex rules consume it. Omitted at
+ *  the default weight of 1 so ordinary groups keep a clean DOM. Garbage
+ *  weights (NaN/Infinity/negative) fall back to the default: inside the
+ *  `flex:` shorthand they would invalidate it at computed-value time
+ *  and silently stop the strip from filling. Zero stays legal (a
+ *  fixed-width option that never takes free space). */
+function growStyle(grow: number): Record<string, string> | undefined {
+  return Number.isFinite(grow) && grow >= 0 && grow !== 1
+    ? { "--hk-tabs-grow": String(grow) }
+    : undefined;
 }
 
 /** A protruding icon button at one inline end of the strip (the former
@@ -69,8 +90,12 @@ interface ScrollerExpose {
  *   while "auto" is active). The cell is a real flex child of the track
  *   (never an absolute cover), so it joins layout AND the animation
  *   context: options/cells fade-swap on merge changes, and the sliding
- *   indicator measures the cell when the active key is merged. Merged
- *   options are skipped by keyboard navigation;
+ *   indicator measures the cell when the active key is merged. The cell
+ *   speaks COLSPAN semantics: an invisible sizer mirrors the merged
+ *   run's triggers, pinning the cell's intrinsic width to the run's
+ *   combined footprint (toggling a merge never resizes the strip or its
+ *   fit-content parent), and its flex-grow is the run's summed `grow`
+ *   weight. Merged options are skipped by keyboard navigation;
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -152,6 +177,13 @@ export default defineComponent({
     const mergedRun = computed(() =>
       props.tabs.filter((tb) => mergeSet.value.has(tb.key)).map((tb) => tb.key),
     );
+    /** The merged cell grows with its run's summed relative width
+     *  weight (colspan: replacing N options occupies N options' share
+     *  of the row). */
+    const mergedGrow = computed(() => {
+      const byKey = new Map(props.tabs.map((tb) => [tb.key, tb] as const));
+      return mergedRun.value.reduce((sum, k) => sum + (byKey.get(k)?.grow ?? 1), 0);
+    });
     /** The contract is ONE contiguous run; a scattered selection would
      *  silently swallow the middle options, so degrade to plain
      *  triggers instead. */
@@ -403,6 +435,12 @@ export default defineComponent({
           // surface is the remaining triggers; interactive slot content
           // carries its own semantics.
           if (tab.key === mergedHead) {
+            // The sizer mirrors the merged run's triggers (same icon/label
+            // structure, same metrics via .hk-tabs-ghost-trigger) so the
+            // cell's intrinsic width equals the run's combined footprint.
+            const ghostTabs = mergedRun.value
+              .map((k) => props.tabs.find((tb) => tb.key === k))
+              .filter((gt): gt is TabItem => gt != null);
             listChildren.push(
               <div
                 key="$merged"
@@ -411,8 +449,28 @@ export default defineComponent({
                 role="presentation"
                 data-keys={mergedRun.value.join(" ")}
                 data-disabled={props.disabled || undefined}
+                style={growStyle(mergedGrow.value)}
               >
-                {slots.merged?.({ keys: mergedRun.value })}
+                {/* Invisible width keeper (colspan floor): out of every
+                    interactive and announced surface, it only pins the
+                    cell's intrinsic width — toggling a merge never
+                    resizes the strip or its fit-content parent (the
+                    theme toggle's popover menu). */}
+                <span class="hk-tabs-merged-sizer" aria-hidden="true">
+                  {ghostTabs.map((gt) => (
+                    <span key={gt.key} class="hk-tabs-ghost-trigger">
+                      {slots[`icon-${gt.key}`]?.() ?? (gt.icon != null
+                        ? (
+                          <span class="hk-tabs-trigger-icon">
+                            {isVNode(gt.icon) ? cloneVNode(gt.icon as VNode) : gt.icon}
+                          </span>
+                        )
+                        : null)}
+                      {gt.label ? <span>{gt.label}</span> : null}
+                    </span>
+                  ))}
+                </span>
+                <div class="hk-tabs-merged-body">{slots.merged?.({ keys: mergedRun.value })}</div>
               </div>,
             );
           }
@@ -433,6 +491,7 @@ export default defineComponent({
             class="hk-tabs-trigger"
             data-active={active || undefined}
             data-disabled={props.disabled || disabled || undefined}
+            style={growStyle(tab.grow ?? 1)}
             // Roving tabindex: the active trigger joins the page tab
             // sequence, the others stay arrow-reachable.
             tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}

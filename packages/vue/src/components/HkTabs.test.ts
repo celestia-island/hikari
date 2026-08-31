@@ -387,6 +387,90 @@ describe("HkTabs segmented variant", () => {
     expect(container.querySelector(".hk-tabs-trigger[data-active]")).toBeNull();
   });
 
+  it("pins the merged cell to the run's combined footprint via a hidden sizer", async () => {
+    const { container } = mountLive(
+      {
+        variant: "segmented",
+        mergeKeys: ["b", "c"],
+        tabs: [
+          { key: "a", label: "Alpha" },
+          { key: "b", label: "Beta", icon: h("i", { class: "glyph-b" }) },
+          { key: "c", label: "Gamma", icon: h("i", { class: "glyph-c" }) },
+        ],
+      },
+      { merged: () => h("span", { class: "strip" }, "m") },
+    );
+    await settle();
+    const sizer = container.querySelector<HTMLElement>(".hk-tabs-merged-sizer")!;
+    expect(sizer).not.toBeNull();
+    // Geometry only: never announced, never interactive.
+    expect(sizer.getAttribute("aria-hidden")).toBe("true");
+    // Ghost triggers mirror the merged run — icons, labels, order.
+    const ghosts = sizer.querySelectorAll(".hk-tabs-ghost-trigger");
+    expect(ghosts).toHaveLength(2);
+    expect(ghosts[0].querySelector(".glyph-b")).not.toBeNull();
+    expect(ghosts[0].textContent).toContain("Beta");
+    expect(ghosts[1].querySelector(".glyph-c")).not.toBeNull();
+    expect(ghosts[1].textContent).toContain("Gamma");
+    // Ghosts never join the radio surface (no role, no button semantics).
+    expect(sizer.querySelector("[role], button")).toBeNull();
+    // The slot body stacks over the sizer in the same grid cell.
+    expect(container.querySelector(".hk-tabs-merged-body .strip")).not.toBeNull();
+    // Clearing the merge removes the sizer with the cell.
+    const bare = mountLive({ variant: "segmented" }, { merged: () => h("span", "x") });
+    expect(bare.container.querySelector(".hk-tabs-merged-sizer")).toBeNull();
+  });
+
+  it("grows merged cells with the run's summed relative weight", async () => {
+    const { container } = mountLive(
+      {
+        variant: "segmented",
+        block: true,
+        mergeKeys: ["b", "c"],
+        tabs: [
+          { key: "a", label: "Alpha" },
+          { key: "b", label: "Beta", grow: 1.2 },
+          { key: "c", label: "Gamma" },
+        ],
+      },
+      { merged: () => h("span", "m") },
+    );
+    await settle();
+    // Colspan: the cell carries the run's summed grow (1.2 + 1).
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-merged")!;
+    expect(cell.style.getPropertyValue("--hk-tabs-grow")).toBe("2.2");
+    // Default-weight triggers keep a clean DOM (var omitted at 1).
+    const alpha = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(alpha.style.getPropertyValue("--hk-tabs-grow")).toBe("");
+    // An explicit per-option weight lands as the CSS var.
+    const weighted = mountLive({
+      variant: "segmented",
+      block: true,
+      tabs: [
+        { key: "a", label: "Alpha", grow: 2 },
+        { key: "b", label: "Beta" },
+        { key: "c", label: "Gamma", disabled: true },
+      ],
+    });
+    const first = weighted.container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(first.style.getPropertyValue("--hk-tabs-grow")).toBe("2");
+    // Zero stays legal (fixed-width option); garbage falls back to the
+    // default instead of invalidating the flex shorthand.
+    const guarded = mountLive({
+      variant: "segmented",
+      block: true,
+      tabs: [
+        { key: "a", label: "Alpha", grow: 0 },
+        { key: "b", label: "Beta", grow: Number.NaN },
+        { key: "c", label: "Gamma", grow: -3, disabled: true },
+      ],
+    });
+    const trig = guarded.container.querySelectorAll<HTMLElement>(".hk-tabs-trigger");
+    expect(trig[0].style.getPropertyValue("--hk-tabs-grow")).toBe("0");
+    expect(trig[1].style.getPropertyValue("--hk-tabs-grow")).toBe("");
+    expect(trig[2].style.getPropertyValue("--hk-tabs-grow")).toBe("");
+  });
+
   it("renders a tab icon field before the label", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);

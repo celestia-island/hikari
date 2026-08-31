@@ -101,6 +101,14 @@
   white-space: pre-wrap;
   word-break: break-word;
   color: rgb(var(--color-text));
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .s-tool-result {
@@ -122,6 +130,13 @@
   color: rgb(var(--color-text));
 }
 
+/* Track host for the code block's overlay scrollbar — the block has
+   siblings (params/nested/call sections), so the rail must anchor to a
+   wrapper that contains only the block. */
+.s-tool-code-block-wrap {
+  position: relative;
+}
+
 .s-tool-code-block {
   margin: var(--space-4, 0.25rem) 0;
   background: rgb(var(--color-surface) / 0.85);
@@ -135,6 +150,14 @@
   cursor: pointer;
   max-height: 240px;
   overflow: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &:active {
     opacity: 0.85;
@@ -235,6 +258,14 @@
   user-select: none;
   max-height: 320px;
   overflow: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .s-jt-row {

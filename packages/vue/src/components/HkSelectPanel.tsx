@@ -14,6 +14,7 @@ import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import "./HkSelect.scss";
 
 /**
@@ -133,7 +134,39 @@ export default defineComponent({
 
     const panelRef = ref<HTMLElement>();
     const sheetListRef = ref<HTMLElement>();
+    // Fixed positioning wrapper around the desktop popout — the overlay
+    // scrollbar's track host (the popout itself teleports to body, whose
+    // box is no positioning context for the tracks).
+    const popoutHostRef = ref<HTMLElement>();
+    // Mobile sheet: positioned wrapper around ONLY the scrolling list —
+    // the sheet panel also carries the grabber + title bands.
+    const sheetBodyRef = ref<HTMLElement>();
     const coords = ref<{ top?: string; left?: string; minWidth?: string }>({});
+
+    // ── overlay scrollbar (shared chrome) ─────────────────────────
+    // Attached per open on whichever surface scrolls — the desktop
+    // popout or the mobile sheet list — and detached on close/unmount
+    // so nothing leaks across the panel's lifetime (the sheet Teleport
+    // stays mounted through its leave transition).
+    let panelScrollbar: OverlayScrollbarHandle | null = null;
+
+    function detachPanelScrollbar(): void {
+      panelScrollbar?.detach();
+      panelScrollbar = null;
+    }
+
+    function attachPanelScrollbar(): void {
+      detachPanelScrollbar();
+      const viewport = sheetMode.value ? sheetListRef.value : panelRef.value;
+      if (!viewport) return;
+      panelScrollbar = attachOverlayScrollbars(viewport, {
+        axis: "vertical",
+        // Both surfaces get an exact host: the popout host (panel + tracks)
+        // and the sheet body wrapper (list only — the sheet panel also
+        // carries the grabber/title bands, which rails must not span).
+        host: sheetMode.value ? sheetBodyRef.value : popoutHostRef.value,
+      });
+    }
 
     // ── sheet duplicate-title filter ───────────────────────────────
     // Composition-slot consumers often open a sheet whose content
@@ -205,6 +238,9 @@ export default defineComponent({
       if (!props.open || sheetMode.value) return;
       const target = e.target as Node;
       if (props.anchorRef?.contains(target)) return;
+      // The host wraps BOTH the panel and the overlay scrollbar tracks —
+      // scrolling a long menu through its custom bar must not dismiss it.
+      if (popoutHostRef.value?.contains(target)) return;
       if (panelRef.value?.contains(target)) return;
       close();
     }
@@ -246,6 +282,14 @@ export default defineComponent({
           // flush rewinds exactly to the fresh entry instead of past it.
           if (backGuard.entries > 0) backGuard.release();
           backGuard.push();
+          // The scrolling surface mounts on this very render (popout
+          // subtree or sheet body) — attach the overlay scrollbar once
+          // the DOM has landed. A same-tick open→close must not arm it
+          // on the leaving panel.
+          void nextTick(() => {
+            if (!props.open) return;
+            attachPanelScrollbar();
+          });
           if (!sheetMode.value) {
             document.addEventListener("click", onDocumentClick, true);
           } else {
@@ -277,6 +321,7 @@ export default defineComponent({
         } else {
           document.removeEventListener("click", onDocumentClick, true);
           window.removeEventListener("resize", onResize);
+          detachPanelScrollbar();
           stopDupTitleSync();
           backGuard.release();
           if (handle.value) {
@@ -295,6 +340,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener("resize", onResize);
+      detachPanelScrollbar();
       stopDupTitleSync();
       overlay.close();
       backGuard.destroy();
@@ -363,9 +409,15 @@ export default defineComponent({
     /** The live panel root element — sheet or popout, or null while closed.
      * Lets option-owning consumers (HkSelect) scope row queries to THEIR
      * panel instead of the whole document, where another open panel's
-     * rows (or HkPopupSelect's) could match first. */
+     * rows (or HkPopupSelect's) could match first.
+     * On the desktop popout this returns the fixed HOST — the box that
+     * contains the panel AND the overlay scrollbar tracks — so dismissal
+     * containment (HkMenu's deepestPanelAt) treats scrollbar interaction
+     * as inside the panel, exactly like the native bar it replaces. The
+     * host holds no option rows of its own, so row queries are unaffected. */
     expose({
-      panelEl: () => panelRef.value ?? null,
+      panelEl: () =>
+        (sheetMode.value ? panelRef.value : popoutHostRef.value ?? panelRef.value) ?? null,
       /**
        * Cancel this panel's pending back-guard rewind. Menu-like hosts
        * (HkMenu) call it when a row selection ITSELF starts an in-page
@@ -415,7 +467,9 @@ export default defineComponent({
                   {props.title ? (
                     <div class="hk-select-sheet-title">{props.title}</div>
                   ) : null}
-                  <div class="hk-select-sheet-list" ref={sheetListRef}>{slots.default?.()}</div>
+                  <div class="hk-select-sheet-body" ref={sheetBodyRef}>
+                    <div class="hk-select-sheet-list" ref={sheetListRef}>{slots.default?.()}</div>
+                  </div>
                 </div>
               ) : null}
             </Transition>
@@ -424,18 +478,21 @@ export default defineComponent({
       }
 
       // Desktop popout: no enter/leave transition on master either —
-      // mount on open, unmount on close.
+      // mount on open, unmount on close. The fixed host carries the
+      // inline coords + popup-manager z-index and anchors the overlay
+      // scrollbar tracks; the popout inside keeps every visual rule.
       if (!props.open) return null;
       return (
         <Teleport to="body">
-          <div
-            ref={panelRef}
-            class="hk-select-popout"
-            style={{ ...coords.value, zIndex: popoutZ.value }}
-            aria-label={props.title || undefined}
-            onKeydown={forwardKeydown}
-          >
-            {slots.default?.()}
+          <div ref={popoutHostRef} class="hk-select-popout-host" style={{ ...coords.value, zIndex: popoutZ.value }}>
+            <div
+              ref={panelRef}
+              class="hk-select-popout"
+              aria-label={props.title || undefined}
+              onKeydown={forwardKeydown}
+            >
+              {slots.default?.()}
+            </div>
           </div>
         </Teleport>
       );

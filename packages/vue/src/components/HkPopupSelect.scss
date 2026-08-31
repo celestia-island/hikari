@@ -99,29 +99,13 @@
   overflow: hidden;
 }
 
-/* The viewport is an HkScrollContainer; items live in its inner scroller,
- * whose default hides the bar — a themed thin bar beats the native chrome. */
+/* The viewport is an HkScrollContainer: its overlay scrollbar (the shared
+ * chrome in theme/_scrollbar.scss) draws the bar — no native styling here. */
 .hk-popup-select-viewport .hk-scroll-container-viewport {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-2);
-  scrollbar-width: thin !important;
-  scrollbar-color: rgb(var(--color-border) / 45%) transparent;
-
-  &::-webkit-scrollbar {
-    display: block !important;
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgb(var(--color-border) / 45%);
-    border-radius: 3px;
-  }
 }
 
 .hk-popup-select-item {

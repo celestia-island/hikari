@@ -1,6 +1,7 @@
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
 
 import "./HkSidebar.scss";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 export default defineComponent({
   name: "HkSidebar",
@@ -14,6 +15,27 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const panelWidth = computed(() => (props.collapsed ? "56px" : props.width));
+
+    // Persistent layout surface — attach the overlay scrollbar (shared
+    // chrome) once and detach on unmount.
+    const bodyRef = ref<HTMLElement>();
+    // Positioned wrapper containing ONLY the body — the rail host (the
+    // panel also contains the header/footer bands).
+    const bodyWrapRef = ref<HTMLElement>();
+    let bodyScrollbar: OverlayScrollbarHandle | null = null;
+
+    onMounted(() => {
+      if (!bodyRef.value) return;
+      bodyScrollbar = attachOverlayScrollbars(bodyRef.value, {
+        axis: "vertical",
+        host: bodyWrapRef.value,
+      });
+    });
+
+    onBeforeUnmount(() => {
+      bodyScrollbar?.detach();
+      bodyScrollbar = null;
+    });
 
     return () => (
       <aside
@@ -34,7 +56,9 @@ export default defineComponent({
           {slots.header ? (
             <header class="hk-sidebar-header">{slots.header()}</header>
           ) : null}
-          <div class="hk-sidebar-body">{slots.default?.()}</div>
+          <div ref={bodyWrapRef} class="hk-sidebar-body-wrap">
+            <div ref={bodyRef} class="hk-sidebar-body">{slots.default?.()}</div>
+          </div>
           {slots.footer ? (
             <footer class="hk-sidebar-footer">{slots.footer()}</footer>
           ) : null}

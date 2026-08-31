@@ -129,6 +129,14 @@
    * --hk-sheet-footer-gap for its action buttons); this sheet has no
    * footer, so this is the family baseline. */
   padding-bottom: calc(var(--space-12, 0.75rem) + env(safe-area-inset-bottom, 0px));
+
+  /* Overlay scrollbar (useOverlayScrollbar, sheet mode only) — the
+     native chrome is hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-popover-sheet-grabber {

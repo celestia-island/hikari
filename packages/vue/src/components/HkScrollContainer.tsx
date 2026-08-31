@@ -11,33 +11,15 @@ import {
 
 import { useI18n } from "../i18n/context";
 import "./HkScrollContainer.scss";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { provideScrollWindow } from "../composables/useScrollWindow";
-import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
-import { notifyScrollStart, onceFrame, scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
+import { scheduleFrame, notifyScrollStart, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import HFab from "./HkFab";
 
 type ScrollAxis = "vertical" | "horizontal" | "both";
 type ScrollMode = "traditional" | "windowed";
 type ScrollAlign = "start" | "center";
 type OverflowSense = "none" | "start" | "end" | "both";
-
-interface AxisState {
-  track: HTMLElement;
-  thumb: HTMLElement;
-  dragging: boolean;
-  dragStartClient: number;
-  dragStartScroll: number;
-  hideTimer: CronHandle;
-}
-
-interface DragHandlers {
-  onDown: (e: MouseEvent) => void;
-  onMove: (e: MouseEvent) => void;
-  onUp: () => void;
-  onTrackClick: (e: MouseEvent) => void;
-  onEnter: () => void;
-  onLeave: () => void;
-}
 
 /** Which edges of an axis still hide content, derived from live scroll
  *  geometry. "end" = content continues past the end edge (can scroll
@@ -83,12 +65,12 @@ export default defineComponent({
   setup(props, { slots, expose }) {
     const { t } = useI18n();
     const viewportRef = ref<HTMLElement>();
-    let ro: ResizeObserver;
+    let ro: ResizeObserver | null = null;
     let scheduled: AnimationHandle | null = null;
-    let vState: AxisState | null = null;
-    let hState: AxisState | null = null;
-    let vDrag: DragHandlers | null = null;
-    let hDrag: DragHandlers | null = null;
+    // Overlay track/thumb machinery lives in the shared composable;
+    // this component keeps overflow sensing, autoFollow, the aligner,
+    // fade, windowed mode and the scrollbar opt-in.
+    let overlay: OverlayScrollbarHandle | null = null;
 
     // Sensed overflow mirrored onto the root as data-h-overflow /
     // data-v-overflow so consumers can style edge affordances in pure
@@ -142,8 +124,11 @@ export default defineComponent({
       }
     }
 
-    watch(() => [props.align, props.axis] as const, () => {
+    watch(() => [props.align, props.axis] as const, ([, axis], [, prevAxis]) => {
       syncAlignObserver();
+      // Follow an axis change at runtime by rebuilding the overlay
+      // tracks so the enabled axes stay in sync with the viewport.
+      if (axis !== prevAxis && props.scrollbar) mountScrollbars();
       scheduleUpdate();
     }, { flush: "post" });
 
@@ -151,31 +136,15 @@ export default defineComponent({
     function mountScrollbars() {
       const vp = viewportRef.value;
       if (!vp) return;
-      const containerEl = vp.parentElement;
-      if (!containerEl) return;
-      if (hasV()) {
-        vState = makeState(false);
-        containerEl.appendChild(vState.track);
-        vDrag = makeDragHandlers(vState, false);
-        attachAxis(vState, vDrag);
-      }
-      if (hasH()) {
-        hState = makeState(true);
-        containerEl.appendChild(hState.track);
-        hDrag = makeDragHandlers(hState, true);
-        attachAxis(hState, hDrag);
-      }
+      overlay?.detach();
+      overlay = attachOverlayScrollbars(vp, { axis: props.axis });
     }
 
     /** Tear down and rebuild the overlay tracks when the `scrollbar`
      *  opt-in flips at runtime (HkTabs passes the prop through). */
     watch(() => props.scrollbar, (on) => {
-      detachAxis(vState, vDrag);
-      detachAxis(hState, hDrag);
-      vState = null;
-      hState = null;
-      vDrag = null;
-      hDrag = null;
+      overlay?.detach();
+      overlay = null;
       if (on) {
         mountScrollbars();
         update();
@@ -222,23 +191,6 @@ export default defineComponent({
       settleHandle = scheduleFrame(runSettleFrame);
     }
 
-    function makeState(horizontal: boolean): AxisState {
-      const track = document.createElement("div");
-      track.className = "hk-scrollbar-track";
-      if (horizontal) track.setAttribute("data-axis", "horizontal");
-      const thumb = document.createElement("div");
-      thumb.className = "hk-scrollbar-thumb";
-      track.appendChild(thumb);
-      return {
-        track,
-        thumb,
-        dragging: false,
-        dragStartClient: 0,
-        dragStartScroll: 0,
-        hideTimer: undefined as unknown as CronHandle,
-      };
-    }
-
     function scheduleUpdate() {
       scheduled?.disconnect();
       scheduled = scheduleFrame(() => {
@@ -247,11 +199,13 @@ export default defineComponent({
       });
     }
 
+    /** Component-side sensing pass: mirror the live scroll geometry
+     *  onto the root as data-h-overflow / data-v-overflow. The overlay
+     *  thumb geometry is the composable's job (it listens to scroll
+     *  and resizes itself). */
     function update() {
       const vp = viewportRef.value;
       if (!vp) return;
-      if (vState) updateAxis(vp, vState, false);
-      if (hState) updateAxis(vp, hState, true);
       senseOverflow(vp);
     }
 
@@ -273,43 +227,10 @@ export default defineComponent({
       }
     }
 
-    function updateAxis(vp: HTMLElement, s: AxisState, horizontal: boolean) {
-      const scrollSize = horizontal ? vp.scrollWidth : vp.scrollHeight;
-      const clientSize = horizontal ? vp.clientWidth : vp.clientHeight;
-      const scrollPos = horizontal ? vp.scrollLeft : vp.scrollTop;
-      if (scrollSize <= clientSize) {
-        s.track.style.display = "none";
-        return;
-      }
-      s.track.style.display = "";
-      const trackSize = horizontal ? s.track.clientWidth : s.track.clientHeight;
-      const ratio = clientSize / scrollSize;
-      const thumbSize = Math.max(ratio * trackSize, 20);
-      const maxScroll = scrollSize - clientSize;
-      const maxTrack = trackSize - thumbSize;
-      const offset = maxScroll > 0 ? (scrollPos / maxScroll) * maxTrack : 0;
-      if (horizontal) {
-        s.thumb.style.width = `${thumbSize}px`;
-        s.thumb.style.transform = `translateX(${offset}px)`;
-      } else {
-        s.thumb.style.height = `${thumbSize}px`;
-        s.thumb.style.transform = `translateY(${offset}px)`;
-      }
-    }
-
-    function flash(s: AxisState | null) {
-      if (!s) return;
-      s.track.classList.add("is-scrolling");
-      s.hideTimer?.disconnect();
-      s.hideTimer = scheduleCronAfter(() => s.track.classList.remove("is-scrolling"), 1200);
-    }
-
     function onScroll() {
       if (!viewportRef.value) return;
       scheduleUpdate();
       if (props.scrollbar) notifyScrollStart();
-      flash(vState);
-      flash(hState);
       if (props.autoFollow) recomputePinned();
     }
 
@@ -324,74 +245,6 @@ export default defineComponent({
       if (vp.scrollLeft !== prev) {
         e.preventDefault();
       }
-    }
-
-    function makeDragHandlers(s: AxisState, horizontal: boolean): DragHandlers {
-      const onDown = (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const vp = viewportRef.value;
-        if (!vp) return;
-        s.dragging = true;
-        s.dragStartClient = horizontal ? e.clientX : e.clientY;
-        s.dragStartScroll = horizontal ? vp.scrollLeft : vp.scrollTop;
-        s.thumb.classList.add("is-dragging");
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      };
-      const onMove = (e: MouseEvent) => {
-        const vp = viewportRef.value;
-        if (!vp || !s.dragging) return;
-        const scrollSize = horizontal ? vp.scrollWidth : vp.scrollHeight;
-        const clientSize = horizontal ? vp.clientWidth : vp.clientHeight;
-        const delta = (horizontal ? e.clientX : e.clientY) - s.dragStartClient;
-        const thumbSize = Math.max((clientSize / scrollSize) * clientSize, 20);
-        const trackRange = clientSize - thumbSize;
-        if (trackRange <= 0) return;
-        const target = s.dragStartScroll + (delta / trackRange) * (scrollSize - clientSize);
-        if (horizontal) vp.scrollLeft = target;
-        else vp.scrollTop = target;
-      };
-      const onUp = () => {
-        s.dragging = false;
-        s.thumb.classList.remove("is-dragging");
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      };
-      const onTrackClick = (e: MouseEvent) => {
-        if (e.target === s.thumb) return;
-        const vp = viewportRef.value;
-        if (!vp) return;
-        const rect = s.track.getBoundingClientRect();
-        const ratio = horizontal
-          ? (e.clientX - rect.left) / rect.width
-          : (e.clientY - rect.top) / rect.height;
-        const max = (horizontal ? vp.scrollWidth : vp.scrollHeight) - (horizontal ? vp.clientWidth : vp.clientHeight);
-        if (horizontal) vp.scrollLeft = ratio * max;
-        else vp.scrollTop = ratio * max;
-      };
-      const onEnter = () => s.track.classList.add("is-hovering");
-      const onLeave = () => s.track.classList.remove("is-hovering");
-      return { onDown, onMove, onUp, onTrackClick, onEnter, onLeave };
-    }
-
-    function attachAxis(s: AxisState, d: DragHandlers) {
-      s.thumb.addEventListener("mousedown", d.onDown);
-      s.track.addEventListener("click", d.onTrackClick);
-      s.track.addEventListener("mouseenter", d.onEnter);
-      s.track.addEventListener("mouseleave", d.onLeave);
-    }
-
-    function detachAxis(s: AxisState | null, d: DragHandlers | null) {
-      if (!s || !d) return;
-      s.thumb.removeEventListener("mousedown", d.onDown);
-      s.track.removeEventListener("click", d.onTrackClick);
-      s.track.removeEventListener("mouseenter", d.onEnter);
-      s.track.removeEventListener("mouseleave", d.onLeave);
-      document.removeEventListener("mousemove", d.onMove);
-      document.removeEventListener("mouseup", d.onUp);
-      s.hideTimer?.disconnect();
-      s.track.remove();
     }
 
     onMounted(() => {
@@ -432,12 +285,13 @@ export default defineComponent({
         vp.removeEventListener("scroll", onScroll);
         vp.removeEventListener("wheel", onWheel);
       }
-      detachAxis(vState, vDrag);
-      detachAxis(hState, hDrag);
+      overlay?.detach();
+      overlay = null;
       scheduled?.disconnect();
       settleHandle?.disconnect();
       settleHandle = null;
       ro?.disconnect();
+      ro = null;
       followRO?.disconnect();
       followRO = null;
       alignRO?.disconnect();
@@ -474,6 +328,7 @@ export default defineComponent({
      *  slot's own children resizing without the aligner box changing,
      *  or non-align consumers swapping content). */
     function refresh(): void {
+      overlay?.update();
       update();
     }
 

@@ -43,6 +43,15 @@
   border-radius: 3px;
 }
 
+/* Track host for the code block's horizontal overlay rail — emitted in
+   the generated markup (see renderMarkdown) so the rail hugs the BLOCK
+   instead of spanning the whole markdown body. Deliberately unstyled
+   beyond positioning: no padding/border/overflow means the block's own
+   vertical margins still collapse through it exactly as before. */
+.hk-md-code-wrap {
+  position: relative;
+}
+
 .hk-md-code {
   position: relative;
   margin: 0.75em 0;
@@ -54,6 +63,14 @@
   cursor: pointer;
   overflow-x: auto;
   background: var(--hi-color-bg-subtle, #0d1117);
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-md-code pre {

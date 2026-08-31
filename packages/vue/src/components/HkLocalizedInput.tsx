@@ -13,8 +13,9 @@ import "./HkLocalizedInput.scss";
 export interface HkLocaleOption {
   code: string;
   /** Display label — apps pass the SAME text their global language
-   *  switcher shows (e.g. the autonym "简体中文" / "English"), so the
-   *  chip and the system picker never disagree. */
+   *  switcher shows (e.g. the autonym "简体中文" / "English"). The chip
+   *  renders the bare label; menu rows render the label plus the
+   *  parenthesized code, so the code lives only in the opened menu. */
   label: string;
   /** Optional flag glyph rendered in the menu rows, matching the app's
    *  language switcher rows when they carry one. */
@@ -54,8 +55,10 @@ const DELETE_LANGUAGE_KEY = "__hkLocalizedInputDelete";
  *         holds a translation, else to the first remaining translation
  *         (or `sourceLang` itself once the map is empty).
  *
- * The chip label is `{label} ({code})` using the app-provided label, and
- * the popup participates in the shared modal/dropdown stacking contexts
+ * The chip shows ONLY the language label (the app-provided autonym,
+ * e.g. "简体中文"); the locale code appears ONLY in the opened menu rows
+ * ("简体中文 (zh-Hans)") so the code never burns space inside the field.
+ * The popup participates in the shared modal/dropdown stacking contexts
  * via HkMenu's popup-manager integration — safe inside modals.
  *
  * Contract:
@@ -130,10 +133,14 @@ export const HkLocalizedInput = defineComponent({
       return props.localeOptions.find((o) => o.code === code)?.label ?? code;
     }
 
-    /** Chip text: app label + parenthesized code, e.g. "English (en)". */
-    const chipLabel = computed(
-      () => `${localeLabel(editLang.value)} (${editLang.value})`,
-    );
+    /** Chip text: the bare language label, e.g. "English" — the locale
+     *  code appears only in the menu rows. */
+    const chipLabel = computed(() => localeLabel(editLang.value));
+
+    /** Menu-row text: label + parenthesized code, e.g. "English (en)". */
+    function menuLabel(code: string): string {
+      return `${localeLabel(code)} (${code})`;
+    }
 
     /** Languages with an existing translation, excluding the one being
      *  edited — those are the switch targets in the menu's first level. */
@@ -159,7 +166,7 @@ export const HkLocalizedInput = defineComponent({
     const menuItems = computed<HkMenuItem[]>(() => [
       ...switchableCodes.value.map((code) => ({
         key: code,
-        label: localeLabel(code),
+        label: menuLabel(code),
         flag: props.localeOptions.find((o) => o.code === code)?.flag,
       })),
       ...(addableOptions.value.length > 0
@@ -169,7 +176,7 @@ export const HkLocalizedInput = defineComponent({
               label: t("hikari::localizedInput.addLanguage", "Add language"),
               children: addableOptions.value.map((o) => ({
                 key: o.code,
-                label: o.label,
+                label: menuLabel(o.code),
                 flag: o.flag,
               })),
             },
@@ -186,7 +193,7 @@ export const HkLocalizedInput = defineComponent({
               danger: true,
               children: filledCodes.value.map((code) => ({
                 key: deleteKey(code),
-                label: localeLabel(code),
+                label: menuLabel(code),
                 flag: props.localeOptions.find((o) => o.code === code)?.flag,
                 danger: true,
               })),

@@ -1,7 +1,8 @@
-import { computed, defineComponent } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, watch } from "vue";
 import { HMarkdownRenderer, HModal, useClipboard, type ModalAction } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 import "./HkProtocolModal.scss";
 
@@ -62,6 +63,32 @@ export const HkProtocolModal = defineComponent({
       },
     ]);
 
+    // ── overlay scrollbar (shared chrome) ─────────────────────────
+    // With `bodyHeight` set the body becomes a height-capped scroll
+    // region NESTED inside HkModal's overlay-equipped body scroller —
+    // without the overlay it would be a surviving native bar (the exact
+    // double-scroll this library eliminates). Attach on mount, re-sync
+    // when the cap flips, detach on unmount.
+    const bodyRef = ref<HTMLElement | null>(null);
+    let bodyScrollbar: OverlayScrollbarHandle | null = null;
+    function syncBodyScrollbar(): void {
+      if (props.bodyHeight && bodyRef.value) {
+        if (!bodyScrollbar) bodyScrollbar = attachOverlayScrollbars(bodyRef.value);
+      } else {
+        bodyScrollbar?.detach();
+        bodyScrollbar = null;
+      }
+    }
+    function bindBodyRef(el: unknown): void {
+      bodyRef.value = (el as HTMLElement) ?? null;
+      syncBodyScrollbar();
+    }
+    watch(() => props.bodyHeight, () => syncBodyScrollbar());
+    onBeforeUnmount(() => {
+      bodyScrollbar?.detach();
+      bodyScrollbar = null;
+    });
+
     return () => (
       <HModal
         modelValue={props.modelValue}
@@ -72,8 +99,9 @@ export const HkProtocolModal = defineComponent({
         footerActions={footerActions.value}
       >
         <div
+          ref={bindBodyRef}
           class="s-protocol-modal"
-          style={props.bodyHeight ? { maxHeight: props.bodyHeight, overflowY: "auto" } : undefined}
+          style={props.bodyHeight ? { maxHeight: props.bodyHeight } : undefined}
         >
           {copied.value && <p class="s-protocol-modal-copied">{t("hikari::protocol.copied", "Copied")}</p>}
           <HMarkdownRenderer content={props.content} />

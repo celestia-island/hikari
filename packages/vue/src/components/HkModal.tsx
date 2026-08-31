@@ -1,6 +1,7 @@
 import {
   computed,
   defineComponent,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -18,6 +19,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -430,6 +432,29 @@ export default defineComponent({
 
     // --- Lifecycle ---
 
+    // Overlay scrollbar on the scrolling body (shared chrome). The body
+    // mounts with the modal surface (shouldRender) and survives through
+    // the leave transition; attach after the DOM lands, detach on close
+    // and unmount so nothing leaks inside the Teleport portal.
+    let bodyScrollbar: OverlayScrollbarHandle | null = null;
+
+    function detachBodyScrollbar(): void {
+      bodyScrollbar?.detach();
+      bodyScrollbar = null;
+    }
+
+    watch(shouldRender, (render) => {
+      if (render) {
+        void nextTick(() => {
+          if (!shouldRender.value || !scrollContainerRef.value) return;
+          detachBodyScrollbar();
+          bodyScrollbar = attachOverlayScrollbars(scrollContainerRef.value, { axis: "vertical" });
+        });
+      } else {
+        detachBodyScrollbar();
+      }
+    });
+
     watch(
       () => props.modelValue,
       (val) => {
@@ -483,6 +508,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       unmounted = true;
+      detachBodyScrollbar();
       teardownWindowed();
       teardownAutoFollow();
       backGuard.destroy();

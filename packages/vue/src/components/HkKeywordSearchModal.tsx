@@ -1,10 +1,11 @@
-import { computed, defineComponent, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 
 import "./HkKeywordSearchModal.scss";
 import HModal from "./HkModal";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 interface FuzzyMatch {
   matched: boolean;
@@ -160,6 +161,15 @@ export default defineComponent({
     }
 
     const resultsRef = ref<HTMLDivElement | null>(null);
+    // Positioned wrapper around ONLY the results list — the rail host.
+    const resultsWrapRef = ref<HTMLDivElement | null>(null);
+    let resultsScrollbar: OverlayScrollbarHandle | null = null;
+
+    onBeforeUnmount(() => {
+      resultsScrollbar?.detach();
+      resultsScrollbar = null;
+      debounceTimer?.disconnect();
+    });
 
     watch(debouncedQuery, (q) => {
       if (semanticActive.value) void runSemantic(q);
@@ -185,6 +195,23 @@ export default defineComponent({
           debouncedQuery.value = "";
           semanticResults.value = [];
           semanticLoading.value = false;
+          // The results list mounts with the modal body — attach the
+          // overlay scrollbar (shared chrome) once the DOM has landed;
+          // detach on close so nothing leaks in the modal portal.
+          void nextTick(() => {
+            if (!props.modelValue || !resultsRef.value) return;
+            resultsScrollbar?.detach();
+            // Exact host = the results wrapper (see the render): the
+            // broader modal body also holds the search-input row, and a
+            // rail spanning that would light up in the wrong place.
+            resultsScrollbar = attachOverlayScrollbars(resultsRef.value, {
+              axis: "vertical",
+              host: resultsWrapRef.value ?? undefined,
+            });
+          });
+        } else {
+          resultsScrollbar?.detach();
+          resultsScrollbar = null;
         }
       },
     );
@@ -251,7 +278,8 @@ export default defineComponent({
             )}
           </div>
 
-          <div class="hk-kw-search-results" ref={resultsRef}>
+          <div class="hk-kw-search-results-wrap" ref={resultsWrapRef}>
+            <div class="hk-kw-search-results" ref={resultsRef}>
             {semanticActive.value ? (
               semanticLoading.value && semanticResults.value.length === 0 ? (
                 <div class="hk-kw-search-empty">
@@ -308,6 +336,7 @@ export default defineComponent({
                 </button>
               ))
             )}
+            </div>
           </div>
         </div>
       </HModal>

@@ -1,10 +1,11 @@
-import { computed, defineComponent, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, onUpdated, ref, watch, type PropType } from "vue";
 import { ChevronDown, ChevronRight } from "lucide-vue-next";
 import { HDivider, useClipboard } from "@celestia-island/hikari";
 
 import type { HToolCallStatus } from "./HkChatTypes";
 import { formatTokenCount } from "../utils/format";
 import { useI18n } from "../i18n/context";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 import "./HkToolBlock.scss";
 
@@ -258,6 +259,33 @@ export const HkToolBlock = defineComponent({
     const expanded = ref(props.defaultExpanded);
     const jsonExpanded = ref(new Set<number>());
 
+    // Overlay scrollbars (shared chrome) on the code panes. The panes
+    // mount/unmount with expansion + status, so the set is reconciled
+    // after every render: handles whose pane left the DOM detach (which
+    // also removes the track from the pane's parent), new panes attach.
+    const rootRef = ref<HTMLElement>();
+    const paneScrollbars: Array<{ el: HTMLElement; handle: OverlayScrollbarHandle }> = [];
+
+    function syncCodePanes() {
+      for (let i = paneScrollbars.length - 1; i >= 0; i--) {
+        if (!paneScrollbars[i].el.isConnected) {
+          paneScrollbars[i].handle.detach();
+          paneScrollbars.splice(i, 1);
+        }
+      }
+      for (const el of rootRef.value?.querySelectorAll<HTMLElement>(".s-tool-code, .s-tool-code-block, .s-tool-json-tree") ?? []) {
+        if (paneScrollbars.some((p) => p.el === el)) continue;
+        paneScrollbars.push({ el, handle: attachOverlayScrollbars(el, { axis: "both" }) });
+      }
+    }
+
+    onMounted(syncCodePanes);
+    onUpdated(syncCodePanes);
+    onBeforeUnmount(() => {
+      for (const p of paneScrollbars) p.handle.detach();
+      paneScrollbars.length = 0;
+    });
+
     watch(() => props.status, (newStatus) => {
       if (newStatus === "done") expanded.value = true;
     });
@@ -474,7 +502,7 @@ export const HkToolBlock = defineComponent({
     }
 
     return () => (
-      <div class={blockClass.value}>
+      <div ref={rootRef} class={blockClass.value}>
         <div class="s-tool-header" onClick={toggleExpand}>
           <span class="s-tool-header-title" onClick={(e) => { e.stopPropagation(); copyTitle(); }}>{displayTitle.value}</span>
           <span class={`s-tool-header-badge is-${props.status}`}>{statusLabel.value}</span>
@@ -502,15 +530,17 @@ export const HkToolBlock = defineComponent({
             )}
 
             {execCodeLines.value && (
-              <div class="s-tool-code-block hljs" onClick={copyExecCode}>
-                <table class="s-tool-code-table">
-                  {execCodeLines.value.map((line, i) => (
-                    <tr key={i}>
-                      <td class="s-tool-code-num"><span>{line.num}</span></td>
-                      <td class="s-tool-code-content" innerHTML={line.html} />
-                    </tr>
-                  ))}
-                </table>
+              <div class="s-tool-code-block-wrap">
+                <div class="s-tool-code-block hljs" onClick={copyExecCode}>
+                  <table class="s-tool-code-table">
+                    {execCodeLines.value.map((line, i) => (
+                      <tr key={i}>
+                        <td class="s-tool-code-num"><span>{line.num}</span></td>
+                        <td class="s-tool-code-content" innerHTML={line.html} />
+                      </tr>
+                    ))}
+                  </table>
+                </div>
               </div>
             )}
 
@@ -527,15 +557,17 @@ export const HkToolBlock = defineComponent({
 
             {props.variant === "default" && props.callText && (
               callHighlighted.value ? (
-                <div class="s-tool-code-block hljs">
-                  <table class="s-tool-code-table">
-                    {callHighlighted.value.map((line, i) => (
-                      <tr key={i}>
-                        <td class="s-tool-code-num"><span>{line.num}</span></td>
-                        <td class="s-tool-code-content" innerHTML={line.html} />
-                      </tr>
-                    ))}
-                  </table>
+                <div class="s-tool-code-block-wrap">
+                  <div class="s-tool-code-block hljs">
+                    <table class="s-tool-code-table">
+                      {callHighlighted.value.map((line, i) => (
+                        <tr key={i}>
+                          <td class="s-tool-code-num"><span>{line.num}</span></td>
+                          <td class="s-tool-code-content" innerHTML={line.html} />
+                        </tr>
+                      ))}
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div class="s-tool-call">

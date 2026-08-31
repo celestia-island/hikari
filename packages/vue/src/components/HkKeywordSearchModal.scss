@@ -52,6 +52,12 @@
   }
 }
 
+/* Track host for the results list's overlay scrollbar — hugs the LIST
+   band only (the modal body also holds the search-input row). */
+.hk-kw-search-results-wrap {
+  position: relative;
+}
+
 .hk-kw-search-results {
   display: flex;
   flex-direction: column;
@@ -60,6 +66,13 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 var(--hi-space-2, 0.125rem);
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-kw-search-result {

@@ -106,10 +106,35 @@ afterEach(() => {
 });
 
 describe("HkLocalizedInput", () => {
-  it("shows the app-provided label plus code on the chip", () => {
+  it("shows only the language label on the chip, never the code", () => {
     const { container } = mountInput({ modelValue: "Plant overview" });
-    expect(queryChip(container).textContent).toContain("English (en)");
+    expect(queryChip(container).textContent).toContain("English");
+    expect(queryChip(container).textContent).not.toContain("(en)");
     expect(queryField(container).value).toBe("Plant overview");
+  });
+
+  it("carries the locale code only in the opened menu rows", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    // The chip stays code-free while the menu is closed.
+    expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
+    await openMenu(container);
+    const labels = menuRows().map((r) => r.textContent ?? "");
+    // Switch-level rows read "label (code)".
+    expect(labels.some((l) => l.includes("简体中文 (zh-Hans)"))).toBe(true);
+    // "Add language" cascade children carry the code too.
+    const addRow = menuRows().find((r) => (r.textContent ?? "").includes("Add language"));
+    addRow!.click();
+    await nextTick();
+    await nextTick();
+    const childLabels = menuRows().map((r) => r.textContent ?? "");
+    expect(childLabels.some((l) => l.includes("日本語 (ja)"))).toBe(true);
+    // Filled languages are not offered in the add cascade.
+    expect(childLabels.some((l) => l.includes("English (en)"))).toBe(false);
+    // The chip STILL shows no code while the menu is open.
+    expect(queryChip(container).textContent).not.toContain("(");
   });
 
   it("commits the edited text into translations on every input", async () => {
@@ -158,7 +183,8 @@ describe("HkLocalizedInput", () => {
     expect(events.modelValue.at(-1)).toBe("工厂总览");
     expect(events.languagechange.at(-1)).toBe("zh-Hans");
     expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
-    expect(queryChip(container).textContent).toContain("简体中文 (zh-Hans)");
+    expect(queryChip(container).textContent).toContain("简体中文");
+    expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     // Menu closed after the switch.
     expect(menuRows().length).toBe(0);
   });
@@ -183,7 +209,8 @@ describe("HkLocalizedInput", () => {
     expect(events.modelValue.at(-1)).toBe("");
     expect(events.languagechange.at(-1)).toBe("ja");
     expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
-    expect(queryChip(container).textContent).toContain("日本語 (ja)");
+    expect(queryChip(container).textContent).toContain("日本語");
+    expect(queryChip(container).textContent).not.toContain("(ja)");
     expect(menuRows().length).toBe(0);
   });
 
@@ -339,7 +366,7 @@ describe("HkLocalizedInput", () => {
     const dangerLabels = menuRows()
       .filter((r) => r.hasAttribute("data-danger"))
       .map((r) => r.querySelector(".hk-menu-label")?.textContent ?? "");
-    expect(dangerLabels).toEqual(expect.arrayContaining(["English", "简体中文"]));
+    expect(dangerLabels).toEqual(expect.arrayContaining(["English (en)", "简体中文 (zh-Hans)"]));
   });
 
   it("deletes a non-current language and keeps the edit state untouched", async () => {
@@ -354,7 +381,8 @@ describe("HkLocalizedInput", () => {
     expect(events.modelValue).toEqual([]);
     expect(events.languagechange).toEqual([]);
     expect(queryField(container).value).toBe("Plant overview");
-    expect(queryChip(container).textContent).toContain("English (en)");
+    expect(queryChip(container).textContent).toContain("English");
+    expect(queryChip(container).textContent).not.toContain("(en)");
     expect(menuRows().length).toBe(0);
   });
 
@@ -371,14 +399,16 @@ describe("HkLocalizedInput", () => {
     row!.click();
     await nextTick();
     await nextTick();
-    expect(queryChip(container).textContent).toContain("简体中文 (zh-Hans)");
+    expect(queryChip(container).textContent).toContain("简体中文");
+    expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openMenu(container);
     await clickDeleteRow("简体中文");
     await nextTick();
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue.at(-1)).toBe("Plant overview");
     expect(events.languagechange.at(-1)).toBe("en");
-    expect(queryChip(container).textContent).toContain("English (en)");
+    expect(queryChip(container).textContent).toContain("English");
+    expect(queryChip(container).textContent).not.toContain("(en)");
     expect(menuRows().length).toBe(0);
     expect(document.activeElement).toBe(queryField(container));
   });
@@ -394,7 +424,8 @@ describe("HkLocalizedInput", () => {
     expect(events.translations.at(-1)).toEqual({ "zh-Hans": "工厂总览" });
     expect(events.modelValue.at(-1)).toBe("工厂总览");
     expect(events.languagechange.at(-1)).toBe("zh-Hans");
-    expect(queryChip(container).textContent).toContain("简体中文 (zh-Hans)");
+    expect(queryChip(container).textContent).toContain("简体中文");
+    expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
   });
 
   it("deletes the last translation and empties the field", async () => {

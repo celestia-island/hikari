@@ -16,6 +16,7 @@ import {
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { useReportedTransition } from "../composables/useReportedTransition";
+import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { onceFrame } from "../runtime/animationBus";
 import "./HkPopover.scss";
 
@@ -293,11 +294,24 @@ export default defineComponent({
 
     function fullCleanup() {
       cleanup();
+      detachPanelScrollbar();
       coords.value = {};
     }
 
     function onPopupAfterLeave() {
       fullCleanup();
+    }
+
+    // Overlay scrollbar (shared chrome) — only the mobile sheet scrolls
+    // its panel; the fixed positioning wrapper rendered around the panel
+    // (panelHostRef) hosts the tracks, since the panel's own parent is
+    // the teleported body.
+    const panelHostRef = ref<HTMLElement>();
+    let panelScrollbar: OverlayScrollbarHandle | null = null;
+
+    function detachPanelScrollbar(): void {
+      panelScrollbar?.detach();
+      panelScrollbar = null;
     }
 
     watch(
@@ -319,7 +333,19 @@ export default defineComponent({
           if (sheetMode.value) {
             // Bottom sheet: nothing to anchor-measure; the scrim handles
             // dismissal (the outside-click shield is desktop-only).
-            nextTick(() => { panelRef.value?.focus?.(); });
+            nextTick(() => {
+              panelRef.value?.focus?.();
+              // The sheet mounts on this render — attach the overlay
+              // once the DOM has landed (sheet panels scroll; desktop
+              // popovers size to content and need none).
+              if (props.modelValue && sheetMode.value && panelRef.value) {
+                detachPanelScrollbar();
+                panelScrollbar = attachOverlayScrollbars(panelRef.value, {
+                  axis: "vertical",
+                  host: panelHostRef.value,
+                });
+              }
+            });
           } else {
             computeInitialCoords();
             attachObservers();
@@ -358,6 +384,9 @@ export default defineComponent({
     function onDocumentClick(e: MouseEvent) {
       if (!props.closeOnBackdrop || !props.modelValue) return;
       const target = e.target as Node;
+      // panelHostRef wraps the panel AND the overlay scrollbar tracks —
+      // scrolling through the custom bar must not count as a backdrop click.
+      if (panelHostRef.value?.contains(target)) return;
       if (panelRef.value?.contains(target)) return;
       if (props.anchorRef?.contains(target)) return;
       close();
@@ -434,29 +463,30 @@ export default defineComponent({
           onAfterLeave={() => { animBus.cancel(); onPopupAfterLeave(); }}
         >
           {props.modelValue ? (
-            <div
-              ref={panelRef}
-              class={[
-                "hk-popover-panel",
-                ...(sheetMode.value ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),
-                props.glass ? "hii-dropdown-content" : "",
-                ...(typeof attrs.class === "string" ? [attrs.class]
-                  : Array.isArray(attrs.class) ? attrs.class as string[]
-                  : attrs.class && typeof attrs.class === "object"
-                    ? Object.entries(attrs.class as Record<string, unknown>)
-                        .filter(([, v]) => v).map(([k]) => k)
-                  : []),
-              ]}
-              style={panelStyle.value}
-              role="dialog"
-              aria-modal={sheetMode.value ? "true" : undefined}
-              tabindex={sheetMode.value ? "-1" : undefined}
-              onKeydown={onPanelKeydown}
-            >
-              {sheetMode.value && (
-                <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
-              )}
-              {slots.default?.()}
+            <div ref={panelHostRef} style={panelStyle.value}>
+              <div
+                ref={panelRef}
+                class={[
+                  "hk-popover-panel",
+                  ...(sheetMode.value ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),
+                  props.glass ? "hii-dropdown-content" : "",
+                  ...(typeof attrs.class === "string" ? [attrs.class]
+                    : Array.isArray(attrs.class) ? attrs.class as string[]
+                    : attrs.class && typeof attrs.class === "object"
+                      ? Object.entries(attrs.class as Record<string, unknown>)
+                          .filter(([, v]) => v).map(([k]) => k)
+                      : []),
+                ]}
+                role="dialog"
+                aria-modal={sheetMode.value ? "true" : undefined}
+                tabindex={sheetMode.value ? "-1" : undefined}
+                onKeydown={onPanelKeydown}
+              >
+                {sheetMode.value && (
+                  <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
+                )}
+                {slots.default?.()}
+              </div>
             </div>
           ) : null}
         </Transition>

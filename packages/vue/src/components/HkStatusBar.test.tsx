@@ -142,13 +142,14 @@ describe("HkStatusBar", () => {
     tag.dispatchEvent(tap());
     await nextTick();
     expect(onRetry).toHaveBeenCalledTimes(1);
-    // happy-dom never fires transitionend, so the panel may still be
-    // mid leave-animation here; assert closure semantics (leaving or
-    // gone), not DOM removal timing.
-    const tail = document.body.querySelector<HTMLElement>(".hk-popover-panel");
-    if (tail) {
-      expect(tail.className).toContain("hk-popover-leave");
-    }
+    // happy-dom never fires transitionend, so the panel is guaranteed to
+    // still be mid leave-animation here (the leave class can only be
+    // removed by the transition's after-leave hook). The Transition's
+    // direct child is the positioning wrapper around the panel, so the
+    // leave class lands on it and the real panel must sit INSIDE it.
+    const tail = document.body.querySelector<HTMLElement>('[class*="hk-popover-leave"]');
+    expect(tail).not.toBeNull();
+    expect(tail?.querySelector(".hk-popover-panel")).not.toBeNull();
   });
 
   it("a scroll-like touch ending over the tag does not retry", async () => {

@@ -13,3 +13,14 @@
   color: rgb(var(--color-success));
   font-size: var(--text-xs, 0.75rem);
 }
+
+/* With `bodyHeight` set the body becomes its own scroll region (nested
+ * inside HkModal's body scroller) — overlay chrome only. */
+.s-protocol-modal {
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

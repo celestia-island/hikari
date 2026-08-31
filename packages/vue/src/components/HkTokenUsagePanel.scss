@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .s-token-panel {
   display: flex;
   flex-direction: column;
@@ -41,7 +44,7 @@
 }
 
 .s-token-panel-num {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -74,7 +77,7 @@
 
 .s-token-panel-model-count {
   color: rgb(var(--color-muted));
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   flex-shrink: 0;
 }
 

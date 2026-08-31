@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .hk-zoom-toolbar {
   display: flex;
   align-items: center;
@@ -21,7 +24,7 @@
 
 .hk-zoom-label {
   font-size: var(--text-2xs);
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   color: rgb(var(--color-muted));
   min-width: 32px;
   text-align: center;

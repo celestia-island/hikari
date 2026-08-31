@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .s-about-modal {
   display: flex;
   flex-direction: column;
@@ -58,7 +61,7 @@
 .s-about-modal-row-value {
   font-size: var(--text-sm, 0.8125rem);
   color: rgb(var(--color-text));
-  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", monospace);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
 }
 
 .s-about-modal-links {

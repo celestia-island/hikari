@@ -1,3 +1,6 @@
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .hk-markdown {
   font-size: 0.875rem;
   line-height: 1.7;
@@ -36,7 +39,7 @@
 }
 
 .hk-markdown code {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: 0.85em;
   background: var(--hi-color-bg-subtle, #21262d);
   padding: 0.15em 0.35em;
@@ -93,7 +96,7 @@
 .hk-md-plain {
   margin: 0;
   padding: 0.5rem 0;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: 0.75rem;
   line-height: 1.6;
   color: var(--hi-color-text-primary, #c9d1d9);

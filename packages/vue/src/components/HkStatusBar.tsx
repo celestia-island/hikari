@@ -2,6 +2,7 @@ import { defineComponent, ref, type PropType } from "vue";
 import { Wifi, WifiOff, Globe, Cable, Monitor, Cog, Plug } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
+import { HIKARI_FONT_MONO } from "../theme/fontContext";
 
 import HPopover from "./HkPopover";
 import type { HkConnectionInfo } from "./HkConnectionInfo";
@@ -300,7 +301,7 @@ export const HkStatusBar = defineComponent({
                       {statusText}
                     </span>
                     {latency !== null && (
-                      <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: "0.6875rem" }}>
+                      <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, fontWeight: 600, fontSize: "0.6875rem" }}>
                         {latency} ms
                       </span>
                     )}
@@ -313,7 +314,7 @@ export const HkStatusBar = defineComponent({
                           .replace("{maxRetries}", String(info.maxRetries > 0 ? info.maxRetries : 3))}
                       </span>
                       {countdown > 0 && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: "var(--font-mono, monospace)", marginLeft: "8px" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, marginLeft: "8px" }}>
                           <HkCountdownDigit value={countdown} />
                         </span>
                       )}
@@ -329,13 +330,13 @@ export const HkStatusBar = defineComponent({
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Monitor size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                         <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.panel", "Panel")}</span>
-                        <span style={{ fontFamily: "var(--font-mono, monospace)" }}>{pv}</span>
+                        <span style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}>{pv}</span>
                       </div>
                       {ev && (
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <Cog size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                           <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.engine", "Engine")}</span>
-                          <span style={{ fontFamily: "var(--font-mono, monospace)" }}>{fmtVer(ev, props.engineBuildHash)}</span>
+                          <span style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})` }}>{fmtVer(ev, props.engineBuildHash)}</span>
                         </div>
                       )}
                     </>

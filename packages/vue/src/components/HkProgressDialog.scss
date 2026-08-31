@@ -2,6 +2,8 @@
 // carry the `::-webkit-scrollbar` half of the native-bar hide, so the
 // pane's visual block lives here like every other overlay-scroll
 // consumer (see packages/theme/styles/_scrollbar.scss).
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
 /* Track host: wraps ONLY the log pane so the rail hugs the log band,
    not the spinner/progress bands above it. */
 .s-progress-dialog-log-wrap {
@@ -23,7 +25,7 @@
   border-radius: 0.375rem;
   background: rgba(0, 0, 0, 0.06);
   padding: 0.5rem;
-  font-family: monospace;
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: 0.75rem;
   line-height: 1.5;
 }

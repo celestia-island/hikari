@@ -383,13 +383,15 @@ export default defineComponent({
 
     const panelStyle = computed(() => {
       if (sheetMode.value) {
-        // Bottom sheet: pinned to the bottom edge, full width, inside the
-        // top inset reserved for the secondary-window breadcrumb strip
-        // (same convention as the modal mobile docking).
+        // Bottom sheet: pinned above the bottom edge with the SAME
+        // host-tunable gap as the HkModal mobile docking
+        // (--hk-sheet-bottom-gap) so every bottom-up window belongs to
+        // one sheet family; full width, inside the top inset reserved
+        // for the secondary-window breadcrumb strip.
         return {
           left: "0",
           right: "0",
-          bottom: "0",
+          bottom: "var(--hk-sheet-bottom-gap, 0.375rem)",
           top: "auto" as const,
           position: "fixed" as const,
           pointerEvents: "auto" as const,

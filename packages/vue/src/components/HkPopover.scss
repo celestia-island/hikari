@@ -107,12 +107,28 @@
   border-left: 0;
   border-right: 0;
   border-bottom: 0;
-  max-height: min(72vh, calc(100vh - var(--hk-sheet-top-inset, 4.25rem)));
+  max-height: min(
+    72vh,
+    calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0.375rem)
+    )
+  );
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-top: 0;
+  /* The sheet's bottom-edge distance itself comes from the shared
+   * --hk-sheet-bottom-gap (inline in HkPopover's sheet style); here the
+   * content keeps the last row clear of the home bar: the safe-area
+   * inset stacked on a 12px family base, which also restores a bottom
+   * cushion over the glass dropdown chrome (equal specificity, earlier
+   * in source, whose own bottom padding the sheet rule would otherwise
+   * zero out). The modal sheet footer goes further (it adds
+   * --hk-sheet-footer-gap for its action buttons); this sheet has no
+   * footer, so this is the family baseline. */
+  padding-bottom: calc(var(--space-12, 0.75rem) + env(safe-area-inset-bottom, 0px));
 }
 
 .hk-popover-sheet-grabber {

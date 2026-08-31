@@ -126,20 +126,29 @@
   flex-shrink: 0;
 }
 
+/* Theme rows speak the SAME grammar as every dropdown option
+ * (.hk-select-option): base-size text, roomy pill padding, hairline
+ * border that tints on hover and strengthens when active — so a theme
+ * list inside the popover reads like any select/menu panel. The old
+ * bespoke 6×8 tight rows (small text, borderless 12% wash) are what
+ * made the theme sheet read as "not from the standard dropdown". */
 .s-theme-item-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-6, 0.375rem);
+  gap: var(--space-8, 0.5rem);
   min-width: 0;
   flex: 1;
-  padding: var(--space-6, 0.375rem) var(--space-8, 0.5rem);
-  border: none;
-  border-radius: var(--radius-sm, 6px);
+  padding: var(--space-10, 0.625rem) var(--space-16, 1rem);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 8px);
   background: transparent;
   color: rgb(var(--color-text));
-  font-size: var(--text-sm, 0.8125rem);
+  font-size: var(--text-base, 0.875rem);
+  line-height: 1.35;
   text-align: left;
   cursor: pointer;
+  appearance: none;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
 .s-theme-item-name {
@@ -156,12 +165,14 @@
 }
 
 .s-theme-item-btn:hover:not([data-active]) {
-  background: rgb(var(--color-primary) / 12%);
+  background: var(--c-primary-subtle);
+  border-color: var(--c-primary-medium);
   color: rgb(var(--color-text));
 }
 
 .s-theme-item-btn[data-active] {
-  background: rgb(var(--color-primary) / 12%);
+  background: var(--c-primary-dim);
+  border-color: var(--c-primary-strong);
   color: rgb(var(--color-primary));
   font-weight: 600;
 }
@@ -183,4 +194,27 @@
 .s-theme-item-delete:hover {
   background: rgb(var(--color-error) / 15%);
   color: rgb(var(--color-error));
+}
+
+/* Touch-sized rows on phone widths — the same sheet bump the shared
+ * surfaces apply (.hk-select-sheet-list .hk-select-option → 14px
+ * vertical, .hk-select-sheet-panel .hk-menu-row → 44px min-height).
+ * The trailing slot mirrors the delete button's bumped footprint so
+ * the equal-highlight-width invariant across custom/non-custom rows
+ * survives on mobile too. */
+@media (max-width: 767px) {
+  .s-theme-item-btn {
+    min-height: 44px;
+    padding: var(--space-14, 0.875rem) var(--space-16, 1rem);
+  }
+
+  .s-theme-item-delete {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .s-theme-item-slot {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
 }

@@ -189,6 +189,9 @@ export default defineComponent({
           offset={4}
           backdrop={false}
           sheetOnMobile
+          // The mobile sheet is a blocking window layer — carry the
+          // field's i18n label so the breadcrumb names it.
+          title={props.label || props.placeholder || undefined}
           class="hk-popup-select-content"
         >
           <HkScrollContainer class="hk-popup-select-viewport">

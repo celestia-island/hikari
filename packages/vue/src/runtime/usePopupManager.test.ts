@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { watch } from "vue";
 
 import { POPUP_Z_BANDS, POPUP_Z_STEP, usePopupManager } from "./usePopupManager";
 
@@ -123,5 +124,77 @@ describe("usePopupManager z bands", () => {
 
     m.unregister(modal.id);
     expect(document.body.style.overflow).toBe("");
+  });
+});
+
+describe("usePopupManager blocking flag (breadcrumb levels)", () => {
+  it("defaults to non-blocking and stores explicit blocking", () => {
+    const m = freshManager();
+    const anchored = m.register("dropdown", false);
+    const sheet = m.register("dropdown", false, "Sheet", true);
+    const modal = m.register("modal", true, "Window");
+    expect(m.registry.value.get(anchored.id)!.blocking).toBe(false);
+    expect(m.registry.value.get(sheet.id)!.blocking).toBe(true);
+    // Window kinds list by kind alone; the flag stays false.
+    expect(m.registry.value.get(modal.id)!.blocking).toBe(false);
+  });
+
+  it("setBlocking flips the flag reactively (anchor ↔ sheet morph)", () => {
+    const m = freshManager();
+    const popup = m.register("dropdown", false, "Menu");
+    // Vue reactivity: the reassigned Map must notify registry watchers.
+    const flips: boolean[] = [];
+    const stop = watch(
+      () => m.registry.value.get(popup.id)?.blocking,
+      (v) => { if (v !== undefined) flips.push(v); },
+      { flush: "sync" },
+    );
+    m.setBlocking(popup.id, true);
+    expect(m.registry.value.get(popup.id)!.blocking).toBe(true);
+    m.setBlocking(popup.id, false);
+    expect(m.registry.value.get(popup.id)!.blocking).toBe(false);
+    expect(flips).toEqual([true, false]);
+    stop();
+    // Flipping to the same value is a no-op (no map churn).
+    const before = m.registry.value;
+    m.setBlocking(popup.id, false);
+    expect(m.registry.value).toBe(before);
+  });
+
+  it("dev-warns when a breadcrumb-visible popup registers untitled", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const m = freshManager();
+      m.register("dropdown", false); // anchored popover: fine, hidden level
+      expect(warn).not.toHaveBeenCalled();
+
+      m.register("dropdown", false, undefined, true); // blocking sheet: unnamed
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toMatch(/without a title/);
+
+      m.register("modal", true); // window kind: unnamed
+      m.register("drawer", true); // window kind: unnamed
+      expect(warn).toHaveBeenCalledTimes(3);
+
+      warn.mockClear();
+      m.register("modal", true, "Named");
+      m.register("dropdown", false, "Named sheet", true);
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("dev-warns when setBlocking promotes an untitled popup", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const m = freshManager();
+      const popup = m.register("dropdown", false);
+      expect(warn).not.toHaveBeenCalled();
+      m.setBlocking(popup.id, true);
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

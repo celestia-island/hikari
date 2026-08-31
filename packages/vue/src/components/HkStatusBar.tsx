@@ -283,6 +283,7 @@ export const HkStatusBar = defineComponent({
             // (desktop) popovers keep the leave-timer semantics.
             closeOnBackdrop={touchOpenedPopover.value}
             anchorRef={anchorRef.value}
+            title={t("hikari::statusBar.panel")}
           >
             <div
               onMouseenter={onPopupEnter}

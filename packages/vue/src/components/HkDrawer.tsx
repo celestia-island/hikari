@@ -167,7 +167,10 @@ export default defineComponent({
         if (unmounted) return;
         if (val) {
           cleanup();
-          handle.value = manager.register("drawer", true);
+          // Register with the drawer title so the modal-stack breadcrumb
+          // labels this layer by name — a drawer is a window on every
+          // form factor and must never fall back to a generic label.
+          handle.value = manager.register("drawer", true, props.title);
           overlayHook.open();
           previouslyFocused = document.activeElement as HTMLElement | null;
           if (backGuardEnabled() && backGuard.entries === 0) {
@@ -194,6 +197,17 @@ export default defineComponent({
         if (unmounted || !props.modelValue) return;
         if (enabled && backGuard.entries === 0) backGuard.push();
         else if (!enabled && backGuard.entries > 0) backGuard.release();
+      },
+    );
+
+    // A retitled open drawer must re-label its breadcrumb layer (same
+    // contract as HkModal's title watch).
+    watch(
+      () => props.title,
+      (newTitle) => {
+        if (handle.value && newTitle) {
+          manager.setTitle(handle.value.id, newTitle);
+        }
       },
     );
 

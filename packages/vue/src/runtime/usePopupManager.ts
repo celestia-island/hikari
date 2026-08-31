@@ -53,12 +53,41 @@ export const POPUP_Z_BANDS: Record<PopupKind, number> = {
  * +1 content/panel layer each overlay puts above its own root. */
 export const POPUP_Z_STEP = 2;
 
-interface PopupEntry {
+export interface PopupEntry {
   id: string;
   kind: PopupKind;
   locksScroll: boolean;
   zIndex: number;
   title?: string;
+  /**
+   * True while the popup is a blocking window the user "navigates" —
+   * a mobile bottom sheet that rose from a dropdown-kind surface. The
+   * modal-stack breadcrumb lists window kinds (modal/drawer) always and
+   * dropdown kinds only while they block like this; an anchored desktop
+   * popover stays a hidden level. Named surfaces only: a blocking popup
+   * without a title is a naming bug (dev warn at registration).
+   */
+  blocking: boolean;
+}
+
+/**
+ * Dev-time naming enforcement for the window-stack breadcrumb. Any popup
+ * that participates in the breadcrumb (window kinds, or a dropdown that
+ * currently blocks as a sheet) must carry a real, i18n-resolved title —
+ * a bare "Layer N" style fallback is exactly what the strip must never
+ * show. Production builds stay silent; the breadcrumb falls back to a
+ * generic localized label there.
+ */
+function warnUntitled(kind: PopupKind, blocking: boolean, title?: string): void {
+  const stacks = kind === "modal" || kind === "drawer" || blocking;
+  if (!stacks || title) return;
+  if (import.meta.env?.DEV) {
+    console.warn(
+      `[hikari] popup registered without a title (kind: ${kind}). ` +
+        "Window surfaces must pass an i18n-resolved title so the " +
+        "modal-stack breadcrumb can label their layer.",
+    );
+  }
 }
 
 function uid(): string {
@@ -89,6 +118,7 @@ export function usePopupManager() {
     kind: PopupKind,
     locksScroll = false,
     title?: string,
+    blocking = false,
   ): PopupHandle {
     const id = uid();
     const band = POPUP_Z_BANDS[kind];
@@ -100,8 +130,9 @@ export function usePopupManager() {
       if (slot > maxSlot) maxSlot = slot;
     }
     const zIndex = band + (maxSlot + 1) * POPUP_Z_STEP;
-    const entry: PopupEntry = { id, kind, locksScroll, zIndex, title };
+    const entry: PopupEntry = { id, kind, locksScroll, zIndex, title, blocking };
     registry.value.set(id, entry);
+    warnUntitled(kind, blocking, title);
     if (locksScroll) {
       scrollLockCount++;
       updateBodyScroll();
@@ -114,6 +145,19 @@ export function usePopupManager() {
     if (!entry) return;
     entry.title = title;
     registry.value = new Map(registry.value);
+  }
+
+  /**
+   * Flip the blocking flag while the popup stays open — a dropdown that
+   * docks as a bottom sheet when the viewport crosses the mobile
+   * breakpoint becomes a breadcrumb level mid-flight (and back).
+   */
+  function setBlocking(id: string, blocking: boolean) {
+    const entry = registry.value.get(id);
+    if (!entry || entry.blocking === blocking) return;
+    entry.blocking = blocking;
+    registry.value = new Map(registry.value);
+    if (blocking) warnUntitled(entry.kind, true, entry.title);
   }
 
   function unregister(id: string) {
@@ -134,6 +178,7 @@ export function usePopupManager() {
     registry: readonly(registry),
     register,
     setTitle,
+    setBlocking,
     unregister,
     isOpen,
   };

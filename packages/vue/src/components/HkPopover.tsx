@@ -60,6 +60,15 @@ export default defineComponent({
      * closes when crossing the breakpoint rather than hanging mid-morph.
      */
     sheetOnMobile: { type: Boolean, default: false },
+    /**
+     * i18n-resolved surface name. While anchored (desktop) the popover is
+     * a non-blocking hidden level, but the name still travels: the
+     * modal-stack breadcrumb lists this layer the moment the popover
+     * blocks as a mobile bottom sheet, and the sheet renders it as a
+     * heading band. Popovers without a title fall back to a generic
+     * localized label there (dev builds warn).
+     */
+    title: { type: String, default: "" },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -329,7 +338,16 @@ export default defineComponent({
       (open) => {
         if (open) {
           fullCleanup();
-          handle.value = manager.register("dropdown", false);
+          // Blocking follows the sheet decision: anchored (desktop) the
+          // popover is a hidden breadcrumb level, docked as a bottom
+          // sheet (mobile) it is a window layer and must be listed —
+          // hence the i18n `title` riding along.
+          handle.value = manager.register(
+            "dropdown",
+            false,
+            props.title || undefined,
+            sheetMode.value,
+          );
           if (sheetMode.value) {
             // Bottom sheet: nothing to anchor-measure; the scrim handles
             // dismissal (the outside-click shield is desktop-only).
@@ -361,6 +379,21 @@ export default defineComponent({
         }
       },
       { immediate: true },
+    );
+
+    // Viewport crossing the mobile breakpoint mid-open: the sheet↔anchor
+    // morph must carry the breadcrumb level with it (blocking flips both
+    // ways), and a retitled open sheet re-labels its layer.
+    watch(sheetMode, (mode) => {
+      if (handle.value) manager.setBlocking(handle.value.id, mode);
+    });
+    watch(
+      () => props.title,
+      (newTitle) => {
+        if (handle.value && newTitle) {
+          manager.setTitle(handle.value.id, newTitle);
+        }
+      },
     );
 
     onUnmounted(() => {
@@ -479,11 +512,18 @@ export default defineComponent({
                 ]}
                 role="dialog"
                 aria-modal={sheetMode.value ? "true" : undefined}
+                aria-label={props.title || undefined}
                 tabindex={sheetMode.value ? "-1" : undefined}
                 onKeydown={onPanelKeydown}
               >
                 {sheetMode.value && (
                   <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
+                )}
+                {sheetMode.value && props.title && (
+                  // Sheet heading band — opt-in via the `title` prop so
+                  // anchored-desktop consumers are untouched; keeps the
+                  // docked sheet naming itself like every other window.
+                  <div class="hk-popover-sheet-title">{props.title}</div>
                 )}
                 {slots.default?.()}
               </div>

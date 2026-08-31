@@ -158,6 +158,19 @@
   }
 }
 
+.hk-popover-sheet-title {
+  flex-shrink: 0;
+  // Same heading grammar as the select sheet title: small, semibold,
+  // slightly letterspaced, inset to the content edge. Hosts tune the
+  // leading inset via --hk-sheet-title-inset.
+  padding: 0 var(--space-16, 1rem) var(--space-8, 0.5rem)
+    var(--hk-sheet-title-inset, var(--space-16, 1rem));
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(var(--color-muted, 140 140 140));
+}
+
 .hk-popover-sheet-enter-active {
   transition:
     opacity 0.25s ease-out,

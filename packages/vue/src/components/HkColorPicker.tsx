@@ -1,7 +1,7 @@
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
-
 import { clampRgbToBands, hueDelta, rgbToHsl, wrapHue, type HueClamp } from "../theme/tokenGroups";
 import { useOverlay } from "../runtime/useOverlay";
+import { useI18n } from "../i18n/context";
 import HInput from "./HkInput";
 import HPopover from "./HkPopover";
 import "./HkColorPicker.scss";
@@ -150,6 +150,7 @@ export default defineComponent({
     change: (_rgb: { r: number; g: number; b: number }) => true,
   },
   setup(props, { emit }) {
+    const { t } = useI18n();
     const isOpen = ref(false);
     const triggerRef = ref<HTMLElement>();
 
@@ -241,6 +242,9 @@ export default defineComponent({
           offset={6}
           backdrop={false}
           sheetOnMobile
+          // The picker docks as a bottom sheet on phones — an i18n name
+          // keeps its breadcrumb layer and sheet heading labeled.
+          title={props.label || t("hikari::colorPicker.title", "Pick a color")}
           class="hk-color-picker-panel"
         >
           <div class="hk-color-picker-body">

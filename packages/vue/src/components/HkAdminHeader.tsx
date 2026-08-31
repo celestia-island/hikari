@@ -151,6 +151,7 @@ export const HkAdminHeader = defineComponent({
           anchorRef={userTriggerRef.value ?? null}
           class="w-56"
           sheetOnMobile
+          title={t("hikari::adminHeader.avatarTrigger")}
         >
           {/* Empty identity (fetchUser race on a hard refresh): render a
               single subtle placeholder row instead of the action items —

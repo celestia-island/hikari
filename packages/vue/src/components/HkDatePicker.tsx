@@ -539,6 +539,7 @@ export default defineComponent({
             placement="bottom-start"
             offset={6}
             backdrop={false}
+            title={t("hikari::datePicker.pickDate")}
             class="hk-dp-popover"
           >
             <div class={["hk-dp-panel", isTouch.value ? "is-touch" : ""].filter(Boolean).join(" ")}>

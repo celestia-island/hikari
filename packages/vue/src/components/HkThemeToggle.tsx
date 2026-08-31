@@ -23,6 +23,11 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
   return geoPromise;
 }
 
+/** The auto-mode merged run, hoisted: a fresh array literal per render
+ *  would re-fire HTabs' mergeKeys watcher (one redundant geometry
+ *  refresh) on every altitude tick. */
+const AUTO_MERGE_KEYS = ["light", "dark"];
+
 /**
  * HkThemeToggle — light/dark/auto theme control over hikari's theme engine.
  *
@@ -34,11 +39,14 @@ function geoOnce(): Promise<{ lat: number; lng: number }> {
  *
  * Color-mode group: the unified HTabs strip in segmented (radiogroup)
  * working mode (Auto | Light | Dark) — same pill chrome as every other
- * group. In AUTO mode the Light/Dark half is covered by the strip's
- * built-in tail overlay (`overlayFrom` + `#overlay`): a passive-looking
+ * group. In AUTO mode the Light/Dark halves merge into the strip's
+ * merged cell (`mergeKeys` + `#merged`): a passive-looking
  * solar-altitude strip in the strip's own trigger typography — pressing
  * it drops to manual on whichever side auto currently resolves to (day
  * → light, night → dark), so no separate resolve step is ever needed.
+ * The cell is NAKED like every unselected option (no border/surface of
+ * its own) and joins the group's animation context (swap transitions +
+ * the sliding indicator).
  */
 export const HkThemeToggle = defineComponent({
   name: "HkThemeToggle",
@@ -65,7 +73,7 @@ export const HkThemeToggle = defineComponent({
     const triggerRef = ref<HTMLElement | null>(null);
     const schemeDialogOpen = ref(false);
 
-    // ── Solar-altitude readout (auto-mode overlay) ──────────────────────
+    // ── Solar-altitude readout (auto-mode merged cell) ──────────────
     const geo = ref<{ lat: number; lng: number }>({ ...DEFAULT_GEO_LOCATION });
     const altTick = ref(0);
 
@@ -125,9 +133,10 @@ export const HkThemeToggle = defineComponent({
      * Fresh option objects (and fresh icon vnodes) on every call — never
      * cache icon vnodes across renders, or closing/reopening the popover
      * would re-mount the same vnode instances. In AUTO mode the Light/
-     * Dark segments are disabled: their area is covered by the group's
-     * tail overlay (the altitude strip), and the strip's press resolves
-     * to whichever manual side auto currently renders.
+     * Dark options collapse into the group's merged cell (the altitude
+     * strip) via `mergeKeys`; they stay flagged disabled for the
+     * degradation path (merge requested without the #merged slot) and
+     * for semantic clarity.
      */
     function modeOptions(): TabItem[] {
       const auto = isAutoMode.value;
@@ -211,10 +220,10 @@ export const HkThemeToggle = defineComponent({
                 tabs={modeOptions()}
                 modelValue={currentMode.value}
                 onUpdate:modelValue={onSelectMode}
-                overlayFrom={isAutoMode.value ? 0 : -1}
+                mergeKeys={isAutoMode.value ? AUTO_MERGE_KEYS : undefined}
               >
                 {{
-                  overlay: () => (
+                  merged: () => (
                     <button
                       type="button"
                       class="s-theme-mode-autoalt"

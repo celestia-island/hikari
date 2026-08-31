@@ -53,7 +53,9 @@ function mountToggle(externalCustomize: boolean): Mounted {
 
 async function settle(): Promise<void> {
   await nextTick();
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  // Leave transitions in the tab strip resolve through a ~1ms fallback
+  // timer in happy-dom — give swap transitions a real macrotask window.
+  await new Promise((resolve) => setTimeout(resolve, 20));
   await nextTick();
 }
 
@@ -75,7 +77,7 @@ function modeSegments(): HTMLButtonElement[] {
   return [...document.body.querySelectorAll<HTMLButtonElement>(".s-theme-mode-row .hk-tabs-trigger")];
 }
 
-function altitudeOverlay(): HTMLElement | null {
+function altitudeStrip(): HTMLElement | null {
   return document.body.querySelector<HTMLElement>(".s-theme-mode-autoalt");
 }
 
@@ -126,7 +128,7 @@ describe("HkThemeToggle external customization", () => {
 });
 
 describe("HkThemeToggle color-mode group", () => {
-  it("renders three segments with the altitude overlay only in auto mode", async () => {
+  it("renders three segments with the naked altitude cell only in auto mode", async () => {
     useTheme().setMode("dark");
     const { container } = mountToggle(true);
     await settle();
@@ -134,30 +136,36 @@ describe("HkThemeToggle color-mode group", () => {
     openMenu(container);
     await settle();
 
-    // Manual mode: plain three-way group, no cover strip.
+    // Manual mode: plain three-way group, no merged cell.
     expect(modeSegments()).toHaveLength(3);
-    expect(altitudeOverlay()).toBeNull();
+    expect(altitudeStrip()).toBeNull();
     const dark = modeSegments().find((b) => b.textContent?.includes("Dark"));
     const lightSeg = modeSegments().find((b) => b.textContent?.includes("Light"));
     expect(dark?.getAttribute("aria-checked")).toBe("true");
     expect(lightSeg?.disabled).toBe(false);
 
-    // Back to auto: the group's tail overlay covers the Light/Dark halves
-    // with the altitude strip (HTabs overlayFrom + #overlay).
+    // Back to auto: the Light/Dark options merge into the group's
+    // merged cell carrying the altitude strip (HTabs mergeKeys +
+    // #merged) — a real track child, NOT the retired absolute overlay.
     modeSegments()
       .find((b) => b.textContent?.includes("Auto"))!
       .click();
     await settle();
 
-    const overlay = altitudeOverlay();
-    expect(overlay).toBeTruthy();
-    expect(overlay!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
-    // The overlay rides inside the segmented group's overlay layer.
-    expect(overlay!.closest(".hk-tabs-overlay")).toBeTruthy();
-    // Covered segments sit out of the tab order; the strip is the single
-    // pointer surface while auto is active.
-    expect(lightSeg?.disabled).toBe(true);
-    expect(dark?.disabled).toBe(true);
+    const strip = altitudeStrip();
+    expect(strip).toBeTruthy();
+    expect(strip!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
+    const cell = strip!.closest(".hk-tabs-merged");
+    expect(cell).toBeTruthy();
+    expect(cell!.getAttribute("data-keys")).toBe("light dark");
+    expect(cell!.parentElement?.classList.contains("hk-tabs-list")).toBe(true);
+    expect(document.body.querySelector(".hk-tabs-overlay")).toBeNull();
+    // The merged Light/Dark triggers leave the radio order entirely —
+    // the strip is the single pointer surface while auto is active.
+    const segments = modeSegments();
+    expect(segments).toHaveLength(1);
+    expect(segments[0].textContent).toContain("Auto");
+    expect(segments[0].getAttribute("aria-checked")).toBe("true");
   });
 
   it("resolves auto to a manual side when the altitude strip is pressed", async () => {
@@ -167,16 +175,18 @@ describe("HkThemeToggle color-mode group", () => {
 
     openMenu(container);
     await settle();
-    expect(altitudeOverlay()).toBeTruthy();
+    expect(altitudeStrip()).toBeTruthy();
 
-    altitudeOverlay()!.click();
+    altitudeStrip()!.click();
     await settle();
 
-    expect(altitudeOverlay()).toBeNull();
+    expect(altitudeStrip()).toBeNull();
     const stored = localStorage.getItem(MODE_KEY);
     expect(["light", "dark"]).toContain(stored);
     const active = modeSegments().find((b) => b.getAttribute("aria-checked") === "true");
     expect(active?.textContent).toContain(stored === "light" ? "Light" : "Dark");
+    // All three plain triggers are back in the radio order.
+    expect(modeSegments()).toHaveLength(3);
   });
 
   it("keeps every theme row footprint uniform for list highlights", async () => {

@@ -321,7 +321,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
   border-right: 2px solid currentColor;
   animation: tech-typing-cursor 1s step-end infinite;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
   width: fit-content;
 }
 
@@ -362,7 +362,7 @@ $animation-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
     position: absolute;
     top: -2em;
     right: 1em;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 0.75em;
     color: rgba(0, 191, 255, 0.3);
     animation: tech-data-flow 3s linear infinite;

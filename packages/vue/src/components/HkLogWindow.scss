@@ -95,7 +95,7 @@
 
 .s-log-entry {
   padding: var(--space-2, 0.125rem) var(--space-4, 0.25rem);
-  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", monospace);
   font-size: var(--text-xs, 0.75rem);
   line-height: 1.5;
   color: rgb(var(--color-text));

@@ -47,7 +47,7 @@
         padding: 1rem;
         margin: 1.5rem 0;
         overflow-x: auto;
-        font-family: 'Courier New', monospace;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
         font-size: 0.875rem;
         line-height: 1.6;
     }
@@ -63,7 +63,7 @@
         background-color: var(--hi-color-surface-secondary);
         padding: 0.2rem 0.4rem;
         border-radius: 4px;
-        font-family: 'Courier New', monospace;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
         font-size: 0.875em;
         color: var(--hi-color-accent);
     }
@@ -109,7 +109,7 @@
         background-color: var(--hi-color-surface);
         padding: 0.5rem 0.75rem;
         border-radius: 4px;
-        font-family: 'Courier New', monospace;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
         font-size: 0.875rem;
         color: var(--hi-color-accent);
         display: inline-block;

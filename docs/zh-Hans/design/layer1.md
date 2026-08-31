@@ -153,9 +153,9 @@ packages/theme/styles/foundation.scss
 
 ```scss
 :root {
-  // 字体族
-  --hi-font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --hi-font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  // 字体族（与 packages/vue/src/theme/fontContext.ts 保持同步）
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
 
   // 字号
   --hi-font-size-xs: 0.75rem;            // 12px

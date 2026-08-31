@@ -510,7 +510,7 @@ impl StyledComponent for MarkdownEditorComponent {
     border: none;
     outline: none;
     resize: none;
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 14px;
     line-height: 1.6;
     color: var(--hi-text-primary);
@@ -549,7 +549,7 @@ impl StyledComponent for MarkdownEditorComponent {
     background-color: var(--hi-color-bg-elevated);
     padding: 2px 6px;
     border-radius: 4px;
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 13px;
 }
 

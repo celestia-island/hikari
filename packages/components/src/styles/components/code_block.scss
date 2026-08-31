@@ -25,7 +25,7 @@
     color: var(--hi-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-family: 'Courier New', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
 }
 
 .hk-code-block-content {
@@ -36,7 +36,7 @@
 
 .hk-code-block-code {
     display: block;
-    font-family: 'Courier New', monospace;
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', monospace;
     font-size: 0.875rem;
     line-height: 1.6;
     color: var(--hi-color-text-primary);

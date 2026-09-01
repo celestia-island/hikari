@@ -330,8 +330,15 @@ export default defineComponent({
               onFocus={(e) => { forwardFocus(true); emit("focus", e); }}
               onBlur={(e) => { forwardFocus(false); emit("blur", e); }}
               onKeydown={(e) => {
+                // Intercept Enter ONLY when the consumer wired a submit
+                // intent. A textarea must keep the native newline: the
+                // old unconditional preventDefault swallowed plain Enter
+                // on every submit-less textarea (chat composers in
+                // ctrl-enter mode could never insert a line break — the
+                // key just did nothing).
                 if (
                   e.key === "Enter" &&
+                  props.submitOnEnter &&
                   !e.isComposing &&
                   !e.ctrlKey &&
                   !e.metaKey &&

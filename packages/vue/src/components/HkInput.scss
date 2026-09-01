@@ -153,6 +153,16 @@
   min-height: 2.5rem;
 }
 
+/* Auto-growing fields measure their own height from content (inline
+   height=scrollHeight), so a native resize grip would fight the growth
+   and let users drag the field into a state the next keystroke snaps
+   back. (The historical resize:none for this lived under a
+   .hk-input-textarea[data-autogrow] attribute selector that never
+   matched — data-autogrow is stamped on the box, not the textarea.) */
+.hk-input-textarea-autogrow {
+  resize: none;
+}
+
 .hk-input-box[data-autogrow] {
   display: flex;
   flex-direction: column;

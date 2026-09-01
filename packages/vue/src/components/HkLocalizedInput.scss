@@ -50,3 +50,122 @@
   flex: none;
   opacity: 0.6;
 }
+
+/* ── multiline mode ──────────────────────────────────────────────────
+ * The base HkInput box flows affixes as a flex ROW (single-line input
+ * absolutely positioned over the box) — but a textarea-type element is
+ * in-flow, so the language chip would land BELOW the field. Pin it to
+ * the field's top-right corner instead and keep every text line clear
+ * of the chip column via the measured affix width. */
+.hk-localized-input[data-multiline] {
+  .hk-input-affix.hk-input-suffix {
+    position: absolute;
+    top: 6px;
+    right: var(--space-8, 8px);
+    margin-inline-start: 0;
+  }
+
+  .hk-input-element.hk-input-textarea {
+    padding-right: calc(var(--space-12, 12px) + var(--hk-input-affix-end-w, 0px));
+  }
+}
+
+/* ── translation tag cloud (menu header) ────────────────────────────
+ * One pill per already-translated language: click the body to switch
+ * the field to that language, click the trailing × to erase the
+ * translation outright. The cloud lives inside the HkMenu popout/sheet
+ * surface, above the "Add language" cascade row. */
+.hk-localized-input-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 15rem;
+  max-width: 20rem;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid var(--border-faint);
+}
+
+.hk-localized-input-tag {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 999px);
+  background: rgb(var(--color-surface) / var(--opacity-half, 50%));
+  overflow: hidden;
+  transition: border-color 0.12s ease, background 0.12s ease;
+
+  &:hover {
+    border-color: rgb(var(--color-primary) / 40%);
+  }
+
+  /* The language being edited right now. */
+  &[data-active] {
+    border-color: rgb(var(--color-primary) / 45%);
+    background: rgb(var(--color-primary) / 12%);
+  }
+}
+
+.hk-localized-input-tag-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 4px 3px 10px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+  appearance: none;
+}
+
+.hk-localized-input-tag-flag {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.hk-localized-input-tag-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-localized-input-tag[data-active] .hk-localized-input-tag-label {
+  font-weight: 600;
+}
+
+.hk-localized-input-tag-code {
+  flex-shrink: 0;
+  color: rgb(var(--color-muted));
+  font-size: calc(var(--text-xs) * 0.86);
+}
+
+/* Active marker dot — mirrors HkBadge's dot treatment. */
+.hk-localized-input-tag-dot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgb(var(--color-primary));
+}
+
+.hk-localized-input-tag-x {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  appearance: none;
+  transition: color 0.12s ease, background 0.12s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: rgb(var(--color-danger, 240 70 80));
+    background: rgb(var(--color-danger, 240 70 80) / 12%);
+  }
+}

@@ -37,6 +37,19 @@ export default defineComponent({
       default: "text",
     },
     /**
+     * Horizontal alignment of the text line. The centered default
+     * reserves affix clearance SYMMETRICALLY — both sides grow by the
+     * max of the measured affix widths — so the centered caret, typed
+     * text and placeholders stay on the box axis no matter which side
+     * carries an icon. `start` / `end` are the explicit edge
+     * alignments: they opt out of the symmetric reservation and pad
+     * each side only by the affix actually sitting on it.
+     */
+    align: {
+      type: String as () => "center" | "start" | "end",
+      default: "center",
+    },
+    /**
      * Overflow strategy for a placeholder longer than the input line:
      * `marquee` (default) scrolls it like a storefront sign — the text is
      * rendered three times inside a clipping window and the strip is
@@ -109,8 +122,12 @@ export default defineComponent({
     // underneath the affixes (the localized input's language chip used
     // to catch the scrolling placeholder). Both affixes are measured
     // and published as custom properties on the box; the element's
-    // horizontal padding and the marquee window insets consume them,
-    // so the text line always ends short of the chip.
+    // horizontal padding and the marquee window insets consume them.
+    // The CSS keys off the alignment: the centered default reserves
+    // max(start, end) on BOTH sides so the content box stays symmetric
+    // about the box axis (a lone prefix icon must not push the
+    // centered line off-center), while an explicit data-align="start"
+    // / "end" pads each side only by its own affix.
     const prefixEl = ref<HTMLElement | null>(null);
     const suffixEl = ref<HTMLElement | null>(null);
     const affixStartW = ref(0);
@@ -240,6 +257,12 @@ export default defineComponent({
           class={boxClass.value}
           style={boxVars.value}
           data-autogrow={isAutoGrow.value || undefined}
+          // Textarea boxes never carry the marker: their element is
+          // excluded by :not() anyway, and keeping it off also spares
+          // a textarea-scoped marquee from the per-side window insets.
+          data-align={
+            !isTextarea.value && props.align !== "center" ? props.align : undefined
+          }
         >
           {slots.prefix && (
             <span ref={prefixAffixRef} class="hk-input-affix hk-input-prefix">

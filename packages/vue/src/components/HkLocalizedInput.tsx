@@ -306,7 +306,6 @@ export const HkLocalizedInput = defineComponent({
                   "hikari::localizedInput.chooseLanguage",
                   "Choose editing language",
                 )}
-                title={t("hikari::localizedInput.chooseLanguage", "Choose editing language")}
                 onClick={(e: MouseEvent) => {
                   e.preventDefault();
                   e.stopPropagation();

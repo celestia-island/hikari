@@ -70,11 +70,10 @@ describe("HkModelTag", () => {
     expect(name?.textContent).toBe("qwen3-coder-plus");
   });
 
-  it("carries the full model id on the group title for hover-to-read", () => {
+  it("carries no native title — the hover card is the only tooltip", () => {
     const c = mount(tagNode({ model: "qwen3-coder-plus#8" }));
-    expect(c.querySelector(".s-model-tag-group")?.getAttribute("title")).toBe(
-      "qwen3-coder-plus#8",
-    );
+    const group = c.querySelector(".s-model-tag-group");
+    expect(group?.getAttribute("title")).toBeNull();
   });
 
   it("renders a bare model id without the number segment", () => {

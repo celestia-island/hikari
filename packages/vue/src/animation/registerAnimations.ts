@@ -98,3 +98,6 @@ registerCssAnimation("hk-flip-in");
 // components/HkVoiceInputPopup.scss — voice waveform bounce (loops
 // forever while listening; upstreamed from chest's plana-legacy).
 registerCssAnimation("s-voice-wave-bounce", { infinite: true });
+// components/HkPlaceholderMarquee.scss — overflowing placeholder sweep
+// (loops forever; pure CSS, loop geometry on inline custom properties).
+registerCssAnimation("hk-placeholder-marquee-scroll", { infinite: true });

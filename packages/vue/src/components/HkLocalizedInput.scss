@@ -5,6 +5,14 @@
   width: 100%;
 }
 
+/* Leading Languages glyph: balances the field's left cushion against the
+ * wrapped language chip on the right edge, so the centered text line stays
+ * on the box axis (HkInput reserves affix clearance symmetrically). */
+.hk-localized-input-lead {
+  color: rgb(var(--color-muted));
+  opacity: 0.75;
+}
+
 /* The wrapped language chip riding the input's right edge. A button so
  * it is focusable/AT-reachable, but it must never steal the field's
  * click-to-edit: pointer events stop at the chip boundary (handled in
@@ -65,32 +73,54 @@
     margin-inline-start: 0;
   }
 
+  .hk-input-affix.hk-input-prefix {
+    position: absolute;
+    top: 6px;
+    left: var(--space-8, 8px);
+    margin-inline-end: 0;
+  }
+
   .hk-input-element.hk-input-textarea {
     padding-right: calc(var(--space-12, 12px) + var(--hk-input-affix-end-w, 0px));
+    padding-left: calc(var(--space-12, 12px) + var(--hk-input-affix-start-w, 0px));
   }
 }
 
-/* ── translation tag cloud (menu header) ────────────────────────────
- * One pill per already-translated language: click the body to switch
- * the field to that language, click the trailing × to erase the
- * translation outright. The cloud lives inside the HkMenu popout/sheet
- * surface, above the "Add language" cascade row. */
+/* ── language list (menu header) ────────────────────────────────────
+ * One row per language currently present — including the one being
+ * edited. LEFT = the already-edited translation text (empty glyph while
+ * it holds nothing), RIGHT = the same language chip as the closed field.
+ * Clicking the chip ARMS the delete: the row turns danger-red and an ×
+ * button widens into the chip's slot (desktop: hovering the row swaps
+ * the × in without arming); clicking the × erases the translation. The
+ * list squashes/expands around adds and removals via HkListTransition. */
 .hk-localized-input-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 15rem;
-  max-width: 20rem;
-  padding: 10px 10px 8px;
+  padding: 10px 0 8px;
   border-bottom: 1px solid var(--border-faint);
 }
 
+/* Rows live inside the HkListTransition container (keyed by language). */
+.hk-localized-input-tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 15rem;
+  max-width: 20rem;
+}
+
 .hk-localized-input-tag {
-  display: inline-flex;
-  align-items: stretch;
-  max-width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 2.375rem;
+  /* 16px leading padding puts the row's text exactly on the shared text
+   * edge: the mobile sheet's title inset (2×--space-16 over the list's
+   * own 1×--space-16) and the desktop popout's option text edge
+   * (8px panel + 16px row). */
+  padding: 5px var(--space-16);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-md);
   background: rgb(var(--color-surface) / var(--opacity-half, 50%));
   overflow: hidden;
   transition: border-color 0.12s ease, background 0.12s ease;
@@ -104,19 +134,28 @@
     border-color: rgb(var(--color-primary) / 45%);
     background: rgb(var(--color-primary) / 12%);
   }
+
+  /* Armed delete: the whole row reads as the danger zone — the chip is
+   * about to be replaced by its confirm ×. */
+  &[data-armed] {
+    border-color: rgb(var(--color-danger, 240 70 80) / 55%);
+    background: rgb(var(--color-danger, 240 70 80) / 12%);
+  }
 }
 
 .hk-localized-input-tag-body {
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-width: 0;
-  padding: 3px 4px 3px 10px;
+  gap: 6px;
+  padding: 0;
   border: 0;
   background: transparent;
   color: rgb(var(--color-text));
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.4;
+  text-align: left;
   cursor: pointer;
   appearance: none;
 }
@@ -127,14 +166,54 @@
   line-height: 1;
 }
 
-.hk-localized-input-tag-label {
+.hk-localized-input-tag-text {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  /* No translation yet (usually the language being edited): the glyph
+   * stays muted so the row reads as "nothing stored here". */
+  &[data-empty] {
+    color: rgb(var(--color-muted));
+    opacity: 0.75;
+  }
 }
 
-.hk-localized-input-tag[data-active] .hk-localized-input-tag-label {
+.hk-localized-input-tag[data-active] .hk-localized-input-tag-text {
   font-weight: 600;
+}
+
+/* The language chip — same grammar as the closed field's chip. */
+.hk-localized-input-tag-locale {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(var(--color-primary) / 14%);
+  color: rgb(var(--color-text));
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+  appearance: none;
+  transition: color 0.12s ease, background 0.12s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: rgb(var(--color-primary) / 22%);
+  }
+}
+
+.hk-localized-input-tag-label {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 9rem;
 }
 
 .hk-localized-input-tag-code {
@@ -152,20 +231,47 @@
   background: rgb(var(--color-primary));
 }
 
+/* The confirm × occupies the chip's slot: while hidden its width
+ * collapses to 0 (so the chip sits at the row edge), and on arm/hover it
+ * widens in — pushing the chip label a step leftward, exactly where the
+ * × now sits. Width transitions animate the reflow smoothly. */
 .hk-localized-input-tag-x {
+  flex: none;
   display: inline-flex;
   align-items: center;
-  padding: 3px 6px;
+  justify-content: center;
+  width: 1.5rem;
+  max-width: 0;
+  padding: 0;
+  overflow: hidden;
   border: 0;
   background: transparent;
-  color: rgb(var(--color-muted));
+  color: rgb(var(--color-danger, 240 70 80));
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
   appearance: none;
-  transition: color 0.12s ease, background 0.12s ease;
+  transition: max-width 0.15s ease, opacity 0.12s ease;
 
   &:hover,
   &:focus-visible {
     color: rgb(var(--color-danger, 240 70 80));
-    background: rgb(var(--color-danger, 240 70 80) / 12%);
+  }
+}
+
+.hk-localized-input-tag[data-armed] .hk-localized-input-tag-x,
+.hk-localized-input-tag:hover .hk-localized-input-tag-x,
+.hk-localized-input-tag-x:focus-visible {
+  max-width: 1.5rem;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-localized-input-tag,
+  .hk-localized-input-tag-locale,
+  .hk-localized-input-tag-x,
+  .hk-localized-input-chip {
+    transition: none;
   }
 }

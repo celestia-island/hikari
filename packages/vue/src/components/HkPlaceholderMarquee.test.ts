@@ -94,6 +94,8 @@ describe("HkPlaceholderMarquee", () => {
     expect(copies).toHaveLength(1);
     expect(copies[0].textContent).toBe("用户名");
     expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(true);
+    // The strip carries no animation while the text fits.
+    expect(container.querySelector(".hk-placeholder-marquee__strip--scroll")).toBeNull();
   });
 
   it("renders three identical copies for the seamless wrap once the text overflows", async () => {
@@ -110,6 +112,19 @@ describe("HkPlaceholderMarquee", () => {
     expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(false);
   });
 
+  it("drives the sweep with CSS custom properties instead of per-frame JS", async () => {
+    const { container } = mountMarquee({ text: "advent calendar of placeholders" });
+    await forceGeometry(container, 500, 200);
+    const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    // The animation class rides the strip; the loop geometry is published
+    // as custom properties (never recomputed per frame by JS).
+    expect(strip.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(true);
+    expect(strip.style.getPropertyValue("--hk-marquee-shift")).toBe("-500px");
+    // 500px at the default 24px/s → 20.833s per loop.
+    expect(strip.style.getPropertyValue("--hk-marquee-duration")).toBe("20.833s");
+    expect(strip.getAttribute("style")).not.toContain("transform");
+  });
+
   it("collapses back to a hidden probe when the window grows past the text", async () => {
     const { container } = mountMarquee({ text: "shrinking story" });
     await forceGeometry(container, 500, 200);
@@ -118,6 +133,7 @@ describe("HkPlaceholderMarquee", () => {
     const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
     expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(1);
     expect(host.classList.contains("hk-placeholder-marquee--hidden")).toBe(true);
+    expect(container.querySelector(".hk-placeholder-marquee__strip--scroll")).toBeNull();
   });
 
   it("renders a single ellipsis copy in truncate variant", () => {
@@ -131,14 +147,64 @@ describe("HkPlaceholderMarquee", () => {
     expect(container.querySelector(".hk-placeholder-marquee")).toBeNull();
   });
 
-  it("exposes setActive without throwing in both directions", async () => {
+  it("exposes setActive: focus parks the sweep via data-parked, blur resumes", async () => {
     const { container } = mountMarquee({ text: "scrolls" });
+    await forceGeometry(container, 500, 200);
     await nextTick();
     const exposed = marqueeExposed(container);
     expect(exposed).toBeTruthy();
-    expect(typeof exposed!.setActive).toBe("function");
-    expect(() => exposed!.setActive!(true)).not.toThrow();
-    expect(() => exposed!.setActive!(false)).not.toThrow();
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    exposed!.setActive!(true);
+    await nextTick();
+    expect(host.hasAttribute("data-parked")).toBe(true);
+    exposed!.setActive!(false);
+    await nextTick();
+    expect(host.hasAttribute("data-parked")).toBe(false);
+  });
+
+  it("republishes the loop geometry when the text changes while the overflow persists", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const textRef = ref("first placeholder");
+    const app = createApp({
+      render: () => h(HkPlaceholderMarquee, { text: textRef.value }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    // Overflow with copy width 500.
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    const copy = container.querySelector(".hk-placeholder-marquee__copy") as HTMLElement;
+    Object.defineProperty(host, "clientWidth", { configurable: true, get: () => 200 });
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 500 } as DOMRect);
+    marqueeExposed(container)?.measure?.();
+    await nextTick();
+    // Swap the text AND the laid-out width while still overflowing — the
+    // vars must republish (this used to freeze on the stale measurement).
+    textRef.value = "a much longer second placeholder";
+    await nextTick();
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 700 } as DOMRect);
+    marqueeExposed(container)?.measure?.();
+    await nextTick();
+    const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    expect(strip.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(true);
+    expect(strip.style.getPropertyValue("--hk-marquee-shift")).toBe("-700px");
+    // 700px at 24px/s → 29.167s per loop.
+    expect(strip.style.getPropertyValue("--hk-marquee-duration")).toBe("29.167s");
+  });
+
+  it("parks the strip for a zero speed and reverses for a negative one", async () => {
+    const { container } = mountMarquee({ text: "parking and reversing", speed: 0 });
+    await forceGeometry(container, 500, 200);
+    const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    // speed 0 → no sweep at all (matches the old JS behavior: offset
+    // never advanced) — the strip shows the text statically.
+    expect(strip.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(false);
+    const { container: c2 } = mountMarquee({ text: "parking and reversing", speed: -24 });
+    await forceGeometry(c2, 500, 200);
+    const strip2 = c2.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    expect(strip2.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(true);
+    expect(strip2.style.getPropertyValue("--hk-marquee-direction")).toBe("reverse");
+    expect(strip2.style.getPropertyValue("--hk-marquee-duration")).toBe("20.833s");
   });
 
   it("re-renders the copy when the text prop changes", async () => {
@@ -204,6 +270,21 @@ describe("HkInput placeholder-variant", () => {
     await forceGeometry(container, 500, 200);
     expect(input.getAttribute("placeholder")).toBe("");
     expect(container.querySelectorAll(".hk-placeholder-marquee__copy")).toHaveLength(3);
+  });
+
+  it("parks the sweep when the host input is focused", async () => {
+    const { container } = mountInput({
+      placeholder: "focus parks the sweeping placeholder sign",
+    });
+    await forceGeometry(container, 500, 200);
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    const input = container.querySelector("input") as HTMLInputElement;
+    input.dispatchEvent(new Event("focus"));
+    await nextTick();
+    expect(host.hasAttribute("data-parked")).toBe(true);
+    input.dispatchEvent(new Event("blur"));
+    await nextTick();
+    expect(host.hasAttribute("data-parked")).toBe(false);
   });
 
   it("drops the overlay once the input holds a value", async () => {

@@ -16,6 +16,7 @@ import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSizeMorph } from "../composables/useSizeMorph";
 import "./HkSelect.scss";
 
 /**
@@ -114,6 +115,33 @@ export default defineComponent({
     const popoutAnim = useSurfaceTransition(250);
     const sheetScrimAnim = useSurfaceTransition(320);
     const sheetPanelAnim = useSurfaceTransition(320);
+    const panelRef = ref<HTMLElement>();
+    const sheetListRef = ref<HTMLElement>();
+    /** Natural-height probe inside the sheet list: the content wrapper
+     *  (slot children), whose height is the content's intrinsic height
+     *  regardless of scroll — the sheet size morph measures this (see
+     *  useSizeMorph). */
+    const sheetContentRef = ref<HTMLElement>();
+    // Content-driven size morphing on the mobile sheet: the panel follows
+    // content growth (a language list gaining rows, filtered options)
+    // with the height transition instead of snapping.
+    const morph = useSizeMorph(panelRef, sheetContentRef);
+    // Sheet panel transition hooks: the surface transition's own set plus
+    // the size-morph lifecycle (arm after enter — pinning during the
+    // slide-up would fight it — and release before the leave). The inner
+    // hooks("panel") call shares the same reported track, so merging is
+    // safe.
+    const sheetPanelHooks = {
+      ...sheetPanelAnim.hooks("panel"),
+      onAfterEnter: () => {
+        sheetPanelAnim.hooks("panel").onAfterEnter();
+        morph.start();
+      },
+      onBeforeLeave: () => {
+        sheetPanelAnim.hooks("panel").onBeforeLeave();
+        morph.stop();
+      },
+    };
 
     // Window-first back priority (HkModal convention): while this panel is
     // the topmost window, the back gesture closes it instead of navigating
@@ -156,8 +184,6 @@ export default defineComponent({
       if (handle.value) manager.setBlocking(handle.value.id, mode);
     });
 
-    const panelRef = ref<HTMLElement>();
-    const sheetListRef = ref<HTMLElement>();
     // Fixed positioning wrapper around the desktop popout — the overlay
     // scrollbar's track host (the popout itself teleports to body, whose
     // box is no positioning context for the tracks).
@@ -222,6 +248,10 @@ export default defineComponent({
       for (const el of list.querySelectorAll<HTMLElement>(
         "h1,h2,h3,h4,h5,h6,p,div,span,strong",
       )) {
+        // The sheet's own content wrapper (a plain div whose textContent
+        // picks up the heading's text) is never the candidate — the scan
+        // must descend to the actual heading it wraps.
+        if (el.classList.contains("hk-select-sheet-content")) continue;
         if ((el.textContent ?? "").trim() !== title) continue;
         if (el.matches(DUP_TITLE_CONTENT)) continue;
         if (el.closest(DUP_TITLE_CONTENT)) continue;
@@ -494,7 +524,7 @@ export default defineComponent({
                 />
               ) : null}
             </Transition>
-            <Transition name="hk-select-sheet" appear {...sheetPanelAnim.hooks("panel")}>
+            <Transition name="hk-select-sheet" appear {...sheetPanelHooks}>
               {props.open ? (
                 <div
                   ref={panelRef}
@@ -515,7 +545,11 @@ export default defineComponent({
                     <div class="hk-select-sheet-title">{props.title}</div>
                   ) : null}
                   <div class="hk-select-sheet-body" ref={sheetBodyRef}>
-                    <div class="hk-select-sheet-list" ref={sheetListRef}>{slots.default?.()}</div>
+                    <div class="hk-select-sheet-list" ref={sheetListRef}>
+                      <div class="hk-select-sheet-content" ref={sheetContentRef}>
+                        {slots.default?.()}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : null}

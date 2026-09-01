@@ -21,6 +21,7 @@ import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSizeMorph } from "../composables/useSizeMorph";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -84,6 +85,14 @@ export default defineComponent({
     const handle = ref<{ id: string; zIndex: number } | null>(null);
     const bodyRef = ref<HTMLElement>();
     const contentRef = ref<HTMLElement>();
+    /** Natural-height probe inside the scroll container: the body's
+     *  content wrapper, whose height is the content's intrinsic height
+     *  regardless of scroll — the size morph measures this (see
+     *  useSizeMorph). */
+    const innerRef = ref<HTMLElement>();
+    // Content-driven size morphing: the frame follows content growth with
+    // the height transition instead of snapping (see useSizeMorph).
+    const morph = useSizeMorph(contentRef, innerRef);
     const shouldRender = ref(false);
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
@@ -589,8 +598,15 @@ export default defineComponent({
               onAfterEnter={() => {
                 contentHooks.onAfterEnter();
                 onAfterEnter();
+                // Size morphs arm once the open choreography finished —
+                // pinning during enter would override its height reveal.
+                morph.start();
               }}
-              onBeforeLeave={contentHooks.onBeforeLeave}
+              onBeforeLeave={() => {
+                contentHooks.onBeforeLeave();
+                // Release the pinned height so the leave owns the frame.
+                morph.stop();
+              }}
               onAfterLeave={() => {
                 contentHooks.onAfterLeave();
                 onAfterLeave();
@@ -648,7 +664,7 @@ export default defineComponent({
                       class="hk-modal-body-scroll"
                       onScroll={onBodyScroll}
                     >
-                      <div class="hk-modal-body-inner">
+                      <div ref={innerRef} class="hk-modal-body-inner">
                         {props.windowed
                           ? renderWindowedBody()
                           : slots.default?.()}

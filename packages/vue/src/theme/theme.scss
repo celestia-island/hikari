@@ -57,10 +57,17 @@
 // not display:none — keeps layouts stable and is cheap. The rules are
 // attribute-scoped so they compose with the per-component
 // `prefers-reduced-motion` blocks instead of fighting them.
+//
+// Transitions participate in the same switch: duration collapses to one
+// frame, so surface/list choreography (popup fades, list squeeze-ins,
+// modal/sheet size morphing) snaps to its end state during suspension
+// instead of running motion the context asked to stop.
 html[data-css-animations="0"] *,
 html[data-css-animations="0"] *::before,
 html[data-css-animations="0"] *::after {
   animation-play-state: paused !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0 !important;
 }
 
 // Smooth scrolling is the keyframes' most expensive friend — it drives

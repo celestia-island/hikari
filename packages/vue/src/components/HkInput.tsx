@@ -52,10 +52,12 @@ export default defineComponent({
     /**
      * Overflow strategy for a placeholder longer than the input line:
      * `marquee` (default) scrolls it like a storefront sign — the text is
-     * rendered three times inside a clipping window and the strip is
-     * translated through the hikari animation bus; `truncate` hard-cuts it
-     * with an ellipsis. The marquee parks while the input is focused or
-     * holds a value, and under reduced-motion the strip stays parked.
+     * rendered three times inside a clipping window and the strip travels
+     * through a registered pure-CSS keyframes animation (loop geometry on
+     * inline custom properties, no per-frame JS — see
+     * HkPlaceholderMarquee); `truncate` hard-cuts it with an ellipsis.
+     * The marquee parks while the input is focused or holds a value, and
+     * under reduced-motion the strip stays parked.
      */
     placeholderVariant: {
       type: String as () => "marquee" | "truncate",

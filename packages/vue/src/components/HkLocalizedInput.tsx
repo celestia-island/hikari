@@ -1,11 +1,12 @@
 import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 
-import { ChevronDown, X } from "lucide-vue-next";
+import { ChevronDown, Languages, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 
 import HkBadge from "./HkBadge";
 import HkInput from "./HkInput";
+import HkListTransition from "./HkListTransition";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 import "./HkLocalizedInput.scss";
 
@@ -26,27 +27,40 @@ export interface HkLocaleOption {
 /** Marker key for the "Add language" cascade root (never a real locale). */
 const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
 
+/** Placeholder glyph for a language that holds no translation yet. */
+const EMPTY_GLYPH = "—";
+
 /**
  * HkLocalizedInput — single-field multilingual text editor.
  *
  * One input that edits ONE language at a time. The text is centered (the
- * base `HkInput` element style) and a small badge-like language chip sits
- * wrapped on the RIGHT edge of the field:
+ * base `HkInput` element style), a leading `Languages` glyph balances the
+ * field's left cushion against the wrapped language chip on the RIGHT
+ * edge (both affixes are measured, so the centered line stays on the box
+ * axis), and a small badge-like language chip rides the right edge:
  *
  *   - Click the field itself → normal text editing for the chip's language.
  *   - Click the chip → the language menu (`HkMenu`, so desktop gets an
  *     anchored popout and mobile a bottom-up sheet — identical behavior
- *     to the app-level language switcher). The menu body is a TAG CLOUD:
- *       · one pill tag per language that already holds a translation —
- *         INCLUDING the one being edited (marked active). Clicking the
- *         tag body switches the field to that language and keeps editing;
- *       · an × on each tag's right edge ERASES that translation straight
- *         away — no separate "delete language" cascade anymore. The menu
- *         stays open so several translations can be wiped in one pass;
- *         the cloud updates live. Deleting the language being edited
- *         moves the field to `sourceLang` if that still holds a
- *         translation, else to the first remaining translation (or
- *         `sourceLang` itself once the map is empty);
+ *     to the app-level language switcher). The menu body is a LANGUAGE
+ *     LIST — one row per language currently present, INCLUDING the one
+ *     being edited (its row carries the active tint and shows the empty
+ *     glyph while it holds no text):
+ *       · LEFT side of a row = the already-edited translation text;
+ *       · RIGHT side = the same language chip as the closed field —
+ *         click it to ARM deletion: the row turns danger-red, the chip
+ *         label shifts and an × button appears in the chip's slot;
+ *       · clicking the × erases the translation for real. On TOUCH the
+ *         arm is the guard (tap the chip, then tap the × that appears);
+ *         on DESKTOP hovering the row swaps in the × and a single click
+ *         on it erases — the hover IS the preview, the click the
+ *         confirm. The menu stays open so several translations can be
+ *         wiped in one pass; the list updates live with squeeze-in /
+ *         squeeze-out list transitions (HkListTransition, which reports
+ *         to the animation context and honors reduced motion). Deleting
+ *         the language being edited moves the field to `sourceLang` if
+ *         that still holds a translation, else to the first remaining
+ *         translation (or `sourceLang` itself once the map is empty);
  *       · an "Add language" cascade into the full locale catalog; picking
  *         one closes the menu and drops the field straight into edit
  *         state for the freshly added language.
@@ -70,11 +84,11 @@ const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
  *   - switching languages commits the current text, swaps `modelValue`
  *     to the target language's stored text ("" when none), and refocuses
  *     the field.
- *   - erasing a language via a tag × emits `update:translations` without
- *     that key; erasing the language being edited additionally swaps
- *     `modelValue` and emits `languagechange` for the fallback language
- *     (sourceLang first, then the first remaining translation, else
- *     sourceLang).
+ *   - erasing a language via the armed × emits `update:translations`
+ *     without that key; erasing the language being edited additionally
+ *     swaps `modelValue` and emits `languagechange` for the fallback
+ *     language (sourceLang first, then the first remaining translation,
+ *     else sourceLang).
  */
 export const HkLocalizedInput = defineComponent({
   name: "HkLocalizedInput",
@@ -118,6 +132,15 @@ export const HkLocalizedInput = defineComponent({
     const menuOpen = ref(false);
     const chipRef = ref<HTMLElement | null>(null);
     const rootRef = ref<HTMLElement | null>(null);
+    /** Code of the tag whose delete is ARMED (chip tapped but the × not
+     *  confirmed yet). At most one row is armed at a time. */
+    const armedCode = ref<string | null>(null);
+
+    // Closing the menu disarms any armed row — the next open starts
+    // calm instead of showing a red delete waiting to fire.
+    watch(menuOpen, (open) => {
+      if (!open) armedCode.value = null;
+    });
 
     // Follow the app locale: whenever the parent's sourceLang changes
     // (the app-level language switch moved), commit the current text
@@ -157,7 +180,7 @@ export const HkLocalizedInput = defineComponent({
     );
 
     /** The menu's action rows: only the "Add language" cascade remains —
-     *  existing translations live in the tag cloud above it. */
+     *  existing translations live in the tag list above it. */
     const menuItems = computed<HkMenuItem[]>(() =>
       addableOptions.value.length > 0
         ? [
@@ -174,16 +197,46 @@ export const HkLocalizedInput = defineComponent({
         : [],
     );
 
+    /** Rows of the language list: EVERY language that holds a translation
+     *  — the currently edited one included, even while it is still empty.
+     *  Filled entries keep their insertion order; the edited language is
+     *  appended when it has no text yet (or moves with the order it was
+     *  filled in otherwise). */
+    const langRows = computed(() => {
+      const codes = [...filledCodes.value];
+      if (!codes.includes(editLang.value)) codes.push(editLang.value);
+      return codes;
+    });
+
     /** The chip is useful while ANY interaction remains: at least one
-     *  translation to switch to / erase, or one language left to add. */
+     *  row to switch to / erase, or one language left to add. */
     const chipDisabled = computed(
-      () => props.disabled || (filledCodes.value.length === 0 && menuItems.value.length === 0),
+      () =>
+        props.disabled ||
+        (filledCodes.value.length === 0 &&
+          addableOptions.value.length === 0 &&
+          langRows.value.length <= 1),
     );
 
-    /** Accessible label of a tag's erase button, e.g.
-     *  "Remove translation — English (en)". */
-    function eraseLabel(code: string): string {
+    /** Accessible label of a row's language chip: arming the delete for
+     *  this language (the × that then appears confirms it). */
+    function armLabel(code: string): string {
       return `${t("hikari::localizedInput.removeTranslation", "Remove translation")} — ${localeLabel(code)} (${code})`;
+    }
+
+    /** Accessible label of the confirm ×: erases the translation for
+     *  real after the arm step. */
+    function confirmLabel(code: string): string {
+      return `${t("hikari::localizedInput.confirmDelete", "Confirm delete")} — ${localeLabel(code)} (${code})`;
+    }
+
+    /** Accessible name of a row body: the control switches the field to
+     *  that language — the raw translation text is visible content (and
+     *  the empty glyph reads as punctuation), so the name must identify
+     *  the ACTION (title is ignored by the accname algorithm once the
+     *  element has text content). */
+    function switchLabel(code: string): string {
+      return `${t("hikari::localizedInput.switchLanguage", "Switch to")} ${localeLabel(code)} (${code})`;
     }
 
     function commitTranslations(code: string, value: string) {
@@ -214,13 +267,13 @@ export const HkLocalizedInput = defineComponent({
       });
     }
 
-    /** Switch the edited language (tag body or freshly added one):
+    /** Switch the edited language (row body or freshly added one):
      *  commit the current text, swap the field to the target language,
      *  close the menu, and resume editing focused. */
     function switchLanguage(code: string, opts: { viaWatch?: boolean } = {}) {
       if (!code || code === ADD_LANGUAGE_KEY) return;
       if (code === editLang.value) {
-        // Already editing it (tag body click on the active tag): just
+        // Already editing it (row body click on the active row): just
         // dismiss the menu and hand focus back to the field.
         if (!opts.viaWatch) {
           menuOpen.value = false;
@@ -230,6 +283,7 @@ export const HkLocalizedInput = defineComponent({
       }
       commitTranslations(editLang.value, props.modelValue);
       editLang.value = code;
+      armedCode.value = null;
       emit("update:modelValue", (props.translations[code] ?? "").trim());
       if (!opts.viaWatch) {
         menuOpen.value = false;
@@ -238,16 +292,29 @@ export const HkLocalizedInput = defineComponent({
       emit("languagechange", code);
     }
 
-    /** Erase a language's translation via its tag's ×: drop the key
+    /** Arm (or disarm) a row's delete: the chip click turns the row red
+     *  and swaps the chip slot for the confirm ×. One armed row at a
+     *  time — arming a sibling disarms the previous one. */
+    function toggleArm(code: string) {
+      armedCode.value = armedCode.value === code ? null : code;
+    }
+
+    /** Erase a language's translation via its armed row's ×: drop the key
      *  from `translations`, and when the erased language is the one
      *  being edited move the field to a fallback — the source language
      *  if it still holds a translation, else the first remaining
      *  translation, else the source language itself. Erasing another
      *  language never disturbs the edit state. The menu STAYS open so
-     *  the cloud updates live and further tags can be erased. */
+     *  the list updates live (with the squeeze-out transition) and
+     *  further rows can be erased. */
     function eraseLanguage(code: string) {
+      // A ghost row (mid-leave after an earlier erase, or a stale × from
+      // a parent re-render) can still be clicked — erasing an already
+      // absent key must not re-emit or disturb the edit state.
+      if (!(code in props.translations)) return;
       const next = { ...props.translations };
       delete next[code];
+      armedCode.value = null;
       emit("update:translations", next);
       if (code === editLang.value) {
         const remaining = Object.keys(next).filter(
@@ -267,66 +334,70 @@ export const HkLocalizedInput = defineComponent({
       switchLanguage(key);
     }
 
-    return () => (
-      <div class="hk-localized-input" ref={rootRef} data-multiline={props.multiline || undefined}>
-        <HkInput
-          modelValue={props.modelValue}
-          onUpdate:modelValue={onInput}
-          placeholder={props.placeholder}
-          placeholderVariant={props.multiline ? "truncate" : "marquee"}
-          disabled={props.disabled}
-          size={props.size}
-          label={props.label}
-          type={props.multiline ? "textarea" : "text"}
-          rows={props.rows}
-          autoGrow={props.autoGrow}
-        >
-          {{
-            suffix: () => (
-              <button
-                ref={(el: unknown) => {
-                  chipRef.value = (el as HTMLElement) ?? null;
-                }}
-                type="button"
-                class="hk-localized-input-chip"
-                disabled={chipDisabled.value}
-                data-empty={filledCodes.value.length === 0 || undefined}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen.value}
-                aria-label={t(
-                  "hikari::localizedInput.chooseLanguage",
-                  "Choose editing language",
-                )}
-                onClick={(e: MouseEvent) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  menuOpen.value = !menuOpen.value;
-                }}
-                onMousedown={(e: MouseEvent) => e.preventDefault()}
-              >
-                <HkBadge variant="primary" size="sm" class="hk-localized-input-chip-badge">
-                  {chipLabel.value}
-                </HkBadge>
-                <ChevronDown size={12} class="hk-localized-input-chip-caret" />
-              </button>
-            ),
-          }}
-        </HkInput>
-        <HkMenu
-          variant="popup"
-          items={menuItems.value}
-          open={menuOpen.value}
-          onUpdate:open={(v: boolean) => {
-            menuOpen.value = v;
-          }}
-          onSelect={onMenuSelect}
-          anchorRef={chipRef.value}
-          placement="bottom-end"
-          title={t("hikari::localizedInput.chooseLanguage", "Choose editing language")}
-        >
-          {{
-            header: () =>
-              filledCodes.value.length > 0 ? (
+    return () => {
+      const rows = langRows.value;
+      return (
+        <div class="hk-localized-input" ref={rootRef} data-multiline={props.multiline || undefined}>
+          <HkInput
+            modelValue={props.modelValue}
+            onUpdate:modelValue={onInput}
+            placeholder={props.placeholder}
+            placeholderVariant={props.multiline ? "truncate" : "marquee"}
+            disabled={props.disabled}
+            size={props.size}
+            label={props.label}
+            type={props.multiline ? "textarea" : "text"}
+            rows={props.rows}
+            autoGrow={props.autoGrow}
+          >
+            {{
+              prefixIcon: () => (
+                <Languages size={15} class="hk-localized-input-lead" aria-hidden="true" />
+              ),
+              suffix: () => (
+                <button
+                  ref={(el: unknown) => {
+                    chipRef.value = (el as HTMLElement) ?? null;
+                  }}
+                  type="button"
+                  class="hk-localized-input-chip"
+                  disabled={chipDisabled.value}
+                  data-empty={filledCodes.value.length === 0 || undefined}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen.value}
+                  aria-label={t(
+                    "hikari::localizedInput.chooseLanguage",
+                    "Choose editing language",
+                  )}
+                  onClick={(e: MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    menuOpen.value = !menuOpen.value;
+                  }}
+                  onMousedown={(e: MouseEvent) => e.preventDefault()}
+                >
+                  <HkBadge variant="primary" size="sm" class="hk-localized-input-chip-badge">
+                    {chipLabel.value}
+                  </HkBadge>
+                  <ChevronDown size={12} class="hk-localized-input-chip-caret" />
+                </button>
+              ),
+            }}
+          </HkInput>
+          <HkMenu
+            variant="popup"
+            items={menuItems.value}
+            open={menuOpen.value}
+            onUpdate:open={(v: boolean) => {
+              menuOpen.value = v;
+            }}
+            onSelect={onMenuSelect}
+            anchorRef={chipRef.value}
+            placement="bottom-end"
+            title={t("hikari::localizedInput.chooseLanguage", "Choose editing language")}
+          >
+            {{
+              header: () => (
                 <div
                   class="hk-localized-input-tags"
                   role="group"
@@ -335,33 +406,71 @@ export const HkLocalizedInput = defineComponent({
                     "Existing translations",
                   )}
                 >
-                  {filledCodes.value.map((code) => {
+                  <HkListTransition
+                    tag="div"
+                    variant="reveal"
+                    move
+                    appear
+                    class="hk-localized-input-tag-list"
+                  >
+                    {rows.map((code) => {
                     const active = code === editLang.value;
                     const option = props.localeOptions.find((o) => o.code === code);
+                    const value = (props.translations[code] ?? "").trim();
                     return (
-                      <span
+                      <div
                         key={code}
                         class="hk-localized-input-tag"
                         data-active={active || undefined}
+                        data-armed={armedCode.value === code || undefined}
                       >
                         <button
                           type="button"
                           class="hk-localized-input-tag-body"
                           title={`${localeLabel(code)} (${code})`}
+                          aria-label={switchLabel(code)}
                           onClick={() => switchLanguage(code)}
                         >
                           {option?.flag && (
                             <span class="hk-localized-input-tag-flag">{option.flag}</span>
                           )}
+                          <span
+                            class="hk-localized-input-tag-text"
+                            data-empty={!value || undefined}
+                          >
+                            {value || EMPTY_GLYPH}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          class="hk-localized-input-tag-locale"
+                          aria-label={armLabel(code)}
+                          title={armLabel(code)}
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation();
+                            toggleArm(code);
+                          }}
+                          onMousedown={(e: MouseEvent) => e.preventDefault()}
+                        >
                           <span class="hk-localized-input-tag-label">{localeLabel(code)}</span>
                           <span class="hk-localized-input-tag-code">{code}</span>
-                          {active && <span class="hk-localized-input-tag-dot" aria-hidden="true" />}
+                          {active && (
+                            <span class="hk-localized-input-tag-dot" aria-hidden="true" />
+                          )}
                         </button>
                         <button
                           type="button"
                           class="hk-localized-input-tag-x"
-                          aria-label={eraseLabel(code)}
-                          title={eraseLabel(code)}
+                          aria-label={confirmLabel(code)}
+                          title={confirmLabel(code)}
+                          // Hidden via CSS until armed/hovered; keep it out
+                          // of the tab order while it is invisible, so
+                          // keyboard users cannot fire the delete on an
+                          // unseen control — the chip arms first, then the
+                          // × becomes the next tab stop (focus-visible
+                          // reveals it, see scss).
+                          tabindex={armedCode.value === code ? 0 : -1}
+                          aria-hidden={armedCode.value === code ? undefined : true}
                           onClick={(e: MouseEvent) => {
                             e.stopPropagation();
                             eraseLanguage(code);
@@ -369,15 +478,17 @@ export const HkLocalizedInput = defineComponent({
                         >
                           <X size={11} />
                         </button>
-                      </span>
+                      </div>
                     );
                   })}
+                  </HkListTransition>
                 </div>
-              ) : null,
-          }}
-        </HkMenu>
-      </div>
-    );
+              ),
+            }}
+          </HkMenu>
+        </div>
+      );
+    };
   },
 });
 

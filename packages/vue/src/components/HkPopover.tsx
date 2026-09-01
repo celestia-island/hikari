@@ -95,28 +95,64 @@ export default defineComponent({
 
     const animBus = useReportedTransition(300);
 
-    // Suppress native browser tooltip on the anchor while the popover is open.
-    let savedTitle: string | null = null;
+    // Suppress native browser tooltips while the popover is open — and
+    // not just on the anchor itself: a `title` on ANY descendant fires
+    // the same native tooltip on top of the custom popup surface (the
+    // model pill of hikari #338 was exactly that bug). Only non-empty
+    // titles are blanked: `title=""` fires no native tooltip, so it is
+    // left byte-for-byte as the consumer wrote it (and elements with no
+    // title at all never gain one). Titles added to the subtree while
+    // the popover is already open are NOT suppressed — the popover
+    // content is the consumer's own popup surface, titles inside it are
+    // legitimate. Only the `title` attribute is touched; aria-label and
+    // friends stay as authored.
+    let suppressedTitles: { el: Element; title: string }[] = [];
+
+    function suppressNativeTitles(anchor: HTMLElement) {
+      suppressedTitles = [];
+      // querySelectorAll covers descendants only, so the anchor itself
+      // rides along explicitly.
+      const titled = [anchor, ...Array.from(anchor.querySelectorAll("[title]"))];
+      for (const el of titled) {
+        const title = el.getAttribute("title");
+        if (title === null || title === "") continue;
+        suppressedTitles.push({ el, title });
+        el.setAttribute("title", "");
+      }
+    }
+
+    function restoreNativeTitles() {
+      for (const { el, title } of suppressedTitles) {
+        el.setAttribute("title", title);
+      }
+      suppressedTitles = [];
+    }
+
     watch(
       () => props.modelValue,
       (open) => {
-        const el = props.anchorRef;
-        if (!el) return;
         if (open) {
-          savedTitle = el.getAttribute("title");
-          if (savedTitle !== null && savedTitle !== "") {
-            el.setAttribute("title", "");
-          } else {
-            savedTitle = null;
-          }
+          if (props.anchorRef) suppressNativeTitles(props.anchorRef);
         } else {
-          if (savedTitle !== null) {
-            el.setAttribute("title", savedTitle);
-          } else if (savedTitle === null && el.getAttribute("title") === "") {
-            el.removeAttribute("title");
-          }
-          savedTitle = null;
+          restoreNativeTitles();
         }
+      },
+      // immediate: a consumer can v-if the popover in already open — the
+      // suppression must hold from the very first render, not just from
+      // a false→true flip.
+      { immediate: true },
+    );
+
+    // Anchor swapped while open: hand the retired subtree its titles
+    // back before suppressing the new one, or the old anchor leaks a
+    // blanked title forever (and a null anchor just releases the old
+    // subtree without adopting a new one).
+    watch(
+      () => props.anchorRef,
+      (anchor) => {
+        if (!props.modelValue) return;
+        restoreNativeTitles();
+        if (anchor) suppressNativeTitles(anchor);
       },
     );
 
@@ -397,6 +433,10 @@ export default defineComponent({
     );
 
     onUnmounted(() => {
+      // Unmounting while open (e.g. parent v-if's the popover away) never
+      // runs the close branch of the modelValue watch — restore here or
+      // the anchor keeps its blanked title forever.
+      restoreNativeTitles();
       detachOutsideClickShield();
       fullCleanup();
     });

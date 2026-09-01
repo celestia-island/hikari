@@ -431,9 +431,11 @@ describe("HkMenu mobile sheets", () => {
     await settle();
     expect(sheets().length).toBe(2);
 
-    // Browser/system back closes ONE level: back to the root sheet.
+    // Browser/system back closes ONE level: back to the root sheet. The
+    // popped sheet lingers briefly through its slide-down leave — count
+    // once it settles.
     window.history.back();
-    await settle();
+    await until(() => sheets().length === 1);
     expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
     expect(window.history.state?.__hkBack).toEqual(expect.any(String));
@@ -442,6 +444,10 @@ describe("HkMenu mobile sheets", () => {
     window.history.back();
     await until(() => openRef.value === false);
     await until(() => window.history.state?.__hkBack === undefined);
+    // The sheet panel lingers briefly through its slide-down leave
+    // (HkMenu keeps the panel tree mounted for the leave window after a
+    // close) — the unmount lands when that window expires.
+    await until(() => document.querySelector(".hk-select-sheet-panel") === null, 800);
     expect(document.querySelector(".hk-select-sheet-panel")).toBeNull();
   });
 
@@ -471,9 +477,10 @@ describe("HkMenu mobile sheets", () => {
     expect(scrims().length).toBe(2);
 
     // The topmost scrim belongs to the pushed layer; tapping it pops one
-    // level and keeps the root sheet open.
+    // level and keeps the root sheet open. The dismissed sheet lingers
+    // briefly through its slide-down leave — count once it settles.
     scrims()[scrims().length - 1].click();
-    await settle();
+    await until(() => sheets().length === 1);
     expect(sheets().length).toBe(1);
     expect(openRef.value).toBe(true);
   });
@@ -702,5 +709,71 @@ describe("HkMenu sidebar variant", () => {
     await settle();
     expect(container.textContent).toContain("Products");
     expect(container.textContent).not.toContain("General");
+  });
+});
+
+describe("HkMenu close linger (leave-transition window)", () => {
+  it("keeps the panel tree mounted briefly after close, then unmounts", async () => {
+    const openRef = ref(true);
+    mountMenu(openRef, items);
+    await settle();
+    expect(popouts()).toHaveLength(1);
+
+    openRef.value = false;
+    // nextTick only: no rAF may run before the assertion, so the
+    // mid-leave presence check is deterministic (happy-dom completes
+    // Vue's CSS-less leave fallback on a later animation frame).
+    await nextTick();
+    // Still rendering — the popout is mid pop-out leave (its HkSelectPanel
+    // stays mounted through the leave window). A synchronous unmount here
+    // would kill the close animation (the pre-linger regression).
+    expect(popouts().length).toBeGreaterThanOrEqual(1);
+
+    // The leave (and the linger window behind it) settles for real.
+    await until(() => popouts().length === 0, 800);
+    expect(popouts()).toHaveLength(0);
+  });
+
+  it("reopening resets the cascade instead of showing stale sub-levels", async () => {
+    const openRef = ref(true);
+    mountMenu(openRef, items);
+    await settle();
+
+    // Open the Language cascade → two popouts.
+    rowByLabel("Language")!.click();
+    await settle();
+    expect(popouts().length).toBe(2);
+
+    // Close and reopen within the linger window.
+    openRef.value = false;
+    await settle();
+    openRef.value = true;
+    await settle();
+    // Fresh menu: only the root level, the stale sub-level is gone.
+    expect(popouts().length).toBe(1);
+  });
+
+  it("closing a desktop sub-panel animates it shut instead of unmounting instantly", async () => {
+    const openRef = ref(true);
+    mountMenu(openRef, items);
+    await settle();
+
+    rowByLabel("Language")!.click();
+    await settle();
+    expect(popouts().length).toBe(2);
+
+    // Escape on the sub-panel closes just that level — deferred: the
+    // panel keeps rendering (mid-leave) right after the request.
+    // nextTick only (deterministic mid-leave window, no rAF yet).
+    const sub = popouts()[1];
+    sub.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    await nextTick();
+    expect(popouts().length).toBe(2); // still mounted, animating shut
+
+    // After the leave window the level is swept for real.
+    await until(() => popouts().length === 1, 800);
+    expect(popouts().length).toBe(1);
   });
 });

@@ -20,6 +20,7 @@ import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -66,6 +67,12 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const manager = usePopupManager();
+    // Open/close motion reported into the unified animation context
+    // (animationBus) — scrim and content on separate tracks so each
+    // layer's report arms/cancels independently.
+    const surf = useSurfaceTransition(320);
+    const overlayHooks = surf.hooks("overlay");
+    const contentHooks = surf.hooks("content");
     const overlay = useOverlay({
       name: "hk-modal",
       // A global closeAll() must be able to actually close this modal
@@ -560,7 +567,14 @@ export default defineComponent({
             style={{ zIndex: overlayZ.value }}
             onKeydown={onKeydown}
           >
-            <Transition name="hk-modal-overlay" appear>
+            <Transition
+              name="hk-modal-overlay"
+              appear
+              onBeforeEnter={overlayHooks.onBeforeEnter}
+              onAfterEnter={overlayHooks.onAfterEnter}
+              onBeforeLeave={overlayHooks.onBeforeLeave}
+              onAfterLeave={overlayHooks.onAfterLeave}
+            >
               {props.modelValue && (
                 <div
                   class="hk-modal-overlay"
@@ -571,8 +585,16 @@ export default defineComponent({
             <Transition
               name="hk-modal-content"
               appear
-              onAfterEnter={onAfterEnter}
-              onAfterLeave={onAfterLeave}
+              onBeforeEnter={contentHooks.onBeforeEnter}
+              onAfterEnter={() => {
+                contentHooks.onAfterEnter();
+                onAfterEnter();
+              }}
+              onBeforeLeave={contentHooks.onBeforeLeave}
+              onAfterLeave={() => {
+                contentHooks.onAfterLeave();
+                onAfterLeave();
+              }}
             >
               {props.modelValue && (
                 <div

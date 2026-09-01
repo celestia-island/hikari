@@ -15,6 +15,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import "./HkSelect.scss";
 
 /**
@@ -85,7 +86,16 @@ export default defineComponent({
   setup(props, { emit, slots, expose }) {
     const manager = usePopupManager();
     const handle = ref<PopupHandle | null>(null);
-    const popoutZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
+    /** z of the last live registration — the leave transition keeps
+     *  painting at this z after the registry entry is dropped, so a
+     *  closing popout never sinks under the page it covered. A popup
+     *  opened DURING the leave window (≤150ms popout, ≤250ms sheet) can
+     *  reclaim the freed band slot and tie on the exact paint z; the tie
+     *  resolves by teleport DOM order, where the newcomer (mounted
+     *  later) paints above the dying panel — accepted, matching how
+     *  equal-z stacking already behaves. */
+    const lastZ = ref(0);
+    const popoutZ = computed(() => ((handle.value?.zIndex ?? lastZ.value) || 0) + 1);
 
     // Overlay registry entry so closeAll()/isOverlayOpen() see the open
     // panel; the onCloseRequested hook makes a global close flip the open
@@ -97,6 +107,13 @@ export default defineComponent({
 
     const { isMobile } = useBreakpoint();
     const sheetMode = computed(() => props.sheetOnMobile && isMobile.value);
+
+    // Open/close motion reports into the unified animation context
+    // (animationBus) for both surface shapes: the desktop popout and the
+    // mobile bottom sheet — scrim and panel on separate tracks.
+    const popoutAnim = useSurfaceTransition(250);
+    const sheetScrimAnim = useSurfaceTransition(320);
+    const sheetPanelAnim = useSurfaceTransition(320);
 
     // Window-first back priority (HkModal convention): while this panel is
     // the topmost window, the back gesture closes it instead of navigating
@@ -338,6 +355,11 @@ export default defineComponent({
           stopDupTitleSync();
           backGuard.release();
           if (handle.value) {
+            // Unregister immediately (stacking/breadcrumb must forget the
+            // dying panel at once) but remember its z — the leave
+            // transition below keeps rendering at that band for its
+            // short lifetime instead of sinking under the page.
+            lastZ.value = handle.value.zIndex;
             manager.unregister(handle.value.id);
             handle.value = null;
           }
@@ -368,6 +390,14 @@ export default defineComponent({
     // height fallback so top placements land sensibly before measure) and
     // again after the DOM settles, when the panel's real box is known and
     // flip/clamp decisions can use actual numbers.
+    /** Resolved popout orientation — drives the pop transition's
+     *  transform-origin (grow from the anchor edge, data-side/align on
+     *  the host). Updated by positionPanel on every reposition. */
+    const resolved = ref<{ side: "top" | "bottom"; align: "start" | "end" }>({
+      side: "bottom",
+      align: "start",
+    });
+
     function positionPanel(): void {
       const anchor = props.anchorRef;
       if (!anchor) return;
@@ -388,6 +418,10 @@ export default defineComponent({
         side = "bottom";
         top = r.bottom + props.offset;
       }
+      resolved.value = {
+        side,
+        align: props.placement.endsWith("-end") ? "end" : "start",
+      };
       // One flip never re-checks: taller menu panels (the viewport-relative
       // CSS cap) made this band reachable — a mid-viewport anchor flips
       // bottom→top into a negative top that was applied verbatim. Clamp so
@@ -451,7 +485,7 @@ export default defineComponent({
       if (sheetMode.value) {
         return (
           <Teleport to="body">
-            <Transition name="hk-select-sheet" appear>
+            <Transition name="hk-select-sheet" appear {...sheetScrimAnim.hooks("scrim")}>
               {props.open ? (
                 <div
                   class="hk-select-sheet-scrim"
@@ -460,7 +494,7 @@ export default defineComponent({
                 />
               ) : null}
             </Transition>
-            <Transition name="hk-select-sheet" appear>
+            <Transition name="hk-select-sheet" appear {...sheetPanelAnim.hooks("panel")}>
               {props.open ? (
                 <div
                   ref={panelRef}
@@ -490,23 +524,36 @@ export default defineComponent({
         );
       }
 
-      // Desktop popout: no enter/leave transition on master either —
-      // mount on open, unmount on close. The fixed host carries the
-      // inline coords + popup-manager z-index and anchors the overlay
-      // scrollbar tracks; the popout inside keeps every visual rule.
-      if (!props.open) return null;
+      // Desktop popout — same contract as the sheet branch: the Teleport
+      // stays mounted across the close so the pop leave transition runs
+      // (the panel scales/fades back into its anchor instead of
+      // vanishing). The fixed host carries the inline coords +
+      // popup-manager z-index and anchors the overlay scrollbar tracks;
+      // data-side/align feed the transition's transform-origin so the
+      // pop grows out of the edge the panel actually sits on (including
+      // after an auto-flip).
       return (
         <Teleport to="body">
-          <div ref={popoutHostRef} class="hk-select-popout-host" style={{ ...coords.value, zIndex: popoutZ.value }}>
-            <div
-              ref={panelRef}
-              class="hk-select-popout"
-              aria-label={props.title || undefined}
-              onKeydown={forwardKeydown}
-            >
-              {slots.default?.()}
-            </div>
-          </div>
+          <Transition name="hk-select-popout" appear {...popoutAnim.hooks()}>
+            {props.open ? (
+              <div
+                ref={popoutHostRef}
+                class="hk-select-popout-host"
+                data-side={resolved.value.side}
+                data-align={resolved.value.align}
+                style={{ ...coords.value, zIndex: popoutZ.value }}
+              >
+                <div
+                  ref={panelRef}
+                  class="hk-select-popout"
+                  aria-label={props.title || undefined}
+                  onKeydown={forwardKeydown}
+                >
+                  {slots.default?.()}
+                </div>
+              </div>
+            ) : null}
+          </Transition>
         </Teleport>
       );
     };

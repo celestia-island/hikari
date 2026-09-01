@@ -70,6 +70,16 @@ function menuRows(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLButtonElement>(".hk-menu-row")];
 }
 
+/** Wait for the menu's leave-transition window to finish — rows linger
+ *  briefly after a close while the popout animates shut. */
+async function untilMenuSettled(): Promise<void> {
+  const deadline = Date.now() + 800;
+  while (menuRows().length > 0 && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
+}
+
 /** The "Delete language" cascade root row (present only when at least
  *  one translation is filled). */
 function deleteCascadeRow(): HTMLElement | undefined {
@@ -185,7 +195,9 @@ describe("HkLocalizedInput", () => {
     expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
     expect(queryChip(container).textContent).toContain("简体中文");
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
-    // Menu closed after the switch.
+    // Menu closed after the switch (rows linger briefly through
+    // the popout's close animation).
+    await untilMenuSettled();
     expect(menuRows().length).toBe(0);
   });
 
@@ -211,6 +223,7 @@ describe("HkLocalizedInput", () => {
     expect(events.translations.at(-1)).toMatchObject({ en: "Plant overview" });
     expect(queryChip(container).textContent).toContain("日本語");
     expect(queryChip(container).textContent).not.toContain("(ja)");
+    await untilMenuSettled();
     expect(menuRows().length).toBe(0);
   });
 
@@ -383,6 +396,7 @@ describe("HkLocalizedInput", () => {
     expect(queryField(container).value).toBe("Plant overview");
     expect(queryChip(container).textContent).toContain("English");
     expect(queryChip(container).textContent).not.toContain("(en)");
+    await untilMenuSettled();
     expect(menuRows().length).toBe(0);
   });
 
@@ -409,6 +423,7 @@ describe("HkLocalizedInput", () => {
     expect(events.languagechange.at(-1)).toBe("en");
     expect(queryChip(container).textContent).toContain("English");
     expect(queryChip(container).textContent).not.toContain("(en)");
+    await untilMenuSettled();
     expect(menuRows().length).toBe(0);
     expect(document.activeElement).toBe(queryField(container));
   });

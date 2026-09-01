@@ -18,6 +18,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 
 type DrawerSide = "left" | "right" | "top" | "bottom";
 
@@ -52,6 +53,11 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const { t } = useI18n();
     const manager = usePopupManager();
+    // Open/close motion reported into the unified animation context
+    // (animationBus) — scrim and sliding panel on separate tracks.
+    const surf = useSurfaceTransition(320);
+    const scrimHooks = surf.hooks("scrim");
+    const panelHooks = surf.hooks("panel");
     const overlayHook = useOverlay({
       name: "hk-drawer",
       // A global closeAll() must be able to actually close this drawer
@@ -224,7 +230,14 @@ export default defineComponent({
 
     return () => (
       <Teleport to="body">
-        <Transition name="hk-drawer-overlay" appear>
+        <Transition
+          name="hk-drawer-overlay"
+          appear
+          onBeforeEnter={scrimHooks.onBeforeEnter}
+          onAfterEnter={scrimHooks.onAfterEnter}
+          onBeforeLeave={scrimHooks.onBeforeLeave}
+          onAfterLeave={scrimHooks.onAfterLeave}
+        >
           {props.modelValue && props.overlay ? (
             <div
               class="hk-drawer-overlay"
@@ -233,7 +246,20 @@ export default defineComponent({
             />
           ) : null}
         </Transition>
-        <Transition name={`hk-drawer-${props.side}`} appear onAfterEnter={onDrawerAfterEnter} onAfterLeave={onDrawerAfterLeave}>
+        <Transition
+          name={`hk-drawer-${props.side}`}
+          appear
+          onBeforeEnter={panelHooks.onBeforeEnter}
+          onAfterEnter={() => {
+            panelHooks.onAfterEnter();
+            onDrawerAfterEnter();
+          }}
+          onBeforeLeave={panelHooks.onBeforeLeave}
+          onAfterLeave={() => {
+            panelHooks.onAfterLeave();
+            onDrawerAfterLeave();
+          }}
+        >
           {props.modelValue ? (
             <div
               ref={panelRef}

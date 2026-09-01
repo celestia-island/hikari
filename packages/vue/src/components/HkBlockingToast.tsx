@@ -34,6 +34,7 @@ import {
 import { useI18n } from "../i18n/context";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import {
   resolveBlockingToast,
   useBlockingToast,
@@ -105,6 +106,10 @@ export default defineComponent({
   setup() {
     const { queue } = useBlockingToast();
     const manager = usePopupManager();
+    // Card enter/leave motion reported into the unified animation
+    // context, mirroring HkToast's TransitionGroup wiring (shared track,
+    // self-healing cron — see HkToast for the caveat).
+    const itemHooks = useSurfaceTransition(320).hooks();
     const handles = new Map<number, PopupHandle>();
 
     // Keep one popup-manager entry (kind "toast") per visible card so
@@ -144,8 +149,17 @@ export default defineComponent({
           <TransitionGroup
             tag="div"
             name="hk-blocking-toast"
-            onBeforeLeave={pinLeaveGeometry}
-            onLeaveCancelled={clearLeaveGeometry}
+            onBeforeEnter={itemHooks.onBeforeEnter}
+            onAfterEnter={itemHooks.onAfterEnter}
+            onBeforeLeave={(el: Element) => {
+              itemHooks.onBeforeLeave();
+              pinLeaveGeometry(el);
+            }}
+            onAfterLeave={itemHooks.onAfterLeave}
+            onLeaveCancelled={(el: Element) => {
+              itemHooks.onLeaveCancelled();
+              clearLeaveGeometry(el);
+            }}
           >
             {queue.map((item) => (
               <div

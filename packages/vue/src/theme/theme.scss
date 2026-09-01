@@ -23,6 +23,22 @@
   // stacks stay dozens of levels below the strip) but below tooltips
   // (3000) and toasts (4000).
   --hk-breadcrumb-z: 2500;
+
+  // ── Pop motion family ─────────────────────────────────────────────
+  // Every anchored popout surface (HkPopover, the HkSelectPanel desktop
+  // popout behind HkSelect/HkMenu, HkTooltip) grows out of its anchor
+  // and retracts into it with the SAME curve — dropdowns, menus and
+  // popovers read as one surface family instead of a mix of animated
+  // and bare surfaces. Durations are in/Out pair; the enter transform
+  // uses a slight overshoot, opacity does not. Components' SCSS carries
+  // identical fallback values at every use site.
+  --hk-pop-in-duration: 0.2s;
+  --hk-pop-out-duration: 0.15s;
+  --hk-pop-in-opacity-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --hk-pop-in-transform-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --hk-pop-out-ease: cubic-bezier(0.4, 0, 1, 1);
+  --hk-pop-scale: 0.97;
+  --hk-pop-offset: 4px;
 }
 
 [data-mode="dark"] body {

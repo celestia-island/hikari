@@ -608,3 +608,59 @@ describe("HkSelectPanel mobile-sheet duplicate-title filter", () => {
     expect(label.classList.contains("hk-sheet-dup-title")).toBe(false);
   });
 });
+
+describe("HkSelectPanel desktop popout motion", () => {
+  it("grows the popout out of the resolved anchor side (auto-flip reflected in data-side)", async () => {
+    // mountPanel defaults to placement="top-start"; in the test layout
+    // the anchor sits at the very top, so the panel flips to the bottom
+    // side — the flip must be visible in data-side (it drives the pop
+    // transition's transform-origin).
+    const { open } = mountPanel();
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host).toBeTruthy();
+    expect(host.dataset.side).toBe("bottom"); // flipped from top-start
+    expect(host.dataset.align).toBe("start");
+  });
+
+  it("keeps the desktop popout mounted through its close so the pop leave runs", async () => {
+    const { open } = mountPanel();
+    await nextTick();
+    open.value = true;
+    await nextTick();
+
+    expect(document.body.querySelector(".hk-select-popout-host")).toBeTruthy();
+
+    open.value = false;
+    await nextTick();
+    // happy-dom never finishes leave transitions, so the host lingers —
+    // exactly what a running pop-out leave looks like. A synchronous
+    // unmount (the pre-transition regression) removes it instantly.
+    expect(document.body.querySelector(".hk-select-popout-host")).toBeTruthy();
+  });
+
+  it("reopens with a fresh popout after a close", async () => {
+    const { open } = mountPanel();
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    open.value = false;
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+
+    const hosts = Array.from(
+      document.body.querySelectorAll<HTMLElement>(".hk-select-popout-host"),
+    );
+    expect(hosts.length).toBeGreaterThanOrEqual(1);
+    // The newest host (last in DOM order) carries live content.
+    expect(hosts.at(-1)!.textContent).toContain("a");
+  });
+});

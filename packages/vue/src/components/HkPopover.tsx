@@ -15,7 +15,7 @@ import {
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
-import { useReportedTransition } from "../composables/useReportedTransition";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { onceFrame } from "../runtime/animationBus";
 import "./HkPopover.scss";
@@ -93,7 +93,11 @@ export default defineComponent({
       if (props.sheetOnMobile && props.modelValue) close();
     });
 
-    const animBus = useReportedTransition(300);
+    // Open/close motion reported into the unified animation context
+    // through the same standard hook wiring every surface shares
+    // (useSurfaceTransition) — this component was the pattern's
+    // origin and now consumes it like the rest.
+    const anim = useSurfaceTransition(300).hooks();
 
     // Suppress native browser tooltips while the popover is open — and
     // not just on the anchor itself: a `title` on ANY descendant fires
@@ -530,10 +534,15 @@ export default defineComponent({
         <Transition
           name={sheetMode.value ? "hk-popover-sheet" : "hk-popover"}
           appear
-          onBeforeEnter={() => animBus.run()}
-          onAfterEnter={() => animBus.cancel()}
-          onBeforeLeave={() => animBus.run()}
-          onAfterLeave={() => { animBus.cancel(); onPopupAfterLeave(); }}
+          onBeforeEnter={anim.onBeforeEnter}
+          onAfterEnter={anim.onAfterEnter}
+          onBeforeLeave={anim.onBeforeLeave}
+          onAfterLeave={() => {
+            anim.onAfterLeave();
+            onPopupAfterLeave();
+          }}
+          onEnterCancelled={anim.onEnterCancelled}
+          onLeaveCancelled={anim.onLeaveCancelled}
         >
           {props.modelValue ? (
             <div ref={panelHostRef} style={panelStyle.value}>

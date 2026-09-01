@@ -7,6 +7,7 @@ import {
   themePresets,
   tokensToCSSVars,
   type CustomThemePreset,
+  type ThemeSchemeTokens,
 } from "./presets";
 import {
   allGroupSlots,
@@ -223,6 +224,39 @@ describe("group cssvars", () => {
     const vars = tokensToCSSVars(themePresets.nord.dark);
     expect(vars["--test-wires-power-l1"]).toBeUndefined();
     expect(Object.keys(vars).every((k) => k.startsWith("--color-") || k.startsWith("--hi-"))).toBe(true);
+  });
+});
+
+describe("on-solid content color tokens", () => {
+  it("emits theme-configurable text/icon triplets plus aliases", () => {
+    const vars = tokensToCSSVars(themePresets.nord.dark);
+    expect(vars["--color-on-solid-text"]).toBe("255 255 255");
+    expect(vars["--color-on-solid-icon"]).toBe("255 255 255");
+    // The legacy hardcoded-white name now aliases the text slot.
+    expect(vars["--color-on-solid"]).toBe("255 255 255");
+    expect(vars["--hi-color-text-on-solid"]).toBe("rgb(var(--color-on-solid-text, 255 255 255))");
+    expect(vars["--hi-color-icon-on-solid"]).toBe("rgb(var(--color-on-solid-icon, 255 255 255))");
+  });
+
+  it("scheme objects predating the slots fall back to white (saved custom themes)", () => {
+    const legacy: ThemeSchemeTokens = { ...themePresets.nord.dark };
+    delete legacy.onSolidText;
+    delete legacy.onSolidIcon;
+    const vars = tokensToCSSVars(legacy);
+    expect(vars["--color-on-solid-text"]).toBe("255 255 255");
+    expect(vars["--color-on-solid-icon"]).toBe("255 255 255");
+    expect(vars["--color-on-solid"]).toBe("255 255 255");
+  });
+
+  it("custom slot values flow through to the triplets", () => {
+    const vars = tokensToCSSVars({
+      ...themePresets.nord.dark,
+      onSolidText: { r: 10, g: 20, b: 30 },
+      onSolidIcon: { r: 40, g: 50, b: 60 },
+    });
+    expect(vars["--color-on-solid-text"]).toBe("10 20 30");
+    expect(vars["--color-on-solid-icon"]).toBe("40 50 60");
+    expect(vars["--color-on-solid"]).toBe("10 20 30");
   });
 });
 

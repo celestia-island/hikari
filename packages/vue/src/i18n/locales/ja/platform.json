@@ -35,6 +35,8 @@
     "hikari::theme.tokens.error": "エラー",
     "hikari::theme.tokens.warning": "警告",
     "hikari::theme.tokens.info": "情報",
+    "hikari::theme.tokens.onSolidText": "ブランド色上の文字",
+    "hikari::theme.tokens.onSolidIcon": "ブランド色上のアイコン",
     "hikari::theme.groupCount": "{count} 色",
     "hikari::theme.extendedColors": "拡張カラー",
     "hikari::secret.title": "シークレット",

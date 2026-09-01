@@ -14,6 +14,7 @@ import {
   resolveLocalizedText,
   tokenGroupsVersion,
   type ThemeSchemeTokens,
+  type ThemeTokenRGB,
   type ThemeTokenGroupModes,
   type ThemeTokenGroupValues,
   type TokenGroupDefinition,
@@ -41,6 +42,8 @@ const defaultDark: ThemeSchemeTokens = {
   error: { r: 255, g: 107, b: 107 },
   warning: { r: 253, g: 235, b: 139 },
   info: { r: 110, g: 231, b: 239 },
+  onSolidText: { r: 255, g: 255, b: 255 },
+  onSolidIcon: { r: 255, g: 255, b: 255 },
 };
 
 const defaultLight: ThemeSchemeTokens = {
@@ -60,12 +63,19 @@ const defaultLight: ThemeSchemeTokens = {
   error: { r: 239, g: 68, b: 68 },
   warning: { r: 245, g: 158, b: 11 },
   info: { r: 6, g: 182, b: 212 },
+  onSolidText: { r: 255, g: 255, b: 255 },
+  onSolidIcon: { r: 255, g: 255, b: 255 },
 };
 
 type ColorTokenKey = keyof ThemeSchemeTokens;
+/** Required (always-present) token slots — excludes the optional on-solid content colors. */
+type RequiredTokenKey = Exclude<ColorTokenKey, "onSolidText" | "onSolidIcon">;
 
-const editableTokens: ColorTokenKey[] = ["primary", "secondary", "accent", "success", "error", "warning", "info"];
-const derivedTokens: ColorTokenKey[] = ["background", "surface", "text", "muted", "border", "focusedBorder", "selectedBackground", "selectedText", "statusBarBackground"];
+const editableTokens: RequiredTokenKey[] = ["primary", "secondary", "accent", "success", "error", "warning", "info"];
+const derivedTokens: RequiredTokenKey[] = ["background", "surface", "text", "muted", "border", "focusedBorder", "selectedBackground", "selectedText", "statusBarBackground"];
+/** Content colors ON solid brand fills: user-choosable, never derived. */
+const contentTokens: Array<"onSolidText" | "onSolidIcon"> = ["onSolidText", "onSolidIcon"];
+const WHITE: ThemeTokenRGB = { r: 255, g: 255, b: 255 };
 
 function clamp(v: number): number {
   return Math.max(0, Math.min(255, v));
@@ -113,7 +123,9 @@ export interface HCustomTheme {
  * their own surface (tabs, drawers, panels) instead of the built-in modal.
  *
  * Edits the seven accent tokens (primary/secondary/accent/success/error/
- * warning/info) per mode (dark/light); surface tokens are derived. When
+ * warning/info) plus the on-solid content colors (onSolidText — text on
+ * brand fills, onSolidIcon — icons/shapes such as the switch thumb) per
+ * mode (dark/light); the remaining surface tokens are derived. When
  * extension token groups are registered (`registerTokenGroup` /
  * `registerTokenGroupConfig`), the "Extended colors" section renders one
  * Material expansion panel per group — sub-sectioned groups get one panel
@@ -187,6 +199,12 @@ export const HkColorSchemeEditor = defineComponent({
       themeName.value = t("hikari::theme.customThemeName");
       Object.assign(dark, props.initialDark ?? defaultDark);
       Object.assign(light, props.initialLight ?? defaultLight);
+      // Optional slots: a legacy prefill omitting them must reset to white
+      // (Object.assign alone leaves stale in-editor values in place).
+      for (const k of contentTokens) {
+        dark[k] = props.initialDark?.[k] ?? WHITE;
+        light[k] = props.initialLight?.[k] ?? WHITE;
+      }
       seedGroups(groupDark, "dark", props.initialGroups?.dark);
       seedGroups(groupLight, "light", props.initialGroups?.light);
       rederiveSurface();
@@ -361,6 +379,20 @@ export const HkColorSchemeEditor = defineComponent({
               onChange={(rgb: { r: number; g: number; b: number }) => updateToken(key, rgb)}
             />
           ))}
+          {contentTokens.map((key) => {
+            // Optional slots: an older prefilled custom theme may omit them.
+            const rgb = currentTokens.value[key] ?? WHITE;
+            return (
+              <HColorPicker
+                key={key}
+                r={rgb.r}
+                g={rgb.g}
+                b={rgb.b}
+                label={t(`hikari::theme.tokens.${key}`)}
+                onChange={(next: { r: number; g: number; b: number }) => updateToken(key, next)}
+              />
+            );
+          })}
         </div>
         {registeredGroups.value.length > 0 && (
           <div class="s-scheme-groups">

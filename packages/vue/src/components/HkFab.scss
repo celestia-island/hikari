@@ -94,7 +94,10 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
 }
 
 .hk-fab[data-variant="primary"] .hk-fab-button {
-  color: var(--hi-color-on-primary, #fff);
+  // Icon-only glyph on a solid brand fill: theme icon color (default
+  // white), not the luminance-computed on-primary that goes near-black
+  // on bright primaries.
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
   background: var(--hi-color-primary, #7aa2f7);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
 

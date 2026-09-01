@@ -40,7 +40,7 @@
 .hk-checkbox-box[data-checked] {
   background: var(--hi-color-primary, #ff6b9d);
   border-color: var(--hi-color-primary, #ff6b9d);
-  color: var(--hi-color-text-on-primary, #fff);
+  color: rgb(var(--color-on-solid-text, 255 255 255));
 }
 
 .hk-checkbox-box[data-indeterminate] {
@@ -69,7 +69,7 @@
 .hk-checkbox-icon {
   position: relative;
   z-index: var(--hi-z-above, 1);
-  color: var(--hi-color-text-on-primary, #fff);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
   width: 14px;
   height: 14px;
 }
@@ -78,7 +78,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--hi-color-text-on-primary, #fff);
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
   z-index: var(--hi-z-above, 1);
 }
 
@@ -86,7 +86,7 @@
   width: 8px;
   height: 2px;
   border-radius: 1px;
-  background: var(--hi-color-text-on-primary, #fff);
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
   z-index: var(--hi-z-above, 1);
 }
 

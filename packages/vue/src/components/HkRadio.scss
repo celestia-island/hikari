@@ -89,7 +89,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--hi-color-text-on-primary, #fff);
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
   z-index: 1;
 
   [data-size="lg"] & {

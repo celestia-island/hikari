@@ -109,6 +109,9 @@
 .hk-list-reveal-leave-active {
   interpolate-size: allow-keywords;
   overflow: hidden;
+  /* A leaving row must not keep taking clicks during its squeeze-out —
+   * activating the body of a just-erased row would resurrect it. */
+  pointer-events: none;
   transition:
     height var(--hi-duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
     opacity var(--hi-duration-fast, 0.15s) ease-in;
@@ -128,4 +131,27 @@
 .hk-list-none-leave-active,
 .hk-list-none-move {
   transition: none;
+}
+
+/* Reduced motion: no list choreography. The global animation switch
+ * (`html[data-css-animations="0"]`) disables transitions too; the media
+ * block covers hosts that never wired the switch. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-list-pop-enter-active,
+  .hk-list-pop-leave-active,
+  .hk-list-slide-enter-active,
+  .hk-list-slide-leave-active,
+  .hk-list-fade-enter-active,
+  .hk-list-fade-leave-active,
+  .hk-list-grow-enter-active,
+  .hk-list-grow-leave-active,
+  .hk-list-reveal-enter-active,
+  .hk-list-reveal-leave-active,
+  .hk-list-pop-move,
+  .hk-list-slide-move,
+  .hk-list-fade-move,
+  .hk-list-grow-move,
+  .hk-list-reveal-move {
+    transition: none !important;
+  }
 }

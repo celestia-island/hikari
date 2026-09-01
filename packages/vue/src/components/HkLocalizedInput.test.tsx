@@ -54,10 +54,10 @@ function mountInput(opts: MountOptions = {}) {
 
 /**
  * Reactive harness — a REAL v-model parent: `update:translations` /
- * `update:modelValue` flow back into the props, so the tag cloud (which
- * renders from `props.translations`) updates live while the menu stays
- * open, exactly as in an application. One-way `mountInput` cannot show
- * that (its props never change). */
+ * `update:modelValue` flow back into the props, so the language list
+ * (which renders from `props.translations`) updates live while the menu
+ * stays open, exactly as in an application. One-way `mountInput` cannot
+ * show that (its props never change). */
 function mountReactive(opts: MountOptions = {}) {
   const events = {
     modelValue: [] as string[],
@@ -119,7 +119,7 @@ function menuRows(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLButtonElement>(".hk-menu-row")];
 }
 
-/** Translation tag pills inside the opened menu's header cloud. */
+/** Language rows inside the opened menu's header list. */
 function menuTags(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>(".hk-localized-input-tag")];
 }
@@ -130,22 +130,44 @@ function tagLabels(): string[] {
   );
 }
 
-/** The tag pill body (switch target) for the language whose label is `label`. */
-function tagBody(label: string): HTMLButtonElement | undefined {
-  return (
-    menuTags()
-      .find((t) => (t.querySelector(".hk-localized-input-tag-label")?.textContent ?? "") === label)
-      ?.querySelector<HTMLButtonElement>(".hk-localized-input-tag-body") ?? undefined
+/** The language row whose chip label is `label`. */
+function tag(label: string): HTMLElement | undefined {
+  return menuTags().find(
+    (t) => (t.querySelector(".hk-localized-input-tag-label")?.textContent ?? "") === label,
   );
 }
 
-/** The erase × button on the tag for `label`. */
+/** The row body (text zone — switch target) of the language row. */
+function tagBody(label: string): HTMLButtonElement | undefined {
+  return tag(label)?.querySelector<HTMLButtonElement>(".hk-localized-input-tag-body") ?? undefined;
+}
+
+/** The language chip (arm-delete target) of the row. */
+function tagLocale(label: string): HTMLButtonElement | undefined {
+  return tag(label)?.querySelector<HTMLButtonElement>(".hk-localized-input-tag-locale") ?? undefined;
+}
+
+/** The confirm × on the row. */
 function tagX(label: string): HTMLButtonElement | undefined {
-  return (
-    menuTags()
-      .find((t) => (t.querySelector(".hk-localized-input-tag-label")?.textContent ?? "") === label)
-      ?.querySelector<HTMLButtonElement>(".hk-localized-input-tag-x") ?? undefined
-  );
+  return tag(label)?.querySelector<HTMLButtonElement>(".hk-localized-input-tag-x") ?? undefined;
+}
+
+/** Full two-step erase: arm via the chip, then confirm on the ×. The
+ *  TransitionGroup keeps the leaving row mounted through its leave window
+ *  (jsdom has no CSS engine, so the ghost clears on the next-frame
+ *  fallback) — poll until the row is really gone. */
+async function eraseViaArm(container: HTMLElement, label: string) {
+  tagLocale(label)!.click();
+  await nextTick();
+  expect(tag(label)?.hasAttribute("data-armed"), "row is armed before the confirm ×").toBe(true);
+  tagX(label)!.click();
+  await nextTick();
+  await nextTick();
+  const deadline = Date.now() + 800;
+  while (tag(label) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
 }
 
 /** Wait for the menu's leave-transition window to finish — rows linger
@@ -174,7 +196,7 @@ describe("HkLocalizedInput", () => {
     expect(queryField(container).value).toBe("Plant overview");
   });
 
-  it("carries the locale code only inside the opened menu tags", async () => {
+  it("carries the locale code only inside the opened menu rows", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
@@ -182,11 +204,11 @@ describe("HkLocalizedInput", () => {
     // The chip stays code-free while the menu is closed.
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openMenu(container);
-    // Tags show the bare label plus a small code suffix — no parens form.
-    const tag = menuTags().find((t) => (t.textContent ?? "").includes("简体中文"));
-    expect(tag, "tag for the filled translation renders").toBeTruthy();
-    expect(tag!.querySelector(".hk-localized-input-tag-code")?.textContent).toBe("zh-Hans");
-    expect(tag!.textContent).not.toContain("(zh-Hans)");
+    // Rows show the bare label plus a small code suffix — no parens form.
+    const row = tag("简体中文");
+    expect(row, "row for the filled translation renders").toBeTruthy();
+    expect(row!.querySelector(".hk-localized-input-tag-code")?.textContent).toBe("zh-Hans");
+    expect(row!.textContent).not.toContain("(zh-Hans)");
     // "Add language" cascade children still carry the parenthesized code.
     const addRow = menuRows().find((r) => (r.textContent ?? "").includes("Add language"));
     addRow!.click();
@@ -219,34 +241,49 @@ describe("HkLocalizedInput", () => {
     expect(events.translations.at(-1)?.en).toBeUndefined();
   });
 
-  it("renders a tag for every filled language, including the one being edited", async () => {
+  it("renders a row for every language, including the one being edited — text left, chip right", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openMenu(container);
-    // Every filled language is a tag — the edited one included, marked active.
+    // Every language in the map is a row — the edited one included, marked active.
     expect(tagLabels()).toEqual(expect.arrayContaining(["English", "简体中文"]));
     const activeTag = menuTags().find((t) => t.hasAttribute("data-active"));
     expect(activeTag?.querySelector(".hk-localized-input-tag-label")?.textContent).toBe("English");
-    // The dedicated delete cascade is gone — tags carry their own ×.
+    // LEFT = the translation text, RIGHT = the language chip.
+    const zhRow = tag("简体中文")!;
+    const text = zhRow.querySelector(".hk-localized-input-tag-text")!;
+    expect(text.textContent).toBe("工厂总览");
+    expect(text.hasAttribute("data-empty")).toBe(false);
+    const enRow = tag("English")!;
+    expect(
+      enRow.querySelector(".hk-localized-input-tag-text")?.textContent,
+    ).toBe("Plant overview");
+    // The dedicated delete cascade is gone — rows carry their own arm/× pair.
     const allRows = menuRows().map((r) => r.textContent ?? "");
     expect(allRows.some((l) => l.includes("Delete language"))).toBe(false);
     expect(allRows.some((l) => l.includes("Add language"))).toBe(true);
-    // One × per tag.
-    for (const tag of menuTags()) {
-      expect(tag.querySelector(".hk-localized-input-tag-x"), "erase × on every tag").toBeTruthy();
+    // One chip + one × per row.
+    for (const row of menuTags()) {
+      expect(row.querySelector(".hk-localized-input-tag-locale"), "chip on every row").toBeTruthy();
+      expect(row.querySelector(".hk-localized-input-tag-x"), "confirm × on every row").toBeTruthy();
     }
   });
 
-  it("renders no tags when no translation is filled", async () => {
-    const { container } = mountInput({ modelValue: "" });
+  it("lists the edited language even while it holds no translation (empty glyph)", async () => {
+    const { container } = mountInput({ modelValue: "Plant overview" });
     await openMenu(container);
-    expect(menuTags().length).toBe(0);
-    expect(menuRows().some((r) => (r.textContent ?? "").includes("Add language"))).toBe(true);
+    // The field edits English with nothing stored yet — still listed.
+    expect(tagLabels()).toEqual(["English"]);
+    const row = tag("English")!;
+    const text = row.querySelector(".hk-localized-input-tag-text")!;
+    expect(text.textContent).toBe("—");
+    expect(text.hasAttribute("data-empty")).toBe(true);
+    expect(row.hasAttribute("data-active")).toBe(true);
   });
 
-  it("switches to an existing language via its tag: commits text, loads its value, closes the menu", async () => {
+  it("switches to an existing language via its row body: commits text, loads its value, closes the menu", async () => {
     const { events, container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
@@ -330,7 +367,7 @@ describe("HkLocalizedInput", () => {
     mounts.push({ app, container });
     expect(queryChip(container).disabled).toBe(false);
     await openMenu(container);
-    // Only the erase-own-language tag remains in the cloud.
+    // Only the current language's row remains in the list.
     expect(tagLabels()).toEqual(["English"]);
   });
 
@@ -414,8 +451,8 @@ describe("HkLocalizedInput", () => {
     app.mount(container);
     mounts.push({ app, container });
     await openMenu(container);
-    const tag = menuTags().find((t) => (t.textContent ?? "").includes("简体中文"));
-    expect(tag?.querySelector(".hk-localized-input-tag-flag")?.textContent).toBe("🇨🇳");
+    const row = tag("简体中文");
+    expect(row?.querySelector(".hk-localized-input-tag-flag")?.textContent).toBe("🇨🇳");
   });
 
   it("follows a sourceLang change without stealing focus", async () => {
@@ -455,24 +492,99 @@ describe("HkLocalizedInput", () => {
     expect(document.activeElement).not.toBe(queryField(container));
   });
 
-  it("erases a non-current translation via the tag × and keeps the menu open", async () => {
+  it("arms only the tapped row and disarms it on a second tap", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(true);
+    expect(tag("English")?.hasAttribute("data-armed")).toBe(false);
+    // Tapping the same chip again disarms.
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
+    // Arming a sibling disarms the previous row.
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    tagLocale("English")!.click();
+    await nextTick();
+    expect(tag("English")?.hasAttribute("data-armed")).toBe(true);
+    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
+  });
+
+  it("keeps the confirm × out of the tab order until the row is armed", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const x = tagX("简体中文")!;
+    // Disarmed: not tabbable, hidden from AT — the arm step is the guard.
+    expect(x.tabIndex).toBe(-1);
+    expect(x.getAttribute("aria-hidden")).toBe("true");
+    // Arm: the × becomes the next tab stop and announces itself.
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(x.tabIndex).toBe(0);
+    expect(x.hasAttribute("aria-hidden")).toBe(false);
+  });
+
+  it("names the row body by its action and the arm/confirm controls by their step", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    expect(tagBody("简体中文")?.getAttribute("aria-label")).toBe("Switch to 简体中文 (zh-Hans)");
+    // The chip labels the ARM step (Remove translation), the × the
+    // confirm step (Confirm delete).
+    expect(tagLocale("简体中文")?.getAttribute("aria-label")).toBe(
+      "Remove translation — 简体中文 (zh-Hans)",
+    );
+    expect(tagX("简体中文")?.getAttribute("aria-label")).toBe(
+      "Confirm delete — 简体中文 (zh-Hans)",
+    );
+  });
+
+  it("disarms every row when the menu closes", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(true);
+    // Close the menu, then reopen it: the armed state must not survive —
+    // a stale armed row would turn the next open into an armed delete
+    // waiting to fire.
+    queryChip(container).click();
+    await nextTick();
+    await nextTick();
+    queryChip(container).click();
+    await nextTick();
+    await nextTick();
+    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
+    expect(tag("English")?.hasAttribute("data-armed")).toBe(false);
+  });
+
+  it("erases a non-current translation via arm → confirm × and keeps the menu open", async () => {
     const { events, container } = mountReactive({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openMenu(container);
-    const x = tagX("简体中文");
-    expect(x, "erase × renders on the tag").toBeTruthy();
-    x!.click();
-    await nextTick();
-    await nextTick();
+    await eraseViaArm(container, "简体中文");
     // The map loses only the erased language; no edit-state events fire.
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue).toEqual([]);
     expect(events.languagechange).toEqual([]);
     expect(queryField(container).value).toBe("Plant overview");
     expect(queryChip(container).textContent).toContain("English");
-    // The menu STAYS open and the cloud updates live.
+    // The menu STAYS open and the list updates live.
     expect(tagLabels()).toEqual(["English"]);
     expect(menuRows().some((r) => (r.textContent ?? "").includes("Add language"))).toBe(true);
   });
@@ -483,12 +595,8 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览", ja: "プラント概覧" },
     });
     await openMenu(container);
-    tagX("简体中文")!.click();
-    await nextTick();
-    await nextTick();
-    tagX("日本語")!.click();
-    await nextTick();
-    await nextTick();
+    await eraseViaArm(container, "简体中文");
+    await eraseViaArm(container, "日本語");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(tagLabels()).toEqual(["English"]);
   });
@@ -508,9 +616,7 @@ describe("HkLocalizedInput", () => {
     expect(queryChip(container).textContent).toContain("简体中文");
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openMenu(container);
-    tagX("简体中文")!.click();
-    await nextTick();
-    await nextTick();
+    await eraseViaArm(container, "简体中文");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue.at(-1)).toBe("Plant overview");
     expect(events.languagechange.at(-1)).toBe("en");
@@ -527,9 +633,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openMenu(container);
-    tagX("English")!.click();
-    await nextTick();
-    await nextTick();
+    await eraseViaArm(container, "English");
     expect(events.translations.at(-1)).toEqual({ "zh-Hans": "工厂总览" });
     expect(events.modelValue.at(-1)).toBe("工厂总览");
     expect(events.languagechange.at(-1)).toBe("zh-Hans");
@@ -543,17 +647,16 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview" },
     });
     await openMenu(container);
-    tagX("English")!.click();
-    await nextTick();
-    await nextTick();
+    await eraseViaArm(container, "English");
     expect(events.translations.at(-1)).toEqual({});
     expect(events.modelValue.at(-1)).toBe("");
-    // The cloud collapses once nothing is filled; the menu stays open.
-    expect(menuTags().length).toBe(0);
+    // The edited language row stays (empty glyph); the menu stays open.
+    expect(tagLabels()).toEqual(["English"]);
+    expect(tag("English")?.querySelector(".hk-localized-input-tag-text")?.textContent).toBe("—");
     expect(menuRows().some((r) => (r.textContent ?? "").includes("Add language"))).toBe(true);
   });
 
-  it("dismisses the menu when the active tag's body is clicked", async () => {
+  it("dismisses the menu when the active row's body is clicked", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },

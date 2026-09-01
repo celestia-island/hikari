@@ -114,6 +114,8 @@
     "hikari::adminHeader.adminGroup": "관리자",
     "hikari::localizedInput.addLanguage": "언어 추가",
     "hikari::localizedInput.removeTranslation": "번역 삭제",
+    "hikari::localizedInput.switchLanguage": "전환 대상",
+    "hikari::localizedInput.confirmDelete": "삭제 확인",
     "hikari::localizedInput.translations": "기존 번역",
     "hikari::localizedInput.chooseLanguage": "편집 언어 선택",
     "hikari::statusBar.panel": "패널",

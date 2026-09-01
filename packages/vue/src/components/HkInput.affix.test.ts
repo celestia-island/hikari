@@ -1,9 +1,11 @@
 /**
  * Source contract for the input affix reservation (2026-08-30 user
  * report: the localized input's language chip sat at the LEFT edge of
- * the field with the scrolling placeholder sliding underneath it).
+ * the field with the scrolling placeholder sliding underneath it;
+ * 2026-09-01 user report: a lone prefix icon pushed the CENTERED text
+ * line half an icon toward the far side on the sign-in card).
  *
- * Two coupled guarantees, pinned here so a refactor cannot silently
+ * Three coupled guarantees, pinned here so a refactor cannot silently
  * regress them — the same "looks fixed but never shipped" class of
  * failure as the overflow-poll incident:
  *
@@ -14,6 +16,11 @@
  *     window consume the measured affix widths (--hk-input-affix-*-w,
  *     published by HkInput on the box), so text and marquee always end
  *     short of the chip.
+ *  3. The CENTERED default reserves the clearance SYMMETRICALLY (max
+ *     of both affix widths on each side), so icons never shift where
+ *     the centered line sits; only an explicit data-align="start"/
+ *     "end" (HkInput's `align` prop) restores the per-side
+ *     reservation.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -28,12 +35,14 @@ const scss = readFileSync(join(here, "HkInput.scss"), "utf-8");
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
-function mountInput(opts: { slots?: Record<string, Component> } = {}) {
+function mountInput(
+  opts: { slots?: Record<string, Component>; props?: Record<string, unknown> } = {},
+) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const app = createApp({
     render: () =>
-      h(HkInput, { placeholder: "Short name" }, opts.slots ?? {}),
+      h(HkInput, { placeholder: "Short name", ...opts.props }, opts.slots ?? {}),
   });
   app.mount(container);
   mounts.push({ app, container });
@@ -65,6 +74,80 @@ describe("HkInput affix reservation contract", () => {
     const marquee = scss.match(/\.hk-input-box \.hk-placeholder-marquee\s*{[^}]*}/)?.[0] ?? "";
     expect(marquee, "marquee window rule must exist").toContain("var(--hk-input-affix-end-w");
     expect(marquee).toContain("var(--hk-input-affix-start-w");
+  });
+
+  it("reserves the centered clearance symmetrically so icons never shift the line", () => {
+    // The centered base rule must reserve the SAME clearance on both
+    // sides (max of the two affix widths) — a lone prefix icon would
+    // otherwise push the text-align:center content box half an affix
+    // toward the far side (2026-09-01 sign-in card report).
+    const symmetric =
+      "max(var(--hk-input-affix-start-w, 0px), var(--hk-input-affix-end-w, 0px))";
+    const element = scss.slice(
+      scss.indexOf(".hk-input-element {"),
+      scss.indexOf("&:focus"),
+    );
+    expect(element).toContain("text-align: center");
+    expect(element).toContain("padding-inline");
+    expect(element).toContain(symmetric);
+    expect(element).not.toContain("padding-inline-start");
+    expect(element).not.toContain("padding-inline-end");
+
+    const marquee = scss.match(/\.hk-input-box \.hk-placeholder-marquee\s*{[^}]*}/)?.[0] ?? "";
+    expect(marquee, "marquee window rule must exist").toContain(symmetric);
+  });
+
+  it("restores the per-side reservation only for explicit edge alignments", () => {
+    const shared = scss.match(
+      /\.hk-input-box\[data-align="start"\] \.hk-input-element:not\(\.hk-input-textarea\),\s*\.hk-input-box\[data-align="end"\] \.hk-input-element:not\(\.hk-input-textarea\)\s*{[^}]*}/,
+    )?.[0] ?? "";
+    expect(shared, "edge-align padding rule must exist").toContain(
+      "padding-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px))",
+    );
+    expect(shared).toContain(
+      "padding-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px))",
+    );
+
+    // The standalone text-align rules must have text-align as the very
+    // first declaration — anchoring the match there skips the shared
+    // rule whose second selector line carries the same prefix.
+    expect(
+      scss.match(/\.hk-input-box\[data-align="start"\] \.hk-input-element:not\(\.hk-input-textarea\)\s*\{\s*text-align:\s*start/),
+      "start alignment rule must exist",
+    ).toBeTruthy();
+    expect(
+      scss.match(/\.hk-input-box\[data-align="end"\] \.hk-input-element:not\(\.hk-input-textarea\)\s*\{\s*text-align:\s*end/),
+      "end alignment rule must exist",
+    ).toBeTruthy();
+
+    // The scrolling window tracks the (off-center) content box too.
+    const marqueeEdge = scss.match(
+      /\.hk-input-box\[data-align="start"\] \.hk-placeholder-marquee,\s*\.hk-input-box\[data-align="end"\] \.hk-placeholder-marquee\s*{[^}]*}/,
+    )?.[0] ?? "";
+    expect(marqueeEdge, "edge-align marquee rule must exist").toContain(
+      "inset-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px))",
+    );
+  });
+
+  it("marks the box with data-align only for non-centered alignment", async () => {
+    const centered = mountInput();
+    await nextTick();
+    expect(centered.container.querySelector(".hk-input-box")!.getAttribute("data-align")).toBeNull();
+
+    const start = mountInput({ props: { align: "start" } });
+    await nextTick();
+    expect(start.container.querySelector(".hk-input-box")!.getAttribute("data-align")).toBe("start");
+
+    const end = mountInput({ props: { align: "end" } });
+    await nextTick();
+    expect(end.container.querySelector(".hk-input-box")!.getAttribute("data-align")).toBe("end");
+
+    // Textarea boxes never carry the marker — their element is excluded
+    // by :not() and a textarea-scoped marquee must keep the symmetric
+    // window insets.
+    const ta = mountInput({ props: { align: "start", type: "textarea" } });
+    await nextTick();
+    expect(ta.container.querySelector(".hk-input-box")!.getAttribute("data-align")).toBeNull();
   });
 
   it("leaves the textarea variant's padding out of the affix reservation", () => {

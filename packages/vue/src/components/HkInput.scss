@@ -73,6 +73,11 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  /* Self-declared so the symmetric-affix centering guarantee never
+   * depends on a host app's global reset: under content-box the
+   * width:100% + padding would push the content box off-axis by the
+   * full padding. Same precedent as HkTextarea/HkDatePicker. */
+  box-sizing: border-box;
   background: transparent;
   border: none;
   outline: none;
@@ -84,15 +89,19 @@
   line-height: 1.5;
   color: rgb(var(--color-text));
   text-align: center;
-  /* Horizontal padding grows by the measured affix widths
-   * (--hk-input-affix-*-w, published by HkInput on the box) so the
-   * caret, typed text and the native placeholder all stay clear of
-   * the prefix/suffix content — e.g. the localized input's language
-   * chip riding the right edge. */
-  padding: var(--space-8)
-    calc(var(--space-12) + var(--hk-input-affix-end-w, 0px))
-    var(--space-8)
-    calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  /* Horizontal padding reserves affix clearance SYMMETRICALLY: both
+   * sides grow by the max of the two measured affix widths
+   * (--hk-input-affix-*-w, published by HkInput on the box), so the
+   * content box stays centered on the box axis — a lone prefix icon
+   * (the sign-in username's user glyph) no longer pushes the centered
+   * caret/text half an icon toward the far side — while the line
+   * still never runs underneath a prefix OR suffix affix (e.g. the
+   * localized input's language chip riding the right edge). */
+  padding-block: var(--space-8);
+  padding-inline: calc(
+    var(--space-12) +
+      max(var(--hk-input-affix-start-w, 0px), var(--hk-input-affix-end-w, 0px))
+  );
 
   // The interactive states stay clean too: the shell (.hk-input-box) owns
   // the focus affordance via :focus-within. Without these overrides any
@@ -105,6 +114,27 @@
     outline: none;
     box-shadow: none;
   }
+}
+
+/* Explicit edge alignment (HkInput's `align` prop) opts out of the
+ * symmetric reservation: each side pads only by the affix actually
+ * sitting on it, so a start-aligned field with a lone suffix chip
+ * gains no phantom leading indent (and an end-aligned field with a
+ * lone prefix stays flush to its edge). The textarea variant keeps
+ * its plain padding either way — its affixes sit in flow BESIDE the
+ * element, not overlaid, so there is nothing to reserve against. */
+.hk-input-box[data-align="start"] .hk-input-element:not(.hk-input-textarea),
+.hk-input-box[data-align="end"] .hk-input-element:not(.hk-input-textarea) {
+  padding-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  padding-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
+}
+
+.hk-input-box[data-align="start"] .hk-input-element:not(.hk-input-textarea) {
+  text-align: start;
+}
+
+.hk-input-box[data-align="end"] .hk-input-element:not(.hk-input-textarea) {
+  text-align: end;
 }
 
 .hk-input-element.hk-input-textarea {
@@ -166,16 +196,28 @@
 }
 
 /* The placeholder-marquee window shares the element's content box: inset
- * by the same base padding plus the measured affix widths, so the
- * scrolling strip never slides underneath the affixes either. With no
- * affixes this still insets by the base padding — the window then exactly
- * matches the native placeholder's bounds, so marginal placeholders that
- * "fit" the padded line stay native instead of scrolling. */
+ * by the same base padding plus the affix clearance, so the scrolling
+ * strip never slides underneath the affixes either. Like the element,
+ * the centered default reserves the clearance symmetrically (max of
+ * both affix widths on each side) so the window stays co-centered with
+ * the centered text line. With no affixes this still insets by the base
+ * padding — the window then exactly matches the native placeholder's
+ * bounds, so marginal placeholders that "fit" the padded line stay
+ * native instead of scrolling. */
 .hk-input-box .hk-placeholder-marquee {
-  inset: 0
-    calc(var(--space-12) + var(--hk-input-affix-end-w, 0px))
-    0
-    calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  inset-block: 0;
+  inset-inline: calc(
+    var(--space-12) +
+      max(var(--hk-input-affix-start-w, 0px), var(--hk-input-affix-end-w, 0px))
+  );
+}
+
+/* Edge-aligned fields mirror their element's per-side reservation so
+ * the scrolling window tracks the (off-center) content box exactly. */
+.hk-input-box[data-align="start"] .hk-placeholder-marquee,
+.hk-input-box[data-align="end"] .hk-placeholder-marquee {
+  inset-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  inset-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
 }
 
 .hk-input-error-msg {

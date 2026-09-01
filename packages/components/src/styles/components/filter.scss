@@ -55,7 +55,7 @@
   padding: 0 5px;
   border-radius: 9px;
   background: var(--hi-color-primary, #00a0e9);
-  color: white;
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   font-size: 11px;
   font-weight: 500;
 }

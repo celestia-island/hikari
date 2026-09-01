@@ -329,7 +329,7 @@ impl StyledComponent for CalendarComponent {
 
 .hk-calendar-nav-button:hover:not(:disabled) {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-icon-on-solid, #ffffff);
     border-color: var(--hi-color-primary);
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
@@ -394,7 +394,7 @@ impl StyledComponent for CalendarComponent {
 
 .hk-calendar-day.hk-calendar-day-selected {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-text-on-solid, #ffffff);
     box-shadow: 0 0 12px var(--hi-color-primary-glow);
 }
 

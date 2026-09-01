@@ -24,7 +24,7 @@ a.hk-logo {
   align-items: center;
   justify-content: center;
   background: var(--hi-color-primary);
-  color: #fff;
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   border-radius: var(--hi-radius-md, 8px);
 }
 

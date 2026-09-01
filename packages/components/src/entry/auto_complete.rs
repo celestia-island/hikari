@@ -316,7 +316,7 @@ impl StyledComponent for AutoCompleteComponent {
 .hk-autocomplete-option:hover,
 .hk-autocomplete-option.hk-autocomplete-option-focused {
     background-color: var(--hi-color-primary);
-    color: var(--hi-color-text-on-primary, #ffffff);
+    color: var(--hi-color-text-on-solid, #ffffff);
 }
 "#
     }

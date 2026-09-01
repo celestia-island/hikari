@@ -390,7 +390,7 @@ impl CodeHighlighterComponent {
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
   background-color: var(--hi-color-primary, #00A0E9);
-  color: white;
+  color: var(--hi-color-text-on-solid, #ffffff);
   transition: all 0.3s ease;
 }
 

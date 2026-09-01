@@ -229,13 +229,24 @@ describe("group cssvars", () => {
 
 describe("on-solid content color tokens", () => {
   it("emits theme-configurable text/icon triplets plus aliases", () => {
-    const vars = tokensToCSSVars(themePresets.nord.dark);
+    const vars = tokensToCSSVars(themePresets.synthwave84.dark);
     expect(vars["--color-on-solid-text"]).toBe("255 255 255");
     expect(vars["--color-on-solid-icon"]).toBe("255 255 255");
     // The legacy hardcoded-white name now aliases the text slot.
     expect(vars["--color-on-solid"]).toBe("255 255 255");
     expect(vars["--hi-color-text-on-solid"]).toBe("rgb(var(--color-on-solid-text, 255 255 255))");
     expect(vars["--hi-color-icon-on-solid"]).toBe("rgb(var(--color-on-solid-icon, 255 255 255))");
+  });
+
+  it("tunes the pale gruvbox/nord dark primaries to dark ink", () => {
+    // Their dark primaries are light enough that white content is illegible
+    // (~1.7:1 / ~1.9:1); the presets carry near-black slots instead.
+    const gruvbox = tokensToCSSVars(themePresets.gruvbox.dark);
+    expect(gruvbox["--color-on-solid-text"]).toBe("40 40 40");
+    expect(gruvbox["--color-on-solid-icon"]).toBe("40 40 40");
+    const nord = tokensToCSSVars(themePresets.nord.dark);
+    expect(nord["--color-on-solid-text"]).toBe("46 52 64");
+    expect(nord["--color-on-solid-icon"]).toBe("46 52 64");
   });
 
   it("scheme objects predating the slots fall back to white (saved custom themes)", () => {

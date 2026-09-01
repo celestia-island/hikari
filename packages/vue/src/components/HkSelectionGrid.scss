@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: center;
   background: var(--hi-color-primary, #58a6ff);
-  color: #fff;
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
   font-size: 0.625rem;
   opacity: 0;
   transform: scale(0.5);

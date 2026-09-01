@@ -385,7 +385,7 @@ impl StyledComponent for UserGuideComponent {
 .hk-user-guide-primary-button {
     background-color: var(--hi-color-primary);
     border-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-text-on-solid, #ffffff);
 }
 
 .hk-user-guide-primary-button:hover {

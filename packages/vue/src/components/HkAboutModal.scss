@@ -22,7 +22,7 @@
   flex-shrink: 0;
   border-radius: var(--radius-lg, 12px);
   background: rgb(var(--color-primary));
-  color: rgb(var(--color-on-primary));
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   font-size: var(--text-lg, 1.125rem);
   font-weight: 700;
 }

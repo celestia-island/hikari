@@ -235,7 +235,9 @@ impl StyledComponent for SwitchComponent {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--hi-component-selection-surface);
+    /* On-solid icon expression matching the vue HkSwitch thumb: immune to
+       stylesheet order when both copies land in the same bundle. */
+    background-color: rgb(var(--color-on-solid-icon, 255 255 255));
     border-radius: 50%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, background 0.2s ease;

@@ -165,8 +165,10 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(191, 97, 106),
       warning: rgb(208, 135, 112),
       info: rgb(136, 192, 208),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
+      // Nord's dark primary is the pale Polar Water #88C0D0: the Nord
+      // design language puts dark ink on it (white is ~1.9:1).
+      onSolidText: rgb(46, 52, 64),
+      onSolidIcon: rgb(46, 52, 64),
     },
     light: {
       primary: rgb(94, 129, 172),
@@ -209,8 +211,10 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(251, 118, 118),
       warning: rgb(251, 189, 84),
       info: rgb(131, 191, 152),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
+      // Gruvbox's dark primary is the warm yellow #FBBD54: gruvbox always
+      // inks dark fg on it (white is ~1.7:1).
+      onSolidText: rgb(40, 40, 40),
+      onSolidIcon: rgb(40, 40, 40),
     },
     light: {
       primary: rgb(204, 128, 49),

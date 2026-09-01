@@ -124,8 +124,8 @@
   // (default white), mirroring packages/vue HkIconButtonVars.scss — both
   // sheets ship in app bundles and must not diverge (identical-specifier
   // cascade picks whichever loads last).
-  --hi-icon-button-icon-color: var(--hi-color-icon-on-solid, #fff);
-  --hi-icon-button-icon-color-active: var(--hi-color-icon-on-solid, #fff);
+  --hi-icon-button-icon-color: rgb(var(--color-on-solid-icon, 255 255 255));
+  --hi-icon-button-icon-color-active: rgb(var(--color-on-solid-icon, 255 255 255));
 
   --hi-icon-button-bg: var(--hi-color-primary);
   --hi-icon-button-bg-active: var(--hi-color-primary-dark);

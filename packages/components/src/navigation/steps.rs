@@ -307,7 +307,7 @@ impl StyledComponent for StepsComponent {
 
 .hk-step-process .hk-step-icon .hk-step-number-process {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-text-on-solid, #ffffff);
     box-shadow: 0 0 8px rgba(var(--hi-color-primary-rgb), 0.5);
 }
 

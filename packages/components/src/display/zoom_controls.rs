@@ -161,7 +161,7 @@ impl StyledComponent for ZoomControlsComponent {
 
 .hk-zoom-controls-button:active:not(.hk-zoom-controls-button-disabled) {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-icon-on-solid, #ffffff);
 }
 
 .hk-zoom-controls-button-disabled {

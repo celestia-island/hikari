@@ -82,7 +82,9 @@
 // ------
 
 .hk-checkbox-icon {
-    color: var(--hi-component-selection-icon);
+    /* On-solid icon expression matching the vue HkCheckbox tick: immune to
+       stylesheet order when both copies land in the same bundle. */
+    color: rgb(var(--color-on-solid-icon, 255 255 255));
     width: 70%;
     height: 70%;
     opacity: 1;

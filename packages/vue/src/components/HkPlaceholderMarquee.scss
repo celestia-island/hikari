@@ -8,6 +8,15 @@
  * through it, so the sign scrolls seamlessly. While the text fits, the whole
  * layer is merely a hidden measuring probe — the host input shows its native
  * placeholder instead (the component reports the flip via `overflowChange`).
+ *
+ * The strip motion is a registered CSS keyframes animation (see
+ * `animation/registerAnimations.ts`): the keyframes travel from 0 to
+ * `var(--hk-marquee-shift)` (one copy width, published inline by the
+ * component after measuring) over `var(--hk-marquee-duration)` — pure
+ * compositor work with zero per-frame JS. The animation-context switch
+ * (`html[data-css-animations="0"]`, driven by setReducedMotion / perf
+ * suspension) and the local `data-parked` attribute (host focus) park the
+ * strip via `animation-play-state`.
  */
 .hk-placeholder-marquee {
   position: absolute;
@@ -25,13 +34,27 @@
   // Match the native placeholder's centered posture (HkInput's element is
   // text-align: center) so the two modes do not shift horizontally.
   text-align: center;
-  // The strip is wider than the window; the JS offset drives translateX.
-  will-change: transform;
 
   &__strip {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
+    // CSS-driven scrolling strip (overflowing only). `will-change` lifts it
+    // to the compositor so the transform never re-rasterizes text on the
+    // main thread — the whole point of the CSS takeover. Direction comes
+    // from --hk-marquee-direction (reverse for a negative speed).
+    &--scroll {
+      animation: hk-placeholder-marquee-scroll var(--hk-marquee-duration, 12s)
+        linear infinite;
+      animation-direction: var(--hk-marquee-direction, normal);
+      will-change: transform;
+    }
+  }
+
+  // Parked while the host input is focused: the loop freezes (play-state),
+  // text stays readable, and blur resumes the sweep from the same spot.
+  &[data-parked] &__strip--scroll {
+    animation-play-state: paused;
   }
 
   &__copy {
@@ -39,7 +62,7 @@
   }
 
   // Hidden probe mode (text fits): visibility keeps the element laid out —
-  // clientWidth and the copy's bounding rect still measure reality for the
+  // clientWidth and the copy's laid-out width still measure reality for the
   // ResizeObserver loop — while the native placeholder of the host input
   // does the actual showing.
   &--hidden {
@@ -56,10 +79,31 @@
   }
 }
 
-// Reduced motion: the bus is parked by setReducedMotion(true); park the
-// strip at its natural position too so no transform jumps remain.
+// Loop geometry is data-driven: the strip travels exactly one copy width
+// (three identical copies are laid out, so the wrap is seamless wherever
+// the loop restarts).
+@keyframes hk-placeholder-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--hk-marquee-shift, -100%));
+  }
+}
+
+// Reduced motion: park the strip at its natural position — no transform
+// jumps, no sweep. The media query covers hosts without useReducedMotion
+// wired; `html[data-css-animations="0"]` covers the runtime switch (and
+// must stop the animation outright, not merely pause it mid-loop, so the
+// first copy — the natural reading position — shows).
 @media (prefers-reduced-motion: reduce) {
   .hk-placeholder-marquee__strip {
+    animation: none !important;
     transform: none !important;
   }
+}
+
+html[data-css-animations="0"] .hk-placeholder-marquee__strip {
+  animation: none !important;
+  transform: none !important;
 }

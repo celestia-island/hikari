@@ -35,6 +35,8 @@
     "hikari::theme.tokens.error": "Erro",
     "hikari::theme.tokens.warning": "Aviso",
     "hikari::theme.tokens.info": "Informação",
+    "hikari::theme.tokens.onSolidText": "Texto sobre a cor da marca",
+    "hikari::theme.tokens.onSolidIcon": "Ícones sobre a cor da marca",
     "hikari::theme.groupCount": "{count} cores",
     "hikari::theme.extendedColors": "Cores estendidas",
     "hikari::secret.title": "Segredo",

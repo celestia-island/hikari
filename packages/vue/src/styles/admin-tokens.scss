@@ -60,6 +60,10 @@
   --hi-color-text-primary: rgb(var(--color-text, 0 0 0));
   --hi-color-text-on-primary: rgb(var(--color-on-primary, 255 255 255));
   --color-on-solid: 255 255 255;
+  --color-on-solid-text: 255 255 255;
+  --color-on-solid-icon: 255 255 255;
+  --hi-color-text-on-solid: rgb(var(--color-on-solid-text, 255 255 255));
+  --hi-color-icon-on-solid: rgb(var(--color-on-solid-icon, 255 255 255));
   --hi-color-text-secondary: color-mix(in srgb, rgb(var(--color-text, 0 0 0)) 60%, transparent);
   --hi-color-muted: rgb(var(--color-muted, 100 100 100));
   --hi-color-background: rgb(var(--color-background, 246 246 246));

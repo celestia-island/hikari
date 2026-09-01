@@ -59,6 +59,27 @@ const SECTIONED_GROUP: TokenGroupDefinition = {
   ],
 };
 
+// Legacy prefill shape: a saved custom theme predating the optional
+// on-solid content slots (ThemeSchemeTokens keeps them optional for these).
+const legacyDark: HCustomTheme["dark"] = {
+  primary: { r: 12, g: 34, b: 56 },
+  secondary: { r: 21, g: 43, b: 65 },
+  accent: { r: 90, g: 80, b: 70 },
+  text: { r: 228, g: 228, b: 231 },
+  muted: { r: 180, g: 180, b: 180 },
+  border: { r: 255, g: 255, b: 255 },
+  focusedBorder: { r: 12, g: 34, b: 56 },
+  background: { r: 14, g: 14, b: 30 },
+  surface: { r: 24, g: 24, b: 42 },
+  selectedBackground: { r: 70, g: 70, b: 85 },
+  selectedText: { r: 240, g: 240, b: 240 },
+  statusBarBackground: { r: 24, g: 24, b: 42 },
+  success: { r: 114, g: 241, b: 184 },
+  error: { r: 255, g: 107, b: 107 },
+  warning: { r: 253, g: 235, b: 139 },
+  info: { r: 110, g: 231, b: 239 },
+};
+
 interface EditorExpose {
   reset: () => void;
   getDraft: () => HCustomTheme;
@@ -107,6 +128,21 @@ async function setPrimaryHex(hex: string): Promise<void> {
   await nextTick();
 }
 
+/** Set an arbitrary picker slot (by swatch index) of the active mode to a hex color. */
+async function setSwatchHex(swatchIndex: number, hex: string): Promise<void> {
+  const swatches = document.body.querySelectorAll(
+    ".s-scheme-colors .hk-color-picker-swatch-btn",
+  );
+  (swatches[swatchIndex] as HTMLButtonElement).click();
+  await settle();
+  const input = document.body.querySelector(
+    ".hk-color-picker-hex-row input.hk-input-element",
+  ) as HTMLInputElement | null;
+  input!.value = hex;
+  input!.dispatchEvent(new Event("input", { bubbles: true }));
+  await nextTick();
+}
+
 beforeEach(() => {
   // Pin the effective mode so edits deterministically target the dark side.
   useTheme().setMode("dark");
@@ -120,12 +156,12 @@ afterEach(() => {
 });
 
 describe("HkColorSchemeEditor", () => {
-  it("renders the seven accent pickers on initial render", async () => {
+  it("renders the seven accent pickers plus the two on-solid content pickers", async () => {
     const { container } = mountEditor();
     await nextTick();
 
     const pickers = container.querySelectorAll(".s-scheme-colors .hk-color-picker");
-    expect(pickers).toHaveLength(7);
+    expect(pickers).toHaveLength(9); // 7 accents + onSolidText + onSolidIcon
     // No groups registered in this file yet: the extension section is absent.
     expect(container.querySelector(".s-scheme-groups")).toBeNull();
   });
@@ -137,6 +173,29 @@ describe("HkColorSchemeEditor", () => {
     await setPrimaryHex("ff0000");
     const draft = ref.value!.getDraft();
     expect(draft.dark.primary).toEqual({ r: 255, g: 0, b: 0 });
+  });
+
+  it("editing an on-solid content color updates getDraft()", async () => {
+    const { ref } = mountEditor();
+    await nextTick();
+
+    // 9th picker in the grid = onSolidIcon (7 accents, then text, then icon).
+    const swatches = document.body.querySelectorAll(
+      ".s-scheme-colors .hk-color-picker-swatch-btn",
+    );
+    (swatches[8] as HTMLButtonElement).click();
+    await settle();
+    const input = document.body.querySelector(
+      ".hk-color-picker-hex-row input.hk-input-element",
+    ) as HTMLInputElement | null;
+    input!.value = "00ff00";
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.onSolidIcon).toEqual({ r: 0, g: 255, b: 0 });
+    // The untouched sibling slot keeps its default white.
+    expect(draft.dark.onSolidText).toEqual({ r: 255, g: 255, b: 255 });
   });
 
   it("getDraft() includes clamped group values", async () => {
@@ -172,5 +231,40 @@ describe("HkColorSchemeEditor", () => {
     ref.value!.reset();
     await nextTick();
     expect(ref.value!.getDraft().dark.primary).toEqual({ r: 255, g: 107, b: 157 });
+  });
+
+  it("reset() re-seeds on-solid slots to white when the prefill omits them", async () => {
+    const { ref } = mountEditor({ initialDark: legacyDark });
+    await nextTick();
+
+    // 8th picker in the grid = onSolidText (7 accents, then text, then icon).
+    await setSwatchHex(7, "00ff00");
+    expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 0, g: 255, b: 0 });
+
+    ref.value!.reset();
+    await nextTick();
+    // Regression: Object.assign alone cannot clear a slot the prefill omits,
+    // so reset() must re-seed the optional slots explicitly.
+    expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 255, g: 255, b: 255 });
+    expect(ref.value!.getDraft().dark.onSolidIcon).toEqual({ r: 255, g: 255, b: 255 });
+  });
+
+  it("reset() restores prefill on-solid slot values after edits", async () => {
+    const { ref } = mountEditor({
+      initialDark: {
+        ...legacyDark,
+        onSolidText: { r: 255, g: 200, b: 0 },
+        onSolidIcon: { r: 0, g: 200, b: 255 },
+      },
+    });
+    await nextTick();
+
+    await setSwatchHex(7, "00ff00");
+    expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 0, g: 255, b: 0 });
+
+    ref.value!.reset();
+    await nextTick();
+    expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 255, g: 200, b: 0 });
+    expect(ref.value!.getDraft().dark.onSolidIcon).toEqual({ r: 0, g: 200, b: 255 });
   });
 });

@@ -35,6 +35,8 @@
     "hikari::theme.tokens.error": "Ошибка",
     "hikari::theme.tokens.warning": "Предупреждение",
     "hikari::theme.tokens.info": "Информация",
+    "hikari::theme.tokens.onSolidText": "Текст на фирменном цвете",
+    "hikari::theme.tokens.onSolidIcon": "Значки на фирменном цвете",
     "hikari::theme.groupCount": "Цветов: {count}",
     "hikari::theme.extendedColors": "Расширенные цвета",
     "hikari::secret.title": "Секрет",

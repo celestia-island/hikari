@@ -38,7 +38,7 @@
 
 .s-log-tab[data-active] {
   background: rgb(var(--color-primary));
-  color: rgb(var(--color-on-primary));
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   font-weight: 600;
 }
 
@@ -68,7 +68,9 @@
 .s-log-btn[data-active] {
   background: rgb(var(--color-primary));
   border-color: rgb(var(--color-primary));
-  color: rgb(var(--color-on-primary));
+  /* Control chrome (icon buttons on the solid fill) follows the
+     theme-configurable icon color, not the computed on-primary. */
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
 }
 
 .s-log-btn:disabled {

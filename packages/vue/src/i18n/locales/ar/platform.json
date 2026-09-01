@@ -35,6 +35,8 @@
     "hikari::theme.tokens.error": "خطأ",
     "hikari::theme.tokens.warning": "تحذير",
     "hikari::theme.tokens.info": "معلومات",
+    "hikari::theme.tokens.onSolidText": "نص على لون العلامة",
+    "hikari::theme.tokens.onSolidIcon": "أيقونات على لون العلامة",
     "hikari::theme.groupCount": "{count} ألوان",
     "hikari::theme.extendedColors": "ألوان موسعة",
     "hikari::secret.title": "سر",

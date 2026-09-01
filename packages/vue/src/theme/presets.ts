@@ -21,6 +21,18 @@ export interface ThemeSchemeTokens {
   error: ThemeTokenRGB;
   warning: ThemeTokenRGB;
   info: ThemeTokenRGB;
+  /**
+   * Text color rendered ON solid brand fills (primary buttons, badges).
+   * Optional for backward compatibility with saved custom themes that
+   * predate the slot; defaults to white when absent.
+   */
+  onSolidText?: ThemeTokenRGB;
+  /**
+   * Icon/shape color rendered ON solid brand fills (switch thumb, checkbox
+   * tick, radio dot). Optional for backward compatibility with saved custom
+   * themes that predate the slot; defaults to white when absent.
+   */
+  onSolidIcon?: ThemeTokenRGB;
 }
 
 /**
@@ -109,6 +121,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(255, 107, 107),
       warning: rgb(253, 235, 139),
       info: rgb(110, 231, 239),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
     light: {
       primary: rgb(214, 51, 132),
@@ -127,6 +141,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(239, 68, 68),
       warning: rgb(245, 158, 11),
       info: rgb(6, 182, 212),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
   },
   nord: {
@@ -149,6 +165,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(191, 97, 106),
       warning: rgb(208, 135, 112),
       info: rgb(136, 192, 208),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
     light: {
       primary: rgb(94, 129, 172),
@@ -167,6 +185,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(191, 97, 106),
       warning: rgb(208, 135, 112),
       info: rgb(136, 192, 208),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
   },
   gruvbox: {
@@ -189,6 +209,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(251, 118, 118),
       warning: rgb(251, 189, 84),
       info: rgb(131, 191, 152),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
     light: {
       primary: rgb(204, 128, 49),
@@ -207,6 +229,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(204, 69, 57),
       warning: rgb(204, 128, 49),
       info: rgb(70, 120, 104),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
   },
   tokyonight: {
@@ -229,6 +253,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(247, 118, 142),
       warning: rgb(255, 183, 87),
       info: rgb(125, 207, 255),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
     light: {
       primary: rgb(52, 96, 189),
@@ -247,6 +273,8 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       error: rgb(225, 72, 96),
       warning: rgb(206, 145, 60),
       info: rgb(56, 157, 192),
+      onSolidText: rgb(255, 255, 255),
+      onSolidIcon: rgb(255, 255, 255),
     },
   },
 };
@@ -288,10 +316,19 @@ export function tokensToCSSVars(
   const onPrimary = contrastColor(tokens.primary);
   const textSecondary = mixToken(tokens.text, tokens.muted, 0.25);
   const textTertiary = mixToken(tokens.text, tokens.muted, 0.5);
+  // Content colors for solid brand fills default to white (the historical
+  // hardcoded value); saved custom themes that predate the slots stay white.
+  const onSolidText = tokens.onSolidText ?? { r: 255, g: 255, b: 255 };
+  const onSolidIcon = tokens.onSolidIcon ?? { r: 255, g: 255, b: 255 };
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
-    "--color-on-solid": "255 255 255",
+    "--color-on-solid-text": `${onSolidText.r} ${onSolidText.g} ${onSolidText.b}`,
+    "--color-on-solid-icon": `${onSolidIcon.r} ${onSolidIcon.g} ${onSolidIcon.b}`,
+    // Legacy name kept as an alias of the text slot: existing consumers
+    // (HkButton, --hi-color-text-on-secondary/danger/success) keep working
+    // and now follow the theme-configurable text choice.
+    "--color-on-solid": `${onSolidText.r} ${onSolidText.g} ${onSolidText.b}`,
     "--color-secondary": `${tokens.secondary.r} ${tokens.secondary.g} ${tokens.secondary.b}`,
     "--color-accent": `${tokens.accent.r} ${tokens.accent.g} ${tokens.accent.b}`,
     "--color-text": `${tokens.text.r} ${tokens.text.g} ${tokens.text.b}`,
@@ -319,6 +356,8 @@ export function tokensToCSSVars(
     "--hi-color-muted": "rgb(var(--color-muted))",
     "--hi-color-on-primary": "rgb(var(--color-on-primary))",
     "--hi-color-text-on-primary": "rgb(var(--color-on-primary))",
+    "--hi-color-text-on-solid": "rgb(var(--color-on-solid-text, 255 255 255))",
+    "--hi-color-icon-on-solid": "rgb(var(--color-on-solid-icon, 255 255 255))",
     "--hi-color-success": "rgb(var(--color-success))",
     "--hi-color-error": "rgb(var(--color-error))",
     "--hi-color-warning": "rgb(var(--color-warning))",

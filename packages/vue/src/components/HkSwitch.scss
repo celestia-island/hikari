@@ -75,7 +75,10 @@
 .hk-switch-thumb {
   position: absolute;
   border-radius: 50%;
-  background: var(--hi-color-text-on-primary, #fff);
+  /* A shape on a solid brand fill: theme icon color (default white), not
+     the luminance-computed on-primary that went near-black on bright
+     primaries (synthwave pink) while HkButton labels stayed white. */
+  background: rgb(var(--color-on-solid-icon, 255 255 255));
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
@@ -137,6 +140,6 @@
 
   &-on {
     left: 4px;
-    color: var(--hi-color-text-on-primary, #fff);
+    color: rgb(var(--color-on-solid-text, 255 255 255));
   }
 }

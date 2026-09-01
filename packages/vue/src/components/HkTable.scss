@@ -200,7 +200,7 @@
 .hk-table-checkbox-icon {
   width: 12px;
   height: 12px;
-  color: var(--hi-color-text-on-primary, #ffffff);
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
 }
 
 /* SR-only utility */

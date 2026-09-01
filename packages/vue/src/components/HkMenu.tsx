@@ -149,8 +149,111 @@ export default defineComponent({
 
     /** Open submenu path on desktop, e.g. ["theme", "dark"] → panel chain. */
     const desktopPath = ref<string[]>([]);
+    /**
+     * Desktop cascade levels >= this 1-based level are animating shut —
+     * their path entries stay (so the panels keep rendering through their
+     * leave transition) but render open=false. Swept for real once the
+     * leave finishes. -1 = none closing.
+     */
+    const closedFrom = ref(-1);
+    /** A pushed mobile sheet layer, optionally mid-leave. */
+    interface StackEntry {
+      item: HkMenuItem;
+      closing: boolean;
+    }
     /** Pushed sheet chain on mobile: the branch item of each level. */
-    const mobileStack = ref<HkMenuItem[]>([]);
+    const mobileStack = ref<StackEntry[]>([]);
+
+    // ── leave-transition bookkeeping ─────────────────────────────────
+    // Panels animate closed inside HkSelectPanel; this component must
+    // therefore stay RENDERED a beat longer than `open` — unmounting the
+    // tree the instant open flips false would snap every panel shut.
+    // `linger` keeps the panel tree mounted for the leave window after a
+    // close; the deferred sweeps below clear the per-level state the
+    // same way. Plain timers (not the animation bus): they gate DOM
+    // lifecycle, not per-frame motion, and must fire even when the tab
+    // is throttling RAF.
+    const POP_LEAVE_MS = 320;
+
+    const lingering = ref(false);
+    let lingerTimer: ReturnType<typeof setTimeout> | null = null;
+    let sweepTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function clearTimers(): void {
+      if (lingerTimer !== null) {
+        clearTimeout(lingerTimer);
+        lingerTimer = null;
+      }
+      if (sweepTimer !== null) {
+        clearTimeout(sweepTimer);
+        sweepTimer = null;
+      }
+    }
+
+    function resetLevels(): void {
+      desktopPath.value = [];
+      mobileStack.value = [];
+      closedFrom.value = -1;
+    }
+
+    /** Drop sub-levels whose leave has finished (armed by the deferred
+     *  close paths below). Re-derived against CURRENT state so a level
+     *  re-opened during the window survives the sweep. */
+    function runSweep(): void {
+      sweepTimer = null;
+      if (closedFrom.value > 0) {
+        const lvl = closedFrom.value;
+        closedFrom.value = -1;
+        desktopPath.value = desktopPath.value.slice(0, lvl - 1);
+      }
+      if (mobileStack.value.some((e) => e.closing)) {
+        mobileStack.value = mobileStack.value.filter((e) => !e.closing);
+      }
+    }
+
+    function scheduleSweep(): void {
+      if (sweepTimer !== null) clearTimeout(sweepTimer);
+      sweepTimer = setTimeout(runSweep, POP_LEAVE_MS);
+    }
+
+    /** Any synchronous path mutation (branch open / sibling switch)
+     *  cancels pending deferred closes — menubar cascade switches stay
+     *  instant by convention; the closing levels were replaced anyway. */
+    function cancelDeferredCloses(): void {
+      if (sweepTimer !== null) {
+        clearTimeout(sweepTimer);
+        sweepTimer = null;
+      }
+      closedFrom.value = -1;
+      for (const e of mobileStack.value) e.closing = false;
+    }
+
+    watch(
+      () => props.open,
+      (open) => {
+        if (open) {
+          clearTimers();
+          lingering.value = true;
+          resetLevels();
+        } else {
+          lingering.value = true;
+          if (lingerTimer !== null) clearTimeout(lingerTimer);
+          lingerTimer = setTimeout(() => {
+            lingerTimer = null;
+            lingering.value = false;
+            resetLevels();
+          }, POP_LEAVE_MS);
+          // Levels already mid-leave ride along with the whole-menu
+          // close; the linger expiry clears them.
+          if (sweepTimer !== null) {
+            clearTimeout(sweepTimer);
+            sweepTimer = null;
+          }
+        }
+      },
+    );
+
+    onBeforeUnmount(clearTimers);
 
     // ── outside-click attribution ────────────────────────────────────
     // Each HkSelectPanel closes on clicks landing outside ITS OWN surface,
@@ -201,8 +304,8 @@ export default defineComponent({
     });
 
     function closeAll(): void {
-      desktopPath.value = [];
-      mobileStack.value = [];
+      // State clearing is deferred to the linger expiry / next open so
+      // every level stays mounted through its leave transition.
       emit("update:open", false);
     }
 
@@ -215,20 +318,30 @@ export default defineComponent({
     /** Desktop sub-panel at `level` asked to close. */
     function onSubCloseRequest(level: number): void {
       if (clickLevel.value > level) return; // a deeper panel owns this click
-      desktopPath.value = desktopPath.value.slice(0, level - 1);
+      // Keep the path (panels keep rendering) but close every level from
+      // here down; the sweep drops them once their leaves finish.
+      closedFrom.value = level;
+      scheduleSweep();
     }
 
     /** Mobile sheet layer `index` (level = index + 1) asked to close. */
     function onStackCloseRequest(index: number): void {
       if (clickLevel.value > index + 1) return;
-      mobileStack.value = mobileStack.value.slice(0, index);
+      mobileStack.value = mobileStack.value.map((e, i) =>
+        i >= index ? { ...e, closing: true } : e,
+      );
+      scheduleSweep();
     }
 
     function onItem(item: HkMenuItem, level: number): void {
       if (item.disabled) return;
       if (item.children?.length) {
+        cancelDeferredCloses();
         if (isMobile.value) {
-          mobileStack.value = [...mobileStack.value.slice(0, level), item];
+          mobileStack.value = [
+            ...mobileStack.value.slice(0, level),
+            { item, closing: false },
+          ];
         } else {
           // Replace the path at the clicked row's level — clicking a
           // sibling in a shallower panel switches the cascade to it.
@@ -257,6 +370,7 @@ export default defineComponent({
       if (isMobile.value) return;
       if (desktopPath.value.length <= level) return;
       if (desktopPath.value[level] === item.key) return;
+      cancelDeferredCloses();
       desktopPath.value = item.children?.length
         ? [...desktopPath.value.slice(0, level), item.key]
         : desktopPath.value.slice(0, level);
@@ -448,9 +562,12 @@ export default defineComponent({
           const list = itemsAtLevel(level);
           if (!list.length) continue;
           const branch = branchAt(level);
+          // Levels mid-deferred-close render open=false so their panel
+          // plays the pop leave instead of unmounting instantly.
+          const levelOpen = props.open && (closedFrom.value < 0 || level < closedFrom.value);
           panels.push(
             <HkSelectPanel
-              open
+              open={levelOpen}
               anchorRef={
                 rowAnchor(level - 1, desktopPath.value[level - 1]) as unknown as HTMLElement
               }
@@ -489,14 +606,14 @@ export default defineComponent({
           {levelSurface(0, props.items)}
         </HkSelectPanel>,
       ];
-      mobileStack.value.forEach((branch, i) => {
+      mobileStack.value.forEach((entry, i) => {
         const level = i + 1;
         sheets.push(
           <HkSelectPanel
-            open
+            open={props.open && !entry.closing}
             // Sub-levels carry no title of their own — the parent item's
             // label names the sheet.
-            title={branch.label}
+            title={entry.item.label}
             onUpdate:open={(v: boolean) => {
               if (!v) onStackCloseRequest(i);
             }}
@@ -504,7 +621,7 @@ export default defineComponent({
               panelInsts.value[level] = inst as PanelInstance | null;
             }}
           >
-            {levelSurface(level, branch.children ?? [])}
+            {levelSurface(level, entry.item.children ?? [])}
           </HkSelectPanel>,
         );
       });
@@ -641,7 +758,10 @@ export default defineComponent({
 
     return () => {
       if (props.variant === "sidebar") return renderSidebar();
-      if (!props.open) return null;
+      // Stay mounted through the leave window after a close (`lingering`)
+      // so every level's HkSelectPanel can play its pop/slide-out —
+      // unmounting here would snap the whole cascade shut.
+      if (!props.open && !lingering.value) return null;
       // Each level renders through its own HkSelectPanel, which teleports
       // itself to body — desktop popouts / mobile sheet layers alike.
       return isMobile.value ? <>{renderSheets()}</> : <>{renderPanels()}</>;

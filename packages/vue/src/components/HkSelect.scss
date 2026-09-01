@@ -103,6 +103,66 @@
 .hk-select-popout-host {
   position: fixed;
   min-width: 180px;
+
+  /* Pop motion family — the popout grows out of the anchor edge it sits
+   * on (data-side/data-align are set by HkSelectPanel from the RESOLVED
+   * placement, including after an auto-flip) and retracts back into it.
+   * Same tokens as HkPopover/HkTooltip so every anchored surface moves
+   * with one curve. */
+  &[data-side="bottom"] { transform-origin: top left; }
+  &[data-side="bottom"][data-align="end"] { transform-origin: top right; }
+  &[data-side="top"] { transform-origin: bottom left; }
+  &[data-side="top"][data-align="end"] { transform-origin: bottom right; }
+}
+
+.hk-select-popout-enter-active {
+  transition:
+    opacity var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--hk-pop-in-duration, 0.2s)
+      var(--hk-pop-in-transform-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.hk-select-popout-leave-active {
+  transition:
+    opacity var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1)),
+    transform var(--hk-pop-out-duration, 0.15s)
+      var(--hk-pop-out-ease, cubic-bezier(0.4, 0, 1, 1));
+}
+
+.hk-select-popout-enter-from,
+.hk-select-popout-leave-to {
+  opacity: 0;
+}
+
+.hk-select-popout-host[data-side="bottom"] {
+  &.hk-select-popout-enter-from {
+    transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+  &.hk-select-popout-leave-to {
+    transform: translateY(var(--hk-pop-offset, 4px))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+}
+
+.hk-select-popout-host[data-side="top"] {
+  &.hk-select-popout-enter-from {
+    transform: translateY(var(--hk-pop-offset, 4px))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+  &.hk-select-popout-leave-to {
+    transform: translateY(calc(-1 * var(--hk-pop-offset, 4px)))
+      scale(var(--hk-pop-scale, 0.97));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-select-popout-enter-active,
+  .hk-select-popout-leave-active {
+    transition: none;
+  }
 }
 
 .hk-select-popout {

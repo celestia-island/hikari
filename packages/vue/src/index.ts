@@ -210,6 +210,11 @@ export type { PasswordValidationResult, PasswordLevel } from "./utils/password";
 
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
+export { useSurfaceTransition } from "./composables/useSurfaceTransition";
+export type {
+  SurfaceTransition,
+  SurfaceTransitionHooks,
+} from "./composables/useSurfaceTransition";
 
 export { useZoomPan } from "./composables/useZoomPan";
 export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";

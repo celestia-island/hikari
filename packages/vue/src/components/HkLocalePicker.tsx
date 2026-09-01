@@ -1,4 +1,7 @@
-import { defineComponent, ref, type PropType } from "vue";
+import { defineComponent, ref, Transition, type PropType } from "vue";
+
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import "./HkLocalePicker.scss";
 
 export interface LocaleOption {
   code: string;
@@ -20,6 +23,10 @@ export const HkLocalePicker = defineComponent({
   emits: ["select"],
   setup(props, { emit }) {
     const open = ref(false);
+    // Open/close motion reported into the unified animation context —
+    // this little dropdown moves like the rest of the pop family
+    // instead of appearing bare.
+    const anim = useSurfaceTransition(250).hooks();
 
     function handleSelect(code: string) {
       emit("select", code);
@@ -52,9 +59,18 @@ export const HkLocalePicker = defineComponent({
             <path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.2" />
           </svg>
         </button>
-        {open.value && (
-          <div
-            style={{
+        <Transition
+          name="hk-locale-picker"
+          appear
+          onBeforeEnter={anim.onBeforeEnter}
+          onAfterEnter={anim.onAfterEnter}
+          onBeforeLeave={anim.onBeforeLeave}
+          onAfterLeave={anim.onAfterLeave}
+        >
+          {open.value && (
+            <div
+              class="hk-locale-picker-dropdown"
+              style={{
               position: "absolute",
               top: "calc(100% + 4px)",
               right: 0,
@@ -109,7 +125,8 @@ export const HkLocalePicker = defineComponent({
               </button>
             ))}
           </div>
-        )}
+          )}
+        </Transition>
       </div>
     );
   },

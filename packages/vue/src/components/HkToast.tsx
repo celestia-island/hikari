@@ -8,6 +8,7 @@ import { useClipboard } from "../runtime/useClipboard";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
 import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
+import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import "./HkToast.scss";
 
 const LONG_THRESHOLD = 50;
@@ -161,6 +162,14 @@ export default defineComponent({
     // it holds the topmost z band (POPUP_Z_BANDS.toast): toasts stay
     // above every modal/drawer sheet no matter which opened first.
     const manager = usePopupManager();
+    // Toast enter/leave motion reported into the unified animation
+    // context. The TransitionGroup hooks fire per item onto ONE shared
+    // track: interleaved enters/leaves re-arm/cancel it, so the bus may
+    // briefly under- or over-report while several toasts swap — the
+    // duration cron in useReportedTransition self-heals within one
+    // window; this is cadence reporting, not exact per-item tracking.
+    const surf = useSurfaceTransition(320);
+    const itemHooks = surf.hooks();
     let popupHandle: PopupHandle | null = null;
     const containerZ = ref<number | null>(null);
 
@@ -188,8 +197,17 @@ export default defineComponent({
           <TransitionGroup
             tag="div"
             name="hk-toast"
-            onBeforeLeave={pinLeaveGeometry}
-            onLeaveCancelled={clearLeaveGeometry}
+            onBeforeEnter={itemHooks.onBeforeEnter}
+            onAfterEnter={itemHooks.onAfterEnter}
+            onBeforeLeave={(el: Element) => {
+              itemHooks.onBeforeLeave();
+              pinLeaveGeometry(el);
+            }}
+            onAfterLeave={itemHooks.onAfterLeave}
+            onLeaveCancelled={(el: Element) => {
+              itemHooks.onLeaveCancelled();
+              clearLeaveGeometry(el);
+            }}
           >
             {toasts.map((item) => (
               <HkToastItem

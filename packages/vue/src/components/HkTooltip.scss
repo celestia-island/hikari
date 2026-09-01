@@ -22,7 +22,13 @@
   word-break: break-word;
   pointer-events: none;
   opacity: 0;
-  transition: opacity var(--duration-short) ease;
+  /* Fade-only on purpose: the popup positions itself with an INLINE
+   * transform (per-placement translate), which would override any SCSS
+   * scale and make a transform transition glide on the first show.
+   * Timing/easing join the pop motion family (--hk-pop-* in
+   * theme.scss) so hover hints keep the family cadence. */
+  transition: opacity var(--hk-pop-in-duration, 0.2s)
+    var(--hk-pop-in-opacity-ease, cubic-bezier(0.16, 1, 0.3, 1));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   background: #ffffff;
   color: #000000;
@@ -30,6 +36,12 @@
 
 .hk-tooltip-popup.hk-tooltip-visible {
   opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-tooltip-popup {
+    transition: none;
+  }
 }
 
 .hk-tooltip-content {

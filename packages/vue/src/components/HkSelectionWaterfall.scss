@@ -56,7 +56,7 @@
   height: 0.875rem;
   border-radius: 50%;
   background: var(--hi-color-primary, #58a6ff);
-  color: #fff;
+  color: rgb(var(--color-on-solid-icon, 255 255 255));
 }
 
 .hk-selection-waterfall-name {

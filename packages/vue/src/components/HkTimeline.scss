@@ -217,7 +217,7 @@
 .hk-timeline-step[data-status="completed"] {
   [data-el="indicator"] {
     background-color: var(--hi-color-primary);
-    color: #fff;
+    color: rgb(var(--color-on-solid-icon, 255 255 255));
   }
 
   [data-el="label"] {

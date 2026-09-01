@@ -148,7 +148,7 @@ impl StyledComponent for StepperComponent {
 
 .hk-step-pending .hk-step-number {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-text-on-solid, #ffffff);
     box-shadow: 0 0 8px var(--hi-color-primary-glow);
 }
 

@@ -83,6 +83,8 @@
   --hi-color-text-secondary: rgb(var(--color-text-secondary));
   --hi-color-muted: rgb(var(--color-muted));
   --hi-color-on-primary: rgb(var(--color-on-primary));
+  /* Deprecated in-tree: luminance-computed contrast, kept only for external
+     consumers. In-tree components use the on-solid slots instead. */
   --hi-color-text-on-primary: rgb(var(--color-on-primary));
   --hi-color-text-on-solid: rgb(var(--color-on-solid-text, 255 255 255));
   --hi-color-icon-on-solid: rgb(var(--color-on-solid-icon, 255 255 255));

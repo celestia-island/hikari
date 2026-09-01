@@ -487,7 +487,7 @@ impl StyledComponent for MarkdownEditorComponent {
 
 .hk-markdown-editor-toolbar-button-active {
     background-color: var(--hi-color-primary);
-    color: white;
+    color: var(--hi-color-icon-on-solid, #ffffff);
 }
 
 .hk-markdown-editor-toolbar-divider {

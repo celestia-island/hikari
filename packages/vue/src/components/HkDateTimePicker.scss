@@ -167,7 +167,7 @@
 
   &.is-selected {
     background: var(--hi-color-primary);
-    color: var(--hi-color-text-on-primary);
+    color: rgb(var(--color-on-solid-text, 255 255 255));
     font-weight: 600;
     &:hover { background: var(--hi-color-primary); }
   }
@@ -342,7 +342,7 @@
 .hk-dtp-popup-confirm {
   appearance: none;
   background: var(--hi-color-primary);
-  color: var(--hi-color-text-on-primary);
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   border: 0;
   border-radius: var(--hi-radius-sm, 4px);
   padding: var(--hi-space-6, 6px) var(--hi-space-14, 14px);

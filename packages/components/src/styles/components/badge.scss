@@ -43,7 +43,7 @@
   box-shadow:
     0 0 8px var(--hi-glow-button-primary),
     inset 0 0 4px var(--hi-color-white-10);
-  color: var(--hi-color-text-on-primary);
+  color: rgb(var(--color-on-solid-text, 255 255 255));
 }
 
 // Secondary (苍翠)

@@ -61,6 +61,12 @@
 .hk-btn-primary {
   background: rgb(var(--color-primary));
   color: rgb(var(--color-on-solid));
+
+  /* Glyphs follow the icon slot so custom themes can split text/icon ink
+     (mirrors the legacy button-vars primary block). */
+  svg {
+    color: rgb(var(--color-on-solid-icon, 255 255 255));
+  }
 }
 
 .hk-btn-primary:hover:not(:disabled) {

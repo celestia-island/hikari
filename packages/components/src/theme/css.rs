@@ -186,6 +186,11 @@ pub struct ThemePalette {
     pub text_color_on_success: String,
     pub text_color_on_ghost: String,
 
+    /// Theme-configurable content colors for solid brand fills (white by
+    /// default), mirroring the vue bridge's onSolidText/onSolidIcon slots.
+    pub text_color_on_solid: String,
+    pub icon_color_on_solid: String,
+
     pub border_light: String,
     pub border_ghost: String,
 
@@ -285,6 +290,9 @@ impl ThemePalette {
             text_color_on_danger: "#ffffff".to_string(),
             text_color_on_success: "#ffffff".to_string(),
             text_color_on_ghost: palette.primary.hex(),
+
+            text_color_on_solid: "#ffffff".to_string(),
+            icon_color_on_solid: "#ffffff".to_string(),
 
             border_light: "rgba(255,255,255, 0.2)".to_string(),
             border_ghost: palette.primary.hex(),
@@ -450,6 +458,8 @@ impl ThemePalette {
                 self.text_color_on_success
             ),
             format!("--hi-color-text-on-ghost: {};", self.text_color_on_ghost),
+            format!("--hi-color-text-on-solid: {};", self.text_color_on_solid),
+            format!("--hi-color-icon-on-solid: {};", self.icon_color_on_solid),
             format!("--hi-color-border-ghost: {};", self.border_ghost),
             format!("--hi-border-light: {};", self.border_light),
             format!("--hi-glow-button-primary: {};", self.glow_button_primary),

@@ -114,11 +114,14 @@
 // ------
 
 .hk-button-primary {
-  --hi-button-text-color: var(--hi-color-text-on-primary);
-  --hi-button-text-color-active: var(--hi-color-text-on-primary);
+  // Content on the solid primary fill follows the theme-configurable
+  // on-solid slots (text vs icon), not the luminance-computed on-primary
+  // token — mirrors packages/vue HkButton/HkIconButton behavior.
+  --hi-button-text-color: rgb(var(--color-on-solid-text, 255 255 255));
+  --hi-button-text-color-active: rgb(var(--color-on-solid-text, 255 255 255));
 
-  --hi-button-icon-color: var(--hi-color-text-on-primary);
-  --hi-button-icon-color-active: var(--hi-color-text-on-primary);
+  --hi-button-icon-color: rgb(var(--color-on-solid-icon, 255 255 255));
+  --hi-button-icon-color-active: rgb(var(--color-on-solid-icon, 255 255 255));
 
   --hi-button-bg: var(--hi-color-primary);
   --hi-button-bg-active: var(--hi-color-primary-dark);

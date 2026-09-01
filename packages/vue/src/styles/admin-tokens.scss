@@ -58,7 +58,7 @@
   --hi-color-surface: rgb(var(--color-surface, 255 255 255));
   --hi-color-border: rgb(var(--color-border, 100 100 100) / 15%);
   --hi-color-text-primary: rgb(var(--color-text, 0 0 0));
-  --hi-color-text-on-primary: rgb(var(--color-on-primary, 255 255 255));
+  --hi-color-text-on-primary: rgb(var(--color-on-primary, 255 255 255)); /* deprecated in-tree: prefer the on-solid slots */
   --color-on-solid: 255 255 255;
   --color-on-solid-text: 255 255 255;
   --color-on-solid-icon: 255 255 255;

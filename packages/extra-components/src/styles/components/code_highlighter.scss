@@ -36,7 +36,7 @@
   padding: 0.25rem 0.75rem;
   border-radius: 4px;
   background-color: var(--hi-color-primary, #00A0E9);
-  color: white;
+  color: rgb(var(--color-on-solid-text, 255 255 255));
   transition: all 0.3s ease;
 }
 

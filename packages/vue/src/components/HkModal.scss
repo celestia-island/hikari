@@ -61,6 +61,18 @@
   transform: translate(-50%, -50%);
   interpolate-size: allow-keywords;
   width: 100%;
+  // Size changes animate instead of snapping: `height: auto` growth
+  // cannot fire a CSS transition (verified in Chromium — neither auto
+  // nor calc-size(auto, size) changes its computed value on content
+  // growth, even under interpolate-size), so HkModal's useSizeMorph
+  // measures the frame's natural (capped) height and pins it as px on
+  // every content change — the transition below animates old→new px.
+  // `interpolate-size: allow-keywords` stays for the enter/leave height
+  // choreography's calc-size() keywords. The enter/leave classes below
+  // override this transition during open/close, as they always have.
+  transition:
+    height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
   backdrop-filter: var(--hk-modal-blur, blur(12px));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
@@ -409,5 +421,15 @@
       padding: var(--space-8) var(--space-16);
       font-size: var(--text-base);
     }
+  }
+}
+
+/* Reduced motion: no size morphing — the frame swaps instantly (the
+ * open/close choreography above is flattened by the same media query in
+ * the transition classes). The global animation switch
+ * (`html[data-css-animations="0"]`) disables transitions wholesale. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-modal-content {
+    transition: none;
   }
 }

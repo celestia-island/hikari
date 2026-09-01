@@ -64,8 +64,12 @@ export const HkPlaceholderMarquee = defineComponent({
       // copy spacing as trailing padding). Reading the first copy element —
       // instead of stripWidth / 3 — stays correct in the fitting case,
       // where the strip holds a single copy, and through overflow flips,
-      // where the copy count changes under the same strip.
-      const copyWidth = copy.offsetWidth;
+      // where the copy count changes under the same strip. The fractional
+      // bounding-rect width keeps the CSS loop shift bit-exact with the
+      // laid-out advance — an integer-rounded width would show a ≤0.5px
+      // seam at every wrap (the copy rides the animated strip, so the
+      // width itself is never affected by the strip's transform).
+      const copyWidth = copy.getBoundingClientRect().width;
       loopWidth.value = copyWidth;
       overflowing.value = copyWidth - COPY_SPACING > host.clientWidth;
       emit("overflowChange", overflowing.value);
@@ -103,14 +107,16 @@ export const HkPlaceholderMarquee = defineComponent({
      *  frame. Duration = one copy width at the configured px/s speed;
      *  the sign of the speed flips the direction (reverse plays the
      *  keyframes backwards, which wraps seamlessly on the three copies).
-     *  The duration is clamped away from 0/negative so a 0 or negative
-     *  speed can never invalidate the animation shorthand. */
+     *  A non-finite or zero speed parks the strip (no scroll class) —
+     *  matching the pre-CSS behavior, where the JS loop simply never
+     *  advanced. */
     const stripVars = computed(() => {
       if (!overflowing.value || loopWidth.value <= 0) return undefined;
       const speed = Number.isFinite(props.speed) ? Math.abs(props.speed) : 24;
+      if (speed === 0) return undefined;
       return {
         "--hk-marquee-shift": `${-loopWidth.value}px`,
-        "--hk-marquee-duration": `${(loopWidth.value / Math.max(speed, 0.1)).toFixed(3)}s`,
+        "--hk-marquee-duration": `${(loopWidth.value / speed).toFixed(3)}s`,
         "--hk-marquee-direction": (props.speed ?? 24) < 0 ? "reverse" : "normal",
       } as Record<string, string>;
     });
@@ -140,7 +146,10 @@ export const HkPlaceholderMarquee = defineComponent({
           <span
             class={[
               "hk-placeholder-marquee__strip",
-              overflowing.value ? "hk-placeholder-marquee__strip--scroll" : "",
+              // The sweep only starts once the loop geometry is known —
+              // overflowing text with a parked speed (0/non-finite) stays
+              // a static strip, matching the old JS behavior.
+              overflowing.value && stripVars.value ? "hk-placeholder-marquee__strip--scroll" : "",
             ].filter(Boolean).join(" ")}
             style={stripVars.value}
           >

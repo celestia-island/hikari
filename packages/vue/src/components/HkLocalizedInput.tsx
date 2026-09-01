@@ -49,11 +49,12 @@ const EMPTY_GLYPH = "—";
  *       · LEFT side of a row = the already-edited translation text;
  *       · RIGHT side = the same language chip as the closed field —
  *         click it to ARM deletion: the row turns danger-red, the chip
- *         label shifts and an × button appears in the chip's slot
- *         (desktop: hovering the chip swaps in the × right away);
- *       · clicking the × erases the translation for real — the two-step
- *         (arm → confirm) is the whole guard, on touch and desktop
- *         alike. The menu stays open so several translations can be
+ *         label shifts and an × button appears in the chip's slot;
+ *       · clicking the × erases the translation for real. On TOUCH the
+ *         arm is the guard (tap the chip, then tap the × that appears);
+ *         on DESKTOP hovering the row swaps in the × and a single click
+ *         on it erases — the hover IS the preview, the click the
+ *         confirm. The menu stays open so several translations can be
  *         wiped in one pass; the list updates live with squeeze-in /
  *         squeeze-out list transitions (HkListTransition, which reports
  *         to the animation context and honors reduced motion). Deleting

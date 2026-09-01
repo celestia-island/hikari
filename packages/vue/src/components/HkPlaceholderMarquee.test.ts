@@ -71,7 +71,7 @@ async function forceGeometry(
   const copy = container.querySelector(".hk-placeholder-marquee__copy") as HTMLElement;
   expect(host && copy).toBeTruthy();
   Object.defineProperty(host, "clientWidth", { configurable: true, get: () => hostWidth });
-  Object.defineProperty(copy, "offsetWidth", { configurable: true, get: () => copyWidth });
+  vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: copyWidth } as DOMRect);
   marqueeExposed(container)?.measure?.();
   await nextTick();
 }
@@ -175,14 +175,14 @@ describe("HkPlaceholderMarquee", () => {
     const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
     const copy = container.querySelector(".hk-placeholder-marquee__copy") as HTMLElement;
     Object.defineProperty(host, "clientWidth", { configurable: true, get: () => 200 });
-    Object.defineProperty(copy, "offsetWidth", { configurable: true, get: () => 500 });
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 500 } as DOMRect);
     marqueeExposed(container)?.measure?.();
     await nextTick();
     // Swap the text AND the laid-out width while still overflowing — the
     // vars must republish (this used to freeze on the stale measurement).
     textRef.value = "a much longer second placeholder";
     await nextTick();
-    Object.defineProperty(copy, "offsetWidth", { configurable: true, get: () => 700 });
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 700 } as DOMRect);
     marqueeExposed(container)?.measure?.();
     await nextTick();
     const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
@@ -190,6 +190,21 @@ describe("HkPlaceholderMarquee", () => {
     expect(strip.style.getPropertyValue("--hk-marquee-shift")).toBe("-700px");
     // 700px at 24px/s → 29.167s per loop.
     expect(strip.style.getPropertyValue("--hk-marquee-duration")).toBe("29.167s");
+  });
+
+  it("parks the strip for a zero speed and reverses for a negative one", async () => {
+    const { container } = mountMarquee({ text: "parking and reversing", speed: 0 });
+    await forceGeometry(container, 500, 200);
+    const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    // speed 0 → no sweep at all (matches the old JS behavior: offset
+    // never advanced) — the strip shows the text statically.
+    expect(strip.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(false);
+    const { container: c2 } = mountMarquee({ text: "parking and reversing", speed: -24 });
+    await forceGeometry(c2, 500, 200);
+    const strip2 = c2.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    expect(strip2.classList.contains("hk-placeholder-marquee__strip--scroll")).toBe(true);
+    expect(strip2.style.getPropertyValue("--hk-marquee-direction")).toBe("reverse");
+    expect(strip2.style.getPropertyValue("--hk-marquee-duration")).toBe("20.833s");
   });
 
   it("re-renders the copy when the text prop changes", async () => {

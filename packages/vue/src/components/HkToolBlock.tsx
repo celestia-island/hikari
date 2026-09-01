@@ -576,7 +576,7 @@ export const HkToolBlock = defineComponent({
               )
             )}
 
-            {props.callText && props.resultText && (
+            {props.variant !== "exec" && props.callText && props.resultText && (
               <HDivider variant="dashed" tone="faint" spacing="sm" />
             )}
 

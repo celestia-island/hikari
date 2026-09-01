@@ -107,9 +107,9 @@ export const HkPlaceholderMarquee = defineComponent({
      *  frame. Duration = one copy width at the configured px/s speed;
      *  the sign of the speed flips the direction (reverse plays the
      *  keyframes backwards, which wraps seamlessly on the three copies).
-     *  A non-finite or zero speed parks the strip (no scroll class) —
-     *  matching the pre-CSS behavior, where the JS loop simply never
-     *  advanced. */
+     *  A zero speed parks the strip (no scroll class) — matching the
+     *  pre-CSS behavior, where the JS loop simply never advanced
+     *  (non-finite speeds fall back to the default rate). */
     const stripVars = computed(() => {
       if (!overflowing.value || loopWidth.value <= 0) return undefined;
       const speed = Number.isFinite(props.speed) ? Math.abs(props.speed) : 24;

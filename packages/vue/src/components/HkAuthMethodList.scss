@@ -23,13 +23,23 @@
   background: var(--hi-color-border, #ddd);
 }
 
+/* The component's own wrapper is `display: contents` (measurement anchor +
+   CSS-var inheritance) — layout-wise the buttons remain direct children of
+   HkAuthCard's `.s-auth-methods` slot container. */
+.s-auth-methods-list {
+  display: contents;
+}
+
 /* Fixed icon + label columns: the two spans keep the same width on every
    row, so icons and labels align across buttons while each button stays a
    centered hk-btn-block. HkButton has a fragment root, so inbound classes
    don't fall through — scope everything off the `.s-auth-methods`
-   container instead of a button-level class. Apps with longer labels
-   widen the label column via `--auth-methods-label-width`. */
-.s-auth-methods > .hk-btn .s-auth-methods-icon {
+   container (descendant match: the component wrapper is display:contents).
+   The label column width is MEASURED by the component (widest label text,
+   published as `--auth-methods-label-width` on its wrapper, inherited into
+   the rows); the 8em fallback only covers the pre-measure frame, and apps
+   may still override the var explicitly. */
+.s-auth-methods .hk-btn .s-auth-methods-icon {
   width: 20px;
   flex: none;
   display: inline-flex;
@@ -37,7 +47,7 @@
   justify-content: center;
 }
 
-.s-auth-methods > .hk-btn .s-auth-methods-label {
+.s-auth-methods .hk-btn .s-auth-methods-label {
   width: var(--auth-methods-label-width, 8em);
   flex: none;
   text-align: start;

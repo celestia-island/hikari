@@ -150,30 +150,35 @@ fn App() -> VNode {
 
 ### Vue 3
 
-The Vue port ships as `@celestia-island/hikari` (0.4.x, `packages/vue`). It is not yet published to the npm registry; consumers wire it up via a local link — this is what arona and shittim-chest use:
+The Vue port ships as `@celestia-island/hikari` (`packages/vue`), published to the npm registry as a **source distribution**: the package contains the TypeScript and SCSS sources, and consumer build pipelines (Vite + vue-tsc + sass) compile them like first-party code — no build step happens on publish. Depend on it from the registry:
 
 ```json
 // package.json
 {
   "dependencies": {
-    "@celestia-island/hikari": "link:../hikari/packages/vue"
+    "@celestia-island/hikari": "^*"
   }
 }
 ```
 
-or, with pnpm workspaces, list the local package in `pnpm-workspace.yaml` and depend on it with `workspace:*`:
+The package exposes these subpaths:
 
-```yaml
-packages:
-  - 'packages/*'
-  - '../hikari/packages/vue'
-```
+| Specifier | Resolves to |
+| --- | --- |
+| `@celestia-island/hikari` | `src/index.ts` — all `Hk*` components, composables, `initTheme` |
+| `@celestia-island/hikari/runtime` | `src/runtime/index.ts` |
+| `@celestia-island/hikari/styles` | `src/styles/index.scss` — full SCSS aggregate (monorepo/dev use) |
+| `@celestia-island/hikari/styles/*` | `src/styles/*` — e.g. `styles/admin-tokens.scss`, `styles/theme/base.scss` |
+| `@celestia-island/hikari/components/*` | `src/components/*` — e.g. `components/HkSelectionGrid` |
+| `@celestia-island/hikari/plugins` | `src/plugins/index.ts` |
 
-Once published to npm, installation will simply be `pnpm add @celestia-island/hikari`. Import the styles once in your app entry point, then use the `Hk*` components (HkButton, HkCard, HkInput, HkModal, ...) in your templates:
+Import the styles once in your app entry point (or the granular `styles/*` subpaths if you assemble your own bundle), then use the `Hk*` components (HkButton, HkCard, HkInput, HkModal, ...) in your templates:
 
 ```ts
 import "@celestia-island/hikari/styles";
 ```
+
+For local development against an upstream working copy, use `celestia-devtools link-npm-siblings` — it overlays `node_modules` with symlinks to sibling checkouts (tracked in `node_modules/.celestia-linked-siblings.json`, revert with `--remove`). No `link:` dependencies, no workspace-member manifests, and CI/production always resolve the pure registry package.
 
 ### Theme initialization
 

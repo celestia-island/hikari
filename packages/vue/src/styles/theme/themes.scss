@@ -1,0 +1,25 @@
+// Vendored byte-identical from packages/theme/styles/themes.scss (hikari repo) so npm registry installs can resolve it — edit the upstream file, then re-copy; do not hand-edit here.
+// hikari-theme/styles/themes.scss
+// 主题变体（使用 hikari-palette）
+
+@use './variables.scss' as *;
+
+// ------
+// 响应式主题切换
+// ------
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="fresh"]) {
+        --hi-color-background: #0F172A;
+        --hi-color-surface: #1E293B;
+        --hi-color-text-primary: rgba(255, 255, 255, 0.9);
+        --hi-color-text-secondary: rgba(255, 255, 255, 0.6);
+        --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
+        --hi-color-text-on-secondary: var(--hi-color-white-100);
+        --hi-color-text-on-ghost: rgba(255, 255, 255, 0.9);
+        --hi-color-text-on-danger: var(--hi-color-white-100);
+        --hi-color-text-on-success: rgba(0, 0, 0, 0.9);
+        --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
+        --hi-color-text-on-info: rgba(0, 0, 0, 0.9);
+    }
+}

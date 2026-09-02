@@ -12,7 +12,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@celestia-island/hikari': resolve(__dirname, 'src'),
-      '@celestia-island/plana-ui': resolve(__dirname, '../../../plana/packages/ui/src'),
       'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },

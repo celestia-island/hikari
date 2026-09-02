@@ -151,4 +151,19 @@ describe("HkSignInCard", () => {
     const c = mount(h(HkSignInCard, { title: "T" }));
     expect(usernameField(c).getAttribute("placeholder")).toBeTruthy();
   });
+
+  it("renders no methods block when the consumer passes no methods slot", () => {
+    const c = mount(h(HkSignInCard, { title: "T" }));
+    // The wrapper would otherwise render HkAuthCard's padded, top-margined
+    // `.s-auth-methods` wrapper as empty dead space under the form.
+    expect(c.querySelector(".s-auth-methods")).toBeNull();
+  });
+
+  it("forwards the methods slot content when the consumer provides one", () => {
+    const c = mount(
+      h(HkSignInCard, { title: "T" }, { methods: () => h("div", { class: "methods-probe" }) }),
+    );
+    expect(c.querySelector(".s-auth-methods")).toBeTruthy();
+    expect(c.querySelector(".methods-probe")).toBeTruthy();
+  });
 });

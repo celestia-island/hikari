@@ -6,6 +6,12 @@ import { defineComponent, type PropType } from "vue";
  * form body.
  *
  * Slot layout contract:
+ * - `methods` renders into a full-width block between the form and the
+ *   footer (typically `HkAuthMethodList`): alternative sign-in buttons
+ *   that must line up with the form inputs. Keeping them OUT of the
+ *   footer is what lets the footer's checkbox rows stay a centered,
+ *   fit-content group instead of being dragged full width with the
+ *   buttons.
  * - `footer` renders into `.s-auth-footer`, a flex column sized to its
  *   widest row and centered in the card: every slot child is its own row
  *   (remember-me, protocol consent, a sign-in link…) and the rows share
@@ -39,6 +45,11 @@ export const HkAuthCard = defineComponent({
         <div class="s-auth-form">
           {slots.default?.()}
         </div>
+        {slots.methods && (
+          <div class="s-auth-methods">
+            {slots.methods()}
+          </div>
+        )}
         {slots.footer && (
           <div class="s-auth-footer">
             {slots.footer()}

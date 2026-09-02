@@ -1,0 +1,47 @@
+/* Full-width stacked alternative sign-in buttons (login card). The block
+   container `.s-auth-methods` and its spacing are owned by HkAuthCard's
+   slot styles (styles/admin-tokens.scss); this file only styles the
+   divider and the buttons the component renders into that slot. */
+
+/* "Other ways to sign in" divider row between rules. */
+.s-auth-methods-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 var(--space-4, 0.25rem);
+  color: var(--hi-color-muted, #999);
+  font-size: var(--text-xs, 0.75rem);
+  text-align: center;
+}
+
+.s-auth-methods-divider::before,
+.s-auth-methods-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hi-color-border, #ddd);
+}
+
+/* Fixed icon + label columns: the two spans keep the same width on every
+   row, so icons and labels align across buttons while each button stays a
+   centered hk-btn-block. HkButton has a fragment root, so inbound classes
+   don't fall through — scope everything off the `.s-auth-methods`
+   container instead of a button-level class. Apps with longer labels
+   widen the label column via `--auth-methods-label-width`. */
+.s-auth-methods > .hk-btn .s-auth-methods-icon {
+  width: 20px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.s-auth-methods > .hk-btn .s-auth-methods-label {
+  width: var(--auth-methods-label-width, 8em);
+  flex: none;
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

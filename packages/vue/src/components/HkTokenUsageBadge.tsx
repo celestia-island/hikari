@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import { ArrowDown, ArrowUp } from "lucide-vue-next";
+import { ArrowDown, ArrowLeftRight, ArrowUp } from "lucide-vue-next";
 import { HRollingNumber } from "@celestia-island/hikari";
 
 import { formatTokenCount } from "../utils/format";
@@ -39,7 +39,7 @@ export const HkTokenUsageBadge = defineComponent({
         </span>
         {props.toolCount != null && (
           <span class="s-token-usage-stat">
-            <span class="s-token-usage-icon-tool">⇄</span>
+            <ArrowLeftRight size={props.compact ? 9 : 10} class="s-token-usage-arrow" data-direction="tool" />
             <span class="s-token-usage-val"><HRollingNumber value={props.toolCount} /></span>
           </span>
         )}

@@ -35,16 +35,13 @@
 .s-token-usage-arrow {
   &[data-direction="in"]  { color: rgb(var(--color-warning)); }
   &[data-direction="out"] { color: rgb(var(--color-success)); }
+  &[data-direction="tool"] { color: rgb(var(--color-muted)); }
 }
 
 .s-token-usage-val {
   color: rgb(var(--color-text));
   opacity: 0.85;
   font-variant-numeric: tabular-nums;
-}
-
-.s-token-usage-icon-tool {
-  color: rgb(var(--color-muted));
 }
 
 .s-token-usage-duration {

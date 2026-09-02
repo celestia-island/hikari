@@ -1,6 +1,6 @@
 [package]
 name = "hikari-e2e"
-version = "0.3.20"
+version.workspace = true
 description = "E2E testing framework for Hikari UI components"
 authors = ["Hikari Contributors"]
 license-file = "../../LICENSE"

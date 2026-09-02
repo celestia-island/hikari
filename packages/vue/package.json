@@ -1,6 +1,6 @@
 {
   "name": "@celestia-island/hikari",
-  "version": "0.32.3",
+  "version": "0.32.4",
   "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",
@@ -32,6 +32,7 @@
       "import": "./src/styles/index.scss"
     },
     "./styles/*": "./src/styles/*",
+    "./theme/*": "./src/theme/*",
     "./components/*": "./src/components/*",
     "./plugins": {
       "import": "./src/plugins/index.ts",

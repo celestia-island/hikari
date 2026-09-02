@@ -13,11 +13,12 @@ import {
   HAlert, HEmptyState, HExpansionPanel,
   HTabs, HCard, HTable, HTimeline,
   HMediaSlider, HMediaPlayer, HImageViewer,
+  HImagePreview,
   HZoomToolbar, HMinimap, HTrendChart,
   type TrendPen, type MinimapBox,
 } from "@celestia-island/hikari";
 
-const totalComponents = 64;
+const totalComponents = 66;
 
 const icons = ["home", "settings", "user", "search", "bell", "heart", "star", "mail", "download", "upload", "trash", "edit", "plus", "check", "x"];
 
@@ -442,6 +443,15 @@ export default defineComponent({
         <section>
           <h2>HImageViewer</h2>
           <HImageViewer src={demoImageSrc} alt="Hikari demo image" />
+        </section>
+
+        <section>
+          <h2>HImagePreview</h2>
+          <h3>zoomable (click to open the lightbox) + fixed, contain-fit</h3>
+          <div class="row" style="max-width:720px">
+            <HImagePreview src={demoImageSrc} alt="Zoomable demo image" ratio="16 / 9" style="flex:1" />
+            <HImagePreview src={demoImageSrc} alt="Fixed demo image" zoomable={false} objectFit="contain" ratio="4 / 3" style="flex:1" />
+          </div>
         </section>
 
         <section>

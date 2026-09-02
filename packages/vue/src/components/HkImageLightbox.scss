@@ -1,0 +1,124 @@
+// ------
+// HkImageLightbox
+// Immersive layout override for HModal (attached via the modal's
+// `contentClass` escape hatch). Selectors are doubled as
+// `.hk-modal-content.hk-image-lightbox` so the overrides win the cascade
+// over HkModal's own rules regardless of stylesheet import order.
+//
+// The frame is a fixed-size stage; the body chain (body → scroll →
+// inner) is flattened to pure flex so the HImageViewer fills it, and the
+// floating close button rides on top of the stage.
+// ------
+
+.hk-modal-content.hk-image-lightbox {
+  width: min(96vw, 80rem);
+  height: min(90vh, 56rem);
+
+  // The body fills the frame; nothing scrolls here — the viewer pans
+  // internally, so the modal's scroll region is inert.
+  .hk-modal-body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hk-modal-body-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .hk-modal-body-inner {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+}
+
+.hk-image-lightbox-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: var(--space-12, 0.75rem);
+
+  // The viewer fills the stage; its own overflow: hidden + rounded
+  // corners clip the panning image into an inset "canvas".
+  .hk-image-viewer {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    border-radius: var(--radius-md, 8px);
+  }
+}
+
+// ------
+// Floating close button — legible on any image: translucent dark chip
+// with a blur, light glyph. Colors ride HIconButton's variable layer
+// (--hi-icon-button-*) so the icon span picks them up too.
+// ------
+
+.hk-image-lightbox-close.hk-icon-button {
+  --hi-icon-button-bg: rgb(0 0 0 / 45%);
+  --hi-icon-button-bg-active: rgb(0 0 0 / 65%);
+  --hi-icon-button-icon-color: rgb(255 255 255 / 92%);
+  --hi-icon-button-icon-color-active: #fff;
+
+  position: absolute;
+  top: var(--space-12, 0.75rem);
+  right: var(--space-12, 0.75rem);
+  z-index: 2;
+  background: var(--hi-icon-button-bg);
+  color: var(--hi-icon-button-icon-color);
+  backdrop-filter: blur(6px);
+
+  &:hover {
+    --hi-icon-button-bg: rgb(0 0 0 / 65%);
+    --hi-icon-button-icon-color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(255 255 255 / 80%);
+    outline-offset: 2px;
+  }
+}
+
+// ------
+// Mobile (≤767px, matches HkModal's bottom-sheet breakpoint): the
+// lightbox has no header/footer chrome to dock, so the sheet form
+// (top inset + bottom gap + rounded corners) would only cost viewing
+// area — go true fullscreen instead. HkModal's own `max-width: 100%
+// !important` beats the inline max-width on phones, so plain width/height
+// finish the job without fighting that rule.
+// ------
+
+@media (max-width: 767px) {
+  .hk-modal-content.hk-image-lightbox {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    width: 100vw;
+    // Plain-vh fallback first for dvh-less engines (older Android
+    // WebView / Tauri), then the dynamic-viewport height.
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .hk-image-lightbox-stage {
+    padding: var(--space-8, 0.5rem);
+  }
+
+  .hk-image-lightbox-close.hk-icon-button {
+    // Keep the close button clear of notches / home-bar gesture areas.
+    top: calc(var(--space-8, 0.5rem) + env(safe-area-inset-top, 0px));
+    right: calc(var(--space-8, 0.5rem) + env(safe-area-inset-right, 0px));
+  }
+}

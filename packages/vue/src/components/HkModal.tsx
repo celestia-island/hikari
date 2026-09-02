@@ -45,6 +45,21 @@ export default defineComponent({
     title: { type: String, default: undefined },
     closable: { type: Boolean, default: true },
     width: { type: String, default: "32rem" },
+    /**
+     * Escape hatch: extra class appended to the .hk-modal-content frame
+     * so hosts can restyle the surface without forking the modal (e.g.
+     * the image lightbox's immersive layout override).
+     */
+    contentClass: { type: String, default: undefined },
+    /**
+     * Accessible name for header-less surfaces: names the popup-manager
+     * layer (breadcrumb) and the dialog's aria-label without rendering
+     * a header. Titleless chrome-only modals (the image lightbox) pass
+     * an i18n-resolved string here to stay named and warning-free.
+     * Takes precedence over `title` everywhere: when both are passed,
+     * later `title` changes no longer reach the layer/aria naming.
+     */
+    surfaceTitle: { type: String, default: undefined },
     footerActions: {
       type: Array as PropType<ModalAction[]>,
       default: undefined,
@@ -100,6 +115,9 @@ export default defineComponent({
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
     const resolvedWidth = computed(() => props.width);
+    // Layer/dialog name: the explicit surface name wins over the header
+    // title (which header-less surfaces never pass).
+    const resolvedSurfaceName = computed(() => props.surfaceTitle ?? props.title);
 
     // Windowed mode state
     const visibleIndices = ref(new Set<number>());
@@ -483,7 +501,7 @@ export default defineComponent({
           shouldRender.value = true;
           // Windows always block, so the kind alone lists this layer in
           // the modal-stack breadcrumb on every form factor.
-          handle.value = manager.register("modal", true, props.title);
+          handle.value = manager.register("modal", true, resolvedSurfaceName.value);
           overlay.open();
           if (backGuardEnabled() && backGuard.entries === 0) {
             backGuard.push();
@@ -512,7 +530,7 @@ export default defineComponent({
     );
 
     watch(
-      () => props.title,
+      resolvedSurfaceName,
       (newTitle) => {
         if (handle.value && newTitle) {
           manager.setTitle(handle.value.id, newTitle);
@@ -615,10 +633,10 @@ export default defineComponent({
               {props.modelValue && (
                 <div
                   ref={contentRef}
-                  class="hk-modal-content"
+                  class={["hk-modal-content", props.contentClass]}
                   role="dialog"
                   aria-modal="true"
-                  aria-label={props.title}
+                  aria-label={resolvedSurfaceName.value}
                   style={{
                     maxWidth: resolvedWidth.value,
                     zIndex: contentZ.value,

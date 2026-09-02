@@ -387,13 +387,25 @@ li {
 // .s-workspace-btn grew a 16px/500 font overnight — hikari #233 fallout);
 // :where() keeps the hk- exclusion at (0,0,1), the exact cascade position
 // the element baseline had before the guards existed (#232/#233).
-input:where(:not([class^="hk-"]):not([class*=" hk-"])),
-textarea:where(:not([class^="hk-"]):not([class*=" hk-"])),
-select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+//
+// 2026-09-02: sanctioned opt-out for shell-EMBEDDED app inputs. Apps that
+// hand-roll a styled field shell around a bare <input> (chest's prefixed
+// workspace-URL field) hit the same double-border disease as #232: the
+// baseline's :focus-visible ring (0,1,1) outranks the shell author's plain
+// class `outline: none` (0,1,0) and paints an inner frame inside the shell
+// while typing. Stamping `data-field-embedded` on the element opts it out
+// of the baseline entirely — the shell owns all field chrome. The guard
+// rides inside the same :where(...) so it adds zero specificity.
+input:where(:not([class^="hk-"]):not([class*=" hk-"]):not([data-field-embedded])),
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"]):not([data-field-embedded])),
+select:where(:not([class^="hk-"]):not([class*=" hk-"]):not([data-field-embedded])) {
     @include input-base;
 }
 
-textarea:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+// Same opt-out contract as the baseline above: an embedded textarea must
+// not get a forced 80px min-height / vertical resize grip inside an app's
+// own shell.
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"]):not([data-field-embedded])) {
     min-height: 80px;
     resize: vertical;
 }
@@ -446,7 +458,9 @@ textarea:where(:not([class^="hk-"]):not([class*=" hk-"])) {
 // components render bare <select>/<label>/<button> interiors that own their
 // chrome, and the element-level :focus-visible ring (0,1,1) would outrank
 // their plain-class styles exactly like the double-border input bug (#232).
-select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+// The embedded-field opt-out applies here too: a select inside an app's own
+// shell must not get the forced appearance reset + chevron + padding.
+select:where(:not([class^="hk-"]):not([class*=" hk-"]):not([data-field-embedded])) {
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
     background-repeat: no-repeat;

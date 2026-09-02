@@ -1,3 +1,4 @@
+@use "./menu-item" as mi;
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
 
@@ -295,44 +296,28 @@
       pointer-events: auto;
     }
 
-    // Menu items
-    .hk-breadcrumb-dropdown-item {
-      // Layout
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      // Spacing
-      padding: 0.5rem 0.75rem;
-      margin: 0.125rem 0;
-
-      // Typography
-      font-size: vars.$hikari-font-size-sm;
-      color: var(--hi-color-text-primary);
-      text-decoration: none;
-      white-space: nowrap;
-
-      // Appearance
-      border-radius: vars.$hikari-radius-fui-sm;
-
-      // Cursor
-      cursor: pointer;
-
-      // Transitions
-      // DISABLED - migrated to JS animation
-
-      // transition: all vars.$hikari-duration-fast vars.$hikari-ease-smooth;
-
-      // Hover state
-      &:hover {
-        background: var(--hi-primary);
-        color: var(--hi-color-text-primary);
-        box-shadow:
-          0 0 12px var(--hi-primary),
-          inset 0 0 8px var(--hi-primary);
-      }
-    }
+    // NOTE: the dropdown ITEM rule lives at TOP LEVEL below, not nested
+    // here — @mixin item declares its desktop tokens on the row element,
+    // and a deeply nested selector would out-rank the sheet-context token
+    // re-declaration in _menu-item.scss (see the comment there).
   }
+}
+
+// Menu items — unified menu-item spec (./_menu-item.scss): same
+// metrics/states as every other row family. The old hover (full
+// primary fill + double glow) was the library's only remaining
+// bespoke row hover and is retired with the unification. Kept at
+// (0,1,0) so the sheet binding can win inside sheet contexts.
+.hk-breadcrumb-dropdown-item {
+  @include mi.item;
+
+  // Spacing
+  margin: 0.125rem 0;
+
+  // Typography
+  color: var(--hi-color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 // ------

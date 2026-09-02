@@ -3,6 +3,8 @@
    Defines layout variables needed by plana-ui + hikari components.
    Color tokens are provided by hikari's initTheme(). */
 
+@use "../components/menu-item" as mi;
+
 :root {
   /* ── Layout tokens ─ */
   --s-footer-height: 3rem;
@@ -357,41 +359,23 @@
 }
 
 /* ── Popup menu items ─ */
+/* Unified menu-item spec (packages/vue/src/components/_menu-item.scss):
+ * one row grammar across menus, selects, theme pills, admin header
+ * rows and nav. The tsx wraps leading icons in .hk-menu-item-icon so
+ * the column centers against the label. */
 .s-popup-menu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-8) var(--space-14);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  font-family: inherit;
-  color: rgb(var(--color-text));
-  cursor: pointer;
-  transition: background var(--duration-normal) ease;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  /* Rows are flex containers (icon + label + optional trailing caret).
-     Without an explicit justification, Chrome's button UA default
-     (justify-content: center) applies — invisible on shrink-to-fit
-     popovers, glaring in full-width mobile sheets where icon+label
-     float to the middle. Pin to flex-start; trailing carets keep
-     parking at the far edge via their own margin-left: auto. */
-  justify-content: flex-start;
-  outline: none;
-  border-radius: var(--radius-sm);
+  @include mi.item;
+
+  /* Trailing carets keep parking at the far edge via their own
+     margin-left: auto. */
 }
 
-/* Hover = background wash only, never on the active item (active >
-   hover precedence — hue and font-weight never change on hover). */
-.s-popup-menu-item:hover:not([data-active]) {
-  background: var(--c-primary-subtle);
+.s-popup-menu-item .hk-menu-item-icon {
+  @include mi.icon;
 }
 
-.s-popup-menu-item[data-active] {
-  color: rgb(var(--color-primary));
-  font-weight: 600;
+.s-popup-menu-item[data-active]:hover {
+  background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
 }
 
 /* ── User identity header (shared) ─ */

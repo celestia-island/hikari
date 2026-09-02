@@ -75,6 +75,9 @@ export const HkPhoneInput = defineComponent({
     hint: { type: String, default: undefined },
     required: { type: Boolean, default: false },
     name: { type: String, default: undefined },
+    /** Fired when Enter is pressed inside the number field (form
+     *  submit). Forwarded to the inner HkInput. */
+    submitOnEnter: { type: Function, default: undefined },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -186,6 +189,7 @@ export const HkPhoneInput = defineComponent({
             name={props.name}
             onBlur={onBlur}
             autocomplete="tel-national"
+            submitOnEnter={props.submitOnEnter}
             {...inputAttrs}
           >
             {{

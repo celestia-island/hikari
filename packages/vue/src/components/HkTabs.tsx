@@ -18,6 +18,18 @@ export interface TabItem {
    *  slot wins when provided). */
   icon?: unknown;
   disabled?: boolean;
+  /**
+   * Slot-unit width for block (row-filling) strips: how many equal
+   * option slots this trigger occupies (default 1). Declaring ANY span
+   * (or using a merged cell, which always spans its run length) flips
+   * the strip onto slot-unit distribution — one `1fr` grid track per
+   * unit — so every option lands on an exact fraction of the row and
+   * the total width stays constant while options merge and unmerge
+   * (the theme toggle's altitude strip keeps the exact Light+Dark
+   * footprint it replaces). Fractional values round and values below 1
+   * clamp to 1. Ignored outside block strips.
+   */
+  span?: number;
 }
 
 /** A protruding icon button at one inline end of the strip (the former
@@ -66,11 +78,16 @@ interface ScrollerExpose {
  * - `mergeKeys` + the `#merged` slot: DYNAMIC MERGED-OPTION rendering —
  *   a contiguous run of options collapses into ONE combined cell (e.g.
  *   the theme toggle's solar-altitude strip replacing the manual halves
- *   while "auto" is active). The cell is a real flex child of the track
- *   (never an absolute cover), so it joins layout AND the animation
+ *   while "auto" is active). The cell is a real in-flow child of the
+ *   track (never an absolute cover), so it joins layout AND the animation
  *   context: options/cells fade-swap on merge changes, and the sliding
  *   indicator measures the cell when the active key is merged. Merged
  *   options are skipped by keyboard navigation;
+ * - slot-unit distribution (block strips): a merged cell always spans
+ *   its run's option count and `TabItem.span` may size any trigger —
+ *   the row is then divided into one equal `1fr` grid track per unit,
+ *   so merging Light+Dark into the altitude strip swaps TWO one-unit
+ *   slots for ONE two-unit cell and nothing else on the strip moves;
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -115,8 +132,8 @@ export default defineComponent({
      *  ONE merged cell rendered by the `#merged` slot (dynamic
      *  merged-option rendering). Merged triggers are not rendered and
      *  are skipped by keyboard navigation; the cell takes the first
-     *  merged option's place as a real flex child of the track, joining
-     *  layout AND the animation context (swap transitions + the sliding
+     *  merged option's place as a real in-flow child of the track,
+     *  joining layout AND the animation context (swap transitions + the sliding
      *  indicator measures it when the active key is merged). Pass
      *  undefined/empty to disable. A single-key run is allowed — note
      *  the cell is role=presentation, so that option leaves the radio/
@@ -171,6 +188,38 @@ export default defineComponent({
     function isMergedTab(tab: TabItem): boolean {
       return hasMergedCell.value && mergeSet.value.has(tab.key);
     }
+    /** Slot-unit weight of an option (TabItem.span): non-integers round
+     *  and the value is clamped into [1, 64], so a bogus or absurd value
+     *  degrades to sane track counts instead of poisoning the grid
+     *  (browsers cap repeat() counts; beyond that the declaration would
+     *  become invalid at computed-value time and drop the division). */
+    function slotSpan(tab: TabItem): number {
+      const s = tab.span;
+      if (typeof s !== "number" || s < 1) return 1;
+      return Math.min(64, Math.max(1, Math.round(s)));
+    }
+    /** Slot-unit distribution (block strips only): active when a merged
+     *  cell actually renders (it always spans its run length) or ANY
+     *  option declares a span. Plain strips — including a degraded merge
+     *  that fell back to plain triggers — never see the attribute and
+     *  keep the content-sized block flex exactly as before. */
+    const slotMode = computed(
+      () =>
+        hasMergedCell.value ||
+        props.tabs.some((tb) => slotSpan(tb) !== 1),
+    );
+    /** Total slot units the strip is divided into while in slot mode:
+     *  every rendered option contributes its clamped span, and the
+     *  merged cell contributes its run's option count (it replaces
+     *  those triggers). Matches the grid track count in HkTabs.scss. */
+    const slotUnits = computed(() => {
+      let units = 0;
+      for (const tb of props.tabs) {
+        if (isMergedTab(tb)) continue;
+        units += slotSpan(tb);
+      }
+      return units + (hasMergedCell.value ? mergedRun.value.length : 0);
+    });
     /** Navigable = rendered trigger: not disabled, not whole-strip
      *  disabled upstream, and not collapsed into the merged cell. */
     function isNavigable(tab: TabItem): boolean {
@@ -397,7 +446,7 @@ export default defineComponent({
       props.tabs.forEach((tab, idx) => {
         if (isMergedTab(tab)) {
           // The merged run renders as ONE combined cell at its first
-          // option's position — a real flex child of the track (joins
+          // option's position — a real in-flow child of the track (joins
           // layout and the swap/indicator animation context), never an
           // absolute cover. role=presentation: the radiogroup's a11y
           // surface is the remaining triggers; interactive slot content
@@ -411,6 +460,9 @@ export default defineComponent({
                 role="presentation"
                 data-keys={mergedRun.value.join(" ")}
                 data-disabled={props.disabled || undefined}
+                // The cell occupies as many slot units as the options it
+                // replaces (see HkTabs.scss slot-unit distribution).
+                style={{ "--hk-tabs-span": String(mergedRun.value.length) }}
               >
                 {slots.merged?.({ keys: mergedRun.value })}
               </div>,
@@ -433,6 +485,9 @@ export default defineComponent({
             class="hk-tabs-trigger"
             data-active={active || undefined}
             data-disabled={props.disabled || disabled || undefined}
+            // Slot-unit weight (1 unless the option declares a span);
+            // only consumed while the strip carries data-slots.
+            style={{ "--hk-tabs-span": String(slotSpan(tab)) }}
             // Roving tabindex: the active trigger joins the page tab
             // sequence, the others stay arrow-reachable.
             tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}
@@ -452,6 +507,14 @@ export default defineComponent({
           ref={listRef}
           data-variant={props.variant}
           data-block={isBlock.value ? "true" : undefined}
+          // Block strips on slot units divide the row into one equal
+          // 1fr track per unit instead of by content — see HkTabs.scss.
+          data-slots={isBlock.value && slotMode.value ? "" : undefined}
+          style={
+            isBlock.value && slotMode.value
+              ? { "--hk-tabs-units": String(slotUnits.value) }
+              : undefined
+          }
           role={isSegmented.value ? "radiogroup" : "tablist"}
           onKeydown={onKeydown}
         >

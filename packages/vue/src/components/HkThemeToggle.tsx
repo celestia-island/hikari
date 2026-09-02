@@ -228,7 +228,13 @@ export const HkThemeToggle = defineComponent({
 
             <div class="s-theme-menu-label">{t("hikari::theme.themes")}</div>
             {allThemeList.value.map((th) => (
-              <div key={th.id} class="s-theme-item-row">
+              // One full-width pill per row — the delete affordance for
+              // custom themes OVERLAYS the pill's trailing edge instead
+              // of reserving a trailing column, so built-in rows carry
+              // no dead space (a bottom sheet once showed a permanent
+              // ~40px empty strip right of every row) and every pill
+              // and highlight shares the exact same width.
+              <div key={th.id} class="s-theme-item-row" data-custom={th.isCustom || undefined}>
                 <button
                   type="button"
                   class="s-theme-item-btn"
@@ -238,7 +244,7 @@ export const HkThemeToggle = defineComponent({
                   {currentTheme.value === th.id && <Check size={14} class="s-theme-item-check" />}
                   <span class="s-theme-item-name">{th.name}</span>
                 </button>
-                {th.isCustom ? (
+                {th.isCustom && (
                   <button
                     type="button"
                     class="s-theme-item-delete"
@@ -247,8 +253,6 @@ export const HkThemeToggle = defineComponent({
                   >
                     <Trash2 size={12} />
                   </button>
-                ) : (
-                  <span class="s-theme-item-slot" aria-hidden="true" />
                 )}
               </div>
             ))}

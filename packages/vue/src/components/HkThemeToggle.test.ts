@@ -155,10 +155,14 @@ describe("HkThemeToggle color-mode group", () => {
     const strip = altitudeStrip();
     expect(strip).toBeTruthy();
     expect(strip!.textContent).toMatch(/[+-]?\d+(?:\.\d+)?°/);
-    const cell = strip!.closest(".hk-tabs-merged");
+    const cell = strip!.closest<HTMLElement>(".hk-tabs-merged");
     expect(cell).toBeTruthy();
     expect(cell!.getAttribute("data-keys")).toBe("light dark");
     expect(cell!.parentElement?.classList.contains("hk-tabs-list")).toBe(true);
+    // Slot-unit width: the cell spans the two options it replaces, so
+    // the group divides exactly as it did before the merge.
+    expect(cell!.style.getPropertyValue("--hk-tabs-span")).toBe("2");
+    expect(cell!.parentElement!.getAttribute("data-slots")).toBe("");
     expect(document.body.querySelector(".hk-tabs-overlay")).toBeNull();
     // The merged Light/Dark triggers leave the radio order entirely —
     // the strip is the single pointer surface while auto is active.
@@ -189,7 +193,7 @@ describe("HkThemeToggle color-mode group", () => {
     expect(modeSegments()).toHaveLength(3);
   });
 
-  it("keeps every theme row footprint uniform for list highlights", async () => {
+  it("keeps every theme row one full-width pill with deletes overlaid", async () => {
     useTheme().addCustomTheme(anyPresetTokens());
     const { container } = mountToggle(true);
     await settle();
@@ -202,21 +206,23 @@ describe("HkThemeToggle color-mode group", () => {
 
     let customRows = 0;
     for (const row of rows) {
-      // Every row is exactly [pill button][trailing slot] — delete button
-      // for custom themes, an equally sized invisible slot otherwise — so
-      // all highlight boxes share one width and left/right padding.
-      expect(row.children).toHaveLength(2);
+      // The pill is the first (and for built-ins the ONLY) in-flow child:
+      // no trailing slot element survives (it reserved a dead column
+      // right of every built-in row in the mobile sheet). Custom rows
+      // flag themselves and carry the delete button overlay as the one
+      // extra child.
       expect(row.children[0].classList.contains("s-theme-item-btn")).toBe(true);
-      const trailing = row.children[1];
-      const isDelete = trailing.classList.contains("s-theme-item-delete");
-      const isSlot = trailing.classList.contains("s-theme-item-slot");
-      expect(isDelete || isSlot).toBe(true);
-      if (isDelete) customRows += 1;
+      expect(row.querySelector(".s-theme-item-slot")).toBeNull();
+      const extra = [...row.children].slice(1);
+      if (row.hasAttribute("data-custom")) {
+        customRows += 1;
+        expect(extra).toHaveLength(1);
+        expect(extra[0].classList.contains("s-theme-item-delete")).toBe(true);
+      } else {
+        expect(extra).toHaveLength(0);
+      }
     }
     expect(customRows).toBe(1);
-
-    // Built-ins keep an explicit reserved slot element.
-    expect(rows[0].querySelector(".s-theme-item-slot")).toBeTruthy();
 
     // Active check glyph sits inside the pill, leading the name.
     const activeBtn = document.body.querySelector<HTMLButtonElement>(".s-theme-item-btn[data-active]");

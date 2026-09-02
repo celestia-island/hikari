@@ -156,5 +156,15 @@
     "hikari::phoneInput.chooseCountry": "选择国家区号",
     "hikari::phoneInput.searchCountries": "搜索国家或区号",
     "hikari::phoneInput.noMatches": "没有匹配的国家"
-  }
+  },
+  "hikari::affixPicker.title": "选项",
+  "hikari::affixPicker.search": "搜索",
+  "hikari::affixPicker.empty": "没有匹配项",
+  "hikari::affixPicker.selected": "已选择",
+  "hikari::affixPicker.selectedCount": "已选 {count} 项",
+  "hikari::affixPicker.switchTo": "切换到",
+  "hikari::affixPicker.remove": "移除",
+  "hikari::affixPicker.confirmDelete": "确认移除",
+  "hikari::affixPicker.useCustom": "使用「{query}」",
+  "hikari::localizedInput.noMatches": "没有匹配的语言"
 }

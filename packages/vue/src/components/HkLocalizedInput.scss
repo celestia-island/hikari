@@ -13,30 +13,21 @@
   opacity: 0.75;
 }
 
-/* The wrapped language chip riding the input's right edge. A button so
- * it is focusable/AT-reachable, but it must never steal the field's
- * click-to-edit: pointer events stop at the chip boundary (handled in
- * TSX) and mousedown is suppressed to keep focus inside the input. */
+/* The wrapped language chip riding the input's right edge, layered on the
+ * shared .hk-affix-chip base (the picker owns hover/disabled/focus). It
+ * must never steal the field's click-to-edit: pointer events stop at the
+ * chip boundary (handled in the picker) and mousedown is suppressed to
+ * keep focus inside the input. */
 .hk-localized-input-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
   padding: 0;
-  border: none;
+  border-radius: var(--radius-sm, 999px);
   background: transparent;
   color: rgb(var(--color-muted));
-  cursor: pointer;
-  border-radius: var(--radius-sm, 999px);
-  transition: color 0.15s ease;
 
   &:hover:not(:disabled),
   &:focus-visible:not(:disabled) {
+    background: transparent;
     color: rgb(var(--color-text));
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.55;
   }
 
   /* Dim while no translation exists yet — same affordance level as an
@@ -86,205 +77,7 @@
   }
 }
 
-/* ── language list (menu header) ────────────────────────────────────
- * One row per language currently present — including the one being
- * edited. LEFT = the already-edited translation text (italic enter-text
- * hint while it holds nothing), RIGHT = the same language chip as the
- * closed field. Clicking the chip ARMS the delete: the row turns
- * danger-red and the × overlays the chip in the same slot (desktop:
- * hovering the row swaps the × in without arming); clicking the × erases
- * the translation. The list squashes/expands around adds and removals
- * via HkListTransition. */
-.hk-localized-input-tags {
-  padding: 10px 0 8px;
-  border-bottom: 1px solid var(--border-faint);
-}
-
-/* Rows live inside the HkListTransition container (keyed by language). */
-.hk-localized-input-tag-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  /* Wider than the old two-line pill cloud: a full row carries the
-   * translation text AND the language chip, and desktop popouts should
-   * not crumple them into one tight box. `min(18rem, 100%)` keeps the
-   * floor from overflowing tiny (sub-320px) mobile viewports — the
-   * sheet list can never scroll horizontally because of it. */
-  min-width: min(18rem, 100%);
-  max-width: 24rem;
-}
-
-.hk-localized-input-tag {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 2.375rem;
-  /* 16px leading padding puts the row's text exactly on the shared text
-   * edge: the mobile sheet's title inset (2×--space-16 over the list's
-   * own 1×--space-16) and the desktop popout's option text edge
-   * (8px panel + 16px row). */
-  padding: 5px var(--space-16);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: rgb(var(--color-surface) / var(--opacity-half, 50%));
-  overflow: hidden;
-  transition: border-color 0.12s ease, background 0.12s ease;
-
-  &:hover {
-    border-color: rgb(var(--color-primary) / 40%);
-  }
-
-  /* The language being edited right now. */
-  &[data-active] {
-    border-color: rgb(var(--color-primary) / 45%);
-    background: rgb(var(--color-primary) / 12%);
-  }
-
-  /* Armed delete: the whole row reads as the danger zone — the chip is
-   * about to be replaced by its confirm ×. */
-  &[data-armed] {
-    border-color: rgb(var(--color-danger, 240 70 80) / 55%);
-    background: rgb(var(--color-danger, 240 70 80) / 12%);
-  }
-}
-
-.hk-localized-input-tag-body {
-  flex: 1;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm);
-  line-height: 1.4;
-  text-align: left;
-  cursor: pointer;
-  appearance: none;
-}
-
-.hk-localized-input-tag-flag {
-  flex-shrink: 0;
-  font-size: var(--text-sm);
-  line-height: 1;
-}
-
-.hk-localized-input-tag-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  /* No translation yet (usually the language being edited): an italic
-   * "enter text" hint asks for input instead of a bare punctuation
-   * glyph — the row reads as an empty slot, not a dash. */
-  &[data-empty] {
-    color: rgb(var(--color-muted));
-    opacity: 0.8;
-    font-style: italic;
-  }
-}
-
-.hk-localized-input-tag[data-active] .hk-localized-input-tag-text {
-  font-weight: 600;
-}
-
-/* The language chip — same grammar as the closed field's chip. */
-.hk-localized-input-tag-locale {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: rgb(var(--color-primary) / 14%);
-  color: rgb(var(--color-text));
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  cursor: pointer;
-  appearance: none;
-  transition: color 0.12s ease, background 0.12s ease;
-
-  &:hover,
-  &:focus-visible {
-    background: rgb(var(--color-primary) / 22%);
-  }
-}
-
-.hk-localized-input-tag-label {
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 9rem;
-}
-
-.hk-localized-input-tag-code {
-  flex-shrink: 0;
-  color: rgb(var(--color-muted));
-  font-size: calc(var(--text-xs) * 0.86);
-}
-
-/* Active marker dot — mirrors HkBadge's dot treatment. */
-.hk-localized-input-tag-dot {
-  flex-shrink: 0;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgb(var(--color-primary));
-}
-
-/* The chip's slot hosts BOTH the chip and the confirm ×: the × overlays
- * the chip absolutely (inset:0), so arm/hover swaps the two in place —
- * zero layout animation, zero reflow, nothing slides. The row never
- * changes its geometry, which is exactly what makes the armed state feel
- * instant (the previous width-transition version reflowed the row and
- * was visibly laggy). */
-.hk-localized-input-tag-slot {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-}
-
-.hk-localized-input-tag-x {
-  position: absolute;
-  inset: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: rgb(var(--color-danger, 240 70 80));
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  appearance: none;
-  transition: opacity 0.1s ease;
-
-  &:hover,
-  &:focus-visible {
-    background: rgb(var(--color-danger, 240 70 80) / 12%);
-  }
-}
-
-.hk-localized-input-tag[data-armed] .hk-localized-input-tag-x,
-.hk-localized-input-tag:hover .hk-localized-input-tag-x,
-.hk-localized-input-tag-x:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .hk-localized-input-tag,
-  .hk-localized-input-tag-locale,
-  .hk-localized-input-tag-x,
   .hk-localized-input-chip {
     transition: none;
   }

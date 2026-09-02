@@ -152,5 +152,15 @@
     "hikari::phoneInput.chooseCountry": "Choose country code",
     "hikari::phoneInput.searchCountries": "Search country or code",
     "hikari::phoneInput.noMatches": "No matching country"
-  }
+  },
+  "hikari::affixPicker.title": "Options",
+  "hikari::affixPicker.search": "Search",
+  "hikari::affixPicker.empty": "No matches",
+  "hikari::affixPicker.selected": "Selected",
+  "hikari::affixPicker.selectedCount": "{count} selected",
+  "hikari::affixPicker.switchTo": "Switch to",
+  "hikari::affixPicker.remove": "Remove",
+  "hikari::affixPicker.confirmDelete": "Confirm remove",
+  "hikari::affixPicker.useCustom": "Use \"{query}\"",
+  "hikari::localizedInput.noMatches": "No matching language"
 }

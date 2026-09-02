@@ -72,7 +72,7 @@ async function openPicker(container: HTMLElement) {
 }
 
 function pickerRows(): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLButtonElement>(".hk-phone-dial-row")];
+  return [...document.querySelectorAll<HTMLButtonElement>(".hk-affix-row")];
 }
 
 describe("HkPhoneInput", () => {

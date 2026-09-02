@@ -29,6 +29,11 @@ export interface MinimapRect {
  * inside the map pans the viewport via the `panDelta` event. The math
  * assumes the main surface uses `translate(panX, panY) scale(zoom)` with
  * `transform-origin: 0 0` — the same model HImageViewer uses.
+ *
+ * The zoom bar is governed by default: ±5% fixed steps clamped to the
+ * 50–200% range, with each press emitting `zoomTo` (clamped target
+ * percent) alongside the legacy `zoomIn`/`zoomOut`. Consumers with a
+ * wider native camera range override `minZoomPercent`/`maxZoomPercent`.
  */
 export default defineComponent({
   name: "HkMinimap",
@@ -51,18 +56,28 @@ export default defineComponent({
     zoomPercent: { type: Number, default: 100 },
     canZoomIn: { type: Boolean, default: true },
     canZoomOut: { type: Boolean, default: true },
+    /** Zoom governance (defaults on): the zoom bar steps by a fixed percent
+     *  increment and clamps to [min, max]. Consumers with a wider native
+     *  camera range override these (e.g. the SCADA scene runs 20–400%). */
+    zoomStepPercent: { type: Number, default: 5 },
+    minZoomPercent: { type: Number, default: 50 },
+    maxZoomPercent: { type: Number, default: 200 },
     /** Show the reset/fit button in the zoom bar (chest only rendered it
      *  when a reset handler was wired up). */
     showReset: { type: Boolean, default: false },
     /** Optional prop-callback surface (alternative to the emits). */
     onZoomIn: { type: Function as PropType<() => void>, default: undefined },
     onZoomOut: { type: Function as PropType<() => void>, default: undefined },
+    onZoomTo: { type: Function as PropType<(percent: number) => void>, default: undefined },
     onReset: { type: Function as PropType<() => void>, default: undefined },
     onPanDelta: { type: Function as PropType<(dx: number, dy: number) => void>, default: undefined },
   },
   emits: {
     zoomIn: () => true,
     zoomOut: () => true,
+    /** Fixed-step zoom request carrying the clamped target percent —
+     *  consumers that can animate their camera should prefer this. */
+    zoomTo: (_percent: number) => true,
     reset: () => true,
     panDelta: (_dx: number, _dy: number) => true,
   },
@@ -109,6 +124,24 @@ export default defineComponent({
       const br = toMap(-props.panX / z + props.viewportWidth / z, -props.panY / z + props.viewportHeight / z);
       return { x: tl[0], y: tl[1], w: Math.max(1, br[0] - tl[0]), h: Math.max(1, br[1] - tl[1]) };
     });
+
+    // ── Fixed-step zoom governance ───────────────────────────────────────
+    const canStepIn = computed(() =>
+      props.canZoomIn && props.zoomPercent < props.maxZoomPercent - 1e-9);
+    const canStepOut = computed(() =>
+      props.canZoomOut && props.zoomPercent > props.minZoomPercent + 1e-9);
+
+    /** Step the zoom bar by the fixed increment, clamped to [min, max];
+     *  emits the legacy zoomIn/zoomOut plus a `zoomTo` carrying the exact
+     *  clamped target percent. No-op (and stays disabled) at the bounds. */
+    function stepZoom(dir: number) {
+      const raw = props.zoomPercent + dir * props.zoomStepPercent;
+      const next = Math.min(props.maxZoomPercent, Math.max(props.minZoomPercent, raw));
+      if (Math.abs(next - props.zoomPercent) < 1e-9) return;
+      if (dir > 0) emit("zoomIn");
+      else emit("zoomOut");
+      emit("zoomTo", next);
+    }
 
     function onDown(e: PointerEvent) {
       if ((e.target as HTMLElement).closest(".hk-mm-zoom-bar")) return;
@@ -226,8 +259,8 @@ export default defineComponent({
             <button
               class="hk-mm-zoom-btn"
               type="button"
-              onClick={() => emit("zoomOut")}
-              disabled={!props.canZoomOut}
+              onClick={() => stepZoom(-1)}
+              disabled={!canStepOut.value}
               aria-label={t("hikari::zoomToolbar.zoomOut", "Zoom out")}
               title={t("hikari::zoomToolbar.zoomOut", "Zoom out")}
             >
@@ -237,8 +270,8 @@ export default defineComponent({
             <button
               class="hk-mm-zoom-btn"
               type="button"
-              onClick={() => emit("zoomIn")}
-              disabled={!props.canZoomIn}
+              onClick={() => stepZoom(1)}
+              disabled={!canStepIn.value}
               aria-label={t("hikari::zoomToolbar.zoomIn", "Zoom in")}
               title={t("hikari::zoomToolbar.zoomIn", "Zoom in")}
             >

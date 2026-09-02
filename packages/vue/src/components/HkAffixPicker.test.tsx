@@ -18,6 +18,7 @@ interface MountOptions {
   allowCustom?: boolean;
   searchable?: boolean;
   closeOnSelect?: boolean;
+  confirmRemove?: boolean;
   disabled?: boolean;
 }
 
@@ -40,6 +41,7 @@ function mountPicker(opts: MountOptions = {}) {
         allowCustom: opts.allowCustom ?? false,
         searchable: opts.searchable ?? true,
         closeOnSelect: opts.closeOnSelect,
+        confirmRemove: opts.confirmRemove,
         disabled: opts.disabled ?? false,
         onSelect: (key: string) => events.select.push(key),
         onRemove: (key: string) => events.remove.push(key),
@@ -100,7 +102,42 @@ async function untilSettled(check: () => number): Promise<void> {
   }
 }
 
-afterEach(() => {
+/** Let the message box mount (own app) and its promise chain settle. */
+async function flush() {
+  await nextTick();
+  await nextTick();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function confirmButton(): HTMLButtonElement {
+  const btn = document.body.querySelector<HTMLButtonElement>(".hk-message-box-confirm");
+  expect(btn, "message box confirm button renders").toBeTruthy();
+  return btn!;
+}
+
+/** Dismiss every open message box and wait out its host's self-unmount
+ *  (leave transition + timer) so no zombie app re-renders into the next
+ *  test's DOM. No-op when a test never opened one. */
+async function teardownMessageBoxes() {
+  if (!document.body.querySelector(".hk-message-box-confirm")) return;
+  for (const btn of [...document.body.querySelectorAll<HTMLButtonElement>(".hk-message-box-confirm")]) {
+    btn.click();
+  }
+  const deadline = Date.now() + 2500;
+  // The modal root (not just the confirm button) must be gone: the
+  // leave transition + cleanup timer fully unmount the host app, so no
+  // zombie registration lingers in the shared popup stack.
+  while (
+    (document.body.querySelector(".hk-message-box-confirm") ||
+      document.body.querySelector(".hk-modal-root")) &&
+    Date.now() < deadline
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+afterEach(async () => {
+  await teardownMessageBoxes();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -162,28 +199,71 @@ describe("HkAffixPicker", () => {
     expect(rows().length).toBeGreaterThan(0);
   });
 
-  it("two-step tag delete: × arms, × again confirms; body click disarms", async () => {
+  it("tag × opens a confirm dialog: Cancel keeps the tag, Confirm fires remove", async () => {
     const { events, container } = mountPicker({ mode: "multi", selected: ["cn", "jp"] });
     await openPopup(container);
-    const x = tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-x")!;
-    x.click();
-    await nextTick();
-    expect(tags()[0].hasAttribute("data-armed")).toBe(true);
+    // One tap never erases: the dialog names the entry instead.
+    tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-x")!.click();
+    // The dialog mounts over several transition frames; wait for the
+    // settled state (box open, tag untouched) before asserting.
+    await untilBoxOpen('Remove "China"');
     expect(events.remove).toHaveLength(0);
-    // Second activation confirms — the tag leaves the list.
-    x.click();
-    await nextTick();
+    expect(tag("China")).toBeTruthy();
+    // Cancel keeps everything as it was.
+    [...document.body.querySelectorAll<HTMLButtonElement>(".hk-message-box-actions button")]
+      .find((b) => !b.classList.contains("hk-message-box-confirm"))!
+      .click();
+    await flush();
+    console.log("DBG-cancel openEvents", JSON.stringify(events.open), "tags", tags().length, "box", !!document.body.querySelector(".hk-message-box-text"));
+    expect(events.remove).toHaveLength(0);
+    expect(tag("China")).toBeTruthy();
+    // Second pass: the dialog's Confirm is what erases.
+    tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-x")!.click();
+    await untilBoxOpen('Remove "China"');
+    confirmButton().click();
+    const deadline = Date.now() + 1500;
+    while (events.remove.length === 0 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await nextTick();
+    }
     expect(events.remove).toEqual(["cn"]);
-    // Body click on an ARMED tag disarms it instead of picking.
-    const jpBody = tag("Japan")!.querySelector<HTMLButtonElement>(".hk-affix-tag-body")!;
-    tag("Japan")!.querySelector<HTMLButtonElement>(".hk-affix-tag-x")!.click();
-    await nextTick();
-    expect(tag("Japan")?.hasAttribute("data-armed")).toBe(true);
-    jpBody.click();
-    await nextTick();
-    expect(tag("Japan")?.hasAttribute("data-armed")).toBe(false);
     expect(events.select).toHaveLength(0);
   });
+
+  it("confirmRemove=false lets the × fire remove immediately, no dialog", async () => {
+    const { events, container } = mountPicker({
+      mode: "multi",
+      selected: ["cn"],
+      confirmRemove: false,
+    });
+    await openPopup(container);
+    tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-x")!.click();
+    await flush();
+    expect(events.remove).toEqual(["cn"]);
+    expect(document.body.querySelector(".hk-message-box-text")).toBeNull();
+  });
+
+  /** Poll until the confirm dialog is mounted AND shows the given body
+   *  text — the box rides HkModal's multi-frame open transition. */
+  async function untilBoxOpen(fragment: string): Promise<void> {
+    const deadline = Date.now() + 1500;
+    while (Date.now() < deadline) {
+      const text = document.body.querySelector(".hk-message-box-text")?.textContent ?? "";
+      if (text.includes(fragment)) {
+        // One extra frame so sibling re-renders (scrollbar lock, panel
+        // reposition) triggered by the modal settle too.
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        await nextTick();
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await nextTick();
+    }
+    expect(
+      document.body.querySelector(".hk-message-box-text")?.textContent ?? "",
+      `confirm dialog showing "${fragment}"`,
+    ).toContain(fragment);
+  }
 
   it("tag body click emits select; close-on-select default keeps multi open", async () => {
     const { events, container } = mountPicker({ mode: "multi", selected: ["cn", "jp"] });

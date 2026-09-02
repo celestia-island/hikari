@@ -143,25 +143,68 @@ function tagBody(label: string): HTMLButtonElement | undefined {
   return tag(label)?.querySelector<HTMLButtonElement>(".hk-affix-tag-body") ?? undefined;
 }
 
-/** The arm/confirm × of the language tag. */
+/** The × of the language tag (opens the confirm dialog). */
 function tagX(label: string): HTMLButtonElement | undefined {
   return tag(label)?.querySelector<HTMLButtonElement>(".hk-affix-tag-x") ?? undefined;
 }
 
-/** Full two-step erase: the × arms (danger tint), the second activation
- *  confirms. The leaving tag lingers through its transition window (jsdom
- *  has no CSS engine, so the ghost clears on the next-frame fallback) —
- *  poll until the tag is really gone. */
-async function eraseViaArm(label: string) {
-  tagX(label)!.click();
-  await nextTick();
-  expect(tag(label)?.hasAttribute("data-armed"), "tag is armed before the confirm ×").toBe(true);
-  tagX(label)!.click();
-  await nextTick();
-  await nextTick();
-  const deadline = Date.now() + 800;
-  while (tag(label) && Date.now() < deadline) {
+/** The message box's confirm/cancel buttons (mounted at body level). */
+function boxButton(confirm: boolean): HTMLButtonElement {
+  const selector = confirm ? ".hk-message-box-confirm" : ".hk-message-box-actions button:not(.hk-message-box-confirm)";
+  const btn = document.body.querySelector<HTMLButtonElement>(selector);
+  expect(btn, `message box ${confirm ? "confirm" : "cancel"} button renders`).toBeTruthy();
+  return btn!;
+}
+
+/** Full erase flow: the × opens the shared confirm dialog naming the
+ *  entry; the dialog's Confirm erases. The leaving tag lingers through
+ *  its transition window (jsdom has no CSS engine, so the ghost clears
+ *  on the next-frame fallback) — poll until the tag is really gone. */
+/** Poll until the condition turns truthy (box leave animations and
+ *  tag transitions lag a few frames behind the click). */
+async function until(condition: () => boolean, what: string): Promise<void> {
+  const deadline = Date.now() + 1500;
+  while (!condition() && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
+  expect(condition(), `${what} within the deadline`).toBe(true);
+}
+
+/** Wait until the confirm dialog is mounted and naming the entry —
+ *  the box rides HkModal's multi-frame open transition. */
+async function untilBoxOpen(label: string): Promise<void> {
+  const deadline = Date.now() + 1500;
+  while (Date.now() < deadline) {
+    const text = document.body.querySelector(".hk-message-box-text")?.textContent ?? "";
+    if (text.includes(label)) {
+      // One extra frame so sibling re-renders (scrollbar lock, panel
+      // reposition) triggered by the modal settle too.
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      await nextTick();
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
+  expect(
+    document.body.querySelector(".hk-message-box-text")?.textContent ?? "",
+    `confirm dialog showing "${label}"`,
+  ).toContain(label);
+}
+
+async function eraseViaConfirm(label: string, tagGone = true) {
+  tagX(label)!.click();
+  await untilBoxOpen(label);
+  boxButton(true).click();
+  await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on confirm");
+  // The edited language's tag deliberately survives its own erase when
+  // no other language remains (it stays as the active tag), so the
+  // absence wait only applies to genuinely-removed entries.
+  if (tagGone) {
+    await until(() => !tag(label), `tag "${label}" erased`);
+  } else {
+    await nextTick();
     await nextTick();
   }
 }
@@ -169,7 +212,7 @@ async function eraseViaArm(label: string) {
 /** Wait for the popup's leave-transition window to finish — rows linger
  *  briefly after a close while the popout animates shut. */
 async function untilPickerSettled(): Promise<void> {
-  const deadline = Date.now() + 800;
+  const deadline = Date.now() + 1500;
   while (pickerRows().length > 0 && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 10));
     await nextTick();
@@ -185,7 +228,29 @@ async function typeIntoSearch(value: string) {
   await nextTick();
 }
 
-afterEach(() => {
+/** Dismiss every open message box and wait out its host's self-unmount
+ *  (leave transition + timer) so no zombie app re-renders into the next
+ *  test's DOM. No-op when a test never opened one. */
+async function teardownMessageBoxes() {
+  if (!document.body.querySelector(".hk-message-box-confirm")) return;
+  for (const btn of [...document.body.querySelectorAll<HTMLButtonElement>(".hk-message-box-confirm")]) {
+    btn.click();
+  }
+  const deadline = Date.now() + 2500;
+  // The modal root (not just the confirm button) must be gone: the
+  // leave transition + cleanup timer fully unmount the host app, so no
+  // zombie registration lingers in the shared popup stack.
+  while (
+    (document.body.querySelector(".hk-message-box-confirm") ||
+      document.body.querySelector(".hk-modal-root")) &&
+    Date.now() < deadline
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+afterEach(async () => {
+  await teardownMessageBoxes();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
     container.remove();
@@ -487,72 +552,57 @@ describe("HkLocalizedInput", () => {
     expect(document.activeElement).not.toBe(queryField(container));
   });
 
-  it("arms only the tapped tag and disarms on a second tap", async () => {
+  it("tag × opens the confirm dialog; Cancel keeps the translation intact", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
     tagX("简体中文")!.click();
-    await nextTick();
-    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(true);
-    expect(tag("English")?.hasAttribute("data-armed")).toBe(false);
-    // Tapping the same × again disarms.
-    tagX("简体中文")!.click();
-    await nextTick();
-    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
-    // Arming a sibling disarms the previous tag.
-    tagX("简体中文")!.click();
-    await nextTick();
-    tagX("English")!.click();
-    await nextTick();
-    expect(tag("English")?.hasAttribute("data-armed")).toBe(true);
-    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
+    await untilBoxOpen("简体中文");
+    // The dialog names the entry and carries a danger-toned confirm.
+    expect(boxButton(true).className).toContain("hk-btn-danger");
+    // Cancel → nothing is erased, the dialog closes.
+    boxButton(false).click();
+    await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on cancel");
+    await until(() => !!tag("简体中文"), "tag stays after cancel");
   });
 
-  it("names the tag body by its action and the × by its current step", async () => {
+  it("names the tag body by its switch action and the × by its remove intent", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
     expect(tagBody("简体中文")?.getAttribute("aria-label")).toBe("Switch to 简体中文");
-    // Calm × announces the remove; armed × announces the confirm.
     expect(tagX("简体中文")?.getAttribute("aria-label")).toBe("Remove — 简体中文");
-    tagX("简体中文")!.click();
-    await nextTick();
-    expect(tagX("简体中文")?.getAttribute("aria-label")).toBe("Confirm remove");
   });
 
-  it("disarms every tag when the popup closes", async () => {
+  it("keeps the picker usable after a dismissed delete dialog", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
     tagX("简体中文")!.click();
-    await nextTick();
-    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(true);
-    // Close the popup, then reopen it: the armed state must not survive —
-    // a stale armed tag would turn the next open into an armed delete
-    // waiting to fire.
-    queryChip(container).click();
-    await nextTick();
-    await nextTick();
-    queryChip(container).click();
+    await untilBoxOpen("简体中文");
+    boxButton(false).click();
+    await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on cancel");
+    // The dialog never leaves the picker half-broken: the tag can still
+    // switch the edited language right after a dismissal.
+    tagBody("简体中文")!.click();
     await nextTick();
     await nextTick();
-    expect(tag("简体中文")?.hasAttribute("data-armed")).toBe(false);
-    expect(tag("English")?.hasAttribute("data-armed")).toBe(false);
+    expect(document.activeElement).toBe(queryField(container));
   });
 
-  it("erases a non-current translation via arm → confirm and keeps the popup open", async () => {
+  it("erases a non-current translation via confirm dialog and keeps the popup open", async () => {
     const { events, container } = mountReactive({
       modelValue: "Plant overview",
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    await eraseViaArm("简体中文");
+    await eraseViaConfirm("简体中文");
     // The map loses only the erased language; no edit-state events fire.
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue).toEqual([]);
@@ -570,8 +620,8 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览", ja: "プラント概覧" },
     });
     await openPicker(container);
-    await eraseViaArm("简体中文");
-    await eraseViaArm("日本語");
+    await eraseViaConfirm("简体中文");
+    await eraseViaConfirm("日本語");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(tagLabels()).toEqual(["English"]);
   });
@@ -591,7 +641,7 @@ describe("HkLocalizedInput", () => {
     expect(queryChip(container).textContent).toContain("简体中文");
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openPicker(container);
-    await eraseViaArm("简体中文");
+    await eraseViaConfirm("简体中文");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue.at(-1)).toBe("Plant overview");
     expect(events.languagechange.at(-1)).toBe("en");
@@ -608,7 +658,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    await eraseViaArm("English");
+    await eraseViaConfirm("English");
     expect(events.translations.at(-1)).toEqual({ "zh-Hans": "工厂总览" });
     expect(events.modelValue.at(-1)).toBe("工厂总览");
     expect(events.languagechange.at(-1)).toBe("zh-Hans");
@@ -622,7 +672,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview" },
     });
     await openPicker(container);
-    await eraseViaArm("English");
+    await eraseViaConfirm("English", false);
     expect(events.translations.at(-1)).toEqual({});
     expect(events.modelValue.at(-1)).toBe("");
     // The edited language tag stays (active); the popup stays open.

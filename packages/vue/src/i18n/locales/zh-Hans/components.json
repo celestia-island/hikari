@@ -164,7 +164,14 @@
   "hikari::affixPicker.selectedCount": "已选 {count} 项",
   "hikari::affixPicker.switchTo": "切换到",
   "hikari::affixPicker.remove": "移除",
-  "hikari::affixPicker.confirmDelete": "确认移除",
   "hikari::affixPicker.useCustom": "使用「{query}」",
-  "hikari::localizedInput.noMatches": "没有匹配的语言"
+  "hikari::localizedInput.noMatches": "没有匹配的语言",
+  "hikari::messageBox.confirm": "确认",
+  "hikari::messageBox.cancel": "取消",
+  "hikari::messageBox.ok": "好",
+  "hikari::affixPicker.removeConfirmTitle": "移除条目",
+  "hikari::affixPicker.removeConfirm": "移除「{label}」？此操作不可撤销。",
+  "hikari::messageBox.alertTitle": "提示",
+  "hikari::messageBox.confirmTitle": "请确认",
+  "hikari::messageBox.promptTitle": "输入"
 }

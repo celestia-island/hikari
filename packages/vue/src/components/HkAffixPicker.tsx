@@ -7,6 +7,7 @@ import { useI18n } from "../i18n/context";
 import HkInput from "./HkInput";
 import HkListTransition from "./HkListTransition";
 import HkMenu from "./HkMenu";
+import HkMessageBox from "./HkMessageBox";
 import "./HkAffixPicker.scss";
 
 /** One pickable entry of the affix picker's searchable list. */
@@ -31,11 +32,12 @@ export interface HkAffixOption {
  * opens one canonical popup:
  *
  *   - a SEARCH FIELD on top (live filter over label / meta / keywords);
- *   - in `multi` mode, a TAG LIST of the currently selected keys with
- *     the shared arm-delete guard: the row's × arms on the first tap
- *     (danger tint) and erases on the second — desktop hover IS the
- *     preview, so a single click erases there; the popup stays open so
- *     several tags can be managed in one pass;
+ *   - in `multi` mode, a TAG LIST of the currently selected keys.
+ *     Deleting a tag is a TWO-STEP interaction: the × opens the shared
+ *     HkMessageBox confirm dialog (danger tone, naming the entry), and
+ *     only its Confirm fires `remove`. `confirmRemove={false}` opts
+ *     out for hosts that confirm themselves. The popup stays open
+ *     behind the dialog so several tags can be managed in one pass;
  *   - the option rows themselves: single mode shows every option and
  *     closes on pick; multi mode lists the NOT-yet-selected options and
  *     stays open for batch adds;
@@ -73,6 +75,9 @@ export const HkAffixPicker = defineComponent({
     searchable: { type: Boolean, default: true },
     /** Offer a "Use <query>" row for free-text entries. */
     allowCustom: { type: Boolean, default: false },
+    /** Gate tag deletion behind a confirm message box (multi mode).
+     *  Default true; pass false when the host runs its own guard. */
+    confirmRemove: { type: Boolean, default: true },
     /** Override the default close-on-pick (single: true, multi: false).
      *  E.g. a multi picker that should close after each add passes
      *  true; a single picker that should stay open passes false. */
@@ -90,7 +95,8 @@ export const HkAffixPicker = defineComponent({
   emits: {
     /** A row or tag body was picked (multi add / single choose). */
     select: (_key: string) => true,
-    /** A tag's armed × confirmed — the host drops that key. */
+    /** A tag's × (after the confirm dialog accepted) — the host drops
+     *  that key. */
     remove: (_key: string) => true,
     /** The "Use <query>" row fired with the typed text. */
     custom: (_query: string) => true,
@@ -106,14 +112,15 @@ export const HkAffixPicker = defineComponent({
     const open = ref(false);
     const chipRef = ref<HTMLElement | null>(null);
     const query = ref("");
-    /** Key of the tag whose delete is ARMED (× tapped once). */
-    const armedKey = ref<string | null>(null);
+    /** True while our confirm dialog is up: clicks inside the dialog
+     *  are outside THIS popup, and the panel's outside-close must not
+     *  tear the tag list down mid-decision. */
+    const confirmHeld = ref(false);
 
-    // A fresh open starts calm: empty filter, no armed tag.
+    // A fresh open starts calm: empty filter.
     watch(open, (v) => {
       if (!v) {
         query.value = "";
-        armedKey.value = null;
       }
       emit("update:open", v);
     });
@@ -179,13 +186,32 @@ export const HkAffixPicker = defineComponent({
       if (resolvedCloseOnSelect.value) open.value = false;
     }
 
-    function confirmRemove(key: string) {
-      armedKey.value = null;
-      emit("remove", key);
-    }
-
-    function toggleArm(key: string) {
-      armedKey.value = armedKey.value === key ? null : key;
+    /** Tag × pressed: unless the host opts out, the shared message box
+     *  names the entry and asks for confirmation — the × alone never
+     *  erases anything. Only an accepted dialog fires `remove`. The
+     *  popup deliberately STAYS OPEN behind the dialog (both while it
+     *  is up and after Confirm/Cancel) so several tags can be managed
+     *  in one pass. */
+    async function requestRemove(tag: HkAffixOption) {
+      if (!props.confirmRemove) {
+        emit("remove", tag.key);
+        return;
+      }
+      const removeLabel = t("hikari::affixPicker.remove", "Remove");
+      confirmHeld.value = true;
+      try {
+        const confirmed = await HkMessageBox.confirm({
+          title: t("hikari::affixPicker.removeConfirmTitle", "Remove entry"),
+          message: interpolate(t("hikari::affixPicker.removeConfirm", 'Remove "{label}"? This cannot be undone.'), {
+            label: tag.label,
+          }),
+          tone: "danger",
+          confirmText: removeLabel,
+        });
+        if (confirmed) emit("remove", tag.key);
+      } finally {
+        confirmHeld.value = false;
+      }
     }
 
     function useCustom() {
@@ -220,7 +246,6 @@ export const HkAffixPicker = defineComponent({
         props.searchPlaceholder ?? t("hikari::affixPicker.search", "Search");
       const emptyText = props.emptyText ?? t("hikari::affixPicker.empty", "No matches");
       const removeLabel = t("hikari::affixPicker.remove", "Remove");
-      const confirmLabel = t("hikari::affixPicker.confirmDelete", "Confirm remove");
       const placement = props.side === "suffix" ? "bottom-end" : "bottom-start";
       return (
         <>
@@ -263,6 +288,9 @@ export const HkAffixPicker = defineComponent({
             items={[]}
             open={open.value}
             onUpdate:open={(v: boolean) => {
+              // Close requests that arrive while the confirm dialog is
+              // up are the dialog's own clicks — ignore them.
+              if (!v && confirmHeld.value) return;
               open.value = v;
             }}
             anchorRef={chipRef.value}
@@ -287,13 +315,11 @@ export const HkAffixPicker = defineComponent({
                         class="hk-affix-tag-list"
                       >
                         {tags.map((tag) => {
-                          const armed = armedKey.value === tag.key;
                           return (
                             <div
                               key={tag.key}
                               class="hk-affix-tag"
                               data-active={activeSet.value.includes(tag.key) || undefined}
-                              data-armed={armed || undefined}
                             >
                               <button
                                 type="button"
@@ -302,10 +328,6 @@ export const HkAffixPicker = defineComponent({
                                 aria-label={`${t("hikari::affixPicker.switchTo", "Switch to")} ${tag.label}`}
                                 onClick={(e: MouseEvent) => {
                                   e.stopPropagation();
-                                  if (armed) {
-                                    armedKey.value = null;
-                                    return;
-                                  }
                                   pick(tag);
                                 }}
                               >
@@ -325,16 +347,14 @@ export const HkAffixPicker = defineComponent({
                               <button
                                 type="button"
                                 class="hk-affix-tag-x"
-                                aria-label={armed ? confirmLabel : `${removeLabel} — ${tag.label}`}
-                                title={armed ? confirmLabel : `${removeLabel} — ${tag.label}`}
-                                // The × arms on the first activation and
-                                // confirms on the second (touch guard); on
-                                // desktop the hover already previewed the
-                                // intent, so the first click erases.
+                                aria-label={`${removeLabel} — ${tag.label}`}
+                                title={`${removeLabel} — ${tag.label}`}
+                                // One tap opens the confirm dialog; the
+                                // dialog's Confirm is what actually
+                                // erases (fires `remove`).
                                 onClick={(e: MouseEvent) => {
                                   e.stopPropagation();
-                                  if (armed) confirmRemove(tag.key);
-                                  else toggleArm(tag.key);
+                                  void requestRemove(tag);
                                 }}
                                 onMousedown={(e: MouseEvent) => e.preventDefault()}
                               >

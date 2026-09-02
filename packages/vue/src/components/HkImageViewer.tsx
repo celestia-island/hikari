@@ -340,9 +340,11 @@ export default defineComponent({
             zoomPercent={zoomPercent.value}
             canZoomIn={canZoomIn.value}
             canZoomOut={canZoomOut.value}
+            zoomStepPercent={5}
+            minZoomPercent={Math.max(1, Math.round(fit.value * 100))}
+            maxZoomPercent={Math.round(MAX_ZOOM * 100)}
             showReset
-            onZoomIn={() => setZoom(zoom.value * 1.2)}
-            onZoomOut={() => setZoom(zoom.value / 1.2)}
+            onZoomTo={(percent: number) => setZoom(percent / 100)}
             onReset={resetView}
             onPanDelta={onPanDelta}
           />

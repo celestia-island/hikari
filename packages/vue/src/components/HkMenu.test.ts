@@ -352,9 +352,11 @@ describe("HkMenu check column (selectMode)", () => {
     mountMenu(ref(true), checkedItems);
     const cells = checkCells();
     expect(cells).toHaveLength(3);
-    expect(cells[0].textContent).toBe("✓");
-    expect(cells[1].textContent).toBe("");
-    expect(cells[2].textContent).toBe("");
+    // The mark is an SVG check inside the fixed icon cell (same grammar
+    // as leading row icons) — not a text glyph.
+    expect(cells[0].querySelector("svg")).not.toBeNull();
+    expect(cells[1].querySelector("svg")).toBeNull();
+    expect(cells[2].querySelector("svg")).toBeNull();
   });
 
   it("auto shows no column for plain action menus", () => {

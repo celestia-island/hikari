@@ -10,7 +10,7 @@ import {
   type VNode,
 } from "vue";
 
-import { ChevronRight } from "lucide-vue-next";
+import { Check, ChevronRight } from "lucide-vue-next";
 
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
@@ -504,11 +504,13 @@ export default defineComponent({
         >
           {reserved && (
             <span class="hk-menu-check" data-on={item.checked || undefined} aria-hidden="true">
-              {item.checked ? "✓" : ""}
+              {item.checked ? <Check size={12} /> : null}
             </span>
           )}
           {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
-          {item.icon && h(item.icon, { size: 15 })}
+          {item.icon && (
+            <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
+          )}
           <span class="hk-menu-label">{item.label}</span>
           {hasKids && <ChevronRight size={14} class="hk-menu-more" />}
         </button>
@@ -708,7 +710,9 @@ export default defineComponent({
             emit("select", item.key, item);
           }}
         >
-          {item.icon && h(item.icon, { size: 16 })}
+          {item.icon && (
+            <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
+          )}
           {item.flag && <span class="hk-menu-flag">{item.flag}</span>}
           <span class="hk-menu-label">{item.label}</span>
           {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
@@ -734,7 +738,9 @@ export default defineComponent({
               toggleGroup(item.key);
             }}
           >
-            {item.icon && h(item.icon, { size: 16 })}
+            {item.icon && (
+              <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
+            )}
             <span class="hk-menu-label">{item.label}</span>
             {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
             <ChevronRight size={14} class="hk-menu-more" />

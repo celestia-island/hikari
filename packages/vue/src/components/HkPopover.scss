@@ -1,3 +1,5 @@
+@use "./menu-item" as mi;
+
 .hk-popover-backdrop {
   position: fixed;
   inset: 0;
@@ -54,35 +56,13 @@
   padding: var(--space-4, 12px);
 }
 
-/* Locale picker menu items */
+/* Locale picker menu items — unified menu-item spec (./_menu-item.scss). */
 .hk-popup-menu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-8) var(--space-14);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  font-family: inherit;
-  color: rgb(var(--color-text));
-  cursor: pointer;
-  transition: background var(--duration-normal) ease;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  outline: none;
-  border-radius: var(--radius-sm);
+  @include mi.item;
 }
 
-/* Hover = background wash only, never on the active item (active >
-   hover precedence — see HkNavItem.scss for the spec). */
-.hk-popup-menu-item:hover:not([data-active]) {
-  background: var(--c-primary-subtle);
-}
-
-.hk-popup-menu-item[data-active] {
-  color: rgb(var(--color-primary));
-  font-weight: 600;
+.hk-popup-menu-item[data-active]:hover {
+  background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
 }
 
 .hk-locale-submenu {
@@ -173,7 +153,7 @@
   // slightly letterspaced, inset to the content edge. Hosts tune the
   // leading inset via --hk-sheet-title-inset.
   padding: 0 var(--space-16, 1rem) var(--space-8, 0.5rem)
-    var(--hk-sheet-title-inset, var(--space-16, 1rem));
+    var(--hk-sheet-title-inset, calc(var(--space-16, 1rem) * 2));
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   letter-spacing: 0.02em;

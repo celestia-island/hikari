@@ -34,9 +34,11 @@ export { default as HModal } from "./components/HkModal";
 export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
 export { default as HPasswordInput } from "./components/HkPasswordInput";
+export { default as HPhoneInput } from "./components/HkPhoneInput";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HGaugeRing } from "./components/HkGaugeRing";
 export { default as HProgressRing } from "./components/HkProgressRing";
+export { default as HQrCode } from "./components/HkQrCode";
 export { default as HRollingNumber } from "./components/HkRollingNumber";
 export { default as HLocalePickerPopup } from "./components/HkLocalePickerPopup";
 export { default as HHoverRevealAction } from "./components/HkHoverRevealAction";
@@ -357,3 +359,15 @@ export {
   formatMs,
   type RelativeTimeT,
 } from "./utils/format";
+
+export {
+  DIAL_CODES,
+  flagEmoji,
+  dialCodeName,
+  formatE164,
+  parseE164,
+  normalizeDial,
+  normalizeNational,
+  type DialCodeEntry,
+  type ParsedE164,
+} from "./data/dialCodes";

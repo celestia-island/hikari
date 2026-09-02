@@ -150,6 +150,11 @@
     "hikari::statusBar.region.CN": "中國大陸",
     "hikari::statusBar.region.TW": "中國台灣",
     "hikari::statusBar.region.HK": "中國香港",
-    "hikari::statusBar.region.MO": "中國澳門"
+    "hikari::statusBar.region.MO": "中國澳門",
+    "hikari::qrCode.alt": "QR 碼",
+    "hikari::phoneInput.dialCode": "區碼",
+    "hikari::phoneInput.chooseCountry": "選擇國家區碼",
+    "hikari::phoneInput.searchCountries": "搜尋國家或區碼",
+    "hikari::phoneInput.noMatches": "沒有符合的國家"
   }
 }

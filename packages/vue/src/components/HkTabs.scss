@@ -203,7 +203,8 @@
 
 /* === Merged cell (dynamic merged-option rendering) ===
  * The contiguous run of options listed in `mergeKeys` collapses into ONE
- * combined cell (the #merged slot) — a REAL flex child of the track,
+ * combined cell (the #merged slot) — a REAL in-flow child of the track
+ * (a grid item on slot-unit strips, see the distribution rules below),
  * not an absolute cover: it joins layout and the animation context
  * (hk-tabs-swap enter/leave + the sliding indicator measures it when
  * the active option is merged). Chrome follows the unselected-option
@@ -240,4 +241,43 @@
 
 .hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"] .hk-tabs-merged {
   flex: 1 0 auto;
+}
+
+/* === Slot-unit distribution (block strips carrying data-slots) ===
+ * A merged cell always spans its run's option count and TabItem.span
+ * may weight any trigger; the row is then divided into one equal 1fr
+ * track per unit, NOT by content. This is what makes dynamic merging
+ * width-stable: the theme toggle's altitude strip replaces the
+ * Light+Dark pair and occupies EXACTLY the two one-unit tracks those
+ * triggers owned, so toggling auto ↔ manual never re-measures any
+ * cell — the strip neither narrows (desktop content-size case) nor
+ * re-divides (mobile block case, thirds stay thirds).
+ *
+ * The division is a GRID because flex-basis math cannot give padded
+ * items exact equal units: a zero flex basis still leaves each item's
+ * own padding riding on its share (item = padding + share of the
+ * remainder), so a 12px-padded trigger consistently stole ~8-16px from
+ * its neighbors. Grid `1fr` tracks are exact regardless of item
+ * padding, borders or content, in both the definite-width and the
+ * `width: max-content; min-width: 100%` intrinsic contexts.
+ *
+ * `minmax(min-content, 1fr)` keeps the never-clip contract: when the
+ * row runs tight a track floors at its content and the max-content
+ * list scrolls instead; the cell's flex-era `min-width: 0` is reset to
+ * `auto` so its content keeps counting toward its track's floor. The
+ * sliding indicator (absolute, positioned from JS measurements) and
+ * the swap transition's absolute leaving items are untouched by the
+ * display switch. Keep this AFTER the rules it overrides
+ * (equal-or-higher specificity + source order). */
+.hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] {
+  display: grid;
+  grid-template-columns: repeat(var(--hk-tabs-units, 1), minmax(min-content, 1fr));
+}
+
+.hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-trigger,
+.hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-trigger,
+.hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-merged,
+.hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-merged {
+  grid-column: span var(--hk-tabs-span, 1) / span var(--hk-tabs-span, 1);
+  min-width: auto;
 }

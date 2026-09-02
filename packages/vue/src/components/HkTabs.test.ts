@@ -1,7 +1,12 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkTabs from "./HkTabs";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -407,5 +412,106 @@ describe("HkTabs segmented variant", () => {
     mounts.push(app);
     app.mount(container);
     expect(container.querySelector(".hk-tabs-trigger-icon .glyph")).not.toBeNull();
+  });
+
+  it("flags block strips with a merged run for slot-unit distribution", async () => {
+    const { container } = mountLive(
+      { variant: "segmented", block: true, mergeKeys: ["b", "c"] },
+      { merged: () => h("span", { class: "strip" }, "m") },
+    );
+    await settle();
+    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    expect(list.getAttribute("data-slots")).toBe("");
+    // The strip announces its total unit count (three options, two of
+    // which are replaced by the two-unit cell → still three units) and
+    // the surviving trigger carries its unit weight; the merged cell
+    // carries the run length — two one-unit slots become one two-unit
+    // cell, so the row's division is identical before and after merging.
+    expect(list.style.getPropertyValue("--hk-tabs-units")).toBe("3");
+    const trig = list.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(trig.style.getPropertyValue("--hk-tabs-span")).toBe("1");
+    const cell = list.querySelector<HTMLElement>(".hk-tabs-merged")!;
+    expect(cell.style.getPropertyValue("--hk-tabs-span")).toBe("2");
+
+    // Slot units are a block-strip layout extra: an inline strip with
+    // the same merge stays content-sized and never gets the attribute.
+    const inline = mountLive(
+      { variant: "segmented", mergeKeys: ["b", "c"] },
+      { merged: () => h("span", "m") },
+    );
+    const inlineList = inline.container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    expect(inlineList.hasAttribute("data-slots")).toBe(false);
+    expect(inlineList.style.getPropertyValue("--hk-tabs-units")).toBe("");
+  });
+
+  it("keeps plain block strips off slot units", () => {
+    // No merge, no spans → the content-sized block flex is untouched.
+    const { container } = mountLive({ variant: "segmented", block: true });
+    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    expect(list.hasAttribute("data-slots")).toBe(false);
+    expect(list.style.getPropertyValue("--hk-tabs-units")).toBe("");
+  });
+
+  it("weights a TabItem span onto slot-unit distribution", () => {
+    const { container } = mountLive({
+      variant: "segmented",
+      block: true,
+      tabs: [
+        { key: "a", label: "Alpha" },
+        { key: "b", label: "Beta", span: 2 },
+      ],
+    });
+    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    expect(list.getAttribute("data-slots")).toBe("");
+    expect(list.style.getPropertyValue("--hk-tabs-units")).toBe("3");
+    const trigs = list.querySelectorAll<HTMLElement>(".hk-tabs-trigger");
+    expect(trigs[0].style.getPropertyValue("--hk-tabs-span")).toBe("1");
+    expect(trigs[1].style.getPropertyValue("--hk-tabs-span")).toBe("2");
+  });
+
+  it("clamps bogus span values to sane slot units", () => {
+    const { container } = mountLive({
+      variant: "segmented",
+      block: true,
+      tabs: [
+        { key: "a", label: "Alpha", span: 0 },
+        { key: "b", label: "Beta", span: -3 },
+        { key: "c", label: "Gamma", span: 1.9 },
+      ],
+    });
+    const list = container.querySelector<HTMLElement>(".hk-tabs-list")!;
+    // Zero/negative degrade to single slots; 1.9 rounds to 2 — the strip
+    // stays a coherent slot grid (four units across three options).
+    expect(list.getAttribute("data-slots")).toBe("");
+    expect(list.style.getPropertyValue("--hk-tabs-units")).toBe("4");
+    const spans = [...list.querySelectorAll<HTMLElement>(".hk-tabs-trigger")].map(
+      (el) => el.style.getPropertyValue("--hk-tabs-span"),
+    );
+    expect(spans).toEqual(["1", "1", "2"]);
+  });
+
+  it("pins the slot-unit grid contract in the stylesheet source", () => {
+    // happy-dom performs no layout, so the geometry itself can't be
+    // asserted here; pin the declarations the layout depends on instead
+    // — deleting or gutting the slot-unit rules must turn this red.
+    const scss = readFileSync(join(here, "HkTabs.scss"), "utf-8");
+    const listRule = scss.match(
+      /\.hk-tabs-list\[data-variant="segmented"\]\[data-block="true"\]\[data-slots\]\s*\{([^}]*)\}/,
+    );
+    expect(listRule).toBeTruthy();
+    expect(listRule![1]).toContain("display: grid");
+    expect(listRule![1]).toContain(
+      "repeat(var(--hk-tabs-units, 1), minmax(min-content, 1fr))",
+    );
+    // The item rule must place items by span and must NOT reintroduce a
+    // flex distribution — flex-basis math skews the units by item padding.
+    const itemRule = scss.match(
+      /\[data-slots\] > \.hk-tabs-trigger[\s\S]*?\{([^}]*)\}/,
+    );
+    expect(itemRule).toBeTruthy();
+    expect(itemRule![1]).toContain(
+      "grid-column: span var(--hk-tabs-span, 1)",
+    );
+    expect(itemRule![1]).not.toMatch(/\bflex:/);
   });
 });

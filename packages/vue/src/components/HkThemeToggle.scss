@@ -115,21 +115,18 @@
 }
 
 /* ── Theme list rows ────────────────────────────────────────────────────
- * Every row shares identical geometry: [pill button][fixed trailing slot].
- * Non-custom themes get an invisible slot mirroring the delete button's
- * footprint, so every active highlight is exactly the same width.
+ * Every row is ONE full-width pill: the delete affordance for custom
+ * themes overlays the pill's trailing edge (the row is the positioning
+ * context), so built-in rows reserve no trailing column — the old
+ * invisible slot left a permanent dead strip right of every row in the
+ * mobile bottom sheet — and every pill and highlight still shares the
+ * exact same width.
  */
 
 .s-theme-item-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-4, 0.25rem);
-}
-
-.s-theme-item-slot {
-  width: 1.5rem;
-  height: 1.5rem;
-  flex-shrink: 0;
 }
 
 /* Theme rows speak the SAME grammar as every dropdown option
@@ -165,6 +162,11 @@
   white-space: nowrap;
 }
 
+/* Custom rows keep the name clear of the overlaid delete button. */
+.s-theme-item-row[data-custom] .s-theme-item-name {
+  margin-right: 2rem;
+}
+
 .s-theme-item-check {
   flex-shrink: 0;
   color: rgb(var(--color-primary));
@@ -183,13 +185,19 @@
   font-weight: 600;
 }
 
+/* Delete affordance for custom themes — an overlay pinned inside the
+ * pill's trailing edge (the row is relative), not a reserved column:
+ * built-in rows show nothing there and the pill runs to the row edge. */
 .s-theme-item-delete {
+  position: absolute;
+  right: var(--space-8, 0.5rem);
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  flex-shrink: 0;
   border: none;
   border-radius: var(--radius-sm, 6px);
   background: transparent;
@@ -205,9 +213,8 @@
 /* Touch-sized rows on phone widths — the same sheet bump the shared
  * surfaces apply (.hk-select-sheet-list .hk-select-option → 14px
  * vertical, .hk-select-sheet-panel .hk-menu-row → 44px min-height).
- * The trailing slot mirrors the delete button's bumped footprint so
- * the equal-highlight-width invariant across custom/non-custom rows
- * survives on mobile too. */
+ * The overlaid delete button grows with them and the name clearance
+ * follows so the two never collide on long custom scheme names. */
 @media (max-width: 767px) {
   .s-theme-item-btn {
     min-height: 44px;
@@ -219,8 +226,7 @@
     height: 2.25rem;
   }
 
-  .s-theme-item-slot {
-    width: 2.25rem;
-    height: 2.25rem;
+  .s-theme-item-row[data-custom] .s-theme-item-name {
+    margin-right: 2.75rem;
   }
 }

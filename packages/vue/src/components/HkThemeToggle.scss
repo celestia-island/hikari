@@ -208,11 +208,10 @@
   color: rgb(var(--color-error));
 }
 
-/* Touch-sized rows on phone widths — the same sheet bump the shared
- * surfaces apply (.hk-select-sheet-list .hk-select-option → 14px
- * vertical, .hk-select-sheet-panel .hk-menu-row → 44px min-height).
- * The overlaid delete button grows with them and the name clearance
- * follows so the two never collide on long custom scheme names. */
+/* Touch-sized delete target on phone widths, scaled for the 44px sheet
+ * rows that the shared spec applies inside sheet contexts (see
+ * ./_menu-item.scss). The name clearance follows so the button and the
+ * label never collide on long custom scheme names. */
 @media (max-width: 767px) {
   .s-theme-item-delete {
     width: 2.25rem;

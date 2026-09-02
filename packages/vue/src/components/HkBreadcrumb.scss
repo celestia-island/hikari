@@ -296,23 +296,28 @@
       pointer-events: auto;
     }
 
-    // Menu items — unified menu-item spec (./_menu-item.scss): same
-    // metrics/states as every other row family. The old hover (full
-    // primary fill + double glow) was the library's only remaining
-    // bespoke row hover and is retired with the unification.
-    .hk-breadcrumb-dropdown-item {
-      @include mi.item;
-
-      // Spacing
-      margin: 0.125rem 0;
-
-      // Typography
-      color: var(--hi-color-text-primary);
-      text-decoration: none;
-      white-space: nowrap;
-
-    }
+    // NOTE: the dropdown ITEM rule lives at TOP LEVEL below, not nested
+    // here — @mixin item declares its desktop tokens on the row element,
+    // and a deeply nested selector would out-rank the sheet-context token
+    // re-declaration in _menu-item.scss (see the comment there).
   }
+}
+
+// Menu items — unified menu-item spec (./_menu-item.scss): same
+// metrics/states as every other row family. The old hover (full
+// primary fill + double glow) was the library's only remaining
+// bespoke row hover and is retired with the unification. Kept at
+// (0,1,0) so the sheet binding can win inside sheet contexts.
+.hk-breadcrumb-dropdown-item {
+  @include mi.item;
+
+  // Spacing
+  margin: 0.125rem 0;
+
+  // Typography
+  color: var(--hi-color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 // ------

@@ -66,8 +66,11 @@
  * beats an inherited value, and @mixin item declares the desktop set at
  * row level — an ancestor-only binding would never win. The (0,2,0)
  * descendant selector here beats the row's own (0,1,0) declaration.
- * Every row family adopted with @include mi.item MUST register its row
- * class in this list (and nowhere else) to get the sheet geometry. */
+ * Therefore every adopter MUST @include mi.item at a TOP-LEVEL (0,1,0)
+ * rule — a nested include (e.g. inside its parent menu selector)
+ * compiles to a higher specificity and silently defeats this binding
+ * (HkBreadcrumb was caught exactly this way). New row families must
+ * also register their class in this list. */
 .hk-select-sheet-panel,
 .hk-popover-panel.hk-is-sheet,
 .hk-drawer-panel {

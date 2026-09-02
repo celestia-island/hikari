@@ -32,7 +32,6 @@
       "import": "./src/styles/index.scss"
     },
     "./styles/*": "./src/styles/*",
-    "./theme/*": "./src/theme/*",
     "./components/*": "./src/components/*",
     "./plugins": {
       "import": "./src/plugins/index.ts",

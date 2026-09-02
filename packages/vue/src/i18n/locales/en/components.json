@@ -146,6 +146,11 @@
     "hikari::statusBar.backend.ok": "OK",
     "hikari::statusBar.backend.warn": "Degraded",
     "hikari::statusBar.backend.error": "Error",
-    "hikari::statusBar.backend.unknown": "Unknown"
+    "hikari::statusBar.backend.unknown": "Unknown",
+    "hikari::qrCode.alt": "QR code",
+    "hikari::phoneInput.dialCode": "Code",
+    "hikari::phoneInput.chooseCountry": "Choose country code",
+    "hikari::phoneInput.searchCountries": "Search country or code",
+    "hikari::phoneInput.noMatches": "No matching country"
   }
 }

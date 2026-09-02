@@ -1,0 +1,23 @@
+.hk-qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hk-qr-canvas {
+  display: block;
+  border-radius: var(--radius-sm, 4px);
+  // Always a white backing so the QR stays scannable regardless of theme.
+  background: #ffffff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.08);
+}
+
+.hk-qr-label {
+  font-size: var(--text-2xs, 0.75rem);
+  line-height: 1.4;
+  color: rgb(var(--color-muted, 120 113 108));
+  text-align: center;
+}

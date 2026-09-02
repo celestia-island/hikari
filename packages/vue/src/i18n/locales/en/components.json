@@ -160,7 +160,14 @@
   "hikari::affixPicker.selectedCount": "{count} selected",
   "hikari::affixPicker.switchTo": "Switch to",
   "hikari::affixPicker.remove": "Remove",
-  "hikari::affixPicker.confirmDelete": "Confirm remove",
   "hikari::affixPicker.useCustom": "Use \"{query}\"",
-  "hikari::localizedInput.noMatches": "No matching language"
+  "hikari::localizedInput.noMatches": "No matching language",
+  "hikari::messageBox.confirm": "Confirm",
+  "hikari::messageBox.cancel": "Cancel",
+  "hikari::messageBox.ok": "OK",
+  "hikari::affixPicker.removeConfirmTitle": "Remove entry",
+  "hikari::affixPicker.removeConfirm": "Remove \"{label}\"? This cannot be undone.",
+  "hikari::messageBox.alertTitle": "Notice",
+  "hikari::messageBox.confirmTitle": "Please confirm",
+  "hikari::messageBox.promptTitle": "Input"
 }

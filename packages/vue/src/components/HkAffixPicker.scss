@@ -68,8 +68,8 @@
 }
 
 /* One selected entry: [flag] label (meta) •active-dot   ×]
- * The × arms on the first activation (danger tint) and erases on the
- * second; desktop hover previews the × so the row reads as deletable. */
+ * The × opens the shared confirm message box — the dialog's Confirm is
+ * what actually erases; the × alone never does. */
 .hk-affix-tag {
   display: flex;
   align-items: center;
@@ -94,10 +94,6 @@
     }
   }
 
-  &[data-armed] {
-    border-color: rgb(var(--color-danger, 240 70 80) / 55%);
-    background: rgb(var(--color-danger, 240 70 80) / 12%);
-  }
 }
 
 .hk-affix-tag-body {
@@ -167,11 +163,6 @@
   &:focus-visible {
     color: rgb(var(--color-danger, 240 70 80));
     background: rgb(var(--color-danger, 240 70 80) / 12%);
-  }
-
-  [data-armed] & {
-    color: rgb(var(--color-danger, 240 70 80));
-    background: rgb(var(--color-danger, 240 70 80) / 18%);
   }
 }
 

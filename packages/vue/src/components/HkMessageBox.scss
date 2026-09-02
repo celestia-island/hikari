@@ -1,0 +1,44 @@
+/* HkMessageBox — the shared transient message box (confirm / alert /
+ * single-field prompt). Hosted in its own HkModal; only the body
+ * layout (icon + text + the one prompt field) and the action row are
+ * styled here. */
+
+.hk-message-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  padding-top: var(--space-2, 2px);
+}
+
+.hk-message-box-icon {
+  display: inline-flex;
+  color: rgb(var(--color-primary));
+
+  [data-tone="success"] & {
+    color: rgb(var(--color-success, 90 180 110));
+  }
+
+  [data-tone="warning"] &,
+  [data-tone="danger"] & {
+    color: rgb(var(--color-danger, 240 70 80));
+  }
+}
+
+.hk-message-box-text {
+  margin: 0;
+  color: rgb(var(--color-text));
+  font-size: var(--text-base, 15px);
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.hk-message-box-prompt {
+  margin-top: var(--space-6, 6px);
+}
+
+.hk-message-box-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8, 8px);
+}

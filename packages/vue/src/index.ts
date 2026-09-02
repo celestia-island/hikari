@@ -47,6 +47,7 @@ export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModa
 export { default as HModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HPopover, type PopupPlacement } from "./components/HkPopover";
 export { default as HMenu, type HkMenuItem } from "./components/HkMenu";
+export { default as HMessageBox, HkMessageBox, type HkMessageBoxOptions, type HkMessageBoxPrompt } from "./components/HkMessageBox";
 export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./components/HkLocalizedInput";
 export { default as HMenuPanel } from "./components/HkMenuPanel";
 export { default as HMenuActionItem } from "./components/HkMenuActionItem";

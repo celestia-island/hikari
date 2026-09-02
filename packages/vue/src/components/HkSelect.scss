@@ -208,13 +208,16 @@
   @include mi.item;
 }
 
-.hk-select-option:hover,
-.hk-select-option[data-highlighted] {
+/* The highlight face never overrides the checked/active face — a
+ * keyboard-highlighted selected option keeps its dim wash + primary
+ * text (active > hover precedence, same as the spec mixin). */
+.hk-select-option:hover:not([data-checked]):not([data-active]),
+.hk-select-option[data-highlighted]:not([data-checked]):not([data-active]) {
   background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
   border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
 }
 
-.hk-select-option[data-highlighted]:not(:hover) {
+.hk-select-option[data-highlighted]:not(:hover):not([data-checked]):not([data-active]) {
   color: rgb(var(--color-text));
 }
 

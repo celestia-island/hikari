@@ -19,6 +19,8 @@
  *     border is always reserved).
  *   - active/checked: dim primary wash + strong border + primary text
  *     + 600 (active > hover precedence).
+ *   - checked mark: an SVG check inside the reserved cell, normalized
+ *     to the cell like every other icon (16px / 20px in sheets).
  *   - danger rows tint red; disabled rows dim to 45%.
  *   - focus-visible: 2px inset primary ring (keyboard parity for every
  *     row family — previously only HkNavItem had one).
@@ -50,9 +52,7 @@
   --hk-menu-item-optical: 0.5px;
 }
 
-/* Mobile bottom-sheet geometry. Bound below to BOTH sheet surfaces plus
- * the bottom/side drawer shell (mobile-only host of menu panels); hosts
- * may also apply it to their own sheet-like shells. */
+/* Mobile bottom-sheet geometry. */
 @mixin item-sheet-tokens {
   --hk-menu-item-min-h: 44px;
   --hk-menu-item-pad-x: 16px;
@@ -61,10 +61,27 @@
   --hk-menu-item-icon-box: 20px;
 }
 
+/* Sheet context. The tokens are re-declared ON each adopting row, not
+ * merely on the panel: a custom property declared on an element always
+ * beats an inherited value, and @mixin item declares the desktop set at
+ * row level — an ancestor-only binding would never win. The (0,2,0)
+ * descendant selector here beats the row's own (0,1,0) declaration.
+ * Every row family adopted with @include mi.item MUST register its row
+ * class in this list (and nowhere else) to get the sheet geometry. */
 .hk-select-sheet-panel,
 .hk-popover-panel.hk-is-sheet,
 .hk-drawer-panel {
-  @include item-sheet-tokens;
+  .hk-menu-row,
+  .hk-menu-sidebar-row,
+  .hk-menu-action-item,
+  .hk-select-option,
+  .hk-popup-select-item,
+  .s-theme-item-btn,
+  .s-popup-menu-item,
+  .hk-popup-menu-item,
+  .hk-breadcrumb-dropdown-item {
+    @include item-sheet-tokens;
+  }
 }
 
 /* ── Row grammar ────────────────────────────────────────────────────── */

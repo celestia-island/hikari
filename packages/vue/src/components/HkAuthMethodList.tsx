@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import HkButton from "./HkButton";
 import "./HkAuthMethodList.scss";
 
@@ -7,15 +7,20 @@ import "./HkAuthMethodList.scss";
  * auth cards (the ERP login's provider-button grammar, componentized).
  *
  * Every button renders [icon | label] with a FIXED icon column and a FIXED
- * label column (CSS var `--auth-methods-label-width`, default 8em), so the
- * icons and the label text start at the same x on every row regardless of
- * label length; because every content block is then the same width, the
- * row can stay centered like any HkButton without the columns drifting.
+ * label column, so the icons and the label text start at the same x on
+ * every row regardless of label length; because every content block is
+ * then the same width, the row can stay centered like any HkButton
+ * without the columns drifting.
  *
- * Render it through HkAuthCard's `methods` slot: the card owns the
- * full-width block layout and the vertical rhythm, and the footer's
- * checkbox rows keep their centered-group behavior instead of being
- * dragged full width with the buttons.
+ * The label column is auto-sized: after mount (and whenever the label set
+ * or the document fonts change) the component measures the widest label
+ * text and publishes it as `--auth-methods-label-width` on its wrapper,
+ * so the aligned text region hugs the longest label instead of a blind
+ * hardcoded width. Consumers can still override the var explicitly.
+ *
+ * The wrapper is `display: contents`: the component keeps a DOM node for
+ * measurement and CSS-var inheritance while the buttons remain direct
+ * layout children of HkAuthCard's `.s-auth-methods` slot container.
  */
 export default defineComponent({
   name: "HkAuthMethodList",
@@ -45,9 +50,45 @@ export default defineComponent({
     /** A method button was clicked. */
     select: (_key: string) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, expose }) {
+    const listRef = ref<HTMLDivElement | null>(null);
+
+    /** Measure the widest label text and publish it as the label-column
+     *  width custom property. `scrollWidth` reports the text width even
+     *  while the fixed column clips it, so this is correct both before
+     *  the variable is first set and after any label change. */
+    function measure() {
+      const root = listRef.value;
+      if (!root) return;
+      let widest = 0;
+      for (const label of root.querySelectorAll<HTMLElement>(".s-auth-methods-label")) {
+        widest = Math.max(widest, label.scrollWidth);
+      }
+      if (widest > 0) root.style.setProperty("--auth-methods-label-width", `${widest}px`);
+    }
+
+    onMounted(() => {
+      void nextTick(measure);
+      // Webfonts change text metrics after first paint; re-measure when
+      // they finish loading (no-op in environments without document.fonts).
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        void document.fonts.ready.then(measure).catch(() => {});
+      }
+    });
+    onBeforeUnmount(() => {
+      listRef.value?.style.removeProperty("--auth-methods-label-width");
+    });
+    watch(
+      () => props.methods.map((method) => method.label).join("\u0000"),
+      () => {
+        void nextTick(measure);
+      },
+    );
+
+    expose({ measure });
+
     return () => (
-      <>
+      <div class="s-auth-methods-list" ref={listRef}>
         {props.divider && (
           <div class="s-auth-methods-divider">
             <span>{props.divider}</span>
@@ -66,7 +107,7 @@ export default defineComponent({
             <span class="s-auth-methods-label">{method.label}</span>
           </HkButton>
         ))}
-      </>
+      </div>
     );
   },
 });

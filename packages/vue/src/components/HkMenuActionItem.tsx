@@ -2,18 +2,20 @@ import { defineComponent } from "vue";
 import "./HkMenuActionItem.scss";
 
 /**
- * Standard menu row: icon + label button sharing the nav row's exact
- * padding/typography constraints (see HkMenuPanel). Pluggable — renders
- * as a bare button, so it works inside HkMenuPanel, a popover, or any
- * other menu host; attrs (including a template `ref`) fall through to
- * the button element.
+ * Standard menu row: icon + label button speaking the unified menu-item
+ * spec (metrics/icon cell/states — see _menu-item.scss). Pluggable —
+ * renders as a bare button, so it works inside HkMenuPanel, a popover,
+ * or any other menu host; attrs (including a template `ref`) fall
+ * through to the button element.
  */
 export default defineComponent({
   name: "HkMenuActionItem",
   props: {
-    /** Leading icon node (e.g. `<Camera size={14} />`). Typed loosely
-     *  (plain Object) so consumers building on a different vue copy than
-     *  hikari's own node_modules never hit VNode type identity errors. */
+    /** Leading icon node (e.g. `<Camera size={14} />`). Rendered inside
+     * the spec's fixed icon cell, so any size centers uniformly. Typed
+     * loosely (plain Object) so consumers building on a different vue
+     * copy than hikari's own node_modules never hit VNode type identity
+     * errors. */
     icon: { type: Object, default: undefined },
     label: { type: String, required: true },
     /** Destructive styling (logout, delete…). */
@@ -28,6 +30,7 @@ export default defineComponent({
       <button
         type="button"
         class={["hk-menu-action-item", props.danger ? "hk-menu-action-item--danger" : ""]}
+        data-danger={props.danger || undefined}
         disabled={props.disabled}
         role="menuitem"
         onClick={(e: MouseEvent) => emit("click", e)}

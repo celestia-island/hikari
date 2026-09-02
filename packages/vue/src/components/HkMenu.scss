@@ -3,49 +3,17 @@
  * surface): desktop anchored popouts, mobile bottom sheets with
  * scrim/grabber/title, popup-manager z-stacking, back-guard history.
  * The panel/sheet geometry lives in HkSelect.scss — this file only
- * owns what HkMenu itself brings to that surface: the row grammar,
- * the leading check column, and the sidebar variant's inline nav. */
+ * owns what HkMenu itself brings to that surface: the row grammar
+ * (the unified menu-item spec — see ./_menu-item.scss), the leading
+ * check column, and the sidebar variant's inline nav. */
 
-/* rows are shared by popout levels and mobile sheet layers */
+@use "./menu-item" as mi;
+
+/* rows are shared by popout levels and mobile sheet layers; metrics
+ * and states come from the unified spec — inside a sheet the shared
+ * panel context swaps the tokens to the 44px touch geometry. */
 .hk-menu-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm);
-  line-height: 1.35;
-  text-align: left;
-  cursor: pointer;
-  appearance: none;
-  transition: background 0.12s ease;
-}
-
-.hk-menu-row:hover {
-  background: rgb(var(--color-primary) / 10%);
-}
-
-.hk-menu-row[data-active] {
-  background: rgb(var(--color-primary) / 14%);
-  font-weight: 600;
-}
-
-.hk-menu-row[data-disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.hk-menu-row[data-danger] {
-  color: rgb(var(--color-danger, 240 70 80));
-}
-
-.hk-menu-row[data-danger]:hover {
-  background: rgb(var(--color-danger, 240 70 80) / 12%);
+  @include mi.item;
 }
 
 .hk-menu-flag {
@@ -55,22 +23,25 @@
 }
 
 .hk-menu-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include mi.label;
+}
+
+/* Leading icon cell — every row icon renders inside the spec's fixed
+ * square, so mixed lucide sizes read as one column and the icon box
+ * (not the raw svg) centers against the label. */
+.hk-menu-item-icon {
+  @include mi.icon;
 }
 
 /* Leading check column (selectMode). The cell is reserved on EVERY row
  * of a level while the column is on, so labels stay aligned; only
- * checked === true shows the mark. */
+ * checked === true shows the mark — an SVG check inside the same fixed
+ * cell grammar as leading icons (the old text "✓" carried its own
+ * baseline rhythm and sat off-center against svg icons). */
 .hk-menu-check {
-  flex-shrink: 0;
-  width: 16px;
+  @include mi.icon;
+
   color: rgb(var(--color-primary));
-  font-weight: 700;
-  text-align: center;
 }
 
 .hk-menu-more {
@@ -88,14 +59,6 @@
   min-width: 0;
 }
 
-/* Touch-sized rows inside the shared mobile sheet surface (the same
- * grammar HkSelect applies to its own sheet options). */
-.hk-select-sheet-panel .hk-menu-level .hk-menu-row {
-  min-height: 44px;
-  padding: 12px 10px;
-  font-size: var(--text-base);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hk-menu-row {
     transition: none;
@@ -104,10 +67,10 @@
 
 /* ── sidebar variant ────────────────────────────────────────────── */
 /* Inline vertical nav list — always rendered, no popover machinery.
- * Rows share the popup row's interaction grammar (hover wash, active
- * tint + weight, disabled/danger) but with nav-appropriate rhythm:
- * a consistent 4px gap between rows so rounded hover pills never touch,
- * deeper levels indenting under their group. */
+ * Rows share the unified menu-item spec's grammar (metrics + states),
+ * with nav-appropriate rhythm: a consistent 4px gap between rows so
+ * rounded hover pills never touch, deeper levels indenting under
+ * their group. */
 
 .hk-menu-sidebar {
   display: flex;
@@ -117,21 +80,7 @@
 }
 
 .hk-menu-sidebar-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8, 8px);
-  width: 100%;
-  padding: var(--space-8, 8px) var(--space-12, 12px);
-  border: 0;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  color: rgb(var(--color-text) / 82%);
-  font-size: var(--text-sm);
-  line-height: 1.4;
-  text-align: left;
-  cursor: pointer;
-  appearance: none;
-  transition: background 0.12s ease, color 0.12s ease;
+  @include mi.item;
 
   .hk-menu-label {
     flex: 1;
@@ -142,24 +91,8 @@
   }
 }
 
-.hk-menu-sidebar-row:hover:not([data-disabled]):not([data-active]) {
-  background: rgb(var(--color-primary) / 10%);
-  color: rgb(var(--color-text));
-}
-
-.hk-menu-sidebar-row[data-active] {
-  background: rgb(var(--color-primary) / 14%);
-  color: rgb(var(--color-primary));
-  font-weight: 600;
-}
-
-.hk-menu-sidebar-row[data-disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.hk-menu-sidebar-row[data-danger] {
-  color: rgb(var(--color-danger, 240 70 80));
+.hk-menu-sidebar-row .hk-menu-item-icon {
+  @include mi.icon;
 }
 
 .hk-menu-sidebar-group {

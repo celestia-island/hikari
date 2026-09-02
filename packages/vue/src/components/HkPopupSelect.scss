@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "./menu-item" as mi;
 
 /* HkPopupSelect */
 
@@ -108,32 +109,17 @@
   padding: var(--space-2);
 }
 
+/* Unified menu-item spec (see ./_menu-item.scss); sheet geometry flows
+ * from the shared `.hk-popover-panel.hk-is-sheet` token context. */
 .hk-popup-select-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-10) var(--space-16);
-  font-size: var(--text-base);
-  color: rgb(var(--color-text));
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  outline: none;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) ease;
-  text-align: left;
+  @include mi.item;
 }
 
 .hk-popup-select-item:hover,
 .hk-popup-select-item[data-highlighted] {
-  background: var(--c-primary-subtle);
-  border-color: var(--c-primary-medium);
-}
-
-.hk-popup-select-item[data-checked] {
-  background: var(--c-primary-dim);
-  border-color: var(--c-primary-strong);
-  color: rgb(var(--color-primary));
-  font-weight: 600;
+  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
+  color: rgb(var(--color-text));
 }
 
 .hk-popup-select-error {
@@ -143,14 +129,9 @@
 }
 
 // Mobile sheet form (HPopover sheetOnMobile): full-width option list with
-// touch-sized rows.
+// touch-sized rows (row geometry flows from the shared sheet tokens).
 .hk-popover-panel.hk-is-sheet.hk-popup-select-content {
   .hk-popup-select-viewport {
     max-height: min(56vh, 24rem);
-  }
-
-  .hk-popup-select-item {
-    padding: var(--space-14) var(--space-16);
-    font-size: var(--text-base);
   }
 }

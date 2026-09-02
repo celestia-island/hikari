@@ -168,7 +168,7 @@ export const HkAdminHeader = defineComponent({
                 class="s-popup-menu-item"
                 onClick={() => props.onForceSignOut?.()}
               >
-                <LogOut size={14} />
+                <span class="hk-menu-item-icon"><LogOut size={14} /></span>
                 {props.forceSignOutLabel ?? t("hikari::adminHeader.forceSignOut", "Sign out")}
               </button>
             </div>
@@ -202,7 +202,7 @@ export const HkAdminHeader = defineComponent({
                   avatarModalOpen.value = true;
                 }}
               >
-                <Camera size={14} />
+                <span class="hk-menu-item-icon"><Camera size={14} /></span>
                 {props.avatarMenuLabel ?? t("hikari::adminHeader.avatar", "Avatar")}
               </button>
               {/* The language trigger owns the locale anchor: the ref sits
@@ -216,7 +216,7 @@ export const HkAdminHeader = defineComponent({
                 class="s-popup-menu-item"
                 onClick={() => (localeMenuOpen.value = !localeMenuOpen.value)}
               >
-                <Languages size={14} />
+                <span class="hk-menu-item-icon"><Languages size={14} /></span>
                 {props.localeMenuLabel ?? t("hikari::adminHeader.language", "Language")}
               </button>
               {slots["locale-picker"]?.({
@@ -240,7 +240,7 @@ export const HkAdminHeader = defineComponent({
                     emit("goToFrontend");
                   }}
                 >
-                  <ExternalLink size={14} />
+                  <span class="hk-menu-item-icon"><ExternalLink size={14} /></span>
                   {props.goToFrontendLabel}
                 </button>
               ) : null}
@@ -251,7 +251,7 @@ export const HkAdminHeader = defineComponent({
                   emit("logout");
                 }}
               >
-                <LogOut size={14} />
+                <span class="hk-menu-item-icon"><LogOut size={14} /></span>
                 {props.logoutLabel ?? t("hikari::adminHeader.logout", "Logout")}
               </button>
             </div>

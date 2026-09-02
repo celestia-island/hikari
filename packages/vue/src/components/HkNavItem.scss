@@ -1,16 +1,28 @@
+/* HkNavItem — nav row. Speaks the unified menu-item spec's METRICS
+ * (min-height / padding / gap / font / radius / icon cell — see
+ * ./_menu-item.scss) so nav rows, menu rows, select options and theme
+ * pills share one box geometry. Colors stay on the --hi-* token family:
+ * nav rows are consumed by hosts that re-theme via --hi-*, so the
+ * interaction palette deliberately does not switch to --c-*. */
+
+@use "./menu-item" as mi;
+
 .hk-nav-item {
+  @include mi.item-tokens;
+
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--hi-radius-md, 6px);
+  gap: var(--hk-menu-item-gap);
+  min-height: var(--hk-menu-item-min-h);
+  padding: var(--hk-menu-item-pad-y) var(--hk-menu-item-pad-x);
+  border-radius: var(--hk-menu-item-radius);
   color: var(--hi-color-muted);
-  font-size: 0.875rem;
+  font-size: var(--hk-menu-item-font);
   font-family: inherit;
-  line-height: 1.4;
+  line-height: var(--hk-menu-item-lh);
   text-decoration: none;
   background: none;
-  border: none;
+  border: 1px solid transparent;
   width: 100%;
   text-align: left;
   cursor: pointer;
@@ -64,12 +76,7 @@
 }
 
 .hk-nav-item-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
+  @include mi.icon;
 }
 
 .hk-nav-item-label {

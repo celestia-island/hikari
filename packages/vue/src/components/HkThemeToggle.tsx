@@ -241,7 +241,9 @@ export const HkThemeToggle = defineComponent({
                   data-active={currentTheme.value === th.id || undefined}
                   onClick={() => onSelectTheme(th.id)}
                 >
-                  {currentTheme.value === th.id && <Check size={14} class="s-theme-item-check" />}
+                  {currentTheme.value === th.id && (
+                    <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
+                  )}
                   <span class="s-theme-item-name">{th.name}</span>
                 </button>
                 {th.isCustom && (
@@ -269,7 +271,7 @@ export const HkThemeToggle = defineComponent({
                 }
               }}
             >
-              <Palette size={14} />
+              <span class="hk-menu-item-icon"><Palette size={14} /></span>
               <span class="s-theme-item-name">{t("hikari::theme.customize")}</span>
             </button>
           </div>

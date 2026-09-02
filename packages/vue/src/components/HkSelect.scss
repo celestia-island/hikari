@@ -1,4 +1,5 @@
 @use "../tokens";
+@use "./menu-item" as mi;
 
 /* HkSelect — popup select component */
 
@@ -198,37 +199,23 @@
   }
 }
 
+/* Unified menu-item spec (see ./_menu-item.scss) — options, menu rows
+ * and theme pills share one grammar; sheet geometry flows from the
+ * shared sheet token context, so the old per-component sheet bump is
+ * gone. [data-highlighted] (keyboard/pointer highlight) maps to the
+ * spec's hover face. */
 .hk-select-option {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  padding: var(--space-10) var(--space-16);
-  font-size: var(--text-base);
-  color: rgb(var(--color-text));
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  outline: none;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) ease;
-  text-align: left;
+  @include mi.item;
 }
 
 .hk-select-option:hover,
 .hk-select-option[data-highlighted] {
-  background: var(--c-primary-subtle);
-  border-color: var(--c-primary-medium);
+  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
 }
 
-.hk-select-option[data-checked] {
-  background: var(--c-primary-dim);
-  border-color: var(--c-primary-strong);
-  color: rgb(var(--color-primary));
-  font-weight: 600;
-}
-
-.hk-select-option[data-disabled] {
-  opacity: 0.4;
-  cursor: not-allowed;
+.hk-select-option[data-highlighted]:not(:hover) {
+  color: rgb(var(--color-text));
 }
 
 .hk-select-error {
@@ -352,11 +339,6 @@
 
   &::-webkit-scrollbar {
     display: none;
-  }
-
-  .hk-select-option {
-    padding: var(--space-14) var(--space-16);
-    font-size: var(--text-base);
   }
 }
 

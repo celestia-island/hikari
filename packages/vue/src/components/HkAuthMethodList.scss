@@ -35,10 +35,12 @@
    centered hk-btn-block. HkButton has a fragment root, so inbound classes
    don't fall through — scope everything off the `.s-auth-methods`
    container (descendant match: the component wrapper is display:contents).
-   The label column width is MEASURED by the component (widest label text,
-   published as `--auth-methods-label-width` on its wrapper, inherited into
-   the rows); the 8em fallback only covers the pre-measure frame, and apps
-   may still override the var explicitly. */
+   The label column width is MEASURED by the component (widest label text
+   + 1px headroom, published as `--auth-methods-label-width` on its
+   wrapper, inherited into the rows); the `max-content` fallback only
+   covers the pre-measure / un-measurable frame, and apps may still
+   override the var explicitly. Labels are centered within the shared
+   column so every row's text sits on the same vertical center line. */
 .s-auth-methods .hk-btn .s-auth-methods-icon {
   width: 20px;
   flex: none;
@@ -48,9 +50,15 @@
 }
 
 .s-auth-methods .hk-btn .s-auth-methods-label {
-  width: var(--auth-methods-label-width, 8em);
+  width: var(--auth-methods-label-width, max-content);
+  /* Hardened floor: even if the published column were ever stale or too
+     narrow (engine DPR / zoom mismatch), the label can never be clipped —
+     the row just widens to its own text. When the measurement is correct
+     the var already exceeds every label's natural width, so the floor is
+     inert and alignment is preserved. */
+  min-width: max-content;
   flex: none;
-  text-align: start;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

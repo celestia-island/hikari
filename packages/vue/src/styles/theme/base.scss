@@ -1,0 +1,617 @@
+// Vendored byte-identical from packages/theme/styles/base.scss (hikari repo) so npm registry installs can resolve it — edit the upstream file, then re-copy; do not hand-edit here.
+// hikari-theme/styles/base.scss
+// 基础样式（使用 hikari-palette）
+
+// Layer1 - Foundation Layer
+@use './foundation.scss' as *;
+
+@use './variables.scss' as *;
+@use './mixins.scss' as *;
+
+// ------
+// CSS 自定义属性（Hikari Light Theme）
+// ------
+
+// ------
+// 默认变量（被 ThemeProvider 覆盖）
+// ------
+
+:root {
+
+    // 默认浅色主题（作为 fallback）
+    --hi-color-background: #D6ECF0;  // 月白
+    --hi-color-surface: #F0F4F8;  // 更亮的白色
+    --hi-color-border: #C4D8DA;
+
+    // 文字颜色
+    --hi-color-text-primary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
+
+    // 主题色（与调色板一致）
+    --hi-color-primary: #EEA2A4;  // 牡丹粉红 (brightness 0.725 → 黑色文字)
+    --hi-color-secondary: #519A73;  // 苍翠 (brightness 0.501 → 黑色文字)
+    --hi-color-accent: #F7B500;  // 姜黄
+    --hi-color-success: #0EB840;  // 葱倩 (brightness 0.469 → 白色文字)
+    --hi-color-warning: #EED677;  // 鹅黄 (brightness 0.825 → 黑色文字)
+    --hi-color-danger: #FF4C00;  // 朱红 (brightness 0.474 → 白色文字)
+    --hi-color-info: #6ABED6;  // 魁卵青
+
+    // 黑色透明度变体
+    --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
+    --hi-color-black-50: rgba(0, 0, 0, 0.5);
+    --hi-color-black-30: rgba(0, 0, 0, 0.3);
+    --hi-color-black-20: rgba(0, 0, 0, 0.2);
+    --hi-color-black-10: rgba(0, 0, 0, 0.1);
+    --hi-color-black-5: rgba(0, 0, 0, 0.05);
+
+    // ------
+    // 2. 透明度变体（用于叠加、发光、阴影）
+    // ------
+
+    // 白色透明度（用于暗黑模式发光）
+    --hi-color-white-100: rgba(255, 255, 255, 1.0);
+    --hi-color-white-95: rgba(255, 255, 255, 0.95);
+    --hi-color-white-90: rgba(255, 255, 255, 0.9);
+    --hi-color-white-70: rgba(255, 255, 255, 0.7);
+    --hi-color-white-50: rgba(255, 255, 255, 0.5);
+    --hi-color-white-30: rgba(255, 255, 255, 0.3);
+    --hi-color-white-20: rgba(255, 255, 255, 0.2);
+    --hi-color-white-15: rgba(255, 255, 255, 0.15);
+    --hi-color-white-10: rgba(255, 255, 255, 0.1);
+    --hi-color-white-8: rgba(255, 255, 255, 0.08);
+    --hi-color-white-5: rgba(255, 255, 255, 0.05);
+
+    // 黑色透明度（用于阴影、发光）
+    --hi-color-black-100: rgba(0, 0, 0, 1.0);
+    --hi-color-black-95: rgba(0, 0, 0, 0.95);
+    --hi-color-black-50: rgba(0, 0, 0, 0.5);
+    --hi-color-black-30: rgba(0, 0, 0, 0.3);
+    --hi-color-black-20: rgba(0, 0, 0, 0.2);
+    --hi-color-black-10: rgba(0, 0, 0, 0.1);
+    --hi-color-black-5: rgba(0, 0, 0, 0.05);
+
+    // 灰色透明度（用于滚动条、边框）
+    --hi-color-gray-100: rgba(128, 128, 128, 1.0);
+    --hi-color-gray-50: rgba(128, 128, 128, 0.5);
+    --hi-color-gray-40: rgba(128, 128, 128, 0.4);
+    --hi-color-gray-30: rgba(128, 128, 128, 0.3);
+    --hi-color-gray-20: rgba(128, 128, 128, 0.2);
+    --hi-color-gray-15: rgba(128, 128, 128, 0.15);
+
+    // 紫色透明度（用于发光特效，基于中国传统色"紫色" RGB: 141, 75, 187）
+    --hi-color-purple-60: rgba(141, 75, 187, 0.6);
+    --hi-color-purple-50: rgba(141, 75, 187, 0.5);
+    --hi-color-purple-40: rgba(141, 75, 187, 0.4);
+
+    // 简化变量名（向后兼容）
+    --hi-white-100: var(--hi-color-white-100);
+    --hi-white-50: var(--hi-color-white-50);
+    --hi-white-30: var(--hi-color-white-30);
+    --hi-white-20: var(--hi-color-white-20);
+    --hi-white-15: var(--hi-color-white-15);
+    --hi-white-10: var(--hi-color-white-10);
+    --hi-white-8: var(--hi-color-white-8);
+    --hi-white-5: var(--hi-color-white-5);
+
+    // 边框发光（白色半透明）
+    --hi-border-light: rgba(255, 255, 255, 0.2);
+
+    // ------
+    // 3. 文字颜色（基于基础色计算）
+    // ------
+
+    // 通用文字颜色
+    --hi-color-text-primary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-secondary: rgba(0, 0, 0, 0.6);
+
+    // 主题色上的文字颜色（根据亮度动态计算，反色原则）
+    // primary: 牡丹粉红 (0.725) → 黑色
+    // secondary: 苍翠 (0.501) → 黑色
+    // success: 葱倩 (0.469) → 白色
+    // warning: 鹅黄 (0.825) → 黑色
+    // danger: 朱红 (0.474) → 白色
+    --hi-color-text-on-primary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-secondary: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-success: var(--hi-color-white-100);
+    --hi-color-text-on-warning: rgba(0, 0, 0, 0.9);
+    --hi-color-text-on-danger: var(--hi-color-white-100);
+    --hi-color-text-on-info: rgba(0, 0, 0, 0.9);
+
+    // ------
+    // 4. 按钮颜色（基于基础色）
+    // ------
+
+    // Primary 按钮渐变（基于 --hi-color-primary 牡丹粉红）
+    --hi-button-primary: var(--hi-color-primary);
+    --hi-button-primary-hover: rgba(238, 162, 164, 0.8);
+    --hi-button-primary-light: #F4C4C5;
+    --hi-button-primary-dark: #D88B8E;
+
+    // Secondary 按钮渐变（基于 --hi-color-secondary 苍翠）
+    --hi-button-secondary: var(--hi-color-secondary);
+    --hi-button-secondary-hover: rgba(81, 154, 115, 0.8);
+    --hi-button-secondary-light: #6BB38C;
+    --hi-button-secondary-dark: #3D7657;
+
+    // Success 按钮渐变（基于 --hi-color-success 葱倩）
+    --hi-button-success: var(--hi-color-success);
+    --hi-button-success-hover: rgba(14, 184, 64, 0.8);
+    --hi-button-success-light: #3DC86E;
+    --hi-button-success-dark: #0A8F33;
+
+    // Danger 按钮渐变（基于 --hi-color-danger 朱红）
+    --hi-button-danger: var(--hi-color-danger);
+    --hi-button-danger-hover: rgba(255, 76, 0, 0.8);
+    --hi-button-danger-light: #FF7A33;
+    --hi-button-danger-dark: #CC3D00;
+
+    // Warning 按钮渐变（基于 --hi-color-warning）
+    --hi-button-warning: var(--hi-color-warning);
+    --hi-button-warning-hover: rgba(238, 214, 119, 0.8);
+    --hi-button-warning-light: rgba(238, 214, 119, 0.6);
+    --hi-button-warning-dark: rgba(189, 169, 83, 0.8);
+
+    // Info 按钮渐变（基于 --hi-color-info）
+    --hi-button-info: var(--hi-color-info);
+    --hi-button-info-hover: rgba(106, 190, 214, 0.8);
+    --hi-button-info-light: rgba(106, 190, 214, 0.6);
+    --hi-button-info-dark: rgba(75, 133, 150, 0.8);
+
+    // ------
+    // 简化变量名（向后兼容）
+    // ------
+
+    // 基础主题色
+    --hi-primary: var(--hi-color-primary);
+    --hi-primary-light: var(--hi-color-white-30);
+
+    --hi-secondary: var(--hi-color-secondary);
+    --hi-secondary-light: var(--hi-color-white-30);
+
+    --hi-success: var(--hi-color-success);
+    --hi-success-light: var(--hi-color-white-30);
+
+    --hi-danger: var(--hi-color-danger);
+    --hi-danger-light: var(--hi-color-white-30);
+
+    --hi-warning: var(--hi-color-warning);
+    --hi-warning-light: var(--hi-color-white-30);
+
+    --hi-info: var(--hi-color-info);
+    --hi-info-light: var(--hi-color-white-30);
+
+    // 背景色
+    --hi-surface: var(--hi-color-surface);
+    --hi-card-bg: var(--hi-button-secondary);
+    --hi-card-bg-light: rgba(255, 255, 255, 0.95);
+
+    // Overlay遮罩色（反色）- 使用调色板变量，95%透明度
+    --hi-overlay-color: var(--hi-color-black-95);
+
+    // 滚动条颜色
+    --hi-scrollbar-thumb-hover: var(--hi-glow-color);
+
+    // 文字颜色
+    --hi-color-text-inverted: #ffffff;
+
+    // ------
+    // 5. Ghost 按钮颜色（基于文字色）
+    // ------
+
+    // Ghost 文字和边框（白天模式使用灰色）
+    --hi-ghost-text: var(--hi-color-text-primary);
+    --hi-ghost-border: var(--hi-color-gray-30);
+    --hi-ghost-glow: var(--hi-glow-gray-50);
+
+    // Ghost 按钮在暗黑模式使用纯白色
+    --hi-ghost-text-dark: var(--hi-color-white-100);
+    --hi-ghost-border-dark: var(--hi-color-white-50);
+    --hi-ghost-glow-dark: var(--hi-glow-white-50);
+
+    // ------
+    // 6. 发光特效颜色（Glow 系统由 JS 注入）
+    // ------
+
+    // 基础黑白灰 glow（由 JS 选择使用）
+    --hi-glow-white-90: rgba(255, 255, 255, 0.9);
+    --hi-glow-white-70: rgba(255, 255, 255, 0.7);
+    --hi-glow-white-50: rgba(255, 255, 255, 0.5);
+    --hi-glow-white-30: rgba(255, 255, 255, 0.3);
+    --hi-glow-white-20: rgba(255, 255, 255, 0.2);
+    --hi-glow-black-90: rgba(0, 0, 0, 0.9);
+    --hi-glow-black-70: rgba(0, 0, 0, 0.7);
+    --hi-glow-black-50: rgba(0, 0, 0, 0.5);
+    --hi-glow-black-30: rgba(0, 0, 0, 0.3);
+    --hi-glow-black-20: rgba(0, 0, 0, 0.2);
+    --hi-glow-black-10: rgba(0, 0, 0, 0.1);
+    --hi-glow-gray-70: rgba(128, 128, 128, 0.7);
+    --hi-glow-gray-50: rgba(128, 128, 128, 0.5);
+    --hi-glow-gray-30: rgba(128, 128, 128, 0.3);
+    --hi-glow-gray-20: rgba(128, 128, 128, 0.2);
+
+    // 默认 glow 颜色（由 JS 注入实际值）
+    --hi-glow-color: var(--hi-glow-white-50);
+
+    // Glow 按钮颜色（基于主题色，用于按钮 glow 效果）
+    --hi-glow-button-primary: rgba(255, 179, 167, 0.6);
+    --hi-glow-button-secondary: rgba(6, 82, 121, 0.6);
+    --hi-glow-button-success: rgba(92, 191, 145, 0.6);
+    --hi-glow-button-danger: rgba(232, 90, 79, 0.6);
+    --hi-glow-button-warning: rgba(238, 214, 119, 0.6);
+    --hi-glow-button-info: rgba(106, 190, 214, 0.6);
+
+    // Glow 尺寸预设
+    --hi-glow-sm: 0 0 8px var(--hi-glow-color);
+    --hi-glow-md: 0 0 16px var(--hi-glow-color);
+    --hi-glow-lg: 0 0 24px var(--hi-glow-color);
+    --hi-glow-focus: 0 0 20px var(--hi-glow-color);
+
+    // 边框发光
+    --hi-border-glow: rgba(141, 75, 187, 0.6);
+    --hi-border-glow-width: 1px;
+
+    // ------
+    // 7. 阴影效果（使用黑色透明度）
+    // ------
+
+    --hi-shadow-sm: 0 1px 2px 0 var(--hi-color-black-5);
+    --hi-shadow-md: 0 4px 6px -1px var(--hi-color-black-10);
+    --hi-shadow-lg: 0 10px 15px -3px var(--hi-color-black-10);
+    --hi-shadow-xl: 0 20px 25px -5px var(--hi-color-black-10);
+
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+
+    // Hide native scrollbar (using custom scrollbar component)
+    &::-webkit-scrollbar {
+        display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+body {
+    font-family: $hikari-font-family-sans;
+    font-size: $hikari-font-size-base;
+    line-height: 1.5;
+    color: var(--hi-color-text-primary);
+    background-color: var(--hi-color-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// ------
+// 排版样式 - 使用主题变量
+// ------
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: $hikari-spacing-md;
+    color: var(--hi-color-text-primary);
+}
+
+h1 {
+    font-size: $hikari-font-size-3xl;
+}
+
+h2 {
+    font-size: $hikari-font-size-2xl;
+}
+
+h3 {
+    font-size: $hikari-font-size-xl;
+}
+
+h4 {
+    font-size: $hikari-font-size-lg;
+}
+
+h5 {
+    font-size: $hikari-font-size-base;
+}
+
+h6 {
+    font-size: $hikari-font-size-sm;
+}
+
+/* NOTE: no element-level color reset here. body already sets
+   --hi-color-text-primary and inheritance flows down; resetting the
+   color on every p/span/div/label broke components that set a color on
+   a parent expecting children to inherit it (e.g. toast variants with
+   white text on colored backgrounds rendered dark-on-green). */
+
+a {
+    color: var(--hi-color-text-primary);
+    text-decoration: none;
+    transition: color $hikari-transition-fast;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+code {
+    font-family: $hikari-font-family-mono;
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    background-color: var(--hi-color-border);
+    border-radius: $hikari-radius-sm;
+}
+
+pre {
+    font-family: $hikari-font-family-mono;
+    font-size: $hikari-font-size-sm;
+    padding: $hikari-spacing-md;
+    background-color: var(--hi-color-background);
+    border: 1px solid var(--hi-color-border);
+    border-radius: $hikari-radius-md;
+    overflow-x: auto;
+
+    @include scrollbar-hidden;
+}
+
+// ------
+// 列表样式
+// ------
+
+ul, ol {
+    list-style: none;
+}
+
+li {
+    // No global margin - components control their own spacing
+}
+
+// ------
+// 表单元素
+// ------
+
+// Element-level baseline for BARE app inputs only. Hikari components render
+// their own <input>/<textarea>/<select> inside a styled shell (.hk-input-box
+// etc.) and must not inherit this border/focus ring: the bare-element
+// `input:focus-visible` (0,1,1) outranks the component's `.hk-input-element`
+// (0,1,0) `border: none`, so a focused field showed BOTH the shell's
+// focus-within border AND an inner 2px ring — the "double border" on the
+// add-view wizard's title/purpose fields (same disease class as the element
+// color reset #215 removed). Excluding any element carrying an `hk-` class
+// keeps the baseline for genuinely bare app markup while leaving every hikari
+// component interior untouched.
+//
+// 2026-08-19: the guards now sit inside :where(...) so they contribute ZERO
+// specificity. The plain :not() form measured (0,1,1) and outranked every
+// single-class button/label/select style in consuming apps (chest's
+// .s-workspace-btn grew a 16px/500 font overnight — hikari #233 fallout);
+// :where() keeps the hk- exclusion at (0,0,1), the exact cascade position
+// the element baseline had before the guards existed (#232/#233).
+input:where(:not([class^="hk-"]):not([class*=" hk-"])),
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"])),
+select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+    @include input-base;
+}
+
+textarea:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+    min-height: 80px;
+    resize: vertical;
+}
+
+:where(*),
+
+:where(*::before),
+:where(*::after) {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+// ------
+// 暗黑模式特殊处理
+// ------
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        // 暗黑模式背景色
+        --hi-color-background: #0F172A;
+        --hi-color-surface: #1E293B;
+
+        // 暗黑模式文字色
+        --hi-color-text-primary: rgba(255, 255, 255, 0.9);
+        --hi-color-text-secondary: rgba(255, 255, 255, 0.6);
+
+        // 暗黑模式 Ghost 按钮使用纯白色
+        --hi-ghost-text: var(--hi-color-white-100);
+        --hi-ghost-border: var(--hi-color-white-50);
+        --hi-ghost-glow: var(--hi-glow-white-50);
+
+        // 暗黑模式按钮 glow 颜色（更高的不透明度以在深色背景上显示）
+        --hi-glow-button-primary: rgba(255, 179, 167, 0.8);
+        --hi-glow-button-secondary: rgba(6, 82, 121, 0.8);
+        --hi-glow-button-success: rgba(92, 191, 145, 0.8);
+        --hi-glow-button-danger: rgba(232, 90, 79, 0.8);
+        --hi-glow-button-warning: rgba(238, 214, 119, 0.8);
+        --hi-glow-button-info: rgba(106, 190, 214, 0.8);
+
+        // 暗黑模式Overlay遮罩色（淡白色）- 使用调色板变量，95%透明度
+        --hi-overlay-color: var(--hi-color-white-95);
+
+        // 暗黑模式Card背景色（黑色半透明）
+        --hi-card-bg-light: rgba(0, 0, 0, 0.95);
+    }
+}
+
+// Same hk- exclusion as the input/textarea/select baseline above: hikari
+// components render bare <select>/<label>/<button> interiors that own their
+// chrome, and the element-level :focus-visible ring (0,1,1) would outrank
+// their plain-class styles exactly like the double-border input bug (#232).
+select:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%239CA3AF" d="M2 4l4 4 4-4"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+label:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+    display: block;
+    margin-bottom: $hikari-spacing-xs;
+    font-weight: 500;
+    color: var(--hi-color-text-secondary);
+}
+
+// ------
+// 按钮样式
+// ------
+
+button:where(:not([class^="hk-"]):not([class*=" hk-"])) {
+    @include button-base;
+}
+
+// ------
+// 图片样式
+// ------
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+// ------
+// 表格样式
+// ------
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $hikari-spacing-md;
+}
+
+th,
+td {
+    padding: $hikari-spacing-sm $hikari-spacing-md;
+    text-align: left;
+    border-bottom: 1px solid var(--hi-color-border);
+}
+
+th {
+    font-weight: 600;
+    color: var(--hi-color-text-secondary);
+}
+
+// ------
+// 分隔线样式
+// ------
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--hi-color-border);
+    margin: $hikari-spacing-lg 0;
+}
+
+// ------
+// 容器样式
+// ------
+
+.hk-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 $hikari-spacing-md;
+}
+
+.hk-container-fluid {
+    width: 100%;
+    padding: 0 $hikari-spacing-md;
+}
+
+.hk-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 (-$hikari-spacing-sm);
+
+    > * {
+        margin: 0 $hikari-spacing-sm;
+    }
+}
+
+.hk-col {
+    flex: 1 1 0%;
+}
+
+// ------
+// 工具类
+// ------
+
+.hk-text-center {
+    text-align: center;
+}
+
+.hk-text-left {
+    text-align: left;
+}
+
+.hk-text-right {
+    text-align: right;
+}
+
+.hk-text-muted {
+    color: var(--hi-color-text-secondary);
+}
+
+.hk-text-primary {
+    color: var(--hi-color-primary);
+}
+
+.hk-text-success {
+    color: var(--hi-color-success);
+}
+
+.hk-text-warning {
+    color: var(--hi-color-warning);
+}
+
+.hk-text-danger {
+    color: var(--hi-color-danger);
+}
+
+// SVG 图标默认颜色继承
+// Note: 不强制设置 fill/stroke，避免覆盖 stroke-only 图标（如 Lucide/Feather）
+// 各组件/图标应自行声明 fill 或 stroke
+svg {
+    color: inherit;
+}
+
+.hk-mt-1 { margin-top: $hikari-spacing-xs; }
+.hk-mt-2 { margin-top: $hikari-spacing-sm; }
+.hk-mt-3 { margin-top: $hikari-spacing-md; }
+.hk-mt-4 { margin-top: $hikari-spacing-lg; }
+.hk-mt-5 { margin-top: $hikari-spacing-xl; }
+
+.hk-mb-1 { margin-bottom: $hikari-spacing-xs; }
+.hk-mb-2 { margin-bottom: $hikari-spacing-sm; }
+.hk-mb-3 { margin-bottom: $hikari-spacing-md; }
+.hk-mb-4 { margin-bottom: $hikari-spacing-lg; }
+.hk-mb-5 { margin-bottom: $hikari-spacing-xl; }
+
+.hk-p-1 { padding: $hikari-spacing-xs; }
+.hk-p-2 { padding: $hikari-spacing-sm; }
+.hk-p-3 { padding: $hikari-spacing-md; }
+.hk-p-4 { padding: $hikari-spacing-lg; }
+.hk-p-5 { padding: $hikari-spacing-xl; }
+
+.hk-hidden {
+    display: none;
+}
+
+.hk-visible {
+    visibility: visible;
+}
+
+.hk-invisible {
+    visibility: hidden;
+}

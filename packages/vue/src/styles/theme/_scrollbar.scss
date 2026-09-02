@@ -1,0 +1,73 @@
+// Vendored byte-identical from packages/theme/styles/_scrollbar.scss (hikari repo) so npm registry installs can resolve it — edit the upstream file, then re-copy; do not hand-edit here.
+// _scrollbar.scss — the shared overlay scrollbar chrome.
+//
+// ONE scrollbar system for the whole library: the `.hk-scrollbar-track` /
+// `.hk-scrollbar-thumb` DOM is created imperatively by
+// packages/vue/src/composables/useOverlayScrollbar.ts
+// (attachOverlayScrollbars) and styled here. HkScrollContainer keeps its
+// container-specific rules in HkScrollContainer.scss; every other scroll
+// region in the library attaches the same overlay and hides its native
+// bar with the standard two-liner:
+//
+//   scrollbar-width: none;
+//   &::-webkit-scrollbar { display: none; }
+
+.hk-scrollbar-track {
+  position: absolute;
+  z-index: 10;
+  background: transparent;
+  /* Click-through while faded: an invisible rail must never steal
+     clicks from the content beneath it (the track hugs the region's
+     edge, exactly where end-of-line links/buttons live). The rail
+     becomes interactive only while it is visible — the flash window
+     after a scroll (and while hovered/dragged within that window). */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+
+  &[data-axis="horizontal"] {
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 6px;
+  }
+
+  &:not([data-axis="horizontal"]) {
+    top: 4px;
+    bottom: 4px;
+    right: 2px;
+    width: 6px;
+  }
+
+  &.is-scrolling,
+  &.is-hovering {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.hk-scrollbar-thumb {
+  position: absolute;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--hi-color-muted) 35%, transparent);
+  transition: background var(--hi-duration-fast, 0.15s) ease;
+
+  .is-hovering &,
+  &.is-dragging {
+    background: color-mix(in srgb, var(--hi-color-muted) 55%, transparent);
+  }
+}
+
+.hk-scrollbar-track[data-axis="horizontal"] .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  height: 100%;
+  min-width: 20px;
+}
+
+.hk-scrollbar-track:not([data-axis="horizontal"]) .hk-scrollbar-thumb {
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 20px;
+}

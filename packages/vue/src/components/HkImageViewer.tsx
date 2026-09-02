@@ -11,8 +11,9 @@ import "./HkImageViewer.scss";
  * `translate(panX, panY) scale(zoom)` (transform-origin 0 0). That keeps it
  * compatible with HMinimap's viewport-rect math, which assumes exactly this
  * transform model. Default state is fit-to-container + centred; wheel and
- * double-click zoom (cursor-anchored), drag pans. The minimap reuses the
- * generic HMinimap (rendered with the image as its background).
+ * double-click zoom (cursor-anchored), drag pans, and a two-finger touch
+ * pinch zooms (midpoint-anchored, clamped to fit..MAX_ZOOM). The minimap
+ * reuses the generic HMinimap (rendered with the image as its background).
  */
 export default defineComponent({
   name: "HkImageViewer",
@@ -34,6 +35,16 @@ export default defineComponent({
 
     const dragging = ref(false);
     const lastPt = ref({ x: 0, y: 0 });
+
+    // Active pointers by pointerId (touch pinch support): one tracked
+    // pointer pans exactly as before; two or more enter a pinch — zoom
+    // follows the distance ratio between the first two pointers, anchored
+    // at their midpoint, and single-finger panning is suppressed until
+    // the gesture drops back to one pointer (which keeps panning).
+    const activePointers = new Map<number, { x: number; y: number }>();
+    const pinching = ref(false);
+    let pinchStartDist = 0;
+    let pinchStartZoom = 1;
 
     const MAX_ZOOM = 8;
 
@@ -111,14 +122,66 @@ export default defineComponent({
       setZoom(zoom.value * factor, cx, cy);
     }
 
+    /** Euclidean distance between two pointer positions. */
+    function pointerDist(a: { x: number; y: number }, b: { x: number; y: number }) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    /** The first two tracked pointers, in pointerdown order — the
+     *  pinch pair (extra fingers are ignored until one of these lifts). */
+    function pinchPair(): [{ x: number; y: number }, { x: number; y: number }] | null {
+      const it = activePointers.values();
+      const a = it.next().value as { x: number; y: number } | undefined;
+      const b = it.next().value as { x: number; y: number } | undefined;
+      return a && b ? [a, b] : null;
+    }
+
     function onPointerDown(e: PointerEvent) {
       if (!loaded.value) return;
-      dragging.value = true;
-      lastPt.value = { x: e.clientX, y: e.clientY };
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+      if (activePointers.size === 1) {
+        dragging.value = true;
+        lastPt.value = { x: e.clientX, y: e.clientY };
+      } else if (activePointers.size === 2) {
+        // Second finger lands: pinch from the current distance and zoom,
+        // suppressing panning while it is live.
+        pinching.value = true;
+        dragging.value = false;
+        armPinch();
+      }
+    }
+
+    /** Re-baseline the pinch onto its current pair (composition change
+     *  or gesture start) so the scale keeps following the fingers 1:1
+     *  without a jump. */
+    function armPinch() {
+      const pair = pinchPair();
+      if (!pair) return;
+      pinchStartDist = Math.max(pointerDist(pair[0], pair[1]), 1);
+      pinchStartZoom = zoom.value;
     }
 
     function onPointerMove(e: PointerEvent) {
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (pinching.value) {
+        const pair = pinchPair();
+        const el = containerRef.value;
+        if (!pair || !el) return;
+        // Anchor the zoom at the fingers' midpoint (container-local
+        // coordinates, same space as the wheel/dblclick anchors).
+        const rect = el.getBoundingClientRect();
+        const dist = Math.max(pointerDist(pair[0], pair[1]), 1);
+        setZoom(
+          pinchStartZoom * (dist / pinchStartDist),
+          (pair[0].x + pair[1].x) / 2 - rect.left,
+          (pair[0].y + pair[1].y) / 2 - rect.top,
+        );
+        return;
+      }
+
       if (!dragging.value) return;
       const dx = e.clientX - lastPt.value.x;
       const dy = e.clientY - lastPt.value.y;
@@ -128,8 +191,44 @@ export default defineComponent({
       clampPan();
     }
 
-    function onPointerUp() {
-      dragging.value = false;
+    function onPointerUp(e: PointerEvent) {
+      retirePointer(e.pointerId);
+    }
+
+    /** A pointer left the gesture (up, cancel, or capture loss): prune
+     *  it, re-baseline or end the pinch, and hand panning over to any
+     *  surviving pointer. */
+    function retirePointer(pointerId: number) {
+      if (!activePointers.delete(pointerId)) return;
+      if (pinching.value && activePointers.size >= 2) {
+        // The pinch pair composition changed (a finger lifted while two
+        // or more remain): re-baseline onto the surviving pair so the
+        // zoom keeps following it 1:1 without a jump.
+        armPinch();
+      } else {
+        pinching.value = false;
+      }
+      // A surviving pointer takes over panning (pinch → drag continues
+      // without a jump); the last one leaving ends the gesture.
+      const rest = activePointers.values().next().value as { x: number; y: number } | undefined;
+      if (rest) {
+        dragging.value = true;
+        lastPt.value = { x: rest.x, y: rest.y };
+      } else {
+        dragging.value = false;
+      }
+    }
+
+    /** Capture-loss backstop: up/cancel are only guaranteed while
+     *  pointer capture holds; a pointer that was released without an
+     *  up is pruned here — otherwise the next single-finger drag would
+     *  silently become a phantom pinch. The event fires on the capture
+     *  target (often the img) and does not bubble, hence the
+     *  capture-phase listener. A pointer whose capture was never taken
+     *  emits nothing here and still relies on its up/cancel arriving
+     *  normally. */
+    function onLostPointerCapture(e: PointerEvent) {
+      retirePointer(e.pointerId);
     }
 
     function onDblClick(e: MouseEvent) {
@@ -169,6 +268,9 @@ export default defineComponent({
       c.addEventListener("pointermove", onPointerMove);
       c.addEventListener("pointerup", onPointerUp);
       c.addEventListener("pointercancel", onPointerUp);
+      // Capture phase: lostpointercapture does not bubble and fires on
+      // the element that held capture (often the img, not this container).
+      c.addEventListener("lostpointercapture", onLostPointerCapture, true);
       c.addEventListener("dblclick", onDblClick);
     });
 
@@ -182,6 +284,7 @@ export default defineComponent({
       c.removeEventListener("pointermove", onPointerMove);
       c.removeEventListener("pointerup", onPointerUp);
       c.removeEventListener("pointercancel", onPointerUp);
+      c.removeEventListener("lostpointercapture", onLostPointerCapture, true);
       c.removeEventListener("dblclick", onDblClick);
     });
 

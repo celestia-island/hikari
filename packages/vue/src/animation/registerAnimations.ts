@@ -78,6 +78,8 @@ registerCssAnimation("hk-modal-breadcrumb-in");
 registerCssAnimation("hk-toast-spin", { infinite: true });
 // components/HkSkeleton.scss — skeleton shimmer (loops forever).
 registerCssAnimation("hk-skeleton-shimmer", { infinite: true });
+// components/HkImagePreview.scss — thumbnail loading shimmer (loops forever).
+registerCssAnimation("hk-image-preview-shimmer", { infinite: true });
 // components/HkProgressBar.scss — indeterminate bar sweep (loops forever).
 registerCssAnimation("hk-progress-indeterminate", { infinite: true });
 // components/HkPasswordInput.scss — caps-lock warning flash (plays once).

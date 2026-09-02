@@ -22,6 +22,8 @@ export { default as HExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HFab, type HFabAction } from "./components/HkFab";
 export { default as HIcon } from "./components/HkIcon";
 export { default as HIconButton } from "./components/HkIconButton";
+export { default as HImageLightbox } from "./components/HkImageLightbox";
+export { default as HImagePreview, type ImagePreviewObjectFit } from "./components/HkImagePreview";
 export { default as HInput } from "./components/HkInput";
 export { default as HPlaceholderMarquee, type PlaceholderVariant } from "./components/HkPlaceholderMarquee";
 export { default as HKbd } from "./components/HkKbd";

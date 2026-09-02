@@ -139,7 +139,16 @@ export const HkAttachmentModal = defineComponent({
       if (props.resolveUrl) {
         srcLoading.value = true;
         try {
-          resolvedSrc.value = await props.resolveUrl(att.name);
+          const resolved = await props.resolveUrl(att.name);
+          // A resolver that misses (map lookup, stale cache) may return
+          // undefined — store the empty string so every src binding stays
+          // a real string and the srcError path explains the empty preview.
+          if (typeof resolved !== "string" || !resolved) {
+            resolvedSrc.value = "";
+            srcError.value = `no URL resolved for "${att.name}"`;
+            return;
+          }
+          resolvedSrc.value = resolved;
         } catch (e) {
           resolvedSrc.value = "";
           srcError.value = e instanceof Error ? e.message : String(e);

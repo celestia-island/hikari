@@ -54,15 +54,20 @@ export default defineComponent({
     const listRef = ref<HTMLDivElement | null>(null);
 
     /** Measure the widest label text and publish it as the label-column
-     *  width custom property. `scrollWidth` reports the text width even
-     *  while the fixed column clips it, so this is correct both before
-     *  the variable is first set and after any label change. */
+     *  width custom property. Each span is momentarily set to
+     *  `max-content` while reading: a plain `scrollWidth` on the fixed
+     *  column would report `max(textWidth, columnWidth)` and the column
+     *  could never shrink below its fallback. All reads happen inside one
+     *  synchronous task, so no intermediate paint is observable. */
     function measure() {
       const root = listRef.value;
       if (!root) return;
       let widest = 0;
       for (const label of root.querySelectorAll<HTMLElement>(".s-auth-methods-label")) {
+        const previous = label.style.width;
+        label.style.width = "max-content";
         widest = Math.max(widest, label.scrollWidth);
+        label.style.width = previous;
       }
       if (widest > 0) root.style.setProperty("--auth-methods-label-width", `${widest}px`);
     }

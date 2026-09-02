@@ -114,6 +114,8 @@
     "hikari::adminHeader.adminGroup": "المسؤولون",
     "hikari::localizedInput.addLanguage": "إضافة لغة",
     "hikari::localizedInput.removeTranslation": "إزالة الترجمة",
+    "hikari::localizedInput.cancelDelete": "إلغاء الحذف",
+    "hikari::localizedInput.emptyRow": "أدخل نصًا في الحقل",
     "hikari::localizedInput.switchLanguage": "التبديل إلى",
     "hikari::localizedInput.confirmDelete": "تأكيد الحذف",
     "hikari::localizedInput.translations": "الترجمات الحالية",

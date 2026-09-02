@@ -114,6 +114,8 @@
     "hikari::adminHeader.adminGroup": "Administrators",
     "hikari::localizedInput.addLanguage": "Add language",
     "hikari::localizedInput.removeTranslation": "Remove translation",
+    "hikari::localizedInput.cancelDelete": "Cancel delete",
+    "hikari::localizedInput.emptyRow": "Enter text in the field",
     "hikari::localizedInput.switchLanguage": "Switch to",
     "hikari::localizedInput.confirmDelete": "Confirm delete",
     "hikari::localizedInput.translations": "Existing translations",

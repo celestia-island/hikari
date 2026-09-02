@@ -114,6 +114,8 @@
     "hikari::adminHeader.adminGroup": "管理员",
     "hikari::localizedInput.addLanguage": "添加新语言",
     "hikari::localizedInput.removeTranslation": "删除该翻译",
+    "hikari::localizedInput.cancelDelete": "取消删除",
+    "hikari::localizedInput.emptyRow": "请在编辑框输入文本",
     "hikari::localizedInput.switchLanguage": "切换至",
     "hikari::localizedInput.confirmDelete": "确认删除",
     "hikari::localizedInput.translations": "已有翻译",

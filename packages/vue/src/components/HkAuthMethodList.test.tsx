@@ -64,35 +64,36 @@ describe("HkAuthMethodList", () => {
     expect(picked).toBe("linuxdo");
   });
 
-  it("publishes the widest label text as the label-column custom property", async () => {
+  it("publishes the widest label text plus a 1px headroom as the label-column custom property", async () => {
     const c = mount(h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })));
     await nextTick();
     const wrapper = c.querySelector<HTMLElement>(".s-auth-methods-list")!;
     expect(wrapper).toBeTruthy();
-    // Layout engines in test DOM report zero text metrics; stub scrollWidth
-    // on the label spans to a deterministic widest-wins pair (LinuxDo wider).
+    // Layout engines in test DOM report zero text metrics; stub a fractional
+    // getBoundingClientRect width on the label spans so the widest-wins pair
+    // (LinuxDo wider) exercises the ceil+1 headroom instead of the integer
+    // scrollWidth that would previously round a fraction and clip the widest.
     const spans = [...wrapper.querySelectorAll<HTMLElement>(".s-auth-methods-label")];
     expect(spans.length).toBe(2);
-    Object.defineProperty(spans[0]!, "scrollWidth", { configurable: true, value: 61 });
-    Object.defineProperty(spans[1]!, "scrollWidth", { configurable: true, value: 59 });
-    // Trigger the measurement through a fresh label change (watch path).
+    // 61.4 ceil→62 (+1→63) and a shorter 58.0: the published column must
+    // exceed BOTH so the widest label can never sit on the clip boundary.
+    Object.defineProperty(spans[0]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 58 }) });
+    Object.defineProperty(spans[1]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 61.4 }) });
     await nextTick();
-    const { app } = mounts[mounts.length - 1]!;
     // Re-run measurement via a re-mount-less route: the component exposes
     // measure() — reach it through the rendered component instance.
     const instance = (wrapper as unknown as { __vueParentComponent?: { exposed?: Record<string, unknown> } })
       .__vueParentComponent?.exposed;
     expect(typeof instance?.measure).toBe("function");
     (instance!.measure as () => void)();
-    expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("61px");
-    void app;
+    expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("63px");
   });
 
   it("leaves the column fallback intact when no text metrics are available", async () => {
     const c = mount(h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })));
     await nextTick();
     const wrapper = c.querySelector<HTMLElement>(".s-auth-methods-list")!;
-    // Zero scrollWidth (no layout) must not publish a 0px column.
+    // Zero text metrics (no layout) must not publish a 0px or a 1px column.
     expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("");
   });
 });

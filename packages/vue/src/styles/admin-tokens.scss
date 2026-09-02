@@ -655,6 +655,26 @@
   padding-bottom: var(--space-8, 0.5rem);
 }
 
+/* Full-width alternative sign-in methods block (HkAuthCard `methods`
+   slot, usually HkAuthMethodList). Same side padding as the form and the
+   footer so the buttons line up exactly with the inputs; the footer keeps
+   its fit-content centered-group behavior because the buttons live here,
+   not in the footer. */
+.s-auth-methods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+  padding: 0 var(--space-32, 2rem);
+  margin-top: var(--space-16, 1rem);
+}
+
+/* Keep the vertical rhythm when the block sits between form and footer:
+   form → 24px → divider row (8px collapsed padding + 16px margin), and
+   buttons → 16px → footer rows (the footer's own margin-top). */
+.s-auth-form:has(+ .s-auth-methods) {
+  padding-bottom: var(--space-8, 0.5rem);
+}
+
 .s-auth-link {
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-text-secondary, #999);
@@ -686,6 +706,7 @@
   .s-auth-header { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
   .s-auth-form  { padding: var(--space-20, 1.25rem) var(--space-16, 1rem) var(--space-24, 1.5rem); }
   .s-auth-footer { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
+  .s-auth-methods { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
 }
 
 /* ── Arona app utility classes ── */

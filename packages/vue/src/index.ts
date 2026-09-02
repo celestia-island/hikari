@@ -260,6 +260,7 @@ export { HkAdminHeader as HAdminHeader } from "./components/HkAdminHeader";
 export { HkNavSidebar as HNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HThemeToggle } from "./components/HkThemeToggle";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
+export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";

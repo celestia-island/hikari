@@ -35,6 +35,7 @@ export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
 export { default as HPasswordInput } from "./components/HkPasswordInput";
 export { default as HPhoneInput } from "./components/HkPhoneInput";
+export { default as HAffixPicker, type HkAffixOption } from "./components/HkAffixPicker";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HGaugeRing } from "./components/HkGaugeRing";
 export { default as HProgressRing } from "./components/HkProgressRing";

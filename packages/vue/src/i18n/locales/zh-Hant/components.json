@@ -156,5 +156,15 @@
     "hikari::phoneInput.chooseCountry": "選擇國家區碼",
     "hikari::phoneInput.searchCountries": "搜尋國家或區碼",
     "hikari::phoneInput.noMatches": "沒有符合的國家"
-  }
+  },
+  "hikari::affixPicker.title": "選項",
+  "hikari::affixPicker.search": "搜尋",
+  "hikari::affixPicker.empty": "沒有符合項目",
+  "hikari::affixPicker.selected": "已選擇",
+  "hikari::affixPicker.selectedCount": "已選 {count} 項",
+  "hikari::affixPicker.switchTo": "切換到",
+  "hikari::affixPicker.remove": "移除",
+  "hikari::affixPicker.confirmDelete": "確認移除",
+  "hikari::affixPicker.useCustom": "使用「{query}」",
+  "hikari::localizedInput.noMatches": "沒有符合的語言"
 }

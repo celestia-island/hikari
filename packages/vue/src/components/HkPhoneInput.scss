@@ -5,32 +5,12 @@
 }
 
 /* The dial-code chip riding the field's LEFT edge — flag glyph + "+86"
- * + caret, mirroring the language-tag chip pattern of HkLocalizedInput
- * (which rides the right edge). A button so it is focusable and
- * AT-reachable; mousedown is suppressed in TSX so clicking it never
- * steals focus from the number field before the menu opens. */
+ * + caret, layered on the shared .hk-affix-chip base (hover, disabled,
+ * focus handling live there). A button so it is focusable and
+ * AT-reachable; mousedown is suppressed in the shared picker so
+ * clicking it never steals focus from the number field. */
 .hk-phone-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
   max-width: 11rem;
-  padding: 2px 6px 2px 4px;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-text));
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-
-  &:hover:not(:disabled),
-  &:focus-visible:not(:disabled) {
-    background: rgb(var(--color-primary) / 14%);
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.6;
-  }
 }
 
 .hk-phone-chip-flag {
@@ -53,88 +33,4 @@
 .hk-phone-chip-caret {
   flex: none;
   color: rgb(var(--color-muted));
-}
-
-/* ── country list (menu) ────────────────────────────────────────────
- * The search box caps the menu header; rows below it scroll inside the
- * popup/sheet list surface (HkSelectPanel caps and scrolls the popout,
- * and the mobile sheet body scrolls natively). */
-.hk-phone-dial-search {
-  padding: 8px 10px 6px;
-}
-
-.hk-phone-dial-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 4px 6px 8px;
-  /* Roomier than the 2px HkMenu gutter so rows read as a picker. */
-  min-width: 13rem;
-  max-width: min(19rem, calc(100vw - 2rem));
-}
-
-.hk-phone-dial-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 2.25rem;
-  padding: 4px 8px;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  background: transparent;
-  color: rgb(var(--color-text));
-  font-size: var(--text-sm, 14px);
-  text-align: left;
-  cursor: pointer;
-  appearance: none;
-  transition: background 0.1s ease;
-
-  &:hover,
-  &:focus-visible {
-    background: rgb(var(--color-primary) / 10%);
-    outline: none;
-  }
-
-  &[data-active] {
-    background: rgb(var(--color-primary) / 16%);
-    font-weight: 600;
-  }
-}
-
-.hk-phone-dial-flag {
-  flex: none;
-  font-size: calc(var(--text-base, 15px) * 1.05);
-  line-height: 1;
-  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
-    sans-serif;
-}
-
-.hk-phone-dial-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hk-phone-dial-code {
-  flex: none;
-  color: rgb(var(--color-muted));
-  font-size: calc(var(--text-sm, 14px) * 0.9);
-  font-variant-numeric: tabular-nums;
-}
-
-.hk-phone-dial-empty {
-  padding: 14px 12px;
-  color: rgb(var(--color-muted));
-  font-size: var(--text-sm, 14px);
-  text-align: center;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hk-phone-chip,
-  .hk-phone-dial-row {
-    transition: none;
-  }
 }

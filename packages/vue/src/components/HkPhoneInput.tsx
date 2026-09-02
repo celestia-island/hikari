@@ -1,6 +1,6 @@
 import { computed, defineComponent, nextTick, ref, useAttrs, watch, type PropType } from "vue";
 
-import { ChevronDown, Search } from "lucide-vue-next";
+import { ChevronDown } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 
@@ -14,18 +14,19 @@ import {
   type DialCodeEntry,
 } from "../data/dialCodes";
 
+import HkAffixPicker, { type HkAffixOption } from "./HkAffixPicker";
 import HkInput from "./HkInput";
-import HkMenu from "./HkMenu";
 import "./HkPhoneInput.scss";
 
 /**
  * HkPhoneInput — phone-number field with a country dial-code picker.
  *
- * Mirrors the language-tag chip pattern of HkLocalizedInput but for
- * dial codes: a leading chip inside the field (flag glyph + "+86" +
- * caret) opens a searchable country list. The chip rides the LEFT edge
- * of the field — the natural reading order for "which country, then
- * which number" — while the number itself is typed after it.
+ * A leading chip inside the field (flag glyph + "+86" + caret) opens
+ * the shared HkAffixPicker (single-select, searchable): flag + country
+ * name + dial code per row, live filter on top. The chip rides the
+ * LEFT edge of the field — the natural reading order for "which
+ * country, then which number" — while the number itself is typed after
+ * it.
  *
  *   - `modelValue` is the NATIONAL number only ("13812345678"); the
  *     country selection lives in `dialCode` ("+86" shape, normalized on
@@ -34,11 +35,6 @@ import "./HkPhoneInput.scss";
  *   - The chip shows the resolved country's flag plus the dial code in
  *     canonical "+…" shape. Unknown dial codes fall back to showing
  *     the normalized code alone (no flag).
- *   - The picker menu (`HkMenu`, desktop popout + mobile bottom sheet)
- *     lists the catalog in its defined order, flag + localized name +
- *     dial code per row, with a live filter field on top. Filtering
- *     matches the country's English/Chinese name, its ISO code, and
- *     the bare dial digits ("86", "0086" or "86" both hit China).
  *   - Picking a row emits `update:dialCode` ("+…"), `dialchange`
  *     (same value) and refocuses the number field. Blurring the field
  *     emits `change` with the composed E.164 — use it to validate or
@@ -93,15 +89,7 @@ export const HkPhoneInput = defineComponent({
     const { t, locale } = useI18n();
     const attrs = useAttrs();
 
-    const menuOpen = ref(false);
-    const chipRef = ref<HTMLElement | null>(null);
     const rootRef = ref<HTMLElement | null>(null);
-    const query = ref("");
-
-    // A fresh open starts with an empty filter.
-    watch(menuOpen, (open) => {
-      if (!open) query.value = "";
-    });
 
     /** Canonical "+86" derived from the prop, whatever shape it is in. */
     const canonicalDial = computed(() => {
@@ -115,28 +103,27 @@ export const HkPhoneInput = defineComponent({
       resolveDial(props.dialCode, undefined, props.countries),
     );
 
-    /** Searchable rows: filter against en/zh names, ISO code, dial. */
-    const filteredRows = computed(() => {
-      const q = query.value.trim().toLowerCase();
-      const qDial = q.replace(/\D/g, "");
-      if (!q) return props.countries;
-      return props.countries.filter((c) => {
-        if (c.iso.toLowerCase().includes(q)) return true;
-        if (qDial && c.dial.includes(qDial)) return true;
-        return (
-          c.en.toLowerCase().includes(q) ||
-          c.zh.toLowerCase().includes(q)
-        );
-      });
-    });
+    /** Picker rows come from the shared affix catalog shape; the
+     *  keywords haystack keeps the old filter reach: en/zh names, ISO
+     *  code, bare and zero-prefixed dial digits ("86"/"0086"). */
+    const dialOptions = computed<readonly HkAffixOption[]>(() =>
+      props.countries.map((c) => ({
+        key: c.iso,
+        label: dialCodeName(c, locale),
+        meta: `+${c.dial}`,
+        flag: flagEmoji(c.iso),
+        keywords: `${c.en} ${c.zh} ${c.iso} +${c.dial} 00${c.dial}`,
+      })),
+    );
 
-    function pickCountry(entry: DialCodeEntry) {
+    function pickCountry(iso: string) {
+      const entry = props.countries.find((c) => c.iso === iso);
+      if (!entry) return;
       const dial = `+${entry.dial}`;
-      menuOpen.value = false;
       emit("update:dialCode", dial);
       emit("dialchange", dial);
       // Refocus the number field so pick-then-type flows without a
-      // second tap (the chip's menu is the only focusable sibling).
+      // second tap (the chip's popup is the only focusable sibling).
       nextTick(() => {
         const el = rootRef.value?.querySelector<HTMLElement>("input");
         el?.focus();
@@ -162,7 +149,6 @@ export const HkPhoneInput = defineComponent({
     }
 
     return () => {
-      const rows = filteredRows.value;
       const active = activeEntry.value;
       const nameFor = (entry: DialCodeEntry) =>
         dialCodeName(entry, locale);
@@ -194,113 +180,41 @@ export const HkPhoneInput = defineComponent({
           >
             {{
               prefix: () => (
-                <button
-                  ref={(el: unknown) => {
-                    chipRef.value = (el as HTMLElement) ?? null;
-                  }}
-                  type="button"
-                  class="hk-phone-chip"
+                <HkAffixPicker
+                  options={dialOptions.value}
+                  mode="single"
+                  side="prefix"
+                  selected={active?.iso ?? ""}
                   disabled={props.disabled || props.readonly}
-                  aria-haspopup="menu"
-                  aria-expanded={menuOpen.value}
-                  aria-label={t(
-                    "hikari::phoneInput.chooseCountry",
-                    "Choose country code",
+                  chipClass="hk-phone-chip"
+                  chipLabel={
+                    active
+                      ? `${nameFor(active)} ${chipLabel()} — ${t("hikari::phoneInput.chooseCountry", "Choose country code")}`
+                      : t("hikari::phoneInput.chooseCountry", "Choose country code")
+                  }
+                  title={t("hikari::phoneInput.chooseCountry", "Choose country code")}
+                  searchPlaceholder={t(
+                    "hikari::phoneInput.searchCountries",
+                    "Search country or code",
                   )}
-                  title={active ? `${nameFor(active)} ${chipLabel()}` : chipLabel()}
-                  onMousedown={(e: MouseEvent) => e.preventDefault()}
-                  onClick={(e: MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!props.disabled && !props.readonly) {
-                      menuOpen.value = !menuOpen.value;
-                    }
-                  }}
+                  emptyText={t("hikari::phoneInput.noMatches", "No matching country")}
+                  onSelect={pickCountry}
                 >
-                  <span class="hk-phone-chip-flag" aria-hidden="true">
-                    {active ? flagEmoji(active.iso) : ""}
-                  </span>
-                  <span class="hk-phone-chip-dial">{chipLabel()}</span>
-                  <ChevronDown size={12} class="hk-phone-chip-caret" aria-hidden="true" />
-                </button>
+                  {{
+                    chip: () => (
+                      <>
+                        <span class="hk-phone-chip-flag" aria-hidden="true">
+                          {active ? flagEmoji(active.iso) : ""}
+                        </span>
+                        <span class="hk-phone-chip-dial">{chipLabel()}</span>
+                        <ChevronDown size={12} class="hk-phone-chip-caret" aria-hidden="true" />
+                      </>
+                    ),
+                  }}
+                </HkAffixPicker>
               ),
             }}
           </HkInput>
-          <HkMenu
-            variant="popup"
-            items={[]}
-            open={menuOpen.value}
-            onUpdate:open={(v: boolean) => {
-              menuOpen.value = v;
-            }}
-            anchorRef={chipRef.value}
-            placement="bottom-start"
-            matchAnchorWidth={false}
-            title={t("hikari::phoneInput.chooseCountry", "Choose country code")}
-          >
-            {{
-              header: () => (
-                <div class="hk-phone-dial-search" role="search">
-                  <HkInput
-                    modelValue={query.value}
-                    onUpdate:modelValue={(v: string) => {
-                      query.value = v;
-                    }}
-                    size="sm"
-                    placeholder={t(
-                      "hikari::phoneInput.searchCountries",
-                      "Search country or code",
-                    )}
-                    aria-label={t(
-                      "hikari::phoneInput.searchCountries",
-                      "Search country or code",
-                    )}
-                    autocomplete="off"
-                    onKeydown={(e: KeyboardEvent) => {
-                      // Enter picks the first filtered row.
-                      if (e.key === "Enter" && !e.isComposing && rows.length > 0) {
-                        e.preventDefault();
-                        pickCountry(rows[0]);
-                      }
-                    }}
-                  >
-                    {{
-                      prefixIcon: () => (
-                        <Search size={13} aria-hidden="true" />
-                      ),
-                    }}
-                  </HkInput>
-                </div>
-              ),
-              default: () =>
-                rows.length > 0 ? (
-                  <div class="hk-phone-dial-list">
-                    {rows.map((entry) => {
-                      const selected = entry.iso === active?.iso;
-                      return (
-                        <button
-                          key={entry.iso}
-                          type="button"
-                          class="hk-phone-dial-row"
-                          data-active={selected || undefined}
-                          onClick={() => pickCountry(entry)}
-                        >
-                          <span class="hk-phone-dial-flag" aria-hidden="true">
-                            {flagEmoji(entry.iso)}
-                          </span>
-                          <span class="hk-phone-dial-name">{nameFor(entry)}</span>
-                          <span class="hk-phone-dial-code">+{entry.dial}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div class="hk-phone-dial-empty">
-                    {t("hikari::phoneInput.noMatches", "No matching country")}
-                  </div>
-                ),
-            }}
-          </HkMenu>
         </div>
       );
     };

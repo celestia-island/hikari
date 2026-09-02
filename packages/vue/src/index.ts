@@ -4,6 +4,7 @@ export { default as HAlert } from "./components/HkAlert";
 export { default as HAltSignIn } from "./components/HkAltSignIn";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
+export { default as HBoard } from "./components/HkBoard";
 export { default as HBlockingToast } from "./components/HkBlockingToast";
 export { default as HBreadcrumb } from "./components/HkBreadcrumb";
 export { default as HButton } from "./components/HkButton";
@@ -105,6 +106,9 @@ export { default as HLogo } from "./components/HkLogo";
 
 // Component types
 export { type BadgeVariant } from "./components/HkBadge";
+export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
+export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";
+export { type BoardCamera, type BoardRect, type BoardViewport } from "./utils/boardCamera";
 export { type ModalAction } from "./components/HkModal";
 export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
 export { type DragListItem } from "./components/HkDraggableList";

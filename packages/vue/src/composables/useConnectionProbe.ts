@@ -34,8 +34,12 @@ export function setProbeEndpoint(endpoint: string | (() => string)): void {
 }
 
 function endpointUrl(): string {
-  const base = (typeof probeEndpoint === "function" ? probeEndpoint() : probeEndpoint)
-    .replace(/\/+$/, "");
+  // A consumer-registered endpoint function returning undefined/null must
+  // degrade to the same-origin default ("/api/health"), not crash the
+  // probe loop — the TypeError from .replace-on-undefined is swallowed by
+  // probeOnce's catch and permanently misreports the app as offline.
+  const raw = typeof probeEndpoint === "function" ? probeEndpoint() : probeEndpoint;
+  const base = (raw ?? "").replace(/\/+$/, "");
   return `${base}/api/health`;
 }
 

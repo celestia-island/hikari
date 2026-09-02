@@ -6,6 +6,18 @@ export type ChallengeDescriptor =
   | null;
 
 /**
+ * Normalize the API base before it is interpolated into request URLs.
+ * Both exported functions are public API: a caller that passes an
+ * undefined/missed config value would otherwise fetch `undefined/health`
+ * — a relative URL resolving to `<origin>/undefined/health` — and fail
+ * with a 404 that looks like a backend problem. Same pattern as
+ * useEngineHealth's baseUrl guard.
+ */
+function normalizeBase(baseUrl: string): string {
+  return (baseUrl ?? "").replace(/\/+$/, "");
+}
+
+/**
  * Fetch the anti-bot challenge descriptor from a public `/health`-style
  * endpoint (upstreamed from shittim-chest's api/pow.ts).
  *
@@ -21,7 +33,7 @@ export async function fetchChallenge(
 ): Promise<ChallengeDescriptor | undefined> {
   let resp: Response;
   try {
-    resp = await fetchFn(`${baseUrl}/health`, { credentials: "same-origin" });
+    resp = await fetchFn(`${normalizeBase(baseUrl)}/health`, { credentials: "same-origin" });
   } catch {
     return undefined;
   }
@@ -66,7 +78,7 @@ export async function negotiateNonce(
       // challenge === null: the gate is disabled and the backend issues a
       // nonce without proof, so an empty body is the correct request.
     }
-    const resp = await fetchFn(`${baseUrl}/auth/nonce`, {
+    const resp = await fetchFn(`${normalizeBase(baseUrl)}/auth/nonce`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: body ? JSON.stringify(body) : undefined,

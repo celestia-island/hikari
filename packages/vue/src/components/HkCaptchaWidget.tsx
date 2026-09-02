@@ -110,6 +110,16 @@ export const HkCaptchaWidget = defineComponent({
       loading.value = true;
       try {
         const src = props.scriptUrl || DEFAULT_SCRIPT_URLS[props.provider];
+        // An unknown provider string (config-driven value, typo) makes the
+        // lookup above return undefined — and `el.src = undefined` coerces
+        // to the literal "undefined", so the browser fetches
+        // `<origin>/undefined` and the widget reports a bogus load failure.
+        // Fail loudly with the provider name instead.
+        if (!src) {
+          throw new Error(
+            `no script URL for captcha provider "${props.provider}" (expected "${Object.keys(DEFAULT_SCRIPT_URLS).join('" | "')}")`,
+          );
+        }
         if (props.provider === "turnstile") {
           await loadScript(src);
           const api = getGlobal("turnstile") as TurnstileApi | undefined;

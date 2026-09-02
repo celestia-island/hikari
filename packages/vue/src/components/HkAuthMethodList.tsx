@@ -1,4 +1,4 @@
-import { defineComponent, type PropType, type VNode } from "vue";
+import { defineComponent, type PropType } from "vue";
 import HkButton from "./HkButton";
 import "./HkAuthMethodList.scss";
 
@@ -30,9 +30,12 @@ export default defineComponent({
         key: string;
         label: string;
         /** Prebuilt icon vnode (brand SVG, <img>, …) — `null` renders an
-         *  empty fixed-width column so the labels still align. The column
-         *  is fixed-size, so any ~16-20px glyph aligns. */
-        icon?: VNode | null;
+         *  empty fixed-width column so the labels still align. Typed loose
+         *  on purpose (same as HkAltSignIn entries): hosts materialize
+         *  hikari against their own vue store, and a hard VNode type
+         *  breaks typecheck whenever the host's vue minor differs. The
+         *  value renders as-is inside the fixed-size column. */
+        icon?: unknown;
         disabled?: boolean;
       }>,
       required: true,

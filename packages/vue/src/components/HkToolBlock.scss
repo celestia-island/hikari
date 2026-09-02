@@ -273,8 +273,10 @@
 }
 
 .s-jt-row {
+  /* Baseline alignment keeps the small type hints (boolean/number/string)
+     on the value's text baseline instead of floating above it. */
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   min-height: 1.55em;
   padding: 0 var(--space-6, 0.375rem);
   border-radius: var(--radius-xs, 2px);
@@ -297,6 +299,10 @@
   height: var(--jt-toggle);
   flex-shrink: 0;
   margin-right: 2px;
+  /* The toggle box has no text baseline of its own — pin it to the line
+     top instead of letting it join the row's baseline group with a
+     synthesized border-box baseline. */
+  align-self: flex-start;
 }
 
 .s-jt-toggle[data-parent] {
@@ -368,9 +374,8 @@
   color: rgb(var(--color-muted) / 0.6);
   font-size: var(--text-3xs, 0.5rem);
   font-style: italic;
-  margin-left: 0.5em;
+  margin-left: 0.75em;
   font-weight: 400;
-  align-self: center;
 }
 
 .s-jt-badge {

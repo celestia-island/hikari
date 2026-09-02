@@ -271,15 +271,17 @@ describe("HkLocalizedInput", () => {
     }
   });
 
-  it("lists the edited language even while it holds no translation (empty glyph)", async () => {
+  it("lists the edited language even while it holds no translation (italic hint)", async () => {
     const { container } = mountInput({ modelValue: "Plant overview" });
     await openMenu(container);
     // The field edits English with nothing stored yet — still listed.
     expect(tagLabels()).toEqual(["English"]);
     const row = tag("English")!;
     const text = row.querySelector(".hk-localized-input-tag-text")!;
-    expect(text.textContent).toBe("—");
+    // No bare dash: an i18n "enter text" hint asks for input instead.
+    expect(text.textContent).toBe("Enter text in the field");
     expect(text.hasAttribute("data-empty")).toBe(true);
+    expect(text.classList.contains("hk-localized-input-tag-text")).toBe(true);
     expect(row.hasAttribute("data-active")).toBe(true);
   });
 
@@ -532,6 +534,28 @@ describe("HkLocalizedInput", () => {
     expect(x.hasAttribute("aria-hidden")).toBe(false);
   });
 
+  it("swaps the chip for the × in place — one slot, no layout shift", async () => {
+    const { container } = mountInput({
+      modelValue: "Plant overview",
+      translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
+    });
+    await openMenu(container);
+    const row = tag("简体中文")!;
+    const slot = row.querySelector(".hk-localized-input-tag-slot")!;
+    // Both controls share the chip's slot; the × overlays it (absolute
+    // in CSS), so arming never reflows the row or slides the label.
+    expect(slot.querySelector(".hk-localized-input-tag-locale")).toBeTruthy();
+    const x = slot.querySelector(".hk-localized-input-tag-x")!;
+    expect(x.getAttribute("aria-hidden")).toBe("true");
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(x.getAttribute("aria-hidden")).toBeNull();
+    expect(row.hasAttribute("data-armed")).toBe(true);
+    // The chip itself stays in the DOM (covered by the ×) — the swap is
+    // purely visual.
+    expect(slot.querySelector(".hk-localized-input-tag-locale")).toBeTruthy();
+  });
+
   it("names the row body by its action and the arm/confirm controls by their step", async () => {
     const { container } = mountInput({
       modelValue: "Plant overview",
@@ -547,6 +571,15 @@ describe("HkLocalizedInput", () => {
     expect(tagX("简体中文")?.getAttribute("aria-label")).toBe(
       "Confirm delete — 简体中文 (zh-Hans)",
     );
+    // Arm: the chip relabels to its actual action (cancel), leaves the
+    // tab order, and the × takes the sole tab stop of the slot.
+    tagLocale("简体中文")!.click();
+    await nextTick();
+    expect(tagLocale("简体中文")?.getAttribute("aria-label")).toBe(
+      "Cancel delete — 简体中文 (zh-Hans)",
+    );
+    expect(tagLocale("简体中文")?.tabIndex).toBe(-1);
+    expect(tagX("简体中文")?.tabIndex).toBe(0);
   });
 
   it("disarms every row when the menu closes", async () => {
@@ -650,9 +683,11 @@ describe("HkLocalizedInput", () => {
     await eraseViaArm(container, "English");
     expect(events.translations.at(-1)).toEqual({});
     expect(events.modelValue.at(-1)).toBe("");
-    // The edited language row stays (empty glyph); the menu stays open.
+    // The edited language row stays (italic hint); the menu stays open.
     expect(tagLabels()).toEqual(["English"]);
-    expect(tag("English")?.querySelector(".hk-localized-input-tag-text")?.textContent).toBe("—");
+    expect(tag("English")?.querySelector(".hk-localized-input-tag-text")?.textContent).toBe(
+      "Enter text in the field",
+    );
     expect(menuRows().some((r) => (r.textContent ?? "").includes("Add language"))).toBe(true);
   });
 

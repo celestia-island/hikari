@@ -27,9 +27,6 @@ export interface HkLocaleOption {
 /** Marker key for the "Add language" cascade root (never a real locale). */
 const ADD_LANGUAGE_KEY = "__hkLocalizedInputAdd";
 
-/** Placeholder glyph for a language that holds no translation yet. */
-const EMPTY_GLYPH = "—";
-
 /**
  * HkLocalizedInput — single-field multilingual text editor.
  *
@@ -44,12 +41,13 @@ const EMPTY_GLYPH = "—";
  *     anchored popout and mobile a bottom-up sheet — identical behavior
  *     to the app-level language switcher). The menu body is a LANGUAGE
  *     LIST — one row per language currently present, INCLUDING the one
- *     being edited (its row carries the active tint and shows the empty
- *     glyph while it holds no text):
+ *     being edited (its row carries the active tint and shows an italic
+ *     "enter text" hint while it holds no text):
  *       · LEFT side of a row = the already-edited translation text;
  *       · RIGHT side = the same language chip as the closed field —
- *         click it to ARM deletion: the row turns danger-red, the chip
- *         label shifts and an × button appears in the chip's slot;
+ *         click it to ARM deletion: the row turns danger-red and an ×
+ *         button appears IN PLACE of the chip (no slide, no layout
+ *         shift — just an instant swap in the same slot);
  *       · clicking the × erases the translation for real. On TOUCH the
  *         arm is the guard (tap the chip, then tap the × that appears);
  *         on DESKTOP hovering the row swaps in the × and a single click
@@ -224,6 +222,13 @@ export const HkLocalizedInput = defineComponent({
       return `${t("hikari::localizedInput.removeTranslation", "Remove translation")} — ${localeLabel(code)} (${code})`;
     }
 
+    /** Accessible label of the SAME chip while the row is armed: clicking
+     *  it again cancels — the label must follow the actual action (the ×
+     *  on top of it owns the confirm). */
+    function cancelLabel(code: string): string {
+      return `${t("hikari::localizedInput.cancelDelete", "Cancel delete")} — ${localeLabel(code)} (${code})`;
+    }
+
     /** Accessible label of the confirm ×: erases the translation for
      *  real after the arm step. */
     function confirmLabel(code: string): string {
@@ -232,9 +237,9 @@ export const HkLocalizedInput = defineComponent({
 
     /** Accessible name of a row body: the control switches the field to
      *  that language — the raw translation text is visible content (and
-     *  the empty glyph reads as punctuation), so the name must identify
-     *  the ACTION (title is ignored by the accname algorithm once the
-     *  element has text content). */
+     *  the empty hint reads as a passive prompt, not the action), so the
+     *  name must identify the ACTION (title is ignored by the accname
+     *  algorithm once the element has text content). */
     function switchLabel(code: string): string {
       return `${t("hikari::localizedInput.switchLanguage", "Switch to")} ${localeLabel(code)} (${code})`;
     }
@@ -438,46 +443,59 @@ export const HkLocalizedInput = defineComponent({
                             class="hk-localized-input-tag-text"
                             data-empty={!value || undefined}
                           >
-                            {value || EMPTY_GLYPH}
+                            {value ||
+                              t(
+                                "hikari::localizedInput.emptyRow",
+                                "Enter text in the field",
+                              )}
                           </span>
                         </button>
-                        <button
-                          type="button"
-                          class="hk-localized-input-tag-locale"
-                          aria-label={armLabel(code)}
-                          title={armLabel(code)}
-                          onClick={(e: MouseEvent) => {
-                            e.stopPropagation();
-                            toggleArm(code);
-                          }}
-                          onMousedown={(e: MouseEvent) => e.preventDefault()}
-                        >
-                          <span class="hk-localized-input-tag-label">{localeLabel(code)}</span>
-                          <span class="hk-localized-input-tag-code">{code}</span>
-                          {active && (
-                            <span class="hk-localized-input-tag-dot" aria-hidden="true" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          class="hk-localized-input-tag-x"
-                          aria-label={confirmLabel(code)}
-                          title={confirmLabel(code)}
-                          // Hidden via CSS until armed/hovered; keep it out
-                          // of the tab order while it is invisible, so
-                          // keyboard users cannot fire the delete on an
-                          // unseen control — the chip arms first, then the
-                          // × becomes the next tab stop (focus-visible
-                          // reveals it, see scss).
-                          tabindex={armedCode.value === code ? 0 : -1}
-                          aria-hidden={armedCode.value === code ? undefined : true}
-                          onClick={(e: MouseEvent) => {
-                            e.stopPropagation();
-                            eraseLanguage(code);
-                          }}
-                        >
-                          <X size={11} />
-                        </button>
+                        <span class="hk-localized-input-tag-slot">
+                          <button
+                            type="button"
+                            class="hk-localized-input-tag-locale"
+                            aria-label={armedCode.value === code ? cancelLabel(code) : armLabel(code)}
+                            title={armedCode.value === code ? cancelLabel(code) : armLabel(code)}
+                            // While armed the confirm × covers this chip and
+                            // owns the confirmation; the chip becomes the
+                            // cancel control — and leaves the tab order (the
+                            // × takes its tab stop) so the armed row exposes
+                            // exactly one actionable control at a time.
+                            tabindex={armedCode.value === code ? -1 : 0}
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation();
+                              toggleArm(code);
+                            }}
+                            onMousedown={(e: MouseEvent) => e.preventDefault()}
+                          >
+                            <span class="hk-localized-input-tag-label">{localeLabel(code)}</span>
+                            <span class="hk-localized-input-tag-code">{code}</span>
+                            {active && (
+                              <span class="hk-localized-input-tag-dot" aria-hidden="true" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            class="hk-localized-input-tag-x"
+                            aria-label={confirmLabel(code)}
+                            title={confirmLabel(code)}
+                            // Hidden via CSS until armed/hovered; keep it out
+                            // of the tab order while it is invisible, so
+                            // keyboard users cannot fire the delete on an
+                            // unseen control — the chip arms first, then the
+                            // × becomes the next tab stop (focus-visible
+                            // reveals it, see scss). It OVERLAYS the chip in
+                            // the same slot: the row never reflows.
+                            tabindex={armedCode.value === code ? 0 : -1}
+                            aria-hidden={armedCode.value === code ? undefined : true}
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation();
+                              eraseLanguage(code);
+                            }}
+                          >
+                            <X size={11} />
+                          </button>
+                        </span>
                       </div>
                     );
                   })}

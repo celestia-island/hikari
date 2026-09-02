@@ -152,7 +152,12 @@ export const HkSignInCard = defineComponent({
             </>
           ),
           footer: () => slots.footer?.(),
-          methods: () => slots.methods?.(),
+          /* Forward the methods slot ONLY when the consumer passed one: an
+             unconditional lambda would make HkAuthCard see a slot that
+             always exists and render its (padded, top-margined)
+             `.s-auth-methods` wrapper as empty dead space under the form
+             on every methods-less sign-in card. */
+          ...(slots.methods ? { methods: () => slots.methods?.() } : {}),
         }}
       </HkAuthCard>
     );

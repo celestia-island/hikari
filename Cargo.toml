@@ -56,7 +56,7 @@ dynamic-fetch = false
 anyhow = "^1"
 thiserror = "^2"
 futures = "^0.3"
-yuuka = "^0.6"
+yuuka = "^0.10"
 include_dir = "^0.7"
 
 # ------

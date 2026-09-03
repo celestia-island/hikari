@@ -201,14 +201,20 @@
  * the fallbacks below are the One Dark originals so standalone
  * consumers render exactly as before. */
 .s-tool-code-block .hljs-keyword,
-.s-tool-code-block .hljs-selector-tag,
-.s-tool-code-block .hljs-built_in {
+.s-tool-code-block .hljs-selector-tag {
   color: var(--code-keyword, #c678dd);
 }
 
-.s-tool-code-block .hljs-string,
-.s-tool-code-block .hljs-attr {
+.s-tool-code-block .hljs-built_in {
+  color: var(--code-builtin, #c678dd);
+}
+
+.s-tool-code-block .hljs-string {
   color: var(--code-string, #98c379);
+}
+
+.s-tool-code-block .hljs-attr {
+  color: var(--code-number, #d19a66);
 }
 
 .s-tool-code-block .hljs-number,

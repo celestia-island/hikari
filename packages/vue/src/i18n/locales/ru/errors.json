@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "hikari::errors.defaultTitle": "Что-то пошло не так",
+    "hikari::errors.rawDetails": "Исходные детали ошибки"
+  }
+}

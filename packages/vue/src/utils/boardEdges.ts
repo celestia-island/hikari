@@ -35,6 +35,29 @@ export interface BoardPoint {
   y: number;
 }
 
+/**
+ * Fan ordinals for a set of edges: every edge sharing a `from` node gets
+ * its `{ index, count }` slot in the 天女散花 spread across that node's
+ * exit border. Two passes — totals first, then positions — so `count` is
+ * the FINAL total per node (a running count would feed the first edges
+ * count = 1 and collapse the whole fan onto one anchor point). Edges from
+ * different nodes are counted independently.
+ */
+export function boardFanOrdinals(
+  edges: ReadonlyArray<{ id: string; from: string }>,
+): Map<string, { index: number; count: number }> {
+  const totals = new Map<string, number>();
+  for (const e of edges) totals.set(e.from, (totals.get(e.from) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  const ordinals = new Map<string, { index: number; count: number }>();
+  for (const e of edges) {
+    const index = seen.get(e.from) ?? 0;
+    seen.set(e.from, index + 1);
+    ordinals.set(e.id, { index, count: totals.get(e.from)! });
+  }
+  return ordinals;
+}
+
 export interface BoardNodeRect {
   x: number;
   y: number;

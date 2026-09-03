@@ -63,12 +63,15 @@ export interface UseBoardCameraReturn {
   zoomOut: () => void;
   /** Raw (unquantized, unanimated) pinch zoom — call per pointermove. */
   pinchZoom: (base: BoardCamera, ratio: number, anchor: BoardPoint) => void;
-  /** Snap the post-pinch camera onto the nearest rung (animated). */
-  settlePinch: () => void;
+  /** Snap the post-pinch camera onto the nearest rung (animated), keeping
+   *  the world point under `anchor` (the pinch midpoint) fixed. */
+  settlePinch: (anchor?: BoardPoint) => void;
   panBy: (dx: number, dy: number) => void;
   setCamera: (cam: BoardCamera, opts?: { animate?: boolean }) => void;
   fit: () => void;
   reset: () => void;
+  /** Cancel any in-flight tween and its pending rAF (call on unmount). */
+  stop: () => void;
 }
 
 export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraReturn {
@@ -82,6 +85,12 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
 
   const camera = ref<BoardCamera>({ x: 0, y: 0, k: 1 });
   const isAnimating = ref(false);
+
+  // fit() may park the camera BELOW the interaction minimum (show the
+  // whole board wins over the zoom ladder, as in HkImageViewer) — the
+  // clamp floor follows it down so the fitted framing survives; any
+  // quantized gesture lands back on the ladder at ≥ minK.
+  let kFloor = minK;
 
   let raf = 0;
   let tweenFrom: BoardCamera = { x: 0, y: 0, k: 1 };
@@ -100,7 +109,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   const contentRect = (): BoardRect => toValue(content);
 
   const clampCam = (cam: BoardCamera): BoardCamera => {
-    const k = Math.min(maxK, Math.max(minK, cam.k));
+    const k = Math.min(maxK, Math.max(kFloor, cam.k));
     return boardClampPan({ ...cam, k }, contentRect(), viewport());
   };
 
@@ -135,13 +144,16 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   };
 
   function zoomByFactor(factor: number, anchor?: BoardPoint): void {
-    const next = boardZoomAt(camera.value, camera.value.k * factor, anchorPoint(anchor));
-    animateTo({ ...next, k: quantizeBoardK(next.k) });
+    // Quantize FIRST, then solve the anchored pan for the QUANTIZED k —
+    // anchoring on the raw k and swapping in the quantized one afterwards
+    // lets the anchored world point jump by the raw/quantized ratio.
+    const k = quantizeBoardK(camera.value.k * factor);
+    animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
   function zoomToK(targetK: number, anchor?: BoardPoint): void {
-    const next = boardZoomAt(camera.value, targetK, anchorPoint(anchor));
-    animateTo({ ...next, k: quantizeBoardK(next.k) });
+    const k = quantizeBoardK(targetK);
+    animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
   function zoomToPercent(percent: number, anchor?: BoardPoint): void {
@@ -162,9 +174,11 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
     camera.value = clampCam(boardZoomAt(base, base.k * ratio, anchor));
   }
 
-  function settlePinch(): void {
-    const settled = { ...camera.value, k: quantizeBoardK(camera.value.k) };
-    animateTo(settled);
+  function settlePinch(anchor?: BoardPoint): void {
+    // Same quantize-then-anchor discipline as the wheel path: the pinch
+    // midpoint stays pinned to its world point while k snaps onto the rung.
+    const k = quantizeBoardK(camera.value.k);
+    animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
   function panBy(dx: number, dy: number): void {
@@ -181,7 +195,9 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   }
 
   function fit(): void {
-    animateTo(boardFit(contentRect(), viewport()));
+    const target = boardFit(contentRect(), viewport());
+    kFloor = Math.min(minK, target.k);
+    animateTo(target);
   }
 
   function reset(): void {
@@ -214,5 +230,6 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
     setCamera,
     fit,
     reset,
+    stop: stopTween,
   };
 }

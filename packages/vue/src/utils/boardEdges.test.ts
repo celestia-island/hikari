@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   boardAnchor,
   boardEdgePath,
+  boardFanOrdinals,
   boardViaPath,
   type BoardNodeRect,
 } from "./boardEdges";
@@ -36,6 +37,39 @@ describe("boardEdges — anchor modes", () => {
     expect(first.y).toBeLessThan(second.y);
     expect(second.y).toBeLessThan(third.y);
     expect(new Set([first.y, second.y, third.y]).size).toBe(3);
+  });
+});
+
+describe("boardEdges — fan ordinals", () => {
+  it("gives a single edge the full fan (count = 1, no spread)", () => {
+    const ord = boardFanOrdinals([{ id: "e1", from: "a" }]);
+    expect(ord.get("e1")).toEqual({ index: 0, count: 1 });
+  });
+
+  it("spreads three edges from one node as {0,3} {1,3} {2,3}", () => {
+    const ord = boardFanOrdinals([
+      { id: "e1", from: "a" },
+      { id: "e2", from: "a" },
+      { id: "e3", from: "a" },
+    ]);
+    expect(ord.get("e1")).toEqual({ index: 0, count: 3 });
+    expect(ord.get("e2")).toEqual({ index: 1, count: 3 });
+    expect(ord.get("e3")).toEqual({ index: 2, count: 3 });
+  });
+
+  it("counts each source node independently", () => {
+    const ord = boardFanOrdinals([
+      { id: "e1", from: "a" },
+      { id: "e2", from: "b" },
+      { id: "e3", from: "a" },
+    ]);
+    expect(ord.get("e1")).toEqual({ index: 0, count: 2 });
+    expect(ord.get("e2")).toEqual({ index: 0, count: 1 });
+    expect(ord.get("e3")).toEqual({ index: 1, count: 2 });
+  });
+
+  it("returns an empty map for empty input", () => {
+    expect(boardFanOrdinals([]).size).toBe(0);
   });
 });
 

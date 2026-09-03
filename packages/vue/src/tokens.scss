@@ -1,3 +1,22 @@
+/* ── Syntax highlighting palette family: --code-* ───────────────────
+ * Token names consumed by hikari's highlighted-code surfaces (the
+ * HkToolBlock syntax layer and its JSON viewer, see HkToolBlock.scss).
+ * The VALUES are intentionally NOT defined here: the family is owned by
+ * the host theme, which maps each token to mode-aware colors. The
+ * canonical mapping (dark = One Dark, light = GitHub Light) lives in the
+ * celestia webui theme.scss; components reference the tokens with their
+ * original One Dark values as fallbacks so standalone consumers render
+ * unchanged. Extend this family only by adding a --code-* token with a
+ * fallback equal to the current visual.
+ *   --code-keyword  hljs-keyword / selector-tag       (purple)
+ *   --code-builtin  hljs-built_in                     (purple → blue in light)
+ *   --code-string   hljs-string                       (green)
+ *   --code-number   hljs-number / literal / attr      (orange → blue in light)
+ *   --code-comment  hljs-comment / doctag             (grey, italic)
+ *   --code-function hljs-title.function_              (blue)
+ *   --code-type     hljs-type / class title           (yellow → green in light)
+ *   --code-variable hljs-variable / template-var      (red → orange in light)
+ */
 /* hikari color aliases — fallback values for theme tokens.
    These CSS variables are used by hikari components (HkButton, HkCard,
    HkInput, HkSelect, etc.) and are expected to be overridden by

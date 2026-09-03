@@ -87,6 +87,7 @@ afterEach(() => {
   } else {
     delete (offsetHeightOwner() as { offsetHeight?: number }).offsetHeight;
   }
+  vi.restoreAllMocks();
   vi.useRealTimers();
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
@@ -165,6 +166,45 @@ describe("HkAuthCard", () => {
     expect(wrapper.classList.contains("s-auth-card--measuring")).toBe(false);
   });
 
+  it("ignores height transitionsend events bubbling up from descendant content", () => {
+    naturalHeight = 100;
+    const c = mount(
+      h(HkAuthCard, { title: "T" }, { default: () => h("div", { class: "probe-anim" }) }),
+    );
+    const wrapper = wrapperOf(c);
+    const child = c.querySelector<HTMLElement>(".probe-anim")!;
+
+    naturalHeight = 180;
+    FakeResizeObserver.instances[0]!.callback();
+    expect(wrapper.classList.contains("s-auth-card--measuring")).toBe(true);
+
+    // A descendant slot element's own height transition bubbling up must
+    // NOT release the clip — it did not open this measuring window.
+    fireTransitionEnd(child, "height");
+    expect(wrapper.classList.contains("s-auth-card--measuring")).toBe(true);
+
+    // Only the wrapper's own height transition may end it.
+    fireTransitionEnd(wrapper, "height");
+    expect(wrapper.classList.contains("s-auth-card--measuring")).toBe(false);
+  });
+
+  it("snaps unclipped under prefers-reduced-motion without arming the backstop", () => {
+    vi.useFakeTimers();
+    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as unknown as MediaQueryList);
+    naturalHeight = 140;
+    const c = mount(h(HkAuthCard, { title: "T" }));
+    const wrapper = wrapperOf(c);
+
+    naturalHeight = 240;
+    FakeResizeObserver.instances[0]!.callback();
+    // Height still tracks the content…
+    expect(wrapper.style.height).toBe("240px");
+    // …but with the transition disabled there is nothing to animate, so
+    // no measuring window opens: no clip, no pending backstop timer.
+    expect(wrapper.classList.contains("s-auth-card--measuring")).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("ignores observer firings that move the height by less than a pixel", () => {
     naturalHeight = 140;
     const c = mount(h(HkAuthCard, { title: "T" }));
@@ -211,7 +251,9 @@ describe("HkAuthCard", () => {
     const entry = mounts.pop()!;
     entry.app.unmount();
     expect(ro.disconnected).toBe(true);
-    // Advancing past the backstop after unmount must be a silent no-op.
-    expect(() => vi.advanceTimersByTime(500)).not.toThrow();
+    // The pending backstop timer was cleared on unmount: nothing is left
+    // scheduled (a leaked timer here would also fire releaseClip on a
+    // dead element).
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

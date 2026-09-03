@@ -51,11 +51,17 @@ const MEASURE_BACKSTOP_MS = 450;
  * - `smoothHeight: false` opts out entirely: the wrapper still renders
  *   (the DOM shape stays stable for consumers) but no height style, no
  *   observer and no listeners are installed, and height changes snap as
- *   before.
+ *   before. The prop is read ONCE at mount time — runtime toggles are
+ *   ignored, making it a static opt-out rather than a reactive switch
+ *   (remount with a changed `:key` to apply a new value).
  * - Environments without `ResizeObserver` degrade the same way: instant
  *   snap, no measurement, no clipping.
  * - `prefers-reduced-motion: reduce` disables the transition in CSS, so
- *   the height still tracks the content, just without animation.
+ *   the height still tracks the content, just without animation. While
+ *   it matches, the observer updates the height directly WITHOUT opening
+ *   a measuring window — no clip and no backstop timer — because a clip
+ *   held for the backstop would cut off the card's shadow with nothing
+ *   animating to mask it.
  *
  * The wrapper is transparent to descendant styling: nothing inside
  * `.s-auth-card` changes, and no hikari stylesheet targets the card as a
@@ -88,6 +94,10 @@ export const HkAuthCard = defineComponent({
     };
 
     const onTransitionEnd = (event: TransitionEvent) => {
+      // Only the wrapper's OWN height transition may release the clip —
+      // a descendant slot element's height transition bubbling up must
+      // not end a measuring window it did not open.
+      if (event.target !== heightEl.value) return;
       if (event.propertyName !== "height") return;
       releaseClip();
     };
@@ -110,6 +120,15 @@ export const HkAuthCard = defineComponent({
         // Ignore sub-pixel churn — rounding noise must not start a
         // clip-and-animate cycle.
         if (Math.abs(next - current) < 1) return;
+
+        // Reduced motion: the CSS transition is `none`, so transitionend
+        // will never fire and the clip would just sit there for the
+        // backstop window, cutting off the shadow with nothing to mask.
+        // Snap unclipped instead — no class, no timer.
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          wrapper.style.height = `${next}px`;
+          return;
+        }
 
         // Clip ONLY while a height transition is actually running; the
         // class is released by transitionend or the backstop timer.

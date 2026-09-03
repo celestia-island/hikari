@@ -538,6 +538,15 @@
      explicit box-sizing keeps that mapping honest on hosts without a
      global border-box reset. */
   box-sizing: border-box;
+  /* Mirror the card's own sizing contract (.s-auth-card below:
+     `width: 100%; max-width: 28rem`). The card's percentage width now
+     resolves against THIS wrapper, and a bare wrapper inside a centered
+     flex/grid host shrink-wraps to the card's content — collapsing the
+     panel to its intrinsic width. Presenting the same definite sizing
+     context here restores the exact pre-wrapper geometry in every host
+     formatting context. Keep the two declarations in sync. */
+  width: 100%;
+  max-width: 28rem;
   transition: height 0.3s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
 
   &.s-auth-card--measuring {

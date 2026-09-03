@@ -2,6 +2,7 @@ name: Publish to crates.io
 on:
   push:
     tags: [v*]
+  workflow_dispatch:
 
 jobs:
   verify-versions:
@@ -48,15 +49,22 @@ jobs:
             fi
           done
           ROOT_VER=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
+          # The v* tag namespace serves the npm release series (packages/vue),
+          # which diverged from the crates workspace series after 0.3.20, so a
+          # release tag generally no longer equals the crates version. Publish
+          # whatever version the workspace itself declares.
           if [ "$ROOT_VER" != "$TAG_VERSION" ]; then
-            echo "::error::workspace.package version ($ROOT_VER) != tag ($TAG_VERSION)"
+            echo "::notice::tag version ($TAG_VERSION) belongs to the npm series; publishing the crates workspace version ($ROOT_VER)"
+          fi
+          if ! [[ "$ROOT_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::workspace.package version ($ROOT_VER) is not a valid semver version"
             FAIL=1
           fi
           if [ "$FAIL" -ne 0 ]; then
-            echo "::error::Version mismatch detected."
+            echo "::error::Version verification failed."
             exit 1
           fi
-          echo "All versions match tag v$TAG_VERSION"
+          echo "All packages resolve to workspace version $ROOT_VER"
 
   publish:
     name: Publish to crates.io
@@ -117,7 +125,7 @@ jobs:
       - name: Skip if already published
         id: check-exists
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION=$(grep -oP '^version\s*=\s*"\K[^"]+' Cargo.toml | head -1)
           STATUS=$(curl -sf -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/${CRATE}/${VERSION}" || echo "000")
           if [ "$STATUS" = "200" ]; then
             echo "::warning::Version ${VERSION} already published — skipping."

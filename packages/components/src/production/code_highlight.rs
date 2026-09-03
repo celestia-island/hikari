@@ -52,6 +52,14 @@ fn copy_to_clipboard(text: &str) -> bool {
 
 pub struct CodeHighlightComponent;
 
+/// NOTE ON THEMING: unlike the Vue-side HkToolBlock (which reads the
+/// host theme's --code-* family, see packages/vue/src/tokens.scss), this
+/// Rust/WASM component ships self-contained palettes as deliberate
+/// content: each `data-palette` selects a full, explicit token set. Hosts
+/// that render this component with their own highlight pass can either
+/// pick one of these palettes or ignore `data-palette` and style their
+/// own `.language-*` classes with the host theme's --code-* tokens —
+/// the component never injects palette CSS unless a palette is chosen.
 /// Selectable syntax highlighting palettes inspired by popular Neovim colorschemes.
 /// Each palette defines CSS variables for syntax token colors.
 #[derive(Debug, Clone, PartialEq, Default)]

@@ -148,6 +148,76 @@ function resolveEffectiveMode(mode: ThemeMode): "dark" | "light" {
 const THEME_TRANSITION_DURATION = 300;
 let transitionTimer: CronHandle | null = null;
 
+/**
+ * Theme vars live in ONE managed stylesheet block (`:root` overrides)
+ * instead of a hundred inline declarations on `<html style="...">`.
+ *  - Inline style attributes bloat the DOM, show up as giant devtools
+ *    noise on the root element, defeat caching of the token set and make
+ *    every style recalc parse the whole attribute again.
+ *  - A stylesheet block is a single atomic replacement (one recalc for
+ *    the whole theme apply) and inspectable/serializable.
+ *  - Only the DELTAS are written: hikari's static stylesheet already
+ *    seeds :root with the full default token set (including pure
+ *    derivations like `--hi-color-primary: rgb(var(--color-primary))`),
+ *    so a token whose value already resolves identically needs no
+ *    override at all — a default-ish theme injects a handful of vars
+ *    instead of ~80.
+ */
+const THEME_VARS_STYLE_ATTR = "data-hikari-theme-vars";
+
+function normalizeVarValue(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+/** Keep only the vars whose value differs from the static cascade. */
+export function pickThemeVarDeltas(
+  vars: Record<string, string>,
+  baseline: Record<string, string>,
+): Record<string, string> {
+  const deltas: Record<string, string> = {};
+  for (const [key, value] of Object.entries(vars)) {
+    const normalized = normalizeVarValue(value);
+    if (normalizeVarValue(baseline[key] ?? "") !== normalized) {
+      deltas[key] = normalized;
+    }
+  }
+  return deltas;
+}
+
+function themeVarsStyleElement(): HTMLStyleElement {
+  let styleEl = document.head.querySelector<HTMLStyleElement>(
+    `style[${THEME_VARS_STYLE_ATTR}]`,
+  );
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.setAttribute(THEME_VARS_STYLE_ATTR, "");
+    document.head.appendChild(styleEl);
+  }
+  return styleEl;
+}
+
+function injectThemeVars(el: HTMLElement, vars: Record<string, string>): void {
+  const styleEl = themeVarsStyleElement();
+  // Measure the cascade WITHOUT our own previous overrides: disable the
+  // managed block, read every candidate, re-enable. One recalc serves
+  // all reads, and applyTheme is a rare switch-time action.
+  const baseline: Record<string, string> = {};
+  try {
+    styleEl.disabled = true;
+    const computed = getComputedStyle(el);
+    for (const key of Object.keys(vars)) {
+      baseline[key] = computed.getPropertyValue(key);
+    }
+  } finally {
+    styleEl.disabled = false;
+  }
+
+  const deltas = pickThemeVarDeltas(vars, baseline);
+  styleEl.textContent = Object.keys(deltas).length > 0
+    ? `:root{${Object.entries(deltas).map(([key, value]) => `${key}:${value}`).join(";")}}`
+    : "";
+}
+
 function applyTheme() {
   const el = document.documentElement;
   const all = getAllThemePresets();
@@ -168,9 +238,7 @@ function applyTheme() {
 
   invalidateLuminanceCache();
 
-  for (const [key, value] of Object.entries(vars)) {
-    el.style.setProperty(key, value);
-  }
+  injectThemeVars(el, vars);
 
   el.setAttribute("data-theme", currentTheme.value);
   el.setAttribute("data-mode", effectiveMode);

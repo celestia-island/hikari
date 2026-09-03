@@ -343,14 +343,19 @@ describe("late registration", () => {
     setMode("dark");
     initTheme();
     const el = document.documentElement;
+    // Theme vars live in the managed :root block (lean injection), so the
+    // html inline style stays clean until the late group lands.
+    const block = () => document.head.querySelector("style[data-hikari-theme-vars]")?.textContent ?? "";
     expect(el.style.getPropertyValue("--late-wires-a")).toBe("");
+    expect(block()).not.toContain("--late-wires-a");
 
     registerTokenGroup(LATE_GROUP);
     await flushMicrotasks();
 
     // The injected hook re-applied the current dark theme, so the late
-    // group's registry defaults are already on the document element.
-    expect(el.style.getPropertyValue("--late-wires-a")).toBe("1 2 3");
+    // group's registry defaults are already in the managed block.
+    expect(block()).toContain("--late-wires-a:1 2 3");
+    expect(el.style.getPropertyValue("--late-wires-a")).toBe("");
   });
 
   it("coalesces same-tick registrations into a single re-apply", async () => {

@@ -195,42 +195,53 @@
   word-break: break-word;
 }
 
+/* Syntax highlighting palette. Values are app-overridable through the
+ * --code-* custom properties (dark = One Dark, light = GitHub Light in
+ * themes that define the family — e.g. celestia webui theme.scss);
+ * the fallbacks below are the One Dark originals so standalone
+ * consumers render exactly as before. */
 .s-tool-code-block .hljs-keyword,
-.s-tool-code-block .hljs-selector-tag,
-.s-tool-code-block .hljs-built_in {
-  color: #c678dd;
+.s-tool-code-block .hljs-selector-tag {
+  color: var(--code-keyword, #c678dd);
 }
 
-.s-tool-code-block .hljs-string,
+.s-tool-code-block .hljs-built_in {
+  color: var(--code-builtin, #c678dd);
+}
+
+.s-tool-code-block .hljs-string {
+  color: var(--code-string, #98c379);
+}
+
 .s-tool-code-block .hljs-attr {
-  color: #98c379;
+  color: var(--code-number, #d19a66);
 }
 
 .s-tool-code-block .hljs-number,
 .s-tool-code-block .hljs-literal {
-  color: #d19a66;
+  color: var(--code-number, #d19a66);
 }
 
 .s-tool-code-block .hljs-comment,
 .s-tool-code-block .hljs-doctag {
-  color: #5c6370;
+  color: var(--code-comment, #5c6370);
   font-style: italic;
 }
 
 .s-tool-code-block .hljs-function .hljs-title,
 .s-tool-code-block .hljs-title.function_ {
-  color: #61afef;
+  color: var(--code-function, #61afef);
 }
 
 .s-tool-code-block .hljs-type,
 .s-tool-code-block .hljs-class .hljs-title {
-  color: #e5c07b;
+  color: var(--code-type, #e5c07b);
 }
 
 .s-tool-code-block .hljs-variable,
 .s-tool-code-block .hljs-template-variable,
 .s-tool-code-block .hljs-property {
-  color: #e06c75;
+  color: var(--code-variable, #e06c75);
 }
 
 .s-tool-code-block .hljs-params {
@@ -352,20 +363,20 @@
 }
 
 .s-jv-str {
-  color: #98c379;
+  color: var(--code-string, #98c379);
   word-break: break-all;
 }
 
 .s-jv-num {
-  color: #d19a66;
+  color: var(--code-number, #d19a66);
 }
 
 .s-jv-bool {
-  color: #c678dd;
+  color: var(--code-keyword, #c678dd);
 }
 
 .s-jv-str-raw {
-  color: #98c379;
+  color: var(--code-string, #98c379);
   white-space: pre-wrap;
   word-break: break-all;
 }

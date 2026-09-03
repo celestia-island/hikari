@@ -107,15 +107,31 @@ export const HkContextRing = defineComponent({
     const windowPct = (tokens: number) =>
       (tokens / props.contextWindow!) * 100;
 
-    /** Arcs for the ring / blocks for the bar (segments mode). */
-    const chartSegments = computed(() =>
-      usable.value
-        ? visibleSegments.value.map((s) => ({
-            value: windowPct(s.tokens),
-            color: segmentColor(s),
-          }))
-        : [],
-    );
+    /**
+     * Arcs for the ring / blocks for the bar (segments mode).
+     *
+     * The per-category tokens are usually an ESTIMATE while `used` is the
+     * authoritative total, so raw `tokens/window` shares need not sum to
+     * the occupancy the center label claims. The arcs therefore partition
+     * the occupied share proportionally (composition within occupancy);
+     * the legend keeps the raw tokens/window stat. When composition is
+     * unknown but occupancy is known, one muted arc carries the fill so
+     * the ring never under-reports against its own center label.
+     */
+    const chartSegments = computed(() => {
+      if (!usable.value) return [];
+      const occupancy = Math.min(100, usagePct.value!);
+      const sum = visibleSegments.value.reduce((acc, s) => acc + s.tokens, 0);
+      if (sum <= 0) {
+        return occupancy > 0
+          ? [{ value: occupancy, color: segmentColor({ key: "free", tokens: 0 }) }]
+          : [];
+      }
+      return visibleSegments.value.map((s) => ({
+        value: occupancy * (s.tokens / sum),
+        color: segmentColor(s),
+      }));
+    });
 
     /** Legend rows sorted by tokens desc (largest first). */
     const legend = computed(() =>

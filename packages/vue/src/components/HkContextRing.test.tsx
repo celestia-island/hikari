@@ -120,6 +120,57 @@ describe("HkContextRing ring", () => {
     expect(arcs).toHaveLength(2);
   });
 
+  it("partitions the occupancy so estimated segments still fill up to the center pct", () => {
+    // Segments sum (20k) intentionally != used (60k): the raw tokens/window
+    // shares would end the fill at 10% while the center claims 30%. The
+    // arcs must instead split the whole 30% proportionally.
+    const c = mount(ringNode({
+      model: "m",
+      used: 60_000,
+      contextWindow: 200_000,
+      segments: [
+        { key: "prompt", tokens: 5_000 },
+        { key: "tool", tokens: 15_000 },
+      ],
+    }));
+    const arcs = c.querySelectorAll(".hk-progress-ring-seg");
+    expect(arcs).toHaveLength(2);
+    const R = (28 - 3) / 2;
+    const C = 2 * Math.PI * R;
+    const drawn = [...arcs].reduce(
+      (acc, el) => acc + Number(el.getAttribute("stroke-dasharray")?.split(/\s+/)[0]),
+      0,
+    );
+    // drawn total = 30% of the circumference (within per-arc gap carve)
+    expect(drawn).toBeGreaterThan(0.25 * C);
+    expect(drawn).toBeLessThan(0.30 * C);
+    // Composition ratio preserved up to the inter-arc gap carve: the first
+    // arc (25% of the composition -> 7.5% of the ring) loses the 1%-of-ring
+    // gap, the last arc (75% -> 22.5%) keeps its full share.
+    const len0 = Number(arcs[0].getAttribute("stroke-dasharray")?.split(/\s+/)[0]);
+    const len1 = Number(arcs[1].getAttribute("stroke-dasharray")?.split(/\s+/)[0]);
+    expect(len0).toBeCloseTo((0.075 - 0.01) * C, 5);
+    expect(len1).toBeCloseTo(0.225 * C, 5);
+  });
+
+  it("draws a single muted occupancy arc when composition is all zeros", () => {
+    const c = mount(ringNode({
+      ...baseProps(),
+      segments: [
+        { key: "prompt", tokens: 0 },
+        { key: "tool", tokens: 0 },
+      ],
+    }));
+    const arcs = c.querySelectorAll(".hk-progress-ring-seg");
+    expect(arcs).toHaveLength(1);
+    // The muted fallback carries the full 21.3% occupancy.
+    const R = (28 - 3) / 2;
+    const C = 2 * Math.PI * R;
+    const drawn = Number(arcs[0].getAttribute("stroke-dasharray")?.split(/\s+/)[0]);
+    expect(drawn).toBeCloseTo((42_600 / 200_000) * C, 5);
+    expect(arcs[0].getAttribute("style")).toContain("--context-free");
+  });
+
   it("degrades to a gray ring with a dash center when the window is null", () => {
     const c = mount(ringNode({
       model: "m",

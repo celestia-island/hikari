@@ -66,6 +66,11 @@ describe("HkProgressRing segmented mode", () => {
 
     // The gap leaves no overlap: the arcs stay inside [0, 50%).
     expect(second.off).toBeCloseTo(first.off - first.len - (PROGRESS_RING_SEG_GAP_PCT / 100) * C, 6);
+
+    // Segment arcs are butt-capped: a round cap extends strokeWidth/2 past
+    // each end and would swallow the carved gap at badge sizes.
+    expect(segs[0].getAttribute("stroke-linecap")).toBe("butt");
+    expect(segs[1].getAttribute("stroke-linecap")).toBe("butt");
   });
 
   it("carves no gap after the last segment (full 100 fills the ring)", () => {
@@ -120,6 +125,8 @@ describe("HkProgressRing single-value mode (backward compat)", () => {
     const C = 2 * Math.PI * R;
     const off = Number(fill?.getAttribute("stroke-dashoffset"));
     expect(off).toBeCloseTo(C * (1 - 25 / 100), 6);
+    // The legacy single-value fill keeps its rounded end caps.
+    expect(fill?.getAttribute("stroke-linecap")).toBe("round");
     expect(c.querySelector(".hk-progress-ring")?.getAttribute("aria-valuenow")).toBe("25");
   });
 

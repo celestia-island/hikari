@@ -134,7 +134,10 @@ export default defineComponent({
                     stroke-width={props.strokeWidth}
                     stroke-dasharray={`${lenPx} ${circumference.value - lenPx}`}
                     stroke-dashoffset={circumference.value * (1 - arc.start / 100)}
-                    stroke-linecap="round"
+                    // Butt caps keep the carved gap visible: a round cap
+                    // extends strokeWidth/2 past each arc end, which at
+                    // badge sizes (28px / 3px) fully swallows the 1% gap.
+                    stroke-linecap="butt"
                     transform={`rotate(-90 ${center.value} ${center.value})`}
                     style={arc.color ? { stroke: arc.color } : undefined}
                   />

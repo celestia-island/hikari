@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "hikari::errors.defaultTitle": "Une erreur est survenue",
+    "hikari::errors.rawDetails": "Détails bruts de l'erreur"
+  }
+}

@@ -97,6 +97,10 @@ export { default as HMinimap } from "./components/HkMinimap";
 export { default as HTrendChart } from "./components/HkTrendChart";
 
 export { default as HErrorBoundary } from "./components/HkErrorBoundary";
+export {
+  HkErrorLanding as HErrorLanding,
+  type HErrorTone,
+} from "./components/HkErrorLanding";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";
@@ -324,12 +328,15 @@ export {
   parseToolCallText,
   extractExecCode,
   buildHighlightedLines,
-  buildJsonTree,
   type HParsedToolCall,
   type HToolBlockVariant,
   type HHighlightedLine,
-  type HJsonNode,
 } from "./components/HkToolBlock";
+export {
+  HkJsonTree as HJsonTree,
+  buildJsonTree,
+  type HJsonNode,
+} from "./components/HkJsonTree";
 export { HkTokenUsageBadge as HTokenUsageBadge } from "./components/HkTokenUsageBadge";
 export { HkTokenUsagePanel as HTokenUsagePanel } from "./components/HkTokenUsagePanel";
 export { HkModelTag as HModelTag } from "./components/HkModelTag";

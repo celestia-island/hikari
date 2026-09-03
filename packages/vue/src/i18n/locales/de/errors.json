@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "hikari::errors.defaultTitle": "Etwas ist schiefgelaufen",
+    "hikari::errors.rawDetails": "Fehlerdetails im Original"
+  }
+}

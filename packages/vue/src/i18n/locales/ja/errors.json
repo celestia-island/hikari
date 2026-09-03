@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "hikari::errors.defaultTitle": "問題が発生しました",
+    "hikari::errors.rawDetails": "エラーの詳細（原文）"
+  }
+}

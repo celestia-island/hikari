@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "hikari::errors.defaultTitle": "出错了",
+    "hikari::errors.rawDetails": "原始错误详情"
+  }
+}

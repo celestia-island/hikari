@@ -1,0 +1,161 @@
+// HkJsonTree — the interactive JSON tree pane.
+// Class names are the legacy `s-jt-*` / `s-jv-*` set shared verbatim with
+// HkToolBlock (the tree was extracted from it); hosts may target
+// `.s-tool-json-tree` for pane-level chrome such as overlay scrollbars.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
+.s-tool-json-tree {
+  --jt-toggle: 14px;
+  margin: var(--space-4, 0.25rem) 0;
+  padding: var(--space-6, 0.375rem);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-size: var(--text-2xs, 0.625rem);
+  line-height: 1.55;
+  background: rgb(var(--color-surface) / 0.5);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  user-select: none;
+  max-height: 320px;
+  overflow: auto;
+
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+     hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.s-jt-row {
+  /* Baseline alignment keeps the small type hints (boolean/number/string)
+     on the value's text baseline instead of floating above it. */
+  display: flex;
+  align-items: baseline;
+  min-height: 1.55em;
+  padding: 0 var(--space-6, 0.375rem);
+  border-radius: var(--radius-xs, 2px);
+  cursor: default;
+}
+
+.s-jt-row[data-parent] {
+  cursor: pointer;
+}
+
+.s-jt-row:hover {
+  background: rgb(var(--color-primary) / 4%);
+}
+
+.s-jt-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--jt-toggle);
+  height: var(--jt-toggle);
+  flex-shrink: 0;
+  margin-right: 2px;
+  /* The toggle box has no text baseline of its own — pin it to the line
+     top instead of letting it join the row's baseline group with a
+     synthesized border-box baseline. */
+  align-self: flex-start;
+}
+
+.s-jt-toggle[data-parent] {
+  color: rgb(var(--color-muted));
+  border-radius: var(--radius-xs, 2px);
+}
+
+.s-jt-leaf {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgb(var(--color-muted) / 25%);
+}
+
+.s-jt-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.s-jt-children {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: var(--guide-left, 11px);
+    top: 0;
+    bottom: 2px;
+    width: 1px;
+    background: var(--border-faint, rgb(var(--color-border) / 10%));
+  }
+}
+
+.s-jt-key {
+  color: rgb(var(--color-primary));
+}
+
+.s-jt-colon {
+  color: rgb(var(--color-muted));
+  margin-right: 0.35em;
+}
+
+.s-jv-null {
+  color: rgb(var(--color-muted));
+  font-style: italic;
+}
+
+.s-jv-str {
+  color: #98c379;
+  word-break: break-all;
+}
+
+.s-jv-num {
+  color: #d19a66;
+}
+
+.s-jv-bool {
+  color: #c678dd;
+}
+
+.s-jv-str-raw {
+  color: #98c379;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.s-jt-type {
+  color: rgb(var(--color-muted) / 0.6);
+  font-size: var(--text-3xs, 0.5rem);
+  font-style: italic;
+  margin-left: 0.75em;
+  font-weight: 400;
+}
+
+.s-jt-badge {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-3xs, 0.5rem);
+  font-weight: 500;
+  background: rgb(var(--color-surface) / 0.6);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 0.3em;
+  line-height: 1.4;
+}
+
+.s-jt-badge.is-open {
+  color: rgb(var(--color-muted));
+  background: transparent;
+  border-color: transparent;
+  font-weight: 400;
+}
+
+.s-jt-preview {
+  color: rgb(var(--color-muted));
+  font-size: var(--text-3xs, 0.5rem);
+  font-weight: 400;
+  opacity: 0.7;
+}

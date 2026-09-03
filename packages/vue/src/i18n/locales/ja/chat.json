@@ -33,6 +33,17 @@
     "hikari::model.context": "コンテキスト",
     "hikari::model.pricing": "価格",
     "hikari::model.noData": "仕様情報がありません",
-    "hikari::chat.removeAttachment": "削除"
+    "hikari::chat.removeAttachment": "削除",
+    "hikari::context.title": "コンテキスト使用量",
+    "hikari::context.estimated": "推定値",
+    "hikari::context.used": "使用済み",
+    "hikari::context.of": "/",
+    "hikari::context.window": "コンテキストウィンドウ",
+    "hikari::context.prompt": "プロンプト",
+    "hikari::context.user": "ユーザー",
+    "hikari::context.thinking": "思考",
+    "hikari::context.tool": "ツール",
+    "hikari::context.output": "出力",
+    "hikari::context.free": "残り"
   }
 }

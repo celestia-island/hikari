@@ -1,0 +1,123 @@
+// Context-usage ring + hover popover (upstreamed for shittim-chest's
+// session context meter). Layout/typography ride the theme tokens; the
+// per-component segment colors are inline styles built from the
+// `--context-<key>` CSS-variable family supplied by the host palette.
+@use "./hikari-vars" as vars;
+
+.hk-ctx-ring {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: var(--radius-full, 999px);
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+}
+
+// Center label rendered through HProgressRing's overlay slot; font size is
+// set inline from the ring `size` prop.
+.hk-ctx-ring-center {
+  font-weight: 600;
+  line-height: 1;
+  color: rgb(var(--color-text));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.hk-ctx-pop {
+  width: 18rem;
+  padding: var(--space-12, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-text));
+}
+
+.hk-ctx-pop-model {
+  display: flex;
+}
+
+.hk-ctx-pop-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-6, 0.375rem);
+  margin-top: var(--space-8, 0.5rem);
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+.hk-ctx-pop-total-label {
+  color: rgb(var(--color-muted));
+}
+
+.hk-ctx-pop-total-num {
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-ctx-pop-total-of {
+  color: rgb(var(--color-muted));
+}
+
+.hk-ctx-pop-bar {
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+.hk-ctx-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.hk-ctx-legend-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--space-6, 0.375rem);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.hk-ctx-legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.hk-ctx-legend-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-ctx-legend-tokens {
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-ctx-legend-pct {
+  color: rgb(var(--color-muted));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 3ch;
+}
+
+.hk-ctx-est {
+  margin: var(--space-8, 0.5rem) 0 0;
+  padding: 0;
+  color: rgb(var(--color-muted));
+  font-size: var(--text-2xs, 0.625rem);
+  font-style: italic;
+}
+
+.hk-ctx-pop-empty {
+  margin-top: var(--space-8, 0.5rem);
+  color: rgb(var(--color-muted));
+  font-style: italic;
+  font-size: var(--text-2xs, 0.625rem);
+}

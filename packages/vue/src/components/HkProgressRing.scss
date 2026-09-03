@@ -28,6 +28,15 @@
   stroke: var(--hi-color-success, #3fb950);
 }
 
+// Segmented-mode arcs: segments without an explicit `color` fall back to
+// the theme primary (same default as the single-value fill).
+.hk-progress-ring-seg {
+  stroke: var(--hi-color-primary, #58a6ff);
+  transition:
+    stroke-dashoffset 0.3s ease,
+    stroke 0.3s ease;
+}
+
 .hk-progress-ring-exception .hk-progress-ring-fill {
   stroke: var(--hi-color-danger, #f85149);
 }

@@ -585,7 +585,7 @@ export default defineComponent({
     return () => {
       if (!shouldRender.value) return null;
 
-      const headerShown = props.title || props.closable || slots.header;
+      const headerShown = props.title || props.closable || slots.header || slots.headerLead;
 
       return (
         <Teleport to="body">
@@ -646,7 +646,15 @@ export default defineComponent({
                 >
                   {headerShown && (
                     <>
-                      <div class="hk-modal-header">
+                      <div
+                        class={[
+                          "hk-modal-header",
+                          slots.headerLead ? "hk-modal-header--lead" : "",
+                        ]}
+                      >
+                        {slots.headerLead && (
+                          <div class="hk-modal-header-lead">{slots.headerLead()}</div>
+                        )}
                         <h2 class="hk-modal-title">
                           {slots.header ? (props.title ?? "") : (props.title ?? "")}
                         </h2>

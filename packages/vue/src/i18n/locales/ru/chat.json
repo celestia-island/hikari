@@ -33,6 +33,17 @@
     "hikari::model.context": "Контекст",
     "hikari::model.pricing": "Цены",
     "hikari::model.noData": "Нет данных о модели",
-    "hikari::chat.removeAttachment": "Удалить"
+    "hikari::chat.removeAttachment": "Удалить",
+    "hikari::context.title": "Использование контекста",
+    "hikari::context.estimated": "Оценка",
+    "hikari::context.used": "Использовано",
+    "hikari::context.of": "из",
+    "hikari::context.window": "Контекстное окно",
+    "hikari::context.prompt": "Промпт",
+    "hikari::context.user": "Пользователь",
+    "hikari::context.thinking": "Рассуждение",
+    "hikari::context.tool": "Инструмент",
+    "hikari::context.output": "Вывод",
+    "hikari::context.free": "Свободно"
   }
 }

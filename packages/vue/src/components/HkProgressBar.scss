@@ -93,6 +93,22 @@
   }
 }
 
+// Segmented mode: blocks sit flush side by side; the track's own radius
+// and overflow clip shape the pill ends.
+.hk-progress-bar-track--segments {
+  display: flex;
+}
+
+.hk-progress-bar-seg {
+  height: 100%;
+  flex-shrink: 0;
+  // No per-block rounding — flush multi-color blocks would otherwise show
+  // hairlines at the seams.
+  border-radius: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(var(--color-primary));
+}
+
 @keyframes hk-progress-indeterminate {
   0% {
     left: -40%;

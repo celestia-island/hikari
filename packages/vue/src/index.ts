@@ -340,6 +340,7 @@ export {
 export { HkTokenUsageBadge as HTokenUsageBadge } from "./components/HkTokenUsageBadge";
 export { HkTokenUsagePanel as HTokenUsagePanel } from "./components/HkTokenUsagePanel";
 export { HkModelTag as HModelTag } from "./components/HkModelTag";
+export { HkContextRing as HContextRing, HkContextRing, type HkContextSegment } from "./components/HkContextRing";
 export {
   getModelMeta,
   registerModelCatalog,

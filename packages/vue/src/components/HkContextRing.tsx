@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, type PropType } from "vue";
 import { HModelTag, HPopover, HProgressBar, HProgressRing } from "@celestia-island/hikari";
 
 import type { PopupPlacement } from "./HkPopover";
@@ -167,6 +167,10 @@ export const HkContextRing = defineComponent({
         toggle();
       }
     }
+
+    // HkModelTag never clears on unmount, but a pending show/hide timer
+    // firing on a dead instance is pure waste — drop both here.
+    onBeforeUnmount(clearTimers);
 
     return () => {
       const windowText = hasWindow.value

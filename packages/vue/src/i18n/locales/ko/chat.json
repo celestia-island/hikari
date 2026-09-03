@@ -33,6 +33,17 @@
     "hikari::model.context": "컨텍스트",
     "hikari::model.pricing": "가격",
     "hikari::model.noData": "사양 정보 없음",
-    "hikari::chat.removeAttachment": "삭제"
+    "hikari::chat.removeAttachment": "삭제",
+    "hikari::context.title": "컨텍스트 사용량",
+    "hikari::context.estimated": "추정치",
+    "hikari::context.used": "사용됨",
+    "hikari::context.of": "/",
+    "hikari::context.window": "컨텍스트 윈도우",
+    "hikari::context.prompt": "프롬프트",
+    "hikari::context.user": "사용자",
+    "hikari::context.thinking": "추론",
+    "hikari::context.tool": "도구",
+    "hikari::context.output": "출력",
+    "hikari::context.free": "남음"
   }
 }

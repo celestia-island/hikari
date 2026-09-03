@@ -33,6 +33,17 @@
     "hikari::model.context": "Context",
     "hikari::model.pricing": "Pricing",
     "hikari::model.noData": "No spec available",
-    "hikari::chat.removeAttachment": "Delete"
+    "hikari::chat.removeAttachment": "Delete",
+    "hikari::context.title": "Context usage",
+    "hikari::context.estimated": "Estimated",
+    "hikari::context.used": "Used",
+    "hikari::context.of": "of",
+    "hikari::context.window": "Context window",
+    "hikari::context.prompt": "Prompt",
+    "hikari::context.user": "User",
+    "hikari::context.thinking": "Thinking",
+    "hikari::context.tool": "Tool",
+    "hikari::context.output": "Output",
+    "hikari::context.free": "Free"
   }
 }

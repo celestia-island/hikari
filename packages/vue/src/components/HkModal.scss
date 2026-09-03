@@ -147,6 +147,24 @@
   flex-shrink: 0;
 }
 
+// Compact lead content (e.g. a context ring) rendered before the title.
+// The title's auto right margin overrides the space-between distribution,
+// so the lead + title cluster sits on the left and the close button stays
+// on the right edge.
+.hk-modal-header-lead {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hk-modal-header--lead {
+  gap: var(--hk-modal-header-lead-gap, 0.75rem);
+
+  .hk-modal-title {
+    margin-right: auto;
+  }
+}
+
 .hk-modal-title {
   font-size: var(--hk-modal-title-font-size, 1.125rem);
   font-weight: var(--hk-modal-title-font-weight, 700);

@@ -33,6 +33,17 @@
     "hikari::model.context": "上下文",
     "hikari::model.pricing": "定价",
     "hikari::model.noData": "暂无规格信息",
-    "hikari::chat.removeAttachment": "删除"
+    "hikari::chat.removeAttachment": "删除",
+    "hikari::context.title": "上下文占用",
+    "hikari::context.estimated": "估算值",
+    "hikari::context.used": "已用",
+    "hikari::context.of": "/",
+    "hikari::context.window": "上下文窗口",
+    "hikari::context.prompt": "系统提示词",
+    "hikari::context.user": "用户对话",
+    "hikari::context.thinking": "思考过程",
+    "hikari::context.tool": "工具调用",
+    "hikari::context.output": "回复文本",
+    "hikari::context.free": "剩余"
   }
 }

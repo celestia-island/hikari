@@ -33,6 +33,17 @@
     "hikari::model.context": "السياق",
     "hikari::model.pricing": "التسعير",
     "hikari::model.noData": "لا توجد مواصفات",
-    "hikari::chat.removeAttachment": "حذف"
+    "hikari::chat.removeAttachment": "حذف",
+    "hikari::context.title": "استخدام السياق",
+    "hikari::context.estimated": "تقديري",
+    "hikari::context.used": "المستخدم",
+    "hikari::context.of": "من",
+    "hikari::context.window": "نافذة السياق",
+    "hikari::context.prompt": "الموجه",
+    "hikari::context.user": "المستخدم",
+    "hikari::context.thinking": "التفكير",
+    "hikari::context.tool": "الأداة",
+    "hikari::context.output": "المخرجات",
+    "hikari::context.free": "المتبقي"
   }
 }

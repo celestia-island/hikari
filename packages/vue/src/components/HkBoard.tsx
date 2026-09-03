@@ -44,6 +44,7 @@ import { useBoardCamera } from "../composables/useBoardCamera";
 import HkMinimap, { type MinimapBox } from "./HkMinimap";
 import {
   boardBBox,
+  boardStepRung,
   type BoardCamera,
   type BoardPoint,
   type BoardRect,
@@ -52,13 +53,19 @@ import {
 import {
   boardAnchor,
   boardEdgePath,
+  boardFanOrdinals,
   boardViaPath,
   type BoardAnchorMode,
   type BoardEdgeStyle,
 } from "../utils/boardEdges";
 import "./HkBoard.scss";
 
-/** A node on the board. `hidden` nodes are junction-only (invisible). */
+/**
+ * A node on the board. `hidden` nodes are junction-only (invisible).
+ * During a node drag the board mutates the node objects IN PLACE and
+ * emits the live reference through `node-move` / `nodeClick` — pass
+ * deep-reactive, mutable node objects, not frozen copies.
+ */
 export interface BoardNodeInput {
   id: string;
   x: number;
@@ -138,16 +145,7 @@ export default defineComponent({
     });
 
     /** Edges sharing a `from` node fan across its border (天女散花). */
-    const fanOrdinal = computed(() => {
-      const counters = new Map<string, number>();
-      const ordinals = new Map<string, { index: number; count: number }>();
-      for (const e of props.edges) {
-        const next = (counters.get(e.from) ?? 0) + 1;
-        counters.set(e.from, next);
-        ordinals.set(e.id, { index: next - 1, count: counters.get(e.from)! });
-      }
-      return ordinals;
-    });
+    const fanOrdinal = computed(() => boardFanOrdinals(props.edges));
 
     const edgePaths = computed(() => {
       const rects = rectOf.value;
@@ -209,6 +207,9 @@ export default defineComponent({
     let panState: { px: number; py: number } | null = null;
     let pinchBase: { cam: BoardCamera; dist: number; mid: BoardPoint } | null = null;
     let dragState: { node: BoardNodeInput; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+    // Every node press is tracked (draggable or not) so read-only boards
+    // — SCADA scenes, mind maps — still get `nodeClick` on a short tap.
+    let pressed: { id: string; pointerId: number; x: number; y: number } | null = null;
 
     const localPoint = (e: PointerEvent | WheelEvent): BoardPoint => {
       const rect = viewportRef.value?.getBoundingClientRect();
@@ -230,23 +231,39 @@ export default defineComponent({
 
     let resizeObs: ResizeObserver | null = null;
 
+    /** Snapshot the camera + current finger pair as the pinch baseline —
+     *  at gesture start, or whenever the pair's composition changes — so
+     *  the scale keeps following the fingers 1:1 without a jump. */
+    function rearmPinch(): void {
+      const [a, b] = [...pointers.values()];
+      if (!a || !b) return;
+      const rect = viewportRef.value?.getBoundingClientRect();
+      pinchBase = {
+        cam: { ...camera.value },
+        dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        mid: {
+          x: (a.x + b.x) / 2 - (rect?.left ?? 0),
+          y: (a.y + b.y) / 2 - (rect?.top ?? 0),
+        },
+      };
+    }
+
     function onPointerDown(e: PointerEvent): void {
       if (!props.interactive) return;
+      // Defensive prune: tracked pointers no gesture is using are stale
+      // (their up/cancel AND capture loss were both lost) — drop them so
+      // the next single-finger touch cannot become a phantom pinch.
+      if (pointers.size > 0 && !pinchBase && !panState && !dragState) pointers.clear();
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pointers.size === 2) {
-        // pinch begins: snapshot camera + finger geometry
-        const [a, b] = [...pointers.values()];
-        pinchBase = {
-          cam: { ...camera.value },
-          dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
-          mid: localPoint(e),
-        };
-        panState = null;
-        return;
-      }
+      // Capture EVERY finger: up/cancel are only guaranteed while capture
+      // holds, and an uncaptured pinch finger would never leave `pointers`.
+      viewportRef.value?.setPointerCapture(e.pointerId);
       if (pointers.size === 1) {
         panState = { px: e.clientX, py: e.clientY };
-        viewportRef.value?.setPointerCapture(e.pointerId);
+      } else if (pointers.size === 2) {
+        // pinch begins: snapshot camera + finger geometry, suspend panning
+        rearmPinch();
+        panState = null;
       }
     }
 
@@ -256,10 +273,12 @@ export default defineComponent({
       if (pinchBase && pointers.size >= 2) {
         const [a, b] = [...pointers.values()];
         const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        const rect = viewportRef.value?.getBoundingClientRect();
         const mid = {
-          x: (a.x + b.x) / 2 - (viewportRef.value?.getBoundingClientRect().left ?? 0),
-          y: (a.y + b.y) / 2 - (viewportRef.value?.getBoundingClientRect().top ?? 0),
+          x: (a.x + b.x) / 2 - (rect?.left ?? 0),
+          y: (a.y + b.y) / 2 - (rect?.top ?? 0),
         };
+        pinchBase.mid = mid;
         cam.pinchZoom(pinchBase.cam, dist / pinchBase.dist, mid);
         return;
       }
@@ -280,17 +299,62 @@ export default defineComponent({
     }
 
     function onPointerUp(e: PointerEvent): void {
-      pointers.delete(e.pointerId);
-      if (pointers.size < 2 && pinchBase) {
-        pinchBase = null;
-        cam.settlePinch();
-      }
-      if (pointers.size === 0) panState = null;
-      if (dragState && !dragState.moved) emit("nodeClick", dragState.node);
+      const press = pressed;
+      pressed = null;
       dragState = null;
+      retirePointer(e.pointerId);
+      // nodeClick: a press that belongs to THIS pointer and stayed within
+      // the drag slop clicks — regardless of `draggable`.
+      if (press && press.pointerId === e.pointerId
+        && Math.abs(e.clientX - press.x) + Math.abs(e.clientY - press.y) < 3) {
+        const node = props.nodes.find((n) => n.id === press.id);
+        if (node) emit("nodeClick", node);
+      }
+    }
+
+    function onPointerCancel(e: PointerEvent): void {
+      // An aborted gesture must never synthesize a click: prune state only.
+      pressed = null;
+      dragState = null;
+      retirePointer(e.pointerId);
+    }
+
+    /** A pointer left the gesture (up, cancel, or capture loss): prune it,
+     *  re-baseline or settle the pinch, and hand panning to any surviving
+     *  pointer so a pinch that ends with one finger down keeps panning. */
+    function retirePointer(pointerId: number): void {
+      if (!pointers.delete(pointerId)) return;
+      if (pinchBase && pointers.size >= 2) {
+        // The pinch pair composition changed (a finger lifted while two
+        // or more remain): re-baseline onto the surviving pair.
+        rearmPinch();
+        return;
+      }
+      if (pinchBase) {
+        const mid = pinchBase.mid;
+        pinchBase = null;
+        cam.settlePinch(mid);
+      }
+      const rest = pointers.values().next().value;
+      panState = rest ? { px: rest.x, py: rest.y } : null;
+    }
+
+    /** Capture-loss backstop: up/cancel are only guaranteed while pointer
+     *  capture holds; a pointer that was released without an up is pruned
+     *  here — otherwise the next single-finger touch would silently become
+     *  a phantom pinch. The event fires on the capture target and does not
+     *  bubble, hence the capture-phase listener; after a normal up it is a
+     *  no-op (the pointer was already pruned there). */
+    function onLostPointerCapture(e: PointerEvent): void {
+      pressed = null;
+      dragState = null;
+      retirePointer(e.pointerId);
     }
 
     function onNodePointerDown(e: PointerEvent, node: BoardNodeInput): void {
+      pressed = { id: node.id, pointerId: e.pointerId, x: e.clientX, y: e.clientY };
+      // Draggable nodes own the gesture (no board pan); every other press
+      // bubbles on so the board can pan — and still click on a short tap.
       if (!props.interactive || !node.draggable) return;
       e.stopPropagation();
       dragState = { node, sx: e.clientX, sy: e.clientY, ox: node.x, oy: node.y, moved: false };
@@ -308,12 +372,17 @@ export default defineComponent({
       resizeObs = new ResizeObserver(refreshSize);
       if (viewportRef.value) resizeObs.observe(viewportRef.value);
       viewportRef.value?.addEventListener("wheel", onWheel, { passive: false });
+      // Capture phase: lostpointercapture does not bubble and fires on the
+      // element that held capture.
+      viewportRef.value?.addEventListener("lostpointercapture", onLostPointerCapture, true);
       if (props.fitOnMount) cam.fit();
     });
 
     onBeforeUnmount(() => {
+      cam.stop(); // kill any in-flight tween rAF
       resizeObs?.disconnect();
       viewportRef.value?.removeEventListener("wheel", onWheel);
+      viewportRef.value?.removeEventListener("lostpointercapture", onLostPointerCapture, true);
     });
 
     expose({
@@ -332,7 +401,7 @@ export default defineComponent({
         onPointerdown={onPointerDown}
         onPointermove={onPointerMove}
         onPointerup={onPointerUp}
-        onPointercancel={onPointerUp}
+        onPointercancel={onPointerCancel}
       >
         <div class="hk-board-grid" style={gridStyle.value} />
         <div class="hk-board-world" style={worldStyle.value}>
@@ -384,7 +453,7 @@ export default defineComponent({
               minZoomPercent={Math.round(props.minK * 100)}
               maxZoomPercent={Math.round(props.maxK * 100)}
               showReset
-              onZoomTo={(percent: number) => cam.zoomToPercent(percent)}
+              onZoomTo={(percent: number) => cam.zoomToK(boardStepRung(camera.value.k, percent / 100))}
               onReset={() => cam.fit()}
               onPanDelta={(dx: number, dy: number) => cam.panBy(dx, dy)}
             />

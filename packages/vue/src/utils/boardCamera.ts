@@ -14,7 +14,9 @@
  *  - pan is CLAMPED so the content bbox can never be pushed fully out of
  *    view (half a viewport of slack on each side); content smaller than
  *    the viewport re-centers;
- *  - `boardFit` fits the whole bbox (pad + floor + cap);
+ *  - `boardFit` fits the whole bbox (pad + cap) and may shrink as far as
+ *    needed to show the whole board — fit sits below the interaction
+ *    ladder freely;
  *  - `boardTweenCam` eases between two cameras with an ease-out curve and
  *    GEOMETRIC k interpolation (log-space lerp) so animated zooms still
  *    land exactly on ladder rungs.
@@ -51,8 +53,6 @@ export interface BoardViewport {
 export const BOARD_ZOOM_FACTOR = 1.05;
 export const BOARD_K_MIN = 0.2;
 export const BOARD_K_MAX = 4;
-/** fit() may shrink as far as needed to show the whole board. */
-export const BOARD_FIT_FLOOR = 0.2;
 /** fit() never blows above this (nearly-empty boards). */
 export const BOARD_FIT_CAP = 1.25;
 /** Padding around the bbox used by fit(), world px. */
@@ -85,6 +85,26 @@ export function quantizeBoardStep(base: number, ratio: number): number {
   const raw = base * ratio;
   const level = Math.round(boardLevelOf(raw) - boardLevelOf(base));
   return boardClampK(base * boardKOf(level));
+}
+
+/**
+ * Quantize a fixed-step zoom target (the minimap ± button: linear ±5% on
+ * a geometric ladder) into a rung, in the step's DIRECTION. Nearest-rung
+ * rounding alone can collapse onto the rung the camera already sits on —
+ * from the last reachable rung below the cap, a +5% percent target rounds
+ * straight back to it and the press does nothing. A target that resolves
+ * to the current rung is therefore pushed ONE rung further in the press
+ * direction (clamped to the global bounds); targets that already resolve
+ * elsewhere are untouched.
+ */
+export function boardStepRung(currentK: number, targetK: number): number {
+  const clamped = boardClampK(targetK);
+  const rung = quantizeBoardK(clamped);
+  const currentLevel = Math.round(boardLevelOf(boardClampK(currentK)));
+  const rungLevel = Math.round(boardLevelOf(rung));
+  if (rungLevel !== currentLevel) return rung;
+  const dir = clamped >= currentK ? 1 : -1;
+  return boardClampK(boardKOf(currentLevel + dir));
 }
 
 export function boardToScreen(cam: BoardCamera, wx: number, wy: number): BoardPoint {
@@ -136,19 +156,20 @@ export function boardClampPan(
 
 /**
  * Fit the whole content bbox into the viewport (centered, padded). Wide
- * boards shrink fully into view; tiny boards never blow up past the cap.
+ * boards shrink as far as needed to show everything — fit is allowed
+ * below the interaction minimum (the ladder is for gestures, not for
+ * the initial framing); tiny boards never blow up past the cap.
  */
 export function boardFit(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: { pad?: number; floor?: number; cap?: number } = {},
+  opts: { pad?: number; cap?: number } = {},
 ): BoardCamera {
   const pad = opts.pad ?? BOARD_FIT_PAD;
-  const floor = opts.floor ?? BOARD_FIT_FLOOR;
   const cap = opts.cap ?? BOARD_FIT_CAP;
   const kw = content.w > 0 ? (viewport.w - pad * 2) / content.w : cap;
   const kh = content.h > 0 ? (viewport.h - pad * 2) / content.h : cap;
-  const k = Math.min(cap, Math.max(floor, Math.min(kw, kh)));
+  const k = Math.min(cap, Math.min(kw, kh));
   return {
     k,
     x: (viewport.w - content.w * k) / 2 - content.x * k,

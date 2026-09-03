@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   BOARD_FIT_CAP,
+  BOARD_K_MAX,
   BOARD_ZOOM_FACTOR,
   boardBBox,
   boardClampPan,
   boardEaseOutCubic,
   boardFit,
   boardLevelOf,
+  boardStepRung,
   boardToScreen,
   boardTweenCam,
   boardToWorld,
@@ -51,6 +53,20 @@ describe("boardCamera — anchor zoom", () => {
     expect(zoomed.k).toBe(1.5);
   });
 
+  it("keeps the anchor world point fixed when zooming to a QUANTIZED rung", () => {
+    // The settle path (wheel notch / pinch release) must quantize k FIRST
+    // and then solve the anchored pan for the quantized k — anchoring on
+    // the raw k and swapping the rung in afterwards jumps the world point.
+    const cam = { x: 40, y: -20, k: 2.3 };
+    const anchor = { x: 300, y: 200 };
+    const worldBefore = boardToWorld(cam, anchor.x, anchor.y);
+    const settled = boardZoomAt(cam, quantizeBoardK(cam.k), anchor);
+    const worldAfter = boardToWorld(settled, anchor.x, anchor.y);
+    expect(worldAfter.x).toBeCloseTo(worldBefore.x, 6);
+    expect(worldAfter.y).toBeCloseTo(worldBefore.y, 6);
+    expect(settled.k).toBe(quantizeBoardK(cam.k));
+  });
+
   it("round-trips screen→world→screen", () => {
     const cam = { x: -130, y: 88, k: 1.3 };
     const p = boardToScreen(cam, 42, -7);
@@ -82,6 +98,45 @@ describe("boardCamera — pan clamp + fit", () => {
     expect(cam.k).toBeCloseTo(Math.min((800 - 80) / 2000, (600 - 80) / 1200), 6);
     const tiny = boardFit({ x: 0, y: 0, w: 60, h: 40 }, viewport);
     expect(tiny.k).toBeLessThanOrEqual(BOARD_FIT_CAP);
+  });
+
+  it("shrinks below the interaction minimum to fit very wide boards", () => {
+    // 8000 world px in an 800 px viewport: fit k = 720/8000 = 0.09, far
+    // below the old 0.2 floor that cropped such boards on open.
+    const wide = { x: 0, y: 0, w: 8000, h: 600 };
+    const cam = boardFit(wide, viewport);
+    expect(cam.k).toBeCloseTo((800 - 80) / 8000, 6);
+    expect(cam.k).toBeLessThan(0.2);
+    // the whole board lands inside the viewport
+    const tl = boardToScreen(cam, 0, 0);
+    const br = boardToScreen(cam, 8000, 600);
+    expect(tl.x).toBeGreaterThanOrEqual(0);
+    expect(br.x).toBeLessThanOrEqual(viewport.w);
+  });
+});
+
+describe("boardCamera — minimap step rungs", () => {
+  const lastRung = BOARD_ZOOM_FACTOR ** 28; // ≈3.92 — last rung below the cap
+
+  it("pushes a linear +5% step that nearest-rounds onto the current rung", () => {
+    // from 392%, the + button targets 397% — nearest rounding falls back
+    // onto rung 28 (the dead band), so the step resolves one rung further
+    // and clamps to the cap.
+    expect(quantizeBoardK(3.97)).toBeCloseTo(lastRung, 5);
+    expect(boardStepRung(lastRung, 3.97)).toBe(BOARD_K_MAX);
+  });
+
+  it("pushes a linear −5% step onto the rung below, not the current one", () => {
+    expect(boardStepRung(lastRung, 3.87)).toBeCloseTo(BOARD_ZOOM_FACTOR ** 27, 5);
+  });
+
+  it("leaves steps that already resolve to a different rung untouched", () => {
+    expect(boardStepRung(1, 1.05)).toBeCloseTo(BOARD_ZOOM_FACTOR, 5);
+    expect(boardStepRung(1, 0.95)).toBeCloseTo(BOARD_ZOOM_FACTOR ** -1, 5);
+  });
+
+  it("steps from the ladder floor up onto the nearest live rung", () => {
+    expect(boardStepRung(0.2, 0.25)).toBeCloseTo(BOARD_ZOOM_FACTOR ** -28, 5);
   });
 });
 

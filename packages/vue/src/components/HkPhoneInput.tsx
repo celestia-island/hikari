@@ -102,15 +102,14 @@ export const HkPhoneInput = defineComponent({
     );
 
     /** Picker rows come from the shared affix catalog shape; the
-     *  keywords haystack keeps the old filter reach: en/zh names plus
-     *  the optional zh search alias, ISO code, bare and zero-prefixed
-     *  dial digits ("86"/"0086"). */
+     *  keywords haystack keeps the old filter reach: en/zh names, ISO
+     *  code, bare and zero-prefixed dial digits ("86"/"0086"). */
     const dialOptions = computed<readonly HkAffixOption[]>(() =>
       props.countries.map((c) => ({
         key: c.iso,
         label: dialCodeName(c, locale),
         meta: `+${c.dial}`,
-        keywords: `${c.en} ${c.zh} ${c.zhAlias ?? ""} ${c.iso} +${c.dial} 00${c.dial}`,
+        keywords: `${c.en} ${c.zh} ${c.iso} +${c.dial} 00${c.dial}`,
       })),
     );
 

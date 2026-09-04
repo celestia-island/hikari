@@ -4,15 +4,12 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import HkFileField from "./HkFileField";
 
 vi.mock("./HkFileBrowserDialog", () => {
-  const emittedConfirms: { name: string; path: string; size?: number }[][] = [];
-  let toggle: ((v: boolean) => void) | null = null;
   return {
     default: defineComponent({
       name: "HkFileBrowserDialogStub",
       props: { modelValue: { type: Boolean, default: false }, multiple: { type: Boolean, default: false } },
       emits: ["update:modelValue", "confirm"],
       setup(props, { emit }) {
-        toggle = (v: boolean) => emit("update:modelValue", v);
         return () =>
           props.modelValue
             ? h(
@@ -27,7 +24,6 @@ vi.mock("./HkFileBrowserDialog", () => {
                           { name: "remote-b.csv", path: "/data/remote-b.csv", size: 4 },
                         ]
                       : [{ name: "remote-a.csv", path: "/data/remote-a.csv", size: 3 }];
-                    emittedConfirms.push(files);
                     emit("confirm", files);
                     emit("update:modelValue", false);
                   },
@@ -36,9 +32,6 @@ vi.mock("./HkFileBrowserDialog", () => {
             : null;
       },
     }),
-    // Exposed for the remote-mode test to drive the stub.
-    __emittedConfirms: emittedConfirms,
-    __setOpen: (fn: (v: boolean) => void | null) => { toggle = fn; },
   };
 });
 

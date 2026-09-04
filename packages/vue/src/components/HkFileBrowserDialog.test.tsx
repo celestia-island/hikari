@@ -228,6 +228,46 @@ describe("HkFileBrowserDialog selection and confirm", () => {
     expect(state.open.value).toBe(false);
   });
 
+  it("prunes vanished selections when the listing refreshes", async () => {
+    const entries: Array<{ name: string; kind: "file"; size: number }> = [
+      { name: "data.csv", kind: "file", size: 10 },
+    ];
+    const adapter: RemoteFsAdapter = {
+      list: vi.fn(async (path: string) => ({ path, entries: [...entries] })),
+    };
+    const state = mountDialog(adapter);
+    await flush();
+
+    await clickRow("data.csv");
+    const confirmBtn = q<HTMLButtonElement>(".hk-file-browser-confirm");
+    expect(confirmBtn.disabled).toBe(false);
+
+    // The file vanishes server-side; the next refresh must drop the dead
+    // selection instead of leaving confirm armed over nothing.
+    entries.length = 0;
+    q<HTMLButtonElement>('button[aria-label="Refresh"]').click();
+    await flush();
+    expect(rowNames()).toEqual([]);
+    expect(confirmBtn.disabled).toBe(true);
+  });
+
+  it("drops hidden selections when the type filter changes", async () => {
+    const adapter = makeAdapter();
+    const state = mountDialog(adapter, { accept: ".csv,.txt", multiple: true });
+    await flush();
+
+    await clickRow("data.csv");
+    await clickRow("notes.txt");
+    await chooseFilter(".csv");
+    // notes.txt is hidden by the filter and must not ride along invisibly.
+    const confirmBtn = q<HTMLButtonElement>(".hk-file-browser-confirm");
+    confirmBtn.click();
+    await flush();
+    expect(state.confirmed).toEqual([
+      [{ name: "data.csv", path: "/data.csv", size: 2048 }],
+    ]);
+  });
+
   it("confirms immediately on file double-click", async () => {
     const adapter = makeAdapter();
     const state = mountDialog(adapter);

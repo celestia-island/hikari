@@ -93,6 +93,9 @@ export default defineComponent({
 
     function openPicker() {
       if (props.disabled) return;
+      // Remote mode without an adapter cannot open anything: clicking is a
+      // no-op rather than a dialog that would later pop open on its own.
+      if (props.mode === "remote" && !props.adapter) return;
       if (props.mode === "remote") {
         dialogOpen.value = true;
         return;
@@ -112,11 +115,11 @@ export default defineComponent({
       dialogOpen.value = false;
     }
 
-    // External clears (form reset) collapse the dialog state too.
+    // External clears (form reset) close the remote dialog too.
     watch(
       () => props.modelValue,
       (value) => {
-        if (value.length === 0) dialogOpen.value = dialogOpen.value && false;
+        if (value.length === 0) dialogOpen.value = false;
       },
     );
 

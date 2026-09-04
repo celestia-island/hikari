@@ -80,6 +80,7 @@ export {
   type RemoteFsAdapter,
   type FileQuickLink,
   type PickedFile,
+  acceptExtensions,
 } from "./components/filePicker";
 export { default as HToast } from "./components/HkToast";
 export { default as HTooltip } from "./components/HkTooltip";

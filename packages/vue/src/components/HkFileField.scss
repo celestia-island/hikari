@@ -13,7 +13,7 @@
 
 .hk-file-field-required {
   margin-left: var(--space-4);
-  color: var(--hi-color-danger, #d33);
+  color: var(--hi-color-danger);
 }
 
 .hk-file-box {
@@ -34,7 +34,7 @@
   }
 
   &[data-error] {
-    border-color: var(--hi-color-danger, #d33);
+    border-color: var(--hi-color-danger);
   }
 
   &[data-disabled] {
@@ -58,7 +58,7 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #7c5cff);
+    outline: 2px solid var(--hi-color-primary);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
   }
@@ -106,7 +106,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #7c5cff);
+    outline: 2px solid var(--hi-color-primary);
     outline-offset: 1px;
   }
 }
@@ -132,5 +132,5 @@
 }
 
 .hk-file-field-error {
-  color: var(--hi-color-danger, #d33);
+  color: var(--hi-color-danger);
 }

@@ -63,12 +63,13 @@ function compareEntries(a: RemoteFileEntry, b: RemoteFileEntry): number {
   return a.name.localeCompare(b.name);
 }
 
-/** Human-readable byte size on the picker's B/KB/MB display scale. */
+/** Human-readable byte size on the picker's B/KB/MB/GB display scale. */
 function formatSize(size: number | undefined): string {
   if (size === undefined || size === null || Number.isNaN(size)) return "";
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 /** Best-effort modified timestamp: epoch millis render as locale strings. */
@@ -159,6 +160,7 @@ export default defineComponent({
         const listing = await props.adapter.list(currentPath.value);
         if (seq !== listSeq) return;
         entries.value = [...listing.entries].sort(compareEntries);
+        pruneSelection();
       } catch (err) {
         if (seq !== listSeq) return;
         entries.value = [];
@@ -166,6 +168,18 @@ export default defineComponent({
       } finally {
         if (seq === listSeq) loading.value = false;
       }
+    }
+
+    /**
+     * Drop selected names that the fresh listing (or the active filter)
+     * no longer shows — a confirm button left enabled over vanished
+     * entries would silently no-op.
+     */
+    function pruneSelection(visible: RemoteFileEntry[] = entries.value) {
+      const present = new Set(visible.map((entry) => entry.name));
+      if (selected.value.size === 0) return;
+      const next = new Set([...selected.value].filter((name) => present.has(name)));
+      if (next.size !== selected.value.size) selected.value = next;
     }
 
     // Every open starts a fresh browsing session at initialPath; closing
@@ -344,7 +358,9 @@ export default defineComponent({
       const entry = selectedEntry.value;
       if (!renaming.value || !entry || !adapter.rename) return;
       const toName = renameValue.value.trim();
-      if (!toName) {
+      // The adapter contract takes a bare sibling name: path separators or
+      // dot segments would escape the current directory.
+      if (!toName || toName === "." || toName === ".." || /[/\\]/.test(toName)) {
         renameError.value = true;
         return;
       }
@@ -408,7 +424,7 @@ export default defineComponent({
     function renderPathbar() {
       return (
         <div class="hk-file-browser-pathbar">
-          <nav class="hk-file-browser-crumbs">
+          <nav class="hk-file-browser-crumbs" aria-label={t("hikari::filePicker.currentPath", "Current path")}>
             {breadcrumbs.value.map((crumb) =>
               crumb.current ? (
                 <span
@@ -539,6 +555,9 @@ export default defineComponent({
                   options={filterOptions.value}
                   onUpdate:modelValue={(v: string) => {
                     filterExt.value = v;
+                    // Entries the new filter hides must not ride along in
+                    // the selection to a confirm the operator cannot see.
+                    pruneSelection(visibleEntries.value);
                   }}
                 />
               </div>
@@ -640,6 +659,7 @@ export default defineComponent({
               class="hk-file-browser-row"
               data-kind={entry.kind}
               data-selected={selected.value.has(entry.name) || undefined}
+              aria-pressed={selected.value.has(entry.name)}
               onClick={() => onEntryClick(entry)}
               onDblclick={() => onEntryActivate(entry)}
             >
@@ -666,6 +686,7 @@ export default defineComponent({
               class="hk-file-browser-tile"
               data-kind={entry.kind}
               data-selected={selected.value.has(entry.name) || undefined}
+              aria-pressed={selected.value.has(entry.name)}
               onClick={() => onEntryClick(entry)}
               onDblclick={() => onEntryActivate(entry)}
             >

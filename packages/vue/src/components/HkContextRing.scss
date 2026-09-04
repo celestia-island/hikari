@@ -36,6 +36,15 @@
   color: rgb(var(--color-text));
 }
 
+/* Mobile sheet mode: the docked sheet spans the viewport, so the fixed
+ * 18rem pop would hug the sheet's left edge with dead space to the right.
+ * Fill the sheet instead — the panel chrome keeps its own symmetric
+ * horizontal gutters (the glass content padding), so the bar and legend
+ * get equal left/right insets. Desktop stays anchored at 18rem. */
+.hk-popover-panel.hk-is-sheet .hk-ctx-pop {
+  width: 100%;
+}
+
 .hk-ctx-pop-model {
   display: flex;
 }

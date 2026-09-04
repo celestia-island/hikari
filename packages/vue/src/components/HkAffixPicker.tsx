@@ -1,8 +1,21 @@
-import { computed, defineComponent, ref, watch, type PropType, type SlotsType } from "vue";
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  onBeforeUnmount,
+  ref,
+  watch,
+  type PropType,
+  type SlotsType,
+} from "vue";
 
 import { ChevronDown, Plus, Search, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
+import {
+  attachOverlayScrollbars,
+  type OverlayScrollbarHandle,
+} from "../composables/useOverlayScrollbar";
 
 import HkInput from "./HkInput";
 import HkListTransition from "./HkListTransition";
@@ -116,14 +129,57 @@ export const HkAffixPicker = defineComponent({
      *  are outside THIS popup, and the panel's outside-close must not
      *  tear the tag list down mid-decision. */
     const confirmHeld = ref(false);
+    /** The scrolling option list and its overlay-scrollbar host (see the
+     *  default slot — the host wraps ONLY the list viewport, not the
+     *  header/search band). */
+    const listRef = ref<HTMLElement | null>(null);
+    const scrollHostRef = ref<HTMLElement | null>(null);
+    /** Live overlay-scrollbar handle for the open popup; null when the
+     *  popup is closed (content not mounted). */
+    let scrollbar: OverlayScrollbarHandle | null = null;
+    /** The viewport element `scrollbar` is currently attached to, so a
+     *  remounted list (the empty-state swap) can be told apart from the
+     *  same in-flight list across content-size updates. */
+    let scrollbarViewport: HTMLElement | null = null;
+
+    function detachScrollbar() {
+      scrollbar?.detach();
+      scrollbar = null;
+      scrollbarViewport = null;
+    }
+
+    function attachScrollbar() {
+      detachScrollbar();
+      if (listRef.value && scrollHostRef.value) {
+        scrollbarViewport = listRef.value;
+        scrollbar = attachOverlayScrollbars(listRef.value, {
+          axis: "vertical",
+          host: scrollHostRef.value,
+        });
+      }
+    }
 
     // A fresh open starts calm: empty filter.
     watch(open, (v) => {
       if (!v) {
         query.value = "";
       }
+      if (v) {
+        // The list mounts on this very render — attach the overlay
+        // scrollbar once the DOM has landed. A same-tick open→close
+        // must not arm it on the leaving popup (the close branch
+        // already detached it).
+        void nextTick(() => {
+          if (!open.value) return;
+          attachScrollbar();
+        });
+      } else {
+        detachScrollbar();
+      }
       emit("update:open", v);
     });
+
+    onBeforeUnmount(detachScrollbar);
 
     const selectedKeys = computed<readonly string[]>(() =>
       Array.isArray(props.selected) ? props.selected : props.selected ? [props.selected] : [],
@@ -149,6 +205,29 @@ export const HkAffixPicker = defineComponent({
         return !!o.keywords && o.keywords.toLowerCase().includes(q);
       });
     });
+
+    // Content-size changes from the search filter change the thumb
+    // geometry without resizing the viewport — keep it in sync on the
+    // live scrollbar (no-op while the popup is closed). Post-flush so
+    // the DOM (esp. a remounted list after the empty-state swap) has
+    // landed and the template refs point at the live nodes before we
+    // decide whether to attach, re-attach or update.
+    watch(
+      [filteredRows, query],
+      () => {
+        if (!open.value) return;
+        if (!listRef.value) {
+          detachScrollbar();
+          return;
+        }
+        if (listRef.value !== scrollbarViewport) {
+          attachScrollbar();
+          return;
+        }
+        scrollbar?.update();
+      },
+      { flush: "post" },
+    );
 
     /** Exact label match suppresses the custom row while the user is
      *  simply re-typing an existing entry. */
@@ -394,8 +473,9 @@ export const HkAffixPicker = defineComponent({
               ),
               default: () =>
                 rows.length > 0 || customVisible.value ? (
-                  <div class="hk-affix-list">
-                    {rows.map((option) => {
+                  <div class="hk-affix-scroll" ref={scrollHostRef}>
+                    <div class="hk-affix-list" ref={listRef}>
+                      {rows.map((option) => {
                       const active =
                         props.mode === "single"
                           ? selectedKeys.value.includes(option.key)
@@ -443,6 +523,7 @@ export const HkAffixPicker = defineComponent({
                         </span>
                       </button>
                     )}
+                    </div>
                   </div>
                 ) : (
                   <div class="hk-affix-empty">{emptyText}</div>

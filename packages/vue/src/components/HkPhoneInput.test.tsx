@@ -101,7 +101,7 @@ describe("HkPhoneInput", () => {
     expect(events.change.at(-1)).toBe("+8613812345678");
   });
 
-  it("lists catalog rows with flags and codes when opened", async () => {
+  it("lists catalog rows with names and codes when opened", async () => {
     const { container } = mountPhone();
     await openPicker(container);
     const rows = pickerRows();
@@ -109,6 +109,12 @@ describe("HkPhoneInput", () => {
     const first = rows[0];
     expect(first.textContent).toContain("China");
     expect(first.textContent).toContain("+86");
+    // Flags are deliberately absent — Windows has no color flag font, so
+    // the emoji would degrade to bare regional-indicator letters.
+    expect(first.querySelector(".hk-affix-row-flag")).toBeNull();
+    for (const row of rows) {
+      expect(row.querySelector(".hk-affix-row-flag")).toBeNull();
+    }
   });
 
   it("picks a country from the list and refocuses the number field", async () => {

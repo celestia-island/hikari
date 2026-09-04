@@ -167,15 +167,32 @@
 }
 
 /* ── option rows ────────────────────────────────────────────────────── */
+/* Positioned host for the overlay scrollbar tracks: wraps ONLY the
+ * scrolling list viewport (the menu body also contains the header/
+ * search band), carries the popup's width constraints so the geometry
+ * is unchanged by the wrapper. */
+.hk-affix-scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 13rem;
+  max-width: min(19rem, calc(100vw - 2rem));
+}
+
 .hk-affix-list {
   display: flex;
   flex-direction: column;
   gap: 1px;
   padding: 4px 6px 8px;
-  min-width: 13rem;
-  max-width: min(19rem, calc(100vw - 2rem));
   max-height: 17rem;
   overflow-y: auto;
+  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
+   * always hidden, never styled. */
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .hk-affix-row {

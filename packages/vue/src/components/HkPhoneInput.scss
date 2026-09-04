@@ -4,23 +4,13 @@
   width: 100%;
 }
 
-/* The dial-code chip riding the field's LEFT edge — flag glyph + "+86"
- * + caret, layered on the shared .hk-affix-chip base (hover, disabled,
- * focus handling live there). A button so it is focusable and
- * AT-reachable; mousedown is suppressed in the shared picker so
- * clicking it never steals focus from the number field. */
+/* The dial-code chip riding the field's LEFT edge — dial code + caret,
+ * layered on the shared .hk-affix-chip base (hover, disabled, focus
+ * handling live there). A button so it is focusable and AT-reachable;
+ * mousedown is suppressed in the shared picker so clicking it never
+ * steals focus from the number field. */
 .hk-phone-chip {
   max-width: 11rem;
-}
-
-.hk-phone-chip-flag {
-  flex: none;
-  font-size: calc(var(--text-sm, 14px) * 1.05);
-  line-height: 1;
-  /* Windows has no color flag font — the regional-indicator letters it
-   * substitutes are tiny; nudge them to the visible size. */
-  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
-    sans-serif;
 }
 
 .hk-phone-chip-dial {

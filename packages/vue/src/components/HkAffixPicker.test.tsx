@@ -176,6 +176,30 @@ describe("HkAffixPicker", () => {
     expect(document.querySelector(".hk-affix-empty")?.textContent).toContain("No matches");
   });
 
+  it("re-attaches the row list when the empty-state query is cleared", async () => {
+    const { container } = mountPicker();
+    await openPopup(container);
+    // A no-match query swaps the default slot to the empty branch —
+    // the scrolling list (and its overlay-scrollbar host) unmounts.
+    await typeQuery("zzz-none");
+    expect(document.querySelector(".hk-affix-empty")).toBeTruthy();
+    expect(document.querySelector(".hk-affix-scroll")).toBeNull();
+    // Clearing the query remounts a FRESH list — the row list must come
+    // back and the overlay host must be remounted for the scrollbar.
+    await typeQuery("");
+    expect(document.querySelector(".hk-affix-empty")).toBeNull();
+    expect(rows().map((r) => r.textContent)).toEqual([
+      expect.stringContaining("China"),
+      expect.stringContaining("Japan"),
+      expect.stringContaining("United States"),
+    ]);
+    expect(document.querySelector(".hk-affix-scroll")).toBeTruthy();
+    expect(document.querySelector(".hk-affix-list")).toBeTruthy();
+    // Re-filtering after the remount keeps working on the live list.
+    await typeQuery("+86");
+    expect(rows().map((r) => r.textContent)).toEqual([expect.stringContaining("China")]);
+  });
+
   it("multi mode renders selected tags and offers only the remaining rows", async () => {
     const { container } = mountPicker({ mode: "multi", selected: ["cn", "jp"], activeKey: "cn" });
     await openPopup(container);

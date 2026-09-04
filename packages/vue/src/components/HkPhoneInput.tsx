@@ -7,7 +7,6 @@ import { useI18n } from "../i18n/context";
 import {
   DIAL_CODES,
   dialCodeName,
-  flagEmoji,
   formatE164,
   normalizeDial,
   resolveDial,
@@ -21,20 +20,19 @@ import "./HkPhoneInput.scss";
 /**
  * HkPhoneInput — phone-number field with a country dial-code picker.
  *
- * A leading chip inside the field (flag glyph + "+86" + caret) opens
- * the shared HkAffixPicker (single-select, searchable): flag + country
- * name + dial code per row, live filter on top. The chip rides the
- * LEFT edge of the field — the natural reading order for "which
- * country, then which number" — while the number itself is typed after
- * it.
+ * A leading chip inside the field (dial code + caret) opens the shared
+ * HkAffixPicker (single-select, searchable): country name + dial code
+ * per row, live filter on top. The chip rides the LEFT edge of the
+ * field — the natural reading order for "which country, then which
+ * number" — while the number itself is typed after it.
  *
  *   - `modelValue` is the NATIONAL number only ("13812345678"); the
  *     country selection lives in `dialCode` ("+86" shape, normalized on
  *     emit). Splitting the two keeps callers free to store whatever
  *     they already store (a bare "86" works too — matched by dial).
- *   - The chip shows the resolved country's flag plus the dial code in
- *     canonical "+…" shape. Unknown dial codes fall back to showing
- *     the normalized code alone (no flag).
+ *   - The chip shows the resolved country's dial code in canonical "+…"
+ *     shape. Unknown dial codes fall back to showing the normalized
+ *     code alone.
  *   - Picking a row emits `update:dialCode` ("+…"), `dialchange`
  *     (same value) and refocuses the number field. Blurring the field
  *     emits `change` with the composed E.164 — use it to validate or
@@ -111,7 +109,6 @@ export const HkPhoneInput = defineComponent({
         key: c.iso,
         label: dialCodeName(c, locale),
         meta: `+${c.dial}`,
-        flag: flagEmoji(c.iso),
         keywords: `${c.en} ${c.zh} ${c.iso} +${c.dial} 00${c.dial}`,
       })),
     );
@@ -203,9 +200,6 @@ export const HkPhoneInput = defineComponent({
                   {{
                     chip: () => (
                       <>
-                        <span class="hk-phone-chip-flag" aria-hidden="true">
-                          {active ? flagEmoji(active.iso) : ""}
-                        </span>
                         <span class="hk-phone-chip-dial">{chipLabel()}</span>
                         <ChevronDown size={12} class="hk-phone-chip-caret" aria-hidden="true" />
                       </>

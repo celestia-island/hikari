@@ -38,6 +38,18 @@ export interface HkAffixOption {
   disabled?: boolean;
 }
 
+/** True when every character of `query` appears in `text` in the same
+ *  order — gaps allowed ("中国" finds 中华人民共和国). Callers lowercase
+ *  both sides first, matching the substring pass. */
+function isSubsequence(query: string, text: string): boolean {
+  let i = 0;
+  for (const ch of text) {
+    if (ch === query[i]) i++;
+    if (i === query.length) return true;
+  }
+  return false;
+}
+
 /**
  * HkAffixPicker — the standardized "affix chip + searchable popup list"
  * control. A chip rides the prefix (left) or suffix (right) slot of a
@@ -190,7 +202,16 @@ export const HkAffixPicker = defineComponent({
     );
 
     /** Rows of the pick list. Multi hides already-selected keys (they
-     *  live in the tag list instead); single always shows everything. */
+     *  live in the tag list instead); single always shows everything.
+     *
+     *  Filtering is TWO-PASS over a single field at a time (never across
+     *  concatenated fields, which produces noise):
+     *    1. an exact substring match for precision (label / meta / key /
+     *       keywords, case-folded);
+     *    2. an in-order character subsequence fallback (gaps allowed) —
+     *       so a renamed or CJK-composed label like "中华人民共和国" is
+     *       still found by its short form "中国" (中 at 0, 国 at 6).
+     */
     const filteredRows = computed<readonly HkAffixOption[]>(() => {
       const base =
         props.mode === "multi"
@@ -202,7 +223,12 @@ export const HkAffixPicker = defineComponent({
         if (o.label.toLowerCase().includes(q)) return true;
         if (o.meta && o.meta.toLowerCase().includes(q)) return true;
         if (o.key.toLowerCase().includes(q)) return true;
-        return !!o.keywords && o.keywords.toLowerCase().includes(q);
+        if (o.keywords && o.keywords.toLowerCase().includes(q)) return true;
+        // Fuzzy fallback — per field, in-order subsequence, gaps allowed.
+        if (isSubsequence(q, o.label.toLowerCase())) return true;
+        if (o.meta && isSubsequence(q, o.meta.toLowerCase())) return true;
+        if (isSubsequence(q, o.key.toLowerCase())) return true;
+        return !!o.keywords && isSubsequence(q, o.keywords.toLowerCase());
       });
     });
 

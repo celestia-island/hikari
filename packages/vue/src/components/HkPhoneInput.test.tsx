@@ -117,12 +117,12 @@ describe("HkPhoneInput", () => {
     }
   });
 
-  it("still finds the PRC row when searching the short alias", async () => {
+  it("still finds the PRC row when searching the short form 中国", async () => {
     const { container } = mountPhone();
     await openPicker(container);
-    // The row renders the formal zh name (中华人民共和国), which no longer
-    // contains 中国 as a substring — the catalog's zhAlias keeps the old
-    // short form reachable from the search field.
+    // The row renders the formal zh name (中华人民共和国), which contains
+    // 中国 only as an in-order subsequence (中 at 0, 国 at 6) — the affix
+    // picker's fuzzy fallback surfaces the +86 row, no alias needed.
     const search = document.querySelector<HTMLInputElement>(
       ".hk-affix-search .hk-input-element",
     );

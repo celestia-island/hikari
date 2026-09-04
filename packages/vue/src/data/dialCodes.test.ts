@@ -17,7 +17,6 @@ describe("dialCodes catalog", () => {
       dial: "86",
       en: "China",
       zh: "中华人民共和国",
-      zhAlias: "中国",
     });
     for (const entry of DIAL_CODES) {
       expect(entry.iso).toMatch(/^[a-z]{2}$/);

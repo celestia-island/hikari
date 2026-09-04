@@ -5,6 +5,7 @@ import HkAffixPicker, { type HkAffixOption } from "./HkAffixPicker";
 
 const OPTIONS: HkAffixOption[] = [
   { key: "cn", label: "China", meta: "+86", flag: "🇨🇳", keywords: "zhongguo 中国 0086" },
+  { key: "cn-main", label: "中华人民共和国", meta: "+86", flag: "🇨🇳" },
   { key: "jp", label: "Japan", meta: "+81", flag: "🇯🇵" },
   { key: "us", label: "United States", meta: "+1", flag: "🇺🇸" },
 ];
@@ -154,9 +155,9 @@ describe("HkAffixPicker", () => {
   it("single mode lists every option, marks the active one, closes on pick", async () => {
     const { events, container } = mountPicker({ selected: "cn" });
     await openPopup(container);
-    expect(rows()).toHaveLength(3);
+    expect(rows()).toHaveLength(4);
     expect(rows()[0].hasAttribute("data-active")).toBe(true);
-    rows()[1].click();
+    rows()[2].click();
     await nextTick();
     expect(events.select.at(-1)).toBe("jp");
     // Single mode closes after the pick (leave transition may linger).
@@ -176,6 +177,30 @@ describe("HkAffixPicker", () => {
     expect(document.querySelector(".hk-affix-empty")?.textContent).toContain("No matches");
   });
 
+  it("fuzzy fallback finds a renamed CJK label by in-order subsequence", async () => {
+    const { container } = mountPicker();
+    await openPopup(container);
+    // 中国 is NOT a substring of 中华人民共和国 — only the in-order
+    // subsequence fallback (中 at 0, 国 at 6) can surface the cn-main
+    // row the substring pass misses.
+    await typeQuery("中国");
+    const labels = rows().map((r) => r.textContent);
+    // Both the China row (keyword substring match) and the renamed
+    // cn-main row (fuzzy subsequence) surface.
+    expect(labels).toContain("🇨🇳China+86");
+    expect(labels.some((l) => l.includes("中华人民共和国"))).toBe(true);
+  });
+
+  it("order-violating query does not fuzzy-match the CJK label", async () => {
+    const { container } = mountPicker();
+    await openPopup(container);
+    // 国民 is out of order in 中华人民共和国 (国 comes after 民) — the
+    // subsequence pass must NOT surface the row.
+    await typeQuery("国民");
+    expect(rows()).toHaveLength(0);
+    expect(document.querySelector(".hk-affix-empty")?.textContent).toContain("No matches");
+  });
+
   it("re-attaches the row list when the empty-state query is cleared", async () => {
     const { container } = mountPicker();
     await openPopup(container);
@@ -190,6 +215,7 @@ describe("HkAffixPicker", () => {
     expect(document.querySelector(".hk-affix-empty")).toBeNull();
     expect(rows().map((r) => r.textContent)).toEqual([
       expect.stringContaining("China"),
+      expect.stringContaining("中华人民共和国"),
       expect.stringContaining("Japan"),
       expect.stringContaining("United States"),
     ]);
@@ -197,7 +223,12 @@ describe("HkAffixPicker", () => {
     expect(document.querySelector(".hk-affix-list")).toBeTruthy();
     // Re-filtering after the remount keeps working on the live list.
     await typeQuery("+86");
-    expect(rows().map((r) => r.textContent)).toEqual([expect.stringContaining("China")]);
+    // Both +86 rows match by substring (the cn-main row via its meta) —
+    // the original fixtured "China" row is still surfaced.
+    expect(rows().map((r) => r.textContent)).toEqual([
+      expect.stringContaining("China"),
+      expect.stringContaining("中华人民共和国"),
+    ]);
   });
 
   it("multi mode renders selected tags and offers only the remaining rows", async () => {
@@ -211,13 +242,17 @@ describe("HkAffixPicker", () => {
     expect(tags()[0].querySelector(".hk-affix-tag-dot")).toBeTruthy();
     expect(tags()[1].querySelector(".hk-affix-tag-dot")).toBeNull();
     // Rows exclude the already-selected keys.
-    expect(rows().map((r) => r.textContent)).toEqual([expect.stringContaining("United States")]);
+    expect(rows().map((r) => r.textContent)).toEqual([
+      expect.stringContaining("中华人民共和国"),
+      expect.stringContaining("United States"),
+    ]);
   });
 
   it("multi mode keeps the popup open when a row is picked", async () => {
     const { events, container } = mountPicker({ mode: "multi", selected: ["cn"] });
     await openPopup(container);
-    rows()[0].click();
+    // With cn selected, the remaining rows are [cn-main, jp, us]; pick jp.
+    rows()[1].click();
     await nextTick();
     expect(events.select.at(-1)).toBe("jp");
     expect(rows().length).toBeGreaterThan(0);

@@ -72,6 +72,16 @@ export { default as HTable } from "./components/HkTable";
 export { default as HTabs } from "./components/HkTabs";
 export { default as HTag } from "./components/HkTag";
 export { default as HTextarea } from "./components/HkTextarea";
+export { default as HFileField } from "./components/HkFileField";
+export { default as HFileBrowserDialog } from "./components/HkFileBrowserDialog";
+export {
+  type RemoteFileEntry,
+  type RemoteDirListing,
+  type RemoteFsAdapter,
+  type FileQuickLink,
+  type PickedFile,
+  acceptExtensions,
+} from "./components/filePicker";
 export { default as HToast } from "./components/HkToast";
 export { default as HTooltip } from "./components/HkTooltip";
 export { default as HTree } from "./components/HkTree";

@@ -8,6 +8,8 @@ import {
   HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
+  HFileField,
+  type PickedFile, type RemoteFsAdapter,
   HCheckbox, HSwitch, HRadio, HSelect, HSelectPanel,
   HLocalizedInput,
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
@@ -98,6 +100,28 @@ export default defineComponent({
   name: "DemoApp",
   setup() {
     const form = ref({ text: "", search: "", number: 0, password: "", textarea: "" });
+    const localFiles = ref<PickedFile[]>([]);
+    const remoteFiles = ref<PickedFile[]>([]);
+    // In-memory remote FS so the remote picker demo browses something real.
+    const demoRemoteFs: RemoteFsAdapter = (() => {
+      const tree: Record<string, { name: string; kind: "file" | "dir"; size?: number }[]> = {
+        "/": [
+          { name: "data", kind: "dir" },
+          { name: "reports", kind: "dir" },
+          { name: "readme.md", kind: "file", size: 1200 },
+        ],
+        "/data": [
+          { name: "stations.csv", kind: "file", size: 20480 },
+          { name: "sensors.json", kind: "file", size: 860 },
+        ],
+        "/reports": [{ name: "2026-Q3.pdf", kind: "file", size: 409600 }],
+      };
+      return {
+        async list(path: string) {
+          return { path, entries: tree[path] ?? [] };
+        },
+      };
+    })();
     const anyForm = computed(() =>
       Object.values(form.value).filter((v) => v !== "" && v !== 0).join(", ") || null,
     );
@@ -265,6 +289,32 @@ export default defineComponent({
             <HTextarea modelValue={form.value.textarea} onUpdate:modelValue={(v: string) => (form.value.textarea = v)} placeholder="Textarea" rows={3} />
           </div>
           {anyForm.value ? <p class="result">Form: {anyForm.value}</p> : null}
+        </section>
+
+        <section>
+          <h2>HFileField / HFileBrowserDialog</h2>
+          <div class="form-grid">
+            <HFileField
+              modelValue={localFiles.value}
+              onUpdate:modelValue={(v: PickedFile[]) => (localFiles.value = v)}
+              label="Local file"
+              multiple
+              accept=".csv,.json,.txt"
+            />
+            <HFileField
+              modelValue={remoteFiles.value}
+              onUpdate:modelValue={(v: PickedFile[]) => (remoteFiles.value = v)}
+              mode="remote"
+              label="Remote file"
+              adapter={demoRemoteFs}
+              quickLinks={[{ label: "Root", path: "/" }, { label: "Data", path: "/data" }]}
+            />
+          </div>
+          {localFiles.value.length + remoteFiles.value.length > 0 ? (
+            <p class="result">
+              Picked: {[...localFiles.value, ...remoteFiles.value].map((f) => f.name).join(", ")}
+            </p>
+          ) : null}
         </section>
 
         <section>

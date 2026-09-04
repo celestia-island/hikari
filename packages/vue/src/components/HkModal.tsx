@@ -34,6 +34,52 @@ export interface ModalAction {
   onClick?: () => void;
 }
 
+/**
+ * Named width presets for the `width` prop. Callers kept reaching for
+ * semantic sizes (`width="sm"`) which, passed through as raw CSS
+ * `max-width`, are silently dropped by the browser — the frame fell back
+ * to `width: 100%` and spanned the whole viewport (chest #662-era change
+ * password modal rendered 2048px wide). Named values now resolve here;
+ * anything else keeps passing through as a CSS max-width value.
+ */
+export const MODAL_WIDTH_PRESETS = {
+  xs: "20rem",
+  sm: "32rem",
+  md: "40rem",
+  lg: "56rem",
+  xl: "72rem",
+} as const;
+
+export type ModalWidthPreset = keyof typeof MODAL_WIDTH_PRESETS;
+
+/**
+ * `width` accepts a named preset or any CSS max-width value. The
+ * `(string & {})` arm keeps preset autocomplete in TSX while still
+ * allowing arbitrary lengths ("32rem", "560px", "50%").
+ */
+export type ModalWidth = ModalWidthPreset | (string & {});
+
+const warnedWidths = new Set<string>();
+
+/**
+ * Resolve the `width` prop to a concrete CSS max-width value: presets map
+ * through `MODAL_WIDTH_PRESETS`, everything else passes through untouched.
+ * In dev, a value that is neither a preset nor a length (no digit anywhere
+ * — e.g. a stray token like `"wide"`) warns once: as a raw max-width it
+ * would be dropped by the browser and the modal would span the viewport.
+ */
+export function resolveModalWidth(width: string): string {
+  const preset = MODAL_WIDTH_PRESETS[width as ModalWidthPreset];
+  if (preset !== undefined) return preset;
+  if (import.meta.env?.DEV && !/\d/.test(width) && !warnedWidths.has(width)) {
+    warnedWidths.add(width);
+    console.warn(
+      `[HkModal] width "${width}" is neither a named preset (${Object.keys(MODAL_WIDTH_PRESETS).join("/")}) nor a CSS length — the browser would drop it and the modal would span the viewport.`,
+    );
+  }
+  return width;
+}
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -44,7 +90,8 @@ export default defineComponent({
     modelValue: { type: Boolean, required: true },
     title: { type: String, default: undefined },
     closable: { type: Boolean, default: true },
-    width: { type: String, default: "32rem" },
+    /** Named preset ("xs"…"xl") or any CSS max-width value (see ModalWidth). */
+    width: { type: String as PropType<ModalWidth>, default: "32rem" },
     /**
      * Escape hatch: extra class appended to the .hk-modal-content frame
      * so hosts can restyle the surface without forking the modal (e.g.
@@ -114,7 +161,7 @@ export default defineComponent({
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
-    const resolvedWidth = computed(() => props.width);
+    const resolvedWidth = computed(() => resolveModalWidth(props.width));
     // Layer/dialog name: the explicit surface name wins over the header
     // title (which header-less surfaces never pass).
     const resolvedSurfaceName = computed(() => props.surfaceTitle ?? props.title);

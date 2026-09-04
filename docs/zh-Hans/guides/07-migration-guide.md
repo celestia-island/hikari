@@ -29,10 +29,10 @@
 ```rust
 // packages/animation/src/properties.rs
 pub enum CssProperty {
- Display,
- Width,
- Height,
- // ... ~50 属性手动定义
+    Display,
+    Width,
+    Height,
+    // ... ~50 属性手动定义
 }
 ```
 
@@ -48,29 +48,29 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 **迁移步骤：**
 
 1. 添加 `tairitsu-style` 依赖到 `hikari-animation`：
- ```toml
- # packages/animation/Cargo.toml
- [dependencies]
- tairitsu-style = { path = "../../../tairitsu/packages/style" }
- ```
+   ```toml
+   # packages/animation/Cargo.toml
+   [dependencies]
+   tairitsu-style = { path = "../../../tairitsu/packages/style" }
+   ```
 
 2. 更新 `hikari-animation/src/style/mod.rs`：
- ```rust
- pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
+   ```rust
+   pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 
- // 保留 StyleBuilder（HtmlElement 版本）用于 web-sys 集成
- ```
+   // 保留 StyleBuilder（HtmlElement 版本）用于 web-sys 集成
+   ```
 
 3. 删除 `packages/animation/src/properties.rs`（删除 635 行代码）
 
 4. 更新代码库中的所有导入：
- ```rust
- // 迁移前
- use hikari_animation::style::CssProperty;
+   ```rust
+   // 迁移前
+   use hikari_animation::style::CssProperty;
 
- // 迁移后（由于 re-export 自动处理）
- use hikari_animation::style::CssProperty;
- ```
+   // 迁移后（由于 re-export 自动处理）
+   use hikari_animation::style::CssProperty;
+   ```
 
 ### 收益
 
@@ -95,23 +95,23 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 ```rust
 #[derive(Clone, PartialEq, Props)]
 pub struct ButtonProps {
- #[props(default)]
- pub variant: ButtonVariant,
+    #[props(default)]
+    pub variant: ButtonVariant,
 
- pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: Option<EventHandler<MouseEvent>>,
 
- #[props(default)]
- pub disabled: bool,
+    #[props(default)]
+    pub disabled: bool,
 }
 
 impl Default for ButtonProps {
- fn default() -> Self {
- Self {
- variant: ButtonVariant::Primary,
- onclick: None,
- disabled: false,
- }
- }
+    fn default() -> Self {
+        Self {
+            variant: ButtonVariant::Primary,
+            onclick: None,
+            disabled: false,
+        }
+    }
 }
 ```
 
@@ -119,13 +119,13 @@ impl Default for ButtonProps {
 ```rust
 #[define_props]
 pub struct ButtonProps {
- #[default(ButtonVariant::Primary)]
- pub variant: ButtonVariant,
+    #[default(ButtonVariant::Primary)]
+    pub variant: ButtonVariant,
 
- pub onclick: Option<EventHandler<MouseEvent>>,
+    pub onclick: Option<EventHandler<MouseEvent>>,
 
- #[default(false)]
- pub disabled: bool,
+    #[default(false)]
+    pub disabled: bool,
 }
 
 // Default 实现由 #[define_props] 自动生成
@@ -232,40 +232,40 @@ pub struct ButtonProps {
 **原因：**
 
 1. **不同的目的：**
- - `tairitsu-style`：Tailwind 风格工具类用于 CSS 生成
- - `hikari-palette`：Hikari 组件专用的 `hi-` 前缀类枚举
+   - `tairitsu-style`：Tailwind 风格工具类用于 CSS 生成
+   - `hikari-palette`：Hikari 组件专用的 `hi-` 前缀类枚举
 
 2. **API 不兼容：**
- - Tailwind 工具类使用连字符命名（如 `flex`、`items-center`）
- - Hikari 类使用基于枚举的命名（如 `Display::Flex`、`FlexDirection::Col`）
+   - Tailwind 工具类使用连字符命名（如 `flex`、`items-center`）
+   - Hikari 类使用基于枚举的命名（如 `Display::Flex`、`FlexDirection::Col`）
 
 3. **组件耦合：**
- - Hikari 有 18 个组件类枚举文件
- - 这些枚举与 `hi-` 前缀样式系统紧密耦合
+   - Hikari 有 18 个组件类枚举文件
+   - 这些枚举与 `hi-` 前缀样式系统紧密耦合
 
 **架构：**
 
 ```mermaid
 graph TB
- subgraph anim["hikari-animation"]
- subgraph reexport["re-export from tairitsu_style"]
- R1["StyleStringBuilder"]
- R2["CssProperty (403 W3C CSS 属性)"]
- R3["Property"]
- end
- subgraph specific["hikari-specific (web-sys 集成)"]
- S1["StyleBuilder (基于 HtmlElement)"]
- S2["AttributeBuilder"]
- S3["set_style, get_style, 等"]
- end
- end
- subgraph palette["hikari-palette"]
- subgraph classsys["hikari 组件类系统"]
- C1["ClassesBuilder (接受 impl UtilityClass)"]
- C2["UtilityClass trait (hi- 前缀)"]
- C3["18 个组件类枚举 (Button, Table, 等)"]
- end
- end
+  subgraph anim["hikari-animation"]
+    subgraph reexport["re-export from tairitsu_style"]
+      R1["StyleStringBuilder"]
+      R2["CssProperty (403 W3C CSS 属性)"]
+      R3["Property"]
+    end
+    subgraph specific["hikari-specific (web-sys 集成)"]
+      S1["StyleBuilder (基于 HtmlElement)"]
+      S2["AttributeBuilder"]
+      S3["set_style, get_style, 等"]
+    end
+  end
+  subgraph palette["hikari-palette"]
+    subgraph classsys["hikari 组件类系统"]
+      C1["ClassesBuilder (接受 impl UtilityClass)"]
+      C2["UtilityClass trait (hi- 前缀)"]
+      C3["18 个组件类枚举 (Button, Table, 等)"]
+    end
+  end
 ```
 
 ---
@@ -286,7 +286,7 @@ graph TB
 - yes 所有包编译成功
 - yes 无编译错误
 - yes 所有测试通过（hikari-components 中 78/78）
-- warning: 少量警告（无关文件中的死代码）
+- 少量警告（无关文件中的死代码）
 
 ### 测试更新
 
@@ -321,13 +321,13 @@ assert!(props1.page_size == props2.page_size);
 
 所有文档更新应翻译到所有支持的语言：
 - yes `zh-CHS`（简体中文）
-- ⏳ `zh-CHT`（繁体中文）
-- ⏳ `ja-JP`（日语）
-- ⏳ `ko-KR`（韩语）
-- ⏳ `es-ES`（西班牙语）
-- ⏳ `fr-FR`（法语）
-- ⏳ `ru-RU`（俄语）
-- ⏳ `ar-SA`（阿拉伯语）
+- `zh-CHT`（繁体中文）
+- `ja-JP`（日语）
+- `ko-KR`（韩语）
+- `es-ES`（西班牙语）
+- `fr-FR`（法语）
+- `ru-RU`（俄语）
+- `ar-SA`（阿拉伯语）
 
 ---
 

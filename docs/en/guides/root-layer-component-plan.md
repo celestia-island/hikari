@@ -28,46 +28,46 @@ Hikari 采用三层次组件体系，从基础到复杂逐步构建。Layer 1 �
 
 ```mermaid
 graph TB
- subgraph "Layer 3: 生产级组件"
- L3A[视频/音频播放器]
- L3B[富文本编辑器]
- L3C[代码高亮设施]
- L3D[时间线]
- L3E[用户引导组件]
- end
+    subgraph "Layer 3: 生产级组件"
+        L3A[视频/音频播放器]
+        L3B[富文本编辑器]
+        L3C[代码高亮设施]
+        L3D[时间线]
+        L3E[用户引导组件]
+    end
 
- subgraph "Layer 2: 复合组件"
- L2A[Menu]
- L2B[Tabs]
- L2C[Table]
- L2D[Tree]
- L2E[Form]
- L2F[Dropdown]
- L2G[Modal]
- end
+    subgraph "Layer 2: 复合组件"
+        L2A[Menu]
+        L2B[Tabs]
+        L2C[Table]
+        L2D[Tree]
+        L2E[Form]
+        L2F[Dropdown]
+        L2G[Modal]
+    end
 
- subgraph "Layer 1: 基础组件"
- L1A[Button]
- L1B[Input]
- L1C[Card]
- L1D[Badge]
- L1E[Alert]
- L1F[Toast]
- L1G[Tooltip]
- end
+    subgraph "Layer 1: 基础组件"
+        L1A[Button]
+        L1B[Input]
+        L1C[Card]
+        L1D[Badge]
+        L1E[Alert]
+        L1F[Toast]
+        L1G[Tooltip]
+    end
 
- L3A --> L2E
- L3A --> L2G
- L3B --> L2E
- L3B --> L2G
+    L3A --> L2E
+    L3A --> L2G
+    L3B --> L2E
+    L3B --> L2G
 
- L2A --> L1A
- L2B --> L1A
- L2C --> L1A
- L2D --> L1A
- L2E --> L1A
- L2F --> L1A
- L2G --> L1A
+    L2A --> L1A
+    L2B --> L1A
+    L2C --> L1A
+    L2D --> L1A
+    L2E --> L1A
+    L2F --> L1A
+    L2G --> L1A
 ```
 
 ### 职责划分
@@ -152,17 +152,17 @@ graph TB
 ```rust
 /// Layer 1 基础组件接口规范
 pub trait Layer1Component {
- /// Props 结构（必须 derive Clone, PartialEq）
- type Props;
+    /// Props 结构（必须 derive Clone, PartialEq）
+    type Props;
 
- /// 渲染组件
- fn render(props: Self::Props) -> Element;
+    /// 渲染组件
+    fn render(props: Self::Props) -> Element;
 
- /// 注册样式
- fn register_styles(registry: &mut StyleRegistry);
+    /// 注册样式
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// 默认 Props
- fn default_props() -> Self::Props;
+    /// 默认 Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -201,23 +201,23 @@ pub trait Layer1Component {
 ```rust
 /// Layer 2 复合组件接口规范
 pub trait Layer2Component {
- /// Props 结构（必须 derive Clone, PartialEq）
- type Props;
+    /// Props 结构（必须 derive Clone, PartialEq）
+    type Props;
 
- /// Context 类型（可选）
- type Context: Clone + 'static;
+    /// Context 类型（可选）
+    type Context: Clone + 'static;
 
- /// 渲染组件
- fn render(props: Self::Props) -> Element;
+    /// 渲染组件
+    fn render(props: Self::Props) -> Element;
 
- /// 提供的 Context
- fn provide_context(&self) -> Option<Self::Context>;
+    /// 提供的 Context
+    fn provide_context(&self) -> Option<Self::Context>;
 
- /// 注册样式
- fn register_styles(registry: &mut StyleRegistry);
+    /// 注册样式
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// 默认 Props
- fn default_props() -> Self::Props;
+    /// 默认 Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -228,28 +228,28 @@ pub trait Layer2Component {
 /// 依赖: Input, Select, Checkbox, Radio (Layer 1)
 #[component]
 pub fn Form(
- children: Element,
- #[props(default = false)] disabled: bool,
- #[props(default = FormValidationMode::OnChange)]
- validation_mode: FormValidationMode,
- on_submit: EventHandler<FormSubmitEvent>,
+    children: Element,
+    #[props(default = false)] disabled: bool,
+    #[props(default = FormValidationMode::OnChange)]
+    validation_mode: FormValidationMode,
+    on_submit: EventHandler<FormSubmitEvent>,
 ) -> Element {
- let form_context = FormContext {
- disabled,
- validation_mode,
- };
+    let form_context = FormContext {
+        disabled,
+        validation_mode,
+    };
 
- rsx! {
- form {
- onsubmit: move |e| {
- e.prevent_default();
- on_submit.call(FormSubmitEvent::new());
- },
- ContextProvider { value: form_context,
- {children}
- }
- }
- }
+    rsx! {
+        form {
+            onsubmit: move |e| {
+                e.prevent_default();
+                on_submit.call(FormSubmitEvent::new());
+            },
+            ContextProvider { value: form_context,
+                {children}
+            }
+        }
+    }
 }
 ```
 
@@ -273,33 +273,33 @@ pub fn Form(
 ```rust
 /// Layer 3 生产级组件接口规范
 pub trait Layer3Component {
- /// Props 结构（必须 derive Clone, PartialEq）
- type Props;
+    /// Props 结构（必须 derive Clone, PartialEq）
+    type Props;
 
- /// State 结构（必须 derive Clone）
- type State: Clone + 'static;
+    /// State 结构（必须 derive Clone）
+    type State: Clone + 'static;
 
- /// 初始化 State
- fn init_state(props: &Self::Props) -> Self::State;
+    /// 初始化 State
+    fn init_state(props: &Self::Props) -> Self::State;
 
- /// 渲染组件
- fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
+    /// 渲染组件
+    fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
 
- /// 生命周期：组件挂载
- fn on_mount(state: &Signal<Self::State>) {
- // 默认空实现
- }
+    /// 生命周期：组件挂载
+    fn on_mount(state: &Signal<Self::State>) {
+        // 默认空实现
+    }
 
- /// 生命周期：组件卸载
- fn on_unmount(state: &Signal<Self::State>) {
- // 默认空实现
- }
+    /// 生命周期：组件卸载
+    fn on_unmount(state: &Signal<Self::State>) {
+        // 默认空实现
+    }
 
- /// 注册样式
- fn register_styles(registry: &mut StyleRegistry);
+    /// 注册样式
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// 默认 Props
- fn default_props() -> Self::Props;
+    /// 默认 Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -310,50 +310,50 @@ pub trait Layer3Component {
 /// 依赖: Card, Button, Form, Menu (Layer 2)
 #[component]
 pub fn VideoPlayer(
- src: String,
- #[props(default = false)] autoplay: bool,
- #[props(default = false)] muted: bool,
- #[props(default = 0)] volume: u8,
- #[props(default = 1.0)] playback_rate: f64,
+    src: String,
+    #[props(default = false)] autoplay: bool,
+    #[props(default = false)] muted: bool,
+    #[props(default = 0)] volume: u8,
+    #[props(default = 1.0)] playback_rate: f64,
 ) -> Element {
- let is_playing = use_signal(|| autoplay);
- let current_time = use_signal(|| 0.0);
- let duration = use_signal(|| 0.0);
- let show_controls = use_signal(|| true);
+    let is_playing = use_signal(|| autoplay);
+    let current_time = use_signal(|| 0.0);
+    let duration = use_signal(|| 0.0);
+    let show_controls = use_signal(|| true);
 
- // 播放/暂停
- let toggle_play = move |_| {
- is_playing.toggle();
- };
+    // 播放/暂停
+    let toggle_play = move |_| {
+        is_playing.toggle();
+    };
 
- // 音量控制
- let set_volume = move |new_volume| {
- // 更新音量
- };
+    // 音量控制
+    let set_volume = move |new_volume| {
+        // 更新音量
+    };
 
- rsx! {
- Card {
- class: "hi-video-player",
- div { class: "hi-video-container",
- video {
- src: "{src}",
- autoplay: autoplay,
- muted: muted,
- // 事件监听
- }
+    rsx! {
+        Card {
+            class: "hi-video-player",
+            div { class: "hi-video-container",
+                video {
+                    src: "{src}",
+                    autoplay: autoplay,
+                    muted: muted,
+                    // 事件监听
+                }
 
- // 控制条
- if show_controls() {
- div { class: "hi-video-controls",
- Button { icon: MdiIcon::Play, on_click: toggle_play }
- Button { icon: MdiIcon::VolumeHigh }
- // 进度条
- // 时间显示
- }
- }
- }
- }
- }
+                // 控制条
+                if show_controls() {
+                    div { class: "hi-video-controls",
+                        Button { icon: MdiIcon::Play, on_click: toggle_play }
+                        Button { icon: MdiIcon::VolumeHigh }
+                        // 进度条
+                        // 时间显示
+                    }
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -364,50 +364,50 @@ pub fn VideoPlayer(
 /// 依赖: Form, Dropdown, Modal, Toolbar (Layer 2)
 #[component]
 pub fn RichTextEditor(
- #[props(default = "")] initial_content: String,
- #[props(default = EditorMode::Wysiwyg)]
- mode: EditorMode,
- on_change: EventHandler<String>,
+    #[props(default = "")] initial_content: String,
+    #[props(default = EditorMode::Wysiwyg)]
+    mode: EditorMode,
+    on_change: EventHandler<String>,
 ) -> Element {
- let content = use_signal(|| initial_content);
- let is_bold = use_signal(|| false);
- let is_italic = use_signal(|| false);
+    let content = use_signal(|| initial_content);
+    let is_bold = use_signal(|| false);
+    let is_italic = use_signal(|| false);
 
- // 格式化文本
- let toggle_bold = move |_| {
- is_bold.toggle();
- // 应用粗体格式
- };
+    // 格式化文本
+    let toggle_bold = move |_| {
+        is_bold.toggle();
+        // 应用粗体格式
+    };
 
- rsx! {
- Card { class: "hi-rich-text-editor",
- // 工具栏
- div { class: "hi-editor-toolbar",
- Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
- Button { icon: MdiIcon::FormatItalic }
- Button { icon: MdiIcon::FormatUnderline }
- Dropdown {
- trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
- // 标题选项
- }
- }
+    rsx! {
+        Card { class: "hi-rich-text-editor",
+            // 工具栏
+            div { class: "hi-editor-toolbar",
+                Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
+                Button { icon: MdiIcon::FormatItalic }
+                Button { icon: MdiIcon::FormatUnderline }
+                Dropdown {
+                    trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
+                    // 标题选项
+                }
+            }
 
- // 编辑区域
- div { class: "hi-editor-content",
- contenteditable: "true",
- dangerous_inner_html: "{content}",
- // 输入事件
- }
+            // 编辑区域
+            div { class: "hi-editor-content",
+                contenteditable: "true",
+                dangerous_inner_html: "{content}",
+                // 输入事件
+            }
 
- // Markdown 模式切换
- if mode == EditorMode::Markdown {
- div { class: "hi-editor-mode-switch",
- Button { "WYSIWYG" }
- Button { "Markdown" }
- }
- }
- }
- }
+            // Markdown 模式切换
+            if mode == EditorMode::Markdown {
+                div { class: "hi-editor-mode-switch",
+                    Button { "WYSIWYG" }
+                    Button { "Markdown" }
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -467,62 +467,62 @@ pub fn RichTextEditor(
 
 ```mermaid
 graph TB
- subgraph "Layer 3"
- V[视频播放器]
- R[富文本编辑器]
- C[代码高亮]
- T[时间线]
- G[用户引导]
- end
+    subgraph "Layer 3"
+        V[视频播放器]
+        R[富文本编辑器]
+        C[代码高亮]
+        T[时间线]
+        G[用户引导]
+    end
 
- subgraph "Layer 2"
- F[Form]
- D[Dropdown]
- M[Modal]
- TB[Toolbar]
- TB2[Tabs]
- end
+    subgraph "Layer 2"
+        F[Form]
+        D[Dropdown]
+        M[Modal]
+        TB[Toolbar]
+        TB2[Tabs]
+    end
 
- subgraph "Layer 1"
- B[Button]
- I[Input]
- C2[Card]
- S[Select]
- CB[Checkbox]
- R2[Radio]
- SW[Switch]
- P[Progress]
- end
+    subgraph "Layer 1"
+        B[Button]
+        I[Input]
+        C2[Card]
+        S[Select]
+        CB[Checkbox]
+        R2[Radio]
+        SW[Switch]
+        P[Progress]
+    end
 
- V --> F
- V --> M
- V --> B
+    V --> F
+    V --> M
+    V --> B
 
- R --> F
- R --> D
- R --> TB
- R --> M
+    R --> F
+    R --> D
+    R --> TB
+    R --> M
 
- C --> TB2
- C --> F
+    C --> TB2
+    C --> F
 
- T --> C2
- T --> B
+    T --> C2
+    T --> B
 
- G --> M
- G --> B
+    G --> M
+    G --> B
 
- F --> I
- F --> S
- F --> CB
- F --> R2
- F --> SW
+    F --> I
+    F --> S
+    F --> CB
+    F --> R2
+    F --> SW
 
- D --> M
- D --> B
+    D --> M
+    D --> B
 
- M --> C2
- M --> B
+    M --> C2
+    M --> B
 ```
 
 ## 技术说明
@@ -534,17 +534,17 @@ Hikari 使用 Material Design Icons (MDI) 替代 Lucide Icons。
 **原因**：
 - MDI 提供更丰富的图标集（7000+ 图标）
 - 与 Material Design 规范一致
-- 更适合 + 设计风格
+- 更适合  +  设计风格
 
 **使用方式**：
 ```rust
 use _icons::{Icon, MdiIcon};
 
 rsx! {
- Icon {
- icon: MdiIcon::Search,
- size: 24,
- }
+    Icon {
+        icon: MdiIcon::Search,
+        size: 24,
+    }
 }
 ```
 
@@ -556,13 +556,13 @@ Website 使用 Tairitsu 的 Routable derive 宏。
 ```rust
 #[component]
 pub fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari".to_string(),
- PortalProvider {
- Router::<Route> {}
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari".to_string(),
+            PortalProvider {
+                Router::<Route> {}
+            }
+        }
+    }
 }
 ```
 
@@ -570,14 +570,14 @@ pub fn App() -> Element {
 ```rust
 #[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
- #[route("/")]
- Home {},
+    #[route("/")]
+    Home {},
 
- #[route("/components/layer1/basic")]
- Layer1Basic {},
+    #[route("/components/layer1/basic")]
+    Layer1Basic {},
 
- #[route("/demos/layer1/form")]
- FormDemo {},
+    #[route("/demos/layer1/form")]
+    FormDemo {},
 }
 ```
 

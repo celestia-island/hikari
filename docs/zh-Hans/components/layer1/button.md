@@ -14,7 +14,7 @@ Button 组件支持三层级 CSS 变量配置架构：
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;color:#999;", "Component preview: pages/components/layer1/button#custom-colors" }
+    div { style: "padding:1rem;color:#999;", "Component preview: pages/components/layer1/button#custom-colors" }
 }
 ```
 
@@ -24,12 +24,12 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "display:flex;gap:8px;padding:1rem;flex-wrap:wrap;",
- button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;cursor:pointer;", "Primary" }
- button { style: "padding:6px 16px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#333;cursor:pointer;", "Secondary" }
- button { style: "padding:6px 16px;border:none;border-radius:4px;background:transparent;color:#3a6ea5;cursor:pointer;", "Ghost" }
- button { style: "padding:6px 16px;border:none;border-radius:4px;background:#ef4444;color:#fff;cursor:pointer;", "Danger" }
- }
+    div { style: "display:flex;gap:8px;padding:1rem;flex-wrap:wrap;",
+        button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;cursor:pointer;", "Primary" }
+        button { style: "padding:6px 16px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#333;cursor:pointer;", "Secondary" }
+        button { style: "padding:6px 16px;border:none;border-radius:4px;background:transparent;color:#3a6ea5;cursor:pointer;", "Ghost" }
+        button { style: "padding:6px 16px;border:none;border-radius:4px;background:#ef4444;color:#fff;cursor:pointer;", "Danger" }
+    }
 }
 ```
 
@@ -39,10 +39,10 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "display:flex;gap:8px;padding:1rem;",
- button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;", "Normal" }
- button { disabled: true, style: "padding:6px 16px;border:none;border-radius:4px;background:#ccc;color:#999;cursor:not-allowed;", "Disabled" }
- }
+    div { style: "display:flex;gap:8px;padding:1rem;",
+        button { style: "padding:6px 16px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;", "Normal" }
+        button { disabled: true, style: "padding:6px 16px;border:none;border-radius:4px;background:#ccc;color:#999;cursor:not-allowed;", "Disabled" }
+    }
 }
 ```
 
@@ -52,11 +52,11 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "display:flex;gap:12px;padding:1rem;align-items:center;",
- button { style: "width:24px;height:24px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
- button { style: "width:32px;height:32px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
- button { style: "width:40px;height:40px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
- }
+    div { style: "display:flex;gap:12px;padding:1rem;align-items:center;",
+        button { style: "width:24px;height:24px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
+        button { style: "width:32px;height:32px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
+        button { style: "width:40px;height:40px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;", "" }
+    }
 }
 ```
 
@@ -66,13 +66,13 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "display:flex;gap:8px;padding:1rem;",
- button { style: "width:32px;height:32px;border:none;border-radius:4px;background:transparent;color:#666;cursor:pointer;", "G" }
- button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;cursor:pointer;", "P" }
- button { style: "width:32px;height:32px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#333;cursor:pointer;", "S" }
- button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#ef4444;color:#fff;cursor:pointer;", "D" }
- button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;", "ok" }
- }
+    div { style: "display:flex;gap:8px;padding:1rem;",
+        button { style: "width:32px;height:32px;border:none;border-radius:4px;background:transparent;color:#666;cursor:pointer;", "G" }
+        button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#3a6ea5;color:#fff;cursor:pointer;", "P" }
+        button { style: "width:32px;height:32px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#333;cursor:pointer;", "S" }
+        button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#ef4444;color:#fff;cursor:pointer;", "D" }
+        button { style: "width:32px;height:32px;border:none;border-radius:4px;background:#22c55e;color:#fff;cursor:pointer;", "✓" }
+    }
 }
 ```
 
@@ -82,11 +82,11 @@ rsx! {
 
 ```rust
 Button {
- variant: ButtonVariant::Primary,
- icon_color: Some("#ff0000".to_string()), // 自定义图标颜色
- text_color: Some("#ffffff".to_string()), // 自定义文字颜色
- background_color: Some("#ff4f00".to_string()), // 自定义背景颜色
- "Custom Colors"
+    variant: ButtonVariant::Primary,
+    icon_color: Some("#ff0000".to_string()),     // 自定义图标颜色
+    text_color: Some("#ffffff".to_string()),     // 自定义文字颜色
+    background_color: Some("#ff4f00".to_string()), // 自定义背景颜色
+    "Custom Colors"
 }
 ```
 
@@ -96,12 +96,12 @@ Button {
 
 ```rust
 Button {
- variant: ButtonVariant::Ghost,
- css_vars: Some(vec![
- ("--hi-button-radius", "50px".to_string()),
- ("--hi-button-bg-hover", "rgba(255, 0, 0, 0.1)".to_string()),
- ]),
- "CSS Variables"
+    variant: ButtonVariant::Ghost,
+    css_vars: Some(vec![
+        ("--hi-button-radius", "50px".to_string()),
+        ("--hi-button-bg-hover", "rgba(255, 0, 0, 0.1)".to_string()),
+    ]),
+    "CSS Variables"
 }
 ```
 
@@ -111,15 +111,15 @@ Button {
 
 ```rust
 Button {
- animation_id: Some("animated-button".to_string()),
- "Animated Button"
+    animation_id: Some("animated-button".to_string()),
+    "Animated Button"
 }
 
 // 使用 AnimationBuilder 控制动画
 AnimationBuilder::new()
- .style("--hi-button-bg", "rgb(255, 0, 0)")
- .duration(300)
- .apply_to_element("animated-button");
+    .style("--hi-button-bg", "rgb(255, 0, 0)")
+    .duration(300)
+    .apply_to_element("animated-button");
 ```
 
 ## API

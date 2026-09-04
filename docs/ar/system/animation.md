@@ -106,9 +106,9 @@ elements.insert("button".to_string(), button_element);
 
 // تطبيق أنماطة ثابتة
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .add_class("button", "hi-flex")
- .apply();
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .add_class("button", "hi-flex")
+    .apply();
 ```
 
 ### حركة القيمة الديناميكية
@@ -116,12 +116,12 @@ AnimationBuilder::new(&elements)
 ```rust
 // تأثير تتبع الماوس
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ### حركة متعددة العناصر
@@ -133,10 +133,10 @@ elements.insert("button".to_string(), button_element);
 elements.insert("icon".to_string(), icon_element);
 
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .add_style("icon", CssProperty::Transform, "scale(1.1)")
- .add_class("button", "hi-flex")
- .apply();
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .add_style("icon", CssProperty::Transform, "scale(1.1)")
+    .add_class("button", "hi-flex")
+    .apply();
 ```
 
 ### حركة الانتقال
@@ -144,31 +144,31 @@ AnimationBuilder::new(&elements)
 ```rust
 // حركة مع انتقال
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Width, "100px")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Width, "100px")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // خصائص انتقال مخصصة
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Transform, "rotate(90deg)")
- .apply_with_transition("500ms", "cubic-bezier(0.68, -0.55, 0.265, 1.55)");
+    .add_style("button", CssProperty::Transform, "rotate(90deg)")
+    .apply_with_transition("500ms", "cubic-bezier(0.68, -0.55, 0.265, 1.55)");
 ```
 
 ### مرجع واجهة البرمجة
 
 ```rust
 impl AnimationBuilder {
- pub fn new(elements: &HashMap<String, Element>) -> Self;
+    pub fn new(elements: &HashMap<String, Element>) -> Self;
 
- pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
- pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
- where
- F: Fn(&AnimationContext) -> String + 'static;
+    pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
+    pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
+    where
+        F: Fn(&AnimationContext) -> String + 'static;
 
- pub fn add_class(self, element: &str, class: &str) -> Self;
- pub fn remove_class(self, element: &str, class: &str) -> Self;
+    pub fn add_class(self, element: &str, class: &str) -> Self;
+    pub fn remove_class(self, element: &str, class: &str) -> Self;
 
- pub fn apply(self);
- pub fn apply_with_transition(self, duration: &str, easing: &str);
+    pub fn apply(self);
+    pub fn apply_with_transition(self, duration: &str, easing: &str);
 }
 ```
 
@@ -182,27 +182,27 @@ impl AnimationBuilder {
 use hikari_animation::tween::{Tween, TweenBuilder};
 
 let tween = TweenBuilder::new()
- .from(0.0)
- .to(100.0)
- .duration(1000) // مللي ثانية
- .easing(ease::EaseOut)
- .build();
+    .from(0.0)
+    .to(100.0)
+    .duration(1000) // مللي ثانية
+    .easing(ease::EaseOut)
+    .build();
 ```
 
 ### Tween مع الاستدعاءات
 
 ```rust
 let tween = TweenBuilder::new()
- .from(0.0)
- .to(1.0)
- .duration(500)
- .on_update(|value| {
- println!("القيمة الحالية: {}", value);
- })
- .on_complete(|| {
- println!("اكتملت الحركة!");
- })
- .build();
+    .from(0.0)
+    .to(1.0)
+    .duration(500)
+    .on_update(|value| {
+        println!("القيمة الحالية: {}", value);
+    })
+    .on_complete(|| {
+        println!("اكتملت الحركة!");
+    })
+    .build();
 ```
 
 ### Tweens المتسلسلة
@@ -211,20 +211,20 @@ let tween = TweenBuilder::new()
 let mut timeline = Timeline::new();
 
 timeline.push(
- TweenBuilder::new()
- .from(0.0)
- .to(100.0)
- .duration(300)
- .build()
+    TweenBuilder::new()
+        .from(0.0)
+        .to(100.0)
+        .duration(300)
+        .build()
 );
 
 timeline.push(
- TweenBuilder::new()
- .from(100.0)
- .to(0.0)
- .duration(300)
- .delay(200)
- .build()
+    TweenBuilder::new()
+        .from(100.0)
+        .to(0.0)
+        .duration(300)
+        .delay(200)
+        .build()
 );
 
 timeline.play();
@@ -278,16 +278,16 @@ let mut timeline = Timeline::new();
 
 // إضافة حركات بالتسلسل
 timeline.add(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "0")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "0")
+        .build()
 );
 
 timeline.add(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "1")
- .with_delay(200)
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "1")
+        .with_delay(200)
+        .build()
 );
 
 timeline.play();
@@ -300,15 +300,15 @@ let mut timeline = Timeline::new();
 
 // تشغيل الحركات في وقت واحد
 timeline.add_parallel(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Transform, "translateX(100px)")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Transform, "translateX(100px)")
+        .build()
 );
 
 timeline.add_parallel(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "0.5")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "0.5")
+        .build()
 );
 
 timeline.play();
@@ -320,14 +320,14 @@ timeline.play();
 let timeline = Timeline::new();
 
 // التحكم في التشغيل
-timeline.play(); // بدء التشغيل
-timeline.pause(); // إيقاف مؤقت
-timeline.reverse(); // عكس التشغيل
-timeline.seek(0.5); // الانتقال إلى 50%
+timeline.play();      // بدء التشغيل
+timeline.pause();     // إيقاف مؤقت
+timeline.reverse();   // عكس التشغيل
+timeline.seek(0.5);   // الانتقال إلى 50%
 
 // التحكم في السرعة
-timeline.set_speed(2.0); // سرعة 2x
-timeline.set_speed(0.5); // سرعة 0.5x
+timeline.set_speed(2.0);  // سرعة 2x
+timeline.set_speed(0.5);  // سرعة 0.5x
 
 // التحكم في الحلقة
 timeline.set_loop(true);
@@ -416,11 +416,11 @@ spotlight::init_selector(".hi-button");
 
 ```rust
 spotlight::Config {
- size: 200, // حجم البقعة بالبكسل
- opacity: 0.15, // الشفافية (0-1)
- color: "#FFB3A7", // لون التوهج
- blur: 20, // نصف قطر الضبابية بالبكسل
- transition: "150ms" // سرعة الانتقال
+    size: 200,              // حجم البقعة بالبكسل
+    opacity: 0.15,          // الشفافية (0-1)
+    color: "#FFB3A7",       // لون التوهج
+    blur: 20,              // نصف قطر الضبابية بالبكسل
+    transition: "150ms"     // سرعة الانتقال
 }.init();
 ```
 
@@ -428,11 +428,11 @@ spotlight::Config {
 
 ```rust
 rsx! {
- Button {
- label: "مرر فوقي",
- class: "hi-spotlight", // تفعيل البقعة المضيئة
- "Data: spot-{spot_id}" // معرف فريد
- }
+    Button {
+        label: "مرر فوقي",
+        class: "hi-spotlight",  // تفعيل البقعة المضيئة
+        "Data: spot-{spot_id}"   // معرف فريد
+    }
 }
 ```
 
@@ -444,21 +444,21 @@ rsx! {
 
 ```rust
 AnimationBuilder::new(&elements)
- .add_style_dynamic("target", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply();
+    .add_style_dynamic("target", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply();
 ```
 
 ### حركة قائمة على الوقت
 
 ```rust
 .add_style_dynamic("clock", CssProperty::Transform, |ctx| {
- let time = ctx.elapsed_time();
- let angle = (time.as_millis() % 1000) as f64 / 1000.0 * 360.0;
- format!("rotate({}deg)", angle)
+    let time = ctx.elapsed_time();
+    let angle = (time.as_millis() % 1000) as f64 / 1000.0 * 360.0;
+    format!("rotate({}deg)", angle)
 })
 ```
 
@@ -466,9 +466,9 @@ AnimationBuilder::new(&elements)
 
 ```rust
 .add_style_dynamic("header", CssProperty::Background, |ctx| {
- let scroll_y = ctx.scroll_y();
- let opacity = (scroll_y / 100.0).min(1.0);
- format!("rgba(0, 160, 233, {})", opacity)
+    let scroll_y = ctx.scroll_y();
+    let opacity = (scroll_y / 100.0).min(1.0);
+    format!("rgba(0, 160, 233, {})", opacity)
 })
 ```
 
@@ -518,7 +518,7 @@ builder.add_style("element", CssProperty::Opacity, "0.5");
 
 // تحويل معقد
 builder.add_style("element", CssProperty::Transform,
- "perspective(1000px) rotateX(45deg) translateZ(50px)");
+    "perspective(1000px) rotateX(45deg) translateZ(50px)");
 ```
 
 ### خصائص CSS المخصصة
@@ -541,30 +541,30 @@ use hikari_animation::style::CssProperty;
 
 #[component]
 fn AnimatedButton() -> Element {
- let elements = use_signal(|| {
- let mut map = HashMap::new();
- map.insert("btn".to_string(), get_button_element());
- map
- });
+    let elements = use_signal(|| {
+        let mut map = HashMap::new();
+        map.insert("btn".to_string(), get_button_element());
+        map
+    });
 
- rsx! {
- button {
- class: "hi-button hi-spotlight",
- onmouseenter: move |_| {
- AnimationBuilder::new(&elements())
- .add_style("btn", CssProperty::Transform, "scale(1.05)")
- .add_style("btn", CssProperty::BoxShadow, "0 8px 16px rgba(0, 160, 233, 0.3)")
- .apply_with_transition("200ms", "ease-out");
- },
- onmouseleave: move |_| {
- AnimationBuilder::new(&elements())
- .add_style("btn", CssProperty::Transform, "scale(1)")
- .add_style("btn", CssProperty::BoxShadow, "none")
- .apply_with_transition("200ms", "ease-out");
- },
- "مرر فوقي"
- }
- }
+    rsx! {
+        button {
+            class: "hi-button hi-spotlight",
+            onmouseenter: move |_| {
+                AnimationBuilder::new(&elements())
+                    .add_style("btn", CssProperty::Transform, "scale(1.05)")
+                    .add_style("btn", CssProperty::BoxShadow, "0 8px 16px rgba(0, 160, 233, 0.3)")
+                    .apply_with_transition("200ms", "ease-out");
+            },
+            onmouseleave: move |_| {
+                AnimationBuilder::new(&elements())
+                    .add_style("btn", CssProperty::Transform, "scale(1)")
+                    .add_style("btn", CssProperty::BoxShadow, "none")
+                    .apply_with_transition("200ms", "ease-out");
+            },
+            "مرر فوقي"
+        }
+    }
 }
 ```
 
@@ -573,31 +573,31 @@ fn AnimatedButton() -> Element {
 ```rust
 #[component]
 fn LoadingSpinner() -> Element {
- let elements = use_signal(|| HashMap::new());
+    let elements = use_signal(|| HashMap::new());
 
- use_effect(move || {
- let elements = elements.clone();
- async move {
- loop {
- AnimationBuilder::new(&elements())
- .add_style("spinner", CssProperty::Transform, "rotate(0deg)")
- .build();
+    use_effect(move || {
+        let elements = elements.clone();
+        async move {
+            loop {
+                AnimationBuilder::new(&elements())
+                    .add_style("spinner", CssProperty::Transform, "rotate(0deg)")
+                    .build();
 
- AnimationBuilder::new(&elements())
- .add_style("spinner", CssProperty::Transform, "rotate(360deg)")
- .apply_with_transition("1000ms", "linear");
+                AnimationBuilder::new(&elements())
+                    .add_style("spinner", CssProperty::Transform, "rotate(360deg)")
+                    .apply_with_transition("1000ms", "linear");
 
- tokio::time::sleep(Duration::from_millis(1000)).await;
- }
- }
- });
+                tokio::time::sleep(Duration::from_millis(1000)).await;
+            }
+        }
+    });
 
- rsx! {
- div {
- id: "spinner",
- style: "width: 40px; height: 40px; border: 4px solid var(--hi-color-primary); border-top-color: transparent; border-radius: 50%;"
- }
- }
+    rsx! {
+        div {
+            id: "spinner",
+            style: "width: 40px; height: 40px; border: 4px solid var(--hi-color-primary); border-top-color: transparent; border-radius: 50%;"
+        }
+    }
 }
 ```
 
@@ -606,30 +606,30 @@ fn LoadingSpinner() -> Element {
 ```rust
 #[component]
 fn ParallaxSection() -> Element {
- let scroll_y = use_signal(|| 0.0);
+    let scroll_y = use_signal(|| 0.0);
 
- rsx! {
- div {
- onscroll: move |e| {
- scroll_y.set(e.scroll_y());
+    rsx! {
+        div {
+            onscroll: move |e| {
+                scroll_y.set(e.scroll_y());
 
- AnimationBuilder::new(&elements())
- .add_style_dynamic("bg", CssProperty::Transform, |ctx| {
- let y = ctx.scroll_y() * 0.5;
- format!("translateY({}px)", y)
- })
- .apply_with_transition("100ms", "ease-out");
- },
- div {
- id: "bg",
- style: "position: fixed; width: 100%; height: 100%; background: url(bg.jpg);"
- },
- div {
- style: "position: relative; z-index: 1;",
- "المحتوى"
- }
- }
- }
+                AnimationBuilder::new(&elements())
+                    .add_style_dynamic("bg", CssProperty::Transform, |ctx| {
+                        let y = ctx.scroll_y() * 0.5;
+                        format!("translateY({}px)", y)
+                    })
+                    .apply_with_transition("100ms", "ease-out");
+            },
+            div {
+                id: "bg",
+                style: "position: fixed; width: 100%; height: 100%; background: url(bg.jpg);"
+            },
+            div {
+                style: "position: relative; z-index: 1;",
+                "المحتوى"
+            }
+        }
+    }
 }
 ```
 
@@ -638,29 +638,29 @@ fn ParallaxSection() -> Element {
 ```rust
 #[component]
 fn AnimatedCounter() -> Element {
- let mut count = use_signal(|| 0);
+    let mut count = use_signal(|| 0);
 
- use_effect(move || {
- let target = 1000;
- let duration = 2000; // ثانيتان
- let steps = 60;
- let step_value = target as f64 / steps as f64;
- let step_duration = duration / steps;
+    use_effect(move || {
+        let target = 1000;
+        let duration = 2000; // ثانيتان
+        let steps = 60;
+        let step_value = target as f64 / steps as f64;
+        let step_duration = duration / steps;
 
- async move {
- for i in 0..=steps {
- count.set((i as f64 * step_value) as i32);
- tokio::time::sleep(Duration::from_millis(step_duration)).await;
- }
- }
- });
+        async move {
+            for i in 0..=steps {
+                count.set((i as f64 * step_value) as i32);
+                tokio::time::sleep(Duration::from_millis(step_duration)).await;
+            }
+        }
+    });
 
- rsx! {
- div {
- class: "counter",
- "{count()}"
- }
- }
+    rsx! {
+        div {
+            class: "counter",
+            "{count()}"
+        }
+    }
 }
 ```
 
@@ -673,12 +673,12 @@ use hikari_animation::AnimationBuilder;
 
 // AnimationBuilder يقوم تلقائيًا بـ debounce للتحديثات
 AnimationBuilder::new(&elements)
- .add_style_dynamic("element", CssProperty::Transform, |ctx| {
- // هذا مؤجل - لن يتم تحديثه عند كل حركة ماوس
- let x = ctx.mouse_x();
- format!("translateX({}px)", x)
- })
- .apply_with_transition("100ms", "ease-out");
+    .add_style_dynamic("element", CssProperty::Transform, |ctx| {
+        // هذا مؤجل - لن يتم تحديثه عند كل حركة ماوس
+        let x = ctx.mouse_x();
+        format!("translateX({}px)", x)
+    })
+    .apply_with_transition("100ms", "ease-out");
 ```
 
 ### RequestAnimationFrame
@@ -688,8 +688,8 @@ AnimationBuilder::new(&elements)
 ```rust
 // تكامل RAF تلقائي
 AnimationBuilder::new(&elements)
- .add_style("anim", CssProperty::Opacity, "1")
- .apply_with_transition("1000ms", "ease");
+    .add_style("anim", CssProperty::Opacity, "1")
+    .apply_with_transition("1000ms", "ease");
 ```
 
 ### تسريع GPU
@@ -711,7 +711,7 @@ builder.add_style("element", CssProperty::Margin, "10px");
 ```css
 /* تلميح للمتصفح للتحسين */
 .animated-element {
- will-change: transform, opacity;
+    will-change: transform, opacity;
 }
 ```
 
@@ -721,23 +721,23 @@ builder.add_style("element", CssProperty::Margin, "10px");
 
 ```rust
 pub struct AnimationBuilder<'a> {
- elements: &'a HashMap<String, Element>,
+    elements: &'a HashMap<String, Element>,
 }
 
 impl<'a> AnimationBuilder<'a> {
- pub fn new(elements: &'a HashMap<String, Element>) -> Self;
+    pub fn new(elements: &'a HashMap<String, Element>) -> Self;
 
- pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
- pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
- where
- F: Fn(&AnimationContext) -> String + 'static;
+    pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
+    pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
+    where
+        F: Fn(&AnimationContext) -> String + 'static;
 
- pub fn add_class(self, element: &str, class: &str) -> Self;
- pub fn remove_class(self, element: &str, class: &str) -> Self;
+    pub fn add_class(self, element: &str, class: &str) -> Self;
+    pub fn remove_class(self, element: &str, class: &str) -> Self;
 
- pub fn apply(self);
- pub fn apply_with_transition(self, duration: &str, easing: &str);
- pub fn apply_with_custom_transition(self, transition: &str);
+    pub fn apply(self);
+    pub fn apply_with_transition(self, duration: &str, easing: &str);
+    pub fn apply_with_custom_transition(self, transition: &str);
 }
 ```
 
@@ -745,21 +745,21 @@ impl<'a> AnimationBuilder<'a> {
 
 ```rust
 pub struct AnimationContext<'a> {
- pub mouse_x: f64,
- pub mouse_y: f64,
- pub scroll_x: f64,
- pub scroll_y: f64,
- pub elapsed_time: Duration,
- pub window_width: f64,
- pub window_height: f64,
+    pub mouse_x: f64,
+    pub mouse_y: f64,
+    pub scroll_x: f64,
+    pub scroll_y: f64,
+    pub elapsed_time: Duration,
+    pub window_width: f64,
+    pub window_height: f64,
 }
 
 impl<'a> AnimationContext<'a> {
- pub fn mouse_x(&self) -> f64;
- pub fn mouse_y(&self) -> f64;
- pub fn scroll_x(&self) -> f64;
- pub fn scroll_y(&self) -> f64;
- pub fn elapsed_time(&self) -> Duration;
+    pub fn mouse_x(&self) -> f64;
+    pub fn mouse_y(&self) -> f64;
+    pub fn scroll_x(&self) -> f64;
+    pub fn scroll_y(&self) -> f64;
+    pub fn elapsed_time(&self) -> Duration;
 }
 ```
 
@@ -767,24 +767,24 @@ impl<'a> AnimationContext<'a> {
 
 ```rust
 pub struct Timeline {
- // داخلي
+    // داخلي
 }
 
 impl Timeline {
- pub fn new() -> Self;
+    pub fn new() -> Self;
 
- pub fn add(&mut self, animation: Animation) -> &mut Self;
- pub fn add_parallel(&mut self, animation: Animation) -> &mut Self;
+    pub fn add(&mut self, animation: Animation) -> &mut Self;
+    pub fn add_parallel(&mut self, animation: Animation) -> &mut Self;
 
- pub fn play(&mut self);
- pub fn pause(&mut self);
- pub fn stop(&mut self);
- pub fn reverse(&mut self);
- pub fn seek(&mut self, progress: f64);
+    pub fn play(&mut self);
+    pub fn pause(&mut self);
+    pub fn stop(&mut self);
+    pub fn reverse(&mut self);
+    pub fn seek(&mut self, progress: f64);
 
- pub fn set_speed(&mut self, speed: f64);
- pub fn set_loop(&mut self, loop: bool);
- pub fn set_repeat_count(&mut self, count: usize);
+    pub fn set_speed(&mut self, speed: f64);
+    pub fn set_loop(&mut self, loop: bool);
+    pub fn set_repeat_count(&mut self, count: usize);
 }
 ```
 
@@ -795,14 +795,14 @@ impl Timeline {
 ```rust
 // yes جيد - فقط عند تفاعل المستخدم
 button {
- onmouseenter: move |_| {
- builder.apply_with_transition("200ms", "ease");
- }
+    onmouseenter: move |_| {
+        builder.apply_with_transition("200ms", "ease");
+    }
 }
 
 // no تجنب - حركة مستمرة
 loop {
- builder.apply_with_transition("16ms", "linear"); // 60 إطار، ثقيل!
+    builder.apply_with_transition("16ms", "linear"); // 60 إطار، ثقيل!
 }
 ```
 
@@ -820,33 +820,33 @@ builder.add_style("el", CssProperty::Margin, "100px");
 
 ```rust
 // إحساس طبيعي
-"ease-out" // تباطؤ
-"ease-in-out" // تسارع ثم تباطؤ
+"ease-out"      // تباطؤ
+"ease-in-out"   // تسارع ثم تباطؤ
 
 // إحساس ميكانيكي
-"linear" // سرعة ثابتة
+"linear"        // سرعة ثابتة
 
 // مرح
-"elastic-out" // يتذبذب
-"bounce-out" // يرتد في النهاية
+"elastic-out"   // يتذبذب
+"bounce-out"    // يرتد في النهاية
 ```
 
 ### 4. احترم تقليل الحركة
 
 ```rust
 use_effect(move || {
- let prefers_reduced_motion = window()
- .match_media("(prefers-motion: reduce)")
- .ok()
- .and_then(|m| m.matches());
+    let prefers_reduced_motion = window()
+        .match_media("(prefers-motion: reduce)")
+        .ok()
+        .and_then(|m| m.matches());
 
- if prefers_reduced_motion.unwrap_or(false) {
- // استخدم حركات أبسط
- builder.apply_with_transition("0ms", "linear");
- } else {
- // حركة كاملة
- builder.apply_with_transition("300ms", "ease-out");
- }
+    if prefers_reduced_motion.unwrap_or(false) {
+        // استخدم حركات أبسط
+        builder.apply_with_transition("0ms", "linear");
+    } else {
+        // حركة كاملة
+        builder.apply_with_transition("300ms", "ease-out");
+    }
 });
 ```
 

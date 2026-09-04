@@ -2,7 +2,7 @@
 
 > Современный UI-фреймворк на Rust, построенный на Tairitsu + Grass + Axum
 >
-> **Стиль дизайна**: Плоский дизайн + Sci-Fi эстетика + Традиционные китайские цвета
+> **Стиль дизайна**: Плоский дизайн  + Sci-Fi эстетика  + Традиционные китайские цвета
 >
 > **Происхождение названия**: "Hikari" (Свет) из ритм-игры Arcaea
 
@@ -12,12 +12,12 @@ Hikari — это современный UI-фреймворк, разработ
 
 ## Основные возможности
 
-### 🎨 Система традиционных китайских цветов
+### Система традиционных китайских цветов
 - **660+ традиционных цветов**: Полная палитра традиционных китайских цветов
 - **Система тем**: Встроенные темы Hikari (светлая) и Tairitsu (тёмная)
 - **Типобезопасность**: Проверка значений цветов во время компиляции
 
-### 🧩 Богатая библиотека компонентов
+### Богатая библиотека компонентов
 - **Базовые компоненты**: Button, Input, Card, Badge
 - **Компоненты обратной связи**: Alert, Toast, Tooltip, Spotlight
 - **Навигационные компоненты**: Menu, Tabs, Breadcrumb
@@ -31,7 +31,7 @@ Hikari — это современный UI-фреймворк, разработ
 - **Функции сглаживания**: 30+ функций сглаживания
 - **Готовые анимации**: Затухание, скольжение, масштабирование и т.д.
 
-### 🎯 Продвинутые возможности
+### Продвинутые возможности
 - **Серверный рендеринг**: Полная поддержка SSR
 - **Типобезопасность**: Полное использование системы типов Rust
 - **Адаптивный дизайн**: Встроенные утилиты адаптивной раскладки
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari" } {
- div { class: "hi-flex hi-flex-col hi-gap-4" {
- Button { label: "Нажми меня" }
- Button { label: "Основная кнопка", variant: "primary" }
- Button { label: "Вторичная кнопка", variant: "secondary" }
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari" } {
+            div { class: "hi-flex hi-flex-col hi-gap-4" {
+                Button { label: "Нажми меня" }
+                Button { label: "Основная кнопка", variant: "primary" }
+                Button { label: "Вторичная кнопка", variant: "secondary" }
+            }
+        }
+    }
 }
 ```
 
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
- root["hikari/"]
- root --> packages["packages/"]
- root --> examples["examples/"]
- packages --> palette["hikari-palette/"]
- packages --> theme["hikari-theme/"]
- packages --> animation["hikari-animation/"]
- packages --> icons["hikari-icons/"]
- packages --> components["hikari-components/"]
- packages --> extra["hikari-extra-components/"]
- examples --> website["website/"]
- examples --> tabledemo["table-demo/"]
- examples --> treedemo["tree-demo/"]
- examples --> nodegraph["node-graph-demo/"]
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## Документация
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
- let mut theme = use_signal(|| "hikari".to_string());
+    let mut theme = use_signal(|| "hikari".to_string());
 
- rsx! {
- ThemeProvider { initial_palette: "{theme}" } {
- button {
- onclick: move |_| {
- theme.set(if *theme() == "hikari" {
- "tairitsu".to_string()
- } else {
- "hikari".to_string()
- });
- },
- "Переключить тему"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "{theme}" } {
+            button {
+                onclick: move |_| {
+                    theme.set(if *theme() == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    });
+                },
+                "Переключить тему"
+            }
+        }
+    }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // Статическая анимация
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // Динамическая анимация (следование за мышью)
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ## Участие в разработке

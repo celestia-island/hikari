@@ -30,41 +30,41 @@ ClassesBuilder 是 Hikari 的工具类生成器，提供了类型安全的 CSS �
 
 ```mermaid
 graph TB
- subgraph "应用层"
- A[组件代码]
- end
+    subgraph "应用层"
+        A[组件代码]
+    end
 
- subgraph "Builder 层"
- B[ClassesBuilder]
- end
+    subgraph "Builder 层"
+        B[ClassesBuilder]
+    end
 
- subgraph "工具类层"
- C1[Display]
- C2[Flex]
- C3[Spacing]
- C4[Colors]
- C5[Typography]
- C6[Components]
- end
+    subgraph "工具类层"
+        C1[Display]
+        C2[Flex]
+        C3[Spacing]
+        C4[Colors]
+        C5[Typography]
+        C6[Components]
+    end
 
- subgraph "CSS 层"
- D[SCSS 文件<br/>.hi-* 类]
- end
+    subgraph "CSS 层"
+        D[SCSS 文件<br/>.hi-* 类]
+    end
 
- A --> B
- B --> C1
- B --> C2
- B --> C3
- B --> C4
- B --> C5
- B --> C6
+    A --> B
+    B --> C1
+    B --> C2
+    B --> C3
+    B --> C4
+    B --> C5
+    B --> C6
 
- C1 -.-> D
- C2 -.-> D
- C3 -.-> D
- C4 -.-> D
- C5 -.-> D
- C6 -.-> D
+    C1 -.-> D
+    C2 -.-> D
+    C3 -.-> D
+    C4 -.-> D
+    C5 -.-> D
+    C6 -.-> D
 ```
 
 ## 核心架构
@@ -75,18 +75,18 @@ graph TB
 
 ```rust
 pub trait UtilityClass {
- /// 获取 CSS 类名后缀（不含 hi- 前缀）
- fn as_suffix(&self) -> &'static str;
+    /// 获取 CSS 类名后缀（不含 hi- 前缀）
+    fn as_suffix(&self) -> &'static str;
 
- /// 获取完整 CSS 类名（含 hi- 前缀）
- fn as_class(&self) -> String {
- format!("hi-{}", self.as_suffix())
- }
+    /// 获取完整 CSS 类名（含 hi- 前缀）
+    fn as_class(&self) -> String {
+        format!("hi-{}", self.as_suffix())
+    }
 
- /// 获取多个类名（用于复合工具类）
- fn as_classes(&self) -> Vec<String> {
- vec![self.as_class()]
- }
+    /// 获取多个类名（用于复合工具类）
+    fn as_classes(&self) -> Vec<String> {
+        vec![self.as_class()]
+    }
 }
 ```
 
@@ -99,7 +99,7 @@ pub trait UtilityClass {
 
 ```rust
 pub struct ClassesBuilder {
- classes: Vec<String>,
+    classes: Vec<String>,
 }
 ```
 
@@ -121,15 +121,15 @@ pub struct ClassesBuilder {
 
 ```rust
 pub enum Display {
- Block,
- Inline,
- InlineBlock,
- Flex,
- InlineFlex,
- Grid,
- InlineGrid,
- None,
- Hidden,
+    Block,
+    Inline,
+    InlineBlock,
+    Flex,
+    InlineFlex,
+    Grid,
+    InlineGrid,
+    None,
+    Hidden,
 }
 
 // 输出示例：
@@ -141,24 +141,24 @@ pub enum Display {
 
 ```rust
 pub enum FlexDirection {
- Row,
- RowReverse,
- Col,
- ColReverse,
+    Row,
+    RowReverse,
+    Col,
+    ColReverse,
 }
 
 pub enum FlexWrap {
- NoWrap,
- Wrap,
- WrapReverse,
+    NoWrap,
+    Wrap,
+    WrapReverse,
 }
 
 pub enum AlignItems {
- Start,
- End,
- Center,
- Stretch,
- Baseline,
+    Start,
+    End,
+    Center,
+    Stretch,
+    Baseline,
 }
 
 // 输出示例：
@@ -170,21 +170,21 @@ pub enum AlignItems {
 
 ```rust
 pub enum Padding {
- P0,
- P1,
- P2,
- P4,
- P6,
- P8,
+    P0,
+    P1,
+    P2,
+    P4,
+    P6,
+    P8,
 }
 
 pub enum Margin {
- M0,
- M1,
- M2,
- M4,
- M6,
- M8,
+    M0,
+    M1,
+    M2,
+    M4,
+    M6,
+    M8,
 }
 
 // 输出示例：
@@ -196,17 +196,17 @@ pub enum Margin {
 
 ```rust
 pub enum Width {
- Full,
- Half,
- Auto,
- Screen,
+    Full,
+    Half,
+    Auto,
+    Screen,
 }
 
 pub enum Height {
- Full,
- Half,
- Auto,
- Screen,
+    Full,
+    Half,
+    Auto,
+    Screen,
 }
 
 // 输出示例：
@@ -218,15 +218,15 @@ pub enum Height {
 
 ```rust
 pub enum Button {
- Button,
- ButtonPrimary,
- ButtonSecondary,
- ButtonDanger,
+    Button,
+    ButtonPrimary,
+    ButtonSecondary,
+    ButtonDanger,
 }
 
 pub enum Card {
- Card,
- CardHoverable,
+    Card,
+    CardHoverable,
 }
 
 // 输出示例：
@@ -240,34 +240,34 @@ pub enum Card {
 
 ```mermaid
 sequenceDiagram
- participant A as 应用代码
- participant B as ClassesBuilder
- participant C as UtilityClass 枚举
- participant D as 输出字符串
+    participant A as 应用代码
+    participant B as ClassesBuilder
+    participant C as UtilityClass 枚举
+    participant D as 输出字符串
 
- A->>B: ClassesBuilder::new()
- B->>B: 创建 Vec<String>
+    A->>B: ClassesBuilder::new()
+    B->>B: 创建 Vec<String>
 
- A->>B: .add(Display::Flex)
- B->>C: 调用 Display::Flex.as_classes()
- C->>C: as_suffix() => "flex"
- C->>C: as_class() => "hi-flex"
- C-->>B: vec!["hi-flex"]
- B->>B: push 到 Vec
+    A->>B: .add(Display::Flex)
+    B->>C: 调用 Display::Flex.as_classes()
+    C->>C: as_suffix() => "flex"
+    C->>C: as_class() => "hi-flex"
+    C-->>B: vec!["hi-flex"]
+    B->>B: push 到 Vec
 
- A->>B: .add(FlexDirection::Col)
- B->>C: 调用 FlexDirection::Col.as_classes()
- C-->>B: vec!["hi-flex-col"]
- B->>B: push 到 Vec
+    A->>B: .add(FlexDirection::Col)
+    B->>C: 调用 FlexDirection::Col.as_classes()
+    C-->>B: vec!["hi-flex-col"]
+    B->>B: push 到 Vec
 
- A->>B: .add(Gap::Gap4)
- B->>C: 调用 Gap::Gap4.as_classes()
- C-->>B: vec!["hi-gap-4"]
- B->>B: push 到 Vec
+    A->>B: .add(Gap::Gap4)
+    B->>C: 调用 Gap::Gap4.as_classes()
+    C-->>B: vec!["hi-gap-4"]
+    B->>B: push 到 Vec
 
- A->>B: .build()
- B->>B: join(" ")
- B-->>A: "hi-flex hi-flex-col hi-gap-4"
+    A->>B: .build()
+    B->>B: join(" ")
+    B-->>A: "hi-flex hi-flex-col hi-gap-4"
 ```
 
 ### 类型检查机制
@@ -277,13 +277,13 @@ sequenceDiagram
 ```rust
 // no 编译错误：拼写错误
 let classes = ClassesBuilder::new()
- .add(Display::Flx) // Display 没有 Flx 变体
- .build();
+    .add(Display::Flx)  // Display 没有 Flx 变体
+    .build();
 
 // yes 编译通过：IDE 自动补全
 let classes = ClassesBuilder::new()
- .add(Display::Flex) // IDE 会提示 Flex 变体
- .build();
+    .add(Display::Flex)  // IDE 会提示 Flex 变体
+    .build();
 ```
 
 ### 条件添加机制
@@ -293,11 +293,11 @@ let is_active = true;
 let is_disabled = false;
 
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add_if(FlexDirection::Row, || is_active)
- .add_if(Button::ButtonDisabled, || is_disabled)
- .add(Button::Button)
- .build();
+    .add(Display::Flex)
+    .add_if(FlexDirection::Row, || is_active)
+    .add_if(Button::ButtonDisabled, || is_disabled)
+    .add(Button::Button)
+    .build();
 
 // 输出: "hi-flex hi-flex-row hi-button"
 // (跳过 hi-flex-row 如果 is_active=false)
@@ -315,21 +315,21 @@ let classes = ClassesBuilder::new()
 ```rust
 // packages/palette/src/classes/layout.rs
 pub enum Overflow {
- Auto,
- Hidden,
- Visible,
- Scroll,
+    Auto,
+    Hidden,
+    Visible,
+    Scroll,
 }
 
 impl UtilityClass for Overflow {
- fn as_suffix(&self) -> &'static str {
- match self {
- Overflow::Auto => "overflow-auto",
- Overflow::Hidden => "overflow-hidden",
- Overflow::Visible => "overflow-visible",
- Overflow::Scroll => "overflow-scroll",
- }
- }
+    fn as_suffix(&self) -> &'static str {
+        match self {
+            Overflow::Auto => "overflow-auto",
+            Overflow::Hidden => "overflow-hidden",
+            Overflow::Visible => "overflow-visible",
+            Overflow::Scroll => "overflow-scroll",
+        }
+    }
 }
 ```
 
@@ -347,19 +347,19 @@ pub use layout::{Overflow, /* ... */};
 ```scss
 // packages/components/src/styles/utilities/overflow.scss
 .hi-overflow-auto {
- overflow: auto;
+  overflow: auto;
 }
 
 .hi-overflow-hidden {
- overflow: hidden;
+  overflow: hidden;
 }
 
 .hi-overflow-visible {
- overflow: visible;
+  overflow: visible;
 }
 
 .hi-overflow-scroll {
- overflow: scroll;
+  overflow: scroll;
 }
 ```
 
@@ -369,8 +369,8 @@ pub use layout::{Overflow, /* ... */};
 use hikari_palette::classes::{ClassesBuilder, Overflow};
 
 let classes = ClassesBuilder::new()
- .add(Overflow::Hidden)
- .build();
+    .add(Overflow::Hidden)
+    .build();
 // 输出: "hi-overflow-hidden"
 ```
 
@@ -380,33 +380,33 @@ let classes = ClassesBuilder::new()
 
 ```rust
 pub enum Responsive {
- Sm, // Small screens
- Md, // Medium screens
- Lg, // Large screens
+    Sm,  // Small screens
+    Md,  // Medium screens
+    Lg,  // Large screens
 }
 
 impl UtilityClass for Responsive {
- fn as_suffix(&self) -> &'static str {
- // as_suffix 不使用，返回默认值
- "responsive"
- }
+    fn as_suffix(&self) -> &'static str {
+        // as_suffix 不使用，返回默认值
+        "responsive"
+    }
 
- fn as_classes(&self) -> Vec<String> {
- match self {
- Responsive::Sm => vec![
- "hi-responsive-sm".to_string(),
- "hi-sm-hidden".to_string(),
- ],
- Responsive::Md => vec![
- "hi-responsive-md".to_string(),
- "hi-md-block".to_string(),
- ],
- Responsive::Lg => vec![
- "hi-responsive-lg".to_string(),
- "hi-lg-block".to_string(),
- ],
- }
- }
+    fn as_classes(&self) -> Vec<String> {
+        match self {
+            Responsive::Sm => vec![
+                "hi-responsive-sm".to_string(),
+                "hi-sm-hidden".to_string(),
+            ],
+            Responsive::Md => vec![
+                "hi-responsive-md".to_string(),
+                "hi-md-block".to_string(),
+            ],
+            Responsive::Lg => vec![
+                "hi-responsive-lg".to_string(),
+                "hi-lg-block".to_string(),
+            ],
+        }
+    }
 }
 
 // 使用：
@@ -426,10 +426,10 @@ impl UtilityClass for Responsive {
 
 ```rust
 impl ClassesBuilder {
- pub fn build(self) -> String {
- // 直接 join，避免中间分配
- self.classes.join(" ")
- }
+    pub fn build(self) -> String {
+        // 直接 join，避免中间分配
+        self.classes.join(" ")
+    }
 }
 ```
 
@@ -437,25 +437,25 @@ impl ClassesBuilder {
 
 ```rust
 pub fn add_all(mut self, classes: &[impl UtilityClass]) -> Self {
- for class in classes {
- for class_str in class.as_classes() {
- self.classes.push(class_str);
- }
- }
- self
+    for class in classes {
+        for class_str in class.as_classes() {
+            self.classes.push(class_str);
+        }
+    }
+    self
 }
 
 // yes 推荐：批量添加
 let classes = ClassesBuilder::new()
- .add_all(&[Display::Flex, FlexDirection::Row, Gap::Gap4])
- .build();
+    .add_all(&[Display::Flex, FlexDirection::Row, Gap::Gap4])
+    .build();
 
 // no 避免：多次调用 add
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(FlexDirection::Row)
- .add(Gap::Gap4)
- .build();
+    .add(Display::Flex)
+    .add(FlexDirection::Row)
+    .add(Gap::Gap4)
+    .build();
 ```
 
 ## 使用示例
@@ -466,19 +466,19 @@ let classes = ClassesBuilder::new()
 use hikari_palette::classes::{ClassesBuilder, Display, FlexDirection, Gap, Padding};
 
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(FlexDirection::Row)
- .add(Gap::Gap4)
- .add(Padding::P4)
- .build();
+    .add(Display::Flex)
+    .add(FlexDirection::Row)
+    .add(Gap::Gap4)
+    .add(Padding::P4)
+    .build();
 
 // 输出: "hi-flex hi-flex-row hi-gap-4 hi-p-4"
 
 // 在 rsx 中使用：
 rsx! {
- div { class: "{classes}",
- "内容"
- }
+    div { class: "{classes}",
+        "内容"
+    }
 }
 ```
 
@@ -489,11 +489,11 @@ let is_active = use_signal(|| false);
 let is_disabled = use_signal(|| false);
 
 let button_classes = use_memo(move || {
- ClassesBuilder::new()
- .add(Button::Button)
- .add_if(Button::ButtonPrimary, || *is_active.read())
- .add_if(Button::ButtonDisabled, || *is_disabled.read())
- .build()
+    ClassesBuilder::new()
+        .add(Button::Button)
+        .add_if(Button::ButtonPrimary, || *is_active.read())
+        .add_if(Button::ButtonDisabled, || *is_disabled.read())
+        .build()
 });
 
 // is_active=true, is_disabled=false
@@ -510,25 +510,25 @@ use hikari_palette::classes::{ClassesBuilder, Display, Gap, Padding};
 use hikari_palette::classes::components::{Card, Button, Input};
 
 let card_classes = ClassesBuilder::new()
- .add(Card::Card)
- .add(Padding::P4)
- .build();
+    .add(Card::Card)
+    .add(Padding::P4)
+    .build();
 
 let input_classes = ClassesBuilder::new()
- .add(Input::Input)
- .add(Padding::P2)
- .build();
+    .add(Input::Input)
+    .add(Padding::P2)
+    .build();
 
 let button_classes = ClassesBuilder::new()
- .add(Button::Button)
- .add(Button::ButtonPrimary)
- .build();
+    .add(Button::Button)
+    .add(Button::ButtonPrimary)
+    .build();
 
 rsx! {
- div { class: "{card_classes}",
- div { class: "{input_classes}", "输入框" }
- div { class: "{button_classes}", "按钮" }
- }
+    div { class: "{card_classes}",
+        div { class: "{input_classes}", "输入框" }
+        div { class: "{button_classes}", "按钮" }
+    }
 }
 ```
 
@@ -536,10 +536,10 @@ rsx! {
 
 ```rust
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add_raw("my-custom-class") // 不添加 hi- 前缀
- .add(Gap::Gap4)
- .build();
+    .add(Display::Flex)
+    .add_raw("my-custom-class")  // 不添加 hi- 前缀
+    .add(Gap::Gap4)
+    .build();
 
 // 输出: "hi-flex my-custom-class hi-gap-4"
 ```
@@ -579,10 +579,10 @@ let classes = "flex items-center gap-4";
 
 // hikari-palette (类型安全枚举)
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(AlignItems::Center)
- .add(Gap::Gap4)
- .build();
+    .add(Display::Flex)
+    .add(AlignItems::Center)
+    .add(Gap::Gap4)
+    .build();
 ```
 
 #### 3. 组件耦合
@@ -616,25 +616,25 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 
 ```mermaid
 graph TB
- subgraph anim["hikari-animation"]
- subgraph reexport["re-export from tairitsu_style"]
- R1["StyleStringBuilder (内联样式构建器)"]
- R2["CssProperty (403 W3C CSS 属性)"]
- R3["Property"]
- end
- subgraph specific["hikari-specific (web-sys integration)"]
- S1["StyleBuilder (HtmlElement-based)"]
- S2["AttributeBuilder"]
- S3["set_style, get_style, etc."]
- end
- end
- subgraph palette["hikari-palette"]
- subgraph classsys["hikari component class system (RETAINED)"]
- C1["ClassesBuilder (accepts impl UtilityClass)"]
- C2["UtilityClass trait (hi- prefix)"]
- C3["18 component class enums (Button, Table, etc.)"]
- end
- end
+  subgraph anim["hikari-animation"]
+    subgraph reexport["re-export from tairitsu_style"]
+      R1["StyleStringBuilder (内联样式构建器)"]
+      R2["CssProperty (403 W3C CSS 属性)"]
+      R3["Property"]
+    end
+    subgraph specific["hikari-specific (web-sys integration)"]
+      S1["StyleBuilder (HtmlElement-based)"]
+      S2["AttributeBuilder"]
+      S3["set_style, get_style, etc."]
+    end
+  end
+  subgraph palette["hikari-palette"]
+    subgraph classsys["hikari component class system (RETAINED)"]
+      C1["ClassesBuilder (accepts impl UtilityClass)"]
+      C2["UtilityClass trait (hi- prefix)"]
+      C3["18 component class enums (Button, Table, etc.)"]
+    end
+  end
 ```
 
 ### 最佳实践
@@ -652,19 +652,19 @@ graph TB
 ```rust
 // 最佳实践：组合使用
 let classes = ClassesBuilder::new()
- .add(Button::Button)
- .add(Button::ButtonPrimary)
- .build();
+    .add(Button::Button)
+    .add(Button::ButtonPrimary)
+    .build();
 
 let style = StyleStringBuilder::new()
- .add_px(CssProperty::Width, computed_width)
- .add(CssProperty::Opacity, "0.8")
- .build_clean();
+    .add_px(CssProperty::Width, computed_width)
+    .add(CssProperty::Opacity, "0.8")
+    .build_clean();
 
 rsx! {
- button { class: "{classes}", style: "{style}",
- "Click me"
- }
+    button { class: "{classes}", style: "{style}",
+        "Click me"
+    }
 }
 ```
 

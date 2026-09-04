@@ -12,12 +12,12 @@ Hikariは、Rustエコシステム向けに設計されたモダンなUIフレ�
 
 ## 主な機能
 
-### 🎨 伝統的な中国色彩システム
+### 伝統的な中国色彩システム
 - **660種類以上の伝統色**: 完全な伝統的な中国色彩パレット
 - **テーマシステム**: 組み込みのHikari（ライト）とTairitsu（ダーク）テーマ
 - **型安全性**: コンパイル時の色値チェック
 
-### 🧩 豊富なコンポーネントライブラリ
+### 豊富なコンポーネントライブラリ
 - **基本コンポーネント**: Button, Input, Card, Badge
 - **フィードバックコンポーネント**: Alert, Toast, Tooltip, Spotlight
 - **ナビゲーションコンポーネント**: Menu, Tabs, Breadcrumb
@@ -31,7 +31,7 @@ Hikariは、Rustエコシステム向けに設計されたモダンなUIフレ�
 - **イージング関数**: 30種類以上のイージング関数
 - **プリセットアニメーション**: フェード、スライド、スケールなど
 
-### 🎯 高度な機能
+### 高度な機能
 - **サーバーサイドレンダリング**: 完全なSSRサポート
 - **型安全性**: Rustの型システムを完全に活用
 - **レスポンシブデザイン**: 組み込みのレスポンシブレイアウトユーティリティ
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari" } {
- div { class: "hi-flex hi-flex-col hi-gap-4" {
- Button { label: "クリックして" }
- Button { label: "プライマリボタン", variant: "primary" }
- Button { label: "セカンダリボタン", variant: "secondary" }
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari" } {
+            div { class: "hi-flex hi-flex-col hi-gap-4" {
+                Button { label: "クリックして" }
+                Button { label: "プライマリボタン", variant: "primary" }
+                Button { label: "セカンダリボタン", variant: "secondary" }
+            }
+        }
+    }
 }
 ```
 
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
- root["hikari/"]
- root --> packages["packages/"]
- root --> examples["examples/"]
- packages --> palette["hikari-palette/"]
- packages --> theme["hikari-theme/"]
- packages --> animation["hikari-animation/"]
- packages --> icons["hikari-icons/"]
- packages --> components["hikari-components/"]
- packages --> extra["hikari-extra-components/"]
- examples --> website["website/"]
- examples --> tabledemo["table-demo/"]
- examples --> treedemo["tree-demo/"]
- examples --> nodegraph["node-graph-demo/"]
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## ドキュメント
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
- let mut theme = use_signal(|| "hikari".to_string());
+    let mut theme = use_signal(|| "hikari".to_string());
 
- rsx! {
- ThemeProvider { initial_palette: "{theme}" } {
- button {
- onclick: move |_| {
- theme.set(if *theme() == "hikari" {
- "tairitsu".to_string()
- } else {
- "hikari".to_string()
- });
- },
- "テーマ切り替え"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "{theme}" } {
+            button {
+                onclick: move |_| {
+                    theme.set(if *theme() == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    });
+                },
+                "テーマ切り替え"
+            }
+        }
+    }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // 静的アニメーション
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // 動的アニメーション（マウス追従）
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ## コントリビュート

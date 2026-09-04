@@ -106,9 +106,9 @@ elements.insert("button".to_string(), button_element);
 
 // Appliquer des styles statiques
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .add_class("button", "hi-flex")
- .apply();
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .add_class("button", "hi-flex")
+    .apply();
 ```
 
 ### Animation de valeur dynamique
@@ -116,12 +116,12 @@ AnimationBuilder::new(&elements)
 ```rust
 // Effet de suivi de souris
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ### Animation multi-éléments
@@ -133,10 +133,10 @@ elements.insert("button".to_string(), button_element);
 elements.insert("icon".to_string(), icon_element);
 
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .add_style("icon", CssProperty::Transform, "scale(1.1)")
- .add_class("button", "hi-flex")
- .apply();
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .add_style("icon", CssProperty::Transform, "scale(1.1)")
+    .add_class("button", "hi-flex")
+    .apply();
 ```
 
 ### Animation de transition
@@ -144,31 +144,31 @@ AnimationBuilder::new(&elements)
 ```rust
 // Animation avec transition
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Width, "100px")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Width, "100px")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // Propriétés de transition personnalisées
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Transform, "rotate(90deg)")
- .apply_with_transition("500ms", "cubic-bezier(0.68, -0.55, 0.265, 1.55)");
+    .add_style("button", CssProperty::Transform, "rotate(90deg)")
+    .apply_with_transition("500ms", "cubic-bezier(0.68, -0.55, 0.265, 1.55)");
 ```
 
 ### Référence API
 
 ```rust
 impl AnimationBuilder {
- pub fn new(elements: &HashMap<String, Element>) -> Self;
+    pub fn new(elements: &HashMap<String, Element>) -> Self;
 
- pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
- pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
- where
- F: Fn(&AnimationContext) -> String + 'static;
+    pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
+    pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
+    where
+        F: Fn(&AnimationContext) -> String + 'static;
 
- pub fn add_class(self, element: &str, class: &str) -> Self;
- pub fn remove_class(self, element: &str, class: &str) -> Self;
+    pub fn add_class(self, element: &str, class: &str) -> Self;
+    pub fn remove_class(self, element: &str, class: &str) -> Self;
 
- pub fn apply(self);
- pub fn apply_with_transition(self, duration: &str, easing: &str);
+    pub fn apply(self);
+    pub fn apply_with_transition(self, duration: &str, easing: &str);
 }
 ```
 
@@ -182,27 +182,27 @@ Interpolation entre des valeurs au fil du temps.
 use hikari_animation::tween::{Tween, TweenBuilder};
 
 let tween = TweenBuilder::new()
- .from(0.0)
- .to(100.0)
- .duration(1000) // ms
- .easing(ease::EaseOut)
- .build();
+    .from(0.0)
+    .to(100.0)
+    .duration(1000) // ms
+    .easing(ease::EaseOut)
+    .build();
 ```
 
 ### Tween avec callbacks
 
 ```rust
 let tween = TweenBuilder::new()
- .from(0.0)
- .to(1.0)
- .duration(500)
- .on_update(|value| {
- println!("Valeur actuelle: {}", value);
- })
- .on_complete(|| {
- println!("Animation terminée !");
- })
- .build();
+    .from(0.0)
+    .to(1.0)
+    .duration(500)
+    .on_update(|value| {
+        println!("Valeur actuelle: {}", value);
+    })
+    .on_complete(|| {
+        println!("Animation terminée !");
+    })
+    .build();
 ```
 
 ### Tweens chaînés
@@ -211,20 +211,20 @@ let tween = TweenBuilder::new()
 let mut timeline = Timeline::new();
 
 timeline.push(
- TweenBuilder::new()
- .from(0.0)
- .to(100.0)
- .duration(300)
- .build()
+    TweenBuilder::new()
+        .from(0.0)
+        .to(100.0)
+        .duration(300)
+        .build()
 );
 
 timeline.push(
- TweenBuilder::new()
- .from(100.0)
- .to(0.0)
- .duration(300)
- .delay(200)
- .build()
+    TweenBuilder::new()
+        .from(100.0)
+        .to(0.0)
+        .duration(300)
+        .delay(200)
+        .build()
 );
 
 timeline.play();
@@ -338,16 +338,16 @@ let mut timeline = Timeline::new();
 
 // Ajouter des animations en séquence
 timeline.add(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "0")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "0")
+        .build()
 );
 
 timeline.add(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "1")
- .with_delay(200)
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "1")
+        .with_delay(200)
+        .build()
 );
 
 timeline.play();
@@ -360,15 +360,15 @@ let mut timeline = Timeline::new();
 
 // Jouer des animations simultanément
 timeline.add_parallel(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Transform, "translateX(100px)")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Transform, "translateX(100px)")
+        .build()
 );
 
 timeline.add_parallel(
- AnimationBuilder::new(&elements)
- .add_style("box", CssProperty::Opacity, "0.5")
- .build()
+    AnimationBuilder::new(&elements)
+        .add_style("box", CssProperty::Opacity, "0.5")
+        .build()
 );
 
 timeline.play();
@@ -380,14 +380,14 @@ timeline.play();
 let timeline = Timeline::new();
 
 // Contrôler la lecture
-timeline.play(); // Démarrer la lecture
-timeline.pause(); // Mettre en pause
-timeline.reverse(); // Inverser la lecture
-timeline.seek(0.5); // Aller à 50%
+timeline.play();      // Démarrer la lecture
+timeline.pause();     // Mettre en pause
+timeline.reverse();   // Inverser la lecture
+timeline.seek(0.5);   // Aller à 50%
 
 // Contrôler la vitesse
-timeline.set_speed(2.0); // Vitesse 2x
-timeline.set_speed(0.5); // Vitesse 0.5x
+timeline.set_speed(2.0);  // Vitesse 2x
+timeline.set_speed(0.5);  // Vitesse 0.5x
 
 // Contrôle de boucle
 timeline.set_loop(true);
@@ -462,17 +462,17 @@ presets::flip_y(&elements, "box", 500);
 use hikari_animation::presets::PresetBuilder;
 
 let custom_preset = PresetBuilder::new()
- .duration(500)
- .easing("ease-out")
- .add_keyframe(0.0, vec![
- (CssProperty::Opacity, "0"),
- (CssProperty::Transform, "translateY(-20px)")
- ])
- .add_keyframe(1.0, vec![
- (CssProperty::Opacity, "1"),
- (CssProperty::Transform, "translateY(0)")
- ])
- .build();
+    .duration(500)
+    .easing("ease-out")
+    .add_keyframe(0.0, vec![
+        (CssProperty::Opacity, "0"),
+        (CssProperty::Transform, "translateY(-20px)")
+    ])
+    .add_keyframe(1.0, vec![
+        (CssProperty::Opacity, "1"),
+        (CssProperty::Transform, "translateY(0)")
+    ])
+    .build();
 
 custom_preset.apply(&elements, "element");
 ```
@@ -497,11 +497,11 @@ spotlight::init_selector(".hi-button");
 
 ```rust
 spotlight::Config {
- size: 200, // Taille du spotlight en px
- opacity: 0.15, // Opacité (0-1)
- color: "#FFB3A7", // Couleur de la lueur
- blur: 20, // Rayon de flou en px
- transition: "150ms" // Vitesse de transition
+    size: 200,              // Taille du spotlight en px
+    opacity: 0.15,          // Opacité (0-1)
+    color: "#FFB3A7",       // Couleur de la lueur
+    blur: 20,              // Rayon de flou en px
+    transition: "150ms"     // Vitesse de transition
 }.init();
 ```
 
@@ -509,11 +509,11 @@ spotlight::Config {
 
 ```rust
 rsx! {
- Button {
- label: "Survolez-moi",
- class: "hi-spotlight", // Activer spotlight
- "Data: spot-{spot_id}" // Identifiant unique
- }
+    Button {
+        label: "Survolez-moi",
+        class: "hi-spotlight",  // Activer spotlight
+        "Data: spot-{spot_id}"   // Identifiant unique
+    }
 }
 ```
 
@@ -535,21 +535,21 @@ Le contexte d'animation fournit des informations d'exécution.
 
 ```rust
 AnimationBuilder::new(&elements)
- .add_style_dynamic("target", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply();
+    .add_style_dynamic("target", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply();
 ```
 
 ### Animation basée sur le temps
 
 ```rust
 .add_style_dynamic("clock", CssProperty::Transform, |ctx| {
- let time = ctx.elapsed_time();
- let angle = (time.as_millis() % 1000) as f64 / 1000.0 * 360.0;
- format!("rotate({}deg)", angle)
+    let time = ctx.elapsed_time();
+    let angle = (time.as_millis() % 1000) as f64 / 1000.0 * 360.0;
+    format!("rotate({}deg)", angle)
 })
 ```
 
@@ -557,9 +557,9 @@ AnimationBuilder::new(&elements)
 
 ```rust
 .add_style_dynamic("header", CssProperty::Background, |ctx| {
- let scroll_y = ctx.scroll_y();
- let opacity = (scroll_y / 100.0).min(1.0);
- format!("rgba(0, 160, 233, {})", opacity)
+    let scroll_y = ctx.scroll_y();
+    let opacity = (scroll_y / 100.0).min(1.0);
+    format!("rgba(0, 160, 233, {})", opacity)
 })
 ```
 
@@ -609,7 +609,7 @@ builder.add_style("element", CssProperty::Opacity, "0.5");
 
 // Transformation complexe
 builder.add_style("element", CssProperty::Transform,
- "perspective(1000px) rotateX(45deg) translateZ(50px)");
+    "perspective(1000px) rotateX(45deg) translateZ(50px)");
 ```
 
 ### Propriétés CSS personnalisées
@@ -632,30 +632,30 @@ use hikari_animation::style::CssProperty;
 
 #[component]
 fn AnimatedButton() -> Element {
- let elements = use_signal(|| {
- let mut map = HashMap::new();
- map.insert("btn".to_string(), get_button_element());
- map
- });
+    let elements = use_signal(|| {
+        let mut map = HashMap::new();
+        map.insert("btn".to_string(), get_button_element());
+        map
+    });
 
- rsx! {
- button {
- class: "hi-button hi-spotlight",
- onmouseenter: move |_| {
- AnimationBuilder::new(&elements())
- .add_style("btn", CssProperty::Transform, "scale(1.05)")
- .add_style("btn", CssProperty::BoxShadow, "0 8px 16px rgba(0, 160, 233, 0.3)")
- .apply_with_transition("200ms", "ease-out");
- },
- onmouseleave: move |_| {
- AnimationBuilder::new(&elements())
- .add_style("btn", CssProperty::Transform, "scale(1)")
- .add_style("btn", CssProperty::BoxShadow, "none")
- .apply_with_transition("200ms", "ease-out");
- },
- "Survolez-moi"
- }
- }
+    rsx! {
+        button {
+            class: "hi-button hi-spotlight",
+            onmouseenter: move |_| {
+                AnimationBuilder::new(&elements())
+                    .add_style("btn", CssProperty::Transform, "scale(1.05)")
+                    .add_style("btn", CssProperty::BoxShadow, "0 8px 16px rgba(0, 160, 233, 0.3)")
+                    .apply_with_transition("200ms", "ease-out");
+            },
+            onmouseleave: move |_| {
+                AnimationBuilder::new(&elements())
+                    .add_style("btn", CssProperty::Transform, "scale(1)")
+                    .add_style("btn", CssProperty::BoxShadow, "none")
+                    .apply_with_transition("200ms", "ease-out");
+            },
+            "Survolez-moi"
+        }
+    }
 }
 ```
 
@@ -664,31 +664,31 @@ fn AnimatedButton() -> Element {
 ```rust
 #[component]
 fn LoadingSpinner() -> Element {
- let elements = use_signal(|| HashMap::new());
+    let elements = use_signal(|| HashMap::new());
 
- use_effect(move || {
- let elements = elements.clone();
- async move {
- loop {
- AnimationBuilder::new(&elements())
- .add_style("spinner", CssProperty::Transform, "rotate(0deg)")
- .build();
+    use_effect(move || {
+        let elements = elements.clone();
+        async move {
+            loop {
+                AnimationBuilder::new(&elements())
+                    .add_style("spinner", CssProperty::Transform, "rotate(0deg)")
+                    .build();
 
- AnimationBuilder::new(&elements())
- .add_style("spinner", CssProperty::Transform, "rotate(360deg)")
- .apply_with_transition("1000ms", "linear");
+                AnimationBuilder::new(&elements())
+                    .add_style("spinner", CssProperty::Transform, "rotate(360deg)")
+                    .apply_with_transition("1000ms", "linear");
 
- tokio::time::sleep(Duration::from_millis(1000)).await;
- }
- }
- });
+                tokio::time::sleep(Duration::from_millis(1000)).await;
+            }
+        }
+    });
 
- rsx! {
- div {
- id: "spinner",
- style: "width: 40px; height: 40px; border: 4px solid var(--hi-color-primary); border-top-color: transparent; border-radius: 50%;"
- }
- }
+    rsx! {
+        div {
+            id: "spinner",
+            style: "width: 40px; height: 40px; border: 4px solid var(--hi-color-primary); border-top-color: transparent; border-radius: 50%;"
+        }
+    }
 }
 ```
 
@@ -697,30 +697,30 @@ fn LoadingSpinner() -> Element {
 ```rust
 #[component]
 fn ParallaxSection() -> Element {
- let scroll_y = use_signal(|| 0.0);
+    let scroll_y = use_signal(|| 0.0);
 
- rsx! {
- div {
- onscroll: move |e| {
- scroll_y.set(e.scroll_y());
+    rsx! {
+        div {
+            onscroll: move |e| {
+                scroll_y.set(e.scroll_y());
 
- AnimationBuilder::new(&elements())
- .add_style_dynamic("bg", CssProperty::Transform, |ctx| {
- let y = ctx.scroll_y() * 0.5;
- format!("translateY({}px)", y)
- })
- .apply_with_transition("100ms", "ease-out");
- },
- div {
- id: "bg",
- style: "position: fixed; width: 100%; height: 100%; background: url(bg.jpg);"
- },
- div {
- style: "position: relative; z-index: 1;",
- "Contenu"
- }
- }
- }
+                AnimationBuilder::new(&elements())
+                    .add_style_dynamic("bg", CssProperty::Transform, |ctx| {
+                        let y = ctx.scroll_y() * 0.5;
+                        format!("translateY({}px)", y)
+                    })
+                    .apply_with_transition("100ms", "ease-out");
+            },
+            div {
+                id: "bg",
+                style: "position: fixed; width: 100%; height: 100%; background: url(bg.jpg);"
+            },
+            div {
+                style: "position: relative; z-index: 1;",
+                "Contenu"
+            }
+        }
+    }
 }
 ```
 
@@ -729,29 +729,29 @@ fn ParallaxSection() -> Element {
 ```rust
 #[component]
 fn AnimatedCounter() -> Element {
- let mut count = use_signal(|| 0);
+    let mut count = use_signal(|| 0);
 
- use_effect(move || {
- let target = 1000;
- let duration = 2000; // 2 secondes
- let steps = 60;
- let step_value = target as f64 / steps as f64;
- let step_duration = duration / steps;
+    use_effect(move || {
+        let target = 1000;
+        let duration = 2000; // 2 secondes
+        let steps = 60;
+        let step_value = target as f64 / steps as f64;
+        let step_duration = duration / steps;
 
- async move {
- for i in 0..=steps {
- count.set((i as f64 * step_value) as i32);
- tokio::time::sleep(Duration::from_millis(step_duration)).await;
- }
- }
- });
+        async move {
+            for i in 0..=steps {
+                count.set((i as f64 * step_value) as i32);
+                tokio::time::sleep(Duration::from_millis(step_duration)).await;
+            }
+        }
+    });
 
- rsx! {
- div {
- class: "counter",
- "{count()}"
- }
- }
+    rsx! {
+        div {
+            class: "counter",
+            "{count()}"
+        }
+    }
 }
 ```
 
@@ -764,12 +764,12 @@ use hikari_animation::AnimationBuilder;
 
 // AnimationBuilder debounce automatiquement les mises à jour
 AnimationBuilder::new(&elements)
- .add_style_dynamic("element", CssProperty::Transform, |ctx| {
- // Ceci est debounced - ne se met pas à jour à chaque mousemove
- let x = ctx.mouse_x();
- format!("translateX({}px)", x)
- })
- .apply_with_transition("100ms", "ease-out");
+    .add_style_dynamic("element", CssProperty::Transform, |ctx| {
+        // Ceci est debounced - ne se met pas à jour à chaque mousemove
+        let x = ctx.mouse_x();
+        format!("translateX({}px)", x)
+    })
+    .apply_with_transition("100ms", "ease-out");
 ```
 
 ### RequestAnimationFrame
@@ -779,8 +779,8 @@ Le système d'animation utilise `requestAnimationFrame` pour des animations flui
 ```rust
 // Intégration RAF automatique
 AnimationBuilder::new(&elements)
- .add_style("anim", CssProperty::Opacity, "1")
- .apply_with_transition("1000ms", "ease");
+    .add_style("anim", CssProperty::Opacity, "1")
+    .apply_with_transition("1000ms", "ease");
 ```
 
 ### Accélération GPU
@@ -788,7 +788,7 @@ AnimationBuilder::new(&elements)
 Utiliser transform et opacity pour les animations accélérées par GPU :
 
 ```rust
-// yes Bon - Accéléré par GPU
+// Bon - Accéléré par GPU
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
@@ -802,7 +802,7 @@ builder.add_style("element", CssProperty::Margin, "10px");
 ```css
 /* Indiquer au navigateur pour optimisation */
 .animated-element {
- will-change: transform, opacity;
+    will-change: transform, opacity;
 }
 ```
 
@@ -812,23 +812,23 @@ builder.add_style("element", CssProperty::Margin, "10px");
 
 ```rust
 pub struct AnimationBuilder<'a> {
- elements: &'a HashMap<String, Element>,
+    elements: &'a HashMap<String, Element>,
 }
 
 impl<'a> AnimationBuilder<'a> {
- pub fn new(elements: &'a HashMap<String, Element>) -> Self;
+    pub fn new(elements: &'a HashMap<String, Element>) -> Self;
 
- pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
- pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
- where
- F: Fn(&AnimationContext) -> String + 'static;
+    pub fn add_style(self, element: &str, property: CssProperty, value: &str) -> Self;
+    pub fn add_style_dynamic<F>(self, element: &str, property: CssProperty, f: F) -> Self
+    where
+        F: Fn(&AnimationContext) -> String + 'static;
 
- pub fn add_class(self, element: &str, class: &str) -> Self;
- pub fn remove_class(self, element: &str, class: &str) -> Self;
+    pub fn add_class(self, element: &str, class: &str) -> Self;
+    pub fn remove_class(self, element: &str, class: &str) -> Self;
 
- pub fn apply(self);
- pub fn apply_with_transition(self, duration: &str, easing: &str);
- pub fn apply_with_custom_transition(self, transition: &str);
+    pub fn apply(self);
+    pub fn apply_with_transition(self, duration: &str, easing: &str);
+    pub fn apply_with_custom_transition(self, transition: &str);
 }
 ```
 
@@ -836,21 +836,21 @@ impl<'a> AnimationBuilder<'a> {
 
 ```rust
 pub struct AnimationContext<'a> {
- pub mouse_x: f64,
- pub mouse_y: f64,
- pub scroll_x: f64,
- pub scroll_y: f64,
- pub elapsed_time: Duration,
- pub window_width: f64,
- pub window_height: f64,
+    pub mouse_x: f64,
+    pub mouse_y: f64,
+    pub scroll_x: f64,
+    pub scroll_y: f64,
+    pub elapsed_time: Duration,
+    pub window_width: f64,
+    pub window_height: f64,
 }
 
 impl<'a> AnimationContext<'a> {
- pub fn mouse_x(&self) -> f64;
- pub fn mouse_y(&self) -> f64;
- pub fn scroll_x(&self) -> f64;
- pub fn scroll_y(&self) -> f64;
- pub fn elapsed_time(&self) -> Duration;
+    pub fn mouse_x(&self) -> f64;
+    pub fn mouse_y(&self) -> f64;
+    pub fn scroll_x(&self) -> f64;
+    pub fn scroll_y(&self) -> f64;
+    pub fn elapsed_time(&self) -> Duration;
 }
 ```
 
@@ -858,24 +858,24 @@ impl<'a> AnimationContext<'a> {
 
 ```rust
 pub struct Timeline {
- // interne
+    // interne
 }
 
 impl Timeline {
- pub fn new() -> Self;
+    pub fn new() -> Self;
 
- pub fn add(&mut self, animation: Animation) -> &mut Self;
- pub fn add_parallel(&mut self, animation: Animation) -> &mut Self;
+    pub fn add(&mut self, animation: Animation) -> &mut Self;
+    pub fn add_parallel(&mut self, animation: Animation) -> &mut Self;
 
- pub fn play(&mut self);
- pub fn pause(&mut self);
- pub fn stop(&mut self);
- pub fn reverse(&mut self);
- pub fn seek(&mut self, progress: f64);
+    pub fn play(&mut self);
+    pub fn pause(&mut self);
+    pub fn stop(&mut self);
+    pub fn reverse(&mut self);
+    pub fn seek(&mut self, progress: f64);
 
- pub fn set_speed(&mut self, speed: f64);
- pub fn set_loop(&mut self, loop: bool);
- pub fn set_repeat_count(&mut self, count: usize);
+    pub fn set_speed(&mut self, speed: f64);
+    pub fn set_loop(&mut self, loop: bool);
+    pub fn set_repeat_count(&mut self, count: usize);
 }
 ```
 
@@ -884,23 +884,23 @@ impl Timeline {
 ### 1. Utiliser les transitions avec parcimonie
 
 ```rust
-// yes Bon - Uniquement lors de l'interaction utilisateur
+// Bon - Uniquement lors de l'interaction utilisateur
 button {
- onmouseenter: move |_| {
- builder.apply_with_transition("200ms", "ease");
- }
+    onmouseenter: move |_| {
+        builder.apply_with_transition("200ms", "ease");
+    }
 }
 
 // no À éviter - Animation continue
 loop {
- builder.apply_with_transition("16ms", "linear"); // 60fps, lourd !
+    builder.apply_with_transition("16ms", "linear"); // 60fps, lourd !
 }
 ```
 
 ### 2. Préférer transform au layout
 
 ```rust
-// yes Bon - Accéléré par GPU
+// Bon - Accéléré par GPU
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
 // no À éviter - Layout thrashing
@@ -911,33 +911,33 @@ builder.add_style("el", CssProperty::Margin, "100px");
 
 ```rust
 // Sensation naturelle
-"ease-out" // Décélérer
-"ease-in-out" // Accélérer puis décélérer
+"ease-out"      // Décélérer
+"ease-in-out"   // Accélérer puis décélérer
 
 // Sensation mécanique
-"linear" // Vitesse constante
+"linear"        // Vitesse constante
 
 // Sensation ludique
-"elastic-out" // Rebondit
-"bounce-out" // Rebondit à la fin
+"elastic-out"   // Rebondit
+"bounce-out"    // Rebondit à la fin
 ```
 
 ### 4. Respecter le mouvement réduit
 
 ```rust
 use_effect(move || {
- let prefers_reduced_motion = window()
- .match_media("(prefers-motion: reduce)")
- .ok()
- .and_then(|m| m.matches());
+    let prefers_reduced_motion = window()
+        .match_media("(prefers-motion: reduce)")
+        .ok()
+        .and_then(|m| m.matches());
 
- if prefers_reduced_motion.unwrap_or(false) {
- // Utiliser des animations plus simples
- builder.apply_with_transition("0ms", "linear");
- } else {
- // Animation complète
- builder.apply_with_transition("300ms", "ease-out");
- }
+    if prefers_reduced_motion.unwrap_or(false) {
+        // Utiliser des animations plus simples
+        builder.apply_with_transition("0ms", "linear");
+    } else {
+        // Animation complète
+        builder.apply_with_transition("300ms", "ease-out");
+    }
 });
 ```
 

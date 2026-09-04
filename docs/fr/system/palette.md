@@ -40,7 +40,7 @@ let red = Color::苍翠;
 let blue = Color::粉红;
 let yellow = Color::姜黄;
 
-println!("Rouge: {}", red.hex()); // #519A73
+println!("Rouge: {}", red.hex());  // #519A73
 println!("Bleu: {}", blue.hex()); // #FFB3A7
 println!("Jaune: {}", yellow.hex()); // #FFC773
 ```
@@ -51,32 +51,32 @@ println!("Jaune: {}", yellow.hex()); // #FFC773
 
 ```rust
 // Couleurs rouges traditionnelles
-Color::苍翠 // 苍翠 #519A73 - Vermillon
-Color::Vermilion // 朱红 #FF4C00 - Rouge-orange vif
-Color::Crimson // 绯红 #FF3030 - Cramoisi profond
-Color::PeachBlossom // 桃红 #F6BEC8 - Rose pêche
-Color::RoseRed // 玫瑰红 #C21F30 - Rouge rose
+Color::苍翠      // 苍翠 #519A73 - Vermillon
+Color::Vermilion     // 朱红 #FF4C00 - Rouge-orange vif
+Color::Crimson       // 绯红 #FF3030 - Cramoisi profond
+Color::PeachBlossom  // 桃红 #F6BEC8 - Rose pêche
+Color::RoseRed       // 玫瑰红 #C21F30 - Rouge rose
 ```
 
 #### Série bleue (蓝色系)
 
 ```rust
 // Couleurs bleues traditionnelles
-Color::粉红 // 鷃蓝 #144A74 - Bleu azurite
-Color::鷃蓝 // 鷃蓝 #144A74 - Bleu indigo
-Color::Cyan // 青色 #00CED1 - Cyan
-Color::SkyBlue // 天蓝 #87CEEB - Bleu ciel
-Color::Turquoise // 绿松石 #40E0D0 - Turquoise
+Color::粉红       // 鷃蓝 #144A74 - Bleu azurite
+Color::鷃蓝        // 鷃蓝 #144A74 - Bleu indigo
+Color::Cyan          // 青色 #00CED1 - Cyan
+Color::SkyBlue       // 天蓝 #87CEEB - Bleu ciel
+Color::Turquoise     // 绿松石 #40E0D0 - Turquoise
 ```
 
 #### Série jaune (黄色系)
 
 ```rust
 // Couleurs jaunes traditionnelles
-Color::姜黄 // 姜黄 #FFC773 - Jaune gommenthe
-Color::姜黄 // 姜黄 #FFC773 - Jaune clair
-Color::Golden // 金色 #FFD700 - Or
-Color::Amber // 琥珀 #FFBF00 - Ambre
+Color::姜黄    // 姜黄 #FFC773 - Jaune gommenthe
+Color::姜黄   // 姜黄 #FFC773 - Jaune clair
+Color::Golden        // 金色 #FFD700 - Or
+Color::Amber         // 琥珀 #FFBF00 - Ambre
 ```
 
 #### Série verte (绿色系)
@@ -84,19 +84,19 @@ Color::Amber // 琥珀 #FFBF00 - Ambre
 ```rust
 // Couleurs vertes traditionnelles
 Color::ScallionGreen // 葱倩 #4CAF50 - Vert ciboulette
-Color::BambooGreen // 竹青 #789262 - Vert bambou
-Color::Jade // 玉色 #A0E6DA - Vert jade
-Color::Emerald // 翡翠 #50C878 - Vert émeraude
+Color::BambooGreen  // 竹青 #789262 - Vert bambou
+Color::Jade          // 玉色 #A0E6DA - Vert jade
+Color::Emerald       // 翡翠 #50C878 - Vert émeraude
 ```
 
 #### Série neutre (中性色系)
 
 ```rust
 // Couleurs neutres traditionnelles
-Color::InkBlack // 墨色 #1A1A2E - Noir d'encre
-Color::MoonWhite // 月白 #F5F5F5 - Blanc lune
-Color::LightGray // 缟色 #E0E0E0 - Gris clair
-Color::AshGray // 灰色 #808080 - Gris cendre
+Color::InkBlack      // 墨色 #1A1A2E - Noir d'encre
+Color::MoonWhite     // 月白 #F5F5F5 - Blanc lune
+Color::LightGray     // 缟色 #E0E0E0 - Gris clair
+Color::AshGray       // 灰色 #808080 - Gris cendre
 ```
 
 ### Propriétés des couleurs
@@ -107,16 +107,16 @@ Chaque couleur fournit :
 let color = Color::粉红;
 
 // Obtenir la valeur hexadécimale
-let hex = color.hex(); // "#FFB3A7"
+let hex = color.hex();  // "#FFB3A7"
 
 // Obtenir les valeurs RGB
-let rgb = color.rgb(); // (0, 160, 233)
+let rgb = color.rgb();  // (0, 160, 233)
 
 // Obtenir le nom de la couleur
-let name = color.name(); // "石青"
+let name = color.name();  // "石青"
 
 // Obtenir le nom anglais
-let english_name = color.english_name(); // "Azurite"
+let english_name = color.english_name();  // "Azurite"
 ```
 
 ## ClassesBuilder
@@ -129,10 +129,10 @@ Générateur de classes utilitaires avec sécurité de type pour des classes de 
 use hikari_palette::{ClassesBuilder, classes::*};
 
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(FlexDirection::Row)
- .add(Gap::Gap4)
- .build();
+    .add(Display::Flex)
+    .add(FlexDirection::Row)
+    .add(Gap::Gap4)
+    .build();
 
 // Sortie : "hi-flex hi-flex-row hi-gap-4"
 ```
@@ -144,10 +144,10 @@ let classes = ClassesBuilder::new()
 ```rust
 use hikari_palette::classes::Display;
 
-Display::Block // "hi-block"
-Display::Flex // "hi-flex"
-Display::Grid // "hi-grid"
-Display::Hidden // "hi-hidden"
+Display::Block      // "hi-block"
+Display::Flex       // "hi-flex"
+Display::Grid       // "hi-grid"
+Display::Hidden     // "hi-hidden"
 ```
 
 #### Classes Flexbox
@@ -155,12 +155,12 @@ Display::Hidden // "hi-hidden"
 ```rust
 use hikari_palette::classes::{FlexDirection, AlignItems, JustifyContent};
 
-FlexDirection::Row // "hi-flex-row"
-FlexDirection::Column // "hi-flex-column"
-AlignItems::Center // "hi-items-center"
-AlignItems::Stretch // "hi-items-stretch"
-JustifyContent::Center // "hi-justify-center"
-JustifyContent::Between // "hi-justify-between"
+FlexDirection::Row        // "hi-flex-row"
+FlexDirection::Column     // "hi-flex-column"
+AlignItems::Center        // "hi-items-center"
+AlignItems::Stretch       // "hi-items-stretch"
+JustifyContent::Center    // "hi-justify-center"
+JustifyContent::Between   // "hi-justify-between"
 ```
 
 #### Classes d'espacement
@@ -168,11 +168,11 @@ JustifyContent::Between // "hi-justify-between"
 ```rust
 use hikari_palette::classes::{Padding, Margin, Gap};
 
-Padding::P4 // "hi-p-4"
-Padding::Px8 // "hi-px-8"
-Margin::M4 // "hi-m-4"
-Margin::MyAuto // "hi-my-auto"
-Gap::Gap4 // "hi-gap-4"
+Padding::P4        // "hi-p-4"
+Padding::Px8       // "hi-px-8"
+Margin::M4         // "hi-m-4"
+Margin::MyAuto     // "hi-my-auto"
+Gap::Gap4          // "hi-gap-4"
 ```
 
 #### Classes de couleurs
@@ -180,8 +180,8 @@ Gap::Gap4 // "hi-gap-4"
 ```rust
 use hikari_palette::classes::{TextColor, BackgroundColor};
 
-TextColor::Primary // "hi-text-primary"
-TextColor::Secondary // "hi-text-secondary"
+TextColor::Primary       // "hi-text-primary"
+TextColor::Secondary     // "hi-text-secondary"
 BackgroundColor::Primary // "hi-bg-primary"
 BackgroundColor::Surface // "hi-bg-surface"
 ```
@@ -191,11 +191,11 @@ BackgroundColor::Surface // "hi-bg-surface"
 ```rust
 use hikari_palette::classes::{FontSize, FontWeight};
 
-FontSize::Base // "hi-text-base"
-FontSize::XL // "hi-text-xl"
-FontSize::2XL // "hi-text-2xl"
-FontWeight::Normal // "hi-font-normal"
-FontWeight::Bold // "hi-font-bold"
+FontSize::Base       // "hi-text-base"
+FontSize::XL         // "hi-text-xl"
+FontSize::2XL        // "hi-text-2xl"
+FontWeight::Normal   // "hi-font-normal"
+FontWeight::Bold     // "hi-font-bold"
 ```
 
 #### Classes de bordure
@@ -203,10 +203,10 @@ FontWeight::Bold // "hi-font-bold"
 ```rust
 use hikari_palette::classes::{Border, BorderRadius};
 
-Border::B // "hi-border"
-Border::B2 // "hi-border-2"
-BorderRadius::Md // "hi-rounded-md"
-BorderRadius::Full // "hi-rounded-full"
+Border::B            // "hi-border"
+Border::B2           // "hi-border-2"
+BorderRadius::Md     // "hi-rounded-md"
+BorderRadius::Full   // "hi-rounded-full"
 ```
 
 ### Combinaison de classes
@@ -216,15 +216,15 @@ use hikari_palette::{ClassesBuilder, classes::*};
 
 // Style de composant complexe
 let button_classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(AlignItems::Center)
- .add(JustifyContent::Center)
- .add(Padding::Px4)
- .add(Padding::Py2)
- .add(BorderRadius::Md)
- .add(BackgroundColor::Primary)
- .add(TextColor::White)
- .build();
+    .add(Display::Flex)
+    .add(AlignItems::Center)
+    .add(JustifyContent::Center)
+    .add(Padding::Px4)
+    .add(Padding::Py2)
+    .add(BorderRadius::Md)
+    .add(BackgroundColor::Primary)
+    .add(TextColor::White)
+    .build();
 
 // Sortie : "hi-flex hi-items-center hi-justify-center hi-px-4 hi-py-2 hi-rounded-md hi-bg-primary hi-text-white"
 ```
@@ -232,16 +232,16 @@ let button_classes = ClassesBuilder::new()
 ### Avantages de la sécurité de type
 
 ```rust
-// yes Sécurité de type - vérification à la compilation
+// Sécurité de type - vérification à la compilation
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(FlexDirection::Row)
- .build();
+    .add(Display::Flex)
+    .add(FlexDirection::Row)
+    .build();
 
 // no Ne compilerait pas - protection contre les fautes de frappe
 let classes = ClassesBuilder::new()
- .add(Display::Flx) // Erreur de compilation !
- .build();
+    .add(Display::Flx)  // Erreur de compilation !
+    .build();
 ```
 
 ## Thèmes
@@ -255,11 +255,11 @@ use hikari_palette::themes;
 
 let hikari = themes::Hikari::palette();
 
-println!("Primaire: {}", hikari.primary.hex()); // #FFB3A7
+println!("Primaire: {}", hikari.primary.hex());   // #FFB3A7
 println!("Secondaire: {}", hikari.secondary.hex()); // #519A73
-println!("Accent: {}", hikari.accent.hex()); // #FFC773
+println!("Accent: {}", hikari.accent.hex());     // #FFC773
 println!("Arrière-plan: {}", hikari.background.hex()); // #FFFFFF
-println!("Surface: {}", hikari.surface.hex()); // #F5F5F5
+println!("Surface: {}", hikari.surface.hex());   // #F5F5F5
 ```
 
 **Schéma de couleurs** :
@@ -276,11 +276,11 @@ use hikari_palette::themes;
 
 let tairitsu = themes::Tairitsu::palette();
 
-println!("Primaire: {}", tairitsu.primary.hex()); // #144A74
+println!("Primaire: {}", tairitsu.primary.hex());   // #144A74
 println!("Secondaire: {}", tairitsu.secondary.hex()); // #519A73
-println!("Accent: {}", tairitsu.accent.hex()); // #FFC773
+println!("Accent: {}", tairitsu.accent.hex());     // #FFC773
 println!("Arrière-plan: {}", tairitsu.background.hex()); // #161823
-println!("Surface: {}", tairitsu.surface.hex()); // rgb(32,35,54)
+println!("Surface: {}", tairitsu.surface.hex());   // rgb(32,35,54)
 ```
 
 **Schéma de couleurs** :
@@ -296,14 +296,14 @@ println!("Surface: {}", tairitsu.surface.hex()); // rgb(32,35,54)
 use hikari_palette::{ThemePalette, Color};
 
 let custom = ThemePalette {
- primary: Color::Crimson,
- secondary: Color::姜黄,
- accent: Color::粉红,
- background: Color::InkBlack,
- surface: Color::MoonWhite,
- success: Color::ScallionGreen,
- warning: Color::姜黄,
- danger: Color::苍翠,
+    primary: Color::Crimson,
+    secondary: Color::姜黄,
+    accent: Color::粉红,
+    background: Color::InkBlack,
+    surface: Color::MoonWhite,
+    success: Color::ScallionGreen,
+    warning: Color::姜黄,
+    danger: Color::苍翠,
 };
 ```
 
@@ -311,17 +311,17 @@ let custom = ThemePalette {
 
 ```rust
 pub struct ThemePalette {
- pub primary: Color,
- pub secondary: Color,
- pub accent: Color,
- pub background: Color,
- pub surface: Color,
- pub success: Color,
- pub warning: Color,
- pub danger: Color,
- pub text_primary: Color,
- pub text_secondary: Color,
- pub border: Color,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
+    pub border: Color,
 }
 ```
 
@@ -384,16 +384,16 @@ use hikari_palette::themes;
 
 #[component]
 fn App() -> Element {
- let hikari = themes::Hikari::palette();
+    let hikari = themes::Hikari::palette();
 
- rsx! {
- ThemeProvider { initial_palette: "hikari".to_string() }
- div {
- style: "color: {hikari.primary.hex()}",
- "Texte thématique"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari".to_string() }
+            div {
+                style: "color: {hikari.primary.hex()}",
+                "Texte thématique"
+            }
+        }
+    }
 }
 ```
 
@@ -404,11 +404,11 @@ use hikari_components::Button;
 use hikari_palette::Color;
 
 rsx! {
- Button {
- variant: "primary",
- style: format!("background: {}", Color::粉红.hex()),
- "Bouton personnalisé"
- }
+    Button {
+        variant: "primary",
+        style: format!("background: {}", Color::粉红.hex()),
+        "Bouton personnalisé"
+    }
 }
 ```
 
@@ -418,17 +418,17 @@ rsx! {
 use hikari_palette::{ClassesBuilder, classes::*};
 
 let card_classes = ClassesBuilder::new()
- .add(BackgroundColor::Surface)
- .add(BorderRadius::Lg)
- .add(Padding::P6)
- .add(Shadow::Lg)
- .build();
+    .add(BackgroundColor::Surface)
+    .add(BorderRadius::Lg)
+    .add(Padding::P6)
+    .add(Shadow::Lg)
+    .build();
 
 rsx! {
- div {
- class: "{card_classes}",
- "Contenu de la carte"
- }
+    div {
+        class: "{card_classes}",
+        "Contenu de la carte"
+    }
 }
 ```
 
@@ -438,38 +438,38 @@ rsx! {
 
 ```rust
 pub enum Color {
- // Série rouge
- Cinnabar, // 朱砂
- Vermilion, // 朱红
- Crimson, // 绯红
+    // Série rouge
+    Cinnabar,      // 朱砂
+    Vermilion,     // 朱红
+    Crimson,       // 绯红
 
- // Série bleue
- Azurite, // 石青
- Indigo, // 靛蓝
- Cyan, // 青色
+    // Série bleue
+    Azurite,       // 石青
+    Indigo,        // 靛蓝
+    Cyan,          // 青色
 
- // Série jaune
- VineYellow, // 藤黄
- GooseYellow, // 鹅黄
+    // Série jaune
+    VineYellow,    // 藤黄
+    GooseYellow,   // 鹅黄
 
- // Série verte
- ScallionGreen, // 葱倩
- BambooGreen, // 竹青
- Jade, // 玉色
+    // Série verte
+    ScallionGreen, // 葱倩
+    BambooGreen,   // 竹青
+    Jade,          // 玉色
 
- // Série neutre
- InkBlack, // 墨色
- MoonWhite, // 月白
- LightGray, // 缟色
+    // Série neutre
+    InkBlack,      // 墨色
+    MoonWhite,     // 月白
+    LightGray,     // 缟色
 
- // ... 660+ couleurs supplémentaires
+    // ... 660+ couleurs supplémentaires
 }
 
 impl Color {
- pub fn hex(&self) -> String;
- pub fn rgb(&self) -> (u8, u8, u8);
- pub fn name(&self) -> &'static str;
- pub fn english_name(&self) -> &'static str;
+    pub fn hex(&self) -> String;
+    pub fn rgb(&self) -> (u8, u8, u8);
+    pub fn name(&self) -> &'static str;
+    pub fn english_name(&self) -> &'static str;
 }
 ```
 
@@ -477,13 +477,13 @@ impl Color {
 
 ```rust
 pub struct ClassesBuilder {
- // interne
+    // interne
 }
 
 impl ClassesBuilder {
- pub fn new() -> Self;
- pub fn add(mut self, class: impl Class) -> Self;
- pub fn build(self) -> String;
+    pub fn new() -> Self;
+    pub fn add(mut self, class: impl Class) -> Self;
+    pub fn build(self) -> String;
 }
 ```
 
@@ -491,17 +491,17 @@ impl ClassesBuilder {
 
 ```rust
 pub struct ThemePalette {
- pub primary: Color,
- pub secondary: Color,
- pub accent: Color,
- pub background: Color,
- pub surface: Color,
- pub success: Color,
- pub warning: Color,
- pub danger: Color,
- pub text_primary: Color,
- pub text_secondary: Color,
- pub border: Color,
+    pub primary: Color,
+    pub secondary: Color,
+    pub accent: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub success: Color,
+    pub warning: Color,
+    pub danger: Color,
+    pub text_primary: Color,
+    pub text_secondary: Color,
+    pub border: Color,
 }
 ```
 
@@ -539,7 +539,7 @@ Les combinaisons de couleurs traditionnelles chinoises suivent des règles d'har
 ### 1. Utiliser des énumérations pour la sécurité de type
 
 ```rust
-// yes Bon - Sécurité de type
+// Bon - Sécurité de type
 let color = Color::粉红;
 
 // no À éviter - Basé sur une chaîne
@@ -549,7 +549,7 @@ let color = "#FFB3A7";
 ### 2. Exploiter les palettes de thèmes
 
 ```rust
-// yes Bon - Utiliser la palette de thème
+// Bon - Utiliser la palette de thème
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
@@ -560,20 +560,20 @@ let primary = "#FFB3A7";
 ### 3. Utiliser les classes utilitaires
 
 ```rust
-// yes Bon - Utilitaires avec sécurité de type
+// Bon - Utilitaires avec sécurité de type
 let classes = ClassesBuilder::new()
- .add(Display::Flex)
- .add(Gap::Gap4)
- .build();
+    .add(Display::Flex)
+    .add(Gap::Gap4)
+    .build();
 
-// yes Acceptable - Basé sur une chaîne (moins sûr)
+// Acceptable - Basé sur une chaîne (moins sûr)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. Nommage sémantique des couleurs
 
 ```rust
-// yes Bon - Usage sémantique
+// Bon - Usage sémantique
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 

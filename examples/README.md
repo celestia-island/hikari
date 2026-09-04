@@ -133,36 +133,36 @@ cargo run
 
 ```
 examples/
-├── website/ # Comprehensive component showcase
-│ ├── Cargo.toml
-│ ├── README.md
-│ └── src/main.rs
+├── website/            # Comprehensive component showcase
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/main.rs
 │
-├── table-demo/ # Advanced table features
-│ ├── Cargo.toml
-│ ├── README.md
-│ └── src/main.rs
+├── table-demo/         # Advanced table features
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/main.rs
 │
-├── tree-demo/ # Tree component with large datasets
-│ ├── Cargo.toml
-│ ├── README.md
-│ └── src/main.rs
+├── tree-demo/          # Tree component with large datasets
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/main.rs
 │
-├── node-graph-demo/ # Interactive node graph
-│ ├── Cargo.toml
-│ ├── README.md
-│ └── src/main.rs
+├── node-graph-demo/    # Interactive node graph
+│   ├── Cargo.toml
+│   ├── README.md
+│   └── src/main.rs
 │
-└── ssr-demo/ # Server-Side Rendering
- ├── Cargo.toml
- ├── README.md
- ├── src/
- │ ├── main.rs
- │ └── index.html
- └── static/ # Static assets (optional)
+└── ssr-demo/           # Server-Side Rendering
+    ├── Cargo.toml
+    ├── README.md
+    ├── src/
+    │   ├── main.rs
+    │   └── index.html
+    └── static/         # Static assets (optional)
 ```
 
-## 🎨 Design System
+## Design System
 
 All examples use the Hikari design system:
 
@@ -198,13 +198,13 @@ Run tests for all examples:
 cargo test --workspace
 ```
 
-## 📚 Learn More
+## Learn More
 
 - **Hikari Components**: [../../packages/components/](../../packages/components/)
 - **Hikari Palette**: [../../packages/palette/](../../packages/palette/)
 - **Hikari Theme**: [../../packages/theme/](../../packages/theme/)
 
-## 🤝 Contributing
+## Contributing
 
 When adding new examples:
 
@@ -218,7 +218,7 @@ When adding new examples:
 
 All examples are licensed under the same terms as the Hikari project — the [Synthetic Source License (SySL), Version 1.0](../LICENSE).
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Tairitsu](https://github.com/celestia-island/tairitsu)
 - Design inspired by [Arknights](https://www.arknights.global/)

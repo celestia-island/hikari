@@ -12,12 +12,12 @@ Hikari는 Rust 생태계를 위해 설계된 현대적인 UI 프레임워크로,
 
 ## 핵심 기능
 
-### 🎨 전통 중국 색채 시스템
+### 전통 중국 색채 시스템
 - **660+ 전통 색상**: 완전한 전통 중국 색상 팔레트
 - **테마 시스템**: 기본 제공 Hikari (라이트) 및 Tairitsu (다크) 테마
 - **타입 안전**: 컴파일 시간 검증 색상 값
 
-### 🧩 풍부한 컴포넌트 라이브러리
+### 풍부한 컴포넌트 라이브러리
 - **기본 컴포넌트**: Button, Input, Card, Badge
 - **피드백 컴포넌트**: Alert, Toast, Tooltip, Spotlight
 - **내비게이션 컴포넌트**: Menu, Tabs, Breadcrumb
@@ -31,7 +31,7 @@ Hikari는 Rust 생태계를 위해 설계된 현대적인 UI 프레임워크로,
 - **이징 함수**: 30+ 이징 함수
 - **프리셋 애니메이션**: 페이드, 슬라이드, 스케일 등
 
-### 🎯 고급 기능
+### 고급 기능
 - **서버 사이드 렌더링**: 완전한 SSR 지원
 - **타입 안전**: Rust 타입 시스템의 완전한 활용
 - **반응형 디자인**: 기본 제공 반응형 레이아웃 유틸리티
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari" } {
- div { class: "hi-flex hi-flex-col hi-gap-4" {
- Button { label: "클릭하세요" }
- Button { label: "기본 버튼", variant: "primary" }
- Button { label: "보조 버튼", variant: "secondary" }
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari" } {
+            div { class: "hi-flex hi-flex-col hi-gap-4" {
+                Button { label: "클릭하세요" }
+                Button { label: "기본 버튼", variant: "primary" }
+                Button { label: "보조 버튼", variant: "secondary" }
+            }
+        }
+    }
 }
 ```
 
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
- root["hikari/"]
- root --> packages["packages/"]
- root --> examples["examples/"]
- packages --> palette["hikari-palette/"]
- packages --> theme["hikari-theme/"]
- packages --> animation["hikari-animation/"]
- packages --> icons["hikari-icons/"]
- packages --> components["hikari-components/"]
- packages --> extra["hikari-extra-components/"]
- examples --> website["website/"]
- examples --> tabledemo["table-demo/"]
- examples --> treedemo["tree-demo/"]
- examples --> nodegraph["node-graph-demo/"]
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## 문서
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
- let mut theme = use_signal(|| "hikari".to_string());
+    let mut theme = use_signal(|| "hikari".to_string());
 
- rsx! {
- ThemeProvider { initial_palette: "{theme}" } {
- button {
- onclick: move |_| {
- theme.set(if *theme() == "hikari" {
- "tairitsu".to_string()
- } else {
- "hikari".to_string()
- });
- },
- "테마 전환"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "{theme}" } {
+            button {
+                onclick: move |_| {
+                    theme.set(if *theme() == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    });
+                },
+                "테마 전환"
+            }
+        }
+    }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // 정적 애니메이션
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // 동적 애니메이션 (마우스 추적)
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ## 기여

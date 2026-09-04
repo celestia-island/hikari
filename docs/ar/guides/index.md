@@ -2,7 +2,7 @@
 
 > إطار عمل حديث لواجهة المستخدم مبني بلغة Rust باستخدام Tairitsu + Grass + Axum
 >
-> **نمط التصميم**: تصميم مسطح على طراز + جماليات الخيالية العلمية + الألوان الصينية التقليدية
+> **نمط التصميم**: تصميم مسطح على طراز  + جماليات  الخيالية العلمية + الألوان الصينية التقليدية
 >
 > **أصل الاسم**: "هيكاري" (الضوء) من لعبة الإيقاع Arcaea
 
@@ -12,12 +12,12 @@
 
 ## الميزات الأساسية
 
-### 🎨 نظام الألوان الصينية التقليدية
+### نظام الألوان الصينية التقليدية
 - **أكثر من 660 لون تقليدي**: لوحة ألوان صينية تقليدية كاملة
 - **نظام السمات**: سمات مدمجة هيكاري (فاتح) وتايريتسو (داكن)
 - **أمان الأنواع**: فحص قيم الألوان في وقت الترجمة
 
-### 🧩 مكتبة مكونات غنية
+### مكتبة مكونات غنية
 - **المكونات الأساسية**: زر، حقل إدخال، بطاقة، شارة
 - **مكونات التغذية الراجعة**: تنبيه، إشعار، تلميح، بقعة ضوئية
 - **مكونات التنقل**: قائمة، تبويبات، مسار التنقل
@@ -31,7 +31,7 @@
 - **دوال التسهيل**: أكثر من 30 دالة تسهيل
 - **رسوم متحركة مسبقة**: تلاشي، انزلاق، تكبير، إلخ
 
-### 🎯 ميزات متقدمة
+### ميزات متقدمة
 - **العرض من جانب الخادم**: دعم SSR كامل
 - **أمان الأنواع**: الاستفادة الكاملة من نظام أنواع Rust
 - **التصميم المستجيب**: أدوات تخطيط مستجيبة مدمجة
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari" } {
- div { class: "hi-flex hi-flex-col hi-gap-4" {
- Button { label: "اضغط هنا" }
- Button { label: "زر رئيسي", variant: "primary" }
- Button { label: "زر ثانوي", variant: "secondary" }
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari" } {
+            div { class: "hi-flex hi-flex-col hi-gap-4" {
+                Button { label: "اضغط هنا" }
+                Button { label: "زر رئيسي", variant: "primary" }
+                Button { label: "زر ثانوي", variant: "secondary" }
+            }
+        }
+    }
 }
 ```
 
@@ -86,12 +86,12 @@ trunk build --release
 
 ## فلسفة التصميم
 
-### تصميم المسطح
+### تصميم  المسطح
 - خطوط نظيفة وتسلسل هرمي واضح للمعلومات
 - تباين عالٍ للقراءة
 - تصميم بسيط لكن مكرر
 
-### جماليات الخيالية العلمية
+### جماليات  الخيالية العلمية
 - تأثيرات توهج دقيقة
 - مؤشرات ديناميكية (أضواء تنفسية، رسوم نبضية)
 - حدود دقيقة وأنماط هندسية
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
- root["hikari/"]
- root --> packages["packages/"]
- root --> examples["examples/"]
- packages --> palette["hikari-palette/"]
- packages --> theme["hikari-theme/"]
- packages --> animation["hikari-animation/"]
- packages --> icons["hikari-icons/"]
- packages --> components["hikari-components/"]
- packages --> extra["hikari-extra-components/"]
- examples --> website["website/"]
- examples --> tabledemo["table-demo/"]
- examples --> treedemo["tree-demo/"]
- examples --> nodegraph["node-graph-demo/"]
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## التوثيق
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
- let mut theme = use_signal(|| "hikari".to_string());
+    let mut theme = use_signal(|| "hikari".to_string());
 
- rsx! {
- ThemeProvider { initial_palette: "{theme}" } {
- button {
- onclick: move |_| {
- theme.set(if *theme() == "hikari" {
- "tairitsu".to_string()
- } else {
- "hikari".to_string()
- });
- },
- "تبديل السمة"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "{theme}" } {
+            button {
+                onclick: move |_| {
+                    theme.set(if *theme() == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    });
+                },
+                "تبديل السمة"
+            }
+        }
+    }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // رسوم متحركة ثابتة
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // رسوم متحركة ديناميكية (متابعة الفأرة)
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ## المساهمة

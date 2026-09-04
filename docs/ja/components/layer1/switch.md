@@ -8,29 +8,29 @@ Success、Primary、Secondary、Danger、Warning、Infoの複数の色をサポ�
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
- div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
- }
- div { style: "width:40px;height:22px;border-radius:11px;background:#ccc;position:relative;",
- div { style: "position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
- }
- }
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#ccc;position:relative;",
+            div { style: "position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" }
+        }
+    }
 }
 ```
 
 ## スイッチアイコンバリアント
 
-アイコン付きスイッチ、デフォルトでokとnoシンボルを提供します。
+アイコン付きスイッチ、デフォルトで✓と✗シンボルを提供します。
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
- span { style: "font-size:16px;", "🌙" }
- div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
- span { style: "font-size:16px;", "☀" }
- }
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:16px;", "" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:16px;", "" }
+    }
 }
 ```
 
@@ -40,12 +40,12 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
- span { style: "font-size:14px;color:#666;", "Off" }
- div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
- span { style: "font-size:14px;color:#333;", "On" }
- }
+    div { style: "padding:1rem;display:flex;gap:8px;align-items:center;",
+        span { style: "font-size:14px;color:#666;", "Off" }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        span { style: "font-size:14px;color:#333;", "On" }
+    }
 }
 ```
 
@@ -55,14 +55,14 @@ Small、Medium、Largeサイズをサポートしています。
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
- div { style: "width:28px;height:16px;border-radius:8px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:1px;top:1px;width:14px;height:14px;border-radius:50%;background:#fff;" } }
- div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
- div { style: "width:52px;height:28px;border-radius:14px;background:#3a6ea5;position:relative;",
- div { style: "position:absolute;right:2px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;" } }
- }
+    div { style: "padding:1rem;display:flex;gap:16px;align-items:center;",
+        div { style: "width:28px;height:16px;border-radius:8px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:1px;top:1px;width:14px;height:14px;border-radius:50%;background:#fff;" } }
+        div { style: "width:40px;height:22px;border-radius:11px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;" } }
+        div { style: "width:52px;height:28px;border-radius:14px;background:#3a6ea5;position:relative;",
+            div { style: "position:absolute;right:2px;top:2px;width:24px;height:24px;border-radius:50%;background:#fff;" } }
+    }
 }
 ```
 
@@ -72,11 +72,11 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;",
- div { style: "width:200px;height:6px;background:#e2e2ea;border-radius:3px;overflow:hidden;",
- div { style: "width:60%;height:100%;background:#3a6ea5;border-radius:3px;" }
- }
- }
+    div { style: "padding:1rem;",
+        div { style: "width:200px;height:6px;background:#e2e2ea;border-radius:3px;overflow:hidden;",
+            div { style: "width:60%;height:100%;background:#3a6ea5;border-radius:3px;" }
+        }
+    }
 }
 ```
 
@@ -86,9 +86,9 @@ rsx! {
 
 ```hikari
 rsx! {
- div { style: "padding:1rem;",
- input { type: "range", min: "0", max: "100", value: "60", style: "width:200px;" }
- }
+    div { style: "padding:1rem;",
+        input { type: "range", min: "0", max: "100", value: "60", style: "width:200px;" }
+    }
 }
 ```
 

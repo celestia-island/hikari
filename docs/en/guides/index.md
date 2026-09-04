@@ -2,7 +2,7 @@
 
 > A modern Rust UI framework built on Tairitsu + Grass + Axum
 >
-> **Design Style**: flat design + sci-fi aesthetics + Traditional Chinese colors
+> **Design Style**:  flat design +  sci-fi aesthetics + Traditional Chinese colors
 >
 > **Name Origin**: "Hikari" (Light) from the rhythm game Arcaea
 
@@ -12,12 +12,12 @@ Hikari is a modern UI framework designed for the Rust ecosystem, combining tradi
 
 ## Core Features
 
-### 🎨 Traditional Chinese Color System
+### Traditional Chinese Color System
 - **660+ Traditional Colors**: Complete traditional Chinese color palette
 - **Theme System**: Built-in Hikari (light) and Tairitsu (dark) themes
 - **Type-Safe**: Compile-time checked color values
 
-### 🧩 Rich Component Library
+### Rich Component Library
 - **Basic Components**: Button, Input, Card, Badge
 - **Feedback Components**: Alert, Toast, Tooltip, Spotlight
 - **Navigation Components**: Menu, Tabs, Breadcrumb
@@ -31,7 +31,7 @@ Hikari is a modern UI framework designed for the Rust ecosystem, combining tradi
 - **Easing Functions**: 30+ easing functions
 - **Preset Animations**: Fade, slide, scale, etc.
 
-### 🎯 Advanced Features
+### Advanced Features
 - **Server-Side Rendering**: Complete SSR support
 - **Type Safety**: Full utilization of Rust's type system
 - **Responsive Design**: Built-in responsive layout utilities
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari" } {
- div { class: "hi-flex hi-flex-col hi-gap-4" {
- Button { label: "Click Me" }
- Button { label: "Primary Button", variant: "primary" }
- Button { label: "Secondary Button", variant: "secondary" }
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari" } {
+            div { class: "hi-flex hi-flex-col hi-gap-4" {
+                Button { label: "Click Me" }
+                Button { label: "Primary Button", variant: "primary" }
+                Button { label: "Secondary Button", variant: "secondary" }
+            }
+        }
+    }
 }
 ```
 
@@ -86,12 +86,12 @@ trunk build --release
 
 ## Design Philosophy
 
-### Flat Design
+###  Flat Design
 - Clean lines and clear information hierarchy
 - High contrast for readability
 - Minimalist yet refined design
 
-### Sci-Fi Aesthetics
+###  Sci-Fi Aesthetics
 - Subtle glow effects
 - Dynamic indicators (breathing lights, pulse animations)
 - Fine borders and geometric patterns
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
- root["hikari/"]
- root --> packages["packages/"]
- root --> examples["examples/"]
- packages --> palette["hikari-palette/"]
- packages --> theme["hikari-theme/"]
- packages --> animation["hikari-animation/"]
- packages --> icons["hikari-icons/"]
- packages --> components["hikari-components/"]
- packages --> extra["hikari-extra-components/"]
- examples --> website["website/"]
- examples --> tabledemo["table-demo/"]
- examples --> treedemo["tree-demo/"]
- examples --> nodegraph["node-graph-demo/"]
+  root["hikari/"]
+  root --> packages["packages/"]
+  root --> examples["examples/"]
+  packages --> palette["hikari-palette/"]
+  packages --> theme["hikari-theme/"]
+  packages --> animation["hikari-animation/"]
+  packages --> icons["hikari-icons/"]
+  packages --> components["hikari-components/"]
+  packages --> extra["hikari-extra-components/"]
+  examples --> website["website/"]
+  examples --> tabledemo["table-demo/"]
+  examples --> treedemo["tree-demo/"]
+  examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## Documentation
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
- let mut theme = use_signal(|| "hikari".to_string());
+    let mut theme = use_signal(|| "hikari".to_string());
 
- rsx! {
- ThemeProvider { initial_palette: "{theme}" } {
- button {
- onclick: move |_| {
- theme.set(if *theme() == "hikari" {
- "tairitsu".to_string()
- } else {
- "hikari".to_string()
- });
- },
- "Toggle Theme"
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "{theme}" } {
+            button {
+                onclick: move |_| {
+                    theme.set(if *theme() == "hikari" {
+                        "tairitsu".to_string()
+                    } else {
+                        "hikari".to_string()
+                    });
+                },
+                "Toggle Theme"
+            }
+        }
+    }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // Static animation
 AnimationBuilder::new(&elements)
- .add_style("button", CssProperty::Opacity, "0.8")
- .apply_with_transition("300ms", "ease-in-out");
+    .add_style("button", CssProperty::Opacity, "0.8")
+    .apply_with_transition("300ms", "ease-in-out");
 
 // Dynamic animation (mouse following)
 AnimationBuilder::new(&elements)
- .add_style_dynamic("button", CssProperty::Transform, |ctx| {
- let x = ctx.mouse_x();
- let y = ctx.mouse_y();
- format!("translate({}px, {}px)", x, y)
- })
- .apply_with_transition("150ms", "ease-out");
+    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+        let x = ctx.mouse_x();
+        let y = ctx.mouse_y();
+        format!("translate({}px, {}px)", x, y)
+    })
+    .apply_with_transition("150ms", "ease-out");
 ```
 
 ## Contributing

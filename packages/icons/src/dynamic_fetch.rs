@@ -75,8 +75,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                         }
                         Err(e) => {
                             web_sys::console::error_1(
-                                &format!("Failed to parse RON for '{}': {}", icon_name, e)
-                                    .into(),
+                                &format!("Failed to parse RON for '{}': {}", icon_name, e).into(),
                             );
                             None
                         }
@@ -84,8 +83,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                 }
                 Err(e) => {
                     web_sys::console::error_1(
-                        &format!("Failed to read RON response for '{}': {}", icon_name, e)
-                            .into(),
+                        &format!("Failed to read RON response for '{}': {}", icon_name, e).into(),
                     );
                     None
                 }

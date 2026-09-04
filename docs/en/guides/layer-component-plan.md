@@ -28,46 +28,46 @@ Hikari adopts a three-layer component system, building from basic to complex ste
 
 ```mermaid
 graph TB
- subgraph "Layer 3: Production Components"
- L3A[Video/Audio Player]
- L3B[Rich Text Editor]
- L3C[Code Highlighter]
- L3D[Timeline]
- L3E[User Guide Component]
- end
+    subgraph "Layer 3: Production Components"
+        L3A[Video/Audio Player]
+        L3B[Rich Text Editor]
+        L3C[Code Highlighter]
+        L3D[Timeline]
+        L3E[User Guide Component]
+    end
 
- subgraph "Layer 2: Composite Components"
- L2A[Menu]
- L2B[Tabs]
- L2C[Table]
- L2D[Tree]
- L2E[Form]
- L2F[Dropdown]
- L2G[Modal]
- end
+    subgraph "Layer 2: Composite Components"
+        L2A[Menu]
+        L2B[Tabs]
+        L2C[Table]
+        L2D[Tree]
+        L2E[Form]
+        L2F[Dropdown]
+        L2G[Modal]
+    end
 
- subgraph "Layer 1: Basic Components"
- L1A[Button]
- L1B[Input]
- L1C[Card]
- L1D[Badge]
- L1E[Alert]
- L1F[Toast]
- L1G[Tooltip]
- end
+    subgraph "Layer 1: Basic Components"
+        L1A[Button]
+        L1B[Input]
+        L1C[Card]
+        L1D[Badge]
+        L1E[Alert]
+        L1F[Toast]
+        L1G[Tooltip]
+    end
 
- L3A --> L2E
- L3A --> L2G
- L3B --> L2E
- L3B --> L2G
+    L3A --> L2E
+    L3A --> L2G
+    L3B --> L2E
+    L3B --> L2G
 
- L2A --> L1A
- L2B --> L1A
- L2C --> L1A
- L2D --> L1A
- L2E --> L1A
- L2F --> L1A
- L2G --> L1A
+    L2A --> L1A
+    L2B --> L1A
+    L2C --> L1A
+    L2D --> L1A
+    L2E --> L1A
+    L2F --> L1A
+    L2G --> L1A
 ```
 
 ### Responsibility Division
@@ -122,23 +122,23 @@ graph TB
 
 | Component | Path | Status |
 |-----------|------|--------|
-| Button | `packages/components/src/basic/button.rs` | yes Completed |
-| Input | `packages/components/src/basic/input.rs` | yes Completed |
-| Card | `packages/components/src/basic/card.rs` | yes Completed |
-| Badge | `packages/components/src/basic/badge.rs` | yes Completed |
-| Alert | `packages/components/src/feedback/alert.rs` | yes Completed |
-| Toast | `packages/components/src/feedback/toast.rs` | yes Completed |
-| Tooltip | `packages/components/src/feedback/tooltip.rs` | yes Completed |
-| Select | `packages/components/src/basic/select.rs` | yes Completed |
-| Checkbox | `packages/components/src/basic/checkbox.rs` | yes Completed |
-| Radio | `packages/components/src/basic/radio_group.rs` | yes Completed |
-| Switch | `packages/components/src/basic/switch.rs` | yes Completed |
-| Avatar | `packages/components/src/basic/avatar.rs` | yes Completed |
-| Image | `packages/components/src/basic/image.rs` | yes Completed |
-| Slider | `packages/components/src/basic/slider.rs` | yes Completed |
-| Progress | `packages/components/src/feedback/progress.rs` | yes Completed |
-| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | yes Completed |
-| FormField | `packages/components/src/basic/form_field.rs` | yes Completed |
+| Button | `packages/components/src/basic/button.rs` | Completed |
+| Input | `packages/components/src/basic/input.rs` | Completed |
+| Card | `packages/components/src/basic/card.rs` | Completed |
+| Badge | `packages/components/src/basic/badge.rs` | Completed |
+| Alert | `packages/components/src/feedback/alert.rs` | Completed |
+| Toast | `packages/components/src/feedback/toast.rs` | Completed |
+| Tooltip | `packages/components/src/feedback/tooltip.rs` | Completed |
+| Select | `packages/components/src/basic/select.rs` | Completed |
+| Checkbox | `packages/components/src/basic/checkbox.rs` | Completed |
+| Radio | `packages/components/src/basic/radio_group.rs` | Completed |
+| Switch | `packages/components/src/basic/switch.rs` | Completed |
+| Avatar | `packages/components/src/basic/avatar.rs` | Completed |
+| Image | `packages/components/src/basic/image.rs` | Completed |
+| Slider | `packages/components/src/basic/slider.rs` | Completed |
+| Progress | `packages/components/src/feedback/progress.rs` | Completed |
+| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | Completed |
+| FormField | `packages/components/src/basic/form_field.rs` | Completed |
 
 ### Components to be Developed
 
@@ -152,17 +152,17 @@ graph TB
 ```rust
 /// Layer 1 basic component interface specification
 pub trait Layer1Component {
- /// Props structure (must derive Clone, PartialEq)
- type Props;
+    /// Props structure (must derive Clone, PartialEq)
+    type Props;
 
- /// Render component
- fn render(props: Self::Props) -> Element;
+    /// Render component
+    fn render(props: Self::Props) -> Element;
 
- /// Register styles
- fn register_styles(registry: &mut StyleRegistry);
+    /// Register styles
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// Default Props
- fn default_props() -> Self::Props;
+    /// Default Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -172,17 +172,17 @@ pub trait Layer1Component {
 
 | Component | Path | Layer 1 Dependencies | Status |
 |-----------|------|---------------------|--------|
-| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | yes Completed |
-| Tabs | `packages/components/src/navigation/tabs.rs` | Button | yes Completed |
-| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | yes Completed |
-| Table | `packages/components/src/data/table.rs` | Button, Card, Input | yes Completed |
-| Tree | `packages/components/src/data/tree.rs` | Button | yes Completed |
-| Pagination | `packages/components/src/data/pagination.rs` | Button | yes Completed |
-| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | yes Completed |
-| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | yes Completed |
-| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | yes Completed |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | yes Completed |
-| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | yes Completed |
+| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | Completed |
+| Tabs | `packages/components/src/navigation/tabs.rs` | Button | Completed |
+| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | Completed |
+| Table | `packages/components/src/data/table.rs` | Button, Card, Input | Completed |
+| Tree | `packages/components/src/data/tree.rs` | Button | Completed |
+| Pagination | `packages/components/src/data/pagination.rs` | Button | Completed |
+| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | Completed |
+| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | Completed |
+| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | Completed |
+| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | Completed |
+| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | Completed |
 
 ### Composite Components to be Developed
 
@@ -201,23 +201,23 @@ pub trait Layer1Component {
 ```rust
 /// Layer 2 composite component interface specification
 pub trait Layer2Component {
- /// Props structure (must derive Clone, PartialEq)
- type Props;
+    /// Props structure (must derive Clone, PartialEq)
+    type Props;
 
- /// Context type (optional)
- type Context: Clone + 'static;
+    /// Context type (optional)
+    type Context: Clone + 'static;
 
- /// Render component
- fn render(props: Self::Props) -> Element;
+    /// Render component
+    fn render(props: Self::Props) -> Element;
 
- /// Provided Context
- fn provide_context(&self) -> Option<Self::Context>;
+    /// Provided Context
+    fn provide_context(&self) -> Option<Self::Context>;
 
- /// Register styles
- fn register_styles(registry: &mut StyleRegistry);
+    /// Register styles
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// Default Props
- fn default_props() -> Self::Props;
+    /// Default Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -228,28 +228,28 @@ pub trait Layer2Component {
 /// Dependencies: Input, Select, Checkbox, Radio (Layer 1)
 #[component]
 pub fn Form(
- children: Element,
- #[props(default = false)] disabled: bool,
- #[props(default = FormValidationMode::OnChange)]
- validation_mode: FormValidationMode,
- on_submit: EventHandler<FormSubmitEvent>,
+    children: Element,
+    #[props(default = false)] disabled: bool,
+    #[props(default = FormValidationMode::OnChange)]
+    validation_mode: FormValidationMode,
+    on_submit: EventHandler<FormSubmitEvent>,
 ) -> Element {
- let form_context = FormContext {
- disabled,
- validation_mode,
- };
+    let form_context = FormContext {
+        disabled,
+        validation_mode,
+    };
 
- rsx! {
- form {
- onsubmit: move |e| {
- e.prevent_default();
- on_submit.call(FormSubmitEvent::new());
- },
- ContextProvider { value: form_context,
- {children}
- }
- }
- }
+    rsx! {
+        form {
+            onsubmit: move |e| {
+                e.prevent_default();
+                on_submit.call(FormSubmitEvent::new());
+            },
+            ContextProvider { value: form_context,
+                {children}
+            }
+        }
+    }
 }
 ```
 
@@ -273,33 +273,33 @@ pub fn Form(
 ```rust
 /// Layer 3 production component interface specification
 pub trait Layer3Component {
- /// Props structure (must derive Clone, PartialEq)
- type Props;
+    /// Props structure (must derive Clone, PartialEq)
+    type Props;
 
- /// State structure (must derive Clone)
- type State: Clone + 'static;
+    /// State structure (must derive Clone)
+    type State: Clone + 'static;
 
- /// Initialize State
- fn init_state(props: &Self::Props) -> Self::State;
+    /// Initialize State
+    fn init_state(props: &Self::Props) -> Self::State;
 
- /// Render component
- fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
+    /// Render component
+    fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
 
- /// Lifecycle: component mount
- fn on_mount(state: &Signal<Self::State>) {
- // Default empty implementation
- }
+    /// Lifecycle: component mount
+    fn on_mount(state: &Signal<Self::State>) {
+        // Default empty implementation
+    }
 
- /// Lifecycle: component unmount
- fn on_unmount(state: &Signal<Self::State>) {
- // Default empty implementation
- }
+    /// Lifecycle: component unmount
+    fn on_unmount(state: &Signal<Self::State>) {
+        // Default empty implementation
+    }
 
- /// Register styles
- fn register_styles(registry: &mut StyleRegistry);
+    /// Register styles
+    fn register_styles(registry: &mut StyleRegistry);
 
- /// Default Props
- fn default_props() -> Self::Props;
+    /// Default Props
+    fn default_props() -> Self::Props;
 }
 ```
 
@@ -310,50 +310,50 @@ pub trait Layer3Component {
 /// Dependencies: Card, Button, Form, Menu (Layer 2)
 #[component]
 pub fn VideoPlayer(
- src: String,
- #[props(default = false)] autoplay: bool,
- #[props(default = false)] muted: bool,
- #[props(default = 0)] volume: u8,
- #[props(default = 1.0)] playback_rate: f64,
+    src: String,
+    #[props(default = false)] autoplay: bool,
+    #[props(default = false)] muted: bool,
+    #[props(default = 0)] volume: u8,
+    #[props(default = 1.0)] playback_rate: f64,
 ) -> Element {
- let is_playing = use_signal(|| autoplay);
- let current_time = use_signal(|| 0.0);
- let duration = use_signal(|| 0.0);
- let show_controls = use_signal(|| true);
+    let is_playing = use_signal(|| autoplay);
+    let current_time = use_signal(|| 0.0);
+    let duration = use_signal(|| 0.0);
+    let show_controls = use_signal(|| true);
 
- // Play/Pause
- let toggle_play = move |_| {
- is_playing.toggle();
- };
+    // Play/Pause
+    let toggle_play = move |_| {
+        is_playing.toggle();
+    };
 
- // Volume control
- let set_volume = move |new_volume| {
- // Update volume
- };
+    // Volume control
+    let set_volume = move |new_volume| {
+        // Update volume
+    };
 
- rsx! {
- Card {
- class: "hi-video-player",
- div { class: "hi-video-container",
- video {
- src: "{src}",
- autoplay: autoplay,
- muted: muted,
- // Event listeners
- }
+    rsx! {
+        Card {
+            class: "hi-video-player",
+            div { class: "hi-video-container",
+                video {
+                    src: "{src}",
+                    autoplay: autoplay,
+                    muted: muted,
+                    // Event listeners
+                }
 
- // Controls
- if show_controls() {
- div { class: "hi-video-controls",
- Button { icon: MdiIcon::Play, on_click: toggle_play }
- Button { icon: MdiIcon::VolumeHigh }
- // Progress bar
- // Time display
- }
- }
- }
- }
- }
+                // Controls
+                if show_controls() {
+                    div { class: "hi-video-controls",
+                        Button { icon: MdiIcon::Play, on_click: toggle_play }
+                        Button { icon: MdiIcon::VolumeHigh }
+                        // Progress bar
+                        // Time display
+                    }
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -364,50 +364,50 @@ pub fn VideoPlayer(
 /// Dependencies: Form, Dropdown, Modal, Toolbar (Layer 2)
 #[component]
 pub fn RichTextEditor(
- #[props(default = "")] initial_content: String,
- #[props(default = EditorMode::Wysiwyg)]
- mode: EditorMode,
- on_change: EventHandler<String>,
+    #[props(default = "")] initial_content: String,
+    #[props(default = EditorMode::Wysiwyg)]
+    mode: EditorMode,
+    on_change: EventHandler<String>,
 ) -> Element {
- let content = use_signal(|| initial_content);
- let is_bold = use_signal(|| false);
- let is_italic = use_signal(|| false);
+    let content = use_signal(|| initial_content);
+    let is_bold = use_signal(|| false);
+    let is_italic = use_signal(|| false);
 
- // Format text
- let toggle_bold = move |_| {
- is_bold.toggle();
- // Apply bold format
- };
+    // Format text
+    let toggle_bold = move |_| {
+        is_bold.toggle();
+        // Apply bold format
+    };
 
- rsx! {
- Card { class: "hi-rich-text-editor",
- // Toolbar
- div { class: "hi-editor-toolbar",
- Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
- Button { icon: MdiIcon::FormatItalic }
- Button { icon: MdiIcon::FormatUnderline }
- Dropdown {
- trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
- // Header options
- }
- }
+    rsx! {
+        Card { class: "hi-rich-text-editor",
+            // Toolbar
+            div { class: "hi-editor-toolbar",
+                Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
+                Button { icon: MdiIcon::FormatItalic }
+                Button { icon: MdiIcon::FormatUnderline }
+                Dropdown {
+                    trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
+                    // Header options
+                }
+            }
 
- // Editor area
- div { class: "hi-editor-content",
- contenteditable: "true",
- dangerous_inner_html: "{content}",
- // Input events
- }
+            // Editor area
+            div { class: "hi-editor-content",
+                contenteditable: "true",
+                dangerous_inner_html: "{content}",
+                // Input events
+            }
 
- // Markdown mode switch
- if mode == EditorMode::Markdown {
- div { class: "hi-editor-mode-switch",
- Button { "WYSIWYG" }
- Button { "Markdown" }
- }
- }
- }
- }
+            // Markdown mode switch
+            if mode == EditorMode::Markdown {
+                div { class: "hi-editor-mode-switch",
+                    Button { "WYSIWYG" }
+                    Button { "Markdown" }
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -467,62 +467,62 @@ pub fn RichTextEditor(
 
 ```mermaid
 graph TB
- subgraph "Layer 3"
- V[Video Player]
- R[Rich Text Editor]
- C[Code Highlighter]
- T[Timeline]
- G[User Guide]
- end
+    subgraph "Layer 3"
+        V[Video Player]
+        R[Rich Text Editor]
+        C[Code Highlighter]
+        T[Timeline]
+        G[User Guide]
+    end
 
- subgraph "Layer 2"
- F[Form]
- D[Dropdown]
- M[Modal]
- TB[Toolbar]
- TB2[Tabs]
- end
+    subgraph "Layer 2"
+        F[Form]
+        D[Dropdown]
+        M[Modal]
+        TB[Toolbar]
+        TB2[Tabs]
+    end
 
- subgraph "Layer 1"
- B[Button]
- I[Input]
- C2[Card]
- S[Select]
- CB[Checkbox]
- R2[Radio]
- SW[Switch]
- P[Progress]
- end
+    subgraph "Layer 1"
+        B[Button]
+        I[Input]
+        C2[Card]
+        S[Select]
+        CB[Checkbox]
+        R2[Radio]
+        SW[Switch]
+        P[Progress]
+    end
 
- V --> F
- V --> M
- V --> B
+    V --> F
+    V --> M
+    V --> B
 
- R --> F
- R --> D
- R --> TB
- R --> M
+    R --> F
+    R --> D
+    R --> TB
+    R --> M
 
- C --> TB2
- C --> F
+    C --> TB2
+    C --> F
 
- T --> C2
- T --> B
+    T --> C2
+    T --> B
 
- G --> M
- G --> B
+    G --> M
+    G --> B
 
- F --> I
- F --> S
- F --> CB
- F --> R2
- F --> SW
+    F --> I
+    F --> S
+    F --> CB
+    F --> R2
+    F --> SW
 
- D --> M
- D --> B
+    D --> M
+    D --> B
 
- M --> C2
- M --> B
+    M --> C2
+    M --> B
 ```
 
 ## Technical Notes
@@ -534,17 +534,17 @@ Hikari uses Material Design Icons (MDI) instead of Lucide Icons.
 **Reasons**:
 - MDI provides a richer icon set (7000+ icons)
 - Consistent with Material Design specifications
-- Better suited for + design style
+- Better suited for  +  design style
 
 **Usage**:
 ```rust
 use _icons::{Icon, MdiIcon};
 
 rsx! {
- Icon {
- icon: MdiIcon::Search,
- size: 24,
- }
+    Icon {
+        icon: MdiIcon::Search,
+        size: 24,
+    }
 }
 ```
 
@@ -556,13 +556,13 @@ Website uses Tairitsu's Routable derive macro.
 ```rust
 #[component]
 pub fn App() -> Element {
- rsx! {
- ThemeProvider { initial_palette: "hikari".to_string(),
- PortalProvider {
- Router::<Route> {}
- }
- }
- }
+    rsx! {
+        ThemeProvider { initial_palette: "hikari".to_string(),
+            PortalProvider {
+                Router::<Route> {}
+            }
+        }
+    }
 }
 ```
 
@@ -570,14 +570,14 @@ pub fn App() -> Element {
 ```rust
 #[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
- #[route("/")]
- Home {},
+    #[route("/")]
+    Home {},
 
- #[route("/components/layer1/basic")]
- Layer1Basic {},
+    #[route("/components/layer1/basic")]
+    Layer1Basic {},
 
- #[route("/demos/layer1/form")]
- FormDemo {},
+    #[route("/demos/layer1/form")]
+    FormDemo {},
 }
 ```
 

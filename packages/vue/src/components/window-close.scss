@@ -1,0 +1,31 @@
+// ------
+// Unified window-close affordance grammar.
+//
+// Every window chrome close control — modal header, drawer header,
+// popover/select mobile-sheet heading row — renders the SAME thing: an
+// HkIconButton (ghost, 32px box) carrying the registry's X glyph
+// (HkIcon name="X"). No component keeps its own inline ✕ SVG any more;
+// the glyph comes from the shared lucide registry and the chrome comes
+// from the icon-button, so there is exactly one source for each.
+//
+// This partial only carries the window-chrome grammar ON TOP of the icon
+// button: a close control never participates in text selection, and it
+// gets the hover tint HkIconButton intentionally leaves to the Glow
+// wrapper (window headers render no Glow). The `--hk-modal-close-hover-*`
+// custom properties stay the shared host tunables for that tint.
+// ------
+.hk-icon-button.hk-window-close {
+  user-select: none;
+  -webkit-user-select: none;
+
+  &:hover {
+    background: var(
+      --hk-modal-close-hover-bg,
+      var(--hi-secondary-bg, rgba(0, 0, 0, 0.06))
+    );
+    color: var(
+      --hk-modal-close-hover-color,
+      var(--hi-color-text-primary, #333)
+    );
+  }
+}

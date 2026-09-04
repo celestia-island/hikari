@@ -29,13 +29,17 @@ export default defineComponent({
         {...attrs}
       >
         <span class="hk-icon-button-icon">
-          {slots.icon ? (
-            slots.icon()
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10" />
-            </svg>
-          )}
+          {slots.icon
+            ? slots.icon()
+            : slots.default
+              ? // Natural children usage: <HIconButton><HIcon .../></HIconButton>
+                // renders the child as the icon (unified window-close wave).
+                slots.default()
+              : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              )}
         </span>
       </button>
     );

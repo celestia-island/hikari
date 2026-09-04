@@ -25,6 +25,9 @@ import { useSizeMorph } from "../composables/useSizeMorph";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
+import HIconButton from "./HkIconButton";
+import HIcon from "./HkIcon";
+import "./window-close.scss";
 
 export interface ModalAction {
   label: string;
@@ -738,24 +741,19 @@ export default defineComponent({
                           {slots.header ? (props.title ?? "") : (props.title ?? "")}
                         </h2>
                         {props.closable && (
-                          <button
-                            class="hk-modal-close"
+                          // Unified window-close affordance: the shared
+                          // icon button + registry X glyph (see
+                          // window-close.scss) — no per-component ✕ SVG.
+                          // `hk-modal-close` stays as the placement hook.
+                          <HIconButton
+                            class="hk-window-close hk-modal-close"
+                            size={32}
+                            variant="ghost"
                             aria-label={t("hikari::modal.close", "Close")}
                             onClick={close}
                           >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              width="16"
-                              height="16"
-                            >
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
+                            <HIcon name="X" size={16} />
+                          </HIconButton>
                         )}
                       </div>
                       {slots.header && (

@@ -1,0 +1,128 @@
+// HkTitleBar — hybrid-shell caption bar.
+//
+// Colors ride the theme channels (--color-*) so the bar follows whatever
+// preset/mode the host app is in. Drag is pure CSS app-region (Tauri and
+// Electron both honor it); interactive children opt out with no-drag.
+// Text selection is chrome-disabled across the whole bar.
+
+.hk-titlebar {
+  --hk-tb-height: 32px;
+  --hk-tb-bg: color-mix(in srgb, rgb(var(--color-surface, 240 244 248)) 80%, transparent);
+  --hk-tb-border: rgb(var(--color-border, 100 100 100) / 0.25);
+  --hk-tb-fg: rgb(var(--color-text-secondary, 102 102 102));
+  --hk-tb-fg-strong: rgb(var(--color-text, 30 30 30));
+  --hk-tb-hover: rgb(var(--color-primary, 122 162 247) / 0.12);
+  --hk-tb-active: rgb(var(--color-primary, 122 162 247) / 0.2);
+  --hk-tb-focus: rgb(var(--color-primary, 122 162 247) / 0.6);
+  --hk-tb-close-hover: #e81123;
+  --hk-tb-close-active: #f1707a;
+  --hk-tb-radius-close: 0 8px 0 0;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--hk-tb-height);
+  display: flex;
+  align-items: center;
+  z-index: var(--z-titlebar, 100001);
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--hk-tb-bg);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--hk-tb-border);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.hk-titlebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.hk-titlebar-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
+}
+
+.hk-titlebar-title-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--hk-tb-fg-strong);
+}
+
+.hk-titlebar-subtitle {
+  font-size: 10px;
+  color: var(--hk-tb-fg);
+  opacity: 0.7;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.hk-titlebar-spacer {
+  flex: 1;
+}
+
+.hk-titlebar-actions {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.hk-titlebar-btn {
+  width: 46px;
+  height: var(--hk-tb-height);
+  border: none;
+  background: transparent;
+  color: var(--hk-tb-fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  outline: none;
+  padding: 0;
+}
+
+.hk-titlebar-btn:hover {
+  background: var(--hk-tb-hover);
+  color: var(--hk-tb-fg-strong);
+}
+
+.hk-titlebar-btn:active {
+  background: var(--hk-tb-active);
+}
+
+/* Only the rightmost (close) button carries the window's top-right
+   corner radius; the other captions highlight as plain rectangles. */
+.hk-titlebar-btn-close {
+  border-radius: 0 8px 0 0;
+}
+
+.hk-titlebar-btn-close:hover {
+  background: var(--hk-tb-close-hover);
+  color: #fff;
+}
+
+.hk-titlebar-btn-close:active {
+  background: var(--hk-tb-close-active);
+  color: #fff;
+}
+
+.hk-titlebar-btn:focus-visible {
+  outline: 2px solid var(--hk-tb-focus);
+  outline-offset: -2px;
+}
+
+/* Host apps offset their own root container below the bar:
+   #app { position: absolute; top: var(--hk-tb-height); … } */

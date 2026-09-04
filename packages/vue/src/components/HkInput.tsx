@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from "lucide-vue-next";
-import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, watch } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch } from "vue";
 
 import { useI18n } from "../i18n/context";
 
@@ -20,6 +20,20 @@ export default defineComponent({
     readonly: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
     name: { type: String, default: undefined },
+    /**
+     * `id` for the field element; the rendered label's `for` points here.
+     * Generated via Vue's useId when omitted, so a bare `label` prop is
+     * fully associated for screen readers and label clicks with zero
+     * caller effort.
+     */
+    id: { type: String, default: undefined },
+    /**
+     * Native spellcheck toggle. Undefined keeps the browser default;
+     * `false` is the right call for exact-literal entry fields (type-
+     * to-confirm gates, addresses, serial paths) where the red squiggle
+     * under correct input reads as an error.
+     */
+    spellcheck: { type: Boolean, default: undefined },
     /** Submit intent on Enter (no modifiers) — see HkPasswordInput. */
     submitOnEnter: { type: Function, default: undefined },
     autocomplete: { type: String, default: "off" },
@@ -116,6 +130,13 @@ export default defineComponent({
       const { class: _, style: __, ...rest } = attrs as Record<string, unknown>;
       return rest;
     });
+
+    // Field identity: the rendered label points at this id, so a bare
+    // `label` prop gives a fully associated field (screen readers, label
+    // clicks) without caller effort. An explicit `id` prop wins.
+    // useId() must run synchronously in setup; it is SSR-safe.
+    const generatedId = useId();
+    const fieldId = computed(() => props.id ?? generatedId);
 
     // ── affix width reservation ──────────────────────────────────────
     // The input element overlays the WHOLE box (absolute inset:0) while
@@ -250,7 +271,7 @@ export default defineComponent({
     return () => (
       <div class="hk-input-wrapper">
         {props.label && (
-          <label class="hk-input-label">
+          <label class="hk-input-label" for={fieldId.value}>
             {props.label}
             {props.required && <span class="hk-input-required">*</span>}
           </label>
@@ -279,11 +300,13 @@ export default defineComponent({
           {isText ? (
             <input
               ref={inputRef}
+              id={fieldId.value}
               type={resolvedType.value}
               value={props.modelValue}
               placeholder={nativePlaceholder.value}
               disabled={props.disabled}
               readonly={props.readonly}
+              spellcheck={props.spellcheck}
               name={props.name}
               autocomplete={props.autocomplete}
               data-1p-ignore
@@ -313,10 +336,12 @@ export default defineComponent({
           ) : (
             <textarea
               ref={inputRef}
+              id={fieldId.value}
               value={props.modelValue}
               placeholder={nativePlaceholder.value}
               disabled={props.disabled}
               readonly={props.readonly}
+              spellcheck={props.spellcheck}
               rows={props.rows}
               name={props.name}
               autocomplete={props.autocomplete}

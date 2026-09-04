@@ -17,11 +17,13 @@ const tsx = readFileSync(join(here, "HkPopover.tsx"), "utf-8");
 const scss = readFileSync(join(here, "HkPopover.scss"), "utf-8");
 
 describe("HkPopover mobile sheet docking contract", () => {
-  it("docks the sheet above the shared bottom gap (inline sheet style)", () => {
+  it("docks the sheet at the shared bottom-gap hook (inline sheet style)", () => {
     const block = tsx.slice(tsx.indexOf("panelStyle"));
     expect(block).toContain("var(--hk-sheet-bottom-gap");
-    // Same default as the HkModal sheet contract.
-    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0\.375rem/);
+    // Family default sits flush on the bottom edge (2026-09-04 user
+    // report: even the tightened 0.375rem lift read as a visible seam);
+    // hosts may re-add a gap via the same custom property.
+    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0px/);
   });
 
   it("keeps sheet content clear of the home bar via the safe-area inset", () => {

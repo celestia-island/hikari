@@ -21,13 +21,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "HkModal.scss"), "utf-8");
 
 describe("HkModal mobile sheet spacing contract", () => {
-  it("sizes the docked sheet from --hk-sheet-bottom-gap (not hard 0)", () => {
+  it("sizes the docked sheet from --hk-sheet-bottom-gap (host-tunable hook)", () => {
     const block = src.slice(src.indexOf("@media (max-width: 767px)"));
     expect(block).toContain("bottom: var(--hk-sheet-bottom-gap");
-    // Default keeps a small visible gap; hosts may narrow or zero it.
-    // (2026-08-29 user request: the docked sheet sat too far off the
-    // bottom — default tightened from 0.5rem to 0.375rem.)
-    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0\.375rem/);
+    // Family default sits flush on the bottom edge; hosts may re-add a
+    // gap via the same custom property. (History: 2026-08-29 tightened
+    // 0.5rem → 0.375rem; 2026-09-04 user report — the remaining sliver
+    // still read as a visible seam, so the default settled on 0.)
+    expect(block).toMatch(/--hk-sheet-bottom-gap,\s*0px/);
   });
 
   it("keeps the footer gap host-tunable and stacks the safe-area inset", () => {

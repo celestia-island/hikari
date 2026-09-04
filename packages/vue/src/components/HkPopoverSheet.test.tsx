@@ -127,4 +127,50 @@ describe("HkPopover sheetOnMobile", () => {
     expect(document.body.querySelector(".hk-popover-panel")!.classList.contains("hk-is-sheet")).toBe(true);
     expect(document.body.querySelector(".hk-popover-scrim")).toBeNull();
   });
+
+  // 2026-09-04 user report: the sheet heading was a bare small band —
+  // the sheet now names itself with a title + explicit close button on
+  // one vertically-centered line, like every other window in the app.
+  it("renders a title + close heading row when titled, close alone when not", async () => {
+    setViewport(375);
+    mountPopover({ sheetOnMobile: true, title: "Context usage" });
+    await nextTick();
+
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    const header = panel.querySelector<HTMLElement>(".hk-popover-sheet-header")!;
+    expect(header).toBeTruthy();
+    expect(header.querySelector(".hk-popover-sheet-title")!.textContent).toBe("Context usage");
+    const close = header.querySelector<HTMLButtonElement>(".hk-popover-sheet-close")!;
+    expect(close).toBeTruthy();
+    expect(close.getAttribute("aria-label")).toBeTruthy();
+  });
+
+  it("closes the sheet from the heading close button", async () => {
+    setViewport(375);
+    const { open } = mountPopover({ sheetOnMobile: true, title: "Context usage" });
+    await nextTick();
+    const close = document.body.querySelector<HTMLButtonElement>(".hk-popover-sheet-close")!;
+    close.click();
+    await nextTick();
+    expect(open.value).toBe(false);
+  });
+
+  it("renders the close button even without a title, right-aligned", async () => {
+    setViewport(375);
+    mountPopover({ sheetOnMobile: true });
+    await nextTick();
+    const header = document.body.querySelector<HTMLElement>(".hk-popover-sheet-header")!;
+    expect(header.querySelector(".hk-popover-sheet-title")).toBeNull();
+    expect(header.querySelector(".hk-popover-sheet-close")).toBeTruthy();
+  });
+
+  it("keeps the heading row out of anchored desktop mode", async () => {
+    setViewport(1200);
+    mountPopover({ sheetOnMobile: true, title: "Context usage" });
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.querySelector(".hk-popover-sheet-header")).toBeNull();
+    expect(panel.querySelector(".hk-popover-sheet-title")).toBeNull();
+    expect(panel.querySelector(".hk-popover-sheet-close")).toBeNull();
+  });
 });

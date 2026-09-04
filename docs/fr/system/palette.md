@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### Avantages de la sécurité de type
 
 ```rust
-// ✅ Sécurité de type - vérification à la compilation
+// Sécurité de type - vérification à la compilation
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ Ne compilerait pas - protection contre les fautes de frappe
+// no Ne compilerait pas - protection contre les fautes de frappe
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // Erreur de compilation !
     .build();
@@ -539,45 +539,45 @@ Les combinaisons de couleurs traditionnelles chinoises suivent des règles d'har
 ### 1. Utiliser des énumérations pour la sécurité de type
 
 ```rust
-// ✅ Bon - Sécurité de type
+// Bon - Sécurité de type
 let color = Color::粉红;
 
-// ❌ À éviter - Basé sur une chaîne
+// no À éviter - Basé sur une chaîne
 let color = "#FFB3A7";
 ```
 
 ### 2. Exploiter les palettes de thèmes
 
 ```rust
-// ✅ Bon - Utiliser la palette de thème
+// Bon - Utiliser la palette de thème
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ À éviter - Couleurs codées en dur
+// no À éviter - Couleurs codées en dur
 let primary = "#FFB3A7";
 ```
 
 ### 3. Utiliser les classes utilitaires
 
 ```rust
-// ✅ Bon - Utilitaires avec sécurité de type
+// Bon - Utilitaires avec sécurité de type
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ Acceptable - Basé sur une chaîne (moins sûr)
+// Acceptable - Basé sur une chaîne (moins sûr)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. Nommage sémantique des couleurs
 
 ```rust
-// ✅ Bon - Usage sémantique
+// Bon - Usage sémantique
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ À éviter - Références directes aux couleurs
+// no À éviter - Références directes aux couleurs
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

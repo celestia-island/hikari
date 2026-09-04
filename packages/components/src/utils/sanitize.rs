@@ -1155,8 +1155,8 @@ mod tests {
 
     #[test]
     fn test_unicode_content() {
-        let result = sanitize_html("<p>你好世界 🌍</p>");
-        assert_eq!(result, "<p>你好世界 🌍</p>");
+        let result = sanitize_html("<p>你好世界</p>");
+        assert_eq!(result, "<p>你好世界</p>");
     }
 
     #[test]

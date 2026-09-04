@@ -122,23 +122,23 @@ graph TB
 
 | Component | Path | Status |
 |-----------|------|--------|
-| Button | `packages/components/src/basic/button.rs` | ✅ Completed |
-| Input | `packages/components/src/basic/input.rs` | ✅ Completed |
-| Card | `packages/components/src/basic/card.rs` | ✅ Completed |
-| Badge | `packages/components/src/basic/badge.rs` | ✅ Completed |
-| Alert | `packages/components/src/feedback/alert.rs` | ✅ Completed |
-| Toast | `packages/components/src/feedback/toast.rs` | ✅ Completed |
-| Tooltip | `packages/components/src/feedback/tooltip.rs` | ✅ Completed |
-| Select | `packages/components/src/basic/select.rs` | ✅ Completed |
-| Checkbox | `packages/components/src/basic/checkbox.rs` | ✅ Completed |
-| Radio | `packages/components/src/basic/radio_group.rs` | ✅ Completed |
-| Switch | `packages/components/src/basic/switch.rs` | ✅ Completed |
-| Avatar | `packages/components/src/basic/avatar.rs` | ✅ Completed |
-| Image | `packages/components/src/basic/image.rs` | ✅ Completed |
-| Slider | `packages/components/src/basic/slider.rs` | ✅ Completed |
-| Progress | `packages/components/src/feedback/progress.rs` | ✅ Completed |
-| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | ✅ Completed |
-| FormField | `packages/components/src/basic/form_field.rs` | ✅ Completed |
+| Button | `packages/components/src/basic/button.rs` | Completed |
+| Input | `packages/components/src/basic/input.rs` | Completed |
+| Card | `packages/components/src/basic/card.rs` | Completed |
+| Badge | `packages/components/src/basic/badge.rs` | Completed |
+| Alert | `packages/components/src/feedback/alert.rs` | Completed |
+| Toast | `packages/components/src/feedback/toast.rs` | Completed |
+| Tooltip | `packages/components/src/feedback/tooltip.rs` | Completed |
+| Select | `packages/components/src/basic/select.rs` | Completed |
+| Checkbox | `packages/components/src/basic/checkbox.rs` | Completed |
+| Radio | `packages/components/src/basic/radio_group.rs` | Completed |
+| Switch | `packages/components/src/basic/switch.rs` | Completed |
+| Avatar | `packages/components/src/basic/avatar.rs` | Completed |
+| Image | `packages/components/src/basic/image.rs` | Completed |
+| Slider | `packages/components/src/basic/slider.rs` | Completed |
+| Progress | `packages/components/src/feedback/progress.rs` | Completed |
+| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | Completed |
+| FormField | `packages/components/src/basic/form_field.rs` | Completed |
 
 ### Components to be Developed
 
@@ -172,17 +172,17 @@ pub trait Layer1Component {
 
 | Component | Path | Layer 1 Dependencies | Status |
 |-----------|------|---------------------|--------|
-| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | ✅ Completed |
-| Tabs | `packages/components/src/navigation/tabs.rs` | Button | ✅ Completed |
-| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | ✅ Completed |
-| Table | `packages/components/src/data/table.rs` | Button, Card, Input | ✅ Completed |
-| Tree | `packages/components/src/data/tree.rs` | Button | ✅ Completed |
-| Pagination | `packages/components/src/data/pagination.rs` | Button | ✅ Completed |
-| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | ✅ Completed |
-| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | ✅ Completed |
-| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | ✅ Completed |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | ✅ Completed |
-| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | ✅ Completed |
+| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | Completed |
+| Tabs | `packages/components/src/navigation/tabs.rs` | Button | Completed |
+| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | Completed |
+| Table | `packages/components/src/data/table.rs` | Button, Card, Input | Completed |
+| Tree | `packages/components/src/data/tree.rs` | Button | Completed |
+| Pagination | `packages/components/src/data/pagination.rs` | Button | Completed |
+| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | Completed |
+| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | Completed |
+| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | Completed |
+| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | Completed |
+| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | Completed |
 
 ### Composite Components to be Developed
 

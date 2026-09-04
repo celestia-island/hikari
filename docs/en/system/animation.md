@@ -788,11 +788,11 @@ AnimationBuilder::new(&elements)
 Use transform and opacity for GPU-accelerated animations:
 
 ```rust
-// ✅ Good - GPU accelerated
+// Good - GPU accelerated
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ Avoid - triggers layout
+// no Avoid - triggers layout
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -884,14 +884,14 @@ impl Timeline {
 ### 1. Use Transitions Sparingly
 
 ```rust
-// ✅ Good - Only on user interaction
+// Good - Only on user interaction
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ Avoid - Continuous animation
+// no Avoid - Continuous animation
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60fps, heavy!
 }
@@ -900,10 +900,10 @@ loop {
 ### 2. Prefer Transform over Layout
 
 ```rust
-// ✅ Good - GPU accelerated
+// Good - GPU accelerated
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ Avoid - Layout thrashing
+// no Avoid - Layout thrashing
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

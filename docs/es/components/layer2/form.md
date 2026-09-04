@@ -50,7 +50,7 @@ rsx! {
             div { style: "padding:10px 12px;color:#666;font-size:14px;", "Content 1" }
         }
         div { style: "border:1px solid #e2e2ea;border-radius:8px;",
-            div { style: "padding:10px 12px;font-weight:600;background:#f7f7fa;cursor:pointer;", "Panel 2 ▶" }
+            div { style: "padding:10px 12px;font-weight:600;background:#f7f7fa;cursor:pointer;", "Panel 2 " }
         }
     }
 }

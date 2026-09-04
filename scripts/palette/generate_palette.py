@@ -52,8 +52,8 @@ def main():
     full_content = docs + "\n" + rust_code
     output_path.write_text(full_content, encoding='utf-8')
 
-    print(f"\n✅ Generated {total_colors} traditional Chinese colors")
-    print(f"📄 Written to: {output_path}")
+    print(f"\nGenerated {total_colors} traditional Chinese colors")
+    print(f"Written to: {output_path}")
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 
@@ -61,7 +61,7 @@ def fetch_chinese_colors() -> List[Dict]:
     """从 GitHub 拉取完整的中国传统色数据"""
     url = "https://raw.githubusercontent.com/lanqy/chinese-colors/master/colors.json"
 
-    print(f"📡 Fetching from: {url}")
+    print(f"Fetching from: {url}")
     try:
         with urllib.request.urlopen(url, timeout=30) as response:
             data = json.loads(response.read().decode('utf-8'))
@@ -69,7 +69,7 @@ def fetch_chinese_colors() -> List[Dict]:
         return data
     except Exception as e:
         print(f"✗ Failed to fetch: {e}")
-        print("📦 Using fallback hardcoded data...")
+        print("Using fallback hardcoded data...")
         return get_fallback_data()
 
 

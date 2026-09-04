@@ -15,7 +15,7 @@ This guide documents the migration of Hikari's core infrastructure to the Tairit
 
 ## Phase 2: CSS Infrastructure Migration
 
-### Status: ✅ Completed
+### Status: Completed
 
 ### Objectives
 
@@ -83,7 +83,7 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 
 ## Phase 3: Props Macro Migration
 
-### Status: ✅ Completed
+### Status: Completed
 
 ### Objectives
 
@@ -154,65 +154,65 @@ pub struct ButtonProps {
 ### Completed Migrations
 
 #### Basic Components
-- `ButtonProps` ✅
-- `InputProps` ✅
-- `TextareaProps` ✅
-- `BadgeProps` ✅
-- `CardProps`, `CardHeaderProps`, `CardContentProps`, `CardActionsProps`, `CardMediaProps` ✅
-- `SliderProps` ✅
-- `SwitchProps` ✅
-- `CheckboxProps` ✅
-- `RadioProps`, `RadioGroupProps` ✅
-- `IconButtonProps` ✅
+- `ButtonProps` yes
+- `InputProps` yes
+- `TextareaProps` yes
+- `BadgeProps` yes
+- `CardProps`, `CardHeaderProps`, `CardContentProps`, `CardActionsProps`, `CardMediaProps` yes
+- `SliderProps` yes
+- `SwitchProps` yes
+- `CheckboxProps` yes
+- `RadioProps`, `RadioGroupProps` yes
+- `IconButtonProps` yes
 
 #### Layout Components
-- `FlexBoxProps` ✅
+- `FlexBoxProps` yes
 
 #### Feedback Components
-- `AlertProps` ✅
-- `ToastProps` ✅
-- `TooltipProps` ✅
-- `DrawerProps` ✅
-- `ProgressProps` ✅
-- `SpinProps` ✅
-- `PopoverProps` ✅
-- `GlowProps` ✅
+- `AlertProps` yes
+- `ToastProps` yes
+- `TooltipProps` yes
+- `DrawerProps` yes
+- `ProgressProps` yes
+- `SpinProps` yes
+- `PopoverProps` yes
+- `GlowProps` yes
 
 #### Navigation Components
-- `StepperProps` ✅
-- `BreadcrumbProps`, `BreadcrumbItemProps` ✅
-- `TabProps`, `TabPanelProps` ✅
-- `MenuItemProps`, etc. ✅
-- `SidebarProps`, `SidebarSectionProps`, `SidebarItemProps`, `SidebarLeafProps` ✅
+- `StepperProps` yes
+- `BreadcrumbProps`, `BreadcrumbItemProps` yes
+- `TabProps`, `TabPanelProps` yes
+- `MenuItemProps`, etc. yes
+- `SidebarProps`, `SidebarSectionProps`, `SidebarItemProps`, `SidebarLeafProps` yes
 
 #### Display Components
-- `TagProps` ✅
-- `CalendarProps` ✅
-- `TimelineProps`, `TimelineItemProps` ✅
-- `QRCodeProps` ✅
+- `TagProps` yes
+- `CalendarProps` yes
+- `TimelineProps`, `TimelineItemProps` yes
+- `QRCodeProps` yes
 
 #### Entry Components
-- `NumberInputProps` ✅
-- `SearchProps` ✅
-- `AutoCompleteProps` ✅
-- `CascaderProps` ✅
-- `TransferProps`, `TransferItem` ✅
+- `NumberInputProps` yes
+- `SearchProps` yes
+- `AutoCompleteProps` yes
+- `CascaderProps` yes
+- `TransferProps`, `TransferItem` yes
 
 #### Data Components
-- `TableProps` ✅
-- `PaginationProps` ✅
-- `VirtualScrollProps` ✅
-- `DragProps`, `DragTreeNodeData` ✅
+- `TableProps` yes
+- `PaginationProps` yes
+- `VirtualScrollProps` yes
+- `DragProps`, `DragTreeNodeData` yes
 
 #### Production Components
-- `CodeHighlightProps` ✅
-- `MarkdownEditorProps` ✅
-- `RichTextEditorProps` ✅
-- `VideoPlayerProps` ✅
-- `AudioPlayerProps` ✅
+- `CodeHighlightProps` yes
+- `MarkdownEditorProps` yes
+- `RichTextEditorProps` yes
+- `VideoPlayerProps` yes
+- `AudioPlayerProps` yes
 
 #### Icon Components
-- `IconProps` ✅
+- `IconProps` yes
 
 ### Benefits
 
@@ -283,10 +283,10 @@ graph TB
 
 ### Compilation Status
 
-- ✅ All packages compile successfully
-- ✅ No compilation errors
-- ✅ All tests passing (78/78 in hikari-components)
-- ⚠️ Minor warnings (dead code in unrelated files)
+- All packages compile successfully
+- No compilation errors
+- All tests passing (78/78 in hikari-components)
+- Minor warnings (dead code in unrelated files)
 
 ### Test Updates
 

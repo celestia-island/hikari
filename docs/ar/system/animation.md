@@ -697,11 +697,11 @@ AnimationBuilder::new(&elements)
 استخدم التحويل والشفافية لحركات مسرعة بـ GPU:
 
 ```rust
-// ✅ جيد - مسرع بـ GPU
+// yes جيد - مسرع بـ GPU
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ تجنب - يحفز التخطيط
+// no تجنب - يحفز التخطيط
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -793,14 +793,14 @@ impl Timeline {
 ### 1. استخدم الانتقالات باعتدال
 
 ```rust
-// ✅ جيد - فقط عند تفاعل المستخدم
+// yes جيد - فقط عند تفاعل المستخدم
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ تجنب - حركة مستمرة
+// no تجنب - حركة مستمرة
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60 إطار، ثقيل!
 }
@@ -809,10 +809,10 @@ loop {
 ### 2. فضّل التحويل على التخطيط
 
 ```rust
-// ✅ جيد - مسرع بـ GPU
+// yes جيد - مسرع بـ GPU
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ تجنب - اضطراب التخطيط
+// no تجنب - اضطراب التخطيط
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

@@ -788,11 +788,11 @@ AnimationBuilder::new(&elements)
 Utiliser transform et opacity pour les animations accélérées par GPU :
 
 ```rust
-// ✅ Bon - Accéléré par GPU
+// Bon - Accéléré par GPU
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ À éviter - déclenche le layout
+// no À éviter - déclenche le layout
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -884,14 +884,14 @@ impl Timeline {
 ### 1. Utiliser les transitions avec parcimonie
 
 ```rust
-// ✅ Bon - Uniquement lors de l'interaction utilisateur
+// Bon - Uniquement lors de l'interaction utilisateur
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ À éviter - Animation continue
+// no À éviter - Animation continue
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60fps, lourd !
 }
@@ -900,10 +900,10 @@ loop {
 ### 2. Préférer transform au layout
 
 ```rust
-// ✅ Bon - Accéléré par GPU
+// Bon - Accéléré par GPU
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ À éviter - Layout thrashing
+// no À éviter - Layout thrashing
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

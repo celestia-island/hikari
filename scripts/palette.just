@@ -65,7 +65,7 @@ fmt:
 # Check if palette colors need to be regenerated
 check:
     @echo "Checking Chinese color palette..."
-    @if (!(Test-Path "packages/palette/src/colors.rs")) { echo "❌ Palette colors not generated"; exit 1 } else { echo "✅ Palette colors exist" }
+    @if (!(Test-Path "packages/palette/src/colors.rs")) { echo "no Palette colors not generated"; exit 1 } else { echo "Palette colors exist" }
 
 # Show available color categories
 categories:

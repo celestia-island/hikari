@@ -27,7 +27,7 @@ pub fn register_scrollbar(id: String, track: JsValue) {
     let track_element = match track.dyn_into::<HtmlElement>() {
         Ok(el) => el,
         Err(_) => {
-            web_sys::console::error_1(&"❌ Invalid track element for scrollbar".into());
+            web_sys::console::error_1(&"Invalid track element for scrollbar".into());
             return;
         }
     };

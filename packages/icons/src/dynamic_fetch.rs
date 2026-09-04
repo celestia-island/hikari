@@ -32,19 +32,19 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         let cache = match cache.read() {
             Ok(guard) => guard,
             Err(e) => {
-                web_sys::console::error_1(&format!("❌ Icon cache poisoned: {}", e).into());
+                web_sys::console::error_1(&format!("Icon cache poisoned: {}", e).into());
                 return None;
             }
         };
         if let Some(cached) = cache.get(icon_name) {
-            web_sys::console::log_1(&format!("✅ Icon '{}' from cache", icon_name).into());
+            web_sys::console::log_1(&format!("Icon '{}' from cache", icon_name).into());
             return Some(cached.clone());
         }
     }
 
     // Fetch from server
     let url = format!("{}?name={}", ICON_ROUTE, icon_name);
-    web_sys::console::log_1(&format!("🔄 Fetching icon '{}' from: {}", icon_name, url).into());
+    web_sys::console::log_1(&format!("Fetching icon '{}' from: {}", icon_name, url).into());
 
     match reqwest::get(&url).await {
         Ok(response) if response.status().is_success() => {
@@ -61,7 +61,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                                     Ok(guard) => guard,
                                     Err(e) => {
                                         web_sys::console::error_1(
-                                            &format!("❌ Icon cache poisoned: {}", e).into(),
+                                            &format!("Icon cache poisoned: {}", e).into(),
                                         );
                                         return Some(svg);
                                     }
@@ -69,14 +69,13 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                                 cache.insert(icon_name.to_string(), svg.clone());
                             }
                             web_sys::console::log_1(
-                                &format!("✅ Icon '{}' fetched and cached", icon_name).into(),
+                                &format!("Icon '{}' fetched and cached", icon_name).into(),
                             );
                             Some(svg)
                         }
                         Err(e) => {
                             web_sys::console::error_1(
-                                &format!("❌ Failed to parse RON for '{}': {}", icon_name, e)
-                                    .into(),
+                                &format!("Failed to parse RON for '{}': {}", icon_name, e).into(),
                             );
                             None
                         }
@@ -84,8 +83,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
                 }
                 Err(e) => {
                     web_sys::console::error_1(
-                        &format!("❌ Failed to read RON response for '{}': {}", icon_name, e)
-                            .into(),
+                        &format!("Failed to read RON response for '{}': {}", icon_name, e).into(),
                     );
                     None
                 }
@@ -94,7 +92,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         Ok(response) => {
             web_sys::console::warn_1(
                 &format!(
-                    "⚠️  Server returned {} for icon '{}'",
+                    "Server returned {} for icon '{}'",
                     response.status(),
                     icon_name
                 )
@@ -104,7 +102,7 @@ pub async fn fetch_and_cache_icon(icon_name: &str) -> Option<String> {
         }
         Err(e) => {
             web_sys::console::error_1(
-                &format!("❌ Failed to fetch icon '{}': {}", icon_name, e).into(),
+                &format!("Failed to fetch icon '{}': {}", icon_name, e).into(),
             );
             None
         }

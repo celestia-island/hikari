@@ -2,7 +2,7 @@
 
 Welcome to the Hikari UI examples! This directory contains comprehensive, runnable demonstrations of the Hikari component library.
 
-## 📁 Examples Overview
+## Examples Overview
 
 ### 1. [website](./website/) - Comprehensive Component Demo
 
@@ -99,7 +99,7 @@ cargo run --bin ssr-demo
 
 Server starts on `http://localhost:3000`
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -129,7 +129,7 @@ cd examples/<example-name>
 cargo run
 ```
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 examples/
@@ -162,7 +162,7 @@ examples/
     └── static/         # Static assets (optional)
 ```
 
-## 🎨 Design System
+## Design System
 
 All examples use the Hikari design system:
 
@@ -171,7 +171,7 @@ All examples use the Hikari design system:
 - **Chinese traditional colors** from the Hikari palette
 - **Responsive layouts** that work on all screen sizes
 
-## 🔧 Development Tips
+## Development Tips
 
 ### Hot Reloading
 
@@ -198,13 +198,13 @@ Run tests for all examples:
 cargo test --workspace
 ```
 
-## 📚 Learn More
+## Learn More
 
 - **Hikari Components**: [../../packages/components/](../../packages/components/)
 - **Hikari Palette**: [../../packages/palette/](../../packages/palette/)
 - **Hikari Theme**: [../../packages/theme/](../../packages/theme/)
 
-## 🤝 Contributing
+## Contributing
 
 When adding new examples:
 
@@ -214,11 +214,11 @@ When adding new examples:
 4. Add a comprehensive `README.md`
 5. Update this `README.md` with the new example
 
-## 📝 License
+## License
 
 All examples are licensed under the same terms as the Hikari project — the [Synthetic Source License (SySL), Version 1.0](../LICENSE).
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Tairitsu](https://github.com/celestia-island/tairitsu)
 - Design inspired by [Arknights](https://www.arknights.global/)

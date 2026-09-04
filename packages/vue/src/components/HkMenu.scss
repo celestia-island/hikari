@@ -36,7 +36,7 @@
 /* Leading check column (selectMode). The cell is reserved on EVERY row
  * of a level while the column is on, so labels stay aligned; only
  * checked === true shows the mark — an SVG check inside the same fixed
- * cell grammar as leading icons (the old text "✓" carried its own
+ * cell grammar as leading icons (the old text glyph carried its own
  * baseline rhythm and sat off-center against svg icons). */
 .hk-menu-check {
   @include mi.icon;

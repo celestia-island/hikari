@@ -2,7 +2,7 @@
 // house rule: no SFCs in the tree). Render-only showcase of every exported
 // component; state is local and throwaway.
 import { computed, defineComponent, ref } from "vue";
-import { PackageOpen } from "lucide-vue-next";
+import { ChevronDown, ChevronUp, PackageOpen } from "lucide-vue-next";
 import { HIKARI_FONT_MONO } from "./theme/fontContext";
 import {
   HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
@@ -214,7 +214,7 @@ export default defineComponent({
           <div class="row">
             <HButton variant="primary" loading>Loading</HButton>
             <HButton variant="primary" disabled>Disabled</HButton>
-            <HButton variant="primary" shortcut="⌘K">Shortcut</HButton>
+            <HButton variant="primary" shortcut="Ctrl+K">Shortcut</HButton>
           </div>
         </section>
 
@@ -337,7 +337,7 @@ export default defineComponent({
           <div class="row">
             <span style="align-self:center;color:var(--color-muted, gray)">custom trigger + checkbox rows:</span>
             <span ref={panelAnchor} style="display:inline-flex">
-              <HButton onClick={() => (panel.value.open = !panel.value.open)}>Filter ▲</HButton>
+              <HButton onClick={() => (panel.value.open = !panel.value.open)}>Filter {panel.value.open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</HButton>
             </span>
             <HSelectPanel
               open={panel.value.open}
@@ -393,7 +393,7 @@ export default defineComponent({
 
         <section>
           <h2>HKbd</h2>
-          <div class="row"><HKbd keys="⌘" /><HKbd keys="⌥" /><HKbd keys="⇧" /><HKbd keys="⌃" /><HKbd keys="K" /><span> = open command palette</span></div>
+          <div class="row"><HKbd keys="Ctrl" /><HKbd keys="Alt" /><HKbd keys="Shift" /><HKbd keys="K" /><span> = open command palette</span></div>
         </section>
 
         <section>

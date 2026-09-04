@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### Type Safety Benefits
 
 ```rust
-// ✅ Type-safe - compile-time checking
+// Type-safe - compile-time checking
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ Would not compile - typo protection
+// no Would not compile - typo protection
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // Compile error!
     .build();
@@ -539,45 +539,45 @@ Traditional Chinese color combinations follow specific harmony rules:
 ### 1. Use Enum for Type Safety
 
 ```rust
-// ✅ Good - Type-safe
+// Good - Type-safe
 let color = Color::粉红;
 
-// ❌ Avoid - String-based
+// no Avoid - String-based
 let color = "#FFB3A7";
 ```
 
 ### 2. Leverage Theme Palettes
 
 ```rust
-// ✅ Good - Use theme palette
+// Good - Use theme palette
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ Avoid - Hardcoded colors
+// no Avoid - Hardcoded colors
 let primary = "#FFB3A7";
 ```
 
 ### 3. Use Utility Classes
 
 ```rust
-// ✅ Good - Type-safe utilities
+// Good - Type-safe utilities
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ Acceptable - String-based (less type-safe)
+// Acceptable - String-based (less type-safe)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. Semantic Color Naming
 
 ```rust
-// ✅ Good - Semantic usage
+// Good - Semantic usage
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ Avoid - Direct color references
+// no Avoid - Direct color references
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

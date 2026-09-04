@@ -788,11 +788,11 @@ AnimationBuilder::new(&elements)
 Используйте transform и opacity для GPU-ускоренных анимаций:
 
 ```rust
-// ✅ Хорошо - GPU-ускорение
+// yes Хорошо - GPU-ускорение
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ Избегайте - вызывает перерасчёт макета
+// no Избегайте - вызывает перерасчёт макета
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -884,14 +884,14 @@ impl Timeline {
 ### 1. Используйте переходы умеренно
 
 ```rust
-// ✅ Хорошо - Только при взаимодействии пользователя
+// yes Хорошо - Только при взаимодействии пользователя
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ Избегайте - Непрерывная анимация
+// no Избегайте - Непрерывная анимация
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60fps, тяжело!
 }
@@ -900,10 +900,10 @@ loop {
 ### 2. Предпочитайте transform вместо макета
 
 ```rust
-// ✅ Хорошо - GPU-ускорение
+// yes Хорошо - GPU-ускорение
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ Избегайте - Проблемы с макетом
+// no Избегайте - Проблемы с макетом
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

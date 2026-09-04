@@ -27,7 +27,7 @@ rsx! {
         div { style: "padding:4px 0;cursor:pointer;", "▼ Folder 1" }
         div { style: "padding:4px 0 4px 20px;color:#666;", "  File A" }
         div { style: "padding:4px 0 4px 20px;color:#666;", "  File B" }
-        div { style: "padding:4px 0;cursor:pointer;", "▶ Folder 2" }
+        div { style: "padding:4px 0;cursor:pointer;", "Folder 2" }
     }
 }
 ```

@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### Преимущества типобезопасности
 
 ```rust
-// ✅ Типобезопасно - проверка во время компиляции
+// yes Типобезопасно - проверка во время компиляции
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ Не скомпилируется - защита от опечаток
+// no Не скомпилируется - защита от опечаток
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // Ошибка компиляции!
     .build();
@@ -539,45 +539,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. Используйте перечисления для типобезопасности
 
 ```rust
-// ✅ Хорошо - Типобезопасно
+// yes Хорошо - Типобезопасно
 let color = Color::粉红;
 
-// ❌ Избегайте - На основе строк
+// no Избегайте - На основе строк
 let color = "#FFB3A7";
 ```
 
 ### 2. Используйте тематические палитры
 
 ```rust
-// ✅ Хорошо - Используйте тематическую палитру
+// yes Хорошо - Используйте тематическую палитру
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ Избегайте - Жёстко заданные цвета
+// no Избегайте - Жёстко заданные цвета
 let primary = "#FFB3A7";
 ```
 
 ### 3. Используйте служебные классы
 
 ```rust
-// ✅ Хорошо - Типобезопасные утилиты
+// yes Хорошо - Типобезопасные утилиты
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ Приемлемо - На основе строк (менее типобезопасно)
+// yes Приемлемо - На основе строк (менее типобезопасно)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. Семантическое именование цветов
 
 ```rust
-// ✅ Хорошо - Семантическое использование
+// yes Хорошо - Семантическое использование
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ Избегайте - Прямые ссылки на цвета
+// no Избегайте - Прямые ссылки на цвета
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

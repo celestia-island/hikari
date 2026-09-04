@@ -15,7 +15,7 @@
 
 ## Phase 2：CSS 基础设施迁移
 
-### 状态：✅ 已完成
+### 状态：yes 已完成
 
 ### 目标
 
@@ -83,7 +83,7 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 
 ## Phase 3：Props 宏迁移
 
-### 状态：✅ 已完成
+### 状态：yes 已完成
 
 ### 目标
 
@@ -154,65 +154,65 @@ pub struct ButtonProps {
 ### 已完成的迁移
 
 #### 基础组件
-- `ButtonProps` ✅
-- `InputProps` ✅
-- `TextareaProps` ✅
-- `BadgeProps` ✅
-- `CardProps`, `CardHeaderProps`, `CardContentProps`, `CardActionsProps`, `CardMediaProps` ✅
-- `SliderProps` ✅
-- `SwitchProps` ✅
-- `CheckboxProps` ✅
-- `RadioProps`, `RadioGroupProps` ✅
-- `IconButtonProps` ✅
+- `ButtonProps` yes
+- `InputProps` yes
+- `TextareaProps` yes
+- `BadgeProps` yes
+- `CardProps`, `CardHeaderProps`, `CardContentProps`, `CardActionsProps`, `CardMediaProps` yes
+- `SliderProps` yes
+- `SwitchProps` yes
+- `CheckboxProps` yes
+- `RadioProps`, `RadioGroupProps` yes
+- `IconButtonProps` yes
 
 #### 布局组件
-- `FlexBoxProps` ✅
+- `FlexBoxProps` yes
 
 #### 反馈组件
-- `AlertProps` ✅
-- `ToastProps` ✅
-- `TooltipProps` ✅
-- `DrawerProps` ✅
-- `ProgressProps` ✅
-- `SpinProps` ✅
-- `PopoverProps` ✅
-- `GlowProps` ✅
+- `AlertProps` yes
+- `ToastProps` yes
+- `TooltipProps` yes
+- `DrawerProps` yes
+- `ProgressProps` yes
+- `SpinProps` yes
+- `PopoverProps` yes
+- `GlowProps` yes
 
 #### 导航组件
-- `StepperProps` ✅
-- `BreadcrumbProps`, `BreadcrumbItemProps` ✅
-- `TabProps`, `TabPanelProps` ✅
-- `MenuItemProps`, 等 ✅
-- `SidebarProps`, `SidebarSectionProps`, `SidebarItemProps`, `SidebarLeafProps` ✅
+- `StepperProps` yes
+- `BreadcrumbProps`, `BreadcrumbItemProps` yes
+- `TabProps`, `TabPanelProps` yes
+- `MenuItemProps`, 等 yes
+- `SidebarProps`, `SidebarSectionProps`, `SidebarItemProps`, `SidebarLeafProps` yes
 
 #### 展示组件
-- `TagProps` ✅
-- `CalendarProps` ✅
-- `TimelineProps`, `TimelineItemProps` ✅
-- `QRCodeProps` ✅
+- `TagProps` yes
+- `CalendarProps` yes
+- `TimelineProps`, `TimelineItemProps` yes
+- `QRCodeProps` yes
 
 #### 输入组件
-- `NumberInputProps` ✅
-- `SearchProps` ✅
-- `AutoCompleteProps` ✅
-- `CascaderProps` ✅
-- `TransferProps`, `TransferItem` ✅
+- `NumberInputProps` yes
+- `SearchProps` yes
+- `AutoCompleteProps` yes
+- `CascaderProps` yes
+- `TransferProps`, `TransferItem` yes
 
 #### 数据组件
-- `TableProps` ✅
-- `PaginationProps` ✅
-- `VirtualScrollProps` ✅
-- `DragProps`, `DragTreeNodeData` ✅
+- `TableProps` yes
+- `PaginationProps` yes
+- `VirtualScrollProps` yes
+- `DragProps`, `DragTreeNodeData` yes
 
 #### 生产组件
-- `CodeHighlightProps` ✅
-- `MarkdownEditorProps` ✅
-- `RichTextEditorProps` ✅
-- `VideoPlayerProps` ✅
-- `AudioPlayerProps` ✅
+- `CodeHighlightProps` yes
+- `MarkdownEditorProps` yes
+- `RichTextEditorProps` yes
+- `VideoPlayerProps` yes
+- `AudioPlayerProps` yes
 
 #### 图标组件
-- `IconProps` ✅
+- `IconProps` yes
 
 ### 收益
 
@@ -283,10 +283,10 @@ graph TB
 
 ### 编译状态
 
-- ✅ 所有包编译成功
-- ✅ 无编译错误
-- ✅ 所有测试通过（hikari-components 中 78/78）
-- ⚠️ 少量警告（无关文件中的死代码）
+- yes 所有包编译成功
+- yes 无编译错误
+- yes 所有测试通过（hikari-components 中 78/78）
+- 少量警告（无关文件中的死代码）
 
 ### 测试更新
 
@@ -320,14 +320,14 @@ assert!(props1.page_size == props2.page_size);
 ### 翻译
 
 所有文档更新应翻译到所有支持的语言：
-- ✅ `zh-CHS`（简体中文）
-- ⏳ `zh-CHT`（繁体中文）
-- ⏳ `ja-JP`（日语）
-- ⏳ `ko-KR`（韩语）
-- ⏳ `es-ES`（西班牙语）
-- ⏳ `fr-FR`（法语）
-- ⏳ `ru-RU`（俄语）
-- ⏳ `ar-SA`（阿拉伯语）
+- yes `zh-CHS`（简体中文）
+- `zh-CHT`（繁体中文）
+- `ja-JP`（日语）
+- `ko-KR`（韩语）
+- `es-ES`（西班牙语）
+- `fr-FR`（法语）
+- `ru-RU`（俄语）
+- `ar-SA`（阿拉伯语）
 
 ---
 

@@ -64,7 +64,7 @@ fmt:
 # Check if Tailwind CSS needs to be regenerated
 check:
     @echo "Checking Tailwind CSS..."
-    @if (!(Test-Path "packages/theme/src/generated/tailwind.rs")) { echo "❌ Tailwind CSS not generated"; exit 1 } else { echo "✅ Tailwind CSS exists" }
+    @if (!(Test-Path "packages/theme/src/generated/tailwind.rs")) { echo "no Tailwind CSS not generated"; exit 1 } else { echo "Tailwind CSS exists" }
 
 # Show theme build status
 status:

@@ -788,11 +788,11 @@ AnimationBuilder::new(&elements)
 GPU 가속 애니메이션을 위해 transform과 opacity를 사용하세요:
 
 ```rust
-// ✅ 좋음 - GPU 가속
+// yes 좋음 - GPU 가속
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ 피하세요 - 레이아웃 트리거
+// no 피하세요 - 레이아웃 트리거
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -884,14 +884,14 @@ impl Timeline {
 ### 1. 트랜지션은 적당히 사용
 
 ```rust
-// ✅ 좋음 - 사용자 상호작용에서만
+// yes 좋음 - 사용자 상호작용에서만
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ 피하세요 - 지속적인 애니메이션
+// no 피하세요 - 지속적인 애니메이션
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60fps, 무거움!
 }
@@ -900,10 +900,10 @@ loop {
 ### 2. 레이아웃보다 Transform 선호
 
 ```rust
-// ✅ 좋음 - GPU 가속
+// yes 좋음 - GPU 가속
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ 피하세요 - 레이아웃 스래싱
+// no 피하세요 - 레이아웃 스래싱
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

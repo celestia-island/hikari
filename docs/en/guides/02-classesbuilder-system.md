@@ -275,12 +275,12 @@ sequenceDiagram
 **编译时检查**：
 
 ```rust
-// ❌ 编译错误：拼写错误
+// no 编译错误：拼写错误
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // Display 没有 Flx 变体
     .build();
 
-// ✅ 编译通过：IDE 自动补全
+// yes 编译通过：IDE 自动补全
 let classes = ClassesBuilder::new()
     .add(Display::Flex)  // IDE 会提示 Flex 变体
     .build();
@@ -445,12 +445,12 @@ pub fn add_all(mut self, classes: &[impl UtilityClass]) -> Self {
     self
 }
 
-// ✅ 推荐：批量添加
+// yes 推荐：批量添加
 let classes = ClassesBuilder::new()
     .add_all(&[Display::Flex, FlexDirection::Row, Gap::Gap4])
     .build();
 
-// ❌ 避免：多次调用 add
+// no 避免：多次调用 add
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)

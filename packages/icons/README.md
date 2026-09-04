@@ -16,8 +16,8 @@ use dioxus::prelude::*;
 use hikari_icons::{Icon, MdiIcon};
 
 rsx! {
-    Icon { icon: MdiIcon::Search, size: 24, class: "text-primary" }
-    Icon { icon: MdiIcon::MoonWaningCrescent, class: "w-6 h-6" }
+ Icon { icon: MdiIcon::Search, size: 24, class: "text-primary" }
+ Icon { icon: MdiIcon::MoonWaningCrescent, class: "w-6 h-6" }
 }
 ```
 
@@ -35,7 +35,7 @@ For complete API documentation, icon shortcuts, and dynamic icon usage, see [doc
 
 ## Dynamic Icons
 
-⚠️ **Important**: When dynamically changing icons (e.g., theme toggle), use a reactive `key` on the wrapper component, not on `Icon` itself. See [documentation](https://docs.rs/hikari-icons) for details.
+warning: **Important**: When dynamically changing icons (e.g., theme toggle), use a reactive `key` on the wrapper component, not on `Icon` itself. See [documentation](https://docs.rs/hikari-icons) for details.
 
 ## License
 

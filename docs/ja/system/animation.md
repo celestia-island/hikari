@@ -757,11 +757,11 @@ AnimationBuilder::new(&elements)
 GPUアクセラレーションされたアニメーションのためにtransformとopacityを使用：
 
 ```rust
-// ✅ 良い - GPUアクセラレーション
+// yes 良い - GPUアクセラレーション
 builder.add_style("element", CssProperty::Transform, "translateX(100px)");
 builder.add_style("element", CssProperty::Opacity, "0.5");
 
-// ❌ 避ける - レイアウトをトリガー
+// no 避ける - レイアウトをトリガー
 builder.add_style("element", CssProperty::Width, "100px");
 builder.add_style("element", CssProperty::Margin, "10px");
 ```
@@ -853,14 +853,14 @@ impl Timeline {
 ### 1. トランジションを控えめに使用
 
 ```rust
-// ✅ 良い - ユーザー操作時のみ
+// yes 良い - ユーザー操作時のみ
 button {
     onmouseenter: move |_| {
         builder.apply_with_transition("200ms", "ease");
     }
 }
 
-// ❌ 避ける - 継続的なアニメーション
+// no 避ける - 継続的なアニメーション
 loop {
     builder.apply_with_transition("16ms", "linear"); // 60fps、重い！
 }
@@ -869,10 +869,10 @@ loop {
 ### 2. レイアウトよりトランスフォームを優先
 
 ```rust
-// ✅ 良い - GPUアクセラレーション
+// yes 良い - GPUアクセラレーション
 builder.add_style("el", CssProperty::Transform, "translateX(100px)");
 
-// ❌ 避ける - レイアウトスラッシング
+// no 避ける - レイアウトスラッシング
 builder.add_style("el", CssProperty::Margin, "100px");
 ```
 

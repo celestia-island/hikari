@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### 타입 안전의 이점
 
 ```rust
-// ✅ 타입 안전 - 컴파일 타임 검사
+// yes 타입 안전 - 컴파일 타임 검사
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ 컴파일되지 않음 - 오타 보호
+// no 컴파일되지 않음 - 오타 보호
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // 컴파일 에러!
     .build();
@@ -539,45 +539,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. 타입 안전을 위해 Enum 사용
 
 ```rust
-// ✅ 좋음 - 타입 안전
+// yes 좋음 - 타입 안전
 let color = Color::粉红;
 
-// ❌ 피하세요 - 문자열 기반
+// no 피하세요 - 문자열 기반
 let color = "#FFB3A7";
 ```
 
 ### 2. 테마 팔레트 활용
 
 ```rust
-// ✅ 좋음 - 테마 팔레트 사용
+// yes 좋음 - 테마 팔레트 사용
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ 피하세요 - 하드코딩된 색상
+// no 피하세요 - 하드코딩된 색상
 let primary = "#FFB3A7";
 ```
 
 ### 3. 유틸리티 클래스 사용
 
 ```rust
-// ✅ 좋음 - 타입 안전 유틸리티
+// yes 좋음 - 타입 안전 유틸리티
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ 허용됨 - 문자열 기반 (덜 타입 안전)
+// yes 허용됨 - 문자열 기반 (덜 타입 안전)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. 의미적 색상 명명
 
 ```rust
-// ✅ 좋음 - 의미적 사용
+// yes 좋음 - 의미적 사용
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ 피하세요 - 직접 색상 참조
+// no 피하세요 - 직접 색상 참조
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

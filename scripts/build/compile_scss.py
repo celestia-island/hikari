@@ -24,12 +24,12 @@ def main():
 
     # Find workspace root
     workspace_root = Path(__file__).parent.parent.parent
-    print(f"\n📂 Workspace root: {workspace_root}")
+    print(f"\nWorkspace root: {workspace_root}")
 
     # Input SCSS file
     index_scss = workspace_root / "packages/components/src/styles/index.scss"
     if not index_scss.exists():
-        print(f"\n❌ Error: {index_scss} not found")
+        print(f"\nno Error: {index_scss} not found")
         sys.exit(1)
 
     # Output directory for website source assets consumed by tairitsu-packager
@@ -80,14 +80,14 @@ def main():
                 continue
 
     if not sass_cmd:
-        print("\n❌ Error: Sass compiler not found!")
+        print("\nno Error: Sass compiler not found!")
         print("\n   Please install Dart Sass:")
         print("   • Windows: choco install sass")
         print("   • Or download from: https://github.com/sass/dart-sass/releases")
         print("   • Or with npm: npm install -g sass")
         sys.exit(1)
 
-    print(f"\n🔨 Using sass command: {sass_cmd}")
+    print(f"\nUsing sass command: {sass_cmd}")
     print(f"   Input:  {index_scss.relative_to(workspace_root)}")
     print(f"   Output: {output_css.relative_to(workspace_root)}")
 
@@ -122,16 +122,16 @@ def main():
 
         # Get file size
         file_size = output_css.stat().st_size
-        print("\n✅ CSS bundle generated successfully!")
+        print("\nCSS bundle generated successfully!")
         print(f"   Size: {file_size:,} bytes")
         print(f"   Path: {output_css}")
 
     except subprocess.CalledProcessError as e:
-        print("\n❌ SCSS compilation failed:")
+        print("\nno SCSS compilation failed:")
         print(f"   {e.stderr}")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nno Error: {e}")
         sys.exit(1)
 
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

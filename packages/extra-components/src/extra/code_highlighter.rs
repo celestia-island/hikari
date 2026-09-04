@@ -226,7 +226,7 @@ impl CodeHighlighterState {
 
     #[must_use]
     pub const fn copy_button_text(&self) -> &'static str {
-        if self.copied { "✓" } else { "Copy" }
+        if self.copied { "Copied" } else { "Copy" }
     }
 
     /// Returns the MDI icon name for the copy button based on state.

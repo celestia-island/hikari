@@ -236,17 +236,17 @@ impl StyleStringBuilder {
 ### 类型检查机制
 
 ```rust
-// ❌ 编译错误：属性名拼写错误
+// no 编译错误：属性名拼写错误
 let style = StyleStringBuilder::new()
     .add(CssProperty::Widht, "100px")  // 没有这个变体
     .build();
 
-// ❌ 编译错误：参数类型错误
+// no 编译错误：参数类型错误
 let style = StyleStringBuilder::new()
     .add_px(CssProperty::Width, "100px")  // 应该是 i32
     .build();
 
-// ✅ 编译通过：IDE 自动补全
+// yes 编译通过：IDE 自动补全
 let style = StyleStringBuilder::new()
     .add(CssProperty::Width, "100px")  // IDE 提示 Width 变体
     .build();
@@ -325,13 +325,13 @@ let style = "width:100px;height:200px;opacity:0.5";
 ### 2. 紧凑输出
 
 ```rust
-// ✅ 推荐：紧凑输出（减少字节）
+// yes 推荐：紧凑输出（减少字节）
 let style = StyleStringBuilder::new()
     .add_px(CssProperty::Width, 100)
     .build_clean();
 // 输出: "width:100px"
 
-// ❌ 避免：标准输出（带空格）
+// no 避免：标准输出（带空格）
 let style = StyleStringBuilder::new()
     .add_px(CssProperty::Width, 100)
     .build();
@@ -350,12 +350,12 @@ impl StyleStringBuilder {
     }
 }
 
-// ✅ 推荐：使用 &str（零成本转换）
+// yes 推荐：使用 &str（零成本转换）
 let style = StyleStringBuilder::new()
     .add(CssProperty::Width, "100px")
     .build();
 
-// ✅ 也支持：使用 String（会移动所有权）
+// yes 也支持：使用 String（会移动所有权）
 let width = "100px".to_string();
 let style = StyleStringBuilder::new()
     .add(CssProperty::Width, width)
@@ -671,12 +671,12 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 // 所有现有的用法都继续工作
 use hikari_animation::style::CssProperty;
 
-// ✅ 仍然有效
+// yes 仍然有效
 CssProperty::Width
 CssProperty::Height
 CssProperty::BackgroundColor
 
-// ✅ 新增属性也可用
+// yes 新增属性也可用
 CssProperty::GridTemplateColumns
 CssProperty::BackdropFilter
 CssProperty::Filter

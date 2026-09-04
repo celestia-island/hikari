@@ -20,17 +20,17 @@ Hikari E2E provides a Rust-native end-to-end testing framework for verifying Hik
 
 ### Core Framework
 
-- ✅ **Trait-based Testing**: `Test` trait for defining test suites
-- ✅ **Test Result Aggregation**: Automatic result collection and reporting
-- ✅ **Logging Integration**: Structured logging with `tracing`
-- ✅ **Async/Await**: Modern async Rust with `tokio`
+- yes **Trait-based Testing**: `Test` trait for defining test suites
+- yes **Test Result Aggregation**: Automatic result collection and reporting
+- yes **Logging Integration**: Structured logging with `tracing`
+- yes **Async/Await**: Modern async Rust with `tokio`
 
 ### Browser Automation
 
-- ✅ **Headless Chrome**: Automated browser control
-- ✅ **CDP Protocol**: Chrome DevTools Protocol for fine-grained control
-- ✅ **Event Simulation**: Click, input, keyboard events
-- ✅ **DOM Inspection**: Element queries and attribute verification
+- yes **Headless Chrome**: Automated browser control
+- yes **CDP Protocol**: Chrome DevTools Protocol for fine-grained control
+- yes **Event Simulation**: Click, input, keyboard events
+- yes **DOM Inspection**: Element queries and attribute verification
 
 ## Architecture
 
@@ -40,19 +40,19 @@ struct BasicComponentsTests;
 
 // Implement Test trait
 impl Test for BasicComponentsTests {
-    fn name(&self) -> &str {
-        "Layer 1: Basic Components Tests"
-    }
+ fn name(&self) -> &str {
+ "Layer 1: Basic Components Tests"
+ }
 
-    fn setup(&self) -> Result<()> {
-        // Setup: launch browser, navigate to page
-        Ok(())
-    }
+ fn setup(&self) -> Result<()> {
+ // Setup: launch browser, navigate to page
+ Ok(())
+ }
 
-    async fn run(&self) -> Result<TestResult> {
-        // Run tests, return aggregated results
-        Ok(TestResult::aggregate(results))
-    }
+ async fn run(&self) -> Result<TestResult> {
+ // Run tests, return aggregated results
+ Ok(TestResult::aggregate(results))
+ }
 }
 ```
 
@@ -60,14 +60,14 @@ impl Test for BasicComponentsTests {
 
 ```
 packages/e2e/
-├── Cargo.toml              # Package configuration
-├── README.md               # This file
+├── Cargo.toml # Package configuration
+├── README.md # This file
 └── src/
-    ├── main.rs             # CLI entry point
-    ├── lib.rs             # Library entry point
-    └── tests/
-        ├── mod.rs          # Test trait and exports
-        └── basic_components.rs  # Test implementations
+ ├── main.rs # CLI entry point
+ ├── lib.rs # Library entry point
+ └── tests/
+ ├── mod.rs # Test trait and exports
+ └── basic_components.rs # Test implementations
 ```
 
 ## Usage
@@ -85,13 +85,13 @@ use hikari_e2e::run_all_tests;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let results = run_all_tests().await?;
+ let results = run_all_tests().await?;
 
-    for result in &results {
-        println!("{}: {}", result.component, result.message);
-    }
+ for result in &results {
+ println!("{}: {}", result.component, result.message);
+ }
 
-    Ok(())
+ Ok(())
 }
 ```
 
@@ -101,13 +101,13 @@ async fn main() -> anyhow::Result<()> {
 
 | Test Suite | Components Covered | Status |
 |-----------|------------------|---------|
-| BasicComponentsTests | Button, Input, Card | ✅ Implemented |
-| FormComponentsTests | Form, Select, Checkbox, Radio, Switch | ✅ Implemented |
-| DataComponentsTests | Table, Tree, Pagination, Dropdown | ✅ Implemented |
-| AdvancedComponentsTests | VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls | ✅ Implemented |
-| ThemeTests | Theme switching, responsive | ⏳ Planned |
-| AccessibilityTests | ARIA, keyboard navigation | ⏳ Planned |
-| PerformanceTests | Bundle size, rendering performance | ⏳ Planned |
+| BasicComponentsTests | Button, Input, Card | yes Implemented |
+| FormComponentsTests | Form, Select, Checkbox, Radio, Switch | yes Implemented |
+| DataComponentsTests | Table, Tree, Pagination, Dropdown | yes Implemented |
+| AdvancedComponentsTests | VideoPlayer, AudioWaveform, RichTextEditor, DragLayer, Collapsible, ZoomControls | yes Implemented |
+| ThemeTests | Theme switching, responsive | Planned |
+| AccessibilityTests | ARIA, keyboard navigation | Planned |
+| PerformanceTests | Bundle size, rendering performance | Planned |
 
 ## Verification Criteria
 
@@ -124,20 +124,20 @@ Each component test verifies:
 
 ```rust
 async fn test_button(&self) -> Result<TestResult> {
-    info!("Testing Button component");
+ info!("Testing Button component");
 
-    // Verification criteria:
-    // 1. Button renders with class: "hi-button"
-    // 2. Button responds to click events
-    // 3. Button supports variant prop (primary, secondary, ghost)
-    // 4. Button supports size prop (small, medium, large)
-    // 5. Button can be disabled
-    // 6. Button has hover/active states
+ // Verification criteria:
+ // 1. Button renders with class: "hi-button"
+ // 2. Button responds to click events
+ // 3. Button supports variant prop (primary, secondary, ghost)
+ // 4. Button supports size prop (small, medium, large)
+ // 5. Button can be disabled
+ // 6. Button has hover/active states
 
-    Ok(TestResult::success(
-        "Button",
-        "Button component renders, accepts props, responds to clicks"
-    ))
+ Ok(TestResult::success(
+ "Button",
+ "Button component renders, accepts props, responds to clicks"
+ ))
 }
 ```
 
@@ -146,35 +146,35 @@ async fn test_button(&self) -> Result<TestResult> {
 ### Adding New Test Suites
 
 1. Create test struct:
-   ```rust
-   pub struct MyComponentTests;
-   ```
+ ```rust
+ pub struct MyComponentTests;
+ ```
 
 2. Implement test methods:
-   ```rust
-   impl MyComponentTests {
-       async fn test_component(&self) -> Result<TestResult> {
-           // Test implementation
-       }
-   }
-   ```
+ ```rust
+ impl MyComponentTests {
+ async fn test_component(&self) -> Result<TestResult> {
+ // Test implementation
+ }
+ }
+ ```
 
 3. Implement Test trait:
-   ```rust
-   impl Test for MyComponentTests {
-       fn name(&self) -> &str { "My Component Tests" }
-       fn setup(&self) -> Result<()> { Ok(()) }
-       async fn run(&self) -> Result<TestResult> { /* ... */ }
-   }
-   ```
+ ```rust
+ impl Test for MyComponentTests {
+ fn name(&self) -> &str { "My Component Tests" }
+ fn setup(&self) -> Result<()> { Ok(()) }
+ async fn run(&self) -> Result<TestResult> { /* ... */ }
+ }
+ ```
 
 4. Register in `lib.rs`:
-   ```rust
-   match MyComponentTests.run().await {
-       Ok(result) => results.push(result),
-       Err(e) => results.push(TestResult::error("MyComponent", &e.to_string())),
-   }
-   ```
+ ```rust
+ match MyComponentTests.run().await {
+ Ok(result) => results.push(result),
+ Err(e) => results.push(TestResult::error("MyComponent", &e.to_string())),
+ }
+ ```
 
 ## Requirements
 
@@ -188,16 +188,16 @@ async fn test_button(&self) -> Result<TestResult> {
 For full E2E testing:
 
 1. Start Hikari dev server:
-   ```bash
-   cd examples/website
-   trunk serve --port 3000
-   ```
+ ```bash
+ cd examples/website
+ trunk serve --port 3000
+ ```
 
 2. In a separate terminal, run E2E tests:
-   ```bash
-   cd packages/e2e
-   cargo run --bin e2e
-   ```
+ ```bash
+ cd packages/e2e
+ cargo run --bin e2e
+ ```
 
 3. Tests will navigate to `http://localhost:3000` and verify components
 

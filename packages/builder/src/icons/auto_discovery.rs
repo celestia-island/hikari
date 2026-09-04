@@ -249,7 +249,7 @@ pub fn generate_selection(usage: &IconUsage) -> Vec<String> {
 
 /// Print usage report for debugging
 pub fn print_usage_report(usage: &IconUsage) {
-    println!("🔍 Icon Auto-Discovery Report");
+    println!("Icon Auto-Discovery Report");
     println!("   Total unique icons found: {}", usage.icons.len());
     println!();
 

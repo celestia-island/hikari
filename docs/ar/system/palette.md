@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### فوائد أمان النوع
 
 ```rust
-// ✅ آمن للنوع - فحص وقت الترجمة
+// yes آمن للنوع - فحص وقت الترجمة
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ لن يترجم - حماية من الأخطاء المطبعية
+// no لن يترجم - حماية من الأخطاء المطبعية
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // خطأ في الترجمة!
     .build();
@@ -531,45 +531,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. استخدم التعداد لأمان النوع
 
 ```rust
-// ✅ جيد - آمن للنوع
+// yes جيد - آمن للنوع
 let color = Color::粉红;
 
-// ❌ تجنب - قائم على السلسلة
+// no تجنب - قائم على السلسلة
 let color = "#FFB3A7";
 ```
 
 ### 2. استفد من لوحات السمات
 
 ```rust
-// ✅ جيد - استخدم لوحة السمة
+// yes جيد - استخدم لوحة السمة
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ تجنب - ألوان مشفرة
+// no تجنب - ألوان مشفرة
 let primary = "#FFB3A7";
 ```
 
 ### 3. استخدم فئات الأدوات
 
 ```rust
-// ✅ جيد - أدوات آمنة للنوع
+// yes جيد - أدوات آمنة للنوع
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ مقبول - قائم على السلسلة (أقل أمانًا للنوع)
+// yes مقبول - قائم على السلسلة (أقل أمانًا للنوع)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. التسمية الدلالية للألوان
 
 ```rust
-// ✅ جيد - استخدام دلالي
+// yes جيد - استخدام دلالي
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ تجنب - مراجع ألوان مباشرة
+// no تجنب - مراجع ألوان مباشرة
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

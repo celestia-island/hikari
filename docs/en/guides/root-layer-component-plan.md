@@ -122,23 +122,23 @@ graph TB
 
 | 组件 | 路径 | 状态 |
 |------|------|------|
-| Button | `packages/components/src/basic/button.rs` | ✅ 完成 |
-| Input | `packages/components/src/basic/input.rs` | ✅ 完成 |
-| Card | `packages/components/src/basic/card.rs` | ✅ 完成 |
-| Badge | `packages/components/src/basic/badge.rs` | ✅ 完成 |
-| Alert | `packages/components/src/feedback/alert.rs` | ✅ 完成 |
-| Toast | `packages/components/src/feedback/toast.rs` | ✅ 完成 |
-| Tooltip | `packages/components/src/feedback/tooltip.rs` | ✅ 完成 |
-| Select | `packages/components/src/basic/select.rs` | ✅ 完成 |
-| Checkbox | `packages/components/src/basic/checkbox.rs` | ✅ 完成 |
-| Radio | `packages/components/src/basic/radio_group.rs` | ✅ 完成 |
-| Switch | `packages/components/src/basic/switch.rs` | ✅ 完成 |
-| Avatar | `packages/components/src/basic/avatar.rs` | ✅ 完成 |
-| Image | `packages/components/src/basic/image.rs` | ✅ 完成 |
-| Slider | `packages/components/src/basic/slider.rs` | ✅ 完成 |
-| Progress | `packages/components/src/feedback/progress.rs` | ✅ 完成 |
-| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | ✅ 完成 |
-| FormField | `packages/components/src/basic/form_field.rs` | ✅ 完成 |
+| Button | `packages/components/src/basic/button.rs` | yes 完成 |
+| Input | `packages/components/src/basic/input.rs` | yes 完成 |
+| Card | `packages/components/src/basic/card.rs` | yes 完成 |
+| Badge | `packages/components/src/basic/badge.rs` | yes 完成 |
+| Alert | `packages/components/src/feedback/alert.rs` | yes 完成 |
+| Toast | `packages/components/src/feedback/toast.rs` | yes 完成 |
+| Tooltip | `packages/components/src/feedback/tooltip.rs` | yes 完成 |
+| Select | `packages/components/src/basic/select.rs` | yes 完成 |
+| Checkbox | `packages/components/src/basic/checkbox.rs` | yes 完成 |
+| Radio | `packages/components/src/basic/radio_group.rs` | yes 完成 |
+| Switch | `packages/components/src/basic/switch.rs` | yes 完成 |
+| Avatar | `packages/components/src/basic/avatar.rs` | yes 完成 |
+| Image | `packages/components/src/basic/image.rs` | yes 完成 |
+| Slider | `packages/components/src/basic/slider.rs` | yes 完成 |
+| Progress | `packages/components/src/feedback/progress.rs` | yes 完成 |
+| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | yes 完成 |
+| FormField | `packages/components/src/basic/form_field.rs` | yes 完成 |
 
 ### 待开发的基础组件
 
@@ -172,17 +172,17 @@ pub trait Layer1Component {
 
 | 组件 | 路径 | 依赖的 Layer 1 | 状态 |
 |------|------|---------------|------|
-| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | ✅ 完成 |
-| Tabs | `packages/components/src/navigation/tabs.rs` | Button | ✅ 完成 |
-| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | ✅ 完成 |
-| Table | `packages/components/src/data/table.rs` | Button, Card, Input | ✅ 完成 |
-| Tree | `packages/components/src/data/tree.rs` | Button | ✅ 完成 |
-| Pagination | `packages/components/src/data/pagination.rs` | Button | ✅ 完成 |
-| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | ✅ 完成 |
-| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | ✅ 完成 |
-| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | ✅ 完成 |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | ✅ 完成 |
-| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | ✅ 完成 |
+| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | yes 完成 |
+| Tabs | `packages/components/src/navigation/tabs.rs` | Button | yes 完成 |
+| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | yes 完成 |
+| Table | `packages/components/src/data/table.rs` | Button, Card, Input | yes 完成 |
+| Tree | `packages/components/src/data/tree.rs` | Button | yes 完成 |
+| Pagination | `packages/components/src/data/pagination.rs` | Button | yes 完成 |
+| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | yes 完成 |
+| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | yes 完成 |
+| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | yes 完成 |
+| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | yes 完成 |
+| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | yes 完成 |
 
 ### 待开发的复合组件
 

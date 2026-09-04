@@ -12,12 +12,12 @@ Hikari est un framework UI moderne conçu pour l'écosystème Rust, combinant l'
 
 ## Fonctionnalités Principales
 
-### 🎨 Système de Couleurs Traditionnelles Chinoises
+### Système de Couleurs Traditionnelles Chinoises
 - **Plus de 500 Couleurs Traditionnelles**: Palette complète des couleurs traditionnelles chinoises
 - **Système de Thèmes**: Thèmes intégrés Hikari (clair) et Tairitsu (sombre)
 - **Type-Safe**: Vérification des valeurs de couleur à la compilation
 
-### 🧩 Riche Bibliothèque de Composants
+### Riche Bibliothèque de Composants
 - **Composants de Base**: Button, Input, Card, Badge
 - **Composants de Feedback**: Alert, Toast, Tooltip, Spotlight
 - **Composants de Navigation**: Menu, Tabs, Breadcrumb
@@ -25,13 +25,13 @@ Hikari est un framework UI moderne conçu pour l'écosystème Rust, combinant l'
 - **Composants de Layout**: Layout, Header, Aside, Content, Footer
 - **Composants Supplémentaires**: Collapsible, DragLayer, ZoomControls
 
-### ✨ Puissant Système d'Animation
+### Puissant Système d'Animation
 - **Animations Déclaratives**: API fluent de type CSS
 - **Valeurs Dynamiques**: Valeurs d'animation calculées à l'exécution
 - **Fonctions d'Easing**: Plus de 30 fonctions d'easing
 - **Animations Prédéfinies**: Fade, slide, scale, etc.
 
-### 🎯 Fonctionnalités Avancées
+### Fonctionnalités Avancées
 - **Rendu Côté Serveur**: Support SSR complet
 - **Sécurité de Type**: Utilisation complète du système de types de Rust
 - **Design Réactif**: Utilitaires de layout réactif intégrés

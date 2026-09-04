@@ -182,7 +182,7 @@ impl AnimationRegistry {
             }
 
             web_sys::console::log_2(
-                &format!("🛑 Animation {} stopped: {}", id, reason).into(),
+                &format!("Animation {} stopped: {}", id, reason).into(),
                 &id.into(),
             );
             true
@@ -224,7 +224,7 @@ impl AnimationRegistry {
             }
 
             web_sys::console::log_2(
-                &format!("🛑 Animation {} stopped: {}", id, reason).into(),
+                &format!("Animation {} stopped: {}", id, reason).into(),
                 &id.into(),
             );
         }
@@ -249,7 +249,7 @@ impl AnimationRegistry {
 
         if !to_remove.is_empty() {
             web_sys::console::log_1(
-                &format!("🧹 Cleaned up {} invalid animations", to_remove.len()).into(),
+                &format!("Cleaned up {} invalid animations", to_remove.len()).into(),
             );
         }
 

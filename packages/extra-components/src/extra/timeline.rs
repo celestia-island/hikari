@@ -131,7 +131,7 @@ impl TimelineItem {
 ///     TimelineItem::new("1", "Project Started")
 ///         .with_status(TimelineStatus::Completed)
 ///         .with_time("2024-01-01")
-///         .with_icon("🚀")
+///         .with_icon("rocket")
 /// );
 /// ```
 #[derive(Clone, PartialEq, Debug)]
@@ -251,13 +251,13 @@ mod tests {
         let item = TimelineItem::new("1", "Test")
             .with_description("Description")
             .with_time("2024-01-01")
-            .with_icon("🎯")
+            .with_icon("target")
             .with_status(TimelineStatus::Completed)
             .with_expanded(true);
 
         assert_eq!(item.description, "Description");
         assert_eq!(item.time, "2024-01-01");
-        assert_eq!(item.icon, "🎯");
+        assert_eq!(item.icon, "target");
         assert_eq!(item.status, TimelineStatus::Completed);
         assert!(item.expanded);
     }

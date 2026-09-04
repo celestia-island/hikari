@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### タイプセーフの利点
 
 ```rust
-// ✅ タイプセーフ - コンパイル時チェック
+// yes タイプセーフ - コンパイル時チェック
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ コンパイルエラー - タイプミス防止
+// no コンパイルエラー - タイプミス防止
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // コンパイルエラー！
     .build();
@@ -539,45 +539,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. タイプセーフのために列挙型を使用する
 
 ```rust
-// ✅ 良い - タイプセーフ
+// yes 良い - タイプセーフ
 let color = Color::粉红;
 
-// ❌ 避ける - 文字列ベース
+// no 避ける - 文字列ベース
 let color = "#FFB3A7";
 ```
 
 ### 2. テーマパレットを活用する
 
 ```rust
-// ✅ 良い - テーマパレットを使用
+// yes 良い - テーマパレットを使用
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ 避ける - ハードコードされた色
+// no 避ける - ハードコードされた色
 let primary = "#FFB3A7";
 ```
 
 ### 3. ユーティリティクラスを使用する
 
 ```rust
-// ✅ 良い - タイプセーフなユーティリティ
+// yes 良い - タイプセーフなユーティリティ
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ 許容 - 文字列ベース（タイプセーフ性は低い）
+// yes 許容 - 文字列ベース（タイプセーフ性は低い）
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. セマンティックな色命名
 
 ```rust
-// ✅ 良い - セマンティックな使用
+// yes 良い - セマンティックな使用
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ 避ける - 直接的な色参照
+// no 避ける - 直接的な色参照
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

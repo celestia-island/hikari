@@ -88,7 +88,7 @@ impl GuideStep {
 /// state.steps.push(
 ///     GuideStep::new("1", "First Step")
 ///         .with_description("Learn the basics")
-///         .with_icon("🎯")
+///         .with_icon("target")
 /// );
 /// state.visible = true;
 /// ```
@@ -284,12 +284,12 @@ mod tests {
     fn test_guide_step_builder() {
         let step = GuideStep::new("1", "First")
             .with_description("Description")
-            .with_icon("🎯")
+            .with_icon("target")
             .with_target(".my-element")
             .with_completed(true);
 
         assert_eq!(step.description, "Description");
-        assert_eq!(step.icon, "🎯");
+        assert_eq!(step.icon, "target");
         assert_eq!(step.target_selector, ".my-element");
         assert!(step.completed);
     }

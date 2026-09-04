@@ -243,7 +243,7 @@ fn ThemeToggleButton() -> Element {
 
                 is_dark.set(!is_dark());
             },
-            if is_dark() { "🌙 Dark" } else { "☀️ Light" }
+            if is_dark() { "Dark" } else { " Light" }
         }
     }
 }

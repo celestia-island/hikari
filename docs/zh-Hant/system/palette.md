@@ -232,13 +232,13 @@ let button_classes = ClassesBuilder::new()
 ### 型別安全優勢
 
 ```rust
-// ✅ 型別安全 - 編譯時檢查
+// yes 型別安全 - 編譯時檢查
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(FlexDirection::Row)
     .build();
 
-// ❌ 無法編譯 - 拼寫保護
+// no 無法編譯 - 拼寫保護
 let classes = ClassesBuilder::new()
     .add(Display::Flx)  // 編譯錯誤!
     .build();
@@ -539,45 +539,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. 使用 Enum 實現型別安全
 
 ```rust
-// ✅ 好 - 型別安全
+// yes 好 - 型別安全
 let color = Color::粉红;
 
-// ❌ 避免 - 基於字串
+// no 避免 - 基於字串
 let color = "#FFB3A7";
 ```
 
 ### 2. 利用主題調色板
 
 ```rust
-// ✅ 好 - 使用主題調色板
+// yes 好 - 使用主題調色板
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ 避免 - 硬編碼顏色
+// no 避免 - 硬編碼顏色
 let primary = "#FFB3A7";
 ```
 
 ### 3. 使用工具類
 
 ```rust
-// ✅ 好 - 型別安全的工具類
+// yes 好 - 型別安全的工具類
 let classes = ClassesBuilder::new()
     .add(Display::Flex)
     .add(Gap::Gap4)
     .build();
 
-// ✅ 可接受 - 基於字串（型別安全性較低）
+// yes 可接受 - 基於字串（型別安全性較低）
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. 語義化顏色命名
 
 ```rust
-// ✅ 好 - 語義化使用
+// yes 好 - 語義化使用
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ 避免 - 直接引用顏色
+// no 避免 - 直接引用顏色
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

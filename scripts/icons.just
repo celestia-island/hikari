@@ -37,7 +37,7 @@ assets:
 
 # Generate all icon resources
 all: fetch
-    @echo "✅ All icon resources generated"
+    @echo "All icon resources generated"
 
 # Build icons package with generated resources
 build: fetch
@@ -78,7 +78,7 @@ fmt:
 # Check if icons need to be regenerated
 check:
     @echo "Checking Lucide icons..."
-    @if (!(Test-Path "packages/icons/src/generated/lucide.rs")) { echo "❌ Lucide icons not generated"; exit 1 } else { echo "✅ Lucide icons exist" }
+    @if (!(Test-Path "packages/icons/src/generated/lucide.rs")) { echo "no Lucide icons not generated"; exit 1 } else { echo "Lucide icons exist" }
 
 # List available icons
 list:

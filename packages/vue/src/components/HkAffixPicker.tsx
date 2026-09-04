@@ -137,10 +137,26 @@ export const HkAffixPicker = defineComponent({
     /** Live overlay-scrollbar handle for the open popup; null when the
      *  popup is closed (content not mounted). */
     let scrollbar: OverlayScrollbarHandle | null = null;
+    /** The viewport element `scrollbar` is currently attached to, so a
+     *  remounted list (the empty-state swap) can be told apart from the
+     *  same in-flight list across content-size updates. */
+    let scrollbarViewport: HTMLElement | null = null;
 
     function detachScrollbar() {
       scrollbar?.detach();
       scrollbar = null;
+      scrollbarViewport = null;
+    }
+
+    function attachScrollbar() {
+      detachScrollbar();
+      if (listRef.value && scrollHostRef.value) {
+        scrollbarViewport = listRef.value;
+        scrollbar = attachOverlayScrollbars(listRef.value, {
+          axis: "vertical",
+          host: scrollHostRef.value,
+        });
+      }
     }
 
     // A fresh open starts calm: empty filter.
@@ -155,13 +171,7 @@ export const HkAffixPicker = defineComponent({
         // already detached it).
         void nextTick(() => {
           if (!open.value) return;
-          detachScrollbar();
-          if (listRef.value && scrollHostRef.value) {
-            scrollbar = attachOverlayScrollbars(listRef.value, {
-              axis: "vertical",
-              host: scrollHostRef.value,
-            });
-          }
+          attachScrollbar();
         });
       } else {
         detachScrollbar();
@@ -198,9 +208,26 @@ export const HkAffixPicker = defineComponent({
 
     // Content-size changes from the search filter change the thumb
     // geometry without resizing the viewport — keep it in sync on the
-    // live scrollbar (no-op while the popup is closed).
-    watch(filteredRows, () => scrollbar?.update());
-    watch(query, () => scrollbar?.update());
+    // live scrollbar (no-op while the popup is closed). Post-flush so
+    // the DOM (esp. a remounted list after the empty-state swap) has
+    // landed and the template refs point at the live nodes before we
+    // decide whether to attach, re-attach or update.
+    watch(
+      [filteredRows, query],
+      () => {
+        if (!open.value) return;
+        if (!listRef.value) {
+          detachScrollbar();
+          return;
+        }
+        if (listRef.value !== scrollbarViewport) {
+          attachScrollbar();
+          return;
+        }
+        scrollbar?.update();
+      },
+      { flush: "post" },
+    );
 
     /** Exact label match suppresses the custom row while the user is
      *  simply re-typing an existing entry. */

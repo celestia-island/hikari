@@ -12,7 +12,13 @@ import {
 
 describe("dialCodes catalog", () => {
   it("starts with China and contains the expected shape", () => {
-    expect(DIAL_CODES[0]).toMatchObject({ iso: "cn", dial: "86", en: "China", zh: "中国" });
+    expect(DIAL_CODES[0]).toMatchObject({
+      iso: "cn",
+      dial: "86",
+      en: "China",
+      zh: "中华人民共和国",
+      zhAlias: "中国",
+    });
     for (const entry of DIAL_CODES) {
       expect(entry.iso).toMatch(/^[a-z]{2}$/);
       expect(entry.dial).toMatch(/^\d+$/);

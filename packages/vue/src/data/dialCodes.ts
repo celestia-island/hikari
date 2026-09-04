@@ -19,6 +19,12 @@ export interface DialCodeEntry {
   en: string;
   /** Simplified Chinese country name. */
   zh: string;
+  /** Search-only Chinese alias — never rendered as the display name.
+   *  HkPhoneInput folds it into the popup's keyword haystack so the old
+   *  short form still finds the entry after a formal rename (e.g. the
+   *  PRC row renamed to 中华人民共和国 no longer contains 中国 as a
+   *  substring). */
+  zhAlias?: string;
 }
 
 /** Flag glyph for an ISO 3166-1 alpha-2 code (regional indicators). */
@@ -43,7 +49,7 @@ export function dialCodeName(entry: DialCodeEntry, locale: string): string {
  * prefixes like +1 / +7).
  */
 export const DIAL_CODES: readonly DialCodeEntry[] = [
-  { iso: "cn", dial: "86", en: "China", zh: "中国" },
+  { iso: "cn", dial: "86", en: "China", zh: "中华人民共和国", zhAlias: "中国" },
   { iso: "hk", dial: "852", en: "Hong Kong (China)", zh: "中国香港" },
   { iso: "mo", dial: "853", en: "Macau (China)", zh: "中国澳门" },
   { iso: "tw", dial: "886", en: "Taiwan (China)", zh: "中国台湾" },

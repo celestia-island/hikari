@@ -35,11 +35,27 @@ describe("resolveModalWidth", () => {
     expect(resolveModalWidth("min(90vw, 48rem)")).toBe("min(90vw, 48rem)");
   });
 
+  it("does not inherit Object.prototype members as presets", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // A bare index lookup would resolve "constructor"/"toString" to
+    // inherited functions and early-return them past the warn — the
+    // guard must treat them as unknown values instead.
+    for (const hostile of ["constructor", "toString", "valueOf"]) {
+      expect(resolveModalWidth(hostile)).toBe(hostile);
+    }
+    expect(warn).toHaveBeenCalledTimes(3);
+  });
+
+  it("trims surrounding whitespace before the preset lookup", () => {
+    expect(resolveModalWidth(" sm ")).toBe("32rem");
+    expect(resolveModalWidth(" 560px ")).toBe(" 560px ");
+  });
+
   it("warns once in dev for a value that is neither a preset nor a length", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     // A unique digit-free token per run: the warn-once set is module
     // state, and any digit would classify the value as a length.
-    const stray = `wide-${Math.random().toString(36).slice(2).replace(/\d/g, "")}`;
+    const stray = `wide-${Math.random().toString(36).slice(2).replace(/\d/g, "") || "wide"}`;
     expect(resolveModalWidth(stray)).toBe(stray);
     expect(resolveModalWidth(stray)).toBe(stray);
     expect(warn).toHaveBeenCalledTimes(1);

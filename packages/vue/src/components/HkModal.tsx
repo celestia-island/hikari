@@ -60,6 +60,10 @@ export type ModalWidthPreset = keyof typeof MODAL_WIDTH_PRESETS;
 export type ModalWidth = ModalWidthPreset | (string & {});
 
 const warnedWidths = new Set<string>();
+/** Dev-only warn-once memory cap: a session feeding dynamically generated
+ *  garbage widths must not grow the set forever. Prod never reaches this
+ *  code (DEV is statically false there). */
+const MAX_WARNED_WIDTHS = 50;
 
 /**
  * Resolve the `width` prop to a concrete CSS max-width value: presets map
@@ -69,9 +73,19 @@ const warnedWidths = new Set<string>();
  * would be dropped by the browser and the modal would span the viewport.
  */
 export function resolveModalWidth(width: string): string {
-  const preset = MODAL_WIDTH_PRESETS[width as ModalWidthPreset];
+  // Object.hasOwn guard: a bare index lookup would inherit Object.prototype
+  // members (`width="constructor"` → the Object function), whose truthy
+  // early-return would bypass the dev warn and land garbage in max-width.
+  const preset = Object.hasOwn(MODAL_WIDTH_PRESETS, width.trim())
+    ? MODAL_WIDTH_PRESETS[width.trim() as ModalWidthPreset]
+    : undefined;
   if (preset !== undefined) return preset;
-  if (import.meta.env?.DEV && !/\d/.test(width) && !warnedWidths.has(width)) {
+  if (
+    import.meta.env?.DEV &&
+    !/\d/.test(width) &&
+    warnedWidths.size < MAX_WARNED_WIDTHS &&
+    !warnedWidths.has(width)
+  ) {
     warnedWidths.add(width);
     console.warn(
       `[HkModal] width "${width}" is neither a named preset (${Object.keys(MODAL_WIDTH_PRESETS).join("/")}) nor a CSS length — the browser would drop it and the modal would span the viewport.`,

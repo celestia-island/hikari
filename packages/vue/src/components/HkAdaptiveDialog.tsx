@@ -38,7 +38,7 @@ import { useBreakpoint } from "../runtime/useBreakpoint";
 import "./HkAdaptiveDialog.scss";
 import HButton from "./HkButton";
 import HDrawer from "./HkDrawer";
-import HModal, { type ModalAction } from "./HkModal";
+import HModal, { type ModalAction, type ModalWidth } from "./HkModal";
 
 export default defineComponent({
   name: "HkAdaptiveDialog",
@@ -47,7 +47,7 @@ export default defineComponent({
     title: { type: String, default: undefined },
     closable: { type: Boolean, default: true },
     /** Desktop modal width (HkModal `width`). */
-    width: { type: String, default: "32rem" },
+    width: { type: String as PropType<ModalWidth>, default: "32rem" },
     /** Mobile drawer height (HkDrawer `size`). HkDrawer's bottom-side CSS
      *  clamps panels at maxHeight 70vh, so the default equals the cap;
      *  pass `panelClass` with a custom max-height for taller sheets. */

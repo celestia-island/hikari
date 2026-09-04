@@ -25,7 +25,7 @@ Hikari는 Rust 생태계를 위해 설계된 현대적인 UI 프레임워크로,
 - **레이아웃 컴포넌트**: Layout, Header, Aside, Content, Footer
 - **추가 컴포넌트**: Collapsible, DragLayer, ZoomControls
 
-### ✨ 강력한 애니메이션 시스템
+### 강력한 애니메이션 시스템
 - **선언적 애니메이션**: CSS 스타일의 유창한 API
 - **동적 값**: 런타임 계산 애니메이션 값
 - **이징 함수**: 30+ 이징 함수
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
-    rsx! {
-        ThemeProvider { initial_palette: "hikari" } {
-            div { class: "hi-flex hi-flex-col hi-gap-4" {
-                Button { label: "클릭하세요" }
-                Button { label: "기본 버튼", variant: "primary" }
-                Button { label: "보조 버튼", variant: "secondary" }
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "hikari" } {
+ div { class: "hi-flex hi-flex-col hi-gap-4" {
+ Button { label: "클릭하세요" }
+ Button { label: "기본 버튼", variant: "primary" }
+ Button { label: "보조 버튼", variant: "secondary" }
+ }
+ }
+ }
 }
 ```
 
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
-  root["hikari/"]
-  root --> packages["packages/"]
-  root --> examples["examples/"]
-  packages --> palette["hikari-palette/"]
-  packages --> theme["hikari-theme/"]
-  packages --> animation["hikari-animation/"]
-  packages --> icons["hikari-icons/"]
-  packages --> components["hikari-components/"]
-  packages --> extra["hikari-extra-components/"]
-  examples --> website["website/"]
-  examples --> tabledemo["table-demo/"]
-  examples --> treedemo["tree-demo/"]
-  examples --> nodegraph["node-graph-demo/"]
+ root["hikari/"]
+ root --> packages["packages/"]
+ root --> examples["examples/"]
+ packages --> palette["hikari-palette/"]
+ packages --> theme["hikari-theme/"]
+ packages --> animation["hikari-animation/"]
+ packages --> icons["hikari-icons/"]
+ packages --> components["hikari-components/"]
+ packages --> extra["hikari-extra-components/"]
+ examples --> website["website/"]
+ examples --> tabledemo["table-demo/"]
+ examples --> treedemo["tree-demo/"]
+ examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## 문서
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
-    let mut theme = use_signal(|| "hikari".to_string());
+ let mut theme = use_signal(|| "hikari".to_string());
 
-    rsx! {
-        ThemeProvider { initial_palette: "{theme}" } {
-            button {
-                onclick: move |_| {
-                    theme.set(if *theme() == "hikari" {
-                        "tairitsu".to_string()
-                    } else {
-                        "hikari".to_string()
-                    });
-                },
-                "테마 전환"
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "{theme}" } {
+ button {
+ onclick: move |_| {
+ theme.set(if *theme() == "hikari" {
+ "tairitsu".to_string()
+ } else {
+ "hikari".to_string()
+ });
+ },
+ "테마 전환"
+ }
+ }
+ }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // 정적 애니메이션
 AnimationBuilder::new(&elements)
-    .add_style("button", CssProperty::Opacity, "0.8")
-    .apply_with_transition("300ms", "ease-in-out");
+ .add_style("button", CssProperty::Opacity, "0.8")
+ .apply_with_transition("300ms", "ease-in-out");
 
 // 동적 애니메이션 (마우스 추적)
 AnimationBuilder::new(&elements)
-    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
-        let x = ctx.mouse_x();
-        let y = ctx.mouse_y();
-        format!("translate({}px, {}px)", x, y)
-    })
-    .apply_with_transition("150ms", "ease-out");
+ .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+ let x = ctx.mouse_x();
+ let y = ctx.mouse_y();
+ format!("translate({}px, {}px)", x, y)
+ })
+ .apply_with_transition("150ms", "ease-out");
 ```
 
 ## 기여

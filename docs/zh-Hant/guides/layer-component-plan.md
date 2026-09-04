@@ -28,46 +28,46 @@ Hikari 採用三層次組件體系，從基礎到複雜逐步構建。Layer 1 �
 
 ```mermaid
 graph TB
-    subgraph "Layer 3: 生產級組件"
-        L3A[影片/音訊播放器]
-        L3B[富文本編輯器]
-        L3C[代碼高亮設施]
-        L3D[時間軸]
-        L3E[用戶引導組件]
-    end
+ subgraph "Layer 3: 生產級組件"
+ L3A[影片/音訊播放器]
+ L3B[富文本編輯器]
+ L3C[代碼高亮設施]
+ L3D[時間軸]
+ L3E[用戶引導組件]
+ end
 
-    subgraph "Layer 2: 複合組件"
-        L2A[Menu]
-        L2B[Tabs]
-        L2C[Table]
-        L2D[Tree]
-        L2E[Form]
-        L2F[Dropdown]
-        L2G[Modal]
-    end
+ subgraph "Layer 2: 複合組件"
+ L2A[Menu]
+ L2B[Tabs]
+ L2C[Table]
+ L2D[Tree]
+ L2E[Form]
+ L2F[Dropdown]
+ L2G[Modal]
+ end
 
-    subgraph "Layer 1: 基礎組件"
-        L1A[Button]
-        L1B[Input]
-        L1C[Card]
-        L1D[Badge]
-        L1E[Alert]
-        L1F[Toast]
-        L1G[Tooltip]
-    end
+ subgraph "Layer 1: 基礎組件"
+ L1A[Button]
+ L1B[Input]
+ L1C[Card]
+ L1D[Badge]
+ L1E[Alert]
+ L1F[Toast]
+ L1G[Tooltip]
+ end
 
-    L3A --> L2E
-    L3A --> L2G
-    L3B --> L2E
-    L3B --> L2G
+ L3A --> L2E
+ L3A --> L2G
+ L3B --> L2E
+ L3B --> L2G
 
-    L2A --> L1A
-    L2B --> L1A
-    L2C --> L1A
-    L2D --> L1A
-    L2E --> L1A
-    L2F --> L1A
-    L2G --> L1A
+ L2A --> L1A
+ L2B --> L1A
+ L2C --> L1A
+ L2D --> L1A
+ L2E --> L1A
+ L2F --> L1A
+ L2G --> L1A
 ```
 
 ### 職責劃分
@@ -122,23 +122,23 @@ graph TB
 
 | 組件 | 路徑 | 狀態 |
 |------|------|------|
-| Button | `packages/components/src/basic/button.rs` | ✅ 已完成 |
-| Input | `packages/components/src/basic/input.rs` | ✅ 已完成 |
-| Card | `packages/components/src/basic/card.rs` | ✅ 已完成 |
-| Badge | `packages/components/src/basic/badge.rs` | ✅ 已完成 |
-| Alert | `packages/components/src/feedback/alert.rs` | ✅ 已完成 |
-| Toast | `packages/components/src/feedback/toast.rs` | ✅ 已完成 |
-| Tooltip | `packages/components/src/feedback/tooltip.rs` | ✅ 已完成 |
-| Select | `packages/components/src/basic/select.rs` | ✅ 已完成 |
-| Checkbox | `packages/components/src/basic/checkbox.rs` | ✅ 已完成 |
-| Radio | `packages/components/src/basic/radio_group.rs` | ✅ 已完成 |
-| Switch | `packages/components/src/basic/switch.rs` | ✅ 已完成 |
-| Avatar | `packages/components/src/basic/avatar.rs` | ✅ 已完成 |
-| Image | `packages/components/src/basic/image.rs` | ✅ 已完成 |
-| Slider | `packages/components/src/basic/slider.rs` | ✅ 已完成 |
-| Progress | `packages/components/src/feedback/progress.rs` | ✅ 已完成 |
-| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | ✅ 已完成 |
-| FormField | `packages/components/src/basic/form_field.rs` | ✅ 已完成 |
+| Button | `packages/components/src/basic/button.rs` | yes 已完成 |
+| Input | `packages/components/src/basic/input.rs` | yes 已完成 |
+| Card | `packages/components/src/basic/card.rs` | yes 已完成 |
+| Badge | `packages/components/src/basic/badge.rs` | yes 已完成 |
+| Alert | `packages/components/src/feedback/alert.rs` | yes 已完成 |
+| Toast | `packages/components/src/feedback/toast.rs` | yes 已完成 |
+| Tooltip | `packages/components/src/feedback/tooltip.rs` | yes 已完成 |
+| Select | `packages/components/src/basic/select.rs` | yes 已完成 |
+| Checkbox | `packages/components/src/basic/checkbox.rs` | yes 已完成 |
+| Radio | `packages/components/src/basic/radio_group.rs` | yes 已完成 |
+| Switch | `packages/components/src/basic/switch.rs` | yes 已完成 |
+| Avatar | `packages/components/src/basic/avatar.rs` | yes 已完成 |
+| Image | `packages/components/src/basic/image.rs` | yes 已完成 |
+| Slider | `packages/components/src/basic/slider.rs` | yes 已完成 |
+| Progress | `packages/components/src/feedback/progress.rs` | yes 已完成 |
+| Spin (Spinner) | `packages/components/src/feedback/spin.rs` | yes 已完成 |
+| FormField | `packages/components/src/basic/form_field.rs` | yes 已完成 |
 
 ### 待開發組件
 
@@ -152,17 +152,17 @@ graph TB
 ```rust
 /// Layer 1 基礎組件介面規範
 pub trait Layer1Component {
-    /// Props 結構（必須 derive Clone, PartialEq）
-    type Props;
+ /// Props 結構（必須 derive Clone, PartialEq）
+ type Props;
 
-    /// 渲染組件
-    fn render(props: Self::Props) -> Element;
+ /// 渲染組件
+ fn render(props: Self::Props) -> Element;
 
-    /// 註冊樣式
-    fn register_styles(registry: &mut StyleRegistry);
+ /// 註冊樣式
+ fn register_styles(registry: &mut StyleRegistry);
 
-    /// 預設 Props
-    fn default_props() -> Self::Props;
+ /// 預設 Props
+ fn default_props() -> Self::Props;
 }
 ```
 
@@ -172,17 +172,17 @@ pub trait Layer1Component {
 
 | 組件 | 路徑 | 依賴的 Layer 1 | 狀態 |
 |------|------|---------------|------|
-| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | ✅ 已完成 |
-| Tabs | `packages/components/src/navigation/tabs.rs` | Button | ✅ 已完成 |
-| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | ✅ 已完成 |
-| Table | `packages/components/src/data/table.rs` | Button, Card, Input | ✅ 已完成 |
-| Tree | `packages/components/src/data/tree.rs` | Button | ✅ 已完成 |
-| Pagination | `packages/components/src/data/pagination.rs` | Button | ✅ 已完成 |
-| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | ✅ 已完成 |
-| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | ✅ 已完成 |
-| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | ✅ 已完成 |
-| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | ✅ 已完成 |
-| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | ✅ 已完成 |
+| Menu | `packages/components/src/navigation/menu.rs` | Button, Card | yes 已完成 |
+| Tabs | `packages/components/src/navigation/tabs.rs` | Button | yes 已完成 |
+| Breadcrumb | `packages/components/src/navigation/breadcrumb.rs` | Button | yes 已完成 |
+| Table | `packages/components/src/data/table.rs` | Button, Card, Input | yes 已完成 |
+| Tree | `packages/components/src/data/tree.rs` | Button | yes 已完成 |
+| Pagination | `packages/components/src/data/pagination.rs` | Button | yes 已完成 |
+| Dropdown | `packages/components/src/feedback/dropdown.rs` | Button, Menu | yes 已完成 |
+| Modal | `packages/components/src/feedback/modal.rs` | Card, Button | yes 已完成 |
+| Drawer | `packages/components/src/feedback/drawer.rs` | Card, Button | yes 已完成 |
+| Steps | `packages/components/src/navigation/steps.rs` | Button, Badge | yes 已完成 |
+| Form | `packages/components/src/utils/form.rs` | Input, Select, Checkbox, Radio | yes 已完成 |
 
 ### 待開發的複合組件
 
@@ -201,23 +201,23 @@ pub trait Layer1Component {
 ```rust
 /// Layer 2 複合組件介面規範
 pub trait Layer2Component {
-    /// Props 結構（必須 derive Clone, PartialEq）
-    type Props;
+ /// Props 結構（必須 derive Clone, PartialEq）
+ type Props;
 
-    /// Context 類型（可選）
-    type Context: Clone + 'static;
+ /// Context 類型（可選）
+ type Context: Clone + 'static;
 
-    /// 渲染組件
-    fn render(props: Self::Props) -> Element;
+ /// 渲染組件
+ fn render(props: Self::Props) -> Element;
 
-    /// 提供的 Context
-    fn provide_context(&self) -> Option<Self::Context>;
+ /// 提供的 Context
+ fn provide_context(&self) -> Option<Self::Context>;
 
-    /// 註冊樣式
-    fn register_styles(registry: &mut StyleRegistry);
+ /// 註冊樣式
+ fn register_styles(registry: &mut StyleRegistry);
 
-    /// 預設 Props
-    fn default_props() -> Self::Props;
+ /// 預設 Props
+ fn default_props() -> Self::Props;
 }
 ```
 
@@ -228,28 +228,28 @@ pub trait Layer2Component {
 /// 依賴：Input, Select, Checkbox, Radio（Layer 1）
 #[component]
 pub fn Form(
-    children: Element,
-    #[props(default = false)] disabled: bool,
-    #[props(default = FormValidationMode::OnChange)]
-    validation_mode: FormValidationMode,
-    on_submit: EventHandler<FormSubmitEvent>,
+ children: Element,
+ #[props(default = false)] disabled: bool,
+ #[props(default = FormValidationMode::OnChange)]
+ validation_mode: FormValidationMode,
+ on_submit: EventHandler<FormSubmitEvent>,
 ) -> Element {
-    let form_context = FormContext {
-        disabled,
-        validation_mode,
-    };
+ let form_context = FormContext {
+ disabled,
+ validation_mode,
+ };
 
-    rsx! {
-        form {
-            onsubmit: move |e| {
-                e.prevent_default();
-                on_submit.call(FormSubmitEvent::new());
-            },
-            ContextProvider { value: form_context,
-                {children}
-            }
-        }
-    }
+ rsx! {
+ form {
+ onsubmit: move |e| {
+ e.prevent_default();
+ on_submit.call(FormSubmitEvent::new());
+ },
+ ContextProvider { value: form_context,
+ {children}
+ }
+ }
+ }
 }
 ```
 
@@ -273,33 +273,33 @@ pub fn Form(
 ```rust
 /// Layer 3 生產級組件介面規範
 pub trait Layer3Component {
-    /// Props 結構（必須 derive Clone, PartialEq）
-    type Props;
+ /// Props 結構（必須 derive Clone, PartialEq）
+ type Props;
 
-    /// State 結構（必須 derive Clone）
-    type State: Clone + 'static;
+ /// State 結構（必須 derive Clone）
+ type State: Clone + 'static;
 
-    /// 初始化 State
-    fn init_state(props: &Self::Props) -> Self::State;
+ /// 初始化 State
+ fn init_state(props: &Self::Props) -> Self::State;
 
-    /// 渲染組件
-    fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
+ /// 渲染組件
+ fn render(props: Self::Props, state: &Signal<Self::State>) -> Element;
 
-    /// 生命週期：組件掛載
-    fn on_mount(state: &Signal<Self::State>) {
-        // 預設空實現
-    }
+ /// 生命週期：組件掛載
+ fn on_mount(state: &Signal<Self::State>) {
+ // 預設空實現
+ }
 
-    /// 生命週期：組件卸載
-    fn on_unmount(state: &Signal<Self::State>) {
-        // 預設空實現
-    }
+ /// 生命週期：組件卸載
+ fn on_unmount(state: &Signal<Self::State>) {
+ // 預設空實現
+ }
 
-    /// 註冊樣式
-    fn register_styles(registry: &mut StyleRegistry);
+ /// 註冊樣式
+ fn register_styles(registry: &mut StyleRegistry);
 
-    /// 預設 Props
-    fn default_props() -> Self::Props;
+ /// 預設 Props
+ fn default_props() -> Self::Props;
 }
 ```
 
@@ -310,50 +310,50 @@ pub trait Layer3Component {
 /// 依賴：Card, Button, Form, Menu（Layer 2）
 #[component]
 pub fn VideoPlayer(
-    src: String,
-    #[props(default = false)] autoplay: bool,
-    #[props(default = false)] muted: bool,
-    #[props(default = 0)] volume: u8,
-    #[props(default = 1.0)] playback_rate: f64,
+ src: String,
+ #[props(default = false)] autoplay: bool,
+ #[props(default = false)] muted: bool,
+ #[props(default = 0)] volume: u8,
+ #[props(default = 1.0)] playback_rate: f64,
 ) -> Element {
-    let is_playing = use_signal(|| autoplay);
-    let current_time = use_signal(|| 0.0);
-    let duration = use_signal(|| 0.0);
-    let show_controls = use_signal(|| true);
+ let is_playing = use_signal(|| autoplay);
+ let current_time = use_signal(|| 0.0);
+ let duration = use_signal(|| 0.0);
+ let show_controls = use_signal(|| true);
 
-    // 播放/暫停
-    let toggle_play = move |_| {
-        is_playing.toggle();
-    };
+ // 播放/暫停
+ let toggle_play = move |_| {
+ is_playing.toggle();
+ };
 
-    // 音量控制
-    let set_volume = move |new_volume| {
-        // 更新音量
-    };
+ // 音量控制
+ let set_volume = move |new_volume| {
+ // 更新音量
+ };
 
-    rsx! {
-        Card {
-            class: "hi-video-player",
-            div { class: "hi-video-container",
-                video {
-                    src: "{src}",
-                    autoplay: autoplay,
-                    muted: muted,
-                    // 事件監聽器
-                }
+ rsx! {
+ Card {
+ class: "hi-video-player",
+ div { class: "hi-video-container",
+ video {
+ src: "{src}",
+ autoplay: autoplay,
+ muted: muted,
+ // 事件監聽器
+ }
 
-                // 控制列
-                if show_controls() {
-                    div { class: "hi-video-controls",
-                        Button { icon: MdiIcon::Play, on_click: toggle_play }
-                        Button { icon: MdiIcon::VolumeHigh }
-                        // 進度條
-                        // 時間顯示
-                    }
-                }
-            }
-        }
-    }
+ // 控制列
+ if show_controls() {
+ div { class: "hi-video-controls",
+ Button { icon: MdiIcon::Play, on_click: toggle_play }
+ Button { icon: MdiIcon::VolumeHigh }
+ // 進度條
+ // 時間顯示
+ }
+ }
+ }
+ }
+ }
 }
 ```
 
@@ -364,50 +364,50 @@ pub fn VideoPlayer(
 /// 依賴：Form, Dropdown, Modal, Toolbar（Layer 2）
 #[component]
 pub fn RichTextEditor(
-    #[props(default = "")] initial_content: String,
-    #[props(default = EditorMode::Wysiwyg)]
-    mode: EditorMode,
-    on_change: EventHandler<String>,
+ #[props(default = "")] initial_content: String,
+ #[props(default = EditorMode::Wysiwyg)]
+ mode: EditorMode,
+ on_change: EventHandler<String>,
 ) -> Element {
-    let content = use_signal(|| initial_content);
-    let is_bold = use_signal(|| false);
-    let is_italic = use_signal(|| false);
+ let content = use_signal(|| initial_content);
+ let is_bold = use_signal(|| false);
+ let is_italic = use_signal(|| false);
 
-    // 格式化文字
-    let toggle_bold = move |_| {
-        is_bold.toggle();
-        // 套用粗體格式
-    };
+ // 格式化文字
+ let toggle_bold = move |_| {
+ is_bold.toggle();
+ // 套用粗體格式
+ };
 
-    rsx! {
-        Card { class: "hi-rich-text-editor",
-            // 工具列
-            div { class: "hi-editor-toolbar",
-                Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
-                Button { icon: MdiIcon::FormatItalic }
-                Button { icon: MdiIcon::FormatUnderline }
-                Dropdown {
-                    trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
-                    // 標題選項
-                }
-            }
+ rsx! {
+ Card { class: "hi-rich-text-editor",
+ // 工具列
+ div { class: "hi-editor-toolbar",
+ Button { icon: MdiIcon::FormatBold, on_click: toggle_bold }
+ Button { icon: MdiIcon::FormatItalic }
+ Button { icon: MdiIcon::FormatUnderline }
+ Dropdown {
+ trigger: rsx! { Button { icon: MdiIcon::FormatHeader1 } },
+ // 標題選項
+ }
+ }
 
-            // 編輯區域
-            div { class: "hi-editor-content",
-                contenteditable: "true",
-                dangerous_inner_html: "{content}",
-                // 輸入事件
-            }
+ // 編輯區域
+ div { class: "hi-editor-content",
+ contenteditable: "true",
+ dangerous_inner_html: "{content}",
+ // 輸入事件
+ }
 
-            // Markdown 模式切換
-            if mode == EditorMode::Markdown {
-                div { class: "hi-editor-mode-switch",
-                    Button { "WYSIWYG" }
-                    Button { "Markdown" }
-                }
-            }
-        }
-    }
+ // Markdown 模式切換
+ if mode == EditorMode::Markdown {
+ div { class: "hi-editor-mode-switch",
+ Button { "WYSIWYG" }
+ Button { "Markdown" }
+ }
+ }
+ }
+ }
 }
 ```
 
@@ -467,62 +467,62 @@ pub fn RichTextEditor(
 
 ```mermaid
 graph TB
-    subgraph "Layer 3"
-        V[Video Player]
-        R[Rich Text Editor]
-        C[Code Highlighter]
-        T[Timeline]
-        G[User Guide]
-    end
+ subgraph "Layer 3"
+ V[Video Player]
+ R[Rich Text Editor]
+ C[Code Highlighter]
+ T[Timeline]
+ G[User Guide]
+ end
 
-    subgraph "Layer 2"
-        F[Form]
-        D[Dropdown]
-        M[Modal]
-        TB[Toolbar]
-        TB2[Tabs]
-    end
+ subgraph "Layer 2"
+ F[Form]
+ D[Dropdown]
+ M[Modal]
+ TB[Toolbar]
+ TB2[Tabs]
+ end
 
-    subgraph "Layer 1"
-        B[Button]
-        I[Input]
-        C2[Card]
-        S[Select]
-        CB[Checkbox]
-        R2[Radio]
-        SW[Switch]
-        P[Progress]
-    end
+ subgraph "Layer 1"
+ B[Button]
+ I[Input]
+ C2[Card]
+ S[Select]
+ CB[Checkbox]
+ R2[Radio]
+ SW[Switch]
+ P[Progress]
+ end
 
-    V --> F
-    V --> M
-    V --> B
+ V --> F
+ V --> M
+ V --> B
 
-    R --> F
-    R --> D
-    R --> TB
-    R --> M
+ R --> F
+ R --> D
+ R --> TB
+ R --> M
 
-    C --> TB2
-    C --> F
+ C --> TB2
+ C --> F
 
-    T --> C2
-    T --> B
+ T --> C2
+ T --> B
 
-    G --> M
-    G --> B
+ G --> M
+ G --> B
 
-    F --> I
-    F --> S
-    F --> CB
-    F --> R2
-    F --> SW
+ F --> I
+ F --> S
+ F --> CB
+ F --> R2
+ F --> SW
 
-    D --> M
-    D --> B
+ D --> M
+ D --> B
 
-    M --> C2
-    M --> B
+ M --> C2
+ M --> B
 ```
 
 ## 技術說明
@@ -534,17 +534,17 @@ Hikari 使用 Material Design Icons (MDI) 而非 Lucide Icons。
 **原因**：
 - MDI 提供更豐富的圖標集（7000+ 圖標）
 - 與 Material Design 規範一致
-- 更適合 +  設計風格
+- 更適合 + 設計風格
 
 **使用方式**：
 ```rust
 use _icons::{Icon, MdiIcon};
 
 rsx! {
-    Icon {
-        icon: MdiIcon::Search,
-        size: 24,
-    }
+ Icon {
+ icon: MdiIcon::Search,
+ size: 24,
+ }
 }
 ```
 
@@ -556,13 +556,13 @@ rsx! {
 ```rust
 #[component]
 pub fn App() -> Element {
-    rsx! {
-        ThemeProvider { initial_palette: "hikari".to_string(),
-            PortalProvider {
-                Router::<Route> {}
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "hikari".to_string(),
+ PortalProvider {
+ Router::<Route> {}
+ }
+ }
+ }
 }
 ```
 
@@ -570,14 +570,14 @@ pub fn App() -> Element {
 ```rust
 #[derive(Clone, Debug, PartialEq, Routable)]
 pub enum Route {
-    #[route("/")]
-    Home {},
+ #[route("/")]
+ Home {},
 
-    #[route("/components/layer1/basic")]
-    Layer1Basic {},
+ #[route("/components/layer1/basic")]
+ Layer1Basic {},
 
-    #[route("/demos/layer1/form")]
-    FormDemo {},
+ #[route("/demos/layer1/form")]
+ FormDemo {},
 }
 ```
 

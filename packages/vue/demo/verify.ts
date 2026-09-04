@@ -179,7 +179,7 @@ async function main() {
   // HkTabs
   results.push(await renderComponent("HkTabs", HkTabs,
     { modelValue: "tab1", tabs: [{ key: "tab1", label: "Tab 1" }, { key: "tab2", label: "Tab 2" }] },
-    { "icon-tab1": () => "🔍", tab1: () => "Content 1" }));
+    { "icon-tab1": () => "", tab1: () => "Content 1" }));
 
   // HkTable
   results.push(await renderComponent("HkTable", HkTable,

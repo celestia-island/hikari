@@ -2,7 +2,7 @@
 
 > Un framework UI moderno para Rust construido sobre Tairitsu + Grass + Axum
 >
-> **Estilo de Diseño**: Diseño plano de  + Estética sci-fi  + Colores tradicionales chinos
+> **Estilo de Diseño**: Diseño plano de + Estética sci-fi + Colores tradicionales chinos
 >
 > **Origen del Nombre**: "Hikari" (Luz) del juego de ritmo Arcaea
 
@@ -25,7 +25,7 @@ Hikari es un framework UI moderno diseñado para el ecosistema Rust, que combina
 - **Componentes de Diseño**: Layout, Header, Aside, Content, Footer
 - **Componentes Extra**: Collapsible, DragLayer, ZoomControls
 
-### ✨ Potente Sistema de Animación
+### Potente Sistema de Animación
 - **Animaciones Declarativas**: API fluida similar a CSS
 - **Valores Dinámicos**: Valores de animación calculados en tiempo de ejecución
 - **Funciones de Easing**: Más de 30 funciones de easing
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
-    rsx! {
-        ThemeProvider { initial_palette: "hikari" } {
-            div { class: "hi-flex hi-flex-col hi-gap-4" {
-                Button { label: "Haz Clic" }
-                Button { label: "Botón Primario", variant: "primary" }
-                Button { label: "Botón Secundario", variant: "secondary" }
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "hikari" } {
+ div { class: "hi-flex hi-flex-col hi-gap-4" {
+ Button { label: "Haz Clic" }
+ Button { label: "Botón Primario", variant: "primary" }
+ Button { label: "Botón Secundario", variant: "secondary" }
+ }
+ }
+ }
 }
 ```
 
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
-  root["hikari/"]
-  root --> packages["packages/"]
-  root --> examples["examples/"]
-  packages --> palette["hikari-palette/"]
-  packages --> theme["hikari-theme/"]
-  packages --> animation["hikari-animation/"]
-  packages --> icons["hikari-icons/"]
-  packages --> components["hikari-components/"]
-  packages --> extra["hikari-extra-components/"]
-  examples --> website["website/"]
-  examples --> tabledemo["table-demo/"]
-  examples --> treedemo["tree-demo/"]
-  examples --> nodegraph["node-graph-demo/"]
+ root["hikari/"]
+ root --> packages["packages/"]
+ root --> examples["examples/"]
+ packages --> palette["hikari-palette/"]
+ packages --> theme["hikari-theme/"]
+ packages --> animation["hikari-animation/"]
+ packages --> icons["hikari-icons/"]
+ packages --> components["hikari-components/"]
+ packages --> extra["hikari-extra-components/"]
+ examples --> website["website/"]
+ examples --> tabledemo["table-demo/"]
+ examples --> treedemo["tree-demo/"]
+ examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## Documentación
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
-    let mut theme = use_signal(|| "hikari".to_string());
+ let mut theme = use_signal(|| "hikari".to_string());
 
-    rsx! {
-        ThemeProvider { initial_palette: "{theme}" } {
-            button {
-                onclick: move |_| {
-                    theme.set(if *theme() == "hikari" {
-                        "tairitsu".to_string()
-                    } else {
-                        "hikari".to_string()
-                    });
-                },
-                "Cambiar Tema"
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "{theme}" } {
+ button {
+ onclick: move |_| {
+ theme.set(if *theme() == "hikari" {
+ "tairitsu".to_string()
+ } else {
+ "hikari".to_string()
+ });
+ },
+ "Cambiar Tema"
+ }
+ }
+ }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // Animación estática
 AnimationBuilder::new(&elements)
-    .add_style("button", CssProperty::Opacity, "0.8")
-    .apply_with_transition("300ms", "ease-in-out");
+ .add_style("button", CssProperty::Opacity, "0.8")
+ .apply_with_transition("300ms", "ease-in-out");
 
 // Animación dinámica (seguimiento del ratón)
 AnimationBuilder::new(&elements)
-    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
-        let x = ctx.mouse_x();
-        let y = ctx.mouse_y();
-        format!("translate({}px, {}px)", x, y)
-    })
-    .apply_with_transition("150ms", "ease-out");
+ .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+ let x = ctx.mouse_x();
+ let y = ctx.mouse_y();
+ format!("translate({}px, {}px)", x, y)
+ })
+ .apply_with_transition("150ms", "ease-out");
 ```
 
 ## Contribuir

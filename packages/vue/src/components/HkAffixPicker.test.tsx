@@ -3,11 +3,19 @@ import { createApp, h, nextTick } from "vue";
 
 import HkAffixPicker, { type HkAffixOption } from "./HkAffixPicker";
 
+/** Regional-indicator flag pair for an ISO 3166-1 alpha-2 code, built
+ * from code points (same derivation as data/dialCodes flagEmoji) so the
+ * fixture source itself carries no literal emoji. */
+const flagOf = (iso: string): string =>
+  String.fromCodePoint(
+    ...Array.from(iso.toUpperCase(), (c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+
 const OPTIONS: HkAffixOption[] = [
-  { key: "cn", label: "China", meta: "+86", flag: "🇨🇳", keywords: "zhongguo 中国 0086" },
-  { key: "cn-main", label: "中华人民共和国", meta: "+86", flag: "🇨🇳" },
-  { key: "jp", label: "Japan", meta: "+81", flag: "🇯🇵" },
-  { key: "us", label: "United States", meta: "+1", flag: "🇺🇸" },
+  { key: "cn", label: "China", meta: "+86", flag: flagOf("cn"), keywords: "zhongguo 中国 0086" },
+  { key: "cn-main", label: "中华人民共和国", meta: "+86", flag: flagOf("cn") },
+  { key: "jp", label: "Japan", meta: "+81", flag: flagOf("jp") },
+  { key: "us", label: "United States", meta: "+1", flag: flagOf("us") },
 ];
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -187,7 +195,7 @@ describe("HkAffixPicker", () => {
     const labels = rows().map((r) => r.textContent);
     // Both the China row (keyword substring match) and the renamed
     // cn-main row (fuzzy subsequence) surface.
-    expect(labels).toContain("🇨🇳China+86");
+    expect(labels).toContain(`${flagOf("cn")}China+86`);
     expect(labels.some((l) => l.includes("中华人民共和国"))).toBe(true);
   });
 

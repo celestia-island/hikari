@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 anyhow::bail!("All pages tests failed with {} checks", total_failed);
             } else {
-                info!("\n✅ All pages quality checks passed!");
+                info!("\nAll pages quality checks passed!");
             }
         }
         Err(e) => {

@@ -2,7 +2,7 @@
 
 > 基於 Tairitsu + Grass + Axum 的現代化 Rust UI 框架
 >
-> **設計風格**:  平面設計 +  科幻感 + 中國傳統色
+> **設計風格**: 平面設計 + 科幻感 + 中國傳統色
 >
 > **名稱來源**: "Hikari" (光) 來自音樂遊戲 Arcaea
 
@@ -25,7 +25,7 @@ Hikari 是一個為 Rust 生態系統設計的現代化 UI 框架，結合了傳
 - **佈局元件**: Layout、Header、Aside、Content、Footer
 - **進階元件**: Collapsible、DragLayer、ZoomControls
 
-### ✨ 強大的動畫系統
+### 強大的動畫系統
 - **宣告式動畫**: 類似 CSS 的流暢 API
 - **動態值**: 執行時期計算的動畫值
 - **緩動函數**: 30+ 種緩動函數
@@ -59,15 +59,15 @@ use hikari_theme::ThemeProvider;
 
 #[component]
 fn App() -> Element {
-    rsx! {
-        ThemeProvider { initial_palette: "hikari" } {
-            div { class: "hi-flex hi-flex-col hi-gap-4" {
-                Button { label: "點擊我" }
-                Button { label: "主要按鈕", variant: "primary" }
-                Button { label: "次要按鈕", variant: "secondary" }
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "hikari" } {
+ div { class: "hi-flex hi-flex-col hi-gap-4" {
+ Button { label: "點擊我" }
+ Button { label: "主要按鈕", variant: "primary" }
+ Button { label: "次要按鈕", variant: "secondary" }
+ }
+ }
+ }
 }
 ```
 
@@ -86,12 +86,12 @@ trunk build --release
 
 ## 設計理念
 
-###  平面設計
+### 平面設計
 - 清晰的線條和資訊層級
 - 高對比度，確保可讀性
 - 簡約而不失精致
 
-###  科幻感
+### 科幻感
 - 微妙的發光效果
 - 動態指示（呼吸燈、脈衝動畫）
 - 精細的邊框和幾何圖案
@@ -105,19 +105,19 @@ trunk build --release
 
 ```mermaid
 graph LR
-  root["hikari/"]
-  root --> packages["packages/"]
-  root --> examples["examples/"]
-  packages --> palette["hikari-palette/"]
-  packages --> theme["hikari-theme/"]
-  packages --> animation["hikari-animation/"]
-  packages --> icons["hikari-icons/"]
-  packages --> components["hikari-components/"]
-  packages --> extra["hikari-extra-components/"]
-  examples --> website["website/"]
-  examples --> tabledemo["table-demo/"]
-  examples --> treedemo["tree-demo/"]
-  examples --> nodegraph["node-graph-demo/"]
+ root["hikari/"]
+ root --> packages["packages/"]
+ root --> examples["examples/"]
+ packages --> palette["hikari-palette/"]
+ packages --> theme["hikari-theme/"]
+ packages --> animation["hikari-animation/"]
+ packages --> icons["hikari-icons/"]
+ packages --> components["hikari-components/"]
+ packages --> extra["hikari-extra-components/"]
+ examples --> website["website/"]
+ examples --> tabledemo["table-demo/"]
+ examples --> treedemo["tree-demo/"]
+ examples --> nodegraph["node-graph-demo/"]
 ```
 
 ## 文件
@@ -134,22 +134,22 @@ graph LR
 use hikari_theme::ThemeProvider;
 
 fn App() -> Element {
-    let mut theme = use_signal(|| "hikari".to_string());
+ let mut theme = use_signal(|| "hikari".to_string());
 
-    rsx! {
-        ThemeProvider { initial_palette: "{theme}" } {
-            button {
-                onclick: move |_| {
-                    theme.set(if *theme() == "hikari" {
-                        "tairitsu".to_string()
-                    } else {
-                        "hikari".to_string()
-                    });
-                },
-                "切換主題"
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "{theme}" } {
+ button {
+ onclick: move |_| {
+ theme.set(if *theme() == "hikari" {
+ "tairitsu".to_string()
+ } else {
+ "hikari".to_string()
+ });
+ },
+ "切換主題"
+ }
+ }
+ }
 }
 ```
 
@@ -161,17 +161,17 @@ use hikari_animation::style::CssProperty;
 
 // 靜態動畫
 AnimationBuilder::new(&elements)
-    .add_style("button", CssProperty::Opacity, "0.8")
-    .apply_with_transition("300ms", "ease-in-out");
+ .add_style("button", CssProperty::Opacity, "0.8")
+ .apply_with_transition("300ms", "ease-in-out");
 
 // 動態動畫（滑鼠跟隨）
 AnimationBuilder::new(&elements)
-    .add_style_dynamic("button", CssProperty::Transform, |ctx| {
-        let x = ctx.mouse_x();
-        let y = ctx.mouse_y();
-        format!("translate({}px, {}px)", x, y)
-    })
-    .apply_with_transition("150ms", "ease-out");
+ .add_style_dynamic("button", CssProperty::Transform, |ctx| {
+ let x = ctx.mouse_x();
+ let y = ctx.mouse_y();
+ format!("translate({}px, {}px)", x, y)
+ })
+ .apply_with_transition("150ms", "ease-out");
 ```
 
 ## 貢獻

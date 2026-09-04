@@ -2,7 +2,7 @@
 
 Welcome to the Hikari UI examples! This directory contains comprehensive, runnable demonstrations of the Hikari component library.
 
-## 📁 Examples Overview
+## Examples Overview
 
 ### 1. [website](./website/) - Comprehensive Component Demo
 
@@ -99,7 +99,7 @@ cargo run --bin ssr-demo
 
 Server starts on `http://localhost:3000`
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -129,37 +129,37 @@ cd examples/<example-name>
 cargo run
 ```
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 examples/
-├── website/            # Comprehensive component showcase
-│   ├── Cargo.toml
-│   ├── README.md
-│   └── src/main.rs
+├── website/ # Comprehensive component showcase
+│ ├── Cargo.toml
+│ ├── README.md
+│ └── src/main.rs
 │
-├── table-demo/         # Advanced table features
-│   ├── Cargo.toml
-│   ├── README.md
-│   └── src/main.rs
+├── table-demo/ # Advanced table features
+│ ├── Cargo.toml
+│ ├── README.md
+│ └── src/main.rs
 │
-├── tree-demo/          # Tree component with large datasets
-│   ├── Cargo.toml
-│   ├── README.md
-│   └── src/main.rs
+├── tree-demo/ # Tree component with large datasets
+│ ├── Cargo.toml
+│ ├── README.md
+│ └── src/main.rs
 │
-├── node-graph-demo/    # Interactive node graph
-│   ├── Cargo.toml
-│   ├── README.md
-│   └── src/main.rs
+├── node-graph-demo/ # Interactive node graph
+│ ├── Cargo.toml
+│ ├── README.md
+│ └── src/main.rs
 │
-└── ssr-demo/           # Server-Side Rendering
-    ├── Cargo.toml
-    ├── README.md
-    ├── src/
-    │   ├── main.rs
-    │   └── index.html
-    └── static/         # Static assets (optional)
+└── ssr-demo/ # Server-Side Rendering
+ ├── Cargo.toml
+ ├── README.md
+ ├── src/
+ │ ├── main.rs
+ │ └── index.html
+ └── static/ # Static assets (optional)
 ```
 
 ## 🎨 Design System
@@ -171,7 +171,7 @@ All examples use the Hikari design system:
 - **Chinese traditional colors** from the Hikari palette
 - **Responsive layouts** that work on all screen sizes
 
-## 🔧 Development Tips
+## Development Tips
 
 ### Hot Reloading
 
@@ -214,7 +214,7 @@ When adding new examples:
 4. Add a comprehensive `README.md`
 5. Update this `README.md` with the new example
 
-## 📝 License
+## License
 
 All examples are licensed under the same terms as the Hikari project — the [Synthetic Source License (SySL), Version 1.0](../LICENSE).
 

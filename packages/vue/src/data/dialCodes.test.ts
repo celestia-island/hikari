@@ -32,9 +32,16 @@ describe("dialCodes catalog", () => {
   });
 
   it("derives flag emoji from ISO codes", () => {
-    expect(flagEmoji("cn")).toBe("🇨🇳");
-    expect(flagEmoji("us")).toBe("🇺🇸");
-    expect(flagEmoji("zz")).toBe("🇿🇿"); // any two letters map
+    // Expected regional-indicator pair built from code points so the
+    // test source carries no literal emoji while still pinning the
+    // exact runtime output byte-for-byte.
+    const expectedFlag = (iso: string): string =>
+      String.fromCodePoint(
+        ...Array.from(iso.toUpperCase(), (c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+      );
+    expect(flagEmoji("cn")).toBe(expectedFlag("cn"));
+    expect(flagEmoji("us")).toBe(expectedFlag("us"));
+    expect(flagEmoji("zz")).toBe(expectedFlag("zz")); // any two letters map
     expect(flagEmoji("")).toBe("");
   });
 });

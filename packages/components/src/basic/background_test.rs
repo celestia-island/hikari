@@ -24,7 +24,7 @@ use super::*;
         // This test just verifies the component can be instantiated
         // In a real WASM environment, we would test the animation itself
         assert!(true);
-        println!("✅ Background component creation test passed");
+        println!("Background component creation test passed");
     }
 
     #[test]
@@ -35,6 +35,6 @@ use super::*;
 
         // Just verify we can create props
         assert!(true);
-        println!("✅ BackgroundProps creation test passed");
+        println!("BackgroundProps creation test passed");
     }
 }

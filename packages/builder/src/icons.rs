@@ -155,7 +155,7 @@ impl Default for IconConfigBuilder {
 /// 3. Generates a Rust module with icon data
 /// 4. Writes the output to the configured file
 pub fn build_selected_icons(config: &IconConfig) -> Result<()> {
-    println!("🎨 Building selected icons...");
+    println!("Building selected icons...");
 
     // Find workspace root
     let workspace_root = find_workspace_root()?;
@@ -170,7 +170,7 @@ pub fn build_selected_icons(config: &IconConfig) -> Result<()> {
     };
 
     if selected.is_empty() {
-        println!("⚠️  No icons selected!");
+        println!("No icons selected!");
         return Ok(());
     }
 
@@ -193,7 +193,7 @@ pub fn build_selected_icons(config: &IconConfig) -> Result<()> {
     }
 
     println!("   Output: {:?}", output_path);
-    println!("✅ Icon build complete!");
+    println!("Icon build complete!");
 
     Ok(())
 }
@@ -410,13 +410,13 @@ fn generate_icon_module(selected_icons: &HashSet<String>, workspace_root: &Path)
         };
         match entry {
             Some(e) => icon_data.push(e),
-            None => eprintln!("⚠️  No SVG or packed data for '{}'", icon_name),
+            None => eprintln!("No SVG or packed data for '{}'", icon_name),
         }
     }
 
     if icon_data.is_empty() {
         eprintln!(
-            "⚠️  No icon data was generated! Selected {} icons but parsed 0.",
+            "No icon data was generated! Selected {} icons but parsed 0.",
             sorted_icons.len()
         );
     }
@@ -555,7 +555,7 @@ pub fn build_icons_from_packed(
     for name in &selected {
         match packed_icon(name, &db) {
             Some(entry) => icon_data.push(entry),
-            None => eprintln!("⚠️  Packed archive has no icon named '{}'", name),
+            None => eprintln!("Packed archive has no icon named '{}'", name),
         }
     }
     icon_data.sort_by(|a, b| a.1.cmp(&b.1));

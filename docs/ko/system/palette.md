@@ -40,7 +40,7 @@ let red = Color::苍翠;
 let blue = Color::粉红;
 let yellow = Color::姜黄;
 
-println!("빨강: {}", red.hex());  // #519A73
+println!("빨강: {}", red.hex()); // #519A73
 println!("파랑: {}", blue.hex()); // #FFB3A7
 println!("노랑: {}", yellow.hex()); // #FFC773
 ```
@@ -51,32 +51,32 @@ println!("노랑: {}", yellow.hex()); // #FFC773
 
 ```rust
 // 전통 빨간색
-Color::苍翠      // 苍翠 #519A73
-Color::Vermilion     // 주홍 #FF4C00 - 밝은 빨강-주황
-Color::Crimson       // 비홍 #FF3030 - 진홍색
-Color::PeachBlossom  // 도홍 #F6BEC8 - 복숭아 분홍
-Color::RoseRed       // 매홍 #C21F30 - 장미 빨강
+Color::苍翠 // 苍翠 #519A73
+Color::Vermilion // 주홍 #FF4C00 - 밝은 빨강-주황
+Color::Crimson // 비홍 #FF3030 - 진홍색
+Color::PeachBlossom // 도홍 #F6BEC8 - 복숭아 분홍
+Color::RoseRed // 매홍 #C21F30 - 장미 빨강
 ```
 
 #### 파란색 계열 (蓝色系)
 
 ```rust
 // 전통 파란색
-Color::粉红       // 粉红 #FFB3A7
-Color::鷃蓝        // 鷃蓝 #144A74
-Color::Cyan          // 청색 #00CED1 - 시안
-Color::SkyBlue       // 청록 #87CEEB - 하늘색
-Color::Turquoise     // 녹송석 #40E0D0 - 터콰이즈
+Color::粉红 // 粉红 #FFB3A7
+Color::鷃蓝 // 鷃蓝 #144A74
+Color::Cyan // 청색 #00CED1 - 시안
+Color::SkyBlue // 청록 #87CEEB - 하늘색
+Color::Turquoise // 녹송석 #40E0D0 - 터콰이즈
 ```
 
 #### 노란색 계열 (黄色系)
 
 ```rust
 // 전통 노란색
-Color::姜黄    // 姜黄 #FFC773
-Color::姜黄   // 姜黄 #FFC773
-Color::Golden        // 금색 #FFD700 - 금색
-Color::Amber         // 호박 #FFBF00 - 호박색
+Color::姜黄 // 姜黄 #FFC773
+Color::姜黄 // 姜黄 #FFC773
+Color::Golden // 금색 #FFD700 - 금색
+Color::Amber // 호박 #FFBF00 - 호박색
 ```
 
 #### 녹색 계열 (绿色系)
@@ -84,19 +84,19 @@ Color::Amber         // 호박 #FFBF00 - 호박색
 ```rust
 // 전통 녹색
 Color::ScallionGreen // 총천 #4CAF50 - 파 녹색
-Color::BambooGreen  // 죽청 #789262 - 대나무 녹색
-Color::Jade          // 옥색 #A0E6DA - 비취 녹색
-Color::Emerald       // 비취 #50C878 - 에메랄드 녹색
+Color::BambooGreen // 죽청 #789262 - 대나무 녹색
+Color::Jade // 옥색 #A0E6DA - 비취 녹색
+Color::Emerald // 비취 #50C878 - 에메랄드 녹색
 ```
 
 #### 중성색 계열 (中性色系)
 
 ```rust
 // 전통 중성색
-Color::InkBlack      // 묵색 #1A1A2E - 먹 검정
-Color::MoonWhite     // 월백 #F5F5F5 - 달 흰색
-Color::LightGray     // 고색 #E0E0E0 - 밝은 회색
-Color::AshGray       // 회색 #808080 - 잿회색
+Color::InkBlack // 묵색 #1A1A2E - 먹 검정
+Color::MoonWhite // 월백 #F5F5F5 - 달 흰색
+Color::LightGray // 고색 #E0E0E0 - 밝은 회색
+Color::AshGray // 회색 #808080 - 잿회색
 ```
 
 ### 색상 속성
@@ -107,16 +107,16 @@ Color::AshGray       // 회색 #808080 - 잿회색
 let color = Color::粉红;
 
 // Hex 값 얻기
-let hex = color.hex();  // "#FFB3A7"
+let hex = color.hex(); // "#FFB3A7"
 
 // RGB 값 얻기
-let rgb = color.rgb();  // (0, 160, 233)
+let rgb = color.rgb(); // (0, 160, 233)
 
 // 색상 이름 얻기
-let name = color.name();  // "석청"
+let name = color.name(); // "석청"
 
 // 영어 이름 얻기
-let english_name = color.english_name();  // "Azurite"
+let english_name = color.english_name(); // "Azurite"
 ```
 
 ## ClassesBuilder
@@ -129,10 +129,10 @@ Tailwind CSS 스타일 클래스를 위한 타입 안전 유틸리티 클래스 
 use hikari_palette::{ClassesBuilder, classes::*};
 
 let classes = ClassesBuilder::new()
-    .add(Display::Flex)
-    .add(FlexDirection::Row)
-    .add(Gap::Gap4)
-    .build();
+ .add(Display::Flex)
+ .add(FlexDirection::Row)
+ .add(Gap::Gap4)
+ .build();
 
 // 출력: "hi-flex hi-flex-row hi-gap-4"
 ```
@@ -144,10 +144,10 @@ let classes = ClassesBuilder::new()
 ```rust
 use hikari_palette::classes::Display;
 
-Display::Block      // "hi-block"
-Display::Flex       // "hi-flex"
-Display::Grid       // "hi-grid"
-Display::Hidden     // "hi-hidden"
+Display::Block // "hi-block"
+Display::Flex // "hi-flex"
+Display::Grid // "hi-grid"
+Display::Hidden // "hi-hidden"
 ```
 
 #### Flexbox 클래스
@@ -155,12 +155,12 @@ Display::Hidden     // "hi-hidden"
 ```rust
 use hikari_palette::classes::{FlexDirection, AlignItems, JustifyContent};
 
-FlexDirection::Row        // "hi-flex-row"
-FlexDirection::Column     // "hi-flex-column"
-AlignItems::Center        // "hi-items-center"
-AlignItems::Stretch       // "hi-items-stretch"
-JustifyContent::Center    // "hi-justify-center"
-JustifyContent::Between   // "hi-justify-between"
+FlexDirection::Row // "hi-flex-row"
+FlexDirection::Column // "hi-flex-column"
+AlignItems::Center // "hi-items-center"
+AlignItems::Stretch // "hi-items-stretch"
+JustifyContent::Center // "hi-justify-center"
+JustifyContent::Between // "hi-justify-between"
 ```
 
 #### Spacing 클래스
@@ -168,11 +168,11 @@ JustifyContent::Between   // "hi-justify-between"
 ```rust
 use hikari_palette::classes::{Padding, Margin, Gap};
 
-Padding::P4        // "hi-p-4"
-Padding::Px8       // "hi-px-8"
-Margin::M4         // "hi-m-4"
-Margin::MyAuto     // "hi-my-auto"
-Gap::Gap4          // "hi-gap-4"
+Padding::P4 // "hi-p-4"
+Padding::Px8 // "hi-px-8"
+Margin::M4 // "hi-m-4"
+Margin::MyAuto // "hi-my-auto"
+Gap::Gap4 // "hi-gap-4"
 ```
 
 #### Color 클래스
@@ -180,8 +180,8 @@ Gap::Gap4          // "hi-gap-4"
 ```rust
 use hikari_palette::classes::{TextColor, BackgroundColor};
 
-TextColor::Primary       // "hi-text-primary"
-TextColor::Secondary     // "hi-text-secondary"
+TextColor::Primary // "hi-text-primary"
+TextColor::Secondary // "hi-text-secondary"
 BackgroundColor::Primary // "hi-bg-primary"
 BackgroundColor::Surface // "hi-bg-surface"
 ```
@@ -191,11 +191,11 @@ BackgroundColor::Surface // "hi-bg-surface"
 ```rust
 use hikari_palette::classes::{FontSize, FontWeight};
 
-FontSize::Base       // "hi-text-base"
-FontSize::XL         // "hi-text-xl"
-FontSize::2XL        // "hi-text-2xl"
-FontWeight::Normal   // "hi-font-normal"
-FontWeight::Bold     // "hi-font-bold"
+FontSize::Base // "hi-text-base"
+FontSize::XL // "hi-text-xl"
+FontSize::2XL // "hi-text-2xl"
+FontWeight::Normal // "hi-font-normal"
+FontWeight::Bold // "hi-font-bold"
 ```
 
 #### Border 클래스
@@ -203,10 +203,10 @@ FontWeight::Bold     // "hi-font-bold"
 ```rust
 use hikari_palette::classes::{Border, BorderRadius};
 
-Border::B            // "hi-border"
-Border::B2           // "hi-border-2"
-BorderRadius::Md     // "hi-rounded-md"
-BorderRadius::Full   // "hi-rounded-full"
+Border::B // "hi-border"
+Border::B2 // "hi-border-2"
+BorderRadius::Md // "hi-rounded-md"
+BorderRadius::Full // "hi-rounded-full"
 ```
 
 ### 클래스 조합
@@ -216,15 +216,15 @@ use hikari_palette::{ClassesBuilder, classes::*};
 
 // 복잡한 컴포넌트 스타일링
 let button_classes = ClassesBuilder::new()
-    .add(Display::Flex)
-    .add(AlignItems::Center)
-    .add(JustifyContent::Center)
-    .add(Padding::Px4)
-    .add(Padding::Py2)
-    .add(BorderRadius::Md)
-    .add(BackgroundColor::Primary)
-    .add(TextColor::White)
-    .build();
+ .add(Display::Flex)
+ .add(AlignItems::Center)
+ .add(JustifyContent::Center)
+ .add(Padding::Px4)
+ .add(Padding::Py2)
+ .add(BorderRadius::Md)
+ .add(BackgroundColor::Primary)
+ .add(TextColor::White)
+ .build();
 
 // 출력: "hi-flex hi-items-center hi-justify-center hi-px-4 hi-py-2 hi-rounded-md hi-bg-primary hi-text-white"
 ```
@@ -232,16 +232,16 @@ let button_classes = ClassesBuilder::new()
 ### 타입 안전의 이점
 
 ```rust
-// ✅ 타입 안전 - 컴파일 타임 검사
+// yes 타입 안전 - 컴파일 타임 검사
 let classes = ClassesBuilder::new()
-    .add(Display::Flex)
-    .add(FlexDirection::Row)
-    .build();
+ .add(Display::Flex)
+ .add(FlexDirection::Row)
+ .build();
 
-// ❌ 컴파일되지 않음 - 오타 보호
+// no 컴파일되지 않음 - 오타 보호
 let classes = ClassesBuilder::new()
-    .add(Display::Flx)  // 컴파일 에러!
-    .build();
+ .add(Display::Flx) // 컴파일 에러!
+ .build();
 ```
 
 ## 테마
@@ -255,11 +255,11 @@ use hikari_palette::themes;
 
 let hikari = themes::Hikari::palette();
 
-println!("Primary: {}", hikari.primary.hex());   // #FFB3A7
+println!("Primary: {}", hikari.primary.hex()); // #FFB3A7
 println!("Secondary: {}", hikari.secondary.hex()); // #519A73
-println!("Accent: {}", hikari.accent.hex());     // #FFC773
+println!("Accent: {}", hikari.accent.hex()); // #FFC773
 println!("Background: {}", hikari.background.hex()); // #FFFFFF
-println!("Surface: {}", hikari.surface.hex());   // #F5F5F5
+println!("Surface: {}", hikari.surface.hex()); // #F5F5F5
 ```
 
 **색상 스킴**:
@@ -276,11 +276,11 @@ use hikari_palette::themes;
 
 let tairitsu = themes::Tairitsu::palette();
 
-println!("Primary: {}", tairitsu.primary.hex());   // #144A74
+println!("Primary: {}", tairitsu.primary.hex()); // #144A74
 println!("Secondary: {}", tairitsu.secondary.hex()); // #519A73
-println!("Accent: {}", tairitsu.accent.hex());     // #FFC773
+println!("Accent: {}", tairitsu.accent.hex()); // #FFC773
 println!("Background: {}", tairitsu.background.hex()); // #161823
-println!("Surface: {}", tairitsu.surface.hex());   // rgb(32,35,54)
+println!("Surface: {}", tairitsu.surface.hex()); // rgb(32,35,54)
 ```
 
 **색상 스킴**:
@@ -296,14 +296,14 @@ println!("Surface: {}", tairitsu.surface.hex());   // rgb(32,35,54)
 use hikari_palette::{ThemePalette, Color};
 
 let custom = ThemePalette {
-    primary: Color::Crimson,
-    secondary: Color::姜黄,
-    accent: Color::粉红,
-    background: Color::InkBlack,
-    surface: Color::MoonWhite,
-    success: Color::ScallionGreen,
-    warning: Color::姜黄,
-    danger: Color::苍翠,
+ primary: Color::Crimson,
+ secondary: Color::姜黄,
+ accent: Color::粉红,
+ background: Color::InkBlack,
+ surface: Color::MoonWhite,
+ success: Color::ScallionGreen,
+ warning: Color::姜黄,
+ danger: Color::苍翠,
 };
 ```
 
@@ -311,17 +311,17 @@ let custom = ThemePalette {
 
 ```rust
 pub struct ThemePalette {
-    pub primary: Color,
-    pub secondary: Color,
-    pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
-    pub success: Color,
-    pub warning: Color,
-    pub danger: Color,
-    pub text_primary: Color,
-    pub text_secondary: Color,
-    pub border: Color,
+ pub primary: Color,
+ pub secondary: Color,
+ pub accent: Color,
+ pub background: Color,
+ pub surface: Color,
+ pub success: Color,
+ pub warning: Color,
+ pub danger: Color,
+ pub text_primary: Color,
+ pub text_secondary: Color,
+ pub border: Color,
 }
 ```
 
@@ -384,16 +384,16 @@ use hikari_palette::themes;
 
 #[component]
 fn App() -> Element {
-    let hikari = themes::Hikari::palette();
+ let hikari = themes::Hikari::palette();
 
-    rsx! {
-        ThemeProvider { initial_palette: "hikari".to_string() }
-            div {
-                style: "color: {hikari.primary.hex()}",
-                "테마가 적용된 텍스트"
-            }
-        }
-    }
+ rsx! {
+ ThemeProvider { initial_palette: "hikari".to_string() }
+ div {
+ style: "color: {hikari.primary.hex()}",
+ "테마가 적용된 텍스트"
+ }
+ }
+ }
 }
 ```
 
@@ -404,11 +404,11 @@ use hikari_components::Button;
 use hikari_palette::Color;
 
 rsx! {
-    Button {
-        variant: "primary",
-        style: format!("background: {}", Color::粉红.hex()),
-        "커스텀 버튼"
-    }
+ Button {
+ variant: "primary",
+ style: format!("background: {}", Color::粉红.hex()),
+ "커스텀 버튼"
+ }
 }
 ```
 
@@ -418,17 +418,17 @@ rsx! {
 use hikari_palette::{ClassesBuilder, classes::*};
 
 let card_classes = ClassesBuilder::new()
-    .add(BackgroundColor::Surface)
-    .add(BorderRadius::Lg)
-    .add(Padding::P6)
-    .add(Shadow::Lg)
-    .build();
+ .add(BackgroundColor::Surface)
+ .add(BorderRadius::Lg)
+ .add(Padding::P6)
+ .add(Shadow::Lg)
+ .build();
 
 rsx! {
-    div {
-        class: "{card_classes}",
-        "카드 콘텐츠"
-    }
+ div {
+ class: "{card_classes}",
+ "카드 콘텐츠"
+ }
 }
 ```
 
@@ -438,38 +438,38 @@ rsx! {
 
 ```rust
 pub enum Color {
-    // 빨간색 계열
-    Cinnabar,      // 주사
-    Vermilion,     // 주홍
-    Crimson,       // 비홍
+ // 빨간색 계열
+ Cinnabar, // 주사
+ Vermilion, // 주홍
+ Crimson, // 비홍
 
-    // 파란색 계열
-    Azurite,       // 석청
-    Indigo,        // 남색
-    Cyan,          // 청색
+ // 파란색 계열
+ Azurite, // 석청
+ Indigo, // 남색
+ Cyan, // 청색
 
-    // 노란색 계열
-    VineYellow,    // 등황
-    GooseYellow,   // 아황
+ // 노란색 계열
+ VineYellow, // 등황
+ GooseYellow, // 아황
 
-    // 녹색 계열
-    ScallionGreen, // 총천
-    BambooGreen,   // 죽청
-    Jade,          // 옥색
+ // 녹색 계열
+ ScallionGreen, // 총천
+ BambooGreen, // 죽청
+ Jade, // 옥색
 
-    // 중성색 계열
-    InkBlack,      // 묵색
-    MoonWhite,     // 월백
-    LightGray,     // 고색
+ // 중성색 계열
+ InkBlack, // 묵색
+ MoonWhite, // 월백
+ LightGray, // 고색
 
-    // ... 660개 이상의 색상
+ // ... 660개 이상의 색상
 }
 
 impl Color {
-    pub fn hex(&self) -> String;
-    pub fn rgb(&self) -> (u8, u8, u8);
-    pub fn name(&self) -> &'static str;
-    pub fn english_name(&self) -> &'static str;
+ pub fn hex(&self) -> String;
+ pub fn rgb(&self) -> (u8, u8, u8);
+ pub fn name(&self) -> &'static str;
+ pub fn english_name(&self) -> &'static str;
 }
 ```
 
@@ -477,13 +477,13 @@ impl Color {
 
 ```rust
 pub struct ClassesBuilder {
-    // 내부
+ // 내부
 }
 
 impl ClassesBuilder {
-    pub fn new() -> Self;
-    pub fn add(mut self, class: impl Class) -> Self;
-    pub fn build(self) -> String;
+ pub fn new() -> Self;
+ pub fn add(mut self, class: impl Class) -> Self;
+ pub fn build(self) -> String;
 }
 ```
 
@@ -491,17 +491,17 @@ impl ClassesBuilder {
 
 ```rust
 pub struct ThemePalette {
-    pub primary: Color,
-    pub secondary: Color,
-    pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
-    pub success: Color,
-    pub warning: Color,
-    pub danger: Color,
-    pub text_primary: Color,
-    pub text_secondary: Color,
-    pub border: Color,
+ pub primary: Color,
+ pub secondary: Color,
+ pub accent: Color,
+ pub background: Color,
+ pub surface: Color,
+ pub success: Color,
+ pub warning: Color,
+ pub danger: Color,
+ pub text_primary: Color,
+ pub text_secondary: Color,
+ pub border: Color,
 }
 ```
 
@@ -539,45 +539,45 @@ pub fn darken(color: Color, amount: f64) -> String;
 ### 1. 타입 안전을 위해 Enum 사용
 
 ```rust
-// ✅ 좋음 - 타입 안전
+// yes 좋음 - 타입 안전
 let color = Color::粉红;
 
-// ❌ 피하세요 - 문자열 기반
+// no 피하세요 - 문자열 기반
 let color = "#FFB3A7";
 ```
 
 ### 2. 테마 팔레트 활용
 
 ```rust
-// ✅ 좋음 - 테마 팔레트 사용
+// yes 좋음 - 테마 팔레트 사용
 let palette = themes::Hikari::palette();
 let primary = palette.primary;
 
-// ❌ 피하세요 - 하드코딩된 색상
+// no 피하세요 - 하드코딩된 색상
 let primary = "#FFB3A7";
 ```
 
 ### 3. 유틸리티 클래스 사용
 
 ```rust
-// ✅ 좋음 - 타입 안전 유틸리티
+// yes 좋음 - 타입 안전 유틸리티
 let classes = ClassesBuilder::new()
-    .add(Display::Flex)
-    .add(Gap::Gap4)
-    .build();
+ .add(Display::Flex)
+ .add(Gap::Gap4)
+ .build();
 
-// ✅ 허용됨 - 문자열 기반 (덜 타입 안전)
+// yes 허용됨 - 문자열 기반 (덜 타입 안전)
 let classes = "hi-flex hi-gap-4";
 ```
 
 ### 4. 의미적 색상 명명
 
 ```rust
-// ✅ 좋음 - 의미적 사용
+// yes 좋음 - 의미적 사용
 let button_color = theme.palette.primary;
 let error_color = theme.palette.danger;
 
-// ❌ 피하세요 - 직접 색상 참조
+// no 피하세요 - 직접 색상 참조
 let button_color = Color::粉红;
 let error_color = Color::苍翠;
 ```

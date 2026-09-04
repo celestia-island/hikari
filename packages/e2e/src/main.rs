@@ -45,9 +45,9 @@ async fn main() -> Result<()> {
     for result in &results {
         info!("{}: {}", result.component, result.message);
         match &result.status {
-            hikari_e2e::TestStatus::Success => info!("  Status: ✅ PASSED"),
-            hikari_e2e::TestStatus::Failure => info!("  Status: ❌ FAILED"),
-            hikari_e2e::TestStatus::Error(msg) => error!("  Status: ⚠️ ERROR - {}", msg),
+            hikari_e2e::TestStatus::Success => info!("  Status: PASSED"),
+            hikari_e2e::TestStatus::Failure => info!("  Status: FAILED"),
+            hikari_e2e::TestStatus::Error(msg) => error!("  Status: ERROR - {}", msg),
         }
     }
     info!("=== End of Test Results ===\n");

@@ -281,7 +281,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
                         class: MarkdownEditorClass::ToolbarButton.as_class(),
                         onclick: insert_link,
                         title: "Link",
-                        "🔗"
+                        "Link"
                     }
                     button {
                         class: MarkdownEditorClass::ToolbarButton.as_class(),

@@ -220,14 +220,14 @@ describe("HkPasswordInput variants and icons", () => {
       "",
       { icon: "custom" },
       {
-        icon: () => [h("span", { class: "custom-icon" }, "custom-✓")],
+        icon: () => [h("span", { class: "custom-icon" }, "custom-mark")],
       },
     );
     expect(
       container.querySelector(".hk-pwd-lock")?.getAttribute("data-icon"),
     ).toBe("custom");
     expect(container.querySelector(".custom-icon")?.textContent).toBe(
-      "custom-✓",
+      "custom-mark",
     );
     expect(container.querySelector(".hk-pwd-lock svg")).toBeNull();
   });

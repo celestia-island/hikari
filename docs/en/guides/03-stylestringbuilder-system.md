@@ -40,25 +40,25 @@ StyleStringBuilder 是 Hikari 的内联样式构建器，提供了类型安全�
 
 ```mermaid
 graph TB
-    subgraph "应用层"
-        A[组件代码]
-    end
+ subgraph "应用层"
+ A[组件代码]
+ end
 
-    subgraph "Builder 层"
-        B[StyleStringBuilder]
-    end
+ subgraph "Builder 层"
+ B[StyleStringBuilder]
+ end
 
-    subgraph "属性层"
-        C[CssProperty 枚举]
-    end
+ subgraph "属性层"
+ C[CssProperty 枚举]
+ end
 
-    subgraph "CSS 层"
-        D[CSS 变量<br/>内联样式]
-    end
+ subgraph "CSS 层"
+ D[CSS 变量<br/>内联样式]
+ end
 
-    A --> B
-    B --> C
-    C --> D
+ A --> B
+ B --> C
+ C --> D
 ```
 
 ## 核心架构
@@ -69,7 +69,7 @@ graph TB
 
 ```rust
 pub struct StyleStringBuilder {
-    styles: Vec<(CssProperty, String)>,
+ styles: Vec<(CssProperty, String)>,
 }
 ```
 
@@ -89,50 +89,50 @@ pub struct StyleStringBuilder {
 
 ```rust
 pub enum CssProperty {
-    // Layout
-    Display,
-    Position,
-    Top,
-    Right,
-    Bottom,
-    Left,
-    ZIndex,
+ // Layout
+ Display,
+ Position,
+ Top,
+ Right,
+ Bottom,
+ Left,
+ ZIndex,
 
-    // Box Model
-    Width,
-    MinWidth,
-    MaxWidth,
-    Height,
-    MinHeight,
-    MaxHeight,
-    Padding,
-    Margin,
-    Border,
-    BorderRadius,
+ // Box Model
+ Width,
+ MinWidth,
+ MaxWidth,
+ Height,
+ MinHeight,
+ MaxHeight,
+ Padding,
+ Margin,
+ Border,
+ BorderRadius,
 
-    // Flexbox
-    Flex,
-    FlexDirection,
-    AlignItems,
-    JustifyContent,
-    Gap,
+ // Flexbox
+ Flex,
+ FlexDirection,
+ AlignItems,
+ JustifyContent,
+ Gap,
 
-    // Typography
-    FontFamily,
-    FontSize,
-    FontWeight,
-    LineHeight,
-    Color,
+ // Typography
+ FontFamily,
+ FontSize,
+ FontWeight,
+ LineHeight,
+ Color,
 
-    // Visual
-    Opacity,
-    Background,
-    BackgroundColor,
-    BoxShadow,
-    Transform,
-    TransformOrigin,
+ // Visual
+ Opacity,
+ Background,
+ BackgroundColor,
+ BoxShadow,
+ Transform,
+ TransformOrigin,
 
-    // ... 更多属性
+ // ... 更多属性
 }
 ```
 
@@ -140,14 +140,14 @@ pub enum CssProperty {
 
 ```rust
 impl CssProperty {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            CssProperty::Display => "display",
-            CssProperty::Opacity => "opacity",
-            CssProperty::Transform => "transform",
-            // ... 自动转换为 kebab-case
-        }
-    }
+ pub fn as_str(&self) -> &'static str {
+ match self {
+ CssProperty::Display => "display",
+ CssProperty::Opacity => "opacity",
+ CssProperty::Transform => "transform",
+ // ... 自动转换为 kebab-case
+ }
+ }
 }
 ```
 
@@ -155,21 +155,21 @@ impl CssProperty {
 
 ```rust
 impl StyleStringBuilder {
-    /// 添加像素值（自动添加 px 单位）
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let style = StyleStringBuilder::new()
-    ///     .add_px(CssProperty::Width, 100)  // => "width:100px"
-    ///     .add_px(CssProperty::Height, 200) // => "height:200px"
-    ///     .build_clean();
-    /// ```
-    pub fn add_px(mut self, property: CssProperty, pixels: i32) -> Self {
-        let value = format!("{}px", pixels);
-        self.styles.push((property, value));
-        self
-    }
+ /// 添加像素值（自动添加 px 单位）
+ ///
+ /// # Example
+ ///
+ /// ```rust
+ /// let style = StyleStringBuilder::new()
+ /// .add_px(CssProperty::Width, 100) // => "width:100px"
+ /// .add_px(CssProperty::Height, 200) // => "height:200px"
+ /// .build_clean();
+ /// ```
+ pub fn add_px(mut self, property: CssProperty, pixels: i32) -> Self {
+ let value = format!("{}px", pixels);
+ self.styles.push((property, value));
+ self
+ }
 }
 ```
 
@@ -179,77 +179,77 @@ impl StyleStringBuilder {
 
 ```mermaid
 sequenceDiagram
-    participant A as 应用代码
-    participant B as StyleStringBuilder
-    participant C as CssProperty
-    participant D as 输出字符串
+ participant A as 应用代码
+ participant B as StyleStringBuilder
+ participant C as CssProperty
+ participant D as 输出字符串
 
-    A->>B: StyleStringBuilder::new()
-    B->>B: 创建 Vec<(CssProperty, String)>
+ A->>B: StyleStringBuilder::new()
+ B->>B: 创建 Vec<(CssProperty, String)>
 
-    A->>B: .add_px(CssProperty::Width, 100)
-    B->>B: 添加 (Width, "100px")
+ A->>B: .add_px(CssProperty::Width, 100)
+ B->>B: 添加 (Width, "100px")
 
-    A->>B: .add_px(CssProperty::Height, 200)
-    B->>B: 添加 (Height, "200px")
+ A->>B: .add_px(CssProperty::Height, 200)
+ B->>B: 添加 (Height, "200px")
 
-    A->>B: .add(CssProperty::Opacity, "0.5")
-    B->>B: 添加 (Opacity, "0.5")
+ A->>B: .add(CssProperty::Opacity, "0.5")
+ B->>B: 添加 (Opacity, "0.5")
 
-    A->>B: .build_clean()
-    B->>B: 遍历 Vec<br/>格式化为 "property:value;..."
-    B-->>A: "width:100px;height:200px;opacity:0.5"
+ A->>B: .build_clean()
+ B->>B: 遍历 Vec<br/>格式化为 "property:value;..."
+ B-->>A: "width:100px;height:200px;opacity:0.5"
 ```
 
 ### 紧凑输出机制
 
 ```rust
 impl StyleStringBuilder {
-    /// 构建紧凑样式字符串（无空格）
-    ///
-    /// 输出: "property:value;property:value"
-    pub fn build_clean(self) -> String {
-        self.styles
-            .into_iter()
-            .map(|(property, value)| {
-                format!("{}:{}", property.as_str(), value)
-            })
-            .collect::<Vec<_>>()
-            .join(";")
-    }
+ /// 构建紧凑样式字符串（无空格）
+ ///
+ /// 输出: "property:value;property:value"
+ pub fn build_clean(self) -> String {
+ self.styles
+ .into_iter()
+ .map(|(property, value)| {
+ format!("{}:{}", property.as_str(), value)
+ })
+ .collect::<Vec<_>>()
+ .join(";")
+ }
 
-    /// 构建标准样式字符串（带空格）
-    ///
-    /// 输出: "property: value; property: value"
-    pub fn build(self) -> String {
-        self.styles
-            .into_iter()
-            .map(|(property, value)| {
-                format!("{}: {}", property.as_str(), value)
-            })
-            .collect::<Vec<_>>()
-            .join("; ")
-    }
+ /// 构建标准样式字符串（带空格）
+ ///
+ /// 输出: "property: value; property: value"
+ pub fn build(self) -> String {
+ self.styles
+ .into_iter()
+ .map(|(property, value)| {
+ format!("{}: {}", property.as_str(), value)
+ })
+ .collect::<Vec<_>>()
+ .join("; ")
+ }
 }
 ```
 
 ### 类型检查机制
 
 ```rust
-// ❌ 编译错误：属性名拼写错误
+// no 编译错误：属性名拼写错误
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Widht, "100px")  // 没有这个变体
-    .build();
+ .add(CssProperty::Widht, "100px") // 没有这个变体
+ .build();
 
-// ❌ 编译错误：参数类型错误
+// no 编译错误：参数类型错误
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, "100px")  // 应该是 i32
-    .build();
+ .add_px(CssProperty::Width, "100px") // 应该是 i32
+ .build();
 
-// ✅ 编译通过：IDE 自动补全
+// yes 编译通过：IDE 自动补全
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Width, "100px")  // IDE 提示 Width 变体
-    .build();
+ .add(CssProperty::Width, "100px") // IDE 提示 Width 变体
+ .build();
 ```
 
 ## CSS 属性枚举
@@ -325,16 +325,16 @@ let style = "width:100px;height:200px;opacity:0.5";
 ### 2. 紧凑输出
 
 ```rust
-// ✅ 推荐：紧凑输出（减少字节）
+// yes 推荐：紧凑输出（减少字节）
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, 100)
-    .build_clean();
+ .add_px(CssProperty::Width, 100)
+ .build_clean();
 // 输出: "width:100px"
 
-// ❌ 避免：标准输出（带空格）
+// no 避免：标准输出（带空格）
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, 100)
-    .build();
+ .add_px(CssProperty::Width, 100)
+ .build();
 // 输出: "width: 100px"
 ```
 
@@ -342,24 +342,24 @@ let style = StyleStringBuilder::new()
 
 ```rust
 impl StyleStringBuilder {
-    pub fn add(mut self, property: CssProperty, value: impl Into<String>) -> Self {
-        // Into<String> 避免不必要的 clone
-        let value = value.into();
-        self.styles.push((property, value));
-        self
-    }
+ pub fn add(mut self, property: CssProperty, value: impl Into<String>) -> Self {
+ // Into<String> 避免不必要的 clone
+ let value = value.into();
+ self.styles.push((property, value));
+ self
+ }
 }
 
-// ✅ 推荐：使用 &str（零成本转换）
+// yes 推荐：使用 &str（零成本转换）
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Width, "100px")
-    .build();
+ .add(CssProperty::Width, "100px")
+ .build();
 
-// ✅ 也支持：使用 String（会移动所有权）
+// yes 也支持：使用 String（会移动所有权）
 let width = "100px".to_string();
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Width, width)
-    .build();
+ .add(CssProperty::Width, width)
+ .build();
 ```
 
 ## 使用示例
@@ -370,17 +370,17 @@ let style = StyleStringBuilder::new()
 use hikari_animation::style::{StyleStringBuilder, CssProperty};
 
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, 100)
-    .add_px(CssProperty::Height, 50)
-    .add(CssProperty::BackgroundColor, "red")
-    .build_clean();
+ .add_px(CssProperty::Width, 100)
+ .add_px(CssProperty::Height, 50)
+ .add(CssProperty::BackgroundColor, "red")
+ .build_clean();
 
 // 输出: "width:100px;height:50px;background-color:red"
 
 rsx! {
-    div { style: "{style}",
-        "内容"
-    }
+ div { style: "{style}",
+ "内容"
+ }
 }
 ```
 
@@ -388,10 +388,10 @@ rsx! {
 
 ```rust
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Opacity, "var(--hi-dropdown-opacity)")
-    .add(CssProperty::Transform, "scale(var(--hi-dropdown-scale))")
-    .add(CssProperty::TransformOrigin, "top center")
-    .build_clean();
+ .add(CssProperty::Opacity, "var(--hi-dropdown-opacity)")
+ .add(CssProperty::Transform, "scale(var(--hi-dropdown-scale))")
+ .add(CssProperty::TransformOrigin, "top center")
+ .build_clean();
 
 // 输出: "opacity:var(--hi-dropdown-opacity);transform:scale(var(--hi-dropdown-scale));transform-origin:top center"
 ```
@@ -401,14 +401,14 @@ let style = StyleStringBuilder::new()
 ```rust
 // 覆盖 img { height: auto; } 全局样式
 let img_style = StyleStringBuilder::new()
-    .add_px(CssProperty::Height, 36)
-    .add_px(CssProperty::MaxWidth, 140)
-    .add(CssProperty::Width, "auto")
-    .add(CssProperty::ObjectFit, "contain")
-    .build_clean();
+ .add_px(CssProperty::Height, 36)
+ .add_px(CssProperty::MaxWidth, 140)
+ .add(CssProperty::Width, "auto")
+ .add(CssProperty::ObjectFit, "contain")
+ .build_clean();
 
 rsx! {
-    img { style: "{img_style}", src: "..." }
+ img { style: "{img_style}", src: "..." }
 }
 ```
 
@@ -416,21 +416,21 @@ rsx! {
 
 ```rust
 let width = use_memo(move || {
-    let window_width = window().inner_width().unwrap();
-    (window_width.as_f64().unwrap() * 0.8) as i32
+ let window_width = window().inner_width().unwrap();
+ (window_width.as_f64().unwrap() * 0.8) as i32
 });
 
 let style = use_memo(move || {
-    StyleStringBuilder::new()
-        .add_px(CssProperty::Width, *width.read())
-        .build()
+ StyleStringBuilder::new()
+ .add_px(CssProperty::Width, *width.read())
+ .build()
 });
 
 // 动态计算宽度
 rsx! {
-    div { style: "{style}",
-        "自适应宽度"
-    }
+ div { style: "{style}",
+ "自适应宽度"
+ }
 }
 ```
 
@@ -442,21 +442,21 @@ use hikari_animation::style::{StyleStringBuilder, CssProperty};
 
 // ClassesBuilder 处理布局
 let classes = ClassesBuilder::new()
-    .add(Display::Flex)
-    .add(FlexDirection::Row)
-    .add(Gap::Gap4)
-    .build();
+ .add(Display::Flex)
+ .add(FlexDirection::Row)
+ .add(Gap::Gap4)
+ .build();
 
 // StyleStringBuilder 处理动态值
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, computed_width)
-    .add(CssProperty::Opacity, "0.8")
-    .build_clean();
+ .add_px(CssProperty::Width, computed_width)
+ .add(CssProperty::Opacity, "0.8")
+ .build_clean();
 
 rsx! {
-    div { class: "{classes}", style: "{style}",
-        "内容"
-    }
+ div { class: "{classes}", style: "{style}",
+ "内容"
+ }
 }
 ```
 
@@ -485,28 +485,28 @@ StyleStringBuilder 通过类型安全的样式构建系统，实现了：
 ```rust
 // packages/animation/src/properties.rs
 pub enum CssProperty {
-    // Layout
-    Display,
-    Position,
-    Top,
-    Right,
-    Bottom,
-    Left,
-    ZIndex,
+ // Layout
+ Display,
+ Position,
+ Top,
+ Right,
+ Bottom,
+ Left,
+ ZIndex,
 
-    // Box Model
-    Width,
-    MinWidth,
-    MaxWidth,
-    Height,
-    MinHeight,
-    MaxHeight,
-    Padding,
-    Margin,
-    Border,
-    BorderRadius,
+ // Box Model
+ Width,
+ MinWidth,
+ MaxWidth,
+ Height,
+ MinHeight,
+ MaxHeight,
+ Padding,
+ Margin,
+ Border,
+ BorderRadius,
 
-    // ... ~50 properties manually defined
+ // ... ~50 properties manually defined
 }
 ```
 
@@ -620,9 +620,9 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 use hikari_animation::style::{StyleStringBuilder, CssProperty};
 
 let style = StyleStringBuilder::new()
-    .add_px(CssProperty::Width, 100)
-    .add(CssProperty::BackgroundColor, "red")
-    .build_clean();
+ .add_px(CssProperty::Width, 100)
+ .add(CssProperty::BackgroundColor, "red")
+ .build_clean();
 ```
 
 但你现在可以使用更多的 CSS 属性：
@@ -630,12 +630,12 @@ let style = StyleStringBuilder::new()
 ```rust
 // 新增的属性示例
 let style = StyleStringBuilder::new()
-    .add(CssProperty::GridTemplateColumns, "repeat(3, 1fr)")
-    .add(CssProperty::Gap, "1rem")
-    .add(CssProperty::BackdropFilter, "blur(10px)")
-    .add(CssProperty::Filter, "drop-shadow(0 4px 6px rgba(0,0,0,0.1))")
-    .add(CssProperty::MixBlendMode, "multiply")
-    .build_clean();
+ .add(CssProperty::GridTemplateColumns, "repeat(3, 1fr)")
+ .add(CssProperty::Gap, "1rem")
+ .add(CssProperty::BackdropFilter, "blur(10px)")
+ .add(CssProperty::Filter, "drop-shadow(0 4px 6px rgba(0,0,0,0.1))")
+ .add(CssProperty::MixBlendMode, "multiply")
+ .build_clean();
 ```
 
 ### 代码清理
@@ -643,7 +643,7 @@ let style = StyleStringBuilder::new()
 迁移删除了以下文件：
 
 ```
-packages/animation/src/properties.rs  (635 lines)
+packages/animation/src/properties.rs (635 lines)
 ```
 
 并简化了 `packages/animation/src/style/mod.rs`：
@@ -654,7 +654,7 @@ mod properties;
 pub use properties::CssProperty;
 
 pub struct StyleStringBuilder {
-    styles: Vec<(CssProperty, String)>,
+ styles: Vec<(CssProperty, String)>,
 }
 
 // ... manual property mapping
@@ -671,12 +671,12 @@ pub use tairitsu_style::{StyleStringBuilder, CssProperty, Property};
 // 所有现有的用法都继续工作
 use hikari_animation::style::CssProperty;
 
-// ✅ 仍然有效
+// yes 仍然有效
 CssProperty::Width
 CssProperty::Height
 CssProperty::BackgroundColor
 
-// ✅ 新增属性也可用
+// yes 新增属性也可用
 CssProperty::GridTemplateColumns
 CssProperty::BackdropFilter
 CssProperty::Filter
@@ -711,11 +711,11 @@ use hikari_animation::style::{StyleStringBuilder, CssProperty};
 
 // 使用任何 403 个 CSS 属性
 let style = StyleStringBuilder::new()
-    .add(CssProperty::Display, "grid")
-    .add(CssProperty::GridTemplateColumns, "repeat(auto-fit, minmax(200px, 1fr))")
-    .add(CssProperty::GridAutoRows, "minmax(100px, auto)")
-    .add(CssProperty::Gap, "1rem")
-    .build_clean();
+ .add(CssProperty::Display, "grid")
+ .add(CssProperty::GridTemplateColumns, "repeat(auto-fit, minmax(200px, 1fr))")
+ .add(CssProperty::GridAutoRows, "minmax(100px, auto)")
+ .add(CssProperty::Gap, "1rem")
+ .build_clean();
 ```
 
 ### 更多信息

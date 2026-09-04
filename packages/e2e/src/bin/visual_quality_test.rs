@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 anyhow::bail!("Visual quality tests failed with {} checks", total_failed);
             } else {
-                info!("\n✅ All visual quality checks passed!");
+                info!("\nAll visual quality checks passed!");
             }
         }
         Err(e) => {

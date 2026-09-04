@@ -72,10 +72,10 @@ pub async fn run_all_tests(driver: &WebDriver) -> anyhow::Result<Vec<TestResult>
     for result in &results {
         info!("{}: {}", result.component, result.message);
         match &result.status {
-            tests::basic_components::TestStatus::Success => info!("  Status: ✅ PASSED"),
-            tests::basic_components::TestStatus::Failure => info!("  Status: ❌ FAILED"),
+            tests::basic_components::TestStatus::Success => info!("  Status: PASSED"),
+            tests::basic_components::TestStatus::Failure => info!("  Status: FAILED"),
             tests::basic_components::TestStatus::Error(msg) => {
-                error!("  Status: ⚠️  ERROR - {}", msg)
+                error!("  Status: ERROR - {}", msg)
             }
         }
     }
@@ -108,7 +108,7 @@ pub async fn run_interactive_tests(
     for result in &results {
         info!("{}: {}", result.component, result.message);
         if result.status == "success" {
-            info!("  Status: ✅ PASSED ({} steps)", result.steps.len());
+            info!("  Status: PASSED ({} steps)", result.steps.len());
             for (i, step) in result.steps.iter().enumerate() {
                 info!(
                     "    Step {}: {} - {:?}",
@@ -118,7 +118,7 @@ pub async fn run_interactive_tests(
                 );
             }
         } else {
-            info!("  Status: ❌ FAILED");
+            info!("  Status: FAILED");
             info!("  Message: {}", result.message);
         }
     }
@@ -148,20 +148,20 @@ pub fn run_ssr_tests() -> anyhow::Result<Vec<tests::ssr_tests::SsrTestResult>> {
     for result in &results {
         info!("{}: {}", result.test_name, result.message);
         match &result.status {
-            tests::ssr_tests::SsrTestStatus::Success => info!("  Status: ✅ PASSED"),
-            tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: ❌ FAILED - {}", msg),
+            tests::ssr_tests::SsrTestStatus::Success => info!("  Status: PASSED"),
+            tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: FAILED - {}", msg),
             tests::ssr_tests::SsrTestStatus::PartialSuccess {
                 passed_tests,
                 failed_tests,
             } => {
                 info!(
-                    "  Status: ⚠️  PARTIAL - {} passed, {} failed",
+                    "  Status: PARTIAL - {} passed, {} failed",
                     passed_tests.len(),
                     failed_tests.len()
                 );
             }
             tests::ssr_tests::SsrTestStatus::Error(msg) => {
-                error!("  Status: ⚠️  ERROR - {}", msg)
+                error!("  Status: ERROR - {}", msg)
             }
         }
     }
@@ -193,20 +193,20 @@ pub async fn run_ssr_e2e_tests(
     for result in &results {
         info!("{}: {}", result.test_name, result.message);
         match &result.status {
-            tests::ssr_tests::SsrTestStatus::Success => info!("  Status: ✅ PASSED"),
-            tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: ❌ FAILED - {}", msg),
+            tests::ssr_tests::SsrTestStatus::Success => info!("  Status: PASSED"),
+            tests::ssr_tests::SsrTestStatus::Failure(msg) => info!("  Status: FAILED - {}", msg),
             tests::ssr_tests::SsrTestStatus::PartialSuccess {
                 passed_tests,
                 failed_tests,
             } => {
                 info!(
-                    "  Status: ⚠️  PARTIAL - {} passed, {} failed",
+                    "  Status: PARTIAL - {} passed, {} failed",
                     passed_tests.len(),
                     failed_tests.len()
                 );
             }
             tests::ssr_tests::SsrTestStatus::Error(msg) => {
-                error!("  Status: ⚠️  ERROR - {}", msg)
+                error!("  Status: ERROR - {}", msg)
             }
         }
     }

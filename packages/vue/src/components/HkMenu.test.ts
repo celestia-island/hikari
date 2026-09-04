@@ -3,6 +3,14 @@ import { createApp, defineComponent, h, nextTick, ref, type ComponentPublicInsta
 
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 
+/** Regional-indicator flag pair for an ISO 3166-1 alpha-2 code, built
+ * from code points (same derivation as data/dialCodes flagEmoji) so the
+ * fixture source itself carries no literal emoji. */
+const flagOf = (iso: string): string =>
+  String.fromCodePoint(
+    ...Array.from(iso.toUpperCase(), (c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
 
@@ -11,8 +19,8 @@ const items: HkMenuItem[] = [
     key: "lang",
     label: "Language",
     children: [
-      { key: "en", label: "English", flag: "🇬🇧" },
-      { key: "zh", label: "中文", flag: "🇨🇳", checked: true },
+      { key: "en", label: "English", flag: flagOf("gb") },
+      { key: "zh", label: "中文", flag: flagOf("cn"), checked: true },
     ],
   },
   { key: "logout", label: "Log out", danger: true },

@@ -428,7 +428,7 @@ pub fn start_animation_with_global_manager(
 
     web_sys::console::log_2(
         &format!(
-            "🎬 Starting animation: {} with {} actions",
+            "Starting animation: {} with {} actions",
             element_name,
             element_actions.len()
         )
@@ -474,14 +474,14 @@ pub fn start_animation_with_global_manager(
     global_animation_manager().register(animation_name.clone(), callback);
 
     let log_msg = format!(
-        "✅ Animation {} registered with global manager",
+        "Animation {} registered with global manager",
         animation_name
     );
     web_sys::console::log_2(&log_msg.into(), &animation_name.clone().into());
 
     let animation_name_final = animation_name;
     Box::new(move || {
-        let stop_msg = format!("🛑 Stopping animation: {}", animation_name_final);
+        let stop_msg = format!("Stopping animation: {}", animation_name_final);
         web_sys::console::log_2(&stop_msg.into(), &animation_name_final.clone().into());
         global_animation_manager().unregister(&animation_name_final);
     })

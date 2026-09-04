@@ -270,7 +270,7 @@ impl ScreenshotGenerator {
         })?;
 
         info!(
-            "[{}] ✓ Screenshot saved to {}",
+            "[{}] Screenshot saved to {}",
             name,
             screenshot_path.display()
         );

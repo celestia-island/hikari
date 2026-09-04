@@ -3,6 +3,14 @@ import { createApp, h, nextTick } from "vue";
 
 import { HkLocalizedInput } from "./HkLocalizedInput";
 
+/** Regional-indicator flag pair for an ISO 3166-1 alpha-2 code, built
+ * from code points (same derivation as data/dialCodes flagEmoji) so the
+ * test source itself carries no literal emoji. */
+const flagOf = (iso: string): string =>
+  String.fromCodePoint(
+    ...Array.from(iso.toUpperCase(), (c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+
 const LOCALES = [
   { code: "en", label: "English" },
   { code: "zh-Hans", label: "简体中文" },
@@ -504,15 +512,15 @@ describe("HkLocalizedInput", () => {
           sourceLang: "en",
           translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
           localeOptions: [
-            { code: "en", label: "English", flag: "🇬🇧" },
-            { code: "zh-Hans", label: "简体中文", flag: "🇨🇳" },
+            { code: "en", label: "English", flag: flagOf("gb") },
+            { code: "zh-Hans", label: "简体中文", flag: flagOf("cn") },
           ],
         }),
     });
     app.mount(container);
     mounts.push({ app, container });
     await openPicker(container);
-    expect(tag("简体中文")?.querySelector(".hk-affix-tag-flag")?.textContent).toBe("🇨🇳");
+    expect(tag("简体中文")?.querySelector(".hk-affix-tag-flag")?.textContent).toBe(flagOf("cn"));
   });
 
   it("follows a sourceLang change without stealing focus", async () => {

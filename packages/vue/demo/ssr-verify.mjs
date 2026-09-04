@@ -72,7 +72,7 @@ async function main() {
     "HkLogo": [{ name: "default", file: f("HkLogo.tsx"), props: { alt: "MyApp", size: "md" } }],
     "HkGaugeRing": [{ name: "default", file: f("HkGaugeRing.tsx"), props: { rings: [{ pct: 65, color: "#ff6b9d", trackColor: "rgba(255,107,157,0.1)" }], centerValue: "65%" } }],
     "HkSelectionGrid": [{ name: "default", file: f("HkSelectionGrid.tsx"), props: { items: [{ id: "1", title: "Item 1" }, { id: "2", title: "Item 2" }], selectedId: "1" } }],
-    "HkNavItem": [{ name: "default", file: f("HkNavItem.tsx"), props: { active: true }, slots: { default: () => "Dashboard", icon: () => "📊" } }],
+    "HkNavItem": [{ name: "default", file: f("HkNavItem.tsx"), props: { active: true }, slots: { default: () => "Dashboard", icon: () => "" } }],
     "HkNumberInput": [{ name: "default", file: f("HkNumberInput.tsx"), props: { modelValue: 42 } }],
     "HkSearchInput": [{ name: "default", file: f("HkSearchInput.tsx"), props: { placeholder: "Search..." } }],
     "HkTextarea": [{ name: "default", file: f("HkTextarea.tsx"), props: { rows: 3, placeholder: "Enter text" } }],

@@ -117,6 +117,26 @@ describe("HkPhoneInput", () => {
     }
   });
 
+  it("still finds the PRC row when searching the short alias", async () => {
+    const { container } = mountPhone();
+    await openPicker(container);
+    // The row renders the formal zh name (中华人民共和国), which no longer
+    // contains 中国 as a substring — the catalog's zhAlias keeps the old
+    // short form reachable from the search field.
+    const search = document.querySelector<HTMLInputElement>(
+      ".hk-affix-search .hk-input-element",
+    );
+    expect(search, "popup search field renders").toBeTruthy();
+    search!.value = "中国";
+    search!.dispatchEvent(new Event("input"));
+    await nextTick();
+    await nextTick();
+    const rows = pickerRows();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].textContent).toContain("China");
+    expect(rows[0].textContent).toContain("+86");
+  });
+
   it("picks a country from the list and refocuses the number field", async () => {
     const { container, events } = mountPhone();
     await openPicker(container);

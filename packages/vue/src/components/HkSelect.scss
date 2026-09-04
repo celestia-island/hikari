@@ -244,11 +244,12 @@
   position: fixed;
   left: 0;
   right: 0;
-  /* Float off the bottom edge with the SAME host-tunable gap as the
-   * HkModal mobile docking (--hk-sheet-bottom-gap) — every bottom-up
-   * window reads as one sheet family; was glued to bottom: 0, which is
-   * exactly why dropdown sheets read as "not the standard modal". */
-  bottom: var(--hk-sheet-bottom-gap, 0.375rem);
+  /* Sit flush on the bottom edge; the host-tunable --hk-sheet-bottom-gap
+   * lift (shared with the HkModal mobile docking) stays available so
+   * every bottom-up window reads as one sheet family. Was glued to
+   * bottom: 0, then floated at the 0.375rem family default — both wrong
+   * for someone; the 2026-09-04 report settles the family on flush. */
+  bottom: var(--hk-sheet-bottom-gap, 0px);
   display: flex;
   flex-direction: column;
   /* The panel height hugs its content (up to the cap below); the sheet
@@ -266,7 +267,7 @@
     72vh,
     calc(
       100vh - var(--hk-sheet-top-inset, 4.25rem) -
-        var(--hk-sheet-bottom-gap, 0.375rem)
+        var(--hk-sheet-bottom-gap, 0px)
     )
   );
   background: rgb(var(--color-surface));
@@ -285,6 +286,10 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
+  /* Window chrome — never a text-selection start (matches the popover
+   * sheet grabber). */
+  user-select: none;
+  -webkit-user-select: none;
 
   &::before {
     content: "";
@@ -302,13 +307,17 @@
    * roughly another --space-16 of leading padding inside, so the old
    * single --space-16 left the title hanging left of every row it
    * named instead of reading as the list's heading. Hosts tune it via
-   * --hk-sheet-title-inset; the trailing inset stays --space-16. */
+   * --hk-sheet-title-inset; the trailing inset stays --space-16.
+   * Size/weight match the popover sheet heading (--text-base, window
+   * chrome never text-selectable — 2026-09-04 sheet chrome pass). */
   padding: 0 var(--space-16) var(--space-8)
     var(--hk-sheet-title-inset, calc(var(--space-16) * 2));
-  font-size: var(--text-xs);
+  font-size: var(--text-base);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgb(var(--color-muted));
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Track host for the sheet list's overlay scrollbar — owns the flex

@@ -15,6 +15,7 @@ import {
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { onceFrame } from "../runtime/animationBus";
@@ -76,6 +77,7 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
     const manager = usePopupManager();
+    const { t } = useI18n();
     const handle = ref<PopupHandle | null>(null);
     const panelRef = ref<HTMLElement>();
     const resolvedPlacement = ref<PopupPlacement>(props.placement);
@@ -489,15 +491,17 @@ export default defineComponent({
 
     const panelStyle = computed(() => {
       if (sheetMode.value) {
-        // Bottom sheet: pinned above the bottom edge with the SAME
-        // host-tunable gap as the HkModal mobile docking
-        // (--hk-sheet-bottom-gap) so every bottom-up window belongs to
-        // one sheet family; full width, inside the top inset reserved
-        // for the secondary-window breadcrumb strip.
+        // Bottom sheet: sits flush on the viewport bottom edge (the
+        // host-tunable --hk-sheet-bottom-gap lift is still honored so the
+        // sheet belongs to the HkModal/HkSelect sheet family — the family
+        // default is 0 since the 2026-09-04 report: even a 0.375rem lift
+        // read as a visible seam under the docked sheet); full width,
+        // inside the top inset reserved for the secondary-window
+        // breadcrumb strip.
         return {
           left: "0",
           right: "0",
-          bottom: "var(--hk-sheet-bottom-gap, 0.375rem)",
+          bottom: "var(--hk-sheet-bottom-gap, 0px)",
           top: "auto" as const,
           position: "fixed" as const,
           pointerEvents: "auto" as const,
@@ -568,11 +572,36 @@ export default defineComponent({
                 {sheetMode.value && (
                   <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
                 )}
-                {sheetMode.value && props.title && (
-                  // Sheet heading band — opt-in via the `title` prop so
-                  // anchored-desktop consumers are untouched; keeps the
-                  // docked sheet naming itself like every other window.
-                  <div class="hk-popover-sheet-title">{props.title}</div>
+                {sheetMode.value && (
+                  // Sheet heading row — the title and the close button on
+                  // one vertically-centered line (2026-09-04 user report:
+                  // the bare title band read too small and hung right of
+                  // the content it named, and every other window in the
+                  // app carries an explicit ✕). Same header grammar as the
+                  // HkModal header: title left, close on the right edge.
+                  <div class="hk-popover-sheet-header">
+                    {props.title && (
+                      <div class="hk-popover-sheet-title">{props.title}</div>
+                    )}
+                    <button
+                      class="hk-popover-sheet-close"
+                      aria-label={t("hikari::modal.close", "Close")}
+                      onClick={close}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        width="16"
+                        height="16"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
                 )}
                 {slots.default?.()}
               </div>

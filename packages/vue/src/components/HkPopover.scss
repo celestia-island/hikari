@@ -100,7 +100,7 @@
     72vh,
     calc(
       100vh - var(--hk-sheet-top-inset, 4.25rem) -
-        var(--hk-sheet-bottom-gap, 0.375rem)
+        var(--hk-sheet-bottom-gap, 0px)
     )
   );
   display: flex;
@@ -137,6 +137,10 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
+  // Window chrome, not content — a long-press must never start a text
+  // selection over the drag handle.
+  user-select: none;
+  -webkit-user-select: none;
 
   &::before {
     content: "";
@@ -147,17 +151,81 @@
   }
 }
 
-.hk-popover-sheet-title {
+/* Sheet heading row — title on the left, explicit close on the right,
+ * one vertically-centered flex line (2026-09-04 user report: the bare
+ * title band read too small, hung right of the content it named, and
+ * long-press selected it; every other window in the app carries an ✕).
+ * The title aligns to the CONTENT edge: the leading inset defaults to
+ * --space-12, matching the padded content blocks popover sheets host
+ * (e.g. HkContextRing's 0.75rem body). Hosts tune it via
+ * --hk-sheet-title-inset; the trailing inset hugs the close button. */
+.hk-popover-sheet-header {
   flex-shrink: 0;
-  // Same heading grammar as the select sheet title: small, semibold,
-  // slightly letterspaced, inset to the content edge. Hosts tune the
-  // leading inset via --hk-sheet-title-inset.
-  padding: 0 var(--space-16, 1rem) var(--space-8, 0.5rem)
-    var(--hk-sheet-title-inset, calc(var(--space-16, 1rem) * 2));
-  font-size: var(--text-xs, 0.75rem);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  padding: 0 var(--space-8, 0.5rem) var(--space-8, 0.5rem)
+    var(--hk-sheet-title-inset, var(--space-12, 0.75rem));
+}
+
+.hk-popover-sheet-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  // Same heading grammar as the select sheet title: semibold, slightly
+  // letterspaced — one step up from the old 0.75rem so the sheet names
+  // itself at body-text size, and window chrome never participates in
+  // text selection.
+  font-size: var(--text-base, 0.875rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgb(var(--color-muted, 140 140 140));
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hk-popover-sheet-close {
+  flex-shrink: 0;
+  // Pushes to the right edge with or without a title beside it.
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--hi-radius-md, 0.5rem);
+  color: var(--hk-modal-close-color, var(--hi-color-text-secondary, #666));
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: var(
+      --hk-modal-close-hover-bg,
+      var(--hi-secondary-bg, rgba(0, 0, 0, 0.06))
+    );
+    color: var(
+      --hk-modal-close-hover-color,
+      var(--hi-color-text-primary, #333)
+    );
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary, #ffc0cb);
+    outline-offset: 2px;
+  }
 }
 
 .hk-popover-sheet-enter-active {

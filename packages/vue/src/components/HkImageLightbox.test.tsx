@@ -61,6 +61,10 @@ describe("HkImageLightbox", () => {
 
     const btn = s.closeButton();
     expect(btn.getAttribute("aria-label")).toBe("Close");
+    // Unified close glyph: the shared icon-button renders the registry X
+    // (default-slot branch), never the fallback placeholder circle.
+    expect(btn.querySelector(".hk-icon")).not.toBeNull();
+    expect(btn.querySelector("circle")).toBeNull();
   });
 
   it("renders nothing while closed", () => {

@@ -72,4 +72,34 @@ describe("HkIconButton", () => {
     expect(btn.disabled).toBe(true);
     expect(btn.getAttribute("aria-label")).toBe("sync");
   });
+
+  // Unified window-close wave: children passed as the DEFAULT slot render
+  // as the icon (named `icon` slot still wins; no children at all keeps the
+  // placeholder circle). Without the default-slot branch, natural JSX usage
+  // `<HIconButton><HIcon name="X"/></HIconButton>` silently rendered the
+  // fallback circle instead of the consumer's glyph.
+  it("renders default-slot children as the icon", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { "aria-label": "close" }, { default: () => h("span", { class: "glyph-probe" }, "✕") }),
+    );
+    expect(c.querySelector(".glyph-probe")).not.toBeNull();
+    // The placeholder circle only renders when NEITHER slot is provided.
+    expect(c.querySelector("circle")).toBeNull();
+  });
+
+  it("prefers the named icon slot over default children", () => {
+    const c = mountComp(() =>
+      h(HkIconButton, { "aria-label": "close" }, {
+        icon: () => h("span", { class: "named-probe" }),
+        default: () => h("span", { class: "default-probe" }),
+      }),
+    );
+    expect(c.querySelector(".named-probe")).not.toBeNull();
+    expect(c.querySelector(".default-probe")).toBeNull();
+  });
+
+  it("keeps the placeholder circle when no slot content is given", () => {
+    const c = mountComp(() => h(HkIconButton, { "aria-label": "probe" }));
+    expect(c.querySelector("circle")).not.toBeNull();
+  });
 });

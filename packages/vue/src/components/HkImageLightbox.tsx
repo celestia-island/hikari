@@ -3,8 +3,10 @@ import { defineComponent, onBeforeUnmount, watch } from "vue";
 import { useI18n } from "../i18n/context";
 import "./HkImageLightbox.scss";
 import HIconButton from "./HkIconButton";
+import HIcon from "./HkIcon";
 import HImageViewer from "./HkImageViewer";
 import HModal from "./HkModal";
+import "./window-close.scss";
 
 /**
  * Immersive fullscreen viewer for a single image — the "special modal"
@@ -67,18 +69,13 @@ export default defineComponent({
         <div class="hk-image-lightbox-stage">
           <HImageViewer src={props.src} alt={props.alt} />
           <HIconButton
-            class="hk-image-lightbox-close"
+            class="hk-window-close hk-image-lightbox-close"
             size={32}
             variant="ghost"
             aria-label={t("hikari::imageLightbox.close", "Close")}
             onClick={close}
           >
-            {{ icon: () => (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            ) }}
+            <HIcon name="X" size={16} />
           </HIconButton>
         </div>
       </HModal>

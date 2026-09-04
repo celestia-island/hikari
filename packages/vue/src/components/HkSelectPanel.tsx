@@ -17,6 +17,10 @@ import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSizeMorph } from "../composables/useSizeMorph";
+import { useI18n } from "../i18n/context";
+import HIconButton from "./HkIconButton";
+import HIcon from "./HkIcon";
+import "./window-close.scss";
 import "./HkSelect.scss";
 
 /**
@@ -86,6 +90,7 @@ export default defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const manager = usePopupManager();
+    const { t } = useI18n();
     const handle = ref<PopupHandle | null>(null);
     /** z of the last live registration — the leave transition keeps
      *  painting at this z after the registry entry is dropped, so a
@@ -541,9 +546,26 @@ export default defineComponent({
                     aria-hidden="true"
                     onClick={close}
                   />
-                  {props.title ? (
-                    <div class="hk-select-sheet-title">{props.title}</div>
-                  ) : null}
+                  {/*
+                    Unified sheet heading row — same grammar as the popover
+                    sheet header (title left, shared icon-button ✕ on the
+                    right edge). The select sheet previously had no explicit
+                    close affordance at all (grabber/scrim only).
+                  */}
+                  <div class="hk-select-sheet-header">
+                    {props.title ? (
+                      <div class="hk-select-sheet-title">{props.title}</div>
+                    ) : null}
+                    <HIconButton
+                      class="hk-window-close hk-select-sheet-close"
+                      size={32}
+                      variant="ghost"
+                      aria-label={t("hikari::modal.close", "Close")}
+                      onClick={close}
+                    >
+                      <HIcon name="X" size={16} />
+                    </HIconButton>
+                  </div>
                   <div class="hk-select-sheet-body" ref={sheetBodyRef}>
                     <div class="hk-select-sheet-list" ref={sheetListRef}>
                       <div class="hk-select-sheet-content" ref={sheetContentRef}>

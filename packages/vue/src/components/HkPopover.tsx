@@ -19,6 +19,9 @@ import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { onceFrame } from "../runtime/animationBus";
+import HIconButton from "./HkIconButton";
+import HIcon from "./HkIcon";
+import "./window-close.scss";
 import "./HkPopover.scss";
 
 export type PopupPlacement =
@@ -583,24 +586,15 @@ export default defineComponent({
                     {props.title && (
                       <div class="hk-popover-sheet-title">{props.title}</div>
                     )}
-                    <button
-                      class="hk-popover-sheet-close"
+                    <HIconButton
+                      class="hk-window-close hk-popover-sheet-close"
+                      size={32}
+                      variant="ghost"
                       aria-label={t("hikari::modal.close", "Close")}
                       onClick={close}
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        width="16"
-                        height="16"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
+                      <HIcon name="X" size={16} />
+                    </HIconButton>
                   </div>
                 )}
                 {slots.default?.()}

@@ -187,45 +187,10 @@
 }
 
 .hk-popover-sheet-close {
-  flex-shrink: 0;
-  // Pushes to the right edge with or without a title beside it.
+  // Legacy placement hook — the chrome lives on the shared .hk-icon-button
+  // / .hk-window-close rules (window-close.scss) since the unified-close
+  // wave. Only the right-edge pinning stays here.
   margin-left: auto;
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: var(--hi-radius-md, 0.5rem);
-  color: var(--hk-modal-close-color, var(--hi-color-text-secondary, #666));
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    background: var(
-      --hk-modal-close-hover-bg,
-      var(--hi-secondary-bg, rgba(0, 0, 0, 0.06))
-    );
-    color: var(
-      --hk-modal-close-hover-color,
-      var(--hi-color-text-primary, #333)
-    );
-  }
-
-  &:active {
-    transform: scale(0.92);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #ffc0cb);
-    outline-offset: 2px;
-  }
 }
 
 .hk-popover-sheet-enter-active {

@@ -103,6 +103,37 @@ describe("HkSelect mobile sheet", () => {
     expect(container.querySelector<HTMLElement>(".hk-select-trigger")!.dataset.state).toBe("closed");
   });
 
+  // Unified window-close wave: the select sheet previously had no explicit
+  // close affordance (grabber/scrim only). It now carries the same heading
+  // row as the popover sheet — title left, shared icon-button ✕ right.
+  it("closes the sheet via the heading close button", async () => {
+    setViewport(375);
+    const { container } = mountSelect();
+    await nextTick();
+
+    container.querySelector<HTMLButtonElement>(".hk-select-trigger")!.click();
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-select-sheet-panel")!;
+    const header = panel.querySelector<HTMLElement>(".hk-select-sheet-header")!;
+    expect(header).toBeTruthy();
+    expect(header.querySelector(".hk-select-sheet-title")!.textContent).toBe("Channel");
+    const close = header.querySelector<HTMLButtonElement>(".hk-select-sheet-close")!;
+    expect(close).toBeTruthy();
+    expect(close.getAttribute("aria-label")).toBeTruthy();
+    // attrs merging through HkIconButton keeps BOTH the shared icon-button
+    // chrome classes and the consumer's close hooks on the same element.
+    expect(close.classList.contains("hk-icon-button")).toBe(true);
+    expect(close.classList.contains("hk-icon-button-ghost")).toBe(true);
+    expect(close.classList.contains("hk-window-close")).toBe(true);
+    // The X glyph actually renders (default-slot branch, not the fallback
+    // placeholder circle).
+    expect(close.querySelector(".hk-icon")).not.toBeNull();
+    expect(close.querySelector("circle")).toBeNull();
+    close.click();
+    await nextTick();
+    expect(container.querySelector<HTMLElement>(".hk-select-trigger")!.dataset.state).toBe("closed");
+  });
+
   it("keeps the anchored popout on desktop widths", async () => {
     setViewport(1200);
     const { container } = mountSelect();

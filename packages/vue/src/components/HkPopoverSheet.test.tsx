@@ -143,6 +143,10 @@ describe("HkPopover sheetOnMobile", () => {
     const close = header.querySelector<HTMLButtonElement>(".hk-popover-sheet-close")!;
     expect(close).toBeTruthy();
     expect(close.getAttribute("aria-label")).toBeTruthy();
+    // The X glyph renders through the default-slot branch of HkIconButton
+    // (the fallback placeholder circle must never appear in a window close).
+    expect(close.querySelector(".hk-icon")).not.toBeNull();
+    expect(close.querySelector("circle")).toBeNull();
   });
 
   it("closes the sheet from the heading close button", async () => {

@@ -139,6 +139,13 @@ describe("HkModal back-guard (window-first back priority)", () => {
     await settle();
     expect((window.history.state as Record<string, unknown>)?.__hkBack).toEqual(expect.any(String));
 
+    // Unified close chrome: the header close is the shared icon-button X
+    // (default-slot glyph, never the fallback placeholder circle).
+    const closeBtn = document.querySelector<HTMLButtonElement>(".hk-modal-close")!;
+    expect(closeBtn.classList.contains("hk-window-close")).toBe(true);
+    expect(closeBtn.querySelector(".hk-icon")).not.toBeNull();
+    expect(closeBtn.querySelector("circle")).toBeNull();
+
     (document.querySelector(".hk-modal-close") as HTMLButtonElement).click();
     await until(() => open.value === false);
     // History rewound to the page base — a subsequent back leaves the page,

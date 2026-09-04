@@ -300,18 +300,40 @@
   }
 }
 
-.hk-select-sheet-title {
+/* Sheet heading row — same unified grammar as the popover sheet header
+ * (title left, shared icon-button ✕ on the right edge, one vertically
+ * centered line). The select sheet previously had NO explicit close
+ * affordance at all: dismissal was grabber-tap/scrim only. */
+.hk-select-sheet-header {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-8) var(--space-8) 0;
+}
+
+.hk-select-sheet-close {
+  // Right-edge pinning with or without a title beside it; the chrome lives
+  // on the shared .hk-icon-button / .hk-window-close rules
+  // (window-close.scss) since the unified-close wave.
+  margin-left: auto;
+}
+
+.hk-select-sheet-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   /* Left inset tracks the sheet ENTRIES' text edge, not their card
    * edge: the list pads option blocks in by --space-16 and rows carry
    * roughly another --space-16 of leading padding inside, so the old
    * single --space-16 left the title hanging left of every row it
    * named instead of reading as the list's heading. Hosts tune it via
-   * --hk-sheet-title-inset; the trailing inset stays --space-16.
-   * Size/weight match the popover sheet heading (--text-base, window
-   * chrome never text-selectable — 2026-09-04 sheet chrome pass). */
-  padding: 0 var(--space-16) var(--space-8)
-    var(--hk-sheet-title-inset, calc(var(--space-16) * 2));
+   * --hk-sheet-title-inset. Size/weight match the popover sheet heading
+   * (--text-base, window chrome never text-selectable). The trailing
+   * inset doubles as the gap to the close button; the vertical rhythm
+   * moved to the header row. */
+  padding: 0 var(--space-16) 0 var(--hk-sheet-title-inset, calc(var(--space-16) * 2));
   font-size: var(--text-base);
   font-weight: 600;
   letter-spacing: 0.02em;

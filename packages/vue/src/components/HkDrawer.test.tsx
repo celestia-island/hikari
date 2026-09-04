@@ -29,7 +29,7 @@ describe("HkDrawer back-guard (window-first back priority)", () => {
     }
   }
 
-  function mountDrawer(open: { value: boolean }, closable = true) {
+  function mountDrawer(open: { value: boolean }, closable = true, extra: Record<string, unknown> = {}) {
     const container = document.createElement("div");
     document.body.appendChild(container);
     containers.push(container);
@@ -39,6 +39,7 @@ describe("HkDrawer back-guard (window-first back priority)", () => {
           h(HkDrawer, {
             modelValue: open.value,
             closable,
+            ...extra,
             "onUpdate:modelValue": (v: boolean) => { open.value = v; },
           }, { default: () => h("div", "content") });
       },
@@ -59,6 +60,23 @@ describe("HkDrawer back-guard (window-first back priority)", () => {
     window.history.back();
     await until(() => open.value === false);
     await until(() => window.history.state === null);
+    app.unmount();
+  });
+
+  it("renders the unified icon-button close with the X glyph when titled", async () => {
+    const open = ref(true);
+    // The header (and thus the close) renders only with a title/header —
+    // pass one so the chrome exists to assert on.
+    const app = mountDrawer(open, true, { title: "Inspector" });
+    await settle();
+
+    const closeBtn = document.body.querySelector<HTMLButtonElement>(".hk-drawer-close")!;
+    expect(closeBtn).not.toBeNull();
+    expect(closeBtn.classList.contains("hk-window-close")).toBe(true);
+    // Unified close glyph: shared icon-button renders the registry X
+    // (default-slot branch, never the fallback placeholder circle).
+    expect(closeBtn.querySelector(".hk-icon")).not.toBeNull();
+    expect(closeBtn.querySelector("circle")).toBeNull();
     app.unmount();
   });
 

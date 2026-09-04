@@ -1,0 +1,18 @@
+name: Runner Drill
+
+# Standby-pool health drill (PLAN 主线 3): every master push runs one
+# trivial job on the backup runner pool so a dead standby pool is detected on
+# the next merge instead of during an incident. See
+# _plan-archive/runner-failover-runbook.md.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  standby-drill:
+    runs-on: [self-hosted, Linux, X64, local, backup]
+    steps:
+      - name: Drill
+        run: echo "backup pool drill ok on $RUNNER_NAME"

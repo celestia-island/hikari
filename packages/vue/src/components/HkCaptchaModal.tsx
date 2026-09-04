@@ -1,5 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import { HModal } from "@celestia-island/hikari";
+import { HModal, type ModalWidth } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 
@@ -23,7 +23,7 @@ export const HkCaptchaModal = defineComponent({
     scriptUrl: { type: String, default: undefined },
     attempt: { type: Number, default: 0 },
     title: { type: String, default: undefined },
-    width: { type: String, default: "30rem" },
+    width: { type: String as PropType<ModalWidth>, default: "30rem" },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,

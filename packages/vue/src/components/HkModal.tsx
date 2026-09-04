@@ -34,6 +34,84 @@ export interface ModalAction {
   onClick?: () => void;
 }
 
+/**
+ * Named width presets for the `width` prop. Callers kept reaching for
+ * semantic sizes (`width="sm"`) which, passed through as raw CSS
+ * `max-width`, are silently dropped by the browser — the frame fell back
+ * to `width: 100%` and spanned the whole viewport (chest #662-era change
+ * password modal rendered 2048px wide). Named values now resolve here;
+ * anything else keeps passing through as a CSS max-width value.
+ */
+export const MODAL_WIDTH_PRESETS = {
+  xs: "20rem",
+  sm: "32rem",
+  md: "40rem",
+  lg: "56rem",
+  xl: "72rem",
+} as const;
+
+export type ModalWidthPreset = keyof typeof MODAL_WIDTH_PRESETS;
+
+/**
+ * `width` accepts a named preset or any CSS max-width value. The
+ * `(string & {})` arm keeps preset autocomplete in TSX while still
+ * allowing arbitrary lengths ("32rem", "560px", "50%").
+ */
+export type ModalWidth = ModalWidthPreset | (string & {});
+
+const warnedWidths = new Set<string>();
+/** Dev-only warn-once memory cap: a session feeding dynamically generated
+ *  garbage widths must not grow the set forever. Prod never reaches this
+ *  code (DEV is statically false there). */
+const MAX_WARNED_WIDTHS = 50;
+
+/** Valid digit-free CSS max-width keywords: the browser honors these, so
+ *  the "would span the viewport" dev warn must stay silent for them. */
+const WIDTH_KEYWORDS = new Set([
+  "auto",
+  "none",
+  "min-content",
+  "max-content",
+  "fit-content",
+]);
+
+/**
+ * Resolve the `width` prop to a concrete CSS max-width value: presets map
+ * through `MODAL_WIDTH_PRESETS`, everything else passes through untouched.
+ * In dev, a value that is neither a preset, a keyword, nor a length (no
+ * digit anywhere — e.g. a stray token like `"wide"`) warns once: as a raw
+ * max-width it would be dropped by the browser and the modal would span
+ * the viewport.
+ */
+export function resolveModalWidth(width: string): string {
+  // Coerce defensively: a JS consumer passing width={560} skips the prop
+  // type check at runtime and Vue would have rendered the number as px.
+  const value = String(width);
+  // hasOwnProperty.call instead of Object.hasOwn (ES2022): the package
+  // ships TS source, so consumers' bundlers will not polyfill new
+  // built-ins — this must not raise the runtime floor. The own-property
+  // guard is what keeps inherited members ("constructor", "toString")
+  // from resolving as presets past the dev warn.
+  const key = value.trim();
+  const preset = Object.prototype.hasOwnProperty.call(MODAL_WIDTH_PRESETS, key)
+    ? MODAL_WIDTH_PRESETS[key as ModalWidthPreset]
+    : undefined;
+  if (preset !== undefined) return preset;
+  if (
+    import.meta.env?.DEV &&
+    !/\d/.test(value) &&
+    !WIDTH_KEYWORDS.has(key) &&
+    warnedWidths.size < MAX_WARNED_WIDTHS &&
+    !warnedWidths.has(value)
+  ) {
+    warnedWidths.add(value);
+    console.warn(
+      `[HkModal] width "${value}" is neither a named preset (${Object.keys(MODAL_WIDTH_PRESETS).join("/")}) nor a CSS length — the browser would drop it and the modal would span the viewport.`,
+    );
+  }
+  return value;
+}
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -44,7 +122,8 @@ export default defineComponent({
     modelValue: { type: Boolean, required: true },
     title: { type: String, default: undefined },
     closable: { type: Boolean, default: true },
-    width: { type: String, default: "32rem" },
+    /** Named preset ("xs"…"xl") or any CSS max-width value (see ModalWidth). */
+    width: { type: String as PropType<ModalWidth>, default: "32rem" },
     /**
      * Escape hatch: extra class appended to the .hk-modal-content frame
      * so hosts can restyle the surface without forking the modal (e.g.
@@ -114,7 +193,7 @@ export default defineComponent({
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
-    const resolvedWidth = computed(() => props.width);
+    const resolvedWidth = computed(() => resolveModalWidth(props.width));
     // Layer/dialog name: the explicit surface name wins over the header
     // title (which header-less surfaces never pass).
     const resolvedSurfaceName = computed(() => props.surfaceTitle ?? props.title);

@@ -1,5 +1,5 @@
-import { computed, defineComponent, onBeforeUnmount, ref, watch } from "vue";
-import { HMarkdownRenderer, HModal, useClipboard, type ModalAction } from "@celestia-island/hikari";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
+import { HMarkdownRenderer, HModal, useClipboard, type ModalAction, type ModalWidth } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
@@ -29,7 +29,7 @@ export const HkProtocolModal = defineComponent({
     declineLabel: { type: String, default: undefined },
     /** Allow dismissing without a decision (overlay/ESC/X). Default true. */
     closable: { type: Boolean, default: true },
-    width: { type: String, default: "48rem" },
+    width: { type: String as PropType<ModalWidth>, default: "48rem" },
     /** Cap the scroll body height (e.g. "60vh"). */
     bodyHeight: { type: String, default: undefined },
   },

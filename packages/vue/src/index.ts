@@ -115,6 +115,11 @@ export { type BoardNodeInput, type BoardEdgeInput } from "./components/HkBoard";
 export { type BoardAnchorMode, type BoardEdgeStyle, type BoardPoint } from "./utils/boardEdges";
 export { type BoardCamera, type BoardRect, type BoardViewport } from "./utils/boardCamera";
 export { type ModalAction } from "./components/HkModal";
+export {
+  type ModalWidth,
+  type ModalWidthPreset,
+  resolveModalWidth,
+} from "./components/HkModal";
 export { type TreeNode, type TreeSize, type TreeRowScope } from "./components/HkTree";
 export { type DragListItem } from "./components/HkDraggableList";
 export { type GridItem } from "./components/HkDraggableGrid";

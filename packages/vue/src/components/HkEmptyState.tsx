@@ -1,5 +1,6 @@
 import { defineComponent, h, type Component, type PropType } from "vue";
 
+import { useI18n } from "../i18n/context";
 import HSpinner from "./HkSpinner";
 import "./HkEmptyState.scss";
 
@@ -20,6 +21,7 @@ export default defineComponent({
     },
   },
   setup(props, { slots }) {
+    const { t } = useI18n();
     return () => (
       <div
         class={[
@@ -31,7 +33,14 @@ export default defineComponent({
         aria-busy={props.loading ? "true" : undefined}
       >
         {props.loading ? (
-          <HSpinner center />
+          <>
+            {/* The status region needs text content, or screen readers
+                announce an empty live region when the spinner appears. */}
+            <span class="hk-empty-sr-only">
+              {t("hikari::emptyState.loading", "Loading")}
+            </span>
+            <HSpinner center />
+          </>
         ) : (
           <>
             <div class="hk-empty-icon">

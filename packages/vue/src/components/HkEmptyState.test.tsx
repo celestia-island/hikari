@@ -93,6 +93,10 @@ describe("HkEmptyState", () => {
     expect(root.getAttribute("role")).toBe("status");
     expect(root.getAttribute("aria-busy")).toBe("true");
     expect(c.querySelector(".hk-spinner")).not.toBeNull();
+    // The status region must carry text content for screen readers.
+    const sr = c.querySelector(".hk-empty-sr-only");
+    expect(sr).not.toBeNull();
+    expect((sr as HTMLElement).textContent).toBe("Loading");
     expect(c.querySelector(".hk-empty-title")).toBeNull();
     expect(c.querySelector(".hk-empty-desc")).toBeNull();
     expect(c.querySelector(".hk-empty-action")).toBeNull();

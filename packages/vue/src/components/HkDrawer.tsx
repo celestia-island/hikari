@@ -292,7 +292,7 @@ export default defineComponent({
                       aria-label={t("hikari::drawer.close", "Close")}
                       onClick={close}
                     >
-                      <HIcon name="X" size={16} />
+                      <HIcon name="close" size={16} />
                     </HIconButton>
                   ) : null}
                 </div>

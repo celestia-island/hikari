@@ -593,7 +593,7 @@ export default defineComponent({
                       aria-label={t("hikari::modal.close", "Close")}
                       onClick={close}
                     >
-                      <HIcon name="X" size={16} />
+                      <HIcon name="close" size={16} />
                     </HIconButton>
                   </div>
                 )}

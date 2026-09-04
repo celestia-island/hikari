@@ -151,6 +151,13 @@
       height: var(--hi-icon-button-icon-size);
       display: block;
     }
+
+    // Theme-context glyph size (user direction 2026-09-05): BA themes keep
+    // scale 1; thin-stroke themes publish a >1 scale for their slightly
+    // larger functional glyphs. transform keeps the 32px hit box intact.
+    .hk-icon {
+      transform: scale(var(--hk-func-icon-scale, 1));
+    }
   }
 
   // Active state for icon

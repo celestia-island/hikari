@@ -2,6 +2,7 @@
 // house rule: no SFCs in the tree). Render-only showcase of every exported
 // component; state is local and throwaway.
 import { computed, defineComponent, ref } from "vue";
+import { PackageOpen } from "lucide-vue-next";
 import { HIKARI_FONT_MONO } from "./theme/fontContext";
 import {
   HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
@@ -360,11 +361,30 @@ export default defineComponent({
 
         <section>
           <h2>HEmptyState</h2>
-          <HEmptyState
-            title="No items"
-            description="Nothing to show here yet."
-            v-slots={{ icon: () => <HIcon name="inbox" size={48} /> }}
-          />
+          <div class="col">
+            <HEmptyState
+              title="No items"
+              description="Nothing to show here yet."
+              v-slots={{ action: () => <HButton size="sm">Create item</HButton> }}
+            />
+            <HEmptyState
+              title="Nothing found"
+              description="Search returned no matches — try a different query."
+              icon={PackageOpen}
+            />
+            <HEmptyState
+              title="Custom icon slot"
+              v-slots={{ icon: () => <HIcon name="inbox" size={48} /> }}
+            />
+            <HEmptyState loading />
+            <div style="height:220px">
+              <HEmptyState
+                title="Panel empty"
+                description={'fit="fill" stretches the card to its host container.'}
+                fit="fill"
+              />
+            </div>
+          </div>
         </section>
 
         <section>

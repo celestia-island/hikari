@@ -1,6 +1,6 @@
 import { computed, defineComponent, nextTick, ref, watch, type PropType } from "vue";
 import { Copy, Eraser, Pause, Play, ScrollText } from "lucide-vue-next";
-import { HModal, HScrollContainer, useClipboard } from "@celestia-island/hikari";
+import { HModal, HScrollContainer, useClipboard, type ModalWidth } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 
@@ -47,7 +47,7 @@ export const HkLogWindow = defineComponent({
     /** Height of the log body (CSS length, e.g. "55vh"). */
     height: { type: String, default: "55vh" },
     title: { type: String, default: undefined },
-    width: { type: String, default: "60rem" },
+    width: { type: String as PropType<ModalWidth>, default: "60rem" },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,

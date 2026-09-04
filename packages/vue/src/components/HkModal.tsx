@@ -65,33 +65,51 @@ const warnedWidths = new Set<string>();
  *  code (DEV is statically false there). */
 const MAX_WARNED_WIDTHS = 50;
 
+/** Valid digit-free CSS max-width keywords: the browser honors these, so
+ *  the "would span the viewport" dev warn must stay silent for them. */
+const WIDTH_KEYWORDS = new Set([
+  "auto",
+  "none",
+  "min-content",
+  "max-content",
+  "fit-content",
+]);
+
 /**
  * Resolve the `width` prop to a concrete CSS max-width value: presets map
  * through `MODAL_WIDTH_PRESETS`, everything else passes through untouched.
- * In dev, a value that is neither a preset nor a length (no digit anywhere
- * — e.g. a stray token like `"wide"`) warns once: as a raw max-width it
- * would be dropped by the browser and the modal would span the viewport.
+ * In dev, a value that is neither a preset, a keyword, nor a length (no
+ * digit anywhere — e.g. a stray token like `"wide"`) warns once: as a raw
+ * max-width it would be dropped by the browser and the modal would span
+ * the viewport.
  */
 export function resolveModalWidth(width: string): string {
-  // Object.hasOwn guard: a bare index lookup would inherit Object.prototype
-  // members (`width="constructor"` → the Object function), whose truthy
-  // early-return would bypass the dev warn and land garbage in max-width.
-  const preset = Object.hasOwn(MODAL_WIDTH_PRESETS, width.trim())
-    ? MODAL_WIDTH_PRESETS[width.trim() as ModalWidthPreset]
+  // Coerce defensively: a JS consumer passing width={560} skips the prop
+  // type check at runtime and Vue would have rendered the number as px.
+  const value = String(width);
+  // hasOwnProperty.call instead of Object.hasOwn (ES2022): the package
+  // ships TS source, so consumers' bundlers will not polyfill new
+  // built-ins — this must not raise the runtime floor. The own-property
+  // guard is what keeps inherited members ("constructor", "toString")
+  // from resolving as presets past the dev warn.
+  const key = value.trim();
+  const preset = Object.prototype.hasOwnProperty.call(MODAL_WIDTH_PRESETS, key)
+    ? MODAL_WIDTH_PRESETS[key as ModalWidthPreset]
     : undefined;
   if (preset !== undefined) return preset;
   if (
     import.meta.env?.DEV &&
-    !/\d/.test(width) &&
+    !/\d/.test(value) &&
+    !WIDTH_KEYWORDS.has(key) &&
     warnedWidths.size < MAX_WARNED_WIDTHS &&
-    !warnedWidths.has(width)
+    !warnedWidths.has(value)
   ) {
-    warnedWidths.add(width);
+    warnedWidths.add(value);
     console.warn(
-      `[HkModal] width "${width}" is neither a named preset (${Object.keys(MODAL_WIDTH_PRESETS).join("/")}) nor a CSS length — the browser would drop it and the modal would span the viewport.`,
+      `[HkModal] width "${value}" is neither a named preset (${Object.keys(MODAL_WIDTH_PRESETS).join("/")}) nor a CSS length — the browser would drop it and the modal would span the viewport.`,
     );
   }
-  return width;
+  return value;
 }
 
 const FOCUSABLE_SELECTOR =

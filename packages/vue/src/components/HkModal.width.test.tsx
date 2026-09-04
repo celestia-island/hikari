@@ -35,6 +35,18 @@ describe("resolveModalWidth", () => {
     expect(resolveModalWidth("min(90vw, 48rem)")).toBe("min(90vw, 48rem)");
   });
 
+  it("passes digit-free max-width keywords through without warning", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    for (const keyword of ["auto", "none", "min-content", "max-content", "fit-content"]) {
+      expect(resolveModalWidth(keyword)).toBe(keyword);
+    }
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("coerces a numeric width from JS consumers instead of throwing", () => {
+    expect(resolveModalWidth(560 as unknown as string)).toBe("560");
+  });
+
   it("does not inherit Object.prototype members as presets", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     // A bare index lookup would resolve "constructor"/"toString" to

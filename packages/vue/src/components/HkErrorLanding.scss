@@ -15,6 +15,15 @@
   --hel-error: var(--color-error, 226 84 84);
   --hel-warning: var(--color-warning, 222 168 62);
 
+  // The landing owns its full-viewport backdrop, so it must always fill
+  // the host's inline axis. Hosts vary: a plain block (the app overlay's
+  // fixed inset-0 box) already gives block children the full width, but a
+  // CENTERING host — e.g. a standalone mount root that is itself a
+  // centering flex/grid box — shrink-wraps flex/grid items to content
+  // width, which paints this background as one content-wide column and
+  // leaks the host body background down both sides. An explicit
+  // width:100% makes every host render the same edge-to-edge takeover.
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;

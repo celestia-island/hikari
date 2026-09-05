@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "Ablehnen",
     "hikari::protocol.copy": "Kopieren",
     "hikari::protocol.copied": "Kopiert",
+    "hikari::clipboard.copied": "Kopiert",
+    "hikari::clipboard.copyFailed": "Kopieren fehlgeschlagen",
     "hikari::about.title": "Über",
     "hikari::about.version": "Version",
     "hikari::about.buildHash": "Build",

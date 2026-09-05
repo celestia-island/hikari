@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "Отклонить",
     "hikari::protocol.copy": "Копировать",
     "hikari::protocol.copied": "Скопировано",
+    "hikari::clipboard.copied": "Скопировано",
+    "hikari::clipboard.copyFailed": "Не удалось скопировать",
     "hikari::about.title": "О программе",
     "hikari::about.version": "Версия",
     "hikari::about.buildHash": "Сборка",

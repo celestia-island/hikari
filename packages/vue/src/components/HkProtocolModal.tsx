@@ -1,5 +1,12 @@
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
-import { HMarkdownRenderer, HModal, useClipboard, type ModalAction, type ModalWidth } from "@celestia-island/hikari";
+import {
+  HMarkdownRenderer,
+  HModal,
+  useClipboardWithToast,
+  useToast,
+  type ModalAction,
+  type ModalWidth,
+} from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
@@ -40,8 +47,7 @@ export const HkProtocolModal = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
-    const clipboard = useClipboard();
-    const copied = computed(() => clipboard.copied.value);
+    const clipboard = useClipboardWithToast(useToast());
 
     const footerActions = computed<ModalAction[]>(() => [
       {
@@ -103,7 +109,6 @@ export const HkProtocolModal = defineComponent({
           class="s-protocol-modal"
           style={props.bodyHeight ? { maxHeight: props.bodyHeight } : undefined}
         >
-          {copied.value && <p class="s-protocol-modal-copied">{t("hikari::protocol.copied", "Copied")}</p>}
           <HMarkdownRenderer content={props.content} />
         </div>
       </HModal>

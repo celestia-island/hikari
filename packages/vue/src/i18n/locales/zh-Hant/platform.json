@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "拒絕",
     "hikari::protocol.copy": "複製",
     "hikari::protocol.copied": "已複製",
+    "hikari::clipboard.copied": "已複製",
+    "hikari::clipboard.copyFailed": "複製失敗",
     "hikari::about.title": "關於",
     "hikari::about.version": "版本",
     "hikari::about.buildHash": "建置",

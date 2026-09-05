@@ -28,14 +28,16 @@ const WINDOW_FILES = [
 ];
 
 describe("unified window-close contract", () => {
-  it("renders every close control as HkIconButton + the X glyph", () => {
+  it("renders every close control as HkIconButton + the functional close key", () => {
     for (const f of WINDOW_FILES) {
       const src = readFileSync(join(here, f), "utf-8");
       expect(src, `${f} must carry the shared grammar class`).toContain(
         "hk-window-close",
       );
-      expect(src, `${f} must render the registry X glyph`).toContain(
-        'HIcon name="X"',
+      // Semantic key: the theme context's material pack can swap the glyph
+      // family at runtime (iconRegistry resolves close → X by default).
+      expect(src, `${f} must render the functional close key`).toContain(
+        'HIcon name="close"',
       );
       expect(src, `${f} must close via HkIconButton`).toContain("HIconButton");
     }

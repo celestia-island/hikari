@@ -269,7 +269,12 @@ export type { HealthProbeBody, HealthProbeResult } from "./utils/healthProbe";
 
 export { highlight, useHighlight } from "./composables/useHighlight";
 export { LANGUAGE_LOADERS } from "./composables/highlightLanguages";
-export { iconByName } from "./composables/iconRegistry";
+export {
+  iconByName,
+  registerFunctionalIconPack,
+  functionalIconSvg,
+  sanitizeSvg,
+} from "./composables/iconRegistry";
 export { useMessaging, registerTransport, registerNativeBridge } from "./composables/messaging";
 export type { MessagePayload, MessageSeverity, MessageTransport, NotifyOptions, TransportName } from "./composables/messaging";
 

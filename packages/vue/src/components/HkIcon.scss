@@ -27,6 +27,21 @@
 }
 
 // ------
+// Functional icon-button glyph weight (theme-context driven)
+// ------
+// Inside the HkIconButton family — the HIGHLY FUNCTIONAL controls (window
+// close/back, compact action buttons) — the THEME CONTEXT decides how the
+// glyph is drawn, per user direction 2026-09-05: Blue Archive-styled themes
+// keep the bold small default (stroke 2, no scaling) while thin-stroke
+// themes (e.g. Endfield) publish --hk-func-icon-stroke-width / --hk-func-icon-scale
+// from their own layer. A CSS rule here overrides lucide's inline
+// stroke-width PRESENTATION ATTRIBUTE; scoping to .hk-icon-button keeps
+// every plain HkIcon elsewhere untouched.
+.hk-icon-button .hk-icon svg {
+  stroke-width: var(--hk-func-icon-stroke-width, 2);
+}
+
+// ------
 // Icon Size Variants
 // ------
 

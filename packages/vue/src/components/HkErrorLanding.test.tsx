@@ -11,6 +11,7 @@ interface MountOptions {
   code?: string;
   status?: number;
   tone?: "error" | "warning" | "info";
+  variant?: "page" | "inline";
   detailsOpen?: boolean;
   details?: () => ReturnType<typeof h>;
   actions?: () => ReturnType<typeof h>;
@@ -28,6 +29,7 @@ function mountLanding(opts: MountOptions = {}) {
         code: opts.code ?? "",
         status: opts.status,
         tone: opts.tone ?? "error",
+        variant: opts.variant ?? "page",
         detailsOpen: opts.detailsOpen ?? true,
       }, {
         ...(opts.details ? { default: opts.details } : {}),
@@ -98,5 +100,11 @@ describe("HkErrorLanding", () => {
     expect(el.querySelector(".hk-error-landing")!.classList.contains("is-warning")).toBe(true);
     expect(el.querySelector(".fake-action")).not.toBeNull();
     expect(el.querySelector(".fake-brand")).not.toBeNull();
+  });
+
+  it("applies the inline variant class without the page backdrop", () => {
+    const el = mountLanding({ variant: "inline", title: "Boom" });
+    const root = el.querySelector(".hk-error-landing")!;
+    expect(root.classList.contains("is-inline")).toBe(true);
   });
 });

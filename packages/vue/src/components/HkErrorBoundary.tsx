@@ -1,14 +1,34 @@
-import { Copy, RefreshCw, TriangleAlert as AlertTriangle } from "lucide-vue-next";
-import { defineComponent, onErrorCaptured, ref, type PropType, type VNode } from "vue";
-
-
+import { Copy, RefreshCw } from "lucide-vue-next";
+import { computed, defineComponent, onErrorCaptured, ref, type PropType, type VNode } from "vue";
 
 import { useClipboard } from "../runtime/useClipboard";
 import { useI18n } from "../i18n/context";
 import HButton from "./HkButton";
-import HScrollContainer from "./HkScrollContainer";
-import "./HkErrorBoundary.scss";
+import { HkErrorLanding } from "./HkErrorLanding";
+import { HkJsonTree } from "./HkJsonTree";
 
+interface CapturedError {
+  name: string;
+  message: string;
+  stack: string;
+}
+
+function captureError(err: unknown): CapturedError {
+  if (err instanceof Error) {
+    return { name: err.name || "Error", message: err.message, stack: err.stack || "" };
+  }
+  return { name: "Error", message: String(err), stack: "" };
+}
+
+/**
+ * HkErrorBoundary — inline crash guard rendering the shared error landing.
+ *
+ * Captures descendant errors via `onErrorCaptured` and stops propagation.
+ * The built-in fallback is the same HkErrorLanding card the family's
+ * full-page takeovers use (inline variant): tone icon, headline, the error
+ * name as the code chip, the message as the description, the raw
+ * name/message/stack in a collapsible JSON tree, plus retry / copy actions.
+ */
 export default defineComponent({
   name: "HkErrorBoundary",
   props: {
@@ -21,15 +41,12 @@ export default defineComponent({
   setup(props, { slots }) {
     const clipboard = useClipboard();
     const { t } = useI18n();
-    const error = ref<string | null>(null);
+    const error = ref<CapturedError | null>(null);
 
     onErrorCaptured((err) => {
-      const msg =
-        err instanceof Error
-          ? `${err.name}: ${err.message}\n\n${err.stack || ""}`
-          : String(err);
-      console.error(`[ErrorBoundary:${props.name}]`, msg);
-      error.value = msg;
+      const captured = captureError(err);
+      console.error(`[ErrorBoundary:${props.name}]`, err);
+      error.value = captured;
       return false;
     });
 
@@ -37,9 +54,16 @@ export default defineComponent({
       error.value = null;
     }
 
-    function copyError() {
-      clipboard.copy(error.value!);
-    }
+    const detailsValue = computed(() => {
+      if (!error.value) return undefined;
+      const record: Record<string, unknown> = {
+        name: error.value.name,
+        message: error.value.message,
+      };
+      if (error.value.stack) record.stack = error.value.stack;
+      if (props.name !== "unknown") record.boundary = props.name;
+      return record;
+    });
 
     return () => {
       if (error.value === null) {
@@ -47,38 +71,33 @@ export default defineComponent({
       }
 
       if (props.fallback) {
-        return props.fallback(error.value, retry);
+        const err = error.value;
+        const text = err.stack ? `${err.name}: ${err.message}\n\n${err.stack}` : `${err.name}: ${err.message}`;
+        return props.fallback(text, retry);
       }
 
+      const err = error.value;
       return (
-        <div class="hk-error-boundary">
-          <div class="hk-error-boundary-card">
-            <div class="hk-error-boundary-header">
-              <AlertTriangle size={16} class="hk-error-boundary-icon" />
-              <span class="hk-error-boundary-label">{props.errorTitle || t("hikari::errorBoundary.title", "Component Error")}</span>
-              {props.name !== "unknown" && (
-                <span class="hk-error-boundary-tag">{props.name}</span>
-              )}
-            </div>
-            <div class="hk-error-boundary-msg">
-              <div style={{ maxHeight: "12rem" }}>
-                <HScrollContainer>
-                  {error.value}
-                </HScrollContainer>
-              </div>
-            </div>
-            <div class="hk-error-boundary-actions">
-              <HButton variant="ghost" size="sm" onClick={copyError}>
-                <Copy size={12} />
-                {props.copyErrorLabel || t("hikari::errorBoundary.copyError", "Copy Error")}
-              </HButton>
-              <HButton variant="outline" size="sm" onClick={retry}>
+        <HkErrorLanding
+          variant="inline"
+          title={props.errorTitle || t("hikari::errors.defaultTitle", "Something went wrong")}
+          description={err.message}
+          code={err.name}
+        >
+          {{
+            default: () => <HkJsonTree value={detailsValue.value} ariaLabel="stack trace" />,
+            actions: () => [
+              <HButton variant="primary" size="sm" onClick={retry}>
                 <RefreshCw size={12} />
                 {props.retryLabel || t("hikari::errorBoundary.retry", "Retry")}
-              </HButton>
-            </div>
-          </div>
-        </div>
+              </HButton>,
+              <HButton variant="ghost" size="sm" onClick={() => clipboard.copy(`${err.name}: ${err.message}\n${err.stack}`)}>
+                <Copy size={12} />
+                {props.copyErrorLabel || t("hikari::errorBoundary.copyError", "Copy Error")}
+              </HButton>,
+            ],
+          }}
+        </HkErrorLanding>
       );
     };
   },

@@ -1,6 +1,8 @@
 {
   "errors": {
     "hikari::errors.defaultTitle": "Algo salió mal",
-    "hikari::errors.rawDetails": "Detalles del error original"
+    "hikari::errors.rawDetails": "Detalles del error original",
+    "hikari::errors.backHome": "Volver al inicio",
+    "hikari::errors.unexpectedDesc": "La aplicación encontró un error no controlado. Puede volver al inicio o reintentar."
   }
 }

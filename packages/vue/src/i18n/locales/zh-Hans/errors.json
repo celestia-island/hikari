@@ -1,6 +1,8 @@
 {
   "errors": {
     "hikari::errors.defaultTitle": "出错了",
-    "hikari::errors.rawDetails": "原始错误详情"
+    "hikari::errors.rawDetails": "原始错误详情",
+    "hikari::errors.backHome": "返回首页",
+    "hikari::errors.unexpectedDesc": "应用遇到了未处理的错误，您可以返回首页或重试。"
   }
 }

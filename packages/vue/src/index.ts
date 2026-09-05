@@ -111,7 +111,17 @@ export { default as HErrorBoundary } from "./components/HkErrorBoundary";
 export {
   HkErrorLanding as HErrorLanding,
   type HErrorTone,
+  type HErrorLandingVariant,
 } from "./components/HkErrorLanding";
+export { HkErrorReportingOverlay as HErrorReportingOverlay } from "./errorReporting";
+export {
+  createErrorReporting,
+  reportGlobalError,
+  clearGlobalError,
+  type HkErrorReportingOptions,
+  type HkErrorSource,
+  type HkReportedError,
+} from "./errorReporting";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";

@@ -1,6 +1,8 @@
 {
   "errors": {
     "hikari::errors.defaultTitle": "Что-то пошло не так",
-    "hikari::errors.rawDetails": "Исходные детали ошибки"
+    "hikari::errors.rawDetails": "Исходные детали ошибки",
+    "hikari::errors.backHome": "На главную",
+    "hikari::errors.unexpectedDesc": "В приложении произошла необработанная ошибка. Вы можете вернуться на главную страницу или повторить попытку."
   }
 }

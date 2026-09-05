@@ -1,4 +1,5 @@
 @use "./menu-item" as mi;
+@use "./scrim-fade" as sf;
 
 .hk-popover-backdrop {
   position: fixed;
@@ -210,6 +211,12 @@
   opacity: 0;
   transform: translateY(100%);
 }
+
+/* Sheet scrim fade — shared window-layer contract (./_scrim-fade.scss):
+ * opacity-only, own transition name, in place. The scrim used to mount
+ * and unmount bare, snapping the dim curtain on and off around the
+ * sliding panel. */
+@include sf.scrim-fade("hk-popover-scrim");
 
 @media (prefers-reduced-motion: reduce) {
   .hk-popover-sheet-enter-active,

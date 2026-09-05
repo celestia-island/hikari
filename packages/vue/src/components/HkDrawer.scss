@@ -1,3 +1,5 @@
+@use "./scrim-fade" as sf;
+
 .hk-drawer-overlay {
   position: fixed;
   inset: 0;
@@ -5,18 +7,15 @@
   backdrop-filter: var(--hk-drawer-overlay-blur, blur(6px));
 }
 
-.hk-drawer-overlay-enter-active {
-  transition: opacity var(--hi-duration-normal, 0.3s) var(--hi-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.hk-drawer-overlay-leave-active {
-  transition: opacity var(--hi-duration-normal, 0.3s) var(--hi-ease-in, cubic-bezier(0.4, 0, 1, 1));
-}
-
-.hk-drawer-overlay-enter-from,
-.hk-drawer-overlay-leave-to {
-  opacity: 0;
-}
+// Overlay enter/leave — fade-only classes from the shared window-layer
+// contract (./_scrim-fade.scss); the panel below owns all the motion.
+@include sf.scrim-fade(
+  "hk-drawer-overlay",
+  $enter-duration: var(--hi-duration-normal, 0.3s),
+  $enter-ease: var(--hi-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+  $leave-duration: var(--hi-duration-normal, 0.3s),
+  $leave-ease: var(--hi-ease-in, cubic-bezier(0.4, 0, 1, 1))
+);
 
 .hk-drawer-panel {
   position: fixed;

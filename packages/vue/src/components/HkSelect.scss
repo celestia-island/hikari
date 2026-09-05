@@ -1,5 +1,6 @@
 @use "../tokens";
 @use "./menu-item" as mi;
+@use "./scrim-fade" as sf;
 
 /* HkSelect — popup select component */
 
@@ -400,6 +401,13 @@
   opacity: 0;
   transform: translateY(100%);
 }
+
+/* Scrim fade — the shared window-layer contract (./_scrim-fade.scss):
+ * the dim curtain fades in place under its OWN transition name while the
+ * panel above slides. It once shared this `hk-select-sheet` name, so the
+ * panel's translateY(100%) enter pair dragged the backdrop up from the
+ * bottom edge on phones (2026-09-06 report). */
+@include sf.scrim-fade("hk-select-sheet-scrim");
 
 @media (prefers-reduced-motion: reduce) {
   .hk-select-sheet-enter-active,

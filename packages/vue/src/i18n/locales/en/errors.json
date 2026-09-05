@@ -1,6 +1,8 @@
 {
   "errors": {
     "hikari::errors.defaultTitle": "Something went wrong",
-    "hikari::errors.rawDetails": "Raw error details"
+    "hikari::errors.rawDetails": "Raw error details",
+    "hikari::errors.backHome": "Back to home",
+    "hikari::errors.unexpectedDesc": "The application hit an unhandled error. You can go back to the home page or retry."
   }
 }

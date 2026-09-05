@@ -8,6 +8,15 @@ import "./HkErrorLanding.scss";
 export type HErrorTone = "error" | "warning" | "info";
 
 /**
+ * Layout variant of the landing.
+ * - `page` (default): owns a full-viewport backdrop — for overlays and
+ *   standalone error pages.
+ * - `inline`: drops the backdrop and viewport height so the same card can
+ *   live inside a pane captured by HkErrorBoundary.
+ */
+export type HErrorLandingVariant = "page" | "inline";
+
+/**
  * HkErrorLanding — the shared full-page error landing.
  *
  * Login-page-like layout: a centered card over a full-viewport backdrop,
@@ -33,6 +42,8 @@ export const HkErrorLanding = defineComponent({
     /** HTTP status chip, e.g. 400. */
     status: { type: Number, default: undefined },
     tone: { type: String as PropType<HErrorTone>, default: "error" },
+    /** Layout variant: `page` (viewport backdrop) or `inline` (in-flow card). */
+    variant: { type: String as PropType<HErrorLandingVariant>, default: "page" },
     /** Initial expansion of the raw-details section. */
     detailsOpen: { type: Boolean, default: true },
   },
@@ -48,7 +59,7 @@ export const HkErrorLanding = defineComponent({
     }
 
     return () => (
-      <div class={`hk-error-landing is-${props.tone}`}>
+      <div class={`hk-error-landing is-${props.tone}${props.variant === "inline" ? " is-inline" : ""}`}>
         <div class="hk-error-landing__card">
           {slots.brand?.()}
 

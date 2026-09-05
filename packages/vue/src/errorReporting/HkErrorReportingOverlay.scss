@@ -1,0 +1,9 @@
+// HkErrorReportingOverlay — fixed full-viewport host for the error landing.
+// Sits above every popup band (modal 1000 / dropdown 2000 / tooltip 3000 /
+// toast 4000): an uncaught-error takeover must never be covered.
+
+.hk-error-reporting-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}

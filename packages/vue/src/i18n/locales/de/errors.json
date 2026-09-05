@@ -1,6 +1,8 @@
 {
   "errors": {
     "hikari::errors.defaultTitle": "Etwas ist schiefgelaufen",
-    "hikari::errors.rawDetails": "Fehlerdetails im Original"
+    "hikari::errors.rawDetails": "Fehlerdetails im Original",
+    "hikari::errors.backHome": "Zur Startseite",
+    "hikari::errors.unexpectedDesc": "In der Anwendung ist ein unbehandelter Fehler aufgetreten. Sie können zur Startseite zurückkehren oder es erneut versuchen."
   }
 }

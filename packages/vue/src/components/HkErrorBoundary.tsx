@@ -20,6 +20,10 @@ function captureError(err: unknown): CapturedError {
   return { name: "Error", message: String(err), stack: "" };
 }
 
+function formatError(err: CapturedError): string {
+  return err.stack ? `${err.name}: ${err.message}\n\n${err.stack}` : `${err.name}: ${err.message}`;
+}
+
 /**
  * HkErrorBoundary — inline crash guard rendering the shared error landing.
  *
@@ -70,13 +74,12 @@ export default defineComponent({
         return slots.default?.();
       }
 
+      const err = error.value;
+
       if (props.fallback) {
-        const err = error.value;
-        const text = err.stack ? `${err.name}: ${err.message}\n\n${err.stack}` : `${err.name}: ${err.message}`;
-        return props.fallback(text, retry);
+        return props.fallback(formatError(err), retry);
       }
 
-      const err = error.value;
       return (
         <HkErrorLanding
           variant="inline"
@@ -91,7 +94,7 @@ export default defineComponent({
                 <RefreshCw size={12} />
                 {props.retryLabel || t("hikari::errorBoundary.retry", "Retry")}
               </HButton>,
-              <HButton variant="ghost" size="sm" onClick={() => clipboard.copy(`${err.name}: ${err.message}\n${err.stack}`)}>
+              <HButton variant="ghost" size="sm" onClick={() => clipboard.copy(formatError(err))}>
                 <Copy size={12} />
                 {props.copyErrorLabel || t("hikari::errorBoundary.copyError", "Copy Error")}
               </HButton>,

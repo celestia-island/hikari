@@ -133,6 +133,7 @@ describe("createErrorReporting", () => {
     const app = createApp({ render: () => null });
     app.config.errorHandler = previous;
     app.use(createErrorReporting());
+    app.mount(container);
     app.config.errorHandler!(new Error("routed"), null, "setup function");
     expect(previous).toHaveBeenCalledTimes(1);
     expect(overlayHost()).not.toBeNull();

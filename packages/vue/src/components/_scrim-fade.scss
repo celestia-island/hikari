@@ -1,0 +1,59 @@
+// _scrim-fade.scss
+//
+// Window-layer animation contract — the one place every modal-context
+// surface's dim curtain is defined (2026-09-06 user directive).
+//
+// Every windowed surface in hikari (HkModal, HkDrawer, the sheet-docked
+// HkSelectPanel, the sheet-docked HkPopover) is TWO independent layers:
+//
+//   overlay / scrim — position: fixed; inset: 0; painted one band below
+//     its panel. It renders inside its OWN <Transition> whose name ends
+//     in -overlay / -scrim and is NEVER the panel's transition name, and
+//     its classes animate OPACITY ONLY: the dim curtain appears over the
+//     whole viewport at once, in place — it never slides, scales, or
+//     clips, on any breakpoint.
+//   panel / content — its own <Transition> with the surface's pop/slide
+//     name (desktop: height-clip or anchored pop; phones: bottom-sheet
+//     translateY). Transforms live here and nowhere else.
+//
+// Why this file exists: the HkSelectPanel sheet scrim reused the panel's
+// `hk-select-sheet` transition name, so the panel's enter-from pair
+// (`transform: translateY(100%)`) applied to the backdrop too — on phones
+// every second-level dropdown sheet dragged its dim curtain up from the
+// bottom edge instead of fading it in globally. First-level modals were
+// fine (their overlay already had a distinct name), which is what made
+// the drift look deliberate.
+//
+// Surfaces generate their fade classes through `scrim-fade()` so the rule
+// is structural, not per-file discipline. Durations and easings accept
+// any CSS value including var() tokens; the defaults are the sheet family
+// feel (0.25s out / 0.2s in, matching the panel opacity timings).
+// Enforced by scrim-fade.contract.test.ts against the compiled css.
+
+@mixin scrim-fade(
+  $name,
+  $enter-duration: 0.25s,
+  $enter-ease: ease-out,
+  $leave-duration: 0.2s,
+  $leave-ease: ease-in
+) {
+  .#{$name}-enter-active {
+    transition: opacity $enter-duration $enter-ease;
+  }
+
+  .#{$name}-leave-active {
+    transition: opacity $leave-duration $leave-ease;
+  }
+
+  .#{$name}-enter-from,
+  .#{$name}-leave-to {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .#{$name}-enter-active,
+    .#{$name}-leave-active {
+      transition: none;
+    }
+  }
+}

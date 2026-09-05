@@ -6,6 +6,8 @@
 // colors, spacing, and typography. Component-specific overrides
 // use the --hk-modal-* namespace.
 
+@use "./scrim-fade" as sf;
+
 // ------
 // Root wrapper — positioned via popup-manager z-index
 // ------
@@ -33,20 +35,16 @@
   pointer-events: auto;
 }
 
-.hk-modal-overlay-enter-active {
-  transition: opacity var(--hk-modal-duration, 0.3s)
-    var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-.hk-modal-overlay-leave-active {
-  transition: opacity var(--hk-modal-duration, 0.3s)
-    var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
-}
-
-.hk-modal-overlay-enter-from,
-.hk-modal-overlay-leave-to {
-  opacity: 0;
-}
+// Overlay enter/leave — fade-only classes emitted from the shared
+// window-layer contract (./_scrim-fade.scss): the curtain dims the whole
+// viewport in place, never sliding or scaling with the content frame.
+@include sf.scrim-fade(
+  "hk-modal-overlay",
+  $enter-duration: var(--hk-modal-duration, 0.3s),
+  $enter-ease: var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+  $leave-duration: var(--hk-modal-duration, 0.3s),
+  $leave-ease: var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1))
+);
 
 // ------
 // Content frame

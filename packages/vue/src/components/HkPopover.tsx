@@ -101,8 +101,12 @@ export default defineComponent({
     // Open/close motion reported into the unified animation context
     // through the same standard hook wiring every surface shares
     // (useSurfaceTransition) — this component was the pattern's
-    // origin and now consumes it like the rest.
-    const anim = useSurfaceTransition(300).hooks();
+    // origin and now consumes it like the rest. Scrim and panel ride
+    // separate named tracks (window-layer contract, ./_scrim-fade.scss)
+    // so the backdrop's fade reports and settles on its own.
+    const surfaceAnim = useSurfaceTransition(300);
+    const anim = surfaceAnim.hooks();
+    const scrimAnim = surfaceAnim.hooks("scrim");
 
     // Suppress native browser tooltips while the popover is open — and
     // not just on the anchor itself: a `title` on ANY descendant fires
@@ -525,13 +529,20 @@ export default defineComponent({
 
     return () => (
       <Teleport to="body">
-        {sheetMode.value && props.modelValue && props.closeOnBackdrop && (
-          <div
-            class="hk-popover-scrim"
-            style={{ zIndex: backdropZ.value }}
-            onClick={() => close()}
-          />
-        )}
+        {/* Window-layer contract (./_scrim-fade.scss): the sheet scrim
+            fades in place under its own transition name — it used to
+            mount and unmount bare, snapping the dim curtain on and off
+            around the sliding panel. z rides the live registration,
+            which outlives the close until the leave fade finishes. */}
+        <Transition name="hk-popover-scrim" appear {...scrimAnim}>
+          {sheetMode.value && props.modelValue && props.closeOnBackdrop ? (
+            <div
+              class="hk-popover-scrim"
+              style={{ zIndex: backdropZ.value }}
+              onClick={() => close()}
+            />
+          ) : null}
+        </Transition>
         {props.backdrop && !sheetMode.value && props.modelValue && (
           <div
             class="hk-popover-backdrop"

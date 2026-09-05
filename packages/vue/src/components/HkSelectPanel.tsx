@@ -520,7 +520,12 @@ export default defineComponent({
       if (sheetMode.value) {
         return (
           <Teleport to="body">
-            <Transition name="hk-select-sheet" appear {...sheetScrimAnim.hooks("scrim")}>
+            {/* Window-layer contract (./_scrim-fade.scss): the scrim fades
+                in place under its OWN transition name. It once shared the
+                panel's `hk-select-sheet` name, so the panel's
+                translateY(100%) enter pair slid the dim curtain up from
+                the bottom edge on phones (2026-09-06 report). */}
+            <Transition name="hk-select-sheet-scrim" appear {...sheetScrimAnim.hooks("scrim")}>
               {props.open ? (
                 <div
                   class="hk-select-sheet-scrim"

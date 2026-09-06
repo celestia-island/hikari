@@ -229,3 +229,91 @@ describe("HkThemeToggle color-mode group", () => {
     expect(activeBtn?.querySelector(".s-theme-item-check")).toBeTruthy();
   });
 });
+
+describe("HkThemeToggle item slots", () => {
+  function mountSlotted(
+    lead: (scope: { id: string }) => unknown,
+    trail: (scope: { id: string }) => unknown,
+  ): HTMLElement {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkThemeToggle, {
+          externalCustomize: true,
+        }, {
+          "item-leading": lead,
+          "item-trailing": trail,
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    return container;
+  }
+
+  it("renders the leading slot on every row in place of the selected-check cell", async () => {
+    const seen: string[] = [];
+    const container = mountSlotted(
+      (scope) => { seen.push(scope.id); return h("i", { class: "lead-mark" }); },
+      () => null,
+    );
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    // Every row — active or not — carries the slot cell; no check cell is
+    // rendered alongside (the slot owns the leading zone).
+    for (const row of rows) {
+      expect(row.querySelector(".s-theme-item-lead .lead-mark")).toBeTruthy();
+      expect(row.querySelector(".s-theme-item-check")).toBeNull();
+    }
+    expect(seen.length).toBe(rows.length);
+  });
+
+  it("reserves the trailing column and suppresses the built-in delete overlay", async () => {
+    useTheme().addCustomTheme(anyPresetTokens());
+    const container = mountSlotted(
+      () => null,
+      (scope) => h("i", { class: "trail-mark", "data-id": scope.id }),
+    );
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    let customRows = 0;
+    for (const row of rows) {
+      expect(row.hasAttribute("data-trailing")).toBe(true);
+      expect(row.getAttribute("data-trailing")).toBe("slot");
+      expect(row.querySelector(".s-theme-item-trailing .trail-mark")).toBeTruthy();
+      // The slot owns the trailing zone: the built-in overlay is gone
+      // even on custom rows.
+      expect(row.querySelector(".s-theme-item-delete")).toBeNull();
+      if (row.hasAttribute("data-custom")) customRows += 1;
+    }
+    expect(customRows).toBe(1);
+  });
+
+  it("scopes each row with its resolved preset definition", async () => {
+    const presets: Array<unknown> = [];
+    const container = mountSlotted(
+      (scope) => { presets.push((scope as { preset?: unknown }).preset); return null; },
+      () => null,
+    );
+    await settle();
+    openMenu(container);
+    await settle();
+
+    // Built-in rows resolve to their preset table entry (tokens present).
+    expect(presets.length).toBeGreaterThanOrEqual(2);
+    for (const preset of presets) {
+      const p = preset as { dark?: { primary?: unknown }; light?: { primary?: unknown } } | undefined;
+      expect(p).toBeTruthy();
+      expect(p!.dark?.primary).toBeTruthy();
+      expect(p!.light?.primary).toBeTruthy();
+    }
+  });
+});

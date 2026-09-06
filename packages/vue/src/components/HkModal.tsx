@@ -194,6 +194,41 @@ export default defineComponent({
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
+    // ── Leave-completion watchdog ─────────────────────────────────────
+    // The close path hands unmounting to <Transition>'s leave, whose
+    // engine is rAF-driven: it double-raf's the leave-from → leave-to
+    // class flip and only THEN arms its transitionend wait. In an
+    // occluded/backgrounded webview rAF can starve for the whole leave
+    // window, the classes freeze in leave-from/leave-active, and the
+    // modal stays over the page forever — undismissable, only a full
+    // reload escaped it (field-reported 2026-09). The watchdog bounds
+    // the wait: if the leave has not finalized within a budget larger
+    // than any themed CSS leave (--hk-modal-duration defaults to 0.25s,
+    // themes may raise it), onAfterLeaveFinalize runs the exact same
+    // finalization the Transition would have. Normal closes disarm it;
+    // late or stale completions (post-watchdog real onAfterLeave, or
+    // the open-interrupted leave Vue resolves without a cancelled flag)
+    // are no-ops through the finalize and modelValue guards.
+    const LEAVE_WATCHDOG_MS = 600;
+    let leaveWatchdog: ReturnType<typeof setTimeout> | null = null;
+    let leaveFinalized = false;
+
+    function armLeaveWatchdog(): void {
+      disarmLeaveWatchdog();
+      leaveWatchdog = setTimeout(() => {
+        leaveWatchdog = null;
+        if (unmounted || props.modelValue || !shouldRender.value) return;
+        onAfterLeaveFinalize();
+      }, LEAVE_WATCHDOG_MS);
+    }
+
+    function disarmLeaveWatchdog(): void {
+      if (leaveWatchdog !== null) {
+        clearTimeout(leaveWatchdog);
+        leaveWatchdog = null;
+      }
+    }
+
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
     const resolvedWidth = computed(() => resolveModalWidth(props.width));
@@ -275,7 +310,15 @@ export default defineComponent({
       }
     }
 
-    function onAfterLeave() {
+    function onAfterLeaveFinalize() {
+      // Finalizing while the surface is OPEN means this is a stale
+      // completion: Vue fires the interrupted leave's onAfterLeave (no
+      // cancelled flag) when a reopen patches over a still-live leave,
+      // and the watchdog callback separately guards on props.modelValue.
+      // Finalizing either of those would tear down the reopened modal.
+      if (unmounted || props.modelValue || leaveFinalized) return;
+      leaveFinalized = true;
+      disarmLeaveWatchdog();
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;
@@ -580,6 +623,8 @@ export default defineComponent({
           if (handle.value) {
             manager.unregister(handle.value.id);
           }
+          leaveFinalized = false;
+          disarmLeaveWatchdog();
           shouldRender.value = true;
           // Windows always block, so the kind alone lists this layer in
           // the modal-stack breadcrumb on every form factor.
@@ -594,6 +639,12 @@ export default defineComponent({
           // (e.g. immediate), clean up now.
           overlay.close();
           backGuard.release();
+          // Bound the Transition leave: if rAF starvation froze the
+          // class flip, the watchdog finalizes in the watchdog's place
+          // (see LEAVE_WATCHDOG_MS above). Only an actually-mounted
+          // surface can stall — a never-opened modal has nothing to
+          // finalize.
+          if (shouldRender.value) armLeaveWatchdog();
         }
       },
       { immediate: true },
@@ -626,6 +677,7 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       unmounted = true;
+      disarmLeaveWatchdog();
       detachBodyScrollbar();
       teardownWindowed();
       teardownAutoFollow();
@@ -709,7 +761,7 @@ export default defineComponent({
               }}
               onAfterLeave={() => {
                 contentHooks.onAfterLeave();
-                onAfterLeave();
+                onAfterLeaveFinalize();
               }}
             >
               {props.modelValue && (

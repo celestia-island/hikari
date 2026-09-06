@@ -1,6 +1,6 @@
-import { defineComponent, ref, watch } from "vue";
-import { TriangleAlert as AlertTriangle, Check, Copy } from "lucide-vue-next";
-import { HModal, useClipboard, useI18n } from "@celestia-island/hikari";
+import { defineComponent } from "vue";
+import { TriangleAlert as AlertTriangle, Copy } from "lucide-vue-next";
+import { HModal, useClipboardWithToast, useI18n, useToast } from "@celestia-island/hikari";
 
 import "./HkSecretRevealModal.scss";
 
@@ -9,9 +9,10 @@ import "./HkSecretRevealModal.scss";
  * HkSecretRevealModal — show-once secret / API-key reveal panel.
  *
  * Displays a one-time secret (API key, token, password) with a "shown
- * only once" notice and a copy button. `copied` fires on successful copy.
- * The value is a prop: the caller decides how to obtain/discard it (e.g.
- * clear it once the modal closes).
+ * only once" notice and a copy button. `copied` fires on successful copy;
+ * the copy itself is confirmed via a localized toast (the button label
+ * stays stable). The value is a prop: the caller decides how to
+ * obtain/discard it (e.g. clear it once the modal closes).
  */
 export const HkSecretRevealModal = defineComponent({
   name: "HkSecretRevealModal",
@@ -33,23 +34,12 @@ export const HkSecretRevealModal = defineComponent({
   },
   setup(props, { emit }) {
     const { t } = useI18n();
-    const clipboard = useClipboard();
-    const copied = ref(false);
-
-    watch(
-      () => props.modelValue,
-      (open) => {
-        if (open) copied.value = false;
-      },
-    );
+    const clipboard = useClipboardWithToast(useToast());
 
     async function handleCopy() {
       if (!props.value) return;
       const ok = await clipboard.copy(props.value);
-      if (ok) {
-        copied.value = true;
-        emit("copied");
-      }
+      if (ok) emit("copied");
     }
 
     return () => (
@@ -76,12 +66,11 @@ export const HkSecretRevealModal = defineComponent({
             <button
               type="button"
               class="s-secret-modal-copy"
-              data-copied={copied.value || undefined}
               onClick={() => void handleCopy()}
               disabled={!props.value}
             >
-              {copied.value ? <Check size={14} /> : <Copy size={14} />}
-              {copied.value ? t("hikari::secret.copied") : props.copyLabel ?? t("hikari::secret.copy")}
+              <Copy size={14} />
+              {props.copyLabel ?? t("hikari::secret.copy")}
             </button>
           </div>
         </div>

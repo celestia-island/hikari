@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "拒否",
     "hikari::protocol.copy": "コピー",
     "hikari::protocol.copied": "コピーしました",
+    "hikari::clipboard.copied": "コピーしました",
+    "hikari::clipboard.copyFailed": "コピーに失敗しました",
     "hikari::about.title": "このアプリについて",
     "hikari::about.version": "バージョン",
     "hikari::about.buildHash": "ビルド",

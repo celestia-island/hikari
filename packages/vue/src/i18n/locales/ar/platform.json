@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "رفض",
     "hikari::protocol.copy": "نسخ",
     "hikari::protocol.copied": "تم النسخ",
+    "hikari::clipboard.copied": "تم النسخ",
+    "hikari::clipboard.copyFailed": "فشل النسخ",
     "hikari::about.title": "حول",
     "hikari::about.version": "الإصدار",
     "hikari::about.buildHash": "البناء",

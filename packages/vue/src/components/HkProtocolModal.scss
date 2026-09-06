@@ -2,17 +2,6 @@
   position: relative;
 }
 
-.s-protocol-modal-copied {
-  position: absolute;
-  top: -0.25rem;
-  right: 0;
-  margin: 0;
-  padding: var(--space-4, 0.25rem) var(--space-8, 0.5rem);
-  border-radius: var(--radius-sm, 6px);
-  background: rgb(var(--color-success) / 15%);
-  color: rgb(var(--color-success));
-  font-size: var(--text-xs, 0.75rem);
-}
 
 /* With `bodyHeight` set the body becomes its own scroll region (nested
  * inside HkModal's body scroller) — overlay chrome only. */

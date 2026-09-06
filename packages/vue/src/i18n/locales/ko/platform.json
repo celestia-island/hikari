@@ -10,6 +10,8 @@
     "hikari::protocol.decline": "거부",
     "hikari::protocol.copy": "복사",
     "hikari::protocol.copied": "복사됨",
+    "hikari::clipboard.copied": "복사됨",
+    "hikari::clipboard.copyFailed": "복사 실패",
     "hikari::about.title": "정보",
     "hikari::about.version": "버전",
     "hikari::about.buildHash": "빌드",

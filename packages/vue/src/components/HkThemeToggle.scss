@@ -222,3 +222,33 @@
     margin-right: 2.75rem;
   }
 }
+
+/* ── Host-provided row anatomy (item-leading / item-trailing) ───────────
+ * When the host renders the item-leading slot, EVERY row carries the
+ * fixed icon cell (not just the active row's check), so names align
+ * across the list; the cell keeps the unified menu-item icon metrics.
+ */
+.s-theme-item-lead {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: inherit;
+}
+
+/* When the host renders the item-trailing slot, every row reserves a
+ * REAL trailing column (the slot owns it — the built-in custom-delete
+ * overlay is suppressed), so trailing affordances align across rows
+ * instead of floating over the pill's edge. The custom-name clearance
+ * for the overlay delete no longer applies in this mode. */
+.s-theme-item-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  flex-shrink: 0;
+  margin-inline-start: var(--space-4, 0.25rem);
+}
+
+.s-theme-item-row[data-trailing="slot"] .s-theme-item-name {
+  margin-right: 0;
+}

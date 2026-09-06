@@ -4,10 +4,13 @@ import {
   HDivider,
   HPopover,
   solarAltitude,
+  themePresets,
   useI18n,
   useTheme,
+  type CustomThemePreset,
   type PopupPlacement,
   type ThemeId,
+  type ThemePreset,
 } from "@celestia-island/hikari";
 
 import { HColorSchemeDialog, type HCustomTheme } from "./HkColorSchemeDialog";
@@ -19,6 +22,18 @@ import "./HkThemeToggle.scss";
  *  refresh) on every altitude tick. */
 const AUTO_MERGE_KEYS = ["light", "dark"];
 
+/** Scoped payload handed to the `item-leading` / `item-trailing` slots:
+ *  one object per theme row, carrying enough identity for the host to
+ *  render swatches or affordances without re-deriving the preset. */
+export interface ThemeItemScope {
+  id: ThemeId;
+  name: string;
+  isCustom: boolean;
+  /** The row's full definition — the built-in preset table entry for
+   *  stock/registered themes, the user's stored scheme for customs. */
+  preset: ThemePreset | CustomThemePreset | undefined;
+}
+
 /**
  * HkThemeToggle — light/dark/auto theme control over hikari's theme engine.
  *
@@ -27,6 +42,15 @@ const AUTO_MERGE_KEYS = ["light", "dark"];
  * cycles light/dark (auto keeps a Monitor glyph); the popover offers the
  * color-mode group and preset/custom theme selection (custom themes are
  * removable), and opens HColorSchemeDialog to create a new custom scheme.
+ *
+ * Theme rows are host-customizable through two scoped slots (both render
+ * in the popover AND the mobile bottom sheet — same DOM):
+ *  · `item-leading` — replaces the selected-check cell; renders for
+ *    every row in the fixed icon cell so names align regardless of the
+ *    active row. Scope: `ThemeItemScope` (id/name/isCustom/preset).
+ *  · `item-trailing` — reserves a trailing column on every row and owns
+ *    it entirely; the built-in custom-delete overlay is suppressed, so
+ *    the host renders delete/edit itself where it wants them.
  *
  * Color-mode group: the unified HTabs strip in segmented (radiogroup)
  * working mode (Auto | Light | Dark) — same pill chrome as every other
@@ -58,7 +82,15 @@ export const HkThemeToggle = defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
-    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme } = useTheme();
+    const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
+
+    /** Resolve a row's full definition for the item slots: the live
+     *  preset table first (stock + registered brand themes), then the
+     *  user's stored custom schemes. */
+    function presetOf(id: ThemeId): ThemePreset | CustomThemePreset | undefined {
+      if (id in themePresets) return themePresets[id as keyof typeof themePresets];
+      return customThemes.value.find((c) => c.id === id);
+    }
 
     const menuOpen = ref(false);
     const triggerRef = ref<HTMLElement | null>(null);
@@ -227,37 +259,61 @@ export const HkThemeToggle = defineComponent({
             <HDivider spacing="md" />
 
             <div class="s-theme-menu-label">{t("hikari::theme.themes")}</div>
-            {allThemeList.value.map((th) => (
-              // One full-width pill per row — the delete affordance for
-              // custom themes OVERLAYS the pill's trailing edge instead
-              // of reserving a trailing column, so built-in rows carry
-              // no dead space (a bottom sheet once showed a permanent
-              // ~40px empty strip right of every row) and every pill
-              // and highlight shares the exact same width.
-              <div key={th.id} class="s-theme-item-row" data-custom={th.isCustom || undefined}>
-                <button
-                  type="button"
-                  class="s-theme-item-btn"
-                  data-active={currentTheme.value === th.id || undefined}
-                  onClick={() => onSelectTheme(th.id)}
+            {allThemeList.value.map((th) => {
+              // Host-customizable row anatomy. `item-leading` replaces the
+              // selected-check cell and renders for EVERY row (fixed icon
+              // cell, so names stay aligned); `item-trailing` reserves a
+              // real trailing column for every row and takes full
+              // ownership of the affordances there — the built-in custom
+              // delete overlay is suppressed in that mode, so the host
+              // renders delete (and anything else) itself. Without the
+              // slots the rows behave exactly as before: check only on
+              // the active row, delete overlaid on custom rows only.
+              const scope: ThemeItemScope = {
+                id: th.id,
+                name: th.name,
+                isCustom: th.isCustom,
+                preset: presetOf(th.id),
+              };
+              const leadingSlot = slots["item-leading"];
+              const trailingSlot = slots["item-trailing"];
+              return (
+                <div
+                  key={th.id}
+                  class="s-theme-item-row"
+                  data-custom={th.isCustom || undefined}
+                  data-trailing={trailingSlot ? "slot" : undefined}
                 >
-                  {currentTheme.value === th.id && (
-                    <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
-                  )}
-                  <span class="s-theme-item-name">{th.name}</span>
-                </button>
-                {th.isCustom && (
                   <button
                     type="button"
-                    class="s-theme-item-delete"
-                    title={t("hikari::theme.deleteTheme")}
-                    onClick={() => removeCustomTheme(th.id)}
+                    class="s-theme-item-btn"
+                    data-active={currentTheme.value === th.id || undefined}
+                    onClick={() => onSelectTheme(th.id)}
                   >
-                    <Trash2 size={12} />
+                    {leadingSlot ? (
+                      <span class="hk-menu-item-icon s-theme-item-lead">
+                        {leadingSlot(scope)}
+                      </span>
+                    ) : currentTheme.value === th.id ? (
+                      <span class="hk-menu-item-icon s-theme-item-check"><Check size={14} /></span>
+                    ) : null}
+                    <span class="s-theme-item-name">{th.name}</span>
                   </button>
-                )}
-              </div>
-            ))}
+                  {trailingSlot ? (
+                    <span class="s-theme-item-trailing">{trailingSlot(scope)}</span>
+                  ) : th.isCustom ? (
+                    <button
+                      type="button"
+                      class="s-theme-item-delete"
+                      title={t("hikari::theme.deleteTheme")}
+                      onClick={() => removeCustomTheme(th.id)}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
 
             <button
               type="button"

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createApp, h, nextTick, ref, type Ref } from "vue";
+import { createApp, h, nextTick, onMounted, ref, type Ref } from "vue";
 
 import { registerTokenGroup, useTheme, type TokenGroupDefinition } from "../theme";
 import { HkColorSchemeEditor, type HCustomTheme } from "./HkColorSchemeEditor";
@@ -266,5 +266,28 @@ describe("HkColorSchemeEditor", () => {
     await nextTick();
     expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 255, g: 200, b: 0 });
     expect(ref.value!.getDraft().dark.onSolidIcon).toEqual({ r: 0, g: 200, b: 255 });
+  });
+
+  it("hides the built-in name input under showName=false and takes setThemeName", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    let exposed: { getDraft(): { name: string }; setThemeName(n: string): void } | null = null;
+    const app = createApp({
+      setup() {
+        const ed = ref<{ getDraft(): { name: string }; setThemeName(n: string): void } | null>(null);
+        onMounted(() => { exposed = ed.value; });
+        return () => h(HkColorSchemeEditor, { ref: ed, showName: false, initialName: "" });
+      },
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+
+    const label = [...container.querySelectorAll("label")].find((l) =>
+      l.textContent?.includes("Theme name") || l.textContent?.includes("主题名称"),
+    );
+    expect(label).toBeUndefined();
+    exposed!.setThemeName("Host owned name");
+    expect(exposed!.getDraft().name).toBe("Host owned name");
   });
 });

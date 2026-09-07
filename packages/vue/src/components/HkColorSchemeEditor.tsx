@@ -147,6 +147,12 @@ export const HkColorSchemeEditor = defineComponent({
     initialGroups: { type: Object as PropType<ThemeTokenGroupModes>, default: undefined },
     /** Prefill the scheme name input (edit/fork flows); empty by default. */
     initialName: { type: String, default: "" },
+    /**
+     * Render the built-in name input. Hosts that own the name field
+     * elsewhere (e.g. a "basic" tab above the editor) hide it and feed the
+     * value through `setThemeName()` — getDraft() still carries it.
+     */
+    showName: { type: Boolean, default: true },
   },
   setup(props, { expose }) {
     const { t } = useI18n();
@@ -214,7 +220,11 @@ export const HkColorSchemeEditor = defineComponent({
 
     onMounted(() => reset());
 
-    expose({ reset, getDraft });
+    function setThemeName(name: string): void {
+      themeName.value = name;
+    }
+
+    expose({ reset, getDraft, setThemeName });
 
     watch(
       () => [
@@ -357,12 +367,14 @@ export const HkColorSchemeEditor = defineComponent({
 
     return () => (
       <div class="s-scheme-dialog">
-        <HInput
-          modelValue={themeName.value}
-          onUpdate:modelValue={(v: string) => { themeName.value = v; }}
-          label={t("hikari::theme.themeName")}
-          placeholder={t("hikari::theme.customThemeName")}
-        />
+        {props.showName && (
+          <HInput
+            modelValue={themeName.value}
+            onUpdate:modelValue={(v: string) => { themeName.value = v; }}
+            label={t("hikari::theme.themeName")}
+            placeholder={t("hikari::theme.customThemeName")}
+          />
+        )}
         <HTabs
           variant="segmented"
           class="s-scheme-mode-switch"

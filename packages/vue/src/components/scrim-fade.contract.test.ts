@@ -63,13 +63,15 @@ describe("window-layer scrim fade contract", () => {
   });
 
   it("the select sheet scrim rides a transition name distinct from the panel's", () => {
+    // Machine era: the surface lifecycle is driven by useSurfaceMachine
+    // whose layer prefixes ARE the transition names — the contract
+    // survives as the distinct-prefix wiring (scrim never shares the
+    // panel's slide name).
     const src = read("HkSelectPanel.tsx");
-    // \s+ across the attribute list: the tag may be formatted with name
-    // on its own line.
-    const names = Array.from(src.matchAll(/<Transition\s+name="([^"]+)"/g), (m) => m[1]);
-    expect(names).toContain("hk-select-sheet-scrim");
-    expect(names).toContain("hk-select-sheet");
-    expect(src).toContain('sheetScrimAnim.hooks("scrim")');
+    expect(src).toContain('prefix: "hk-select-sheet-scrim"');
+    expect(src).toContain('prefix: "hk-select-sheet"');
+    expect(src).toContain('prefix: "hk-select-popout"');
+    expect(src).toContain("useSurfaceMachine({");
   });
 
   it("the popover sheet scrim fades instead of mounting bare", () => {

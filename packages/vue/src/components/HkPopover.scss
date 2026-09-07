@@ -10,6 +10,20 @@
 .hk-popover-panel {
   min-width: 0;
   max-height: min(70vh, calc(100vh - 2 * 8px));
+  /* Width MUST be position-independent (max-content, viewport-capped).
+   * The anchored panel is fixed-positioned with shrink-to-fit sizing,
+   * and computePosition places it as `left = anchorEnd - panelWidth`
+   * (bottom-end). With shrink-to-fit the width itself derives from the
+   * available space (`viewport - left`) — so any elastically-wide
+   * content (percentage-width rows) creates a geometric feedback: every
+   * ResizeObserver → rAF reposition adds (viewport - anchorEnd) px of
+   * width until the clamp saturates, and the menu visibly ratchets
+   * wider frame by frame (demo.dev field report 2026-09-07). Pinning
+   * the width to max-content breaks the loop: the panel sizes to its
+   * content wherever it sits, and positioning converges in one pass.
+   * VIEWPORT_PAD is 8 (script side). */
+  width: max-content;
+  max-width: calc(100vw - 2 * 8px);
 }
 
 /* Pop motion family tokens (--hk-pop-* in theme.scss) — the reference
@@ -91,6 +105,10 @@
 }
 
 .hk-popover-panel.hk-is-sheet {
+  /* The sheet spans the viewport via inline left/right — the anchored
+   * rule's max-content width would over-constrain it (left+right+width
+   * drops `right` in LTR) and dock it at content width instead. */
+  width: auto;
   border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  0 0;

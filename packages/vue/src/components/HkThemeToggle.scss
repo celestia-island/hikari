@@ -47,7 +47,22 @@
   flex-direction: column;
   gap: var(--space-4, 0.25rem);
   min-width: 13rem;
+  max-width: 22rem;
   padding: var(--space-8, 0.5rem);
+}
+
+/*
+ * The anchored popover panel is shrink-to-fit (width: max-content, #421),
+ * so any long-form prose in a host slot (mode-extra hint paragraphs) would
+ * otherwise set the panel's PREFERRED width — the menu once opened at the
+ * hint's single-line ideal width (~870px), stretching the segmented mode
+ * group full-bleed and leaving a wide void right of every row. The cap
+ * above clamps the menu's max-content contribution instead. The sheet
+ * branch is excluded: it stretches to the viewport by design, and its
+ * width never derives from content.
+ */
+.hk-popover-panel.hk-is-sheet .s-theme-menu {
+  max-width: none;
 }
 
 .s-theme-menu-label {

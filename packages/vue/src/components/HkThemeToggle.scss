@@ -62,7 +62,15 @@
  * width never derives from content.
  */
 .hk-popover-panel.hk-is-sheet .s-theme-menu {
-  max-width: none;
+  /* User report 09-07 22:53 (mobile sheet, 412px viewport): the exclusion
+   * below let the host slot's long prose (chest DPI hint, ~870px ideal)
+   * keep driving the sheet's max-content contribution — clamped to
+   * 100vw-16px and left-anchored it left a mysterious right gap plus
+   * full-bleed stretched rows. The sheet content is capped to the same
+   * designed measure, centered within the viewport-wide sheet. */
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
 }
 
 .s-theme-menu-label {

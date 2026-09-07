@@ -228,6 +228,41 @@ describe("HkThemeToggle color-mode group", () => {
     const activeBtn = document.body.querySelector<HTMLButtonElement>(".s-theme-item-btn[data-active]");
     expect(activeBtn?.querySelector(".s-theme-item-check")).toBeTruthy();
   });
+  it("renders the mode-extra strip under the mode group when provided", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkThemeToggle, { externalCustomize: true }, {
+          "mode-extra": () => h("div", { class: "dpi-mark", "data-x": "1" }, "dpi"),
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+    openMenu(container);
+    await settle();
+
+    const strip = document.body.querySelector(".s-theme-menu .s-theme-mode-extra");
+    expect(strip).toBeTruthy();
+    expect(strip!.querySelector(".dpi-mark")).toBeTruthy();
+    // It sits inside the menu, after the mode row and before the divider.
+    const menu = document.body.querySelector(".s-theme-menu")!;
+    const children = [...menu.children].map((c) => c.className);
+    const extraIdx = children.indexOf("s-theme-mode-extra");
+    expect(extraIdx).toBeGreaterThan(children.indexOf("s-theme-mode-row"));
+    expect(children[extraIdx + 1]).toContain("hk-divider");
+  });
+
+  it("omits the mode-extra strip when no slot is provided", async () => {
+    let container: HTMLElement;
+    const mounted = mountToggle(true);
+    container = mounted.container;
+    await settle();
+    openMenu(container);
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu .s-theme-mode-extra")).toBeNull();
+  });
 });
 
 describe("HkThemeToggle item slots", () => {

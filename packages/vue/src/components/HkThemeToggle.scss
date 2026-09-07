@@ -13,11 +13,19 @@
   height: 1.75rem;
   min-width: 1.75rem;
   padding: 0 var(--space-6, 0.375rem);
-  border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
+  /* Host/theme-tunable: borderless chrome sets --hk-theme-toggle-btn-border:
+   * transparent (e.g. the BA brand look). */
+  border: 1px solid var(--hk-theme-toggle-btn-border, var(--border-faint, rgb(var(--color-border) / 12%)));
   background: rgb(var(--color-surface));
   color: rgb(var(--color-text-secondary, var(--color-muted)));
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* Host strip under the mode group (mode-extra slot). */
+.s-theme-mode-extra {
+  margin-top: var(--space-8, 0.5rem);
+  width: 100%;
 }
 
 .s-theme-toggle-btn:hover {

@@ -52,6 +52,10 @@ export interface ThemeItemScope {
  *    it entirely; the built-in custom-delete overlay is suppressed, so
  *    the host renders delete/edit itself where it wants them.
  *
+ * `mode-extra` — a host strip rendered directly under the color-mode
+ * group (before the divider). Mode-adjacent host chrome that is NOT a
+ * theme-editor concern lives here (e.g. display-scale control).
+ *
  * Color-mode group: the unified HTabs strip in segmented (radiogroup)
  * working mode (Auto | Light | Dark) — same pill chrome as every other
  * group. In AUTO mode the Light/Dark halves merge into the strip's
@@ -253,8 +257,15 @@ export const HkThemeToggle = defineComponent({
                     </button>
                   ),
                 }}
-              </HTabs>
+</HTabs>
             </div>
+
+            {/* Host extension point directly under the mode group (P98: the
+                 chest DPI control lives here — mode-adjacent chrome, not a theme
+                 editor tab). Rendered only when the host provides the slot. */}
+            {slots["mode-extra"] ? (
+              <div class="s-theme-mode-extra">{slots["mode-extra"]()}</div>
+            ) : null}
 
             <HDivider spacing="md" />
 

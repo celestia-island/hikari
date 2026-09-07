@@ -299,12 +299,16 @@ describe("HkThemeToggle item slots", () => {
     const rows = [...document.body.querySelectorAll<HTMLElement>(".s-theme-menu .s-theme-item-row")];
     expect(rows.length).toBeGreaterThanOrEqual(2);
     // Every row — active or not — carries the slot cell; no check cell is
-    // rendered alongside (the slot owns the leading zone).
+    // rendered alongside (the slot owns the leading zone). Exactly ONE
+    // slot cell per row in the DOM — the machine-era popover re-renders
+    // per phase (class outputs are reactive), so slot invocation counts
+    // are no longer 1:1 with rows; DOM uniqueness is the invariant.
     for (const row of rows) {
       expect(row.querySelector(".s-theme-item-lead .lead-mark")).toBeTruthy();
+      expect(row.querySelectorAll(".lead-mark")).toHaveLength(1);
       expect(row.querySelector(".s-theme-item-check")).toBeNull();
     }
-    expect(seen.length).toBe(rows.length);
+    expect(seen.length).toBeGreaterThanOrEqual(rows.length);
   });
 
   it("reserves the trailing column and suppresses the built-in delete overlay", async () => {

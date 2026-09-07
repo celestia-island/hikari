@@ -75,10 +75,13 @@ describe("window-layer scrim fade contract", () => {
   });
 
   it("the popover sheet scrim fades instead of mounting bare", () => {
+    // Machine era: the scrim's fade classes are machine outputs under a
+    // prefix DISTINCT from the panel's slide names — the contract
+    // survives as the layer wiring.
     const src = read("HkPopover.tsx");
-    expect(src).toContain('<Transition name="hk-popover-scrim"');
-    expect(src).toContain('surfaceAnim.hooks("scrim")');
+    expect(src).toContain('prefix: "hk-popover-scrim"');
+    expect(src).toContain("useSurfaceMachine({");
     // The panel's sheet name stays the slide family — distinct from the scrim.
-    expect(src).toContain('"hk-popover-sheet"');
+    expect(src).toContain('prefix: "hk-popover-sheet"');
   });
 });

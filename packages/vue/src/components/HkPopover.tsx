@@ -7,7 +7,6 @@ import {
   onUnmounted,
   ref,
   Teleport,
-  Transition,
   useAttrs,
   watch,
   type PropType,
@@ -17,6 +16,7 @@ import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { onceFrame } from "../runtime/animationBus";
 import HIconButton from "./HkIconButton";
@@ -88,6 +88,13 @@ export default defineComponent({
 
     const { isMobile } = useBreakpoint();
     const sheetMode = computed(() => props.sheetOnMobile && isMobile.value);
+    /** The form factor this surface OPENED in. The render branches on it
+     *  (not the live sheetMode) so a viewport crossing the mobile
+     *  breakpoint mid-flight closes in the shape the surface was born in
+     *  — the anchored popup must not flash in for the closing window of
+     *  a dying sheet (or vice versa). Set on the machine's opening edge;
+     *  the next open adopts whatever the viewport calls for. */
+    const activeBranch = ref<"sheet" | "anchored">("anchored");
 
     // Crossing the mobile/desktop breakpoint mid-flight would leave a
     // SHEET-mode panel hung between two form factors — close it and let
@@ -99,14 +106,87 @@ export default defineComponent({
     });
 
     // Open/close motion reported into the unified animation context
-    // through the same standard hook wiring every surface shares
-    // (useSurfaceTransition) — this component was the pattern's
-    // origin and now consumes it like the rest. Scrim and panel ride
-    // separate named tracks (window-layer contract, ./_scrim-fade.scss)
-    // so the backdrop's fade reports and settles on its own.
-    const surfaceAnim = useSurfaceTransition(300);
-    const anim = surfaceAnim.hooks();
-    const scrimAnim = surfaceAnim.hooks("scrim");
+    // (animationBus) — one track for the whole surface, armed on the
+    // machine's animation-phase edges.
+    const surfTrack = useSurfaceTransition(300).track("surface");
+
+    // ── Surface lifecycle machine ─────────────────────────────────────
+    // One machine drives the sheet scrim and the panel in BOTH form
+    // factors (the mobile sheet and the anchored popup) — the layers are
+    // outputs of the shared phase, so the divergent-layer states of the
+    // two-<Transition> era are unrepresentable (see
+    // runtime/surfaceMachine.ts).
+    const scrimRef = ref<HTMLElement>();
+    const machine = useSurfaceMachine({
+      layers: [
+        // Budgets are the starvation-era bounds over the SCSS truths
+        // (scrim 0.25s/0.2s, sheet panel 0.3s/0.25s, anchored pop
+        // 0.2s/0.15s); the driver probes the live CSS durations and
+        // tightens them.
+        { prefix: "hk-popover-scrim", el: () => scrimRef.value, enterMs: () => 270, leaveMs: () => 240 },
+        // The machine classes land on the INNER panel div — the probe
+        // must read that element, not the positioning host (a classless
+        // host reads duration 0 and kills the animation in real
+        // browsers; the el-carries-the-classes invariant of #417/#418).
+        { prefix: "hk-popover-sheet", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 280 },
+        { prefix: "hk-popover", el: () => panelRef.value, enterMs: () => 240, leaveMs: () => 190 },
+      ],
+      onPhase: (from, to, event) => {
+        if (to === "openingFrom") {
+          surfTrack.run();
+          activeBranch.value = sheetMode.value ? "sheet" : "anchored";
+          // The open arm of the old modelValue watcher, verbatim.
+          fullCleanup();
+          // Blocking follows the sheet decision: anchored (desktop) the
+          // popover is a hidden breadcrumb level, docked as a bottom
+          // sheet (mobile) it is a window layer and must be listed —
+          // hence the i18n `title` riding along.
+          handle.value = manager.register(
+            "dropdown",
+            false,
+            props.title || undefined,
+            sheetMode.value,
+          );
+          if (sheetMode.value) {
+            // Bottom sheet: nothing to anchor-measure; the scrim handles
+            // dismissal (the outside-click shield is desktop-only).
+            nextTick(() => {
+              panelRef.value?.focus?.();
+              // The sheet mounts on this render — attach the overlay
+              // once the DOM has landed (sheet panels scroll; desktop
+              // popovers size to content and need none).
+              if (machine.mounted.value && sheetMode.value && panelRef.value) {
+                detachPanelScrollbar();
+                panelScrollbar = attachOverlayScrollbars(panelRef.value, {
+                  axis: "vertical",
+                  host: panelHostRef.value,
+                });
+              }
+            });
+          } else {
+            computeInitialCoords();
+            attachObservers();
+            attachOutsideClickShield();
+            nextTick(() => {
+              computePosition();
+              schedulePosition();
+            });
+          }
+        } else if (to === "closingFrom") {
+          surfTrack.run();
+          // The close arm of the old watcher.
+          detachObservers();
+          detachOutsideClickShield();
+        } else if (
+          to === "closed" &&
+          (from === "closingFrom" || from === "closingTo") &&
+          event !== "UNMOUNT"
+        ) {
+          surfTrack.cancel();
+          onPopupAfterLeave();
+        }
+      },
+    });
 
     // Suppress native browser tooltips while the popover is open — and
     // not just on the anchor itself: a `title` on ANY descendant fires
@@ -385,47 +465,9 @@ export default defineComponent({
     watch(
       () => props.modelValue,
       (open) => {
-        if (open) {
-          fullCleanup();
-          // Blocking follows the sheet decision: anchored (desktop) the
-          // popover is a hidden breadcrumb level, docked as a bottom
-          // sheet (mobile) it is a window layer and must be listed —
-          // hence the i18n `title` riding along.
-          handle.value = manager.register(
-            "dropdown",
-            false,
-            props.title || undefined,
-            sheetMode.value,
-          );
-          if (sheetMode.value) {
-            // Bottom sheet: nothing to anchor-measure; the scrim handles
-            // dismissal (the outside-click shield is desktop-only).
-            nextTick(() => {
-              panelRef.value?.focus?.();
-              // The sheet mounts on this render — attach the overlay
-              // once the DOM has landed (sheet panels scroll; desktop
-              // popovers size to content and need none).
-              if (props.modelValue && sheetMode.value && panelRef.value) {
-                detachPanelScrollbar();
-                panelScrollbar = attachOverlayScrollbars(panelRef.value, {
-                  axis: "vertical",
-                  host: panelHostRef.value,
-                });
-              }
-            });
-          } else {
-            computeInitialCoords();
-            attachObservers();
-            attachOutsideClickShield();
-            nextTick(() => {
-              computePosition();
-              schedulePosition();
-            });
-          }
-        } else {
-          detachObservers();
-          detachOutsideClickShield();
-        }
+        // The machine owns every visual/registry consequence on its
+        // phase edges; this watcher is purely the event feed.
+        machine.send(open ? "OPEN" : "CLOSE");
       },
       { immediate: true },
     );
@@ -497,7 +539,7 @@ export default defineComponent({
     const panelZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
 
     const panelStyle = computed(() => {
-      if (sheetMode.value) {
+      if (activeBranch.value === "sheet") {
         // Bottom sheet: sits flush on the viewport bottom edge (the
         // host-tunable --hk-sheet-bottom-gap lift is still honored so the
         // sheet belongs to the HkModal/HkSelect sheet family — the family
@@ -527,49 +569,39 @@ export default defineComponent({
       };
     });
 
-    return () => (
+    return () => {
+      if (!machine.mounted.value) return null;
+      const sheetBranch = activeBranch.value === "sheet";
+      const panelPrefix = sheetBranch ? "hk-popover-sheet" : "hk-popover";
+      return (
       <Teleport to="body">
         {/* Window-layer contract (./_scrim-fade.scss): the sheet scrim
-            fades in place under its own transition name — it used to
-            mount and unmount bare, snapping the dim curtain on and off
-            around the sliding panel. z rides the live registration,
+            fades in place under its own transition name (machine output)
+            — it never mounts bare, so the dim curtain never snaps on or
+            off around the sliding panel. z rides the live registration,
             which outlives the close until the leave fade finishes. */}
-        <Transition name="hk-popover-scrim" appear {...scrimAnim}>
-          {sheetMode.value && props.modelValue && props.closeOnBackdrop ? (
-            <div
-              class="hk-popover-scrim"
-              style={{ zIndex: backdropZ.value }}
-              onClick={() => close()}
-            />
-          ) : null}
-        </Transition>
-        {props.backdrop && !sheetMode.value && props.modelValue && (
+        {sheetBranch && props.closeOnBackdrop ? (
+          <div
+            ref={scrimRef}
+            class={["hk-popover-scrim", ...machine.classesFor("hk-popover-scrim")]}
+            style={{ zIndex: backdropZ.value }}
+            onClick={() => close()}
+          />
+        ) : null}
+        {props.backdrop && !sheetBranch && props.modelValue && (
           <div
             class="hk-popover-backdrop"
             style={{ zIndex: backdropZ.value }}
           />
         )}
-        <Transition
-          name={sheetMode.value ? "hk-popover-sheet" : "hk-popover"}
-          appear
-          onBeforeEnter={anim.onBeforeEnter}
-          onAfterEnter={anim.onAfterEnter}
-          onBeforeLeave={anim.onBeforeLeave}
-          onAfterLeave={() => {
-            anim.onAfterLeave();
-            onPopupAfterLeave();
-          }}
-          onEnterCancelled={anim.onEnterCancelled}
-          onLeaveCancelled={anim.onLeaveCancelled}
-        >
-          {props.modelValue ? (
-            <div ref={panelHostRef} style={panelStyle.value}>
+        <div ref={panelHostRef} style={panelStyle.value}>
               <div
                 ref={panelRef}
                 class={[
                   "hk-popover-panel",
-                  ...(sheetMode.value ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),
+                  ...(sheetBranch ? ["hk-is-sheet"] : [`hk-popover-${resolvedPlacement.value}`]),
                   props.glass ? "hii-dropdown-content" : "",
+                  ...machine.classesFor(panelPrefix),
                   ...(typeof attrs.class === "string" ? [attrs.class]
                     : Array.isArray(attrs.class) ? attrs.class as string[]
                     : attrs.class && typeof attrs.class === "object"
@@ -578,15 +610,15 @@ export default defineComponent({
                       : []),
                 ]}
                 role="dialog"
-                aria-modal={sheetMode.value ? "true" : undefined}
+                aria-modal={sheetBranch ? "true" : undefined}
                 aria-label={props.title || undefined}
-                tabindex={sheetMode.value ? "-1" : undefined}
+                tabindex={sheetBranch ? "-1" : undefined}
                 onKeydown={onPanelKeydown}
               >
-                {sheetMode.value && (
+                {sheetBranch && (
                   <div class="hk-popover-sheet-grabber" aria-hidden="true" onClick={() => close()} />
                 )}
-                {sheetMode.value && (
+                {sheetBranch && (
                   // Sheet heading row — the title and the close button on
                   // one vertically-centered line (2026-09-04 user report:
                   // the bare title band read too small and hung right of
@@ -610,10 +642,9 @@ export default defineComponent({
                 )}
                 {slots.default?.()}
               </div>
-            </div>
-          ) : null}
-        </Transition>
+        </div>
       </Teleport>
-    );
+      );
+    };
   },
 });

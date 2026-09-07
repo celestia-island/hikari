@@ -142,14 +142,14 @@ describe("HkStatusBar", () => {
     tag.dispatchEvent(tap());
     await nextTick();
     expect(onRetry).toHaveBeenCalledTimes(1);
-    // happy-dom never fires transitionend, so the panel is guaranteed to
-    // still be mid leave-animation here (the leave class can only be
-    // removed by the transition's after-leave hook). The Transition's
-    // direct child is the positioning wrapper around the panel, so the
-    // leave class lands on it and the real panel must sit INSIDE it.
-    const tail = document.body.querySelector<HTMLElement>('[class*="hk-popover-leave"]');
-    expect(tail).not.toBeNull();
-    expect(tail?.querySelector(".hk-popover-panel")).not.toBeNull();
+    // Machine era: in no-transition environments (happy-dom's computed
+    // durations read 0) the close settles on the microtask queue — the
+    // rAF-era lingering leave window is gone. Assert the dismissal
+    // completed: the panel unmounted, exactly one retry ever fired.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
   it("a scroll-like touch ending over the tag does not retry", async () => {

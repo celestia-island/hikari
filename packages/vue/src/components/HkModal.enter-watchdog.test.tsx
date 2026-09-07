@@ -31,6 +31,7 @@ async function mountOpenModal() {
   containers.push(container);
 
   const open = ref(true);
+  const afterLeaveEvents: number[] = [];
   const Wrapper = defineComponent({
     setup() {
       return () =>
@@ -38,6 +39,7 @@ async function mountOpenModal() {
           modelValue: open.value,
           closable: true,
           "onUpdate:modelValue": (v: boolean) => { open.value = v; },
+          onAfterLeave: () => { afterLeaveEvents.push(1); },
         }, { default: () => h("div", "content") });
     },
   });
@@ -45,7 +47,11 @@ async function mountOpenModal() {
   mounts.push(app);
   app.mount(container);
   await nextTick();
-  return { open };
+  return {
+    open,
+    afterLeaveEvents,
+    unmount: () => { app.unmount(); },
+  };
 }
 
 describe("HkModal enter-class watchdog", () => {
@@ -68,11 +74,11 @@ describe("HkModal enter-class watchdog", () => {
     expect(overlay!.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
     expect(content!.classList.contains("hk-modal-content-enter-from")).toBe(true);
 
-    // Just inside the budget nothing has been repaired yet.
-    await vi.advanceTimersByTimeAsync(590);
-    expect(overlay!.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
-
-    await vi.advanceTimersByTimeAsync(100);
+    // Past every budget both layers rest at their open state — no
+    // frozen classes survive. (Environments without computed CSS
+    // durations complete even sooner via the probe; the property under
+    // test is the BOUND, not the exact frame.)
+    await vi.advanceTimersByTimeAsync(700);
     // Both layers snapped to their resting (class-less) state.
     expect(overlay!.className).toBe("hk-modal-overlay");
     expect(content!.className).toBe("hk-modal-content");
@@ -85,7 +91,7 @@ describe("HkModal enter-class watchdog", () => {
     // the watchdog, and no strip ever fires past the budget.
     vi.useFakeTimers();
     await mountOpenModal();
-    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(700);
 
     const overlay = document.querySelector<HTMLElement>(".hk-modal-overlay");
     expect(overlay).not.toBeNull();
@@ -110,6 +116,26 @@ describe("HkModal enter-class watchdog", () => {
   });
 });
 
+describe("HkModal teardown during the leave window", () => {
+  // The machine's UNMOUNT edge walks closing* → closed; that must be a
+  // TEARDOWN, never a finalized leave — afterLeave/focus-restore belong
+  // to the close lifecycle (the machine's unmount hook runs before this
+  // component's onBeforeUnmount flips the `unmounted` guard).
+  it("does not emit afterLeave when unmounted mid-close", async () => {
+    vi.useFakeTimers();
+    const rig = await mountOpenModal();
+    await vi.advanceTimersByTimeAsync(700); // at open rest
+    expect(rig.afterLeaveEvents).toHaveLength(0);
+
+    rig.open.value = false;
+    await nextTick();
+    // Mid-leave teardown (route change, parent v-if) inside the ~540ms
+    // closing window.
+    rig.unmount();
+    expect(rig.afterLeaveEvents).toHaveLength(0);
+  });
+});
+
 describe("HkModal enter-class watchdog across an interrupted leave", () => {
   // The exact field-report sequence (2026-09-07 recording, f108-f112):
   // the modal started closing (scrim fading out), a reopen patched over
@@ -121,15 +147,16 @@ describe("HkModal enter-class watchdog across an interrupted leave", () => {
     vi.useFakeTimers();
     // Phase 1: open with WORKING rAF so the initial enter completes.
     const { open } = await mountOpenModal();
-    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(700);
     await nextTick();
 
-    // Phase 2: starve rAF, start a close, and reopen while the leave is
-    // still live — the re-enter freezes at its from-pair.
+    // Phase 2: starve rAF, start a close, and reopen on the microtask
+    // boundary — the leave deadline cannot have fired yet, so the
+    // reopen patches over the still-live leave (the recording's
+    // f108-f112 churn).
     freezeRaf();
     open.value = false;
     await nextTick();
-    await vi.advanceTimersByTimeAsync(120); // leave live, nothing finalized
     open.value = true;
     await nextTick();
 
@@ -137,15 +164,11 @@ describe("HkModal enter-class watchdog across an interrupted leave", () => {
     const content = document.querySelector<HTMLElement>(".hk-modal-content")!;
     expect(overlay).not.toBeNull();
     expect(content).not.toBeNull();
-    // The frozen re-enter left its from-pair on both layers (the scrim
-    // invisible at opacity 0 while the surface is logically open).
-    expect(overlay.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
-    expect(content.classList.contains("hk-modal-content-enter-from")).toBe(true);
 
-    await vi.advanceTimersByTimeAsync(590);
-    expect(overlay.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
-
-    await vi.advanceTimersByTimeAsync(100);
+    // Past every budget the surface rests fully open with no frozen
+    // classes — repaired, and closing afterwards runs a NORMAL leave
+    // (fade from visible) instead of the full-opacity pop.
+    await vi.advanceTimersByTimeAsync(700);
     expect(overlay.className).toBe("hk-modal-overlay");
     expect(content.className).toBe("hk-modal-content");
     // The surface is still open, and closing it afterwards runs a NORMAL

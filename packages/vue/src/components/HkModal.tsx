@@ -19,6 +19,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
+import { armTransitionClassWatchdog, stripTransitionClasses } from "../runtime/transitionWatchdog";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSizeMorph } from "../composables/useSizeMorph";
@@ -180,6 +181,7 @@ export default defineComponent({
     });
 
     const handle = ref<{ id: string; zIndex: number } | null>(null);
+    const overlayRef = ref<HTMLElement>();
     const bodyRef = ref<HTMLElement>();
     const contentRef = ref<HTMLElement>();
     /** Natural-height probe inside the scroll container: the body's
@@ -227,6 +229,24 @@ export default defineComponent({
         clearTimeout(leaveWatchdog);
         leaveWatchdog = null;
       }
+    }
+
+    // ── Enter-class watchdog ──────────────────────────────────────────
+    // The leave side above bounds rAF starvation for the CLOSE; the enter
+    // side has no such guard. A starved enter freezes the from-pair on
+    // the layer (scrim at opacity: 0 while the panel floats above it),
+    // and the eventual close then flashes the resurrected curtain at full
+    // opacity — the mobile "black rectangle" report (2026-09). Each layer
+    // (overlay, content) arms on its before-enter and strips stuck
+    // enter classes once the same budget lapses; normal enters disarm.
+    let overlayEnterGuard: (() => void) | null = null;
+    let contentEnterGuard: (() => void) | null = null;
+
+    function disarmEnterGuards(): void {
+      overlayEnterGuard?.();
+      overlayEnterGuard = null;
+      contentEnterGuard?.();
+      contentEnterGuard = null;
     }
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
@@ -319,6 +339,7 @@ export default defineComponent({
       if (unmounted || props.modelValue || leaveFinalized) return;
       leaveFinalized = true;
       disarmLeaveWatchdog();
+      disarmEnterGuards();
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;
@@ -639,6 +660,9 @@ export default defineComponent({
           // (e.g. immediate), clean up now.
           overlay.close();
           backGuard.release();
+          // The enter cycles are dead the moment the surface starts
+          // closing — their guards must not fire into the leave.
+          disarmEnterGuards();
           // Bound the Transition leave: if rAF starvation froze the
           // class flip, the watchdog finalizes in the watchdog's place
           // (see LEAVE_WATCHDOG_MS above). Only an actually-mounted
@@ -678,6 +702,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       unmounted = true;
       disarmLeaveWatchdog();
+      disarmEnterGuards();
       detachBodyScrollbar();
       teardownWindowed();
       teardownAutoFollow();
@@ -731,13 +756,40 @@ export default defineComponent({
             <Transition
               name="hk-modal-overlay"
               appear
-              onBeforeEnter={overlayHooks.onBeforeEnter}
-              onAfterEnter={overlayHooks.onAfterEnter}
+              onBeforeEnter={(el: Element) => {
+                overlayHooks.onBeforeEnter();
+                // A prior interrupted cycle can stamp stale classes on a
+                // recycled node — never enter from a frozen transition.
+                stripTransitionClasses(el as HTMLElement, "hk-modal-overlay");
+                overlayEnterGuard?.();
+                overlayEnterGuard = armTransitionClassWatchdog(
+                  el as HTMLElement,
+                  "hk-modal-overlay",
+                  () => !unmounted && !!props.modelValue,
+                );
+              }}
+              onAfterEnter={(el: Element) => {
+                overlayHooks.onAfterEnter();
+                // Stale after-enters from an interrupted cycle (Vue fires
+                // them without a cancelled flag) must not disarm the live
+                // cycle's guard — only the current element's completion.
+                if (el === overlayRef.value) {
+                  overlayEnterGuard?.();
+                  overlayEnterGuard = null;
+                }
+              }}
+              onEnterCancelled={() => {
+                overlayHooks.onEnterCancelled();
+                overlayEnterGuard?.();
+                overlayEnterGuard = null;
+              }}
               onBeforeLeave={overlayHooks.onBeforeLeave}
               onAfterLeave={overlayHooks.onAfterLeave}
+              onLeaveCancelled={overlayHooks.onLeaveCancelled}
             >
               {props.modelValue && (
                 <div
+                  ref={overlayRef}
                   class="hk-modal-overlay"
                   onClick={onOverlayClick}
                 />
@@ -746,13 +798,34 @@ export default defineComponent({
             <Transition
               name="hk-modal-content"
               appear
-              onBeforeEnter={contentHooks.onBeforeEnter}
-              onAfterEnter={() => {
+              onBeforeEnter={(el: Element) => {
+                contentHooks.onBeforeEnter();
+                stripTransitionClasses(el as HTMLElement, "hk-modal-content");
+                contentEnterGuard?.();
+                contentEnterGuard = armTransitionClassWatchdog(
+                  el as HTMLElement,
+                  "hk-modal-content",
+                  () => !unmounted && !!props.modelValue,
+                );
+              }}
+              onAfterEnter={(el: Element) => {
                 contentHooks.onAfterEnter();
-                onAfterEnter();
-                // Size morphs arm once the open choreography finished —
-                // pinning during enter would override its height reveal.
-                morph.start();
+                // Identity gate: a stale after-enter from an interrupted
+                // cycle must neither disarm the live guard nor re-run the
+                // open side effects (focus, morph arming).
+                if (el === contentRef.value) {
+                  contentEnterGuard?.();
+                  contentEnterGuard = null;
+                  onAfterEnter();
+                  // Size morphs arm once the open choreography finished —
+                  // pinning during enter would override its height reveal.
+                  morph.start();
+                }
+              }}
+              onEnterCancelled={() => {
+                contentHooks.onEnterCancelled();
+                contentEnterGuard?.();
+                contentEnterGuard = null;
               }}
               onBeforeLeave={() => {
                 contentHooks.onBeforeLeave();
@@ -763,6 +836,7 @@ export default defineComponent({
                 contentHooks.onAfterLeave();
                 onAfterLeaveFinalize();
               }}
+              onLeaveCancelled={contentHooks.onLeaveCancelled}
             >
               {props.modelValue && (
                 <div

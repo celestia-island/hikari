@@ -32,17 +32,19 @@ interface Harness {
   frame: HTMLElement;
   content: HTMLElement;
   setNatural(height: number): void;
+  setContentNatural(height: number): void;
   start(): void;
   stop(): void;
   remeasure(): void;
 }
 
-function mountHarness(initialHeight: number): Harness {
+function mountHarness(initialHeight: number, initialContentHeight = 0): Harness {
   const container = document.createElement("div");
   document.body.appendChild(container);
   let frameEl: HTMLElement | null = null;
   let contentEl: HTMLElement | null = null;
   let natural = initialHeight;
+  let contentNatural = initialContentHeight;
   let morph: ReturnType<typeof useSizeMorph> | null = null;
   const app = createApp({
     setup() {
@@ -68,6 +70,12 @@ function mountHarness(initialHeight: number): Harness {
               ref: (el: unknown) => {
                 content.value = (el as HTMLElement | null) ?? null;
                 contentEl = content.value;
+                if (contentEl) {
+                  Object.defineProperty(contentEl, "offsetHeight", {
+                    configurable: true,
+                    get: () => contentNatural,
+                  });
+                }
               },
               class: "content",
             }, "content"),
@@ -82,6 +90,9 @@ function mountHarness(initialHeight: number): Harness {
     content: contentEl!,
     setNatural: (h: number) => {
       natural = h;
+    },
+    setContentNatural: (h: number) => {
+      contentNatural = h;
     },
     start: () => morph!.start(),
     stop: () => morph!.stop(),
@@ -151,6 +162,94 @@ describe("useSizeMorph", () => {
   it("does nothing while disarmed", () => {
     const h = mountHarness(120);
     h.remeasure();
+    expect(h.frame.style.height).toBe("");
+  });
+
+  // ── Contamination guard (2026-09 mobile report) ─────────────────────
+  // A remeasure taken under transition-class flex pollution (e.g. a
+  // frozen enter's `flex: 0 0 auto` uncapping the scroll body) reads a
+  // "natural" height far past the content — pinning it locked a 600px
+  // form at 1728px with ~1100px of blank shell. The guard must release
+  // to auto instead of pinning.
+
+  it("releases to auto when the measurement exceeds content plus chrome", async () => {
+    // Rest: 600px frame around 560px content → chrome allowance ≈128px.
+    const h = mountHarness(600, 560);
+    h.start();
+    expect(h.frame.style.height).toBe("600px");
+
+    // Contaminated probe: the frame "naturally" 1728px, content unmoved.
+    h.setNatural(1728);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("");
+    expect(h.frame.style.transition).toBe("");
+  });
+
+  it("recovers and pins again once a clean measurement returns", async () => {
+    const h = mountHarness(600, 560);
+    h.start();
+
+    h.setNatural(1728);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("");
+
+    h.setNatural(520);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("520px");
+  });
+
+  it("still pins when the content probe reads zero (no layout engine)", async () => {
+    // happy-dom-style degenerate probe: the guard cannot validate
+    // anything, so it must not block the pin (pre-guard behavior).
+    const h = mountHarness(160, 0);
+    h.start();
+    expect(h.frame.style.height).toBe("160px");
+
+    h.setNatural(300);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("300px");
+  });
+
+  it("pins legitimate overflow growth (frame capped under content height)", async () => {
+    // Overflow: content taller than the (capped) frame — the delta goes
+    // negative at rest, the allowance floors, and later capped pins
+    // must never trip the guard.
+    const h = mountHarness(700, 900);
+    h.start();
+    expect(h.frame.style.height).toBe("700px");
+
+    h.setNatural(720);
+    h.setContentNatural(1200);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("720px");
+  });
+
+  it("recalibrates the chrome allowance across stop/start cycles", async () => {
+    const h = mountHarness(600, 560);
+    h.start();
+    h.stop();
+
+    // A new open cycle with real chrome of ~200px (frame 700, content 500).
+    h.setNatural(700);
+    h.setContentNatural(500);
+    h.start();
+    expect(h.frame.style.height).toBe("700px");
+
+    // 730px is within content+chrome (500+232) → pins.
+    h.setNatural(730);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("730px");
+
+    // 900px is past it → releases.
+    h.setNatural(900);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
     expect(h.frame.style.height).toBe("");
   });
 });

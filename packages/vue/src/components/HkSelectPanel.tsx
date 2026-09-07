@@ -14,6 +14,7 @@ import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
+import { armTransitionClassWatchdog, stripTransitionClasses } from "../runtime/transitionWatchdog";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSizeMorph } from "../composables/useSizeMorph";
@@ -120,7 +121,11 @@ export default defineComponent({
     const popoutAnim = useSurfaceTransition(250);
     const sheetScrimAnim = useSurfaceTransition(320);
     const sheetPanelAnim = useSurfaceTransition(320);
+    // Stable hook sets (one object per track, hoisted out of handlers).
+    const popoutHooks = popoutAnim.hooks();
+    const sheetScrimHooks = sheetScrimAnim.hooks("scrim");
     const panelRef = ref<HTMLElement>();
+    const sheetScrimRef = ref<HTMLElement>();
     const sheetListRef = ref<HTMLElement>();
     /** Natural-height probe inside the sheet list: the content wrapper
      *  (slot children), whose height is the content's intrinsic height
@@ -131,19 +136,57 @@ export default defineComponent({
     // content growth (a language list gaining rows, filtered options)
     // with the height transition instead of snapping.
     const morph = useSizeMorph(panelRef, sheetContentRef);
+    // Enter-class watchdogs (runtime/transitionWatchdog): a starved enter
+    // freezes the from-pair on a layer — a stuck scrim at opacity: 0 with
+    // the panel floating above it, resurrected as a full-opacity flash on
+    // close (the 2026-09 mobile report). One guard per transition track;
+    // normal enters disarm them.
+    let scrimEnterGuard: (() => void) | null = null;
+    let sheetPanelEnterGuard: (() => void) | null = null;
+    let popoutEnterGuard: (() => void) | null = null;
+
+    function disarmEnterGuards(): void {
+      scrimEnterGuard?.();
+      scrimEnterGuard = null;
+      sheetPanelEnterGuard?.();
+      sheetPanelEnterGuard = null;
+      popoutEnterGuard?.();
+      popoutEnterGuard = null;
+    }
     // Sheet panel transition hooks: the surface transition's own set plus
     // the size-morph lifecycle (arm after enter — pinning during the
-    // slide-up would fight it — and release before the leave). The inner
-    // hooks("panel") call shares the same reported track, so merging is
-    // safe.
+    // slide-up would fight it — and release before the leave). The base
+    // hook set shares the same reported track, so merging is safe.
+    const sheetPanelBaseHooks = sheetPanelAnim.hooks("panel");
     const sheetPanelHooks = {
-      ...sheetPanelAnim.hooks("panel"),
-      onAfterEnter: () => {
-        sheetPanelAnim.hooks("panel").onAfterEnter();
-        morph.start();
+      ...sheetPanelBaseHooks,
+      onBeforeEnter: (el: Element) => {
+        sheetPanelBaseHooks.onBeforeEnter();
+        stripTransitionClasses(el as HTMLElement, "hk-select-sheet");
+        sheetPanelEnterGuard?.();
+        sheetPanelEnterGuard = armTransitionClassWatchdog(
+          el as HTMLElement,
+          "hk-select-sheet",
+          () => props.open,
+        );
+      },
+      onEnterCancelled: () => {
+        sheetPanelBaseHooks.onEnterCancelled();
+        sheetPanelEnterGuard?.();
+        sheetPanelEnterGuard = null;
+      },
+      onAfterEnter: (el: Element) => {
+        sheetPanelBaseHooks.onAfterEnter();
+        // Identity gate: a stale after-enter from an interrupted cycle
+        // must neither disarm the live guard nor re-arm the morph.
+        if (el === panelRef.value) {
+          sheetPanelEnterGuard?.();
+          sheetPanelEnterGuard = null;
+          morph.start();
+        }
       },
       onBeforeLeave: () => {
-        sheetPanelAnim.hooks("panel").onBeforeLeave();
+        sheetPanelBaseHooks.onBeforeLeave();
         morph.stop();
       },
     };
@@ -388,6 +431,9 @@ export default defineComponent({
           window.removeEventListener("resize", onResize);
           detachPanelScrollbar();
           stopDupTitleSync();
+          // Enter cycles died with the open state — their guards must
+          // not fire into the leave transitions.
+          disarmEnterGuards();
           backGuard.release();
           if (handle.value) {
             // Unregister immediately (stacking/breadcrumb must forget the
@@ -412,6 +458,7 @@ export default defineComponent({
       window.removeEventListener("resize", onResize);
       detachPanelScrollbar();
       stopDupTitleSync();
+      disarmEnterGuards();
       overlay.close();
       backGuard.destroy();
       if (handle.value) {
@@ -525,9 +572,38 @@ export default defineComponent({
                 panel's `hk-select-sheet` name, so the panel's
                 translateY(100%) enter pair slid the dim curtain up from
                 the bottom edge on phones (2026-09-06 report). */}
-            <Transition name="hk-select-sheet-scrim" appear {...sheetScrimAnim.hooks("scrim")}>
+            <Transition
+              name="hk-select-sheet-scrim"
+              appear
+              onBeforeEnter={(el: Element) => {
+                sheetScrimHooks.onBeforeEnter();
+                stripTransitionClasses(el as HTMLElement, "hk-select-sheet-scrim");
+                scrimEnterGuard?.();
+                scrimEnterGuard = armTransitionClassWatchdog(
+                  el as HTMLElement,
+                  "hk-select-sheet-scrim",
+                  () => props.open,
+                );
+              }}
+              onAfterEnter={(el: Element) => {
+                sheetScrimHooks.onAfterEnter();
+                if (el === sheetScrimRef.value) {
+                  scrimEnterGuard?.();
+                  scrimEnterGuard = null;
+                }
+              }}
+              onEnterCancelled={() => {
+                sheetScrimHooks.onEnterCancelled();
+                scrimEnterGuard?.();
+                scrimEnterGuard = null;
+              }}
+              onBeforeLeave={sheetScrimHooks.onBeforeLeave}
+              onAfterLeave={sheetScrimHooks.onAfterLeave}
+              onLeaveCancelled={sheetScrimHooks.onLeaveCancelled}
+            >
               {props.open ? (
                 <div
+                  ref={sheetScrimRef}
                   class="hk-select-sheet-scrim"
                   style={{ zIndex: popoutZ.value - 1 }}
                   onClick={close}
@@ -595,7 +671,37 @@ export default defineComponent({
       // after an auto-flip).
       return (
         <Teleport to="body">
-          <Transition name="hk-select-popout" appear {...popoutAnim.hooks()}>
+          <Transition
+            name="hk-select-popout"
+            appear
+            onBeforeEnter={(el: Element) => {
+              popoutHooks.onBeforeEnter();
+              stripTransitionClasses(el as HTMLElement, "hk-select-popout");
+              popoutEnterGuard?.();
+              popoutEnterGuard = armTransitionClassWatchdog(
+                el as HTMLElement,
+                "hk-select-popout",
+                () => props.open,
+              );
+            }}
+            onAfterEnter={(el: Element) => {
+              popoutHooks.onAfterEnter();
+              // Identity-gated disarm: a stale after-enter from an
+              // interrupted cycle must not disarm the live cycle's guard.
+              if (el === popoutHostRef.value) {
+                popoutEnterGuard?.();
+                popoutEnterGuard = null;
+              }
+            }}
+            onEnterCancelled={() => {
+              popoutHooks.onEnterCancelled();
+              popoutEnterGuard?.();
+              popoutEnterGuard = null;
+            }}
+            onBeforeLeave={popoutHooks.onBeforeLeave}
+            onAfterLeave={popoutHooks.onAfterLeave}
+            onLeaveCancelled={popoutHooks.onLeaveCancelled}
+          >
             {props.open ? (
               <div
                 ref={popoutHostRef}

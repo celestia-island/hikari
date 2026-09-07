@@ -145,6 +145,8 @@ export const HkColorSchemeEditor = defineComponent({
     initialLight: { type: Object as PropType<ThemeSchemeTokens>, default: undefined },
     /** Prefill extension token groups (per mode); defaults to registry defaults. */
     initialGroups: { type: Object as PropType<ThemeTokenGroupModes>, default: undefined },
+    /** Prefill the scheme name input (edit/fork flows); empty by default. */
+    initialName: { type: String, default: "" },
   },
   setup(props, { expose }) {
     const { t } = useI18n();
@@ -153,7 +155,7 @@ export const HkColorSchemeEditor = defineComponent({
     // through a computed so config-file labels follow the live locale.
     const activeLocale = computed(() => useI18n().locale);
     const modeTab = ref<string>("dark");
-    const themeName = ref("");
+    const themeName = ref(props.initialName ?? "");
 
     const dark = reactive<ThemeSchemeTokens>({ ...defaultDark });
     const light = reactive<ThemeSchemeTokens>({ ...defaultLight });
@@ -196,7 +198,7 @@ export const HkColorSchemeEditor = defineComponent({
 
     function reset(): void {
       modeTab.value = useTheme().effectiveMode.value;
-      themeName.value = t("hikari::theme.customThemeName");
+      themeName.value = props.initialName ?? t("hikari::theme.customThemeName");
       Object.assign(dark, props.initialDark ?? defaultDark);
       Object.assign(light, props.initialLight ?? defaultLight);
       // Optional slots: a legacy prefill omitting them must reset to white

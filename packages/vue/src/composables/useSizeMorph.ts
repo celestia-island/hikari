@@ -1,5 +1,13 @@
 import { onBeforeUnmount, type Ref } from "vue";
 
+/** Chrome-allowance calibration constants (px): the floor covers a
+ *  standard header+footer+borders stack (and bodies that overflow at
+ *  arm time, where the resting delta goes negative and says nothing
+ *  about chrome); the slack absorbs subpixel/border noise so the guard
+ *  never trips on a legitimate measurement. */
+const CHROME_ALLOWANCE_FLOOR = 96;
+const CHROME_ALLOWANCE_SLACK = 32;
+
 export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
    *  height on every change. Call once the surface finished its open
@@ -54,11 +62,33 @@ export function useSizeMorph(
   let armed = false;
   /** Last pinned height (px) — the transition's "from" value. */
   let pinned = 0;
+  /** Contamination allowance (px): how far the frame's natural height may
+   *  exceed the content probe at rest — its own chrome (header, footer,
+   *  borders, CSS min-height floors), captured at arm time, floored for
+   *  bodies that overflow at rest, plus subpixel slack. See the guard in
+   *  remeasure(). */
+  let chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
 
   function release(): void {
     const f = frame.value;
     if (f) f.style.height = "";
     pinned = 0;
+  }
+
+  /** Calibrate the chrome allowance from the resting (unpinned, enter
+   *  finished) frame — the only moment guaranteed free of transition-class
+   *  flex rules. Never calibrate from a remeasure sample: the first
+   *  remeasure can itself be the contaminated one (a frozen enter leaves
+   *  the flex rules behind when the surface is mid-repair). */
+  function calibrate(): void {
+    const f = frame.value;
+    const c = content.value;
+    if (!f || !c) return;
+    const frameH = f.offsetHeight;
+    const contentH = c.offsetHeight;
+    chromeAllowance = frameH > 0 && contentH > 0 && frameH >= contentH
+      ? Math.max(frameH - contentH, CHROME_ALLOWANCE_FLOOR) + CHROME_ALLOWANCE_SLACK
+      : CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
   }
 
   function remeasure(): void {
@@ -74,7 +104,7 @@ export function useSizeMorph(
     // 3. Flip to the NEW pin under the live transition — the computed
     //    value changes old→new, so the height transition animates.
     // No paint happens between the steps: they run in one task and the
-    // layout flushes are invisible to the screen.
+    //    layout flushes are invisible to the screen.
     const inlineTransition = f.style.transition;
     f.style.transition = "none";
     f.style.height = "";
@@ -85,12 +115,36 @@ export function useSizeMorph(
       f.style.transition = inlineTransition;
       return;
     }
+    // Contamination guard: at rest the frame can only be taller than the
+    // content probe by its own chrome. A natural height past that bound
+    // describes a mid-transition state (e.g. enter/leave-class
+    // `flex: 0 0 auto` rules uncapping the scroll body) that never
+    // exists at rest — pinning it would lock a blank shell at the
+    // max-height cap (2026-09 mobile report: a 600px form pinned at
+    // 1728px with ~1100px of empty body). A zero-height probe (no layout
+    // engine, hidden content) validates nothing — fall through and pin.
+    // On a trip, release to auto; the observer re-fires on the next
+    // genuine content change.
+    if (c.offsetHeight > 0 && natural > c.offsetHeight + chromeAllowance) {
+      release();
+      f.style.transition = inlineTransition;
+      return;
+    }
     if (pinned > 0) f.style.height = `${pinned}px`;
     // Flush the old-pin state before re-enabling the transition.
     void f.offsetHeight;
     f.style.transition = inlineTransition;
     f.style.height = `${Math.round(natural)}px`;
     pinned = Math.round(natural);
+    // Self-heal the allowance on every VALIDATED pin: chrome that grew
+    // after calibration (an async footer, a header slot mounting
+    // mid-open) updates the baseline instead of tripping the guard on
+    // the next change and silently disabling the morph for the cycle.
+    const probeH = c.offsetHeight;
+    if (probeH > 0 && natural >= probeH) {
+      chromeAllowance =
+        Math.max(natural - probeH, CHROME_ALLOWANCE_FLOOR) + CHROME_ALLOWANCE_SLACK;
+    }
   }
 
   function onResize(): void {
@@ -114,6 +168,10 @@ export function useSizeMorph(
   function start(): void {
     if (armed) return;
     armed = true;
+    // Calibrate before the first pin: at this point the surface finished
+    // its enter (callers arm in after-enter) and sits at rest, so the
+    // frame-vs-content delta is pure chrome.
+    calibrate();
     if (typeof ResizeObserver === "undefined" || !content.value) {
       remeasure();
       return;
@@ -136,6 +194,9 @@ export function useSizeMorph(
       cancelAnimationFrame(raf);
       raf = 0;
     }
+    // The next start() re-calibrates against whatever chrome that open
+    // cycle carries.
+    chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
     release();
   }
 

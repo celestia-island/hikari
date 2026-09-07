@@ -664,3 +664,59 @@ describe("HkSelectPanel desktop popout motion", () => {
     expect(hosts.at(-1)!.textContent).toContain("a");
   });
 });
+
+describe("HkSelectPanel enter-class watchdog (frozen-rAF repair)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  // Mirror of HkModal.enter-watchdog: a starved enter freezes the from
+  // pair on the sheet's scrim and panel (2026-09 mobile report — the
+  // scrim died invisible and flashed back at full opacity on close).
+  // The watchdog must strip the stuck classes on both layers while the
+  // panel stays open.
+  it("strips frozen enter classes on the sheet scrim and panel within the budget", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    setViewport(375);
+    const { open } = mountPanel();
+    await nextTick();
+    open.value = true;
+    await nextTick();
+
+    const scrim = document.body.querySelector<HTMLElement>(".hk-select-sheet-scrim")!;
+    const panel = document.body.querySelector<HTMLElement>(".hk-select-sheet-panel")!;
+    expect(scrim).toBeTruthy();
+    expect(panel).toBeTruthy();
+    // The frozen enter left its from-pair on both layers.
+    expect(scrim.classList.contains("hk-select-sheet-scrim-enter-from")).toBe(true);
+    expect(panel.classList.contains("hk-select-sheet-enter-from")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(590);
+    expect(scrim.classList.contains("hk-select-sheet-scrim-enter-from")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(scrim.classList.contains("hk-select-sheet-scrim-enter-from")).toBe(false);
+    expect(panel.classList.contains("hk-select-sheet-enter-from")).toBe(false);
+    // …and the surface is still open and intact.
+    expect(document.body.querySelector(".hk-select-sheet-panel")).not.toBeNull();
+  });
+
+  it("a repaired sheet still closes normally through its scrim click", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", (_cb: FrameRequestCallback) => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    setViewport(375);
+    const { open } = mountPanel();
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(700);
+
+    (document.body.querySelector<HTMLElement>(".hk-select-sheet-scrim"))!.click();
+    await nextTick();
+    expect(open.value).toBe(false);
+  });
+});

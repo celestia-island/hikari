@@ -1,5 +1,5 @@
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Check, ChevronDown, Monitor, Moon, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
+import { Check, ChevronDown, Monitor, MoonStar, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
   HDivider,
   HPopover,
@@ -159,9 +159,9 @@ export const HkThemeToggle = defineComponent({
     function modeOptions(): TabItem[] {
       const auto = isAutoMode.value;
       return [
-        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={14} /> },
-        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={14} />, disabled: auto },
-        { key: "dark", label: t("hikari::theme.modeDark"), icon: <Moon size={14} />, disabled: auto },
+        { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={16} /> },
+        { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={16} />, disabled: auto },
+        { key: "dark", label: t("hikari::theme.modeDark"), icon: <MoonStar size={16} />, disabled: auto },
       ];
     }
 
@@ -205,11 +205,11 @@ export const HkThemeToggle = defineComponent({
           aria-label={t("hikari::theme.mode")}
         >
           {currentMode.value === "system" ? (
-            <Monitor size={14} />
+            <Monitor size={16} />
           ) : effectiveMode.value === "dark" ? (
-            <Moon size={14} />
+            <MoonStar size={16} />
           ) : (
-            <Sun size={14} />
+            <Sun size={16} />
           )}
         </button>
         <button
@@ -252,7 +252,7 @@ export const HkThemeToggle = defineComponent({
                       aria-label={t("hikari::theme.autoAltitudeTip")}
                       onClick={resolveAutoToManual}
                     >
-                      {altitudeNight.value ? <Moon size={14} /> : <Sun size={14} />}
+                      {altitudeNight.value ? <MoonStar size={16} /> : <Sun size={16} />}
                       <span class="s-theme-mode-autoalt-value">{altitudeText.value}</span>
                     </button>
                   ),

@@ -148,6 +148,21 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
     }, Math.max(0, ms));
   }
 
+  /** Zero-duration completion: no CSS transitions are running, so the
+   *  surface's logical open/close can settle on the MICROtask queue —
+   *  ahead of every macrotask (a 0ms timer loses macrotask-order races
+   *  against caller setTimeout(0)s, e.g. test harnesses; real browsers
+   *  never take this path). The table absorbs a DEADLINE in any phase,
+   *  so a microtask that lands after an unrelated phase change is a
+   *  no-op. */
+  function completeNow(): void {
+    if (deadlineTimer !== null) {
+      clearTimeout(deadlineTimer);
+      deadlineTimer = null;
+    }
+    queueMicrotask(() => { send("DEADLINE"); });
+  }
+
   function armClock(next: SurfacePhase): void {
     clearClock();
     if (next === "closed" || next === "open") return;
@@ -186,13 +201,15 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
         if (phase.value !== phaseAtArm) return;
         const measured = measuredBudget();
         if (measured === null) return;
-        rearmDeadline(measured > 0 ? flipBudget + measured + slack : 0);
+        if (measured > 0) rearmDeadline(flipBudget + measured + slack);
+        else completeNow();
       });
     } else {
       // *.to phases: the elements exist and styles settled at the flip.
       const measured = measuredBudget();
       if (measured !== null) {
-        rearmDeadline(measured > 0 ? measured + slack : 0);
+        if (measured > 0) rearmDeadline(measured + slack);
+        else completeNow();
       }
     }
   }

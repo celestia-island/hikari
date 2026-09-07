@@ -5,7 +5,6 @@ import {
   onBeforeUnmount,
   ref,
   Teleport,
-  Transition,
   watch,
   type PropType,
 } from "vue";
@@ -14,9 +13,9 @@ import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
-import { armTransitionClassWatchdog, stripTransitionClasses } from "../runtime/transitionWatchdog";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSizeMorph } from "../composables/useSizeMorph";
 import { useI18n } from "../i18n/context";
 import HIconButton from "./HkIconButton";
@@ -114,16 +113,14 @@ export default defineComponent({
 
     const { isMobile } = useBreakpoint();
     const sheetMode = computed(() => props.sheetOnMobile && isMobile.value);
+    /** The form factor this surface OPENED in. The render branches on
+     *  it (not the live sheetMode) so a viewport crossing the mobile
+     *  breakpoint mid-flight closes in the shape the surface was born
+     *  in — the popout branch must not flash in for the closing window
+     *  of a dying sheet (or vice versa). Set on the machine's opening
+     *  edge; the next open adopts whatever the viewport calls for. */
+    const activeBranch = ref<"sheet" | "popout">("sheet");
 
-    // Open/close motion reports into the unified animation context
-    // (animationBus) for both surface shapes: the desktop popout and the
-    // mobile bottom sheet — scrim and panel on separate tracks.
-    const popoutAnim = useSurfaceTransition(250);
-    const sheetScrimAnim = useSurfaceTransition(320);
-    const sheetPanelAnim = useSurfaceTransition(320);
-    // Stable hook sets (one object per track, hoisted out of handlers).
-    const popoutHooks = popoutAnim.hooks();
-    const sheetScrimHooks = sheetScrimAnim.hooks("scrim");
     const panelRef = ref<HTMLElement>();
     const sheetScrimRef = ref<HTMLElement>();
     const sheetListRef = ref<HTMLElement>();
@@ -136,60 +133,135 @@ export default defineComponent({
     // content growth (a language list gaining rows, filtered options)
     // with the height transition instead of snapping.
     const morph = useSizeMorph(panelRef, sheetContentRef);
-    // Enter-class watchdogs (runtime/transitionWatchdog): a starved enter
-    // freezes the from-pair on a layer — a stuck scrim at opacity: 0 with
-    // the panel floating above it, resurrected as a full-opacity flash on
-    // close (the 2026-09 mobile report). One guard per transition track;
-    // normal enters disarm them.
-    let scrimEnterGuard: (() => void) | null = null;
-    let sheetPanelEnterGuard: (() => void) | null = null;
-    let popoutEnterGuard: (() => void) | null = null;
 
-    function disarmEnterGuards(): void {
-      scrimEnterGuard?.();
-      scrimEnterGuard = null;
-      sheetPanelEnterGuard?.();
-      sheetPanelEnterGuard = null;
-      popoutEnterGuard?.();
-      popoutEnterGuard = null;
+    // Open/close motion reported into the unified animation context
+    // (animationBus) — one track for the whole surface, armed on the
+    // machine's animation-phase edges.
+    const surfTrack = useSurfaceTransition(320).track("surface");
+
+    /** Open-request bookkeeping (was the props.open watcher's open
+     *  arm): popup registration (blocking follows the sheet decision),
+     *  overlay registry, release-then-push back guard, and the
+     *  next-tick mounts (scrollbar, duplicate-title filter). */
+    function handleOpenRequest(): void {
+      // Register with the panel title so the modal breadcrumb labels
+      // this layer by its i18n name. Blocking follows the sheet
+      // decision: the desktop popout is a hidden level, the mobile
+      // bottom sheet is a window layer that must be listed.
+      handle.value = manager.register(
+        "dropdown",
+        false,
+        props.title || undefined,
+        sheetMode.value,
+      );
+      overlay.open();
+      // Release-then-push (the HkMenu normalizer form): a same-tick
+      // close→reopen must not leave the reopened panel unguarded —
+      // release() keeps its rewind claim (desired snaps to 0) and the
+      // following push() re-advances desired by one, so the pending
+      // flush rewinds exactly to the fresh entry instead of past it.
+      if (backGuard.entries > 0) backGuard.release();
+      backGuard.push();
+      // The scrolling surface mounts on this very render (popout
+      // subtree or sheet body) — attach the overlay scrollbar once
+      // the DOM has landed. A same-tick open→close must not arm it
+      // on the leaving panel.
+      void nextTick(() => {
+        if (!props.open) return;
+        attachPanelScrollbar();
+      });
+      if (!sheetMode.value) {
+        document.addEventListener("click", onDocumentClick, true);
+      } else {
+        // The sheet body mounts on this very render — run the
+        // duplicate-title filter once it has landed, then keep
+        // re-syncing while open (async slot content swaps).
+        void nextTick(() => {
+          // A same-tick open→close must not arm the observer on the
+          // leaving panel (the close edge already ran).
+          if (!props.open || !sheetMode.value) return;
+          syncDupTitle();
+          if (sheetListRef.value && !dupTitleObserver) {
+            dupTitleObserver = new MutationObserver(syncDupTitle);
+            dupTitleObserver.observe(sheetListRef.value, {
+              childList: true,
+              characterData: true,
+              subtree: true,
+              // A consumer re-render patching className can wipe
+              // hk-sheet-dup-title mid-open — class mutations re-sync
+              // it (adding an existing class mutates nothing, so the
+              // loop converges).
+              attributes: true,
+              attributeFilter: ["class"],
+            });
+          }
+        });
+      }
+      window.addEventListener("resize", onResize);
     }
-    // Sheet panel transition hooks: the surface transition's own set plus
-    // the size-morph lifecycle (arm after enter — pinning during the
-    // slide-up would fight it — and release before the leave). The base
-    // hook set shares the same reported track, so merging is safe.
-    const sheetPanelBaseHooks = sheetPanelAnim.hooks("panel");
-    const sheetPanelHooks = {
-      ...sheetPanelBaseHooks,
-      onBeforeEnter: (el: Element) => {
-        sheetPanelBaseHooks.onBeforeEnter();
-        stripTransitionClasses(el as HTMLElement, "hk-select-sheet");
-        sheetPanelEnterGuard?.();
-        sheetPanelEnterGuard = armTransitionClassWatchdog(
-          el as HTMLElement,
-          "hk-select-sheet",
-          () => props.open,
-        );
-      },
-      onEnterCancelled: () => {
-        sheetPanelBaseHooks.onEnterCancelled();
-        sheetPanelEnterGuard?.();
-        sheetPanelEnterGuard = null;
-      },
-      onAfterEnter: (el: Element) => {
-        sheetPanelBaseHooks.onAfterEnter();
-        // Identity gate: a stale after-enter from an interrupted cycle
-        // must neither disarm the live guard nor re-arm the morph.
-        if (el === panelRef.value) {
-          sheetPanelEnterGuard?.();
-          sheetPanelEnterGuard = null;
+
+    /** Close-request bookkeeping (was the watcher's close arm): the
+     *  registries forget the surface at request time; the machine keeps
+     *  the DOM mounted through its closing window (leave transition),
+     *  painting at the remembered z band. */
+    function handleCloseRequest(): void {
+      document.removeEventListener("click", onDocumentClick, true);
+      window.removeEventListener("resize", onResize);
+      detachPanelScrollbar();
+      stopDupTitleSync();
+      // Release the pinned height so the leave owns the frame.
+      morph.stop();
+      backGuard.release();
+      if (handle.value) {
+        // Unregister immediately (stacking/breadcrumb must forget the
+        // dying panel at once) but remember its z — the closing window
+        // below keeps rendering at that band for its short lifetime
+        // instead of sinking under the page.
+        lastZ.value = handle.value.zIndex;
+        manager.unregister(handle.value.id);
+        handle.value = null;
+      }
+      overlay.close();
+    }
+
+    // ── Surface lifecycle machine ─────────────────────────────────────
+    // One machine drives every layer of BOTH form factors — the mobile
+    // sheet (scrim + panel) and the desktop popout. The branches render
+    // disjoint elements, so the inactive layers' probes read null and
+    // only the live branch's CSS timing tightens the deadlines. The
+    // two-<Transition> era could freeze one layer's enter pair while the
+    // other stayed visible (2026-09 mobile report); with one phase the
+    // divergent states are unrepresentable. See runtime/surfaceMachine.ts
+    // for the axioms, the total table, and the invariants.
+    const machine = useSurfaceMachine({
+      layers: [
+        // Budgets are the starvation-era bounds (flip 120 + slowest
+        // layer + slack); the driver probes the live CSS durations and
+        // tightens them. SCSS truths: scrim 0.25s/0.2s, sheet panel
+        // 0.3s/0.25s, popout 0.2s/0.15s.
+        { prefix: "hk-select-sheet-scrim", el: () => sheetScrimRef.value, enterMs: () => 270, leaveMs: () => 240 },
+        { prefix: "hk-select-sheet", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 280 },
+        { prefix: "hk-select-popout", el: () => popoutHostRef.value, enterMs: () => 240, leaveMs: () => 190 },
+      ],
+      onPhase: (from, to) => {
+        if (to === "openingFrom") {
+          surfTrack.run();
+          activeBranch.value = sheetMode.value ? "sheet" : "popout";
+          handleOpenRequest();
+        } else if (to === "open") {
+          surfTrack.cancel();
+          // Size morphs arm once the open choreography finished —
+          // pinning during the slide-up would fight it. Harmless on the
+          // desktop popout (the sheet content probe is absent).
           morph.start();
+        } else if (to === "closingFrom") {
+          surfTrack.run();
+          handleCloseRequest();
+        } else if (to === "closed" && (from === "closingFrom" || from === "closingTo")) {
+          surfTrack.cancel();
         }
       },
-      onBeforeLeave: () => {
-        sheetPanelBaseHooks.onBeforeLeave();
-        morph.stop();
-      },
-    };
+    });
 
     // Window-first back priority (HkModal convention): while this panel is
     // the topmost window, the back gesture closes it instead of navigating
@@ -221,12 +293,14 @@ export default defineComponent({
         if (props.open && sheetMode.value) syncDupTitle();
       },
     );
-    // Flipping OUT of sheet mode while open (consumer prop, not the
-    // breakpoint flip — that closes the panel) swaps the render branch
-    // and detaches the sheet list; drop the observer promptly instead
-    // of letting it guard a detached subtree. Blocking follows so the
-    // breadcrumb level tracks the surface's current form even when only
-    // the consumer prop (not the viewport) moved.
+    // A consumer-prop flip out of sheet mode while open (the breakpoint
+    // flip closes the panel instead) keeps rendering the BORN branch —
+    // only the registry tracks the new form. The dup-title observer
+    // drops promptly so it stops guarding a soon-irrelevant subtree
+    // (the sheet list stays mounted through the rest of that open
+    // cycle, but re-syncing its duplicate headings no longer matters
+    // once the form is no longer the sheet). Blocking follows so the
+    // breadcrumb level tracks the surface's declared form.
     watch(sheetMode, (mode) => {
       if (!mode) stopDupTitleSync();
       if (handle.value) manager.setBlocking(handle.value.id, mode);
@@ -371,85 +445,13 @@ export default defineComponent({
     watch(
       () => props.open,
       (open) => {
-        if (open) {
-          // Register with the panel title so the modal breadcrumb labels
-          // this layer by its i18n name. Blocking follows the sheet
-          // decision: the desktop popout is a hidden level, the mobile
-          // bottom sheet is a window layer that must be listed.
-          handle.value = manager.register(
-            "dropdown",
-            false,
-            props.title || undefined,
-            sheetMode.value,
-          );
-          overlay.open();
-          // Release-then-push (the HkMenu normalizer form): a same-tick
-          // close→reopen must not leave the reopened panel unguarded —
-          // release() keeps its rewind claim (desired snaps to 0) and the
-          // following push() re-advances desired by one, so the pending
-          // flush rewinds exactly to the fresh entry instead of past it.
-          if (backGuard.entries > 0) backGuard.release();
-          backGuard.push();
-          // The scrolling surface mounts on this very render (popout
-          // subtree or sheet body) — attach the overlay scrollbar once
-          // the DOM has landed. A same-tick open→close must not arm it
-          // on the leaving panel.
-          void nextTick(() => {
-            if (!props.open) return;
-            attachPanelScrollbar();
-          });
-          if (!sheetMode.value) {
-            document.addEventListener("click", onDocumentClick, true);
-          } else {
-            // The sheet body mounts on this very render — run the
-            // duplicate-title filter once it has landed, then keep
-            // re-syncing while open (async slot content swaps).
-            void nextTick(() => {
-              // A same-tick open→close must not arm the observer on the
-              // leaving panel (the close branch already ran).
-              if (!props.open || !sheetMode.value) return;
-              syncDupTitle();
-              if (sheetListRef.value && !dupTitleObserver) {
-                dupTitleObserver = new MutationObserver(syncDupTitle);
-                dupTitleObserver.observe(sheetListRef.value, {
-                  childList: true,
-                  characterData: true,
-                  subtree: true,
-                  // A consumer re-render patching className can wipe
-                  // hk-sheet-dup-title mid-open — class mutations
-                  // re-sync it (adding an existing class mutates
-                  // nothing, so the loop converges).
-                  attributes: true,
-                  attributeFilter: ["class"],
-                });
-              }
-            });
-          }
-          window.addEventListener("resize", onResize);
-        } else {
-          document.removeEventListener("click", onDocumentClick, true);
-          window.removeEventListener("resize", onResize);
-          detachPanelScrollbar();
-          stopDupTitleSync();
-          // Enter cycles died with the open state — their guards must
-          // not fire into the leave transitions.
-          disarmEnterGuards();
-          backGuard.release();
-          if (handle.value) {
-            // Unregister immediately (stacking/breadcrumb must forget the
-            // dying panel at once) but remember its z — the leave
-            // transition below keeps rendering at that band for its
-            // short lifetime instead of sinking under the page.
-            lastZ.value = handle.value.zIndex;
-            manager.unregister(handle.value.id);
-            handle.value = null;
-          }
-          overlay.close();
-        }
+        // The machine owns every visual/registry consequence on its
+        // phase edges; this watcher is purely the event feed.
+        machine.send(open ? "OPEN" : "CLOSE");
       },
-      // immediate: mounting with open=true must register with the popup
-      // manager (z band) and overlay registry right away — the HkPopover /
-      // HkModal convention.
+      // immediate: mounting with open=true must walk the machine into
+      // its opening edge right away — the HkPopover / HkModal
+      // convention.
       { immediate: true },
     );
 
@@ -458,7 +460,6 @@ export default defineComponent({
       window.removeEventListener("resize", onResize);
       detachPanelScrollbar();
       stopDupTitleSync();
-      disarmEnterGuards();
       overlay.close();
       backGuard.destroy();
       if (handle.value) {
@@ -560,11 +561,12 @@ export default defineComponent({
     });
 
     return () => {
-      // Sheet mode keeps its Teleport mounted across the close so the
-      // leave transition (slide-down) actually runs — unmounting the
-      // subtree on close would snap the sheet shut instead (the same
-      // reason HkPopover keeps its Teleport alive through the leave).
-      if (sheetMode.value) {
+      // The machine keeps the Teleport mounted across the whole closing
+      // window so the leave transition (slide-down / pop-out) actually
+      // runs — `closed` unmounts it (the same reason the pre-machine
+      // code kept its Transitions alive through the leave).
+      if (!machine.mounted.value) return null;
+      if (activeBranch.value === "sheet") {
         return (
           <Teleport to="body">
             {/* Window-layer contract (./_scrim-fade.scss): the scrim fades
@@ -572,49 +574,15 @@ export default defineComponent({
                 panel's `hk-select-sheet` name, so the panel's
                 translateY(100%) enter pair slid the dim curtain up from
                 the bottom edge on phones (2026-09-06 report). */}
-            <Transition
-              name="hk-select-sheet-scrim"
-              appear
-              onBeforeEnter={(el: Element) => {
-                sheetScrimHooks.onBeforeEnter();
-                stripTransitionClasses(el as HTMLElement, "hk-select-sheet-scrim");
-                scrimEnterGuard?.();
-                scrimEnterGuard = armTransitionClassWatchdog(
-                  el as HTMLElement,
-                  "hk-select-sheet-scrim",
-                  () => props.open,
-                );
-              }}
-              onAfterEnter={(el: Element) => {
-                sheetScrimHooks.onAfterEnter();
-                if (el === sheetScrimRef.value) {
-                  scrimEnterGuard?.();
-                  scrimEnterGuard = null;
-                }
-              }}
-              onEnterCancelled={() => {
-                sheetScrimHooks.onEnterCancelled();
-                scrimEnterGuard?.();
-                scrimEnterGuard = null;
-              }}
-              onBeforeLeave={sheetScrimHooks.onBeforeLeave}
-              onAfterLeave={sheetScrimHooks.onAfterLeave}
-              onLeaveCancelled={sheetScrimHooks.onLeaveCancelled}
-            >
-              {props.open ? (
-                <div
-                  ref={sheetScrimRef}
-                  class="hk-select-sheet-scrim"
-                  style={{ zIndex: popoutZ.value - 1 }}
-                  onClick={close}
-                />
-              ) : null}
-            </Transition>
-            <Transition name="hk-select-sheet" appear {...sheetPanelHooks}>
-              {props.open ? (
-                <div
+            <div
+              ref={sheetScrimRef}
+              class={["hk-select-sheet-scrim", ...machine.classesFor("hk-select-sheet-scrim")]}
+              style={{ zIndex: popoutZ.value - 1 }}
+              onClick={close}
+            />
+            <div
                   ref={panelRef}
-                  class="hk-select-sheet-panel"
+                  class={["hk-select-sheet-panel", ...machine.classesFor("hk-select-sheet")]}
                   style={{ zIndex: popoutZ.value }}
                   role="dialog"
                   aria-modal="true"
@@ -655,8 +623,6 @@ export default defineComponent({
                     </div>
                   </div>
                 </div>
-              ) : null}
-            </Transition>
           </Teleport>
         );
       }
@@ -671,41 +637,9 @@ export default defineComponent({
       // after an auto-flip).
       return (
         <Teleport to="body">
-          <Transition
-            name="hk-select-popout"
-            appear
-            onBeforeEnter={(el: Element) => {
-              popoutHooks.onBeforeEnter();
-              stripTransitionClasses(el as HTMLElement, "hk-select-popout");
-              popoutEnterGuard?.();
-              popoutEnterGuard = armTransitionClassWatchdog(
-                el as HTMLElement,
-                "hk-select-popout",
-                () => props.open,
-              );
-            }}
-            onAfterEnter={(el: Element) => {
-              popoutHooks.onAfterEnter();
-              // Identity-gated disarm: a stale after-enter from an
-              // interrupted cycle must not disarm the live cycle's guard.
-              if (el === popoutHostRef.value) {
-                popoutEnterGuard?.();
-                popoutEnterGuard = null;
-              }
-            }}
-            onEnterCancelled={() => {
-              popoutHooks.onEnterCancelled();
-              popoutEnterGuard?.();
-              popoutEnterGuard = null;
-            }}
-            onBeforeLeave={popoutHooks.onBeforeLeave}
-            onAfterLeave={popoutHooks.onAfterLeave}
-            onLeaveCancelled={popoutHooks.onLeaveCancelled}
-          >
-            {props.open ? (
-              <div
+          <div
                 ref={popoutHostRef}
-                class="hk-select-popout-host"
+                class={["hk-select-popout-host", ...machine.classesFor("hk-select-popout")]}
                 data-side={resolved.value.side}
                 data-align={resolved.value.align}
                 style={{ ...coords.value, zIndex: popoutZ.value }}
@@ -719,8 +653,6 @@ export default defineComponent({
                   {slots.default?.()}
                 </div>
               </div>
-            ) : null}
-          </Transition>
         </Teleport>
       );
     };

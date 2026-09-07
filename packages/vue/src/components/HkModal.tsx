@@ -7,7 +7,6 @@ import {
   ref,
   shallowRef,
   Teleport,
-  Transition,
   watch,
   type PropType,
 } from "vue";
@@ -19,9 +18,9 @@ import { useOverlay } from "../runtime/useOverlay";
 import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
-import { armTransitionClassWatchdog, stripTransitionClasses } from "../runtime/transitionWatchdog";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSizeMorph } from "../composables/useSizeMorph";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
@@ -167,11 +166,10 @@ export default defineComponent({
     const { t } = useI18n();
     const manager = usePopupManager();
     // Open/close motion reported into the unified animation context
-    // (animationBus) — scrim and content on separate tracks so each
-    // layer's report arms/cancels independently.
+    // (animationBus) — one track for the whole surface, armed on the
+    // machine's animation-phase edges.
     const surf = useSurfaceTransition(320);
-    const overlayHooks = surf.hooks("overlay");
-    const contentHooks = surf.hooks("content");
+    const surfTrack = surf.track("surface");
     const overlay = useOverlay({
       name: "hk-modal",
       // A global closeAll() must be able to actually close this modal
@@ -181,7 +179,6 @@ export default defineComponent({
     });
 
     const handle = ref<{ id: string; zIndex: number } | null>(null);
-    const overlayRef = ref<HTMLElement>();
     const bodyRef = ref<HTMLElement>();
     const contentRef = ref<HTMLElement>();
     /** Natural-height probe inside the scroll container: the body's
@@ -192,62 +189,8 @@ export default defineComponent({
     // Content-driven size morphing: the frame follows content growth with
     // the height transition instead of snapping (see useSizeMorph).
     const morph = useSizeMorph(contentRef, innerRef);
-    const shouldRender = ref(false);
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
-
-    // ── Leave-completion watchdog ─────────────────────────────────────
-    // The close path hands unmounting to <Transition>'s leave, whose
-    // engine is rAF-driven: it double-raf's the leave-from → leave-to
-    // class flip and only THEN arms its transitionend wait. In an
-    // occluded/backgrounded webview rAF can starve for the whole leave
-    // window, the classes freeze in leave-from/leave-active, and the
-    // modal stays over the page forever — undismissable, only a full
-    // reload escaped it (field-reported 2026-09). The watchdog bounds
-    // the wait: if the leave has not finalized within a budget larger
-    // than any themed CSS leave (--hk-modal-duration defaults to 0.25s,
-    // themes may raise it), onAfterLeaveFinalize runs the exact same
-    // finalization the Transition would have. Normal closes disarm it;
-    // late or stale completions (post-watchdog real onAfterLeave, or
-    // the open-interrupted leave Vue resolves without a cancelled flag)
-    // are no-ops through the finalize and modelValue guards.
-    const LEAVE_WATCHDOG_MS = 600;
-    let leaveWatchdog: ReturnType<typeof setTimeout> | null = null;
-    let leaveFinalized = false;
-
-    function armLeaveWatchdog(): void {
-      disarmLeaveWatchdog();
-      leaveWatchdog = setTimeout(() => {
-        leaveWatchdog = null;
-        if (unmounted || props.modelValue || !shouldRender.value) return;
-        onAfterLeaveFinalize();
-      }, LEAVE_WATCHDOG_MS);
-    }
-
-    function disarmLeaveWatchdog(): void {
-      if (leaveWatchdog !== null) {
-        clearTimeout(leaveWatchdog);
-        leaveWatchdog = null;
-      }
-    }
-
-    // ── Enter-class watchdog ──────────────────────────────────────────
-    // The leave side above bounds rAF starvation for the CLOSE; the enter
-    // side has no such guard. A starved enter freezes the from-pair on
-    // the layer (scrim at opacity: 0 while the panel floats above it),
-    // and the eventual close then flashes the resurrected curtain at full
-    // opacity — the mobile "black rectangle" report (2026-09). Each layer
-    // (overlay, content) arms on its before-enter and strips stuck
-    // enter classes once the same budget lapses; normal enters disarm.
-    let overlayEnterGuard: (() => void) | null = null;
-    let contentEnterGuard: (() => void) | null = null;
-
-    function disarmEnterGuards(): void {
-      overlayEnterGuard?.();
-      overlayEnterGuard = null;
-      contentEnterGuard?.();
-      contentEnterGuard = null;
-    }
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
@@ -331,20 +274,15 @@ export default defineComponent({
     }
 
     function onAfterLeaveFinalize() {
-      // Finalizing while the surface is OPEN means this is a stale
-      // completion: Vue fires the interrupted leave's onAfterLeave (no
-      // cancelled flag) when a reopen patches over a still-live leave,
-      // and the watchdog callback separately guards on props.modelValue.
-      // Finalizing either of those would tear down the reopened modal.
-      if (unmounted || props.modelValue || leaveFinalized) return;
-      leaveFinalized = true;
-      disarmLeaveWatchdog();
-      disarmEnterGuards();
+      // The machine reaches `closed` from a closing phase exactly once
+      // per close cycle (its table cannot re-enter or double-fire), so
+      // the old finalize-once flag and stale-completion guards reduce
+      // to a defense-in-depth modelValue check.
+      if (unmounted || props.modelValue) return;
       if (handle.value) {
         manager.unregister(handle.value.id);
         handle.value = null;
       }
-      shouldRender.value = false;
       if (previouslyFocused) {
         previouslyFocused.focus();
         previouslyFocused = null;
@@ -353,6 +291,71 @@ export default defineComponent({
       teardownAutoFollow();
       emit("afterLeave");
     }
+
+    // ── Surface lifecycle machine ─────────────────────────────────────
+    // One machine drives BOTH layers (scrim + panel) — the layer outputs
+    // are pure functions of the shared phase, so the divergent-layer
+    // states of the two-<Transition> era (scrim gone while the panel
+    // floats; the full-opacity close flash) are unrepresentable. The
+    // correctness clock is the machine's deadline timers; rAF is an
+    // optimization for the class flip. See runtime/surfaceMachine.ts
+    // for the axioms, the total transition table, and the invariants.
+    const overlayEl = ref<HTMLElement>();
+    const machine = useSurfaceMachine({
+      layers: [
+        // Budgets are the starvation-era upper bound; the driver probes
+        // the layers' live CSS durations (themes, reduced motion) and
+        // tightens the deadlines accordingly.
+        { prefix: "hk-modal-overlay", el: () => overlayEl.value, enterMs: () => 320, leaveMs: () => 340 },
+        { prefix: "hk-modal-content", el: () => contentRef.value, enterMs: () => 320, leaveMs: () => 300 },
+      ],
+      onPhase: (from, to, event) => {
+        if (to === "openingFrom") {
+          // Open-request bookkeeping (was the modelValue watcher's open
+          // arm): registration, overlay registry, back-guard, focus
+          // capture.
+          previouslyFocused = document.activeElement as HTMLElement | null;
+          if (handle.value) {
+            manager.unregister(handle.value.id);
+          }
+          handle.value = manager.register("modal", true, resolvedSurfaceName.value);
+          overlay.open();
+          if (backGuardEnabled() && backGuard.entries === 0) {
+            backGuard.push();
+          }
+          surfTrack.run();
+        } else if (to === "open") {
+          surfTrack.cancel();
+          onAfterEnter();
+          // Size morphs arm once the open choreography finished —
+          // pinning during enter would override its height reveal.
+          morph.start();
+        } else if (to === "closingFrom") {
+          // Close-request bookkeeping (was the watcher's close arm): the
+          // registries forget the surface at request time; the finalize
+          // edge below completes the teardown at leave end.
+          surfTrack.run();
+          overlay.close();
+          backGuard.release();
+          // Release the pinned height so the leave owns the frame.
+          morph.stop();
+        } else if (
+          to === "closed" &&
+          (from === "closingFrom" || from === "closingTo") &&
+          // UNMOUNT mid-close walks the same edge but is a TEARDOWN, not
+          // a finalized leave — afterLeave/focus-restore belong to the
+          // close lifecycle only (the machine's own unmount hook runs
+          // before this component's onBeforeUnmount sets `unmounted`).
+          event !== "UNMOUNT"
+        ) {
+          surfTrack.cancel();
+          onAfterLeaveFinalize();
+        }
+        // to === "closed" via UNMOUNT: teardown is owned by
+        // onBeforeUnmount (the machine's own unmount hook already
+        // cleared its clocks and walked the phase to `closed`).
+      },
+    });
 
     // --- Windowed mode ---
 
@@ -613,7 +616,7 @@ export default defineComponent({
     // --- Lifecycle ---
 
     // Overlay scrollbar on the scrolling body (shared chrome). The body
-    // mounts with the modal surface (shouldRender) and survives through
+    // mounts with the modal surface (machine.mounted) and survives through
     // the leave transition; attach after the DOM lands, detach on close
     // and unmount so nothing leaks inside the Teleport portal.
     let bodyScrollbar: OverlayScrollbarHandle | null = null;
@@ -623,10 +626,10 @@ export default defineComponent({
       bodyScrollbar = null;
     }
 
-    watch(shouldRender, (render) => {
+    watch(machine.mounted, (render) => {
       if (render) {
         void nextTick(() => {
-          if (!shouldRender.value || !scrollContainerRef.value) return;
+          if (!machine.mounted.value || !scrollContainerRef.value) return;
           detachBodyScrollbar();
           bodyScrollbar = attachOverlayScrollbars(scrollContainerRef.value, { axis: "vertical" });
         });
@@ -639,37 +642,9 @@ export default defineComponent({
       () => props.modelValue,
       (val) => {
         if (unmounted) return;
-        if (val) {
-          previouslyFocused = document.activeElement as HTMLElement | null;
-          if (handle.value) {
-            manager.unregister(handle.value.id);
-          }
-          leaveFinalized = false;
-          disarmLeaveWatchdog();
-          shouldRender.value = true;
-          // Windows always block, so the kind alone lists this layer in
-          // the modal-stack breadcrumb on every form factor.
-          handle.value = manager.register("modal", true, resolvedSurfaceName.value);
-          overlay.open();
-          if (backGuardEnabled() && backGuard.entries === 0) {
-            backGuard.push();
-          }
-        } else {
-          // Close happens via Transition onAfterLeave,
-          // but if modelValue flips to false without Transition
-          // (e.g. immediate), clean up now.
-          overlay.close();
-          backGuard.release();
-          // The enter cycles are dead the moment the surface starts
-          // closing — their guards must not fire into the leave.
-          disarmEnterGuards();
-          // Bound the Transition leave: if rAF starvation froze the
-          // class flip, the watchdog finalizes in the watchdog's place
-          // (see LEAVE_WATCHDOG_MS above). Only an actually-mounted
-          // surface can stall — a never-opened modal has nothing to
-          // finalize.
-          if (shouldRender.value) armLeaveWatchdog();
-        }
+        // The machine owns every visual/registry consequence on its
+        // phase edges; this watcher is purely the event feed.
+        machine.send(val ? "OPEN" : "CLOSE");
       },
       { immediate: true },
     );
@@ -701,8 +676,9 @@ export default defineComponent({
 
     onBeforeUnmount(() => {
       unmounted = true;
-      disarmLeaveWatchdog();
-      disarmEnterGuards();
+      // The machine's own unmount hook (registered first) already sent
+      // UNMOUNT — phase `closed`, clocks cleared. This is the surface's
+      // own teardown, idempotent with the finalize edge.
       detachBodyScrollbar();
       teardownWindowed();
       teardownAutoFollow();
@@ -711,7 +687,6 @@ export default defineComponent({
         manager.unregister(handle.value.id);
         handle.value = null;
       }
-      shouldRender.value = false;
     });
 
     // --- Render helpers ---
@@ -742,7 +717,7 @@ export default defineComponent({
     }
 
     return () => {
-      if (!shouldRender.value) return null;
+      if (!machine.mounted.value) return null;
 
       const headerShown = props.title || props.closable || slots.header || slots.headerLead;
 
@@ -753,95 +728,14 @@ export default defineComponent({
             style={{ zIndex: overlayZ.value }}
             onKeydown={onKeydown}
           >
-            <Transition
-              name="hk-modal-overlay"
-              appear
-              onBeforeEnter={(el: Element) => {
-                overlayHooks.onBeforeEnter();
-                // A prior interrupted cycle can stamp stale classes on a
-                // recycled node — never enter from a frozen transition.
-                stripTransitionClasses(el as HTMLElement, "hk-modal-overlay");
-                overlayEnterGuard?.();
-                overlayEnterGuard = armTransitionClassWatchdog(
-                  el as HTMLElement,
-                  "hk-modal-overlay",
-                  () => !unmounted && !!props.modelValue,
-                );
-              }}
-              onAfterEnter={(el: Element) => {
-                overlayHooks.onAfterEnter();
-                // Stale after-enters from an interrupted cycle (Vue fires
-                // them without a cancelled flag) must not disarm the live
-                // cycle's guard — only the current element's completion.
-                if (el === overlayRef.value) {
-                  overlayEnterGuard?.();
-                  overlayEnterGuard = null;
-                }
-              }}
-              onEnterCancelled={() => {
-                overlayHooks.onEnterCancelled();
-                overlayEnterGuard?.();
-                overlayEnterGuard = null;
-              }}
-              onBeforeLeave={overlayHooks.onBeforeLeave}
-              onAfterLeave={overlayHooks.onAfterLeave}
-              onLeaveCancelled={overlayHooks.onLeaveCancelled}
-            >
-              {props.modelValue && (
-                <div
-                  ref={overlayRef}
-                  class="hk-modal-overlay"
-                  onClick={onOverlayClick}
-                />
-              )}
-            </Transition>
-            <Transition
-              name="hk-modal-content"
-              appear
-              onBeforeEnter={(el: Element) => {
-                contentHooks.onBeforeEnter();
-                stripTransitionClasses(el as HTMLElement, "hk-modal-content");
-                contentEnterGuard?.();
-                contentEnterGuard = armTransitionClassWatchdog(
-                  el as HTMLElement,
-                  "hk-modal-content",
-                  () => !unmounted && !!props.modelValue,
-                );
-              }}
-              onAfterEnter={(el: Element) => {
-                contentHooks.onAfterEnter();
-                // Identity gate: a stale after-enter from an interrupted
-                // cycle must neither disarm the live guard nor re-run the
-                // open side effects (focus, morph arming).
-                if (el === contentRef.value) {
-                  contentEnterGuard?.();
-                  contentEnterGuard = null;
-                  onAfterEnter();
-                  // Size morphs arm once the open choreography finished —
-                  // pinning during enter would override its height reveal.
-                  morph.start();
-                }
-              }}
-              onEnterCancelled={() => {
-                contentHooks.onEnterCancelled();
-                contentEnterGuard?.();
-                contentEnterGuard = null;
-              }}
-              onBeforeLeave={() => {
-                contentHooks.onBeforeLeave();
-                // Release the pinned height so the leave owns the frame.
-                morph.stop();
-              }}
-              onAfterLeave={() => {
-                contentHooks.onAfterLeave();
-                onAfterLeaveFinalize();
-              }}
-              onLeaveCancelled={contentHooks.onLeaveCancelled}
-            >
-              {props.modelValue && (
-                <div
+            <div
+              ref={overlayEl}
+              class={["hk-modal-overlay", ...machine.classesFor("hk-modal-overlay")]}
+              onClick={onOverlayClick}
+            />
+            <div
                   ref={contentRef}
-                  class={["hk-modal-content", props.contentClass]}
+                  class={["hk-modal-content", props.contentClass, ...machine.classesFor("hk-modal-content")]}
                   role="dialog"
                   aria-modal="true"
                   aria-label={resolvedSurfaceName.value}
@@ -927,8 +821,6 @@ export default defineComponent({
                   </div>
                   {renderFooter()}
                 </div>
-              )}
-            </Transition>
           </div>
         </Teleport>
       );

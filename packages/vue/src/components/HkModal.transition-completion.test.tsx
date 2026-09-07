@@ -61,7 +61,7 @@ describe("HkModal leave-completion watchdog", () => {
   // full reload escaped it. The watchdog must finalize within its
   // budget, unmount both surface layers, and emit afterLeave exactly
   // the way a real transition would.
-  it("force-finalizes a stalled leave within the watchdog budget", async () => {
+  it("force-finalizes a stalled leave within the deadline budget", async () => {
     vi.useFakeTimers();
     freezeRaf();
     const { open, afterLeaveEvents } = await mountOpenModal();
@@ -69,12 +69,12 @@ describe("HkModal leave-completion watchdog", () => {
 
     open.value = false;
     await nextTick();
-    // Just inside the budget nothing else can have completed the leave.
-    await vi.advanceTimersByTimeAsync(590);
-    await nextTick();
-    expect(document.querySelector(".hk-modal-content")).not.toBeNull();
-
-    await vi.advanceTimersByTimeAsync(100);
+    // Past the machine's deadline budget the surface must be gone even
+    // though not a single frame or transitionend ever arrived — the
+    // timer column alone finalizes the leave (environments with live
+    // CSS durations exercise the full window; without them the probe
+    // completes even sooner — the property is the BOUND).
+    await vi.advanceTimersByTimeAsync(700);
     await nextTick();
     expect(document.querySelector(".hk-modal-content")).toBeNull();
     expect(document.querySelector(".hk-modal-overlay")).toBeNull();
@@ -97,10 +97,11 @@ describe("HkModal leave-completion watchdog", () => {
 
     open.value = false;
     await nextTick();
-    await vi.advanceTimersByTimeAsync(50); // leave live, nothing finalized
-    open.value = true; // reopen patches over the live leave
+    // Reopen while the leave is still live (before any deadline timer
+    // fires) — the reopen patches over the in-flight close.
+    open.value = true;
     await nextTick();
-    await vi.advanceTimersByTimeAsync(700); // past the watchdog budget
+    await vi.advanceTimersByTimeAsync(700); // past every budget
     await nextTick();
     // The reopened modal must survive both the stale onAfterLeave and
     // the (disarmed) watchdog from the aborted close.
@@ -164,16 +165,17 @@ describe("HkModal leave-completion watchdog", () => {
     expect(afterLeaveEvents).toHaveLength(2);
   });
 
-  // Contract pin: the watchdog must stay armed on the close path and
-  // its budget must stay bigger than any themed CSS leave
-  // (--hk-modal-duration defaults to 0.25s; a theme may raise it). A
-  // refactor that drops the arming — or shrinks the budget under the
-  // CSS timing — silently re-opens the frozen-modal failure mode.
-  it("pins the watchdog wiring and budget in the source", () => {
+  // Contract pin: the lifecycle machine owns finalization now. Its
+  // layer budgets must stay ≥ the themed CSS durations
+  // (--hk-modal-duration defaults to 0.3s; a theme may raise it) — a
+  // refactor that shrinks a budget under the CSS timing would cut the
+  // leave short, and one that drops the machine wiring re-opens the
+  // frozen-modal failure mode.
+  it("pins the machine wiring and deadline budgets in the source", () => {
     const src = readFileSync(join(here, "HkModal.tsx"), "utf-8");
-    expect(src).toContain("const LEAVE_WATCHDOG_MS = 600;");
-    expect(src).toContain("if (shouldRender.value) armLeaveWatchdog();");
-    expect(src).toContain("disarmLeaveWatchdog();");
+    expect(src).toContain("useSurfaceMachine({");
+    expect(src).toContain('{ prefix: "hk-modal-overlay", el: () => overlayEl.value, enterMs: () => 320, leaveMs: () => 340 }');
+    expect(src).toContain('{ prefix: "hk-modal-content", el: () => contentRef.value, enterMs: () => 320, leaveMs: () => 300 }');
     expect(src).toContain("onAfterLeaveFinalize();");
   });
 });

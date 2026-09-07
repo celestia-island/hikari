@@ -6,7 +6,6 @@ import {
   onMounted,
   ref,
   Teleport,
-  Transition,
   watch,
   type PropType,
 } from "vue";
@@ -19,6 +18,7 @@ import { usePopupManager } from "../runtime/usePopupManager";
 import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
+import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
@@ -57,10 +57,9 @@ export default defineComponent({
     const { t } = useI18n();
     const manager = usePopupManager();
     // Open/close motion reported into the unified animation context
-    // (animationBus) — scrim and sliding panel on separate tracks.
-    const surf = useSurfaceTransition(320);
-    const scrimHooks = surf.hooks("scrim");
-    const panelHooks = surf.hooks("panel");
+    // (animationBus) — one track for the whole surface, armed on the
+    // machine's animation-phase edges.
+    const surfTrack = useSurfaceTransition(320).track("surface");
     const overlayHook = useOverlay({
       name: "hk-drawer",
       // A global closeAll() must be able to actually close this drawer
@@ -89,25 +88,6 @@ export default defineComponent({
       bodyScrollbar = null;
     }
 
-    watch(() => props.modelValue, (open) => {
-      if (unmounted) return;
-      if (open) {
-        void nextTick(() => {
-          if (!props.modelValue || !bodyRef.value) return;
-          detachBodyScrollbar();
-          // The wrapper (not the panel) is the track host: the panel also
-          // contains the header/footer bands, and rails spanning those
-          // would light up in the wrong place.
-          bodyScrollbar = attachOverlayScrollbars(bodyRef.value, {
-            axis: "vertical",
-            host: bodyWrapRef.value,
-          });
-        });
-      } else {
-        detachBodyScrollbar();
-      }
-    });
-
     /**
      * Window-first back priority: while this drawer is the topmost open
      * window, the back gesture closes it instead of navigating the
@@ -118,6 +98,80 @@ export default defineComponent({
     const backGuard = createBackGuard({
       onBack: () => {
         if (backGuardEnabled()) close();
+      },
+    });
+
+    // ── Surface lifecycle machine ─────────────────────────────────────
+    // One machine drives the overlay scrim and the sliding panel — the
+    // layers are outputs of the shared phase, so the divergent-layer
+    // states of the two-<Transition> era are unrepresentable (see
+    // runtime/surfaceMachine.ts). The panel prefix follows the side
+    // prop; all four sides share the same 0.3s CSS timing.
+    const overlayEl = ref<HTMLElement>();
+    const machine = useSurfaceMachine({
+      layers: [
+        // Budgets are the starvation-era bounds over the SCSS truths
+        // (overlay 0.3s/0.3s, panel slides 0.3s/0.3s); the driver probes
+        // the live CSS durations and tightens them.
+        { prefix: "hk-drawer-overlay", el: () => overlayEl.value, enterMs: () => 320, leaveMs: () => 320 },
+        { prefix: "hk-drawer-left", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 320 },
+        { prefix: "hk-drawer-right", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 320 },
+        { prefix: "hk-drawer-top", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 320 },
+        { prefix: "hk-drawer-bottom", el: () => panelRef.value, enterMs: () => 320, leaveMs: () => 320 },
+      ],
+      onPhase: (from, to, event) => {
+        if (to === "openingFrom") {
+          surfTrack.run();
+          cleanup();
+          // Register with the drawer title so the modal-stack breadcrumb
+          // labels this layer by name — a drawer is a window on every
+          // form factor and must never fall back to a generic label.
+          handle.value = manager.register("drawer", true, props.title);
+          overlayHook.open();
+          previouslyFocused = document.activeElement as HTMLElement | null;
+          if (backGuardEnabled() && backGuard.entries === 0) {
+            backGuard.push();
+          }
+          // Scrollbar chrome mounts with the panel (was the modelValue
+          // watcher's open arm, nextTick after the DOM lands).
+          void nextTick(() => {
+            // props.modelValue (not machine.mounted): a same-tick
+            // open→close flap is already in closingFrom — still mounted —
+            // and must not attach a scrollbar onto the dying surface.
+            if (!props.modelValue || !bodyRef.value) return;
+            detachBodyScrollbar();
+            // The wrapper (not the panel) is the track host: the panel
+            // also contains the header/footer bands, and rails spanning
+            // those would light up in the wrong place.
+            bodyScrollbar = attachOverlayScrollbars(bodyRef.value, {
+              axis: "vertical",
+              host: bodyWrapRef.value,
+            });
+          });
+        } else if (to === "open") {
+          surfTrack.cancel();
+          const el = panelRef.value;
+          if (el) focusFirst(el);
+        } else if (to === "closingFrom") {
+          surfTrack.run();
+          // Register/unregister WITH the open state so a closed-but-
+          // mounted drawer does not linger in the overlay registry
+          // (isOverlayOpen must reflect reality). The popup manager
+          // handle is torn down by the finalize edge below or by
+          // cleanup() on unmount.
+          overlayHook.close();
+          backGuard.release();
+          detachBodyScrollbar();
+        } else if (
+          to === "closed" &&
+          (from === "closingFrom" || from === "closingTo") &&
+          // UNMOUNT mid-close is a teardown, not a finalized leave —
+          // afterLeave/focus-restore belong to the close lifecycle only.
+          event !== "UNMOUNT"
+        ) {
+          surfTrack.cancel();
+          onDrawerAfterLeave();
+        }
       },
     });
 
@@ -149,11 +203,6 @@ export default defineComponent({
       if (props.closable) close();
     }
 
-    function onDrawerAfterEnter() {
-      const el = panelRef.value;
-      if (el) focusFirst(el);
-    }
-
     function onDrawerAfterLeave() {
       cleanup();
       if (previouslyFocused) {
@@ -174,25 +223,9 @@ export default defineComponent({
       () => props.modelValue,
       (val) => {
         if (unmounted) return;
-        if (val) {
-          cleanup();
-          // Register with the drawer title so the modal-stack breadcrumb
-          // labels this layer by name — a drawer is a window on every
-          // form factor and must never fall back to a generic label.
-          handle.value = manager.register("drawer", true, props.title);
-          overlayHook.open();
-          previouslyFocused = document.activeElement as HTMLElement | null;
-          if (backGuardEnabled() && backGuard.entries === 0) {
-            backGuard.push();
-          }
-        } else {
-          // Register/unregister WITH the open state so a closed-but-mounted
-          // drawer does not linger in the overlay registry (isOverlayOpen
-          // must reflect reality). The popup manager handle is torn down by
-          // the leave transition or by cleanup() on unmount.
-          overlayHook.close();
-          backGuard.release();
-        }
+        // The machine owns every visual/registry consequence on its
+        // phase edges; this watcher is purely the event feed.
+        machine.send(val ? "OPEN" : "CLOSE");
       },
       { immediate: true },
     );
@@ -231,42 +264,22 @@ export default defineComponent({
       cleanup();
     });
 
-    return () => (
+    return () => {
+      if (!machine.mounted.value) return null;
+      const panelPrefix = `hk-drawer-${props.side}`;
+      return (
       <Teleport to="body">
-        <Transition
-          name="hk-drawer-overlay"
-          appear
-          onBeforeEnter={scrimHooks.onBeforeEnter}
-          onAfterEnter={scrimHooks.onAfterEnter}
-          onBeforeLeave={scrimHooks.onBeforeLeave}
-          onAfterLeave={scrimHooks.onAfterLeave}
-        >
-          {props.modelValue && props.overlay ? (
-            <div
-              class="hk-drawer-overlay"
-              style={{ zIndex: overlayZ.value }}
-              onClick={onOverlayClick}
-            />
-          ) : null}
-        </Transition>
-        <Transition
-          name={`hk-drawer-${props.side}`}
-          appear
-          onBeforeEnter={panelHooks.onBeforeEnter}
-          onAfterEnter={() => {
-            panelHooks.onAfterEnter();
-            onDrawerAfterEnter();
-          }}
-          onBeforeLeave={panelHooks.onBeforeLeave}
-          onAfterLeave={() => {
-            panelHooks.onAfterLeave();
-            onDrawerAfterLeave();
-          }}
-        >
-          {props.modelValue ? (
-            <div
+        {props.overlay ? (
+          <div
+            ref={overlayEl}
+            class={["hk-drawer-overlay", ...machine.classesFor("hk-drawer-overlay")]}
+            style={{ zIndex: overlayZ.value }}
+            onClick={onOverlayClick}
+          />
+        ) : null}
+        <div
               ref={panelRef}
-              class={["hk-drawer-panel", `hk-drawer-${props.side}`, props.panelClass]}
+              class={["hk-drawer-panel", `hk-drawer-${props.side}`, props.panelClass, ...machine.classesFor(panelPrefix)]}
               style={panelStyle.value}
               role="dialog"
               aria-label={props.title}
@@ -304,9 +317,8 @@ export default defineComponent({
                 <div class="hk-drawer-footer">{slots.footer()}</div>
               ) : null}
             </div>
-          ) : null}
-        </Transition>
       </Teleport>
-    );
+      );
+    };
   },
 });

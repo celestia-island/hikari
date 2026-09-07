@@ -19,8 +19,11 @@ interface Rig {
 }
 
 /** Mount a machine with two test layers (like a modal's scrim+panel)
- *  and capture every phase edge it walks. */
-function mountRig(): Rig {
+ *  and capture every phase edge it walks. `probed` wires live element
+ *  accessors — in happy-dom the probe reads a 0 duration, which selects
+ *  the no-transition fast path; without probes the machine runs on the
+ *  configured fallback budgets (the starvation-era behavior). */
+function mountRig(probed = false): Rig {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const edges: Array<[string, string, string]> = [];
@@ -29,8 +32,18 @@ function mountRig(): Rig {
     setup() {
       machineRef.current = useSurfaceMachine({
         layers: [
-          { prefix: "rig-scrim", enterMs: () => 300, leaveMs: () => 300 },
-          { prefix: "rig-panel", enterMs: () => 300, leaveMs: () => 250 },
+          {
+            prefix: "rig-scrim",
+            ...(probed ? { el: () => document.querySelector<HTMLElement>(".scrim") } : {}),
+            enterMs: () => 300,
+            leaveMs: () => 300,
+          },
+          {
+            prefix: "rig-panel",
+            ...(probed ? { el: () => document.querySelector<HTMLElement>(".panel") } : {}),
+            enterMs: () => 300,
+            leaveMs: () => 250,
+          },
         ],
         onPhase: (from, to, event) => { edges.push([from, to, event]); },
       });
@@ -172,7 +185,7 @@ describe("useSurfaceMachine driver", () => {
       const style = realGCS(el as Element, ...(rest as []));
       return { ...style, transitionDuration: "0.3s" } as CSSStyleDeclaration;
     });
-    const rig = mountRig();
+    const rig = mountRig(true);
     rig.send("OPEN");
     await nextTick();
     await vi.advanceTimersByTimeAsync(130); // flip timer forced the FLIP
@@ -184,6 +197,47 @@ describe("useSurfaceMachine driver", () => {
     await vi.advanceTimersByTimeAsync(120);
     expect(rig.phase()).toBe("open");
     expect(scrimClasses(rig)).toEqual([]);
+  });
+
+  it("TEND: a matching transitionend completes the phase early", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const realGCS = window.getComputedStyle.bind(window);
+    vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
+      const style = realGCS(el as Element, ...(rest as []));
+      return { ...style, transitionDuration: "0.3s" } as CSSStyleDeclaration;
+    });
+    const rig = mountRig(true);
+    rig.send("OPEN");
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(130); // flip forced → openingTo
+    expect(rig.phase()).toBe("openingTo");
+    const panel = document.querySelector<HTMLElement>(".panel")!;
+
+    // happy-dom's TransitionEvent ignores its init dict — synthesize
+    // the event and stamp elapsedTime on the instance.
+    const endEvent = (elapsedSeconds: number): Event => {
+      const ev = new Event("transitionend");
+      Object.defineProperty(ev, "elapsedTime", { value: elapsedSeconds });
+      return ev;
+    };
+
+    // A fast property's end event (elapsed < measured budget) is ignored…
+    panel.dispatchEvent(endEvent(0.1));
+    expect(rig.phase()).toBe("openingTo");
+
+    // …the slowest property's end event lands → the surface settles open
+    // immediately, ahead of the deadline timer.
+    panel.dispatchEvent(endEvent(0.3));
+    expect(rig.phase()).toBe("open");
+    await nextTick();
+    expect(scrimClasses(rig)).toEqual([]);
+    // No late deadline fires afterwards.
+    const edgesAtRest = rig.edges.length;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(rig.phase()).toBe("open");
+    expect(rig.edges.length).toBe(edgesAtRest);
   });
 
   it("UNMOUNT from any phase clears every clock and walks to closed", async () => {

@@ -76,6 +76,11 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
   let raf1 = 0;
   let raf2 = 0;
 
+  /** transitionend listeners for the TEND early completion (see
+   *  armTend) — cleared with every clock reset so a phase change can
+   *  never inherit the previous phase's listeners. */
+  let tendCleanups: Array<() => void> = [];
+
   function clearClock(): void {
     if (flipTimer !== null) {
       clearTimeout(flipTimer);
@@ -85,10 +90,51 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
       clearTimeout(deadlineTimer);
       deadlineTimer = null;
     }
+    for (const off of tendCleanups) off();
+    tendCleanups = [];
     if (raf1) cancelAnimationFrame(raf1);
     if (raf2) cancelAnimationFrame(raf2);
     raf1 = 0;
     raf2 = 0;
+  }
+
+  /** TEND wiring — the advisory early-completion event. Real browsers
+   *  fire transitionend when the slowest property lands; the deadline
+   *  timer stays armed as the bound (starved or cancelled transitions
+   *  never fire it — the machine stays correct either way, TEND only
+   *  shortens the settle latency). Filter rules:
+   *  - e.target must be the layer element itself (child bubbles — the
+   *    content's own transitions — must not complete the surface);
+   *  - elapsedTime must match the measured budget (the SLOWEST
+   *    property's end event; faster properties of the same element are
+   *    ignored). The table absorbs a TEND in any phase, so a late or
+   *    duplicated event is a no-op. */
+  function armTend(expectedMs: number): void {
+    // Several layers may share one element (drawer sides, popover
+    // branches) — one listener per ELEMENT, not per layer.
+    const seen = new Set<HTMLElement>();
+    for (const layer of options.layers) {
+      const el = layer.el?.();
+      if (!el || !el.isConnected || seen.has(el)) continue;
+      seen.add(el);
+      const onEnd = (e: TransitionEvent) => {
+        if (e.target !== el) return;
+        // An event without a numeric elapsedTime cannot be validated
+        // against the budget — ignore it (the deadline stays the bound;
+        // TEND is strictly an optimization).
+        if (typeof e.elapsedTime !== "number") return;
+        const elapsedMs = e.elapsedTime * 1000;
+        // Two-sided epsilon: only the SLOWEST property's end event — the
+        // one landing at the measured budget — completes the surface.
+        // Faster properties are below the window; an unrelated LONGER
+        // transition on the element (consumer classes ride the panel)
+        // is above it and must not fire the surface's completion.
+        if (elapsedMs + 60 < expectedMs || elapsedMs - 60 > expectedMs) return;
+        send("TEND");
+      };
+      el.addEventListener("transitionend", onEnd);
+      tendCleanups.push(() => el.removeEventListener("transitionend", onEnd));
+    }
   }
 
   /** Worst-case deadline for the phase being entered, from the CONFIGURED
@@ -208,8 +254,12 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
       // *.to phases: the elements exist and styles settled at the flip.
       const measured = measuredBudget();
       if (measured !== null) {
-        if (measured > 0) rearmDeadline(measured + slack);
-        else completeNow();
+        if (measured > 0) {
+          rearmDeadline(measured + slack);
+          armTend(measured);
+        } else {
+          completeNow();
+        }
       }
     }
   }

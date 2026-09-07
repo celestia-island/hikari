@@ -109,3 +109,52 @@ describe("HkModal enter-class watchdog", () => {
     expect(document.querySelector(".hk-modal-overlay")).toBeNull();
   });
 });
+
+describe("HkModal enter-class watchdog across an interrupted leave", () => {
+  // The exact field-report sequence (2026-09-07 recording, f108-f112):
+  // the modal started closing (scrim fading out), a reopen patched over
+  // the still-live leave on the SAME element, and rAF starvation froze
+  // the re-enter's from-pair — the scrim stayed invisible for seconds
+  // and the eventual close flashed it back at full opacity. The
+  // watchdog must repair both layers of the reopened surface.
+  it("repairs a reopen that froze mid-re-enter on the same element", async () => {
+    vi.useFakeTimers();
+    // Phase 1: open with WORKING rAF so the initial enter completes.
+    const { open } = await mountOpenModal();
+    await vi.advanceTimersByTimeAsync(50);
+    await nextTick();
+
+    // Phase 2: starve rAF, start a close, and reopen while the leave is
+    // still live — the re-enter freezes at its from-pair.
+    freezeRaf();
+    open.value = false;
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(120); // leave live, nothing finalized
+    open.value = true;
+    await nextTick();
+
+    const overlay = document.querySelector<HTMLElement>(".hk-modal-overlay")!;
+    const content = document.querySelector<HTMLElement>(".hk-modal-content")!;
+    expect(overlay).not.toBeNull();
+    expect(content).not.toBeNull();
+    // The frozen re-enter left its from-pair on both layers (the scrim
+    // invisible at opacity 0 while the surface is logically open).
+    expect(overlay.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
+    expect(content.classList.contains("hk-modal-content-enter-from")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(590);
+    expect(overlay.classList.contains("hk-modal-overlay-enter-from")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(overlay.className).toBe("hk-modal-overlay");
+    expect(content.className).toBe("hk-modal-content");
+    // The surface is still open, and closing it afterwards runs a NORMAL
+    // leave (fade from visible) instead of the full-opacity pop.
+    open.value = false;
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(700);
+    await nextTick();
+    expect(document.querySelector(".hk-modal-content")).toBeNull();
+    expect(document.querySelector(".hk-modal-overlay")).toBeNull();
+  });
+});

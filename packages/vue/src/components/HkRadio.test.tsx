@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkRadio from "./HkRadio";
+import HkRadio, { type HkRadioOption } from "./HkRadio";
 
 /**
  * HkRadio contract tests:
@@ -54,12 +54,12 @@ function mountVModel(initial: string | number | null, props: Record<string, unkn
     setup: () => () =>
       h(HkRadio, {
         ...props,
-        modelValue: model.value,
+        modelValue: model.value as string | number,
         "onUpdate:modelValue": (v: string | number) => {
           model.value = v;
           emitted.push(v);
         },
-      }),
+      } as never),
   }));
   app.mount(container);
   mounts.push({ app, container });
@@ -105,7 +105,7 @@ describe("HkRadio group shell", () => {
     const c = mount(h(HkRadio, {
       options: OPTS,
     }, {
-      label: ({ option }) => h("span", { class: "custom-opt" }, `#${option.label}`),
+      label: ({ option }: { option: HkRadioOption }) => h("span", { class: "custom-opt" }, `#${option.label}`),
     }));
     const customs = Array.from(c.querySelectorAll<HTMLElement>(".custom-opt"));
     expect(customs.map((el) => el.textContent)).toEqual(["#Alpha", "#Beta"]);

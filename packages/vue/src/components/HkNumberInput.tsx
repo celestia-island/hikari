@@ -12,6 +12,14 @@ export default defineComponent({
     disabled: { type: Boolean, default: false },
     placeholder: { type: String, default: undefined },
     label: { type: String, default: undefined },
+    /* Affix text rendered INSIDE the field (before/after the input,
+       flex-centered by the inner row). Slots of the same name take
+       precedence; empty/undefined means no affix. Consumers should use
+       these instead of placing unit text in a sibling element next to
+       the component — the root stacks label over input, so a sibling
+       centered against the root targets the wrong axis midpoint. */
+    prefix: { type: String, default: undefined },
+    suffix: { type: String, default: undefined },
     size: {
       type: String as PropType<"sm" | "md" | "lg">,
       default: "md",
@@ -87,8 +95,10 @@ export default defineComponent({
       <div class={wrapperClass.value}>
         {props.label && <label class="hk-input-label">{props.label}</label>}
         <div class="hk-number-input-inner">
-          {slots.prefix ? (
-            <span class="hk-number-input-prefix">{slots.prefix()}</span>
+          {(slots.prefix || props.prefix) ? (
+            <span class="hk-number-input-prefix">
+              {slots.prefix ? slots.prefix() : props.prefix}
+            </span>
           ) : null}
           <input
             ref={inputRef}
@@ -104,8 +114,10 @@ export default defineComponent({
               emitValue(Number((e.target as HTMLInputElement).value))
             }
           />
-          {slots.suffix ? (
-            <span class="hk-number-input-suffix">{slots.suffix()}</span>
+          {(slots.suffix || props.suffix) ? (
+            <span class="hk-number-input-suffix">
+              {slots.suffix ? slots.suffix() : props.suffix}
+            </span>
           ) : null}
           <div class="hk-number-input-steppers">
             <button

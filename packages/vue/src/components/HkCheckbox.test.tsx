@@ -38,7 +38,7 @@ function mountVModel(initial: boolean | null, props: Record<string, unknown> = {
     setup: () => () =>
       h(HkCheckbox, {
         ...props,
-        modelValue: model.value,
+        modelValue: model.value as boolean,
         "onUpdate:modelValue": (v: boolean) => {
           model.value = v;
           emitted.push(v);
@@ -89,7 +89,7 @@ describe("HkCheckbox model states", () => {
   });
 
   it("maps modelValue=null to the indeterminate dash without checking the input", () => {
-    const c = mount(h(HkCheckbox, { modelValue: null }));
+    const c = mount(h(HkCheckbox, { modelValue: null as unknown as boolean }));
     const box = c.querySelector<HTMLElement>(".hk-checkbox-box")!;
     expect(box.getAttribute("data-indeterminate")).toBe("");
     expect(box.hasAttribute("data-checked")).toBe(false);
@@ -107,7 +107,7 @@ describe("HkCheckbox model states", () => {
     expect(checked.querySelector(".hk-checkbox-icon")).toBeNull();
 
     // null in radio mode: no dash — indeterminate is checkbox-only.
-    const unset = mount(h(HkCheckbox, { modelValue: null, type: "radio" }));
+    const unset = mount(h(HkCheckbox, { modelValue: null as unknown as boolean, type: "radio" }));
     expect(unset.querySelector(".hk-checkbox-indeterminate")).toBeNull();
     expect(unset.querySelector(".hk-checkbox-dot")).toBeNull();
   });

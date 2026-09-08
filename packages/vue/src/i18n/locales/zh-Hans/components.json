@@ -201,6 +201,7 @@
   "hikari::messageBox.ok": "好",
   "hikari::affixPicker.removeConfirmTitle": "移除条目",
   "hikari::affixPicker.removeConfirm": "移除「{label}」？此操作不可撤销。",
+  "hikari::affixPicker.unset": "未设置",
   "hikari::messageBox.alertTitle": "提示",
   "hikari::messageBox.confirmTitle": "请确认",
   "hikari::messageBox.promptTitle": "输入"

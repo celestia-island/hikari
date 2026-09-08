@@ -29,6 +29,7 @@ interface MountOptions {
   closeOnSelect?: boolean;
   confirmRemove?: boolean;
   disabled?: boolean;
+  tagValues?: Record<string, string>;
 }
 
 function mountPicker(opts: MountOptions = {}) {
@@ -52,6 +53,7 @@ function mountPicker(opts: MountOptions = {}) {
         closeOnSelect: opts.closeOnSelect,
         confirmRemove: opts.confirmRemove,
         disabled: opts.disabled ?? false,
+        tagValues: opts.tagValues,
         onSelect: (key: string) => events.select.push(key),
         onRemove: (key: string) => events.remove.push(key),
         onCustom: (q: string) => events.custom.push(q),
@@ -213,12 +215,12 @@ describe("HkAffixPicker", () => {
     const { container } = mountPicker();
     await openPopup(container);
     // A no-match query swaps the default slot to the empty branch —
-    // the scrolling list (and its overlay-scrollbar host) unmounts.
+    // the list block unmounts.
     await typeQuery("zzz-none");
     expect(document.querySelector(".hk-affix-empty")).toBeTruthy();
     expect(document.querySelector(".hk-affix-scroll")).toBeNull();
     // Clearing the query remounts a FRESH list — the row list must come
-    // back and the overlay host must be remounted for the scrollbar.
+    // back inside its width container.
     await typeQuery("");
     expect(document.querySelector(".hk-affix-empty")).toBeNull();
     expect(rows().map((r) => r.textContent)).toEqual([
@@ -379,5 +381,67 @@ describe("HkAffixPicker", () => {
     expect(queryChip(container).disabled).toBe(true);
     await openPopup(container);
     expect(rows()).toHaveLength(0);
+  });
+
+  it("tagValues swaps the tag primary text to each key's value", async () => {
+    const { container } = mountPicker({
+      mode: "multi",
+      selected: ["cn", "jp"],
+      tagValues: { cn: "China's stored text", jp: "  " },
+    });
+    await openPopup(container);
+    const texts = tags().map(
+      (t) => t.querySelector(".hk-affix-tag-text")?.textContent,
+    );
+    // cn carries its stored value; jp (whitespace-only = unfilled) shows
+    // the italic unset placeholder.
+    expect(texts).toEqual(["China's stored text", "Not set"]);
+    expect(tags()[0].querySelector(".hk-affix-tag-text")?.hasAttribute("data-unset")).toBe(false);
+    expect(tags()[1].querySelector(".hk-affix-tag-text")?.hasAttribute("data-unset")).toBe(true);
+    // The autonym survives as the tag's identity in the title (and the
+    // confirm dialog / aria naming, asserted in the dialog tests).
+    expect(
+      tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-body")?.title,
+    ).toContain("China");
+    // The pick rows are untouched — they keep the autonym labels.
+    expect(rows().map((r) => r.textContent)).toEqual([
+      expect.stringContaining("中华人民共和国"),
+      expect.stringContaining("United States"),
+    ]);
+  });
+
+  it("a tagValues key missing from the map renders the unset placeholder", async () => {
+    const { container } = mountPicker({
+      mode: "multi",
+      selected: ["us"],
+      tagValues: {},
+    });
+    await openPopup(container);
+    const text = tags()[0].querySelector(".hk-affix-tag-text")!;
+    expect(text.textContent).toBe("Not set");
+    expect(text.hasAttribute("data-unset")).toBe(true);
+  });
+
+  it("without tagValues the tags keep the autonym labels (no unset state)", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+    await openPopup(container);
+    const text = tags()[0].querySelector(".hk-affix-tag-text")!;
+    expect(text.textContent).toBe("China");
+    expect(text.hasAttribute("data-unset")).toBe(false);
+  });
+
+  it("mounts NO inner scroll region — the window owns the one scrollbar", async () => {
+    const { container } = mountPicker({
+      mode: "multi",
+      selected: ["cn", "jp", "us"],
+    });
+    await openPopup(container);
+    expect(
+      document.querySelector<HTMLElement>(".hk-affix-list"),
+      "row list renders",
+    ).toBeTruthy();
+    // No overlay-scroll chrome of the list's own inside the popup — the
+    // CSS/text half of the contract is pinned by the contract test.
+    expect(document.querySelector(".hk-affix-list .hk-scrollbar-track")).toBeNull();
   });
 });

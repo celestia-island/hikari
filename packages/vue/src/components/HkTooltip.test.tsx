@@ -32,7 +32,7 @@ function mount(props: Record<string, unknown> = {}) {
   document.body.appendChild(container);
   const app = createApp({
     render: () =>
-      h(HkTooltip, props, () => h("span", { class: "anchor-probe" }, "anchor")),
+      h(HkTooltip, props as never, () => h("span", { class: "anchor-probe" }, "anchor")),
   });
   app.mount(container);
   mounts.push({ app, container });

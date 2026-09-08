@@ -1,11 +1,10 @@
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 
 import "./HkKeywordSearchModal.scss";
 import HModal from "./HkModal";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
-import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 interface FuzzyMatch {
   matched: boolean;
@@ -161,21 +160,21 @@ export default defineComponent({
     }
 
     const resultsRef = ref<HTMLDivElement | null>(null);
-    // Positioned wrapper around ONLY the results list — the rail host.
-    const resultsWrapRef = ref<HTMLDivElement | null>(null);
-    let resultsScrollbar: OverlayScrollbarHandle | null = null;
+    /** ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the results list no
+     *  longer scrolls itself (its old 22rem/50vh cap + overlay rail was a
+     *  second scrollbar nested inside the modal window). The HkModal
+     *  body scroller is THE scrollbar; new results reset ITS position. */
+    function resetResultsScroll(): void {
+      resultsRef.value
+        ?.closest<HTMLElement>(".hk-modal-body-scroll")
+        ?.scrollTo({ top: 0 });
+    }
 
-    onBeforeUnmount(() => {
-      resultsScrollbar?.detach();
-      resultsScrollbar = null;
-      debounceTimer?.disconnect();
-    });
-
-    watch(debouncedQuery, (q) => {
-      if (semanticActive.value) void runSemantic(q);
+    watch(debouncedQuery, () => {
+      if (semanticActive.value) void runSemantic(debouncedQuery.value);
       // New results replace the list (fuzzy + semantic paths both
-      // recompute from debouncedQuery): return the viewport to the top.
-      resultsRef.value?.scrollTo({ top: 0 });
+      // recompute from debouncedQuery): return the window to the top.
+      resetResultsScroll();
     });
 
     const results = computed(() => {
@@ -189,32 +188,21 @@ export default defineComponent({
 
     watch(
       () => props.modelValue,
-      (open) => {
-        if (open) {
+      () => {
+        if (props.modelValue) {
           query.value = "";
           debouncedQuery.value = "";
           semanticResults.value = [];
           semanticLoading.value = false;
-          // The results list mounts with the modal body — attach the
-          // overlay scrollbar (shared chrome) once the DOM has landed;
-          // detach on close so nothing leaks in the modal portal.
-          void nextTick(() => {
-            if (!props.modelValue || !resultsRef.value) return;
-            resultsScrollbar?.detach();
-            // Exact host = the results wrapper (see the render): the
-            // broader modal body also holds the search-input row, and a
-            // rail spanning that would light up in the wrong place.
-            resultsScrollbar = attachOverlayScrollbars(resultsRef.value, {
-              axis: "vertical",
-              host: resultsWrapRef.value ?? undefined,
-            });
-          });
         } else {
-          resultsScrollbar?.detach();
-          resultsScrollbar = null;
+          semanticLoading.value = false;
         }
       },
     );
+
+    onBeforeUnmount(() => {
+      debounceTimer?.disconnect();
+    });
 
     function pick(rec: unknown) {
       emit("select", rec);
@@ -278,8 +266,9 @@ export default defineComponent({
             )}
           </div>
 
-          <div class="hk-kw-search-results-wrap" ref={resultsWrapRef}>
-            <div class="hk-kw-search-results" ref={resultsRef}>
+          {/* No inner scroll region — the modal window is THE scroller
+              (ONE SCROLLBAR PER WINDOW, see resetResultsScroll). */}
+          <div class="hk-kw-search-results" ref={resultsRef}>
             {semanticActive.value ? (
               semanticLoading.value && semanticResults.value.length === 0 ? (
                 <div class="hk-kw-search-empty">
@@ -336,7 +325,6 @@ export default defineComponent({
                 </button>
               ))
             )}
-            </div>
           </div>
         </div>
       </HModal>

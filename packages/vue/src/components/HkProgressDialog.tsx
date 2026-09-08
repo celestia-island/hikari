@@ -1,7 +1,6 @@
-import { defineComponent, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { defineComponent, nextTick, ref, watch } from "vue";
 
 import { useProgressDialog } from "../composables/useProgressDialog";
-import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import HModal from "./HkModal";
 import HProgressBar from "./HkProgressBar";
 import HSpinner from "./HkSpinner";
@@ -12,42 +11,21 @@ export default defineComponent({
   setup() {
     const state = useProgressDialog();
     const logRef = ref<HTMLElement>();
-    // Positioned wrapper around the conditional log pane — the rail host
-    // (the modal body also holds the spinner/progress bands).
-    const logWrapRef = ref<HTMLElement>();
-    // Overlay scrollbar (shared chrome) on the conditional log pane —
-    // attached when it mounts, detached when it unmounts.
-    let logScrollbar: OverlayScrollbarHandle | null = null;
-
-    function syncLogScrollbar() {
-      void nextTick(() => {
-        if (logRef.value) {
-          logScrollbar ??= attachOverlayScrollbars(logRef.value, {
-            axis: "vertical",
-            host: logWrapRef.value,
-          });
-        } else {
-          logScrollbar?.detach();
-          logScrollbar = null;
-        }
-      });
+    // ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the log pane no longer
+    // scrolls itself — its old 10rem cap + overlay rail was a second
+    // scrollbar nested inside the modal window (the HkModal body
+    // scroller). Tailing now scrolls THAT window to the bottom.
+    function scrollWindowToBottom() {
+      const win = logRef.value?.closest<HTMLElement>(".hk-modal-body-scroll");
+      if (win) win.scrollTop = win.scrollHeight;
     }
 
     watch(
       () => state.logs.length,
       () => {
-        syncLogScrollbar();
-        nextTick(() => {
-          const el = logRef.value;
-          if (el) el.scrollTop = el.scrollHeight;
-        });
+        void nextTick(scrollWindowToBottom);
       },
     );
-
-    onBeforeUnmount(() => {
-      logScrollbar?.detach();
-      logScrollbar = null;
-    });
 
     return () => (
       <HModal
@@ -68,14 +46,12 @@ export default defineComponent({
             </div>
           )}
           {state.logs.length > 0 ? (
-            <div ref={logWrapRef} class="s-progress-dialog-log-wrap">
-              <div ref={logRef} class="s-progress-dialog-log">
-                <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-                  {state.logs.map((line, i) => (
-                    <li key={i}>{line}</li>
-                  ))}
-                </ul>
-              </div>
+            <div ref={logRef} class="s-progress-dialog-log">
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {state.logs.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
             </div>
           ) : null}
         </div>

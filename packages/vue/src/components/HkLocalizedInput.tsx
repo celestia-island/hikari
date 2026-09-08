@@ -14,9 +14,11 @@ export interface HkLocaleOption {
   code: string;
   /** Display label — apps pass the SAME text their global language
    *  switcher shows (e.g. the autonym "简体中文" / "English"). The chip
-   *  renders the bare label; the menu's language tags render the label
-   *  plus a small code suffix, so the code lives only in the opened
-   *  menu. */
+   *  renders the bare label; the menu's language tags render the
+   *  language's stored translation (or the italic "Not set") plus a
+   *  small code suffix, and the label survives as the tag's title /
+   *  aria / confirm-dialog naming; the add-language rows render the
+   *  label plus the code. */
   label: string;
   /** Optional flag glyph rendered in the menu tags, matching the app's
    *  language switcher rows when they carry one. */
@@ -36,11 +38,19 @@ export interface HkLocaleOption {
  *   - Click the chip → the shared HkAffixPicker (multi-select, right
  *     anchored, closes on pick so the field is immediately editable):
  *       · a TAG LIST of every language currently present — the one being
- *         edited carries the active dot. The × on a tag arms the delete
- *         (danger tint) and a second tap erases; the popup stays open
- *         after removals so several translations can be wiped in one
- *         pass, with squeeze-in / squeeze-out list transitions
- *         (HkListTransition, animation-context aware);
+ *         edited carries the active dot. A tag's primary text is that
+ *         language's CURRENT TRANSLATION (value-driven `tagValues`), not
+ *         its autonym; the language being edited but not yet filled
+ *         renders an italic muted "Not set" placeholder (the only tag
+ *         that can be empty — an unfilled language vanishes from the
+ *         list the moment the field switches away, since empty values
+ *         never enter `translations`). The autonym and locale code stay
+ *         on the tag as title/aria naming and the muted code suffix.
+ *         The × on a tag arms the delete (danger tint) and a second tap
+ *         erases; the popup stays open after removals so several
+ *         translations can be wiped in one pass, with squeeze-in /
+ *         squeeze-out list transitions (HkListTransition,
+ *         animation-context aware);
  *       · a SEARCHABLE list of the languages NOT yet present — typing
  *         filters, picking adds the language and drops the field
  *         straight into edit state for it. This replaces the old
@@ -56,6 +66,8 @@ export interface HkLocaleOption {
  * (as a muted suffix on each tag) so the code never burns space inside
  * the field. The popup participates in the shared modal/dropdown stacking
  * contexts via HkMenu's popup-manager integration — safe inside modals.
+ * The popup mounts no scroll region of its own: the window surface it
+ * opens as owns the ONE scrollbar (HkAffixPicker contract).
  *
  * Set `multiline` to edit long-form translations: the field becomes an
  * auto-growing textarea (`rows` seeds the height, `autoGrow` lets it
@@ -305,6 +317,7 @@ export const HkLocalizedInput = defineComponent({
                     "Add language",
                   )}
                   emptyText={t("hikari::localizedInput.noMatches", "No matching language")}
+                  tagValues={props.translations}
                   onSelect={(code: string) => switchLanguage(code)}
                   onRemove={(code: string) => eraseLanguage(code)}
                 >

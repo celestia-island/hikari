@@ -326,15 +326,16 @@
 // Entries area — the list/grid body (state carries on data-layout)
 // ------
 
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the entries area is NOT a
+ * scroll region — its old 24rem cap + native bar was a second scrollbar
+ * nested inside the modal window. The listing grows with its content and
+ * the HkModal body scroller (the window's ONE scrollbar) scrolls it. */
 .hk-file-browser-entries {
   display: flex;
   flex-direction: column;
   min-height: 12rem;
-  max-height: 24rem;
-  overflow-y: auto;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  overscroll-behavior: contain;
 }
 
 .hk-file-browser-loading {

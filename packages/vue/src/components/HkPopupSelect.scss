@@ -131,8 +131,9 @@
 
 // Mobile sheet form (HPopover sheetOnMobile): full-width option list with
 // touch-sized rows (row geometry flows from the shared sheet tokens).
-.hk-popover-panel.hk-is-sheet.hk-popup-select-content {
-  .hk-popup-select-viewport {
-    max-height: min(56vh, 24rem);
-  }
-}
+// ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the sheet PANEL is the
+// window scroller (.hk-popover-panel.hk-is-sheet carries overflow-y:
+// auto), so the viewport must NOT cap itself here — an inner max-height
+// lit a second nested scrollbar inside the same window. The desktop
+// popout keeps its 240px content cap + viewport scroll, where the
+// viewport bar is the popup's only scrollbar.

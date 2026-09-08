@@ -133,27 +133,30 @@ function pickerTags(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>(".hk-affix-tag")];
 }
 
-function tagLabels(): string[] {
+/** Primary texts of the tags — each language's stored value, or the
+ *  italic "Not set" placeholder for the edited-but-unfilled one. */
+function tagTexts(): string[] {
   return pickerTags().map(
     (t) => t.querySelector(".hk-affix-tag-text")?.textContent ?? "",
   );
 }
 
-/** The tag whose label is `label`. */
-function tag(label: string): HTMLElement | undefined {
+/** The tag whose locale-code suffix is `code` (the code suffix is the
+ *  stable identity — the primary text is the language's VALUE). */
+function tagByCode(code: string): HTMLElement | undefined {
   return pickerTags().find(
-    (t) => (t.querySelector(".hk-affix-tag-text")?.textContent ?? "") === label,
+    (t) => t.querySelector(".hk-affix-tag-meta")?.textContent === code,
   );
 }
 
 /** The tag body (switch target) of the language tag. */
-function tagBody(label: string): HTMLButtonElement | undefined {
-  return tag(label)?.querySelector<HTMLButtonElement>(".hk-affix-tag-body") ?? undefined;
+function tagBody(code: string): HTMLButtonElement | undefined {
+  return tagByCode(code)?.querySelector<HTMLButtonElement>(".hk-affix-tag-body") ?? undefined;
 }
 
 /** The × of the language tag (opens the confirm dialog). */
-function tagX(label: string): HTMLButtonElement | undefined {
-  return tag(label)?.querySelector<HTMLButtonElement>(".hk-affix-tag-x") ?? undefined;
+function tagX(code: string): HTMLButtonElement | undefined {
+  return tagByCode(code)?.querySelector<HTMLButtonElement>(".hk-affix-tag-x") ?? undefined;
 }
 
 /** The message box's confirm/cancel buttons (mounted at body level). */
@@ -164,10 +167,6 @@ function boxButton(confirm: boolean): HTMLButtonElement {
   return btn!;
 }
 
-/** Full erase flow: the × opens the shared confirm dialog naming the
- *  entry; the dialog's Confirm erases. The leaving tag lingers through
- *  its transition window (jsdom has no CSS engine, so the ghost clears
- *  on the next-frame fallback) — poll until the tag is really gone. */
 /** Poll until the condition turns truthy (box leave animations and
  *  tag transitions lag a few frames behind the click). */
 async function until(condition: () => boolean, what: string): Promise<void> {
@@ -201,8 +200,13 @@ async function untilBoxOpen(label: string): Promise<void> {
   ).toContain(label);
 }
 
-async function eraseViaConfirm(label: string, tagGone = true) {
-  tagX(label)!.click();
+/** Full erase flow: the × opens the shared confirm dialog naming the
+ *  entry (by its language label); the dialog's Confirm erases. The
+ *  leaving tag lingers through its transition window (jsdom has no CSS
+ *  engine, so the ghost clears on the next-frame fallback) — poll until
+ *  the tag is really gone. */
+async function eraseViaConfirm(code: string, label: string, tagGone = true) {
+  tagX(code)!.click();
   await untilBoxOpen(label);
   boxButton(true).click();
   await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on confirm");
@@ -210,7 +214,7 @@ async function eraseViaConfirm(label: string, tagGone = true) {
   // no other language remains (it stays as the active tag), so the
   // absence wait only applies to genuinely-removed entries.
   if (tagGone) {
-    await until(() => !tag(label), `tag "${label}" erased`);
+    await until(() => !tagByCode(code), `tag "${code}" erased`);
   } else {
     await nextTick();
     await nextTick();
@@ -282,9 +286,11 @@ describe("HkLocalizedInput", () => {
     // The chip stays code-free while the popup is closed.
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openPicker(container);
-    // Tags show the bare label plus a muted code suffix — no parens form.
-    const zhTag = tag("简体中文");
+    // Tags show the language's VALUE plus a muted code suffix — no
+    // parens form, and never the autonym as the primary text.
+    const zhTag = tagByCode("zh-Hans");
     expect(zhTag, "tag for the filled translation renders").toBeTruthy();
+    expect(zhTag!.querySelector(".hk-affix-tag-text")?.textContent).toBe("工厂总览");
     expect(zhTag!.querySelector(".hk-affix-tag-meta")?.textContent).toBe("zh-Hans");
     expect(zhTag!.textContent).not.toContain("(zh-Hans)");
     // Addable rows carry their code as the muted meta too.
@@ -324,10 +330,11 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    // Every language in the map is a tag — the edited one marked active.
-    expect(tagLabels()).toEqual(expect.arrayContaining(["English", "简体中文"]));
+    // Every language in the map is a tag showing its VALUE — the edited
+    // one marked active.
+    expect(tagTexts()).toEqual(expect.arrayContaining(["Plant overview", "工厂总览"]));
     const activeTag = pickerTags().find((t) => t.hasAttribute("data-active"));
-    expect(activeTag?.querySelector(".hk-affix-tag-text")?.textContent).toBe("English");
+    expect(activeTag?.querySelector(".hk-affix-tag-text")?.textContent).toBe("Plant overview");
     // One body + one arm/confirm × per tag.
     for (const t of pickerTags()) {
       expect(t.querySelector(".hk-affix-tag-body"), "body on every tag").toBeTruthy();
@@ -340,9 +347,14 @@ describe("HkLocalizedInput", () => {
   it("lists the edited language even while it holds no translation", async () => {
     const { container } = mountInput({ modelValue: "Plant overview" });
     await openPicker(container);
-    // The field edits English with nothing stored yet — still listed, active.
-    expect(tagLabels()).toEqual(["English"]);
-    expect(tag("English")?.hasAttribute("data-active")).toBe(true);
+    // The field edits English with nothing stored yet — still listed,
+    // active, and showing the italic "Not set" placeholder.
+    expect(tagTexts()).toEqual(["Not set"]);
+    const enTag = tagByCode("en")!;
+    expect(enTag.hasAttribute("data-active")).toBe(true);
+    expect(enTag.querySelector(".hk-affix-tag-text")?.hasAttribute("data-unset")).toBe(true);
+    // The autonym survives as the language's identity (title naming).
+    expect(tagBody("en")?.title).toContain("English");
   });
 
   it("switches to an existing language via its tag body: commits text, loads its value, closes the popup", async () => {
@@ -351,7 +363,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    const body = tagBody("简体中文");
+    const body = tagBody("zh-Hans");
     expect(body).toBeTruthy();
     body!.click();
     await nextTick();
@@ -440,8 +452,8 @@ describe("HkLocalizedInput", () => {
     mounts.push({ app, container });
     expect(queryChip(container).disabled).toBe(false);
     await openPicker(container);
-    // Only the current language's tag remains in the list.
-    expect(tagLabels()).toEqual(["English"]);
+    // Only the current language's tag remains in the list (its value).
+    expect(tagTexts()).toEqual(["Plant overview"]);
   });
 
   it("keeps edits on the switched-from language when the text is blank", async () => {
@@ -450,7 +462,7 @@ describe("HkLocalizedInput", () => {
       translations: { "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    const body = tagBody("简体中文");
+    const body = tagBody("zh-Hans");
     body!.click();
     await nextTick();
     await nextTick();
@@ -465,7 +477,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    const body = tagBody("简体中文");
+    const body = tagBody("zh-Hans");
     body!.click();
     await nextTick();
     await nextTick();
@@ -520,7 +532,7 @@ describe("HkLocalizedInput", () => {
     app.mount(container);
     mounts.push({ app, container });
     await openPicker(container);
-    expect(tag("简体中文")?.querySelector(".hk-affix-tag-flag")?.textContent).toBe(flagOf("cn"));
+    expect(tagByCode("zh-Hans")?.querySelector(".hk-affix-tag-flag")?.textContent).toBe(flagOf("cn"));
   });
 
   it("follows a sourceLang change without stealing focus", async () => {
@@ -566,14 +578,14 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    tagX("简体中文")!.click();
+    tagX("zh-Hans")!.click();
     await untilBoxOpen("简体中文");
     // The dialog names the entry and carries a danger-toned confirm.
     expect(boxButton(true).className).toContain("hk-btn-danger");
     // Cancel → nothing is erased, the dialog closes.
     boxButton(false).click();
     await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on cancel");
-    await until(() => !!tag("简体中文"), "tag stays after cancel");
+    await until(() => !!tagByCode("zh-Hans"), "tag stays after cancel");
   });
 
   it("names the tag body by its switch action and the × by its remove intent", async () => {
@@ -582,8 +594,8 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    expect(tagBody("简体中文")?.getAttribute("aria-label")).toBe("Switch to 简体中文");
-    expect(tagX("简体中文")?.getAttribute("aria-label")).toBe("Remove — 简体中文");
+    expect(tagBody("zh-Hans")?.getAttribute("aria-label")).toBe("Switch to 简体中文");
+    expect(tagX("zh-Hans")?.getAttribute("aria-label")).toBe("Remove — 简体中文");
   });
 
   it("keeps the picker usable after a dismissed delete dialog", async () => {
@@ -592,13 +604,13 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    tagX("简体中文")!.click();
+    tagX("zh-Hans")!.click();
     await untilBoxOpen("简体中文");
     boxButton(false).click();
     await until(() => !document.body.querySelector(".hk-message-box-text"), "dialog closes on cancel");
     // The dialog never leaves the picker half-broken: the tag can still
     // switch the edited language right after a dismissal.
-    tagBody("简体中文")!.click();
+    tagBody("zh-Hans")!.click();
     await nextTick();
     await nextTick();
     expect(document.activeElement).toBe(queryField(container));
@@ -610,7 +622,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    await eraseViaConfirm("简体中文");
+    await eraseViaConfirm("zh-Hans", "简体中文");
     // The map loses only the erased language; no edit-state events fire.
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue).toEqual([]);
@@ -618,7 +630,7 @@ describe("HkLocalizedInput", () => {
     expect(queryField(container).value).toBe("Plant overview");
     expect(queryChip(container).textContent).toContain("English");
     // The popup STAYS open and the list updates live.
-    expect(tagLabels()).toEqual(["English"]);
+    expect(tagTexts()).toEqual(["Plant overview"]);
     expect(pickerRows().some((r) => (r.textContent ?? "").includes("日本語"))).toBe(true);
   });
 
@@ -628,10 +640,10 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览", ja: "プラント概覧" },
     });
     await openPicker(container);
-    await eraseViaConfirm("简体中文");
-    await eraseViaConfirm("日本語");
+    await eraseViaConfirm("zh-Hans", "简体中文");
+    await eraseViaConfirm("ja", "日本語");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
-    expect(tagLabels()).toEqual(["English"]);
+    expect(tagTexts()).toEqual(["Plant overview"]);
   });
 
   it("falls back to the source language when the edited language is erased", async () => {
@@ -643,20 +655,20 @@ describe("HkLocalizedInput", () => {
     // Switch to zh-Hans first so erasing it means erasing the edited
     // language while the source still holds a translation.
     await openPicker(container);
-    tagBody("简体中文")!.click();
+    tagBody("zh-Hans")!.click();
     await nextTick();
     await nextTick();
     expect(queryChip(container).textContent).toContain("简体中文");
     expect(queryChip(container).textContent).not.toContain("(zh-Hans)");
     await openPicker(container);
-    await eraseViaConfirm("简体中文");
+    await eraseViaConfirm("zh-Hans", "简体中文");
     expect(events.translations.at(-1)).toEqual({ en: "Plant overview" });
     expect(events.modelValue.at(-1)).toBe("Plant overview");
     expect(events.languagechange.at(-1)).toBe("en");
     expect(queryChip(container).textContent).toContain("English");
     expect(queryChip(container).textContent).not.toContain("(en)");
     // The popup stays open after an erase.
-    expect(tagLabels()).toEqual(["English"]);
+    expect(tagTexts()).toEqual(["Plant overview"]);
   });
 
   it("falls back to the first remaining translation when the source language is erased", async () => {
@@ -666,7 +678,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    await eraseViaConfirm("English");
+    await eraseViaConfirm("en", "English");
     expect(events.translations.at(-1)).toEqual({ "zh-Hans": "工厂总览" });
     expect(events.modelValue.at(-1)).toBe("工厂总览");
     expect(events.languagechange.at(-1)).toBe("zh-Hans");
@@ -680,12 +692,13 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview" },
     });
     await openPicker(container);
-    await eraseViaConfirm("English", false);
+    await eraseViaConfirm("en", "English", false);
     expect(events.translations.at(-1)).toEqual({});
     expect(events.modelValue.at(-1)).toBe("");
-    // The edited language tag stays (active); the popup stays open.
-    expect(tagLabels()).toEqual(["English"]);
-    expect(tag("English")?.hasAttribute("data-active")).toBe(true);
+    // The edited language tag stays (active, italic Not set); the popup
+    // stays open.
+    expect(tagTexts()).toEqual(["Not set"]);
+    expect(tagByCode("en")?.hasAttribute("data-active")).toBe(true);
     expect(pickerRows().some((r) => (r.textContent ?? "").includes("日本語"))).toBe(true);
   });
 
@@ -695,7 +708,7 @@ describe("HkLocalizedInput", () => {
       translations: { en: "Plant overview", "zh-Hans": "工厂总览" },
     });
     await openPicker(container);
-    tagBody("English")!.click();
+    tagBody("en")!.click();
     await nextTick();
     await nextTick();
     await untilPickerSettled();
@@ -722,5 +735,35 @@ describe("HkLocalizedInput", () => {
     await nextTick();
     expect(events.modelValue.at(-1)).toBe("Line one\nLine two");
     expect(events.translations.at(-1)).toEqual({ en: "Line one\nLine two" });
+  });
+
+  it("tags show stored values; an unfilled language vanishes once left", async () => {
+    const { events, container } = mountInput({
+      modelValue: "",
+      translations: { "zh-Hans": "工厂总览" },
+    });
+    await openPicker(container);
+    // Filled language → its value as the primary text; the edited-but-
+    // unfilled source language → the italic Not set placeholder (the
+    // only tag that can ever be empty).
+    expect(tagTexts()).toEqual(["工厂总览", "Not set"]);
+    expect(tagByCode("en")!.querySelector(".hk-affix-tag-text")?.hasAttribute("data-unset")).toBe(true);
+    expect(tagByCode("zh-Hans")!.querySelector(".hk-affix-tag-text")?.hasAttribute("data-unset")).toBe(false);
+    // The autonym + code still identify the language beside the value.
+    expect(tagBody("zh-Hans")!.title).toContain("简体中文");
+    expect(tagByCode("zh-Hans")!.querySelector(".hk-affix-tag-meta")?.textContent).toBe("zh-Hans");
+    // Switching away from the unfilled language (adding ja moves the
+    // field there): "en" never entered translations, so it leaves the
+    // list — the Not set state only ever marks the CURRENT edit.
+    const jaRow = pickerRows().find((r) => (r.textContent ?? "").includes("日本語"));
+    jaRow!.click();
+    await nextTick();
+    await nextTick();
+    expect(events.languagechange.at(-1)).toBe("ja");
+    await untilPickerSettled();
+    await openPicker(container);
+    expect(tagByCode("en")).toBeUndefined();
+    expect(tagTexts()).toEqual(["工厂总览", "Not set"]);
+    expect(tagByCode("ja")).toBeTruthy();
   });
 });

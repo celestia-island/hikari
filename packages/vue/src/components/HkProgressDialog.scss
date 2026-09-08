@@ -1,27 +1,13 @@
-// HkProgressDialog.scss — the log pane's chrome. Inline styles cannot
-// carry the `::-webkit-scrollbar` half of the native-bar hide, so the
-// pane's visual block lives here like every other overlay-scroll
-// consumer (see packages/theme/styles/_scrollbar.scss).
+// HkProgressDialog.scss — the log pane's chrome.
+// ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the pane is NOT a scroll
+// region — its old 10rem cap + overlay rail was a second scrollbar nested
+// inside the modal window. Logs grow unbounded; the HkModal body scroller
+// (the window's ONE scrollbar) scrolls them, and the tailing watcher in
+// HkProgressDialog.tsx keeps the latest line visible.
 // Use theme variables with namespace to avoid conflicts
 @use "./hikari-vars" as vars;
-/* Track host: wraps ONLY the log pane so the rail hugs the log band,
-   not the spinner/progress bands above it. */
-.s-progress-dialog-log-wrap {
-  position: relative;
-}
 
 .s-progress-dialog-log {
-  max-height: 10rem;
-  overflow: hidden auto;
-
-  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
-     always hidden, never styled. */
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
   border-radius: 0.375rem;
   background: rgba(0, 0, 0, 0.06);
   padding: 0.5rem;

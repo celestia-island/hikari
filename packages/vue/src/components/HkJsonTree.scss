@@ -29,6 +29,21 @@
   }
 }
 
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): inside a window surface's
+ * own scroller the bounded tree cap lit a second scrollbar under the
+ * window's — the window's scrollbar is the only one there and the tree
+ * grows with its content. Pages and standalone cards (the error landing,
+ * chat tool blocks outside windows) keep the bounded viewport above.
+ * The host's deferred overlay pass self-hides its rails once the
+ * content fits, so no attach-side change is needed. */
+.hk-modal-body-scroll .s-tool-json-tree,
+.hk-select-sheet-list .s-tool-json-tree,
+.hk-select-popout .s-tool-json-tree,
+.hk-popover-panel .s-tool-json-tree,
+.hk-drawer-body .s-tool-json-tree {
+  max-height: none;
+}
+
 .s-jt-row {
   /* Baseline alignment keeps the small type hints (boolean/number/string)
      on the value's text baseline instead of floating above it. */

@@ -393,8 +393,15 @@
     // sits off the very bottom edge (chest asked for a visibly narrower
     // gap than body bottom + safe area on phones). Safe area is added ON
     // TOP of the gap so home-bar devices never lose tappable chrome.
-    padding: 0.625rem 1rem
-      calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px));
+    // --hk-modal-footer-padding-mobile is the host-tunable mobile footer
+    // inset: a host with edge-to-edge footer content (chest's report
+    // reply bar) sets it to 0 instead of repainting the rule and
+    // duplicating the formula — desktop keeps --hk-modal-padding-footer.
+    padding: var(
+      --hk-modal-footer-padding-mobile,
+      0.625rem 1rem
+        calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px))
+    );
 
     // Footer actions are the sheet's primary touch targets: lift sm/md
     // buttons one size up to the 44px class regardless of the caller's

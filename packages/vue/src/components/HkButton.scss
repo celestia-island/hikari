@@ -12,7 +12,15 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  /* Longhand on purpose: the former comma-separated shorthand
+   * `transition: background-color, ..., filter var(--duration-normal) ...`
+   * declares one transition PER property where only the LAST carries the
+   * duration — every property but `filter` animated at 0s and hover states
+   * snapped (host overrides kept patching over it). One property LIST with
+   * one duration/easing animates them all. */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
   white-space: nowrap;
   user-select: none;
   outline: none;

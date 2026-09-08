@@ -197,6 +197,7 @@
   "hikari::messageBox.ok": "OK",
   "hikari::affixPicker.removeConfirmTitle": "Remove entry",
   "hikari::affixPicker.removeConfirm": "Remove \"{label}\"? This cannot be undone.",
+  "hikari::affixPicker.unset": "Not set",
   "hikari::messageBox.alertTitle": "Notice",
   "hikari::messageBox.confirmTitle": "Please confirm",
   "hikari::messageBox.promptTitle": "Input"

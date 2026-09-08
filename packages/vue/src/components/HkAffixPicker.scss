@@ -67,7 +67,9 @@
   max-width: 24rem;
 }
 
-/* One selected entry: [flag] label (meta) •active-dot   ×]
+/* One selected entry: [flag] value|label (meta) •active-dot   ×]
+ * With `tagValues` the primary text is the key's mapped value (italic
+ * muted "Not set" while empty); without it, the autonym label.
  * The × opens the shared confirm message box — the dialog's Confirm is
  * what actually erases; the × alone never does. */
 .hk-affix-tag {
@@ -126,6 +128,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  /* Value-driven tags (HkLocalizedInput): the language is listed but
+   * holds no text yet — the italic muted "Not set" placeholder. */
+  &[data-unset] {
+    font-style: italic;
+    color: rgb(var(--color-muted));
+  }
 }
 
 .hk-affix-tag-meta {
@@ -167,12 +176,12 @@
 }
 
 /* ── option rows ────────────────────────────────────────────────────── */
-/* Positioned host for the overlay scrollbar tracks: wraps ONLY the
- * scrolling list viewport (the menu body also contains the header/
- * search band), carries the popup's width constraints so the geometry
- * is unchanged by the wrapper. */
+/* Width container for the option list — carries the popup's width
+ * constraints so the list block keeps its designed measure inside the
+ * hosting window (HkSelectPanel popout / mobile sheet). It is NOT a
+ * scroll region: the window owns THE single scrollbar and scrolls the
+ * whole popup content (tags + search + rows) as one. */
 .hk-affix-scroll {
-  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 13rem;
@@ -189,20 +198,15 @@
   width: 100%;
 }
 
+/* NO max-height / overflow here — ONE SCROLLBAR PER WINDOW (2026-09-08
+ * user report: the language sheet showed two nested scrollbars, this
+ * list's 17rem cap + the sheet's own). The list grows with its content
+ * and the hosting window scrolls it. */
 .hk-affix-list {
   display: flex;
   flex-direction: column;
   gap: 1px;
   padding: 4px 6px 8px;
-  max-height: 17rem;
-  overflow-y: auto;
-  /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
-   * always hidden, never styled. */
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .hk-affix-row {

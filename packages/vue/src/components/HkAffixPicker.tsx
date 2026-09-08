@@ -1,8 +1,6 @@
 import {
   computed,
   defineComponent,
-  nextTick,
-  onBeforeUnmount,
   ref,
   watch,
   type PropType,
@@ -12,10 +10,6 @@ import {
 import { ChevronDown, Plus, Search, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
-import {
-  attachOverlayScrollbars,
-  type OverlayScrollbarHandle,
-} from "../composables/useOverlayScrollbar";
 
 import HkInput from "./HkInput";
 import HkListTransition from "./HkListTransition";
@@ -71,6 +65,23 @@ function isSubsequence(query: string, text: string): boolean {
  *     without leaving the keyboard flow (Enter picks the first row, or
  *     the custom row when nothing matches).
  *
+ * ONE SCROLLBAR PER WINDOW: the popup mounts NO scroll region of its
+ * own — the window surface it opens as (the desktop popout or the
+ * mobile bottom sheet, both provided by HkSelectPanel) owns THE single
+ * scrollbar and scrolls the whole popup content (tags + search + rows)
+ * as one. The row list deliberately carries no max-height/overflow; a
+ * nested second scrollbar inside the same window is a contract
+ * violation (2026-09-08 user report: the language sheet scrolled twice).
+ *
+ * With `tagValues`, the multi picker's TAG LIST switches to
+ * value-driven primary text: a selected key renders its mapped value
+ * (trimmed), and a key with no value renders `tagUnsetText` in an
+ * italic muted state (`data-unset`) — "the language is listed but
+ * nothing typed yet". The autonym label stays in the tag's title /
+ * aria naming and the confirm dialog, which identify the LANGUAGE, not
+ * the current text. Hosts that don't pass `tagValues` keep the
+ * autonym-label tags.
+ *
  * The picker owns ZERO field semantics: selection state lives with the
  * host (`selected` key(s) in, events out), and the chip visuals come
  * from the host through the scoped `chip` slot — the same component
@@ -103,6 +114,18 @@ export const HkAffixPicker = defineComponent({
     /** Gate tag deletion behind a confirm message box (multi mode).
      *  Default true; pass false when the host runs its own guard. */
     confirmRemove: { type: Boolean, default: true },
+    /** Per-key value text replacing the tag list's primary label (multi
+     *  mode). Provided = value-driven tags: a key mapping to a non-empty
+     *  string renders that string; an empty/missing key renders
+     *  `tagUnsetText` italic (`data-unset`). Left undefined = the
+     *  autonym-label tags. Does not affect the pick rows. */
+    tagValues: {
+      type: Object as PropType<Record<string, string>>,
+      default: undefined,
+    },
+    /** Text shown (italic) for a tag whose `tagValues` entry is empty;
+     *  defaulted from the i18n bundle. */
+    tagUnsetText: { type: String, default: undefined },
     /** Override the default close-on-pick (single: true, multi: false).
      *  E.g. a multi picker that should close after each add passes
      *  true; a single picker that should stay open passes false. */
@@ -141,57 +164,16 @@ export const HkAffixPicker = defineComponent({
      *  are outside THIS popup, and the panel's outside-close must not
      *  tear the tag list down mid-decision. */
     const confirmHeld = ref(false);
-    /** The scrolling option list and its overlay-scrollbar host (see the
-     *  default slot — the host wraps ONLY the list viewport, not the
-     *  header/search band). */
-    const listRef = ref<HTMLElement | null>(null);
-    const scrollHostRef = ref<HTMLElement | null>(null);
-    /** Live overlay-scrollbar handle for the open popup; null when the
-     *  popup is closed (content not mounted). */
-    let scrollbar: OverlayScrollbarHandle | null = null;
-    /** The viewport element `scrollbar` is currently attached to, so a
-     *  remounted list (the empty-state swap) can be told apart from the
-     *  same in-flight list across content-size updates. */
-    let scrollbarViewport: HTMLElement | null = null;
 
-    function detachScrollbar() {
-      scrollbar?.detach();
-      scrollbar = null;
-      scrollbarViewport = null;
-    }
-
-    function attachScrollbar() {
-      detachScrollbar();
-      if (listRef.value && scrollHostRef.value) {
-        scrollbarViewport = listRef.value;
-        scrollbar = attachOverlayScrollbars(listRef.value, {
-          axis: "vertical",
-          host: scrollHostRef.value,
-        });
-      }
-    }
-
-    // A fresh open starts calm: empty filter.
+    // A fresh open starts calm: empty filter. (The popup mounts no
+    // scroll machinery of its own — the window surface owns the one
+    // scrollbar — so there is nothing to attach/detach on open/close.)
     watch(open, (v) => {
       if (!v) {
         query.value = "";
       }
-      if (v) {
-        // The list mounts on this very render — attach the overlay
-        // scrollbar once the DOM has landed. A same-tick open→close
-        // must not arm it on the leaving popup (the close branch
-        // already detached it).
-        void nextTick(() => {
-          if (!open.value) return;
-          attachScrollbar();
-        });
-      } else {
-        detachScrollbar();
-      }
       emit("update:open", v);
     });
-
-    onBeforeUnmount(detachScrollbar);
 
     const selectedKeys = computed<readonly string[]>(() =>
       Array.isArray(props.selected) ? props.selected : props.selected ? [props.selected] : [],
@@ -231,29 +213,6 @@ export const HkAffixPicker = defineComponent({
         return !!o.keywords && isSubsequence(q, o.keywords.toLowerCase());
       });
     });
-
-    // Content-size changes from the search filter change the thumb
-    // geometry without resizing the viewport — keep it in sync on the
-    // live scrollbar (no-op while the popup is closed). Post-flush so
-    // the DOM (esp. a remounted list after the empty-state swap) has
-    // landed and the template refs point at the live nodes before we
-    // decide whether to attach, re-attach or update.
-    watch(
-      [filteredRows, query],
-      () => {
-        if (!open.value) return;
-        if (!listRef.value) {
-          detachScrollbar();
-          return;
-        }
-        if (listRef.value !== scrollbarViewport) {
-          attachScrollbar();
-          return;
-        }
-        scrollbar?.update();
-      },
-      { flush: "post" },
-    );
 
     /** Exact label match suppresses the custom row while the user is
      *  simply re-typing an existing entry. */
@@ -351,6 +310,14 @@ export const HkAffixPicker = defineComponent({
         props.searchPlaceholder ?? t("hikari::affixPicker.search", "Search");
       const emptyText = props.emptyText ?? t("hikari::affixPicker.empty", "No matches");
       const removeLabel = t("hikari::affixPicker.remove", "Remove");
+      // Value-driven tags (tagValues provided): each tag's primary text
+      // is its mapped value, or the italic unset text when empty. The
+      // autonym stays the tag's identity in title/aria and the dialog.
+      const valueDriven = props.tagValues !== undefined;
+      const unsetText =
+        props.tagUnsetText ?? t("hikari::affixPicker.unset", "Not set");
+      const tagValue = (key: string): string =>
+        (props.tagValues?.[key] ?? "").trim();
       const placement = props.side === "suffix" ? "bottom-end" : "bottom-start";
       return (
         <>
@@ -420,6 +387,7 @@ export const HkAffixPicker = defineComponent({
                         class="hk-affix-tag-list"
                       >
                         {tags.map((tag) => {
+                          const value = tagValue(tag.key);
                           return (
                             <div
                               key={tag.key}
@@ -429,7 +397,9 @@ export const HkAffixPicker = defineComponent({
                               <button
                                 type="button"
                                 class="hk-affix-tag-body"
-                                title={`${tag.label}${tag.meta ? ` (${tag.meta})` : ""}`}
+                                title={`${tag.label}${tag.meta ? ` (${tag.meta})` : ""}${
+                                  valueDriven ? `: ${value || unsetText}` : ""
+                                }`}
                                 aria-label={`${t("hikari::affixPicker.switchTo", "Switch to")} ${tag.label}`}
                                 onClick={(e: MouseEvent) => {
                                   e.stopPropagation();
@@ -441,7 +411,12 @@ export const HkAffixPicker = defineComponent({
                                     {tag.flag}
                                   </span>
                                 )}
-                                <span class="hk-affix-tag-text">{tag.label}</span>
+                                <span
+                                  class="hk-affix-tag-text"
+                                  data-unset={valueDriven && !value ? "" : undefined}
+                                >
+                                  {valueDriven ? value || unsetText : tag.label}
+                                </span>
                                 {tag.meta && (
                                   <span class="hk-affix-tag-meta">{tag.meta}</span>
                                 )}
@@ -499,8 +474,12 @@ export const HkAffixPicker = defineComponent({
               ),
               default: () =>
                 rows.length > 0 || customVisible.value ? (
-                  <div class="hk-affix-scroll" ref={scrollHostRef}>
-                    <div class="hk-affix-list" ref={listRef}>
+                  /* Width container only — the window surface (HkSelectPanel
+                   * popout / sheet) owns THE single scrollbar and scrolls this
+                   * list with the rest of the popup content; no inner
+                   * max-height/overflow here, ever. */
+                  <div class="hk-affix-scroll">
+                    <div class="hk-affix-list">
                       {rows.map((option) => {
                       const active =
                         props.mode === "single"

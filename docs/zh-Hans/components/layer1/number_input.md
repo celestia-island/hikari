@@ -79,3 +79,21 @@ rsx! {
 - `Small` - 小尺寸 (24px)
 - `Medium` - 中尺寸 (32px，默认)
 - `Large` - 大尺寸 (40px)
+
+## Vue 前后缀（prefix / suffix）
+
+Vue 组件（`HNumberInput`）把前后缀文本渲染在输入框**内部**——位于输入值与步进按钮列之间，由内部 flex 行在输入框中轴上垂直居中。两种设定方式，同名插槽优先：
+
+```tsx
+// 字符串 prop（最简）
+<HNumberInput modelValue={v} onUpdate:modelValue={setV} suffix={t("unit.seconds")} />
+
+// 插槽（富内容）
+<HNumberInput modelValue={v} onUpdate:modelValue={setV}>
+  {{ suffix: () => <span>秒</span> }}
+</HNumberInput>
+```
+
+空字符串或未传时渲染无前后缀。另有 `label` prop，在输入框上方渲染字段标题。
+
+⚠️ 不要把单位文本作为兄弟元素放在组件旁边：组件根节点是「label 在上 + 输入框在下」的块级堆叠，兄弟元素相对根节点做 flex 居中会对到错误的轴线中点，悬浮在输入框中轴上方。确需外部伴随文本时，应将根节点与伴随文本包进同一个 flex 行，并以输入框高度（而非根节点）为对齐基准。

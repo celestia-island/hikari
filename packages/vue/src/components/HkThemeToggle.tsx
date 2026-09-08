@@ -88,12 +88,16 @@ export const HkThemeToggle = defineComponent({
     const { t } = useI18n();
     const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
 
-    /** Resolve a row's full definition for the item slots: the live
-     *  preset table first (stock + registered brand themes), then the
-     *  user's stored custom schemes. */
+    /** Resolve a row's full definition for the item slots: the user's
+     *  stored custom schemes first, then the live preset table — the SAME
+     *  precedence getAllThemePresets applies at apply time, so a row that
+     *  shadows a builtin id (in-place preset override) shows the anatomy
+     *  of the scheme that actually renders, not the shadowed factory. */
     function presetOf(id: ThemeId): ThemePreset | CustomThemePreset | undefined {
+      const custom = customThemes.value.find((c) => c.id === id);
+      if (custom) return custom;
       if (id in themePresets) return themePresets[id as keyof typeof themePresets];
-      return customThemes.value.find((c) => c.id === id);
+      return undefined;
     }
 
     const menuOpen = ref(false);

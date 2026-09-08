@@ -228,6 +228,17 @@
 
 .hk-modal-body-inner {
   padding: var(--hk-modal-padding-body, 1.5rem);
+
+  // Default vertical rhythm between bare stacked children (user direction
+  // 2026-09-08: window bodies keep a little distance between their elements
+  // without every consumer hand-rolling a gap). Block layout collapses
+  // adjacent vertical margins, so this composes with — never doubles — a
+  // consumer's own sibling margins; windows that manage their own rhythm
+  // through a single root wrapper are unaffected, and hosts can flatten it
+  // per window with `--hk-modal-body-gap: 0`.
+  & > * + * {
+    margin-top: var(--hk-modal-body-gap, 0.75rem);
+  }
 }
 
 // ------

@@ -165,3 +165,58 @@
   border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
 }
+
+// ------
+// Mobile bottom drawer = the sheet family (2026-09-08 scan wave 2).
+// HkAdaptiveDialog renders its mobile form as a bottom drawer, which
+// made it the ONLY bottom-docked window outside the HkModal / HkPopover /
+// HkSelectPanel sheet family contract: glued to `bottom: 0` (hosts lifting
+// --hk-sheet-bottom-gap saw no effect), capped by the inline `size` 70vh
+// with no top-inset reservation (a tall dialog covered the secondary-window
+// breadcrumb strip), 8px corners against the family's 12px, a footer that
+// ignored the home-bar safe area, and sm/md footer buttons without the
+// family's 44px touch lift. Same geometry, same tokens, one family.
+// ------
+@media (max-width: 767px) {
+  .hk-drawer-bottom {
+    bottom: var(--hk-sheet-bottom-gap, 0px);
+    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                   var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+                   0 0;
+    // The inline maxHeight from the `size` prop must lose to the family cap
+    // (plain-vh fallback first for dvh-less engines, then dvh) — same
+    // inline-beating !important pattern as HkModal's mobile max-width.
+    max-height: calc(
+      100vh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+    max-height: calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) - var(--hk-sheet-bottom-gap, 0px)
+    ) !important;
+  }
+
+  // Scoped to BOTTOM drawers only: side drawers (admin panels etc.) keep
+  // their desktop footer contract on phones — the sheet family is the
+  // bottom-docked form factor. Three-value padding keeps the axes right:
+  // the --hk-drawer-footer-padding hook owns the TOP, 1rem the sides, and
+  // the home-bar safe area lands on the BOTTOM where it belongs (a 2-value
+  // form would put the safe-area calc on the horizontal axis — and for
+  // hosts that zero the var it would strip the bottom protection entirely,
+  // the exact opposite of the intent).
+  .hk-drawer-bottom .hk-drawer-footer {
+    // Family baseline: home-bar safe area stacked on the base inset (same
+    // stacking as HkModal's mobile footer), on top of the existing
+    // --hk-drawer-footer-padding hook for menu-panel hosts.
+    padding: var(--hk-drawer-footer-padding, 0.625rem 1rem) 1rem
+      calc(0.375rem + var(--hk-sheet-footer-gap, 0.5rem) + env(safe-area-inset-bottom, 0px));
+
+    // Footer actions are the drawer's primary touch targets on phones:
+    // lift sm/md buttons to the 44px class, exactly like HkModal's mobile
+    // footer (padding/min-height only; font-size stays --text-base).
+    .hk-btn-sm,
+    .hk-btn-md {
+      min-height: 2.75rem;
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--text-base);
+    }
+  }
+}

@@ -179,6 +179,16 @@
   max-width: min(19rem, calc(100vw - 2rem));
 }
 
+/* Mobile sheet context (#424 pattern): inside the full-width select sheet
+ * the popup's designed measure becomes a centered cap instead of a
+ * left-glued clamp — the list reads as one designed block inside the
+ * viewport-wide sheet rather than hugging its left edge. */
+.hk-select-sheet-panel .hk-affix-scroll {
+  max-width: min(19rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
 .hk-affix-list {
   display: flex;
   flex-direction: column;

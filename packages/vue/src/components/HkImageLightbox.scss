@@ -102,9 +102,16 @@
     top: 0;
     bottom: auto;
     left: 0;
-    width: 100vw;
+    // Full-bleed width from the containing block, NOT 100vw and NOT the
+    // desktop rule's inherited `min(96vw, 80rem)`: that unconditional
+    // same-specificity width would persist into mobile and, over-constrained
+    // against the inherited `left: 0; right: 0` pair, drop `right` under
+    // LTR — a persistent ~4vw dead strip on the right edge (the exact gap
+    // class this wave hunts). 100vw itself also measures the ICB including
+    // classic scrollbar gutters.
     // Plain-vh fallback first for dvh-less engines (older Android
     // WebView / Tauri), then the dynamic-viewport height.
+    width: 100%;
     height: 100vh;
     height: 100dvh;
     max-height: none;

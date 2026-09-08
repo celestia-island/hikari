@@ -271,6 +271,16 @@
         var(--hk-sheet-bottom-gap, 0px)
     )
   );
+  /* Dynamic-viewport pairing (HkModal parity): the dvh twin follows the
+   * vh cap so a maxed sheet cannot extend under the URL bar on
+   * dynamic-toolbar browsers. */
+  max-height: min(
+    72vh,
+    calc(
+      100dvh - var(--hk-sheet-top-inset, 4.25rem) -
+        var(--hk-sheet-bottom-gap, 0px)
+    )
+  );
   background: rgb(var(--color-surface));
   border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  var(--hk-modal-radius, var(--hi-radius-lg, 12px))

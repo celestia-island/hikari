@@ -91,3 +91,28 @@ rsx! {
 - `Small` - Small size (24px)
 - `Medium` - Medium size (32px, default)
 - `Large` - Large size (40px)
+
+## Vue Affixes (prefix / suffix)
+
+The Vue component (`HNumberInput`) renders affix text INSIDE the field,
+between the typed value and the stepper column, flex-centered on the
+input box axis. Two ways to set it — named slots take precedence:
+
+```tsx
+// String props (simplest)
+<HNumberInput modelValue={v} onUpdate:modelValue={setV} suffix={t("unit.seconds")} />
+
+// Slots (rich content)
+<HNumberInput modelValue={v} onUpdate:modelValue={setV}>
+  {{ suffix: () => <span>sec</span> }}
+</HNumberInput>
+```
+
+An empty string or absent prop/slot renders no affix. A `label` prop is
+also available; it renders a caption ABOVE the box.
+
+⚠️ Never place unit text in a SIBLING element next to the component:
+the root stacks the label over the input box, so a sibling centered
+against the root targets the wrong axis midpoint and floats above the
+box's center. If you must keep a companion outside, wrap root +
+companion in a flex row and align against the box height, not the root.

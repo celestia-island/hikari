@@ -64,6 +64,35 @@ describe("HkNumberInput affix contract", () => {
     expect(rule).toContain("flex-shrink: 0");
   });
 
+  it("stretches the stepper column so height:50% steps and the divider span the box", () => {
+    const rule = scss.match(/\.hk-number-input-steppers\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "steppers rule must exist").toContain("align-self: stretch");
+    const steps = scss.match(/\.hk-number-input-step\s*{[^}]*}/)?.[0] ?? "";
+    expect(steps).toContain("height: 50%");
+  });
+
+  it("self-declares border-box so per-size heights survive hosts without a reset", () => {
+    const field = scss.match(/\.hk-number-input-field\s*{[^}]*}/)?.[0] ?? "";
+    expect(field, "field rule must exist").toContain("box-sizing: border-box");
+  });
+
+  it("keeps the affix font size equal to the field font size in every size variant", () => {
+    for (const size of ["sm", "md", "lg"] as const) {
+      const field = scss.match(
+        new RegExp(`\\.hk-number-input-${size} \\.hk-number-input-field\\s*{[^}]*}`),
+      )?.[0];
+      expect(field, `${size} field rule must exist`).toBeTruthy();
+      const fieldSize = field?.match(/font-size:\s*([^;]+);/)?.[1]?.trim();
+      const affix = scss.match(
+        new RegExp(
+          `\\.hk-number-input-${size} \\.hk-number-input-(?:prefix|suffix),[\\s\\S]*?{[^}]*}`,
+        ),
+      )?.[0];
+      expect(affix, `${size} affix rule must exist`).toBeTruthy();
+      expect(affix?.match(/font-size:\s*([^;]+);/)?.[1]?.trim()).toBe(fieldSize);
+    }
+  });
+
   it("renders the suffix string prop inside the field, before the steppers", () => {
     const { container } = mountNumberInput({ props: { suffix: "秒" } });
     const suffix = query(container, ".hk-number-input-suffix");
@@ -101,9 +130,22 @@ describe("HkNumberInput affix contract", () => {
     expect(suffix?.textContent).not.toContain("prop-text");
   });
 
+  it("treats an empty-string affix prop as no affix", () => {
+    const { container } = mountNumberInput({ props: { prefix: "", suffix: "" } });
+    expect(query(container, ".hk-number-input-prefix")).toBeNull();
+    expect(query(container, ".hk-number-input-suffix")).toBeNull();
+  });
+
   it("renders no affix spans without props or slots", () => {
     const { container } = mountNumberInput({});
     expect(query(container, ".hk-number-input-prefix")).toBeNull();
     expect(query(container, ".hk-number-input-suffix")).toBeNull();
+  });
+
+  it("still renders the field caption label above the box", () => {
+    const { container } = mountNumberInput({ props: { label: "轮播间隔" } });
+    const label = query(container, ".hk-input-label");
+    expect(label, "label must render").not.toBeNull();
+    expect(label?.textContent).toBe("轮播间隔");
   });
 });

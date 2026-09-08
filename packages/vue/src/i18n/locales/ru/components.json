@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "Сбросить масштаб",
     "hikari::zoomToolbar.zoomIn": "Увеличить",
     "hikari::zoomToolbar.zoomOut": "Уменьшить"
-  }
+  },
+  "hikari::affixPicker.unset": "Не задано",
+  "hikari::affixPicker.title": "Параметры",
+  "hikari::affixPicker.search": "Поиск",
+  "hikari::affixPicker.empty": "Нет совпадений",
+  "hikari::affixPicker.selected": "Выбрано",
+  "hikari::affixPicker.selectedCount": "Выбрано: {count}",
+  "hikari::affixPicker.switchTo": "Переключиться на",
+  "hikari::affixPicker.remove": "Удалить",
+  "hikari::affixPicker.useCustom": "Использовать «{query}»",
+  "hikari::affixPicker.removeConfirmTitle": "Удалить запись",
+  "hikari::affixPicker.removeConfirm": "Удалить «{label}»? Это действие нельзя отменить.",
+  "hikari::localizedInput.noMatches": "Нет подходящего языка",
+  "hikari::messageBox.confirm": "Подтвердить",
+  "hikari::messageBox.cancel": "Отмена",
+  "hikari::messageBox.ok": "ОК",
+  "hikari::messageBox.alertTitle": "Уведомление",
+  "hikari::messageBox.confirmTitle": "Подтвердите",
+  "hikari::messageBox.promptTitle": "Ввод"
 }

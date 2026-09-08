@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "Redefinir zoom",
     "hikari::zoomToolbar.zoomIn": "Ampliar",
     "hikari::zoomToolbar.zoomOut": "Reduzir"
-  }
+  },
+  "hikari::affixPicker.unset": "Não definido",
+  "hikari::affixPicker.title": "Opções",
+  "hikari::affixPicker.search": "Pesquisar",
+  "hikari::affixPicker.empty": "Sem correspondências",
+  "hikari::affixPicker.selected": "Selecionados",
+  "hikari::affixPicker.selectedCount": "{count} selecionados",
+  "hikari::affixPicker.switchTo": "Mudar para",
+  "hikari::affixPicker.remove": "Remover",
+  "hikari::affixPicker.useCustom": "Usar \"{query}\"",
+  "hikari::affixPicker.removeConfirmTitle": "Remover item",
+  "hikari::affixPicker.removeConfirm": "Remover \"{label}\"? Isso não pode ser desfeito.",
+  "hikari::localizedInput.noMatches": "Nenhum idioma correspondente",
+  "hikari::messageBox.confirm": "Confirmar",
+  "hikari::messageBox.cancel": "Cancelar",
+  "hikari::messageBox.ok": "OK",
+  "hikari::messageBox.alertTitle": "Aviso",
+  "hikari::messageBox.confirmTitle": "Confirme",
+  "hikari::messageBox.promptTitle": "Entrada"
 }

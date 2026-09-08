@@ -134,6 +134,11 @@
   &[data-unset] {
     font-style: italic;
     color: rgb(var(--color-muted));
+    /* Italic final strokes lean past the glyph advance; overflow:hidden
+     * (the ellipsis pair above) shaves them at the content edge. The
+     * inline-end cushion is clipping room, and because it sits INSIDE
+     * the padding box it never triggers the ellipsis for fitting text. */
+    padding-inline-end: 0.2em;
   }
 }
 

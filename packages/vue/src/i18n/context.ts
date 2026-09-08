@@ -3,7 +3,7 @@ import { reactive } from "vue";
 type Messages = Record<string, string>;
 
 interface LocaleModule {
-  default: Record<string, Messages>;
+  default: Record<string, unknown>;
 }
 
 const localeModules = import.meta.glob<LocaleModule>(
@@ -18,9 +18,18 @@ function buildLocaleMessages(locale: string): Messages {
   for (const [path, mod] of Object.entries(localeModules)) {
     if (!path.startsWith(prefix)) continue;
     const domain = mod.default;
-    for (const [_section, keys] of Object.entries(domain)) {
-      if (typeof keys === "object" && keys !== null) {
-        Object.assign(merged, keys);
+    for (const [key, value] of Object.entries(domain)) {
+      if (typeof value === "string") {
+        // Flat leaf — the appended-at-the-bottom style
+        // ("hikari::x.y": "…") every post-0.3 locale addition uses
+        // (affixPicker.*, messageBox.*, localizedInput.noMatches, …).
+        // The old object-only merge SILENTLY DROPPED these, so every
+        // flat key fell back to English at runtime no matter the
+        // locale (2026-09-08 user report: "Not set" stayed English).
+        merged[key] = value;
+      } else if (value !== null && typeof value === "object") {
+        // Legacy nested domain section ("components", "chat", …).
+        Object.assign(merged, value as Messages);
       }
     }
   }

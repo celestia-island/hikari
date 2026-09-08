@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "Réinitialiser le zoom",
     "hikari::zoomToolbar.zoomIn": "Agrandir",
     "hikari::zoomToolbar.zoomOut": "Réduire"
-  }
+  },
+  "hikari::affixPicker.unset": "Non défini",
+  "hikari::affixPicker.title": "Options",
+  "hikari::affixPicker.search": "Rechercher",
+  "hikari::affixPicker.empty": "Aucun résultat",
+  "hikari::affixPicker.selected": "Sélectionnés",
+  "hikari::affixPicker.selectedCount": "{count} sélectionnés",
+  "hikari::affixPicker.switchTo": "Passer à",
+  "hikari::affixPicker.remove": "Retirer",
+  "hikari::affixPicker.useCustom": "Utiliser « {query} »",
+  "hikari::affixPicker.removeConfirmTitle": "Retirer l’entrée",
+  "hikari::affixPicker.removeConfirm": "Retirer « {label} » ? Cette action est irréversible.",
+  "hikari::localizedInput.noMatches": "Aucune langue correspondante",
+  "hikari::messageBox.confirm": "Confirmer",
+  "hikari::messageBox.cancel": "Annuler",
+  "hikari::messageBox.ok": "OK",
+  "hikari::messageBox.alertTitle": "Avis",
+  "hikari::messageBox.confirmTitle": "Veuillez confirmer",
+  "hikari::messageBox.promptTitle": "Saisie"
 }

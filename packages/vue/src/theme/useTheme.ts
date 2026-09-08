@@ -281,16 +281,24 @@ export function useTheme() {
   const effectiveMode = computed(() => resolveEffectiveMode(currentMode.value));
 
   const allThemeList = computed(() => {
-    const builtIn = (Object.keys(themePresets) as string[]).map((id) => ({
-      id,
-      name: themePresets[id as keyof typeof themePresets].name,
-      isCustom: false,
-    }));
     const custom = customThemes.value.map((ct: CustomThemePreset) => ({
       id: ct.id,
       name: ct.name,
       isCustom: true,
     }));
+    // A custom overriding a builtin id SHADOWS it — the same rule
+    // getAllThemePresets applies at apply time — so the picker shows ONE
+    // row per id (a duplicate key row would be unselectable dead chrome),
+    // flagged custom so the delete affordance doubles as "restore the
+    // factory preset".
+    const customIds = new Set(custom.map((c) => c.id));
+    const builtIn = (Object.keys(themePresets) as string[])
+      .filter((id) => !customIds.has(id))
+      .map((id) => ({
+        id,
+        name: themePresets[id as keyof typeof themePresets].name,
+        isCustom: false,
+      }));
     return [...builtIn, ...custom];
   });
 
@@ -319,7 +327,15 @@ export function useTheme() {
     removeCustomThemeFromStorage(id);
     customThemes.value = loadCustomThemes();
     if (currentTheme.value === id) {
-      setTheme(resolveDefaultTheme());
+      // A deleted custom whose id still resolves as a builtin preset falls
+      // back to the FACTORY preset (an in-place preset override restoring
+      // its shipped look); a truly custom id would no longer resolve, so
+      // the selection resets to the default theme.
+      if (themePresets[id as keyof typeof themePresets]) {
+        setTheme(id);
+      } else {
+        setTheme(resolveDefaultTheme());
+      }
     }
   }
 

@@ -137,3 +137,92 @@ describe("useTheme lean cssvar injection", () => {
     expect(blocks[0].textContent).not.toBe(before);
   });
 });
+
+describe("useTheme preset/custom shadowing", () => {
+  let theme: ThemeModule;
+  let presetModule: typeof import("./presets");
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.unstubAllGlobals();
+    localStorage.clear();
+    document.documentElement.style.cssText = "";
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.removeAttribute("data-mode");
+    document.head.querySelectorAll("style[data-hikari-theme-vars]").forEach((el) => el.remove());
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("offline");
+    }));
+    // Same import context as useTheme so both share one presets instance.
+    presetModule = await import("./presets");
+    theme = await import("./useTheme");
+  });
+
+  afterEach(() => {
+    theme.stopThemeClock();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  // A custom whose id equals a builtin shadows it at apply time
+  // (getAllThemePresets). The picker list must agree: ONE row per id,
+  // flagged custom — the in-place preset override grammar. The primary
+  // shifts so an applied override is distinguishable from the factory.
+  function override(id: string) {
+    const nord = presetModule.themePresets.nord;
+    return {
+      id,
+      name: `${id} (edited)`,
+      dark: { ...nord.dark, primary: { r: 1, g: 2, b: 3 } },
+      light: { ...nord.light },
+    };
+  }
+
+  it("allThemeList dedupes a builtin id shadowed by a custom, flagging it custom", () => {
+    theme.initTheme();
+    const th = theme.useTheme();
+    th.addCustomTheme(override("nord"));
+    const rows = th.allThemeList.value.filter((r) => r.id === "nord");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].isCustom).toBe(true);
+    expect(rows[0].name).toBe("nord (edited)");
+    // Pure custom ids stay listed as customs; untouched builtins stay builtin.
+    expect(th.allThemeList.value.some((r) => r.id === "gruvbox" && !r.isCustom)).toBe(true);
+  });
+
+  it("applyTheme renders the shadowing custom's tokens", () => {
+    theme.initTheme();
+    const th = theme.useTheme();
+    th.setTheme("nord");
+    const before = document.head.querySelector("style[data-hikari-theme-vars]")!.textContent;
+    th.addCustomTheme(override("nord"));
+    th.setTheme("nord");
+    const after = document.head.querySelector("style[data-hikari-theme-vars]")!.textContent;
+    expect(after).not.toBe(before);
+  });
+
+  it("removing a shadowed builtin id restores the factory preset selection", () => {
+    theme.initTheme();
+    const th = theme.useTheme();
+    th.addCustomTheme(override("nord"));
+    th.setTheme("nord");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("nord");
+    th.removeCustomTheme("nord");
+    // Still on the id — now backed by the factory preset again.
+    expect(th.currentTheme.value).toBe("nord");
+    expect(th.allThemeList.value.find((r) => r.id === "nord")?.isCustom).toBe(false);
+    expect(th.customThemes.value.some((c) => c.id === "nord")).toBe(false);
+  });
+
+  it("removing a pure custom id resets the selection to the default theme", () => {
+    theme.initTheme();
+    const th = theme.useTheme();
+    th.setTheme("nord");
+    th.addCustomTheme({ ...override("nord"), id: "my-own" });
+    th.setTheme("my-own");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("my-own");
+    th.removeCustomTheme("my-own");
+    expect(th.currentTheme.value).not.toBe("my-own");
+    expect(th.allThemeList.value.some((r) => r.id === "my-own")).toBe(false);
+  });
+});

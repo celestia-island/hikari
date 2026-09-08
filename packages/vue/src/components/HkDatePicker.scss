@@ -136,6 +136,18 @@
   color: var(--hi-color-text-primary);
 }
 
+/* Mobile sheet context (#424 centered-cap pattern): the calendar keeps its
+ * designed measure inside the viewport-wide sheet instead of left-gluing
+ * at the anchored popover's min-width. Safe to stretch: the stage pins
+ * only its height (HkPickerPane.scss) and the day/month grids use 1fr
+ * tracks, so nothing fixed fights width: 100%. */
+.hk-popover-panel.hk-is-sheet .hk-dp-panel {
+  min-width: 0;
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
 .hk-dp-header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

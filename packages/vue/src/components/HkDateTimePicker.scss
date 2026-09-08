@@ -331,6 +331,23 @@
   min-width: 260px;
 }
 
+/* Mobile sheet context (#424 centered-cap pattern): the popup wrapper is
+ * the sheet's direct content child, so it takes the centered cap; the
+ * .hk-dtp body root already fills via width: 100% and only needs its
+ * 17.5rem floor lifted so narrow sheets never overflow. The stage pins
+ * height only (HkPickerPane.scss) and the grids use 1fr tracks, so
+ * stretching fights no fixed geometry. */
+.hk-popover-panel.hk-is-sheet .hk-dtp-popup {
+  min-width: 0;
+  max-width: min(22rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.hk-popover-panel.hk-is-sheet .hk-dtp {
+  min-width: 0;
+}
+
 .hk-dtp-popup-foot {
   display: flex;
   justify-content: flex-end;

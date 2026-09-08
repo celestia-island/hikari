@@ -578,6 +578,10 @@ export default defineComponent({
             anchorRef={triggerWrapRef.value ?? null}
             placement={props.placement}
             offset={props.offset}
+            sheetOnMobile
+            // The popup docks as a bottom sheet on non-native touch hosts
+            // (nativeOnMobile=false); the native path returns before this
+            // popover ever renders.
             title={t("hikari::dateTimePicker.pickDate")}
           >
             <div class="hk-dtp-popup">

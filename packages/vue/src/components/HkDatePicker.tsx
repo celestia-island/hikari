@@ -539,6 +539,10 @@ export default defineComponent({
             placement="bottom-start"
             offset={6}
             backdrop={false}
+            sheetOnMobile
+            // The calendar docks as a bottom sheet on non-native touch
+            // hosts (nativeOnMobile=false); the native path returns
+            // before this popover ever renders.
             title={t("hikari::datePicker.pickDate")}
             class="hk-dp-popover"
           >

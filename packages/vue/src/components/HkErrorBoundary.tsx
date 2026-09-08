@@ -30,8 +30,9 @@ function formatError(err: CapturedError): string {
  * Captures descendant errors via `onErrorCaptured` and stops propagation.
  * The built-in fallback is the same HkErrorLanding card the family's
  * full-page takeovers use (inline variant): tone icon, headline, the error
- * name as the code chip, the message as the description, the raw
- * name/message/stack in a collapsible JSON tree, plus retry / copy actions.
+ * name as the tone-matched HkBadge chip, the message as the description,
+ * the raw name/message/stack in the fixed-height JSON tree pane, plus
+ * retry / copy actions.
  */
 export default defineComponent({
   name: "HkErrorBoundary",

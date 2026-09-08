@@ -17,8 +17,8 @@ import "./HkErrorReportingOverlay.scss";
  * Renders nothing until the error-reporting state is raised. The card is
  * the family-wide HkErrorLanding (same design language as every unified
  * error surface): tone icon, headline, the error name as the code chip,
- * the message as the description, the raw error record in a collapsible
- * JSON tree, and Home / Retry actions.
+ * the message as the description, the raw error record in the fixed-height
+ * raw-details pane, and Home / Retry actions.
  *
  * Mounted by `createErrorReporting` on a dedicated root appended to
  * `document.body` via its own tiny app instance, so it keeps working even

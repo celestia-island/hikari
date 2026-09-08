@@ -528,3 +528,46 @@
   justify-content: flex-end;
   gap: var(--space-8);
 }
+
+// ------
+// Mobile (≤767px) — let the desktop internals breathe in the docked sheet
+// ------
+// 2026-09-08 scan wave 2 finding F5 (LOW, user-facing: chest's workspace
+// file-browser flow opens this dialog on phones). HkModal's docking is
+// correct (full-bleed bottom sheet); the squeeze is HERE, in internals
+// sized for the 56rem desktop frame. The scan's "sidebar/tree column"
+// label drifted: the 9rem pair at the flagged lines is the toolbar's type
+// filter, and the 8rem floor is the rename input — there is no sidebar.
+// Pure relaxation only (same grammar as HkModal's ≤767px block): no
+// stacking, no reordering, no JS — the existing rows/columns just stop
+// reserving desktop widths.
+@media (max-width: 767px) {
+  // Type filter: 9rem + min-width 9rem is a third of a 412px sheet for a
+  // select whose longest label is an extension (".csv"). Let the flex item
+  // size to its HkSelect trigger content instead of holding a fixed box —
+  // no floor needed: the trigger carries its own padding/min-height and
+  // the wrapping toolbar stacks it onto its own line when truly cramped.
+  .hk-file-browser-filter {
+    width: auto;
+    min-width: 0;
+  }
+
+  // Rename input: the 8rem floor decided the row's wrap point before the
+  // label and the two buttons got their share. min-width: 0 lets the
+  // flex-wrap row hand the input whatever line width is left.
+  .hk-file-browser-rename-input {
+    min-width: 0;
+  }
+
+  // List rows: desktop reserves fixed 6rem + 10rem (256px) for the
+  // size/modified tracks — about three quarters of a 412px sheet's content
+  // width, leaving the name column a sliver. Both cells already ellipsize,
+  // so cap them as compressible maxima (they still take the full cap on
+  // roomier sheets and shrink only under real pressure) and reclaim one
+  // spacing step of horizontal row padding for the name column.
+  .hk-file-browser-list-head,
+  .hk-file-browser-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 4.5rem) minmax(0, 6.5rem);
+    padding-inline: var(--space-8);
+  }
+}

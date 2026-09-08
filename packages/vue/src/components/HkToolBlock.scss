@@ -114,6 +114,22 @@
   }
 }
 
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit, HkJsonTree tool blocks and
+   code panes): inside a window surface's own scroller the bounded pane
+   cap lit a SECOND scrollbar under the window's — one per pane in pane
+   lists like the chest todo-log modal. There the window's scrollbar is
+   the only one and the pane grows with its content. Chat message cards
+   and pages are NOT window surfaces: the bounded viewport above stays.
+   (The panes' overlay rails self-hide once the content fits, so the
+   deferred attach pass needs no changes.) */
+.hk-modal-body-scroll .s-tool-code,
+.hk-select-sheet-list .s-tool-code,
+.hk-select-popout .s-tool-code,
+.hk-popover-panel .s-tool-code,
+.hk-drawer-body .s-tool-code {
+  max-height: none;
+}
+
 .s-tool-result {
   border-left: 2px solid rgb(var(--color-success) / 40%);
   padding-left: var(--space-8, 0.5rem);
@@ -165,6 +181,15 @@
   &:active {
     opacity: 0.85;
   }
+}
+
+/* Window-surface twin of the .s-tool-code rule above. */
+.hk-modal-body-scroll .s-tool-code-block,
+.hk-select-sheet-list .s-tool-code-block,
+.hk-select-popout .s-tool-code-block,
+.hk-popover-panel .s-tool-code-block,
+.hk-drawer-body .s-tool-code-block {
+  max-height: none;
 }
 
 .s-tool-code-table {

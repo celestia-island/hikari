@@ -1,15 +1,7 @@
+/* ONE SCROLLBAR PER WINDOW (2026-09-08 audit): the body grows with its
+ * content and the HkModal body scroller is THE scrollbar. The old
+ * `bodyHeight`-driven nested scroll region (with its own overlay chrome)
+ * was removed as dead API — no consumer in the family ever passed it. */
 .s-protocol-modal {
   position: relative;
-}
-
-
-/* With `bodyHeight` set the body becomes its own scroll region (nested
- * inside HkModal's body scroller) — overlay chrome only. */
-.s-protocol-modal {
-  overflow-y: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }

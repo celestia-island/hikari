@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, type PropType } from "vue";
 import {
   HMarkdownRenderer,
   HModal,
@@ -9,7 +9,6 @@ import {
 } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
-import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 
 import "./HkProtocolModal.scss";
 
@@ -21,6 +20,12 @@ import "./HkProtocolModal.scss";
  * a Decline/Accept footer. `accept`/`decline` are the caller's commit
  * actions; closing (overlay click / ESC / X) only emits `update:modelValue`
  * so the caller can decide whether close === decline.
+ *
+ * ONE SCROLLBAR PER WINDOW: the body grows with its content and the
+ * HkModal body scroller is THE scrollbar. The old `bodyHeight` prop
+ * (a height-capped scroll region nested inside the modal's own scroller —
+ * the exact double-scroll this library eliminates) was removed as dead
+ * API: no consumer in the family ever passed it.
  */
 export const HkProtocolModal = defineComponent({
   name: "HkProtocolModal",
@@ -37,8 +42,6 @@ export const HkProtocolModal = defineComponent({
     /** Allow dismissing without a decision (overlay/ESC/X). Default true. */
     closable: { type: Boolean, default: true },
     width: { type: String as PropType<ModalWidth>, default: "48rem" },
-    /** Cap the scroll body height (e.g. "60vh"). */
-    bodyHeight: { type: String, default: undefined },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -69,32 +72,6 @@ export const HkProtocolModal = defineComponent({
       },
     ]);
 
-    // ── overlay scrollbar (shared chrome) ─────────────────────────
-    // With `bodyHeight` set the body becomes a height-capped scroll
-    // region NESTED inside HkModal's overlay-equipped body scroller —
-    // without the overlay it would be a surviving native bar (the exact
-    // double-scroll this library eliminates). Attach on mount, re-sync
-    // when the cap flips, detach on unmount.
-    const bodyRef = ref<HTMLElement | null>(null);
-    let bodyScrollbar: OverlayScrollbarHandle | null = null;
-    function syncBodyScrollbar(): void {
-      if (props.bodyHeight && bodyRef.value) {
-        if (!bodyScrollbar) bodyScrollbar = attachOverlayScrollbars(bodyRef.value);
-      } else {
-        bodyScrollbar?.detach();
-        bodyScrollbar = null;
-      }
-    }
-    function bindBodyRef(el: unknown): void {
-      bodyRef.value = (el as HTMLElement) ?? null;
-      syncBodyScrollbar();
-    }
-    watch(() => props.bodyHeight, () => syncBodyScrollbar());
-    onBeforeUnmount(() => {
-      bodyScrollbar?.detach();
-      bodyScrollbar = null;
-    });
-
     return () => (
       <HModal
         modelValue={props.modelValue}
@@ -104,11 +81,7 @@ export const HkProtocolModal = defineComponent({
         closable={props.closable}
         footerActions={footerActions.value}
       >
-        <div
-          ref={bindBodyRef}
-          class="s-protocol-modal"
-          style={props.bodyHeight ? { maxHeight: props.bodyHeight } : undefined}
-        >
+        <div class="s-protocol-modal">
           <HMarkdownRenderer content={props.content} />
         </div>
       </HModal>

@@ -198,3 +198,83 @@ describe("usePopupManager blocking flag (breadcrumb levels)", () => {
     }
   });
 });
+
+describe("usePopupManager window stack (blocking sheets reband)", () => {
+  it("stacks a blocking sheet with windows in open order — a window opened from inside the sheet paints above it", () => {
+    // The chest mobile regression: the theme menu docks as a bottom
+    // sheet, its row's edit affordance opens a MODAL — kind bands put
+    // the sheet (dropdown, 2000) above the modal (1000) and the editor
+    // rendered BEHIND its own opener. A blocking sheet is a window: it
+    // must share the window band and lose to windows pushed after it.
+    const m = freshManager();
+    const sheet = m.register("dropdown", false, "Themes", true);
+    expect(sheet.zIndex).toBe(POPUP_Z_BANDS.modal);
+
+    const editor = m.register("modal", true, "Edit theme");
+    expect(editor.zIndex).toBe(sheet.zIndex + POPUP_Z_STEP);
+
+    // A sheet opened from INSIDE that modal pushes on top of it.
+    const innerSheet = m.register("dropdown", false, "Picker", true);
+    expect(innerSheet.zIndex).toBe(editor.zIndex + POPUP_Z_STEP);
+  });
+
+  it("keeps an ANCHORED dropdown above the whole window stack, blocking sheets included", () => {
+    // The in-modal select flow: anchored panels stay in the dropdown
+    // band so they paint above whichever window (modal OR blocking
+    // sheet) contains them.
+    const m = freshManager();
+    const sheet = m.register("dropdown", false, "Themes", true);
+    const modal = m.register("modal", true, "Edit");
+    const panel = m.register("dropdown", false);
+    expect(panel.zIndex).toBe(POPUP_Z_BANDS.dropdown);
+    expect(panel.zIndex).toBeGreaterThan(sheet.zIndex);
+    expect(panel.zIndex).toBeGreaterThan(modal.zIndex);
+  });
+
+  it("reclaims window-band slots across mixed windows and sheets", () => {
+    const m = freshManager();
+    const sheet = m.register("dropdown", false, "Themes", true);
+    const modal = m.register("modal", true, "Edit");
+    expect(modal.zIndex).toBe(sheet.zIndex + POPUP_Z_STEP);
+
+    m.unregister(modal.id);
+    const drawer = m.register("drawer", true, "Details");
+    // The drawer reclaims the modal's slot, not a third one.
+    expect(drawer.zIndex).toBe(modal.zIndex);
+  });
+
+  it("setBlocking promotion pushes onto the top of the window band, demotion returns to the anchored band", () => {
+    const m = freshManager();
+    const modal = m.register("modal", true, "Edit");
+    // Anchored first: above every window while non-blocking.
+    const popup = m.register("dropdown", false, "Menu");
+    expect(popup.zIndex).toBe(POPUP_Z_BANDS.dropdown);
+
+    // Viewport crosses the mobile breakpoint: the popover docks as a
+    // sheet — becoming a window is a PUSH, so it lands above the modal.
+    m.setBlocking(popup.id, true);
+    expect(m.registry.value.get(popup.id)!.zIndex).toBe(modal.zIndex + POPUP_Z_STEP);
+
+    // Back to desktop: an anchored attachment again — top of the
+    // anchored band, above the whole window stack.
+    m.setBlocking(popup.id, false);
+    const entry = m.registry.value.get(popup.id)!;
+    expect(entry.zIndex).toBe(POPUP_Z_BANDS.dropdown);
+    expect(entry.zIndex).toBeGreaterThan(modal.zIndex);
+  });
+
+  it("orders the breadcrumb window stack by push order (sheet → editor)", () => {
+    // HkModalBreadcrumb sorts by zIndex; with blocking sheets sharing
+    // the window band, the strip reads in navigation order: the sheet
+    // that opened the editor, then the editor as the current level.
+    const m = freshManager();
+    const sheet = m.register("dropdown", false, "Themes", true);
+    const editor = m.register("modal", true, "Edit theme");
+    const levels = [...m.registry.value.values()]
+      .filter((e) => e.kind === "modal" || e.kind === "drawer" || e.blocking)
+      .sort((a, b) => a.zIndex - b.zIndex)
+      .map((e) => e.title);
+    expect(levels).toEqual(["Themes", "Edit theme"]);
+    expect(editor.zIndex).toBeGreaterThan(sheet.zIndex);
+  });
+});

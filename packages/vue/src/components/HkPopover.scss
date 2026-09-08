@@ -109,6 +109,16 @@
    * rule's max-content width would over-constrain it (left+right+width
    * drops `right` in LTR) and dock it at content width instead. */
   width: auto;
+  /* The base .hk-popover-panel max-width clamp (calc(100vw - 16px), the
+   * anchored panel's ratchet guard) must NOT leak into the sheet: with
+   * the inline left:0 + right:0 docking the clamp over-constrains the
+   * used width and LTR drops the `right` constraint — the sheet docks
+   * flush left but stops 16px short of the right viewport edge (2026-09-08
+   * user report: a mysterious right-hand gap on the secondary windows,
+   * present on every popover-family sheet and never on the HkModal /
+   * HkSelectPanel sheets, hence "some have it, some don't"). The inline
+   * left/right pair alone owns the sheet's horizontal geometry. */
+  max-width: none;
   border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  var(--hk-modal-radius, var(--hi-radius-lg, 12px))
                  0 0;

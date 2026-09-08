@@ -281,7 +281,6 @@ describe("HkAffixPicker", () => {
       .find((b) => !b.classList.contains("hk-message-box-confirm"))!
       .click();
     await flush();
-    console.log("DBG-cancel openEvents", JSON.stringify(events.open), "tags", tags().length, "box", !!document.body.querySelector(".hk-message-box-text"));
     expect(events.remove).toHaveLength(0);
     expect(tag("China")).toBeTruthy();
     // Second pass: the dialog's Confirm is what erases.

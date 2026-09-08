@@ -36,16 +36,38 @@
 }
 
 .hk-error-landing__card {
-  width: min(430px, 100%);
+  position: relative;
+  overflow: hidden;
+  width: min(440px, 100%);
   background: rgb(var(--hel-surface));
   border: 1px solid rgb(var(--hel-border) / 70%);
-  border-radius: var(--radius-lg, 16px);
+  border-radius: var(--radius-xl, 20px);
   box-shadow: var(--shadow-lg, 0 18px 48px rgb(0 0 0 / 8%));
-  padding: 2rem 1.75rem;
+  padding: 2.25rem 1.75rem 1.75rem;
   text-align: center;
+
+  // Tone wash bleeding down from the top edge behind the icon — gives the
+  // upper half the designed depth the plain white card used to lack.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 150px;
+    background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-error) / 8%), transparent 72%);
+    pointer-events: none;
+  }
+}
+
+.hk-error-landing.is-warning .hk-error-landing__card::before {
+  background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-warning) / 10%), transparent 72%);
+}
+
+.hk-error-landing.is-info .hk-error-landing__card::before {
+  background: radial-gradient(58% 100% at 50% 0%, rgb(var(--hel-primary) / 7%), transparent 72%);
 }
 
 .hk-error-landing__brand {
+  position: relative;
   display: flex;
   justify-content: center;
   margin-bottom: var(--space-16, 1rem);
@@ -56,9 +78,10 @@
 }
 
 .hk-error-landing__icon {
-  width: 58px;
-  height: 58px;
-  margin: 0 auto var(--space-16, 1rem);
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-14, 0.875rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,8 +92,13 @@
     color: rgb(var(--hel-error));
   }
 
-  background: rgb(var(--hel-error) / 12%);
-  border: 1px solid rgb(var(--hel-error) / 22%);
+  background: linear-gradient(145deg, rgb(var(--hel-error) / 18%), rgb(var(--hel-error) / 6%));
+  border: 1px solid rgb(var(--hel-error) / 26%);
+  // Layered halo: a soft tone ring hugging the disc plus a long, faint
+  // drop shadow — reads as a designed badge instead of a flat circle.
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-error) / 5%),
+    0 10px 28px -12px rgb(var(--hel-error) / 45%);
 }
 
 .hk-error-landing.is-warning .hk-error-landing__icon {
@@ -79,8 +107,11 @@
     color: rgb(var(--hel-warning));
   }
 
-  background: rgb(var(--hel-warning) / 12%);
-  border-color: rgb(var(--hel-warning) / 24%);
+  background: linear-gradient(145deg, rgb(var(--hel-warning) / 20%), rgb(var(--hel-warning) / 7%));
+  border-color: rgb(var(--hel-warning) / 28%);
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-warning) / 6%),
+    0 10px 28px -12px rgb(var(--hel-warning) / 45%);
 }
 
 .hk-error-landing.is-info .hk-error-landing__icon {
@@ -89,19 +120,63 @@
     color: rgb(var(--hel-primary));
   }
 
-  background: rgb(var(--hel-primary) / 10%);
-  border-color: rgb(var(--hel-primary) / 20%);
+  background: linear-gradient(145deg, rgb(var(--hel-primary) / 16%), rgb(var(--hel-primary) / 5%));
+  border-color: rgb(var(--hel-primary) / 24%);
+  box-shadow:
+    0 0 0 8px rgb(var(--hel-primary) / 5%),
+    0 10px 28px -12px rgb(var(--hel-primary) / 40%);
+}
+
+// Code / status chips ride on the canonical HkBadge (mono, small). The
+// channels are re-resolved through the landing's --hel-* fallbacks so a
+// theme-less standalone render paints them exactly like the themed one,
+// and the code chip follows the landing tone like the icon does.
+.hk-error-landing__meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-6, 0.375rem);
+  margin-bottom: var(--space-8, 0.5rem);
+}
+
+.hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-error));
+  --hk-badge-bg: rgb(var(--hel-error) / 10%);
+  --hk-badge-border: rgb(var(--hel-error) / 22%);
+}
+
+.hk-error-landing.is-warning .hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-warning));
+  --hk-badge-bg: rgb(var(--hel-warning) / 12%);
+  --hk-badge-border: rgb(var(--hel-warning) / 24%);
+}
+
+.hk-error-landing.is-info .hk-error-landing__meta .hk-badge:not(.hk-badge-muted) {
+  --hk-badge-text: rgb(var(--hel-primary));
+  --hk-badge-bg: rgb(var(--hel-primary) / 10%);
+  --hk-badge-border: rgb(var(--hel-primary) / 20%);
+}
+
+.hk-error-landing__meta .hk-badge-muted {
+  --hk-badge-text: rgb(var(--hel-muted));
+  --hk-badge-bg: rgb(var(--hel-muted) / 8%);
+  --hk-badge-border: rgb(var(--hel-border) / 80%);
 }
 
 .hk-error-landing__title {
+  position: relative;
   margin: 0;
-  font-size: var(--text-lg, 1.125rem);
-  font-weight: 600;
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
   line-height: 1.35;
   color: rgb(var(--hel-text));
 }
 
 .hk-error-landing__desc {
+  position: relative;
   margin: var(--space-8, 0.5rem) 0 0;
   font-size: var(--text-sm, 0.8125rem);
   line-height: 1.6;
@@ -110,69 +185,71 @@
   overflow-wrap: anywhere;
 }
 
-.hk-error-landing__meta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--space-6, 0.375rem);
-  margin-top: var(--space-10, 0.625rem);
-}
-
-.hk-error-landing__code {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: var(--text-xs, 0.75rem);
-  color: rgb(var(--hel-muted));
-  background: rgb(var(--hel-muted) / 8%);
-  border: 1px solid rgb(var(--hel-border) / 80%);
-  border-radius: var(--radius-sm, 4px);
-  padding: 0.1em 0.55em;
-  overflow-wrap: anywhere;
-}
-
-.hk-error-landing__status {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: var(--text-xs, 0.75rem);
-  color: rgb(var(--hel-muted));
-  border: 1px dashed rgb(var(--hel-border));
-  border-radius: var(--radius-sm, 4px);
-  padding: 0.1em 0.55em;
-}
-
 .hk-error-landing__details {
+  position: relative;
   margin-top: var(--space-16, 1rem);
   text-align: left;
 }
 
-.hk-error-landing__details-toggle {
-  display: inline-flex;
+.hk-error-landing__details-label {
+  display: flex;
   align-items: center;
   gap: 4px;
-  border: none;
-  background: transparent;
-  padding: 2px 4px;
-  font: inherit;
+  padding: 0 2px;
   font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
   color: rgb(var(--hel-muted));
-  cursor: pointer;
-  border-radius: var(--radius-xs, 4px);
+  user-select: none;
+}
 
-  &:hover {
-    color: rgb(var(--hel-text));
-    background: rgb(var(--hel-muted) / 8%);
-  }
-
-  &:focus-visible {
-    outline: 2px solid rgb(var(--hel-primary) / 60%);
-    outline-offset: 1px;
-  }
+// Fixed-height details pane: the raw payload keeps a stable ~20vh
+// footprint. Folding every JSON node still leaves the pane standing at
+// the same height, and a long stack trace can never stretch the card —
+// the family overlay scrollbar (attachOverlayScrollbars) carries the
+// overflow inside the frame. The pane div is the track's positioning
+// context and wraps EXACTLY the scrolling body (useOverlayScrollbar
+// host contract).
+.hk-error-landing__details-pane {
+  position: relative;
+  margin-top: var(--space-6, 0.375rem);
+  height: max(9rem, 20vh);
+  height: max(9rem, 20dvh);
+  border: 1px solid rgb(var(--hel-border) / 70%);
+  border-radius: var(--radius-md, 10px);
+  background: rgb(var(--hel-muted) / 4%);
 }
 
 .hk-error-landing__details-body {
-  margin-top: var(--space-6, 0.375rem);
+  height: 100%;
+  overflow: auto;
+  border-radius: inherit;
+  padding: var(--space-4, 0.25rem);
+
+  // The overlay scrollbar is the only chrome — hide the native bar.
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// A nested HkJsonTree fills the pane instead of stacking its own frame
+// and 320px cap — the pane above owns the chrome now (overflow included:
+// the tree must never engage its own scroller).
+.hk-error-landing__details-body .s-tool-json-tree {
+  max-height: none;
+  height: auto;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .hk-error-landing__actions {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,6 +269,6 @@
 
 @media (max-width: 480px) {
   .hk-error-landing__card {
-    padding: 1.5rem 1.125rem;
+    padding: 1.75rem 1.125rem 1.5rem;
   }
 }

@@ -1,4 +1,4 @@
-import { computed, defineComponent, type PropType } from "vue";
+import { defineComponent, type PropType } from "vue";
 import HkLabel from "./HkLabel";
 import "./HkSwitch.scss";
 

@@ -11,7 +11,7 @@ export default defineComponent({
     title: { type: String, default: undefined },
     description: { type: String, default: undefined },
     /** Icon component (lucide-vue-next style); rendered via h() at size 32. */
-    icon: { type: Object as PropType<Component>, default: undefined },
+    icon: { type: [Object, Function] as PropType<Component>, default: undefined },
     /** Loading variant: only a centered spinner, exposed as a status region. */
     loading: { type: Boolean, default: false },
     /** page = bounded, centered card on desktop; fill = stretch to the host. */

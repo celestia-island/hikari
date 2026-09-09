@@ -74,12 +74,15 @@ export { default as HTag } from "./components/HkTag";
 export { default as HTextarea } from "./components/HkTextarea";
 export { default as HFileField } from "./components/HkFileField";
 export { default as HFileBrowserDialog } from "./components/HkFileBrowserDialog";
+export { default as HFilePickerField } from "./components/HkFilePickerField";
 export {
   type RemoteFileEntry,
   type RemoteDirListing,
   type RemoteFsAdapter,
   type FileQuickLink,
   type PickedFile,
+  type FilePickerBackend,
+  type FilePickerHook,
   acceptExtensions,
 } from "./components/filePicker";
 export { default as HToast } from "./components/HkToast";

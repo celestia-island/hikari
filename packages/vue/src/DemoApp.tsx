@@ -9,6 +9,7 @@ import {
   HProgressBar, HProgressRing, HGaugeRing,
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
   HFileField,
+  HFilePickerField,
   type PickedFile, type RemoteFsAdapter,
   HCheckbox, HSwitch, HRadio, HSelect, HSelectPanel,
   HLocalizedInput,
@@ -21,7 +22,7 @@ import {
   type TrendPen, type MinimapBox,
 } from "@celestia-island/hikari";
 
-const totalComponents = 66;
+const totalComponents = 67;
 
 const icons = ["home", "settings", "user", "search", "bell", "heart", "star", "mail", "download", "upload", "trash", "edit", "plus", "check", "x"];
 
@@ -102,6 +103,12 @@ export default defineComponent({
     const form = ref({ text: "", search: "", number: 0, password: "", textarea: "" });
     const localFiles = ref<PickedFile[]>([]);
     const remoteFiles = ref<PickedFile[]>([]);
+    const hookPath = ref("");
+    const remotePath = ref("/data");
+    // Stands in for a host-opened OS dialog (the Tauri2/Electron case —
+    // the window lives outside the webview, so the field takes a hook).
+    const fakeHostPicker = async (): Promise<string | null> =>
+      Promise.resolve("/opt/acme/install");
     // In-memory remote FS so the remote picker demo browses something real.
     const demoRemoteFs: RemoteFsAdapter = (() => {
       const tree: Record<string, { name: string; kind: "file" | "dir"; size?: number }[]> = {
@@ -315,6 +322,27 @@ export default defineComponent({
               Picked: {[...localFiles.value, ...remoteFiles.value].map((f) => f.name).join(", ")}
             </p>
           ) : null}
+        </section>
+
+        <section>
+          <h2>HFilePickerField</h2>
+          <div class="form-grid">
+            <HFilePickerField
+              modelValue={hookPath.value}
+              onUpdate:modelValue={(v: string) => (hookPath.value = v)}
+              label="Install location (host hook)"
+              hint="A host-opened OS dialog — e.g. the Tauri2 dialog plugin."
+              pick={fakeHostPicker}
+            />
+            <HFilePickerField
+              modelValue={remotePath.value}
+              onUpdate:modelValue={(v: string) => (remotePath.value = v)}
+              label="Remote folder (in-app picker)"
+              backend="remote"
+              adapter={demoRemoteFs}
+              quickLinks={[{ label: "Root", path: "/" }, { label: "Data", path: "/data" }]}
+            />
+          </div>
         </section>
 
         <section>

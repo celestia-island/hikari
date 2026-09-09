@@ -1,0 +1,93 @@
+.hk-file-picker-field {
+  display: block;
+}
+
+.hk-file-picker-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4);
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-file-picker-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  min-height: 2.5rem;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    background-color var(--duration-normal) var(--ease-standard);
+
+  &:focus-within {
+    border-color: color-mix(in srgb, rgb(var(--color-text)) 38%, transparent);
+  }
+
+  &[data-error] {
+    border-color: var(--hi-color-danger);
+  }
+
+  &[data-disabled] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+/* The shittim-chest file-picker badge: a primary-tinted rounded square
+   carrying the folder glyph, anchoring the field's affordance. */
+.hk-file-picker-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--hi-color-primary) 14%, transparent);
+  color: var(--hi-color-primary);
+  pointer-events: none;
+}
+
+.hk-file-picker-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: rgb(var(--color-text));
+  font-size: var(--text-sm);
+  font-family: inherit;
+
+  &::placeholder {
+    color: rgb(var(--color-text) / 55%);
+  }
+
+  /* Paths are code — mono by default, opt out with :mono="false". */
+  .hk-file-picker-box[data-mono] & {
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.hk-file-picker-browse {
+  flex-shrink: 0;
+}
+
+.hk-file-picker-hint {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-xs);
+  color: rgb(var(--color-text) / 60%);
+
+  &[data-error] {
+    color: var(--hi-color-danger);
+  }
+}

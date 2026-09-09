@@ -66,3 +66,19 @@ export function acceptExtensions(accept?: string): string[] {
     .map((part) => part.trim().toLowerCase())
     .filter((part) => part.startsWith("."));
 }
+
+/**
+ * Backend selector for HkFilePickerField — the path-valued picker. All
+ * three are addressable so embedders can force one; "auto" resolves
+ * hook → remote → native from whichever props are present.
+ */
+export type FilePickerBackend = "auto" | "hook" | "remote" | "native";
+
+/**
+ * The app hook backend: the host opens its own picker and resolves the
+ * chosen path (or null for a dismissal). The canonical case is a
+ * Tauri2/Electron-style host whose native dialog is a real OS window
+ * OUTSIDE the webview — neither the browser picker nor an in-app
+ * dialog can stand in for it.
+ */
+export type FilePickerHook = () => Promise<string | null>;

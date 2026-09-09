@@ -71,6 +71,7 @@ interface MountOptions {
   multiple?: boolean;
   quickLinks?: Array<{ label: string; path: string }>;
   initialPath?: string;
+  pickDirectory?: boolean;
 }
 
 function mountDialog(adapter: RemoteFsAdapter, opts: MountOptions = {}) {
@@ -91,6 +92,7 @@ function mountDialog(adapter: RemoteFsAdapter, opts: MountOptions = {}) {
           multiple: opts.multiple ?? false,
           quickLinks: opts.quickLinks ?? [],
           initialPath: opts.initialPath ?? "/",
+          pickDirectory: opts.pickDirectory ?? false,
           "onUpdate:modelValue": (v: boolean) => {
             openEvents.push(v);
             open.value = v;
@@ -444,5 +446,46 @@ describe("HkFileBrowserDialog load states", () => {
     await flush();
     expect(document.body.querySelector(".hk-file-browser-error")).toBeNull();
     expect(rowNames()).toEqual(["ok.txt"]);
+  });
+});
+
+describe("HkFileBrowserDialog directory mode", () => {
+  it("confirms the listed folder without needing a selection", async () => {
+    const adapter = makeAdapter();
+    const { confirmed, openEvents } = mountDialog(adapter, { pickDirectory: true });
+    await flush();
+
+    // Nothing is selected, yet confirm is live: the current folder IS
+    // the choice.
+    const confirmBtn = q<HTMLButtonElement>(".hk-file-browser-confirm");
+    expect(confirmBtn.disabled).toBe(false);
+    expect(confirmBtn.textContent).toContain("Choose this folder");
+    confirmBtn.click();
+    await flush();
+    expect(confirmed).toEqual([[{ name: "/", path: "/" }]]);
+    expect(openEvents).toContain(false);
+  });
+
+  it("navigates into subfolders and hands back that folder's path", async () => {
+    const adapter = makeAdapter();
+    const { confirmed } = mountDialog(adapter, { pickDirectory: true });
+    await flush();
+
+    await clickRow("reports");
+    expect(adapter.list).toHaveBeenLastCalledWith("/reports");
+    const confirmBtn = q<HTMLButtonElement>(".hk-file-browser-confirm");
+    confirmBtn.click();
+    await flush();
+    expect(confirmed).toEqual([[{ name: "reports", path: "/reports" }]]);
+  });
+
+  it("never selects file rows while picking a folder", async () => {
+    const adapter = makeAdapter();
+    mountDialog(adapter, { pickDirectory: true });
+    await flush();
+
+    await clickRow("data.csv");
+    const rows = qa<HTMLButtonElement>(".hk-file-browser-row");
+    expect(rows.every((r) => r.dataset.selected === undefined)).toBe(true);
   });
 });

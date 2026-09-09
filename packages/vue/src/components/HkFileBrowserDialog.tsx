@@ -112,6 +112,11 @@ export default defineComponent({
       type: Array as PropType<FileQuickLink[]>,
       default: () => [],
     },
+    /**
+     * Directory-picking mode: confirm chooses the folder currently
+     * listed (entries only navigate), instead of selecting files.
+     */
+    pickDirectory: { type: Boolean, default: false },
     confirmLabel: { type: String, default: undefined },
     cancelLabel: { type: String, default: undefined },
   },
@@ -290,6 +295,8 @@ export default defineComponent({
         navigate(joinPath(currentPath.value, entry.name));
         return;
       }
+      // Directory-picking mode only navigates; files are inert rows.
+      if (props.pickDirectory) return;
       const next = new Set(selected.value);
       if (props.multiple) {
         if (next.has(entry.name)) next.delete(entry.name);
@@ -306,7 +313,7 @@ export default defineComponent({
     /** Double-click activates: the file confirms immediately (and alone,
      *  even in multiple mode — a double-click names ONE file). */
     function onEntryActivate(entry: RemoteFileEntry) {
-      if (entry.kind !== "file") return;
+      if (entry.kind !== "file" || props.pickDirectory) return;
       selected.value = new Set([entry.name]);
       confirmSelection();
     }
@@ -394,6 +401,15 @@ export default defineComponent({
     }
 
     function confirmSelection() {
+      // Directory mode: the folder currently listed IS the choice —
+      // the pathbar has been showing it the whole time.
+      if (props.pickDirectory) {
+        const path = currentPath.value;
+        const name = path.replace(/\/+$/, "").split("/").filter(Boolean).pop() ?? "/";
+        emit("confirm", [{ name, path }]);
+        close();
+        return;
+      }
       if (selected.value.size === 0) return;
       const files: ConfirmedFile[] = [];
       for (const name of selected.value) {
@@ -770,10 +786,13 @@ export default defineComponent({
               variant="primary"
               size="md"
               class="hk-file-browser-confirm"
-              disabled={selected.value.size === 0}
+              disabled={!props.pickDirectory && selected.value.size === 0}
               onClick={confirmSelection}
             >
-              {props.confirmLabel ?? t("hikari::filePicker.confirm", "Confirm")}
+              {props.confirmLabel ??
+                (props.pickDirectory
+                  ? t("hikari::filePicker.chooseFolder", "Choose this folder")
+                  : t("hikari::filePicker.confirm", "Confirm"))}
             </HButton>
           </div>
         </div>
@@ -783,7 +802,12 @@ export default defineComponent({
     return () => (
       <HModal
         modelValue={props.modelValue}
-        title={props.title ?? t("hikari::filePicker.title", "Browse files")}
+        title={
+          props.title ??
+          (props.pickDirectory
+            ? t("hikari::filePicker.titleFolder", "Browse folders")
+            : t("hikari::filePicker.title", "Browse files"))
+        }
         width="56rem"
         onUpdate:modelValue={(v: boolean) => emit("update:modelValue", v)}
       >

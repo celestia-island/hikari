@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h } from "vue";
 
 import HkEmptyState from "./HkEmptyState";
@@ -54,6 +54,26 @@ describe("HkEmptyState", () => {
     const btn = c.querySelector(".hk-empty-action .stub-action") as HTMLElement;
     expect(btn).not.toBeNull();
     expect(btn.textContent).toBe("Retry");
+  });
+
+  it("accepts functional icon components without a prop-type warning", () => {
+    // lucide-vue-next icons are plain functions; the Object-only runtime
+    // check rejected them with a dev warning at every chest call site
+    // (fixed 2026-09-09: [Object, Function]).
+    const warnings: string[] = [];
+    const spy = vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
+      warnings.push(args.join(" "));
+    });
+    try {
+      // Shape-mirrors a lucide icon: a functional component accepting
+      // props (size/aria) and rendering a node.
+      const lucideLike = ((_props: unknown) => h("i", { class: "fn-icon" })) as never;
+      const c = mount(h(HkEmptyState, { title: "No items", icon: lucideLike }));
+      expect(c.querySelector(".hk-empty-icon .fn-icon")).not.toBeNull();
+      expect(warnings.filter((w) => w.includes("Invalid prop"))).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("renders the icon prop component in the icon well", () => {

@@ -52,7 +52,6 @@ export default defineComponent({
 
     return () => {
       const inputType = props.type === "radio" ? "radio" : "checkbox";
-      const isChecked = props.modelValue === true || props.modelValue === null;
 
       return (
         <label

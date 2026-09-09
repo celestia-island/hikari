@@ -96,6 +96,21 @@ export const HkStatusBar = defineComponent({
     transportTier: { type: String as PropType<string>, default: undefined },
     attemptNumber: { type: Number, default: undefined },
     countdown: { type: Number, default: undefined },
+    /**
+     * Optional extra rows appended to the connection-info popover (after
+     * the network row): host-supplied label/value pairs with a prebuilt
+     * icon vnode each — the same loose-icon contract as HkAuthMethodList.
+     * Rows grow with their content but cap at 400px; values past the cap
+     * ellipsize (full text rides the native title). Lets a host surface
+     * stage endpoints (gateway, registry…) inside the popover without
+     * forking the component.
+     */
+    extraDetails: {
+      type: Array as PropType<
+        Array<{ key: string; icon?: unknown; label: string; value: string }>
+      >,
+      default: undefined,
+    },
   },
   setup(props) {
     const popupOpen = ref(false);
@@ -358,6 +373,13 @@ export const HkStatusBar = defineComponent({
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.network", "Network")}</span>
                     <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
                   </div>
+                  {(props.extraDetails ?? []).map((row) => (
+                    <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "400px" }}>
+                      <span style={{ opacity: 0.5, flexShrink: 0, display: "inline-flex" }}>{row.icon}</span>
+                      <span style={{ opacity: 0.5, flexShrink: 0, marginRight: "auto" }}>{row.label}</span>
+                      <span title={row.value} style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</span>
+                    </div>
+                  ))}
                 </>
               ) : (
                 <div style={{ opacity: 0.5 }}>{t("hikari::statusBar.fetching", "Fetching connection info...")}</div>

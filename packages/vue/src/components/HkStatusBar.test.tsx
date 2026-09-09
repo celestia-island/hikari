@@ -38,6 +38,47 @@ afterEach(() => {
 });
 
 describe("HkStatusBar", () => {
+  it("renders extraDetails rows capped at 400px with an ellipsized, title-backed value", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+      extraDetails: [
+        { key: "gateway", label: "Gateway", value: "gateway.celestia.world" },
+      ],
+    });
+    await nextTick();
+    // Popover content teleports to <body> and only renders once the tag
+    // is hovered open (same grammar as the protocol/network rows).
+    const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
+    tag.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel, "popover opens on hover").toBeTruthy();
+    const row = panel!.querySelector('[data-extra-detail="gateway"]');
+    expect(row).not.toBeNull();
+    expect((row as HTMLElement).style.maxWidth).toBe("400px");
+    const value = panel!.querySelector("span[title]") as HTMLElement;
+    expect(value.textContent).toBe("gateway.celestia.world");
+    expect(value.title).toBe("gateway.celestia.world");
+    expect(value.style.textOverflow).toBe("ellipsis");
+  });
+
+  it("renders no extraDetails rows when the prop is absent", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector(".hk-popover-panel");
+    expect(panel?.querySelector("[data-extra-detail]")).toBeNull();
+  });
+
   it("mounts with the traffic light and version rows inline, protocol row on hover-open", async () => {
     const container = mountBar({
       version: "1.2.3",

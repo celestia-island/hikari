@@ -138,9 +138,47 @@ describe("HkTimeline full mode", () => {
     expect(els[3].getAttribute("aria-current")).toBeNull();
   });
 
-  it("keeps vertical orientation in full mode", () => {
-    const t = mountTimeline({ currentKey: "b", orientation: "vertical", collapse: "always" });
+  it("keeps a short vertical timeline in full mode", () => {
+    // A 3-step vertical timeline is its own window: nothing to collapse.
+    const steps = [
+      { key: "a", label: "Alpha" },
+      { key: "b", label: "Beta" },
+      { key: "c", label: "Gamma" },
+    ];
+    const t = mountTimeline({ currentKey: "b", orientation: "vertical", collapse: "always" }, steps);
     expect(t.container.querySelector(".hk-timeline")?.getAttribute("data-mode")).toBe("full");
+  });
+
+  it("collapses a vertical timeline into the stacked window", () => {
+    const t = mountTimeline({ currentKey: "c", orientation: "vertical", collapse: "always" });
+    const root = t.container.querySelector(".hk-timeline");
+    expect(root?.getAttribute("data-orientation")).toBe("vertical");
+    expect(root?.getAttribute("data-mode")).toBe("window");
+
+    const before = t.container.querySelector('.hk-timeline-window[data-side="before"]');
+    const current = t.container.querySelector('.hk-timeline-window[data-side="current"]');
+    const after = t.container.querySelector('.hk-timeline-window[data-side="after"]');
+
+    expect(before?.querySelector('[data-el="label"]')?.textContent).toBe("Beta");
+    expect(current?.querySelector('[data-el="label"]')?.textContent).toBe("Gamma");
+    expect(after?.querySelector('[data-el="label"]')?.textContent).toBe("Delta");
+
+    // Same dimming grammar as the horizontal window: outer cells dimmed,
+    // the current cell at full strength.
+    expect(before?.hasAttribute("data-dimmed")).toBe(true);
+    expect(current?.hasAttribute("data-dimmed")).toBe(false);
+    expect(after?.hasAttribute("data-dimmed")).toBe(true);
+
+    // Vertical continuation hints fade along the block axis.
+    expect(
+      t.container.querySelector('.hk-timeline-link[data-segment="edge-before"]')?.getAttribute("data-fade-dir"),
+    ).toBe("up");
+    expect(
+      t.container.querySelector('.hk-timeline-link[data-segment="edge-after"]')?.getAttribute("data-fade-dir"),
+    ).toBe("down");
+
+    // The current step keeps its aria contract inside the stacked window.
+    expect(current?.querySelector(".hk-timeline-step")?.getAttribute("aria-current")).toBe("step");
   });
 });
 

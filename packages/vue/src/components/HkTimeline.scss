@@ -150,6 +150,95 @@
   transform: scaleX(-1);
 }
 
+/* ── Vertical window mode ────────────────────────────────────────────────
+   The height-starved sibling of the compact horizontal window: when the
+   host cannot fit the full column, the timeline collapses to the same
+   three-cell window (previous / current / next) stacked as equal thirds,
+   the outer two dimmed exactly like their left/right counterparts, and
+   vertical rail segments joining the node centers on an overlay — with
+   fading continuations past the top/bottom edges where hidden steps go. */
+.hk-timeline[data-orientation="vertical"][data-mode="window"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+
+  // Each cell centers its step within its third, which puts every node
+  // center at the SAME fractions of the host height as the horizontal
+  // mode puts them across the width (1/6, 1/2, 5/6) — the link math
+  // below is the horizontal one rotated, nothing more.
+  .hk-timeline-window {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .hk-timeline-window .hk-timeline-step {
+    flex: 0 0 auto;
+    max-width: 100%;
+
+    [data-el="label"] {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  // Vertical rails: centered under the node column, spanning between the
+  // cells' node centers (at 1/6, 1/2, 5/6 of the height) minus the same
+  // clearance the horizontal bonds keep from the circles. Each segment
+  // also re-asserts the inline geometry — the horizontal segment rules
+  // above carry the same attribute specificity and must not leak in.
+  .hk-timeline-link {
+    width: var(--hk-timeline-link-thickness);
+    height: auto;
+    inset-inline-start: var(--hk-timeline-link-top);
+    top: auto;
+    bottom: auto;
+
+    &[data-segment="before-current"] {
+      inset-inline-start: var(--hk-timeline-link-top);
+      width: var(--hk-timeline-link-thickness);
+      top: calc(16.6667% + var(--hk-timeline-link-clearance));
+      height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+    }
+
+    &[data-segment="current-after"] {
+      inset-inline-start: var(--hk-timeline-link-top);
+      width: var(--hk-timeline-link-thickness);
+      top: calc(50% + var(--hk-timeline-link-clearance));
+      height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
+    }
+
+    // Continuation hints: from the container edge toward that cell's node,
+    // fading INTO the edge ("more steps exist beyond this side").
+    &[data-segment="edge-before"] {
+      inset-inline-start: var(--hk-timeline-link-top);
+      width: var(--hk-timeline-link-thickness);
+      top: 0;
+      height: calc(16.6667% - var(--hk-timeline-link-clearance));
+    }
+
+    &[data-segment="edge-after"] {
+      inset-inline-start: var(--hk-timeline-link-top);
+      width: var(--hk-timeline-link-thickness);
+      top: auto;
+      bottom: 0;
+      height: calc(16.6667% - var(--hk-timeline-link-clearance));
+    }
+
+    &[data-fade-dir="up"] {
+      background-color: transparent;
+      background-image: linear-gradient(to top, var(--_link-color), transparent);
+    }
+
+    &[data-fade-dir="down"] {
+      background-color: transparent;
+      background-image: linear-gradient(to bottom, var(--_link-color), transparent);
+    }
+  }
+}
+
 
 .hk-timeline-step {
   display: flex;
@@ -206,7 +295,7 @@
   flex: 0 0 auto;
 }
 
-.hk-timeline[data-orientation="vertical"] .hk-timeline-step {
+.hk-timeline[data-orientation="vertical"][data-mode="full"] .hk-timeline-step {
   flex-direction: row;
   flex: 0 0 auto;
 
@@ -220,9 +309,14 @@
 
   [data-el="connector"] {
     width: var(--hk-timeline-link-thickness);
-    height: var(--hk-timeline-vert-gap);
+    // The horizontal base rule leaves `min-width: 0.5rem` behind; on an
+    // absolutely-positioned rail min-width beats width, which once fatted
+    // the rail to 8px and shoved it off the node center. Neutralize the
+    // leaked sizing constraints explicitly.
+    min-width: 0;
     flex: 0 0 auto;
     position: absolute;
+    height: var(--hk-timeline-vert-gap);
     // Centered under the NODE, not the row: the circle occupies the first
     // node-size square of the row, so the rail's inline offset is
     // (node − thickness) / 2. Logical property mirrors it under RTL
@@ -230,7 +324,9 @@
     inset-inline-start: calc(
       (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
     );
+    inset-inline-end: auto;
     top: var(--hk-timeline-node-size);
+    bottom: auto;
     margin: 0;
     // Rounded caps keep the rail's ends from aliasing against the circles.
     border-radius: calc(var(--hk-timeline-link-thickness) / 2);

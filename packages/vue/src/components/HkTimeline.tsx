@@ -91,6 +91,23 @@ function naturalRowWidth(el: HTMLElement): number {
   return Math.ceil(width);
 }
 
+/** Vertical twin of [`naturalRowWidth`]: the column's natural height when
+ *  free to grow past the host (steps are `flex: 0 0 auto`, so an offscreen
+ *  clone with `height: max-content` measures the unclamped stack). */
+function naturalColumnHeight(el: HTMLElement): number {
+  const probe = el.cloneNode(true) as HTMLElement;
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  probe.style.height = "max-content";
+  const parent = el.parentElement;
+  if (!parent) return el.scrollHeight;
+  parent.appendChild(probe);
+  const height = probe.getBoundingClientRect().height;
+  probe.remove();
+  return Math.ceil(height);
+}
+
 export default defineComponent({
   name: "HkTimeline",
   props: {
@@ -112,22 +129,22 @@ export default defineComponent({
   setup(props, { emit }) {
     const host = ref<HTMLElement | null>(null);
     const collapsed = ref(false);
-    /** Full-row width captured right before collapsing; used as the
-     *  expand-again threshold (plus hysteresis) while windowed. */
-    let fullNaturalWidth = 0;
+    /** Full-row width (horizontal) or full-column height (vertical)
+     *  captured right before collapsing; used as the expand-again
+     *  threshold (plus hysteresis) while windowed. */
+    let fullNaturalSize = 0;
     let observer: ResizeObserver | undefined;
 
     const currentIndex = computed(() =>
       props.steps.findIndex((s) => s.key === props.currentKey),
     );
 
-    /** The window only makes sense for a horizontal row with more steps
-     *  than the window can show (a 3-step row is its own window). */
+    /** The window only makes sense for more steps than the window can show
+     *  (a 3-step timeline is its own window). Horizontal collapse keys off
+     *  width overflow, vertical collapse off height overflow — the stepper
+     *  behaves the same whether the host squeezes its row or its column. */
     const windowable = computed(
-      () =>
-        props.orientation === "horizontal" &&
-        props.steps.length > 3 &&
-        currentIndex.value >= 0,
+      () => props.steps.length > 3 && currentIndex.value >= 0,
     );
 
     const windowed = computed(
@@ -152,23 +169,25 @@ export default defineComponent({
 
     function measure(): void {
       const el = host.value;
-      if (!el || !windowable.value || props.collapse !== "auto") {
+      if (!el || props.collapse !== "auto") {
         collapsed.value = false;
         return;
       }
+      const vertical = props.orientation === "vertical";
+      const fitSize = vertical ? el.clientHeight : el.clientWidth;
       if (collapsed.value) {
-        // Expand again only once the host comfortably fits the full row it
-        // could not fit when we collapsed (16px hysteresis against flapping
-        // around the exact threshold).
-        if (fullNaturalWidth > 0 && el.clientWidth >= fullNaturalWidth + 16) {
+        // Expand again only once the host comfortably fits the full row or
+        // column it could not fit when we collapsed (16px hysteresis
+        // against flapping around the exact threshold).
+        if (fullNaturalSize > 0 && fitSize >= fullNaturalSize + 16) {
           collapsed.value = false;
-          fullNaturalWidth = 0;
+          fullNaturalSize = 0;
         }
         return;
       }
-      const natural = naturalRowWidth(el);
-      if (natural > el.clientWidth + 1) {
-        fullNaturalWidth = natural;
+      const natural = vertical ? naturalColumnHeight(el) : naturalRowWidth(el);
+      if (natural > fitSize + 1) {
+        fullNaturalSize = natural;
         collapsed.value = true;
       }
     }
@@ -197,7 +216,7 @@ export default defineComponent({
       ],
       () => {
         collapsed.value = false;
-        fullNaturalWidth = 0;
+        fullNaturalSize = 0;
         void nextTick(measure);
       },
     );
@@ -288,7 +307,7 @@ export default defineComponent({
                     class="hk-timeline-link"
                     data-segment="edge-before"
                     data-status={statusOf(w.beforeIndex)}
-                    data-fade-dir="left"
+                    data-fade-dir={props.orientation === "vertical" ? "up" : "left"}
                   />
                 )}
                 {w.afterIndex >= 0 && w.fadeAfter && (
@@ -296,7 +315,7 @@ export default defineComponent({
                     class="hk-timeline-link"
                     data-segment="edge-after"
                     data-status={statusOf(w.afterIndex)}
-                    data-fade-dir="right"
+                    data-fade-dir={props.orientation === "vertical" ? "down" : "right"}
                   />
                 )}
               </div>

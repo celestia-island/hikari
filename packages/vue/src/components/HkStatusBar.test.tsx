@@ -38,6 +38,52 @@ afterEach(() => {
 });
 
 describe("HkStatusBar", () => {
+  it("renders extraDetails rows capped at 400px with an ellipsized, title-backed value", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+      extraDetails: [
+        { key: "gateway", label: "Gateway", value: "gateway.celestia.world" },
+      ],
+    });
+    await nextTick();
+    // Popover content teleports to <body> and only renders once the tag
+    // is hovered open (same grammar as the protocol/network rows).
+    const tag = container.querySelector<HTMLElement>(".s-status-bar-tag")!;
+    tag.dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel");
+    expect(panel, "popover opens on hover").toBeTruthy();
+    const row = panel!.querySelector('[data-extra-detail="gateway"]');
+    expect(row).not.toBeNull();
+    expect((row as HTMLElement).style.maxWidth).toBe("400px");
+    const value = panel!.querySelector("span[title]") as HTMLElement;
+    expect(value.textContent).toBe("gateway.celestia.world");
+    expect(value.title).toBe("gateway.celestia.world");
+    expect(value.style.textOverflow).toBe("ellipsis");
+    // The label column keeps a minimum width — a long value must not
+    // squeeze it (the row space-between-aligns instead).
+    const label = row!.querySelector("span[style*='min-width'], span:nth-child(2)") as HTMLElement;
+    expect(label.style.minWidth).toBe("72px");
+    expect(label.style.flexShrink).toBe("0");
+  });
+
+  it("renders no extraDetails rows when the prop is absent", async () => {
+    const container = mountBar({
+      version: "1.2.3",
+      connectionStatus: "connected",
+      connectionInfo: INFO,
+    });
+    await nextTick();
+    container
+      .querySelector<HTMLElement>(".s-status-bar-tag")!
+      .dispatchEvent(new MouseEvent("mouseenter"));
+    await nextTick();
+    const panel = document.body.querySelector(".hk-popover-panel");
+    expect(panel?.querySelector("[data-extra-detail]")).toBeNull();
+  });
+
   it("mounts with the traffic light and version rows inline, protocol row on hover-open", async () => {
     const container = mountBar({
       version: "1.2.3",

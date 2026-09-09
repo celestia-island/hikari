@@ -62,6 +62,11 @@ describe("HkStatusBar", () => {
     expect(value.textContent).toBe("gateway.celestia.world");
     expect(value.title).toBe("gateway.celestia.world");
     expect(value.style.textOverflow).toBe("ellipsis");
+    // The label column keeps a minimum width — a long value must not
+    // squeeze it (the row space-between-aligns instead).
+    const label = row!.querySelector("span[style*='min-width'], span:nth-child(2)") as HTMLElement;
+    expect(label.style.minWidth).toBe("72px");
+    expect(label.style.flexShrink).toBe("0");
   });
 
   it("renders no extraDetails rows when the prop is absent", async () => {

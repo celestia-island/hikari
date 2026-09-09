@@ -374,9 +374,9 @@ export const HkStatusBar = defineComponent({
                     <span>{regionDisplayName(info.region, locale, t)}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("hikari::statusBar.local", "Local") : ""}</span>
                   </div>
                   {(props.extraDetails ?? []).map((row) => (
-                    <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "400px" }}>
+                    <div key={row.key} data-extra-detail={row.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px", maxWidth: "400px" }}>
                       <span style={{ opacity: 0.5, flexShrink: 0, display: "inline-flex" }}>{row.icon}</span>
-                      <span style={{ opacity: 0.5, flexShrink: 0, marginRight: "auto" }}>{row.label}</span>
+                      <span style={{ opacity: 0.5, flexShrink: 0, minWidth: "72px", marginRight: "auto" }}>{row.label}</span>
                       <span title={row.value} style={{ fontFamily: `var(--font-mono, ${HIKARI_FONT_MONO})`, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.value}</span>
                     </div>
                   ))}

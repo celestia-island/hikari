@@ -3,6 +3,17 @@
   align-items: center;
   gap: 0;
   width: 100%;
+
+  // Shared node geometry — ONE source of truth for the 24px indicator
+  // circle and the rail thickness. Every connector math keys off these:
+  // window-mode links center on the node along the inline axis, the
+  // vertical rail hangs centered under it, so both stay glued to the
+  // circles even if the node size ever changes.
+  --hk-timeline-node-size: 24px;
+  --hk-timeline-link-thickness: 2px;
+  --hk-timeline-link-top: calc(
+    (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
+  );
 }
 
 .hk-timeline[data-orientation="vertical"] {
@@ -26,12 +37,9 @@
   // Geometry contract with the stacked steps above: the node is the 24px
   // indicator circle at the top of every stack, so its center sits half a
   // node below the cell top in ALL columns — that is where link segments go.
-  --hk-timeline-node-size: 24px;
+  // (Node size, thickness and link-top are the shared tokens on
+  // `.hk-timeline`.)
   --hk-timeline-link-clearance: 20px;
-  --hk-timeline-link-thickness: 2px;
-  --hk-timeline-link-top: calc(
-    (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
-  );
 }
 
 .hk-timeline[data-mode="window"] .hk-timeline-window {
@@ -187,7 +195,7 @@
   }
 
   [data-el="connector"] {
-    height: 2px;
+    height: var(--hk-timeline-link-thickness);
     flex: 1 1 0%;
     min-width: 0.5rem;
     margin: 0 var(--hi-space-4, 4px);
@@ -201,16 +209,31 @@
 .hk-timeline[data-orientation="vertical"] .hk-timeline-step {
   flex-direction: row;
   flex: 0 0 auto;
-  padding-bottom: var(--hi-space-24, 24px);
+
+  // The gap this step's rail must bridge: exactly the space between the
+  // bottom edge of this step's node circle and the top edge of the next
+  // step's node circle. Padding and rail height share the token, so the
+  // rail always lands flush on both circles — no floating dashes, no
+  // overlap, whatever the rhythm is tuned to.
+  --hk-timeline-vert-gap: var(--hi-space-24, 24px);
+  padding-bottom: var(--hk-timeline-vert-gap);
 
   [data-el="connector"] {
-    width: 2px;
-    height: 1rem;
+    width: var(--hk-timeline-link-thickness);
+    height: var(--hk-timeline-vert-gap);
     flex: 0 0 auto;
     position: absolute;
-    left: 0.6875rem;
-    top: 1.5rem;
+    // Centered under the NODE, not the row: the circle occupies the first
+    // node-size square of the row, so the rail's inline offset is
+    // (node − thickness) / 2. Logical property mirrors it under RTL
+    // together with the flipped flex column.
+    inset-inline-start: calc(
+      (var(--hk-timeline-node-size) - var(--hk-timeline-link-thickness)) / 2
+    );
+    top: var(--hk-timeline-node-size);
     margin: 0;
+    // Rounded caps keep the rail's ends from aliasing against the circles.
+    border-radius: calc(var(--hk-timeline-link-thickness) / 2);
   }
 }
 

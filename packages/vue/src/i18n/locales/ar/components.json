@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "إعادة تعيين التكبير",
     "hikari::zoomToolbar.zoomIn": "تكبير",
     "hikari::zoomToolbar.zoomOut": "تصغير"
-  }
+  },
+  "hikari::affixPicker.unset": "غير محدد",
+  "hikari::affixPicker.title": "الخيارات",
+  "hikari::affixPicker.search": "بحث",
+  "hikari::affixPicker.empty": "لا تطابقات",
+  "hikari::affixPicker.selected": "المحدد",
+  "hikari::affixPicker.selectedCount": "تم اختيار {count}",
+  "hikari::affixPicker.switchTo": "التبديل إلى",
+  "hikari::affixPicker.remove": "إزالة",
+  "hikari::affixPicker.useCustom": "استخدام \"{query}\"",
+  "hikari::affixPicker.removeConfirmTitle": "إزالة العنصر",
+  "hikari::affixPicker.removeConfirm": "إزالة \"{label}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+  "hikari::localizedInput.noMatches": "لا توجد لغة مطابقة",
+  "hikari::messageBox.confirm": "تأكيد",
+  "hikari::messageBox.cancel": "إلغاء",
+  "hikari::messageBox.ok": "موافق",
+  "hikari::messageBox.alertTitle": "تنبيه",
+  "hikari::messageBox.confirmTitle": "يرجى التأكيد",
+  "hikari::messageBox.promptTitle": "إدخال"
 }

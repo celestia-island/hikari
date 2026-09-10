@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "ズームをリセット",
     "hikari::zoomToolbar.zoomIn": "拡大",
     "hikari::zoomToolbar.zoomOut": "縮小"
-  }
+  },
+  "hikari::affixPicker.unset": "未設定",
+  "hikari::affixPicker.title": "オプション",
+  "hikari::affixPicker.search": "検索",
+  "hikari::affixPicker.empty": "一致なし",
+  "hikari::affixPicker.selected": "選択中",
+  "hikari::affixPicker.selectedCount": "{count} 件選択中",
+  "hikari::affixPicker.switchTo": "切り替え",
+  "hikari::affixPicker.remove": "削除",
+  "hikari::affixPicker.useCustom": "「{query}」を使用",
+  "hikari::affixPicker.removeConfirmTitle": "項目を削除",
+  "hikari::affixPicker.removeConfirm": "「{label}」を削除しますか？この操作は元に戻せません。",
+  "hikari::localizedInput.noMatches": "一致する言語がありません",
+  "hikari::messageBox.confirm": "確認",
+  "hikari::messageBox.cancel": "キャンセル",
+  "hikari::messageBox.ok": "OK",
+  "hikari::messageBox.alertTitle": "お知らせ",
+  "hikari::messageBox.confirmTitle": "確認してください",
+  "hikari::messageBox.promptTitle": "入力"
 }

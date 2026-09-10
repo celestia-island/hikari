@@ -182,5 +182,23 @@
     "hikari::zoomToolbar.reset": "줌 초기화",
     "hikari::zoomToolbar.zoomIn": "확대",
     "hikari::zoomToolbar.zoomOut": "축소"
-  }
+  },
+  "hikari::affixPicker.unset": "미설정",
+  "hikari::affixPicker.title": "옵션",
+  "hikari::affixPicker.search": "검색",
+  "hikari::affixPicker.empty": "일치 항목 없음",
+  "hikari::affixPicker.selected": "선택됨",
+  "hikari::affixPicker.selectedCount": "{count}개 선택됨",
+  "hikari::affixPicker.switchTo": "전환",
+  "hikari::affixPicker.remove": "제거",
+  "hikari::affixPicker.useCustom": "\"{query}\" 사용",
+  "hikari::affixPicker.removeConfirmTitle": "항목 제거",
+  "hikari::affixPicker.removeConfirm": "\"{label}\"을(를) 제거할까요? 이 작업은 되돌릴 수 없습니다.",
+  "hikari::localizedInput.noMatches": "일치하는 언어가 없습니다",
+  "hikari::messageBox.confirm": "확인",
+  "hikari::messageBox.cancel": "취소",
+  "hikari::messageBox.ok": "확인",
+  "hikari::messageBox.alertTitle": "알림",
+  "hikari::messageBox.confirmTitle": "확인 필요",
+  "hikari::messageBox.promptTitle": "입력"
 }

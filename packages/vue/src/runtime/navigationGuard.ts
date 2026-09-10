@@ -21,7 +21,13 @@ const POISONED_LITERALS = new Set(["undefined", "null", "nan"]);
  *  beforeEach, so any router-shaped object works (no vue-router dep:
  *  hikari stays UI-library-scoped). */
 export interface GuardRouter {
-  beforeEach: (fn: (to: GuardRoute, ...rest: unknown[]) => unknown) => void;
+  // METHOD syntax on purpose: property-function syntax falls under
+  // strictFunctionTypes' strict contravariance, which makes a real
+  // vue-router Router (whose beforeEach is itself method-typed with a
+  // NavigationGuard parameter) unassignable — consumers then need
+  // `as GuardRouter` casts (field report e.cw #84). Method parameters
+  // are bivariant, so both shapes interoperate cast-free.
+  beforeEach(fn: (to: GuardRoute, ...rest: unknown[]) => unknown): void;
 }
 
 export interface GuardRoute {

@@ -56,9 +56,12 @@ interface GuardRouter {
   // Accepts any guard signature (vue-router's NavigationGuard takes extra
   // args; slimmer routers take fewer) — the callback just inspects `to`.
   // The guard callback receives the route; vue-router also passes from/next
-  // which we ignore. `never`-parameter variance keeps both sides assignable.
-  beforeEach: (fn: (to: GuardRoute, ...rest: unknown[]) => unknown) => void;
-  onError?: (fn: (error: unknown, to: GuardRoute) => void) => void;
+  // which we ignore. METHOD syntax keeps both sides assignable cast-free:
+  // property-function syntax would fall under strictFunctionTypes' strict
+  // contravariance and reject a real vue-router Router (field report e.cw
+  // #84).
+  beforeEach(fn: (to: GuardRoute, ...rest: unknown[]) => unknown): void;
+  onError?(fn: (error: unknown, to: GuardRoute) => void): void;
 }
 
 export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {

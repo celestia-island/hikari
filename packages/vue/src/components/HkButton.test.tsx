@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import HkButton from "./HkButton";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 /**
  * HkButton contract tests:
@@ -162,6 +167,52 @@ describe("HkButton icon-only square contract", () => {
     // The spinner replaces the glyph, but the button still carries no
     // label — the square footprint must hold through the swap.
     expect(button(c).className).toContain("hk-btn-icon-only");
+  });
+
+  it("keeps the block class alongside the icon-only square class", () => {
+    // CSS precedence lives in the SCSS contract test below; this pins the
+    // class composition so both rules can actually apply.
+    const c = mount(h(HkButton, { icon: "close", block: true, ariaLabel: "Go" }));
+    const cls = button(c).className;
+    expect(cls).toContain("hk-btn-block");
+    expect(cls).toContain("hk-btn-icon-only");
+  });
+});
+
+// SCSS geometry contract (house pattern, cf. HkNumberInput.affix.test.ts):
+// the square is a CSS fact — padding fully collapsed + self-declared
+// border-box (survives hosts without a reset) + the block prop winning
+// over the square width. Textual assertions because happy-dom does not
+// lay out.
+describe("HkButton icon-only SCSS contract", () => {
+  const scss = readFileSync(join(here, "HkButton.scss"), "utf-8");
+
+  it("self-declares the collapsed square geometry", () => {
+    const rule = scss.match(/\.hk-btn-icon-only\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "icon-only rule must exist").toBeTruthy();
+    expect(rule).toContain("padding: 0");
+    expect(rule).toContain("box-sizing: border-box");
+  });
+
+  it("lets the block prop win over the square width", () => {
+    const rule = scss.match(/\.hk-btn-block\.hk-btn-icon-only\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "block override rule must exist").toBeTruthy();
+    expect(rule).toContain("width: 100%");
+  });
+
+  it("locks each size variant width to its min-height", () => {
+    const cases: Array<[string, string]> = [
+      ["sm", "1.75rem"],
+      ["md", "2.5rem"],
+      ["lg", "2.75rem"],
+    ];
+    for (const [size, width] of cases) {
+      const rule = scss.match(new RegExp(`\\.hk-btn-${size}\\.hk-btn-icon-only\\s*{[^}]*}`))?.[0] ?? "";
+      expect(rule, `${size} icon-only rule must exist`).toBeTruthy();
+      expect(rule).toContain(`width: ${width}`);
+      const minH = scss.match(new RegExp(`\\.hk-btn-${size}\\s*{[^}]*}`))?.[0] ?? "";
+      expect(minH).toContain(`min-height: ${width}`);
+    }
   });
 });
 

@@ -177,6 +177,13 @@ describe("HkButton icon-only square contract", () => {
     expect(cls).toContain("hk-btn-block");
     expect(cls).toContain("hk-btn-icon-only");
   });
+
+  it("does not square-collapse when a shortcut chip rides along", () => {
+    // The HKbd chip is an extra flex child — the fixed square width would
+    // visibly clip it, so icon + shortcut stays a padded button.
+    const c = mount(h(HkButton, { icon: "close", shortcut: "Ctrl+W", ariaLabel: "Close" }));
+    expect(button(c).className).not.toContain("hk-btn-icon-only");
+  });
 });
 
 // SCSS geometry contract (house pattern, cf. HkNumberInput.affix.test.ts):

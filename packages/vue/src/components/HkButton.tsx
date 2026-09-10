@@ -49,8 +49,11 @@ export default defineComponent({
       // in a padded text button reads as a squat rectangle otherwise.
       // Re-evaluated per render, NOT a computed: slots.default is not
       // reactive, so a cached flag would go stale when a parent toggles
-      // the label slot without touching the icon props.
-      const iconOnly = !slots.default && Boolean(props.icon || props.suffix);
+      // the label slot without touching the icon props. A shortcut chip
+      // is excluded: it renders as an extra flex child the fixed square
+      // width would visibly clip.
+      const iconOnly =
+        !slots.default && Boolean(props.icon || props.suffix) && !props.shortcut;
 
       return (
         <button

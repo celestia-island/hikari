@@ -181,7 +181,8 @@
     "hikari::toast.msgs": "сообщений",
     "hikari::zoomToolbar.reset": "Сбросить масштаб",
     "hikari::zoomToolbar.zoomIn": "Увеличить",
-    "hikari::zoomToolbar.zoomOut": "Уменьшить"
+    "hikari::zoomToolbar.zoomOut": "Уменьшить",
+    "hikari::zoomToolbar.zoomSlider": "Уровень масштаба"
   },
   "hikari::affixPicker.unset": "Не задано",
   "hikari::affixPicker.title": "Параметры",

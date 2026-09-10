@@ -19,8 +19,14 @@ export default defineComponent({
   props: {
     items: { type: Array as PropType<SelectionGridItem[]>, required: true },
     selectedId: { type: String, default: undefined },
+    selectedIds: {
+      type: Array as PropType<string[]>,
+      default: () => [],
+    },
+    multi: { type: Boolean, default: false },
     columns: { type: Number as PropType<SelectionGridCols>, default: 2 },
     groupTitle: { type: String, default: undefined },
+    hint: { type: String, default: undefined },
     dense: { type: Boolean, default: false },
   },
   emits: {
@@ -41,7 +47,9 @@ export default defineComponent({
             data-dense={props.dense || undefined}
           >
             {props.items.map((item) => {
-              const isSelected = props.selectedId === item.id;
+              const isSelected = props.multi
+                ? props.selectedIds.includes(item.id)
+                : props.selectedId === item.id;
               const ItemIcon = item.icon;
 
               return (
@@ -93,6 +101,9 @@ export default defineComponent({
               );
             })}
           </div>
+          {props.hint && (
+            <p class="hk-selection-grid-hint">{props.hint}</p>
+          )}
         </div>
       );
     };

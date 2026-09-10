@@ -33,14 +33,6 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
 
-    // Icon-only contract (2026-09-10 user direction): a button carrying
-    // just a prefix/suffix glyph and no text collapses to the same square
-    // footprint the HIconButton family guarantees — a bare icon in a
-    // padded text button reads as a squat rectangle otherwise.
-    const iconOnly = computed(
-      () => !slots.default && Boolean(props.icon || props.suffix),
-    );
-
     const buttonClass = computed(() => [
       "hk-btn",
       `hk-btn-${props.variant}`,
@@ -48,36 +40,46 @@ export default defineComponent({
       props.block ? "hk-btn-block" : "",
       props.loading ? "hk-btn-loading" : "",
       props.shortcut ? "hk-btn-has-shortcut" : "",
-      iconOnly.value ? "hk-btn-icon-only" : "",
     ]);
 
-    return () => (
-      <button
-        {...attrs}
-        type={(attrs.type as "button" | "submit" | "reset") || "button"}
-        disabled={props.disabled || props.loading}
-        class={[buttonClass.value, attrs.class]}
-        style={attrs.style || undefined}
-        aria-label={props.ariaLabel}
-        aria-busy={props.loading || undefined}
-        onClick={(e) => emit("click", e)}
-      >
-        {props.loading ? <HSpinner size="xs" tone="current" /> : null}
-        {!props.loading && props.icon ? (
-          <span class="hk-btn-icon">
-            <HIcon name={props.icon} size={16} />
-          </span>
-        ) : null}
-        {slots.default?.()}
-        {props.suffix ? (
-          <span class="hk-btn-suffix">
-            <HIcon name={props.suffix} size={16} />
-          </span>
-        ) : null}
-        {props.shortcut ? (
-          <HKbd keys={props.shortcut!} size="sm" />
-        ) : null}
-      </button>
-    );
+    return () => {
+      // Icon-only contract (2026-09-10 user direction): a button carrying
+      // just a prefix/suffix glyph and no text collapses to the same
+      // square footprint the HIconButton family guarantees — a bare icon
+      // in a padded text button reads as a squat rectangle otherwise.
+      // Re-evaluated per render, NOT a computed: slots.default is not
+      // reactive, so a cached flag would go stale when a parent toggles
+      // the label slot without touching the icon props.
+      const iconOnly = !slots.default && Boolean(props.icon || props.suffix);
+
+      return (
+        <button
+          {...attrs}
+          type={(attrs.type as "button" | "submit" | "reset") || "button"}
+          disabled={props.disabled || props.loading}
+          class={[buttonClass.value, iconOnly ? "hk-btn-icon-only" : "", attrs.class]}
+          style={attrs.style || undefined}
+          aria-label={props.ariaLabel}
+          aria-busy={props.loading || undefined}
+          onClick={(e) => emit("click", e)}
+        >
+          {props.loading ? <HSpinner size="xs" tone="current" /> : null}
+          {!props.loading && props.icon ? (
+            <span class="hk-btn-icon">
+              <HIcon name={props.icon} size={16} />
+            </span>
+          ) : null}
+          {slots.default?.()}
+          {props.suffix ? (
+            <span class="hk-btn-suffix">
+              <HIcon name={props.suffix} size={16} />
+            </span>
+          ) : null}
+          {props.shortcut ? (
+            <HKbd keys={props.shortcut!} size="sm" />
+          ) : null}
+        </button>
+      );
+    };
   },
 });

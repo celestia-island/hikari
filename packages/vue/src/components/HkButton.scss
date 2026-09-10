@@ -90,12 +90,17 @@
 
 /* ---- Icon-only square ---- */
 /* An icon-only HkButton (glyph, no label) occupies a SQUARE footprint
-   by default: inline padding collapses and width locks to the size
+   by default: padding collapses fully and width locks to the size
    variant's min-height, so it reads as the same standard square the
-   HIconButton family guarantees. Hosts may still override with an
-   explicit width when a design genuinely calls for another shape. */
+   HIconButton family guarantees. box-sizing is self-declared (house
+   convention — geometry rules never rely on a host-side reset reaching
+   the component): with zero padding the min-height governs the height
+   on every size, an exact square under border-box AND content-box.
+   Hosts may still override with an explicit width when a design
+   genuinely calls for another shape. */
 .hk-btn-icon-only {
-  padding-inline: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .hk-btn-sm.hk-btn-icon-only {
@@ -108,6 +113,11 @@
 
 .hk-btn-lg.hk-btn-icon-only {
   width: 2.75rem;
+}
+
+/* The first-class block prop wins over the square width. */
+.hk-btn-block.hk-btn-icon-only {
+  width: 100%;
 }
 
 /* ---- Primary ---- */

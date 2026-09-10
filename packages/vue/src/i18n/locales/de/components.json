@@ -181,7 +181,8 @@
     "hikari::toast.msgs": "Meldungen",
     "hikari::zoomToolbar.reset": "Zoom zurücksetzen",
     "hikari::zoomToolbar.zoomIn": "Vergrößern",
-    "hikari::zoomToolbar.zoomOut": "Verkleinern"
+    "hikari::zoomToolbar.zoomOut": "Verkleinern",
+    "hikari::zoomToolbar.zoomSlider": "Zoom-Stufe"
   },
   "hikari::affixPicker.unset": "Nicht festgelegt",
   "hikari::affixPicker.title": "Optionen",

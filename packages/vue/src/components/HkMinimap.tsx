@@ -1,8 +1,7 @@
 import { Maximize2, ZoomIn, ZoomOut } from "lucide-vue-next";
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
 
-
-
+import HSlider from "./HkSlider";
 
 import { useI18n } from "../i18n/context";
 import "./HkMinimap.scss";
@@ -34,6 +33,23 @@ export interface MinimapRect {
  * 50–200% range, each press emitting `zoomTo` with the clamped target
  * percent. Consumers with a wider native camera range override
  * `minZoomPercent`/`maxZoomPercent`.
+ *
+ * The percent label in the bar is a button: clicking it toggles a small
+ * slider dropdown (a zoom-pop panel opening upward from the bar) whose
+ * bounds/step follow `minZoomPercent`/`maxZoomPercent`/`zoomStepPercent`.
+ * Dragging the slider emits `zoomTo` continuously so consumers animate
+ * their camera toward each target. The panel dismisses on Escape, on a
+ * pointerdown outside the minimap, and when a real map drag starts; the
+ * zoom bar itself sits right-aligned in the card.
+ *
+ * `zoomTo` carries a `source`: `"step"` (the ± buttons — a RELATIVE
+ * one-rung request; consumers may apply directional rung logic) and
+ * `"slider"` (the dropdown slider — an ABSOLUTE target; consumers must
+ * land the camera on that rung, never push past it). The slider is
+ * bounded by min/max alone — `canZoomIn`/`canZoomOut` (the buttons'
+ * endpoint guards) deliberately do not gate it; consumers that hold the
+ * camera to a dynamic floor above `minZoomPercent` must clamp inside
+ * their `zoomTo` handler.
  */
 export default defineComponent({
   name: "HkMinimap",
@@ -66,14 +82,18 @@ export default defineComponent({
      *  when a reset handler was wired up). */
     showReset: { type: Boolean, default: false },
     /** Optional prop-callback surface (alternative to the emits). */
-    onZoomTo: { type: Function as PropType<(percent: number) => void>, default: undefined },
+    onZoomTo: {
+      type: Function as PropType<(percent: number, source?: "slider" | "step") => void>,
+      default: undefined,
+    },
     onReset: { type: Function as PropType<() => void>, default: undefined },
     onPanDelta: { type: Function as PropType<(dx: number, dy: number) => void>, default: undefined },
   },
   emits: {
-    /** Fixed-step zoom request carrying the clamped target percent —
-     *  consumers animate their camera toward this target. */
-    zoomTo: (_percent: number) => true,
+    /** Zoom request carrying the clamped target percent plus the gesture
+     *  source — `"step"` (± buttons, relative one-rung request) vs
+     *  `"slider"` (dropdown slider, ABSOLUTE target rung). */
+    zoomTo: (_percent: number, _source?: "slider" | "step") => true,
     reset: () => true,
     panDelta: (_dx: number, _dy: number) => true,
   },
@@ -84,6 +104,7 @@ export default defineComponent({
     const rootRef = ref<HTMLElement | null>(null);
     const dragging = ref(false);
     const dragStart = ref({ x: 0, y: 0 });
+    const sliderOpen = ref(false);
 
     const cb = computed(() => props.contentBounds);
     const overpanW = computed(() => Math.max(props.contentBounds.w * 0.5, props.viewportWidth * 0.3));
@@ -128,17 +149,22 @@ export default defineComponent({
       props.canZoomOut && props.zoomPercent > props.minZoomPercent + 1e-9);
 
     /** Step the zoom bar by the fixed increment, clamped to [min, max];
-     *  emits `zoomTo` with the exact clamped target percent. No-op (and
-     *  stays disabled) at the bounds. */
+     *  emits `zoomTo` with the exact clamped target percent (source
+     *  `"step"`). No-op (and stays disabled) at the bounds. */
     function stepZoom(dir: number) {
       const raw = props.zoomPercent + dir * props.zoomStepPercent;
       const next = Math.min(props.maxZoomPercent, Math.max(props.minZoomPercent, raw));
       if (Math.abs(next - props.zoomPercent) < 1e-9) return;
-      emit("zoomTo", next);
+      emit("zoomTo", next, "step");
     }
 
     function onDown(e: PointerEvent) {
-      if ((e.target as HTMLElement).closest(".hk-mm-zoom-bar")) return;
+      const target = e.target as HTMLElement;
+      // Zoom chrome (bar + slider pop) must never start a map drag — the
+      // root's setPointerCapture would swallow the slider's gestures.
+      if (target.closest(".hk-mm-zoom-bar") || target.closest(".hk-mm-zoom-pop")) return;
+      // A real map drag takes over the gesture: put the slider away.
+      sliderOpen.value = false;
       e.stopPropagation();
       e.preventDefault();
       dragging.value = true;
@@ -162,6 +188,26 @@ export default defineComponent({
       rootRef.value?.releasePointerCapture(e.pointerId);
     }
 
+    // ── Slider pop dismissal (outside pointerdown + Escape) ──────────────
+    // Capture-phase document listeners while the pop is open, mirroring
+    // HkPopover's outside-click shield; removed on close and unmount so
+    // nothing leaks.
+    function onDocPointerDown(e: PointerEvent) {
+      if (!rootRef.value?.contains(e.target as Node)) sliderOpen.value = false;
+    }
+    function onDocKeydown(e: KeyboardEvent) {
+      if (e.key === "Escape") sliderOpen.value = false;
+    }
+    watch(sliderOpen, (open) => {
+      if (open) {
+        document.addEventListener("pointerdown", onDocPointerDown, true);
+        document.addEventListener("keydown", onDocKeydown, true);
+      } else {
+        document.removeEventListener("pointerdown", onDocPointerDown, true);
+        document.removeEventListener("keydown", onDocKeydown, true);
+      }
+    });
+
     onMounted(() => {
       const el = rootRef.value;
       if (!el) return;
@@ -172,11 +218,14 @@ export default defineComponent({
     });
     onBeforeUnmount(() => {
       const el = rootRef.value;
-      if (!el) return;
-      el.removeEventListener("pointerdown", onDown);
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerup", onUp);
-      el.removeEventListener("pointercancel", onUp);
+      if (el) {
+        el.removeEventListener("pointerdown", onDown);
+        el.removeEventListener("pointermove", onMove);
+        el.removeEventListener("pointerup", onUp);
+        el.removeEventListener("pointercancel", onUp);
+      }
+      document.removeEventListener("pointerdown", onDocPointerDown, true);
+      document.removeEventListener("keydown", onDocKeydown, true);
     });
 
     return () => {
@@ -260,7 +309,18 @@ export default defineComponent({
             >
               <ZoomOut size={12} />
             </button>
-            <span class="hk-mm-zoom-label">{props.zoomPercent}%</span>
+            <button
+              class="hk-mm-zoom-label"
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={sliderOpen.value ? "true" : "false"}
+              onClick={() => {
+                sliderOpen.value = !sliderOpen.value;
+              }}
+              title={t("hikari::zoomToolbar.zoomSlider", "Zoom level")}
+            >
+              {props.zoomPercent}%
+            </button>
             <button
               class="hk-mm-zoom-btn"
               type="button"
@@ -283,6 +343,24 @@ export default defineComponent({
               </button>
             )}
           </div>
+          {sliderOpen.value && (
+            <div class="hk-mm-zoom-pop">
+              <HSlider
+                modelValue={props.zoomPercent}
+                min={props.minZoomPercent}
+                max={props.maxZoomPercent}
+                step={props.zoomStepPercent}
+                size="sm"
+                ariaLabel={t("hikari::zoomToolbar.zoomSlider", "Zoom level")}
+                formatValue={(v: number) => `${v}%`}
+                onUpdate:modelValue={(v: number) => emit("zoomTo", v, "slider")}
+              />
+              <div class="hk-mm-zoom-pop-scale" aria-hidden="true">
+                <span>{props.minZoomPercent}%</span>
+                <span>{props.maxZoomPercent}%</span>
+              </div>
+            </div>
+          )}
         </div>
       );
     };

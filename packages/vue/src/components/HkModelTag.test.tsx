@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 // HPopover teleports to body — stub it with a passthrough that renders its
 // slot while open (same pattern as HkAdminHeader.test.tsx).
@@ -68,6 +68,24 @@ describe("HkModelTag", () => {
     const name = group?.querySelector(".s-model-tag-name");
     expect(num?.textContent).toBe("#8");
     expect(name?.textContent).toBe("qwen3-coder-plus");
+  });
+
+  it("re-splits the model id when the model prop changes after mount", async () => {
+    // Consumer flow: the pill first paints a bare id, then a late roster
+    // fetch refines it to `base#N` — the split must track the prop, not a
+    // setup-time snapshot (a captured split kept rendering the untagged
+    // pill forever).
+    const model = ref("deepseek-v4-pro");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render: () => h(HkModelTag, { model: model.value } as never) });
+    app.mount(container);
+    mounts.push({ app, container });
+    expect(container.querySelector(".s-model-tag-num")).toBeNull();
+    model.value = "deepseek-v4-pro#4";
+    await nextTick();
+    expect(container.querySelector(".s-model-tag-num")?.textContent).toBe("#4");
+    expect(container.querySelector(".s-model-tag-name")?.textContent).toBe("deepseek-v4-pro");
   });
 
   it("carries no native title — the hover card is the only tooltip", () => {

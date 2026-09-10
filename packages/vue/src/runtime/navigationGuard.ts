@@ -27,7 +27,6 @@ export interface GuardRouter {
 export interface GuardRoute {
   path?: string | null;
   fullPath?: string;
-  [k: string]: unknown;
 }
 
 export interface NavigationSafetyNetOptions extends HistorySafetyNetOptions {

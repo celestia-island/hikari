@@ -45,6 +45,7 @@ import HkMinimap, { type MinimapBox } from "./HkMinimap";
 import {
   boardBBox,
   boardStepRung,
+  quantizeBoardK,
   type BoardCamera,
   type BoardPoint,
   type BoardRect,
@@ -437,6 +438,9 @@ export default defineComponent({
           ))}
         </div>
         {props.minimap && (
+          // Slider drags arrive as ABSOLUTE rung targets — land the camera
+          // on the thumb's rung exactly (boardStepRung's directional push
+          // is only for the ± buttons' relative steps).
           <div class="hk-board-minimap">
             <HkMinimap
               boxes={minimapBoxes.value}
@@ -453,7 +457,10 @@ export default defineComponent({
               minZoomPercent={Math.round(props.minK * 100)}
               maxZoomPercent={Math.round(props.maxK * 100)}
               showReset
-              onZoomTo={(percent: number) => cam.zoomToK(boardStepRung(camera.value.k, percent / 100))}
+              onZoomTo={(percent: number, source?: "slider" | "step") =>
+                cam.zoomToK(source === "slider"
+                  ? quantizeBoardK(percent / 100)
+                  : boardStepRung(camera.value.k, percent / 100))}
               onReset={() => cam.fit()}
               onPanDelta={(dx: number, dy: number) => cam.panBy(dx, dy)}
             />

@@ -34,7 +34,10 @@
 .hk-mm-zoom-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* Right-aligned (user feedback: centered controls read as floating
+     clutter in the card's bottom strip; right edge aligns with the
+     card's own corner radius). */
+  justify-content: flex-end;
   gap: 2px;
   padding: 3px 8px;
   border-top: 1px solid var(--border-faint);
@@ -70,6 +73,13 @@
 }
 
 .hk-mm-zoom-label {
+  /* The percent label is now a <button> (toggles the slider pop): strip
+     the user-agent chrome, keep the numeric look of the old span. */
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
   font-size: var(--text-2xs);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -77,4 +87,40 @@
   min-width: 30px;
   text-align: center;
   user-select: none;
+  transition: color 0.1s ease;
+
+  &:hover {
+    color: rgb(var(--color-primary));
+  }
+}
+
+/* Slider dropdown, anchored inside the card above the zoom bar. Surface
+   vocabulary matches the HkPopover panel family (surface bg, faint
+   border, --shadow-dropdown elevation); the card is 160px wide with
+   overflow hidden, so 132px + right 6px keeps it inside, and bottom
+   34px clears the ~29px zoom bar so the panel opens upward. */
+.hk-mm-zoom-pop {
+  position: absolute;
+  right: 6px;
+  bottom: 34px;
+  z-index: 2;
+  width: 132px;
+  padding: 8px 10px 6px;
+  background: rgb(var(--color-surface));
+  backdrop-filter: blur(var(--blur-lg)) saturate(1.2);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-dropdown);
+  pointer-events: auto;
+}
+
+/* Min/max captions under the slider. */
+.hk-mm-zoom-pop-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-muted));
 }

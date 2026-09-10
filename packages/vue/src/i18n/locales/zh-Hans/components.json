@@ -190,7 +190,8 @@
     "hikari::toast.msgs": "条消息",
     "hikari::zoomToolbar.reset": "重置缩放",
     "hikari::zoomToolbar.zoomIn": "放大",
-    "hikari::zoomToolbar.zoomOut": "缩小"
+    "hikari::zoomToolbar.zoomOut": "缩小",
+    "hikari::zoomToolbar.zoomSlider": "缩放级别"
   },
   "hikari::affixPicker.title": "选项",
   "hikari::affixPicker.search": "搜索",

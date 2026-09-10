@@ -181,7 +181,8 @@
     "hikari::toast.msgs": "개의 메시지",
     "hikari::zoomToolbar.reset": "줌 초기화",
     "hikari::zoomToolbar.zoomIn": "확대",
-    "hikari::zoomToolbar.zoomOut": "축소"
+    "hikari::zoomToolbar.zoomOut": "축소",
+    "hikari::zoomToolbar.zoomSlider": "확대 수준"
   },
   "hikari::affixPicker.unset": "미설정",
   "hikari::affixPicker.title": "옵션",

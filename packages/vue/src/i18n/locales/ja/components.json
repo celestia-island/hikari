@@ -181,7 +181,8 @@
     "hikari::toast.msgs": "件のメッセージ",
     "hikari::zoomToolbar.reset": "ズームをリセット",
     "hikari::zoomToolbar.zoomIn": "拡大",
-    "hikari::zoomToolbar.zoomOut": "縮小"
+    "hikari::zoomToolbar.zoomOut": "縮小",
+    "hikari::zoomToolbar.zoomSlider": "ズーム倍率"
   },
   "hikari::affixPicker.unset": "未設定",
   "hikari::affixPicker.title": "オプション",

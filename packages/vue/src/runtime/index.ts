@@ -4,6 +4,20 @@ export * from "./intervalBus";
 export * from "./pageLifecycle";
 export * from "./mobileViewport";
 export {
+  sanitizeHistoryUrl,
+  installHistorySafetyNet,
+  type HistorySafetyNetOptions,
+  type HistoryCoercion,
+} from "./historySafetyNet";
+export {
+  createPoisonedLocationGuard,
+  installNavigationSafetyNet,
+  type NavigationSafetyNetOptions,
+  type GuardRouter,
+  type GuardRoute,
+} from "./navigationGuard";
+export { createAuthGuard, type AuthGuardOptions } from "./createAuthGuard";
+export {
   createBackGuard,
   BACK_GUARD_MARKER,
   BACK_GUARD_DEPTH,

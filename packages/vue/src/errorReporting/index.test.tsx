@@ -125,6 +125,48 @@ describe("createErrorReporting", () => {
     expect(overlayHost()).toBeNull();
   });
 
+  it("stays up for cross-origin-masked window errors", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Earlier tests in this file spy the same methods without restoring;
+    // clear the accumulated calls so the assertions see only this test's.
+    warn.mockClear();
+    error.mockClear();
+    installPlugin();
+
+    // The masking signature: details withheld (error == null) because the
+    // thrower is foreign-origin code (extension / userscript), message
+    // pinned to "Script error." by every Chromium/Gecko/WebKit build.
+    window.dispatchEvent(new ErrorEvent("error", { message: "Script error.", error: null }));
+    await nextTick();
+    expect(overlayHost()).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+
+    // The bare-spelling variant is masked the same way.
+    window.dispatchEvent(new ErrorEvent("error", { message: "Script error", error: null }));
+    await nextTick();
+    expect(overlayHost()).toBeNull();
+
+    clearGlobalError();
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
+  it("still reports detail-less window errors that are not masked", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    installPlugin();
+
+    // error == null with a real message is a script error the browser DID
+    // describe — that stays reportable.
+    window.dispatchEvent(
+      new ErrorEvent("error", { message: "Uncaught SyntaxError: unexpected token", error: null }),
+    );
+    await nextTick();
+    expect(overlayHost()!.querySelector(".hk-error-landing__desc")!.textContent)
+      .toBe("Uncaught SyntaxError: unexpected token");
+  });
+
   it("chains a pre-existing app errorHandler", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const previous = vi.fn();

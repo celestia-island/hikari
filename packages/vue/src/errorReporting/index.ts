@@ -87,6 +87,21 @@ function installWindowHooks(options: HkErrorReportingOptions): void {
     const onError = (event: ErrorEvent) => {
       // Resource-load failures never reach here (no capture phase); script
       // errors always carry `error` or at least a `message`.
+      //
+      // Cross-origin-masked script errors arrive as `message: "Script
+      // error."` with a null `error` object: the browser withholds the
+      // details precisely because the thrower is NOT this origin's code
+      // (browser extensions / userscripts are the usual sources). A
+      // synthetic record for one would carry zero actionable detail and a
+      // stack pointing at this very handler, while the takeover rips the
+      // host app away from the user for noise it did not produce — log
+      // and stay up instead (chest demo report 2026-09-10: tapping the
+      // wallpaper preview in a userscript-capable mobile browser nuked
+      // the session with such a masked event).
+      if (event.error == null && /^script error\.?$/i.test(event.message)) {
+        console.warn("[hikari:error-reporting] ignored a cross-origin-masked script error");
+        return;
+      }
       const err = event.error ?? new Error(event.message || "Unknown script error");
       if (reportError(err, "window")) ensureOverlayMounted();
     };

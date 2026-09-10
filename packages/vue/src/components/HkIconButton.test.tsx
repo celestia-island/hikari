@@ -102,4 +102,19 @@ describe("HkIconButton", () => {
     const c = mountComp(() => h(HkIconButton, { "aria-label": "probe" }));
     expect(c.querySelector("circle")).not.toBeNull();
   });
+
+  // Named-icon contract (2026-09-10): the icon prop resolves through HIcon
+  // (functional keys ride the host material pack) — slot content still
+  // wins over it, and the placeholder circle only shows with neither.
+  it("renders the icon prop through HIcon, below slot precedence", () => {
+    const propOnly = mountComp(() => h(HkIconButton, { icon: "close", "aria-label": "close" }));
+    expect(propOnly.querySelector(".hk-icon")).not.toBeNull();
+    expect(propOnly.querySelector("circle")).toBeNull();
+
+    const propAndSlot = mountComp(() =>
+      h(HkIconButton, { icon: "close", "aria-label": "close" }, { icon: () => h("span", { class: "slot-probe" }) }),
+    );
+    expect(propAndSlot.querySelector(".slot-probe")).not.toBeNull();
+    expect(propAndSlot.querySelector(".hk-icon")).toBeNull();
+  });
 });

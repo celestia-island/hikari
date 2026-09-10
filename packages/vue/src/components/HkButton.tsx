@@ -33,6 +33,14 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
 
+    // Icon-only contract (2026-09-10 user direction): a button carrying
+    // just a prefix/suffix glyph and no text collapses to the same square
+    // footprint the HIconButton family guarantees — a bare icon in a
+    // padded text button reads as a squat rectangle otherwise.
+    const iconOnly = computed(
+      () => !slots.default && Boolean(props.icon || props.suffix),
+    );
+
     const buttonClass = computed(() => [
       "hk-btn",
       `hk-btn-${props.variant}`,
@@ -40,6 +48,7 @@ export default defineComponent({
       props.block ? "hk-btn-block" : "",
       props.loading ? "hk-btn-loading" : "",
       props.shortcut ? "hk-btn-has-shortcut" : "",
+      iconOnly.value ? "hk-btn-icon-only" : "",
     ]);
 
     return () => (

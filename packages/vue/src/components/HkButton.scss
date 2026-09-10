@@ -64,6 +64,52 @@
   min-height: 2.75rem;
 }
 
+/* ---- Prefix / suffix icon boxes ---- */
+/* Standard-part contract (2026-09-10 user direction): a button glyph
+   renders inside a FIXED SQUARE box — flex:none so host flex rows can
+   never squeeze it into a squat sliver, centered on both axes so the
+   icon rides the button's vertical midline at any button height, and
+   the box (not the bare svg) owns the rhythm so the glyph keeps a
+   consistent margin from the adjacent label via the button's own gap.
+   The 1rem box matches the 16px glyph HkButton renders for the
+   icon/suffix props. */
+.hk-btn-icon,
+.hk-btn-suffix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+/* ---- Icon-only square ---- */
+/* An icon-only HkButton (glyph, no label) occupies a SQUARE footprint
+   by default: inline padding collapses and width locks to the size
+   variant's min-height, so it reads as the same standard square the
+   HIconButton family guarantees. Hosts may still override with an
+   explicit width when a design genuinely calls for another shape. */
+.hk-btn-icon-only {
+  padding-inline: 0;
+}
+
+.hk-btn-sm.hk-btn-icon-only {
+  width: 1.75rem;
+}
+
+.hk-btn-md.hk-btn-icon-only {
+  width: 2.5rem;
+}
+
+.hk-btn-lg.hk-btn-icon-only {
+  width: 2.75rem;
+}
+
 /* ---- Primary ---- */
 
 .hk-btn-primary {

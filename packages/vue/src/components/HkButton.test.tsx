@@ -142,6 +142,29 @@ describe("HkButton content slots", () => {
   });
 });
 
+describe("HkButton icon-only square contract", () => {
+  it("flags the icon-only square class for a glyph with no label", () => {
+    const iconOnly = mount(h(HkButton, { icon: "close", ariaLabel: "Close" }));
+    const btn = button(iconOnly);
+    expect(btn.className).toContain("hk-btn-icon-only");
+    expect(iconOnly.querySelector(".hk-btn-icon")).not.toBeNull();
+
+    const suffixOnly = mount(h(HkButton, { suffix: "close", ariaLabel: "Next" }));
+    expect(button(suffixOnly).className).toContain("hk-btn-icon-only");
+
+    // Glyph + text stays a normal text button — no square collapse.
+    const withText = mount(h(HkButton, { icon: "close" }, () => "Close"));
+    expect(button(withText).className).not.toContain("hk-btn-icon-only");
+  });
+
+  it("keeps the square footprint while an icon-only button loads", () => {
+    const c = mount(h(HkButton, { icon: "close", loading: true, ariaLabel: "Busy" }));
+    // The spinner replaces the glyph, but the button still carries no
+    // label — the square footprint must hold through the swap.
+    expect(button(c).className).toContain("hk-btn-icon-only");
+  });
+});
+
 describe("HkButton attr fallthrough (inheritAttrs: false)", () => {
   it("spreads extra attrs and honors an explicit type", () => {
     const c = mount(h(HkButton, { type: "submit", "data-test": "probe" }, () => "Save"));

@@ -25,22 +25,29 @@ const ModelPill = defineComponent({
     expanded: { type: Boolean, default: false },
   },
   setup(props) {
-    const { base, tag } = splitModelId(props.model);
-    return () => (
-      <span
-        class="s-model-tag-group"
-        data-expanded={props.expanded || undefined}
-      >
-        {tag && (
-          <HBadge variant="primary" size="sm" mono pill={false} class="s-model-tag-num">
-            #{tag}
+    // Split inside the render closure: capturing `splitModelId(props.model)`
+    // at setup froze the base/tag halves for the pill's whole lifetime, so
+    // a consumer that refines the model id after mount (e.g. a provider
+    // number arriving once a roster fetch resolves) kept rendering the
+    // stale, untagged pill.
+    return () => {
+      const { base, tag } = splitModelId(props.model);
+      return (
+        <span
+          class="s-model-tag-group"
+          data-expanded={props.expanded || undefined}
+        >
+          {tag && (
+            <HBadge variant="primary" size="sm" mono pill={false} class="s-model-tag-num">
+              #{tag}
+            </HBadge>
+          )}
+          <HBadge variant="muted" size="sm" mono pill={false} class="s-model-tag-name">
+            <span class="s-model-tag-name-text">{base}</span>
           </HBadge>
-        )}
-        <HBadge variant="muted" size="sm" mono pill={false} class="s-model-tag-name">
-          <span class="s-model-tag-name-text">{base}</span>
-        </HBadge>
-      </span>
-    );
+        </span>
+      );
+    };
   },
 });
 

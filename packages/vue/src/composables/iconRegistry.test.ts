@@ -6,19 +6,20 @@ import { iconByName } from "./iconRegistry";
 // Glyph-expansion contract (2026-09-10): downstream audits (chest / e.cw /
 // erp.cw icon waves) found these icon-prop names silently rendering the
 // `Info` fallback because the lucide exports were missing from the
-// tree-shakeable registry. Each entry must resolve to its real glyph —
-// asserted against the unknown-name fallback, not just against `Info`,
-// so a future fallback swap cannot silently pass this suite.
+// tree-shakeable registry. `minus` and `copy` are chest adversarial-verifier
+// finds that shipped as Info-fallback regressions. Each entry must resolve
+// to its real glyph — asserted against the unknown-name fallback, not just
+// against `Info`, so a future fallback swap cannot silently pass this suite.
 const NEW_GLYPH_KEBAB = [
   "log-out", "sparkles", "upload", "camera", "flag", "download", "image",
   "video", "save", "braces", "history", "rotate-cw", "key-round",
-  "scan-search", "ban", "filter",
+  "scan-search", "ban", "filter", "minus", "copy",
 ] as const;
 
 const NEW_GLYPH_PASCAL = [
   "LogOut", "Sparkles", "Upload", "Camera", "Flag", "Download", "Image",
   "Video", "Save", "Braces", "History", "RotateCw", "KeyRound",
-  "ScanSearch", "Ban", "Filter",
+  "ScanSearch", "Ban", "Filter", "Minus", "Copy",
 ] as const;
 
 describe("icon registry glyph expansion", () => {

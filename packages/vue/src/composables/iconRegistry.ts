@@ -8,7 +8,7 @@
 // badges, nav tags) resolve without the wildcard import. Unknown names fall
 // back to `Info`, matching the previous `|| LucideIcons.Info` behavior.
 
-import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ban, Battery, Bell, Bot, Box, Braces, Brain, Cable, Calendar, Camera, ChartBarBig as BarChart3, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert as AlertCircle, CircleCheck as CheckCircle, CircleCheckBig as CheckCircle2, CircleDot, Clock, Cpu, Database, Dot, Download, Ellipsis as MoreHorizontal, ExternalLink, Eye, FileArchive, FileCode, FileImage, FileText, Filter, Flag, Flame, FolderOpen, Gauge, Globe, HardDrive, History, Image, Info, Kanban, Key, KeyRound, Layers, LayoutDashboard, LoaderCircle as Loader2, LogOut, Lock, Maximize, Maximize2, MessageSquare, Mic, MicOff, Minimize, Monitor, Network, Package, Pause, Pencil, Play, Plug, Plus, Radio, RefreshCw, RotateCw, ScanSearch, Save, Search, Send, Server, Settings, Share2, Shield, Sparkles, Star, Table, Tag, Thermometer, Trash2, TriangleAlert as AlertTriangle, Upload, Video, Volume2, VolumeX, Webhook, Wind, Workflow, Wrench, X, Zap, ZoomIn, ZoomOut } from "lucide-vue-next";
+import { Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ban, Battery, Bell, Bot, Box, Braces, Brain, Cable, Calendar, Camera, ChartBarBig as BarChart3, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert as AlertCircle, CircleCheck as CheckCircle, CircleCheckBig as CheckCircle2, CircleDot, Clock, Copy, Cpu, Database, Dot, Download, Ellipsis as MoreHorizontal, ExternalLink, Eye, FileArchive, FileCode, FileImage, FileText, Filter, Flag, Flame, FolderOpen, Gauge, Globe, HardDrive, History, Image, Info, Kanban, Key, KeyRound, Layers, LayoutDashboard, LoaderCircle as Loader2, LogOut, Lock, Maximize, Maximize2, MessageSquare, Mic, MicOff, Minimize, Minus, Monitor, Network, Package, Pause, Pencil, Play, Plug, Plus, Radio, RefreshCw, RotateCw, ScanSearch, Save, Search, Send, Server, Settings, Share2, Shield, Sparkles, Star, Table, Tag, Thermometer, Trash2, TriangleAlert as AlertTriangle, Upload, Video, Volume2, VolumeX, Webhook, Wind, Workflow, Wrench, X, Zap, ZoomIn, ZoomOut } from "lucide-vue-next";
 import type { Component } from "vue";
 
 
@@ -100,13 +100,14 @@ const REGISTRY: Record<string, Component> = {
   Activity, AlertCircle, AlertTriangle, ArrowDown, ArrowLeft, ArrowRight,
   ArrowUp, Ban, BarChart3, Battery, Bell, Bot, Box, Braces, Brain, Cable,
   Calendar, Camera, Check, CheckCircle, CheckCircle2, ChevronDown,
-  ChevronLeft, ChevronRight, ChevronUp, Circle, CircleDot, Clock, Cpu,
+  ChevronLeft, ChevronRight, ChevronUp, Circle, CircleDot, Clock, Copy, Cpu,
   Database, Dot, Download, ExternalLink, Eye, FileArchive, FileCode,
   FileImage, FileText, Filter, Flag, Flame, FolderOpen, Gauge, Globe,
   HardDrive, History, Image, Info, Kanban, Key, KeyRound, Layers,
   LayoutDashboard, Loader2, LogOut, Lock, Maximize, Maximize2,
-  MessageSquare, Mic, MicOff, Minimize, Monitor, MoreHorizontal, Network,
-  Package, Pause, Pencil, Play, Plug, Plus, Radio, RefreshCw, RotateCw,
+  MessageSquare, Mic, MicOff, Minimize, Minus, Monitor, MoreHorizontal,
+  Network, Package, Pause, Pencil, Play, Plug, Plus, Radio, RefreshCw,
+  RotateCw,
   ScanSearch, Save, Search, Send, Server, Settings, Share2, Shield,
   Sparkles, Star, Table, Tag, Thermometer, Trash2, Upload, Video, Volume2,
   VolumeX, Webhook, Wind, Workflow, Wrench, X, Zap, ZoomIn, ZoomOut,

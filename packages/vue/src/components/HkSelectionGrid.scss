@@ -11,6 +11,15 @@
   margin: 0 0 0.5rem;
 }
 
+/* Foot note under the grid — same register as .hk-input-hint so the
+   helper line reads identically wherever it appears in a form. */
+.hk-selection-grid-hint {
+  margin: var(--space-4, 0.25rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
+  text-align: start;
+}
+
 .hk-selection-grid-grid {
   display: grid;
   gap: 0.5rem;

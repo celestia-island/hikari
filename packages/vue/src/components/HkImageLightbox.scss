@@ -103,7 +103,8 @@
     --hi-icon-button-icon-color: #fff;
   }
 
-  // (0,4,0)+pseudo — beats `.hk-icon-button.hk-window-close:hover`.
+  // (0,4,0) with the pseudo-class counted — beats
+  // `.hk-icon-button.hk-window-close:hover` at (0,3,0).
   &.hk-window-close:hover,
   &.hk-window-close:focus-visible {
     background: var(--hi-icon-button-bg);

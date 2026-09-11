@@ -48,6 +48,16 @@ function actionButtons(card: HTMLElement): HTMLButtonElement[] {
   return Array.from(card.querySelectorAll<HTMLButtonElement>(".hk-blocking-toast-actions button"));
 }
 
+/** Answer the gate by semantics, not by position: the row order is pinned
+ *  separately, so these helpers keep the behaviour cases readable. */
+function confirmButton(card: HTMLElement): HTMLButtonElement {
+  return actionButtons(card).find((b) => !b.classList.contains("hk-btn-secondary"))!;
+}
+
+function cancelButton(card: HTMLElement): HTMLButtonElement {
+  return actionButtons(card).find((b) => b.classList.contains("hk-btn-secondary"))!;
+}
+
 function toastRegistryTitles(): Array<{ kind: string; title?: string }> {
   return [...usePopupManager().registry.value.values()].map((e) => ({ kind: e.kind, title: e.title }));
 }
@@ -73,9 +83,9 @@ describe("HkBlockingToast", () => {
     expect(card.querySelector(".hk-blocking-toast-title")!.textContent).toContain("Join group?");
     expect(card.querySelector(".hk-blocking-toast-message")!.textContent).toContain("Admins can view your usage.");
     const labels = actionButtons(card).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["Cancel", "Confirm"]);
+    expect(labels).toEqual(["Confirm", "Cancel"]);
 
-    actionButtons(card)[1].click();
+    confirmButton(card).click();
     await expect(gate).resolves.toBe(true);
     await settle();
     expect(cards().length).toBe(0);
@@ -87,7 +97,7 @@ describe("HkBlockingToast", () => {
     await settle();
     const card = cards()[0];
 
-    actionButtons(card)[0].click();
+    cancelButton(card).click();
     await expect(gate).resolves.toBe(false);
     await settle();
     expect(cards().length).toBe(0);
@@ -103,7 +113,7 @@ describe("HkBlockingToast", () => {
     expect(cards().length).toBe(1);
 
     // Clean up the deliberately unanswered gate.
-    actionButtons(cards()[0])[1].click();
+    confirmButton(cards()[0]).click();
     await expect(gate).resolves.toBe(true);
   });
 
@@ -115,7 +125,7 @@ describe("HkBlockingToast", () => {
     await settle();
     expect(toastRegistryTitles().some((e) => e.kind === "toast" && e.title === "Consent")).toBe(true);
 
-    actionButtons(cards()[0])[0].click();
+    cancelButton(cards()[0]).click();
     await expect(gate).resolves.toBe(false);
     await settle();
     expect(toastRegistryTitles().some((e) => e.kind === "toast")).toBe(false);
@@ -144,13 +154,13 @@ describe("HkBlockingToast", () => {
     expect(cardTwo.querySelector(".hk-blocking-toast-title")!.textContent).toContain("Two");
 
     // Answer only the second; the first keeps blocking.
-    actionButtons(cardTwo)[1].click();
+    confirmButton(cardTwo).click();
     await expect(second).resolves.toBe(true);
     await settle();
     expect(cards().length).toBe(1);
     expect(cards()[0].querySelector(".hk-blocking-toast-title")!.textContent).toContain("One");
 
-    actionButtons(cards()[0])[0].click();
+    cancelButton(cards()[0]).click();
     await expect(first).resolves.toBe(false);
   });
 
@@ -166,9 +176,9 @@ describe("HkBlockingToast", () => {
     const card = cards()[0];
     expect(card.classList.contains("hk-blocking-toast-danger")).toBe(true);
     const labels = actionButtons(card).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["Back out", "Join"]);
+    expect(labels).toEqual(["Join", "Back out"]);
 
-    actionButtons(card)[1].click();
+    confirmButton(card).click();
     await expect(gate).resolves.toBe(true);
   });
 
@@ -179,9 +189,9 @@ describe("HkBlockingToast", () => {
     await settle();
 
     const labels = actionButtons(cards()[0]).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["取消", "确认"]);
+    expect(labels).toEqual(["确认", "取消"]);
 
-    actionButtons(cards()[0])[1].click();
+    confirmButton(cards()[0]).click();
     await expect(gate).resolves.toBe(true);
     await setLocale("en");
   });
@@ -203,7 +213,8 @@ describe("HkBlockingToast", () => {
     Object.defineProperty(slot!, "offsetWidth", { value: 384, configurable: true });
     Object.defineProperty(slot!, "offsetHeight", { value: 120, configurable: true });
 
-    actionButtons(cards()[0])[0].click();
+    // Dismiss (not confirm): this case only cares about the leave animation.
+    cancelButton(cards()[0]).click();
     await nextTick();
 
     const leaving = document.querySelector<HTMLElement>(".hk-blocking-toast-leave-active");

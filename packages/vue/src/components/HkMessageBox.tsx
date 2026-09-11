@@ -196,13 +196,10 @@ const HkMessageBoxHost = defineComponent({
             ),
             footer: () => (
               <div class="hk-message-box-actions">
-                {/* Alerts have no cancel by definition; confirm/prompt
-                    hide it only when the host asks. */}
-                {props.kind !== "alert" && !props.hideCancel && (
-                  <HkButton variant="secondary" onClick={cancel}>
-                    {cancelLabel}
-                  </HkButton>
-                )}
+                {/* Primary action first, dismiss second — message boxes follow
+                    the desktop OK-left / Cancel-right convention, matching
+                    HkConfirmDialog. Alerts have no cancel by definition;
+                    confirm/prompt hide it only when the host asks. */}
                 <HkButton
                   variant={confirmVariant}
                   class="hk-message-box-confirm"
@@ -210,6 +207,11 @@ const HkMessageBoxHost = defineComponent({
                 >
                   {confirmLabel}
                 </HkButton>
+                {props.kind !== "alert" && !props.hideCancel && (
+                  <HkButton variant="secondary" onClick={cancel}>
+                    {cancelLabel}
+                  </HkButton>
+                )}
               </div>
             ),
           }}

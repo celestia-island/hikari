@@ -79,19 +79,22 @@ const HkBlockingToastCard = defineComponent({
             ) : null}
             <p class="hk-blocking-toast-message">{item.message}</p>
             <div class="hk-blocking-toast-actions">
-              <HButton
-                variant="secondary"
-                size="sm"
-                onClick={() => emit("cancel")}
-              >
-                {item.cancelLabel ?? t("hikari::blockingToast.cancel", "Cancel")}
-              </HButton>
+              {/* Confirmation surfaces share one order: primary action first
+                  (left), dismiss second (right) — matching HkConfirmDialog
+                  and HkMessageBox. */}
               <HButton
                 variant={item.variant === "danger" ? "danger" : "primary"}
                 size="sm"
                 onClick={() => emit("confirm")}
               >
                 {item.confirmLabel ?? t("hikari::blockingToast.confirm", "Confirm")}
+              </HButton>
+              <HButton
+                variant="secondary"
+                size="sm"
+                onClick={() => emit("cancel")}
+              >
+                {item.cancelLabel ?? t("hikari::blockingToast.cancel", "Cancel")}
               </HButton>
             </div>
           </div>

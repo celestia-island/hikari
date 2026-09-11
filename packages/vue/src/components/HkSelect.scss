@@ -106,14 +106,16 @@
   position: fixed;
   min-width: 180px;
 
-  /* Pop motion family — the popout grows out of the anchor edge it sits
-   * on (data-side/data-align are set by HkSelectPanel from the RESOLVED
-   * placement, including after an auto-flip) and retracts back into it.
-   * Same tokens as HkPopover/HkTooltip so every anchored surface moves
-   * with one curve. */
+  /* Pop motion family — the popout grows out of the anchor edge (or
+   * midpoint, for the -center placements) it sits on (data-side/data-align
+   * are set by HkSelectPanel from the RESOLVED placement, including after
+   * an auto-flip) and retracts back into it. Same tokens as
+   * HkPopover/HkTooltip so every anchored surface moves with one curve. */
   &[data-side="bottom"] { transform-origin: top left; }
+  &[data-side="bottom"][data-align="center"] { transform-origin: top center; }
   &[data-side="bottom"][data-align="end"] { transform-origin: top right; }
   &[data-side="top"] { transform-origin: bottom left; }
+  &[data-side="top"][data-align="center"] { transform-origin: bottom center; }
   &[data-side="top"][data-align="end"] { transform-origin: bottom right; }
 }
 

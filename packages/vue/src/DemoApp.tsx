@@ -150,6 +150,8 @@ export default defineComponent({
         { key: "c", label: "Archived" },
       ],
     });
+    const centerAnchor = ref<HTMLElement | null>(null);
+    const centerPanelOpen = ref(false);
     function togglePanelOpt(key: string, v: boolean) {
       panel.value.checked = v
         ? [...panel.value.checked, key]
@@ -408,6 +410,26 @@ export default defineComponent({
               anchorRef={panelAnchor.value ?? null}
               title="Filters"
               placement="top-start"
+            >
+              {panel.value.opts.map((opt) => (
+                <HCheckbox
+                  key={opt.key}
+                  modelValue={panel.value.checked.includes(opt.key)}
+                  onUpdate:modelValue={(v: boolean) => togglePanelOpt(opt.key, v)}
+                >{opt.label}</HCheckbox>
+              ))}
+            </HSelectPanel>
+            <span style="align-self:center;color:var(--color-muted, gray)">center placement:</span>
+            <span ref={centerAnchor} style="display:inline-flex">
+              <HButton onClick={() => (centerPanelOpen.value = !centerPanelOpen.value)}>Engine {centerPanelOpen.value ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</HButton>
+            </span>
+            <HSelectPanel
+              open={centerPanelOpen.value}
+              onUpdate:open={(v: boolean) => (centerPanelOpen.value = v)}
+              anchorRef={centerAnchor.value ?? null}
+              title="Engine"
+              placement="top-center"
+              matchAnchorWidth={false}
             >
               {panel.value.opts.map((opt) => (
                 <HCheckbox

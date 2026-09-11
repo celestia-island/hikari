@@ -56,8 +56,10 @@ import "./HkSelect.scss";
 
 export type SelectPanelPlacement =
   | "bottom-start"
+  | "bottom-center"
   | "bottom-end"
   | "top-start"
+  | "top-center"
   | "top-end";
 
 const VIEWPORT_PAD = 8;
@@ -71,7 +73,10 @@ export default defineComponent({
     anchorRef: { type: Object as PropType<HTMLElement | null>, default: null },
     /** Sheet header on mobile / a11y name for the panel. */
     title: { type: String, default: "" },
-    /** Base placement of the popout relative to the anchor (auto-flips). */
+    /** Base placement of the popout relative to the anchor (auto-flips).
+     *  The `-center` variants center the popout on the anchor's horizontal
+     *  midpoint (footer-center triggers whose menus would otherwise read
+     *  as lopsided off a narrow pill). */
     placement: {
       type: String as PropType<SelectPanelPlacement>,
       default: "bottom-start",
@@ -474,9 +479,10 @@ export default defineComponent({
     // again after the DOM settles, when the panel's real box is known and
     // flip/clamp decisions can use actual numbers.
     /** Resolved popout orientation — drives the pop transition's
-     *  transform-origin (grow from the anchor edge, data-side/align on
-     *  the host). Updated by positionPanel on every reposition. */
-    const resolved = ref<{ side: "top" | "bottom"; align: "start" | "end" }>({
+     *  transform-origin (grow from the anchor edge or midpoint,
+     *  data-side/align on the host). Updated by positionPanel on every
+     *  reposition. */
+    const resolved = ref<{ side: "top" | "bottom"; align: "start" | "center" | "end" }>({
       side: "bottom",
       align: "start",
     });
@@ -501,10 +507,12 @@ export default defineComponent({
         side = "bottom";
         top = r.bottom + props.offset;
       }
-      resolved.value = {
-        side,
-        align: props.placement.endsWith("-end") ? "end" : "start",
-      };
+      const align = props.placement.endsWith("-center")
+        ? "center"
+        : props.placement.endsWith("-end")
+          ? "end"
+          : "start";
+      resolved.value = { side, align };
       // One flip never re-checks: taller menu panels (the viewport-relative
       // CSS cap) made this band reachable — a mid-viewport anchor flips
       // bottom→top into a negative top that was applied verbatim. Clamp so
@@ -512,7 +520,15 @@ export default defineComponent({
       // the panel's own internal scroll takes over.
       const maxTop = Math.max(VIEWPORT_PAD, window.innerHeight - VIEWPORT_PAD - ph);
       top = Math.min(Math.max(top, VIEWPORT_PAD), maxTop);
-      let left = props.placement.endsWith("-end") ? r.right - pw : r.left;
+      // -center balances the panel on the anchor's horizontal midpoint
+      // (still clamped, so a half-off-screen anchor keeps the panel
+      // readable instead of mirroring the overflow to both edges).
+      let left =
+        align === "center"
+          ? r.left + (r.width - pw) / 2
+          : props.placement.endsWith("-end")
+            ? r.right - pw
+            : r.left;
       const maxLeft = Math.max(VIEWPORT_PAD, window.innerWidth - VIEWPORT_PAD - pw);
       left = Math.min(Math.max(left, VIEWPORT_PAD), maxLeft);
       coords.value = {

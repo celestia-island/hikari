@@ -3,6 +3,7 @@ import { usePopupManager, type PopupEntry } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
 import { useReportedTransition } from "../composables/useReportedTransition";
 import { scheduleEvery } from "../runtime/animationBus";
+import { ancestorZoom } from "../runtime/cssZoom";
 import "./HkModalBreadcrumb.scss";
 
 /** Window kinds always participate in the stack: modals and drawers block
@@ -59,9 +60,24 @@ export default defineComponent({
     function resyncTop() {
       const app = document.getElementById(props.appRootId);
       if (!app) return;
+      // The strip teleports to <body> — inside any root CSS zoom subtree
+      // — so its inline top is LOCAL px. Keep every term in that local
+      // space: the app root's computed top is already local, while the
+      // header's gBCR height reports the root VISUAL space (standardized
+      // zoom applies ancestor zoom), so it comes back divided by the
+      // cumulative zoom. Without the conversion the strip drifts
+      // (zoom-1)·headerHeight/2 down its window (chest's root-level
+      // manual DPI scale). The fallback height is a layout constant and
+      // stays local.
       const appTop = parseFloat(getComputedStyle(app).top) || 0;
       const header = app.querySelector(props.headerSelector) as HTMLElement | null;
-      const headerH = header ? header.getBoundingClientRect().height : props.headerFallbackHeight;
+      // Measure the zoom AT the header (not just the root): the header's
+      // gBCR carries the zoom of every ancestor between it and the root,
+      // so the conversion factor is read from the same chain.
+      const z = ancestorZoom(header ?? document.body);
+      const headerH = header
+        ? header.getBoundingClientRect().height / z
+        : props.headerFallbackHeight;
       topPx.value = appTop + headerH / 2;
     }
 

@@ -1,5 +1,6 @@
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, Teleport, type CSSProperties, type PropType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
+import { ancestorZoom } from "../runtime/cssZoom";
 import "./HkTooltip.scss";
 
 export default defineComponent({
@@ -33,6 +34,15 @@ export default defineComponent({
       if (!wrapperRef.value) return;
       const rect = wrapperRef.value.getBoundingClientRect();
       const gap = 8;
+      // The tooltip teleports to <body> — inside any root CSS zoom
+      // subtree — while `rect` is already in the root visual space
+      // (standardized zoom reports ancestor zoom applied). The browser
+      // scales the tooltip's local px back up at paint, so the visual
+      // rect values must be written divided by the cumulative zoom or
+      // the tooltip drifts zoom× off its trigger (chest's root-level
+      // manual DPI scale).
+      const z = ancestorZoom(document.body);
+      const local = (v: number) => `${v / z}px`;
       const style: CSSProperties = {};
 
       if (props.maxWidth) {
@@ -41,23 +51,23 @@ export default defineComponent({
 
       switch (props.placement) {
         case "top":
-          style.top = `${rect.top - gap}px`;
-          style.left = `${rect.left + rect.width / 2}px`;
+          style.top = local(rect.top - gap);
+          style.left = local(rect.left + rect.width / 2);
           style.transform = "translate(-50%, -100%)";
           break;
         case "bottom":
-          style.top = `${rect.bottom + gap}px`;
-          style.left = `${rect.left + rect.width / 2}px`;
+          style.top = local(rect.bottom + gap);
+          style.left = local(rect.left + rect.width / 2);
           style.transform = "translate(-50%, 0)";
           break;
         case "left":
-          style.top = `${rect.top + rect.height / 2}px`;
-          style.left = `${rect.left - gap}px`;
+          style.top = local(rect.top + rect.height / 2);
+          style.left = local(rect.left - gap);
           style.transform = "translate(-100%, -50%)";
           break;
         case "right":
-          style.top = `${rect.top + rect.height / 2}px`;
-          style.left = `${rect.right + gap}px`;
+          style.top = local(rect.top + rect.height / 2);
+          style.left = local(rect.right + gap);
           style.transform = "translate(0, -50%)";
           break;
       }

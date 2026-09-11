@@ -14,6 +14,7 @@ import {
 
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import { ancestorZoom } from "../runtime/cssZoom";
 import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
@@ -557,12 +558,27 @@ export default defineComponent({
           zIndex: panelZ.value,
         };
       }
+      // Anchored coords are measured in the ROOT VISUAL space (gBCR under
+      // standardized CSS zoom reports ancestor zoom already applied), but
+      // this fixed host lives inside the zoomed subtree, so the browser
+      // scales its px back up at paint. Writing visual px verbatim landed
+      // every popup zoom× away from its anchor (chest's root-level DPI
+      // scale: a 300% menu opened three viewport-widths off screen; a
+      // top-anchored popover floated a zoom× gap above its footer bar).
+      // Divide once at the write layer — the measurement, flip and clamp
+      // math above stays in the visual space it was computed in. The
+      // anchored branch is edge-anchored (0 / custom property) and needs
+      // none. Known limit: nothing observes a root-zoom change while the
+      // popover is open (resize/RO/reopen all recompute) — transient
+      // surfaces reopen correct, so no zoom watcher is wired.
+      const z = ancestorZoom(panelHostRef.value ?? document.body);
       const c = coords.value;
+      const localPx = (v: number) => `${v / z}px`;
       return {
-        ...(c.top != null ? { top: `${c.top}px` } : {}),
-        ...(c.left != null ? { left: `${c.left}px` } : {}),
-        ...(c.bottom != null ? { bottom: `${c.bottom}px` } : {}),
-        ...(c.right != null ? { right: `${c.right}px` } : {}),
+        ...(c.top != null ? { top: localPx(c.top) } : {}),
+        ...(c.left != null ? { left: localPx(c.left) } : {}),
+        ...(c.bottom != null ? { bottom: localPx(c.bottom) } : {}),
+        ...(c.right != null ? { right: localPx(c.right) } : {}),
         position: "fixed" as const,
         pointerEvents: "auto" as const,
         zIndex: panelZ.value,

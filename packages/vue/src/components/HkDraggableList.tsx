@@ -1,6 +1,7 @@
 import { defineComponent, onBeforeUnmount, ref, shallowRef, type PropType } from "vue";
 import { onceFrame } from "../runtime/animationBus";
 import { useReportedTransition } from "../composables/useReportedTransition";
+import { ancestorZoom } from "../runtime/cssZoom";
 import "./HkDraggableList.scss";
 
 export interface DragListItem {
@@ -96,8 +97,14 @@ export default defineComponent({
       const node = document.createElement("div");
       node.className = "hk-draggable-list-ghost";
       node.innerHTML = html;
-      node.style.width = `${sourceRect.width}px`;
-      node.style.transform = `translate3d(${sourceRect.left}px, ${sourceRect.top}px, 0)`;
+      // The ghost is appended to <body> — inside any root CSS zoom
+      // subtree — so its px are LOCAL while sourceRect (gBCR) reports the
+      // root VISUAL space (standardized zoom applies ancestor zoom).
+      // Divide at the write layer or the ghost paints zoom× too large and
+      // zoom× off the pointer (chest's root-level manual DPI scale).
+      const z = ancestorZoom(document.body);
+      node.style.width = `${sourceRect.width / z}px`;
+      node.style.transform = `translate3d(${sourceRect.left / z}px, ${sourceRect.top / z}px, 0)`;
       node.style.pointerEvents = "none";
       document.body.appendChild(node);
       ghostNode = node;
@@ -113,8 +120,12 @@ export default defineComponent({
     function moveGhost(clientY: number) {
       const s = drag.value;
       if (!s || !ghostNode) return;
-      const gx = s.originX - s.grabOffsetX;
-      const gy = clientY - s.grabOffsetY;
+      // gx/gy are the ghost's visual top-left (client coords minus the
+      // visual grab offset); the teleported ghost paints local px scaled
+      // by the cumulative zoom — divide once at the write layer.
+      const z = ancestorZoom(document.body);
+      const gx = (s.originX - s.grabOffsetX) / z;
+      const gy = (clientY - s.grabOffsetY) / z;
       ghostNode.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
     }
 

@@ -13,6 +13,7 @@ import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
+import { ancestorZoom } from "../runtime/cssZoom";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
@@ -525,9 +526,22 @@ export default defineComponent({
       const anchor = props.anchorRef;
       if (!anchor) return;
       const r = anchor.getBoundingClientRect();
-      // 0 (unstyled/test environments) counts as unmeasured — fall back.
-      const pw = panelRef.value?.offsetWidth || Math.max(r.width, 180);
-      const ph = panelRef.value?.offsetHeight || 200;
+      // The popout host is teleported INSIDE the root zoom subtree: its
+      // inline fixed px are interpreted locally and scaled by the
+      // cumulative CSS zoom at paint, while gBCR rects (anchor r, and the
+      // clamp viewport below) report the ROOT VISUAL space where that
+      // zoom is already applied. Convert both ways at the boundaries —
+      // offsetWidth stays local (and transform-agnostic, unlike gBCR
+      // which would swallow the enter transition's scale) so panel sizes
+      // are multiplied into visual space for the flip/clamp math, and the
+      // final px are divided back to local for the write. Without the
+      // conversion every dropdown lands zoom× away from its trigger
+      // (chest's root-level manual DPI scale).
+      const z = ancestorZoom(popoutHostRef.value ?? document.body);
+      const pwRaw = panelRef.value?.offsetWidth || 0;
+      const phRaw = panelRef.value?.offsetHeight || 0;
+      const pw = pwRaw > 0 ? pwRaw * z : Math.max(r.width, 180);
+      const ph = phRaw > 0 ? phRaw * z : 200;
       let side: "top" | "bottom" = props.placement.startsWith("top-") ? "top" : "bottom";
       let top =
         side === "top"
@@ -566,9 +580,9 @@ export default defineComponent({
       const maxLeft = Math.max(VIEWPORT_PAD, window.innerWidth - VIEWPORT_PAD - pw);
       left = Math.min(Math.max(left, VIEWPORT_PAD), maxLeft);
       coords.value = {
-        top: `${Math.round(top)}px`,
-        left: `${Math.round(left)}px`,
-        ...(props.matchAnchorWidth ? { minWidth: `${Math.round(r.width)}px` } : {}),
+        top: `${Math.round(top / z)}px`,
+        left: `${Math.round(left / z)}px`,
+        ...(props.matchAnchorWidth ? { minWidth: `${Math.round(r.width / z)}px` } : {}),
       };
     }
 

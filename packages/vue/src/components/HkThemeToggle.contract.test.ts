@@ -40,4 +40,24 @@ describe("HkThemeToggle row lead-cell contract", () => {
     // target the lead slot class.
     expect(css).not.toMatch(/\.s-theme-item-btn \.hk-menu-item-icon\s*\{/);
   });
+
+  it("aligns the customize row to the lead column without rescaling its glyph", () => {
+    const css = read("HkThemeToggle.scss");
+    // The customize affordance joins the 28px lead column (2026-09-11
+    // field report: its palette sat a full cell left of the rows' bitmap
+    // marks), but the glyph must keep the standard menu icon size —
+    // mi.icon normalizes svg to the cell, so the box is pinned back.
+    const block = css.match(
+      /\.s-theme-item-customize \.hk-menu-item-icon\s*\{[^}]*\}/,
+    );
+    expect(block).not.toBeNull();
+    expect(block![0]).toContain("width: 28px");
+    expect(block![0]).toContain("height: 28px");
+
+    const svgBlock = css.match(
+      /\.s-theme-item-customize \.hk-menu-item-icon > svg\s*\{[^}]*\}/,
+    );
+    expect(svgBlock).not.toBeNull();
+    expect(svgBlock![0]).toContain("var(--hk-menu-item-icon-box)");
+  });
 });

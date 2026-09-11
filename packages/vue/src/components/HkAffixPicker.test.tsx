@@ -444,4 +444,33 @@ describe("HkAffixPicker", () => {
     // CSS/text half of the contract is pinned by the contract test.
     expect(document.querySelector(".hk-affix-list .hk-scrollbar-track")).toBeNull();
   });
+
+  it("caps its popup surface with the tag editor's own measure", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+    await openPopup(container);
+
+    // The picker renders through HkMenu, which forwards a cap to the shared
+    // panel surface: the popup scrolls inside min(18rem, 45dvh) instead of
+    // stretching to the panel's 36rem ceiling — the same measure HkTagInput
+    // uses, so the two sibling chip pickers read consistently.
+    const popout = document.querySelector<HTMLElement>(".hk-select-popout");
+    expect(popout, "the popup renders as the shared popout").toBeTruthy();
+    expect(popout!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(
+      "min(18rem, 45dvh)",
+    );
+    // The cap is the SURFACE's: the popout carries the hook and no inline
+    // max-height of its own…
+    expect(popout!.style.maxHeight).toBe("");
+    // …and the picker still opts out of matching the chip's width.
+    expect(document.querySelector<HTMLElement>(".hk-select-popout-host")!.style.minWidth).toBe(
+      "",
+    );
+
+    // The popup's designed measure is untouched: the content wrapper stays a
+    // plain width container with no cap or scroll region of its own.
+    const content = document.querySelector<HTMLElement>(".hk-affix-scroll");
+    expect(content, "the content wrapper renders").toBeTruthy();
+    expect(content!.hasAttribute("style"), "no inline style on the content").toBe(false);
+    expect(document.querySelector(".hk-affix-list .hk-scrollbar-track")).toBeNull();
+  });
 });

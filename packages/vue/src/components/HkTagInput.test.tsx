@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
@@ -1494,6 +1497,92 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     expect(tagTexts(container)).toEqual(["gitee.com", "Technology", "News"]);
   });
 
+  it("lifts the dragged chip and drops the lift on release", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    const strip = tags(container);
+    pinStrip(strip, 60, "x");
+
+    // Mid-gesture (still held): exactly the item being moved carries the
+    // drag state — the hook the stylesheet lifts — and the slot it would
+    // land in keeps its own ring. Nothing else is marked.
+    holdPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, strip[0]);
+    await nextTick();
+    const dragging = tags(container).filter((t) =>
+      t.classList.contains("hk-tag-input-tag-dragging"),
+    );
+    expect(dragging).toHaveLength(1);
+    expect(dragging[0]).toBe(strip[0]);
+    expect(tags(container).filter((t) => t.classList.contains("hk-tag-input-tag-drop"))).toHaveLength(
+      1,
+    );
+
+    releasePointer({ x: 200, y: 10 });
+    await settle();
+    // The lift is a LIVE-drag state: the release clears it in both lists.
+    expect(container.querySelectorAll(".hk-tag-input-tag-dragging")).toHaveLength(0);
+    expect(container.querySelectorAll(".hk-tag-input-tag-drop")).toHaveLength(0);
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+  });
+
+  it("drops the chip's lift when the gesture is cancelled without a drop", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
+    pinStrip(tags(container), 60, "x");
+
+    holdPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, tags(container)[0]);
+    await nextTick();
+    expect(container.querySelectorAll(".hk-tag-input-tag-dragging")).toHaveLength(1);
+
+    // The browser takes the gesture back (a vertical scroll on touch): the
+    // drag is abandoned — no reorder, and no lift left behind.
+    window.dispatchEvent(
+      new PointerEvent("pointercancel", { bubbles: true, pointerId: 1, pointerType: "touch" }),
+    );
+    await settle();
+    expect(container.querySelectorAll(".hk-tag-input-tag-dragging")).toHaveLength(0);
+    expect(container.querySelectorAll(".hk-tag-input-tag-drop")).toHaveLength(0);
+    expect(events.modelValue).toEqual([]);
+  });
+
+  it("lifts the dragged panel row too, and drops the lift on release", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    pinStrip(selected, 40, "y");
+
+    // The row face of the same lift is the data attribute the stylesheet
+    // keys off (rows carry no classes of their own).
+    holdPointer({ x: 10, y: 10 }, { x: 10, y: 130 }, grip(selected[0]));
+    await nextTick();
+    const draggingRows = rows().filter((row) => row.hasAttribute("data-dragging"));
+    expect(draggingRows).toHaveLength(1);
+    expect(draggingRows[0]).toBe(selected[0]);
+    expect(rows().filter((row) => row.hasAttribute("data-drop"))).toHaveLength(1);
+
+    releasePointer({ x: 10, y: 130 });
+    await settle();
+    expect(rows().filter((row) => row.hasAttribute("data-dragging"))).toHaveLength(0);
+    expect(rows().filter((row) => row.hasAttribute("data-drop"))).toHaveLength(0);
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+  });
+
+  it("hands a disabled field's chips to text selection instead of a drag", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"], disabled: true });
+
+    // The stylesheet restores selection (and drops the grab cursor) through
+    // the box's OWN disabled hook — happy-dom has no layout, so the pin is
+    // on that attribute, which is exactly what the rule keys off.
+    expect(field(container).hasAttribute("data-disabled")).toBe(true);
+    expect(tags(container)).toHaveLength(2);
+
+    // Nothing can be reordered here, so a press that travels the whole strip
+    // must not be spent on a drag: no state, no emission, no lifted chip.
+    pinStrip(tags(container), 60, "x");
+    dragPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, tags(container)[0]);
+    await settle();
+    expect(events.modelValue).toEqual([]);
+    expect(container.querySelectorAll(".hk-tag-input-tag-dragging")).toHaveLength(0);
+  });
+
   it("keeps a sub-threshold press a click — and never drags from the ×", async () => {
     const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
     pinStrip(tags(container), 60, "x");
@@ -1922,5 +2011,99 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     await nextTick();
     expect(container.querySelectorAll(".hk-tag.hk-list-reveal-leave-active")).toHaveLength(1);
     expect(tagTexts(container)).toEqual(["Technology"]);
+  });
+});
+
+/* The stylesheet half of the states asserted above: happy-dom has no layout
+ * engine, so the DOM tests can only pin the HOOKS — these assertions pin
+ * what those hooks actually buy (the lift, the selection restore, and the
+ * reduced-motion handling), the way the sibling contract tests in this
+ * directory pin the scroll and panel-geometry contracts. */
+const scss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkTagInput.scss"), "utf-8");
+
+/** The declaration block of the rule whose selector list starts at the
+ *  FIRST `selector` occurrence — braces balanced, so a nested block cannot
+ *  let properties appended after it evade the pin. */
+function styleBlock(selector: string): string {
+  const at = scss.indexOf(selector);
+  expect(at, `${selector} is styled`).toBeGreaterThanOrEqual(0);
+  const open = scss.indexOf("{", at);
+  let depth = 0;
+  for (let i = open; i < scss.length; i += 1) {
+    if (scss[i] === "{") depth += 1;
+    else if (scss[i] === "}") {
+      depth -= 1;
+      if (depth === 0) return scss.slice(open, i + 1);
+    }
+  }
+  return "";
+}
+
+describe("HkTagInput drag feedback and text selection", () => {
+  it("lifts the dragged item in both lists instead of only dimming it", () => {
+    const lift = styleBlock(".hk-tag-input-tag-dragging,");
+    // ONE rule body serves both lists: the chip's class and the row's data
+    // attribute — the very hooks the DOM tests above assert.
+    expect(scss).toMatch(
+      /\.hk-tag-input-tag-dragging,\s*\n\.hk-tag-input-row\[data-dragging\]\s*\{/,
+    );
+    expect(lift).toMatch(/box-shadow:/);
+    // Subtle dimming on purpose: the lifted item must stay readable as the
+    // one being moved, not fade away (the pre-wave 0.55 did).
+    expect(lift).toMatch(/opacity:\s*0\.85/);
+    // The lift is a state, never layout: no width/height/margin edits, and
+    // no isotropic scale smuggled into the shared body.
+    expect(lift).not.toMatch(/(^|[^-])(width|height|margin|padding)\s*:/);
+    expect(lift).not.toMatch(/transform\s*:/);
+  });
+
+  it("scales each list ALONG its drag axis and never across it", () => {
+    // The drop slot is resolved from the items' live rects
+    // (usePointerReorder.indexAt): the item's midpoint on the drag axis
+    // picks the slot, and every item's span on the axis ACROSS it decides
+    // which line the pointer is on. A scale is symmetric about the centre,
+    // so scaling along the drag axis changes neither — while growing across
+    // it widens the dragged item's band, and a pointer a few pixels outside
+    // the strip would then match that item alone: every sibling falls out of
+    // the line filter and the drag silently collapses to a no-op. CSS is the
+    // only place this can regress, so each hook's own transform is pinned.
+    const axisTransform = (hook: string): string | undefined =>
+      scss.match(
+        new RegExp(`${hook.replace(/[[\]]/g, "\\$&")}\\s*\\{\\s*transform:\\s*([^;]+);`),
+      )?.[1];
+    expect(axisTransform(".hk-tag-input-tag-dragging"), "the chip strip is horizontal").toBe(
+      "scaleX(1.03)",
+    );
+    expect(axisTransform(".hk-tag-input-row[data-dragging]"), "the row list is vertical").toBe(
+      "scaleY(1.03)",
+    );
+  });
+
+  it("keeps the lift's state marker under reduced motion and drops only its ramp", () => {
+    const reduce = scss.slice(scss.indexOf("@media (prefers-reduced-motion: reduce)"));
+    expect(reduce, "the reduced-motion block exists").toContain(".hk-tag-input-tag-dragging");
+    expect(reduce).toContain(".hk-tag-input-row[data-dragging]");
+    expect(reduce).toMatch(/transition:\s*none/);
+    // The scale and the shadow survive — a reduced-motion user gets the
+    // same affordance, just without the 0.12s motion.
+    expect(reduce).not.toMatch(/transform:\s*none/);
+    expect(reduce).not.toMatch(/box-shadow:\s*none/);
+  });
+
+  it("restores text selection on a disabled field's chips only", () => {
+    const disabled = styleBlock(".hk-tag-input-box[data-disabled] .hk-tag-input-tag");
+    expect(disabled).toContain("user-select: text");
+    expect(disabled).toContain("-webkit-user-select: text");
+    expect(disabled).toContain("cursor: default");
+    // The editable chip keeps the gesture reservation: its press is the
+    // reorder gesture, so it stays non-selectable (the documented trade-off).
+    const chip = styleBlock(".hk-tag-input-tag {");
+    expect(chip).toContain("user-select: none");
+    expect(chip).toContain("cursor: grab");
+    // The panel rows' LABELS are never selection-blocked — only the grip,
+    // which is the drag handle, reserves the gesture.
+    expect(styleBlock(".hk-tag-input-grip {")).toContain("user-select: none");
+    const row = styleBlock(".hk-tag-input-row {");
+    expect(row).not.toMatch(/user-select/);
   });
 });

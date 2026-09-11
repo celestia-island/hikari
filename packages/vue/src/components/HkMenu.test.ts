@@ -345,6 +345,75 @@ describe("HkMenu on the HkSelectPanel surface", () => {
   });
 });
 
+describe("HkMenu surface cap (maxHeight)", () => {
+  const CAP = "min(18rem, 45dvh)";
+
+  it("renders no cap at all when the prop is absent (the additive no-op)", async () => {
+    // Pinned at the DOM level rather than in source text: with no
+    // `maxHeight` the shared panel forwards nothing, so the popout
+    // publishes no hook and carries no inline max-height — every existing
+    // consumer (theme switchers, cascades, the menubar) is untouched.
+    mountMenu(ref(true));
+    await settle();
+    const popout = popouts()[0];
+    expect(popout.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+    expect(popout.style.maxHeight).toBe("");
+    expect(popout.hasAttribute("style"), "no inline style at all").toBe(false);
+  });
+
+  it("publishes the cap on the root popout and on every cascade level", async () => {
+    mountMenu(ref(true), siblingItems, {}, { props: { maxHeight: CAP } });
+    await settle();
+    expect(popouts()[0].style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+
+    // A cascade level is its own scroll surface, so it is capped too.
+    rowByLabel("Branch One")!.click();
+    await settle();
+    expect(popouts().length).toBe(2);
+    expect(popouts()[1].style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+
+    // …and the cap follows the cascade to whichever level is open.
+    rowByLabel("Branch Two")!.click();
+    await settle();
+    expect(popouts().length).toBe(2);
+    expect(popouts()[1].textContent).toContain("Two A");
+    expect(popouts()[1].style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+
+    // Height only: the cap never touches the popout's width contract.
+    expect(popoutHosts()[0].style.minWidth).toBe("");
+  });
+
+  it("caps the mobile sheet path — on the band that actually scrolls", async () => {
+    window.innerWidth = 390;
+    mountMenu(ref(true), siblingItems, {}, { props: { maxHeight: CAP } });
+    await settle();
+    expect(sheets().length).toBe(1);
+
+    // In sheet mode the element the panel caps (and the one that scrolls) is
+    // the list band inside the sheet, not the sheet panel itself.
+    const band = sheets()[0].querySelector<HTMLElement>(".hk-select-sheet-list");
+    expect(band, "the sheet list band renders").toBeTruthy();
+    expect(band!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+
+    rowByLabel("Branch One")!.click();
+    await settle();
+    expect(sheets().length).toBe(2);
+    const subBand = sheets()[1].querySelector<HTMLElement>(".hk-select-sheet-list");
+    expect(subBand, "the pushed sheet's band renders").toBeTruthy();
+    expect(subBand!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+  });
+
+  it("leaves the mobile sheet band uncapped when the prop is absent", async () => {
+    window.innerWidth = 390;
+    mountMenu(ref(true), siblingItems);
+    await settle();
+    const band = sheets()[0].querySelector<HTMLElement>(".hk-select-sheet-list");
+    expect(band, "the sheet list band renders").toBeTruthy();
+    expect(band!.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+    expect(band!.hasAttribute("style"), "no inline style at all").toBe(false);
+  });
+});
+
 describe("HkMenu check column (selectMode)", () => {
   const checkedItems: HkMenuItem[] = [
     { key: "a", label: "Alpha", checked: true },

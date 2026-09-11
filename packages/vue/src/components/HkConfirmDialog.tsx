@@ -67,10 +67,11 @@ export default defineComponent({
           default: () => (
             <div class="hk-confirm-dialog">
               <p class="hk-confirm-dialog-message">{props.message}</p>
-              {/* Primary action first, dismiss second — the desktop dialog
-               *  convention this component follows (OK/Yes before No/Cancel);
-               *  it mirrors under `dir="rtl"` because the row only reverses
-               *  visually. */}
+              {/* Primary action first, dismiss second — the message-box order
+               *  the confirmation surfaces share (HkMessageBox,
+               *  HkBlockingToast); form-dialog footers keep the primary
+               *  rightmost. It mirrors under `dir="rtl"` because the row only
+               *  reverses visually. */}
               <div class="hk-confirm-dialog-actions">
                 <HButton
                   class="hk-confirm-dialog-btn"

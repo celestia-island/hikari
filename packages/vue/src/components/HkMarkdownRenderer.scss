@@ -31,7 +31,7 @@
 .hk-markdown ul,
 .hk-markdown ol {
   margin: 0.5em 0;
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
 }
 
 .hk-markdown li {
@@ -107,7 +107,7 @@
 .hk-markdown blockquote {
   margin: 0.75em 0;
   padding: 0.5em 1em;
-  border-left: 3px solid var(--hi-color-text-tertiary, #8b949e);
+  border-inline-start: 3px solid var(--hi-color-text-tertiary, #8b949e);
   color: var(--hi-color-text-secondary, #8b949e);
 }
 
@@ -121,7 +121,7 @@
 .hk-markdown td {
   padding: 0.5em 0.75em;
   border: 1px solid var(--hi-color-border, #30363d);
-  text-align: left;
+  text-align: start;
 }
 
 .hk-markdown th {
@@ -155,7 +155,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--hi-color-surface) 70%, transparent);
+  background: color-mix(in srgb, var(--hi-color-surface, #fff) 70%, transparent);
   backdrop-filter: blur(4px);
   z-index: 10;
 }

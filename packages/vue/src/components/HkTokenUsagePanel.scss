@@ -72,7 +72,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-right: var(--space-8, 0.5rem);
+  margin-inline-end: var(--space-8, 0.5rem);
 }
 
 .s-token-panel-model-count {
@@ -92,4 +92,12 @@
   height: 100%;
   border-radius: 999px;
   transition: width var(--duration-normal, 0.3s) ease;
+}
+
+/* Size animation (bar fill) — house reduced-motion guard, as in
+   HkExpansionPanel.scss / HkAffixPicker.scss. */
+@media (prefers-reduced-motion: reduce) {
+  .s-token-panel-model-bar {
+    transition: none;
+  }
 }

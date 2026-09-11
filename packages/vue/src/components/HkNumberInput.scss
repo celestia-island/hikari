@@ -83,11 +83,11 @@
 }
 
 .hk-number-input-prefix {
-  padding-left: 0.75rem;
+  padding-inline-start: 0.75rem;
 }
 
 .hk-number-input-suffix {
-  padding-right: 0.5rem;
+  padding-inline-end: 0.5rem;
 }
 
 .hk-number-input-steppers {
@@ -98,7 +98,9 @@
      against the real box height and the divider spans it fully —
      content-sized centering left a floating ~28px stack in a 36px box. */
   align-self: stretch;
-  border-left: 1px solid var(--hi-color-border);
+  /* Inline-start so the divider faces the field/suffix side in both
+     LTR and RTL (the flex row flips under direction: rtl). */
+  border-inline-start: 1px solid var(--hi-color-border);
 }
 
 .hk-number-input-step {

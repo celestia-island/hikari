@@ -18,7 +18,7 @@
   &::before {
     content: "";
     position: absolute;
-    left: var(--guide-left, 8px);
+    inset-inline-start: var(--guide-left, 8px);
     top: 0;
     bottom: 6px;
     width: 1px;
@@ -127,6 +127,12 @@
   transform: rotate(90deg);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .hk-tree-chevron {
+    transition: none;
+  }
+}
+
 .hk-tree-leaf {
   display: block;
   border-radius: 50%;
@@ -140,7 +146,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 /* ── Label ─────────────────────────────────────── */
@@ -153,7 +159,7 @@
   text-overflow: ellipsis;
   line-height: 1.4;
   font-weight: 400;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 }
 
 /* ── Label rich-text parts (agent::skill) ───────── */

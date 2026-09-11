@@ -24,7 +24,7 @@
   background: none;
   border: 1px solid transparent;
   width: 100%;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     background-color var(--hi-duration-fast, 0.15s) ease,
@@ -62,16 +62,20 @@
 .hk-nav-item-button {
   cursor: pointer;
 
+  /* Focus ring drawn inside the border box (offset -2px, the
+     HkSelectionGrid precedent): child rows sit inside the
+     overflow:hidden .hk-nav-item-children container, whose edges shave
+     the top/bottom legs of an outer ring. */
   &:focus-visible {
     outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
 .hk-nav-item-link {
   &:focus-visible {
     outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
@@ -94,6 +98,12 @@
 }
 
 .hk-nav-item-children {
-  padding-left: 1rem;
+  padding-inline-start: 1rem;
   overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-nav-item-arrow {
+    transition: none;
+  }
 }

@@ -1,7 +1,9 @@
 .hk-minimap {
   position: absolute;
   bottom: 12px;
-  right: 12px;
+  // Corner overlay anchor mirrors in RTL like the sibling HkZoomToolbar
+  // (inset-inline-end: 8px there).
+  inset-inline-end: 12px;
   z-index: 50;
   width: 160px;
   background: rgb(var(--color-surface) / 0.82);
@@ -62,7 +64,9 @@
   background: transparent;
   color: rgb(var(--color-text));
   cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
+  transition:
+    background var(--hi-duration-fast, 0.15s) ease,
+    color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled) {
     background: rgb(var(--color-primary) / 0.1);
@@ -72,6 +76,14 @@
   &:disabled {
     color: rgb(var(--color-muted) / 40%);
     cursor: not-allowed;
+  }
+
+  // Keyboard focus ring drawn INSIDE the border box: the card clips
+  // (overflow: hidden) and the bar pads only 3px vertically, so an outer
+  // ring would be shaved per-side (HkSelectionGrid precedent).
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
   }
 }
 

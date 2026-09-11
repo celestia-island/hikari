@@ -203,8 +203,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
-  padding: 0 var(--space-8, 0.5rem) var(--space-8, 0.5rem)
-    var(--hk-sheet-title-inset, var(--space-12, 0.75rem));
+  // Logical longhand (was physical `0 x y title-inset`): the title inset is
+  // the inline START edge so RTL mirrors it with the mirrored title/close.
+  padding-block: 0 var(--space-8, 0.5rem);
+  padding-inline: var(--hk-sheet-title-inset, var(--space-12, 0.75rem))
+    var(--space-8, 0.5rem);
 }
 
 .hk-popover-sheet-title {
@@ -228,8 +231,9 @@
 .hk-popover-sheet-close {
   // Legacy placement hook — the chrome lives on the shared .hk-icon-button
   // / .hk-window-close rules (window-close.scss) since the unified-close
-  // wave. Only the right-edge pinning stays here.
-  margin-left: auto;
+  // wave. Only the trailing-edge pinning stays here (logical, so the close
+  // mirrors to the left in RTL like HkInput/HkTagInput's auto inline start).
+  margin-inline-start: auto;
 }
 
 .hk-popover-sheet-enter-active {
@@ -257,6 +261,11 @@
 @include sf.scrim-fade("hk-popover-scrim");
 
 @media (prefers-reduced-motion: reduce) {
+  // Pop transitions included: the anchored panel's translateY+scale pop is
+  // the same non-trivial motion the sheet slide already silences here
+  // (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss guards).
+  .hk-popover-enter-active,
+  .hk-popover-leave-active,
   .hk-popover-sheet-enter-active,
   .hk-popover-sheet-leave-active {
     transition: none;

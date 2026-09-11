@@ -31,10 +31,12 @@
 .hk-progress-bar-secondary {
   position: absolute;
   top: 0;
-  left: 0;
+  // Logical: anchors to the inline start like the in-flow fill, so an RTL
+  // track keeps the secondary bar on the same side as the fill.
+  inset-inline-start: 0;
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--duration-normal) var(--ease-standard);
   opacity: 0.3;
 
   &-loading {
@@ -54,7 +56,7 @@
   position: relative;
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--duration-normal) var(--ease-standard);
 
   &-loading {
     background: rgb(var(--color-primary));
@@ -105,18 +107,30 @@
   // No per-block rounding — flush multi-color blocks would otherwise show
   // hairlines at the seams.
   border-radius: 0;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width var(--duration-normal) var(--ease-standard);
   background: rgb(var(--color-primary));
 }
 
+// Keyframes animate the logical inset so the sweep mirrors in RTL together
+// with the fill/secondary anchoring (LTR-identical).
 @keyframes hk-progress-indeterminate {
   0% {
-    left: -40%;
+    inset-inline-start: -40%;
   }
   60% {
-    left: 100%;
+    inset-inline-start: 100%;
   }
   100% {
-    left: 100%;
+    inset-inline-start: 100%;
+  }
+}
+
+// House pattern (HkExpansionPanel.scss / HkAffixPicker.scss guards): the
+// infinite indeterminate sweep must not run under reduced motion; the bar
+// rests as a static 40% block at the inline start, like the done/error
+// variants rest at full width.
+@media (prefers-reduced-motion: reduce) {
+  .hk-progress-bar-indeterminate {
+    animation: none;
   }
 }

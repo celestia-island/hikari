@@ -18,7 +18,7 @@
 }
 
 .hk-input-required {
-  margin-left: var(--space-2);
+  margin-inline-start: var(--space-2);
   color: rgb(var(--color-error));
 }
 
@@ -34,7 +34,12 @@
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  /* Longhand on purpose: the comma shorthand attached the duration to the
+   * LAST property only, so hover border-color and the focus-within
+   * background/box-shadow snapped at 0s (HkButton F5, same disease). */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
   color: rgb(var(--color-text));
 
   &:hover:not(.hk-input-box-disabled) {
@@ -163,28 +168,6 @@
   resize: none;
 }
 
-.hk-input-box[data-autogrow] {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.hk-input-autogrow {
-  flex: 1;
-  min-height: 0;
-}
-
-.hk-input-textarea[data-autogrow] {
-  position: relative;
-  inset: unset;
-  width: 100%;
-  flex: 0 0 auto;
-  resize: none;
-  overflow: hidden;
-  min-height: 2.5rem;
-  text-align: start;
-}
-
 .hk-input-affix {
   display: flex;
   align-items: center;
@@ -282,10 +265,14 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #888);
+  /* Contract tokens, not the raw app triplets: --color-text-secondary is a
+   * bare "R G B" triplet, so using it directly as a color is invalid at
+   * computed-value time (the rule silently inherits); --color-text-primary
+   * is not defined anywhere. --hi-color-* wrap the triplets in rgb(). */
+  color: var(--hi-color-text-secondary, #888);
   cursor: pointer;
 
   &:hover {
-    color: var(--color-text-primary, #222);
+    color: var(--hi-color-text-primary, #222);
   }
 }

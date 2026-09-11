@@ -7,7 +7,7 @@
   gap: 2px;
   position: absolute;
   top: 8px;
-  right: 8px;
+  inset-inline-end: 8px;
   z-index: 10;
   border-radius: var(--radius-md);
   background: rgb(var(--color-surface) / 85%);
@@ -32,7 +32,6 @@
 }
 
 .hk-zoom-reset-btn {
-  margin-left: 2px;
-  border-left: 1px solid rgb(var(--color-border) / 8%);
-  padding-left: 4px;
+  margin-inline-start: 2px;
+  border-inline-start: 1px solid rgb(var(--color-border) / 8%);
 }

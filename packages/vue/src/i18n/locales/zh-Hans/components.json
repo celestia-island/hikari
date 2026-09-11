@@ -217,5 +217,6 @@
   "hikari::tagInput.search": "搜索",
   "hikari::tagInput.empty": "没有匹配项",
   "hikari::tagInput.remove": "移除",
-  "hikari::tagInput.addCustom": "使用「{q}」"
+  "hikari::tagInput.addCustom": "使用「{q}」",
+  "hikari::tagInput.reorder": "拖动排序 — {label}"
 }

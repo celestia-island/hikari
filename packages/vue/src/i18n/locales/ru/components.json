@@ -208,5 +208,6 @@
   "hikari::tagInput.search": "Поиск",
   "hikari::tagInput.empty": "Нет совпадений",
   "hikari::tagInput.remove": "Удалить",
-  "hikari::tagInput.addCustom": "Использовать «{q}»"
+  "hikari::tagInput.addCustom": "Использовать «{q}»",
+  "hikari::tagInput.reorder": "Изменить порядок — {label}"
 }

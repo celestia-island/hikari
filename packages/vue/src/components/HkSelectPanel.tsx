@@ -47,6 +47,15 @@ import "./HkSelect.scss";
  * events on the panel surface are forwarded (`keydown`) so owners that own
  * an option model (like HkSelect) can run their own arrow/enter navigation.
  *
+ * Geometry is the surface's to decide: `matchAnchorWidth` (default true,
+ * select parity) ties the popout's minimum width to the trigger, and the
+ * optional `maxHeight` caps whichever element scrolls (the desktop popout,
+ * the mobile sheet's list band). Both are opt-outs — a consumer that passes
+ * neither gets the historic panel, which is what every existing caller
+ * does; a consumer whose content should scroll inside a hugged surface
+ * (a tag catalog, a long filter list) sets them and relies on the panel's
+ * ONE scrollbar.
+ *
  * Mobile sheets also run a duplicate-title filter: content that opens with
  * a non-interactive heading exactly repeating the panel `title` is hidden
  * (`.hk-sheet-dup-title`) — the sheet header already names the sheet, and
@@ -85,6 +94,23 @@ export default defineComponent({
     offset: { type: Number, default: 4 },
     /** Popout min-width follows the anchor width (select parity). */
     matchAnchorWidth: { type: Boolean, default: true },
+    /** Cap for the surface that scrolls — the desktop popout or the
+     *  mobile sheet's list band — as ANY CSS length (`min(18rem, 45dvh)`,
+     *  `24rem`, `calc(50vh - 3rem)`).
+     *
+     *  Undefined (the default) keeps the stylesheet's own ceilings, so
+     *  every existing consumer is untouched; a consumer whose content
+     *  should scroll instead of stretching the panel to the viewport sets
+     *  it, and the panel's ONE scrollbar (never a second region) does the
+     *  rest. Applied through the `--hk-select-panel-max-height` hook
+     *  HkSelect.scss reads, inside its `@supports (height: 1dvh)` branch —
+     *  a value an engine cannot use is therefore IGNORED rather than
+     *  clamped: the popout keeps the plain-vh ceiling it has today.
+     *  A MALFORMED value (a typo, a bare number) is likewise not sanitized:
+     *  the substituted declaration becomes invalid at computed-value time
+     *  and resolves to `max-height: none`, i.e. the surface is UNCAPPED —
+     *  the type gate is a CSS length, the value gate is the consumer's. */
+    maxHeight: { type: String, default: undefined },
     /** Dock as a bottom sheet on phone-width viewports. */
     sheetOnMobile: { type: Boolean, default: true },
   },
@@ -319,6 +345,14 @@ export default defineComponent({
     // the sheet panel also carries the grabber + title bands.
     const sheetBodyRef = ref<HTMLElement>();
     const coords = ref<{ top?: string; left?: string; minWidth?: string }>({});
+
+    /** Host-tunable surface cap (the `maxHeight` prop): published as the
+     *  custom property HkSelect.scss reads on whichever element scrolls,
+     *  so the stylesheet keeps today's ceiling as its fallback and a
+     *  consumer that passes nothing renders exactly as before. */
+    const surfaceCap = computed<Record<string, string> | undefined>(() =>
+      props.maxHeight ? { "--hk-select-panel-max-height": props.maxHeight } : undefined,
+    );
 
     // ── overlay scrollbar (shared chrome) ─────────────────────────
     // Attached per open on whichever surface scrolls — the desktop
@@ -632,7 +666,11 @@ export default defineComponent({
                     </HIconButton>
                   </div>
                   <div class="hk-select-sheet-body" ref={sheetBodyRef}>
-                    <div class="hk-select-sheet-list" ref={sheetListRef}>
+                    <div
+                      class="hk-select-sheet-list"
+                      ref={sheetListRef}
+                      style={surfaceCap.value}
+                    >
                       <div class="hk-select-sheet-content" ref={sheetContentRef}>
                         {slots.default?.()}
                       </div>
@@ -663,6 +701,7 @@ export default defineComponent({
                 <div
                   ref={panelRef}
                   class="hk-select-popout"
+                  style={surfaceCap.value}
                   aria-label={props.title || undefined}
                   onKeydown={forwardKeydown}
                 >

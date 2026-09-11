@@ -101,10 +101,14 @@
 
 /* A disabled field reorders nothing: the chips drop the grab affordance
  * (and the gesture reservation with it) — the box's own not-allowed
- * cursor takes over. */
+ * cursor takes over — and they become plain TEXT: with no drag left to
+ * lose, the press is free to select, so the chips are selectable here
+ * (the one state where selection and reordering cannot compete). */
 .hk-tag-input-box[data-disabled] .hk-tag-input-tag {
   cursor: default;
   touch-action: auto;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* ── inline typing input / placeholder ────────────────────────────── */
@@ -318,14 +322,50 @@
 }
 
 /* ── reordering ───────────────────────────────────────────────────── */
-/* Live drag (both lists): the item being moved dims, the slot it would
- * land in is ringed. Chips carry the state as classes (HkTag takes no
- * arbitrary attributes), panel rows as data attributes — both are
- * assertable hooks that never collide with the pointer/hover faces. */
+/* Live drag (both lists): the item being moved LIFTS — a touch larger and
+ * raised off the surface — while the slot it would land in is ringed. The
+ * lift is what makes the drag read on touch, where the finger covers the
+ * chip, the cursor is invisible and dimming alone looks like nothing
+ * happened. The dimming stays LIGHT on purpose (0.85, the value of the
+ * HkDraggableList/HkDraggableGrid drag ghost): the item must still read as
+ * the one being moved, not fade out. `transform` reflows nothing — no
+ * neighbour ever moves for it — and the axis rules below keep it out of the
+ * drag's own geometry too. The raised shadow replaces the row's own
+ * box-shadow faces for as long as the drag lasts (the keyboard cursor's
+ * inset ring included: the lift is the live state).
+ *
+ * Chips carry the state as classes (HkTag takes no arbitrary attributes),
+ * panel rows as data attributes — both are assertable hooks that never
+ * collide with the pointer/hover faces. */
 .hk-tag-input-tag-dragging,
 .hk-tag-input-row[data-dragging] {
-  opacity: 0.55;
+  opacity: 0.85;
   cursor: grabbing;
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 24%),
+    0 2px 6px rgb(0 0 0 / 16%);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* The scale runs ALONG each list's own drag axis, never across it. A drag
+ * resolves its landing slot from the items' LIVE rects (usePointerReorder
+ * .indexAt): the item's MIDPOINT on the drag axis picks the slot, and on
+ * the axis ACROSS it every item's span decides which line the pointer is
+ * on — a filter that started out a no-op precisely because every row spans
+ * the list's full width. A scale is symmetric about the item's centre, so
+ * scaling along the drag axis leaves both readings exactly as they were;
+ * growing ACROSS it widens one item's band, and a pointer a few pixels
+ * outside the strip (the row list's own padding is 6px) would then match
+ * that item ALONE — every sibling falls out of the line filter, the slot
+ * collapses back onto the item's own index, and the drag ends as a silent
+ * no-op with no drop ring anywhere. Chips therefore scale on X (a
+ * horizontal strip), rows on Y (a vertical list). */
+.hk-tag-input-tag-dragging {
+  transform: scaleX(1.03);
+}
+
+.hk-tag-input-row[data-dragging] {
+  transform: scaleY(1.03);
 }
 
 .hk-tag-input-tag-drop {
@@ -384,7 +424,13 @@
   .hk-tag-input-box,
   .hk-tag-input-chevron,
   .hk-tag-input-grip,
-  .hk-tag-input-row {
+  .hk-tag-input-row,
+  /* The lift itself is KEPT without its ramp: the scale and the raised
+   * shadow are a static state marker, not motion, and dropping them would
+   * take the drag feedback away from exactly the users who cannot rely on
+   * the cursor following the pointer — only the 0.12s transition goes. */
+  .hk-tag-input-tag-dragging,
+  .hk-tag-input-row[data-dragging] {
     transition: none;
   }
 }

@@ -142,6 +142,20 @@ export default defineComponent({
      * shrink to fit.
      */
     matchAnchorWidth: { type: Boolean, default: false },
+    /**
+     * Cap for the panel surface of EVERY level, as any CSS length
+     * (`min(18rem, 45dvh)`, `24rem`, …): it is forwarded to each
+     * HkSelectPanel this menu renders — the root desktop popout, every
+     * cascade level and each mobile sheet layer (every level is its own
+     * scroll surface, so each one is capped).
+     *
+     * Undefined (the default) forwards nothing at all, so the shared panel
+     * keeps its own ceilings and every existing consumer — theme switchers,
+     * cascades, the menubar, popups — renders exactly as before. See
+     * HkSelectPanel's own `maxHeight` for the value contract: any CSS
+     * length, applied on the `dvh`-capable branch, never sanitized.
+     */
+    maxHeight: { type: String, default: undefined },
   },
   emits: ["update:open", "select"],
   setup(props, { emit, slots }) {
@@ -549,6 +563,7 @@ export default defineComponent({
           placement={cfg.placement}
           offset={cfg.offset}
           matchAnchorWidth={cfg.match}
+          maxHeight={props.maxHeight}
           onUpdate:open={(v: boolean) => {
             if (!v) onRootCloseRequest();
           }}
@@ -576,6 +591,7 @@ export default defineComponent({
               title={branch?.label ?? props.title}
               placement="bottom-start"
               offset={0}
+              maxHeight={props.maxHeight}
               onUpdate:open={(v: boolean) => {
                 if (!v) onSubCloseRequest(level);
               }}
@@ -598,6 +614,7 @@ export default defineComponent({
           open={props.open}
           anchorRef={props.anchorRef}
           title={props.title}
+          maxHeight={props.maxHeight}
           onUpdate:open={(v: boolean) => {
             if (!v) onRootCloseRequest();
           }}
@@ -616,6 +633,7 @@ export default defineComponent({
             // Sub-levels carry no title of their own — the parent item's
             // label names the sheet.
             title={entry.item.label}
+            maxHeight={props.maxHeight}
             onUpdate:open={(v: boolean) => {
               if (!v) onStackCloseRequest(i);
             }}

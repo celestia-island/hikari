@@ -72,6 +72,11 @@ function isSubsequence(query: string, text: string): boolean {
  * as one. The row list deliberately carries no max-height/overflow; a
  * nested second scrollbar inside the same window is a contract
  * violation (2026-09-08 user report: the language sheet scrolled twice).
+ * The surface itself is capped at `min(18rem, 45dvh)` through HkMenu's
+ * `maxHeight` forwarding (the HkTagInput measure, so the family reads
+ * consistently), which bounds the one scroll region instead of letting it
+ * stretch to the shared panel's 36rem ceiling. The popup's own designed
+ * measure (13–19rem wide) is unchanged: the cap bounds HEIGHT only.
  *
  * With `tagValues`, the multi picker's TAG LIST switches to
  * value-driven primary text: a selected key renders its mapped value
@@ -368,6 +373,10 @@ export const HkAffixPicker = defineComponent({
             anchorRef={chipRef.value}
             placement={placement}
             matchAnchorWidth={false}
+            // The same cap the tag editor's catalog uses: the popup hugs its
+            // own designed measure instead of stretching to the shared
+            // panel's 36rem ceiling, and a long catalog scrolls inside it.
+            maxHeight="min(18rem, 45dvh)"
             title={title}
           >
             {{

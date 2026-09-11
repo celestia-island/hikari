@@ -130,8 +130,11 @@ type HkTagStop =
  *     a plain click/tap still clicks:
  *       * a CHIP is dragged by its BODY (its × never starts a drag, and
  *         pressing any control inside a chip is not a drag at all); the
- *         chip follows no ghost — the drop slot is highlighted and the
- *         release emits the reordered array;
+ *         chip follows no ghost — it LIFTS in place (a touch larger,
+ *         raised off the surface, only lightly dimmed so it stays legible
+ *         as the item being moved) while the drop slot is ringed and the
+ *         release emits the reordered array. The lift is what makes the
+ *         gesture readable under a finger, where the cursor is invisible;
  *       * in the PANEL only the SELECTED rows move, and only through the
  *         explicit GRIP HANDLE at the row's trailing edge (the handle is
  *         the one element that claims touch, so the sheet keeps scrolling
@@ -142,10 +145,17 @@ type HkTagStop =
  *         of the (capped) surface in one gesture; nothing is scrolled
  *         without a live drag. A row drag is CLAMPED to the selected
  *         group: unselected rows are not drop targets and never move, and
- *         a release past the group's end lands on its last position;
+ *         a release past the group's end lands on its last position. A
+ *         dragged row lifts exactly like a dragged chip;
  *     both lists are keyed HkListTransition groups (FLIP `move`), so the
  *     moved chip/row and its neighbours animate into their new places,
- *     with the library's usual reduced-motion opt-outs;
+ *     with the library's usual reduced-motion opt-outs (the lift's scale
+ *     and shadow stay — only their 0.12s ramp is dropped, so a
+ *     reduced-motion user keeps the state marker without the motion). The
+ *     lift scales ALONG each list's drag axis and never across it: the drop
+ *     slot is resolved from the items' live rects, so a span grown across
+ *     that axis would hide every sibling from the pointer and silently
+ *     collapse the gesture into a no-op;
  *   - a key in `modelValue` that the catalog does not carry (a custom
  *     tag, or an option deleted since) degrades to its raw key as the
  *     tag label — the same rule as HkAffixPicker.tagEntries. Such a key
@@ -187,6 +197,21 @@ type HkTagStop =
  * selected group (hard stops at its edges, a no-op for an unselected
  * row). The grip handle is a pointer affordance; the field and the panel
  * are otherwise pointer-only for reordering.
+ *
+ * CHIP TEXT IS NOT SELECTABLE WHILE THE FIELD IS EDITABLE — the chip is an
+ * interactive control, and its press is the reorder gesture, exactly as a
+ * `<button>`'s label is not selectable because its press is the activation.
+ * The two cannot be had at once: a press allowed to start a text selection
+ * is a press the browser has already claimed, so it can no longer become a
+ * ~6px drag (on touch the long press raises the selection callout and the
+ * drag dies on `pointercancel`; on a mouse the two gestures run together
+ * and neither reads). The threshold therefore wins by design, and the
+ * trade-off is paid where it costs nothing instead: a DISABLED field
+ * reorders nothing, so its chips ARE selectable text — the stylesheet
+ * flips their `user-select` back to `text` (and drops the grab cursor)
+ * under the box's own disabled hook. The panel rows keep their LABELS
+ * selectable even while editable: only the grip handle reserves the
+ * gesture there, and it — not the label — is the drag target.
  *
  * `maxTags` freezes ADDS only. Reordering stays available at the cap:
  * the order is host state, and a reorder adds nothing (nor removes

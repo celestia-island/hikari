@@ -72,11 +72,12 @@ export function useApproachEnd(
    *  clamps scrollHeight to clientHeight while the content does NOT
    *  overflow, so an under-filled list that grows page by page never
    *  changes that key. The under-filled state therefore bypasses the
-   *  dedup entirely and fires on every pass: scroll jitter cannot occur
-   *  there (no overflow → no scroll events), so only real
-   *  resize/mutation signals drive the emissions, and the consumer's
-   *  own loading flag paces the walk — the auto-fill first-screen
-   *  contract. */
+   *  dedup entirely and fires on every pass: the consumer's own loading
+   *  flag paces the walk — the auto-fill first-screen contract. (Only
+   *  real resize/mutation signals drive the passes in the common case;
+   *  a list that horizontally overflows while vertically under-filled
+   *  also sees horizontal scroll events here, which is fine — still
+   *  real user-driven signals, paced by the guard.) */
   function check(force = false): void {
     if (stopped) return;
     const vp = viewport.value;

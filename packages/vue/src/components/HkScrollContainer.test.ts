@@ -12,6 +12,7 @@ interface Mounted {
     refresh: () => void;
     getOverflow: () => { horizontal: string; vertical: string };
     isNearEnd?: () => boolean;
+    recheck?: () => void;
   } | null;
 }
 
@@ -184,5 +185,19 @@ describe("HkScrollContainer approachEnd", () => {
     mountScroller({ onApproachEnd: () => emissions.push(1) });
     await flushFrames();
     expect(emissions.length).toBe(0);
+  });
+
+  it("exposes recheck and honours it at the container level", async () => {
+    const emissions: number[] = [];
+    const m = mountScroller({ approachEnd: true, onApproachEnd: () => emissions.push(1) });
+    stubGeometry(m.viewport, { scrollHeight: 300, clientHeight: 300, scrollTop: 0 });
+    await flushFrames();
+    expect(emissions.length).toBe(1);
+    // Pin recheck on the exposed surface: dropping it from expose() must
+    // fail here, not just at the composable level.
+    expect(typeof m.instance?.recheck).toBe("function");
+    m.instance?.recheck?.();
+    await flushFrames();
+    expect(emissions.length).toBe(2);
   });
 });

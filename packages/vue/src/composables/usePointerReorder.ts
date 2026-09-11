@@ -77,6 +77,95 @@ export interface PointerReorder {
   start: (event: PointerEvent, index: number) => void;
 }
 
+/** The display index the dragged item lands ON for a pointer at
+ *  (`main`, `cross`) — the pointer's coordinates split into the strip's
+ *  axis and the axis across it — over `rects`, starting from index `from`
+ *  (`-1` while no drag is in flight). The composable's own resolution, kept
+ *  pure so its tests can pin the no-drag path: this module is internal to
+ *  the package, so the export is not part of the published surface.
+ *
+ *  Resolved in two steps. First the LINE: items whose cross-axis span
+ *  holds the pointer (or is nearest to it) are the candidates, which is
+ *  what makes a WRAPPING chip row behave — a chip on the second line can
+ *  never be matched by a pointer on the first. A single-file strip (the
+ *  panel's column, whose rows all span the list width) has every item in
+ *  one span, so filtering by line is a strict no-op there — it only ever
+ *  separates items that really are on different lines.
+ *
+ *  Then the INSERTION POINT: the first candidate whose midpoint still
+ *  lies beyond the pointer (past the line's end when it is beyond every
+ *  candidate midpoint), which becomes a landing index by accounting for
+ *  the dragged item's own removal — dragging past one neighbour's
+ *  midpoint swaps with that neighbour instead of skipping it. -1 for an
+ *  empty strip. */
+export function indexAt(
+  rects: readonly DOMRect[],
+  axis: PointerReorderAxis,
+  main: number,
+  cross: number,
+  from: number,
+): number {
+  if (rects.length === 0) return -1;
+  /** An item's span ACROSS the strip — the axis the line is read on. */
+  const band = (rect: DOMRect) =>
+    axis === "x" ? { lo: rect.top, hi: rect.bottom } : { lo: rect.left, hi: rect.right };
+  // Nearest line wins: items in the pointer's own band score 0, and a
+  // pointer between two bands takes the closer one. The half-pixel
+  // tolerance keeps the siblings of ONE wrapped line together, whose
+  // bands can differ by sub-pixel rounding.
+  const lineGap = rects.map((rect) => {
+    const { lo, hi } = band(rect);
+    return cross < lo ? lo - cross : cross > hi ? cross - hi : 0;
+  });
+  // The line is decided by the items OTHER than the one being dragged: a
+  // drop onto the dragged item's own slot is already a no-op, so it must
+  // never be the geometry that decides which line the pointer is on —
+  // which is what makes the resolution invariant to whatever transform the
+  // host paints on the item being moved. Its live rect reflects that
+  // transform (the drag lift, a zoomed container, a `scale()` on a wrapper),
+  // so a band widened across the strip would otherwise be the unique
+  // zero-gap match: every sibling filtered out, the slot collapsed onto the
+  // item's own index, and the whole drag a silent no-op.
+  let nearest = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < lineGap.length; i += 1) {
+    if (i !== from && lineGap[i] < nearest) nearest = lineGap[i];
+  }
+  // …unless the dragged item is ALONE on its line — no sibling whose band
+  // holds its centre. A transform about the item's own centre (this
+  // library's lift, a zoomed container, a `scale()` on a wrapper) leaves
+  // that centre on the line the item was laid out on, whatever the band
+  // grew to, so a lone item's band IS that line: the exclusion above cannot
+  // see the line at all and the item speaks for itself — a single-file
+  // strip, or a chip wrapped onto a line of its own, keeps the answer it
+  // had. A transform that moves the centre OFF that line (an edge-anchored
+  // scale of ~2x or more, a translate of a whole line — nothing this
+  // library paints) is the one case these rects cannot read: the centre
+  // then decides from the line it landed on.
+  if (from >= 0 && from < rects.length) {
+    const own = band(rects[from]);
+    const centre = (own.lo + own.hi) / 2;
+    const shared = rects.some((rect, i) => {
+      if (i === from) return false;
+      const { lo, hi } = band(rect);
+      return centre >= lo - 0.5 && centre <= hi + 0.5;
+    });
+    if (!shared && lineGap[from] < nearest) nearest = lineGap[from];
+  }
+  let slot = -1;
+  for (let i = 0; i < rects.length; i += 1) {
+    if (lineGap[i] > nearest + 0.5) continue;
+    const rect = rects[i];
+    const mid = axis === "x" ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+    if (main < mid) {
+      slot = i;
+      break;
+    }
+    slot = i + 1;
+  }
+  if (slot < 0) slot = rects.length;
+  return from >= 0 && slot > from ? slot - 1 : slot;
+}
+
 /**
  * usePointerReorder — pointer drag-to-reorder for a strip of elements.
  *
@@ -146,53 +235,19 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     return options.items().filter((el): el is HTMLElement => el != null);
   }
 
-  /** The display index the dragged item lands ON for a pointer at
-   *  (`main`, `cross`) — the pointer's coordinates split into the strip's
-   *  axis and the axis across it — starting from index `from`.
-   *
-   *  Resolved in two steps. First the LINE: items whose cross-axis span
-   *  holds the pointer (or is nearest to it) are the candidates, which is
-   *  what makes a WRAPPING chip row behave — a chip on the second line can
-   *  never be matched by a pointer on the first. A single-file strip (the
-   *  panel's column, whose rows all span the list width) has every item in
-   *  one span, so filtering by line is a strict no-op there — it only ever
-   *  separates items that really are on different lines.
-   *
-   *  Then the INSERTION POINT: the first candidate whose midpoint still
-   *  lies beyond the pointer (past the line's end when it is beyond every
-   *  candidate midpoint), which becomes a landing index by accounting for
-   *  the dragged item's own removal — dragging past one neighbour's
-   *  midpoint swaps with that neighbour instead of skipping it. -1 for an
-   *  empty strip. */
-  function indexAt(main: number, cross: number, from: number): number {
+  /** The slot the live strip resolves for a pointer at (`main`, `cross`),
+   *  starting from index `from` — the elements measured, then handed to
+   *  `indexAt`, which carries the geometry's rules. */
+  function slotAt(main: number, cross: number, from: number): number {
     const items = liveItems();
     if (items.length === 0) return -1;
-    const rects = items.map((item) => item.getBoundingClientRect());
-    // Nearest line wins: items in the pointer's own band score 0, and a
-    // pointer between two bands takes the closer one. The half-pixel
-    // tolerance keeps the siblings of ONE wrapped line together, whose
-    // bands can differ by sub-pixel rounding.
-    let nearest = Number.POSITIVE_INFINITY;
-    const lineGap = rects.map((rect) => {
-      const lo = axis === "x" ? rect.top : rect.left;
-      const hi = axis === "x" ? rect.bottom : rect.right;
-      const gap = cross < lo ? lo - cross : cross > hi ? cross - hi : 0;
-      if (gap < nearest) nearest = gap;
-      return gap;
-    });
-    let slot = -1;
-    for (let i = 0; i < rects.length; i += 1) {
-      if (lineGap[i] > nearest + 0.5) continue;
-      const rect = rects[i];
-      const mid = axis === "x" ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
-      if (main < mid) {
-        slot = i;
-        break;
-      }
-      slot = i + 1;
-    }
-    if (slot < 0) slot = items.length;
-    return from >= 0 && slot > from ? slot - 1 : slot;
+    return indexAt(
+      items.map((item) => item.getBoundingClientRect()),
+      axis,
+      main,
+      cross,
+      from,
+    );
   }
 
   /** The pointer's coordinates split by axis: the position along the strip
@@ -248,7 +303,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     } else {
       container.scrollTop = next;
     }
-    const over = indexAt(lastMain, lastCross, pressedIndex);
+    const over = slotAt(lastMain, lastCross, pressedIndex);
     if (over >= 0) dragOver.value = over;
     scrollFrameId = requestAnimationFrame(scrollTick);
   }
@@ -368,7 +423,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     const at = pointerAt(event);
     lastMain = at.main;
     lastCross = at.cross;
-    const over = indexAt(lastMain, lastCross, pressedIndex);
+    const over = slotAt(lastMain, lastCross, pressedIndex);
     if (over >= 0) dragOver.value = over;
     syncAutoScroll();
   }
@@ -377,7 +432,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     if (!pressed || event.pointerId !== pointerId) return;
     const from = pressedIndex;
     const at = pointerAt(event);
-    const to = moved ? indexAt(at.main, at.cross, from) : from;
+    const to = moved ? slotAt(at.main, at.cross, from) : from;
     const dropped = moved && to >= 0 && to !== from;
     // The drag is over either way — the trap only guards the click the
     // browser is about to deliver.

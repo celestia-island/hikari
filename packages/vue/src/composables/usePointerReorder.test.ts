@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { effectScope, type EffectScope } from "vue";
 
-import { usePointerReorder, type PointerReorder } from "./usePointerReorder";
+import { usePointerReorder, indexAt, type PointerReorder } from "./usePointerReorder";
 
 /** Items with PINNED rects — happy-dom ships no layout engine, so every
  *  item is placed by hand along the axis under test (size 40, the same
@@ -32,6 +32,22 @@ function strip(axis: "x" | "y", count = 3, size = 40) {
     items.push(el);
   }
   return { container, items };
+}
+
+/** Items with hand-placed boxes on BOTH axes — the wrapping-strip pattern,
+ *  for the geometries only a transform produces (a band widened across the
+ *  strip while the item keeps its place along it). */
+function boxes(geometry: Array<{ left: number; right: number; top: number; bottom: number }>): HTMLElement[] {
+  return geometry.map((box) => {
+    const el = document.createElement("div");
+    Object.defineProperty(el, "getBoundingClientRect", {
+      configurable: true,
+      value: () =>
+        ({ ...box, width: box.right - box.left, height: box.bottom - box.top, x: box.left, y: box.top }) as DOMRect,
+    });
+    document.body.appendChild(el);
+    return el;
+  });
 }
 
 /** Waits out `frames` animation frames — the auto-scroll loop steps once
@@ -393,6 +409,112 @@ describe("usePointerReorder", () => {
       [2, 3],
       [2, 3],
     ]);
+  });
+
+  it("resolves past a dragged chip whose own band is widened across the strip", () => {
+    // One line of three chips, the DRAGGED one (index 1) reporting a band
+    // widened ACROSS the strip — which is what any transform on it does: a
+    // host's `scale()` on a wrapper, a zoomed container, a theme animating a
+    // chip. The pointer sits 3px outside the SIBLINGS' band (43 against
+    // 0-40) and inside the widened one, so the dragged chip is the unique
+    // zero-gap match: left to define the line on its own it filters every
+    // sibling out and the slot collapses onto its own index — a silent
+    // no-op, no reorder and no drop ring.
+    const items = boxes([
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: -8, bottom: 48 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ]);
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 1, { x: 150, y: 20 });
+    move(260, 43);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "260 is past item 2's midpoint of 250").toBe(2);
+    up(260, 43);
+    expect(drops).toEqual([[1, 2]]);
+  });
+
+  it("resolves the panel rows the same way when the dragged row's band is widened", () => {
+    // The same defect on the vertical strip, whose cross axis is x: the
+    // dragged row (index 1) reports its band widened from 0-40 to -8-48, so
+    // the pointer at x 44 is 4px outside the siblings' band and inside the
+    // dragged one. Both ends of the strip answer — the leading edge, then
+    // the last row.
+    const items = boxes([
+      { left: 0, right: 40, top: 0, bottom: 40 },
+      { left: -8, right: 48, top: 40, bottom: 80 },
+      { left: 0, right: 40, top: 80, bottom: 120 },
+    ]);
+    const { handle, drops } = harness("y", items);
+
+    press(handle, items, 1, { x: 20, y: 60 });
+    move(44, 5);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "5 is before every row's midpoint").toBe(0);
+    up(44, 5);
+    expect(drops).toEqual([[1, 0]]);
+
+    // …and 140 is past the last row's midpoint of 100.
+    press(handle, items, 1, { x: 20, y: 60 });
+    move(44, 140);
+    expect(handle.dragOver.value).toBe(2);
+    up(44, 140);
+    expect(drops).toEqual([
+      [1, 0],
+      [1, 2],
+    ]);
+  });
+
+  it("resolves the no-drag path (from = -1) exactly as it always did", () => {
+    // `from = -1` is the call with no drag in flight: nothing is the item
+    // being dragged, so nothing may be left out of the line — the exclusion
+    // is INERT there, not a rewrite of the resolution. The widened band
+    // therefore still owns the line on its own, which is the pre-fix value
+    // the strip resolved before the dragged item was ever excluded (the same
+    // gesture with `from = 1` answers 0 instead — see the panel-rows test).
+    const items = boxes([
+      { left: 0, right: 40, top: 0, bottom: 40 },
+      { left: -8, right: 48, top: 40, bottom: 80 },
+      { left: 0, right: 40, top: 80, bottom: 120 },
+    ]);
+    const rects = items.map((item) => item.getBoundingClientRect());
+
+    expect(indexAt(rects, "y", 5, 44, -1), "the widened row still owns the line").toBe(1);
+    // …and the geometry the fix never touched: the ends, and an empty strip.
+    expect(indexAt(rects, "y", 5000, 20, -1), "past every midpoint").toBe(3);
+    expect(indexAt(rects, "y", -5, 20, -1), "before every midpoint").toBe(0);
+    expect(indexAt([], "x", 0, 0, -1), "an empty strip has no slot").toBe(-1);
+
+    // The user-visible half of the same invariant: with no gesture at all, a
+    // pointer move resolves nothing and publishes nothing.
+    const { handle, drops } = harness("y", items);
+    move(44, 5);
+    expect(handle.dragOver.value).toBe(-1);
+    expect(handle.dragFrom.value).toBe(-1);
+    expect(drops).toEqual([]);
+  });
+
+  it("lets the dragged item speak for a line no sibling shares", () => {
+    // A chip wrapped onto a line of its own (index 2) while it is dragged:
+    // no sibling is on that line, so the dragged item's band IS the line the
+    // pointer is on and a drag within it stays the no-op it always was.
+    // Ignoring the dragged item's band outright instead would let the
+    // nearest OTHER line — a full row above — answer, and a 90px drag along
+    // its own line would jump the chip up into it.
+    const items = boxes([
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 0, right: 60, top: 40, bottom: 80 },
+    ]);
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 2, { x: 5, y: 60 });
+    move(100, 60);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "the pointer is still on the chip's own line").toBe(2);
+    up(100, 60);
+    expect(drops).toEqual([]);
   });
 
   it("retires a stale click trap when a new press starts", () => {

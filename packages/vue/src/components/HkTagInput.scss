@@ -347,19 +347,17 @@
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-/* The scale runs ALONG each list's own drag axis, never across it. A drag
- * resolves its landing slot from the items' LIVE rects (usePointerReorder
- * .indexAt): the item's MIDPOINT on the drag axis picks the slot, and on
- * the axis ACROSS it every item's span decides which line the pointer is
- * on — a filter that started out a no-op precisely because every row spans
- * the list's full width. A scale is symmetric about the item's centre, so
- * scaling along the drag axis leaves both readings exactly as they were;
- * growing ACROSS it widens one item's band, and a pointer a few pixels
- * outside the strip (the row list's own padding is 6px) would then match
- * that item ALONE — every sibling falls out of the line filter, the slot
- * collapses back onto the item's own index, and the drag ends as a silent
- * no-op with no drop ring anywhere. Chips therefore scale on X (a
- * horizontal strip), rows on Y (a vertical list). */
+/* The scale runs ALONG each list's own drag axis — chips on X (a horizontal
+ * strip), rows on Y (a vertical list). That split is TASTE, not geometry: a
+ * small scale that follows the gesture keeps the lifted item tight in a
+ * dense chip row. A drag resolves its landing slot from the items' LIVE
+ * rects (usePointerReorder's `indexAt`): the item's MIDPOINT on the drag
+ * axis picks the slot, and on the axis ACROSS it every item's span decides
+ * which line the pointer is on — a filter that started out a no-op precisely
+ * because every row spans the list's full width. The item being dragged may
+ * not decide that line (a drop onto its own slot is already a no-op), so a
+ * centre-anchored transform on it — along the axis or across it — leaves the
+ * resolution exactly where it was. */
 .hk-tag-input-tag-dragging {
   transform: scaleX(1.03);
 }

@@ -210,6 +210,26 @@
   height: 28px;
 }
 
+/* The customize affordance joins the theme rows' 28px lead column so the
+ * palette glyph and the row marks sit on one line and every name starts
+ * at the same x (2026-09-11 field report: with the lead cell at 28px and
+ * this row at the generic box, the selected theme's bitmap mark read a
+ * full cell to the right of the customize palette). The cell widens but
+ * the GLYPH keeps the standard menu icon size — mi.icon normalizes svg
+ * to the cell, so the box is pinned back explicitly; widening a cell
+ * must never re-scale its glyph (the 0.42.2 regression class). */
+.s-theme-item-customize .hk-menu-item-icon {
+  @include mi.icon;
+
+  width: 28px;
+  height: 28px;
+}
+
+.s-theme-item-customize .hk-menu-item-icon > svg {
+  width: var(--hk-menu-item-icon-box);
+  height: var(--hk-menu-item-icon-box);
+}
+
 /* Custom rows keep the name clear of the overlaid delete button. */
 .s-theme-item-row[data-custom] .s-theme-item-name {
   margin-right: 2rem;

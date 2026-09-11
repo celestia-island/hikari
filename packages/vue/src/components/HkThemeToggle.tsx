@@ -332,7 +332,7 @@ export const HkThemeToggle = defineComponent({
 
             <button
               type="button"
-              class="s-theme-item-btn"
+              class="s-theme-item-btn s-theme-item-customize"
               onClick={() => {
                 menuOpen.value = false;
                 if (props.externalCustomize) {

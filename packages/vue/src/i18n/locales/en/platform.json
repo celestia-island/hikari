@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "Icons on brand fill",
     "hikari::theme.groupCount": "{count} colors",
     "hikari::theme.extendedColors": "Extended colors",
+    "hikari::theme.onSolidGroupTitle": "On-brand content",
     "hikari::secret.title": "Secret",
     "hikari::secret.notice": "This secret is shown only once. Copy and store it before closing.",
     "hikari::secret.copy": "Copy",

@@ -327,7 +327,13 @@ export default defineComponent({
           </div>
         )}
 
-        {loaded.value && isZoomed.value && (
+        {/* The controls are visible for the WHOLE session, not only once
+            zoomed past fit (2026-09-11 user report: at fit the viewer
+            offered no affordance at all — no buttons, no percent, no hint
+            that wheel/pinch/drag exist). At fit the viewport rect says
+            nothing worth drawing, so the minimap runs toolbar-only and
+            grows the overview map back the moment zooming starts. */}
+        {loaded.value && (
           <HMinimap
             imageSrc={props.src}
             imageBounds={contentBounds.value}
@@ -344,6 +350,7 @@ export default defineComponent({
             minZoomPercent={Math.max(1, Math.round(fit.value * 100))}
             maxZoomPercent={Math.round(MAX_ZOOM * 100)}
             showReset
+            toolbarOnly={!isZoomed.value}
             onZoomTo={(percent: number) => setZoom(percent / 100)}
             onReset={resetView}
             onPanDelta={onPanDelta}

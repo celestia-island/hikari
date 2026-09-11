@@ -143,6 +143,23 @@ async function setSwatchHex(swatchIndex: number, hex: string): Promise<void> {
   await nextTick();
 }
 
+/** Set an on-brand content slot (0 = onSolidText, 1 = onSolidIcon) of the
+ *  active mode to a hex color — the pair edits inside the extended-colors
+ *  section's first group panel, not the accent row. */
+async function setOnSolidHex(slotIndex: number, hex: string): Promise<void> {
+  const swatches = document.body.querySelectorAll(
+    ".s-scheme-groups .s-scheme-group-grid .hk-color-picker-swatch-btn",
+  );
+  (swatches[slotIndex] as HTMLButtonElement).click();
+  await settle();
+  const input = document.body.querySelector(
+    ".hk-color-picker-hex-row input.hk-input-element",
+  ) as HTMLInputElement | null;
+  input!.value = hex;
+  input!.dispatchEvent(new Event("input", { bubbles: true }));
+  await nextTick();
+}
+
 beforeEach(() => {
   // Pin the effective mode so edits deterministically target the dark side.
   useTheme().setMode("dark");
@@ -156,14 +173,21 @@ afterEach(() => {
 });
 
 describe("HkColorSchemeEditor", () => {
-  it("renders the seven accent pickers plus the two on-solid content pickers", async () => {
+  it("renders seven accent pickers and moves the on-solid pair into the extended section", async () => {
     const { container } = mountEditor();
     await nextTick();
 
     const pickers = container.querySelectorAll(".s-scheme-colors .hk-color-picker");
-    expect(pickers).toHaveLength(9); // 7 accents + onSolidText + onSolidIcon
-    // No groups registered in this file yet: the extension section is absent.
-    expect(container.querySelector(".s-scheme-groups")).toBeNull();
+    expect(pickers).toHaveLength(7); // accents only — the on-solid pair moved out
+    // The extended section is always rendered: the on-brand content group
+    // lives there even with no extension token group registered.
+    const groups = container.querySelector(".s-scheme-groups");
+    expect(groups).not.toBeNull();
+    expect(groups!.querySelector(".s-scheme-groups-title")).not.toBeNull();
+    const onSolidPickers = groups!.querySelectorAll(
+      ".s-scheme-group-grid .hk-color-picker",
+    );
+    expect(onSolidPickers).toHaveLength(2); // onSolidText + onSolidIcon
   });
 
   it("editing a token updates getDraft() with the edited RGB", async () => {
@@ -175,15 +199,15 @@ describe("HkColorSchemeEditor", () => {
     expect(draft.dark.primary).toEqual({ r: 255, g: 0, b: 0 });
   });
 
-  it("editing an on-solid content color updates getDraft()", async () => {
+  it("editing an on-brand content color updates getDraft()", async () => {
     const { ref } = mountEditor();
     await nextTick();
 
-    // 9th picker in the grid = onSolidIcon (7 accents, then text, then icon).
+    // 2nd picker in the on-brand group grid = onSolidIcon (text first).
     const swatches = document.body.querySelectorAll(
-      ".s-scheme-colors .hk-color-picker-swatch-btn",
+      ".s-scheme-groups .s-scheme-group-grid .hk-color-picker-swatch-btn",
     );
-    (swatches[8] as HTMLButtonElement).click();
+    (swatches[1] as HTMLButtonElement).click();
     await settle();
     const input = document.body.querySelector(
       ".hk-color-picker-hex-row input.hk-input-element",
@@ -237,8 +261,8 @@ describe("HkColorSchemeEditor", () => {
     const { ref } = mountEditor({ initialDark: legacyDark });
     await nextTick();
 
-    // 8th picker in the grid = onSolidText (7 accents, then text, then icon).
-    await setSwatchHex(7, "00ff00");
+    // 1st picker in the on-brand group grid = onSolidText.
+    await setOnSolidHex(0, "00ff00");
     expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 0, g: 255, b: 0 });
 
     ref.value!.reset();
@@ -259,7 +283,7 @@ describe("HkColorSchemeEditor", () => {
     });
     await nextTick();
 
-    await setSwatchHex(7, "00ff00");
+    await setOnSolidHex(0, "00ff00");
     expect(ref.value!.getDraft().dark.onSolidText).toEqual({ r: 0, g: 255, b: 0 });
 
     ref.value!.reset();

@@ -123,14 +123,16 @@ export interface HCustomTheme {
  * their own surface (tabs, drawers, panels) instead of the built-in modal.
  *
  * Edits the seven accent tokens (primary/secondary/accent/success/error/
- * warning/info) plus the on-solid content colors (onSolidText — text on
- * brand fills, onSolidIcon — icons/shapes such as the switch thumb) per
- * mode (dark/light); the remaining surface tokens are derived. When
- * extension token groups are registered (`registerTokenGroup` /
- * `registerTokenGroupConfig`), the "Extended colors" section renders one
- * Material expansion panel per group — sub-sectioned groups get one panel
- * per section — with the slots laid out on a 2–3 column grid of
- * hue-clamped pickers showing full localized color names.
+ * warning/info) per mode (dark/light); the remaining surface tokens are
+ * derived. The on-solid content colors (onSolidText — text on brand
+ * fills, onSolidIcon — icons/shapes such as the switch thumb) are
+ * user-choosable too and edit as the FIRST group of the "Extended
+ * colors" section (2026-09-11 user direction: moved out of the accent
+ * row). When extension token groups are registered
+ * (`registerTokenGroup` / `registerTokenGroupConfig`), the section
+ * renders one Material expansion panel per group — sub-sectioned groups
+ * get one panel per section — with the slots laid out on a 2–3 column
+ * grid of hue-clamped pickers showing full localized color names.
  *
  * Exposes `reset()` (re-seed from props + current effective mode) and
  * `getDraft()` (snapshot the current edits as a `HCustomTheme`) for the
@@ -365,6 +367,40 @@ export const HkColorSchemeEditor = defineComponent({
       return panels;
     }
 
+    // ── On-brand content colors as their own extended group ──────────
+    // The two content tokens (text / icons on solid brand fills) USED to
+    // sit in the top accent row (2026-09-11 user direction: they are
+    // niche, rarely-tuned colors — they belong with the other extension
+    // palettes, as the section's FIRST group). Editing them here writes
+    // the exact same draft slots as before; only the location moved.
+    function renderOnSolidGroup() {
+      return (
+        <HExpansionPanel
+          key="on-solid-content"
+          title={t("hikari::theme.onSolidGroupTitle", "On-brand content")}
+          subtitle={countLabel(contentTokens.length)}
+        >
+          <div class="s-scheme-group-grid">
+            {contentTokens.map((key) => {
+              // Optional slots: an older prefilled custom theme may omit them.
+              const rgb = currentTokens.value[key] ?? WHITE;
+              return (
+                <HColorPicker
+                  key={key}
+                  r={rgb.r}
+                  g={rgb.g}
+                  b={rgb.b}
+                  label={t(`hikari::theme.tokens.${key}`)}
+                  layout="row"
+                  onChange={(next: { r: number; g: number; b: number }) => updateToken(key, next)}
+                />
+              );
+            })}
+          </div>
+        </HExpansionPanel>
+      );
+    }
+
     return () => (
       <div class="s-scheme-dialog">
         {props.showName && (
@@ -393,31 +429,18 @@ export const HkColorSchemeEditor = defineComponent({
               onChange={(rgb: { r: number; g: number; b: number }) => updateToken(key, rgb)}
             />
           ))}
-          {contentTokens.map((key) => {
-            // Optional slots: an older prefilled custom theme may omit them.
-            const rgb = currentTokens.value[key] ?? WHITE;
-            return (
-              <HColorPicker
-                key={key}
-                r={rgb.r}
-                g={rgb.g}
-                b={rgb.b}
-                label={t(`hikari::theme.tokens.${key}`)}
-                onChange={(next: { r: number; g: number; b: number }) => updateToken(key, next)}
-              />
-            );
-          })}
         </div>
-        {registeredGroups.value.length > 0 && (
-          <div class="s-scheme-groups">
-            <div class="s-scheme-groups-title">
-              {t("hikari::theme.extendedColors", "Extended colors")}
-            </div>
-            <div class="s-scheme-group-panels">
-              {registeredGroups.value.map((group) => renderGroup(group))}
-            </div>
+        {/* Always rendered now: the on-brand content group lives here even
+            when no extension token group is registered. */}
+        <div class="s-scheme-groups">
+          <div class="s-scheme-groups-title">
+            {t("hikari::theme.extendedColors", "Extended colors")}
           </div>
-        )}
+          <div class="s-scheme-group-panels">
+            {renderOnSolidGroup()}
+            {registeredGroups.value.map((group) => renderGroup(group))}
+          </div>
+        </div>
       </div>
     );
   },

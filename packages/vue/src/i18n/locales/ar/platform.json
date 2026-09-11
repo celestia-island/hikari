@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "أيقونات على لون العلامة",
     "hikari::theme.groupCount": "{count} ألوان",
     "hikari::theme.extendedColors": "ألوان موسعة",
+    "hikari::theme.onSolidGroupTitle": "المحتوى على لون العلامة",
     "hikari::secret.title": "سر",
     "hikari::secret.notice": "يُعرض هذا السر مرة واحدة فقط. انسخه واحفظه قبل الإغلاق.",
     "hikari::secret.copy": "نسخ",

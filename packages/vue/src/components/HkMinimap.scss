@@ -41,6 +41,16 @@
   pointer-events: auto;
 }
 
+// Toolbar-only form (no overview map): shrink-wrap the card around the
+// zoom bar and drop the map's separator — the bar IS the whole surface.
+.hk-minimap[data-toolbar-only] {
+  width: auto;
+
+  .hk-mm-zoom-bar {
+    border-top: none;
+  }
+}
+
 .hk-mm-zoom-btn {
   display: flex;
   align-items: center;

@@ -65,6 +65,12 @@ export default defineComponent({
     /** Show the reset/fit button in the zoom bar (chest only rendered it
      *  when a reset handler was wired up). */
     showReset: { type: Boolean, default: false },
+    /** Toolbar-only form: render just the zoom bar, no overview map. For
+     *  hosts whose viewport rect is uninformative at rest (e.g. the image
+     *  lightbox at fit zoom) but that still want the zoom controls
+     *  visible; the map is expected to reappear once it has something to
+     *  say (the viewer switches this off when zoomed past fit). */
+    toolbarOnly: { type: Boolean, default: false },
     /** Optional prop-callback surface (alternative to the emits). */
     onZoomTo: { type: Function as PropType<(percent: number) => void>, default: undefined },
     onReset: { type: Function as PropType<() => void>, default: undefined },
@@ -180,7 +186,7 @@ export default defineComponent({
     });
 
     return () => {
-      if (props.boxes.length === 0 && !props.imageSrc) return null;
+      if (props.boxes.length === 0 && !props.imageSrc && !props.toolbarOnly) return null;
 
       const s = scale.value;
       const vr = viewportRect.value;
@@ -213,42 +219,45 @@ export default defineComponent({
           ref={rootRef}
           class="hk-minimap"
           data-dragging={dragging.value ? "" : undefined}
+          data-toolbar-only={props.toolbarOnly ? "" : undefined}
         >
-          <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} class="hk-minimap-svg">
-            {imgPos && (
-              <image
-                href={props.imageSrc}
-                x={imgPos[0]}
-                y={imgPos[1]}
-                width={ib.w * s}
-                height={ib.h * s}
-                preserveAspectRatio="none"
-                class="hk-mm-image"
+          {!props.toolbarOnly && (
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} class="hk-minimap-svg">
+              {imgPos && (
+                <image
+                  href={props.imageSrc}
+                  x={imgPos[0]}
+                  y={imgPos[1]}
+                  width={ib.w * s}
+                  height={ib.h * s}
+                  preserveAspectRatio="none"
+                  class="hk-mm-image"
+                />
+              )}
+              {boxRects}
+              {hubP && (
+                <circle
+                  cx={hubP[0]}
+                  cy={hubP[1]}
+                  r={3}
+                  fill="rgb(var(--color-primary))"
+                  filter="drop-shadow(0 0 2px rgb(var(--color-primary) / 0.6))"
+                />
+              )}
+              <rect
+                x={vr.x}
+                y={vr.y}
+                width={Math.max(1, vr.w)}
+                height={Math.max(1, vr.h)}
+                fill="none"
+                stroke="rgb(var(--color-primary))"
+                stroke-width="1"
+                stroke-dasharray="3 2"
+                rx="2"
+                opacity="0.85"
               />
-            )}
-            {boxRects}
-            {hubP && (
-              <circle
-                cx={hubP[0]}
-                cy={hubP[1]}
-                r={3}
-                fill="rgb(var(--color-primary))"
-                filter="drop-shadow(0 0 2px rgb(var(--color-primary) / 0.6))"
-              />
-            )}
-            <rect
-              x={vr.x}
-              y={vr.y}
-              width={Math.max(1, vr.w)}
-              height={Math.max(1, vr.h)}
-              fill="none"
-              stroke="rgb(var(--color-primary))"
-              stroke-width="1"
-              stroke-dasharray="3 2"
-              rx="2"
-              opacity="0.85"
-            />
-          </svg>
+            </svg>
+          )}
           <div class="hk-mm-zoom-bar">
             <button
               class="hk-mm-zoom-btn"

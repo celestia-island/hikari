@@ -1,6 +1,10 @@
 {
   "name": "@celestia-island/hikari",
+<<<<<<< HEAD
   "version": "0.42.1",
+=======
+  "version": "0.42.2",
+>>>>>>> ee1d16c (🐛 Fix the collapsed lightbox stage, keep its zoom controls and close button visible, and regroup on-brand content colors.)
   "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library — production-grade UI components based on shittim-chest design system",

@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "Iconos sobre color de marca",
     "hikari::theme.groupCount": "{count} colores",
     "hikari::theme.extendedColors": "Colores extendidos",
+    "hikari::theme.onSolidGroupTitle": "Contenido sobre el color de marca",
     "hikari::secret.title": "Secreto",
     "hikari::secret.notice": "Este secreto se muestra solo una vez. Cópielo y guárdelo antes de cerrar.",
     "hikari::secret.copy": "Copiar",

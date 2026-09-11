@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "브랜드 색 위의 아이콘",
     "hikari::theme.groupCount": "색상 {count}개",
     "hikari::theme.extendedColors": "확장 색상",
+    "hikari::theme.onSolidGroupTitle": "브랜드 색상 콘텐츠",
     "hikari::secret.title": "비밀",
     "hikari::secret.notice": "이 비밀은 한 번만 표시됩니다. 닫기 전에 복사하여 저장하세요.",
     "hikari::secret.copy": "복사",

@@ -53,13 +53,16 @@ function mountTagInput(opts: MountOptions = {}) {
   };
   const container = document.createElement("div");
   document.body.appendChild(container);
+  /** The host's own array — the component's `modelValue` comes straight
+   *  from it, so a test can rewrite the order out of band (a host edit
+   *  landing mid-gesture) instead of only through the component's emits. */
+  const model = ref<readonly string[]>(opts.modelValue ?? []);
   const Host = defineComponent({
     name: "HkTagInputHost",
     setup() {
-      const value = ref<readonly string[]>(opts.modelValue ?? []);
       return () =>
         h(HkTagInput, {
-          modelValue: value.value,
+          modelValue: model.value,
           options: opts.options ?? OPTIONS,
           allowCustom: opts.allowCustom ?? false,
           label: opts.label,
@@ -72,7 +75,7 @@ function mountTagInput(opts: MountOptions = {}) {
           emptyText: opts.emptyText,
           "onUpdate:modelValue": (keys: string[]) => {
             events.modelValue.push(keys);
-            value.value = keys;
+            model.value = keys;
           },
           onAdd: (key: string) => events.add.push(key),
           onRemove: (key: string) => events.remove.push(key),
@@ -83,7 +86,7 @@ function mountTagInput(opts: MountOptions = {}) {
   const app = createApp(Host);
   app.mount(container);
   mounts.push({ app, container });
-  return { events, container };
+  return { events, container, model };
 }
 
 async function settle(): Promise<void> {
@@ -1192,6 +1195,15 @@ function holdPointer(
       clientY: from.y,
     }),
   );
+  movePointer(to, pointerType);
+}
+
+/** Move an already-held pointer — a second step of a gesture whose press
+ *  (and its exact travel) the test wants to control. */
+function movePointer(
+  to: { x: number; y: number },
+  pointerType: "mouse" | "touch" = "mouse",
+): void {
   window.dispatchEvent(
     new PointerEvent("pointermove", {
       bubbles: true,
@@ -1432,6 +1444,130 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     expect(events.remove).toEqual([]);
     // The panel and the field agree on the new order.
     expect(rowLabels().slice(0, 3)).toEqual(["Technology", "Germany", "News"]);
+  });
+
+  it("leaves the order alone when a keyboard nudge lands under a held row drag", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    pinStrip(selected, 40, "y");
+    const search = searchInput();
+    search.focus();
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    // A drag on the FIRST row is held while the cursor's row is nudged with
+    // Alt+ArrowUp. The drag's landing slot is an index into the strip it
+    // grabbed, so a reorder under the held pointer would leave the release
+    // moving whatever now sits at that index — a different row, silently.
+    // The chord is still consumed (Alt+Arrow is not a plain arrow), it just
+    // has nothing to move while a pointer owns the order.
+    holdPointer({ x: 10, y: 10 }, { x: 10, y: 130 }, grip(selected[0]));
+    await settle();
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(events.modelValue, "the chord emits nothing mid-drag").toEqual([]);
+    expect(rowLabels().slice(0, 3), "the rows stayed where they were").toEqual([
+      "News",
+      "Technology",
+      "Germany",
+    ]);
+    releasePointer({ x: 10, y: 130 });
+    await settle();
+
+    // …and the drop moves the row the pointer actually grabbed.
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+  });
+
+  it("keeps the chord out of a press that has not become a drag yet", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    pinStrip(selected, 40, "y");
+    const search = searchInput();
+    search.focus();
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    // The same chord, one step EARLIER: the pointer is down on the first
+    // row's grip but has not travelled the few pixels that turn a press into
+    // a drag, so nothing has been published yet. The press already owns the
+    // strip, though — crossing the threshold after the chord had moved a row
+    // would leave the drop resolving against a strip it never grabbed.
+    holdPointer({ x: 10, y: 10 }, { x: 12, y: 11 }, grip(selected[0]));
+    await settle();
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(events.modelValue, "the chord emits nothing under a live press").toEqual([]);
+
+    // Crossing the threshold now still moves the row the pointer grabbed.
+    movePointer({ x: 10, y: 130 });
+    releasePointer({ x: 10, y: 130 });
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+  });
+
+  it("keeps the chord out of a live CHIP drag too", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const strip = tags(container);
+    pinStrip(strip, 60, "x");
+    const search = searchInput();
+    search.focus();
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    // The panel rows and the field's chips are two views of ONE array, so a
+    // chord that reorders the rows edits the strip a chip drag is resolving
+    // against — the drag has to hold the order whichever list it grabbed.
+    holdPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, strip[0]);
+    await settle();
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(events.modelValue, "the chord emits nothing mid-drag").toEqual([]);
+    expect(tagTexts(container), "the chips stayed where they were").toEqual([
+      "News",
+      "Technology",
+      "Germany",
+    ]);
+    releasePointer({ x: 200, y: 10 });
+    await settle();
+
+    // The chip the pointer grabbed is the one that moved.
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+    expect(tagTexts(container)).toEqual(["Technology", "Germany", "News"]);
+  });
+
+  it("ends a row drag when the host reorders the list under it", async () => {
+    const { events, container, model } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    pinStrip(selected, 40, "y");
+
+    holdPointer({ x: 10, y: 10 }, { x: 10, y: 130 }, grip(selected[0]));
+    await settle();
+    // The host rewrites its own order out of band while the drag is held:
+    // the index the drag resolves by no longer names the row it grabbed.
+    model.value = ["de", "news", "tech"];
+    await settle();
+    expect(rowLabels().slice(0, 3)).toEqual(["Germany", "News", "Technology"]);
+
+    releasePointer({ x: 10, y: 130 });
+    await settle();
+
+    // The gesture ends without a reorder — a drag may come to nothing, it
+    // must never move whichever row slid into the index it was holding.
+    expect(events.modelValue, "no reorder came out of the rewritten strip").toEqual([]);
+    expect(tagTexts(container)).toEqual(["Germany", "News", "Technology"]);
   });
 
   it("clamps a row drag to the selected group", async () => {
@@ -2059,14 +2195,16 @@ describe("HkTagInput drag feedback and text selection", () => {
 
   it("scales each list ALONG its drag axis and never across it", () => {
     // The drop slot is resolved from the items' live rects
-    // (usePointerReorder.indexAt): the item's midpoint on the drag axis
-    // picks the slot, and every item's span on the axis ACROSS it decides
-    // which line the pointer is on. A scale is symmetric about the centre,
-    // so scaling along the drag axis changes neither — while growing across
-    // it widens the dragged item's band, and a pointer a few pixels outside
-    // the strip would then match that item alone: every sibling falls out of
-    // the line filter and the drag silently collapses to a no-op. CSS is the
-    // only place this can regress, so each hook's own transform is pinned.
+    // (usePointerReorder.indexAt) except for the item being dragged, whose
+    // line across the list and midpoint along it come from the geometry
+    // captured when the press landed: the item's midpoint on the drag axis
+    // picks the slot, and each item's span on the axis ACROSS it decides
+    // which line the pointer is on. A transform ON the pressed item is
+    // measured from that pre-paint geometry either way, so the lift stays on
+    // the drag axis by TASTE — a small scale following the gesture keeps a
+    // dense chip row tight — rather than because the resolution needs it.
+    // CSS is the only place the lift can regress, so each hook's own
+    // transform is pinned.
     const axisTransform = (hook: string): string | undefined =>
       scss.match(
         new RegExp(`${hook.replace(/[[\]]/g, "\\$&")}\\s*\\{\\s*transform:\\s*([^;]+);`),

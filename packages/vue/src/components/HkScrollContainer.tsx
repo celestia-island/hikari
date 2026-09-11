@@ -12,6 +12,7 @@ import {
 import { useI18n } from "../i18n/context";
 import "./HkScrollContainer.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
+import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
 import { provideScrollWindow } from "../composables/useScrollWindow";
 import { scheduleFrame, notifyScrollStart, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import HFab from "./HkFab";
@@ -61,8 +62,23 @@ export default defineComponent({
      *  scrolled away from the bottom, float a small jump-back FAB that
      *  snaps to the latest content and re-arms follow. */
     followAffordance: { type: Boolean, default: false },
+    /** Additive opt-in: sense "the viewport is at/near the end of its
+     *  content" and emit `approachEnd` so the consumer can load the
+     *  next page of data (infinite/dynamic loading). The event fires on
+     *  zone entry and whenever the content geometry grows while still
+     *  in the zone — including the initial pass when the content does
+     *  not fill the viewport, which is what lets a consumer auto-fill a
+     *  first screen. Fire-and-dedup contract: guard the handler with
+     *  your own loading flag; repeated events arrive only when new
+     *  content actually landed (or the zone was re-entered). */
+    approachEnd: { type: Boolean, default: false },
+    /** Distance in px from the vertical end that still counts as
+     *  approaching (`approachEnd`). Read live, so runtime changes need
+     *  no remount. */
+    approachDistance: { type: Number, default: 160 },
   },
-  setup(props, { slots, expose }) {
+  emits: { approachEnd: () => true },
+  setup(props, { slots, expose, emit }) {
     const { t } = useI18n();
     const viewportRef = ref<HTMLElement>();
     let ro: ResizeObserver | null = null;
@@ -86,6 +102,31 @@ export default defineComponent({
     const autoFollowContent = shallowRef<HTMLElement | null>(null);
     let followRO: ResizeObserver | null = null;
     const showAutoTag = computed(() => props.autoFollow && props.scrollbar && pinned.value);
+
+    // End-approach sensing (infinite loading): the composable owns the
+    // scroll/resize/mutation sensors; this component only owns the
+    // lifecycle and forwards the emission. `distance` is passed as a
+    // getter so runtime approachDistance changes need no restart.
+    const approachHandle = shallowRef<ApproachEndHandle | null>(null);
+
+    function startApproach() {
+      if (approachHandle.value) return;
+      approachHandle.value = useApproachEnd(
+        viewportRef as unknown as import("vue").Ref<HTMLElement | null>,
+        () => emit("approachEnd"),
+        { distance: () => props.approachDistance },
+      );
+    }
+
+    function stopApproach() {
+      approachHandle.value?.stop();
+      approachHandle.value = null;
+    }
+
+    watch(() => props.approachEnd, (on) => {
+      if (on) startApproach();
+      else stopApproach();
+    }, { flush: "post" });
 
     if (props.mode === "windowed") {
       provideScrollWindow(viewportRef as unknown as import("vue").Ref<HTMLElement | null>, props.overscanScreens);
@@ -255,6 +296,8 @@ export default defineComponent({
         mountScrollbars();
       }
 
+      if (props.approachEnd) startApproach();
+
       vp.addEventListener("scroll", onScroll, { passive: true });
       vp.addEventListener("wheel", onWheel, { passive: false });
 
@@ -287,6 +330,7 @@ export default defineComponent({
       }
       overlay?.detach();
       overlay = null;
+      stopApproach();
       scheduled?.disconnect();
       settleHandle?.disconnect();
       settleHandle = null;
@@ -341,7 +385,13 @@ export default defineComponent({
       };
     }
 
-    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow });
+    /** True while the viewport sits within `approachDistance` of its
+     *  vertical end (only meaningful with `approachEnd`). */
+    function isNearEnd(): boolean {
+      return approachHandle.value?.isNearEnd() ?? false;
+    }
+
+    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd });
 
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";

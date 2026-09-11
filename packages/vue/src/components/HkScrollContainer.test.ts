@@ -11,6 +11,7 @@ interface Mounted {
   instance: {
     refresh: () => void;
     getOverflow: () => { horizontal: string; vertical: string };
+    isNearEnd?: () => boolean;
   } | null;
 }
 
@@ -47,7 +48,7 @@ function mountScroller(props: Record<string, unknown> = {}, slotText = "content"
 /** happy-dom performs no layout, so scroll geometry is stubbed on the
  *  viewport instance (shadowing the prototype getters) before a
  *  refresh() pass re-senses the overflow. */
-function stubGeometry(el: HTMLElement, geom: { scrollWidth?: number; clientWidth?: number; scrollLeft?: number }) {
+function stubGeometry(el: HTMLElement, geom: { scrollWidth?: number; clientHeight?: number; clientWidth?: number; scrollLeft?: number; scrollHeight?: number; scrollTop?: number }) {
   const desc: PropertyDescriptorMap = {};
   for (const [key, value] of Object.entries(geom)) {
     desc[key] = { configurable: true, get: () => value };
@@ -156,5 +157,31 @@ describe("HkScrollContainer scrollbar reactivity", () => {
     props.scrollbar = false;
     await nextTick();
     expect(root.querySelectorAll(".hk-scrollbar-track").length).toBe(0);
+  });
+});
+
+describe("HkScrollContainer approachEnd", () => {
+  /** Two awaited frames: scheduleFrame's scheduling rAF + the composable's
+   *  onceFrame initial sensing pass. */
+  async function flushFrames(): Promise<void> {
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
+
+  it("emits approachEnd for under-filled content and exposes isNearEnd", async () => {
+    const emissions: number[] = [];
+    const m = mountScroller({ approachEnd: true, onApproachEnd: () => emissions.push(1) });
+    // happy-dom has no layout: under-filled = scrollHeight < clientHeight.
+    stubGeometry(m.viewport, { scrollHeight: 100, clientHeight: 300, scrollTop: 0 });
+    await flushFrames();
+    expect(emissions.length).toBe(1);
+    expect(m.instance?.isNearEnd?.()).toBe(true);
+  });
+
+  it("does not emit when the prop is off", async () => {
+    const emissions: number[] = [];
+    mountScroller({ onApproachEnd: () => emissions.push(1) });
+    await flushFrames();
+    expect(emissions.length).toBe(0);
   });
 });

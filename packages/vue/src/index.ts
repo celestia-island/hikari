@@ -66,6 +66,7 @@ export { default as HSidebar } from "./components/HkSidebar";
 export { default as HSkeleton } from "./components/HkSkeleton";
 export { default as HSkeletonList } from "./components/HkSkeletonList";
 export { default as HSlider } from "./components/HkSlider";
+export { default as HLoadMore } from "./components/HkLoadMore";
 export { default as HSpinner } from "./components/HkSpinner";
 export { default as HSwitch } from "./components/HkSwitch";
 export { default as HTable } from "./components/HkTable";
@@ -260,6 +261,9 @@ export type {
 } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";
 export type { SizeMorph } from "./composables/useSizeMorph";
+
+export { useApproachEnd } from "./composables/useApproachEnd";
+export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
 
 export { useZoomPan } from "./composables/useZoomPan";
 export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";

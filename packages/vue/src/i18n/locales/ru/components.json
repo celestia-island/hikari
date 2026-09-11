@@ -200,5 +200,8 @@
   "hikari::messageBox.ok": "ОК",
   "hikari::messageBox.alertTitle": "Уведомление",
   "hikari::messageBox.confirmTitle": "Подтвердите",
-  "hikari::messageBox.promptTitle": "Ввод"
+  "hikari::messageBox.promptTitle": "Ввод",
+  "hikari::loadMore.more": "Загрузить ещё",
+  "hikari::loadMore.loading": "Загрузка…",
+  "hikari::loadMore.end": "Вы дошли до конца"
 }

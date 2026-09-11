@@ -205,5 +205,8 @@
   "hikari::affixPicker.unset": "Not set",
   "hikari::messageBox.alertTitle": "Notice",
   "hikari::messageBox.confirmTitle": "Please confirm",
-  "hikari::messageBox.promptTitle": "Input"
+  "hikari::messageBox.promptTitle": "Input",
+  "hikari::loadMore.more": "Load more",
+  "hikari::loadMore.loading": "Loading…",
+  "hikari::loadMore.end": "You've reached the end"
 }

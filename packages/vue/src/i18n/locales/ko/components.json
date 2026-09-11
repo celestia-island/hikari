@@ -200,5 +200,8 @@
   "hikari::messageBox.ok": "확인",
   "hikari::messageBox.alertTitle": "알림",
   "hikari::messageBox.confirmTitle": "확인 필요",
-  "hikari::messageBox.promptTitle": "입력"
+  "hikari::messageBox.promptTitle": "입력",
+  "hikari::loadMore.more": "더 불러오기",
+  "hikari::loadMore.loading": "불러오는 중…",
+  "hikari::loadMore.end": "마지막 항목입니다"
 }

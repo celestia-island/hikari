@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "ブランド色上のアイコン",
     "hikari::theme.groupCount": "{count} 色",
     "hikari::theme.extendedColors": "拡張カラー",
+    "hikari::theme.onSolidGroupTitle": "ブランドカラー上のコンテンツ",
     "hikari::secret.title": "シークレット",
     "hikari::secret.notice": "このシークレットは一度だけ表示されます。閉じる前にコピーして保存してください。",
     "hikari::secret.copy": "コピー",

@@ -41,6 +41,7 @@
     "hikari::theme.tokens.onSolidIcon": "Значки на фирменном цвете",
     "hikari::theme.groupCount": "Цветов: {count}",
     "hikari::theme.extendedColors": "Расширенные цвета",
+    "hikari::theme.onSolidGroupTitle": "Контент на фирменном цвете",
     "hikari::secret.title": "Секрет",
     "hikari::secret.notice": "Этот секрет показывается только один раз. Скопируйте и сохраните его до закрытия.",
     "hikari::secret.copy": "Копировать",

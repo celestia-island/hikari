@@ -84,22 +84,28 @@ describe("HkColorSchemeDialog extension groups", () => {
   it("renders the extension section reactively when a group is registered after mount", async () => {
     mountDialog();
     await nextTick();
-    // Zero-cost for consumers that register nothing.
-    expect(document.body.querySelector(".s-scheme-groups")).toBeNull();
+    // The section always renders now (the on-brand content group lives
+    // here); before any registration it holds exactly that one panel.
+    const before = document.body.querySelector(".s-scheme-groups");
+    expect(before).toBeTruthy();
+    expect(before!.querySelectorAll(".hk-expansion-panel")).toHaveLength(1);
 
     // Late registration (after the dialog is already rendered): the
     // registry's reactive version invalidates the computed and the
-    // section appears without a remount.
+    // group's panel appears without a remount.
     registerTokenGroup(DIALOG_GROUP);
     await nextTick();
 
     const section = document.body.querySelector(".s-scheme-groups");
     expect(section).toBeTruthy();
-    // Un-sectioned group: one expansion panel, all slots on its grid.
-    expect(section!.querySelectorAll(".hk-expansion-panel")).toHaveLength(1);
-    const grid = section!.querySelector(".s-scheme-group-grid");
-    expect(grid).toBeTruthy();
-    expect(grid!.querySelectorAll(".hk-color-picker")).toHaveLength(2);
+    // The late group's panel lands after the on-brand content panel.
+    expect(section!.querySelectorAll(".hk-expansion-panel")).toHaveLength(2);
+    // The late group's own grid: scoped by its panel title, 2 slots.
+    const groupPanel = [...section!.querySelectorAll<HTMLElement>(".hk-expansion-panel")].find(
+      (p) => p.querySelector(".hk-expansion-panel-title")?.textContent === "Dialog wires",
+    );
+    expect(groupPanel).toBeTruthy();
+    expect(groupPanel!.querySelectorAll(".hk-color-picker")).toHaveLength(2);
   });
 
   it("renders one expansion panel per section of a sectioned group", async () => {

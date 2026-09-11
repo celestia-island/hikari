@@ -62,15 +62,28 @@
     box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.06);
   }
 
+  // Keyboard focus indicator drawn inside the border box (negative outline
+  // offset) for the same overlap-immunity as the selected ring below.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  // Selected emphasis is drawn INSIDE the border box (border + inset ring =
+  // 2px on every side). An outer ring (`0 0 0 1px`) lives outside the border
+  // box, where any overlapping chrome — frosted sticky headers, clipping
+  // ancestors, adjacent paint order — can shave individual sides and leave
+  // the frame visibly lopsided (observed as a 1px top vs 2px sides under
+  // HkStepFlow's sticky header).
   &[data-selected] {
     border-color: var(--hi-color-primary, #58a6ff);
     background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.06);
-    box-shadow: 0 0 0 1px var(--hi-color-primary, #58a6ff);
+    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #58a6ff);
 
     &:hover {
       background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.09);
       box-shadow:
-        0 0 0 1px var(--hi-color-primary, #58a6ff),
+        inset 0 0 0 1px var(--hi-color-primary, #58a6ff),
         0 2px 12px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.14);
     }
 

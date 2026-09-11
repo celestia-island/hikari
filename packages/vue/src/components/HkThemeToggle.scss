@@ -188,9 +188,19 @@
   @include mi.label;
 }
 
-/* Leading check / customize glyphs share the spec's fixed icon cell. */
+/* Leading check / customize glyphs share the spec's fixed icon cell —
+ * sized for the WIDEST lead mark hosts render there, not the generic
+ * 16px box: chest's three-dot palette swatch is 28px (3×8px dots + 2px
+ * gaps), and a mark wider than its cell bleeds symmetrically out of the
+ * cell into the row gap — at fractional zoom rounding the dots visually
+ * overlap the name (2026-09-11 field report). A uniform 28px cell keeps
+ * every row's name starting at the same x (swatch rows and icon rows
+ * stay aligned) and leaves the bleed zero room at any zoom. */
 .s-theme-item-btn .hk-menu-item-icon {
   @include mi.icon;
+
+  width: 28px;
+  height: 28px;
 }
 
 /* Custom rows keep the name clear of the overlaid delete button. */

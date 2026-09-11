@@ -75,8 +75,10 @@ export interface PointerReorder {
    *  crossed the threshold into a drag. The strip is this gesture's until
    *  it ends, so a caller that can change the order by other means (the
    *  panel's own keyboard reorder, a host edit) can hold off while this is
-   *  `true`: the drag resolves by INDEX, and an order that moves under it
-   *  is an order the release would misread. */
+   *  `true`: the drag moves the element the press grabbed and the snapshot
+   *  it resolves by is the one the press read, so an order that reorders the
+   *  strip under the gesture is an order resolved against geometry its item
+   *  no longer occupies. */
   pressed: Ref<boolean>;
   /** Watch a press on item `index` (item 0 of `items()` is index 0).
    *  Nothing is reported until the pointer travels past the threshold,
@@ -191,7 +193,13 @@ export function indexAt(
  * before the lift is painted on it (`start`) and carried along with the
  * frame it was read in, however that frame moves under the drag — so no
  * transform an item picks up mid-drag can move the line it is dragged along
- * or the midpoint it is compared against.
+ * or the midpoint it is compared against. The drag is moved BY ELEMENT: the
+ * press records the element it landed on and every resolution re-reads that
+ * element's index from the live strip, so a list that reorders under the
+ * gesture (a host edit, a second pointer, a removal elsewhere) keeps the
+ * drop on what the pointer is holding instead of on whatever slid into the
+ * index it started at — and a gesture whose element is gone from the strip
+ * ends without a reorder.
  *
  * The threshold is what keeps the gesture honest on a control that is also
  * clickable: a press under ~6px is not a drag at all — no state is
@@ -236,15 +244,19 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
   let lastMain = 0;
   let lastCross = 0;
   /** The pressed item's LAYOUT geometry (`null` until a press reads it), the
-   *  FRAME it was laid out in (its parent element) and where that frame sat
-   *  when the geometry was read — the whole drag resolves against this
-   *  instead of the item's live rect, which carries the lift. */
+   *  FRAME it was laid out in (its parent element) and that frame's reading
+   *  when the geometry was taken — the whole drag resolves against this
+   *  instead of the item's live rect, which carries the lift. The geometry
+   *  stays the press's even if the ELEMENT is re-anchored to another index
+   *  mid-gesture (`slotAt`): the pointer grabbed it where it was. */
   let pressedBand: { lo: number; hi: number } | null = null;
   let pressedMid = 0;
   let pressedFrame: HTMLElement | null = null;
-  let pressedFrameBox: { x: number; y: number; w: number; h: number } | null = null;
-  /** The very ELEMENT the press landed on: the index the drag resolves by
-   *  is only meaningful while that index still names it (see `slotAt`). */
+  let pressedFrameBox: FrameBox | null = null;
+  /** The very ELEMENT the press landed on. The drag is moved BY element:
+   *  the index is re-read from it on every resolution, so a strip that
+   *  reorders under the gesture keeps the drop on what the pointer grabbed
+   *  (`slotAt`). */
   let pressedItem: HTMLElement | null = null;
   /** Auto-scroll: px per frame (signed: negative scrolls back), 0 = off. */
   let scrollVelocity = 0;
@@ -262,87 +274,145 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     return options.items().filter((el): el is HTMLElement => el != null);
   }
 
-  /** The slot the live strip resolves for a pointer at (`main`, `cross`),
-   *  starting from index `from` — the elements measured, then handed to
-   *  `indexAt`, which carries the geometry's rules. One thing is checked
-   *  first: that the INDEX still names the element the press grabbed — a
-   *  keyboard reorder, a host edit, a row toggled by a second pointer or a
-   *  leaving item finally leaving all put a different element there. When it
-   *  does not, the gesture is abandoned rather than resolved: a drag may end
-   *  without a reorder, it never lands on an item the pointer did not
-   *  grab. */
-  function slotAt(main: number, cross: number, from: number): number {
+  /** The slot the live strip resolves for a pointer at (`main`, `cross`).
+   *  The press is on an ELEMENT, and the index it landed at is only the way
+   *  the resolution names it — so the index is re-read from the element
+   *  first: anything that reorders the strip under the gesture (a host edit,
+   *  a row toggled by a second pointer, a chip's ×, an Enter, a query that
+   *  filters rows out) moves the elements under those indices, while the
+   *  element the pointer grabbed is still the one being dragged. The
+   *  resolution then follows IT, and the caller's `onDrop` gets the indices
+   *  the strip has now. Only a strip that no longer carries the element at
+   *  all — it was removed, or a drag of it can no longer land anywhere —
+   *  ends the gesture, and it ends without a reorder. */
+  function slotAt(main: number, cross: number): number {
     const items = liveItems();
-    if (items.length === 0) return -1;
-    if (pressedItem && items[pressedIndex] !== pressedItem) {
+    if (items.length === 0) {
       abandonDrag();
       return -1;
+    }
+    if (pressedItem) {
+      const index = items.indexOf(pressedItem);
+      if (index < 0) {
+        abandonDrag();
+        return -1;
+      }
+      if (index !== pressedIndex) {
+        pressedIndex = index;
+        if (dragging.value) dragFrom.value = index;
+      }
     }
     return indexAt(
       items.map((item) => item.getBoundingClientRect()),
       axis,
       main,
       cross,
-      from,
+      pressedIndex,
       layoutOrigin(),
     );
   }
 
-  /** Where a frame's CONTENT sits in viewport coordinates — the box the
-   *  item is laid out in, minus that box's own scroll, which is the point
-   *  its children move with — and how big that box is. A scroller the items
-   *  sit directly in scrolls its children without moving its own box, so
-   *  the scroll has to come off explicitly; for every other element the
-   *  offsets are 0 and this is its box origin.
-   *
-   *  The scroll comes off at its own scale, which is right whenever the
-   *  frame is not ALSO transformed: this is a raw offset against a rect the
-   *  browser has already transformed, so a `scale()` on a frame that is
-   *  itself a scroller AND is scaled mid-drag would take it off at the
-   *  wrong magnitude — out of contract here, and the shapes this is written
-   *  for (a wrapping field, a panel list) are not scrollers at all: the
-   *  surface that scrolls them is their ancestor, and an ancestor's scroll
-   *  moves the frame's box like any other translation. */
-  function frameBox(frame: HTMLElement): { x: number; y: number; w: number; h: number } {
+  /**
+   * Everything the frame says about where it puts a coordinate: the box the
+   *  item is laid out in — where it is drawn (`x`/`y`), how big it is drawn
+   *  (`w`/`h`) and how big it is LAID OUT (`laidW`/`laidH`, which no
+   *  transform touches, so the two together are the scale it is drawn at) —
+   *  and the scroll that slides its children inside that box.
+   */
+  interface FrameBox {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    laidW: number;
+    laidH: number;
+    scrollX: number;
+    scrollY: number;
+  }
+
+  /** The nearest ancestor of `item` that is actually LAID OUT. A snapshot
+   *  can only be carried in a frame that has a box to move it: an element
+   *  with `display: contents` generates none, and its children are laid out
+   *  by the next box up — which is the frame whose movement they follow. A
+   *  tree with no boxes anywhere (no layout engine at all, a test
+   *  environment) walks out of ancestors and keeps the parent it started
+   *  with. */
+  function layoutFrameOf(item: HTMLElement): HTMLElement | null {
+    for (let el = item.parentElement; el; el = el.parentElement) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 || rect.height > 0 || el.offsetWidth > 0 || el.offsetHeight > 0) return el;
+    }
+    return item.parentElement;
+  }
+
+  /** Read the frame as it is right now (see `FrameBox`). */
+  function frameBox(frame: HTMLElement): FrameBox {
     const rect = frame.getBoundingClientRect();
     return {
-      x: rect.left - frame.scrollLeft,
-      y: rect.top - frame.scrollTop,
+      x: rect.left,
+      y: rect.top,
       w: rect.width,
       h: rect.height,
+      laidW: frame.offsetWidth,
+      laidH: frame.offsetHeight,
+      scrollX: frame.scrollLeft,
+      scrollY: frame.scrollTop,
     };
   }
 
-
-  /** The pressed item's layout geometry for `indexAt`, placed in the frame's
-   *  box AS IT IS NOW. The snapshot is in VIEWPORT coordinates, so anything
+  /** The pressed item's layout geometry for `indexAt`, placed where the
+   *  frame puts it NOW. The snapshot is in VIEWPORT coordinates, so anything
    *  that moves the frame under it — the auto-scroll this composable drives,
    *  a host scrolling the surface or any scroller above it, a page scroll, a
-   *  re-parent, a transform on an ancestor — has to be carried with it, or
-   *  the line the item was laid out on would be compared against siblings
-   *  that have since moved away from it. `null` before any press, and for a
-   *  press whose item was not in the strip.
+   *  re-parent, a transform on the frame or on an ancestor — has to be
+   *  carried with it, or the line the item was laid out on would be compared
+   *  against siblings that have since moved away from it. `null` before any
+   *  press, and for a press whose item was not in the strip.
    *
-   *  The carrier is the frame's BOX: a coordinate travels by the box's
-   *  displacement when the box keeps its size (a scroll of any kind, a
-   *  re-parent, a translation) and keeps its place INSIDE the box when the
-   *  box is resized — which is what a `scale()` or a zoom painted on the
-   *  frame or on an ancestor does to it, the box growing and shrinking with
-   *  the content it holds. A frame with no extent to scale against (no
-   *  layout at all, a `display: contents` frame) falls back to the
+   *  The carrier is the frame's own reading of a coordinate: the snapshot
+   *  travels to wherever the frame puts that same place in its layout now,
+   *  which is exact for the three things that can move it —
+   *
+   *   - a DISPLACEMENT of the frame (a page scroll, a re-parent, a
+   *     translation) moves the snapshot by the same amount;
+   *   - the frame's own SCROLL slides its children inside a box that does not
+   *     move, so it is taken off inside the frame's own units rather than in
+   *     drawn pixels (`sample`);
+   *   - a `scale()` or a zoom — on the frame or on an ancestor — keeps the
+   *     snapshot at the same place INSIDE the frame, which is what the frame
+   *     does to everything it holds, so the placement scales with it.
+   *
+   *  A frame with no box to read any of this from falls back to the plain
    *  displacement. */
   function layoutOrigin(): PointerReorderOrigin | null {
     if (!pressedBand || !pressedFrameBox) return null;
     const at = pressedFrameBox;
     const now = pressedFrame && pressedFrame.isConnected ? frameBox(pressedFrame) : at;
+    /** Where the frame draws a coordinate it drew at `from` when the press
+     *  was read: how far it sat from the frame's content origin, taken
+     *  against the scroll the frame has moved since, drawn again at the
+     *  scale the frame carries now. A frame whose LAID-OUT size cannot be
+     *  read (no layout engine, `display: contents`) answers with the ratio
+     *  of its drawn sizes, and takes its own scroll off raw — the reading
+     *  every frame got before the scale was measurable at all. A frame with
+     *  no box and no scroll of its own — one that cannot be read at all —
+     *  carries nothing, so the snapshot stays where the press put it. */
     const carry = (value: number, along: "x" | "y"): number => {
       const from = along === "x" ? at.x : at.y;
-      const fromSpan = along === "x" ? at.w : at.h;
       const to = along === "x" ? now.x : now.y;
-      const toSpan = along === "x" ? now.w : now.h;
-      return fromSpan > 0 && toSpan > 0
-        ? to + ((value - from) * toSpan) / fromSpan
-        : to + (value - from);
+      const drawnFrom = along === "x" ? at.w : at.h;
+      const drawnTo = along === "x" ? now.w : now.h;
+      const laidFrom = along === "x" ? at.laidW : at.laidH;
+      const laidTo = along === "x" ? now.laidW : now.laidH;
+      const scrollFrom = along === "x" ? at.scrollX : at.scrollY;
+      const scrollTo = along === "x" ? now.scrollX : now.scrollY;
+      if (laidFrom > 0 && laidTo > 0) {
+        const scaleFrom = drawnFrom / laidFrom;
+        const scaleTo = drawnTo / laidTo;
+        return to + (scaleTo / scaleFrom) * (value - from) + scaleTo * (scrollFrom - scrollTo);
+      }
+      const ratio = drawnFrom > 0 && drawnTo > 0 ? drawnTo / drawnFrom : 1;
+      return to + ratio * (value - from) + (scrollFrom - scrollTo);
     };
     const down = axis === "x" ? "y" : "x";
     const lo = carry(pressedBand.lo, down);
@@ -403,7 +473,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     } else {
       container.scrollTop = next;
     }
-    const over = slotAt(lastMain, lastCross, pressedIndex);
+    const over = slotAt(lastMain, lastCross);
     if (over >= 0) dragOver.value = over;
     scrollFrameId = requestAnimationFrame(scrollTick);
   }
@@ -527,16 +597,18 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     const at = pointerAt(event);
     lastMain = at.main;
     lastCross = at.cross;
-    const over = slotAt(lastMain, lastCross, pressedIndex);
+    const over = slotAt(lastMain, lastCross);
     if (over >= 0) dragOver.value = over;
     syncAutoScroll();
   }
 
   function onPointerUp(event: PointerEvent): void {
     if (!pressed.value || event.pointerId !== pointerId) return;
-    const from = pressedIndex;
     const at = pointerAt(event);
-    const to = moved ? slotAt(at.main, at.cross, from) : from;
+    // The slot is resolved first: it re-reads the pressed ELEMENT's index
+    // from the live strip, and that is the index the drop is reported with.
+    const to = moved ? slotAt(at.main, at.cross) : pressedIndex;
+    const from = pressedIndex;
     const dropped = moved && to >= 0 && to !== from;
     // The drag is over either way — the trap only guards the click the
     // browser is about to deliver.
@@ -545,11 +617,12 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     if (dropped) options.onDrop(from, to);
   }
 
-  /** End a drag that must not resolve — the strip it was reading is no
-   *  longer the strip the press grabbed. The trailing click is swallowed
-   *  exactly as a drop's is: this WAS a drag (the pointer travelled past the
-   *  threshold), and the click the browser is about to deliver at wherever
-   *  the finger came to rest is one the user never made. */
+  /** End a drag that must not resolve — the strip no longer carries the
+   *  element the press grabbed, so there is nothing for the gesture to move.
+   *  The trailing click is swallowed exactly as a drop's is: this WAS a drag
+   *  (the pointer travelled past the threshold), and the click the browser is
+   *  about to deliver at wherever the finger came to rest is one the user
+   *  never made. */
   function abandonDrag(): void {
     if (moved) trapClick();
     releaseDrag();
@@ -594,7 +667,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
         ? rect.left + rect.width / 2
         : rect.top + rect.height / 2
       : 0;
-    pressedFrame = item?.parentElement ?? null;
+    pressedFrame = item ? layoutFrameOf(item) : null;
     pressedFrameBox = pressedFrame ? frameBox(pressedFrame) : null;
     pressedItem = item ?? null;
     originX = event.clientX;

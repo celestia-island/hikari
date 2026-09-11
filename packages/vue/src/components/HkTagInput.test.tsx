@@ -1547,7 +1547,7 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     expect(tagTexts(container)).toEqual(["Technology", "Germany", "News"]);
   });
 
-  it("ends a row drag when the host reorders the list under it", async () => {
+  it("follows the row it grabbed when the host reorders the list under it", async () => {
     const { events, container, model } = mountTagInput({ modelValue: ["news", "tech", "de"] });
     await openPanel(container);
     const selected = reorderableRows();
@@ -1555,8 +1555,9 @@ describe("HkTagInput panel geometry and drag reordering", () => {
 
     holdPointer({ x: 10, y: 10 }, { x: 10, y: 130 }, grip(selected[0]));
     await settle();
-    // The host rewrites its own order out of band while the drag is held:
-    // the index the drag resolves by no longer names the row it grabbed.
+    // The host rewrites its own order out of band while the drag is held: the
+    // index the drag landed at names a different row now, but the row the
+    // pointer is holding is still the one being moved.
     model.value = ["de", "news", "tech"];
     await settle();
     expect(rowLabels().slice(0, 3)).toEqual(["Germany", "News", "Technology"]);
@@ -1564,10 +1565,35 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     releasePointer({ x: 10, y: 130 });
     await settle();
 
-    // The gesture ends without a reorder — a drag may come to nothing, it
-    // must never move whichever row slid into the index it was holding.
-    expect(events.modelValue, "no reorder came out of the rewritten strip").toEqual([]);
-    expect(tagTexts(container)).toEqual(["Germany", "News", "Technology"]);
+    // "News" — the row the pointer grabbed — moved to the slot it was dragged
+    // to, in the strip's own new order: the released gesture is never
+    // silently replaced by a move of whichever row slid into that index.
+    expect(events.modelValue.at(-1)).toEqual(["de", "tech", "news"]);
+    expect(tagTexts(container)).toEqual(["Germany", "Technology", "News"]);
+  });
+
+  it("keeps a dragged chip on the chip it grabbed when a × removes another one mid-drag", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    const strip = tags(container);
+    pinStrip(strip, 60, "x");
+
+    // A second pair of eyes on the same list: the × of the FIRST chip is
+    // clicked while the SECOND is being dragged. The field re-lays out under
+    // the held pointer and the dragged chip slides one index left — so the
+    // index the press landed at names the wrong chip by the time the pointer
+    // comes up, and the drop has to stay on the chip the pointer is holding.
+    holdPointer({ x: 70, y: 10 }, { x: 200, y: 10 }, strip[1]);
+    await settle();
+    closeButtons(container)[0].click();
+    await settle();
+    expect(tagTexts(container), "the × landed").toEqual(["Technology", "Germany"]);
+
+    releasePointer({ x: 200, y: 10 });
+    await settle();
+
+    // "Technology" — the grabbed chip — lands last, in the field's own order.
+    expect(events.modelValue.at(-1)).toEqual(["de", "tech"]);
+    expect(tagTexts(container)).toEqual(["Germany", "Technology"]);
   });
 
   it("clamps a row drag to the selected group", async () => {

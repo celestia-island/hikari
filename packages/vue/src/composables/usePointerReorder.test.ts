@@ -218,6 +218,56 @@ function scrollStrip(
   return { container, items };
 }
 
+/** A strip whose frame IS the scroller it sits in — the frame's box, its
+ *  LAID-OUT size (`offsetWidth`/`offsetHeight`, which no transform touches)
+ *  and its scroll offsets all answer as a browser would, and `scene` lets a
+ *  test scale and scroll the whole thing mid-gesture. */
+function scrollerStrip(
+  count: number,
+  size: number,
+  height: number,
+): {
+  frame: HTMLElement;
+  items: HTMLElement[];
+  scene: { scale: number; scroll: number; laid: number };
+} {
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const scene = { scale: 1, scroll: 0, laid: count * size };
+  Object.defineProperty(frame, "offsetWidth", { configurable: true, get: () => scene.laid });
+  Object.defineProperty(frame, "offsetHeight", { configurable: true, get: () => height });
+  Object.defineProperty(frame, "scrollLeft", { configurable: true, get: () => scene.scroll });
+  Object.defineProperty(frame, "scrollTop", { configurable: true, get: () => 0 });
+  Object.defineProperty(frame, "getBoundingClientRect", {
+    configurable: true,
+    value: () =>
+      asRect({
+        left: 0,
+        right: scene.laid * scene.scale,
+        top: 0,
+        bottom: height * scene.scale,
+      }),
+  });
+  const items = Array.from({ length: count }, (_, i) => {
+    const el = document.createElement("div");
+    Object.defineProperty(el, "getBoundingClientRect", {
+      configurable: true,
+      value: () => {
+        const start = (i * size - scene.scroll) * scene.scale;
+        return asRect({
+          left: start,
+          right: start + size * scene.scale,
+          top: 0,
+          bottom: height * scene.scale,
+        });
+      },
+    });
+    frame.appendChild(el);
+    return el;
+  });
+  return { frame, items, scene };
+}
+
 const scopes: EffectScope[] = [];
 
 /** Mount the composable inside a real effect scope (the component case). */
@@ -874,7 +924,7 @@ describe("usePointerReorder", () => {
 
     press(handle, items, 0, { x: 10, y: 20 });
     move(150, 20);
-    items.reverse(); // the strip reorders under the drag: it must give way
+    items.shift(); // the strip drops the very chip the pointer is holding
     move(260, 20);
     up(260, 20);
     expect(drops).toEqual([]);
@@ -886,15 +936,15 @@ describe("usePointerReorder", () => {
     expect(clicks).toEqual(["row"]);
   });
 
-  it("abandons a drag whose strip reorders under it rather than dropping a foreign item", () => {
-    // The caller hands its items over in DISPLAY order, so the index a drag
-    // resolves is only meaningful while that index still names the element
-    // the press grabbed. A strip that reorders mid-gesture — a host edit
-    // from outside, a keyboard reorder, a row toggled by a second pointer, a
-    // leaving item that finally leaves — puts a different element there, and
-    // a drop resolved from that index would move whichever item slid into
-    // the slot: never the one the pointer is holding. The gesture ends
-    // instead, without a reorder.
+  it("follows the element it grabbed when the strip reorders under it", () => {
+    // The caller hands its items over in DISPLAY order, and the index a drag
+    // landed at is only the way the resolution names the element. A strip
+    // that reorders mid-gesture — a host edit from outside, a row toggled by
+    // a second pointer, a chip's ×, an Enter, a query that filters rows out —
+    // moves the elements under those indices, and the drag has to follow the
+    // ELEMENT: resolving the press-time index would move whichever item slid
+    // into it, and giving way would throw away a gesture the user is still
+    // holding.
     const items = boxes([
       { left: 0, right: 100, top: 0, bottom: 40 },
       { left: 100, right: 200, top: 0, bottom: 40 },
@@ -907,14 +957,158 @@ describe("usePointerReorder", () => {
     expect(handle.dragging.value).toBe(true);
     expect(handle.dragOver.value, "150 is past the first chip's midpoint").toBe(1);
 
-    // The strip reorders under the live drag: index 0 is another chip now.
-    items.reverse();
+    // The host moves the LAST chip to the front: the strip is now
+    // [C, A, B], so the chip the pointer grabbed sits at index 1.
+    const [grabbed, middle, last] = items;
+    const moved = [last, grabbed, middle];
+    moved.forEach((el, i) => reshape(el, { left: i * 100, right: i * 100 + 100, top: 0, bottom: 40 }));
+    items.splice(0, items.length, ...moved);
     move(260, 20);
-    expect(handle.dragging.value, "the drag ended with the strip it was reading").toBe(false);
+    expect(handle.dragging.value, "the drag is still the one the pointer started").toBe(true);
+    expect(handle.dragFrom.value, "the lift follows the chip it grabbed").toBe(1);
+    expect(handle.dragOver.value, "260 is past the second chip's midpoint of 250").toBe(2);
+    up(260, 20);
+    expect(drops, "the drop is reported in the indices the strip has now").toEqual([[1, 2]]);
+  });
+
+  it("ends the gesture the moment the strip empties", () => {
+    // Nothing left to resolve against is the same answer as the element being
+    // gone: the gesture is over then, not at the release — a drag left
+    // "running" against an empty strip would keep publishing a slot it can no
+    // longer read, and would not swallow the click it owes.
+    const items = boxes([
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ]);
+    const { handle, drops } = harness("x", items);
+    const inner = document.createElement("span");
+    items[0].appendChild(inner);
+    const clicks: string[] = [];
+    inner.addEventListener("click", () => clicks.push("row"));
+
+    press(handle, items, 0, { x: 10, y: 20 });
+    move(150, 20);
+    expect(handle.dragging.value).toBe(true);
+
+    items.splice(0, items.length); // every item goes at once
+    move(260, 20);
+    expect(handle.dragging.value, "the gesture ended with the strip").toBe(false);
+    expect(handle.dragFrom.value).toBe(-1);
+    expect(handle.dragOver.value).toBe(-1);
+    up(260, 20);
+    expect(drops).toEqual([]);
+    inner.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(clicks, "…and its trailing click was swallowed").toEqual([]);
+  });
+
+  it("abandons a drag whose pressed item leaves the strip", () => {
+    // The other side of the same rule: a strip that no longer carries the
+    // element at all — it was removed, or a drag of it can no longer land
+    // anywhere — has nothing for the gesture to move, so it ends without a
+    // reorder.
+    const items = boxes([
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ]);
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 0, { x: 10, y: 20 });
+    move(150, 20);
+    expect(handle.dragOver.value).toBe(1);
+
+    items.shift(); // the chip the pointer is holding is gone
+    move(260, 20);
+    expect(handle.dragging.value, "the drag ended with the strip").toBe(false);
     expect(handle.dragFrom.value).toBe(-1);
     expect(handle.dragOver.value).toBe(-1);
     up(260, 20);
     expect(drops, "nothing was dropped").toEqual([]);
+  });
+
+  it("carries the snapshot exactly through a frame that scrolls AND is scaled", () => {
+    // The frame here is the scroller the strip SITS IN — the shape this
+    // composable documents — and the host zooms it mid-drag while it is
+    // scrolled. The frame's own scroll slides the content inside a box that
+    // does not move, and it does so in the frame's LAYOUT units: taken off
+    // the drawn box as a raw offset it is measured at the wrong magnitude
+    // the moment the frame is scaled (by `(scale - 1) x scroll`, here 300px
+    // on a 2x zoom), and the snapshot drifts off the item it belongs to. The
+    // pointer here is past the third chip and before the fourth, so the
+    // drifted snapshot answers "stay where you are" where the strip answers
+    // "land after the fourth".
+    const { items, scene } = scrollerStrip(5, 100, 40);
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 2, { x: 250, y: 20 });
+    scene.scale = 2; // the host zooms the strip…
+    scene.scroll = 300; // …while it is scrolled under the live drag
+    move(100, 20);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "past the third chip, before the fourth").toBe(3);
+    up(100, 20);
+    expect(drops).toEqual([[2, 3]]);
+  });
+
+  it("reads a LAYOUT change as a layout change, not as a scale", () => {
+    // The frame's own box growing is not the frame being drawn bigger: the
+    // chips keep their place and their size, and the frame merely got wider
+    // around them. A carrier that reads the drawn box alone cannot tell the
+    // two apart, and would stretch the snapshot by the ratio of the two
+    // sizes — here it would answer "stay where you are" for a pointer the
+    // strip answers "land after the third chip".
+    const { items, scene } = scrollerStrip(5, 100, 40);
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 1, { x: 150, y: 20 });
+    scene.laid = 1000; // the frame is re-laid out around the same chips
+    move(260, 20);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "260 is past the third chip's midpoint of 250").toBe(2);
+    up(260, 20);
+    expect(drops).toEqual([[1, 2]]);
+  });
+
+  it("carries the snapshot in the nearest frame that has a box", () => {
+    // A strip wrapped in an element that generates no box of its own
+    // (`display: contents`) is laid out by the next box up, and that is the
+    // box its content moves with: reading the boxless wrapper leaves the
+    // snapshot behind the moment the page scrolls the real frame.
+    const frame = document.createElement("div");
+    const wrapper = document.createElement("div");
+    frame.appendChild(wrapper);
+    document.body.appendChild(frame);
+    const scene = { shift: 0 };
+    reshape(frame, { left: 0, right: 300, top: 0, bottom: 40 });
+    Object.defineProperty(frame, "getBoundingClientRect", {
+      configurable: true,
+      value: () => {
+        const box = { left: 0, right: 300, top: scene.shift, bottom: scene.shift + 40 };
+        return asRect(box);
+      },
+    });
+    // The wrapper itself: no box at all, exactly as `display: contents` reports.
+    reshape(wrapper, { left: 0, right: 0, top: 0, bottom: 0 });
+    const items = [0, 100, 200].map((start) => {
+      const el = document.createElement("div");
+      Object.defineProperty(el, "getBoundingClientRect", {
+        configurable: true,
+        value: () =>
+          asRect({ left: start, right: start + 100, top: scene.shift, bottom: scene.shift + 40 }),
+      });
+      wrapper.appendChild(el);
+      return el;
+    });
+    const { handle, drops } = harness("x", items);
+
+    press(handle, items, 0, { x: 10, y: 20 });
+    scene.shift = 40; // the page scrolls the strip a line up under the drag
+    move(150, 20);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "the chips kept their places inside the frame").toBe(1);
+    up(150, 20);
+    expect(drops).toEqual([[0, 1]]);
   });
 
   it("keeps the pressed item's geometry on the content when the frame is SCALED under it", () => {

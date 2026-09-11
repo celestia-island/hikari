@@ -329,10 +329,12 @@
  * happened. The dimming stays LIGHT on purpose (0.85, the value of the
  * HkDraggableList/HkDraggableGrid drag ghost): the item must still read as
  * the one being moved, not fade out. `transform` reflows nothing — no
- * neighbour ever moves for it — and the axis rules below keep it out of the
- * drag's own geometry too. The raised shadow replaces the row's own
- * box-shadow faces for as long as the drag lasts (the keyboard cursor's
- * inset ring included: the lift is the live state).
+ * neighbour ever moves for it — and it cannot move the drag's own geometry
+ * either: the resolution reads the pressed item's line and midpoint from
+ * the layout captured when the press landed, before this lift is painted.
+ * The raised shadow replaces the row's own box-shadow faces for as long as
+ * the drag lasts (the keyboard cursor's inset ring included: the lift is
+ * the live state).
  *
  * Chips carry the state as classes (HkTag takes no arbitrary attributes),
  * panel rows as data attributes — both are assertable hooks that never
@@ -348,16 +350,17 @@
 }
 
 /* The scale runs ALONG each list's own drag axis — chips on X (a horizontal
- * strip), rows on Y (a vertical list). That split is TASTE, not geometry: a
- * small scale that follows the gesture keeps the lifted item tight in a
- * dense chip row. A drag resolves its landing slot from the items' LIVE
- * rects (usePointerReorder's `indexAt`): the item's MIDPOINT on the drag
- * axis picks the slot, and on the axis ACROSS it every item's span decides
- * which line the pointer is on — a filter that started out a no-op precisely
- * because every row spans the list's full width. The item being dragged may
- * not decide that line (a drop onto its own slot is already a no-op), so a
- * centre-anchored transform on it — along the axis or across it — leaves the
- * resolution exactly where it was. */
+ * strip), rows on Y (a vertical list): a small scale that follows the
+ * gesture keeps the lifted item tight in a dense chip row. WHICH axis it
+ * runs on is TASTE, not necessity — a drag resolves its landing slot from
+ * the items' live rects (usePointerReorder's `indexAt`), where every item's
+ * span on the axis ACROSS the drag decides which line the pointer is on and
+ * the item's MIDPOINT on the drag axis picks the slot, except that the item
+ * being dragged is measured by the geometry captured when the press landed,
+ * before this lift is painted: no transform on it, along the axis, across it
+ * or an isotropic `scale()`, can move the line it is dragged along. The line
+ * filter started out a no-op precisely because every row spans the list's
+ * full width. */
 .hk-tag-input-tag-dragging {
   transform: scaleX(1.03);
 }

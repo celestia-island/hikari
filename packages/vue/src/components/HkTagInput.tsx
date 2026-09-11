@@ -155,11 +155,12 @@ type HkTagStop =
  *     lift scales ALONG each list's drag axis by TASTE, not by necessity: a
  *     small scale that follows the gesture keeps the lifted item's own
  *     footprint tight in a dense chip row. The drop slot is resolved from
- *     the items' live rects, but the dragged item never decides which line
- *     the pointer is on (it is only ever a candidate in the slot loop, and
- *     a drop onto its own slot is already a no-op), so a centre-preserving
- *     transform on it — along the axis, across it, or an isotropic
- *     `scale()` — leaves the resolution exactly where it was;
+ *     the items' live rects except for the item being dragged: its line
+ *     across the list and its midpoint along it come from the geometry
+ *     captured when the press landed, before the lift is painted, so no
+ *     transform on it — along the axis, across it, isotropic, or anchored
+ *     on an edge rather than its centre — can move the slot the pointer
+ *     resolves;
  *   - a key in `modelValue` that the catalog does not carry (a custom
  *     tag, or an option deleted since) degrades to its raw key as the
  *     tag label — the same rule as HkAffixPicker.tagEntries. Such a key
@@ -452,12 +453,22 @@ export const HkTagInput = defineComponent({
     /** The panel's keyboard reorder: move the ACTIVE row one slot inside
      *  the selected group (the same edit a row drag makes, without a
      *  pointer). Only a selected row has a place in that order, the ends of
-     *  the group are hard stops, and `false` means the key was not ours to
-     *  consume. The cursor stays on the key it was on — the stops rebuild
-     *  in the new order, so it follows the row the user moved. */
+     *  the group are hard stops, and `false` means there was nothing this
+     *  key could move. The cursor stays on the key it was on — the stops
+     *  rebuild in the new order, so it follows the row the user moved. */
     function nudgeActiveRow(delta: 1 | -1): boolean {
       const stop = activeStop.value;
       if (props.disabled || !stop || stop.kind !== "option") return false;
+      // A live press OWNS the order — either list's, and from the moment
+      // the press lands rather than from the moment it turns into a drag:
+      // the drag resolves its landing slot by INDEX, so a reorder under the
+      // held pointer (or under a press that is about to become one) would
+      // leave the release moving whatever now sits at that index — a
+      // different row, silently. The chord is still consumed by the caller
+      // either way (Alt+Arrow is not a plain arrow, and the browser must
+      // not act on it); it just has nothing to move while a pointer owns
+      // the list.
+      if (chipDrag.pressed.value || rowDrag.pressed.value) return false;
       const group = selectedRows.value;
       const from = group.findIndex((option) => option.key === stop.option.key);
       if (from < 0) return false;

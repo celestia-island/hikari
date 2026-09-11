@@ -6,6 +6,13 @@
  * layout engine, so the geometry contract is pinned as an scss-text
  * assertion: the theme-row lead cell must carry an explicit size that
  * fits the widest host lead mark, not just the mixin's generic box.
+ *
+ * The widened cell must stay scoped to the lead slot (2026-09-12 field
+ * report): shipped first as a bare `.s-theme-item-btn .hk-menu-item-icon`
+ * rule, it also matched the 自定义 row and every host row reusing
+ * s-theme-item-btn (chest's mode-extra DPI entry) — and mi.icon
+ * normalizes those cells' svg to the cell, so their 14px glyphs rendered
+ * 28px wide.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -19,10 +26,18 @@ describe("HkThemeToggle row lead-cell contract", () => {
   it("sizes the theme-row lead cell to fit a 28px swatch mark", () => {
     const css = read("HkThemeToggle.scss");
     const block = css.match(
-      /\.s-theme-item-btn \.hk-menu-item-icon\s*\{[^}]*\}/,
+      /\.s-theme-item-btn \.hk-menu-item-icon\.s-theme-item-lead\s*\{[^}]*\}/,
     );
     expect(block).not.toBeNull();
     expect(block![0]).toContain("width: 28px");
     expect(block![0]).toContain("height: 28px");
+  });
+
+  it("does not widen icon cells outside the leading slot", () => {
+    const css = read("HkThemeToggle.scss");
+    // A bare `.s-theme-item-btn .hk-menu-item-icon {` rule also hits the
+    // customize row and host mode-extra rows; the widened cell may only
+    // target the lead slot class.
+    expect(css).not.toMatch(/\.s-theme-item-btn \.hk-menu-item-icon\s*\{/);
   });
 });

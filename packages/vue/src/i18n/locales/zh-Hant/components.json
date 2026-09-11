@@ -212,5 +212,10 @@
   "hikari::messageBox.promptTitle": "輸入",
   "hikari::loadMore.more": "載入更多",
   "hikari::loadMore.loading": "載入中…",
-  "hikari::loadMore.end": "到底啦"
+  "hikari::loadMore.end": "到底啦",
+  "hikari::tagInput.title": "標籤",
+  "hikari::tagInput.search": "搜尋",
+  "hikari::tagInput.empty": "沒有符合項目",
+  "hikari::tagInput.remove": "移除",
+  "hikari::tagInput.addCustom": "使用「{q}」"
 }

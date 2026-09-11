@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "Saisie",
   "hikari::loadMore.more": "Charger plus",
   "hikari::loadMore.loading": "Chargement…",
-  "hikari::loadMore.end": "Vous avez tout vu"
+  "hikari::loadMore.end": "Vous avez tout vu",
+  "hikari::tagInput.title": "Étiquettes",
+  "hikari::tagInput.search": "Rechercher",
+  "hikari::tagInput.empty": "Aucun résultat",
+  "hikari::tagInput.remove": "Retirer",
+  "hikari::tagInput.addCustom": "Utiliser « {q} »"
 }

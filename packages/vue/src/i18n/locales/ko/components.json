@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "입력",
   "hikari::loadMore.more": "더 불러오기",
   "hikari::loadMore.loading": "불러오는 중…",
-  "hikari::loadMore.end": "마지막 항목입니다"
+  "hikari::loadMore.end": "마지막 항목입니다",
+  "hikari::tagInput.title": "태그",
+  "hikari::tagInput.search": "검색",
+  "hikari::tagInput.empty": "일치 항목 없음",
+  "hikari::tagInput.remove": "제거",
+  "hikari::tagInput.addCustom": "\"{q}\" 사용"
 }

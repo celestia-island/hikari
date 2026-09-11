@@ -72,6 +72,7 @@ export { default as HSwitch } from "./components/HkSwitch";
 export { default as HTable } from "./components/HkTable";
 export { default as HTabs } from "./components/HkTabs";
 export { default as HTag } from "./components/HkTag";
+export { HkTagInput as HTagInput, type HkTagOption } from "./components/HkTagInput";
 export { default as HTextarea } from "./components/HkTextarea";
 export { default as HFileField } from "./components/HkFileField";
 export { default as HFileBrowserDialog } from "./components/HkFileBrowserDialog";

@@ -13,6 +13,7 @@ import {
 import { Check, ChevronRight } from "lucide-vue-next";
 
 import { useBreakpoint } from "../runtime/useBreakpoint";
+import { ancestorZoom } from "../runtime/cssZoom";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import "./HkMenu.scss";
 
@@ -398,7 +399,11 @@ export default defineComponent({
     /** Synthetic anchor placing a sub-panel beside its parent row:
      *  popout to the right, flipping to the left when the viewport runs
      *  out (classic menubar cascade). The rect stays LIVE — HkSelectPanel
-     *  re-reads it on every reposition (open, resize). */
+     *  re-reads it on every reposition (open, resize). The fixed panel
+     *  width is a LOCAL constant while the row rect and the viewport are
+     *  in the root VISUAL space (standardized zoom applies ancestor zoom
+     *  to gBCR and innerWidth alike), so the width is scaled by the
+     *  cumulative zoom before the flip comparison. */
     function rowAnchor(level: number, key: string): PanelAnchor {
       const id = `${level}:${key}`;
       let anchor = anchorCache.get(id);
@@ -409,8 +414,9 @@ export default defineComponent({
             if (!row) return pointRect(0, 0);
             const r = row.getBoundingClientRect();
             if (!r.width && !r.height) return pointRect(0, 0); // detached
-            const openRight = r.right + CASCADE_PANEL_W <= window.innerWidth - VIEWPORT_PAD;
-            const left = openRight ? r.right : Math.max(VIEWPORT_PAD, r.left - CASCADE_PANEL_W);
+            const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
+            const openRight = r.right + cascadeW <= window.innerWidth - VIEWPORT_PAD;
+            const left = openRight ? r.right : Math.max(VIEWPORT_PAD, r.left - cascadeW);
             return pointRect(left, r.top);
           },
           contains: (node) => !!rowRefs.value[id]?.contains(node),
@@ -430,12 +436,13 @@ export default defineComponent({
           if (!real) return pointRect(0, 0);
           const r = real.getBoundingClientRect();
           if (!r.width && !r.height) return pointRect(0, 0);
-          const gap = props.offset;
-          const openRight = r.right + gap + CASCADE_PANEL_W <= window.innerWidth - VIEWPORT_PAD;
+          const gap = props.offset; // visual-space gap, same as the native placements
+          const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
+          const openRight = r.right + gap + cascadeW <= window.innerWidth - VIEWPORT_PAD;
           const left =
             side === "right" && openRight
               ? r.right + gap
-              : Math.max(VIEWPORT_PAD, r.left - CASCADE_PANEL_W - gap);
+              : Math.max(VIEWPORT_PAD, r.left - cascadeW - gap);
           return pointRect(left, r.top);
         },
         contains: (node) => !!props.anchorRef?.contains(node),

@@ -152,10 +152,14 @@ type HkTagStop =
  *     with the library's usual reduced-motion opt-outs (the lift's scale
  *     and shadow stay — only their 0.12s ramp is dropped, so a
  *     reduced-motion user keeps the state marker without the motion). The
- *     lift scales ALONG each list's drag axis and never across it: the drop
- *     slot is resolved from the items' live rects, so a span grown across
- *     that axis would hide every sibling from the pointer and silently
- *     collapse the gesture into a no-op;
+ *     lift scales ALONG each list's drag axis by TASTE, not by necessity: a
+ *     small scale that follows the gesture keeps the lifted item's own
+ *     footprint tight in a dense chip row. The drop slot is resolved from
+ *     the items' live rects, but the dragged item never decides which line
+ *     the pointer is on (it is only ever a candidate in the slot loop, and
+ *     a drop onto its own slot is already a no-op), so a centre-preserving
+ *     transform on it — along the axis, across it, or an isotropic
+ *     `scale()` — leaves the resolution exactly where it was;
  *   - a key in `modelValue` that the catalog does not carry (a custom
  *     tag, or an option deleted since) degrades to its raw key as the
  *     tag label — the same rule as HkAffixPicker.tagEntries. Such a key

@@ -740,10 +740,14 @@ export const HkTagInput = defineComponent({
                         <span class="hk-tag-input-row-label">{customLabel}</span>
                       </div>
                     )}
-                    {rows.length === 0 && !customVisible.value && (
-                      <div class="hk-tag-input-empty">{emptyText}</div>
-                    )}
                   </div>
+                  {/* The empty message lives OUTSIDE the listbox: a listbox
+                    * may only own options/groups (aria-required-children),
+                    * and the element it hangs off must still exist while the
+                    * panel is open for `aria-controls` to resolve. */}
+                  {rows.length === 0 && !customVisible.value && (
+                    <div class="hk-tag-input-empty">{emptyText}</div>
+                  )}
                 </div>
               ),
             }}

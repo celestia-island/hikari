@@ -295,13 +295,20 @@ describe("HkTagInput", () => {
     expect(rows()).toHaveLength(0);
 
     // The reference is not allowed to dangle: the listbox element stays
-    // mounted while the panel is open, with the empty state inside it.
+    // mounted while the panel is open, even with nothing to list.
     const id = inlineInput(container)!.getAttribute("aria-controls");
     expect(id, "the input names a listbox id").toBeTruthy();
     const list = document.getElementById(id!);
     expect(list, "the referenced element exists").toBeTruthy();
     expect(list!.getAttribute("role")).toBe("listbox");
-    expect(list!.querySelector(".hk-tag-input-empty")?.textContent).toBe("Nothing here");
+    expect(list!.children).toHaveLength(0);
+
+    // …and the message itself is NOT owned by the listbox: a listbox may
+    // only own options/groups (aria-required-children), so it sits beside.
+    const empty = document.querySelector(".hk-tag-input-empty")!;
+    expect(empty.textContent).toBe("Nothing here");
+    expect(list!.contains(empty)).toBe(false);
+    expect(empty.parentElement?.contains(list!)).toBe(true);
   });
 
   it("lists EVERY option — selected ones stay visible with a check glyph", async () => {

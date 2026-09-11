@@ -212,5 +212,10 @@
   "hikari::messageBox.promptTitle": "输入",
   "hikari::loadMore.more": "加载更多",
   "hikari::loadMore.loading": "正在加载…",
-  "hikari::loadMore.end": "到底啦"
+  "hikari::loadMore.end": "到底啦",
+  "hikari::tagInput.title": "标签",
+  "hikari::tagInput.search": "搜索",
+  "hikari::tagInput.empty": "没有匹配项",
+  "hikari::tagInput.remove": "移除",
+  "hikari::tagInput.addCustom": "使用「{q}」"
 }

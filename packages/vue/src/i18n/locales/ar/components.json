@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "إدخال",
   "hikari::loadMore.more": "تحميل المزيد",
   "hikari::loadMore.loading": "جارٍ التحميل…",
-  "hikari::loadMore.end": "وصلت إلى النهاية"
+  "hikari::loadMore.end": "وصلت إلى النهاية",
+  "hikari::tagInput.title": "الوسوم",
+  "hikari::tagInput.search": "بحث",
+  "hikari::tagInput.empty": "لا تطابقات",
+  "hikari::tagInput.remove": "إزالة",
+  "hikari::tagInput.addCustom": "استخدام \"{q}\""
 }

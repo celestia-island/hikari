@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "Ввод",
   "hikari::loadMore.more": "Загрузить ещё",
   "hikari::loadMore.loading": "Загрузка…",
-  "hikari::loadMore.end": "Вы дошли до конца"
+  "hikari::loadMore.end": "Вы дошли до конца",
+  "hikari::tagInput.title": "Теги",
+  "hikari::tagInput.search": "Поиск",
+  "hikari::tagInput.empty": "Нет совпадений",
+  "hikari::tagInput.remove": "Удалить",
+  "hikari::tagInput.addCustom": "Использовать «{q}»"
 }

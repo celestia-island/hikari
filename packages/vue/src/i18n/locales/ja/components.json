@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "入力",
   "hikari::loadMore.more": "さらに読み込む",
   "hikari::loadMore.loading": "読み込み中…",
-  "hikari::loadMore.end": "すべて読み込みました"
+  "hikari::loadMore.end": "すべて読み込みました",
+  "hikari::tagInput.title": "タグ",
+  "hikari::tagInput.search": "検索",
+  "hikari::tagInput.empty": "一致なし",
+  "hikari::tagInput.remove": "削除",
+  "hikari::tagInput.addCustom": "「{q}」を使用"
 }

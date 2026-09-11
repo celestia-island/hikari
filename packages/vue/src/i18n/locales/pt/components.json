@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "Entrada",
   "hikari::loadMore.more": "Carregar mais",
   "hikari::loadMore.loading": "Carregando…",
-  "hikari::loadMore.end": "Você chegou ao fim"
+  "hikari::loadMore.end": "Você chegou ao fim",
+  "hikari::tagInput.title": "Etiquetas",
+  "hikari::tagInput.search": "Pesquisar",
+  "hikari::tagInput.empty": "Sem correspondências",
+  "hikari::tagInput.remove": "Remover",
+  "hikari::tagInput.addCustom": "Usar \"{q}\""
 }

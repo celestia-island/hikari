@@ -203,5 +203,10 @@
   "hikari::messageBox.promptTitle": "Eingabe",
   "hikari::loadMore.more": "Mehr laden",
   "hikari::loadMore.loading": "Wird geladen…",
-  "hikari::loadMore.end": "Das Ende ist erreicht"
+  "hikari::loadMore.end": "Das Ende ist erreicht",
+  "hikari::tagInput.title": "Tags",
+  "hikari::tagInput.search": "Suchen",
+  "hikari::tagInput.empty": "Keine Treffer",
+  "hikari::tagInput.remove": "Entfernen",
+  "hikari::tagInput.addCustom": "„{q}“ verwenden"
 }

@@ -11,6 +11,13 @@ export default defineComponent({
     variant: { type: String as PropType<TagVariant>, default: "default" },
     size: { type: String as PropType<"sm" | "md">, default: "md" },
     closable: { type: Boolean, default: false },
+    /**
+     * Accessible name of the close button, rendered as its `aria-label`.
+     * Undefined (the default) renders exactly the pre-prop markup, so
+     * existing consumers are untouched; tag fields that can carry several
+     * chips side by side set it to name the entry each × removes.
+     */
+    closeLabel: { type: String, default: undefined },
   },
   emits: {
     close: () => true,
@@ -34,6 +41,7 @@ export default defineComponent({
           <button
             type="button"
             class="hk-tag-close"
+            aria-label={props.closeLabel}
             onClick={() => emit("close")}
           >
             <X size={12} />

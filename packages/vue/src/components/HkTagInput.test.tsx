@@ -147,6 +147,11 @@ function rowByLabel(label: string): HTMLElement {
   return row!;
 }
 
+/** The row the keyboard cursor currently sits on (none = null). */
+function activeRow(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(".hk-tag-input-row[data-active]");
+}
+
 function customRow(): HTMLElement | null {
   return document.querySelector<HTMLElement>('.hk-tag-input-row[data-custom="true"]');
 }
@@ -243,6 +248,21 @@ describe("HkTagInput", () => {
     await settle();
     expect(rows().length).toBe(OPTIONS.length);
     expect(input.getAttribute("aria-expanded")).toBe("true");
+    // Opening is the whole job of that first press: the cursor is not
+    // placed on a row until the next arrow (the APG combobox step).
+    expect(activeRow()).toBeNull();
+  });
+
+  it("ArrowUp on the closed field opens the panel as well", async () => {
+    const { events, container } = mountTagInput();
+    const input = inlineInput(container)!;
+    pressKey(input, "ArrowUp");
+    await settle();
+    expect(events.open).toEqual([true]);
+    expect(activeRow()).toBeNull();
+    pressKey(input, "ArrowUp");
+    await settle();
+    expect(activeRow()).toBe(rows().at(-1));
   });
 
   it("exposes combobox / listbox semantics with aria-selected on every row", async () => {
@@ -266,6 +286,22 @@ describe("HkTagInput", () => {
     // The chevron and the search field carry accessible names.
     expect(chevron(container).getAttribute("aria-label")).toBe("Tags");
     expect(searchInput().getAttribute("aria-label")).toBe("Search");
+  });
+
+  it("aria-controls resolves even when the filter matches nothing", async () => {
+    const { container } = mountTagInput({ emptyText: "Nothing here" });
+    await openPanel(container);
+    await typeSearch("zzz-nothing");
+    expect(rows()).toHaveLength(0);
+
+    // The reference is not allowed to dangle: the listbox element stays
+    // mounted while the panel is open, with the empty state inside it.
+    const id = inlineInput(container)!.getAttribute("aria-controls");
+    expect(id, "the input names a listbox id").toBeTruthy();
+    const list = document.getElementById(id!);
+    expect(list, "the referenced element exists").toBeTruthy();
+    expect(list!.getAttribute("role")).toBe("listbox");
+    expect(list!.querySelector(".hk-tag-input-empty")?.textContent).toBe("Nothing here");
   });
 
   it("lists EVERY option — selected ones stay visible with a check glyph", async () => {
@@ -532,7 +568,7 @@ describe("HkTagInput", () => {
     expect(tagTexts(container)).toEqual([]);
   });
 
-  it("ArrowDown while the panel is already open changes nothing", async () => {
+  it("ArrowDown opens the panel once and then walks the rows", async () => {
     const { events, container } = mountTagInput();
     const input = inlineInput(container)!;
     pressKey(input, "ArrowDown");
@@ -541,6 +577,163 @@ describe("HkTagInput", () => {
     await settle();
     expect(events.open).toEqual([true]);
     expect(rows().length).toBe(OPTIONS.length);
+    // The second press moved the cursor instead of reopening anything.
+    expect(activeRow()).toBe(rows()[0]);
+  });
+
+  it("ArrowDown / ArrowUp walk the rows, wrap at both ends, and publish aria-activedescendant", async () => {
+    const { container } = mountTagInput();
+    const input = inlineInput(container)!;
+    input.focus();
+    await openPanel(container);
+    expect(input.getAttribute("aria-activedescendant"), "nothing active on open").toBeNull();
+
+    // From nothing active, ArrowDown lands on the FIRST row.
+    pressKey(input, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rows()[0]);
+    expect(rows()[0].id, "the active row is addressable").toBeTruthy();
+    expect(input.getAttribute("aria-activedescendant")).toBe(rows()[0].id);
+
+    // One step down, then wrapping off both ends.
+    pressKey(input, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rows()[1]);
+    expect(rows()[0].hasAttribute("data-active")).toBe(false);
+    pressKey(input, "ArrowUp");
+    await settle();
+    expect(activeRow()).toBe(rows()[0]);
+    pressKey(input, "ArrowUp");
+    await settle();
+    expect(activeRow()).toBe(rows().at(-1));
+    expect(input.getAttribute("aria-activedescendant")).toBe(rows().at(-1)!.id);
+    pressKey(input, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rows()[0]);
+
+    // The activedescendant pattern: focus never left the field.
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("the panel search field drives the same cursor and keeps its focus", async () => {
+    const { container } = mountTagInput();
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(rows()[0].hasAttribute("data-active")).toBe(true);
+    expect(search.getAttribute("aria-activedescendant")).toBe(rows()[0].id);
+    expect(document.activeElement, "focus stays in the search field").toBe(search);
+
+    // A query edit re-filters the list, so the cursor is dropped with it.
+    await typeSearch("Technology");
+    expect(rows()).toHaveLength(1);
+    expect(activeRow()).toBeNull();
+    expect(search.getAttribute("aria-activedescendant")).toBeNull();
+  });
+
+  it("arrow keys pressed on a row itself still walk the cursor", async () => {
+    // Clicking a row leaves focus on it (rows are tabindex="-1"), so the
+    // panel surface forwards those arrows too — handled once, not twice.
+    const { container } = mountTagInput();
+    await openPanel(container);
+    const row = rowByLabel("News");
+    row.focus();
+    expect(document.activeElement).toBe(row);
+
+    pressKey(row, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rows()[0]);
+    expect(document.activeElement, "the row keeps its own focus").toBe(row);
+  });
+
+  it("Enter activates the ACTIVE row instead of the first match", async () => {
+    const { events, container } = mountTagInput({ allowCustom: true });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    // "e" matches four rows: News, Technology, Germany, Retired.
+    await typeSearch("e");
+    expect(rowLabels()).toEqual(["News", "Technology", "Germany", "Retired", "Use “e”"]);
+
+    pressKey(search, "ArrowDown");
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+    pressKey(search, "Enter");
+    await settle();
+    // The SECOND row was activated — not the top one, which is what the
+    // no-cursor fallback would have picked.
+    expect(events.add).toEqual(["tech"]);
+    expect(events.modelValue).toEqual([["tech"]]);
+  });
+
+  it("the custom row is the LAST stop and wraps back to the first row", async () => {
+    const { events, container } = mountTagInput({ allowCustom: true });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    await typeSearch("e");
+    expect(customRow()).not.toBeNull();
+
+    // ArrowUp from nothing active walks to the LAST stop — the custom row.
+    pressKey(search, "ArrowUp");
+    await settle();
+    expect(activeRow()).toBe(customRow());
+    pressKey(search, "ArrowUp");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Retired"));
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(customRow());
+
+    pressKey(search, "Enter");
+    await settle();
+    expect(events.add).toEqual(["e"]);
+    expect(events.modelValue).toEqual([["e"]]);
+    // The query was consumed, so the custom row is gone and the cursor
+    // has nothing left to sit on.
+    expect(customRow()).toBeNull();
+    expect(search.value).toBe("");
+    expect(activeRow()).toBeNull();
+  });
+
+  it("Enter on an INERT active row is a no-op, not a fall-through", async () => {
+    const { events, container } = mountTagInput({ allowCustom: true });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    await typeSearch("retir");
+    // "Retired" cannot be toggled on, and with no cursor the same Enter
+    // falls through to the custom row (the test above). Once the user has
+    // explicitly parked the cursor on it, the key must not silently act on
+    // a DIFFERENT row than the highlighted one.
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Retired"));
+
+    pressKey(search, "Enter");
+    await settle();
+    expect(events.add).toEqual([]);
+    expect(events.modelValue).toEqual([]);
+    expect(search.value).toBe("retir");
+  });
+
+  it("closing clears the cursor and reopening starts with none", async () => {
+    const { container } = mountTagInput();
+    await openPanel(container);
+    pressKey(inlineInput(container)!, "ArrowDown");
+    await settle();
+    expect(activeRow()).not.toBeNull();
+
+    pressKey(searchInput(), "Escape");
+    await settle();
+    await untilSettled(() => rows().length);
+    await openPanel(container);
+    expect(activeRow()).toBeNull();
+    expect(inlineInput(container)!.getAttribute("aria-activedescendant")).toBeNull();
   });
 
   it("Backspace with no tags to remove is inert", async () => {
@@ -614,16 +807,89 @@ describe("HkTagInput", () => {
     expect(events.open).toEqual([]);
   });
 
-  it("maxTags: the inline input gives way to the placeholder and adds stop", async () => {
+  it("disabled: no label dangles and the field box carries the caption", () => {
+    const { container } = mountTagInput({ label: "Interests", disabled: true });
+    const label = container.querySelector<HTMLLabelElement>(".hk-tag-input-label")!;
+    // A `for` with nothing behind it is worse than none: the caption moves
+    // onto the box as the group's name instead.
+    expect(label.getAttribute("for")).toBeNull();
+    expect(inlineInput(container)).toBeNull();
+    expect(field(container).getAttribute("aria-label")).toBe("Interests");
+    expect(field(container).getAttribute("role")).toBe("group");
+  });
+
+  it("disabled without a label: the box still carries the default caption", () => {
+    const { container } = mountTagInput({ disabled: true });
+    expect(field(container).getAttribute("aria-label")).toBe("Tags");
+  });
+
+  it("disabled while the panel is open marks the custom row inert like the option rows", async () => {
+    // A live `disabled` flip — the panel is already open with a query typed.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const value = ref<readonly string[]>([]);
+    const disabled = ref(false);
+    const added: string[] = [];
+    const Host = defineComponent({
+      name: "HkTagInputDisabledFlipHost",
+      setup() {
+        return () =>
+          h(HkTagInput, {
+            modelValue: value.value,
+            options: OPTIONS,
+            allowCustom: true,
+            disabled: disabled.value,
+            "onUpdate:modelValue": (keys: string[]) => {
+              value.value = keys;
+            },
+            onAdd: (key: string) => added.push(key),
+          });
+      },
+    });
+    const app = createApp(Host);
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+
+    chevron(container).click();
+    await settle();
+    await typeSearch("Tec");
+    const custom = customRow()!;
+    expect(custom, "the custom row is offered").toBeTruthy();
+    expect(custom.hasAttribute("data-disabled")).toBe(false);
+
+    disabled.value = true;
+    await settle();
+
+    // The custom row reads inert on exactly the same flag as the option
+    // rows — same ARIA, same visual hook — instead of being a silent no-op.
+    const option = rowByLabel("Technology");
+    expect(option.getAttribute("aria-disabled")).toBe("true");
+    expect(custom.getAttribute("aria-disabled")).toBe(
+      option.getAttribute("aria-disabled"),
+    );
+    expect(custom.hasAttribute("data-disabled")).toBe(option.hasAttribute("data-disabled"));
+    expect(custom.hasAttribute("data-disabled")).toBe(true);
+
+    custom.click();
+    await settle();
+    expect(added).toEqual([]);
+    expect(value.value).toEqual([]);
+  });
+
+  it("maxTags: the inline input stays put as a readOnly field and adds stop", async () => {
     const { events, container } = mountTagInput({
       modelValue: ["news", "tech"],
       maxTags: 2,
       placeholder: "Add a tag…",
     });
-    expect(inlineInput(container)).toBeNull();
-    expect(
-      container.querySelector(".hk-tag-input-placeholder")?.textContent,
-    ).toBe("Add a tag…");
+    // The element is not swapped for placeholder text: it is the same
+    // field, readOnly, and the placeholder is its own.
+    const capped = inlineInput(container);
+    expect(capped).not.toBeNull();
+    expect(capped!.readOnly).toBe(true);
+    expect(capped!.placeholder).toBe("Add a tag…");
+    expect(container.querySelector(".hk-tag-input-placeholder")).toBeNull();
     expect(field(container).hasAttribute("data-full")).toBe(true);
 
     await openPanel(container);
@@ -641,6 +907,90 @@ describe("HkTagInput", () => {
     await settle();
     expect(events.remove).toEqual(["news"]);
     expect(events.modelValue).toEqual([["tech"]]);
+    // Back under the cap the same element types again.
+    expect(inlineInput(container)!.readOnly).toBe(false);
+  });
+
+  it("maxTags: reaching the cap keeps the FOCUSED field focused", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news"],
+      maxTags: 2,
+      placeholder: "Add a tag…",
+    });
+    const input = inlineInput(container)!;
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    // The real keyboard path to the cap: type, commit with Enter. (A row
+    // `.click()` would not prove much — jsdom never moves focus on click,
+    // while a browser focuses the row and the field would lose it anyway.)
+    await typeInto(input, "tech");
+    pressKey(input, "Enter");
+    await settle();
+
+    expect(events.modelValue).toEqual([["news", "tech"]]);
+    expect(field(container).hasAttribute("data-full")).toBe(true);
+    // Same element, still focused: reaching the cap used to unmount it and
+    // drop activeElement back to <body>.
+    const capped = inlineInput(container);
+    expect(capped).toBe(input);
+    expect(capped!.readOnly).toBe(true);
+    expect(document.activeElement).toBe(capped);
+    expect(container.querySelector(".hk-tag-input-placeholder")).toBeNull();
+  });
+
+  it("maxTags: Backspace on the readOnly capped field frees a slot", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news", "tech"],
+      maxTags: 2,
+    });
+    // Backspace-on-empty is the same code path an editable field uses;
+    // at the cap it is the keyboard route to a free slot.
+    pressKey(inlineInput(container)!, "Backspace");
+    await settle();
+    expect(events.remove).toEqual(["tech"]);
+    expect(events.modelValue).toEqual([["news"]]);
+    // Back under the cap, the very same element edits text again.
+    expect(inlineInput(container)!.readOnly).toBe(false);
+  });
+
+  it("maxTags: Enter and the custom row stay inert for a readOnly capped field", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news"],
+      maxTags: 1,
+      allowCustom: true,
+    });
+    const input = inlineInput(container)!;
+    expect(input.readOnly).toBe(true);
+
+    await openPanel(container);
+    await typeSearch("brand-new");
+    const custom = customRow()!;
+    expect(custom, "the custom row is offered").toBeTruthy();
+    expect(custom.getAttribute("aria-disabled")).toBe("true");
+    custom.click();
+    pressKey(input, "Enter");
+    await settle();
+    expect(events.add).toEqual([]);
+    expect(events.modelValue).toEqual([]);
+    expect(tagTexts(container)).toEqual(["News"]);
+  });
+
+  it("associates the label with a field that exists at the cap", () => {
+    const { container } = mountTagInput({
+      label: "Interests",
+      modelValue: ["news"],
+      maxTags: 1,
+    });
+    const label = container.querySelector<HTMLLabelElement>(".hk-tag-input-label")!;
+    const id = label.getAttribute("for");
+    expect(id, "the capped field is still named by the label").toBeTruthy();
+    // There IS an element behind that `for` — the capped (readOnly) input,
+    // not a dangling reference to the unmounted element of the old shape.
+    const capped = inlineInput(container);
+    expect(capped, "the capped field still renders an input").not.toBeNull();
+    expect(document.getElementById(id!)).toBe(capped);
+    expect(label.control).toBe(capped);
   });
 
   it("maxTags: a field with room left still types and adds", async () => {
@@ -657,7 +1007,7 @@ describe("HkTagInput", () => {
     expect(inlineInput(unlimited.container), "0 means unlimited").not.toBeNull();
     expect(field(unlimited.container).hasAttribute("data-full")).toBe(false);
     const full = mountTagInput({ modelValue: ["news"], maxTags: 1 });
-    expect(inlineInput(full.container)).toBeNull();
+    expect(inlineInput(full.container)?.readOnly, "capped, not gone").toBe(true);
     expect(field(full.container).hasAttribute("data-full")).toBe(true);
     const empty = mountTagInput({ maxTags: 1 });
     expect(inlineInput(empty.container), "a capped but empty field types").not.toBeNull();
@@ -666,9 +1016,10 @@ describe("HkTagInput", () => {
     rowByLabel("News").click();
     await settle();
     expect(empty.events.modelValue).toEqual([["news"]]);
-    // Second add is refused at the cap.
+    // Second add is refused at the cap — the field is still there, inert.
     await settle();
-    expect(inlineInput(empty.container)).toBeNull();
+    expect(inlineInput(empty.container)?.readOnly).toBe(true);
+    expect(field(empty.container).hasAttribute("data-full")).toBe(true);
   });
 
   it("renders the label, the hint and the placeholder", () => {

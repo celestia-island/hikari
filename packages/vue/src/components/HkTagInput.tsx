@@ -51,6 +51,12 @@ function isSubsequence(query: string, text: string): boolean {
 const WIDE_GLYPH =
   /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe6f\uff00-\uff60\uffe0-\uffe6]/;
 
+/** One keyboard stop of the panel: a visible catalog row, or the
+ *  trailing custom row when `allowCustom` offers one (always last). */
+type HkTagStop =
+  | { id: string; kind: "option"; option: HkTagOption }
+  | { id: string; kind: "custom" };
+
 /**
  * HkTagInput — the tag editor field: selected tags live IN the field as
  * closable chips, and one searchable panel toggles catalog membership.
@@ -59,7 +65,13 @@ const WIDE_GLYPH =
  *     language: tags left to right in host order, then a bare
  *     auto-growing input for typing, then the chevron that opens the
  *     panel. Chips wrap onto as many lines as they need and the box
- *     grows with them;
+ *     grows with them. At `maxTags` that input is NOT unmounted — it
+ *     stays in place and goes `readOnly`, so the field keeps its focus,
+ *     its caret and its accessible name while every ADD affordance is
+ *     inert; the browser shows the placeholder (or the surviving query)
+ *     as the field's text. Only `disabled` removes the element — a
+ *     disabled control must not be focusable — and the placeholder text
+ *     stands in for it;
  *   - the PANEL (chevron, any click inside the field, ArrowDown) is the
  *     shared HkSelectPanel surface — same popup-manager stacking, mobile
  *     bottom sheet, outside-click/Escape closing and ONE SCROLLBAR PER
@@ -81,14 +93,33 @@ const WIDE_GLYPH =
  *     with no confirm dialog. This is a deliberate divergence from
  *     HkAffixPicker's `confirmRemove` two-step — a tag field is edited
  *     in bulk, and a modal per chip would dominate the flow;
- *   - with `allowCustom` the trimmed query that matches no option key or
- *     label offers a trailing "Use “<query>”" row, so the search box can
- *     also CREATE a value (the CORS-origin/admin-keyword case).
+ *   - with `allowCustom` a NON-EMPTY trimmed query offers a trailing
+ *     "Use “<query>”" row, so the search box can also CREATE a value (the
+ *     CORS-origin/admin-keyword case) — but only while that query names
+ *     nothing the field already carries. An exact, case-folded match on
+ *     an option key, on an option label, or on an ALREADY-SELECTED key
+ *     suppresses the row: in all three cases there is nothing left to add.
  *
  * The field is a combobox-style control: the inline input carries
  * `role="combobox"`, `aria-expanded`, `aria-controls` (the listbox id)
  * and `aria-autocomplete="list"`; rows are `role="option"` with
- * `aria-selected`.
+ * `aria-selected`. ArrowDown / ArrowUp walk an ACTIVE row through the
+ * visible rows — the custom row, when offered, is the LAST stop and both
+ * ends wrap — and publish it as `aria-activedescendant` on the inline
+ * input and on the panel's search field. That is the activedescendant
+ * pattern: focus never moves to a row, the row is only highlighted, and
+ * Enter activates the active row (falling back to today's first
+ * togglable row / custom row when nothing is active). Every open and
+ * every query edit starts again with no active row.
+ *
+ * CONTROLLED: the component owns no selected state — `add` / `remove`
+ * fire with the key and `update:modelValue` with the full next array, and
+ * the host writes the prop back. Two synthetic clicks dispatched in the
+ * SAME tick therefore both resolve against the same stale prop and
+ * collapse to the last emitted state — a real pair of user clicks cannot
+ * hit this, because the second lands after the host has re-rendered the
+ * first — so a host must not write back asynchronously expecting both
+ * edits to land.
  */
 export const HkTagInput = defineComponent({
   name: "HkTagInput",
@@ -115,8 +146,9 @@ export const HkTagInput = defineComponent({
     disabled: { type: Boolean, default: false },
     size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
     /** Capacity cap; 0 / undefined means unlimited. At the cap the
-     *  inline input gives way to the placeholder text and the panel's
-     *  add affordances go disabled (the tags' × still removes). */
+     *  inline input stays mounted but `readOnly` (focus and the field's
+     *  accessible name survive) and the panel's add affordances go
+     *  disabled (the tags' × still removes). */
     maxTags: { type: Number, default: undefined },
     /** Search field placeholder; defaulted from the i18n bundle. */
     searchPlaceholder: { type: String, default: undefined },
@@ -136,6 +168,9 @@ export const HkTagInput = defineComponent({
 
     const open = ref(false);
     const query = ref("");
+    /** The keyboard cursor: an index into the stops list, -1 for "nothing
+     *  active" — the state every open and every query edit starts from. */
+    const activeIndex = ref(-1);
     const fieldRef = ref<HTMLElement | null>(null);
     const inputRef = ref<HTMLInputElement | null>(null);
 
@@ -145,11 +180,24 @@ export const HkTagInput = defineComponent({
     const listboxId = `${generatedId}-listbox`;
 
     /** A fresh close drops the filter — a reopened panel starts calm
-     *  (the HkAffixPicker convention). */
+     *  (the HkAffixPicker convention) — and the cursor is cleared on BOTH
+     *  edges: a reopened panel must not remember a row. */
     watch(open, (v) => {
       if (!v) query.value = "";
+      activeIndex.value = -1;
       emit("update:open", v);
     });
+
+    /** Any query edit re-filters the list under the cursor, so the cursor
+     *  goes with it — synchronously, so a key pressed in the same tick as
+     *  the input event can never address a row that is already gone. */
+    watch(
+      query,
+      () => {
+        activeIndex.value = -1;
+      },
+      { flush: "sync" },
+    );
 
     const selectedKeys = computed<readonly string[]>(() =>
       Array.isArray(props.modelValue) ? props.modelValue : [],
@@ -224,6 +272,49 @@ export const HkTagInput = defineComponent({
     /** Rows and the custom row are inert while the field is disabled or
      *  already at capacity. */
     const rowsDisabled = computed(() => props.disabled || atMax.value);
+
+    /** DOM id of one stop: the single spelling the ROW renders and
+     *  `aria-activedescendant` publishes, so the two can never drift. */
+    function stopId(kind: "option" | "custom", index = 0): string {
+      return kind === "custom" ? `${generatedId}-custom` : `${generatedId}-option-${index}`;
+    }
+
+    /** The stops ArrowDown / ArrowUp walk, in the panel's reading order:
+     *  the visible rows, then the custom row as the LAST stop.
+     *
+     *  Indexed by position, not by key — the filter rebuilds the list on
+     *  every query edit (which clears the cursor) and an index can never
+     *  collide the way a host-supplied key could inside a DOM id. */
+    const stops = computed<readonly HkTagStop[]>(() => {
+      const list: HkTagStop[] = filteredRows.value.map((option, index) => ({
+        id: stopId("option", index),
+        kind: "option" as const,
+        option,
+      }));
+      if (customVisible.value) list.push({ id: stopId("custom"), kind: "custom" });
+      return list;
+    });
+
+    /** The active stop, or null when nothing is active — also when the
+     *  list shrank under a stale index (a cursor past the end is no
+     *  cursor, never a neighbouring row). */
+    const activeStop = computed<HkTagStop | null>(
+      () => stops.value[activeIndex.value] ?? null,
+    );
+
+    /** Walk the cursor one stop. From "nothing active" ArrowDown lands on
+     *  the FIRST stop and ArrowUp on the last; from either end it wraps
+     *  around. An empty list leaves nothing active. */
+    function moveActive(delta: 1 | -1): void {
+      const count = stops.value.length;
+      if (count === 0) {
+        activeIndex.value = -1;
+        return;
+      }
+      const from = activeIndex.value;
+      if (from < 0 || from >= count) activeIndex.value = delta > 0 ? 0 : count - 1;
+      else activeIndex.value = (from + delta + count) % count;
+    }
 
     /** Rows that carry the raw key when the catalog's label is blank. */
     function labelOf(option: HkTagOption): string {
@@ -315,12 +406,20 @@ export const HkTagInput = defineComponent({
       query.value = "";
     }
 
-    /** Enter resolves the typed query: the first togglable row when one
-     *  matches, otherwise the custom row (the HkAffixPicker order — an
-     *  inert top row falls through instead of swallowing the key).
+    /** Enter resolves the typed query. With an active row that row wins —
+     *  the keyboard cursor must be able to reach a row other than the top
+     *  one. With nothing active it stays the HkAffixPicker order: the
+     *  first togglable row, otherwise the custom row (an inert top row
+     *  falls through instead of swallowing the key).
      *  An empty query is a no-op: Enter on a blank field must not pick
      *  the top of the catalog. */
     function commitQuery(): void {
+      const stop = activeStop.value;
+      if (stop) {
+        if (stop.kind === "custom") addCustom();
+        else toggleRow(stop.option);
+        return;
+      }
       const q = customText.value;
       if (!q) return;
       const rows = filteredRows.value;
@@ -358,9 +457,13 @@ export const HkTagInput = defineComponent({
         }
         return;
       }
-      if (e.key === "ArrowDown") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
-        openPanel();
+        // Closed: the arrow only opens the panel — the canonical combobox
+        // step, and opening starts with nothing active. Open: it walks
+        // the cursor; focus stays where it is (activedescendant).
+        if (!open.value) openPanel();
+        else moveActive(e.key === "ArrowDown" ? 1 : -1);
         return;
       }
       if (e.key === "Escape") {
@@ -383,9 +486,28 @@ export const HkTagInput = defineComponent({
         commitQuery();
         return;
       }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        moveActive(e.key === "ArrowDown" ? 1 : -1);
+        return;
+      }
       if (e.key === "Escape") {
         e.preventDefault();
         open.value = false;
+      }
+    }
+
+    /** Arrows pressed on the panel SURFACE itself (a row keeps focus
+     *  after a click, since rows carry tabindex="-1") walk the cursor
+     *  too. Keydowns that bubbled out of a field are that field's own
+     *  business — handled once, never twice. */
+    function onPanelKeydown(e: KeyboardEvent): void {
+      if (e.isComposing) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.("input, textarea, select")) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        moveActive(e.key === "ArrowDown" ? 1 : -1);
       }
     }
 
@@ -399,13 +521,24 @@ export const HkTagInput = defineComponent({
         t("hikari::tagInput.addCustom", "Use “{q}”"),
         { q: customText.value },
       );
-      // The inline input is absent while disabled or at capacity; the
-      // placeholder text keeps the field readable in its place.
-      const typingEnabled = !props.disabled && !atMax.value;
+      // The inline input is unmounted ONLY while disabled — a disabled
+      // control must not be focusable, and the placeholder text keeps the
+      // field readable. At capacity it stays mounted and goes readOnly:
+      // the field keeps its focus, its caret and its accessible name, the
+      // browser shows the placeholder (or the surviving query) as the
+      // field's text, and every add affordance is inert anyway.
+      const inputRendered = !props.disabled;
+      const activeId = activeStop.value?.id;
       return (
         <div class="hk-tag-input-wrapper">
           {props.label && (
-            <label class="hk-tag-input-label" for={generatedId}>
+            <label
+              class="hk-tag-input-label"
+              // A `for` must name an element that exists. While disabled
+              // there is no input to point at, and the box carries the
+              // caption itself (role="group" + aria-label).
+              for={inputRendered ? generatedId : undefined}
+            >
               {props.label}
             </label>
           )}
@@ -420,6 +553,8 @@ export const HkTagInput = defineComponent({
             ]}
             data-disabled={props.disabled || undefined}
             data-full={atMax.value || undefined}
+            role={inputRendered ? undefined : "group"}
+            aria-label={inputRendered ? undefined : title.value}
             onClick={onFieldClick}
           >
             {tagEntries.value.map((entry) => (
@@ -434,7 +569,7 @@ export const HkTagInput = defineComponent({
                 <span class="hk-tag-input-tag-text">{entry.label}</span>
               </HkTag>
             ))}
-            {typingEnabled ? (
+            {inputRendered ? (
               <input
                 ref={inputRef}
                 id={generatedId}
@@ -447,7 +582,17 @@ export const HkTagInput = defineComponent({
                 aria-controls={listboxId}
                 aria-autocomplete="list"
                 aria-haspopup="listbox"
+                aria-activedescendant={activeId}
                 aria-label={props.label ? undefined : title.value}
+                // At the cap the field stays focusable and readable, but
+                // takes no text; nothing could be added with it anyway.
+                // (Lowercase `readonly`: Vue's JSX types spell the DOM
+                // ATTRIBUTE, and the runtime sets the boolean attribute.)
+                // Backspace on the empty readOnly field still removes the
+                // last tag — the very code path an editable field uses,
+                // and at the cap the keyboard way to free a slot, exactly
+                // like the chip's ×.
+                readonly={atMax.value || undefined}
                 placeholder={placeholder.value}
                 autocomplete="off"
                 spellcheck={false}
@@ -492,6 +637,7 @@ export const HkTagInput = defineComponent({
             onUpdate:open={(v: boolean) => {
               open.value = v;
             }}
+            onKeydown={onPanelKeydown}
           >
             {{
               default: () => (
@@ -509,6 +655,10 @@ export const HkTagInput = defineComponent({
                       size="sm"
                       placeholder={searchPlaceholder}
                       aria-label={searchPlaceholder}
+                      // The search field is the second combobox surface:
+                      // arrows pressed here move the SAME cursor, and the
+                      // row is published the same way.
+                      aria-activedescendant={activeId}
                       autocomplete="off"
                       onKeydown={onSearchKeydown}
                     >
@@ -517,71 +667,83 @@ export const HkTagInput = defineComponent({
                       }}
                     </HkInput>
                   </div>
-                  {rows.length > 0 || customVisible.value ? (
-                    <div
-                      id={listboxId}
-                      class="hk-tag-input-list"
-                      role="listbox"
-                      aria-multiselectable="true"
-                      aria-label={title.value}
-                    >
-                      {rows.map((option) => {
-                        const selected = selectedKeys.value.includes(option.key);
-                        const inert = rowInert(option);
-                        return (
-                          <div
-                            key={option.key}
-                            role="option"
-                            tabindex={-1}
-                            class="hk-tag-input-row"
-                            aria-selected={selected}
-                            aria-disabled={inert || undefined}
-                            data-selected={selected || undefined}
-                            data-disabled={inert || undefined}
-                            onClick={(e: MouseEvent) => {
-                              e.stopPropagation();
-                              toggleRow(option);
-                            }}
-                          >
-                            <span class="hk-tag-input-check" aria-hidden="true">
-                              {selected && <Check size={14} />}
-                            </span>
-                            {option.flag && (
-                              <span class="hk-tag-input-row-flag" aria-hidden="true">
-                                {option.flag}
-                              </span>
-                            )}
-                            <span class="hk-tag-input-row-label">{labelOf(option)}</span>
-                            {option.meta && (
-                              <span class="hk-tag-input-row-meta">{option.meta}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {customVisible.value && (
+                  {/* The listbox element exists for as long as the panel is
+                    * open — including when the filter matches nothing — so
+                    * the input's `aria-controls` always resolves; the empty
+                    * state is its only child in that case. */}
+                  <div
+                    id={listboxId}
+                    class="hk-tag-input-list"
+                    role="listbox"
+                    aria-multiselectable="true"
+                    aria-label={title.value}
+                  >
+                    {rows.map((option, index) => {
+                      const selected = selectedKeys.value.includes(option.key);
+                      const inert = rowInert(option);
+                      const stop = stops.value[index];
+                      return (
                         <div
+                          key={option.key}
+                          id={stop.id}
                           role="option"
                           tabindex={-1}
                           class="hk-tag-input-row"
-                          aria-selected={false}
-                          aria-disabled={atMax.value || undefined}
-                          data-custom="true"
-                          data-disabled={atMax.value || undefined}
+                          aria-selected={selected}
+                          aria-disabled={inert || undefined}
+                          data-selected={selected || undefined}
+                          data-disabled={inert || undefined}
+                          data-active={activeId === stop.id || undefined}
                           onClick={(e: MouseEvent) => {
                             e.stopPropagation();
-                            addCustom();
+                            toggleRow(option);
                           }}
                         >
                           <span class="hk-tag-input-check" aria-hidden="true">
-                            <Plus size={14} />
+                            {selected && <Check size={14} />}
                           </span>
-                          <span class="hk-tag-input-row-label">{customLabel}</span>
+                          {option.flag && (
+                            <span class="hk-tag-input-row-flag" aria-hidden="true">
+                              {option.flag}
+                            </span>
+                          )}
+                          <span class="hk-tag-input-row-label">{labelOf(option)}</span>
+                          {option.meta && (
+                            <span class="hk-tag-input-row-meta">{option.meta}</span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div class="hk-tag-input-empty">{emptyText}</div>
-                  )}
+                      );
+                    })}
+                    {customVisible.value && (
+                      <div
+                        id={stopId("custom")}
+                        role="option"
+                        tabindex={-1}
+                        class="hk-tag-input-row"
+                        aria-selected={false}
+                        // The custom row is inert on exactly the same flag
+                        // as the option rows — the whole list (custom row
+                        // included) freezes when the field is disabled or
+                        // full, and reads inert to AT while it does.
+                        aria-disabled={rowsDisabled.value || undefined}
+                        data-custom="true"
+                        data-disabled={rowsDisabled.value || undefined}
+                        data-active={activeId === stopId("custom") || undefined}
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation();
+                          addCustom();
+                        }}
+                      >
+                        <span class="hk-tag-input-check" aria-hidden="true">
+                          <Plus size={14} />
+                        </span>
+                        <span class="hk-tag-input-row-label">{customLabel}</span>
+                      </div>
+                    )}
+                    {rows.length === 0 && !customVisible.value && (
+                      <div class="hk-tag-input-empty">{emptyText}</div>
+                    )}
+                  </div>
                 </div>
               ),
             }}

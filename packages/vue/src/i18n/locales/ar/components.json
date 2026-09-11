@@ -200,5 +200,8 @@
   "hikari::messageBox.ok": "موافق",
   "hikari::messageBox.alertTitle": "تنبيه",
   "hikari::messageBox.confirmTitle": "يرجى التأكيد",
-  "hikari::messageBox.promptTitle": "إدخال"
+  "hikari::messageBox.promptTitle": "إدخال",
+  "hikari::loadMore.more": "تحميل المزيد",
+  "hikari::loadMore.loading": "جارٍ التحميل…",
+  "hikari::loadMore.end": "وصلت إلى النهاية"
 }

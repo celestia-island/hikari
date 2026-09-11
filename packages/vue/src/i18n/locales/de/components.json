@@ -200,5 +200,8 @@
   "hikari::messageBox.ok": "OK",
   "hikari::messageBox.alertTitle": "Hinweis",
   "hikari::messageBox.confirmTitle": "Bitte bestätigen",
-  "hikari::messageBox.promptTitle": "Eingabe"
+  "hikari::messageBox.promptTitle": "Eingabe",
+  "hikari::loadMore.more": "Mehr laden",
+  "hikari::loadMore.loading": "Wird geladen…",
+  "hikari::loadMore.end": "Das Ende ist erreicht"
 }

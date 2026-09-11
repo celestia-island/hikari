@@ -209,5 +209,8 @@
   "hikari::affixPicker.unset": "未設定",
   "hikari::messageBox.alertTitle": "提示",
   "hikari::messageBox.confirmTitle": "請確認",
-  "hikari::messageBox.promptTitle": "輸入"
+  "hikari::messageBox.promptTitle": "輸入",
+  "hikari::loadMore.more": "載入更多",
+  "hikari::loadMore.loading": "載入中…",
+  "hikari::loadMore.end": "到底啦"
 }

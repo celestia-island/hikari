@@ -30,6 +30,7 @@ export { default as HPlaceholderMarquee, type PlaceholderVariant } from "./compo
 export { default as HKbd } from "./components/HkKbd";
 export { default as HLabel } from "./components/HkLabel";
 export { default as HListTransition } from "./components/HkListTransition";
+export { default as HLoadMore } from "./components/HkLoadMore";
 export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HModal } from "./components/HkModal";
 export { default as HNavItem } from "./components/HkNavItem";
@@ -252,6 +253,8 @@ export { validatePassword, passwordLevel } from "./utils/password";
 export type { PasswordValidationResult, PasswordLevel } from "./utils/password";
 
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
+export { useApproachEnd } from "./composables/useApproachEnd";
+export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
 export type {

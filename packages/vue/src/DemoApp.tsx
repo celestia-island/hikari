@@ -16,6 +16,7 @@ import {
   HSkeleton, HSkeletonList, HAvatar, HKbd, HDivider,
   HAlert, HEmptyState, HExpansionPanel,
   HTabs, HCard, HTable, HTimeline,
+  HScrollContainer, HLoadMore,
   HMediaSlider, HMediaPlayer, HImageViewer,
   HImagePreview,
   HZoomToolbar, HMinimap, HTrendChart,
@@ -197,6 +198,24 @@ export default defineComponent({
       syncZoom();
     }
 
+    // HLoadMore + HScrollContainer approachEnd — the canonical dynamic
+    // loading pair: the container emits `approachEnd` when the content
+    // end nears (including the initial under-filled pass), the demo
+    // "fetches" a page, and the indicator morphs button → spinner → end.
+    const pagedRows = ref(Array.from({ length: 10 }, (_, i) => `Row ${i + 1}`));
+    const pagedState = ref<"idle" | "loading" | "end">("idle");
+    function loadPagedRows() {
+      if (pagedState.value !== "idle") return;
+      pagedState.value = "loading";
+      setTimeout(() => {
+        pagedRows.value = [
+          ...pagedRows.value,
+          ...Array.from({ length: 10 }, (_, i) => `Row ${pagedRows.value.length + i + 1}`),
+        ];
+        pagedState.value = pagedRows.value.length >= 60 ? "end" : "idle";
+      }, 500);
+    }
+
     return () => (
       <div class="demo">
         <header class="demo-header">
@@ -223,6 +242,22 @@ export default defineComponent({
             <HButton variant="primary" disabled>Disabled</HButton>
             <HButton variant="primary" shortcut="Ctrl+K">Shortcut</HButton>
           </div>
+        </section>
+
+        <section>
+          <h2>HScrollContainer + HLoadMore</h2>
+          <HScrollContainer
+            style={{ height: "320px" }}
+            approachEnd
+            onApproachEnd={loadPagedRows}
+          >
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {pagedRows.value.map((r) => (
+                <div key={r} style={{ padding: "6px 12px", borderBottom: "1px solid rgb(var(--color-muted, 108 108 108) / 18%)" }}>{r}</div>
+              ))}
+              <HLoadMore state={pagedState.value} shown={pagedRows.value.length} total={60} onLoadMore={loadPagedRows} />
+            </div>
+          </HScrollContainer>
         </section>
 
         <section>

@@ -213,5 +213,6 @@
   "hikari::tagInput.search": "Search",
   "hikari::tagInput.empty": "No matches",
   "hikari::tagInput.remove": "Remove",
-  "hikari::tagInput.addCustom": "Use “{q}”"
+  "hikari::tagInput.addCustom": "Use “{q}”",
+  "hikari::tagInput.reorder": "Reorder {label}"
 }

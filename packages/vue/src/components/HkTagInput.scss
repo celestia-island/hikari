@@ -3,7 +3,10 @@
  * HkInput's box (border, radius, rhythm, focus ring) so a tag field sits
  * flush beside plain inputs in the same form; the panel chrome mirrors
  * HkAffixPicker's popup (search on top, rows below, NO inner scroll
- * region — the HkSelectPanel window owns the single scrollbar). */
+ * region — the HkSelectPanel window owns the single scrollbar, capped by
+ * the component's `maxHeight` so a long catalog scrolls there instead of
+ * stretching the panel). Chips and selected rows are reorderable; the
+ * drag states (`data-dragging` / `data-drop`) live at the bottom. */
 
 .hk-tag-input-wrapper {
   display: block;
@@ -78,6 +81,15 @@
 
 .hk-tag-input-tag {
   max-width: 100%;
+  /* Reorder affordance: the chip BODY is the handle. */
+  cursor: grab;
+  /* A press that becomes a drag must not paint a text selection, and a
+   * touch that starts scrolling vertically belongs to the page (the
+   * browser takes the gesture back with a pointercancel; a horizontal
+   * drag is ours — see usePointerReorder). */
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
 }
 
 .hk-tag-input-tag-text {
@@ -85,6 +97,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* A disabled field reorders nothing: the chips drop the grab affordance
+ * (and the gesture reservation with it) — the box's own not-allowed
+ * cursor takes over. */
+.hk-tag-input-box[data-disabled] .hk-tag-input-tag {
+  cursor: default;
+  touch-action: auto;
 }
 
 /* ── inline typing input / placeholder ────────────────────────────── */
@@ -171,6 +191,12 @@
 .hk-tag-input-panel {
   display: flex;
   flex-direction: column;
+  /* A FIXED measure, not a content-driven one: the popout is positioned
+   * once when it opens, so a panel that grew with its content would shift
+   * its own left edge mid-interaction — toggling a row adds a check glyph,
+   * and a query changes which rows (and how much meta text) survive.
+   * min/max stay as the bounds a narrow viewport imposes on that width. */
+  width: min(19rem, calc(100vw - 2rem));
   min-width: 13rem;
   max-width: min(19rem, calc(100vw - 2rem));
 }
@@ -291,6 +317,62 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── reordering ───────────────────────────────────────────────────── */
+/* Live drag (both lists): the item being moved dims, the slot it would
+ * land in is ringed. Chips carry the state as classes (HkTag takes no
+ * arbitrary attributes), panel rows as data attributes — both are
+ * assertable hooks that never collide with the pointer/hover faces. */
+.hk-tag-input-tag-dragging,
+.hk-tag-input-row[data-dragging] {
+  opacity: 0.55;
+  cursor: grabbing;
+}
+
+.hk-tag-input-tag-drop {
+  outline: 1px dashed rgb(var(--color-focused-border));
+  outline-offset: 1px;
+}
+
+.hk-tag-input-row[data-drop] {
+  box-shadow: inset 0 0 0 1px rgb(var(--color-focused-border));
+}
+
+/* Drag handle of a SELECTED panel row — the one element that claims the
+ * touch gesture outright, so the sheet keeps scrolling under the rest of
+ * the row. Only selected rows render one: an unselected row is not
+ * draggable and is never a drop target. */
+.hk-tag-input-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  /* The largest target the row rhythm allows: the row's content box is the
+     2.25rem row minus its 4px block padding, so the handle grows to that
+     without changing the option rows' height (the 44px touch guidance
+     cannot fit in a list row — the sheet scrolls through them instead). */
+  width: 1.5rem;
+  height: 1.75rem;
+  margin-inline-end: -4px;
+  color: rgb(var(--color-muted));
+  opacity: 0.6;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.12s ease, color 0.12s ease;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.hk-tag-input-row:hover .hk-tag-input-grip,
+.hk-tag-input-row[data-dragging] .hk-tag-input-grip,
+.hk-tag-input-grip:focus-visible {
+  opacity: 1;
+  color: rgb(var(--color-text));
+}
+
 .hk-tag-input-empty {
   padding: 14px 12px;
   color: rgb(var(--color-muted));
@@ -301,6 +383,7 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-tag-input-box,
   .hk-tag-input-chevron,
+  .hk-tag-input-grip,
   .hk-tag-input-row {
     transition: none;
   }

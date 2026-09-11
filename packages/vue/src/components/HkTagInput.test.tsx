@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
+import HkSelectPanel from "./HkSelectPanel";
 import HkTagInput, { type HkTagOption } from "./HkTagInput";
 
 /** Regional-indicator flag pair for an ISO 3166-1 alpha-2 code, built
@@ -114,8 +115,19 @@ function inlineInput(container: HTMLElement): HTMLInputElement | null {
   return container.querySelector<HTMLInputElement>(".hk-tag-input-element");
 }
 
+/** HkListTransition keeps a leaving element mounted until its squeeze-out
+ *  ends (`variant="reveal"`), and happy-dom never signals that end — so a
+ *  node on its way out is still in the DOM. It is no longer part of the
+ *  list (the CSS even takes its pointer events away), so every list query
+ *  here reads the LIVING elements only. */
+function isLeaving(el: Element): boolean {
+  return el.classList.contains("hk-list-reveal-leave-active");
+}
+
 function tags(container: HTMLElement): HTMLElement[] {
-  return [...container.querySelectorAll<HTMLElement>(".hk-tag")];
+  return [...container.querySelectorAll<HTMLElement>(".hk-tag")].filter(
+    (tag) => !isLeaving(tag),
+  );
 }
 
 function tagTexts(container: HTMLElement): string[] {
@@ -125,12 +137,22 @@ function tagTexts(container: HTMLElement): string[] {
 }
 
 function closeButtons(container: HTMLElement): HTMLButtonElement[] {
-  return [...container.querySelectorAll<HTMLButtonElement>(".hk-tag-close")];
+  return tags(container)
+    .map((tag) => tag.querySelector<HTMLButtonElement>(".hk-tag-close"))
+    .filter((button): button is HTMLButtonElement => button != null);
 }
 
 /** Rows live in the teleported panel, so they are queried on body. */
 function rows(): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLElement>(".hk-tag-input-row")];
+  return [...document.querySelectorAll<HTMLElement>(".hk-tag-input-row")].filter(
+    (row) => !isLeaving(row),
+  );
+}
+
+/** The rows a panel drag may move: the selected ones, which carry both the
+ *  strip marker and their grip handle. */
+function reorderableRows(): HTMLElement[] {
+  return rows().filter((row) => row.hasAttribute("data-reorder"));
 }
 
 function rowLabels(): string[] {
@@ -149,11 +171,11 @@ function rowByLabel(label: string): HTMLElement {
 
 /** The row the keyboard cursor currently sits on (none = null). */
 function activeRow(): HTMLElement | null {
-  return document.querySelector<HTMLElement>(".hk-tag-input-row[data-active]");
+  return rows().find((row) => row.hasAttribute("data-active")) ?? null;
 }
 
 function customRow(): HTMLElement | null {
-  return document.querySelector<HTMLElement>('.hk-tag-input-row[data-custom="true"]');
+  return rows().find((row) => row.getAttribute("data-custom") === "true") ?? null;
 }
 
 function searchInput(): HTMLInputElement {
@@ -183,8 +205,10 @@ async function typeSearch(value: string): Promise<void> {
   await typeInto(searchInput(), value);
 }
 
-function pressKey(el: Element, key: string): void {
-  el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+function pressKey(el: Element, key: string, init: KeyboardEventInit = {}): void {
+  el.dispatchEvent(
+    new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init }),
+  );
 }
 
 afterEach(async () => {
@@ -301,7 +325,7 @@ describe("HkTagInput", () => {
     const list = document.getElementById(id!);
     expect(list, "the referenced element exists").toBeTruthy();
     expect(list!.getAttribute("role")).toBe("listbox");
-    expect(list!.children).toHaveLength(0);
+    expect([...list!.children].filter((child) => !isLeaving(child))).toHaveLength(0);
 
     // …and the message itself is NOT owned by the listbox: a listbox may
     // only own options/groups (aria-required-children), so it sits beside.
@@ -314,10 +338,13 @@ describe("HkTagInput", () => {
   it("lists EVERY option — selected ones stay visible with a check glyph", async () => {
     const { container } = mountTagInput({ modelValue: ["news", "tech"] });
     await openPanel(container);
+    // Group-strict: the two selected rows come first, in the HOST's order
+    // ("news" before "tech" — not the catalog's), then the unselected ones
+    // in catalog order.
     expect(rowLabels()).toEqual([
       "News",
-      "中华人民共和国",
       "Technology",
+      "中华人民共和国",
       "Germany",
       "Retired",
     ]);
@@ -1118,5 +1145,782 @@ describe("HkTagInput", () => {
     expect(
       [...document.querySelectorAll(".hk-tag-input-tag-text")].map((n) => n.textContent),
     ).toEqual(["News", "Technology"]);
+  });
+});
+
+/** Pin an item strip's rects: happy-dom ships no layout engine, so the
+ *  items a drag measures are placed by hand (the HkSlider pinRect
+ *  pattern). `size` is the item's extent along the axis. */
+function pinStrip(items: HTMLElement[], size: number, axis: "x" | "y"): void {
+  items.forEach((el, index) => {
+    const start = index * size;
+    const box =
+      axis === "x"
+        ? { left: start, right: start + size, top: 0, bottom: size, width: size, height: size, x: start, y: 0 }
+        : { left: 0, right: size, top: start, bottom: start + size, width: size, height: size, x: 0, y: start };
+    Object.defineProperty(el, "getBoundingClientRect", {
+      configurable: true,
+      value: () => box as DOMRect,
+    });
+  });
+}
+
+/** Press `on` and move to `to`, WITHOUT releasing — for observing a held
+ *  drag (auto-scroll, drop markers) before the drop. Moves and releases are
+ *  window events: the drag listens at the window, because a real pointer
+ *  leaves the item it started on. `buttons` models the held button (1 for
+ *  the whole press, 0 on release), which is how the drag tells a live
+ *  gesture from one whose release the page never saw. */
+function holdPointer(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  on: HTMLElement,
+  pointerType: "mouse" | "touch" = "mouse",
+): void {
+  on.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      pointerType,
+      button: 0,
+      buttons: 1,
+      clientX: from.x,
+      clientY: from.y,
+    }),
+  );
+  window.dispatchEvent(
+    new PointerEvent("pointermove", {
+      bubbles: true,
+      pointerId: 1,
+      pointerType,
+      buttons: 1,
+      clientX: to.x,
+      clientY: to.y,
+    }),
+  );
+}
+
+function releasePointer(
+  to: { x: number; y: number },
+  pointerType: "mouse" | "touch" = "mouse",
+): void {
+  window.dispatchEvent(
+    new PointerEvent("pointerup", {
+      bubbles: true,
+      pointerId: 1,
+      pointerType,
+      buttons: 0,
+      clientX: to.x,
+      clientY: to.y,
+    }),
+  );
+}
+
+/** A full gesture: press, move, release. */
+function dragPointer(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  on: HTMLElement,
+  pointerType: "mouse" | "touch" = "mouse",
+): void {
+  holdPointer(from, to, on, pointerType);
+  releasePointer(to, pointerType);
+}
+
+/** Wait out `count` animation frames — auto-scroll steps one per frame. */
+async function frames(count: number): Promise<void> {
+  for (let i = 0; i < count; i += 1) {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+}
+
+/** Pin a scrollable band and place its drag rows relative to the band's own
+ *  scroll offset — what a browser does to the content a scroll moves under
+ *  the pointer (happy-dom has no layout, so the geometry is stated). */
+function pinScrollBand(
+  surface: HTMLElement,
+  height: number,
+  rows: HTMLElement[],
+  rowSize = 40,
+): void {
+  Object.defineProperty(surface, "getBoundingClientRect", {
+    configurable: true,
+    value: () =>
+      ({ left: 0, right: 40, top: 0, bottom: height, width: 40, height, x: 0, y: 0 }) as DOMRect,
+  });
+  rows.forEach((row, index) => {
+    Object.defineProperty(row, "getBoundingClientRect", {
+      configurable: true,
+      value: () => {
+        const start = index * rowSize - surface.scrollTop;
+        return {
+          left: 0,
+          right: 40,
+          top: start,
+          bottom: start + rowSize,
+          width: 40,
+          height: rowSize,
+          x: 0,
+          y: start,
+        } as DOMRect;
+      },
+    });
+  });
+}
+
+/** The row the live drag would land on (the drop marker), or null. */
+function dropRow(): HTMLElement | null {
+  return rows().find((row) => row.hasAttribute("data-drop")) ?? null;
+}
+
+function grip(row: HTMLElement): HTMLElement {
+  const handle = row.querySelector<HTMLElement>(".hk-tag-input-grip");
+  expect(handle, "the selected row carries a drag handle").toBeTruthy();
+  return handle!;
+}
+
+function rowText(row: HTMLElement): string {
+  return row.querySelector(".hk-tag-input-row-label")?.textContent ?? "";
+}
+
+describe("HkTagInput panel geometry and drag reordering", () => {
+  it("hugs its own measure instead of the field's width, capped by maxHeight", async () => {
+    const { container } = mountTagInput({ modelValue: ["news"] });
+    // A full-width settings column (880px): far wider than the panel's
+    // designed 13–19rem measure, which is exactly the reported defect.
+    Object.defineProperty(field(container), "getBoundingClientRect", {
+      configurable: true,
+      value: () =>
+        ({ left: 0, right: 880, top: 0, bottom: 40, width: 880, height: 40, x: 0, y: 0 }) as DOMRect,
+    });
+    await openPanel(container);
+
+    const host = document.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host, "the popout host renders").toBeTruthy();
+    // No anchor-width match: nothing pins the popout to the 880px field.
+    expect(host.style.minWidth).toBe("");
+
+    // The surface cap rides the panel through the SCSS hook, so a long
+    // catalog scrolls inside 18rem/45dvh instead of growing to 36rem.
+    const popout = document.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.style.getPropertyValue("--hk-select-panel-max-height")).toBe(
+      "min(18rem, 45dvh)",
+    );
+  });
+
+  it("leaves the shared panel exactly as it was when the cap is not passed", async () => {
+    // The `maxHeight` prop is ADDITIVE, pinned at the DOM level rather than
+    // in source text: a panel mounted with no cap renders no hook and no
+    // inline max-height, i.e. the historic popout geometry.
+    const anchor = document.createElement("div");
+    document.body.appendChild(anchor);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HkSelectPanel,
+          { open: true, anchorRef: anchor, title: "Pick" },
+          { default: () => h("div", { class: "probe-row" }, "row") },
+        ),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+
+    const popout = document.querySelector<HTMLElement>(".hk-select-popout");
+    expect(popout, "the popout renders").toBeTruthy();
+    expect(popout!.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+    expect(popout!.style.maxHeight).toBe("");
+    expect(popout!.hasAttribute("style"), "no inline style at all").toBe(false);
+  });
+
+  it("regroups the rows: selected first in host order, then catalog order", async () => {
+    // The host order is "de" then "news" — deliberately NOT the catalog's
+    // (news precedes de there), so the assertion pins the host's order.
+    const { container } = mountTagInput({ modelValue: ["de", "news"] });
+    await openPanel(container);
+    expect(rowLabels()).toEqual([
+      "Germany",
+      "News",
+      "中华人民共和国",
+      "Technology",
+      "Retired",
+    ]);
+    // Only the selected rows are drag items — they carry the marker.
+    expect(reorderableRows().map(rowText)).toEqual(["Germany", "News"]);
+  });
+
+  it("filters WITHIN each group and never merges them", async () => {
+    const { container } = mountTagInput({
+      modelValue: ["tech", "news"],
+      allowCustom: true,
+    });
+    await openPanel(container);
+    // "e" matches News, Technology, Germany and Retired: the two selected
+    // rows keep the host order and stay ahead of the unselected ones.
+    await typeSearch("e");
+    expect(rowLabels()).toEqual([
+      "Technology",
+      "News",
+      "Germany",
+      "Retired",
+      "Use “e”",
+    ]);
+
+    // A query matching only unselected rows leaves the selected group
+    // empty — the groups do not collapse into one catalog order.
+    await typeSearch("retir");
+    expect(rowLabels()).toEqual(["Retired", "Use “retir”"]);
+  });
+
+  it("walks the keyboard stops in the RENDERED order", async () => {
+    const { container } = mountTagInput({ modelValue: ["de", "news"], allowCustom: true });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    await typeSearch("e");
+
+    const walked: string[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      pressKey(search, "ArrowDown");
+      await settle();
+      walked.push(rowText(activeRow()!));
+    }
+    // The cursor follows the regrouped rows, custom row last…
+    expect(walked).toEqual(["Germany", "News", "Technology", "Retired", "Use “e”"]);
+    // …and wraps back to the first rendered row.
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Germany"));
+  });
+
+  it("drags a chip by its body and emits the host's new order", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    const strip = tags(container);
+    expect(strip).toHaveLength(3);
+    pinStrip(strip, 60, "x");
+
+    // Press the first chip and pull the pointer past every midpoint: it
+    // lands in the last slot.
+    dragPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, strip[0]);
+    await settle();
+
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+    expect(tagTexts(container)).toEqual(["Technology", "Germany", "News"]);
+    // A reorder is not an edit: nothing was added or removed.
+    expect(events.add).toEqual([]);
+    expect(events.remove).toEqual([]);
+  });
+
+  it("drags a selected row by its grip and emits the host's new order", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    expect(selected.map(rowText)).toEqual(["News", "Technology", "Germany"]);
+    pinStrip(selected, 40, "y");
+
+    dragPointer({ x: 10, y: 10 }, { x: 10, y: 130 }, grip(selected[0]));
+    await settle();
+
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news"]);
+    expect(events.add).toEqual([]);
+    expect(events.remove).toEqual([]);
+    // The panel and the field agree on the new order.
+    expect(rowLabels().slice(0, 3)).toEqual(["Technology", "Germany", "News"]);
+  });
+
+  it("clamps a row drag to the selected group", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    expect(selected.map(rowText)).toEqual(["News", "Technology"]);
+    // EVERY row is measured, not just the drag items: a strip that wrongly
+    // included the unselected rows would otherwise resolve against
+    // unmeasured (all-zero) rects and slip through this test.
+    pinStrip(rows(), 40, "y");
+
+    // Aim far BELOW the group, deep into the unselected rows: the drop
+    // still lands on the last SELECTED slot, never inside that region.
+    dragPointer({ x: 10, y: 10 }, { x: 10, y: 600 }, grip(selected[0]));
+    await settle();
+
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+    expect(rowLabels()).toEqual([
+      "Technology",
+      "News",
+      "中华人民共和国",
+      "Germany",
+      "Retired",
+    ]);
+  });
+
+  it("keeps unselected rows out of the drag space entirely", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    expect(selected).toHaveLength(1);
+    expect(grip(selected[0])).toBeTruthy();
+
+    // An unselected row carries neither the drag marker nor a handle…
+    const unselected = rowByLabel("Germany");
+    expect(unselected.hasAttribute("data-reorder")).toBe(false);
+    expect(unselected.querySelector(".hk-tag-input-grip")).toBeNull();
+
+    // …and a press on it starts nothing, however far the pointer travels.
+    pinStrip([selected[0], unselected], 40, "y");
+    dragPointer({ x: 10, y: 70 }, { x: 10, y: 600 }, unselected);
+    await settle();
+    expect(events.modelValue).toEqual([]);
+  });
+
+  it("moves a panel row by key, so a custom tag in the array survives", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news", "gitee.com", "tech"],
+    });
+    await openPanel(container);
+    const selected = reorderableRows();
+    // Only the two catalog entries have rows; the custom key does not.
+    expect(selected.map(rowText)).toEqual(["News", "Technology"]);
+    pinStrip(selected, 40, "y");
+
+    dragPointer({ x: 10, y: 10 }, { x: 10, y: 70 }, grip(selected[0]));
+    await settle();
+
+    // "news" lands on "tech"'s host position; the custom key was neither
+    // dropped nor duplicated by a row drag it had no row in.
+    expect(events.modelValue.at(-1)).toEqual(["gitee.com", "tech", "news"]);
+    expect(tagTexts(container)).toEqual(["gitee.com", "Technology", "News"]);
+  });
+
+  it("keeps a sub-threshold press a click — and never drags from the ×", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
+    pinStrip(tags(container), 60, "x");
+
+    // The × is a control: its press starts no drag at all, however far the
+    // pointer then travels — on touch just as on a mouse.
+    dragPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, closeButtons(container)[0], "touch");
+    await settle();
+    expect(events.modelValue).toEqual([]);
+
+    // …and the click it does own still removes its tag.
+    closeButtons(container)[0].click();
+    await settle();
+    expect(events.remove).toEqual(["news"]);
+    expect(events.modelValue.at(-1)).toEqual(["tech"]);
+
+    // A press on the chip body that stays under the ~6px threshold is a
+    // click too — no reorder, no swallowed click.
+    const remaining = tags(container);
+    pinStrip(remaining, 60, "x");
+    dragPointer({ x: 10, y: 10 }, { x: 13, y: 10 }, remaining[0]);
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech"]);
+    expect(tagTexts(container)).toEqual(["Technology"]);
+  });
+
+  it("swallows the click a real chip drag would deliver to the field", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
+    const strip = tags(container);
+    pinStrip(strip, 60, "x");
+
+    dragPointer({ x: 10, y: 10 }, { x: 200, y: 10 }, strip[0]);
+    // The gesture ended inside the field, so the browser delivers its click
+    // to the box: the drag owns it — the panel must not pop open behind
+    // the drop.
+    field(container).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+    expect(events.open).toEqual([]);
+  });
+
+  it("does not let a row drag's trailing click toggle the dragged row", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"] });
+    await openPanel(container);
+    const selected = reorderableRows();
+    pinStrip(selected, 40, "y");
+    dragPointer({ x: 10, y: 10 }, { x: 10, y: 70 }, grip(selected[0]));
+    // The pointer started and ended on the SAME row (a short drag), so the
+    // browser delivers its click there right after the release: the drag
+    // owns that click — otherwise the row the user just moved would toggle
+    // itself back OFF against the model it was moved in.
+    grip(selected[0]).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+
+    expect(events.remove).toEqual([]);
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+  });
+
+  it("never lets a blind Enter remove a tag the query matches", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["tech"], allowCustom: true });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+
+    // "e" matches the SELECTED Technology first (group-strict order), then
+    // News / Germany / Retired. Enter with no cursor is the "type to add"
+    // gesture, so it takes the first row the field can still take instead of
+    // toggling the tag the user is looking at back off.
+    await typeSearch("e");
+    expect(rowLabels()[0]).toBe("Technology");
+    pressKey(search, "Enter");
+    await settle();
+    expect(events.add).toEqual(["news"]);
+    expect(events.remove).toEqual([]);
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+
+    // A query naming ONLY what the field already carries has nothing to add
+    // and nothing to remove — the same no-op rule a selected custom key
+    // already had; the row stays for a deliberate toggle.
+    await typeSearch("Technology");
+    expect(rowLabels()).toEqual(["Technology"]);
+    pressKey(search, "Enter");
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+    expect(events.remove).toEqual([]);
+    expect(rowByLabel("Technology").getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("keeps a tap on the grip from toggling its row", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news"] });
+    await openPanel(container);
+    const row = reorderableRows()[0];
+    expect(rowText(row)).toBe("News");
+
+    // No drag happened (no movement): the press is the handle's, not the
+    // row's — a handle that erased its tag on a tap would be a trap.
+    grip(row).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(events.remove).toEqual([]);
+    expect(events.modelValue).toEqual([]);
+    expect(rowByLabel("News").getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("names the grip handle after the entry it moves", async () => {
+    const { container } = mountTagInput({ modelValue: ["news", "tech"] });
+    await openPanel(container);
+    // The handle's name is the localized `hikari::tagInput.reorder`
+    // template with the row's own label interpolated — the i18n key and
+    // its `{label}` placeholder are part of the contract.
+    const handle = grip(reorderableRows()[0]);
+    expect(rowText(reorderableRows()[0])).toBe("News");
+    expect(handle.getAttribute("aria-label")).toBe("Reorder News");
+    expect(handle.getAttribute("title")).toBe("Reorder News");
+    expect(handle.getAttribute("role")).toBe("button");
+    expect(handle.getAttribute("tabindex"), "pointer-only affordance").toBe("-1");
+  });
+
+  it("never lets a leaving row keep the id the field publishes", async () => {
+    // A catalog edit (an async reload) drops the row the cursor sits on: the
+    // row leaves through the list transition while the cursor stays on its
+    // index, where a DIFFERENT option now lives. An index-derived id would
+    // be worn by two nodes at once, so `aria-activedescendant` could resolve
+    // to the ghost; the ids are keyed, so the published one belongs to
+    // exactly one LIVING row.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const value = ref<readonly string[]>(["news", "tech", "de"]);
+    const options = ref<readonly HkTagOption[]>(OPTIONS);
+    const Host = defineComponent({
+      name: "HkTagInputCatalogShrinkHost",
+      setup() {
+        return () =>
+          h(HkTagInput, {
+            modelValue: value.value,
+            options: options.value,
+            "onUpdate:modelValue": (keys: string[]) => {
+              value.value = keys;
+            },
+          });
+      },
+    });
+    const app = createApp(Host);
+    app.mount(container);
+    mounts.push({ app, container });
+    await settle();
+
+    chevron(container).click();
+    await settle();
+    pressKey(inlineInput(container)!, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("News"));
+
+    options.value = OPTIONS.filter((option) => option.key !== "news");
+    await nextTick();
+
+    const published = inlineInput(container)!.getAttribute("aria-activedescendant");
+    expect(published, "the field still publishes a row").toBeTruthy();
+    const matches = document.querySelectorAll(`[id="${published}"]`);
+    expect(matches, "the published id is worn by one row only").toHaveLength(1);
+    const live = matches[0] as HTMLElement;
+    expect(live.classList.contains("hk-list-reveal-leave-active")).toBe(false);
+    expect(live.getAttribute("role")).toBe("option");
+    expect(rowText(live)).toBe("Technology");
+  });
+
+  it("carries a panel drag past the visible band by scrolling the popout", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news", "cn-main", "tech", "de", "retired"],
+    });
+    await openPanel(container);
+    const selected = reorderableRows();
+    expect(selected.map(rowText)).toEqual([
+      "News",
+      "中华人民共和国",
+      "Technology",
+      "Germany",
+      "Retired",
+    ]);
+
+    // A two-row visible band (80px) over the five-row strip: the last row is
+    // only reachable by scrolling the surface — no new scroll region, the
+    // popout that already owns the one scrollbar.
+    const popout = document.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout).toBeTruthy();
+    pinScrollBand(popout, 80, selected);
+
+    // Press the first row and hold near the bottom edge.
+    holdPointer({ x: 10, y: 10 }, { x: 10, y: 78 }, grip(selected[0]));
+    await nextTick();
+    expect(dropRow(), "before any scrolling the slot is inside the band").toBe(
+      rowByLabel("中华人民共和国"),
+    );
+
+    for (let i = 0; i < 40 && popout.scrollTop < 120; i += 1) await frames(1);
+    expect(popout.scrollTop, "the surface is pulled along").toBeGreaterThanOrEqual(120);
+    expect(dropRow(), "the slot follows the scrolled content").toBe(
+      rowByLabel("Retired"),
+    );
+
+    releasePointer({ x: 10, y: 78 });
+    await settle();
+    // The dragged key landed last, which is what the scroll bought.
+    expect(events.modelValue.at(-1)).toEqual(["cn-main", "tech", "de", "retired", "news"]);
+    expect(tagTexts(container).at(-1)).toBe("News");
+
+    // Nothing scrolls without a live drag.
+    const settled = popout.scrollTop;
+    await frames(3);
+    expect(popout.scrollTop).toBe(settled);
+  });
+
+  it("scrolls the mobile sheet's own list band, not the popout", async () => {
+    const original = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 375,
+    });
+    try {
+      const { container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+      await openPanel(container);
+      // Phone width: the sheet is the surface, and the band that scrolls is
+      // its list — resolved at drag time, not assumed.
+      expect(document.querySelector(".hk-select-popout")).toBeNull();
+      const band = document.querySelector<HTMLElement>(".hk-select-sheet-list");
+      expect(band, "the sheet list renders").toBeTruthy();
+      const selected = reorderableRows();
+      pinScrollBand(band!, 80, selected);
+
+      holdPointer({ x: 10, y: 10 }, { x: 10, y: 78 }, grip(selected[0]));
+      await nextTick();
+      for (let i = 0; i < 40 && band!.scrollTop < 80; i += 1) await frames(1);
+      expect(band!.scrollTop, "the sheet band is pulled along").toBeGreaterThanOrEqual(80);
+      releasePointer({ x: 10, y: 78 });
+      await settle();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: original,
+      });
+    }
+  });
+
+  it("keeps a leaving chip out of the drag strip", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    // Measure the whole strip BEFORE the removal: the removed chip keeps
+    // its rect while it squeezes out, so a drag that counted it would
+    // resolve a different slot.
+    pinStrip(tags(container), 60, "x");
+    closeButtons(container)[0].click();
+    await nextTick();
+
+    const live = tags(container);
+    expect(live.map((tag) => tag.textContent)).toEqual(["Technology", "Germany"]);
+    expect(
+      container.querySelectorAll(".hk-tag").length,
+      "the removed chip is still mounted (its leave)",
+    ).toBe(3);
+
+    // Drag the FIRST LIVING chip to the end. Counting the ghost would take
+    // the press for index 1 and emit the unchanged order instead.
+    dragPointer({ x: 70, y: 10 }, { x: 300, y: 10 }, live[0]);
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["de", "tech"]);
+    expect(tagTexts(container)).toEqual(["Germany", "Technology"]);
+  });
+
+  it("keeps a leaving row out of the panel drag strip", async () => {
+    const { events, container } = mountTagInput({
+      modelValue: ["news", "tech", "de", "cn-main"],
+    });
+    await openPanel(container);
+    expect(reorderableRows().map(rowText)).toEqual([
+      "News",
+      "Technology",
+      "Germany",
+      "中华人民共和国",
+    ]);
+    // Measure every row up front — the row about to leave keeps its rect.
+    pinStrip(rows(), 40, "y");
+
+    // "e" hides the selected 中华人民共和国: its row starts leaving and is
+    // still in the DOM for the leave window, while the OTHER three remain
+    // the drag strip. (One tick, not `settle()`: the ghost is guaranteed to
+    // be there the moment the patch lands — which is when a real drag would
+    // start — while later timers may already have swept it away.)
+    const search = searchInput();
+    search.value = "e";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(reorderableRows().map(rowText)).toEqual(["News", "Technology", "Germany"]);
+    expect(
+      document.querySelectorAll('.hk-tag-input-row[data-reorder="true"]').length,
+      "the hidden row is still mounted (its leave)",
+    ).toBe(4);
+
+    dragPointer({ x: 10, y: 10 }, { x: 10, y: 200 }, grip(reorderableRows()[0]));
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech", "de", "news", "cn-main"]);
+    expect(rowLabels().slice(0, 3)).toEqual(["Technology", "Germany", "News"]);
+  });
+
+  it("moves the ACTIVE selected row with Alt+Arrow, and stops at the edges", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech", "de"] });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    const edits = () => events.modelValue.length;
+
+    // Park the cursor on the middle selected row.
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    // Alt+ArrowUp moves it one slot up inside the selected group.
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news", "de"]);
+    expect(events.add).toEqual([]);
+    expect(events.remove).toEqual([]);
+    expect(rowLabels().slice(0, 3)).toEqual(["Technology", "News", "Germany"]);
+    // The cursor followed the row it moved, it was not left behind.
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    // It is the group's first row now: another Alt+ArrowUp is a hard stop.
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(edits()).toBe(1);
+
+    // An UNSELECTED row has no place in the order — the chord does nothing.
+    // Rows are [Technology, News, Germany, 中华人民共和国, Retired] now, and
+    // the third of those is the first the field does not carry.
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("中华人民共和国"));
+    expect(rowByLabel("中华人民共和国").hasAttribute("data-selected")).toBe(false);
+    pressKey(search, "ArrowDown", { altKey: true });
+    await settle();
+    expect(edits()).toBe(1);
+
+    // …and with no row active at all there is nothing to move.
+    pressKey(search, "Escape");
+    await settle();
+    await untilSettled(() => rows().length);
+    await openPanel(container);
+    expect(activeRow()).toBeNull();
+    pressKey(searchInput(), "ArrowDown", { altKey: true });
+    await settle();
+    expect(edits()).toBe(1);
+  });
+
+  it("reorders at the maxTags cap — the cap freezes adds, not the order", async () => {
+    const { events, container } = mountTagInput({ modelValue: ["news", "tech"], maxTags: 2 });
+    await openPanel(container);
+    const search = searchInput();
+    search.focus();
+    pressKey(search, "ArrowDown");
+    await settle();
+    pressKey(search, "ArrowDown");
+    await settle();
+    expect(activeRow()).toBe(rowByLabel("Technology"));
+
+    pressKey(search, "ArrowUp", { altKey: true });
+    await settle();
+    expect(events.modelValue.at(-1)).toEqual(["tech", "news"]);
+    expect(events.add).toEqual([]);
+    expect(tagTexts(container)).toEqual(["Technology", "News"]);
+  });
+
+  it("keeps every chip and row a DIRECT child of its container", async () => {
+    // The FLIP groups render as fragments: no wrapper element may appear
+    // between the box and its chips, or between the listbox and its rows.
+    const { container } = mountTagInput({ modelValue: ["news", "tech"] });
+    const box = field(container);
+    for (const chip of tags(container)) expect(chip.parentElement).toBe(box);
+    expect(inlineInput(container)!.parentElement).toBe(box);
+
+    await openPanel(container);
+    const list = document.querySelector<HTMLElement>(".hk-tag-input-list")!;
+    expect(list.getAttribute("role")).toBe("listbox");
+    expect(rows()).toHaveLength(OPTIONS.length);
+    for (const row of rows()) expect(row.parentElement).toBe(list);
+  });
+
+  it("caps the mobile sheet too — on the band that scrolls", async () => {
+    const original = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 375,
+    });
+    try {
+      const { container } = mountTagInput({ modelValue: ["news"] });
+      await openPanel(container);
+      // Phone width: the sheet replaces the popout, and the same cap lands
+      // on the sheet's scrolling list (the surface the user actually drags).
+      expect(document.querySelector(".hk-select-popout-host")).toBeNull();
+      const list = document.querySelector<HTMLElement>(".hk-select-sheet-list");
+      expect(list, "the sheet list renders").toBeTruthy();
+      expect(list!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(
+        "min(18rem, 45dvh)",
+      );
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: original,
+      });
+    }
+  });
+
+  it("leaves a removed chip through the list-transition leave", async () => {
+    // Both lists are HkListTransition groups (FLIP `move` + the reveal
+    // squeeze): a removal squeezes the chip out instead of vanishing, and
+    // the logical list is short immediately.
+    const { container } = mountTagInput({ modelValue: ["news", "tech"] });
+    closeButtons(container)[0].click();
+    await nextTick();
+    expect(container.querySelectorAll(".hk-tag.hk-list-reveal-leave-active")).toHaveLength(1);
+    expect(tagTexts(container)).toEqual(["Technology"]);
   });
 });

@@ -208,5 +208,6 @@
   "hikari::tagInput.search": "검색",
   "hikari::tagInput.empty": "일치 항목 없음",
   "hikari::tagInput.remove": "제거",
-  "hikari::tagInput.addCustom": "\"{q}\" 사용"
+  "hikari::tagInput.addCustom": "\"{q}\" 사용",
+  "hikari::tagInput.reorder": "순서 변경 — {label}"
 }

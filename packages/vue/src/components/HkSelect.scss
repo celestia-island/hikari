@@ -177,9 +177,24 @@
   /* Menu/switcher panels overflow a bare 240px cap even on tall viewports
      (user feedback 2026-08-30: identity header + rows ≈ 320px+). Keep 240px
      as the floor for select lists on short viewports, otherwise let the
-     panel size to its content up to a viewport-relative ceiling. */
+     panel size to its content up to a viewport-relative ceiling — plain-vh
+     first, dvh second, so an engine without dvh drops the dvh twin at PARSE
+     time and keeps the vh cap (the HkModal/HkDrawer/HkImageLightbox rule).
+     A consumer that needs a tighter surface (HkTagInput's catalog) publishes
+     --hk-select-panel-max-height through HkSelectPanel's `maxHeight` prop;
+     that hook rides the dvh-capable branch below, because a dvh value
+     reaching a dvh-less engine through var() would not be parse-dropped but
+     invalid at COMPUTED-value time — which resolves to `max-height: none`,
+     losing the cap entirely. Such an engine keeps the plain-vh ceiling
+     instead, exactly as it does today. */
   max-height: max(240px, min(36rem, calc(100vh - 32px)));
   max-height: max(240px, min(36rem, calc(100dvh - 32px)));
+  @supports (height: 1dvh) {
+    max-height: var(
+      --hk-select-panel-max-height,
+      max(240px, min(36rem, calc(100dvh - 32px)))
+    );
+  }
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -371,6 +386,17 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The same consumer-tunable cap the popout reads, applied to the band
+     that actually scrolls: the sheet header keeps its place and the
+     catalog scrolls inside it. `none` (the fallback) is exactly today's
+     behaviour, so an untouched consumer's sheet is unchanged.
+     DELIBERATELY not wrapped in the popout's `@supports (height: 1dvh)`
+     guard: this band's fallback already IS the property's initial value,
+     so a value the engine cannot use resolves to the same `none` the
+     guard would produce — the asymmetry is a no-op, not an oversight.
+     The sheet PANEL above keeps its own plain-vh/dvh family cap either
+     way, so a hidden cap can never leave the sheet unbounded. */
+  max-height: var(--hk-select-panel-max-height, none);
   /* Side insets so the option blocks (full-row hover pills) read as
      cards inside the sheet instead of an edge-to-edge strip glued to
      both screen sides — matching the popover family's breathing room.

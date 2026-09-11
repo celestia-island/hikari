@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "たった今",
+    "common.time.minutesAgo": "{n} 分前",
+    "common.time.hoursAgo": "{n} 時間前",
+    "common.time.daysAgo": "{n} 日前",
+    "common.time.weeksAgo": "{n} 週間前"
+  }
+}

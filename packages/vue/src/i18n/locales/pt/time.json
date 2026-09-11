@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "Agora mesmo",
+    "common.time.minutesAgo": "há {n} min",
+    "common.time.hoursAgo": "há {n} h",
+    "common.time.daysAgo": "há {n} d",
+    "common.time.weeksAgo": "há {n} sem"
+  }
+}

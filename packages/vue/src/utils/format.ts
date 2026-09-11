@@ -37,7 +37,8 @@ export function formatPriceUsd(n: number, currency = "$"): string {
   return `${currency}${n.toFixed(2)}`;
 }
 
-/** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / locale date. */
+/** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / "2w ago" /
+ *  locale date. */
 export type RelativeTimeT = (
   key: string,
   fallback: string,
@@ -46,7 +47,12 @@ export type RelativeTimeT = (
 
 /** Relative-time formatting ("just now / {n} min ago / …").
  *  Pass an optional translator for localized variants; defaults to
- *  compact English text. */
+ *  compact English text. Tiers: <1min justNow, <60min minutes,
+ *  <24h hours, <7d days, <30d weeks, otherwise an absolute
+ *  locale-rendered date (browser locale, like formatDateTime).
+ *  The translator owns {n} interpolation — hikari's own useI18n().t
+ *  does NOT interpolate named params, so wrap it (the canonical key
+ *  set lives in the per-locale i18n time bundles). */
 export function formatRelativeTime(
   input: string | number | Date,
   t?: RelativeTimeT,
@@ -54,7 +60,8 @@ export function formatRelativeTime(
   if (!input) return "";
   const d = input instanceof Date ? input : new Date(input);
   if (isNaN(d.getTime())) return "";
-  const diff = Date.now() - d.getTime();
+  // Clamp future timestamps to "just now" — no negative weeks/days.
+  const diff = Math.max(0, Date.now() - d.getTime());
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
@@ -62,6 +69,12 @@ export function formatRelativeTime(
   if (mins < 60) return t?.("common.time.minutesAgo", "{n} min ago", { n: mins }) ?? `${mins}m ago`;
   if (hours < 24) return t?.("common.time.hoursAgo", "{n} h ago", { n: hours }) ?? `${hours}h ago`;
   if (days < 7) return t?.("common.time.daysAgo", "{n} d ago", { n: days }) ?? `${days}d ago`;
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return (
+      t?.("common.time.weeksAgo", "{n} w ago", { n: weeks }) ?? `${weeks}w ago`
+    );
+  }
   return d.toLocaleDateString();
 }
 

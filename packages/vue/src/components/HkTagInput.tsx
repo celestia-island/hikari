@@ -460,14 +460,15 @@ export const HkTagInput = defineComponent({
       const stop = activeStop.value;
       if (props.disabled || !stop || stop.kind !== "option") return false;
       // A live press OWNS the order — either list's, and from the moment
-      // the press lands rather than from the moment it turns into a drag:
-      // the drag resolves its landing slot by INDEX, so a reorder under the
-      // held pointer (or under a press that is about to become one) would
-      // leave the release moving whatever now sits at that index — a
-      // different row, silently. The chord is still consumed by the caller
-      // either way (Alt+Arrow is not a plain arrow, and the browser must
-      // not act on it); it just has nothing to move while a pointer owns
-      // the list.
+      // the press lands rather than from the moment it turns into a drag.
+      // The drag would survive a reorder (it moves the ELEMENT the press
+      // grabbed, re-reading its index as it goes), but the item's geometry
+      // is the one the press read: reordering the strip under a held pointer
+      // leaves the drag resolving against a place its item no longer
+      // occupies, which is how a gesture ends up quietly doing nothing. So
+      // the chord is inert while a pointer owns the list. It is still
+      // consumed by the caller either way (Alt+Arrow is not a plain arrow,
+      // and the browser must not act on it).
       if (chipDrag.pressed.value || rowDrag.pressed.value) return false;
       const group = selectedRows.value;
       const from = group.findIndex((option) => option.key === stop.option.key);

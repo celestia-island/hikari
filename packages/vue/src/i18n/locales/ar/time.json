@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "الآن",
+    "common.time.minutesAgo": "قبل {n} دقيقة",
+    "common.time.hoursAgo": "قبل {n} ساعة",
+    "common.time.daysAgo": "قبل {n} يوم",
+    "common.time.weeksAgo": "قبل {n} أسبوع"
+  }
+}

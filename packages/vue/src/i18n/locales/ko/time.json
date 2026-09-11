@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "방금 전",
+    "common.time.minutesAgo": "{n}분 전",
+    "common.time.hoursAgo": "{n}시간 전",
+    "common.time.daysAgo": "{n}일 전",
+    "common.time.weeksAgo": "{n}주 전"
+  }
+}

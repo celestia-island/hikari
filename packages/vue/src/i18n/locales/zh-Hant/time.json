@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "剛剛",
+    "common.time.minutesAgo": "{n} 分鐘前",
+    "common.time.hoursAgo": "{n} 小時前",
+    "common.time.daysAgo": "{n} 天前",
+    "common.time.weeksAgo": "{n} 週前"
+  }
+}

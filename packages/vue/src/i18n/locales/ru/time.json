@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "Только что",
+    "common.time.minutesAgo": "{n} мин. назад",
+    "common.time.hoursAgo": "{n} ч. назад",
+    "common.time.daysAgo": "{n} дн. назад",
+    "common.time.weeksAgo": "{n} нед. назад"
+  }
+}

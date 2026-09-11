@@ -1,0 +1,9 @@
+{
+  "time": {
+    "common.time.justNow": "Gerade eben",
+    "common.time.minutesAgo": "vor {n} Min.",
+    "common.time.hoursAgo": "vor {n} Std.",
+    "common.time.daysAgo": "vor {n} Tg.",
+    "common.time.weeksAgo": "vor {n} Wo."
+  }
+}

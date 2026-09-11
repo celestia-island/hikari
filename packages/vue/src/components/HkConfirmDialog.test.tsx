@@ -120,11 +120,32 @@ describe("HkConfirmDialog", () => {
     expect(events).toContain("open:false");
   });
 
+  it("dismisses as a cancel on Escape", async () => {
+    const { events } = mountDialog();
+    await flush();
+
+    const surface = document.body.querySelector<HTMLElement>(".hk-modal-content");
+    expect(surface, "dialog surface renders").toBeTruthy();
+    surface!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    await flush();
+
+    expect(events).toContain("cancel");
+    expect(events).toContain("open:false");
+    expect(events).not.toContain("confirm");
+  });
+
   it("cannot be dismissed while the confirmation is loading", async () => {
     const { events } = mountDialog({ loading: true });
     await flush();
 
     expect(document.body.querySelector(".hk-modal-close")).toBeNull();
+    // Both actions refuse input too, so a half-submitted confirmation cannot
+    // be answered twice.
+    const buttons = actionButtons();
+    expect(buttons.map((b) => b.disabled)).toEqual([true, true]);
+    buttons.forEach((b) => b.click());
     const overlay = document.body.querySelector<HTMLElement>(".hk-modal-overlay");
     overlay?.click();
     await flush();

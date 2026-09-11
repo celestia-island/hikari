@@ -67,7 +67,16 @@ export function useApproachEnd(
     return d ?? 160;
   }
 
-  /** One sensing pass. `force` skips the same-geometry dedup (recheck). */
+  /** One sensing pass. `force` skips the same-geometry dedup (recheck).
+   *  The dedup keys on `${scrollHeight}x${clientHeight}` — but CSSOM
+   *  clamps scrollHeight to clientHeight while the content does NOT
+   *  overflow, so an under-filled list that grows page by page never
+   *  changes that key. The under-filled state therefore bypasses the
+   *  dedup entirely and fires on every pass: scroll jitter cannot occur
+   *  there (no overflow → no scroll events), so only real
+   *  resize/mutation signals drive the emissions, and the consumer's
+   *  own loading flag paces the walk — the auto-fill first-screen
+   *  contract. */
   function check(force = false): void {
     if (stopped) return;
     const vp = viewport.value;
@@ -75,6 +84,13 @@ export function useApproachEnd(
     const inZone = vp.scrollHeight - vp.scrollTop - vp.clientHeight <= readDistance();
     if (!inZone) {
       wasInZone = false;
+      return;
+    }
+    if (vp.scrollHeight <= vp.clientHeight + 1) {
+      // Under-filled: always report (see doc above).
+      wasInZone = true;
+      lastKey = null;
+      onApproach();
       return;
     }
     const key = `${vp.scrollHeight}x${vp.clientHeight}`;

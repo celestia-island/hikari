@@ -171,8 +171,9 @@ describe("HkScrollContainer approachEnd", () => {
   it("emits approachEnd for under-filled content and exposes isNearEnd", async () => {
     const emissions: number[] = [];
     const m = mountScroller({ approachEnd: true, onApproachEnd: () => emissions.push(1) });
-    // happy-dom has no layout: under-filled = scrollHeight < clientHeight.
-    stubGeometry(m.viewport, { scrollHeight: 100, clientHeight: 300, scrollTop: 0 });
+    // happy-dom has no layout; a real under-filled DOM reports the
+    // CSSOM clamp (scrollHeight == clientHeight), so stub THAT.
+    stubGeometry(m.viewport, { scrollHeight: 300, clientHeight: 300, scrollTop: 0 });
     await flushFrames();
     expect(emissions.length).toBe(1);
     expect(m.instance?.isNearEnd?.()).toBe(true);

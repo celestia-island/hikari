@@ -8,7 +8,7 @@ import HButton from "./HkButton";
  * The unified bottom indicator for dynamically loaded lists — one look
  * for every consumer (cruise panels, tables, feeds), three states:
  *
- * - `idle`: a ghost load-more button; clicking emits `load-more`.
+ * - `idle`: a ghost load-more button; clicking emits `loadMore`.
  * - `loading`: the SAME button with its built-in spinner (HkButton
  *   swaps in an HSpinner while loading) — no second spinner here, the
  *   affordance morphs in place at a stable height.

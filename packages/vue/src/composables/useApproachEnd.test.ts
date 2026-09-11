@@ -26,11 +26,14 @@ class FakeMutationObserver {
   static instances: FakeMutationObserver[] = [];
   callback: () => void;
   disconnected = false;
+  lastOptions: MutationObserverInit | null = null;
   constructor(callback: () => void) {
     this.callback = callback;
     FakeMutationObserver.instances.push(this);
   }
-  observe(): void {}
+  observe(_el: Node, options?: MutationObserverInit): void {
+    this.lastOptions = options ?? null;
+  }
   disconnect(): void {
     this.disconnected = true;
   }
@@ -113,6 +116,40 @@ describe("useApproachEnd", () => {
     h.setGeometry({ scrollHeight: 400, clientHeight: 300, scrollTop: 0 });
     await h.mutate();
     expect(h.fired()).toBe(2);
+  });
+
+  it("keeps firing while under-filled even though scrollHeight clamps to clientHeight", async () => {
+    // A REAL under-filled DOM reports scrollHeight == clientHeight (the
+    // CSSOM clamp), so the geometry key cannot change as pages land —
+    // the under-filled state must bypass the dedup entirely.
+    const h = mountHarness();
+    h.setGeometry({ scrollHeight: 300, clientHeight: 300, scrollTop: 0 });
+    await flushFrames();
+    expect(h.fired()).toBe(1);
+    h.setGeometry({ scrollHeight: 300, clientHeight: 300, scrollTop: 0 }); // "grew" but still clamped
+    await h.mutate();
+    expect(h.fired()).toBe(2);
+    await h.mutate();
+    expect(h.fired()).toBe(3);
+  });
+
+  it("observes characterData/subtree mutations on the viewport", () => {
+    mountHarness();
+    const mo = FakeMutationObserver.instances[FakeMutationObserver.instances.length - 1];
+    expect(mo.lastOptions).toMatchObject({ childList: true, subtree: true, characterData: true });
+  });
+
+  it("checks on viewport resize (ResizeObserver callback path)", async () => {
+    const h = mountHarness({ distance: 50 });
+    // Start far from the end: 900 - 0 - 300 = 600 > 50 → outside.
+    h.setGeometry({ scrollHeight: 900, clientHeight: 300, scrollTop: 0 });
+    await flushFrames();
+    expect(h.fired()).toBe(0);
+    // The viewport box SHRINKS, pulling the end zone over the offset.
+    h.setGeometry({ scrollHeight: 900, clientHeight: 850, scrollTop: 0 });
+    FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1].callback();
+    await flushFrames();
+    expect(h.fired()).toBe(1);
   });
 
   it("does not refire on scroll jitter with unchanged geometry", async () => {

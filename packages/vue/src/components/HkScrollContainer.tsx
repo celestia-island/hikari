@@ -66,11 +66,13 @@ export default defineComponent({
      *  content" and emit `approachEnd` so the consumer can load the
      *  next page of data (infinite/dynamic loading). The event fires on
      *  zone entry and whenever the content geometry grows while still
-     *  in the zone — including the initial pass when the content does
-     *  not fill the viewport, which is what lets a consumer auto-fill a
-     *  first screen. Fire-and-dedup contract: guard the handler with
-     *  your own loading flag; repeated events arrive only when new
-     *  content actually landed (or the zone was re-entered). */
+     *  in the zone — including every pass while the content does not
+     *  fill the viewport (CSSOM clamps scrollHeight there, so the
+     *  under-filled state always reports; that is what lets a consumer
+     *  auto-fill a first screen). Fire-and-dedup contract: guard the
+     *  handler with your own loading flag; when a load renders nothing
+     *  new (all filtered out downstream), call the exposed `recheck()`
+     *  to force the next emission. */
     approachEnd: { type: Boolean, default: false },
     /** Distance in px from the vertical end that still counts as
      *  approaching (`approachEnd`). Read live, so runtime changes need
@@ -391,7 +393,16 @@ export default defineComponent({
       return approachHandle.value?.isNearEnd() ?? false;
     }
 
-    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd });
+    /** Force one end-approach sensing pass that ignores the
+     *  same-geometry dedup. Call after a load that may still leave the
+     *  content under-filled — while under-filled the sensor fires on
+     *  its own, but a consumer whose load rendered nothing new (all
+     *  filtered out downstream) needs this to keep the walk going. */
+    function recheck(): void {
+      approachHandle.value?.recheck();
+    }
+
+    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd, recheck });
 
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";

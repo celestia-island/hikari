@@ -301,6 +301,94 @@ describe("HkSelectPanel custom invocation", () => {
     expect(flipped).toBeGreaterThan(8);
   });
 
+  it("balances a top-center popout on the anchor's horizontal midpoint", async () => {
+    // happy-dom lays nothing out, so the panel measures at the
+    // max(anchor, 180) fallback width — anchor spanning 200..360 (midpoint
+    // 280, fallback width 180) puts the balanced left edge at
+    // 280 - 180/2 = 190.
+    const { container, open } = mountPanel({ placement: "top-center" });
+    await nextTick();
+
+    const anchor = container.querySelector<HTMLButtonElement>("button")!;
+    anchor.getBoundingClientRect = () =>
+      ({ top: 500, bottom: 520, left: 200, right: 360, width: 160, height: 20 }) as DOMRect;
+    open.value = true;
+    await nextTick();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host.style.left).toBe("190px");
+    // Top-side still honored (anchor bottom 520 → panel above it), and the
+    // resolved alignment drives the pop motion's transform origin.
+    expect(Number.parseInt(host.style.top, 10)).toBeLessThan(520);
+    expect(host.dataset.align).toBe("center");
+    expect(host.dataset.side).toBe("top");
+
+    // A centered panel poking past the left edge clamps to the viewport
+    // pad instead of mirroring the overflow to both sides: anchor
+    // 0..40 → raw left (20 - 180/2) = -70 → clamped to 8.
+    anchor.getBoundingClientRect = () =>
+      ({ top: 500, bottom: 520, left: 0, right: 40, width: 40, height: 20 }) as DOMRect;
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(host.style.left).toBe("8px");
+  });
+
+  it("reports center alignment through an auto-flip so the pop origin follows", async () => {
+    // mountPanel's rig anchor sits at the very top of the test layout, so
+    // a top-center panel cannot fit above and flips bottom-side — the
+    // flip must carry data-side/data-align with it (transform origin).
+    const { container, open } = mountPanel({ placement: "top-center" });
+    await nextTick();
+    open.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host.dataset.side).toBe("bottom");
+    expect(host.dataset.align).toBe("center");
+  });
+
+  it("opens an unflipped bottom-center popout below the anchor", async () => {
+    // The bottom-center twin: same balance math, opposite side, and no
+    // flip here (the faked anchor sits low with room below).
+    const { container, open } = mountPanel({ placement: "bottom-center" });
+    await nextTick();
+
+    const anchor = container.querySelector<HTMLButtonElement>("button")!;
+    anchor.getBoundingClientRect = () =>
+      ({ top: 100, bottom: 120, left: 200, right: 360, width: 160, height: 20 }) as DOMRect;
+    open.value = true;
+    await nextTick();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host.dataset.side).toBe("bottom");
+    expect(host.dataset.align).toBe("center");
+    // Anchor top 100 + offset 4 → the panel hangs below 104.
+    expect(Number.parseInt(host.style.top, 10)).toBeGreaterThan(120);
+    expect(host.style.left).toBe("190px");
+  });
+
+  it("clamps a centered popout at the right viewport pad near the right edge", async () => {
+    // Anchor hugging the right edge: raw balanced left 1100 + (80 - 180)/2
+    // = 1050 would poke past 1200 - 8 - 180 = 1012 → pinned at the pad.
+    // The expected left edge is viewport arithmetic, so pin the width here
+    // (happy-dom's bare default is 1024 — the afterEach reset only helps
+    // full-file runs, not -t filtering; afterEach re-asserts 1200 anyway).
+    setViewport(1200);
+    const { container, open } = mountPanel({ placement: "bottom-center" });
+    await nextTick();
+
+    const anchor = container.querySelector<HTMLButtonElement>("button")!;
+    anchor.getBoundingClientRect = () =>
+      ({ top: 100, bottom: 120, left: 1100, right: 1180, width: 80, height: 20 }) as DOMRect;
+    open.value = true;
+    await nextTick();
+
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
+    expect(host.style.left).toBe("1012px");
+  });
+
   it("clamps a tall flipped popout into the viewport instead of going negative", async () => {
     // The taller viewport-relative CSS cap admits ~576px panels: anchored
     // mid-viewport (top 380 / bottom 424 on an 800px-tall viewport), a

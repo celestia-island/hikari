@@ -95,6 +95,12 @@
   --color-focused-border: 122 162 247;
   --color-background: 214 236 240;
   --color-surface: 240 244 248;
+  /* Derived seed defaults for the runtime-selected channels: a primary
+   * wash over the background (selected) and the surface tint (status
+   * bar), matching what presets derive at runtime. */
+  --color-selected-bg: 191 218 242;
+  --color-selected-text: 30 30 30;
+  --color-status-bar-bg: 240 244 248;
   --color-success: 14 184 64;
   --color-error: 247 118 142;
   --color-warning: 238 214 119;
@@ -104,7 +110,7 @@
   --hi-color-secondary: rgb(var(--color-secondary));
   --hi-color-surface: rgb(var(--color-surface));
   --hi-color-background: rgb(var(--color-background));
-  --hi-color-border: rgb(var(--color-border));
+  --hi-color-border: rgb(var(--color-border) / 15%);
   --hi-color-text-primary: rgb(var(--color-text));
   --hi-color-text-secondary: rgb(var(--color-text-secondary));
   --hi-color-muted: rgb(var(--color-muted));
@@ -118,6 +124,12 @@
   --hi-color-error: rgb(var(--color-error));
   --hi-color-warning: rgb(var(--color-warning));
   --hi-color-info: rgb(var(--color-info));
+  /* Surface-layer aliases the runtime writes on every apply — seeded so
+   * no-JS consumers resolve them instead of invalid var(). */
+  --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);
+  --hi-color-bg-elevated: rgb(var(--color-surface));
+  --hi-color-bg-canvas: rgb(var(--color-background));
+  --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
 
   /* Scale tokens (spacing/type/radius/blur/opacity/durations/easings/
      z-index/fonts) moved to src/scale.scss — the canonical L2 sheet,

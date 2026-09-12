@@ -115,19 +115,9 @@ const RUNTIME_ALIAS_KEYS = Object.keys(RUNTIME_VARS).filter((k) =>
 );
 
 describe("theme token inventory", () => {
-  // W4 target: runtime-only tokens the static seed does not carry yet —
-  // no-JS consumers get invalid var() for these today.
-  const KNOWN_MISSING_CHANNELS = new Set([
-    "--color-selected-bg",
-    "--color-selected-text",
-    "--color-status-bar-bg",
-  ]);
-  const KNOWN_MISSING_ALIASES = new Set([
-    "--hi-color-bg-subtle",
-    "--hi-color-bg-elevated",
-    "--hi-color-bg-canvas",
-    "--hi-secondary-bg",
-  ]);
+  // W4 complete: the static seed now carries every runtime-written token.
+  const KNOWN_MISSING_CHANNELS = new Set<string>([]);
+  const KNOWN_MISSING_ALIASES = new Set<string>([]);
 
   it("static seed defines every --color-* channel the runtime writes", () => {
     const defs = harvestDefinitions(seedFiles);

@@ -360,6 +360,78 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     };
   }
 
+  /** Where an element's border box sits in a space its ancestors share: the
+   *  one number CSS transforms do not touch. `offsetLeft`/`offsetTop` are
+   *  LAYOUT positions — the drag's own lift, a host `scale()`, a FLIP
+   *  animation and a transition mid-flight all leave them exactly where they
+   *  were — so walking the offsetParent chain of the item and of its frame
+   *  and subtracting gives the item's current place inside the frame however
+   *  it is drawn. Both sides are walked to the same root, so a frame that is
+   *  not itself an offsetParent (a static frame) cancels exactly.
+   *
+   *  `through` reports whether the walk passed THROUGH the frame, which is
+   *  what decides how the two differ: an offset is measured from the
+   *  offsetParent's PADDING edge, so a chain that runs through the frame
+   *  leaves the difference measured from the frame's padding box (its border
+   *  has to be added back), while a chain that skips it — a frame that is
+   *  `position: static` is nobody's offsetParent — leaves the difference
+   *  measured from the frame's BORDER box, where adding the border again
+   *  would double-count it.
+   *
+   *  The chain must be walked LIVE: a transform (or even
+   *  `will-change: transform`) on an ancestor rebinds `offsetParent`. */
+  function layoutOffset(
+    el: HTMLElement,
+    frame: HTMLElement | null,
+  ): { x: number; y: number; through: boolean } {
+    let x = 0;
+    let y = 0;
+    let through = false;
+    for (let node: HTMLElement | null = el; node; node = node.offsetParent as HTMLElement | null) {
+      x += node.offsetLeft;
+      y += node.offsetTop;
+      if (node === frame) through = true;
+    }
+    return { x, y, through };
+  }
+
+  /** The pressed item's layout geometry read off the LIVE strip rather than
+   *  carried from the press — the answer to "where is the item I am holding
+   *  NOW?", which is what changes when the list reorders, an item is added or
+   *  removed around it, a font or a zoom changes, or the strip re-wraps.
+   *  `null` when there is no box to read (no layout engine at all, a detached
+   *  element, a collapsed or partially-readable one), which keeps the caller
+   *  on the carried snapshot. */
+  function derivedOrigin(): PointerReorderOrigin | null {
+    if (!pressedItem || !pressedFrame || !pressedFrame.isConnected) return null;
+    const box = frameBox(pressedFrame);
+    const itemW = pressedItem.offsetWidth;
+    const itemH = pressedItem.offsetHeight;
+    if (!(itemW > 0) || !(itemH > 0)) return null;
+    if (!(box.w > 0) || !(box.h > 0)) return null;
+    const at = layoutOffset(pressedItem, pressedFrame);
+    const of = layoutOffset(pressedFrame, null);
+    // A chain that runs through something without layout offsets of its own
+    // (an SVG ancestor, a foreignObject boundary) sums to NaN rather than
+    // failing: nothing can be placed from it, so the snapshot keeps the call.
+    if (!Number.isFinite(at.x) || !Number.isFinite(at.y)) return null;
+    if (!Number.isFinite(of.x) || !Number.isFinite(of.y)) return null;
+    const scaleX = box.laidW > 0 ? box.w / box.laidW : 1;
+    const scaleY = box.laidH > 0 ? box.h / box.laidH : 1;
+    /** The frame's own border, in the units it is DRAWN at — and only when
+     *  the walk into the frame came through it (`through`). */
+    const style = getComputedStyle(pressedFrame);
+    const borderLeft = at.through ? (parseFloat(style.borderLeftWidth) || 0) * scaleX : 0;
+    const borderTop = at.through ? (parseFloat(style.borderTopWidth) || 0) * scaleY : 0;
+    const left = box.x + borderLeft + (at.x - of.x - box.scrollX) * scaleX;
+    const top = box.y + borderTop + (at.y - of.y - box.scrollY) * scaleY;
+    const width = itemW * scaleX;
+    const height = itemH * scaleY;
+    return axis === "x"
+      ? { band: { lo: top, hi: top + height }, mid: left + width / 2 }
+      : { band: { lo: left, hi: left + width }, mid: top + height / 2 };
+  }
+
   /** The pressed item's layout geometry for `indexAt`, placed where the
    *  frame puts it NOW. The snapshot is in VIEWPORT coordinates, so anything
    *  that moves the frame under it — the auto-scroll this composable drives,
@@ -385,6 +457,8 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
    *  A frame with no box to read any of this from falls back to the plain
    *  displacement. */
   function layoutOrigin(): PointerReorderOrigin | null {
+    const live = derivedOrigin();
+    if (live) return live;
     if (!pressedBand || !pressedFrameBox) return null;
     const at = pressedFrameBox;
     const now = pressedFrame && pressedFrame.isConnected ? frameBox(pressedFrame) : at;

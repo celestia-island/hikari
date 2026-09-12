@@ -20,6 +20,22 @@
   transform: translateY(-8px);
 }
 
+/* Reduced motion: keep the opacity cross-fade, drop the translateY
+ * slide. The global animation switch (`html[data-css-animations="0"]`)
+ * disables these transitions too when the host wired it; the media
+ * block covers hosts that never did. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-phase-enter-active,
+  .hk-phase-leave-active {
+    transition: opacity var(--hi-duration-fast, 0.15s) ease;
+  }
+
+  .hk-phase-enter-from,
+  .hk-phase-leave-to {
+    transform: none;
+  }
+}
+
 .hk-phase-content {
   width: 100%;
 }

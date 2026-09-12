@@ -1,5 +1,5 @@
 /* Field caption, mirroring .hk-input-label in HkInput.scss (the number
-   input carries its own copy so it does not depend on HInput's stylesheet
+   input carries its own copy so it does not depend on HkInput's stylesheet
    being loaded too). */
 .hk-input-label {
   display: block;
@@ -25,7 +25,7 @@
   align-items: center;
   background: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: var(--hi-radius-md, 6px);
+  border-radius: var(--hi-radius-md, 8px);
   overflow: hidden;
   transition:
     background-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
@@ -53,9 +53,10 @@
   outline: none;
   color: var(--hi-color-text-primary);
   font-family: inherit;
-  font-size: 0.875rem;
+  /* Font size / horizontal padding come from the per-size blocks below —
+     the size class is always on the wrapper (HkNumberInput.tsx), so the
+     md block is the single source for those metrics. */
   line-height: 1.5;
-  padding: 0 0.75rem;
 
   &::placeholder {
     color: var(--hi-color-muted);
@@ -83,11 +84,11 @@
 }
 
 .hk-number-input-prefix {
-  padding-inline-start: 0.75rem;
+  padding-inline-start: var(--space-12, 0.75rem);
 }
 
 .hk-number-input-suffix {
-  padding-inline-end: 0.5rem;
+  padding-inline-end: var(--space-8, 0.5rem);
 }
 
 .hk-number-input-steppers {
@@ -107,7 +108,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
+  /* Width comes from the per-size blocks below (the size class is always
+     on the wrapper); height stays here as the size-independent half. */
   height: 50%;
   padding: 0;
   background: transparent;
@@ -137,18 +139,18 @@
 /* --- Size variants --- */
 
 .hk-number-input-sm .hk-number-input-field {
-  font-size: 0.75rem;
-  padding: 0 0.5rem;
-  height: 1.75rem;
+  font-size: var(--text-xs, 0.75rem);
+  padding: 0 var(--space-8, 0.5rem);
+  height: var(--space-28, 1.75rem);
 }
 
 .hk-number-input-sm .hk-number-input-prefix,
 .hk-number-input-sm .hk-number-input-suffix {
-  font-size: 0.75rem;
+  font-size: var(--text-xs, 0.75rem);
 }
 
 .hk-number-input-sm .hk-number-input-step {
-  width: 1.25rem;
+  width: var(--space-20, 1.25rem);
 }
 
 .hk-number-input-sm .hk-number-input-step svg {
@@ -157,33 +159,33 @@
 }
 
 .hk-number-input-md .hk-number-input-field {
-  font-size: 0.875rem;
-  padding: 0 0.75rem;
+  font-size: var(--text-base, 0.875rem);
+  padding: 0 var(--space-12, 0.75rem);
   height: 2.25rem;
 }
 
 .hk-number-input-md .hk-number-input-prefix,
 .hk-number-input-md .hk-number-input-suffix {
-  font-size: 0.875rem;
+  font-size: var(--text-base, 0.875rem);
 }
 
 .hk-number-input-md .hk-number-input-step {
-  width: 1.5rem;
+  width: var(--space-24, 1.5rem);
 }
 
 .hk-number-input-lg .hk-number-input-field {
-  font-size: 1rem;
-  padding: 0 1rem;
+  font-size: var(--text-md, 1rem);
+  padding: 0 var(--space-16, 1rem);
   height: 2.75rem;
 }
 
 .hk-number-input-lg .hk-number-input-prefix,
 .hk-number-input-lg .hk-number-input-suffix {
-  font-size: 1rem;
+  font-size: var(--text-md, 1rem);
 }
 
 .hk-number-input-lg .hk-number-input-step {
-  width: 1.75rem;
+  width: var(--space-28, 1.75rem);
 }
 
 .hk-number-input-lg .hk-number-input-step svg {

@@ -9,13 +9,11 @@
  * handling live there). A button so it is focusable and AT-reachable;
  * mousedown is suppressed in the shared picker so clicking it never
  * steals focus from the number field. */
-.hk-phone-chip {
-  max-width: 11rem;
-}
-
+/* Width cap comes from the shared .hk-affix-chip base (max-width: 11rem);
+ * this class stays a tsx/test hook for hosts to layer overrides on. */
 .hk-phone-chip-dial {
   font-weight: 600;
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-sm, 0.8125rem);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -23,4 +21,11 @@
 .hk-phone-chip-caret {
   flex: none;
   color: rgb(var(--color-muted));
+}
+
+/* Open disclosure state (aria-expanded sits on the chip button): flip the
+ * caret like the shared default chip does (HkAffixPicker.scss). Instant
+ * swap — no transition, so no reduced-motion entry is needed. */
+.hk-phone-chip[aria-expanded="true"] .hk-phone-chip-caret {
+  transform: rotate(180deg);
 }

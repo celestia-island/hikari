@@ -2,6 +2,3 @@
  * content and the HkModal body scroller is THE scrollbar. The old
  * `bodyHeight`-driven nested scroll region (with its own overlay chrome)
  * was removed as dead API — no consumer in the family ever passed it. */
-.s-protocol-modal {
-  position: relative;
-}

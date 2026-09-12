@@ -268,6 +268,122 @@ function scrollerStrip(
   return { frame, items, scene };
 }
 
+/** A strip a BROWSER could have laid out: every element reports both of the
+ *  readings a real engine keeps apart — the box it is DRAWN in
+ *  (`getBoundingClientRect`, which every transform moves) and the box it is
+ *  LAID OUT in (`offsetLeft`/`offsetTop`/`offsetWidth`/`offsetHeight` along
+ *  an `offsetParent` chain, which no transform touches). One model drives
+ *  both, exactly as a browser would, so a test can re-lay the strip out (a
+ *  reorder, an insertion, a font change) or paint a transform on it and see
+ *  which reading the resolution followed. */
+function laidStrip(
+  layout: Box[],
+  frameLayout: { left: number; top: number; w: number; h: number },
+  frameDrawn: Box,
+  scene: {
+    scale?: number;
+    scroll?: number;
+    border?: { left: number; top: number };
+    /** The frame is `position: static`, so it is nobody's `offsetParent`:
+     *  the items' layout numbers are then measured from further up — the
+     *  fact that decides whether the frame's border still has to be added. */
+    staticFrame?: boolean;
+  } = {},
+): {
+  frame: HTMLElement;
+  items: HTMLElement[];
+  laid: Box[];
+  relayout: (next: Box[]) => void;
+  setFrameDrawn: (next: Box) => void;
+} {
+  const frame = document.createElement("div");
+  document.body.appendChild(frame);
+  const live = layout.map((box) => ({ ...box }));
+  const pins: Array<() => void> = [];
+  const border = scene.border ?? { left: 0, top: 0 };
+  const sceneOf = () => ({ scale: scene.scale ?? 1, scroll: scene.scroll ?? 0 });
+  frame.style.borderLeftWidth = `${border.left}px`;
+  frame.style.borderTopWidth = `${border.top}px`;
+
+  /** The box a browser draws for a laid-out box inside this frame. */
+  const drawn = (box: Box): Box => {
+    const { scale, scroll } = sceneOf();
+    const left = frameDrawn.left + (box.left - frameLayout.left - scroll) * scale;
+    const top = frameDrawn.top + (box.top - frameLayout.top) * scale;
+    return {
+      left,
+      right: left + (box.right - box.left) * scale,
+      top,
+      bottom: top + (box.bottom - box.top) * scale,
+    };
+  };
+
+  let frameDrawnBox = frameDrawn;
+  Object.defineProperty(frame, "getBoundingClientRect", {
+    configurable: true,
+    value: () => asRect(frameDrawnBox),
+  });
+  Object.defineProperty(frame, "offsetWidth", { configurable: true, get: () => frameLayout.w });
+  Object.defineProperty(frame, "offsetHeight", { configurable: true, get: () => frameLayout.h });
+  Object.defineProperty(frame, "offsetParent", { configurable: true, get: () => null });
+  Object.defineProperty(frame, "offsetLeft", { configurable: true, get: () => frameLayout.left });
+  Object.defineProperty(frame, "offsetTop", { configurable: true, get: () => frameLayout.top });
+  Object.defineProperty(frame, "scrollLeft", { configurable: true, get: () => sceneOf().scroll });
+  Object.defineProperty(frame, "scrollTop", { configurable: true, get: () => 0 });
+
+  const items = live.map((box, i) => {
+    const el = document.createElement("div");
+    frame.appendChild(el);
+    Object.defineProperty(el, "offsetParent", {
+      configurable: true,
+      get: () => (scene.staticFrame ? null : frame),
+    });
+    // A positioned frame is the items' offsetParent, so their offsets are
+    // measured from its PADDING edge; a static one is skipped and they are
+    // measured from the same place as the frame itself.
+    Object.defineProperty(el, "offsetLeft", {
+      configurable: true,
+      get: () =>
+        scene.staticFrame ? live[i].left : live[i].left - frameLayout.left - border.left,
+    });
+    Object.defineProperty(el, "offsetTop", {
+      configurable: true,
+      get: () => (scene.staticFrame ? live[i].top : live[i].top - frameLayout.top - border.top),
+    });
+    Object.defineProperty(el, "offsetWidth", {
+      configurable: true,
+      get: () => live[i].right - live[i].left,
+    });
+    Object.defineProperty(el, "offsetHeight", {
+      configurable: true,
+      get: () => live[i].bottom - live[i].top,
+    });
+    const pin = () =>
+      Object.defineProperty(el, "getBoundingClientRect", {
+        configurable: true,
+        value: () => asRect(drawn(live[i])),
+      });
+    pin();
+    pins.push(pin);
+    return el;
+  });
+
+  return {
+    frame,
+    items,
+    laid: live,
+    relayout: (next: Box[]) => {
+      next.forEach((box, i) => {
+        live[i] = { ...box };
+      });
+      pins.forEach((pin) => pin());
+    },
+    setFrameDrawn: (next: Box) => {
+      frameDrawnBox = next;
+    },
+  };
+}
+
 const scopes: EffectScope[] = [];
 
 /** Mount the composable inside a real effect scope (the component case). */
@@ -969,6 +1085,319 @@ describe("usePointerReorder", () => {
     expect(handle.dragOver.value, "260 is past the second chip's midpoint of 250").toBe(2);
     up(260, 20);
     expect(drops, "the drop is reported in the indices the strip has now").toEqual([[1, 2]]);
+  });
+
+  it("resolves against where the strip has RE-LAID the held item out", () => {
+    // A font, a zoom or an insertion around the strip re-lays it out under a
+    // live drag, so the item the pointer is holding is no longer where the
+    // press found it. The snapshot describes the old place; the layout
+    // numbers describe the new one, and the resolution has to follow the
+    // strip the user is looking at. The chips here shrink mid-drag, which
+    // brings the held chip's midpoint back behind the pointer: the walk that
+    // the press-time midpoint stopped short of now runs past the strip.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ];
+    const strip = laidStrip(laid, { left: 0, top: 0, w: 300, h: 40 }, { left: 0, right: 300, top: 0, bottom: 40 });
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 1, { x: 150, y: 20 });
+    move(140, 20);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "the press-time midpoint is still ahead of the pointer").toBe(1);
+
+    // The strip is re-laid out under the drag: every chip, the held one
+    // included, is drawn at its new place.
+    strip.relayout([
+      { left: 0, right: 50, top: 0, bottom: 40 },
+      { left: 50, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 150, top: 0, bottom: 40 },
+    ]);
+    move(140, 20);
+    expect(handle.dragOver.value, "the pointer is past every chip of the new strip").toBe(2);
+    up(140, 20);
+    expect(drops).toEqual([[1, 2]]);
+  });
+
+  it("ignores a transform painted on the held item while it follows the layout", () => {
+    // The whole reason the snapshot exists: a transform on the item — the
+    // drag's own lift, a host animation, a zoomed wrapper — is painted, not
+    // laid out, and must not move the line or the midpoint the resolution
+    // reads. The layout numbers are blind to it, so following the layout
+    // costs nothing here: the same gesture resolves the same way with the
+    // held chip drawn twice as large and shifted.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ];
+    const strip = laidStrip(laid, { left: 0, top: 0, w: 300, h: 40 }, { left: 0, right: 300, top: 0, bottom: 40 });
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 0, { x: 10, y: 20 });
+    move(150, 20);
+    expect(handle.dragOver.value).toBe(1);
+
+    // A host transform lands on the held chip: an edge-anchored cross-axis
+    // scale, plus a hard translation that carries its drawn box onto the line
+    // below and its drawn midpoint far past where it is laid out — the class
+    // of transform an earlier wave recorded as unfixable while the drawn box
+    // was what got measured. The pointer sits inside the moved band (where
+    // measuring the drawn box makes the held chip the only candidate line, so
+    // the walk stops on its own translated midpoint) and past the second
+    // chip's midpoint, which is where the layout answers "land after the
+    // second chip".
+    reshape(strip.items[0], { left: 100, right: 300, top: 40, bottom: 96 });
+    move(180, 45);
+    expect(handle.dragOver.value, "180 is past the second chip's midpoint of 150").toBe(1);
+    up(180, 45);
+    expect(drops).toEqual([[0, 1]]);
+  });
+
+  it("carries the derived geometry through a frame that scrolls", () => {
+    // The derivation reads a LAYOUT position and maps it through the box the
+    // frame is drawn in, so the frame's own scroll (which slides the content
+    // inside that box) has to be taken off in the same units. The strip is
+    // scrolled mid-drag; the pointer stays where it is, over a different
+    // chip of the content.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+      { left: 300, right: 400, top: 0, bottom: 40 },
+    ];
+    const scene = { scale: 1, scroll: 0 };
+    const strip = laidStrip(
+      laid,
+      { left: 0, top: 0, w: 400, h: 40 },
+      { left: 0, right: 400, top: 0, bottom: 40 },
+      scene,
+    );
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 0, { x: 10, y: 20 });
+    move(40, 20);
+    expect(handle.dragOver.value, "40 is still short of the first chip's midpoint of 50").toBe(0);
+
+    scene.scroll = 120; // the frame scrolls the strip under the drag
+    strip.relayout(laid); // re-pin the drawn boxes at the new scroll
+    move(40, 20);
+    expect(handle.dragOver.value, "the chips moved back under the pointer with the content").toBe(1);
+    up(40, 20);
+    expect(drops).toEqual([[0, 1]]);
+  });
+
+  it("reads the frame's border the way the frame hands its layout numbers over", () => {
+    // The items' layout numbers are measured from their offsetParent's
+    // PADDING edge — so when the frame is that offsetParent its border has to
+    // be added back, and when the frame is `position: static` (nobody's
+    // offsetParent) the same numbers are already measured from its BORDER
+    // edge and adding it again would count it twice. Both shapes here are
+    // laid out identically and drawn identically: the resolution has to
+    // answer the same for both, and it has to keep the border's own scale.
+    const layout: Box[] = [
+      { left: 20, right: 60, top: 20, bottom: 60 },
+      { left: 80, right: 120, top: 20, bottom: 60 },
+      { left: 140, right: 180, top: 20, bottom: 60 },
+      { left: 200, right: 240, top: 20, bottom: 60 },
+    ];
+    const frameLayout = { left: 0, top: 0, w: 260, h: 80 };
+    const frameDrawn: Box = { left: 0, right: 260, top: 0, bottom: 80 };
+    const border = { left: 20, top: 20 };
+    for (const staticFrame of [false, true]) {
+      const strip = laidStrip(layout, frameLayout, frameDrawn, { border, staticFrame });
+      const { handle, drops } = harness("x", strip.items);
+      press(handle, strip.items, 0, { x: 30, y: 35 });
+      move(102, 62);
+      expect(handle.dragging.value, `staticFrame=${staticFrame}`).toBe(true);
+      expect(handle.dragOver.value, `staticFrame=${staticFrame} lands after the first chip`).toBe(1);
+      up(102, 62);
+      expect(drops, `staticFrame=${staticFrame}`).toEqual([[0, 1]]);
+    }
+  });
+
+  it("resolves exactly as the held item's own drawn box says, across frame shapes", () => {
+    // The differential form of the test above: for every shape a frame can
+    // have — positioned or static, with or without a border, drawn at its own
+    // size or scaled, scrolled or not, one line or two — the resolution has
+    // to answer what the held item's TRUE layout box answers. The sweep walks
+    // the pointer over each strip and compares against `indexAt` handed that
+    // true box, so any place the derived geometry drifts shows up wherever
+    // the drift can be observed, without hand-picking pointers.
+    const single: Box[] = [
+      { left: 12, right: 52, top: 12, bottom: 52 },
+      { left: 72, right: 112, top: 12, bottom: 52 },
+      { left: 132, right: 172, top: 12, bottom: 52 },
+    ];
+    const wrapped: Box[] = [
+      { left: 12, right: 52, top: 12, bottom: 52 },
+      { left: 72, right: 112, top: 12, bottom: 52 },
+      { left: 12, right: 52, top: 72, bottom: 112 },
+    ];
+    const scenes = [
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 0, right: 200, top: 0, bottom: 70 }, scene: {} },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 5, right: 235, top: 7, bottom: 112 }, scene: { scale: 1.5 } },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 5, right: 235, top: 7, bottom: 112 }, scene: { scale: 1.5, border: { left: 12, top: 12 } } },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 5, right: 235, top: 7, bottom: 112 }, scene: { scale: 1.5, border: { left: 12, top: 12 }, staticFrame: true } },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 0, right: 200, top: 0, bottom: 70 }, scene: { border: { left: 12, top: 12 } } },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 0, right: 200, top: 0, bottom: 70 }, scene: { border: { left: 12, top: 12 }, staticFrame: true } },
+      { layout: single, frame: { left: 0, top: 0, w: 200, h: 70 }, drawn: { left: 0, right: 200, top: 0, bottom: 70 }, scene: { scroll: 25 } },
+      { layout: wrapped, frame: { left: 0, top: 0, w: 200, h: 130 }, drawn: { left: 0, right: 200, top: 0, bottom: 130 }, scene: {} },
+      { layout: wrapped, frame: { left: 0, top: 0, w: 200, h: 130 }, drawn: { left: 0, right: 300, top: 0, bottom: 195 }, scene: { scale: 1.5, border: { left: 8, top: 8 } } },
+    ];
+    let compared = 0;
+    for (const [index, entry] of scenes.entries()) {
+      const strip = laidStrip(entry.layout, entry.frame, entry.drawn, entry.scene);
+      const rects = strip.items.map((el) => el.getBoundingClientRect());
+      // The line filter's tolerance is half a pixel wide, so the sweep has to
+      // land ON the band edges, not only near them.
+      const crosses = new Set<number>();
+      for (let cross = -10; cross <= 140; cross += 5) crosses.add(cross);
+      for (const rect of rects) {
+        for (const edge of [rect.top, rect.bottom]) {
+          for (const delta of [-2, -1, -0.5, 0, 0.5, 1, 2]) crosses.add(Number((edge + delta).toFixed(2)));
+        }
+      }
+      for (let from = 0; from < strip.items.length; from += 1) {
+        // The held item's own layout box, drawn — the geometry the resolution
+        // is supposed to be reading.
+        const truth = strip.items[from].getBoundingClientRect();
+        const trueOrigin = {
+          band: { lo: truth.top, hi: truth.bottom },
+          mid: truth.left + truth.width / 2,
+        };
+        for (let main = -20; main <= 240; main += 20) {
+          for (const cross of crosses) {
+            const { handle } = harness("x", strip.items);
+            press(handle, strip.items, from, { x: main - 40, y: cross });
+            move(main, cross);
+            const got = handle.dragOver.value;
+            const want = indexAt(rects, "x", main, cross, from, trueOrigin);
+            expect(got, `scene ${index} from ${from} at (${main}, ${cross})`).toBe(want);
+            up(main, cross);
+            compared += 1;
+          }
+        }
+      }
+    }
+    expect(compared, "the sweep really ran").toBeGreaterThan(1000);
+  }, 20_000);
+
+  it("keeps the carried snapshot when only half of the box can be read", () => {
+    // A box that reports one side and not the other cannot place anything: a
+    // zero width would put the midpoint on the item's own edge. The gesture
+    // here is one the derivation WOULD answer differently — the strip is
+    // re-laid out under the drag — so the assertion is the carried
+    // snapshot's answer, which is what a strip with no layout numbers at all
+    // gets.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ];
+    const strip = laidStrip(laid, { left: 0, top: 0, w: 300, h: 40 }, {
+      left: 0,
+      right: 300,
+      top: 0,
+      bottom: 40,
+    });
+    Object.defineProperty(strip.items[1], "offsetWidth", { configurable: true, get: () => 0 });
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 1, { x: 150, y: 20 });
+    move(140, 20);
+    expect(handle.dragging.value).toBe(true);
+    expect(handle.dragOver.value, "the press-time midpoint still stops the walk").toBe(1);
+
+    strip.relayout([
+      { left: 0, right: 50, top: 0, bottom: 40 },
+      { left: 50, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 150, top: 0, bottom: 40 },
+    ]);
+    move(140, 20);
+    expect(handle.dragOver.value, "half a box is no box: the snapshot still resolves").toBe(1);
+    up(140, 20);
+    expect(drops).toEqual([]);
+  });
+
+  it("keeps the carried snapshot when the layout chain cannot be added up", () => {
+    // A chain that runs through something with no offsets of its own — an
+    // element inside `<svg>` reports no `offsetLeft` at all — sums to NaN,
+    // and a NaN origin answers every comparison the same way: it would place
+    // the item at the end of the strip. The chain is checked, and the gesture
+    // falls back to the snapshot.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ];
+    const strip = laidStrip(laid, { left: 0, top: 0, w: 300, h: 40 }, {
+      left: 0,
+      right: 300,
+      top: 0,
+      bottom: 40,
+    });
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 1, { x: 150, y: 20 });
+    move(140, 20);
+    expect(handle.dragOver.value).toBe(1);
+
+    // The held chip's chain now passes through an element with no offsets.
+    const svgish = document.createElement("div");
+    Object.defineProperty(svgish, "offsetLeft", { configurable: true, get: () => undefined });
+    Object.defineProperty(svgish, "offsetTop", { configurable: true, get: () => undefined });
+    Object.defineProperty(svgish, "offsetParent", {
+      configurable: true,
+      get: () => strip.frame,
+    });
+    Object.defineProperty(strip.items[1], "offsetParent", {
+      configurable: true,
+      get: () => svgish,
+    });
+    strip.relayout([
+      { left: 0, right: 50, top: 0, bottom: 40 },
+      { left: 50, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 150, top: 0, bottom: 40 },
+    ]);
+    move(140, 20);
+    expect(handle.dragOver.value, "an unaddable chain keeps the snapshot's answer").toBe(1);
+    up(140, 20);
+    expect(drops).toEqual([]);
+  });
+
+  it("keeps the carried snapshot when the held item collapses", () => {
+    // A held chip re-laid out to no height has no line to be on: its derived
+    // band would be a point and the line filter would drop it, which is a
+    // resolution the layout cannot justify. The fallback answers instead.
+    const laid: Box[] = [
+      { left: 0, right: 100, top: 0, bottom: 40 },
+      { left: 100, right: 200, top: 0, bottom: 40 },
+      { left: 200, right: 300, top: 0, bottom: 40 },
+    ];
+    const strip = laidStrip(laid, { left: 0, top: 0, w: 300, h: 40 }, {
+      left: 0,
+      right: 300,
+      top: 0,
+      bottom: 40,
+    });
+    const { handle, drops } = harness("x", strip.items);
+
+    press(handle, strip.items, 1, { x: 150, y: 20 });
+    move(140, 20);
+    expect(handle.dragOver.value).toBe(1);
+
+    strip.relayout([
+      { left: 0, right: 50, top: 0, bottom: 40 },
+      { left: 50, right: 100, top: 20, bottom: 20 },
+      { left: 100, right: 150, top: 0, bottom: 40 },
+    ]);
+    move(140, 20);
+    expect(handle.dragOver.value, "a chip with no height has no line to stand on").toBe(1);
+    up(140, 20);
+    expect(drops).toEqual([]);
   });
 
   it("ends the gesture the moment the strip empties", () => {

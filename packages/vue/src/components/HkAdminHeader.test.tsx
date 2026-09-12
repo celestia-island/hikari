@@ -1,39 +1,66 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
 
-// HPopover teleports to body — stubbing Teleport stringifies its vnode
-// children. Replace just HPopover with an inline passthrough that renders
-// its default slot while open; the rest of hikari stays real.
-vi.mock("@celestia-island/hikari", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@celestia-island/hikari")>();
+// HkMenu renders its levels through HkSelectPanel, which teleports to
+// body — replace just HkMenu (imported by the component from
+// ./HkMenu) with an inline passthrough that renders the header slot
+// plus one flattened row per item (children included) while open,
+// wiring row clicks to the select handler; the rest of hikari stays
+// real. The select handler reaches the stub through attrs (it is not
+// re-declared as an emit, which would strip it from props).
+vi.mock("./HkMenu", async () => {
   const { defineComponent, h } = await import("vue");
-  const HPopoverStub = defineComponent({
-    name: "HPopover",
+  const HMenuStub = defineComponent({
+    name: "HMenu",
     props: {
-      modelValue: { type: Boolean, default: false },
-      placement: { type: String, default: "bottom" },
+      open: { type: Boolean, default: false },
+      items: { type: Array, default: () => [] },
+      title: { type: String, default: "" },
     },
-    setup(props, { slots }) {
-      return () =>
-        props.modelValue
-          ? h("div", { class: "popover-stub" }, slots.default?.())
-          : null;
+    setup(props, { slots, attrs }) {
+      return () => {
+        if (!props.open) return null;
+        const rows: ReturnType<typeof h>[] = [];
+        const flatten = (items: any[]) => {
+          for (const item of items ?? []) {
+            rows.push(
+              h(
+                "button",
+                {
+                  class: "menu-stub-row",
+                  "data-key": item.key,
+                  "data-checked": item.checked || undefined,
+                  "data-danger": item.danger || undefined,
+                  onClick: () => (attrs as any).onSelect?.(item.key),
+                },
+                item.label,
+              ),
+            );
+            if (item.children?.length) flatten(item.children);
+          }
+        };
+        flatten(props.items as any[]);
+        return h("div", { class: "menu-stub" }, [...(slots.header?.() ?? []), ...rows]);
+      };
     },
   });
-  return { ...actual, HPopover: HPopoverStub };
+  return { default: HMenuStub };
 });
 
 import { HkAdminHeader } from "./HkAdminHeader";
 
 /**
- * HkAdminHeader contract tests for the generalized avatar/identity
- * behaviors ported from the chest plana-legacy fork:
- * - avatarAction "menu" (default) toggles the user dropdown; "drawer"
- *   emits avatarClick so the shell can open its nav drawer.
- * - the identity block (name/email/groups) leads the menu; an empty
- *   identity renders the signing-in placeholder + force-sign-out escape.
- * - an empty title hides the context-title node entirely (pages carry
- *   their own in-page title in the HPageHeader convention).
+ * HkAdminHeader contract tests for the unified user dropdown:
+ * - the bar beside the avatar carries the PAGE TITLE, never the
+ *   nickname;
+ * - the avatar trigger toggles an HkMenu dropdown whose header slot is
+ *   the profile identity block (avatar chip + nickname + email) and
+ *   whose rows end in a danger logout;
+ * - avatarAction "drawer" emits avatarClick instead (bar text hidden);
+ * - an empty identity renders the signing-in placeholder + the
+ *   force-sign-out escape row;
+ * - Language children carry checked state and emit localeSelect;
+ * - the goToFrontend row sits directly above logout.
  *
  * (Repo test convention: raw createApp + container queries, no
  * @vue/test-utils dependency.)
@@ -66,6 +93,9 @@ function headerNode(props: HeaderProps = {}, slots?: Record<string, unknown>) {
 const avatarButton = (c: HTMLElement) =>
   c.querySelector('button[aria-haspopup]') as HTMLButtonElement | null;
 
+const menuRows = (c: HTMLElement) =>
+  [...c.querySelectorAll(".menu-stub-row")] as HTMLButtonElement[];
+
 async function click(el: Element | null) {
   el?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   await Promise.resolve();
@@ -73,27 +103,51 @@ async function click(el: Element | null) {
 }
 
 describe("HkAdminHeader", () => {
-  it("toggles the user dropdown on avatar click in menu mode", async () => {
-    const c = mount(headerNode({ logoutLabel: "Log out" }));
+  it("shows the page title beside the avatar, never the nickname", () => {
+    const c = mount(headerNode({ title: "Providers", logoutLabel: "Log out" }));
+    const barText = c.querySelector("header > div")?.textContent ?? "";
+    expect(barText).toContain("Providers");
+    // The nickname must not render as bar text — identity lives in the
+    // dropdown's identity block only.
+    expect(barText).not.toContain("alice");
+  });
+
+  it("hides the title node entirely when it is empty", () => {
+    const withTitle = mount(headerNode({ title: "Dashboard" }));
+    expect(withTitle.textContent).toContain("Dashboard");
+
+    const withoutTitle = mount(headerNode());
+    expect(withoutTitle.querySelector("header > div")?.textContent).not.toContain("Dashboard");
+  });
+
+  it("toggles the user dropdown with the profile identity header in menu mode", async () => {
+    const c = mount(headerNode({
+      userEmail: "alice@example.com",
+      logoutLabel: "Log out",
+    }));
     const btn = avatarButton(c);
     expect(btn?.getAttribute("aria-haspopup")).toBe("menu");
 
     await click(btn);
-    const menu = c.querySelector(".popover-stub");
-    // The dropdown leads with the identity block and ends with logout.
+    const menu = c.querySelector(".menu-stub");
+    // The dropdown leads with the identity block — avatar chip,
+    // nickname, email — and ends with a danger logout row.
+    expect(menu?.querySelector(".s-user-header--profile")).toBeTruthy();
+    expect(menu?.querySelector(".s-user-avatar-chip")).toBeTruthy();
     expect(menu?.textContent).toContain("alice");
-    expect(c.querySelector(".s-user-header")).toBeTruthy();
-    expect(menu?.textContent).toContain("Log out");
+    expect(menu?.textContent).toContain("alice@example.com");
+    expect(c.querySelector(".menu-stub-row[data-key='logout'][data-danger]")).toBeTruthy();
 
     await click(btn);
-    expect(c.querySelector(".s-user-header")).toBeNull();
+    expect(c.querySelector(".menu-stub")).toBeNull();
   });
 
   it("emits avatarClick instead of the dropdown in drawer mode", async () => {
     const clicks: number[] = [];
     const c = mount(headerNode({
       avatarAction: "drawer",
-      logoutLabel: "Log out",
+      title: "Providers",
+      userEmail: "alice@example.com",
       onAvatarClick: () => clicks.push(1),
     }));
     const btn = avatarButton(c);
@@ -101,9 +155,10 @@ describe("HkAdminHeader", () => {
 
     await click(btn);
     expect(clicks).toHaveLength(1);
-    // The dropdown must NOT open in drawer mode, and the username stays
-    // hidden — the identity block lives in the drawer footer.
-    expect(c.querySelector(".s-user-header")).toBeNull();
+    // The dropdown must NOT open in drawer mode, and neither the title
+    // nor the nickname renders — both live in the drawer footer.
+    expect(c.querySelector(".menu-stub")).toBeNull();
+    expect(c.textContent).not.toContain("Providers");
     expect(c.textContent).not.toContain("alice");
   });
 
@@ -123,63 +178,64 @@ describe("HkAdminHeader", () => {
     // No action items above an absent identity.
     expect(c.textContent).not.toContain("Avatar");
 
-    await click(c.querySelector(".s-popup-menu-item"));
+    await click(c.querySelector(".menu-stub-row"));
     expect(onForceSignOut).toHaveBeenCalledTimes(1);
-  });
-
-  it("hides the context title entirely when it is empty", () => {
-    const withTitle = mount(headerNode({ title: "Dashboard" }));
-    expect(withTitle.querySelector("h2")?.textContent).toBe("Dashboard");
-
-    const withoutTitle = mount(headerNode());
-    expect(withoutTitle.querySelector("h2")).toBeNull();
-  });
-
-  it("renders no emergency-stop control by default", () => {
-    const c = mount(headerNode({ username: "alice" }));
-    expect(c.textContent.toLowerCase()).not.toContain("emergency");
   });
 
   it("renders the goToFrontend row above logout and emits goToFrontend", async () => {
     const onGoToFrontend = vi.fn();
     const c = mount(headerNode({
+      userEmail: "alice@example.com",
       logoutLabel: "Log out",
       goToFrontendLabel: "Go to Frontend",
       onGoToFrontend,
     }));
     // Opt-in: absent without the label prop…
-    const bare = mount(headerNode({ logoutLabel: "Log out" }));
+    const bare = mount(headerNode({ userEmail: "alice@example.com", logoutLabel: "Log out" }));
     await click(avatarButton(bare));
-    expect(bare.textContent).not.toContain("Go to Frontend");
+    expect(bare.querySelector(".menu-stub-row[data-key='go-to-frontend']")).toBeNull();
 
     // …and present (directly above logout, mirroring the drawer user
     // panel's row order) with the label prop.
     await click(avatarButton(c));
-    const rows = [...c.querySelectorAll(".s-popup-menu-item")];
-    const labels = rows.map((r) => r.textContent?.trim());
-    expect(labels.indexOf("Go to Frontend")).toBeGreaterThan(-1);
-    expect(labels.indexOf("Log out")).toBe(labels.indexOf("Go to Frontend") + 1);
+    const keys = menuRows(c).map((r) => r.dataset.key);
+    expect(keys.indexOf("go-to-frontend")).toBeGreaterThan(-1);
+    expect(keys.indexOf("logout")).toBe(keys.indexOf("go-to-frontend") + 1);
 
-    await click(rows[labels.indexOf("Go to Frontend")]);
+    await click(menuRows(c)[keys.indexOf("go-to-frontend")]);
     expect(onGoToFrontend).toHaveBeenCalledTimes(1);
   });
 
-  it("passes the locale trigger ref OBJECT through the slot so the picker anchors to the button", async () => {
-    let captured: unknown = null;
-    const c = mount(headerNode(
-      { username: "alice" },
-      {
-        "locale-picker": (scope: { triggerRef: unknown }) => {
-          captured = scope.triggerRef;
-          return null;
-        },
-      },
-    ));
+  it("offers locales as a checked cascade and emits localeSelect with the code", async () => {
+    const onLocaleSelect = vi.fn();
+    const c = mount(headerNode({
+      userEmail: "alice@example.com",
+      localeOptions: [
+        { code: "en", label: "English" },
+        { code: "zh-Hans", label: "简体中文" },
+      ],
+      currentLocale: "zh-Hans",
+      onLocaleSelect,
+    }));
     await click(avatarButton(c));
-    // The slot must receive the ref object itself (reactive), not its
-    // frozen .value snapshot from the first render (null before the
-    // ref attached).
-    expect(captured).toBeTruthy();
-    expect((captured as { value?: unknown }).value).toBeInstanceOf(HTMLElement);
+
+    // Children flatten after the parent row with checked state on the
+    // active locale only.
+    const rows = menuRows(c);
+    const localeIdx = rows.findIndex((r) => r.dataset.key === "locale");
+    const en = rows[localeIdx + 1];
+    const zh = rows[localeIdx + 2];
+    expect(en.dataset.key).toBe("locale:en");
+    expect(zh.dataset.key).toBe("locale:zh-Hans");
+    expect(zh.dataset.checked).toBe("true");
+    expect(en.dataset.checked).toBeUndefined();
+
+    await click(en);
+    expect(onLocaleSelect).toHaveBeenCalledWith("en");
+  });
+
+  it("renders no emergency-stop control by default", () => {
+    const c = mount(headerNode({ username: "alice" }));
+    expect(c.textContent.toLowerCase()).not.toContain("emergency");
   });
 });

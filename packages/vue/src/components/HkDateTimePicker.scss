@@ -247,7 +247,7 @@
 }
 
 .hk-dtp-step-val {
-  font-size: var(--text-base, 1rem);
+  font-size: var(--text-base, 0.875rem);
   font-variant-numeric: tabular-nums;
   min-width: 1.75rem;
   text-align: center;
@@ -256,7 +256,7 @@
 }
 
 .hk-dtp-time-sep {
-  font-size: var(--text-base, 1rem);
+  font-size: var(--text-base, 0.875rem);
   color: var(--hi-color-muted);
   padding-top: var(--space-10, 10px);
 }

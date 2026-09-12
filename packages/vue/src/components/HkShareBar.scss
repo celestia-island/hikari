@@ -31,7 +31,7 @@
   inset-inline-start: 0;
   border-radius: 3px;
   background: rgb(var(--color-primary) / 70%);
-  transition: width var(--duration-normal, 0.2s) ease;
+  transition: width var(--duration-normal, 0.3s) ease;
 }
 
 /* Width is a size animation — the fill snaps instead of animating

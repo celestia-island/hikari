@@ -151,9 +151,14 @@
   backdrop-filter: blur(var(--blur-sm));
 }
 
+/* background stays the base surface — the hover declaration only restated
+   it; hover emphasis comes from the border-color change below. */
 .hk-btn-secondary:hover:not(:disabled) {
-  background: rgb(var(--color-surface));
   border-color: var(--c-primary-strong);
+}
+
+.hk-btn-secondary:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 /* ---- Outline ---- */
@@ -169,6 +174,10 @@
   border-color: rgb(var(--color-primary));
 }
 
+.hk-btn-outline:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
 /* ---- Ghost ---- */
 
 .hk-btn-ghost {
@@ -181,6 +190,10 @@
   background: var(--c-primary-light);
 }
 
+.hk-btn-ghost:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
 /* ---- Danger ---- */
 
 .hk-btn-danger {
@@ -191,6 +204,10 @@
 .hk-btn-danger:hover:not(:disabled) {
   filter: brightness(1.1);
   box-shadow: var(--shadow-button-danger);
+}
+
+.hk-btn-danger:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 /* ---- Block ---- */

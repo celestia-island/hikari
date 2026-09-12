@@ -5,7 +5,7 @@
   padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
   border-radius: var(--hi-radius-md, 8px);
   border: 1px solid transparent;
-  border-left-width: 4px;
+  border-inline-start-width: 4px;
   color: var(--hi-color-text-primary);
 }
 
@@ -25,7 +25,7 @@
 }
 
 .hk-alert-md {
-  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  /* md padding == the .hk-alert base values; only the type size differs. */
   font-size: var(--hi-text-sm, 0.875rem);
 }
 
@@ -39,7 +39,7 @@
 .hk-alert-error {
   background: color-mix(in srgb, var(--hi-color-danger) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
-  border-left-color: var(--hi-color-danger);
+  border-inline-start-color: var(--hi-color-danger);
 
   .hk-alert-icon { color: var(--hi-color-danger); }
 }
@@ -47,7 +47,7 @@
 .hk-alert-warning {
   background: color-mix(in srgb, var(--hi-color-warning) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-warning) 15%, transparent);
-  border-left-color: var(--hi-color-warning);
+  border-inline-start-color: var(--hi-color-warning);
 
   .hk-alert-icon { color: var(--hi-color-warning); }
 }
@@ -55,7 +55,7 @@
 .hk-alert-info {
   background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
-  border-left-color: var(--hi-color-primary);
+  border-inline-start-color: var(--hi-color-primary);
 
   .hk-alert-icon { color: var(--hi-color-primary); }
 }
@@ -63,7 +63,7 @@
 .hk-alert-success {
   background: color-mix(in srgb, var(--hi-color-success) 8%, transparent);
   border-color: color-mix(in srgb, var(--hi-color-success) 15%, transparent);
-  border-left-color: var(--hi-color-success);
+  border-inline-start-color: var(--hi-color-success);
 
   .hk-alert-icon { color: var(--hi-color-success); }
 }
@@ -117,5 +117,10 @@
   &:hover {
     background: var(--hi-color-surface);
     color: var(--hi-color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
   }
 }

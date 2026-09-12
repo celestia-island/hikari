@@ -1,12 +1,12 @@
 .s-auth-submit {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-6, 0.375rem);
   width: 100%;
 }
 
 .s-auth-submit-error {
   margin: 0;
-  font-size: 0.8125rem;
-  color: rgb(var(--color-danger, 229 62 62));
+  font-size: var(--text-sm, 0.8125rem);
+  color: rgb(var(--color-danger, 240 70 80));
 }

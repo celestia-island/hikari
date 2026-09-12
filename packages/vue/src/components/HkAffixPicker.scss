@@ -12,7 +12,10 @@
   align-items: center;
   gap: 0.3rem;
   max-width: 11rem;
-  padding: 2px 6px 2px 4px;
+  /* Logical axes: the wide side reserves caret room at inline-end and
+   * flips together with the host input's RTL suffix/prefix side. */
+  padding-block: 2px;
+  padding-inline: 4px 6px;
   border: none;
   border-radius: var(--radius-sm, 6px);
   background: transparent;
@@ -23,6 +26,10 @@
   &:hover:not(:disabled),
   &:focus-visible:not(:disabled) {
     background: rgb(var(--color-primary) / 14%);
+  }
+
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 20%);
   }
 
   &:disabled {
@@ -80,7 +87,7 @@
   padding: 4px var(--space-16);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: rgb(var(--color-surface) / var(--opacity-half, 50%));
+  background: rgb(var(--color-surface) / var(--opacity-half));
   transition: border-color 0.12s ease, background 0.12s ease;
 
   &:hover {
@@ -110,9 +117,14 @@
   color: rgb(var(--color-text));
   font-size: var(--text-sm);
   line-height: 1.4;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   appearance: none;
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
 }
 
 .hk-affix-tag-flag {
@@ -226,7 +238,7 @@
   background: transparent;
   color: rgb(var(--color-text));
   font-size: var(--text-sm, 14px);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   appearance: none;
   transition: background 0.1s ease;
@@ -246,7 +258,10 @@
     opacity: 0.5;
     cursor: default;
 
-    &:hover {
+    /* The button stays keyboard-focusable (data-disabled only), so the
+     * unpickable row must not paint the pickable tint on focus either. */
+    &:hover,
+    &:focus-visible {
       background: transparent;
     }
   }

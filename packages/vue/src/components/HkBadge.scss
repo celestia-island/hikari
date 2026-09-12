@@ -32,11 +32,6 @@
   padding: var(--space-1) var(--space-6);
 }
 
-.hk-badge[data-size="md"] {
-  font-size: var(--text-xs);
-  padding: var(--space-2) var(--space-8);
-}
-
 /* ---------- shape ---------- */
 .hk-badge[data-pill="false"] {
   border-radius: var(--radius-sm);
@@ -45,7 +40,6 @@
 /* ---------- typography ---------- */
 .hk-badge[data-mono] {
   font-family: var(--font-mono);
-  font-weight: 600;
 }
 
 .hk-badge[data-uppercase] {

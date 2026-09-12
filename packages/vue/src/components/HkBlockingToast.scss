@@ -57,7 +57,6 @@
 }
 
 .hk-blocking-toast-title {
-  font-size: 1em;
   font-weight: 700;
 }
 
@@ -120,4 +119,14 @@
 
 .hk-blocking-toast-move {
   transition: transform var(--hi-duration-normal, 0.3s) ease;
+}
+
+// Reduced motion: drop the slide/FLIP choreography, cards snap in and
+// out (house pattern: HkListTransition.scss / HkExpansionPanel.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-blocking-toast-enter-active,
+  .hk-blocking-toast-leave-active,
+  .hk-blocking-toast-move {
+    transition: none;
+  }
 }

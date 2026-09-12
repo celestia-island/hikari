@@ -7,8 +7,7 @@
 .s-auth-methods-divider {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  gap: var(--space-10, 0.625rem);
   margin: 0 0 var(--space-4, 0.25rem);
   color: var(--hi-color-muted, #999);
   font-size: var(--text-xs, 0.75rem);

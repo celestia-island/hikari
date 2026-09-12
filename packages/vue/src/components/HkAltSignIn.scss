@@ -5,7 +5,6 @@
 .hk-alt-signin {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   width: 100%;
 }
 
@@ -25,8 +24,15 @@
     opacity var(--duration-normal, 0.3s) ease;
 }
 
-.hk-alt-signin__trigger:hover:not(:disabled) {
+.hk-alt-signin__trigger:hover:not(:disabled),
+.hk-alt-signin__trigger[aria-expanded="true"] {
   color: var(--hi-color-text-secondary, #999);
+}
+
+/* Keyboard position feedback on the full-width disclosure row. */
+.hk-alt-signin__trigger:focus-visible:not(:disabled) {
+  outline: 2px solid var(--hi-color-primary, #58a6ff);
+  outline-offset: 2px;
 }
 
 .hk-alt-signin__trigger:disabled {
@@ -51,5 +57,5 @@
   flex-direction: column;
   gap: var(--space-2, 0.125rem);
   min-width: 12rem;
-  padding: var(--space-4, 0.25rem) var(--space-4, 0.25rem);
+  padding: var(--space-4, 0.25rem);
 }

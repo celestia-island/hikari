@@ -97,6 +97,33 @@ export function layoutOffset(el: HTMLElement, frame?: HTMLElement | null): Layou
   return { x, y, through };
 }
 
+/** Where `el` sits inside `frame`'s content, in the frame's own layout units —
+ *  the number a scroll offset has to be set to in order to bring the element's
+ *  top/left edge to the frame's visible top/left (its padding edge).
+ *
+ *  `layoutOffset` sums a chain all the way to the document root, so using its
+ *  result directly as a scroll target is off by the frame's own distance from
+ *  that root: measured in Chromium, a frame sitting 310px down the page asked
+ *  for 810 where the correct scroll offset was 500. Subtracting the frame's own
+ *  sum cancels every offset convention along the way (see the file comment) and
+ *  the result is scale-free, so it is the same number at zoom 1 and zoom 3
+ *  while the drawn-box equivalent (`rect.top - frameRect.top + frame.scrollTop`)
+ *  is `k` times too large at zoom `k`.
+ *
+ *  `y` (and `x`) are `NaN` when the chain cannot be added up or when `frame` is
+ *  not an ancestor of `el` — the difference is meaningless then, and callers
+ *  check `Number.isFinite` before scrolling with it. */
+export function laidOffsetWithin(el: HTMLElement, frame: HTMLElement): LayoutOffset {
+  const at = layoutOffset(el, frame);
+  const of = layoutOffset(frame, null);
+  const through = at.through;
+  if (!Number.isFinite(at.x) || !Number.isFinite(at.y) || !Number.isFinite(of.x) || !Number.isFinite(of.y)) {
+    return { x: NaN, y: NaN, through };
+  }
+  if (el !== frame && !frame.contains(el)) return { x: NaN, y: NaN, through };
+  return { x: at.x - of.x, y: at.y - of.y, through };
+}
+
 /** An element's laid-out BORDER box, as finely as the engine will report it.
  *  `offsetWidth`/`offsetHeight` are integers — they round, and half a pixel is
  *  a third of the line filter's entire tolerance — while the computed

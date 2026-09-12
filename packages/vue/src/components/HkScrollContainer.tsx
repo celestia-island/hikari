@@ -10,7 +10,7 @@ import {
 } from "vue";
 
 import { useI18n } from "../i18n/context";
-import { layoutOffset } from "../composables/layoutGeometry";
+import { laidOffsetWithin } from "../composables/layoutGeometry";
 import "./HkScrollContainer.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
@@ -361,9 +361,14 @@ export default defineComponent({
       // Both ends in the LAYOUT space the scroll offset lives in: the drawn
       // boxes would carry the scale of whatever root this sits in, and the
       // target would overshoot by (scale - 1) of the element's distance from
-      // the visible top (see `layoutGeometry`).
-      const offset = layoutOffset(el, vp);
-      const target = Number.isFinite(offset.y) ? offset.y : el.getBoundingClientRect().top;
+      // the visible top. The offset is measured INSIDE the viewport — a raw
+      // `layoutOffset` sum runs on to the document root, which lands the scroll
+      // past the element by however far the viewport itself sits down the page
+      // (see `laidOffsetWithin`).
+      const inside = laidOffsetWithin(el, vp);
+      const target = Number.isFinite(inside.y)
+        ? inside.y
+        : el.getBoundingClientRect().top - vp.getBoundingClientRect().top + vp.scrollTop;
       vp.scrollTo({ top: target, behavior });
     }
 

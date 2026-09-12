@@ -88,7 +88,7 @@ describe("HkScrollContainer alignment", () => {
     Object.defineProperty(m.viewport, "offsetHeight", { configurable: true, get: () => 400 });
     void drawn;
 
-    // The element sits 150 of the viewport's own pixels below its top edge.
+    // The element sits 150 of the viewport's own pixels below its top edge...
     const target = document.createElement("div");
     m.viewport.appendChild(target);
     Object.defineProperty(target, "offsetParent", { configurable: true, get: () => m.viewport });
@@ -97,9 +97,18 @@ describe("HkScrollContainer alignment", () => {
     vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 600, right: 100, bottom: 700, width: 100, height: 100, x: 0, y: 600,
     } as DOMRect);
+    // ...while the VIEWPORT itself sits 310 of its own pixels down the page,
+    // which the scroll target must not carry: an offset sum walked all the way
+    // to the root would ask to scroll 460 and land the element past the top.
+    const above = document.createElement("div");
+    above.appendChild(m.viewport);
+    Object.defineProperty(m.viewport, "offsetParent", { configurable: true, get: () => above });
+    Object.defineProperty(m.viewport, "offsetTop", { configurable: true, get: () => 310 });
+    Object.defineProperty(above, "offsetParent", { configurable: true, get: () => null });
+    Object.defineProperty(above, "offsetTop", { configurable: true, get: () => 0 });
 
     (m.instance as unknown as { scrollToElement: (el: HTMLElement) => void }).scrollToElement(target);
-    expect(scrolled.at(-1), "150 of the viewport's own pixels, not the drawn 300").toBe(150);
+    expect(scrolled.at(-1), "150 of the viewport's own pixels, not the drawn 300 nor the page offset 460").toBe(150);
   });
   it("renders the slot bare without an align prop", () => {
     const m = mountScroller();

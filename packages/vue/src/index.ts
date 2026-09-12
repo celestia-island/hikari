@@ -274,6 +274,7 @@ export {
   drawnScale,
   frameMetrics,
   frameScale,
+  laidOffsetWithin,
   laidSize,
   layoutOffset,
   layoutRect,

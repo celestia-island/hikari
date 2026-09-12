@@ -4,6 +4,7 @@ import {
   drawnScale,
   frameMetrics,
   frameScale,
+  laidOffsetWithin,
   laidSize,
   layoutOffset,
   layoutRect,
@@ -105,6 +106,46 @@ describe("layoutGeometry", () => {
     expect(layoutOffset(child, frame).through).toBe(false);
     expect(placePoint(frame, frameMetrics(frame), layoutOffset(child, frame), layoutOffset(frame, null)))
       .toEqual({ x: 140, y: 240 });
+  });
+
+  it("measures an offset INSIDE its frame, not from the document root", () => {
+    // The trap this helper exists for: a raw offset sum runs on to the root,
+    // so the frame's own distance down the page is added to the answer. Used
+    // as a scroll target that overshoots by exactly that distance — measured
+    // in Chromium, a frame 310px down the page asked for 810 where 500 was
+    // right, and the drawn-box equivalent is a further zoom factor out.
+    const outer = document.createElement("div");
+    const frame = document.createElement("div");
+    const child = document.createElement("div");
+    frame.appendChild(child);
+    outer.appendChild(frame);
+    document.body.appendChild(outer);
+
+    laid(outer, { left: 0, top: 0, w: 400, h: 600 }, document.body);
+    laid(frame, { left: 10, top: 310, w: 300, h: 400 }, outer);
+    laid(child, { left: 0, top: 500, w: 200, h: 60 }, frame);
+    // The frame is drawn at 2x: the drawn-box answer for the same scroll.
+    drawn(frame, { left: 20, right: 620, top: 620, bottom: 1420 });
+    drawn(child, { left: 20, right: 420, top: 1620, bottom: 1740 });
+
+    expect(layoutOffset(child, frame).y, "the raw sum carries the frame's own 310").toBe(810);
+    expect(laidOffsetWithin(child, frame).y, "inside the frame, in its own units").toBe(500);
+    expect(laidOffsetWithin(child, frame).through).toBe(true);
+    // Same number however the frame is drawn: layout units are scale-free.
+    drawn(frame, { left: 30, right: 930, top: 930, bottom: 2130 });
+    expect(laidOffsetWithin(child, frame).y).toBe(500);
+  });
+
+  it("refuses an offset inside something that is not an ancestor", () => {
+    const frame = document.createElement("div");
+    const stranger = document.createElement("div");
+    document.body.appendChild(frame);
+    document.body.appendChild(stranger);
+    laid(frame, { left: 0, top: 0, w: 200, h: 200 }, document.body);
+    laid(stranger, { left: 0, top: 40, w: 100, h: 40 }, document.body);
+    laid(frame, { left: 0, top: 0, w: 200, h: 200 }, document.body);
+
+    expect(Number.isFinite(laidOffsetWithin(stranger, frame).y)).toBe(false);
   });
 
   it("scales what it places by the scale the frame is drawn at", () => {

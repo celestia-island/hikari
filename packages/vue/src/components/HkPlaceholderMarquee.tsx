@@ -1,4 +1,5 @@
 import { defineComponent, ref, computed, onMounted, onBeforeUnmount, watch, type PropType } from "vue";
+import { drawnScale } from "../composables/layoutGeometry";
 
 /**
  * Overflow strategy for a placeholder that does not fit its input.
@@ -64,12 +65,19 @@ export const HkPlaceholderMarquee = defineComponent({
       // copy spacing as trailing padding). Reading the first copy element —
       // instead of stripWidth / 3 — stays correct in the fitting case,
       // where the strip holds a single copy, and through overflow flips,
-      // where the copy count changes under the same strip. The fractional
-      // bounding-rect width keeps the CSS loop shift bit-exact with the
-      // laid-out advance — an integer-rounded width would show a ≤0.5px
-      // seam at every wrap (the copy rides the animated strip, so the
-      // width itself is never affected by the strip's transform).
-      const copyWidth = copy.getBoundingClientRect().width;
+      // where the copy count changes under the same strip. The width is read
+      // where the copy is DRAWN and converted into the host's own units,
+      // because that is the space the CSS loop shift and `clientWidth` live
+      // in: inside a scaled or zoomed root the raw rect is k times the
+      // advance, so the loop would overshoot by (k-1) per cycle and the
+      // overflow test would fire on copies that fit k times over. The
+      // conversion keeps the fractional width that makes the shift
+      // bit-exact — an integer-rounded width would show a ≤0.5px seam at
+      // every wrap (the copy rides the animated strip, so the width itself
+      // is never affected by the strip's transform).
+      const space = drawnScale(host);
+      const factor = space.x > 0 ? space.x : 1;
+      const copyWidth = copy.getBoundingClientRect().width / factor;
       loopWidth.value = copyWidth;
       overflowing.value = copyWidth - COPY_SPACING > host.clientWidth;
       emit("overflowChange", overflowing.value);

@@ -11,6 +11,7 @@ import {
 } from "vue";
 
 
+import { drawnScale } from "../composables/layoutGeometry";
 import "./HkTimeline.scss";
 
 export type TimelineStepStatus = "completed" | "active" | "pending";
@@ -76,6 +77,15 @@ export function computeTimelineWindow(
  * sized to `max-content`, which lets the flex items keep their natural
  * widths (labels are `white-space: nowrap; flex-shrink: 0`).
  */
+/** A length measured where it is DRAWN, in the laid-out units the host it
+ *  will be compared against is sized in: a probe appended inside a scaled or
+ *  zoomed root reports `k` times the space it really occupies there. */
+function drawnToLaid(drawn: number, space: HTMLElement): number {
+  const scale = drawnScale(space);
+  const factor = space.offsetWidth > 0 ? scale.x : space.offsetHeight > 0 ? scale.y : 1;
+  return factor > 0 ? drawn / factor : drawn;
+}
+
 function naturalRowWidth(el: HTMLElement): number {
   const probe = el.cloneNode(true) as HTMLElement;
   probe.style.position = "absolute";
@@ -86,7 +96,11 @@ function naturalRowWidth(el: HTMLElement): number {
   const parent = el.parentElement;
   if (!parent) return el.scrollWidth;
   parent.appendChild(probe);
-  const width = probe.getBoundingClientRect().width;
+  // The probe is measured where it is DRAWN, while the host it is compared
+  // against (`clientWidth`) is laid out: convert through the space the probe
+  // lives in, or a scaled or zoomed root answers with a size that is k times
+  // the one the host can hold (see `layoutGeometry`).
+  const width = drawnToLaid(probe.getBoundingClientRect().width, el);
   probe.remove();
   return Math.ceil(width);
 }
@@ -103,7 +117,7 @@ function naturalColumnHeight(el: HTMLElement): number {
   const parent = el.parentElement;
   if (!parent) return el.scrollHeight;
   parent.appendChild(probe);
-  const height = probe.getBoundingClientRect().height;
+  const height = drawnToLaid(probe.getBoundingClientRect().height, el);
   probe.remove();
   return Math.ceil(height);
 }

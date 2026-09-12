@@ -1,5 +1,15 @@
 import { getCurrentScope, onScopeDispose, ref, type Ref } from "vue";
 
+import {
+  frameMetrics,
+  frameScale,
+  laidSize,
+  layoutOffset,
+  nearestLaidAncestor,
+  placePoint,
+  type FrameMetrics,
+} from "./layoutGeometry";
+
 /** The axis a reorderable strip flows along: field chips run left to
  *  right, stacked panel rows top to bottom. */
 export type PointerReorderAxis = "x" | "y";
@@ -252,7 +262,7 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
   let pressedBand: { lo: number; hi: number } | null = null;
   let pressedMid = 0;
   let pressedFrame: HTMLElement | null = null;
-  let pressedFrameBox: FrameBox | null = null;
+  let pressedFrameBox: FrameMetrics | null = null;
   /** The very ELEMENT the press landed on. The drag is moved BY element:
    *  the index is re-read from it on every resolution, so a strip that
    *  reorders under the gesture keeps the drop on what the pointer grabbed
@@ -312,156 +322,60 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
     );
   }
 
-  /**
-   * Everything the frame says about where it puts a coordinate: the box the
-   *  item is laid out in — where it is drawn (`x`/`y`), how big it is drawn
-   *  (`w`/`h`) and how big it is LAID OUT (`laidW`/`laidH`, which no
-   *  transform touches, so the two together are the scale it is drawn at) —
-   *  and the scroll that slides its children inside that box.
-   */
-  interface FrameBox {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    laidW: number;
-    laidH: number;
-    scrollX: number;
-    scrollY: number;
-  }
-
-  /** The nearest ancestor of `item` that is actually LAID OUT. A snapshot
-   *  can only be carried in a frame that has a box to move it: an element
-   *  with `display: contents` generates none, and its children are laid out
-   *  by the next box up — which is the frame whose movement they follow. A
-   *  tree with no boxes anywhere (no layout engine at all, a test
-   *  environment) walks out of ancestors and keeps the parent it started
-   *  with. */
-  function layoutFrameOf(item: HTMLElement): HTMLElement | null {
-    for (let el = item.parentElement; el; el = el.parentElement) {
-      const rect = el.getBoundingClientRect();
-      if (rect.width > 0 || rect.height > 0 || el.offsetWidth > 0 || el.offsetHeight > 0) return el;
-    }
-    return item.parentElement;
-  }
-
-  /** Read the frame as it is right now (see `FrameBox`). */
-  function frameBox(frame: HTMLElement): FrameBox {
-    const rect = frame.getBoundingClientRect();
-    return {
-      x: rect.left,
-      y: rect.top,
-      w: rect.width,
-      h: rect.height,
-      laidW: frame.offsetWidth,
-      laidH: frame.offsetHeight,
-      scrollX: frame.scrollLeft,
-      scrollY: frame.scrollTop,
-    };
-  }
-
-  /** Where an element's border box sits in a space its ancestors share: the
-   *  one number CSS transforms do not touch. `offsetLeft`/`offsetTop` are
-   *  LAYOUT positions — the drag's own lift, a host `scale()`, a FLIP
-   *  animation and a transition mid-flight all leave them exactly where they
-   *  were — so walking the offsetParent chain of the item and of its frame
-   *  and subtracting gives the item's current place inside the frame however
-   *  it is drawn. Both sides are walked to the same root, so a frame that is
-   *  not itself an offsetParent (a static frame) cancels exactly.
-   *
-   *  `through` reports whether the walk passed THROUGH the frame, which is
-   *  what decides how the two differ: an offset is measured from the
-   *  offsetParent's PADDING edge, so a chain that runs through the frame
-   *  leaves the difference measured from the frame's padding box (its border
-   *  has to be added back), while a chain that skips it — a frame that is
-   *  `position: static` is nobody's offsetParent — leaves the difference
-   *  measured from the frame's BORDER box, where adding the border again
-   *  would double-count it.
-   *
-   *  The chain must be walked LIVE: a transform (or even
-   *  `will-change: transform`) on an ancestor rebinds `offsetParent`. */
-  function layoutOffset(
-    el: HTMLElement,
-    frame: HTMLElement | null,
-  ): { x: number; y: number; through: boolean } {
-    let x = 0;
-    let y = 0;
-    let through = false;
-    for (let node: HTMLElement | null = el; node; node = node.offsetParent as HTMLElement | null) {
-      x += node.offsetLeft;
-      y += node.offsetTop;
-      if (node === frame) through = true;
-    }
-    return { x, y, through };
-  }
-
   /** The pressed item's layout geometry read off the LIVE strip rather than
    *  carried from the press — the answer to "where is the item I am holding
    *  NOW?", which is what changes when the list reorders, an item is added or
    *  removed around it, a font or a zoom changes, or the strip re-wraps.
-   *  `null` when there is no box to read (no layout engine at all, a detached
-   *  element, a collapsed or partially-readable one), which keeps the caller
-   *  on the carried snapshot. */
-  function derivedOrigin(): PointerReorderOrigin | null {
-    if (!pressedItem || !pressedFrame || !pressedFrame.isConnected) return null;
-    const box = frameBox(pressedFrame);
-    const itemW = pressedItem.offsetWidth;
-    const itemH = pressedItem.offsetHeight;
-    if (!(itemW > 0) || !(itemH > 0)) return null;
-    if (!(box.w > 0) || !(box.h > 0)) return null;
+   *
+   *  The two halves are read SEPARATELY: the line the item is on needs the
+   *  cross axis to be expressible, the position along it needs the main axis,
+   *  and a strip whose frame draws no size on one of them can still answer
+   *  the other (the caller keeps the carried snapshot for whichever half
+   *  cannot be placed). A chain that cannot be added up at all — it runs
+   *  through something without offsets of its own, like an element inside
+   *  `<svg>` — leaves both `null`. */
+  function derivedGeometry(): { band: { lo: number; hi: number } | null; mid: number | null } {
+    const nothing = { band: null, mid: null } as const;
+    if (!pressedItem || !pressedFrame || !pressedFrame.isConnected) return nothing;
+    const box = frameMetrics(pressedFrame);
     const at = layoutOffset(pressedItem, pressedFrame);
     const of = layoutOffset(pressedFrame, null);
-    // A chain that runs through something without layout offsets of its own
-    // (an SVG ancestor, a foreignObject boundary) sums to NaN rather than
-    // failing: nothing can be placed from it, so the snapshot keeps the call.
-    if (!Number.isFinite(at.x) || !Number.isFinite(at.y)) return null;
-    if (!Number.isFinite(of.x) || !Number.isFinite(of.y)) return null;
-    const scaleX = box.laidW > 0 ? box.w / box.laidW : 1;
-    const scaleY = box.laidH > 0 ? box.h / box.laidH : 1;
-    /** The frame's own border, in the units it is DRAWN at — and only when
-     *  the walk into the frame came through it (`through`). */
-    const style = getComputedStyle(pressedFrame);
-    const borderLeft = at.through ? (parseFloat(style.borderLeftWidth) || 0) * scaleX : 0;
-    const borderTop = at.through ? (parseFloat(style.borderTopWidth) || 0) * scaleY : 0;
-    const left = box.x + borderLeft + (at.x - of.x - box.scrollX) * scaleX;
-    const top = box.y + borderTop + (at.y - of.y - box.scrollY) * scaleY;
-    const width = itemW * scaleX;
-    const height = itemH * scaleY;
-    return axis === "x"
-      ? { band: { lo: top, hi: top + height }, mid: left + width / 2 }
-      : { band: { lo: left, hi: left + width }, mid: top + height / 2 };
+    if (!Number.isFinite(at.x) || !Number.isFinite(at.y)) return nothing;
+    if (!Number.isFinite(of.x) || !Number.isFinite(of.y)) return nothing;
+    const size = laidSize(pressedItem);
+    // Where the frame draws the item's laid-out origin, and how big it draws
+    // what the item laid out there.
+    const drawn = placePoint(pressedFrame, box, at, of);
+    const scale = frameScale(box);
+    const itemW = size.w * scale.x;
+    const itemH = size.h * scale.y;
+    // Along the strip (`axis`) versus across it.
+    const drawnAlong = axis === "x" ? box.w : box.h;
+    const drawnAcross = axis === "x" ? box.h : box.w;
+    const itemAlong = axis === "x" ? size.w : size.h;
+    const itemAcross = axis === "x" ? size.h : size.w;
+    return {
+      // The line the item is on needs a cross-axis extent on both sides; the
+      // position along the strip needs a main-axis one. A strip that draws no
+      // size on one of them still answers the other (`layoutOrigin`).
+      band:
+        drawnAcross > 0 && itemAcross > 0
+          ? axis === "x"
+            ? { lo: drawn.y, hi: drawn.y + itemH }
+            : { lo: drawn.x, hi: drawn.x + itemW }
+          : null,
+      mid:
+        drawnAlong > 0 && itemAlong > 0
+          ? axis === "x"
+            ? drawn.x + itemW / 2
+            : drawn.y + itemH / 2
+          : null,
+    };
   }
 
-  /** The pressed item's layout geometry for `indexAt`, placed where the
-   *  frame puts it NOW. The snapshot is in VIEWPORT coordinates, so anything
-   *  that moves the frame under it — the auto-scroll this composable drives,
-   *  a host scrolling the surface or any scroller above it, a page scroll, a
-   *  re-parent, a transform on the frame or on an ancestor — has to be
-   *  carried with it, or the line the item was laid out on would be compared
-   *  against siblings that have since moved away from it. `null` before any
-   *  press, and for a press whose item was not in the strip.
-   *
-   *  The carrier is the frame's own reading of a coordinate: the snapshot
-   *  travels to wherever the frame puts that same place in its layout now,
-   *  which is exact for the three things that can move it —
-   *
-   *   - a DISPLACEMENT of the frame (a page scroll, a re-parent, a
-   *     translation) moves the snapshot by the same amount;
-   *   - the frame's own SCROLL slides its children inside a box that does not
-   *     move, so it is taken off inside the frame's own units rather than in
-   *     drawn pixels (`sample`);
-   *   - a `scale()` or a zoom — on the frame or on an ancestor — keeps the
-   *     snapshot at the same place INSIDE the frame, which is what the frame
-   *     does to everything it holds, so the placement scales with it.
-   *
-   *  A frame with no box to read any of this from falls back to the plain
-   *  displacement. */
-  function layoutOrigin(): PointerReorderOrigin | null {
-    const live = derivedOrigin();
-    if (live) return live;
-    if (!pressedBand || !pressedFrameBox) return null;
-    const at = pressedFrameBox;
-    const now = pressedFrame && pressedFrame.isConnected ? frameBox(pressedFrame) : at;
+  function carriedOrigin(): PointerReorderOrigin {
+    const at = pressedFrameBox as FrameMetrics;
+    const now = pressedFrame && pressedFrame.isConnected ? frameMetrics(pressedFrame) : at;
     /** Where the frame draws a coordinate it drew at `from` when the press
      *  was read: how far it sat from the frame's content origin, taken
      *  against the scroll the frame has moved since, drawn again at the
@@ -489,9 +403,31 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
       return to + ratio * (value - from) + (scrollFrom - scrollTo);
     };
     const down = axis === "x" ? "y" : "x";
-    const lo = carry(pressedBand.lo, down);
-    const hi = carry(pressedBand.hi, down);
+    const lo = carry(pressedBandLo(), down);
+    const hi = carry(pressedBandHi(), down);
     return { band: { lo, hi }, mid: carry(pressedMid, axis) };
+  }
+
+  function layoutOrigin(): PointerReorderOrigin | null {
+    const live = derivedGeometry();
+    if (!pressedBand || !pressedFrameBox) {
+      // Nothing carried to fall back on: only a complete reading places it.
+      return live.band && live.mid !== null ? { band: live.band, mid: live.mid } : null;
+    }
+    const carried = carriedOrigin();
+    return {
+      band: live.band ?? carried.band,
+      mid: live.mid ?? carried.mid,
+    };
+  }
+
+  /** The pressed item's own band, for the callers that know a press is live. */
+  function pressedBandLo(): number {
+    return pressedBand ? pressedBand.lo : 0;
+  }
+
+  function pressedBandHi(): number {
+    return pressedBand ? pressedBand.hi : 0;
   }
 
   /** The pointer's coordinates split by axis: the position along the strip
@@ -741,8 +677,8 @@ export function usePointerReorder(options: PointerReorderOptions): PointerReorde
         ? rect.left + rect.width / 2
         : rect.top + rect.height / 2
       : 0;
-    pressedFrame = item ? layoutFrameOf(item) : null;
-    pressedFrameBox = pressedFrame ? frameBox(pressedFrame) : null;
+    pressedFrame = item ? nearestLaidAncestor(item) : null;
+    pressedFrameBox = pressedFrame ? frameMetrics(pressedFrame) : null;
     pressedItem = item ?? null;
     originX = event.clientX;
     originY = event.clientY;

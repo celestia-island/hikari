@@ -20,7 +20,7 @@
   backdrop-filter: blur(var(--blur-md));
   pointer-events: none;
   user-select: none;
-  animation: hk-modal-breadcrumb-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-modal-breadcrumb-in var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-modal-breadcrumb-crumb {
@@ -47,6 +47,14 @@
   color: var(--hi-color-text-secondary, #666);
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+// RTL mirrors the chevron: the tsx always renders a right-pointing glyph,
+// which reads backwards on the flipped axis (HkBreadcrumb.scss precedent —
+// there the class wraps the svg, here the class IS the svg, so the mirror
+// lands on the element itself; static transform, no motion to guard).
+[dir="rtl"] .hk-modal-breadcrumb-sep {
+  transform: scaleX(-1);
 }
 
 @keyframes hk-modal-breadcrumb-in {

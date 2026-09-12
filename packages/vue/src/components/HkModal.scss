@@ -146,9 +146,9 @@
 }
 
 // Compact lead content (e.g. a context ring) rendered before the title.
-// The title's auto right margin overrides the space-between distribution,
-// so the lead + title cluster sits on the left and the close button stays
-// on the right edge.
+// The title's auto inline-end margin overrides the space-between
+// distribution, so the lead + title cluster sits at inline-start and the
+// close button stays pinned at inline-end (mirrors correctly in RTL).
 .hk-modal-header-lead {
   display: flex;
   align-items: center;
@@ -159,7 +159,7 @@
   gap: var(--hk-modal-header-lead-gap, 0.75rem);
 
   .hk-modal-title {
-    margin-right: auto;
+    margin-inline-end: auto;
   }
 }
 
@@ -250,22 +250,21 @@
 // .hk-scroll-container-autotag.
 .hk-modal-autofollow-tag {
   position: absolute;
-  right: 0.75rem;
-  bottom: 0.625rem;
+  inset-inline-end: var(--space-12);
+  bottom: var(--space-10);
   z-index: 6;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  padding: 2px 8px;
-  font-size: 0.625rem;
+  padding: var(--space-2) var(--space-8);
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
-  color: var(--hi-color-muted);
-  background: color-mix(in srgb, var(--hi-color-surface) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-border) 12%, transparent);
+  color: var(--hi-color-muted, #666);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.08)) 12%, transparent);
   border-radius: var(--hi-radius-full, 9999px);
   backdrop-filter: blur(4px);
   opacity: 0.85;
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }
 
 // Jump-back FAB (HkFab root) — floats above scroll content while follow
@@ -286,7 +285,7 @@
     var(--hk-modal-divider-color, var(--hi-color-border, rgba(0, 0, 0, 0.06)));
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-8);
   flex-shrink: 0;
 
   // Conditional footer slots (phases without actions, close transitions)
@@ -314,8 +313,9 @@
 // ------
 @media (max-width: 767px) {
   .hk-modal-content {
+    // !important beats the inline maxWidth (width prop); base width: 100%
+    // already applies at every viewport, so only the cap is re-asserted.
     max-width: 100% !important;
-    width: 100%;
     // Bottom-docked, content-hugging: `top: auto` lets the sheet size
     // itself from its content instead of stretching from the top inset
     // down to the bottom gap (2026-08-30 user report: the node-detail
@@ -369,12 +369,6 @@
     opacity: 0;
     height: auto;
     transform: translateY(100%);
-  }
-
-  // Keep children pinned (same reason as desktop) — height stays auto.
-  .hk-modal-content-enter-active > *,
-  .hk-modal-content-leave-active > * {
-    flex: 0 0 auto;
   }
 
   .hk-modal-header {

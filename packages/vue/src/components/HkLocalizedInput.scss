@@ -20,7 +20,6 @@
  * keep focus inside the input. */
 .hk-localized-input-chip {
   padding: 0;
-  border-radius: var(--radius-sm, 999px);
   background: transparent;
   color: rgb(var(--color-muted));
 
@@ -54,26 +53,27 @@
  * The base HkInput box flows affixes as a flex ROW (single-line input
  * absolutely positioned over the box) — but a textarea-type element is
  * in-flow, so the language chip would land BELOW the field. Pin it to
- * the field's top-right corner instead and keep every text line clear
- * of the chip column via the measured affix width. */
+ * the field's top inline-end corner instead and keep every text line
+ * clear of the chip column via the measured affix width. Logical
+ * properties throughout: the pinned chips and the textarea clearance
+ * mirror with the writing direction, matching the base field's
+ * logical padding-inline / margin-inline-start affix layout. */
 .hk-localized-input[data-multiline] {
   .hk-input-affix.hk-input-suffix {
     position: absolute;
-    top: 6px;
-    right: var(--space-8, 8px);
-    margin-inline-start: 0;
+    top: var(--space-6, 6px);
+    inset-inline-end: var(--space-8, 8px);
   }
 
   .hk-input-affix.hk-input-prefix {
     position: absolute;
-    top: 6px;
-    left: var(--space-8, 8px);
-    margin-inline-end: 0;
+    top: var(--space-6, 6px);
+    inset-inline-start: var(--space-8, 8px);
   }
 
   .hk-input-element.hk-input-textarea {
-    padding-right: calc(var(--space-12, 12px) + var(--hk-input-affix-end-w, 0px));
-    padding-left: calc(var(--space-12, 12px) + var(--hk-input-affix-start-w, 0px));
+    padding-inline-end: calc(var(--space-12, 12px) + var(--hk-input-affix-end-w, 0px));
+    padding-inline-start: calc(var(--space-12, 12px) + var(--hk-input-affix-start-w, 0px));
   }
 }
 

@@ -20,7 +20,6 @@
 .hk-media-slider-buffered {
   position: absolute;
   inset: 0 auto 0 0;
-  height: 100%;
   border-radius: var(--radius-sm);
   background: rgb(var(--color-muted) / 40%);
 }
@@ -28,7 +27,6 @@
 .hk-media-slider-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  height: 100%;
   border-radius: var(--radius-sm);
   background: rgb(var(--color-primary));
 }

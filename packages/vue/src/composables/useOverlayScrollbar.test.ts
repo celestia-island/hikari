@@ -156,6 +156,39 @@ describe("attachOverlayScrollbars", () => {
     document.dispatchEvent(new MouseEvent("mouseup"));
   });
 
+  it("rests the horizontal thumb at the track's right end in a right-to-left scroller", () => {
+    // An RTL scroller starts with `scrollLeft` at 0 — the content's right end
+    // — and counts down from there, so the thumb belongs at the right of the
+    // track and travels left. Rendering it at translateX(0) parked it at the
+    // wrong end of its own track.
+    const { viewport, wrapper, handle } = mountViewport("horizontal");
+    const track = wrapper.querySelector<HTMLElement>('.hk-scrollbar-track[data-axis="horizontal"]')!;
+    const thumb = track.querySelector<HTMLElement>(".hk-scrollbar-thumb")!;
+    // A 100px track with a 100-of-400 client box: thumb 25px, 75px of travel.
+    Object.defineProperty(track, "clientWidth", { configurable: true, get: () => 100 });
+    const at = (scrollLeft: number) => {
+      stubGeometry(viewport, {
+        scrollWidth: 400, clientWidth: 100, scrollLeft,
+        scrollHeight: 100, clientHeight: 100, scrollTop: 0,
+      });
+      handle.update();
+      return thumb.style.transform;
+    };
+    viewport.style.direction = "rtl";
+    // An RTL scroller starts with `scrollLeft` at 0 — the content's right end
+    // — and counts down from there, so the thumb belongs at the right of the
+    // track and travels left. Rendering it at translateX(0) parked it at the
+    // wrong end of its own track.
+    expect(at(0), "at the start, against the right end").toBe("translateX(75px)");
+    expect(at(-150), "half way").toBe("translateX(37.5px)");
+    expect(at(-300), "scrolled to the far end, at the left").toBe("translateX(0px)");
+
+    // …and the left-to-right bar keeps resting at the left.
+    viewport.style.direction = "ltr";
+    expect(at(0)).toBe("translateX(0px)");
+    expect(at(150)).toBe("translateX(37.5px)");
+  });
+
   it("pages when the track (not the thumb) is clicked", () => {
     const { viewport, wrapper, handle } = mountViewport("vertical");
     stubGeometry(viewport, {

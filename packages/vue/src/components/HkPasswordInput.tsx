@@ -17,6 +17,7 @@ import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import HListTransition from "./HkListTransition";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
 import "./HkPasswordInput.scss";
+import { drawnScale } from "../composables/layoutGeometry";
 
 interface Ripple {
   radius: number;
@@ -232,7 +233,14 @@ export default defineComponent({
       const cv = dotCanvasRef.value;
       const bx = boxRef.value;
       if (!cv || !bx) return;
-      const { width, height } = bx.getBoundingClientRect();
+      // The canvas box is sized in the element's own units (`inset: 0`), so
+      // its backing store has to be too: taking the DRAWN box would make the
+      // dot grid k times denser inside a scaled or zoomed root (see
+      // `layoutGeometry`).
+      const drawn = bx.getBoundingClientRect();
+      const scale = drawnScale(bx);
+      const width = bx.offsetWidth > 0 ? drawn.width / (scale.x > 0 ? scale.x : 1) : drawn.width;
+      const height = bx.offsetHeight > 0 ? drawn.height / (scale.y > 0 ? scale.y : 1) : drawn.height;
       cv.width = width * dpr;
       cv.height = height * dpr;
       const usable = width * 0.8;

@@ -278,4 +278,52 @@ describe("HkPasswordInput placeholder layers on Tab focus", () => {
     expect(staticText).toBeTruthy();
     expect(marqueeText).toBe(staticText);
   });
+
+/** happy-dom's own ResizeObserver never fires (no layout engine): this one
+ *  keeps the callbacks so a test can run the measurement deterministically. */
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  callback: () => void;
+  constructor(callback: () => void) {
+    this.callback = callback;
+    FakeResizeObserver.instances.push(this);
+  }
+  observe(): void {}
+  disconnect(): void {}
+}
+
+describe("HkPasswordInput strength dots in a scaled root", () => {
+  it("sizes the dot canvas in the box's own units", () => {
+    const original = globalThis.ResizeObserver;
+    FakeResizeObserver.instances = [];
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    try {
+    // The canvas is CSS-sized to its box (`inset: 0`) while its backing store
+    // is drawn from the box's DRAWN size: in a scaled or zoomed root the grid
+    // came out k times denser and every dot k times smaller.
+    const m = mountPasswordInput("hunter2", { showStrengthDots: true });
+    const box = m.container.querySelector<HTMLElement>(".hk-pwd-box")!;
+    const canvas = m.container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+    expect(box && canvas).toBeTruthy();
+    // The box is drawn twice the size it is laid out at.
+    Object.defineProperty(box, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 800, bottom: 200, width: 800, height: 200, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(box, "offsetWidth", { configurable: true, get: () => 400 });
+    Object.defineProperty(box, "offsetHeight", { configurable: true, get: () => 100 });
+    const dpr = window.devicePixelRatio || 1;
+    // Re-run the measurement the box's observer would run.
+    const observers = FakeResizeObserver.instances.filter((o) => o.callback);
+    expect(observers.length, "the box is observed").toBeGreaterThan(0);
+    observers.forEach((o) => o.callback());
+    expect(canvas.width, "400 of the box's own pixels, not the drawn 800").toBe(
+      Math.round(400 * dpr),
+    );
+    } finally {
+      globalThis.ResizeObserver = original;
+    }
+  });
+});
+
 });

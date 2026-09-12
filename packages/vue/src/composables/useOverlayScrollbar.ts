@@ -81,6 +81,14 @@ function axisMetrics(viewport: HTMLElement, horizontal: boolean) {
   };
 }
 
+/** Whether the axis runs right-to-left. Only the horizontal one can: a
+ *  vertical bar is RTL-agnostic, and `writing-mode` on the scroller is not
+ *  something this component supports. */
+function isRtlAxis(viewport: HTMLElement, horizontal: boolean): boolean {
+  if (!horizontal) return false;
+  return getComputedStyle(viewport).direction === "rtl";
+}
+
 function makeAxisState(horizontal: boolean): AxisState {
   const track = document.createElement("div");
   track.className = "hk-scrollbar-track";
@@ -161,7 +169,13 @@ export function attachOverlayScrollbars(
     const thumbSize = Math.max(ratio * trackSize, 20);
     const maxScroll = scrollSize - clientSize;
     const maxTrack = trackSize - thumbSize;
-    const offset = maxScroll > 0 ? (scrollPos / maxScroll) * maxTrack : 0;
+    // A right-to-left scroller starts with `scrollLeft` at 0 (showing the
+    // content's right end) and counts DOWN to -maxScroll, so its progress is
+    // the magnitude — and the thumb rests at the track's right end and
+    // travels left, mirrored against the left-to-right bar.
+    const rtl = isRtlAxis(viewport, horizontal);
+    const progress = maxScroll > 0 ? Math.abs(scrollPos) / maxScroll : 0;
+    const offset = (rtl ? 1 - progress : progress) * maxTrack;
     if (horizontal) {
       s.thumb.style.width = `${thumbSize}px`;
       s.thumb.style.transform = `translateX(${offset}px)`;

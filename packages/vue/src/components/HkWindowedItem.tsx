@@ -3,6 +3,7 @@ import { defineComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch, ty
 import "./HkWindowedItem.scss";
 import { useScrollWindow } from "../composables/useScrollWindow";
 import { onceFrame } from "../runtime/animationBus";
+import { drawnScale } from "../composables/layoutGeometry";
 
 export default defineComponent({
   name: "HkWindowedItem",
@@ -24,9 +25,16 @@ export default defineComponent({
     }
 
     function withinBuffer(el: HTMLElement, scrollEl: HTMLElement, overscan: number): boolean {
+      // Both boxes and the buffer in the scroll root's own units: the rects
+      // are drawn (a scaled or zoomed root makes them k times bigger) while
+      // `clientHeight` is laid out, which shrank the effective overscan to
+      // overscan/k (see `layoutGeometry`).
+      const scale = drawnScale(scrollEl);
+      const factor = scrollEl.offsetHeight > 0 ? scale.y : scrollEl.offsetWidth > 0 ? scale.x : 1;
+      const k = factor > 0 ? factor : 1;
       const elRect = el.getBoundingClientRect();
       const rootRect = scrollEl.getBoundingClientRect();
-      const buf = scrollEl.clientHeight * overscan;
+      const buf = scrollEl.clientHeight * overscan * k;
       return elRect.bottom >= rootRect.top - buf && elRect.top <= rootRect.bottom + buf;
     }
 

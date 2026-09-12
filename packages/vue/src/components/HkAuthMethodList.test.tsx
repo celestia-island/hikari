@@ -89,6 +89,30 @@ describe("HkAuthMethodList", () => {
     expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("63px");
   });
 
+  it("publishes a width in the column's own units inside a scaled root", async () => {
+    // The labels are measured where they are DRAWN while the custom property
+    // is a CSS length the column is laid out with: in a scaled or zoomed root
+    // the published column would come out that many times too wide.
+    const c = mount(h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })));
+    await nextTick();
+    const wrapper = c.querySelector<HTMLElement>(".s-auth-methods-list")!;
+    const spans = [...wrapper.querySelectorAll<HTMLElement>(".s-auth-methods-label")];
+    Object.defineProperty(spans[0]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 58 }) });
+    Object.defineProperty(spans[1]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 61.4 }) });
+    // The list is drawn twice the size it is laid out at.
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 400, bottom: 200, width: 400, height: 200, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(wrapper, "offsetWidth", { configurable: true, get: () => 200 });
+    Object.defineProperty(wrapper, "offsetHeight", { configurable: true, get: () => 100 });
+    const instance = (wrapper as unknown as { __vueParentComponent?: { exposed?: Record<string, unknown> } })
+      .__vueParentComponent?.exposed;
+    (instance!.measure as () => void)();
+    // 61.4 drawn are 30.7 of the column's own: ceil 31, plus the 1px headroom.
+    expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("32px");
+  });
+
   it("leaves the column fallback intact when no text metrics are available", async () => {
     const c = mount(h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })));
     await nextTick();

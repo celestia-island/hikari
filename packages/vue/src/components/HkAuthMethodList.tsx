@@ -1,5 +1,6 @@
 import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import HkButton from "./HkButton";
+import { drawnScale } from "../composables/layoutGeometry";
 import "./HkAuthMethodList.scss";
 
 /**
@@ -81,10 +82,16 @@ export default defineComponent({
       const root = listRef.value;
       if (!root) return;
       let widest = 0;
+      // The labels are measured where they are DRAWN, and the width is
+      // published as a CSS length the column is laid out with: in a scaled or
+      // zoomed root the two differ by the scale of the space, so the column
+      // would come out that many times too wide (see `layoutGeometry`).
+      const space = drawnScale(root);
+      const factor = root.offsetWidth > 0 ? space.x : root.offsetHeight > 0 ? space.y : 1;
       for (const label of root.querySelectorAll<HTMLElement>(".s-auth-methods-label")) {
         const previous = label.style.width;
         label.style.width = "max-content";
-        widest = Math.max(widest, label.getBoundingClientRect().width);
+        widest = Math.max(widest, label.getBoundingClientRect().width / (factor > 0 ? factor : 1));
         label.style.width = previous;
       }
       // Guard: only publish when real text metrics were observed, so a

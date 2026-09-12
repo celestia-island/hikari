@@ -118,21 +118,3 @@
 .hk-icon-muted {
   color: var(--hi-color-text-secondary);
 }
-
-// ------
-// Transitions
-// ------
-
-.hk-icon-transition {
-  transition: color 150ms ease-in-out;
-
-  svg path,
-  svg circle,
-  svg rect,
-  svg ellipse,
-  svg polygon,
-  svg polyline,
-  svg line {
-    transition: fill 150ms ease-in-out, stroke 150ms ease-in-out;
-  }
-}

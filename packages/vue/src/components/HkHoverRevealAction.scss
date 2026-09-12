@@ -27,25 +27,34 @@
     transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Revealed state, shared by the tsx-managed hover/touch reveal
+   (.is-revealed) and keyboard focus anywhere in the wrapper
+   (:focus-within) — without the focus path the extension's real
+   buttons stay tab-reachable yet invisible (HkTabs renders its
+   add actions there). */
+.hk-hover-reveal.is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal:focus-within > .hk-hover-reveal-extension {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .hk-hover-reveal[data-placement="right"] > .hk-hover-reveal-extension {
-  left: 100%;
+  inset-inline-start: 100%;
   top: 50%;
   transform: translate(-4px, -50%);
 }
-.hk-hover-reveal[data-placement="right"].is-revealed > .hk-hover-reveal-extension {
-  opacity: 1;
-  pointer-events: auto;
+.hk-hover-reveal[data-placement="right"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="right"]:focus-within > .hk-hover-reveal-extension {
   transform: translate(4px, -50%);
 }
 
 .hk-hover-reveal[data-placement="left"] > .hk-hover-reveal-extension {
-  right: 100%;
+  inset-inline-end: 100%;
   top: 50%;
   transform: translate(4px, -50%);
 }
-.hk-hover-reveal[data-placement="left"].is-revealed > .hk-hover-reveal-extension {
-  opacity: 1;
-  pointer-events: auto;
+.hk-hover-reveal[data-placement="left"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="left"]:focus-within > .hk-hover-reveal-extension {
   transform: translate(-4px, -50%);
 }
 
@@ -54,9 +63,8 @@
   top: 100%;
   transform: translate(-50%, -4px);
 }
-.hk-hover-reveal[data-placement="bottom"].is-revealed > .hk-hover-reveal-extension {
-  opacity: 1;
-  pointer-events: auto;
+.hk-hover-reveal[data-placement="bottom"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="bottom"]:focus-within > .hk-hover-reveal-extension {
   transform: translate(-50%, 4px);
 }
 
@@ -65,8 +73,14 @@
   bottom: 100%;
   transform: translate(-50%, 4px);
 }
-.hk-hover-reveal[data-placement="top"].is-revealed > .hk-hover-reveal-extension {
-  opacity: 1;
-  pointer-events: auto;
+.hk-hover-reveal[data-placement="top"].is-revealed > .hk-hover-reveal-extension,
+.hk-hover-reveal[data-placement="top"]:focus-within > .hk-hover-reveal-extension {
   transform: translate(-50%, -4px);
+}
+
+/* Reduced motion: keep the opacity fade, drop the transform slide. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-hover-reveal-extension {
+    transition: opacity 0.15s ease;
+  }
 }

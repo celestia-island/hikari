@@ -2,9 +2,10 @@
 // Layer2 - IconButton Component Variables
 //
 // This file defines component-level CSS variables for the IconButton component.
-// These variables can be overridden at runtime via AnimationBuilder.
+// These variables can be overridden by host theme layers.
 //
-// NOTE: Hover effects are handled by Glow wrapper, not here.
+// NOTE: Hover feedback is not styled in this layer; window-close.scss adds
+// its own hover grammar for close controls.
 // Only base, active, and disabled states are defined.
 
 // ------
@@ -26,18 +27,14 @@
   --hi-icon-button-bg-active: var(--hi-bg-surface-dark);
   --hi-icon-button-bg-disabled: rgba(128, 128, 128, 0.1);
 
-  // Border Colors
-  --hi-icon-button-border-color: transparent;
+  // Border Colors (focus ring only; the base button draws no border)
   --hi-icon-button-border-color-focus: var(--hi-border-color-focus);
-
-  // Shadow & Glow (used by Glow wrapper)
-  --hi-icon-button-glow: var(--hi-glow-color);
 
   // ------
   // 2. Border Radius System
   // ------
 
-  --hi-icon-button-radius: 4px;
+  --hi-icon-button-radius: var(--radius-sm, 4px);
 
   // ------
   // 3. Animation System
@@ -45,15 +42,13 @@
 
   // Duration
   --hi-icon-button-duration: var(--hi-duration-fast);
-  --hi-icon-button-duration-active: var(--hi-duration-instant);
 
   // Easing
   --hi-icon-button-easing: var(--hi-ease-default);
 
-  // Transition
-  --hi-icon-button-transition:
-    background-color var(--hi-icon-button-duration) var(--hi-icon-button-easing),
-    transform var(--hi-icon-button-duration-active) var(--hi-icon-button-easing);
+  // Transition (background only; CSS applies no transform to the button)
+  --hi-icon-button-transition: background-color var(--hi-icon-button-duration)
+    var(--hi-icon-button-easing);
 
   // ------
   // 4. Size System
@@ -61,13 +56,6 @@
 
   --hi-icon-button-size: 40px;
   --hi-icon-button-icon-size: var(--hi-icon-size-sm);
-
-  // ------
-  // 5. Transform System
-  // ------
-
-  --hi-icon-button-transform: none;
-  --hi-icon-button-transform-active: scale(0.95);
 }
 
 // ------
@@ -108,11 +96,7 @@
   --hi-icon-button-icon-color: var(--hi-color-text-secondary);
   --hi-icon-button-icon-color-active: var(--hi-color-text-secondary);
 
-  --hi-icon-button-bg: transparent;
   --hi-icon-button-bg-active: var(--hi-color-gray-20, rgba(128, 128, 128, 0.2));
-
-  --hi-icon-button-border-color: transparent;
-  --hi-icon-button-glow: var(--hi-glow-color);
 }
 
 // ------
@@ -131,7 +115,6 @@
   --hi-icon-button-bg-active: var(--hi-color-primary-dark);
 
   --hi-icon-button-border-color-focus: var(--hi-color-primary);
-  --hi-icon-button-glow: var(--hi-glow-color);
 }
 
 // ------
@@ -146,7 +129,6 @@
   --hi-icon-button-bg-active: var(--hi-color-secondary-dark);
 
   --hi-icon-button-border-color-focus: var(--hi-color-secondary);
-  --hi-icon-button-glow: var(--hi-glow-color);
 }
 
 // ------
@@ -161,7 +143,6 @@
   --hi-icon-button-bg-active: var(--hi-color-danger-dark);
 
   --hi-icon-button-border-color-focus: var(--hi-color-danger);
-  --hi-icon-button-glow: var(--hi-glow-color);
 }
 
 // ------
@@ -176,5 +157,4 @@
   --hi-icon-button-bg-active: var(--hi-color-success-dark);
 
   --hi-icon-button-border-color-focus: var(--hi-color-success);
-  --hi-icon-button-glow: var(--hi-glow-color);
 }

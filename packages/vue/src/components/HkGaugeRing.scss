@@ -2,3 +2,11 @@
   position: relative;
   display: inline-flex;
 }
+
+// The 0.8s dash sweep rides an INLINE transition on the progress circles
+// (HkGaugeRing.tsx), so the guard needs !important to beat it.
+@media (prefers-reduced-motion: reduce) {
+  .hk-gauge-ring circle {
+    transition: none !important;
+  }
+}

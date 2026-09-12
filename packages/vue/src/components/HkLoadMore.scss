@@ -25,6 +25,16 @@
   background: linear-gradient(to left, transparent, rgb(var(--color-muted) / 35%));
 }
 
+/* The flex row flips in RTL, so the hairlines mirror too: transparent
+ * stays on the outer edge, muted towards the central control. */
+[dir="rtl"] .hk-load-more-rule {
+  background: linear-gradient(to left, transparent, rgb(var(--color-muted) / 35%));
+}
+
+[dir="rtl"] .hk-load-more-rule-end {
+  background: linear-gradient(to right, transparent, rgb(var(--color-muted) / 35%));
+}
+
 .hk-load-more-core {
   flex: none;
   display: inline-flex;
@@ -39,7 +49,7 @@
   font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  color: rgb(var(--color-text-tertiary));
+  transition: opacity 200ms ease;
 }
 
 .hk-load-more[data-state="loading"] .hk-load-more-count {
@@ -49,5 +59,4 @@
 .hk-load-more-end {
   font-size: var(--text-2xs);
   letter-spacing: 0.08em;
-  color: rgb(var(--color-text-tertiary));
 }

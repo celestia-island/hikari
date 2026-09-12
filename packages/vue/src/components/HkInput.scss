@@ -68,7 +68,6 @@
 }
 
 .hk-input-box[data-autogrow] {
-  display: flex;
   flex-direction: column;
   align-items: stretch;
 }
@@ -145,7 +144,6 @@
 .hk-input-element.hk-input-textarea {
   position: relative;
   inset: unset;
-  width: 100%;
   height: auto;
   flex: 1;
   min-width: 0;
@@ -274,5 +272,20 @@
 
   &:hover {
     color: var(--hi-color-text-primary, #222);
+  }
+
+  // Keyboard parity (house icon-button pattern, HkIconButton): this real
+  // <button> had a hover state only, so keyboard focus was invisible.
+  // Offset 2px is safe here — the toggle rides the box's inline padding,
+  // well inside the box's overflow:hidden clip edge.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  // Press feedback matching the house button pattern (HkButton variants).
+  &:active {
+    filter: brightness(0.95);
   }
 }

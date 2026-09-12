@@ -130,6 +130,12 @@
   --hi-color-bg-elevated: rgb(var(--color-surface));
   --hi-color-bg-canvas: rgb(var(--color-background));
   --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
+  --hi-color-accent: rgb(var(--color-accent));
+  /* Gen-1 shorthand references that were never defined anywhere — wired to
+     the canonical tokens so the consuming rules render as intended. */
+  --hi-primary: var(--hi-color-primary);
+  --hi-surface: var(--hi-color-surface);
+  --hi-card-bg: var(--hi-color-surface);
 
   /* Scale tokens (spacing/type/radius/blur/opacity/durations/easings/
      z-index/fonts) moved to src/scale.scss — the canonical L2 sheet,

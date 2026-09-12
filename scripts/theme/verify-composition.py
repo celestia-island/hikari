@@ -14,6 +14,7 @@ Exit code 0 when every token resolves to the same value in both bundles
 (allowlisted diffs excluded); 1 otherwise, printing each differing token.
 """
 import argparse
+import os
 import re
 import sys
 
@@ -27,26 +28,41 @@ def resolve_bundle(entry_files, base_dirs):
     """Flatten @use/@import of local .scss files depth-first, dedup @use."""
     ordered, seen = [], set()
 
-    def load(path):
-        real = path
+    def resolve_path(path):
+        def with_partial(p):
+            if os.path.isfile(p):
+                return p
+            partial = os.path.join(
+                os.path.dirname(p), "_" + os.path.basename(p)
+            )
+            return partial if os.path.isfile(partial) else None
+
+        direct = with_partial(path)
+        if direct:
+            return direct
         for base in base_dirs:
             candidate = os.path.join(base, path)
-            if os.path.isfile(candidate):
-                real = candidate
-                break
-        if real not in seen:
-            seen.add(real)
-            text = open(real).read()
-            text = re.sub(r"^//.*$", "", text, flags=re.M)
-            for m in re.finditer(r"@(?:use|import)\s+['\"]([^'\"]+)['\"]", text):
-                target = m.group(1)
-                if not target.endswith(".scss"):
-                    target += ".scss"
-                target = os.path.normpath(
-                    os.path.join(os.path.dirname(real), target)
-                )
-                load(target)
-            ordered.append(real)
+            partial = with_partial(candidate)
+            if partial:
+                return partial
+        raise FileNotFoundError(path)
+
+    def load(path):
+        real = resolve_path(path)
+        if real in seen:
+            return
+        seen.add(real)
+        text = open(real).read()
+        text = re.sub(r"^//.*$", "", text, flags=re.M)
+        for m in re.finditer(r"@(?:use|import)\s+['\"]([^'\"]+)['\"]", text):
+            target = m.group(1)
+            if not target.endswith(".scss"):
+                target += ".scss"
+            target = os.path.normpath(
+                os.path.join(os.path.dirname(real), target)
+            )
+            load(target)
+        ordered.append(real)
 
     for entry in entry_files:
         load(entry)

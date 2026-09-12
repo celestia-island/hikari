@@ -69,8 +69,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--jt-toggle);
-  height: var(--jt-toggle);
+  width: var(--jt-toggle, 1rem);
+  height: var(--jt-toggle, 1rem);
   flex-shrink: 0;
   margin-inline-end: var(--space-2, 0.125rem);
   /* The toggle box has no text baseline of its own — pin it to the line

@@ -124,6 +124,38 @@ describe("attachOverlayScrollbars", () => {
     expect(viewport.scrollTop).toBe(80);
   });
 
+  it("moves the thumb the distance the POINTER went, however the space is scaled", () => {
+    // The pointer moves in drawn pixels; the track it is divided by is laid
+    // out. Inside a scaled or zoomed root the two differ by the factor the
+    // space is drawn at, and the thumb would travel that many times further
+    // than the pointer — it would reach the end of the track and stop
+    // following after 1/k of the drag.
+    const { viewport, wrapper, handle } = mountViewport("vertical");
+    stubGeometry(viewport, {
+      scrollHeight: 400, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 100, clientWidth: 100, scrollLeft: 0,
+    });
+    handle.update();
+    const track = wrapper.querySelector<HTMLElement>(".hk-scrollbar-track")!;
+    const thumb = wrapper.querySelector<HTMLElement>(".hk-scrollbar-thumb")!;
+    // The track is drawn twice the size it is laid out at (a zoom or a
+    // scale on any ancestor), so 100 drawn px are 50 of the track's own.
+    Object.defineProperty(track, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, width: 200, height: 200, right: 200, bottom: 200, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(track, "offsetWidth", { configurable: true, get: () => 100 });
+    Object.defineProperty(track, "offsetHeight", { configurable: true, get: () => 100 });
+    Object.defineProperty(track, "clientHeight", { configurable: true, get: () => 100 });
+    Object.defineProperty(track, "clientWidth", { configurable: true, get: () => 100 });
+
+    thumb.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientY: 0 }));
+    // 50 of the track's own px over a 75px range maps onto 300 scroll px.
+    document.dispatchEvent(new MouseEvent("mousemove", { clientY: 100 }));
+    expect(viewport.scrollTop, "half the track, half the range").toBe(200);
+    document.dispatchEvent(new MouseEvent("mouseup"));
+  });
+
   it("pages when the track (not the thumb) is clicked", () => {
     const { viewport, wrapper, handle } = mountViewport("vertical");
     stubGeometry(viewport, {

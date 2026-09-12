@@ -182,6 +182,45 @@ describe("HkTimeline full mode", () => {
   });
 });
 
+describe("HkTimeline scale-aware collapse", () => {
+  it("measures the natural size in the units the host is sized in", async () => {
+    // The probe is measured where it is DRAWN while the host it is compared
+    // against (`clientWidth`) is laid out: inside a scaled or zoomed root the
+    // probe reports k times the space it really needs, so a timeline that
+    // fits is collapsed — and because the remembered full size is drawn too,
+    // it never comes back. The measurement converts through the space it was
+    // taken in.
+    const proto = Element.prototype as unknown as { getBoundingClientRect: () => DOMRect };
+    const original = proto.getBoundingClientRect;
+    const rect = (w: number, h: number): DOMRect =>
+      ({ left: 0, top: 0, right: w, bottom: h, width: w, height: h, x: 0, y: 0 }) as DOMRect;
+    proto.getBoundingClientRect = function (this: HTMLElement) {
+      // The natural-size probe (an absolutely positioned clone) and the root
+      // it cloned report a box drawn twice the size it is laid out at.
+      if (this.style?.position === "absolute" || this.classList?.contains("hk-timeline")) {
+        return rect(600, 40);
+      }
+      return rect(0, 0);
+    };
+    try {
+      const t = mountTimeline({ currentKey: "c" });
+      const root = t.container.querySelector<HTMLElement>(".hk-timeline")!;
+      Object.defineProperty(root, "offsetWidth", { configurable: true, get: () => 300 });
+      Object.defineProperty(root, "offsetHeight", { configurable: true, get: () => 20 });
+      Object.defineProperty(root, "clientWidth", { configurable: true, get: () => 300 });
+      await nextTick();
+      await nextTick();
+      await nextTick();
+      expect(
+        root.getAttribute("data-mode"),
+        "300 of natural width in a 300px host is not an overflow",
+      ).toBe("full");
+    } finally {
+      proto.getBoundingClientRect = original;
+    }
+  });
+});
+
 describe("HkTimeline window mode", () => {
   it("shows only the previous, current and next steps around the middle", () => {
     const t = mountTimeline({ currentKey: "c", collapse: "always" });

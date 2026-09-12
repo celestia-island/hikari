@@ -1395,9 +1395,12 @@ describe("usePointerReorder", () => {
       { left: 100, right: 150, top: 0, bottom: 40 },
     ]);
     move(140, 20);
-    expect(handle.dragOver.value, "a chip with no height has no line to stand on").toBe(1);
+    // Each half comes from the freshest source that can place it: a chip
+    // collapsed to no height has no line to read, so the line stays the one
+    // the press found, while its position along the strip is read live.
+    expect(handle.dragOver.value, "the position follows the layout").toBe(2);
     up(140, 20);
-    expect(drops).toEqual([]);
+    expect(drops).toEqual([[1, 2]]);
   });
 
   it("ends the gesture the moment the strip empties", () => {

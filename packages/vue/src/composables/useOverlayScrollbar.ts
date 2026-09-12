@@ -23,6 +23,7 @@
 // Works inside teleported popups/modals: attach on mount/open and call
 // `detach()` on close/unmount so no DOM or listener leaks.
 
+import { drawnScale } from "./layoutGeometry";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 
@@ -199,7 +200,14 @@ export function attachOverlayScrollbars(
     const onMove = (e: MouseEvent) => {
       if (!s.dragging) return;
       const { scrollSize, clientSize } = axisMetrics(viewport, horizontal);
-      const delta = (horizontal ? e.clientX : e.clientY) - s.dragStartClient;
+      // The pointer moves in DRAWN pixels while the track it is compared
+      // against is laid out, so the delta is converted into the track's own
+      // units first: a scaled or zoomed root would otherwise slide the thumb
+      // `k` times further than the pointer went (see `layoutGeometry`).
+      const drawnDelta = (horizontal ? e.clientX : e.clientY) - s.dragStartClient;
+      const space = drawnScale(s.track);
+      const factor = horizontal ? space.x : space.y;
+      const delta = factor > 0 ? drawnDelta / factor : drawnDelta;
       // Mirror updateAxis's RENDER math exactly — the thumb is sized
       // against the TRACK box, so drag travel must divide by the same
       // numbers or the thumb slides out of sync under short tracks.

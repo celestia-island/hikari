@@ -84,6 +84,33 @@ afterEach(() => {
   }
 });
 
+describe("HkPlaceholderMarquee scale-aware measurement", () => {
+  it("converts the copy's drawn width into the host's own units before looping", async () => {
+    // The copy is measured where it is DRAWN while the host it is compared
+    // with (`clientWidth`) is laid out. Inside a scaled or zoomed root the two
+    // differ by the factor the space is drawn at: the raw rect would make the
+    // loop overshoot by (k-1) of a copy per cycle and report overflow for
+    // copies that fit k times over.
+    const { container } = mountMarquee({ text: "a very long placeholder that overflows".repeat(4) });
+    const host = container.querySelector(".hk-placeholder-marquee") as HTMLElement;
+    const copy = container.querySelector(".hk-placeholder-marquee__copy") as HTMLElement;
+    Object.defineProperty(host, "clientWidth", { configurable: true, get: () => 200 });
+    // The host is drawn twice the size it is laid out at: 800 drawn px are
+    // 400 of its own, while the copy really advances 500 of them.
+    Object.defineProperty(host, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 400, left: 0, top: 0, right: 400, bottom: 40, height: 40, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(host, "offsetWidth", { configurable: true, get: () => 200 });
+    vi.spyOn(copy, "getBoundingClientRect").mockReturnValue({ width: 1000 } as DOMRect);
+    marqueeExposed(container)?.measure?.();
+    await nextTick();
+
+    const strip = container.querySelector(".hk-placeholder-marquee__strip") as HTMLElement;
+    expect(strip.style.getPropertyValue("--hk-marquee-shift"), "1000 drawn = 500 of the host's own").toBe("-500px");
+  });
+});
+
 describe("HkPlaceholderMarquee", () => {
   it("stays a hidden single-copy probe while the text fits", () => {
     const { container } = mountMarquee({ text: "用户名" });

@@ -103,20 +103,6 @@ registerCssAnimation("s-voice-wave-bounce", { infinite: true });
 // components/HkPlaceholderMarquee.scss — overflowing placeholder sweep
 // (loops forever; pure CSS, loop geometry on inline custom properties).
 registerCssAnimation("hk-placeholder-marquee-scroll", { infinite: true });
-// styles/theme/mixins.scss — ambient/glow pulses (loop forever) and the
-// one-shot entrance/exit grammar, vendored byte-identical from
-// packages/theme. #353 brought the file under src/ without registering
-// its keyframes — the parity test caught the gap 6 days later.
-registerCssAnimation("pulse", { infinite: true });
-registerCssAnimation("ambient-move", { infinite: true });
-registerCssAnimation("pulse-glow-animation", { infinite: true });
-registerCssAnimation("expand-horizontal");
-registerCssAnimation("collapse-vertical");
-registerCssAnimation("slide-in-left");
-registerCssAnimation("slide-in-right");
-registerCssAnimation("slide-in-top");
-registerCssAnimation("slide-in-bottom");
-registerCssAnimation("fade-in-scale");
-registerCssAnimation("fade-out-scale");
-registerCssAnimation("blur-in");
-registerCssAnimation("bounce-in");
+// The styles/theme/mixins.scss ambient/glow/entrance keyframes were
+// retired with the legacy Gen-1 sheet vendoring (hikari #476) — their
+// registrar entries went with them.

@@ -4,14 +4,10 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
-description = "Theme context provider, CSS variables, and SCSS compilation for the Hikari design system"
+description = "Theme context provider and CSS variables for the Hikari design system"
 
 [lib]
 doctest = false
-
-[features]
-default = ["scss"]
-scss = []  # SCSS compilation
 
 [dependencies]
 # Hikari palette
@@ -22,9 +18,3 @@ hikari-palette = { version = "^0.3", path = "../palette" }
 tairitsu-vdom = "^0.5"
 tairitsu-hooks = "^0.5"
 tairitsu-macros = "^0.5"
-
-[build-dependencies]
-# Use grass directly for SCSS compilation — avoids pulling tairitsu-packager
-# (which transitively depends on wasmtime) into every consumer's build.
-grass = "^0.13"
-anyhow = "^1"

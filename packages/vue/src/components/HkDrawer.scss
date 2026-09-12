@@ -220,3 +220,23 @@
     }
   }
 }
+
+/* Reduced motion: the width/height size morph and the four slide
+   directions snap instead of animating — the surface machine's
+   zero-duration probe (useSurfaceMachine.completeNow) finalizes open/
+   close immediately. The overlay scrim's fade is already flattened by
+   the same media query inside scrim-fade().
+   (house pattern: HkModal.scss / HkPopover.scss guards) */
+@media (prefers-reduced-motion: reduce) {
+  .hk-drawer-panel,
+  .hk-drawer-left-enter-active,
+  .hk-drawer-right-enter-active,
+  .hk-drawer-top-enter-active,
+  .hk-drawer-bottom-enter-active,
+  .hk-drawer-left-leave-active,
+  .hk-drawer-right-leave-active,
+  .hk-drawer-top-leave-active,
+  .hk-drawer-bottom-leave-active {
+    transition: none;
+  }
+}

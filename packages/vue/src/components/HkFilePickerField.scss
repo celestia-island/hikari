@@ -1,3 +1,5 @@
+@use "./hikari-vars" as vars;
+
 .hk-file-picker-field {
   display: block;
 }
@@ -26,10 +28,14 @@
 
   &:focus-within {
     border-color: color-mix(in srgb, rgb(var(--color-text)) 38%, transparent);
+    /* Visible keyboard focus ring on the text input (which sets
+     * outline: none) — sibling pattern: the inline-rename input pairs
+     * border shift + var(--shadow-focus). */
+    box-shadow: var(--shadow-focus);
   }
 
   &[data-error] {
-    border-color: var(--hi-color-danger);
+    border-color: var(--hi-color-danger, #f85149);
   }
 
   &[data-disabled] {
@@ -47,9 +53,9 @@
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: var(--radius-xs);
-  background: color-mix(in srgb, var(--hi-color-primary) 14%, transparent);
-  color: var(--hi-color-primary);
+  border-radius: var(--radius-xs, 2px);
+  background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 14%, transparent);
+  color: var(--hi-color-primary, #58a6ff);
   pointer-events: none;
 }
 
@@ -70,7 +76,7 @@
 
   /* Paths are code — mono by default, opt out with :mono="false". */
   .hk-file-picker-box[data-mono] & {
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-mono, vars.$hikari-font-family-mono);
   }
 
   &:disabled {
@@ -88,6 +94,6 @@
   color: rgb(var(--color-text) / 60%);
 
   &[data-error] {
-    color: var(--hi-color-danger);
+    color: var(--hi-color-danger, #f85149);
   }
 }

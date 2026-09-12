@@ -7,6 +7,9 @@
  * (rendered as inline --hk-badge-* custom properties).
  */
 
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+
 .hk-badge {
   --hk-badge-text: inherit;
   --hk-badge-bg: transparent;
@@ -39,7 +42,7 @@
 
 /* ---------- typography ---------- */
 .hk-badge[data-mono] {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, vars.$hikari-font-family-mono);
 }
 
 .hk-badge[data-uppercase] {
@@ -49,8 +52,8 @@
 
 /* ---------- dot indicator ---------- */
 .hk-badge [data-el="dot"] {
-  width: 6px;
-  height: 6px;
+  width: var(--space-6);
+  height: var(--space-6);
   border-radius: 50%;
   background: var(--hk-badge-text);
   flex-shrink: 0;

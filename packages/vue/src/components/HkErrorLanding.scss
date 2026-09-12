@@ -43,7 +43,7 @@
   border: 1px solid rgb(var(--hel-border) / 70%);
   border-radius: var(--radius-xl, 20px);
   box-shadow: var(--shadow-lg, 0 18px 48px rgb(0 0 0 / 8%));
-  padding: 2.25rem 1.75rem 1.75rem;
+  padding: 2.25rem var(--space-28, 1.75rem) var(--space-28, 1.75rem);
   text-align: center;
 
   // Tone wash bleeding down from the top edge behind the icon — gives the
@@ -188,14 +188,14 @@
 .hk-error-landing__details {
   position: relative;
   margin-top: var(--space-16, 1rem);
-  text-align: left;
+  text-align: start;
 }
 
 .hk-error-landing__details-label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 2px;
+  gap: var(--space-4, 4px);
+  padding: 0 var(--space-2, 2px);
   font-size: var(--text-xs, 0.75rem);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -269,6 +269,6 @@
 
 @media (max-width: 480px) {
   .hk-error-landing__card {
-    padding: 1.75rem 1.125rem 1.5rem;
+    padding: var(--space-28, 1.75rem) 1.125rem var(--space-24, 1.5rem);
   }
 }

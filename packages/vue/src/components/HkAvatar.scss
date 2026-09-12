@@ -9,7 +9,6 @@
   overflow: hidden;
   background-color: var(--hi-color-gray-200, #E5E7EB);
   color: var(--hi-color-gray-600, #4B5563);
-  font-weight: 500;
   transition: all 0.2s ease;
 
   img {
@@ -20,21 +19,23 @@
 }
 
 .hk-avatar-sm {
-  width: 32px;
-  height: 32px;
-  font-size: 0.75rem;
+  width: var(--space-32);
+  height: var(--space-32);
+  font-size: var(--text-xs);
 }
 
 .hk-avatar-md {
-  width: 40px;
-  height: 40px;
-  font-size: 0.875rem;
+  width: var(--space-40);
+  height: var(--space-40);
+  font-size: var(--text-base);
 }
 
 .hk-avatar-lg {
+  /* 48px: --space-48 exists only in theme/_layout.scss, not in every
+     token sheet this component's other tokens live in — keep literal. */
   width: 48px;
   height: 48px;
-  font-size: 1rem;
+  font-size: var(--text-md);
 }
 
 .hk-avatar-fallback {

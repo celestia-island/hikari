@@ -22,6 +22,15 @@
   border-color: var(--c-primary-intense);
 }
 
+.hk-card-hoverable:active {
+  border-color: rgb(var(--color-primary) / 45%);
+}
+
+.hk-card-hoverable:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
 .hk-card-header {
   padding: var(--space-12) var(--space-16);
   border-bottom: 1px solid var(--border-faint);

@@ -59,27 +59,26 @@
   margin-inline: var(--hk-divider-space);
 }
 
-.hk-divider-vertical.hk-divider-length-xs {
+.hk-divider-vertical[class*="hk-divider-length-"] {
   align-self: center;
+}
+
+.hk-divider-vertical.hk-divider-length-xs {
   height: var(--hi-space-8, 0.5rem);
 }
 
 .hk-divider-vertical.hk-divider-length-sm {
-  align-self: center;
   height: var(--hi-space-12, 0.75rem);
 }
 
 .hk-divider-vertical.hk-divider-length-md {
-  align-self: center;
   height: var(--hi-space-16, 1rem);
 }
 
 .hk-divider-vertical.hk-divider-length-lg {
-  align-self: center;
   height: var(--hi-space-24, 1.5rem);
 }
 
 .hk-divider-vertical.hk-divider-length-xl {
-  align-self: center;
   height: var(--hi-space-32, 2rem);
 }

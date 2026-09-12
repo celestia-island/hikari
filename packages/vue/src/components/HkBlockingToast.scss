@@ -4,12 +4,12 @@
 // transient toasts read as one stack; the card itself follows the toast
 // item conventions (variant background, icon column, clamped message)
 // with a button row appended. Pointer events pass through the column
-// and re-enable on the card, exactly like toasts.
+// and re-enable on the per-card slot, exactly like toasts.
 
 .hk-blocking-toast-container {
   position: fixed;
   top: 4rem;
-  right: 1rem;
+  inset-inline-end: 1rem;
   z-index: var(--hk-z-toast, 4000);
   max-width: 24rem;
   pointer-events: none;
@@ -36,7 +36,6 @@
   font-size: var(--hi-text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  pointer-events: auto;
   backdrop-filter: blur(12px);
 }
 
@@ -115,6 +114,15 @@
 .hk-blocking-toast-leave-to {
   opacity: 0;
   transform: translateX(1rem);
+}
+
+// RTL: the fixed column sits at the inline-end (physical left) side, so
+// the slide direction flips with it (house pattern: HkTimeline.scss).
+// The leave-pin contract writes physical right/top inline, which within
+// the shrink-to-fit column is edge-agnostic (slot width == column width).
+[dir="rtl"] .hk-blocking-toast-enter-from,
+[dir="rtl"] .hk-blocking-toast-leave-to {
+  transform: translateX(-1rem);
 }
 
 .hk-blocking-toast-move {

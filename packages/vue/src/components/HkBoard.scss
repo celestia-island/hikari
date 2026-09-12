@@ -96,5 +96,8 @@
   inset-inline-end: var(--space-10);
   bottom: var(--space-10);
   z-index: 6;
+  // Defensive re-enable (the inner HkMinimap root asserts it too,
+  // HkMinimap.scss:15): keeps the dock alive if a host ever parks the
+  // board under an ancestor `pointer-events: none`.
   pointer-events: auto;
 }

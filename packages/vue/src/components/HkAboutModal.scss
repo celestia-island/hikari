@@ -90,6 +90,10 @@
   background: rgb(var(--color-primary) / 20%);
 }
 
+.s-about-modal-link:active {
+  background: rgb(var(--color-primary) / 26%);
+}
+
 .s-about-modal-link:focus-visible {
   box-shadow:
     0 0 0 2px rgb(var(--color-surface)),

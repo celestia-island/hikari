@@ -12,8 +12,8 @@
 }
 
 .hk-file-field-required {
-  margin-left: var(--space-4);
-  color: var(--hi-color-danger);
+  margin-inline-start: var(--space-4);
+  color: var(--hi-color-danger, #f85149);
 }
 
 .hk-file-box {
@@ -34,7 +34,7 @@
   }
 
   &[data-error] {
-    border-color: var(--hi-color-danger);
+    border-color: var(--hi-color-danger, #f85149);
   }
 
   &[data-disabled] {
@@ -54,13 +54,24 @@
   border: 0;
   color: rgb(var(--color-text));
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
+  transition: background-color var(--duration-normal) var(--ease-standard);
+
+  /* Pressable primary affordance (real <button> in the tsx) — the house
+   * quiet-trigger hover/active wash (cf. HkSelect option rows). */
+  &:hover:not(:disabled) {
+    background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+  }
+
+  &:active:not(:disabled) {
+    background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
+  }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
+    outline: 2px solid var(--hi-color-primary, #58a6ff);
     outline-offset: 2px;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-xs, 2px);
   }
 
   &:disabled {
@@ -96,7 +107,7 @@
   padding: 0;
   background: transparent;
   border: 0;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-xs, 2px);
   color: rgb(var(--color-text) / 55%);
   cursor: pointer;
 
@@ -106,7 +117,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
+    outline: 2px solid var(--hi-color-primary, #58a6ff);
     outline-offset: 1px;
   }
 }
@@ -132,5 +143,5 @@
 }
 
 .hk-file-field-error {
-  color: var(--hi-color-danger);
+  color: var(--hi-color-danger, #f85149);
 }

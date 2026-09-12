@@ -23,7 +23,7 @@
   justify-content: center;
   width: 1.125rem;
   height: 1.125rem;
-  border-radius: var(--hi-radius-xs, 4px);
+  border-radius: var(--hi-radius-sm, 4px);
   border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
   background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
   transition:
@@ -40,16 +40,9 @@
 .hk-checkbox-box[data-checked] {
   background: var(--hi-color-primary, #ff6b9d);
   border-color: var(--hi-color-primary, #ff6b9d);
-  color: rgb(var(--color-on-solid-text, 255 255 255));
 }
 
 .hk-checkbox-box[data-indeterminate] {
-  background: var(--hi-color-primary, #ff6b9d);
-  border-color: var(--hi-color-primary, #ff6b9d);
-}
-
-.hk-checkbox:hover .hk-checkbox-box[data-checked],
-.hk-checkbox[data-animating] .hk-checkbox-box[data-checked] {
   background: var(--hi-color-primary, #ff6b9d);
   border-color: var(--hi-color-primary, #ff6b9d);
 }
@@ -62,6 +55,15 @@
   height: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Keyboard focus: the native input is visually hidden, so draw the house
+   double ring (HkButton/HkTable pattern) on the box via :has();
+   :focus-visible keeps mouse toggles ring-free. */
+.hk-checkbox-box:has(.hk-checkbox-input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--hi-color-surface, rgba(255, 255, 255, 0.95)),
+    0 0 0 4px var(--hi-color-primary, #ff6b9d);
 }
 
 /* ---------- markers ---------- */

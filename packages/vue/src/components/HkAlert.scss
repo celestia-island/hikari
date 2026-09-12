@@ -6,7 +6,7 @@
   border-radius: var(--hi-radius-md, 8px);
   border: 1px solid transparent;
   border-inline-start-width: 4px;
-  color: var(--hi-color-text-primary);
+  color: var(--hi-color-text-primary, #333);
 }
 
 .hk-alert-banner {
@@ -37,35 +37,35 @@
 /* ── Variants ──────────────────────────────────── */
 
 .hk-alert-error {
-  background: color-mix(in srgb, var(--hi-color-danger) 8%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-danger) 15%, transparent);
-  border-inline-start-color: var(--hi-color-danger);
+  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 15%, transparent);
+  border-inline-start-color: var(--hi-color-danger, #f85149);
 
-  .hk-alert-icon { color: var(--hi-color-danger); }
+  .hk-alert-icon { color: var(--hi-color-danger, #f85149); }
 }
 
 .hk-alert-warning {
-  background: color-mix(in srgb, var(--hi-color-warning) 8%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-warning) 15%, transparent);
-  border-inline-start-color: var(--hi-color-warning);
+  background: color-mix(in srgb, var(--hi-color-warning, #d29922) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-warning, #d29922) 15%, transparent);
+  border-inline-start-color: var(--hi-color-warning, #d29922);
 
-  .hk-alert-icon { color: var(--hi-color-warning); }
+  .hk-alert-icon { color: var(--hi-color-warning, #d29922); }
 }
 
 .hk-alert-info {
-  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
-  border-inline-start-color: var(--hi-color-primary);
+  background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 15%, transparent);
+  border-inline-start-color: var(--hi-color-primary, #58a6ff);
 
-  .hk-alert-icon { color: var(--hi-color-primary); }
+  .hk-alert-icon { color: var(--hi-color-primary, #58a6ff); }
 }
 
 .hk-alert-success {
-  background: color-mix(in srgb, var(--hi-color-success) 8%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-success) 15%, transparent);
-  border-inline-start-color: var(--hi-color-success);
+  background: color-mix(in srgb, var(--hi-color-success, #3fb950) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-success, #3fb950) 15%, transparent);
+  border-inline-start-color: var(--hi-color-success, #3fb950);
 
-  .hk-alert-icon { color: var(--hi-color-success); }
+  .hk-alert-icon { color: var(--hi-color-success, #3fb950); }
 }
 
 /* ── Icon ──────────────────────────────────────── */
@@ -87,14 +87,13 @@
 .hk-alert-title {
   margin: 0 0 2px;
   font-weight: 600;
-  font-size: inherit;
   line-height: 1.4;
 }
 
 .hk-alert-text {
   margin: 0;
   line-height: 1.5;
-  color: color-mix(in srgb, var(--hi-color-text-secondary) 85%, transparent);
+  color: color-mix(in srgb, var(--hi-color-text-secondary, #666) 85%, transparent);
 }
 
 /* ── Close button ──────────────────────────────── */
@@ -109,18 +108,18 @@
   border: 0;
   background: transparent;
   border-radius: var(--hi-radius-sm, 4px);
-  color: var(--hi-color-muted);
+  color: var(--hi-color-muted, #666);
   cursor: pointer;
   padding: 0;
   transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover {
-    background: var(--hi-color-surface);
-    color: var(--hi-color-text-primary);
+    background: var(--hi-color-surface, #fff);
+    color: var(--hi-color-text-primary, #333);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
+    outline: 2px solid var(--hi-color-primary, #58a6ff);
     outline-offset: 2px;
   }
 }

@@ -21,9 +21,6 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: var(--hi-space-8, 8px);
-}
-
-.hk-dtp-header {
   /* Fixed height keeps the header row — and therefore the shared stage
    * height — identical in every view and locale (enlarged on touch). */
   height: var(--hk-picker-header);
@@ -106,7 +103,7 @@
 .hk-dtp-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: var(--space-2, 2px);
 }
 
 .hk-dtp-wd {
@@ -242,6 +239,11 @@
     color: var(--hi-color-text-primary);
     background: var(--hi-color-surface);
   }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
 }
 
 .hk-dtp-step-val {
@@ -260,7 +262,7 @@
 }
 
 .hk-dtp-today {
-  margin-left: var(--hi-space-4, 4px);
+  margin-inline-start: var(--hi-space-4, 4px);
   appearance: none;
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
@@ -270,12 +272,16 @@
   font-weight: 600;
   color: var(--hi-color-muted);
   cursor: pointer;
-  align-self: center;
   transition: color var(--hi-duration-fast, 0.15s) ease, border-color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover {
     color: var(--hi-color-text-primary);
     border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
   }
 }
 
@@ -306,6 +312,11 @@
     border-color: color-mix(in srgb, var(--hi-color-primary) 50%, transparent);
     color: var(--hi-color-text-primary);
   }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
+    outline-offset: 1px;
+  }
 }
 
 .hk-dtp-trigger-icon {
@@ -324,6 +335,12 @@
 
 .hk-dtp-trigger-chev.is-open {
   transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-dtp-trigger-chev {
+    transition: none;
+  }
 }
 
 .hk-dtp-popup {

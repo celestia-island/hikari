@@ -7,12 +7,15 @@
  * assertion: the theme-row lead cell must carry an explicit size that
  * fits the widest host lead mark, not just the mixin's generic box.
  *
- * The widened cell must stay scoped to the lead slot (2026-09-12 field
- * report): shipped first as a bare `.s-theme-item-btn .hk-menu-item-icon`
- * rule, it also matched the 自定义 row and every host row reusing
- * s-theme-item-btn (chest's mode-extra DPI entry) — and mi.icon
- * normalizes those cells' svg to the cell, so their 14px glyphs rendered
- * 28px wide.
+ * The widened cell must stay scoped (2026-09-12 field report): shipped
+ * first as a bare `.s-theme-item-btn .hk-menu-item-icon` rule, it also
+ * matched the 自定义 row and every host row reusing s-theme-item-btn —
+ * and mi.icon normalizes those cells' svg to the cell, so their 14px
+ * glyphs rendered 28px wide. The widening therefore targets named scopes
+ * (lead slot, customize row) plus the toggle-owned mode-extra strip, the
+ * last one widening the CELL while pinning the glyph back to the
+ * standard box so host strip rows (chest's DPI entry) align their labels
+ * with the theme rows' names without rescaling their icons.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -33,12 +36,12 @@ describe("HkThemeToggle row lead-cell contract", () => {
     expect(block![0]).toContain("height: 28px");
   });
 
-  it("does not widen icon cells outside the leading slot", () => {
+  it("does not widen icon cells with a bare unscoped theme-row rule", () => {
     const css = read("HkThemeToggle.scss");
     // A bare `.s-theme-item-btn .hk-menu-item-icon {` rule also hits the
     // customize row and host mode-extra rows; the widened cell may only
-    // target the lead slot class.
-    expect(css).not.toMatch(/\.s-theme-item-btn \.hk-menu-item-icon\s*\{/);
+    // target named scopes (lead slot, customize row, mode-extra strip).
+    expect(css).not.toMatch(/^\.s-theme-item-btn \.hk-menu-item-icon\s*\{/m);
   });
 
   it("aligns the customize row to the lead column without rescaling its glyph", () => {
@@ -56,6 +59,25 @@ describe("HkThemeToggle row lead-cell contract", () => {
 
     const svgBlock = css.match(
       /\.s-theme-item-customize \.hk-menu-item-icon > svg\s*\{[^}]*\}/,
+    );
+    expect(svgBlock).not.toBeNull();
+    expect(svgBlock![0]).toContain("var(--hk-menu-item-icon-box)");
+  });
+
+  it("aligns mode-extra host rows to the lead column without rescaling their glyph", () => {
+    const css = read("HkThemeToggle.scss");
+    // Host strip rows (chest's DPI entry) join the 28px lead column so
+    // their label starts at the same x as the theme rows' names
+    // (2026-09-12 field report), but the glyph keeps the standard box.
+    const block = css.match(
+      /\.s-theme-mode-extra \.s-theme-item-btn \.hk-menu-item-icon\s*\{[^}]*\}/,
+    );
+    expect(block).not.toBeNull();
+    expect(block![0]).toContain("width: 28px");
+    expect(block![0]).toContain("height: 28px");
+
+    const svgBlock = css.match(
+      /\.s-theme-mode-extra \.s-theme-item-btn \.hk-menu-item-icon > svg\s*\{[^}]*\}/,
     );
     expect(svgBlock).not.toBeNull();
     expect(svgBlock![0]).toContain("var(--hk-menu-item-icon-box)");

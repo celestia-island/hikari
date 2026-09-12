@@ -723,6 +723,7 @@ export default defineComponent({
           class="hk-menu-sidebar-row"
           data-depth={depth || undefined}
           data-active={active || undefined}
+          data-checked={item.checked || undefined}
           data-danger={item.danger || undefined}
           data-disabled={item.disabled || undefined}
           style={
@@ -735,6 +736,15 @@ export default defineComponent({
             emit("select", item.key, item);
           }}
         >
+          {/* Check column on opt-in rows (checked !== undefined): the
+              same fixed cell grammar the popup rows use, so a sidebar
+              locale/account picker shows its active entry in place.
+              false renders the empty placeholder to keep labels aligned. */}
+          {item.checked !== undefined && (
+            <span class="hk-menu-check" data-on={item.checked || undefined} aria-hidden="true">
+              {item.checked ? <Check size={12} /> : null}
+            </span>
+          )}
           {item.icon && (
             <span class="hk-menu-item-icon">{h(item.icon, { size: 16 })}</span>
           )}
@@ -782,6 +792,11 @@ export default defineComponent({
     function renderSidebar() {
       return (
         <nav class="hk-menu-sidebar" aria-label={props.title || "menu"}>
+          {/* Header slot (identity block, section label, …) above the
+              rows — mirrors the popup variant's level-0 header, so an
+              account menu renders the same grammar whether it pops up
+              on desktop or lives inside a drawer on mobile. */}
+          {slots.header?.()}
           {props.items.map((it) => renderSidebarItem(it, 0))}
         </nav>
       );

@@ -112,6 +112,15 @@ describe("HkAdminHeader", () => {
     expect(barText).not.toContain("alice");
   });
 
+  it("renders the letter fallback on the shared avatar primitive, no outline ring", () => {
+    const c = mount(headerNode({ title: "Providers" }));
+    const btn = avatarButton(c) as HTMLButtonElement;
+    // The old border-2 ring made the console avatar read as a different
+    // control from the chat frontend's (user report 2026-09-12).
+    expect(btn.className).not.toContain("border-2");
+    expect(btn.querySelector(".s-user-avatar")?.textContent).toBe("A");
+  });
+
   it("hides the title node entirely when it is empty", () => {
     const withTitle = mount(headerNode({ title: "Dashboard" }));
     expect(withTitle.textContent).toContain("Dashboard");

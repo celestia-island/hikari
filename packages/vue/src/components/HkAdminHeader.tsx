@@ -1,7 +1,8 @@
-import { defineComponent, ref, type PropType, type VNode } from "vue";
+import { computed, defineComponent, ref, type PropType, type VNode } from "vue";
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
-import { HBadge, HButton, HPopover, HSpinner } from "@celestia-island/hikari";
+import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
+import HkMenu, { type HkMenuItem } from "./HkMenu";
 
 export interface LocaleOption {
   code: string;
@@ -11,25 +12,30 @@ export interface LocaleOption {
 export const HkAdminHeader = defineComponent({
   name: "HkAdminHeader",
   props: {
-    /** Optional context title — empty (the default) hides the node
-     *  entirely, for layouts whose pages carry their own in-page title
-     *  (the HPageHeader convention). */
+    /** Page title rendered beside the avatar — the view the console is
+     *  currently ON (dashboard, providers, …). The signed-in nickname
+     *  deliberately does NOT go here: identity lives in the dropdown's
+     *  identity block, the bar labels WHERE you are. Empty hides the
+     *  node; long titles truncate. */
     title: { type: String, default: "" },
     showHamburger: { type: Boolean, default: false },
     compact: { type: Boolean, default: false },
     actions: { type: Array as PropType<VNode[]>, default: () => [] },
+    /** Signed-in identity. Drives the avatar fallback letter, the
+     *  dropdown identity block and the pending-state branch — it is
+     *  never rendered as bar text (the title slot above owns that). */
     username: { type: String, default: "" },
     avatarUrl: { type: String, default: "" },
     userEmail: { type: String, default: "" },
     userGroups: { type: Array as PropType<{ id: string; name: string }[]>, default: () => [] },
     /** What the avatar trigger does:
-     *  - "menu"   (default, desktop): toggle the user dropdown popover
+     *  - "menu"   (default, desktop): toggle the user dropdown
      *    (identity, avatar edit, language, logout).
      *  - "drawer" (mobile): emit `avatarClick` so the shell opens its nav
      *    drawer, whose `userPanel` footer carries the same user content.
-     *    The username stays hidden in this mode — the identity block
-     *    lives in the drawer, so a header username would read as a
-     *    duplicated stray control. */
+     *    Both the page title and the identity stay hidden in this mode —
+     *    they live in the drawer, so header copies read as duplicated
+     *    stray controls. */
     avatarAction: { type: String as PropType<"menu" | "drawer">, default: "menu" },
     /** Placeholder row shown while the identity is still loading (a
      *  fetchUser race on hard refresh) — the action items stay hidden
@@ -51,6 +57,13 @@ export const HkAdminHeader = defineComponent({
     /** Accessible label for the avatar trigger button. */
     avatarTriggerLabel: { type: String, default: undefined },
     localeMenuLabel: { type: String, default: undefined },
+    /** Offered locales for the Language cascade (the same shape the chat
+     *  frontend feeds its user menu). An empty list hides the row —
+     *  hosts without a locale concept simply omit it. Selecting a child
+     *  emits `localeSelect` with the code. */
+    localeOptions: { type: Array as PropType<LocaleOption[]>, default: () => [] },
+    /** Currently active locale code (the Language cascade's check). */
+    currentLocale: { type: String, default: undefined },
     logoutLabel: { type: String, default: undefined },
     adminGroupLabel: { type: String, default: undefined },
     /** "Go to frontend" menu row (external-face link, rendered directly
@@ -65,6 +78,7 @@ export const HkAdminHeader = defineComponent({
     hamburger: () => true,
     avatarClick: () => true,
     emergencyStop: () => true,
+    localeSelect: (_code: string) => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
@@ -72,8 +86,6 @@ export const HkAdminHeader = defineComponent({
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
     const avatarFailed = ref(false);
-    const localeMenuOpen = ref(false);
-    const localeTriggerRef = ref<HTMLElement | null>(null);
 
     function onAvatarClick(e: MouseEvent) {
       e.stopPropagation();
@@ -82,6 +94,72 @@ export const HkAdminHeader = defineComponent({
         return;
       }
       userMenuOpen.value = !userMenuOpen.value;
+    }
+
+    /** The dropdown is the SAME engine as the chat frontend's user menu
+     *  (HkMenu): identity header via the header slot, cascading Language
+     *  children, danger logout row — every account surface (chat header,
+     *  console header, mobile drawer) reads identically. */
+    const userMenuItems = computed<HkMenuItem[]>(() => {
+      // Empty identity (fetchUser race on a hard refresh): a single
+      // force-sign-out escape row — action items floating above no
+      // identity read as a broken menu.
+      if (!props.username && !props.userEmail) {
+        return [
+          {
+            key: "force-signout",
+            label: props.forceSignOutLabel ?? t("hikari::adminHeader.forceSignOut", "Sign out"),
+          },
+        ];
+      }
+      const items: HkMenuItem[] = [
+        {
+          key: "avatar",
+          label: props.avatarMenuLabel ?? t("hikari::adminHeader.avatar", "Avatar"),
+          icon: Camera,
+        },
+      ];
+      if (props.localeOptions.length > 0) {
+        items.push({
+          key: "locale",
+          label: props.localeMenuLabel ?? t("hikari::adminHeader.language", "Language"),
+          icon: Languages,
+          children: props.localeOptions.map((o) => ({
+            key: `locale:${o.code}`,
+            label: o.label,
+            checked: o.code === props.currentLocale,
+          })),
+        });
+      }
+      // Frontend link — mirrors the drawer user panel's "go to frontend"
+      // row (same position: directly above logout). Opt-in via the label
+      // prop so admin-only panels keep the menu at avatar/language/logout.
+      if (props.goToFrontendLabel) {
+        items.push({ key: "go-to-frontend", label: props.goToFrontendLabel, icon: ExternalLink });
+      }
+      items.push({
+        key: "logout",
+        label: props.logoutLabel ?? t("hikari::adminHeader.logout", "Logout"),
+        icon: LogOut,
+        danger: true,
+      });
+      return items;
+    });
+
+    /** Leaf selection IS the action; HkMenu closes the menu around the
+     *  emit, so each branch only fires its own side effect. */
+    function onUserMenuSelect(key: string) {
+      if (key === "avatar") {
+        avatarModalOpen.value = true;
+      } else if (key.startsWith("locale:")) {
+        emit("localeSelect", key.slice("locale:".length));
+      } else if (key === "go-to-frontend") {
+        emit("goToFrontend");
+      } else if (key === "logout") {
+        emit("logout");
+      } else if (key === "force-signout") {
+        props.onForceSignOut?.();
+      }
     }
 
     return () => (
@@ -132,142 +210,85 @@ export const HkAdminHeader = defineComponent({
               </div>
             )}
           </button>
-          {props.avatarAction === "menu" && (
-            <span class="text-sm font-semibold text-text truncate max-w-[8rem]">
-              {props.username}
+          {/* WHERE am I — the open view's title, not the nickname. The
+              explicit 1.5 line-height keeps descenders (g, y, p) inside
+              the truncate clip box: the default text-sm box is exactly
+              the em advance, so zoom/subpixel rounding in a scaled root
+              shaves the ink off at the bottom (user report 2026-09-12:
+              the "g" tail of the nickname was visibly cut). */}
+          {props.avatarAction === "menu" && props.title && (
+            <span
+              class="text-sm font-semibold text-text truncate max-w-[8rem]"
+              style={{ lineHeight: "1.5" }}
+            >
+              {props.title}
             </span>
           )}
         </div>
 
-        <HPopover
-          modelValue={userMenuOpen.value}
-          onUpdate:modelValue={(v: boolean) => {
-            userMenuOpen.value = v;
-            // Closing the outer menu must also close the locale submenu,
-            // or it stays orphaned for the next open.
-            if (!v) localeMenuOpen.value = false;
-          }}
-          placement="bottom-start"
+        <HkMenu
+          open={userMenuOpen.value}
+          onUpdate:open={(v: boolean) => { userMenuOpen.value = v; }}
           anchorRef={userTriggerRef.value ?? null}
-          class="w-56"
-          sheetOnMobile
-          title={t("hikari::adminHeader.avatarTrigger")}
+          placement="bottom-start"
+          title={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
+          items={userMenuItems.value}
+          onSelect={(key: string) => onUserMenuSelect(key)}
         >
-          {/* Empty identity (fetchUser race on a hard refresh): render a
-              single subtle placeholder row instead of the action items —
-              "Change Avatar"/"Logout" floating above no identity read as a
-              broken menu. The force-sign-out escape hatch lets the user
-              break out of a wedged session restore. */}
-          {!props.username && !props.userEmail ? (
-            <div>
-              <div class="s-user-header s-user-header--pending">
-                <HSpinner size="sm" />
-                <div class="s-user-header-email">{props.signingInLabel ?? t("hikari::adminHeader.signingIn", "Signing in…")}</div>
-              </div>
-              <button
-                class="s-popup-menu-item"
-                onClick={() => props.onForceSignOut?.()}
-              >
-                <span class="hk-menu-item-icon"><LogOut size={14} /></span>
-                {props.forceSignOutLabel ?? t("hikari::adminHeader.forceSignOut", "Sign out")}
-              </button>
-            </div>
-          ) : (
-            <div>
-              {/* Identity header FIRST — nickname, login email, permission
-                  badges — so every account surface reads identically. */}
-              <div class="s-user-header">
-                {props.username && <div class="s-user-header-name">{props.username}</div>}
-                {props.userEmail && <div class="s-user-header-email">{props.userEmail}</div>}
-                {props.userGroups && props.userGroups.length > 0 && (
-                  <div class="s-user-header-groups">
-                    {props.userGroups.map((g: { id: string; name: string }) => (
-                      <HBadge
-                        key={g.id}
-                        variant={g.name === "Administrators" ? "error" : "primary"}
-                        size="sm"
-                      >
-                        {g.name === "Administrators"
-                          ? (props.adminGroupLabel ?? t("hikari::adminHeader.adminGroup", "Administrators"))
-                          : g.name}
-                      </HBadge>
-                    ))}
+          {{
+            header: () => (
+              !props.username && !props.userEmail ? (
+                // Pending identity: a spinner beside the label reads as
+                // "actively working", not a frozen panel.
+                <div class="s-user-header s-user-header--pending">
+                  <HSpinner size="sm" />
+                  <div class="s-user-header-email">{props.signingInLabel ?? t("hikari::adminHeader.signingIn", "Signing in…")}</div>
+                </div>
+              ) : (
+                // Identity block FIRST — avatar, nickname, login email,
+                // permission badges — the same grammar the chat
+                // frontend's user-menu header uses (the shared
+                // s-user-header profile variant).
+                <div class="s-user-header s-user-header--profile">
+                  <span class="s-user-avatar-chip" aria-hidden="true">
+                    {props.avatarUrl && !avatarFailed.value ? (
+                      <img
+                        src={props.avatarUrl}
+                        alt=""
+                        class="s-user-avatar-img"
+                        onError={() => { avatarFailed.value = true; }}
+                      />
+                    ) : (
+                      <span class="s-user-avatar">
+                        {props.username?.charAt(0).toUpperCase() || "?"}
+                      </span>
+                    )}
+                  </span>
+                  <div class="s-user-header-body">
+                    {props.username && <div class="s-user-header-name">{props.username}</div>}
+                    {props.userEmail && <div class="s-user-header-email">{props.userEmail}</div>}
+                    {props.userGroups && props.userGroups.length > 0 && (
+                      <div class="s-user-header-groups">
+                        {props.userGroups.map((g: { id: string; name: string }) => (
+                          <HBadge
+                            key={g.id}
+                            variant={g.name === "Administrators" ? "error" : "primary"}
+                            size="sm"
+                          >
+                            {g.name === "Administrators"
+                              ? (props.adminGroupLabel ?? t("hikari::adminHeader.adminGroup", "Administrators"))
+                              : g.name}
+                          </HBadge>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <button
-                class="s-popup-menu-item"
-                onClick={() => {
-                  userMenuOpen.value = false;
-                  avatarModalOpen.value = true;
-                }}
-              >
-                <span class="hk-menu-item-icon"><Camera size={14} /></span>
-                {props.avatarMenuLabel ?? t("hikari::adminHeader.avatar", "Avatar")}
-              </button>
-              {/* The language trigger owns the locale anchor: the ref sits
-                  on the BUTTON itself (not a wrapper div) so the picker
-                  popup anchors to it instead of falling back to inline
-                  rendering. The ref OBJECT is passed through the slot —
-                  reading .value here would freeze null from the first
-                  render before the ref attached. */}
-              <button
-                ref={localeTriggerRef}
-                class="s-popup-menu-item"
-                onClick={() => (localeMenuOpen.value = !localeMenuOpen.value)}
-              >
-                <span class="hk-menu-item-icon"><Languages size={14} /></span>
-                {props.localeMenuLabel ?? t("hikari::adminHeader.language", "Language")}
-              </button>
-              {slots["locale-picker"]?.({
-                open: localeMenuOpen.value,
-                onUpdateOpen: (v: boolean) => {
-                  localeMenuOpen.value = v;
-                  if (!v) userMenuOpen.value = false;
-                },
-                triggerRef: localeTriggerRef,
-              })}
-              {slots["user-menu-extra"]?.()}
-              {/* Frontend link — mirrors the drawer user panel's
-                  "go to frontend" row (same icon/position: directly
-                  above logout). Opt-in via the label prop so admin-only
-                  panels keep the menu at avatar/language/logout. */}
-              {props.goToFrontendLabel ? (
-                <button
-                  class="s-popup-menu-item"
-                  onClick={() => {
-                    userMenuOpen.value = false;
-                    emit("goToFrontend");
-                  }}
-                >
-                  <span class="hk-menu-item-icon"><ExternalLink size={14} /></span>
-                  {props.goToFrontendLabel}
-                </button>
-              ) : null}
-              <button
-                class="s-popup-menu-item"
-                onClick={() => {
-                  userMenuOpen.value = false;
-                  emit("logout");
-                }}
-              >
-                <span class="hk-menu-item-icon"><LogOut size={14} /></span>
-                {props.logoutLabel ?? t("hikari::adminHeader.logout", "Logout")}
-              </button>
-            </div>
-          )}
-        </HPopover>
+                </div>
+              )
+            ),
+          }}
+        </HkMenu>
 
-        {/* The page title lives INSIDE each page in the HPageHeader
-            convention (big title left, tool buttons right). The bar
-            renders an optional context title only when one is given —
-            empty hides the node, keeping the bar to identity + theme
-            controls. */}
-        {props.title && (
-          <h2 class="text-sm font-semibold text-text truncate min-w-0">
-            {props.title}
-          </h2>
-        )}
         <div class="ml-auto flex items-center gap-1.5 shrink-0">
           {props.showEmergencyStop && (
             <button

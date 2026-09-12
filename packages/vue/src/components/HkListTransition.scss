@@ -94,13 +94,18 @@
   opacity: 0;
 }
 
+/* The leave ghost keeps its in-flow geometry via the pinLeaveGeometry
+ * hook wired in HkListTransition.tsx (explicit width/top/left inline
+ * pins). Do NOT add `width: 100%` here — without a position:relative
+ * host it resolves against the nearest positioned ancestor's collapsed
+ * box and the row flashes full-width while fading (the toast #306
+ * defect class). */
 .hk-list-grow-leave-active {
   transition:
     transform var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
     opacity var(--duration-fast, 0.15s) ease-in;
   pointer-events: none;
   position: absolute;
-  width: 100%;
 }
 
 .hk-list-grow-leave-to {

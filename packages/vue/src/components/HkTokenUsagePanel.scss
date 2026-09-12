@@ -14,7 +14,6 @@
   padding: var(--space-24, 1.5rem) 0;
   text-align: center;
   color: rgb(var(--color-muted));
-  font-size: var(--text-xs, 0.75rem);
 }
 
 .s-token-panel-total {
@@ -51,7 +50,6 @@
 .s-token-panel-models-title {
   font-weight: 600;
   margin-bottom: var(--space-8, 0.5rem);
-  color: rgb(var(--color-text));
 }
 
 .s-token-panel-model-list {
@@ -64,7 +62,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: var(--text-xs, 0.75rem);
   margin-bottom: var(--space-4, 0.25rem);
 }
 
@@ -83,14 +80,14 @@
 
 .s-token-panel-model-track {
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full, 999px);
   overflow: hidden;
   background: rgb(var(--color-border) / 15%);
 }
 
 .s-token-panel-model-bar {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-full, 999px);
   transition: width var(--duration-normal, 0.3s) ease;
 }
 

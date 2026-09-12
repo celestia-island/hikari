@@ -16,6 +16,9 @@
   padding: var(--space-4) var(--space-8);
   border: none;
   border-radius: var(--radius-sm);
+  /* Default cap lives on the popup so the inline maxWidth prop
+     legitimately overrides it (the content div would shadow the prop). */
+  max-width: 280px;
   font-size: var(--text-xs);
   line-height: 1.4;
   white-space: normal;
@@ -44,15 +47,8 @@
   }
 }
 
-.hk-tooltip-content {
-  max-width: 280px;
-}
-
-[data-mode="light"] .hk-tooltip-popup {
-  background: #ffffff;
-  color: #000000;
-}
-
+/* Light mode needs no override — the base rule above already is the
+   light palette; only dark re-inks the popup. */
 [data-mode="dark"] .hk-tooltip-popup {
   background: #4b4b4b;
   color: #ffffff;

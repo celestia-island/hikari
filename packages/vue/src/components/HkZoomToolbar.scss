@@ -4,21 +4,21 @@
 .hk-zoom-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-2);
   position: absolute;
-  top: 8px;
-  inset-inline-end: 8px;
+  top: var(--space-8);
+  inset-inline-end: var(--space-8);
   z-index: 10;
   border-radius: var(--radius-md);
   background: rgb(var(--color-surface) / 85%);
   border: 1px solid rgb(var(--color-border) / 8%);
-  padding: 2px 4px;
+  padding: var(--space-2) var(--space-4);
   backdrop-filter: blur(var(--blur-sm));
 }
 
 .hk-zoom-btn.hk-btn {
-  width: 24px;
-  height: 24px;
+  width: var(--space-24);
+  height: var(--space-24);
   padding: 0;
 }
 
@@ -26,12 +26,12 @@
   font-size: var(--text-2xs);
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   color: rgb(var(--color-muted));
-  min-width: 32px;
+  min-width: var(--space-32);
   text-align: center;
   user-select: none;
 }
 
 .hk-zoom-reset-btn {
-  margin-inline-start: 2px;
+  margin-inline-start: var(--space-2);
   border-inline-start: 1px solid rgb(var(--color-border) / 8%);
 }

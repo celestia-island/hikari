@@ -243,6 +243,27 @@
   height: var(--hk-menu-item-icon-box);
 }
 
+/* Host rows in the mode-extra strip (chest's DPI entry row reuses
+ * s-theme-item-btn) join the same 28px lead column, so every row's name
+ * in the toggle starts at one x — desktop popover and mobile sheet both
+ * (2026-09-12 field report: with the strip row at the generic 16px cell
+ * its label sat a full cell-width left of the theme rows' names). The
+ * strip container is the toggle's own, so the scope needs no host
+ * class-name contract. As with the customize row, the cell widens but
+ * the GLYPH keeps the standard menu icon size — widening a cell must
+ * never re-scale its glyph (the 0.42.2 regression class). */
+.s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon {
+  @include mi.icon;
+
+  width: 28px;
+  height: 28px;
+}
+
+.s-theme-mode-extra .s-theme-item-btn .hk-menu-item-icon > svg {
+  width: var(--hk-menu-item-icon-box);
+  height: var(--hk-menu-item-icon-box);
+}
+
 /* Custom rows keep the name clear of the overlaid delete button. */
 .s-theme-item-row[data-custom] .s-theme-item-name {
   margin-inline-end: 2rem;

@@ -54,7 +54,8 @@
   // Transitions - use CSS variables
   transition: var(--hi-icon-button-transition);
 
-  // Resting transform stays none — the :active press supplies its own.
+  // Resting transform stays none and the press keeps it that way — the
+  // press feedback is the background wash only.
 
   // Cursor
   cursor: pointer;
@@ -87,7 +88,6 @@
 
   &:where(:active:not(:disabled)) {
     background: var(--hi-icon-button-bg-active);
-    transform: var(--hi-icon-button-transform-active);
   }
 
   // ------

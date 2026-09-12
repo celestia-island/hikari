@@ -39,7 +39,11 @@
 }
 
 .hk-hover-reveal[data-placement="right"] > .hk-hover-reveal-extension {
-  inset-inline-start: 100%;
+  /* Anchors stay PHYSICAL on purpose: placement is a physical prop
+     (consumers pass literal left/right) and the slide transforms below
+     are physical too — logical axes here would mirror the box in RTL
+     while the motion still slides the old way. */
+  left: 100%;
   top: 50%;
   transform: translate(-4px, -50%);
 }
@@ -49,7 +53,7 @@
 }
 
 .hk-hover-reveal[data-placement="left"] > .hk-hover-reveal-extension {
-  inset-inline-end: 100%;
+  right: 100%;
   top: 50%;
   transform: translate(4px, -50%);
 }

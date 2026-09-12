@@ -1,5 +1,6 @@
-import { defineComponent, TransitionGroup, type PropType } from "vue";
+import { defineComponent, onBeforeUpdate, ref, TransitionGroup, type PropType } from "vue";
 
+import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 import { useReportedTransition } from "../composables/useReportedTransition";
 
 import "./HkListTransition.scss";
@@ -63,10 +64,58 @@ export default defineComponent({
       if (pending === 0) report.cancel();
     };
 
+    // Variants whose leave-active rule lifts the row out of flow with
+    // `position: absolute` (see HkListTransition.scss). Only these need
+    // the geometry pin; `reveal` animates the row's own height in place
+    // and `none` never leaves the flow, so a pin would freeze the very
+    // property they animate.
+    const ABSOLUTE_VARIANTS: ReadonlySet<string> = new Set(["pop", "slide", "fade", "grow"]);
+
+    // Pre-patch geometry of every row, refreshed on each update (the DOM
+    // is still the pre-patch tree at onBeforeUpdate — same pattern as
+    // HkTabs). During a multi-row removal the first leaving sibling gets
+    // its leave-active class (position:absolute) synchronously inside the
+    // patch pass, so a live offset read in a later sibling's beforeLeave
+    // hook would freeze an already-reflowed position. The pin also
+    // replaces `grow`'s old `width: 100%`, which resolved against a
+    // possibly-collapsed containing block when the host is not
+    // position:relative (the full-width leave flash).
+    const hostRef = ref<{ $el?: Element } | null>(null);
+    const prePatchBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    onBeforeUpdate(() => {
+      // Fragment hosts (tag="") have a comment anchor as $el — no
+      // element children to measure there.
+      const host = hostRef.value?.$el;
+      if (host == null || host.nodeType !== 1) return;
+      for (const child of Array.from(host.children)) {
+        const e = child as HTMLElement;
+        prePatchBoxes.set(e, {
+          top: e.offsetTop,
+          left: e.offsetLeft,
+          width: e.offsetWidth,
+          height: e.offsetHeight,
+        });
+      }
+    });
+
+    const usesAbsoluteLeave = () =>
+      !props.disabled && ABSOLUTE_VARIANTS.has(props.variant);
+
+    function pinLeaving(el: Element) {
+      if (!usesAbsoluteLeave()) return;
+      pinLeaveGeometry(el, { anchorX: "left", box: prePatchBoxes.get(el) });
+    }
+
+    function unpinLeaving(el: Element) {
+      if (!usesAbsoluteLeave()) return;
+      clearLeaveGeometry(el);
+    }
+
     return () => {
       const name = props.disabled ? "hk-list-none" : `hk-list-${props.variant}`;
       return (
         <TransitionGroup
+          ref={hostRef}
           tag={props.tag}
           name={name}
           appear={props.appear}
@@ -74,9 +123,15 @@ export default defineComponent({
           onBeforeEnter={arm}
           onAfterEnter={settle}
           onEnterCancelled={settle}
-          onBeforeLeave={arm}
+          onBeforeLeave={(el: Element) => {
+            arm();
+            pinLeaving(el);
+          }}
           onAfterLeave={settle}
-          onLeaveCancelled={settle}
+          onLeaveCancelled={(el: Element) => {
+            settle();
+            unpinLeaving(el);
+          }}
         >
           {slots.default?.()}
         </TransitionGroup>

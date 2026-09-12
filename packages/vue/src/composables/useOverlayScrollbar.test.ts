@@ -208,6 +208,34 @@ describe("attachOverlayScrollbars", () => {
     expect(viewport.scrollTop).toBe(150);
   });
 
+  it("maps a horizontal track click onto the RTL scroll range", () => {
+    const { viewport, wrapper, handle } = mountViewport("horizontal");
+    stubGeometry(viewport, {
+      scrollHeight: 100, clientHeight: 100, scrollTop: 0,
+      scrollWidth: 400, clientWidth: 100, scrollLeft: 0,
+    });
+    // An RTL scroller counts `scrollLeft` down from 0 to −max (see the thumb
+    // mirroring): the track's LEFT end is the content's end, so a click at the
+    // halfway point must land at −150, not +150.
+    viewport.style.direction = "rtl";
+    handle.update();
+    const track = wrapper.querySelector<HTMLElement>(".hk-scrollbar-track")!;
+    vi.spyOn(track, "getBoundingClientRect").mockReturnValue({
+      top: 0, left: 0, width: 100, height: 6,
+      bottom: 6, right: 100, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    track.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: 25 }));
+    // A quarter along the track, measured from its left = three quarters into
+    // the content from its (right-hand) start: −0.75 × 300.
+    expect(viewport.scrollLeft).toBe(-225);
+    // The magnitude is what the thumb's own mirroring reads back as progress
+    // (|scrollLeft| / max), so click and thumb now agree on the position.
+    // The LTR bar keeps mapping straight through.
+    viewport.style.direction = "ltr";
+    track.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: 25 }));
+    expect(viewport.scrollLeft).toBe(75);
+  });
+
   it("marks and unmarks a static parent with inline position:relative (guard)", () => {
     const { wrapper, handle } = mountViewport("vertical");
     // happy-dom computes no CSS → position computes "static" → the

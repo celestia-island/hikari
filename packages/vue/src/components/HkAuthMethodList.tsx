@@ -86,12 +86,21 @@ export default defineComponent({
       // published as a CSS length the column is laid out with: in a scaled or
       // zoomed root the two differ by the scale of the space, so the column
       // would come out that many times too wide (see `layoutGeometry`).
-      const space = drawnScale(root);
-      const factor = root.offsetWidth > 0 ? space.x : root.offsetHeight > 0 ? space.y : 1;
+      //
+      // The scale is read from the LABEL — the element the box was measured
+      // on. Reading it from the list itself cannot work: the list is
+      // `display: contents`, so it generates no box at all (measured in Blink:
+      // `offsetWidth` 0, a 0x0 rect, computed width `auto`), and every reader
+      // of a box reports nothing to divide by.
       for (const label of root.querySelectorAll<HTMLElement>(".s-auth-methods-label")) {
         const previous = label.style.width;
         label.style.width = "max-content";
-        widest = Math.max(widest, label.getBoundingClientRect().width / (factor > 0 ? factor : 1));
+        const drawn = label.getBoundingClientRect().width;
+        const scale = drawnScale(label);
+        const factor = Number.isFinite(scale.x) && scale.x > 0 ? scale.x : 1;
+        // `offsetWidth` is the laid-out fallback — already in the units the
+        // published length is used in, so it needs no division.
+        widest = Math.max(widest, factor > 0 ? drawn / factor : label.offsetWidth);
         label.style.width = previous;
       }
       // Guard: only publish when real text metrics were observed, so a

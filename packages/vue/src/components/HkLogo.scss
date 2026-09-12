@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
   flex-shrink: 0;
   user-select: none;
@@ -23,7 +23,7 @@ a.hk-logo:focus-visible {
 
 .hk-logo-img {
   display: block;
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   object-fit: contain;
 }
 
@@ -34,7 +34,7 @@ a.hk-logo:focus-visible {
   /* Contract token with hex fallback (house idiom). No radius here: the
    * only render site is inside .hk-logo, whose matching border-radius +
    * overflow: hidden already clip this exactly-fitting child. */
-  background: var(--hi-color-primary, #58a6ff);
+  background: var(--hi-color-primary, #7aa2f7);
   color: rgb(var(--color-on-solid-text, 255 255 255));
 }
 

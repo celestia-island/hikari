@@ -111,13 +111,13 @@
   padding: var(--space-2) var(--space-8);
   font-size: var(--text-2xs);
   letter-spacing: 0.04em;
-  color: var(--hi-color-muted, #666);
-  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.08)) 12%, transparent);
-  border-radius: var(--hi-radius-full, 9999px);
+  color: var(--hi-color-muted, #6c6c6c);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(240,244,248,0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.08)) 12%, transparent);
+  border-radius: var(--radius-full, 9999px);
   backdrop-filter: blur(4px);
   opacity: 0.85;
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease;
 }
 
 // Jump-back FAB — above the scrollbar tracks (z-index 10).

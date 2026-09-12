@@ -51,10 +51,10 @@
   -webkit-appearance: none;
   padding: 0;
   border: none;
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full, 9999px);
   cursor: pointer;
   font-family: inherit;
-  transition: transform var(--hi-duration-fast, 0.15s) ease, box-shadow var(--hi-duration-fast, 0.15s) ease;
+  transition: transform var(--duration-fast, 0.15s) ease, box-shadow var(--duration-fast, 0.15s) ease;
 
   &:active:not(:disabled) { transform: scale(0.94); }
   &:focus-visible { outline: 2px solid var(--hi-color-primary, #7aa2f7); outline-offset: 2px; }
@@ -84,13 +84,13 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
 }
 
 .hk-fab[data-variant="glass"] .hk-fab-button {
-  color: var(--hi-color-text-secondary, #555);
-  background: color-mix(in srgb, var(--hi-color-surface, #fff) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.12)) 25%, transparent);
+  color: var(--hi-color-text-secondary, #666666);
+  background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.12)) 25%, transparent);
   backdrop-filter: blur(var(--blur-xs, 4px)); // chip language shared with autotag pills
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
 
-  &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #fff) 92%, transparent); }
+  &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 92%, transparent); }
 }
 
 .hk-fab[data-variant="primary"] .hk-fab-button {
@@ -129,16 +129,16 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
   font-size: 0.6875rem;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  color: var(--hi-color-text-secondary, #555);
-  background: color-mix(in srgb, var(--hi-color-surface, #fff) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.12)) 25%, transparent);
-  border-radius: var(--hi-radius-full, 9999px);
+  color: var(--hi-color-text-secondary, #666666);
+  background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(100,100,100,0.12)) 25%, transparent);
+  border-radius: var(--radius-full, 9999px);
   cursor: pointer;
   backdrop-filter: blur(var(--blur-xs, 4px));
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   opacity: 0;
   transform: scale(0.4);
-  transition: opacity var(--hi-duration-fast, 0.15s) ease, transform var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease, transform var(--duration-fast, 0.15s) ease;
 
   .hk-fab-mini-icon {
     display: inline-flex;
@@ -149,7 +149,7 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
   &:focus-visible { outline: 2px solid var(--hi-color-primary, #7aa2f7); outline-offset: 1px; }
   &:disabled { opacity: 0.35; cursor: not-allowed; }
   // 82%→94% mirrors the main glass hover ladder (78%→92%).
-  &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #fff) 94%, transparent); }
+  &:hover:not(:disabled) { background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 94%, transparent); }
 }
 
 // Staggered reveal while expanded (CSS only, via nth-child delay).

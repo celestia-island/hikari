@@ -1,5 +1,5 @@
 .hk-divider {
-  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.12));
+  --hk-divider-color: var(--hi-color-border, rgba(100,100,100,0.12));
   flex-shrink: 0;
 
   width: 100%;
@@ -16,11 +16,11 @@
 }
 
 .hk-divider-faint {
-  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  --hk-divider-color: var(--hi-color-border, rgba(100,100,100,0.06));
 }
 
 .hk-divider-input {
-  --hk-divider-color: var(--hi-color-border, rgba(0, 0, 0, 0.15));
+  --hk-divider-color: var(--hi-color-border, rgba(100,100,100,0.15));
 }
 
 .hk-divider-dashed.hk-divider-vertical {

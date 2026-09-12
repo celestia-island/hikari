@@ -92,7 +92,7 @@
      primaries (synthwave pink) while HkButton labels stayed white. */
   background: rgb(var(--color-on-solid-icon, 255 255 255));
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 1;
 
   .hk-switch-sm & {

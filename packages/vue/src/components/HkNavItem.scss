@@ -27,8 +27,8 @@
   text-align: start;
   cursor: pointer;
   transition:
-    background-color var(--hi-duration-fast, 0.15s) ease,
-    color var(--hi-duration-fast, 0.15s) ease;
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
   user-select: none;
 
   /* Interaction-state precedence: ACTIVE > HOVER > NONE.

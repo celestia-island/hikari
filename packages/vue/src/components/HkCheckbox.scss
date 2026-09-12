@@ -23,12 +23,12 @@
   justify-content: center;
   width: 1.125rem;
   height: 1.125rem;
-  border-radius: var(--hi-radius-sm, 4px);
-  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  background: var(--hi-color-surface, rgba(240,244,248,0.95));
   transition:
-    border-color var(--hi-duration-normal, 0.3s) ease,
-    background var(--hi-duration-normal, 0.3s) ease;
+    border-color var(--duration-normal, 0.3s) ease,
+    background var(--duration-normal, 0.3s) ease;
   flex-shrink: 0;
   position: relative;
 }
@@ -38,13 +38,13 @@
 }
 
 .hk-checkbox-box[data-checked] {
-  background: var(--hi-color-primary, #ff6b9d);
-  border-color: var(--hi-color-primary, #ff6b9d);
+  background: var(--hi-color-primary, #7aa2f7);
+  border-color: var(--hi-color-primary, #7aa2f7);
 }
 
 .hk-checkbox-box[data-indeterminate] {
-  background: var(--hi-color-primary, #ff6b9d);
-  border-color: var(--hi-color-primary, #ff6b9d);
+  background: var(--hi-color-primary, #7aa2f7);
+  border-color: var(--hi-color-primary, #7aa2f7);
 }
 
 /* ---------- input ---------- */
@@ -62,8 +62,8 @@
    :focus-visible keeps mouse toggles ring-free. */
 .hk-checkbox-box:has(.hk-checkbox-input:focus-visible) {
   box-shadow:
-    0 0 0 2px var(--hi-color-surface, rgba(255, 255, 255, 0.95)),
-    0 0 0 4px var(--hi-color-primary, #ff6b9d);
+    0 0 0 2px var(--hi-color-surface, rgba(240,244,248,0.95)),
+    0 0 0 4px var(--hi-color-primary, #7aa2f7);
 }
 
 /* ---------- markers ---------- */

@@ -25,7 +25,7 @@
   align-items: center;
   background: var(--hi-color-surface);
   border: 1px solid var(--hi-color-border);
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
   transition:
     background-color var(--hi-transition-base, 200ms cubic-bezier(0.4, 0, 0.2, 1)),
@@ -117,8 +117,8 @@
   color: var(--hi-color-muted);
   cursor: pointer;
   transition:
-    background-color var(--hi-duration-fast, 0.15s) ease,
-    color var(--hi-duration-fast, 0.15s) ease;
+    background-color var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled) {
     background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);

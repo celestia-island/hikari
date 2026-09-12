@@ -11,55 +11,55 @@
 // contract (./_scrim-fade.scss); the panel below owns all the motion.
 @include sf.scrim-fade(
   "hk-drawer-overlay",
-  $enter-duration: var(--hi-duration-normal, 0.3s),
-  $enter-ease: var(--hi-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-  $leave-duration: var(--hi-duration-normal, 0.3s),
-  $leave-ease: var(--hi-ease-in, cubic-bezier(0.4, 0, 1, 1))
+  $enter-duration: var(--duration-normal, 0.3s),
+  $enter-ease: var(--ease-elastic, cubic-bezier(0.16, 1, 0.3, 1)),
+  $leave-duration: var(--duration-normal, 0.3s),
+  $leave-ease: var(--ease-in, cubic-bezier(0.4, 0, 1, 1))
 );
 
 .hk-drawer-panel {
   position: fixed;
   display: flex;
   flex-direction: column;
-  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   outline: none;
   transition:
-    width var(--hi-duration-normal, 0.3s) ease,
-    height var(--hi-duration-normal, 0.3s) ease;
+    width var(--duration-normal, 0.3s) ease,
+    height var(--duration-normal, 0.3s) ease;
 }
 
 .hk-drawer-left {
   top: 0;
   bottom: 0;
   left: 0;
-  border-right: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: 0 var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem) 0;
+  border-right: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0;
 }
 
 .hk-drawer-right {
   top: 0;
   bottom: 0;
   right: 0;
-  border-left: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: var(--hi-radius-md, 0.5rem) 0 0 var(--hi-radius-md, 0.5rem);
+  border-left: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: var(--radius-md, 0.5rem) 0 0 var(--radius-md, 0.5rem);
 }
 
 .hk-drawer-top {
   top: 0;
   left: 0;
   right: 0;
-  border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: 0 0 var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem);
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
 }
 
 .hk-drawer-bottom {
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem) 0 0;
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
 }
 
 .hk-drawer-left-enter-active,
@@ -71,8 +71,8 @@
      that briefly opens a gap between the panel edge and the screen
      edge. Both properties use the same plain ease-out. */
   transition:
-    opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-drawer-left-leave-active,
@@ -80,8 +80,8 @@
 .hk-drawer-top-leave-active,
 .hk-drawer-bottom-leave-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
 }
 
 .hk-drawer-left-enter-from,
@@ -113,14 +113,14 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
-  border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   flex-shrink: 0;
 }
 
 .hk-drawer-title {
   font-size: var(--text-base, 0.875rem);
   font-weight: 700;
-  color: var(--hi-color-text-primary, #333);
+  color: var(--hi-color-text-primary, #1e1e1e);
 }
 
 // Legacy placement hook — the chrome lives on the shared .hk-icon-button
@@ -162,7 +162,7 @@
   /* HkMenuPanel carries its own inset; zero this variable when the
      footer hosts one so both edges align. */
   padding: var(--hk-drawer-footer-padding, var(--space-12, 0.75rem) var(--space-16, 1rem));
-  border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   flex-shrink: 0;
 }
 
@@ -180,8 +180,8 @@
 @media (max-width: 767px) {
   .hk-drawer-bottom {
     bottom: var(--hk-sheet-bottom-gap, 0px);
-    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-                   var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                   var(--hk-modal-radius, var(--radius-lg, 12px))
                    0 0;
     // The inline maxHeight from the `size` prop must lose to the family cap
     // (plain-vh fallback first for dvh-less engines, then dvh) — same

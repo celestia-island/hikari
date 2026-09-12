@@ -73,22 +73,22 @@
 
 .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active,
 .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active {
-  animation: hk-picker-pane-fwd-in var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-fwd-in var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active,
 .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active {
-  animation: hk-picker-pane-fwd-out var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-fwd-out var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="back"] > .hk-picker-pane-enter-active,
 .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-enter-active {
-  animation: hk-picker-pane-back-in var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-back-in var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="back"] > .hk-picker-pane-leave-active,
 .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-leave-active {
-  animation: hk-picker-pane-back-out var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-back-out var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* RTL: reading direction flips, so a forward drill flows left→right —

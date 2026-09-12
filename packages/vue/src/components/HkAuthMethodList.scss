@@ -9,7 +9,7 @@
   align-items: center;
   gap: var(--space-10, 0.625rem);
   margin: 0 0 var(--space-4, 0.25rem);
-  color: var(--hi-color-muted, #999);
+  color: var(--hi-color-muted, #6c6c6c);
   font-size: var(--text-xs, 0.75rem);
   text-align: center;
 }
@@ -19,7 +19,7 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--hi-color-border, #ddd);
+  background: var(--hi-color-border, #646464);
 }
 
 /* The component's own wrapper is `display: contents` (measurement anchor +

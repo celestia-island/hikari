@@ -68,8 +68,8 @@
   color: rgb(var(--color-text));
   cursor: pointer;
   transition:
-    background var(--hi-duration-fast, 0.15s) ease,
-    color var(--hi-duration-fast, 0.15s) ease;
+    background var(--duration-fast, 0.15s) ease,
+    color var(--duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled) {
     background: rgb(var(--color-primary) / 0.1);

@@ -42,7 +42,7 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
   transform: translateY(-50%);
   opacity: 0;
-  transition: opacity var(--hi-duration-short, 0.15s);
+  transition: opacity var(--duration-short, 0.15s);
   pointer-events: none;
 }
 

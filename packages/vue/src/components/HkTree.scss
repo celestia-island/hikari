@@ -22,7 +22,7 @@
     top: 0;
     bottom: 6px;
     width: 1px;
-    background: color-mix(in srgb, var(--hi-color-border, #30363d) 30%, transparent);
+    background: color-mix(in srgb, var(--hi-color-border, #646464) 30%, transparent);
   }
 }
 
@@ -31,12 +31,12 @@
   align-items: center;
   padding: 0 var(--space-8, 0.5rem);
   cursor: pointer;
-  transition: background var(--hi-duration-fast, 0.15s) ease;
-  color: var(--hi-color-text-primary, #333);
+  transition: background var(--duration-fast, 0.15s) ease;
+  color: var(--hi-color-text-primary, #1e1e1e);
   position: relative;
 
   &:hover {
-    background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 5%, transparent);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 5%, transparent);
   }
 }
 
@@ -60,7 +60,7 @@
 }
 
 .hk-tree-row[data-status="warning"] .hk-tree-label {
-  color: var(--hi-color-warning, #d29922);
+  color: var(--hi-color-warning, #eed677);
 }
 
 .hk-tree-row[data-status="muted"] {
@@ -105,22 +105,22 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: var(--hi-color-muted, #666);
-  border-radius: var(--hi-radius-sm, 4px);
-  transition: color var(--hi-duration-fast, 0.15s), background var(--hi-duration-fast, 0.15s);
+  color: var(--hi-color-muted, #6c6c6c);
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--duration-fast, 0.15s), background var(--duration-fast, 0.15s);
 }
 
 .hk-tree-toggle[data-parent] {
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, var(--hi-color-surface, #fff) 40%, transparent);
-    color: var(--hi-color-text-primary, #333);
+    background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 40%, transparent);
+    color: var(--hi-color-text-primary, #1e1e1e);
   }
 }
 
 .hk-tree-chevron {
-  transition: transform var(--hi-duration-normal, 0.3s) ease;
+  transition: transform var(--duration-normal, 0.3s) ease;
 }
 
 .hk-tree-chevron[data-open] {
@@ -136,7 +136,7 @@
 .hk-tree-leaf {
   display: block;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--hi-color-muted, #666) 25%, transparent);
+  background: color-mix(in srgb, var(--hi-color-muted, #6c6c6c) 25%, transparent);
 }
 
 /* ── Icon slot ─────────────────────────────────── */
@@ -170,10 +170,10 @@
   padding: 0 0.375em;
   font-size: 0.85em;
   font-weight: 600;
-  color: var(--hi-color-primary, #58a6ff);
-  background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-primary, #58a6ff) 18%, transparent);
-  border-radius: var(--hi-radius-sm, 4px);
+  color: var(--hi-color-primary, #7aa2f7);
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 18%, transparent);
+  border-radius: var(--radius-sm, 4px);
   line-height: 1.5;
   letter-spacing: 0.02em;
 }

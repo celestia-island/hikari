@@ -1,12 +1,26 @@
-// Re-export shared hikari theme and component styles.
-// NOTE: The `../../../theme/...` and `../../../components/...` imports below
-// resolve relative to the monorepo root and work locally, but escape the npm
-// package — registry installs should import the granular subpaths instead
-// (`@celestia-island/hikari/styles/theme/*.scss`, `.../styles/admin-tokens.scss`),
-// which are vendored/exposed inside this package.
-@use "../../../theme/styles/variables.scss";
-@use "../../../theme/styles/mixins.scss";
-@use "../../../theme/styles/foundation.scss";
-@use "../../../theme/styles/themes.scss";
-@use "../../../components/src/styles/index.scss";
+// Canonical hikari theme + component style entry.
+//
+// Composition (order matters only for the plana-ui sheet at the end —
+// every token is defined exactly once across the first two sheets, so
+// the color/scale base is order-independent):
+//   1. theme/channels.scss — the static seed: --color-* channel palette,
+//      --hi-color-* derivations, --c-*/--shadow-*/--border-* aliases and
+//      the icon-button bridge (vendored from src/tokens.scss).
+//   2. theme/scale.scss — the L2 scale tokens: spacing, type, radius,
+//      blur, opacity, durations, easings, z bands, fonts (vendored from
+//      src/scale.scss).
+//   3. admin-tokens.scss — the plana-ui shared surface: layout tokens,
+//      brand-color aliases and the shared admin component classes.
+//
+// initTheme() (runtime) writes only deltas against this base into a
+// managed <style data-hikari-theme-vars> block.
+//
+// The legacy Gen-1 sheets (styles/theme/base.scss, foundation.scss,
+// themes.scss, _tokens.scss, _layout.scss, … — vendored from
+// packages/theme/styles for the Rust crate) are NOT part of this entry;
+// import them granularly only for legacy compositions. The previous
+// version of this file re-exported packages/theme + packages/components
+// through paths that escape the npm package and did not compile.
+@use "./theme/channels.scss";
+@use "./theme/scale.scss";
 @use "./admin-tokens.scss";

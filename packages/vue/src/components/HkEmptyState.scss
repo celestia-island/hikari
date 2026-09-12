@@ -5,10 +5,10 @@
   justify-content: center;
   padding: var(--space-48, 3rem) var(--space-16, 1rem);
   text-align: center;
-  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  background: var(--hk-empty-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
   backdrop-filter: blur(var(--blur-sm, 8px));
-  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
-  border-radius: var(--hi-radius-md, 0.5rem);
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
+  border-radius: var(--radius-md, 0.5rem);
   box-sizing: border-box;
 }
 
@@ -16,7 +16,7 @@
   width: var(--space-48, 3rem);
   height: var(--space-48, 3rem);
   margin-bottom: var(--space-12, 0.75rem);
-  color: var(--hi-color-text-secondary, #666);
+  color: var(--hi-color-text-secondary, #666666);
   opacity: 0.5;
   display: flex;
   align-items: center;
@@ -26,13 +26,13 @@
 .hk-empty-title {
   font-size: var(--text-base, 0.875rem);
   font-weight: 600;
-  color: var(--hi-color-text-primary, #333);
+  color: var(--hi-color-text-primary, #1e1e1e);
   margin: 0 0 var(--space-8, 0.5rem);
 }
 
 .hk-empty-desc {
   font-size: var(--text-sm, 0.8125rem);
-  color: var(--hi-color-text-secondary, #666);
+  color: var(--hi-color-text-secondary, #666666);
   margin: 0 0 var(--space-16, 1rem);
   max-width: 24rem;
   line-height: 1.5;

@@ -4,7 +4,7 @@
 .hk-markdown {
   font-size: var(--text-base);
   line-height: 1.7;
-  color: var(--hi-color-text-primary, #c9d1d9);
+  color: var(--hi-color-text-primary, #1e1e1e);
   position: relative;
 }
 
@@ -17,7 +17,7 @@
 .hk-markdown h3 {
   font-weight: 700;
   margin: 1.25em 0 0.5em;
-  color: var(--hi-color-text-primary, #c9d1d9);
+  color: var(--hi-color-text-primary, #1e1e1e);
 }
 
 .hk-markdown h1 { font-size: 1.5em; }
@@ -97,7 +97,7 @@
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: var(--text-xs);
   line-height: 1.6;
-  color: var(--hi-color-text-primary, #c9d1d9);
+  color: var(--hi-color-text-primary, #1e1e1e);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -106,7 +106,7 @@
   margin: 0.75em 0;
   padding: 0.5em 1em;
   border-inline-start: 3px solid var(--hi-color-text-tertiary, #8b949e);
-  color: var(--hi-color-text-secondary, #8b949e);
+  color: var(--hi-color-text-secondary, #666666);
 }
 
 .hk-markdown table {
@@ -118,7 +118,7 @@
 .hk-markdown th,
 .hk-markdown td {
   padding: 0.5em 0.75em;
-  border: 1px solid var(--hi-color-border, #30363d);
+  border: 1px solid var(--hi-color-border, #646464);
   text-align: start;
 }
 
@@ -128,7 +128,7 @@
 }
 
 .hk-markdown a {
-  color: var(--hi-color-primary, #58a6ff);
+  color: var(--hi-color-primary, #7aa2f7);
   text-decoration: none;
 }
 
@@ -140,13 +140,13 @@
    the house :focus-visible ring (HkFab/HkContextRing pattern). Ring uses
    the same contract var as the link ink so it matches in every theme. */
 .hk-markdown a:focus-visible {
-  outline: 2px solid var(--hi-color-primary, #58a6ff);
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
   outline-offset: 2px;
 }
 
 .hk-markdown hr {
   border: none;
-  border-top: 1px solid var(--hi-color-border, #30363d);
+  border-top: 1px solid var(--hi-color-border, #646464);
   margin: 1em 0;
 }
 
@@ -161,7 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--hi-color-surface, #fff) 70%, transparent);
+  background: color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 70%, transparent);
   backdrop-filter: blur(4px);
   z-index: 10;
 }

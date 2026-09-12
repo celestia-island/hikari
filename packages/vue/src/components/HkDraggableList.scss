@@ -1,16 +1,16 @@
 .hk-draggable-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-4, 4px);
 }
 
 .hk-draggable-list-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 40px;
-  padding: 0.5rem 0.625rem;
-  border-radius: 4px;
+  gap: var(--space-8, 0.5rem);
+  min-height: var(--space-40, 40px);
+  padding: var(--space-8, 0.5rem) var(--space-10, 0.625rem);
+  border-radius: var(--radius-sm, 4px);
   background: var(--hi-color-bg-subtle, #21262d);
   border: 1px solid var(--hi-color-border, #30363d);
   transition:
@@ -20,7 +20,6 @@
     background 150ms ease;
   user-select: none;
   -webkit-user-select: none;
-  transform-origin: center;
 
   &:hover {
     border-color: var(--hi-color-text-tertiary, #8b949e);
@@ -33,7 +32,6 @@
     border-color: var(--hi-color-primary, #58a6ff);
     background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.04);
     cursor: grabbing;
-    z-index: 0;
   }
 
   &[data-placeholder="before"] {
@@ -58,7 +56,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
+  width: var(--space-20, 20px);
   flex-shrink: 0;
   color: var(--hi-color-text-tertiary, #8b949e);
   cursor: grab;
@@ -78,7 +76,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-8, 0.5rem);
 }
 
 .hk-draggable-list-ghost {
@@ -86,12 +84,14 @@
   top: 0;
   left: 0;
   margin: 0;
-  transform: translate3d(0, 0, 0) scale(1.02);
+  // No transform here: the tsx always writes the full translate3d inline
+  // (attachGhost/moveGhost) before the ghost paints — a class transform
+  // (e.g. a scale lift) could never win the cascade against it.
   opacity: 0.85;
   box-shadow:
     0 8px 24px rgb(0 0 0 / 28%),
     0 2px 6px rgb(0 0 0 / 18%);
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   background: var(--hi-color-bg-elevated, #161b22);
   backdrop-filter: blur(2px);
   pointer-events: none;
@@ -109,5 +109,16 @@
     transform: none;
     opacity: 1;
     width: 100%;
+  }
+}
+
+/* Reduced motion: the dragging press cue (scale + dim) must snap instead
+   of animating; the hover border/background fades stay (house convention).
+   The ghost itself is pointer-positioned via inline transform — 1:1
+   direct manipulation, not autonomous motion — so it is left alone.
+   (house pattern: HkAffixPicker.scss / HkExpansionPanel.scss guards) */
+@media (prefers-reduced-motion: reduce) {
+  .hk-draggable-list-item {
+    transition: border-color 150ms ease, background 150ms ease;
   }
 }

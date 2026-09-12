@@ -1,8 +1,8 @@
 @use "../tokens";
 
-/* HkCard — canonical surface card. Hover effect mirrors the node card:
-   only box-shadow and border-color animate. No transforms, so the card
-   never displaces its neighbors or triggers layout reflow. */
+/* HkCard — canonical surface card. Hover emphasis is border-color only
+   (the base elevation shadow is already at its resting value). No
+   transforms, so the card never displaces neighbors or reflows layout. */
 .hk-card {
   display: block;
   overflow: hidden;
@@ -15,14 +15,20 @@
 
 .hk-card-hoverable {
   cursor: pointer;
-  transition:
-    box-shadow var(--duration-normal) ease,
-    border-color var(--duration-normal) ease;
+  transition: border-color var(--duration-normal) ease;
 }
 
 .hk-card-hoverable:hover {
-  box-shadow: var(--shadow-elevated);
   border-color: var(--c-primary-intense);
+}
+
+.hk-card-hoverable:active {
+  border-color: rgb(var(--color-primary) / 45%);
+}
+
+.hk-card-hoverable:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
 }
 
 .hk-card-header {
@@ -45,5 +51,5 @@
 
 .hk-card-footer {
   padding: var(--space-12) var(--space-16);
-  border-top: 1px solid rgb(var(--color-border) / 10%);
+  border-top: 1px solid var(--border-faint);
 }

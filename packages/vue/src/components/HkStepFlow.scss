@@ -36,10 +36,6 @@
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-.hk-stepflow-body {
-  width: 100%;
-}
-
 .hk-stepflow-fwd-enter-active,
 .hk-stepflow-back-enter-active {
   transition:
@@ -72,4 +68,28 @@
 .hk-stepflow-back-leave-to {
   opacity: 0;
   transform: translateX(24px);
+}
+
+/* RTL: reading direction flips, so the slide mirrors — forward enters
+ * from the left and exits right (house pattern: HkListTransition.scss
+ * [dir="rtl"] form). */
+[dir="rtl"] .hk-stepflow-fwd-enter-from,
+[dir="rtl"] .hk-stepflow-back-leave-to {
+  transform: translateX(-24px);
+}
+
+[dir="rtl"] .hk-stepflow-fwd-leave-to,
+[dir="rtl"] .hk-stepflow-back-enter-from {
+  transform: translateX(24px);
+}
+
+/* Reduced motion: the body snaps between steps instead of sliding
+ * (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-stepflow-fwd-enter-active,
+  .hk-stepflow-back-enter-active,
+  .hk-stepflow-fwd-leave-active,
+  .hk-stepflow-back-leave-active {
+    transition: none;
+  }
 }

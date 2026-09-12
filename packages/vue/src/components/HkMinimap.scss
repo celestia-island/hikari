@@ -1,14 +1,19 @@
 .hk-minimap {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: var(--space-12);
+  // Corner overlay anchor mirrors in RTL like the sibling HkZoomToolbar
+  // (inset-inline-end: 8px there).
+  inset-inline-end: var(--space-12);
   z-index: 50;
   width: 160px;
   background: rgb(var(--color-surface) / 0.82);
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
   backdrop-filter: blur(var(--blur-md));
-  cursor: pointer;
+  // The root is a drag-to-pan surface (no click action): grab cursor, and
+  // the drag state tints the border like hover escalates it (HkBoard's
+  // draggable grab/grabbing precedent).
+  cursor: grab;
   overflow: hidden;
   pointer-events: auto;
   /* The minimap owns its own drag gestures — the surrounding pannable
@@ -22,6 +27,7 @@
 
   &[data-dragging] {
     cursor: grabbing;
+    border-color: rgb(var(--color-primary) / 0.5);
   }
 }
 
@@ -38,7 +44,6 @@
   gap: 2px;
   padding: 3px 8px;
   border-top: 1px solid var(--border-faint);
-  pointer-events: auto;
 }
 
 // Toolbar-only form (no overview map): shrink-wrap the card around the
@@ -62,21 +67,31 @@
   background: transparent;
   color: rgb(var(--color-text));
   cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
+  transition:
+    background var(--hi-duration-fast, 0.15s) ease,
+    color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled) {
     background: rgb(var(--color-primary) / 0.1);
     color: rgb(var(--color-primary));
   }
 
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 0.18);
+  }
+
   &:disabled {
     color: rgb(var(--color-muted) / 40%);
     cursor: not-allowed;
   }
-}
 
-.hk-mm-zoom-reset-btn svg {
-  stroke-width: 2px;
+  // Keyboard focus ring drawn INSIDE the border box: the card clips
+  // (overflow: hidden) and the bar pads only 3px vertically, so an outer
+  // ring would be shaved per-side (HkSelectionGrid precedent).
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
 }
 
 .hk-mm-zoom-label {

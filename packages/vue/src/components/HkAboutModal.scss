@@ -78,15 +78,26 @@
 
 .s-about-modal-link {
   padding: var(--space-4, 0.25rem) var(--space-8, 0.5rem);
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-sm, 4px);
   background: rgb(var(--color-primary) / 12%);
   color: rgb(var(--color-primary));
   font-size: var(--text-xs, 0.75rem);
   text-decoration: none;
+  transition: background 200ms ease;
 }
 
 .s-about-modal-link:hover {
   background: rgb(var(--color-primary) / 20%);
+}
+
+.s-about-modal-link:active {
+  background: rgb(var(--color-primary) / 26%);
+}
+
+.s-about-modal-link:focus-visible {
+  box-shadow:
+    0 0 0 2px rgb(var(--color-surface)),
+    0 0 0 4px rgb(var(--color-primary));
 }
 
 .s-about-modal-footer {

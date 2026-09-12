@@ -133,7 +133,10 @@
   }
 }
 
-.hk-btn-primary:hover:not(:disabled) {
+/* :not(:focus-visible) keeps the keyboard double ring winning while a
+   focused button is under the cursor — this hover rule's (0,3,0)
+   box-shadow would otherwise beat the (0,2,0) :focus-visible ring. */
+.hk-btn-primary:hover:not(:disabled):not(:focus-visible) {
   filter: brightness(1.1);
   box-shadow: var(--shadow-button);
 }
@@ -151,9 +154,14 @@
   backdrop-filter: blur(var(--blur-sm));
 }
 
+/* background stays the base surface — the hover declaration only restated
+   it; hover emphasis comes from the border-color change below. */
 .hk-btn-secondary:hover:not(:disabled) {
-  background: rgb(var(--color-surface));
   border-color: var(--c-primary-strong);
+}
+
+.hk-btn-secondary:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 /* ---- Outline ---- */
@@ -169,6 +177,10 @@
   border-color: rgb(var(--color-primary));
 }
 
+.hk-btn-outline:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
 /* ---- Ghost ---- */
 
 .hk-btn-ghost {
@@ -181,6 +193,10 @@
   background: var(--c-primary-light);
 }
 
+.hk-btn-ghost:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
 /* ---- Danger ---- */
 
 .hk-btn-danger {
@@ -188,9 +204,13 @@
   color: rgb(var(--color-on-solid));
 }
 
-.hk-btn-danger:hover:not(:disabled) {
+.hk-btn-danger:hover:not(:disabled):not(:focus-visible) {
   filter: brightness(1.1);
   box-shadow: var(--shadow-button-danger);
+}
+
+.hk-btn-danger:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 /* ---- Block ---- */
@@ -201,6 +221,9 @@
 
 /* ---- Loading ---- */
 
+/* pointer-events: none is deliberate, not dead: the tsx already forces
+   `disabled` while loading (HkButton.tsx), so this only suppresses the
+   :disabled not-allowed cursor — a busy spinner reads busy, not broken. */
 .hk-btn-loading {
   pointer-events: none;
 }

@@ -9,32 +9,25 @@
 .hk-progress-ring-svg {
   width: 100%;
   height: 100%;
-  transform: rotate(0deg);
 }
 
 .hk-progress-ring-track {
   stroke: var(--hk-progress-ring-track, var(--hi-color-border, rgba(0, 0, 0, 0.12)));
-  transition: stroke 0.3s ease;
-}
-
-.hk-progress-ring-fill {
-  stroke: var(--hi-color-primary, #58a6ff);
-  transition:
-    stroke-dashoffset 0.3s ease,
-    stroke 0.3s ease;
-}
-
-.hk-progress-ring-success .hk-progress-ring-fill {
-  stroke: var(--hi-color-success, #3fb950);
+  transition: stroke var(--duration-normal) var(--ease-standard);
 }
 
 // Segmented-mode arcs: segments without an explicit `color` fall back to
 // the theme primary (same default as the single-value fill).
+.hk-progress-ring-fill,
 .hk-progress-ring-seg {
   stroke: var(--hi-color-primary, #58a6ff);
   transition:
-    stroke-dashoffset 0.3s ease,
-    stroke 0.3s ease;
+    stroke-dashoffset var(--duration-normal) var(--ease-standard),
+    stroke var(--duration-normal) var(--ease-standard);
+}
+
+.hk-progress-ring-success .hk-progress-ring-fill {
+  stroke: var(--hi-color-success, #3fb950);
 }
 
 .hk-progress-ring-exception .hk-progress-ring-fill {

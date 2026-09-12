@@ -3,7 +3,7 @@
 .s-theme-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-2, 2px);
 }
 
 .s-theme-toggle-btn {
@@ -42,6 +42,10 @@
 .s-theme-toggle-btn:hover {
   background: rgb(var(--color-primary) / 12%);
   color: rgb(var(--color-text));
+}
+
+.s-theme-toggle-btn:active {
+  background: rgb(var(--color-primary) / 16%);
 }
 
 .s-theme-menu {
@@ -138,6 +142,15 @@
   outline-offset: -2px;
 }
 
+/* The press scale above rides the transition's transform leg; snap it
+ * under reduced motion while keeping the color/background legs
+ * (house pattern: HkIconButton.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .s-theme-mode-autoalt {
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+}
+
 .s-theme-mode-autoalt-value {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -232,7 +245,7 @@
 
 /* Custom rows keep the name clear of the overlaid delete button. */
 .s-theme-item-row[data-custom] .s-theme-item-name {
-  margin-right: 2rem;
+  margin-inline-end: 2rem;
 }
 
 .s-theme-item-check {
@@ -240,25 +253,15 @@
   color: rgb(var(--color-primary));
 }
 
-.s-theme-item-btn:hover:not([data-active]) {
-  background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
-  border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
-  color: rgb(var(--color-text));
-}
-
-.s-theme-item-btn[data-active] {
-  background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
-  border-color: var(--c-primary-strong, rgb(var(--color-primary) / 40%));
-  color: rgb(var(--color-primary));
-  font-weight: 600;
-}
+/* Hover/active states come verbatim from the unified mi.item spec included
+ * on .s-theme-item-btn above — former local copies deleted (R3 sweep). */
 
 /* Delete affordance for custom themes — an overlay pinned inside the
  * pill's trailing edge (the row is relative), not a reserved column:
  * built-in rows show nothing there and the pill runs to the row edge. */
 .s-theme-item-delete {
   position: absolute;
-  right: var(--space-8, 0.5rem);
+  inset-inline-end: var(--space-8, 0.5rem);
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
@@ -278,6 +281,13 @@
   color: rgb(var(--color-error));
 }
 
+/* Keyboard parity for the destructive overlay (mi.item-style inset ring,
+ * error-tinted to match its hover). */
+.s-theme-item-delete:focus-visible {
+  outline: 2px solid rgb(var(--color-error));
+  outline-offset: -2px;
+}
+
 /* Touch-sized delete target on phone widths, scaled for the 44px sheet
  * rows that the shared spec applies inside sheet contexts (see
  * ./_menu-item.scss). The name clearance follows so the button and the
@@ -289,7 +299,7 @@
   }
 
   .s-theme-item-row[data-custom] .s-theme-item-name {
-    margin-right: 2.75rem;
+    margin-inline-end: 2.75rem;
   }
 }
 
@@ -302,7 +312,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--space-2, 2px);
   color: inherit;
 }
 
@@ -320,5 +330,5 @@
 }
 
 .s-theme-item-row[data-trailing="slot"] .s-theme-item-name {
-  margin-right: 0;
+  margin-inline-end: 0;
 }

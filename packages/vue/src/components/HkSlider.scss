@@ -87,8 +87,10 @@
   pointer-events: none;
 }
 
-.hk-slider:hover .hk-slider-thumb,
-.hk-slider:active .hk-slider-thumb {
+// Disabled stays inert: no press/hover feedback on a non-interactive
+// control (tsx gates the interaction; the dim alone reads as disabled).
+.hk-slider:not(.is-disabled):hover .hk-slider-thumb,
+.hk-slider:not(.is-disabled):active .hk-slider-thumb {
   transform: translateY(-50%) scale(1.15);
 }
 
@@ -96,4 +98,12 @@
   width: 12px;
   height: 12px;
   margin-left: -6px;
+}
+
+// Reduced motion: the hover/press scale snaps instead of animating
+// (house pattern: HkProgressBar.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-slider-thumb {
+    transition: none;
+  }
 }

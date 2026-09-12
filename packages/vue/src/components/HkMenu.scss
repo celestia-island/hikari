@@ -59,12 +59,6 @@
   min-width: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hk-menu-row {
-    transition: none;
-  }
-}
-
 /* ── sidebar variant ────────────────────────────────────────────── */
 /* Inline vertical nav list — always rendered, no popover machinery.
  * Rows share the unified menu-item spec's grammar (metrics + states),
@@ -81,19 +75,11 @@
 
 .hk-menu-sidebar-row {
   @include mi.item;
-
-  .hk-menu-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
-.hk-menu-sidebar-row .hk-menu-item-icon {
-  @include mi.icon;
-}
+/* Label and icon grammar comes from the shared .hk-menu-label /
+ * .hk-menu-item-icon rules above — sidebar rows carry those classes, so
+ * no sidebar-scoped copies are needed. */
 
 .hk-menu-sidebar-group {
   display: flex;
@@ -109,6 +95,19 @@
   transform: rotate(90deg);
 }
 
+/* RTL mirrors the expand chevron: the tsx always renders a right-pointing
+ * glyph, which reads backwards on the flipped axis (HkBreadcrumb
+ * precedent — scaleX mirrors paint only). An open group composes the
+ * same +90° turn after the mirror, so the open glyph points down in
+ * both directions. */
+[dir="rtl"] .hk-menu-more {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .hk-menu-sidebar-group[data-open] .hk-menu-sidebar-group-toggle .hk-menu-more {
+  transform: scaleX(-1) rotate(90deg);
+}
+
 .hk-menu-sidebar-children {
   display: flex;
   flex-direction: column;
@@ -117,17 +116,30 @@
 }
 
 .hk-menu-sidebar-badge {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 18px;
   height: 18px;
   padding: 0 var(--space-4, 4px);
-  border-radius: 999px;
-  background: rgb(var(--color-error, 240 70 80));
+  border-radius: var(--radius-full, 9999px);
+  background: rgb(var(--color-error, 247 118 142));
   color: #fff;
   font-size: var(--text-2xs, 10px);
   font-weight: 700;
   line-height: 1;
+}
+
+/* Reduced motion resets live AFTER the rules they guard so `transition: none`
+ * wins the cascade (the chevron's (0,2,0) transform transition used to be
+ * declared later in source order, leaving this guard dead for it). Sidebar
+ * rows carry the same mi.item color fades as .hk-menu-row, so they reset
+ * too. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-menu-row,
+  .hk-menu-sidebar-row,
+  .hk-menu-sidebar-group-toggle .hk-menu-more {
+    transition: none;
+  }
 }

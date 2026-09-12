@@ -72,7 +72,7 @@
   /* "/" separators between segments (the root crumb renders its own). */
   & + .hk-file-browser-crumb::before {
     content: "/";
-    margin-right: var(--space-4);
+    margin-inline-end: var(--space-4);
     color: color-mix(in srgb, rgb(var(--color-muted)) 60%, transparent);
   }
 
@@ -229,7 +229,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 /* Compact type-filter select (HkSelect trigger inside). */
@@ -261,7 +261,7 @@
     color var(--duration-normal) var(--ease-standard);
 
   & + .hk-file-browser-layout-btn {
-    border-left: 1px solid var(--border-subtle);
+    border-inline-start: 1px solid var(--border-subtle);
   }
 
   &:hover:not([data-active]) {
@@ -382,7 +382,7 @@
   gap: var(--space-8);
   align-items: center;
   padding: var(--space-6) var(--space-12);
-  text-align: left;
+  text-align: start;
 }
 
 .hk-file-browser-list-head {
@@ -416,9 +416,12 @@
     background: var(--c-primary-subtle);
   }
 
+  // Keyboard focus is drawn INSIDE the border box (HkSelectionGrid model):
+  // rows scroll beneath the sticky list head (position: sticky + opaque
+  // surface bg), which shaves the top edge of an outer spread ring.
   &:focus-visible {
-    box-shadow: var(--shadow-focus);
-    outline: none;
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
   }
 
   &[data-selected] {
@@ -429,6 +432,12 @@
   &[data-kind="dir"] .hk-file-browser-col-name {
     font-weight: 600;
   }
+}
+
+/* RTL mirrors the physical-left selection bar (house pattern:
+ * HkDraggableGrid.scss flips its inset insertion markers the same way). */
+[dir="rtl"] .hk-file-browser-row[data-selected] {
+  box-shadow: inset -2px 0 0 rgb(var(--color-primary));
 }
 
 .hk-file-browser-col-name {
@@ -442,7 +451,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  text-align: right;
+  text-align: end;
   font-size: var(--text-xs);
   color: rgb(var(--color-muted));
 }
@@ -466,7 +475,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   font-family: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     background-color var(--duration-normal) var(--ease-standard),
@@ -476,9 +485,11 @@
     border-color: var(--c-primary-medium);
   }
 
+  // Same inside-the-border-box focus ring as the list rows: grid tiles
+  // also scroll beneath the sticky list head in the modal scroller.
   &:focus-visible {
-    box-shadow: var(--shadow-focus);
-    outline: none;
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
   }
 
   &[data-selected] {

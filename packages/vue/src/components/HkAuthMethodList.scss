@@ -7,8 +7,7 @@
 .s-auth-methods-divider {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  gap: var(--space-10, 0.625rem);
   margin: 0 0 var(--space-4, 0.25rem);
   color: var(--hi-color-muted, #999);
   font-size: var(--text-xs, 0.75rem);
@@ -32,9 +31,10 @@
 
 /* Fixed icon + label columns: the two spans keep the same width on every
    row, so icons and labels align across buttons while each button stays a
-   centered hk-btn-block. HkButton has a fragment root, so inbound classes
-   don't fall through — scope everything off the `.s-auth-methods`
-   container (descendant match: the component wrapper is display:contents).
+   centered hk-btn-block. The part classes sit on the default-slot spans
+   inside HkButton's single <button> root — scope everything off the
+   `.s-auth-methods` container (descendant match: the component wrapper
+   is display:contents).
    The label column width is MEASURED by the component (widest label text
    + 1px headroom, published as `--auth-methods-label-width` on its
    wrapper, inherited into the rows); the `max-content` fallback only

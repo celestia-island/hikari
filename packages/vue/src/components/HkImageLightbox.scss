@@ -93,8 +93,6 @@
   top: var(--space-12, 0.75rem);
   right: var(--space-12, 0.75rem);
   z-index: 2;
-  background: var(--hi-icon-button-bg);
-  color: var(--hi-icon-button-icon-color);
   backdrop-filter: blur(6px);
 
   &:hover,
@@ -115,9 +113,12 @@
     }
   }
 
+  // Focus ring rides INSIDE the chip (negative offset, HkSelectionGrid
+  // precedent): an outward ring floats over raw imagery and vanishes on
+  // light photos.
   &:focus-visible {
     outline: 2px solid rgb(255 255 255 / 80%);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 

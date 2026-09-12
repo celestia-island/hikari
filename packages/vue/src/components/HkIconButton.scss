@@ -6,14 +6,15 @@
 // Hikari IconButton Component - FUI Styling
 // Three-layer CSS variable system:
 // - Layer1: Foundation variables (foundation.scss)
-// - Layer2: Component variables (icon-button-vars.scss)
+// - Layer2: Component variables (HkIconButtonVars.scss)
 // - Custom: Runtime overrides via AnimationBuilder
 //
-// NOTE: Hover effects are handled by Glow wrapper, not here
+// NOTE: This sheet now carries baseline hover/press feedback via the
+// --hi-icon-button-* active vars; hosts can out-rank it (see below).
 // ------
 
 .hk-icon-button {
-  // Layer2 variables are defined in icon-button-vars.scss
+  // Layer2 variables are defined in HkIconButtonVars.scss
 
   // Layout
   display: inline-flex;
@@ -22,7 +23,6 @@
   flex-shrink: 0;
   padding: 0;
   line-height: 0;
-  gap: 0;
 
   // Size - use CSS variables
   width: var(--hi-icon-button-size);
@@ -54,84 +54,47 @@
   // Transitions - use CSS variables
   transition: var(--hi-icon-button-transition);
 
-  // No transform - controlled by AnimationBuilder via Glow wrapper
+  // Resting transform stays none and the press keeps it that way — the
+  // press feedback is the background wash only.
 
   // Cursor
   cursor: pointer;
 
-  // Focus state - only outline, no color changes
+  // Focus state - only outline, no color changes (the glyph color var is
+  // identical at rest, so re-declaring it here would be a no-op)
   &:focus-visible {
     outline: 2px solid var(--hi-icon-button-border-color-focus);
     outline-offset: 2px;
-    color: var(--hi-icon-button-icon-color);
-
-    .hk-icon-button-icon {
-      color: var(--hi-icon-button-icon-color);
-    }
   }
 
   // Disabled state
   &:disabled {
     background: var(--hi-icon-button-bg-disabled);
-    color: var(--hi-icon-button-icon-color-disabled);
     cursor: not-allowed;
     pointer-events: none;
   }
 
-  // No active state - controlled by AnimationBuilder via Glow wrapper
+  // Hover / press feedback. The old contract deferred these to the
+  // Rust-side Glow wrapper, but Vue-library hosts render no Glow
+  // (window-close.scss and the lightbox close each had to paint their
+  // own tint). These defaults consume the designed active vars from
+  // HkIconButtonVars.scss; :where() keeps both rules at (0,1,0) so any
+  // host hover paint — .hk-window-close's (0,3,0) tint, the lightbox
+  // chip's (0,4,0) re-assertion — still outranks them (zero-specificity
+  // guard pattern from styles/theme/base.scss).
+  &:where(:hover:not(:disabled):not(:active)) {
+    background: var(--hi-icon-button-bg-hover, var(--hi-icon-button-bg-active));
+  }
 
-  // ------
-  // Size Variants - Variables defined in icon-button-vars.scss
-  // ------
-
-  &.hk-icon-button-16,
-  &.hk-icon-button-24,
-  &.hk-icon-button-32,
-  &.hk-icon-button-36,
-  &.hk-icon-button-40 {
-    // Size variables are already set by the classes in icon-button-vars.scss
+  &:where(:active:not(:disabled)) {
+    background: var(--hi-icon-button-bg-active);
   }
 
   // ------
-  // Variant: Ghost (default - transparent)
+  // Size/variant hooks carry no rules here: .hk-icon-button-16/24/32/36/40
+  // and -ghost/-borderless/-primary/-secondary/-danger/-success get all of
+  // their custom properties from HkIconButtonVars.scss.
   // ------
-
-  &.hk-icon-button-ghost,
-  &.hk-icon-button-borderless {
-    // Variables defined in icon-button-vars.scss
-  }
-
-  // ------
-  // Variant: Primary (solid primary color)
-  // ------
-
-  &.hk-icon-button-primary {
-    // Variables defined in icon-button-vars.scss
-  }
-
-  // ------
-  // Variant: Secondary (solid secondary color)
-  // ------
-
-  &.hk-icon-button-secondary {
-    // Variables defined in icon-button-vars.scss
-  }
-
-  // ------
-  // Variant: Danger (solid danger color)
-  // ------
-
-  &.hk-icon-button-danger {
-    // Variables defined in icon-button-vars.scss
-  }
-
-  // ------
-  // Variant: Success (solid success color)
-  // ------
-
-  &.hk-icon-button-success {
-    // Variables defined in icon-button-vars.scss
-  }
 
   // ------
   // Icon Styles - Use CSS Variables
@@ -169,8 +132,12 @@
   &:disabled .hk-icon-button-icon {
     color: var(--hi-icon-button-icon-color-disabled);
   }
+}
 
-  .hk-icon-button-disabled {
-    opacity: 0.3;
+// The transition above drives the press transform; snap it under reduced
+// motion (house pattern: HkFab.scss / HkExpansionPanel.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-icon-button {
+    transition: none;
   }
 }

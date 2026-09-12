@@ -18,7 +18,7 @@
 }
 
 .hk-input-required {
-  margin-left: var(--space-2);
+  margin-inline-start: var(--space-2);
   color: rgb(var(--color-error));
 }
 
@@ -34,7 +34,12 @@
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  /* Longhand on purpose: the comma shorthand attached the duration to the
+   * LAST property only, so hover border-color and the focus-within
+   * background/box-shadow snapped at 0s (HkButton F5, same disease). */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
   color: rgb(var(--color-text));
 
   &:hover:not(.hk-input-box-disabled) {
@@ -63,7 +68,6 @@
 }
 
 .hk-input-box[data-autogrow] {
-  display: flex;
   flex-direction: column;
   align-items: stretch;
 }
@@ -140,7 +144,6 @@
 .hk-input-element.hk-input-textarea {
   position: relative;
   inset: unset;
-  width: 100%;
   height: auto;
   flex: 1;
   min-width: 0;
@@ -161,28 +164,6 @@
    matched — data-autogrow is stamped on the box, not the textarea.) */
 .hk-input-textarea-autogrow {
   resize: none;
-}
-
-.hk-input-box[data-autogrow] {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.hk-input-autogrow {
-  flex: 1;
-  min-height: 0;
-}
-
-.hk-input-textarea[data-autogrow] {
-  position: relative;
-  inset: unset;
-  width: 100%;
-  flex: 0 0 auto;
-  resize: none;
-  overflow: hidden;
-  min-height: 2.5rem;
-  text-align: start;
 }
 
 .hk-input-affix {
@@ -282,10 +263,29 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #888);
+  /* Contract tokens, not the raw app triplets: --color-text-secondary is a
+   * bare "R G B" triplet, so using it directly as a color is invalid at
+   * computed-value time (the rule silently inherits); --color-text-primary
+   * is not defined anywhere. --hi-color-* wrap the triplets in rgb(). */
+  color: var(--hi-color-text-secondary, #888);
   cursor: pointer;
 
   &:hover {
-    color: var(--color-text-primary, #222);
+    color: var(--hi-color-text-primary, #222);
+  }
+
+  // Keyboard parity (house icon-button pattern, HkIconButton): this real
+  // <button> had a hover state only, so keyboard focus was invisible.
+  // Offset 2px is safe here — the toggle rides the box's inline padding,
+  // well inside the box's overflow:hidden clip edge.
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  // Press feedback matching the house button pattern (HkButton variants).
+  &:active {
+    filter: brightness(0.95);
   }
 }

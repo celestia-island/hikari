@@ -2,7 +2,7 @@
 @use "./hikari-vars" as vars;
 
 .hk-markdown {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   line-height: 1.7;
   color: var(--hi-color-text-primary, #c9d1d9);
   position: relative;
@@ -31,7 +31,7 @@
 .hk-markdown ul,
 .hk-markdown ol {
   margin: 0.5em 0;
-  padding-left: 1.5em;
+  padding-inline-start: 1.5em;
 }
 
 .hk-markdown li {
@@ -59,13 +59,11 @@
   position: relative;
   margin: 0.75em 0;
   padding: 1em;
-  border-radius: 4px;
-  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
   line-height: 1.5;
-  user-select: none;
-  cursor: pointer;
   overflow-x: auto;
-  background: var(--hi-color-bg-subtle, #0d1117);
+  background: var(--hi-color-bg-subtle, #21262d);
 
   /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
      hidden, never styled. */
@@ -83,7 +81,7 @@
 .hk-md-code-lang {
   position: absolute;
   top: 0.25em;
-  right: 0.5em;
+  inset-inline-end: 0.5em;
   font-size: 0.625em;
   color: var(--hi-color-text-tertiary, #8b949e);
   opacity: 0.6;
@@ -97,7 +95,7 @@
   margin: 0;
   padding: 0.5rem 0;
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   line-height: 1.6;
   color: var(--hi-color-text-primary, #c9d1d9);
   white-space: pre-wrap;
@@ -107,7 +105,7 @@
 .hk-markdown blockquote {
   margin: 0.75em 0;
   padding: 0.5em 1em;
-  border-left: 3px solid var(--hi-color-text-tertiary, #8b949e);
+  border-inline-start: 3px solid var(--hi-color-text-tertiary, #8b949e);
   color: var(--hi-color-text-secondary, #8b949e);
 }
 
@@ -121,7 +119,7 @@
 .hk-markdown td {
   padding: 0.5em 0.75em;
   border: 1px solid var(--hi-color-border, #30363d);
-  text-align: left;
+  text-align: start;
 }
 
 .hk-markdown th {
@@ -138,6 +136,14 @@
   text-decoration: underline;
 }
 
+/* Rendered GFM links are real anchors — keyboard-focusable, so they need
+   the house :focus-visible ring (HkFab/HkContextRing pattern). Ring uses
+   the same contract var as the link ink so it matches in every theme. */
+.hk-markdown a:focus-visible {
+  outline: 2px solid var(--hi-color-primary, #58a6ff);
+  outline-offset: 2px;
+}
+
 .hk-markdown hr {
   border: none;
   border-top: 1px solid var(--hi-color-border, #30363d);
@@ -146,7 +152,7 @@
 
 .hk-markdown img {
   max-width: 100%;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .hk-markdown-overlay {
@@ -155,7 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--hi-color-surface) 70%, transparent);
+  background: color-mix(in srgb, var(--hi-color-surface, #fff) 70%, transparent);
   backdrop-filter: blur(4px);
   z-index: 10;
 }

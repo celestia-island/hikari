@@ -13,21 +13,31 @@
   min-width: 0;
 }
 
-// Number segment: keeps its left rounding, square right edge at the seam.
+// Number segment: keeps its inline-start rounding, square inline-end
+// edge at the seam. Logical corners so the joined geometry survives an
+// RTL flip (the flex row mirrors, and physical left/right radii would
+// land on the wrong sides).
 // (The extra .hk-badge term out-specifies hikari's own
 // `.hk-badge[data-pill="false"]` radius so import order cannot flip it.)
 .s-model-tag-group .hk-badge.s-model-tag-num {
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-  border-right: none;
+  border-start-start-radius: var(--radius-sm, 4px);
+  border-end-start-radius: var(--radius-sm, 4px);
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  border-inline-end: none;
   flex-shrink: 0;
 }
 
-// Name segment: square left edge at the seam — its own left border IS the
-// divider line (darkened a notch so the seam reads clearly against both
-// badge fills). Must be allowed to shrink so the text can ellipsize.
+// Name segment: square inline-start edge at the seam — its own
+// inline-start border IS the divider line (darkened a notch so the seam
+// reads clearly against both badge fills). Must be allowed to shrink so
+// the text can ellipsize.
 .s-model-tag-group .hk-badge.s-model-tag-name {
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  border-left-color: rgb(var(--color-muted) / 35%);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-start-end-radius: var(--radius-sm, 4px);
+  border-end-end-radius: var(--radius-sm, 4px);
+  border-inline-start-color: rgb(var(--color-muted) / 35%);
   min-width: 0;
   overflow: hidden;
 }
@@ -35,7 +45,7 @@
 // No `#tag` segment (bare model id): the name badge stands alone and
 // keeps the full badge radius — the divider/seam styling never shows.
 .s-model-tag-group .hk-badge.s-model-tag-name:only-child {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm, 4px);
 }
 
 .s-model-tag-name-text {
@@ -80,7 +90,7 @@
 .s-model-card-stats {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 2px var(--space-10, 0.625rem);
+  gap: var(--space-2, 0.125rem) var(--space-10, 0.625rem);
   align-items: baseline;
 }
 
@@ -90,7 +100,7 @@
 }
 
 .s-model-card-col2 {
-  text-align: right;
+  text-align: end;
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-variant-numeric: tabular-nums;
 }
@@ -114,8 +124,8 @@
 .s-model-card-cap {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px var(--space-6, 0.375rem);
+  gap: var(--space-4, 0.25rem);
+  padding: var(--space-2, 0.125rem) var(--space-6, 0.375rem);
   border-radius: var(--radius-sm, 4px);
   background: rgb(var(--color-primary) / 10%);
   color: rgb(var(--color-primary));

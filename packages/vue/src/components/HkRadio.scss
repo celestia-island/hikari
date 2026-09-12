@@ -1,6 +1,6 @@
 .hk-radio-group {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-16, 1rem);
 
   &-horizontal {
     flex-direction: row;
@@ -12,18 +12,18 @@
   }
 
   &-sm {
-    gap: 0.5rem;
+    gap: var(--space-8, 0.5rem);
   }
 
   &-lg {
-    gap: 1.25rem;
+    gap: var(--space-20, 1.25rem);
   }
 }
 
 .hk-radio {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-8, 0.5rem);
   cursor: pointer;
   user-select: none;
 
@@ -43,8 +43,8 @@
   border: 1px solid var(--hi-color-border);
   background: var(--hi-color-surface);
   transition:
-    border-color 0.3s ease,
-    background 0.3s ease;
+    border-color var(--hi-duration-normal, 0.3s) ease,
+    background var(--hi-duration-normal, 0.3s) ease;
   flex-shrink: 0;
   position: relative;
 
@@ -81,6 +81,15 @@
   height: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Keyboard focus: the native input is visually hidden, so draw the house
+   double ring (HkButton/HkCheckbox pattern) on the box via :has();
+   :focus-visible keeps mouse clicks ring-free. */
+.hk-radio-box:has(.hk-radio-input:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--hi-color-surface, rgba(255, 255, 255, 0.95)),
+    0 0 0 4px var(--hi-color-primary, #ff6b9d);
 }
 
 /* --- Dot --- */

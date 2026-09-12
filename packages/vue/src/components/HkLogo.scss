@@ -13,6 +13,14 @@ a.hk-logo {
   text-decoration: none;
 }
 
+/* Keyboard parity (HkButton double ring): the anchor variant otherwise
+ * falls back to the rectangular UA outline. The div variant never
+ * matches :focus-visible (not focusable without a tsx tabindex). */
+a.hk-logo:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-primary));
+}
+
 .hk-logo-img {
   display: block;
   border-radius: var(--hi-radius-md, 8px);
@@ -23,14 +31,15 @@ a.hk-logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hi-color-primary);
+  /* Contract token with hex fallback (house idiom). No radius here: the
+   * only render site is inside .hk-logo, whose matching border-radius +
+   * overflow: hidden already clip this exactly-fitting child. */
+  background: var(--hi-color-primary, #58a6ff);
   color: rgb(var(--color-on-solid-text, 255 255 255));
-  border-radius: var(--hi-radius-md, 8px);
 }
 
 .hk-logo-initial {
   font-weight: 700;
   font-size: 50%;
   line-height: 1;
-  user-select: none;
 }

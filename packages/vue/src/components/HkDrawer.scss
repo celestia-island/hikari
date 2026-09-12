@@ -112,13 +112,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--hi-space-12, 0.75rem) var(--hi-space-16, 1rem);
+  padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
   border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
 }
 
 .hk-drawer-title {
-  font-size: var(--hi-text-base, 1rem);
+  font-size: var(--text-base, 0.875rem);
   font-weight: 700;
   color: var(--hi-color-text-primary, #333);
 }
@@ -147,7 +147,7 @@
   /* Consumers nesting a self-padded menu (HkMenuPanel) zero this via
      --hk-drawer-body-padding so nav rows and the footer menu share one
      left edge. */
-  padding: var(--hk-drawer-body-padding, var(--hi-space-16, 1rem));
+  padding: var(--hk-drawer-body-padding, var(--space-16, 1rem));
 
   /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
      hidden, never styled. */
@@ -161,7 +161,7 @@
 .hk-drawer-footer {
   /* HkMenuPanel carries its own inset; zero this variable when the
      footer hosts one so both edges align. */
-  padding: var(--hk-drawer-footer-padding, var(--hi-space-12, 0.75rem) var(--hi-space-16, 1rem));
+  padding: var(--hk-drawer-footer-padding, var(--space-12, 0.75rem) var(--space-16, 1rem));
   border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
 }
@@ -218,5 +218,25 @@
       padding: var(--space-8) var(--space-16);
       font-size: var(--text-base);
     }
+  }
+}
+
+/* Reduced motion: the width/height size morph and the four slide
+   directions snap instead of animating — the surface machine's
+   zero-duration probe (useSurfaceMachine.completeNow) finalizes open/
+   close immediately. The overlay scrim's fade is already flattened by
+   the same media query inside scrim-fade().
+   (house pattern: HkModal.scss / HkPopover.scss guards) */
+@media (prefers-reduced-motion: reduce) {
+  .hk-drawer-panel,
+  .hk-drawer-left-enter-active,
+  .hk-drawer-right-enter-active,
+  .hk-drawer-top-enter-active,
+  .hk-drawer-bottom-enter-active,
+  .hk-drawer-left-leave-active,
+  .hk-drawer-right-leave-active,
+  .hk-drawer-top-leave-active,
+  .hk-drawer-bottom-leave-active {
+    transition: none;
   }
 }

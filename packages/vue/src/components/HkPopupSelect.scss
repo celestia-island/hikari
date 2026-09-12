@@ -20,7 +20,7 @@
 }
 
 .hk-popup-select-required {
-  margin-left: var(--space-2);
+  margin-inline-start: var(--space-2);
   color: rgb(var(--color-error));
 }
 
@@ -28,7 +28,10 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: var(--space-8) var(--space-32) var(--space-8) var(--space-12);
+  // Logical longhand: the wide end inset clears the arrow on the inline END
+  // edge, so an RTL locale mirrors both the padding and the arrow with it.
+  padding: var(--space-8) var(--space-12);
+  padding-inline-end: var(--space-32);
   min-height: 2.5rem;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   
@@ -41,12 +44,23 @@
   text-align: center;
   cursor: pointer;
   outline: none;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  /* Longhand on purpose: the former comma-separated shorthand declared one
+   * transition per property where only `filter` carried the duration — the
+   * rest animated at 0s so hover/focus snapped (HkButton.scss precedent). */
+  transition-property: background-color, border-color, color, box-shadow,
+    opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
   position: relative;
 }
 
 .hk-popup-select-trigger:hover:not([data-disabled]) {
   border-color: var(--c-primary-strong);
+}
+
+// Press feedback (house pattern: HkButton.scss :active brightness dip).
+.hk-popup-select-trigger:active:not(:disabled):not([data-disabled]) {
+  filter: brightness(0.95);
 }
 
 .hk-popup-select-trigger:focus,
@@ -80,10 +94,9 @@
 
 .hk-popup-select-arrow {
   position: absolute;
-  right: 0.75rem;
+  inset-inline-end: var(--space-12);
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
   pointer-events: none;
-  flex-shrink: 0;
   transition: transform var(--duration-normal) ease;
 }
 
@@ -115,8 +128,8 @@
   @include mi.item;
 }
 
-/* Highlight face yields to checked/active (see HkSelect.scss). */
-.hk-popup-select-item:hover:not([data-checked]):not([data-active]),
+/* Keyboard highlight face yields to checked/active; the hover face comes
+ * from mi.item's own guarded :hover (identical values, higher specificity). */
 .hk-popup-select-item[data-highlighted]:not([data-checked]):not([data-active]) {
   background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
   border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
@@ -137,3 +150,11 @@
 // lit a second nested scrollbar inside the same window. The desktop
 // popout keeps its 240px content cap + viewport scroll, where the
 // viewport bar is the popup's only scrollbar.
+
+// Chevron flip is a transform animation — house reduced-motion guard
+// (HkExpansionPanel.scss silences its chevron the same way).
+@media (prefers-reduced-motion: reduce) {
+  .hk-popup-select-arrow {
+    transition: none;
+  }
+}

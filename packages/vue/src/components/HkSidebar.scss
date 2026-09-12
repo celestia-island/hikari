@@ -9,14 +9,16 @@
   flex-direction: column;
   height: 100%;
   background: var(--hk-sidebar-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
-  backdrop-filter: blur(8px);
-  border-right: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  backdrop-filter: blur(var(--blur-sm, 8px));
+  /* Logical edge: the border rides the content-facing side in either
+   * direction (LTR sidebar docks left, RTL docks right). */
+  border-inline-end: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
   transition: width var(--hi-duration-normal, 0.3s) ease;
   overflow: hidden;
 }
 
 .hk-sidebar-header {
-  padding: 16px 12px;
+  padding: var(--space-16) var(--space-12);
   border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
   min-height: 56px;
@@ -38,7 +40,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-block: 20px 4px;
+  padding-block: var(--space-20) var(--space-4);
   padding-inline: var(--space-12);
 
   /* Overlay scrollbar (useOverlayScrollbar) — the native chrome is
@@ -51,7 +53,7 @@
 }
 
 .hk-sidebar-footer {
-  padding: 16px 10px;
+  padding: var(--space-16) var(--space-10);
   border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
   flex-shrink: 0;
 }
@@ -59,15 +61,15 @@
 .hk-sidebar[data-collapsed] {
   .hk-sidebar-header {
     justify-content: center;
-    padding: 12px 8px;
+    padding: var(--space-12) var(--space-8);
   }
 
   .hk-sidebar-body {
-    padding-block: 12px 4px;
+    padding-block: var(--space-12) var(--space-4);
   }
 
   .hk-sidebar-footer {
-    padding: 12px 8px;
+    padding: var(--space-12) var(--space-8);
   }
 }
 
@@ -81,6 +83,18 @@
   .hk-sidebar-panel {
     width: 280px;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
-    border-right: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+    /* Shadow offsets cannot flip via logical properties — mirror the
+     * cast toward the content side in RTL (house [dir=rtl] override). */
+    [dir="rtl"] & {
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+    border-inline-end: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-sidebar,
+  .hk-sidebar-panel {
+    transition: none;
   }
 }

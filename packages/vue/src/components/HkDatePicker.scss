@@ -13,33 +13,40 @@
   opacity: 0.5;
 }
 
-/* ── Trigger ─────────────────────────────────────────────────── */
-
-.hk-dp-trigger {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--hi-space-6, 6px);
+/* ── Trigger / native input ──────────────────────────────────── */
+/* The custom trigger and the native <input type="date"> carry
+ * byte-identical field chrome, so those declarations live in one group. */
+.hk-dp-trigger,
+.hk-dp-native {
   width: 100%;
   min-height: 2.5rem;
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   color: rgb(var(--color-text));
   font-family: inherit;
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
-  cursor: pointer;
-  user-select: none;
   transition:
     background-color var(--hi-duration-fast, 0.15s) ease,
     border-color var(--hi-duration-fast, 0.15s) ease,
     box-shadow var(--hi-duration-fast, 0.15s) ease;
 }
 
+.hk-dp-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6, 6px);
+  cursor: pointer;
+  user-select: none;
+}
+
 .hk-dp:not(.is-disabled) .hk-dp-trigger:hover,
-.hk-dp-trigger:focus-visible {
+.hk-dp:not(.is-disabled) .hk-dp-native:hover,
+.hk-dp-trigger:focus-visible,
+.hk-dp-native:focus-visible {
   border-color: rgb(var(--color-focused-border));
 }
 
@@ -53,8 +60,9 @@
   }
 }
 
-/* Focus ring + open state live on the trigger itself. */
-.hk-dp-trigger:focus-visible {
+/* Focus ring + open state live on the field itself. */
+.hk-dp-trigger:focus-visible,
+.hk-dp-native:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
   background: rgb(var(--color-surface));
@@ -67,8 +75,8 @@
 
 .hk-dp-trigger-sm {
   min-height: 2rem;
-  padding: var(--hi-space-4, 4px) var(--hi-space-10, 10px);
-  font-size: var(--hi-text-xs, 0.75rem);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
 }
 
 .hk-dp-value {
@@ -102,7 +110,6 @@
 
   .hk-dp-trigger:hover &,
   .hk-dp-trigger:focus &,
-  .hk-dp-trigger:focus-visible &,
   .hk-dp-clear:focus-visible {
     opacity: 1;
   }
@@ -124,13 +131,13 @@
 /* ── Calendar panel ──────────────────────────────────────────── */
 
 .hk-dp-popover.hk-popover-panel {
-  padding: var(--hi-space-10, 10px) var(--hi-space-12, 12px) var(--hi-space-8, 8px);
+  padding: var(--space-10, 10px) var(--space-12, 12px) var(--space-8, 8px);
 }
 
 .hk-dp-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
   min-width: 17.5rem;
   user-select: none;
   color: var(--hi-color-text-primary);
@@ -152,10 +159,7 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: var(--hi-space-4, 4px);
-}
-
-.hk-dp-header {
+  gap: var(--space-4, 4px);
   /* Fixed height keeps the header row — and therefore the shared stage
    * height — identical in every view and locale (enlarged on touch). */
   height: var(--hk-picker-header);
@@ -164,7 +168,7 @@
 .hk-dp-header-side {
   display: flex;
   align-items: center;
-  gap: var(--hi-space-2, 2px);
+  gap: var(--space-2, 2px);
   min-width: 0;
 }
 
@@ -192,6 +196,10 @@
     color: var(--hi-color-text-primary);
   }
 
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
   &:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
     outline-offset: 1px;
@@ -204,22 +212,21 @@
 }
 
 .hk-dp-title {
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   font-weight: 600;
   color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;
-  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
 }
 
 .hk-dp-title-btn {
   appearance: none;
   background: transparent;
   border: 0;
-  padding: var(--hi-space-2, 2px) var(--hi-space-4, 4px);
+  padding: var(--space-2, 2px) var(--space-4, 4px);
   font: inherit;
   font-weight: 600;
   color: inherit;
@@ -233,6 +240,10 @@
     color: var(--hi-color-primary);
   }
 
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
+  }
+
   &:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--hi-color-primary) 55%, transparent);
     outline-offset: 1px;
@@ -243,7 +254,7 @@
 .hk-dp-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: var(--space-2, 2px);
 }
 
 /* Month/year pick grids sit in the same fixed stage as the day grid and
@@ -254,7 +265,7 @@
 
 .hk-dp-wd {
   text-align: center;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
   height: var(--hk-picker-wd);
@@ -278,13 +289,17 @@
   justify-content: center;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
   cursor: pointer;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-variant-numeric: tabular-nums;
   transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled):not(.is-selected) {
     background: var(--hi-color-surface);
     color: var(--hi-color-text-primary);
+  }
+
+  &:active:not(:disabled) {
+    filter: brightness(0.95);
   }
 
   &:focus-visible {
@@ -299,10 +314,6 @@
   &.is-disabled {
     cursor: default;
     opacity: 0.25;
-
-    &:hover {
-      background: transparent;
-    }
   }
 
   &.is-today:not(.is-selected) {
@@ -315,10 +326,6 @@
     background: var(--hi-color-primary);
     color: rgb(var(--color-on-solid-text, 255 255 255));
     font-weight: 600;
-
-    &:hover {
-      background: var(--hi-color-primary);
-    }
   }
 }
 
@@ -331,41 +338,18 @@
 .hk-dp-footer {
   display: flex;
   justify-content: center;
-  padding-top: var(--hi-space-6, 6px);
+  padding-top: var(--space-6, 6px);
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 
 /* ── Native mobile input ─────────────────────────────────────── */
+/* Unique native-input bits only; the shared field chrome comes from the
+ * .hk-dp-trigger / .hk-dp-native group at the top of the file. */
 
 .hk-dp-native {
   display: block;
-  width: 100%;
-  min-height: 2.5rem;
   box-sizing: border-box;
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
-  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--hi-radius-sm, 4px);
-  color: rgb(var(--color-text));
-  font-family: inherit;
-  font-size: var(--hi-text-sm, 0.875rem);
-  line-height: 1.5;
   font-variant-numeric: tabular-nums;
-  transition:
-    background-color var(--hi-duration-fast, 0.15s) ease,
-    border-color var(--hi-duration-fast, 0.15s) ease,
-    box-shadow var(--hi-duration-fast, 0.15s) ease;
-}
-
-.hk-dp:not(.is-disabled) .hk-dp-native:hover,
-.hk-dp-native:focus-visible {
-  border-color: rgb(var(--color-focused-border));
-}
-
-.hk-dp-native:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  background: rgb(var(--color-surface));
 }
 
 .hk-dp.is-disabled .hk-dp-native {

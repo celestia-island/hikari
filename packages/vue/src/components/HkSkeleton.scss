@@ -1,18 +1,18 @@
 .hk-skeleton {
   display: inline-block;
-  background: color-mix(in srgb, var(--hi-color-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent);
 }
 
 .hk-skeleton[data-tone="muted"] {
-  background: color-mix(in srgb, var(--hi-color-text-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--hi-color-text-primary, #333) 12%, transparent);
 }
 
 .hk-skeleton[data-animated] {
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--hi-color-primary) 8%, transparent) 25%,
-    color-mix(in srgb, var(--hi-color-primary) 18%, transparent) 50%,
-    color-mix(in srgb, var(--hi-color-primary) 8%, transparent) 75%
+    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 18%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;
@@ -21,9 +21,9 @@
 .hk-skeleton[data-tone="muted"][data-animated] {
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--hi-color-text-primary) 10%, transparent) 25%,
-    color-mix(in srgb, var(--hi-color-text-primary) 22%, transparent) 50%,
-    color-mix(in srgb, var(--hi-color-text-primary) 10%, transparent) 75%
+    color-mix(in srgb, var(--hi-color-text-primary, #333) 10%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-text-primary, #333) 22%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-text-primary, #333) 10%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: hk-skeleton-shimmer 1.5s ease-in-out infinite;
@@ -35,6 +35,14 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+// Reduced motion: keep the placeholder, drop the shimmer sweep
+// (house pattern: HkImagePreview.scss / HkProgressBar.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-skeleton[data-animated] {
+    animation: none;
   }
 }
 

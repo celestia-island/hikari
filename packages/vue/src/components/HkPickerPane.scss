@@ -44,7 +44,8 @@
 .hk-dp-stage,
 .hk-dtp-stage {
   position: relative;
-  height: calc(var(--hk-picker-header) + var(--hk-picker-wd) + 6 * var(--hk-picker-cell) + 10px);
+  height: calc(var(--hk-picker-header) + var(--hk-picker-wd) + 6 * var(--hk-picker-cell) +
+    5 * var(--space-2, 2px));
 }
 
 .hk-dp-pane,
@@ -72,22 +73,48 @@
 
 .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active,
 .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active {
-  animation: hk-picker-pane-fwd-in var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-fwd-in var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active,
 .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active {
-  animation: hk-picker-pane-fwd-out var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-fwd-out var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="back"] > .hk-picker-pane-enter-active,
 .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-enter-active {
-  animation: hk-picker-pane-back-in var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-back-in var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-dp-stage[data-dir="back"] > .hk-picker-pane-leave-active,
 .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-leave-active {
-  animation: hk-picker-pane-back-out var(--hi-duration-normal, 0.18s) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: hk-picker-pane-back-out var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* RTL: reading direction flips, so a forward drill flows left→right —
+ * swap the fwd/back keyframes (HkListTransition/HkBlockingToast
+ * [dir="rtl"] form; same registered keyframes, mirrored direction).
+ * Only the name is overridden: duration and easing carry over from the
+ * rules above, and the reduced-motion / data-css-animations guards below
+ * still win with !important. */
+[dir="rtl"] .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active,
+[dir="rtl"] .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-enter-active {
+  animation-name: hk-picker-pane-back-in;
+}
+
+[dir="rtl"] .hk-dp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active,
+[dir="rtl"] .hk-dtp-stage[data-dir="fwd"] > .hk-picker-pane-leave-active {
+  animation-name: hk-picker-pane-back-out;
+}
+
+[dir="rtl"] .hk-dp-stage[data-dir="back"] > .hk-picker-pane-enter-active,
+[dir="rtl"] .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-enter-active {
+  animation-name: hk-picker-pane-fwd-in;
+}
+
+[dir="rtl"] .hk-dp-stage[data-dir="back"] > .hk-picker-pane-leave-active,
+[dir="rtl"] .hk-dtp-stage[data-dir="back"] > .hk-picker-pane-leave-active {
+  animation-name: hk-picker-pane-fwd-out;
 }
 
 /* The leaving pane overlays the fixed stage so the entering pane can take

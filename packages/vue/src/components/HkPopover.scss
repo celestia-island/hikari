@@ -68,16 +68,12 @@
   border: 1px solid rgb(var(--color-border) / 20%);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-dropdown);
-  padding: var(--space-4, 12px);
+  padding: var(--space-4, 0.25rem);
 }
 
 /* Locale picker menu items — unified menu-item spec (./_menu-item.scss). */
 .hk-popup-menu-item {
   @include mi.item;
-}
-
-.hk-popup-menu-item[data-active]:hover {
-  background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
 }
 
 .hk-locale-submenu {
@@ -125,6 +121,9 @@
   border-left: 0;
   border-right: 0;
   border-bottom: 0;
+  // The panel is a programmatic focus surface (tabindex="-1", focused on
+  // sheet open) — suppress the UA focus ring like .hk-modal-content.
+  outline: none;
   max-height: min(
     72vh,
     calc(
@@ -203,8 +202,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
-  padding: 0 var(--space-8, 0.5rem) var(--space-8, 0.5rem)
-    var(--hk-sheet-title-inset, var(--space-12, 0.75rem));
+  // Logical longhand (was physical `0 x y title-inset`): the title inset is
+  // the inline START edge so RTL mirrors it with the mirrored title/close.
+  padding-block: 0 var(--space-8, 0.5rem);
+  padding-inline: var(--hk-sheet-title-inset, var(--space-12, 0.75rem))
+    var(--space-8, 0.5rem);
 }
 
 .hk-popover-sheet-title {
@@ -220,7 +222,7 @@
   font-size: var(--text-base, 0.875rem);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: rgb(var(--color-muted, 140 140 140));
+  color: rgb(var(--color-muted, 108 108 108));
   user-select: none;
   -webkit-user-select: none;
 }
@@ -228,8 +230,9 @@
 .hk-popover-sheet-close {
   // Legacy placement hook — the chrome lives on the shared .hk-icon-button
   // / .hk-window-close rules (window-close.scss) since the unified-close
-  // wave. Only the right-edge pinning stays here.
-  margin-left: auto;
+  // wave. Only the trailing-edge pinning stays here (logical, so the close
+  // mirrors to the left in RTL like HkInput/HkTagInput's auto inline start).
+  margin-inline-start: auto;
 }
 
 .hk-popover-sheet-enter-active {
@@ -257,6 +260,11 @@
 @include sf.scrim-fade("hk-popover-scrim");
 
 @media (prefers-reduced-motion: reduce) {
+  // Pop transitions included: the anchored panel's translateY+scale pop is
+  // the same non-trivial motion the sheet slide already silences here
+  // (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss guards).
+  .hk-popover-enter-active,
+  .hk-popover-leave-active,
   .hk-popover-sheet-enter-active,
   .hk-popover-sheet-leave-active {
     transition: none;

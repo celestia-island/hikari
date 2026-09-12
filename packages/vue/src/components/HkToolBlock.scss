@@ -11,6 +11,10 @@
     border-color: rgb(var(--color-error) / 35%);
   }
 
+  &.is-running {
+    border-color: rgb(var(--color-primary) / 35%);
+  }
+
   &.is-success {
     border-color: rgb(var(--color-success) / 25%);
   }
@@ -26,6 +30,12 @@
   user-select: none;
 }
 
+/* Hover affordance mirrors the sibling chat-surface row pattern
+   (.s-jt-row:hover in HkJsonTree.scss). */
+.s-tool-header:hover {
+  background: rgb(var(--color-primary) / 4%);
+}
+
 .s-tool-header-title {
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-weight: 600;
@@ -34,8 +44,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
   border-radius: var(--radius-sm, 4px);
   padding: 0 var(--space-2, 0.125rem);
 
@@ -45,7 +53,7 @@
 }
 
 .s-tool-header-badge {
-  padding: 1px var(--space-6, 0.375rem);
+  padding: var(--space-1, 0.0625rem) var(--space-6, 0.375rem);
   border-radius: var(--radius-sm, 4px);
   font-size: var(--text-2xs, 0.625rem);
   font-weight: 600;
@@ -59,7 +67,7 @@
 }
 
 .s-tool-header-expand {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: inline-flex;
   color: rgb(var(--color-muted));
 }
@@ -74,7 +82,7 @@
 .s-tool-params {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2, 0.125rem);
 }
 
 .s-tool-param-line {
@@ -131,11 +139,11 @@
 }
 
 .s-tool-result {
-  border-left: 2px solid rgb(var(--color-success) / 40%);
-  padding-left: var(--space-8, 0.5rem);
+  border-inline-start: 2px solid rgb(var(--color-success) / 40%);
+  padding-inline-start: var(--space-8, 0.5rem);
 
   &.is-error {
-    border-left-color: rgb(var(--color-error) / 40%);
+    border-inline-start-color: rgb(var(--color-error) / 40%);
   }
 }
 
@@ -178,6 +186,10 @@
     display: none;
   }
 
+  &:hover {
+    background: rgb(var(--color-muted) / 10%);
+  }
+
   &:active {
     opacity: 0.85;
   }
@@ -207,15 +219,15 @@
 .s-tool-code-num {
   width: 1%;
   min-width: 2.75em;
-  padding: 0 0.875em 0 1em;
-  text-align: right;
+  padding-inline: 1em 0.875em;
+  text-align: end;
   user-select: none;
   white-space: nowrap;
   color: rgb(var(--color-muted) / 0.45);
 }
 
 .s-tool-code-content {
-  padding: 0 var(--space-12, 0.75rem) 0 0;
+  padding-inline-end: var(--space-12, 0.75rem);
   white-space: pre-wrap;
   word-break: break-word;
 }

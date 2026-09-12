@@ -27,10 +27,24 @@
   background: rgb(var(--color-surface) / 0.5);
   cursor: pointer;
   overflow: hidden;
+  transition:
+    border-color var(--duration-short, 0.15s) ease,
+    background var(--duration-short, 0.15s) ease;
 
   &[data-variant="media"] {
     width: 72px;
     height: 48px;
+  }
+
+  /* Clickable tile (previewAttachment) with no hover/press affordance;
+   * color/background only, so no reduced-motion guard is needed. */
+  &:hover {
+    border-color: rgb(var(--color-primary) / 45%);
+    background: rgb(var(--color-surface) / 0.8);
+  }
+
+  &:active {
+    background: rgb(var(--color-surface) / 0.9);
   }
 }
 
@@ -47,22 +61,21 @@
   }
 }
 
-.s-rich-input-attachment-play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  background: rgb(0 0 0 / 25%);
-}
-
+.s-rich-input-attachment-play,
 .s-rich-input-attachment-progress {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.s-rich-input-attachment-play {
+  color: #fff;
+  background: rgb(0 0 0 / 25%);
+}
+
+.s-rich-input-attachment-progress {
   background: rgb(0 0 0 / 30%);
 }
 
@@ -90,12 +103,13 @@
 .s-rich-input-attachment-remove {
   position: absolute;
   top: 2px;
-  right: 2px;
+  inset-inline-end: 2px;
   opacity: 0;
   transition: opacity var(--duration-short, 0.15s) ease;
 }
 
-.s-rich-input-attachment:hover .s-rich-input-attachment-remove {
+.s-rich-input-attachment:hover .s-rich-input-attachment-remove,
+.s-rich-input-attachment:focus-within .s-rich-input-attachment-remove {
   opacity: 1;
 }
 
@@ -125,15 +139,17 @@
     border-color: rgb(var(--color-primary));
   }
 
-  .s-rich-input-textarea {
+  /* The `s-rich-input-textarea` class passed to HInput never reaches the
+   * DOM (inheritAttrs:false + filteredAttrs strip class), so strip the
+   * embedded input's chrome on its real carrier (.hk-input-box) instead.
+   * The :focus-within twin outranks HkInput's own focus ring regardless
+   * of stylesheet order. */
+  .hk-input-box,
+  .hk-input-box:focus-within {
     border: none;
     box-shadow: none;
     background: transparent;
   }
-}
-
-.s-rich-input-textarea {
-  width: 100%;
 }
 
 /* ── Tools row ──────────────────────────────────────────────────── */

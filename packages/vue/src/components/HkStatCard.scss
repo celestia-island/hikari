@@ -11,10 +11,14 @@
 
 .hk-stat-card-clickable {
   cursor: pointer;
-  transition: border-color var(--duration-normal, 0.2s) ease;
+  transition: border-color var(--duration-normal, 0.3s) ease;
 
   &:hover {
     border-color: rgb(var(--color-primary) / 35%);
+  }
+
+  &:active {
+    border-color: rgb(var(--color-primary) / 55%);
   }
 
   &:focus-visible {
@@ -55,7 +59,7 @@
 .hk-stat-card-dot-muted { background: rgb(var(--color-muted)); }
 
 .hk-stat-card-value {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl, 1.5rem);
   font-weight: 700;
   line-height: 1.2;
   color: rgb(var(--color-text));
@@ -65,7 +69,7 @@
 }
 
 .hk-stat-card-hint {
-  font-size: var(--text-2xs, 0.6875rem);
+  font-size: var(--text-2xs, 0.625rem);
   color: rgb(var(--color-muted) / 70%);
   overflow: hidden;
   text-overflow: ellipsis;

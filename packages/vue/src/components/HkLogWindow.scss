@@ -29,9 +29,21 @@
   color: rgb(var(--color-muted));
   font-size: var(--text-xs, 0.75rem);
   cursor: pointer;
+  /* Declared here on purpose: these s-log classes intentionally escape
+   * the `button:where(:not([class^="hk-"])…)` element baseline (base.scss),
+   * which currently supplies their transition/focus ring only by accident
+   * of the hk- exclusion — do not lean on it. */
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, opacity 200ms ease;
 }
 
-.s-log-tab:hover:not([data-active]) {
+.s-log-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-primary));
+}
+
+.s-log-tab:hover:not([data-active]),
+.s-log-btn:hover:not([data-active]) {
   background: rgb(var(--color-primary) / 12%);
   color: rgb(var(--color-text));
 }
@@ -51,6 +63,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Reset the element-baseline button padding (base.scss button-base
+   * reaches these non-hk buttons): 0.5rem/1rem inside the fixed 1.75rem
+   * border-box collapses the content box and off-centers the icon. */
+  padding: 0;
   width: 1.75rem;
   height: 1.75rem;
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
@@ -58,11 +74,13 @@
   background: rgb(var(--color-surface));
   color: rgb(var(--color-muted));
   cursor: pointer;
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, opacity 200ms ease;
 }
 
-.s-log-btn:hover:not([data-active]) {
-  background: rgb(var(--color-primary) / 12%);
-  color: rgb(var(--color-text));
+.s-log-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-surface)), 0 0 0 4px rgb(var(--color-primary));
 }
 
 .s-log-btn[data-active] {

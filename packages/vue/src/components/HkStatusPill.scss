@@ -6,8 +6,8 @@
   align-items: center;
   gap: var(--space-6, 0.375rem);
   padding: 2px var(--space-8, 0.5rem);
-  border-radius: 999px;
-  font-size: var(--text-2xs, 0.6875rem);
+  border-radius: var(--radius-full, 999px);
+  font-size: var(--text-2xs, 0.625rem);
   line-height: 1.4;
   color: rgb(var(--color-text));
   background: rgb(var(--color-surface) / 60%);
@@ -24,10 +24,6 @@
   background: rgb(var(--color-muted));
 }
 
-.hk-status-pill-ok .hk-status-pill-dot {
-  background: rgb(var(--color-success));
-}
-
 .hk-status-pill-warn .hk-status-pill-dot {
   background: rgb(var(--color-warning));
 }
@@ -36,8 +32,9 @@
   background: rgb(var(--color-error));
 }
 
-/* Gentle pulse for the live/ok state so liveness reads at a glance. */
+/* Live/ok state: success dot with a gentle pulse so liveness reads at a glance. */
 .hk-status-pill-ok .hk-status-pill-dot {
+  background: rgb(var(--color-success));
   animation: hk-status-pill-pulse 2.4s ease-in-out infinite;
 }
 

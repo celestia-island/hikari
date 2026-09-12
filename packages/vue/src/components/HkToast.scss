@@ -1,7 +1,7 @@
 .hk-toast-container {
   position: fixed;
   top: 4rem;
-  right: 1rem;
+  inset-inline-end: var(--space-16, 1rem);
   /* Toast band — the topmost popup z band (POPUP_Z_BANDS.toast; mirror in
      theme.scss). The live value arrives inline from the popup manager. */
   z-index: var(--hk-z-toast, 4000);
@@ -13,7 +13,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-12, 12px);
+  gap: var(--space-12, 12px);
 }
 
 .hk-toast-item {
@@ -25,10 +25,10 @@
      the text. Centering aligns all three optical axes and distributes
      the height symmetrically for single- and multi-line bodies alike. */
   align-items: center;
-  gap: var(--hi-space-8, 8px);
-  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  gap: var(--space-8, 8px);
+  padding: var(--space-12, 12px) var(--space-16, 16px);
   border-radius: var(--hi-radius-sm, 4px);
-  font-size: var(--hi-text-base, 0.875rem);
+  font-size: var(--text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
@@ -41,7 +41,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
 }
 
 .hk-toast-icon {
@@ -76,12 +76,12 @@
 
 .hk-toast-error {
   background: var(--hi-color-danger, #f85149);
-  color: #fff;
+  color: var(--hi-color-text-on-solid, #fff);
 }
 
 .hk-toast-success {
   background: var(--hi-color-success, #3fb950);
-  color: #fff;
+  color: var(--hi-color-text-on-solid, #fff);
 }
 
 /* Warning toasts use a light, saturated amber background where white text
@@ -104,12 +104,12 @@
 
 .hk-toast-info {
   background: var(--hi-color-info, #58a6ff);
-  color: #fff;
+  color: var(--hi-color-text-on-solid, #fff);
 }
 
 .hk-toast-loading {
   background: var(--hi-color-info, #58a6ff);
-  color: #fff;
+  color: var(--hi-color-text-on-solid, #fff);
 }
 
 .hk-toast-loading-spinner {
@@ -147,6 +147,12 @@
   opacity: 1;
 }
 
+.hk-toast-copy-btn:focus-visible,
+.hk-toast-close:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
 .hk-toast-enter-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
   transition-duration: var(--hi-duration-normal, 0.3s);
@@ -172,6 +178,13 @@
   transform: translateX(1rem);
 }
 
+/* RTL: the stack sits at inline-end (left), so the slide mirrors to
+   come from the left edge (HkBlockingToast [dir="rtl"] form). */
+[dir="rtl"] .hk-toast-enter-from,
+[dir="rtl"] .hk-toast-leave-to {
+  transform: translateX(-1rem);
+}
+
 /* The leaving toast only switches positioning here; its box is frozen
    by HkToast's before-leave hook (pinLeaveGeometry writes right/top/
    width/height inline). The fixed stack column is shrink-to-fit, so a
@@ -194,4 +207,21 @@
 .hk-toast-msg-enter-from,
 .hk-toast-msg-leave-to {
   opacity: 0;
+}
+
+/* Reduced motion: kill the infinite spinner rotation and the
+   slide/fade transitions entirely (HkSpinner / HkExpansionPanel
+   pattern) — Vue resolves zero-duration transitions immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-toast-loading-spinner {
+    animation: none;
+  }
+
+  .hk-toast-enter-active,
+  .hk-toast-leave-active,
+  .hk-toast-move,
+  .hk-toast-msg-enter-active,
+  .hk-toast-msg-leave-active {
+    transition: none;
+  }
 }

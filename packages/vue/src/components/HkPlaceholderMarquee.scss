@@ -58,7 +58,11 @@
   }
 
   &__copy {
-    padding-right: 24px;
+    // Trailing cushion between copies. Kept as a px literal (not a token)
+    // on purpose: it must equal COPY_SPACING = 24 in the tsx overflow math
+    // at every root font size. Logical axis so the cushion trails the
+    // reading direction under RTL hosts.
+    padding-inline-end: 24px;
   }
 
   // Hidden probe mode (text fits): visibility keeps the element laid out —
@@ -74,8 +78,9 @@
     width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    // white-space stays local (ellipsis-trio idiom); text-align: center
+    // was dropped — the root already centers and hosts may re-align it.
     white-space: nowrap;
-    text-align: center;
   }
 }
 

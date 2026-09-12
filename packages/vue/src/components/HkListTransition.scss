@@ -1,4 +1,9 @@
-.hk-list-move {
+/* FLIP move: vue applies `${name}-move` (runtime-dom resolves moveClass
+ * as `${name}-move`), never a bare `.hk-list-move`. pop/slide/fade share
+ * the normal duration; grow/reveal define their staggered bases below. */
+.hk-list-pop-move,
+.hk-list-slide-move,
+.hk-list-fade-move {
   transition: transform var(--hi-duration-normal, 0.3s) ease;
 }
 
@@ -50,6 +55,16 @@
 .hk-list-slide-leave-to {
   opacity: 0;
   transform: translateX(12px);
+}
+
+/* RTL: reading direction flips, so slide enters from the right and
+ * exits to the left (HkBreadcrumb/HkBlockingToast [dir="rtl"] form). */
+[dir="rtl"] .hk-list-slide-enter-from {
+  transform: translateX(12px);
+}
+
+[dir="rtl"] .hk-list-slide-leave-to {
+  transform: translateX(-12px);
 }
 
 .hk-list-fade-enter-active {

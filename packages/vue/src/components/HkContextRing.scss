@@ -10,6 +10,11 @@
   cursor: pointer;
   border-radius: var(--radius-full, 999px);
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 200ms ease;
+
+  &:hover {
+    background: rgb(var(--color-text) / 6%);
+  }
 
   &:focus-visible {
     outline: 2px solid rgb(var(--color-primary));
@@ -79,7 +84,7 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: var(--space-2, 0.125rem);
 }
 
 .hk-ctx-legend-row {
@@ -93,9 +98,8 @@
 .hk-ctx-legend-swatch {
   width: 8px;
   height: 8px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs, 2px);
   align-self: center;
-  flex-shrink: 0;
 }
 
 .hk-ctx-legend-label {
@@ -112,7 +116,7 @@
 .hk-ctx-legend-pct {
   color: rgb(var(--color-muted));
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
   min-width: 3ch;
 }
 

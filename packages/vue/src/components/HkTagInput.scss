@@ -130,12 +130,11 @@
   line-height: 1.5;
   color: rgb(var(--color-text));
 
-  /* The shell owns the focus affordance (`:focus-within`); an
-   * element-level focus ring would double it. */
+  /* The shell owns the focus affordance (`:focus-within`); the base
+   * border/outline: none above already holds at all times, so only a
+   * stray element-level box-shadow needs explicit suppression. */
   &:focus,
   &:focus-visible {
-    border: none;
-    outline: none;
     box-shadow: none;
   }
 
@@ -179,6 +178,12 @@
     color: rgb(var(--color-text));
   }
 
+  /* Tactile press, one step past the hover fill (the rows' selected
+     hover). */
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 16%);
+  }
+
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
@@ -199,10 +204,10 @@
    * once when it opens, so a panel that grew with its content would shift
    * its own left edge mid-interaction — toggling a row adds a check glyph,
    * and a query changes which rows (and how much meta text) survive.
-   * min/max stay as the bounds a narrow viewport imposes on that width. */
+   * min-width stays as the lower bound a narrow viewport imposes on
+   * that width (an equal max-width could never constrain further). */
   width: min(19rem, calc(100vw - 2rem));
   min-width: 13rem;
-  max-width: min(19rem, calc(100vw - 2rem));
 }
 
 /* Mobile sheet context (the HkAffixPicker #424 pattern): inside the
@@ -216,7 +221,8 @@
 }
 
 .hk-tag-input-search {
-  padding: 8px 10px 6px;
+  /* Same spellings as the mirrored HkAffixPicker popup head. */
+  padding: var(--space-8, 8px) var(--space-10, 10px) var(--space-6, 6px);
 }
 
 /* NOT a scroll region: the window surface (popout / sheet) owns THE one
@@ -225,20 +231,20 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 4px 6px 8px;
+  padding: var(--space-4, 4px) var(--space-6, 6px) var(--space-8, 8px);
 }
 
 .hk-tag-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-8, 8px);
   width: 100%;
   min-height: 2.25rem;
-  padding: 4px 8px;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
   border-radius: var(--radius-sm);
   color: rgb(var(--color-text));
-  font-size: var(--text-sm, 14px);
-  text-align: left;
+  font-size: var(--text-sm);
+  text-align: start;
   cursor: pointer;
   transition: background 0.1s ease;
 
@@ -300,7 +306,7 @@
 
 .hk-tag-input-row-flag {
   flex: none;
-  font-size: calc(var(--text-base, 15px) * 1.05);
+  font-size: calc(var(--text-base) * 1.05);
   line-height: 1;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
     sans-serif;
@@ -317,7 +323,7 @@
 .hk-tag-input-row-meta {
   flex: none;
   color: rgb(var(--color-muted));
-  font-size: calc(var(--text-sm, 14px) * 0.9);
+  font-size: calc(var(--text-sm) * 0.9);
   font-variant-numeric: tabular-nums;
 }
 
@@ -415,9 +421,9 @@
 }
 
 .hk-tag-input-empty {
-  padding: 14px 12px;
+  padding: var(--space-14, 14px) var(--space-12, 12px);
   color: rgb(var(--color-muted));
-  font-size: var(--text-sm, 14px);
+  font-size: var(--text-sm);
   text-align: center;
 }
 

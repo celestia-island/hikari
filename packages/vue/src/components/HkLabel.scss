@@ -9,16 +9,16 @@
 
 .hk-label {
   display: inline;
-  font-size: var(--hi-text-base, 0.875rem);
+  font-size: var(--text-base, 0.875rem);
   line-height: 1.5;
   color: var(--hi-color-text-primary, #333);
 
   &.hk-label-sm {
-    font-size: var(--hi-text-xs, 0.75rem);
+    font-size: var(--text-xs, 0.75rem);
   }
 
   &.hk-label-lg {
-    font-size: var(--hi-text-md, 1rem);
+    font-size: var(--text-md, 1rem);
   }
 
   a {
@@ -29,6 +29,11 @@
 
     &:hover {
       text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid color-mix(in srgb, var(--hi-color-primary, #58a6ff) 55%, transparent);
+      outline-offset: 2px;
     }
   }
 }

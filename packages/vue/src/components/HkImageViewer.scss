@@ -31,3 +31,11 @@
   align-items: center;
   justify-content: center;
 }
+
+// Reduced motion: pan/zoom keeps working, the transform just stops
+// gliding (house pattern — HkExpansionPanel / HkAffixPicker).
+@media (prefers-reduced-motion: reduce) {
+  .hk-image-viewer-img {
+    transition: none;
+  }
+}

@@ -24,7 +24,7 @@
   background: none;
   border: 1px solid transparent;
   width: 100%;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition:
     background-color var(--hi-duration-fast, 0.15s) ease,
@@ -57,21 +57,16 @@
     opacity: 0.4;
     pointer-events: none;
   }
-}
 
-.hk-nav-item-button {
-  cursor: pointer;
-
+  /* Focus ring drawn inside the border box (offset -2px, the
+     HkSelectionGrid precedent): child rows sit inside the
+     overflow:hidden .hk-nav-item-children container, whose edges shave
+     the top/bottom legs of an outer ring. Every row — button and link
+     variants alike — carries .hk-nav-item, so one (0,2,0) rule covers
+     them all. */
   &:focus-visible {
     outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
-  }
-}
-
-.hk-nav-item-link {
-  &:focus-visible {
-    outline: 2px solid var(--hi-color-primary);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
@@ -85,6 +80,18 @@
   text-overflow: ellipsis;
 }
 
+/* Child-row badge (tsx emits it bare): a small push-to-end pill so it
+   never competes with the ellipsizing label for space. Auto inline-start
+   margin is the house push-to-end pattern and survives the RTL flip. */
+.hk-nav-item-badge {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding: 0 var(--space-6, 0.375rem);
+  border-radius: var(--radius-sm, 4px);
+  background: color-mix(in srgb, var(--hi-color-muted) 12%, transparent);
+  font-size: var(--text-2xs, 0.625rem);
+}
+
 .hk-nav-item-arrow {
   transition: transform 0.2s;
 }
@@ -94,6 +101,12 @@
 }
 
 .hk-nav-item-children {
-  padding-left: 1rem;
+  padding-inline-start: var(--space-16, 1rem);
   overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-nav-item-arrow {
+    transition: none;
+  }
 }

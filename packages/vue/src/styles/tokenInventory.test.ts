@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { tokensToCSSVars, type ThemeSchemeTokens } from "../theme/presets";
+
 /**
  * Theme token inventory guard — the normalization contract.
  *
@@ -76,39 +78,49 @@ const legacySheets = [
 const seedFiles: Array<[string, string]> = [["theme/channels.scss", seedSource]];
 
 // ── L0: channel completeness vs the runtime writer ──
-// tokensToCSSVars (src/theme/presets.ts) emits exactly these --color-* keys.
-const RUNTIME_CHANNEL_KEYS = [
-  "--color-primary",
-  "--color-on-primary",
-  "--color-on-solid-text",
-  "--color-on-solid-icon",
-  "--color-on-solid",
-  "--color-secondary",
-  "--color-accent",
-  "--color-text",
-  "--color-text-secondary",
-  "--color-text-tertiary",
-  "--color-muted",
-  "--color-border",
-  "--color-focused-border",
-  "--color-background",
-  "--color-surface",
-  "--color-success",
-  "--color-error",
-  "--color-warning",
-  "--color-info",
-  "--color-bg-subtle",
-  "--color-bg-elevated",
-  "--color-bg-canvas",
-];
+// Derive the exact `--color-*` / `--hi-*` key set tokensToCSSVars emits by
+// calling it with a fixture scheme — the inventory then tracks the runtime
+// writer automatically as presets.ts evolves.
+const FIXTURE_RGB = { r: 1, g: 2, b: 3 };
+const FIXTURE_SCHEME: ThemeSchemeTokens = {
+  primary: FIXTURE_RGB,
+  secondary: FIXTURE_RGB,
+  accent: FIXTURE_RGB,
+  text: FIXTURE_RGB,
+  muted: FIXTURE_RGB,
+  border: FIXTURE_RGB,
+  focusedBorder: FIXTURE_RGB,
+  background: FIXTURE_RGB,
+  surface: FIXTURE_RGB,
+  selectedBackground: FIXTURE_RGB,
+  selectedText: FIXTURE_RGB,
+  statusBarBackground: FIXTURE_RGB,
+  success: FIXTURE_RGB,
+  error: FIXTURE_RGB,
+  warning: FIXTURE_RGB,
+  info: FIXTURE_RGB,
+};
+const RUNTIME_VARS = tokensToCSSVars(FIXTURE_SCHEME);
+const RUNTIME_CHANNEL_KEYS = Object.keys(RUNTIME_VARS).filter((k) =>
+  k.startsWith("--color-"),
+);
+const RUNTIME_ALIAS_KEYS = Object.keys(RUNTIME_VARS).filter((k) =>
+  k.startsWith("--hi-"),
+);
 
 describe("theme token inventory", () => {
-  // W4 target: the runtime derives these (presets.ts) but the static seed
-  // does not carry them yet — no-JS consumers get invalid var() today.
+  // W4 target: runtime-only tokens the static seed does not carry yet —
+  // no-JS consumers get invalid var() for these today.
   const KNOWN_MISSING_CHANNELS = new Set([
-    "--color-bg-subtle",
-    "--color-bg-elevated",
-    "--color-bg-canvas",
+    "--color-selected-bg",
+    "--color-selected-text",
+    "--color-status-bar-bg",
+  ]);
+  const KNOWN_MISSING_ALIASES = new Set([
+    "--hi-color-bg-subtle",
+    "--hi-color-bg-elevated",
+    "--hi-color-bg-canvas",
+    "--hi-secondary-bg",
   ]);
 
   it("static seed defines every --color-* channel the runtime writes", () => {
@@ -117,6 +129,14 @@ describe("theme token inventory", () => {
       (k) => !defs.has(k) && !KNOWN_MISSING_CHANNELS.has(k),
     );
     expect(missing, "channels missing from the static seed").toEqual([]);
+  });
+
+  it("static seed carries every --hi-* alias the runtime writes", () => {
+    const defs = harvestDefinitions(seedFiles);
+    const missing = RUNTIME_ALIAS_KEYS.filter(
+      (k) => !defs.has(k) && !KNOWN_MISSING_ALIASES.has(k),
+    );
+    expect(missing, "aliases missing from the static seed").toEqual([]);
   });
 
   it("static seed has no --hi-* derivation that is not backed by a channel", () => {

@@ -26,11 +26,11 @@
   width: 100%;
   font-size: var(--text-base, 0.875rem);
   border-collapse: collapse;
-  color: var(--hi-color-text-primary, #c9d1d9);
+  color: var(--hi-color-text-primary, #1e1e1e);
 }
 
 .hk-table-header-row {
-  border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
 }
 
 .hk-table-header-cell {
@@ -40,7 +40,7 @@
   text-align: start;
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
-  color: var(--hi-color-text-secondary, #8b949e);
+  color: var(--hi-color-text-secondary, #666666);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
@@ -52,12 +52,12 @@
   transition: color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 
   &:hover {
-    color: var(--hi-color-primary, #58a6ff);
+    color: var(--hi-color-primary, #7aa2f7);
   }
 }
 
 .hk-table-header-sorted {
-  color: var(--hi-color-primary, #58a6ff);
+  color: var(--hi-color-primary, #7aa2f7);
 }
 
 .hk-table-header-label {
@@ -80,7 +80,7 @@
 
 .hk-table-body {
   .hk-table-row {
-    border-bottom: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.05));
+    border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.05));
   }
 }
 
@@ -93,23 +93,23 @@
 }
 
 .hk-table-bordered {
-  border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.1));
   border-radius: var(--radius-md, 8px);
 
   .hk-table-header-cell,
   .hk-table-cell {
-    border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   }
 
   .hk-table-header-cell {
-    border-bottom: 2px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
+    border-bottom: 2px solid var(--hi-color-border, rgba(100,100,100,0.1));
   }
 }
 
 .hk-table-cell {
   /* md values (see .hk-table-header-cell). */
   padding: var(--space-8, 8px) var(--space-12, 12px);
-  color: var(--hi-color-text-primary, #c9d1d9);
+  color: var(--hi-color-text-primary, #1e1e1e);
   vertical-align: middle;
 }
 
@@ -132,7 +132,7 @@
 .hk-table-empty {
   padding: var(--space-32, 32px) var(--space-16, 16px);
   text-align: center;
-  color: var(--hi-color-text-secondary, #8b949e);
+  color: var(--hi-color-text-secondary, #666666);
 }
 
 /* Alignment helpers (start/end so aligned columns mirror in RTL; the
@@ -170,7 +170,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 2px solid var(--hi-color-border, rgba(255, 255, 255, 0.2));
+  border: 2px solid var(--hi-color-border, rgba(100,100,100,0.2));
   border-radius: var(--radius-sm, 4px);
   background: transparent;
   transition:
@@ -183,14 +183,14 @@
   }
 
   &-checked {
-    background: var(--hi-color-primary, #58a6ff);
-    border-color: var(--hi-color-primary, #58a6ff);
+    background: var(--hi-color-primary, #7aa2f7);
+    border-color: var(--hi-color-primary, #7aa2f7);
   }
 
   .hk-table-checkbox-input:focus-visible + & {
     box-shadow:
       0 0 0 2px var(--hi-color-bg-canvas, #0d1117),
-      0 0 0 4px var(--hi-color-primary, #58a6ff);
+      0 0 0 4px var(--hi-color-primary, #7aa2f7);
   }
 }
 

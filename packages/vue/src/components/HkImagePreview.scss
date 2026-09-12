@@ -9,7 +9,7 @@
   width: 100%;
   overflow: hidden;
   background: var(--hi-color-gray-100, rgba(0, 0, 0, 0.04));
-  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   border-radius: var(--radius-md, 8px);
 }
 
@@ -19,10 +19,10 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 
   &:hover {
-    border-color: var(--hi-color-primary, #58a6ff);
+    border-color: var(--hi-color-primary, #7aa2f7);
     // Emphasis drawn INSIDE the border box (HkSelectionGrid precedent):
     // outer spread rings get shaved per-side by overlapping chrome.
-    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #58a6ff);
+    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
   }
 
   // Press feedback matching the house button pattern (HkButton variants,
@@ -32,7 +32,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--hi-color-primary, #58a6ff);
+    outline: 2px solid var(--hi-color-primary, #7aa2f7);
     outline-offset: 2px;
   }
 }
@@ -65,9 +65,9 @@
   justify-content: center;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent) 25%,
-    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 18%, transparent) 50%,
-    color-mix(in srgb, var(--hi-color-primary, #58a6ff) 8%, transparent) 75%
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent) 25%,
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 18%, transparent) 50%,
+    color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: hk-image-preview-shimmer 1.5s ease-in-out infinite;
@@ -95,7 +95,7 @@
   justify-content: center;
   gap: var(--space-8, 0.5rem);
   padding: var(--space-12, 0.75rem);
-  color: var(--hi-color-muted, #666);
+  color: var(--hi-color-muted, #6c6c6c);
   text-align: center;
 }
 

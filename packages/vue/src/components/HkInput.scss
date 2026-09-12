@@ -267,11 +267,11 @@
    * bare "R G B" triplet, so using it directly as a color is invalid at
    * computed-value time (the rule silently inherits); --color-text-primary
    * is not defined anywhere. --hi-color-* wrap the triplets in rgb(). */
-  color: var(--hi-color-text-secondary, #888);
+  color: var(--hi-color-text-secondary, #666666);
   cursor: pointer;
 
   &:hover {
-    color: var(--hi-color-text-primary, #222);
+    color: var(--hi-color-text-primary, #1e1e1e);
   }
 
   // Keyboard parity (house icon-button pattern, HkIconButton): this real

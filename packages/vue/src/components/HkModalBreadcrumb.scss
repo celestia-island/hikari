@@ -13,7 +13,7 @@
   // family don't collapse this strip (8px→4px gap, 32px→16px padding).
   gap: var(--space-8, 0.5rem);
   padding: var(--space-12, 0.75rem) var(--space-32, 2rem);
-  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
+  background: var(--hi-color-surface, rgba(240,244,248,0.95));
   border: 1px solid var(--hk-breadcrumb-border, rgba(0, 0, 0, 0.06));
   border-radius: var(--radius-md, 0.5rem);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
@@ -35,16 +35,16 @@
   line-height: 1.4;
   font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
-  color: var(--hi-color-text-secondary, #666);
+  color: var(--hi-color-text-secondary, #666666);
   white-space: nowrap;
 }
 
 .hk-modal-breadcrumb-item-current {
-  color: var(--hi-color-primary, #58a6ff);
+  color: var(--hi-color-primary, #7aa2f7);
 }
 
 .hk-modal-breadcrumb-sep {
-  color: var(--hi-color-text-secondary, #666);
+  color: var(--hi-color-text-secondary, #666666);
   opacity: 0.5;
   flex-shrink: 0;
 }

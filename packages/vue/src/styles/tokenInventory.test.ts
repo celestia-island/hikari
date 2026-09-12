@@ -241,36 +241,34 @@ describe("theme token inventory", () => {
 
   it("component --hi-color-* fallbacks stay on the canonical literals", () => {
     // The standalone-render contract: when a host loads nothing, a
-    // component renders through these literals. One concept, one literal.
-    const CANONICAL: Record<string, string> = {
-      "--hi-color-primary": "#58a6ff",
-      "--hi-color-danger": "#f85149",
-      "--hi-color-text-primary": "#333",
-      "--hi-color-text-secondary": "#666",
-      "--hi-color-text-tertiary": "#8b949e",
-      "--hi-color-muted": "#666",
-      "--hi-color-border": "#30363d",
-      "--hi-color-surface": "#fff",
-      "--hi-color-success": "#3fb950",
-      "--hi-color-warning": "#d29922",
-      "--hi-color-info": "#79c0ff",
+    // component renders through these literals. They are DERIVED FROM THE
+    // SEED triplets (theme/channels.scss) so the standalone face equals
+    // the documented default palette — derived programmatically below so
+    // the table tracks the seed automatically.
+    const seedTriplets = harvestDefinitions(seedFiles);
+    const hexFromSeed = (channel: string): string => {
+      const def = seedTriplets.get(channel)![0].value; // "r g b"
+      const [r, g, b] = def
+        .split(" ")
+        .map((n) => Number(n).toString(16).padStart(2, "0"));
+      return `#${r}${g}${b}`;
     };
-    // Known legacy deviants to retire in the fallback-alignment wave
-    // (frozen 2026-09-12 census, 42 occurrences / 13 literals).
-    const KNOWN_DEVIANT_FALLBACKS = new Set([
-      "#ddd",
-      "#58a6ff", // as --hi-color-info fallback (canonical info is #79c0ff)
-      "#999",
-      "#7aa2f7",
-      "#ff6b9d",
-      "#222",
-      "#c9d1d9",
-      "#555",
-      "#888",
-      "#484f58",
-      "#6e7681",
-      "#8b949e", // as --hi-color-text-secondary fallback (canonical #666 = seed)
-    ]);
+    const CANONICAL: Record<string, string> = {
+      "--hi-color-primary": hexFromSeed("--color-primary"),
+      "--hi-color-secondary": hexFromSeed("--color-secondary"),
+      "--hi-color-surface": hexFromSeed("--color-surface"),
+      "--hi-color-background": hexFromSeed("--color-background"),
+      "--hi-color-border": hexFromSeed("--color-border"),
+      "--hi-color-text-primary": hexFromSeed("--color-text"),
+      "--hi-color-text-secondary": hexFromSeed("--color-text-secondary"),
+      "--hi-color-muted": hexFromSeed("--color-muted"),
+      "--hi-color-success": hexFromSeed("--color-success"),
+      "--hi-color-error": hexFromSeed("--color-error"),
+      "--hi-color-warning": hexFromSeed("--color-warning"),
+      "--hi-color-info": hexFromSeed("--color-info"),
+      "--hi-color-focused-border": hexFromSeed("--color-focused-border"),
+    };
+    const KNOWN_DEVIANT_FALLBACKS = new Set<string>([]);
 
     const componentsDir = resolve(stylesDir, "../components");
     const files = readdirSync(componentsDir).filter((f) => f.endsWith(".scss"));

@@ -44,7 +44,7 @@
   gap: var(--space-8, 0.5rem);
   padding: var(--space-12, 0.75rem);
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--hi-color-border, #30363d);
+  border: 1px solid var(--hi-color-border, #646464);
   cursor: pointer;
   transition:
     border-color 200ms ease,
@@ -53,13 +53,13 @@
   user-select: none;
 
   &:hover {
-    border-color: var(--hi-color-primary, #58a6ff);
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.04);
-    box-shadow: 0 2px 12px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.1);
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.04);
+    box-shadow: 0 2px 12px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
   }
 
   &:active {
-    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.06);
+    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
   }
 
   // Keyboard focus indicator drawn inside the border box (negative outline
@@ -76,15 +76,15 @@
   // the frame visibly lopsided (observed as a 1px top vs 2px sides under
   // HkStepFlow's sticky header).
   &[data-selected] {
-    border-color: var(--hi-color-primary, #58a6ff);
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.06);
-    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #58a6ff);
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
+    box-shadow: inset 0 0 0 1px var(--hi-color-primary, #7aa2f7);
 
     &:hover {
-      background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.09);
+      background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.09);
       box-shadow:
-        inset 0 0 0 1px var(--hi-color-primary, #58a6ff),
-        0 2px 12px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.14);
+        inset 0 0 0 1px var(--hi-color-primary, #7aa2f7),
+        0 2px 12px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.14);
     }
 
     .hk-selection-grid-check {
@@ -93,11 +93,11 @@
     }
 
     .hk-selection-grid-icon {
-      color: var(--hi-color-primary, #58a6ff);
+      color: var(--hi-color-primary, #7aa2f7);
     }
 
     .hk-selection-grid-name {
-      color: var(--hi-color-primary, #58a6ff);
+      color: var(--hi-color-primary, #7aa2f7);
       font-weight: 600;
     }
   }
@@ -113,7 +113,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--hi-color-primary, #58a6ff);
+  background: var(--hi-color-primary, #7aa2f7);
   color: rgb(var(--color-on-solid-icon, 255 255 255));
   font-size: var(--text-2xs, 0.625rem);
   opacity: 0;
@@ -168,18 +168,18 @@
   letter-spacing: 0.02em;
 
   &[data-variant="primary"] {
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.12);
-    color: var(--hi-color-primary, #58a6ff);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.12);
+    color: var(--hi-color-primary, #7aa2f7);
   }
 
   &[data-variant="success"] {
-    background: rgb(from var(--hi-color-success, #3fb950) r g b / 0.12);
-    color: var(--hi-color-success, #3fb950);
+    background: rgb(from var(--hi-color-success, #0eb840) r g b / 0.12);
+    color: var(--hi-color-success, #0eb840);
   }
 
   &[data-variant="info"] {
-    background: rgb(from var(--hi-color-info, #79c0ff) r g b / 0.12);
-    color: var(--hi-color-info, #79c0ff);
+    background: rgb(from var(--hi-color-info, #6abed6) r g b / 0.12);
+    color: var(--hi-color-info, #6abed6);
   }
 }
 

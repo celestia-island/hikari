@@ -29,7 +29,7 @@
   z-index: var(--hk-stepflow-sticky-z, 10);
   background: var(
     --hk-stepflow-sticky-bg,
-    color-mix(in srgb, var(--hi-color-surface, #fff) 95%, transparent)
+    color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
   );
   backdrop-filter: blur(6px);
   margin-bottom: 0;

@@ -24,7 +24,7 @@
   gap: var(--space-4, 0.25rem);
   padding: var(--space-4, 0.25rem) var(--space-10, 0.625rem);
   border-radius: 9999px;
-  border: 1px solid var(--hi-color-border, #30363d);
+  border: 1px solid var(--hi-color-border, #646464);
   font-size: 0.6875rem;
   cursor: pointer;
   transition:
@@ -35,9 +35,9 @@
   white-space: nowrap;
 
   &:hover {
-    border-color: var(--hi-color-primary, #58a6ff);
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.04);
-    box-shadow: 0 2px 8px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.1);
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.04);
+    box-shadow: 0 2px 8px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
   }
 
   // Keyboard focus drawn inside the border box (negative offset), matching
@@ -49,13 +49,13 @@
   }
 
   &:active {
-    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.06);
+    box-shadow: 0 1px 4px rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.06);
   }
 
   &[data-selected] {
-    border-color: var(--hi-color-primary, #58a6ff);
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.1);
-    color: var(--hi-color-primary, #58a6ff);
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.1);
+    color: var(--hi-color-primary, #7aa2f7);
     font-weight: 500;
   }
 }
@@ -67,7 +67,7 @@
   width: 0.875rem;
   height: 0.875rem;
   border-radius: 50%;
-  background: var(--hi-color-primary, #58a6ff);
+  background: var(--hi-color-primary, #7aa2f7);
   color: rgb(var(--color-on-solid-icon, 255 255 255));
 }
 
@@ -83,18 +83,18 @@
   color: var(--hi-color-text-tertiary, #8b949e);
 
   &[data-variant="success"] {
-    background: rgb(from var(--hi-color-success, #3fb950) r g b / 0.12);
-    color: var(--hi-color-success, #3fb950);
+    background: rgb(from var(--hi-color-success, #0eb840) r g b / 0.12);
+    color: var(--hi-color-success, #0eb840);
   }
 
   &[data-variant="info"] {
-    background: rgb(from var(--hi-color-info, #79c0ff) r g b / 0.12);
-    color: var(--hi-color-info, #79c0ff);
+    background: rgb(from var(--hi-color-info, #6abed6) r g b / 0.12);
+    color: var(--hi-color-info, #6abed6);
   }
 
   &[data-variant="primary"] {
-    background: rgb(from var(--hi-color-primary, #58a6ff) r g b / 0.12);
-    color: var(--hi-color-primary, #58a6ff);
+    background: rgb(from var(--hi-color-primary, #7aa2f7) r g b / 0.12);
+    color: var(--hi-color-primary, #7aa2f7);
   }
 }
 

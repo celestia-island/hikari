@@ -12,7 +12,7 @@
 }
 
 .hk-progress-ring-track {
-  stroke: var(--hk-progress-ring-track, var(--hi-color-border, rgba(0, 0, 0, 0.12)));
+  stroke: var(--hk-progress-ring-track, var(--hi-color-border, rgba(100,100,100,0.12)));
   transition: stroke var(--duration-normal) var(--ease-standard);
 }
 
@@ -20,14 +20,14 @@
 // the theme primary (same default as the single-value fill).
 .hk-progress-ring-fill,
 .hk-progress-ring-seg {
-  stroke: var(--hi-color-primary, #58a6ff);
+  stroke: var(--hi-color-primary, #7aa2f7);
   transition:
     stroke-dashoffset var(--duration-normal) var(--ease-standard),
     stroke var(--duration-normal) var(--ease-standard);
 }
 
 .hk-progress-ring-success .hk-progress-ring-fill {
-  stroke: var(--hi-color-success, #3fb950);
+  stroke: var(--hi-color-success, #0eb840);
 }
 
 .hk-progress-ring-exception .hk-progress-ring-fill {
@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  color: var(--hi-color-text-primary, #333);
+  color: var(--hi-color-text-primary, #1e1e1e);
   user-select: none;
   pointer-events: none;
 }

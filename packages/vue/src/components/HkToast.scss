@@ -76,19 +76,19 @@
 
 .hk-toast-error {
   background: var(--hi-color-danger, #f85149);
-  color: var(--hi-color-text-on-solid, #fff);
+  color: var(--hi-color-text-on-solid, #ffffff);
 }
 
 .hk-toast-success {
-  background: var(--hi-color-success, #3fb950);
-  color: var(--hi-color-text-on-solid, #fff);
+  background: var(--hi-color-success, #0eb840);
+  color: var(--hi-color-text-on-solid, #ffffff);
 }
 
 /* Warning toasts use a light, saturated amber background where white text
  * lands at ~2.6:1 contrast (unreadable). Dark text keeps >= 4.5:1 on the
  * amber in BOTH color schemes; the copy/close buttons inherit it. */
 .hk-toast-warning {
-  background: var(--hi-color-warning, #d29922);
+  background: var(--hi-color-warning, #eed677);
   color: #1c1c1e;
 }
 
@@ -103,13 +103,13 @@
 }
 
 .hk-toast-info {
-  background: var(--hi-color-info, #58a6ff);
-  color: var(--hi-color-text-on-solid, #fff);
+  background: var(--hi-color-info, #6abed6);
+  color: var(--hi-color-text-on-solid, #ffffff);
 }
 
 .hk-toast-loading {
-  background: var(--hi-color-info, #58a6ff);
-  color: var(--hi-color-text-on-solid, #fff);
+  background: var(--hi-color-info, #6abed6);
+  color: var(--hi-color-text-on-solid, #ffffff);
 }
 
 .hk-toast-loading-spinner {

@@ -88,8 +88,8 @@
    :focus-visible keeps mouse clicks ring-free. */
 .hk-radio-box:has(.hk-radio-input:focus-visible) {
   box-shadow:
-    0 0 0 2px var(--hi-color-surface, rgba(255, 255, 255, 0.95)),
-    0 0 0 4px var(--hi-color-primary, #ff6b9d);
+    0 0 0 2px var(--hi-color-surface, rgba(240,244,248,0.95)),
+    0 0 0 4px var(--hi-color-primary, #7aa2f7);
 }
 
 /* --- Dot --- */

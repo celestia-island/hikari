@@ -21,7 +21,7 @@
   position: fixed;
   display: flex;
   flex-direction: column;
-  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   outline: none;
@@ -34,7 +34,7 @@
   top: 0;
   bottom: 0;
   left: 0;
-  border-right: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-right: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   border-radius: 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0;
 }
 
@@ -42,7 +42,7 @@
   top: 0;
   bottom: 0;
   right: 0;
-  border-left: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-left: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   border-radius: var(--radius-md, 0.5rem) 0 0 var(--radius-md, 0.5rem);
 }
 
@@ -50,7 +50,7 @@
   top: 0;
   left: 0;
   right: 0;
-  border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
 }
 
@@ -58,7 +58,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
   border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
 }
 
@@ -113,14 +113,14 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-12, 0.75rem) var(--space-16, 1rem);
-  border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  border-bottom: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   flex-shrink: 0;
 }
 
 .hk-drawer-title {
   font-size: var(--text-base, 0.875rem);
   font-weight: 700;
-  color: var(--hi-color-text-primary, #333);
+  color: var(--hi-color-text-primary, #1e1e1e);
 }
 
 // Legacy placement hook — the chrome lives on the shared .hk-icon-button
@@ -162,7 +162,7 @@
   /* HkMenuPanel carries its own inset; zero this variable when the
      footer hosts one so both edges align. */
   padding: var(--hk-drawer-footer-padding, var(--space-12, 0.75rem) var(--space-16, 1rem));
-  border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
+  border-top: 1px solid var(--hi-color-border, rgba(100,100,100,0.06));
   flex-shrink: 0;
 }
 

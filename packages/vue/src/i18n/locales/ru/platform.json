@@ -17,7 +17,6 @@
     "hikari::about.buildHash": "Сборка",
     "hikari::about.engineVersion": "Версия движка",
     "hikari::about.engineBuildHash": "Сборка движка",
-    "hikari::about.links": "Ссылки",
     "hikari::about.author": "Автор",
     "hikari::about.license": "Лицензия",
     "hikari::theme.mode": "Режим темы",

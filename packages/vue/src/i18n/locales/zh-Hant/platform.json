@@ -17,7 +17,6 @@
     "hikari::about.buildHash": "建置",
     "hikari::about.engineVersion": "引擎版本",
     "hikari::about.engineBuildHash": "引擎建置",
-    "hikari::about.links": "連結",
     "hikari::about.author": "作者",
     "hikari::about.license": "授權條款",
     "hikari::theme.mode": "主題模式",

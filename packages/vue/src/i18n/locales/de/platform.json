@@ -17,7 +17,6 @@
     "hikari::about.buildHash": "Build",
     "hikari::about.engineVersion": "Engine-Version",
     "hikari::about.engineBuildHash": "Engine-Build",
-    "hikari::about.links": "Links",
     "hikari::about.author": "Autor",
     "hikari::about.license": "Lizenz",
     "hikari::theme.mode": "Design-Modus",

@@ -17,7 +17,6 @@
     "hikari::about.buildHash": "البناء",
     "hikari::about.engineVersion": "إصدار المحرك",
     "hikari::about.engineBuildHash": "بناء المحرك",
-    "hikari::about.links": "روابط",
     "hikari::about.author": "المؤلف",
     "hikari::about.license": "الترخيص",
     "hikari::theme.mode": "وضع السمة",

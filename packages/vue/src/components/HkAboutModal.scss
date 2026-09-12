@@ -2,6 +2,29 @@
 @use "./hikari-vars" as vars;
 
 .s-about-modal {
+  position: relative;
+}
+
+// Clipped, pointer-inert decorative layer (canvas or any subtree handed in
+// through the `backdrop` prop). Sits under `.s-about-modal-body`; sizing,
+// background and animation belong to the consumer's subtree.
+.s-about-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 12px);
+  pointer-events: none;
+
+  > * {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.s-about-modal-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-16, 1rem);
@@ -11,6 +34,15 @@
   display: flex;
   align-items: center;
   gap: var(--space-12, 0.75rem);
+}
+
+.s-about-modal-logo-img {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg, 12px);
+  object-fit: contain;
+  user-select: none;
 }
 
 .s-about-modal-logo {
@@ -40,6 +72,19 @@
   color: rgb(var(--color-muted));
 }
 
+.s-about-modal-tagline {
+  margin: var(--space-2, 0.125rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+}
+
+.s-about-modal-description {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.55;
+  color: rgb(var(--color-muted));
+}
+
 .s-about-modal-rows {
   display: flex;
   flex-direction: column;
@@ -62,6 +107,15 @@
   font-size: var(--text-sm, 0.8125rem);
   color: rgb(var(--color-text));
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
+}
+
+.s-about-modal-row-link {
+  color: rgb(var(--color-primary));
+  text-decoration: none;
+}
+
+.s-about-modal-row-link:hover {
+  text-decoration: underline;
 }
 
 .s-about-modal-links {

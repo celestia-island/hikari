@@ -18,6 +18,8 @@
     "hikari::about.engineVersion": "엔진 버전",
     "hikari::about.engineBuildHash": "엔진 빌드",
     "hikari::about.links": "링크",
+    "hikari::about.author": "제작자",
+    "hikari::about.license": "라이선스",
     "hikari::theme.mode": "테마 모드",
     "hikari::theme.modeLight": "라이트",
     "hikari::theme.modeDark": "다크",

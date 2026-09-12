@@ -18,6 +18,8 @@
     "hikari::about.engineVersion": "Versión del motor",
     "hikari::about.engineBuildHash": "Compilación del motor",
     "hikari::about.links": "Enlaces",
+    "hikari::about.author": "Autor",
+    "hikari::about.license": "Licencia",
     "hikari::theme.mode": "Modo de tema",
     "hikari::theme.modeLight": "Claro",
     "hikari::theme.modeDark": "Oscuro",

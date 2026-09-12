@@ -29,7 +29,7 @@
   user-select: none;
   -webkit-user-select: none;
   background: var(--hk-tb-bg);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-md, 16px));
   border-bottom: 1px solid var(--hk-tb-border);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-app-region: drag;
@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-left: 12px;
+  padding-inline-start: 12px;
   white-space: nowrap;
   cursor: default;
 }
@@ -63,7 +63,7 @@
   font-size: 10px;
   color: var(--hk-tb-fg);
   opacity: 0.7;
-  padding-left: 8px;
+  padding-inline-start: 8px;
   white-space: nowrap;
 }
 
@@ -106,17 +106,23 @@
 /* Only the rightmost (close) button carries the window's top-right
    corner radius; the other captions highlight as plain rectangles. */
 .hk-titlebar-btn-close {
-  border-radius: 0 8px 0 0;
+  border-radius: var(--hk-tb-radius-close);
+}
+
+/* RTL mirrors the caption row, so the close button lands top-left and
+   the window corner radius flips with it. */
+[dir="rtl"] .hk-titlebar-btn-close {
+  border-radius: 8px 0 0 0;
 }
 
 .hk-titlebar-btn-close:hover {
   background: var(--hk-tb-close-hover);
-  color: #fff;
+  color: var(--hi-color-text-on-danger, #fff);
 }
 
 .hk-titlebar-btn-close:active {
   background: var(--hk-tb-close-active);
-  color: #fff;
+  color: var(--hi-color-text-on-danger, #fff);
 }
 
 .hk-titlebar-btn:focus-visible {
@@ -124,5 +130,8 @@
   outline-offset: -2px;
 }
 
-/* Host apps offset their own root container below the bar:
+/* Host apps offset their own root container below the bar. The var is
+   declared on .hk-titlebar and does not inherit to the host root, so
+   hosts re-declare it first:
+   :root { --hk-tb-height: 32px; }
    #app { position: absolute; top: var(--hk-tb-height); … } */

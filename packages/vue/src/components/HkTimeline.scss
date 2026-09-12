@@ -1,7 +1,6 @@
 .hk-timeline {
   display: flex;
   align-items: center;
-  gap: 0;
   width: 100%;
 
   // Shared node geometry — ONE source of truth for the 24px indicator
@@ -121,7 +120,9 @@
     --_link-color: var(--hi-color-primary);
   }
 
-  &[data-status="active"],
+  // Links only ever carry a neighbour's status ("completed" / "pending");
+  // the current step is never a link endpoint (HkTimeline.tsx statusOf),
+  // so no "active" key here.
   &[data-status="pending"] {
     --_link-color: color-mix(in srgb, var(--hi-color-border) 30%, transparent);
   }
@@ -186,26 +187,26 @@
 
   // Vertical rails: centered under the node column, spanning between the
   // cells' node centers (at 1/6, 1/2, 5/6 of the height) minus the same
-  // clearance the horizontal bonds keep from the circles. Each segment
-  // also re-asserts the inline geometry — the horizontal segment rules
-  // above carry the same attribute specificity and must not leak in.
+  // clearance the horizontal bonds keep from the circles. This base rule
+  // ((0,4,0)) already outranks the horizontal segment rules ((0,2,0)) on
+  // width/inset-inline-start and re-asserts the top/height/bottom axes,
+  // so segments below only declare their own top/height/bottom.
   .hk-timeline-link {
     width: var(--hk-timeline-link-thickness);
     height: auto;
     inset-inline-start: var(--hk-timeline-link-top);
+    // Explicitly neutralize the horizontal edge-after rule's
+    // inset-inline-end: 0 leak (same guard as the full-mode rail below).
+    inset-inline-end: auto;
     top: auto;
     bottom: auto;
 
     &[data-segment="before-current"] {
-      inset-inline-start: var(--hk-timeline-link-top);
-      width: var(--hk-timeline-link-thickness);
       top: calc(16.6667% + var(--hk-timeline-link-clearance));
       height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
     }
 
     &[data-segment="current-after"] {
-      inset-inline-start: var(--hk-timeline-link-top);
-      width: var(--hk-timeline-link-thickness);
       top: calc(50% + var(--hk-timeline-link-clearance));
       height: calc(33.3334% - (var(--hk-timeline-link-clearance) * 2));
     }
@@ -213,16 +214,11 @@
     // Continuation hints: from the container edge toward that cell's node,
     // fading INTO the edge ("more steps exist beyond this side").
     &[data-segment="edge-before"] {
-      inset-inline-start: var(--hk-timeline-link-top);
-      width: var(--hk-timeline-link-thickness);
       top: 0;
       height: calc(16.6667% - var(--hk-timeline-link-clearance));
     }
 
     &[data-segment="edge-after"] {
-      inset-inline-start: var(--hk-timeline-link-top);
-      width: var(--hk-timeline-link-thickness);
-      top: auto;
       bottom: 0;
       height: calc(16.6667% - var(--hk-timeline-link-clearance));
     }
@@ -249,21 +245,20 @@
   min-width: 0;
 
   [data-el="indicator"] {
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
-    min-height: 24px;
-    max-width: 24px;
-    max-height: 24px;
+    // Keyed off the shared node-size token above so the circle, the
+    // window-mode link math and the vertical rail offset stay in sync.
+    width: var(--hk-timeline-node-size);
+    height: var(--hk-timeline-node-size);
+    min-width: var(--hk-timeline-node-size);
+    min-height: var(--hk-timeline-node-size);
+    max-width: var(--hk-timeline-node-size);
+    max-height: var(--hk-timeline-node-size);
     border-radius: 50%;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    flex-grow: 0;
-    visibility: visible;
-    overflow: visible;
   }
 
   [data-el="num"] {
@@ -383,9 +378,31 @@
 .hk-timeline-step[data-clickable] {
   cursor: pointer;
 
+  // Keyboard parity: the tsx gives completed steps role="button" +
+  // tabindex 0 (HkContextRing outer-ring pattern).
+  &:focus-visible {
+    outline: 2px solid var(--hi-color-primary);
+    outline-offset: 2px;
+  }
+
   &:hover [data-el="indicator"] {
     transform: scale(1.12);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
     transition: transform var(--hi-duration-normal, 0.3s) ease, box-shadow var(--hi-duration-normal, 0.3s) ease;
+  }
+
+  // Press feedback mirroring the hover pop (role="button" affordance).
+  &:active [data-el="indicator"] {
+    transform: scale(0.96);
+  }
+}
+
+// The hover/press rules above drive the indicator scale; snap the
+// animation under reduced motion, keeping the state change itself
+// (house pattern: HkIconButton.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-timeline-step[data-clickable]:hover [data-el="indicator"],
+  .hk-timeline-step[data-clickable]:active [data-el="indicator"] {
+    transition: none;
   }
 }

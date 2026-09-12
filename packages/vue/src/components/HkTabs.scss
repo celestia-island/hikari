@@ -9,14 +9,18 @@
   width: 100%;
 }
 
-/* === Scrollable (default) === */
+/* === Scrollable (default) + protruding end actions shrink-wrap === */
 
 /* The scroller (a horizontal HkScrollContainer) bounds the list: it
    sizes to the content up to the available width, then the list
    scrolls inside with safe centering. min-width: 0 lets the whole
    chain shrink inside constrained flex parents (status bars, header
-   centres). */
-.hk-tabs[data-scrollable] {
+   centres). With an end action the same shrink-wrap lets the
+   hover-reveal chain cap inside constrained flex parents (the two
+   attributes co-occur — scrollable defaults on — and the declarations
+   are identical, so one rule serves both). */
+.hk-tabs[data-scrollable],
+.hk-tabs[data-actions] {
   width: auto;
   max-width: 100%;
   min-width: 0;
@@ -28,23 +32,13 @@
 
 /* === Protruding end actions (startAction / endAction) === */
 
-/* With an end action the whole strip sits inside an HkHoverRevealAction
-   host (`.hk-tabs-addwrap`) and the button protrudes at the host's edge
-   (left:100% / right:100% in HkHoverRevealAction.scss) — outside the
-   scroll viewport, so it never scrolls away. Shrink-wrap the strip the
-   same way the scrollable variant does, so the hover-reveal chain can
-   cap inside constrained flex parents and the tabs keep their safe
-   centering. */
-.hk-tabs[data-actions] {
-  width: auto;
-  max-width: 100%;
-  min-width: 0;
-}
-
-/* The reveal host itself must be able to shrink below its content and
-   must not be clipped by rigid parents — mirrors HkHoverRevealAction's
-   own min/max rules; no flex shorthand here, the host's natural
-   shrink-wrap keeps the centered-bar geometry. */
+/* The strip sits inside an HkHoverRevealAction host and the button
+   protrudes at the host's edge (left:100% / right:100% in
+   HkHoverRevealAction.scss) — outside the scroll viewport, so it never
+   scrolls away. The reveal host itself must be able to shrink below its
+   content and must not be clipped by rigid parents — mirrors
+   HkHoverRevealAction's own min/max rules; no flex shorthand here, the
+   host's natural shrink-wrap keeps the centered-bar geometry. */
 .hk-tabs-addwrap {
   min-width: 0;
   max-width: 100%;
@@ -55,8 +49,7 @@
 .hk-tabs-list {
   position: relative;
   display: inline-flex;
-  gap: 0;
-  padding: 2px;
+  padding: var(--space-2);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-faint);
   background: rgb(var(--color-surface) / 60%);
@@ -87,8 +80,15 @@
   transition: color var(--duration-short) ease,
               transform var(--duration-short) ease;
 
-  &:hover {
+  /* A real <button disabled> (tsx) still matches :hover, so a dead tab
+     must be guarded explicitly. House muted state (HkButton). */
+  &:hover:not([data-disabled]) {
     color: rgb(var(--color-text));
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   /* Tactile press feedback — every button-group click animates, even
@@ -119,8 +119,8 @@
  * pop-in from a stale corner), later frames slide via left/width. */
 .hk-tabs-indicator {
   position: absolute;
-  top: 2px;
-  height: calc(100% - 4px);
+  top: var(--space-2);
+  height: calc(100% - var(--space-4));
   border-radius: var(--radius-sm);
   background: rgb(var(--color-primary) / 12%);
   pointer-events: none;
@@ -167,7 +167,8 @@
 /* === Panel (pill / tablist mode) === */
 
 .hk-tabs-panel {
-  outline: none;
+  /* No outline suppression: the panel div carries no tabindex and can
+     never take focus, so there is nothing to suppress. */
 
   &:not([data-active]) {
     display: none;
@@ -280,4 +281,17 @@
 .hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-merged {
   grid-column: span var(--hk-tabs-span, 1) / span var(--hk-tabs-span, 1);
   min-width: auto;
+}
+
+/* === Reduced motion ===
+ * The indicator slide, the trigger press scale and the swap enter/leave
+ * are pure motion; reduced-motion users get the instant end states
+ * (house pattern: HkExpansionPanel / HkAffixPicker / HkTagInput). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-tabs-trigger,
+  .hk-tabs-indicator,
+  .hk-tabs-swap-enter-active,
+  .hk-tabs-swap-leave-active {
+    transition: none;
+  }
 }

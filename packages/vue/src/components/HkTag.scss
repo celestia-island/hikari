@@ -13,14 +13,13 @@
 }
 
 .hk-tag-sm {
-  font-size: 0.625rem;
-  padding: 1px 6px;
+  font-size: var(--text-2xs, 0.625rem);
+  padding: 1px var(--space-6, 6px);
 }
 
-.hk-tag-md {
-  font-size: var(--hi-text-xs, 0.75rem);
-  padding: var(--hi-space-2, 2px) var(--hi-space-8, 8px);
-}
+/* md is the default size: HkTag always co-applies `.hk-tag` (tsx class
+   list), so the base rule above already carries the md values — the
+   class stays in the markup, but needs no rule of its own. */
 
 .hk-tag-icon {
   display: inline-flex;
@@ -42,8 +41,9 @@
   cursor: pointer;
   opacity: 0.5;
   padding: 0;
-  margin-left: var(--hi-space-2, 2px);
-  border-radius: var(--hi-radius-sm, 2px);
+  /* Trailing edge of the chip in both directions. */
+  margin-inline-start: var(--hi-space-2, 2px);
+  border-radius: var(--hi-radius-sm, 4px);
   transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }
 
@@ -51,38 +51,44 @@
   opacity: 1;
 }
 
+/* Keyboard focus indicator (house HkContextRing pattern). */
+.hk-tag-close:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
 .hk-tag-default {
-  background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
-  color: var(--hi-color-text-primary);
-  border-color: var(--hi-color-border);
+  background: color-mix(in srgb, var(--hi-color-surface, #fff) 60%, transparent);
+  color: var(--hi-color-text-primary, #333);
+  border-color: var(--hi-color-border, #30363d);
 }
 
 .hk-tag-primary {
-  background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
-  color: var(--hi-color-primary);
-  border-color: color-mix(in srgb, var(--hi-color-primary) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 10%, transparent);
+  color: var(--hi-color-primary, #58a6ff);
+  border-color: color-mix(in srgb, var(--hi-color-primary, #58a6ff) 20%, transparent);
 }
 
 .hk-tag-success {
-  background: color-mix(in srgb, var(--hi-color-success) 10%, transparent);
-  color: var(--hi-color-success);
-  border-color: color-mix(in srgb, var(--hi-color-success) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-success, #3fb950) 10%, transparent);
+  color: var(--hi-color-success, #3fb950);
+  border-color: color-mix(in srgb, var(--hi-color-success, #3fb950) 20%, transparent);
 }
 
 .hk-tag-warning {
-  background: color-mix(in srgb, var(--hi-color-warning) 10%, transparent);
-  color: var(--hi-color-warning);
-  border-color: color-mix(in srgb, var(--hi-color-warning) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-warning, #d29922) 10%, transparent);
+  color: var(--hi-color-warning, #d29922);
+  border-color: color-mix(in srgb, var(--hi-color-warning, #d29922) 20%, transparent);
 }
 
 .hk-tag-danger {
-  background: color-mix(in srgb, var(--hi-color-danger) 10%, transparent);
-  color: var(--hi-color-danger);
-  border-color: color-mix(in srgb, var(--hi-color-danger) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 10%, transparent);
+  color: var(--hi-color-danger, #f85149);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 20%, transparent);
 }
 
 .hk-tag-info {
-  background: color-mix(in srgb, var(--hi-color-info) 10%, transparent);
-  color: var(--hi-color-info);
-  border-color: color-mix(in srgb, var(--hi-color-info) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-info, #79c0ff) 10%, transparent);
+  color: var(--hi-color-info, #79c0ff);
+  border-color: color-mix(in srgb, var(--hi-color-info, #79c0ff) 20%, transparent);
 }

@@ -6,19 +6,19 @@
   min-height: 100vh;
   background: var(--hi-color-bg-canvas, #0d1117);
   color: var(--hi-color-text-primary, #c9d1d9);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif);
 }
 
 .hk-splash-main {
   text-align: center;
   max-width: 480px;
-  padding: 2rem;
+  padding: var(--space-32, 2rem);
 }
 
 .hk-splash-logo {
   width: 80px;
   height: 80px;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-24, 1.5rem);
   border-radius: 16px;
 }
 
@@ -26,35 +26,35 @@
   font-size: 2rem;
   font-weight: 700;
   color: var(--hi-color-primary, #58a6ff);
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-8, 0.5rem);
 }
 
 .hk-splash-subtitle {
   font-size: 1.1rem;
   color: var(--hi-color-text-secondary, #8b949e);
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-8, 0.5rem);
 }
 
 .hk-splash-description {
   font-size: 0.9rem;
   color: var(--hi-color-text-tertiary, #6e7681);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-16, 1rem);
 }
 
 .hk-splash-status {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-24, 1.5rem);
 }
 
 .hk-splash-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-12, 0.75rem);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .hk-splash-footer {
   margin-top: auto;
-  padding: 1rem;
-  font-size: 0.75rem;
+  padding: var(--space-16, 1rem);
+  font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-text-tertiary, #484f58);
 }

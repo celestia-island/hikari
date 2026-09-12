@@ -34,8 +34,10 @@
 }
 
 .hk-table-header-cell {
-  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
-  text-align: left;
+  /* md values live here: the wrapper always carries `hk-table-${size}`
+     (default md), whose override used to mask these base paddings. */
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  text-align: start;
   font-size: var(--hi-text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-text-secondary, #8b949e);
@@ -61,7 +63,7 @@
 .hk-table-header-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-4, 4px);
 }
 
 .hk-table-sort-icon {
@@ -105,7 +107,8 @@
 }
 
 .hk-table-cell {
-  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  /* md values (see .hk-table-header-cell). */
+  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
   color: var(--hi-color-text-primary, #c9d1d9);
   vertical-align: middle;
 }
@@ -116,13 +119,6 @@
   .hk-table-cell {
     padding: var(--hi-space-4, 4px) var(--hi-space-8, 8px);
     font-size: var(--hi-text-xs, 0.75rem);
-  }
-}
-
-.hk-table-md {
-  .hk-table-header-cell,
-  .hk-table-cell {
-    padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
   }
 }
 
@@ -139,9 +135,10 @@
   color: var(--hi-color-text-secondary, #8b949e);
 }
 
-/* Alignment helpers */
+/* Alignment helpers (start/end so aligned columns mirror in RTL; the
+   tsx keeps emitting the hk-text-* names) */
 .hk-text-left {
-  text-align: left;
+  text-align: start;
 }
 
 .hk-text-center {
@@ -149,7 +146,7 @@
 }
 
 .hk-text-right {
-  text-align: right;
+  text-align: end;
 }
 
 /* Checkbox styles inline */
@@ -214,4 +211,12 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Reduced motion: the sort icon snaps between asc/desc instead of
+   rotating (house pattern: HkExpansionPanel.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-table-sort-icon {
+    transition: none;
+  }
 }

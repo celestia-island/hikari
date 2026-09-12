@@ -160,7 +160,6 @@ export const HkAboutModal = defineComponent({
 
             {props.links.length > 0 && (
               <div class="s-about-modal-links">
-                <span class="s-about-modal-row-label">{t("hikari::about.links", "Links")}</span>
                 <div class="s-about-modal-links-list">
                   {props.links.map((link) => (
                     <a

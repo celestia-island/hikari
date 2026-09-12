@@ -17,7 +17,6 @@
     "hikari::about.buildHash": "Build",
     "hikari::about.engineVersion": "Versão do motor",
     "hikari::about.engineBuildHash": "Build do motor",
-    "hikari::about.links": "Links",
     "hikari::about.author": "Autor",
     "hikari::about.license": "Licença",
     "hikari::theme.mode": "Modo do tema",

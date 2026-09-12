@@ -270,6 +270,21 @@ export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";
 export { extOf, isImageFile, isAudioFile, codeLanguage, isCodeFile, isArchiveFile, isTextFile, fileIcon, mediaKindOf } from "./utils/fileType";
 
 export { useReducedMotion } from "./composables/useReducedMotion";
+export {
+  drawnScale,
+  frameMetrics,
+  frameScale,
+  laidSize,
+  layoutOffset,
+  layoutRect,
+  nearestLaidAncestor,
+  placePoint,
+} from "./composables/layoutGeometry";
+export type {
+  FrameMetrics,
+  LayoutOffset,
+  LayoutRect,
+} from "./composables/layoutGeometry";
 export { useMeasuredHighlight } from "./composables/useMeasuredHighlight";
 export type { UseMeasuredHighlightOptions, MeasuredHighlight } from "./composables/useMeasuredHighlight";
 export {

@@ -59,6 +59,7 @@ import {
   type BoardEdgeStyle,
 } from "../utils/boardEdges";
 import "./HkBoard.scss";
+import { drawnScale } from "../composables/layoutGeometry";
 
 /**
  * A node on the board. `hidden` nodes are junction-only (invisible).
@@ -211,9 +212,23 @@ export default defineComponent({
     // — SCADA scenes, mind maps — still get `nodeClick` on a short tap.
     let pressed: { id: string; pointerId: number; x: number; y: number } | null = null;
 
+    /** How many of the board's own pixels one DRAWN pixel is worth: the
+     *  camera and every anchor live in the board's local CSS pixels while the
+     *  pointer arrives in drawn ones, and a scaled or zoomed root separates
+     *  the two (see `layoutGeometry`). */
+    const pxScale = (): number => {
+      const el = viewportRef.value;
+      if (!el) return 1;
+      const scale = drawnScale(el);
+      const factor = el.offsetWidth > 0 ? scale.x : el.offsetHeight > 0 ? scale.y : 1;
+      return factor > 0 ? factor : 1;
+    };
+
     const localPoint = (e: PointerEvent | WheelEvent): BoardPoint => {
-      const rect = viewportRef.value?.getBoundingClientRect();
-      return { x: e.clientX - (rect?.left ?? 0), y: e.clientY - (rect?.top ?? 0) };
+      const el = viewportRef.value;
+      const rect = el?.getBoundingClientRect();
+      const k = pxScale();
+      return { x: (e.clientX - (rect?.left ?? 0)) / k, y: (e.clientY - (rect?.top ?? 0)) / k };
     };
 
     function onWheel(e: WheelEvent): void {
@@ -237,14 +252,10 @@ export default defineComponent({
     function rearmPinch(): void {
       const [a, b] = [...pointers.values()];
       if (!a || !b) return;
-      const rect = viewportRef.value?.getBoundingClientRect();
       pinchBase = {
         cam: { ...camera.value },
         dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
-        mid: {
-          x: (a.x + b.x) / 2 - (rect?.left ?? 0),
-          y: (a.y + b.y) / 2 - (rect?.top ?? 0),
-        },
+        mid: localPoint({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 } as PointerEvent),
       };
     }
 
@@ -273,17 +284,18 @@ export default defineComponent({
       if (pinchBase && pointers.size >= 2) {
         const [a, b] = [...pointers.values()];
         const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-        const rect = viewportRef.value?.getBoundingClientRect();
-        const mid = {
-          x: (a.x + b.x) / 2 - (rect?.left ?? 0),
-          y: (a.y + b.y) / 2 - (rect?.top ?? 0),
-        };
+        const mid = localPoint({
+          clientX: (a.x + b.x) / 2,
+          clientY: (a.y + b.y) / 2,
+        } as PointerEvent);
         pinchBase.mid = mid;
         cam.pinchZoom(pinchBase.cam, dist / pinchBase.dist, mid);
         return;
       }
       if (dragState) {
-        const k = camera.value.k || 1;
+        // The node lives in WORLD units: the drawn delta comes down through
+        // the ancestor scale and then through the camera's own zoom.
+        const k = (camera.value.k || 1) * pxScale();
         const dx = (e.clientX - dragState.sx) / k;
         const dy = (e.clientY - dragState.sy) / k;
         if (Math.abs(e.clientX - dragState.sx) + Math.abs(e.clientY - dragState.sy) > 3) dragState.moved = true;
@@ -293,7 +305,8 @@ export default defineComponent({
         return;
       }
       if (panState) {
-        cam.panBy(e.clientX - panState.px, e.clientY - panState.py);
+        const k = pxScale();
+        cam.panBy((e.clientX - panState.px) / k, (e.clientY - panState.py) / k);
         panState = { px: e.clientX, py: e.clientY };
       }
     }

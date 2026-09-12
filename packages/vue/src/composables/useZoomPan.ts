@@ -1,6 +1,7 @@
-import { computed, onUnmounted, ref, type Ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch, type Ref } from "vue";
 
 import { useReportedTransition } from "@celestia-island/hikari";
+import { drawnScale } from "./layoutGeometry";
 
 /** Duration of the transform settle transition (see `style` below) AND the
  *  window reported to the unified animation bus. JS == CSS so the bus
@@ -128,8 +129,22 @@ export function useZoomPan(options: ZoomPanOptions): ZoomPanState {
 
   function onPointerMove(e: PointerEvent) {
     if (!isPanning.value) return;
-    const dx = e.clientX - lastPointerX.value;
-    const dy = e.clientY - lastPointerY.value;
+    // The container's own pixels, not the drawn ones: a scaled or zoomed root
+    // would otherwise pan k times as far as the pointer moved.
+    const container = containerRef.value;
+    const scale = container ? drawnScale(container) : { x: 1, y: 1 };
+    const factor =
+      container && container.offsetWidth > 0
+        ? scale.x > 0
+          ? scale.x
+          : 1
+        : container && container.offsetHeight > 0
+          ? scale.y > 0
+            ? scale.y
+            : 1
+          : 1;
+    const dx = (e.clientX - lastPointerX.value) / factor;
+    const dy = (e.clientY - lastPointerY.value) / factor;
     lastPointerX.value = e.clientX;
     lastPointerY.value = e.clientY;
     panX.value += dx;
@@ -146,23 +161,33 @@ export function useZoomPan(options: ZoomPanOptions): ZoomPanState {
   }
 
   let detach: (() => void) | null = null;
-  if (typeof window !== "undefined") {
+  /** Wire the gestures to whatever element the ref resolves to. A ref is
+   *  still empty while `setup` runs, so this has to happen once the host has
+   *  mounted — wiring it inline left every gesture unattached. */
+  function attach(): void {
+    detach?.();
+    detach = null;
     const el = containerRef.value;
-    if (el) {
-      const wheelOpts = { passive: false } as AddEventListenerOptions;
-      el.addEventListener("wheel", onWheel, wheelOpts);
-      el.addEventListener("pointerdown", onPointerDown);
-      el.addEventListener("pointermove", onPointerMove);
-      el.addEventListener("pointerup", onPointerUp);
-      el.addEventListener("pointercancel", onPointerUp);
-      detach = () => {
-        el.removeEventListener("wheel", onWheel, wheelOpts);
-        el.removeEventListener("pointerdown", onPointerDown);
-        el.removeEventListener("pointermove", onPointerMove);
-        el.removeEventListener("pointerup", onPointerUp);
-        el.removeEventListener("pointercancel", onPointerUp);
-      };
-    }
+    if (!el) return;
+    const wheelOpts = { passive: false } as AddEventListenerOptions;
+    el.addEventListener("wheel", onWheel, wheelOpts);
+    el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", onPointerUp);
+    el.addEventListener("pointercancel", onPointerUp);
+    detach = () => {
+      el.removeEventListener("wheel", onWheel, wheelOpts);
+      el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", onPointerUp);
+      el.removeEventListener("pointercancel", onPointerUp);
+    };
+  }
+
+  if (typeof window !== "undefined") {
+    onMounted(attach);
+    // A host that swaps the element out from under the ref re-wires too.
+    watch(containerRef, () => attach());
   }
 
   const style = computed(() => ({

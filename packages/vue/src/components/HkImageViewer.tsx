@@ -2,6 +2,7 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } fro
 
 import HSpinner from "./HkSpinner";
 import HMinimap from "./HkMinimap";
+import { drawnScale } from "../composables/layoutGeometry";
 import "./HkImageViewer.scss";
 
 /**
@@ -55,6 +56,29 @@ export default defineComponent({
     function dims() {
       const c = containerRef.value;
       return c ? { cw: c.clientWidth, ch: c.clientHeight } : { cw: 0, ch: 0 };
+    }
+
+    /** How many of the container's own pixels one DRAWN pixel is worth.
+     *  The camera (`panX`/`panY`/`zoom`) lives in the container's local CSS
+     *  pixels while the pointer arrives in drawn ones, and a scaled or zoomed
+     *  root makes the two differ — feeding a drawn delta straight into the
+     *  camera moves the image `k` times as far as the finger went. */
+    function pxScale() {
+      const el = containerRef.value;
+      if (!el) return 1;
+      const scale = drawnScale(el);
+      const factor = el.offsetWidth > 0 ? scale.x : el.offsetHeight > 0 ? scale.y : 1;
+      return factor > 0 ? factor : 1;
+    }
+
+    /** A pointer position inside the container, in the container's own
+     *  pixels (the space every anchor and the camera are written in). */
+    function localPoint(e: { clientX: number; clientY: number }) {
+      const el = containerRef.value;
+      if (!el) return { x: 0, y: 0 };
+      const rect = el.getBoundingClientRect();
+      const factor = pxScale();
+      return { x: (e.clientX - rect.left) / factor, y: (e.clientY - rect.top) / factor };
     }
 
     function recomputeFit() {
@@ -115,11 +139,9 @@ export default defineComponent({
       e.preventDefault();
       const el = containerRef.value;
       if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
+      const at = localPoint(e);
       const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-      setZoom(zoom.value * factor, cx, cy);
+      setZoom(zoom.value * factor, at.x, at.y);
     }
 
     /** Euclidean distance between two pointer positions. */
@@ -172,19 +194,19 @@ export default defineComponent({
         if (!pair || !el) return;
         // Anchor the zoom at the fingers' midpoint (container-local
         // coordinates, same space as the wheel/dblclick anchors).
-        const rect = el.getBoundingClientRect();
         const dist = Math.max(pointerDist(pair[0], pair[1]), 1);
-        setZoom(
-          pinchStartZoom * (dist / pinchStartDist),
-          (pair[0].x + pair[1].x) / 2 - rect.left,
-          (pair[0].y + pair[1].y) / 2 - rect.top,
-        );
+        const mid = localPoint({
+          clientX: (pair[0].x + pair[1].x) / 2,
+          clientY: (pair[0].y + pair[1].y) / 2,
+        });
+        setZoom(pinchStartZoom * (dist / pinchStartDist), mid.x, mid.y);
         return;
       }
 
       if (!dragging.value) return;
-      const dx = e.clientX - lastPt.value.x;
-      const dy = e.clientY - lastPt.value.y;
+      const factor = pxScale();
+      const dx = (e.clientX - lastPt.value.x) / factor;
+      const dy = (e.clientY - lastPt.value.y) / factor;
       lastPt.value = { x: e.clientX, y: e.clientY };
       panX.value += dx;
       panY.value += dy;
@@ -235,12 +257,11 @@ export default defineComponent({
       if (!loaded.value) return;
       const el = containerRef.value;
       if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
-      setZoom(isZoomed.value ? fit.value : Math.min(MAX_ZOOM, fit.value * 3), cx, cy);
+      const at = localPoint(e);
+      setZoom(isZoomed.value ? fit.value : Math.min(MAX_ZOOM, fit.value * 3), at.x, at.y);
     }
 
+    /** Panned by another surface (the minimap), in this camera's own units. */
     function onPanDelta(dx: number, dy: number) {
       panX.value += dx;
       panY.value += dy;

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, reactive, ref } from "vue";
 
 import HkScrollContainer from "./HkScrollContainer";
@@ -16,6 +16,7 @@ interface Mounted {
   } | null;
 }
 
+const scrolled: number[] = [];
 const mounts: Mounted["app"][] = [];
 const containers: HTMLElement[] = [];
 
@@ -63,6 +64,43 @@ afterEach(() => {
 });
 
 describe("HkScrollContainer alignment", () => {
+  it("scrolls to an element by its laid-out distance, inside a scaled root", () => {
+    // The target is compared against `scrollTop`, a layout number: measured
+    // from drawn boxes it overshoots by (scale - 1) of the element's distance
+    // from the visible top, and in a zoomed root that walks the element right
+    // out of view.
+    const m = mountScroller();
+    stubGeometry(m.viewport, {
+      scrollHeight: 2000, clientHeight: 400, scrollTop: 100,
+      scrollWidth: 300, clientWidth: 300, scrollLeft: 0,
+    });
+    Object.defineProperty(m.viewport, "scrollTo", {
+      configurable: true,
+      value: (opts: { top: number }) => {
+        scrolled.push(opts.top);
+      },
+    });
+    // The viewport is drawn twice the size it is laid out at.
+    const drawn = vi.spyOn(m.viewport, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, right: 800, bottom: 800, width: 800, height: 800, x: 0, y: 0,
+    } as DOMRect);
+    Object.defineProperty(m.viewport, "offsetWidth", { configurable: true, get: () => 400 });
+    Object.defineProperty(m.viewport, "offsetHeight", { configurable: true, get: () => 400 });
+    void drawn;
+
+    // The element sits 150 of the viewport's own pixels below its top edge.
+    const target = document.createElement("div");
+    m.viewport.appendChild(target);
+    Object.defineProperty(target, "offsetParent", { configurable: true, get: () => m.viewport });
+    Object.defineProperty(target, "offsetLeft", { configurable: true, get: () => 0 });
+    Object.defineProperty(target, "offsetTop", { configurable: true, get: () => 150 });
+    vi.spyOn(target, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 600, right: 100, bottom: 700, width: 100, height: 100, x: 0, y: 600,
+    } as DOMRect);
+
+    (m.instance as unknown as { scrollToElement: (el: HTMLElement) => void }).scrollToElement(target);
+    expect(scrolled.at(-1), "150 of the viewport's own pixels, not the drawn 300").toBe(150);
+  });
   it("renders the slot bare without an align prop", () => {
     const m = mountScroller();
     expect(m.root.hasAttribute("data-align")).toBe(false);

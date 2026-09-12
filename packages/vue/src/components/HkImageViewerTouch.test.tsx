@@ -100,6 +100,63 @@ describe("HkImageViewer touch gestures", () => {
     expect(after.scale).toBe(before.scale);
   });
 
+  it("pans by the finger's own distance inside a scaled root", async () => {
+    // The camera lives in the container's local pixels while the pointer
+    // arrives in drawn ones. Inside a scaled or zoomed root (chest's display
+    // scale reaches 300%) the image would otherwise travel k times as far as
+    // the finger — it slips out from under the pointer.
+    const s = await mountViewer();
+    const c = s.container();
+    // The container is drawn twice the size it is laid out at.
+    Object.defineProperty(c, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(c, "offsetWidth", { configurable: true, get: () => 400 });
+    Object.defineProperty(c, "offsetHeight", { configurable: true, get: () => 300 });
+
+    const before = s.transform();
+    c.dispatchEvent(pointer("pointerdown", 1, 100, 100));
+    c.dispatchEvent(pointer("pointermove", 1, 140, 160));
+    await nextTick();
+
+    const after = s.transform();
+    expect(after.tx, "40 drawn px are 20 of the container's own").toBeCloseTo(before.tx + 20, 5);
+    expect(after.ty, "60 drawn px are 30 of the container's own").toBeCloseTo(before.ty + 30, 5);
+  });
+
+  it("anchors a wheel zoom where the pointer is, inside a scaled root", async () => {
+    const s = await mountViewer();
+    const c = s.container();
+    Object.defineProperty(c, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0 }) as DOMRect,
+    });
+    Object.defineProperty(c, "offsetWidth", { configurable: true, get: () => 400 });
+    Object.defineProperty(c, "offsetHeight", { configurable: true, get: () => 300 });
+
+    // The point under the pointer must stay under it: the container-local
+    // coordinate of the pointer is (200, 150) — half of the layout box — and
+    // the anchor has to be that, not the drawn (400, 300).
+    const anchor = { x: 200, y: 150 };
+    const before = s.transform();
+    const worldBefore = {
+      x: (anchor.x - before.tx) / before.scale,
+      y: (anchor.y - before.ty) / before.scale,
+    };
+    // happy-dom's WheelEvent carries no pointer coordinates: pin them by hand
+    // so the anchor has a position to work from.
+    const wheel = new WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: -1 });
+    Object.defineProperty(wheel, "clientX", { value: 400 });
+    Object.defineProperty(wheel, "clientY", { value: 300 });
+    c.dispatchEvent(wheel);
+    await nextTick();
+    const after = s.transform();
+    expect(after.scale).toBeGreaterThan(before.scale);
+    expect(after.tx + worldBefore.x * after.scale, "the world point stays under the pointer").toBeCloseTo(anchor.x, 4);
+    expect(after.ty + worldBefore.y * after.scale).toBeCloseTo(anchor.y, 4);
+  });
+
   it("a stray move without an active pointer never pans", async () => {
     const s = await mountViewer();
     const c = s.container();

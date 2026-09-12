@@ -5,6 +5,7 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropTy
 
 
 import { useI18n } from "../i18n/context";
+import { layoutOffset } from "../composables/layoutGeometry";
 import "./HkMinimap.scss";
 
 export interface MinimapBox {
@@ -158,7 +159,21 @@ export default defineComponent({
       const dy = e.clientY - dragStart.value.y;
       dragStart.value = { x: e.clientX, y: e.clientY };
       if (scale.value > 0) {
-        emit("panDelta", (-dx / scale.value) * props.zoom, (-dy / scale.value) * props.zoom);
+        // The pointer moves in DRAWN pixels while the map is drawn into a
+        // card that is not necessarily as wide as the SVG's viewBox (and, in
+        // a scaled or zoomed root, is drawn wider still). One drawn pixel is
+        // `viewBox / rect.width` user units, so the delta is converted before
+        // it is turned into a pan.
+        const host = rootRef.value;
+        const svg =
+          host instanceof SVGElement ? host : host?.querySelector("svg") ?? host ?? null;
+        const rect = svg?.getBoundingClientRect();
+        const units = rect && rect.width > 0 ? svgW / rect.width : 1;
+        emit(
+          "panDelta",
+          (-dx * units / scale.value) * props.zoom,
+          (-dy * units / scale.value) * props.zoom,
+        );
       }
     }
     function onUp(e: PointerEvent) {

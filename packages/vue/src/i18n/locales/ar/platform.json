@@ -18,6 +18,8 @@
     "hikari::about.engineVersion": "إصدار المحرك",
     "hikari::about.engineBuildHash": "بناء المحرك",
     "hikari::about.links": "روابط",
+    "hikari::about.author": "المؤلف",
+    "hikari::about.license": "الترخيص",
     "hikari::theme.mode": "وضع السمة",
     "hikari::theme.modeLight": "فاتح",
     "hikari::theme.modeDark": "داكن",

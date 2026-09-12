@@ -18,6 +18,8 @@
     "hikari::about.engineVersion": "引擎版本",
     "hikari::about.engineBuildHash": "引擎构建",
     "hikari::about.links": "链接",
+    "hikari::about.author": "作者",
+    "hikari::about.license": "许可证",
     "hikari::theme.mode": "主题模式",
     "hikari::theme.modeLight": "浅色",
     "hikari::theme.modeDark": "深色",

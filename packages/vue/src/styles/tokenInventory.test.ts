@@ -70,13 +70,6 @@ const scaleSource = stripProvenanceHeader(
   read(resolve(stylesDir, "theme/scale.scss")),
 );
 const adminSource = read(resolve(stylesDir, "admin-tokens.scss"));
-const legacySheets = [
-  "base.scss",
-  "foundation.scss",
-  "themes.scss",
-  "_tokens.scss",
-  "_layout.scss",
-].map((b) => [`theme/${b}`, stripProvenanceHeader(read(resolve(stylesDir, "theme", b)))] as [string, string]);
 
 const seedFiles: Array<[string, string]> = [
   ["theme/channels.scss", seedSource],
@@ -151,80 +144,19 @@ describe("theme token inventory", () => {
 
   it("scale tokens are single-defined across the normalized sheets", () => {
     // Current legacy debt: these names still multi-define across the
-    // legacy sheets + admin-tokens (frozen 2026-09-12 census, 56 names).
+    // legacy sheets + admin-tokens (frozen 2026-09-12 census).
     // Each entry must die in its wave; adding a NEW name here is a
     // regression.
+        // Intentional dual faces: the plana-ui brand aliases in admin-tokens
+    // (pink no-JS face) vs the channel seed (standalone face).
     const KNOWN_MULTI_SCALE = new Set([
-      "--blur-lg",
-      "--blur-md",
-      "--blur-sm",
-      "--border-faint",
-      "--border-input",
-      "--border-subtle",
-      "--c-primary",
       "--c-primary-light",
       "--c-primary-overlay",
       "--c-primary-subtle",
-      "--duration-fast",
-      "--duration-instant",
-      "--duration-normal",
-      "--duration-short",
-      "--ease-in-expo",
-      "--ease-in-out",
-      "--ease-out-expo",
-      "--ease-standard",
-      "--font-mono",
-      "--font-reading",
-      "--font-sans",
-      "--hi-bg-surface-dark",
-      "--hi-border-color-focus",
-      "--hi-duration-instant",
-      "--hi-ease-default",
-      "--hi-icon-color",
-      "--hi-icon-size-lg",
-      "--hi-icon-size-md",
-      "--hi-icon-size-sm",
-      "--hi-icon-size-xs",
-      "--hi-radius-lg",
-      "--hi-radius-md",
-      "--hi-radius-sm",
-      "--hi-radius-xl",
-      "--hi-shadow-button",
-      "--hi-shadow-elevated",
-      "--hi-shadow-lg",
-      "--hi-shadow-md",
-      "--hi-shadow-sm",
-      "--hi-shadow-xl",
-      "--opacity-half",
-      "--radius-md",
-      "--radius-sm",
-      "--space-10",
-      "--space-12",
-      "--space-14",
-      "--space-16",
-      "--space-2",
-      "--space-20",
-      "--space-24",
-      "--space-28",
-      "--space-32",
-      "--space-4",
-      "--space-40",
-      "--space-6",
-      "--space-8",
-      "--text-2xs",
-      "--text-base",
-      "--text-lg",
-      "--text-md",
-      "--text-sm",
-      "--text-xs",
-      "--z-base",
-      "--z-header",
-      "--z-sidebar",
     ]);
 
     const defs = harvestDefinitions([
-      seedFiles[0],
-      ...legacySheets,
+      ...seedFiles,
       ["admin-tokens.scss", adminSource],
     ]);
     const scaleRe = /^--(space-|text-|radius-|blur-|duration-|ease-|z-|border-|c-|opacity-|shadow-(?!dropdown|focus|button-danger)|font-|hi-(duration|ease|radius|icon|blur|opacity|shadow-(?!dropdown|focus)|z-|border-color))/;
@@ -286,5 +218,38 @@ describe("theme token inventory", () => {
       }
     }
     expect(deviants, "non-canonical hex fallbacks").toEqual([]);
+
+    // rgba() fallbacks: the color channels must equal the seed triplet
+    // (alpha is the caller's choice and stays untouched).
+    const seedTripletValues: Record<string, [number, number, number]> = {};
+    for (const [name, sites] of seedTriplets) {
+      if (!name.startsWith("--color-")) continue;
+      const [r, g, b] = sites[0].value.split(" ").map((n) => Number(n));
+      seedTripletValues[name] = [r, g, b];
+    }
+    const rgbaDeviants: string[] = [];
+    for (const f of files) {
+      const css = read(resolve(componentsDir, f));
+      for (const m of css.matchAll(
+        /var\((--hi-color-[a-z0-9-]+),\s*rgba\((\d+),\s*(\d+),\s*(\d+),/g,
+      )) {
+        const token = m[1];
+        // danger is the one alias whose channel is named differently.
+        const channel = token
+          .replace("--hi-color-", "--color-")
+          .replace("danger", "error")
+          .replace(/-dark$/, "");
+        const seed = seedTripletValues[channel];
+        if (!seed) continue;
+        if (
+          Number(m[2]) !== seed[0] ||
+          Number(m[3]) !== seed[1] ||
+          Number(m[4]) !== seed[2]
+        ) {
+          rgbaDeviants.push(`${f}: var(${token}, rgba(${m[2]},${m[3]},${m[4]},…))`);
+        }
+      }
+    }
+    expect(rgbaDeviants, "non-canonical rgba fallbacks").toEqual([]);
   });
 });

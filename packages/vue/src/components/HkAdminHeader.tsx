@@ -181,12 +181,7 @@ export const HkAdminHeader = defineComponent({
 
         <div ref={userTriggerRef} class="flex items-center gap-2 min-w-0">
           <button
-            class={[
-              "w-7 h-7 rounded-full overflow-hidden shrink-0 cursor-pointer transition-opacity relative group p-0 border-0",
-              props.avatarUrl
-                ? ""
-                : "bg-primary/10 border-2 border-primary/15 hover:border-primary/30",
-            ]}
+            class="w-7 h-7 rounded-full overflow-hidden shrink-0 cursor-pointer transition-opacity relative group p-0 border-0"
             aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
             aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
             aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
@@ -200,7 +195,12 @@ export const HkAdminHeader = defineComponent({
                 onError={() => { avatarFailed.value = true; }}
               />
             ) : (
-              <span class="text-xs font-bold text-primary/70">
+              // Letter fallback on the shared avatar primitive — the
+              // same filled-circle grammar as the chat frontend's
+              // trigger. The old border-2 ring made the console's
+              // avatar read as a different control (user report
+              // 2026-09-12: 前后台头像不一致).
+              <span class="s-user-avatar">
                 {props.username?.charAt(0).toUpperCase() || "?"}
               </span>
             )}

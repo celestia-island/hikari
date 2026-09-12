@@ -789,6 +789,85 @@ describe("HkMenu sidebar variant", () => {
     expect(container.textContent).toContain("Products");
     expect(container.textContent).not.toContain("General");
   });
+
+  it("renders the header slot above the rows", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(
+          HkMenu,
+          { variant: "sidebar", open: true, items: navItems },
+          { header: () => h("div", { class: "sidebar-identity" }, "me@example.com") },
+        ),
+    });
+    mounts.push(app);
+    app.mount(container);
+
+    // The identity block leads the same inline surface (drawer account
+    // menu grammar) — first child of the nav, before any row.
+    const nav = container.querySelector(".hk-menu-sidebar");
+    const identity = nav?.querySelector(".sidebar-identity");
+    expect(identity).not.toBeNull();
+    expect(nav!.firstElementChild).toBe(identity);
+  });
+
+  it("renders the check column on rows that opt in (checked !== undefined)", async () => {
+    const selected: string[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: [
+            {
+              key: "locale",
+              label: "Language",
+              children: [
+                { key: "en", label: "English", checked: false },
+                { key: "zh", label: "中文", checked: true },
+              ],
+            },
+            { key: "logout", label: "Log out", danger: true },
+          ],
+          onSelect: (key: string) => selected.push(key),
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    // Groups default collapsed — expand the locale group.
+    const toggle = container.querySelector(
+      ".hk-menu-sidebar-group-toggle",
+    ) as HTMLButtonElement;
+    toggle.click();
+    await settle();
+
+    const rowOf = (label: string) =>
+      [...container.querySelectorAll(".hk-menu-sidebar-row")].find(
+        (r) => r.textContent?.includes(label),
+      ) as HTMLButtonElement;
+    const en = rowOf("English");
+    const zh = rowOf("中文");
+    const logout = rowOf("Log out");
+
+    // Checked rows carry the cell; true renders the mark, false keeps
+    // the empty placeholder so labels stay aligned. Rows without the
+    // opt-in get no cell at all.
+    expect(en.querySelector(".hk-menu-check")).not.toBeNull();
+    expect(en.querySelector(".hk-menu-check")?.hasAttribute("data-on")).toBe(false);
+    expect(zh.querySelector(".hk-menu-check")?.hasAttribute("data-on")).toBe(true);
+    expect(logout.querySelector(".hk-menu-check")).toBeNull();
+
+    en.click();
+    await settle();
+    expect(selected).toEqual(["en"]);
+  });
 });
 
 describe("HkMenu close linger (leave-transition window)", () => {

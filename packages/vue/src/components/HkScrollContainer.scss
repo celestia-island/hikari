@@ -45,7 +45,7 @@
    content fade. The fade size custom property is declared on the
    root so consumers can override it from the container element. */
 .hk-scroll-container[data-fade="true"] {
-  --hk-scroll-fade-size: 24px;
+  --hk-scroll-fade-size: var(--space-24);
 }
 
 .hk-scroll-container[data-fade="true"][data-h-overflow="end"] > .hk-scroll-container-viewport {
@@ -56,6 +56,18 @@
 .hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
   mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+}
+
+/* RTL: the horizontal scroll start/end edges swap sides, so the
+ * directional fades flip (the "both" mask is end-symmetric — no flip). */
+[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="end"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
+}
+
+[dir="rtl"] .hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
+  mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
 }
 
 .hk-scroll-container[data-fade="true"][data-h-overflow="both"] > .hk-scroll-container-viewport {
@@ -90,18 +102,18 @@
 
 .hk-scroll-container-autotag {
   position: absolute;
-  right: 0.625rem;
-  bottom: 0.625rem;
+  right: var(--space-10);
+  bottom: var(--space-10);
   z-index: 6;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  padding: 2px 8px;
-  font-size: 0.625rem;
+  padding: var(--space-2) var(--space-8);
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
-  color: var(--hi-color-muted);
-  background: color-mix(in srgb, var(--hi-color-surface) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-border) 12%, transparent);
+  color: var(--hi-color-muted, #666);
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.08)) 12%, transparent);
   border-radius: var(--hi-radius-full, 9999px);
   backdrop-filter: blur(4px);
   opacity: 0.85;

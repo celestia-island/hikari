@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  padding-left: 0.75rem;
+  padding-inline-start: var(--space-12);
   color: var(--hi-color-muted);
 
   svg {
@@ -47,9 +47,9 @@
   outline: none;
   color: var(--hi-color-text-primary);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   line-height: 1.5;
-  padding: 0 0.5rem;
+  padding: 0 var(--space-8);
 
   &::placeholder {
     color: var(--hi-color-muted);
@@ -68,12 +68,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.75rem;
+  width: var(--space-28);
   height: 100%;
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 0;
   color: var(--hi-color-muted);
   cursor: pointer;
   transition:
@@ -89,17 +88,21 @@
     background: color-mix(in srgb, var(--hi-color-surface) 60%, transparent);
     color: var(--hi-color-text-primary);
   }
+
+  &:active {
+    background: color-mix(in srgb, var(--hi-color-surface) 80%, transparent);
+  }
 }
 
 /* --- Size variants --- */
 
 .hk-search-input-sm .hk-search-input-field {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   height: 1.75rem;
 }
 
 .hk-search-input-sm .hk-search-input-icon {
-  padding-left: 0.5rem;
+  padding-inline-start: var(--space-8);
 
   svg {
     width: 14px;
@@ -108,17 +111,16 @@
 }
 
 .hk-search-input-md .hk-search-input-field {
-  font-size: 0.875rem;
   height: 2.25rem;
 }
 
 .hk-search-input-lg .hk-search-input-field {
-  font-size: 1rem;
+  font-size: var(--text-md);
   height: 2.75rem;
 }
 
 .hk-search-input-lg .hk-search-input-icon {
-  padding-left: 1rem;
+  padding-inline-start: var(--space-16);
 
   svg {
     width: 18px;

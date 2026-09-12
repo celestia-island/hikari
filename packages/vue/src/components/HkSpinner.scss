@@ -3,6 +3,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  /* Transient loading status, not content: selecting it mid-drag
+     produces accidental clipboard noise. Covers circle and text. */
+  user-select: none;
 }
 
 /* center — the shared loading-state placement contract: the spinner is
@@ -25,9 +28,9 @@
   height: 100%;
   box-sizing: border-box;
   align-self: stretch;
-  /* grow without shrink: min-height already floors the box, so letting
-     it shrink cannot go below the floor but avoids a rigid-sibling
-     overflow trap in tight flex rows. */
+  /* grow + shrink: min-height floors the box, so shrinking cannot go
+     below the floor, and growing fills leftover space — avoiding a
+     rigid-sibling overflow trap in tight flex rows. */
   flex: 1 1 auto;
   /* Predictable mid-panel presence on every viewport: a fixed floor,
      not fluid scaling (fluid values hit their cap on all realistic
@@ -86,17 +89,20 @@
   font-size: var(--text-base);
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
   /* Transient status, not content: selecting it mid-drag produces
-     accidental clipboard noise. The circle itself stays selectable-free
-     via the wrapper below. */
-  user-select: none;
-}
-
-.hk-spinner-wrapper {
+     accidental clipboard noise. (The wrapper already covers the circle.) */
   user-select: none;
 }
 
 @keyframes hk-spinner-rotate {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// Reduced motion: the wheel rests as a static track + primary arc,
+// still readable as a loading mark (house pattern: HkProgressBar.scss).
+@media (prefers-reduced-motion: reduce) {
+  .hk-spinner {
+    animation: none;
   }
 }

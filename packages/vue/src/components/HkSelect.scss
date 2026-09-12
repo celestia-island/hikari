@@ -21,7 +21,7 @@
 }
 
 .hk-select-required {
-  margin-left: var(--space-2);
+  margin-inline-start: var(--space-2);
   color: rgb(var(--color-error));
 }
 
@@ -29,8 +29,11 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: var(--space-8) var(--space-32) var(--space-8) var(--space-12);
-  min-height: 2.5rem;
+  /* Logical axes (HkAffixPicker rule): the wide side reserves arrow
+   * room at inline-end and flips with the host's direction. */
+  padding-block: var(--space-8);
+  padding-inline: var(--space-12) var(--space-32);
+  min-height: var(--space-40);
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
@@ -42,7 +45,12 @@
   text-align: center;
   cursor: pointer;
   outline: none;
-  transition: background-color, border-color, color, box-shadow, opacity, transform, filter var(--duration-normal) var(--ease-standard);
+  /* Longhand on purpose (HkButton rule): the former comma shorthand
+   * bound the duration/easing to `filter` only — every other property
+   * animated at 0s and hover/focus snapped. */
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform, filter;
+  transition-duration: var(--duration-normal);
+  transition-timing-function: var(--ease-standard);
   position: relative;
 }
 
@@ -50,7 +58,13 @@
   border-color: var(--c-primary-strong);
 }
 
-.hk-select-trigger:focus,
+/* Press feedback (HkButton :active rule) — brightness, not background,
+ * so it never clobbers the focus/open ring below. */
+.hk-select-trigger:active:not([data-disabled]) {
+  filter: brightness(0.95);
+}
+
+.hk-select-trigger:focus-visible,
 .hk-select-trigger[data-state="open"] {
   border-color: rgb(var(--color-focused-border));
   box-shadow: var(--shadow-focus);
@@ -61,7 +75,7 @@
   border-color: var(--c-error-strong);
 }
 
-.hk-select-trigger[data-error]:focus,
+.hk-select-trigger[data-error]:focus-visible,
 .hk-select-trigger[data-error][data-state="open"] {
   border-color: rgb(var(--color-error));
   box-shadow: var(--shadow-focus-error);
@@ -81,10 +95,9 @@
 
 .hk-select-arrow {
   position: absolute;
-  right: 0.75rem;
+  inset-inline-end: var(--space-12);
   color: color-mix(in srgb, rgb(var(--color-muted)) 70%, rgb(var(--color-background)));
   pointer-events: none;
-  flex-shrink: 0;
   transition: transform var(--duration-normal) ease;
 }
 
@@ -164,7 +177,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hk-select-popout-enter-active,
-  .hk-select-popout-leave-active {
+  .hk-select-popout-leave-active,
+  /* The trigger chevron's 180° rotate is a transform animation too. */
+  .hk-select-arrow {
     transition: none;
   }
 }
@@ -228,14 +243,16 @@
 
 /* The highlight face never overrides the checked/active face — a
  * keyboard-highlighted selected option keeps its dim wash + primary
- * text (active > hover precedence, same as the spec mixin). */
-.hk-select-option:hover:not([data-checked]):not([data-active]),
-.hk-select-option[data-highlighted]:not([data-checked]):not([data-active]) {
+ * text (active > hover precedence, same as the spec mixin) — and it
+ * never paints disabled rows (keyboard highlight and pointerenter both
+ * land on them; HkSelect.tsx does not skip disabled options). */
+.hk-select-option:hover:not([data-disabled]):not([data-checked]):not([data-active]),
+.hk-select-option[data-highlighted]:not([data-disabled]):not([data-checked]):not([data-active]) {
   background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
   border-color: var(--c-primary-medium, rgb(var(--color-primary) / 25%));
 }
 
-.hk-select-option[data-highlighted]:not(:hover):not([data-checked]):not([data-active]) {
+.hk-select-option[data-highlighted]:not(:hover):not([data-disabled]):not([data-checked]):not([data-active]) {
   color: rgb(var(--color-text));
 }
 
@@ -308,7 +325,7 @@
 
 .hk-select-sheet-grabber {
   flex-shrink: 0;
-  padding: 14px 0 20px;
+  padding: var(--space-14) 0 var(--space-20);
   margin: 0 auto;
   width: 100%;
   cursor: pointer;
@@ -322,7 +339,7 @@
   &::before {
     content: "";
     width: 2.25rem;
-    height: 4px;
+    height: var(--space-4);
     border-radius: 999px;
     background: rgb(var(--color-border, 100 100 100) / 40%);
   }
@@ -340,10 +357,11 @@
 }
 
 .hk-select-sheet-close {
-  // Right-edge pinning with or without a title beside it; the chrome lives
+  // Inline-end pinning with or without a title beside it (push-to-end
+  // via the logical auto margin — mirrors in RTL); the chrome lives
   // on the shared .hk-icon-button / .hk-window-close rules
   // (window-close.scss) since the unified-close wave.
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .hk-select-sheet-title {

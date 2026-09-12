@@ -3,15 +3,13 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
 
-  [data-el="char"] {
-    display: inline-block;
-  }
+  /* char/slot/digit are all flex items (root and roll are flex
+     containers), so their display blockifies and vertical-align never
+     applies — no explicit display/vertical-align declarations. */
 
   [data-el="slot"] {
-    display: inline-block;
     position: relative;
     overflow: hidden;
-    vertical-align: baseline;
     height: 1em;
   }
 
@@ -22,7 +20,6 @@
   }
 
   [data-el="digit"] {
-    display: block;
     height: 1em;
   }
 }
@@ -33,5 +30,16 @@
   }
   to {
     transform: translateY(-1em);
+  }
+}
+
+/* Reduced motion: stop the digit roll. The global switch
+ * (`html[data-css-animations="0"]`) pauses it too when the host wired
+ * it; the media block covers hosts that never did. Safe: the component
+ * arms a cron fallback that force-commits the final digit whenever
+ * `animationend` never fires. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-rolling-number [data-el="roll"] {
+    animation: none;
   }
 }

@@ -97,20 +97,25 @@ describe("HkAuthMethodList", () => {
     await nextTick();
     const wrapper = c.querySelector<HTMLElement>(".s-auth-methods-list")!;
     const spans = [...wrapper.querySelectorAll<HTMLElement>(".s-auth-methods-label")];
-    Object.defineProperty(spans[0]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 58 }) });
-    Object.defineProperty(spans[1]!, "getBoundingClientRect", { configurable: true, value: () => ({ width: 61.4 }) });
-    // The list is drawn twice the size it is laid out at.
-    Object.defineProperty(wrapper, "getBoundingClientRect", {
-      configurable: true,
-      value: () => ({ left: 0, top: 0, right: 400, bottom: 200, width: 400, height: 200, x: 0, y: 0 }) as DOMRect,
-    });
-    Object.defineProperty(wrapper, "offsetWidth", { configurable: true, get: () => 200 });
-    Object.defineProperty(wrapper, "offsetHeight", { configurable: true, get: () => 100 });
+    // The scale has to come from a LABEL: the list is `display: contents` and
+    // generates no box at all (Blink reports offsetWidth 0 and a 0x0 rect), so
+    // stubbing a box on the list would only ever be green by accident.
+    for (const [i, drawn] of [58, 61.4].entries()) {
+      Object.defineProperty(spans[i]!, "getBoundingClientRect", {
+        configurable: true,
+        value: () => ({ left: 0, top: 0, right: drawn * 2, bottom: 40, width: drawn * 2, height: 40, x: 0, y: 0 }) as DOMRect,
+      });
+      // Laid out at half: the label is drawn twice the size it is laid out at.
+      Object.defineProperty(spans[i]!, "offsetWidth", { configurable: true, get: () => drawn });
+      Object.defineProperty(spans[i]!, "offsetHeight", { configurable: true, get: () => 20 });
+    }
     const instance = (wrapper as unknown as { __vueParentComponent?: { exposed?: Record<string, unknown> } })
       .__vueParentComponent?.exposed;
     (instance!.measure as () => void)();
-    // 61.4 drawn are 30.7 of the column's own: ceil 31, plus the 1px headroom.
-    expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("32px");
+    // 122.8 drawn are 61.4 of the column's own: ceil 62, plus the 1px headroom.
+    // Reading the scale off the LIST instead — the shape this shipped with —
+    // yields 1 for a `display: contents` element and publishes the drawn 124px.
+    expect(wrapper.style.getPropertyValue("--auth-methods-label-width")).toBe("63px");
   });
 
   it("leaves the column fallback intact when no text metrics are available", async () => {

@@ -110,6 +110,13 @@ export function layoutOffset(el: HTMLElement, frame?: HTMLElement | null): Layou
  *  while the drawn-box equivalent (`rect.top - frameRect.top + frame.scrollTop`)
  *  is `k` times too large at zoom `k`.
  *
+ *  The frame's own border is excluded exactly when the walk passed THROUGH it
+ *  (`through`): a positioned frame measures its children from its padding edge,
+ *  so the difference does too, while a frame that is not in the chain (a
+ *  `position: static` scroller) is measured from its border box. The result is
+ *  the value `scrollTop`/`scrollLeft` want in both cases — those are offsets
+ *  into the scrollable area, whose origin is the padding edge.
+ *
  *  `y` (and `x`) are `NaN` when the chain cannot be added up or when `frame` is
  *  not an ancestor of `el` — the difference is meaningless then, and callers
  *  check `Number.isFinite` before scrolling with it. */

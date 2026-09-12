@@ -266,8 +266,16 @@ export function attachOverlayScrollbars(
         : (e.clientY - rect.top) / rect.height;
       const { scrollSize, clientSize } = axisMetrics(viewport, horizontal);
       const max = scrollSize - clientSize;
-      if (horizontal) viewport.scrollLeft = ratio * max;
-      else viewport.scrollTop = ratio * max;
+      if (horizontal) {
+        // RTL: the track's left end is the content's END, and `scrollLeft`
+        // runs 0 → −max (see the thumb mirroring in `update`), so a click at
+        // `ratio` from the left asks for `(ratio - 1) * max`. Without this the
+        // thumb and the click disagreed in RTL: the thumb was mirrored but the
+        // click still mapped LTR, so clicking right of the thumb scrolled the
+        // other way.
+        const rtl = isRtlAxis(viewport, true);
+        viewport.scrollLeft = rtl ? (ratio - 1) * max : ratio * max;
+      } else viewport.scrollTop = ratio * max;
     };
     const onEnter = () => s.track.classList.add("is-hovering");
     const onLeave = () => s.track.classList.remove("is-hovering");

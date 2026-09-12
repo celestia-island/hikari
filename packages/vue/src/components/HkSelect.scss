@@ -316,8 +316,8 @@
     )
   );
   background: rgb(var(--color-surface));
-  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-                 var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                 var(--hk-modal-radius, var(--radius-lg, 12px))
                  0 0;
   box-shadow: 0 -8px 32px rgb(0 0 0 / 20%);
   outline: none;

@@ -74,7 +74,7 @@
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
   backdrop-filter: var(--hk-modal-blur, blur(12px));
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(0, 0, 0, 0.08)));
-  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px));
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px));
   box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -265,7 +265,7 @@
   color: var(--hi-color-muted, #666);
   background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 78%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.08)) 12%, transparent);
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full, 9999px);
   backdrop-filter: blur(4px);
   opacity: 0.85;
 }
@@ -332,8 +332,8 @@
     left: 0;
     right: 0;
     transform: none;
-    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-                   var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                   var(--hk-modal-radius, var(--radius-lg, 12px))
                    0 0;
     border-left: 0;
     border-right: 0;

@@ -66,6 +66,9 @@ function harvestDefinitions(files: Array<[string, string]>) {
 const seedSource = stripProvenanceHeader(
   read(resolve(stylesDir, "theme/channels.scss")),
 );
+const scaleSource = stripProvenanceHeader(
+  read(resolve(stylesDir, "theme/scale.scss")),
+);
 const adminSource = read(resolve(stylesDir, "admin-tokens.scss"));
 const legacySheets = [
   "base.scss",
@@ -75,7 +78,10 @@ const legacySheets = [
   "_layout.scss",
 ].map((b) => [`theme/${b}`, stripProvenanceHeader(read(resolve(stylesDir, "theme", b)))] as [string, string]);
 
-const seedFiles: Array<[string, string]> = [["theme/channels.scss", seedSource]];
+const seedFiles: Array<[string, string]> = [
+  ["theme/channels.scss", seedSource],
+  ["theme/scale.scss", scaleSource],
+];
 
 // ── L0: channel completeness vs the runtime writer ──
 // Derive the exact `--color-*` / `--hi-*` key set tokensToCSSVars emits by

@@ -16,7 +16,7 @@
   [data-el="roll"] {
     display: flex;
     flex-direction: column;
-    animation: hk-rolling-number-up var(--hi-duration-instant, 0.1s) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: hk-rolling-number-up var(--duration-instant, 0.1s) cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   [data-el="digit"] {

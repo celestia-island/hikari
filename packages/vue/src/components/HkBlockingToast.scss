@@ -32,7 +32,7 @@
   align-items: flex-start;
   gap: var(--space-8, 8px);
   padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   font-size: var(--text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -95,13 +95,13 @@
 // cards go absolute so the remaining ones glide up (hk-toast pattern).
 .hk-blocking-toast-enter-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-duration: var(--duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .hk-blocking-toast-leave-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-duration: var(--duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
   /* Only the positioning switch lives here; the leaving slot's box is
      frozen by the before-leave hook (pinLeaveGeometry), same contract
@@ -126,7 +126,7 @@
 }
 
 .hk-blocking-toast-move {
-  transition: transform var(--hi-duration-normal, 0.3s) ease;
+  transition: transform var(--duration-normal, 0.3s) ease;
 }
 
 // Reduced motion: drop the slide/FLIP choreography, cards snap in and

@@ -49,7 +49,7 @@
 
 .hk-table-header-sortable {
   cursor: pointer;
-  transition: color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 
   &:hover {
     color: var(--hi-color-primary, #58a6ff);
@@ -71,7 +71,7 @@
   height: 14px;
   display: inline-block;
   vertical-align: middle;
-  transition: transform var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .hk-table-sort-icon-desc {
@@ -94,7 +94,7 @@
 
 .hk-table-bordered {
   border: 1px solid var(--hi-color-border, rgba(255, 255, 255, 0.1));
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
 
   .hk-table-header-cell,
   .hk-table-cell {
@@ -171,11 +171,11 @@
   justify-content: center;
   flex-shrink: 0;
   border: 2px solid var(--hi-color-border, rgba(255, 255, 255, 0.2));
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   background: transparent;
   transition:
-    background-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1)),
-    border-color var(--hi-duration-short, 0.15s) var(--hi-ease-default, cubic-bezier(0.4, 0, 0.2, 1));
+    background-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 
   &-md {
     width: 16px;

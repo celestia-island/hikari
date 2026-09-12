@@ -43,8 +43,8 @@
   border: 1px solid var(--hi-color-border);
   background: var(--hi-color-surface);
   transition:
-    border-color var(--hi-duration-normal, 0.3s) ease,
-    background var(--hi-duration-normal, 0.3s) ease;
+    border-color var(--duration-normal, 0.3s) ease,
+    background var(--duration-normal, 0.3s) ease;
   flex-shrink: 0;
   position: relative;
 

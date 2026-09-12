@@ -7,7 +7,7 @@
   line-height: 1.4;
   white-space: nowrap;
   border: 1px solid transparent;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   padding: var(--space-2, 2px) var(--space-8, 8px);
   user-select: none;
 }
@@ -43,8 +43,8 @@
   padding: 0;
   /* Trailing edge of the chip in both directions. */
   margin-inline-start: var(--space-2, 2px);
-  border-radius: var(--hi-radius-sm, 4px);
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+  border-radius: var(--radius-sm, 4px);
+  transition: opacity var(--duration-fast, 0.15s) ease;
 }
 
 .hk-tag-close:hover {

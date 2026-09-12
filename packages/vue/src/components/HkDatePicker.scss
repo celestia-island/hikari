@@ -23,15 +23,15 @@
   padding: var(--space-8, 8px) var(--space-12, 12px);
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   color: rgb(var(--color-text));
   font-family: inherit;
   font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
   transition:
-    background-color var(--hi-duration-fast, 0.15s) ease,
-    border-color var(--hi-duration-fast, 0.15s) ease,
-    box-shadow var(--hi-duration-fast, 0.15s) ease;
+    background-color var(--duration-fast, 0.15s) ease,
+    border-color var(--duration-fast, 0.15s) ease,
+    box-shadow var(--duration-fast, 0.15s) ease;
 }
 
 .hk-dp-trigger {
@@ -102,11 +102,11 @@
   padding: 0;
   border: 0;
   background: transparent;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   color: var(--hi-color-muted);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   .hk-dp-trigger:hover &,
   .hk-dp-trigger:focus &,
@@ -183,13 +183,13 @@
   border: 0;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   color: var(--hi-color-muted);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled) {
     background: var(--hi-color-surface);
@@ -232,8 +232,8 @@
   color: inherit;
   cursor: pointer;
   white-space: nowrap;
-  border-radius: var(--hi-radius-sm, 4px);
-  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+  border-radius: var(--radius-sm, 4px);
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   &:hover {
     background: var(--hi-color-surface);
@@ -279,7 +279,7 @@
   appearance: none;
   background: transparent;
   border: 0;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   /* Fixed height keeps the six-row day grid — and therefore the shared
    * stage height — independent of the panel width, so drilling between
    * views never changes the popup's size (enlarged on touch). */
@@ -291,7 +291,7 @@
   cursor: pointer;
   font-size: var(--text-xs, 0.75rem);
   font-variant-numeric: tabular-nums;
-  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   &:hover:not(:disabled):not(.is-selected) {
     background: var(--hi-color-surface);

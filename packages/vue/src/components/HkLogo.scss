@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   overflow: hidden;
   flex-shrink: 0;
   user-select: none;
@@ -23,7 +23,7 @@ a.hk-logo:focus-visible {
 
 .hk-logo-img {
   display: block;
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   object-fit: contain;
 }
 

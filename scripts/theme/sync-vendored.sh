@@ -41,5 +41,6 @@ for base in base foundation themes _tokens _layout variables mixins _glass _scro
   sync "$vue_styles/theme/$base.scss" "$root/packages/theme/styles/$base.scss"
 done
 sync "$vue_styles/theme/channels.scss" "$root/packages/vue/src/tokens.scss"
+sync "$vue_styles/theme/scale.scss" "$root/packages/vue/src/scale.scss"
 
 echo "vendored stylesheets are in sync"

@@ -27,7 +27,7 @@
   align-items: center;
   gap: var(--space-8, 8px);
   padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   font-size: var(--text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -136,9 +136,9 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   opacity: 0.7;
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease;
   padding: 0;
 }
 
@@ -155,7 +155,7 @@
 
 .hk-toast-enter-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-duration: var(--duration-normal, 0.3s);
   /* Plain ease-out: the previous back-overshoot spring (1.56 y) is the
      same family the drawer animation was corrected away from — toasts
      slide in and settle, they do not bounce. */
@@ -164,7 +164,7 @@
 
 .hk-toast-leave-active {
   transition-property: background-color, border-color, color, box-shadow, opacity, transform;
-  transition-duration: var(--hi-duration-normal, 0.3s);
+  transition-duration: var(--duration-normal, 0.3s);
   transition-timing-function: cubic-bezier(0.36, 0, 0.66, 1);
 }
 
@@ -196,12 +196,12 @@
 }
 
 .hk-toast-move {
-  transition: transform var(--hi-duration-normal, 0.3s) ease;
+  transition: transform var(--duration-normal, 0.3s) ease;
 }
 
 .hk-toast-msg-enter-active,
 .hk-toast-msg-leave-active {
-  transition: opacity var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease;
 }
 
 .hk-toast-msg-enter-from,

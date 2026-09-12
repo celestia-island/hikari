@@ -60,7 +60,7 @@ describe("HkDrawer mobile bottom sheet-family contract", () => {
   });
 
   it("adopts the 12px family corner radius", () => {
-    expect(drawer).toContain("border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))");
+    expect(drawer).toContain("border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))");
   });
 
   it("stacks the home-bar safe area on the mobile footer's BOTTOM axis", () => {

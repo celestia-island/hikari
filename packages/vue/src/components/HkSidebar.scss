@@ -1,7 +1,7 @@
 .hk-sidebar {
   flex-shrink: 0;
   height: 100%;
-  transition: width var(--hi-duration-normal, 0.3s) ease;
+  transition: width var(--duration-normal, 0.3s) ease;
 }
 
 .hk-sidebar-panel {
@@ -13,7 +13,7 @@
   /* Logical edge: the border rides the content-facing side in either
    * direction (LTR sidebar docks left, RTL docks right). */
   border-inline-end: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  transition: width var(--hi-duration-normal, 0.3s) ease;
+  transition: width var(--duration-normal, 0.3s) ease;
   overflow: hidden;
 }
 

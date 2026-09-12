@@ -69,7 +69,7 @@
 // neighbour brightens back up while pointed at (affordance to jump back).
 .hk-timeline[data-mode="window"] .hk-timeline-window[data-dimmed] {
   opacity: var(--hk-timeline-neighbor-opacity, 0.55);
-  transition: opacity var(--hi-duration-normal, 0.3s) ease;
+  transition: opacity var(--duration-normal, 0.3s) ease;
 
   &:has(.hk-timeline-step[data-clickable]):hover {
     opacity: 1;
@@ -388,7 +388,7 @@
   &:hover [data-el="indicator"] {
     transform: scale(1.12);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
-    transition: transform var(--hi-duration-normal, 0.3s) ease, box-shadow var(--hi-duration-normal, 0.3s) ease;
+    transition: transform var(--duration-normal, 0.3s) ease, box-shadow var(--duration-normal, 0.3s) ease;
   }
 
   // Press feedback mirroring the hover pop (role="button" affordance).

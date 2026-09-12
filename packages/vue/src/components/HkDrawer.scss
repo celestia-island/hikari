@@ -11,10 +11,10 @@
 // contract (./_scrim-fade.scss); the panel below owns all the motion.
 @include sf.scrim-fade(
   "hk-drawer-overlay",
-  $enter-duration: var(--hi-duration-normal, 0.3s),
-  $enter-ease: var(--hi-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-  $leave-duration: var(--hi-duration-normal, 0.3s),
-  $leave-ease: var(--hi-ease-in, cubic-bezier(0.4, 0, 1, 1))
+  $enter-duration: var(--duration-normal, 0.3s),
+  $enter-ease: var(--ease-elastic, cubic-bezier(0.16, 1, 0.3, 1)),
+  $leave-duration: var(--duration-normal, 0.3s),
+  $leave-ease: var(--ease-in, cubic-bezier(0.4, 0, 1, 1))
 );
 
 .hk-drawer-panel {
@@ -26,8 +26,8 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   outline: none;
   transition:
-    width var(--hi-duration-normal, 0.3s) ease,
-    height var(--hi-duration-normal, 0.3s) ease;
+    width var(--duration-normal, 0.3s) ease,
+    height var(--duration-normal, 0.3s) ease;
 }
 
 .hk-drawer-left {
@@ -35,7 +35,7 @@
   bottom: 0;
   left: 0;
   border-right: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: 0 var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem) 0;
+  border-radius: 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0;
 }
 
 .hk-drawer-right {
@@ -43,7 +43,7 @@
   bottom: 0;
   right: 0;
   border-left: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: var(--hi-radius-md, 0.5rem) 0 0 var(--hi-radius-md, 0.5rem);
+  border-radius: var(--radius-md, 0.5rem) 0 0 var(--radius-md, 0.5rem);
 }
 
 .hk-drawer-top {
@@ -51,7 +51,7 @@
   left: 0;
   right: 0;
   border-bottom: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: 0 0 var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem);
+  border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
 }
 
 .hk-drawer-bottom {
@@ -59,7 +59,7 @@
   left: 0;
   right: 0;
   border-top: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
-  border-radius: var(--hi-radius-md, 0.5rem) var(--hi-radius-md, 0.5rem) 0 0;
+  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
 }
 
 .hk-drawer-left-enter-active,
@@ -71,8 +71,8 @@
      that briefly opens a gap between the panel edge and the screen
      edge. Both properties use the same plain ease-out. */
   transition:
-    opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-drawer-left-leave-active,
@@ -80,8 +80,8 @@
 .hk-drawer-top-leave-active,
 .hk-drawer-bottom-leave-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.4, 0, 1, 1);
 }
 
 .hk-drawer-left-enter-from,
@@ -180,8 +180,8 @@
 @media (max-width: 767px) {
   .hk-drawer-bottom {
     bottom: var(--hk-sheet-bottom-gap, 0px);
-    border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-                   var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+    border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                   var(--hk-modal-radius, var(--radius-lg, 12px))
                    0 0;
     // The inline maxHeight from the `size` prop must lose to the family cap
     // (plain-vh fallback first for dvh-less engines, then dvh) — same

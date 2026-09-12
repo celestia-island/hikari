@@ -8,7 +8,7 @@
   background: var(--hk-empty-bg, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
   backdrop-filter: blur(var(--blur-sm, 8px));
   border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.06));
-  border-radius: var(--hi-radius-md, 0.5rem);
+  border-radius: var(--radius-md, 0.5rem);
   box-sizing: border-box;
 }
 

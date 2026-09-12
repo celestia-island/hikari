@@ -47,6 +47,7 @@ function stripProvenanceHeader(source: string): string {
 
 const VENDORED_FROM_VUE: Array<[string, string]> = [
   ["theme/channels.scss", "tokens.scss"],
+  ["theme/scale.scss", "scale.scss"],
 ];
 
 const VENDORED_FROM_THEME_PKG = [

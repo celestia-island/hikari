@@ -115,8 +115,8 @@
    * HkSelectPanel sheets, hence "some have it, some don't"). The inline
    * left/right pair alone owns the sheet's horizontal geometry. */
   max-width: none;
-  border-radius: var(--hk-modal-radius, var(--hi-radius-lg, 12px))
-                 var(--hk-modal-radius, var(--hi-radius-lg, 12px))
+  border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
+                 var(--hk-modal-radius, var(--radius-lg, 12px))
                  0 0;
   border-left: 0;
   border-right: 0;

@@ -4,7 +4,7 @@
 .hk-list-pop-move,
 .hk-list-slide-move,
 .hk-list-fade-move {
-  transition: transform var(--hi-duration-normal, 0.3s) ease;
+  transition: transform var(--duration-normal, 0.3s) ease;
 }
 
 .hk-list-move-disabled {
@@ -13,14 +13,14 @@
 
 .hk-list-pop-enter-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-list-pop-leave-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) ease-in,
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
+    opacity var(--duration-normal, 0.3s) ease-in,
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
   position: absolute;
 }
 
@@ -36,14 +36,14 @@
 
 .hk-list-slide-enter-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) ease,
-    transform var(--hi-duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--duration-normal, 0.3s) ease,
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-list-slide-leave-active {
   transition:
-    opacity var(--hi-duration-normal, 0.3s) ease-in,
-    transform var(--hi-duration-normal, 0.3s) ease-in;
+    opacity var(--duration-normal, 0.3s) ease-in,
+    transform var(--duration-normal, 0.3s) ease-in;
   position: absolute;
 }
 
@@ -68,11 +68,11 @@
 }
 
 .hk-list-fade-enter-active {
-  transition: opacity var(--hi-duration-normal, 0.3s) ease;
+  transition: opacity var(--duration-normal, 0.3s) ease;
 }
 
 .hk-list-fade-leave-active {
-  transition: opacity var(--hi-duration-normal, 0.3s) ease-in;
+  transition: opacity var(--duration-normal, 0.3s) ease-in;
   position: absolute;
 }
 
@@ -83,9 +83,9 @@
 
 .hk-list-grow-enter-active {
   transition:
-    transform var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--hi-duration-fast, 0.15s);
+    transform var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--duration-fast, 0.15s);
   pointer-events: none;
 }
 
@@ -96,8 +96,8 @@
 
 .hk-list-grow-leave-active {
   transition:
-    transform var(--hi-duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--hi-duration-fast, 0.15s) ease-in;
+    transform var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--duration-fast, 0.15s) ease-in;
   pointer-events: none;
   position: absolute;
   width: 100%;
@@ -109,16 +109,16 @@
 }
 
 .hk-list-grow-move {
-  transition: transform var(--hi-duration-fast, 0.15s) ease;
-  transition-delay: var(--hi-duration-fast, 0.15s);
+  transition: transform var(--duration-fast, 0.15s) ease;
+  transition-delay: var(--duration-fast, 0.15s);
 }
 
 .hk-list-reveal-enter-active {
   interpolate-size: allow-keywords;
   overflow: hidden;
   transition:
-    height var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--hi-duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+    height var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-list-reveal-leave-active {
@@ -128,8 +128,8 @@
    * activating the body of a just-erased row would resurrect it. */
   pointer-events: none;
   transition:
-    height var(--hi-duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--hi-duration-fast, 0.15s) ease-in;
+    height var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--duration-fast, 0.15s) ease-in;
 }
 
 .hk-list-reveal-enter-from,
@@ -139,7 +139,7 @@
 }
 
 .hk-list-reveal-move {
-  transition: transform var(--hi-duration-fast, 0.15s) ease;
+  transition: transform var(--duration-fast, 0.15s) ease;
 }
 
 .hk-list-none-enter-active,

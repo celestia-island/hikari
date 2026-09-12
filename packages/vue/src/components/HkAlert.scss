@@ -3,7 +3,7 @@
   align-items: flex-start;
   gap: var(--space-12, 12px);
   padding: var(--space-12, 12px) var(--space-16, 16px);
-  border-radius: var(--hi-radius-md, 8px);
+  border-radius: var(--radius-md, 8px);
   border: 1px solid transparent;
   border-inline-start-width: 4px;
   color: var(--hi-color-text-primary, #333);
@@ -107,11 +107,11 @@
   height: 22px;
   border: 0;
   background: transparent;
-  border-radius: var(--hi-radius-sm, 4px);
+  border-radius: var(--radius-sm, 4px);
   color: var(--hi-color-muted, #666);
   cursor: pointer;
   padding: 0;
-  transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
+  transition: background var(--duration-fast, 0.15s) ease, color var(--duration-fast, 0.15s) ease;
 
   &:hover {
     background: var(--hi-color-surface, #fff);

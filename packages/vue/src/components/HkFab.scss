@@ -51,10 +51,10 @@
   -webkit-appearance: none;
   padding: 0;
   border: none;
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full, 9999px);
   cursor: pointer;
   font-family: inherit;
-  transition: transform var(--hi-duration-fast, 0.15s) ease, box-shadow var(--hi-duration-fast, 0.15s) ease;
+  transition: transform var(--duration-fast, 0.15s) ease, box-shadow var(--duration-fast, 0.15s) ease;
 
   &:active:not(:disabled) { transform: scale(0.94); }
   &:focus-visible { outline: 2px solid var(--hi-color-primary, #7aa2f7); outline-offset: 2px; }
@@ -132,13 +132,13 @@ $sizes: (sm: 34px, md: 42px, lg: 50px);
   color: var(--hi-color-text-secondary, #555);
   background: color-mix(in srgb, var(--hi-color-surface, #fff) 82%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-border, rgba(0, 0, 0, 0.12)) 25%, transparent);
-  border-radius: var(--hi-radius-full, 9999px);
+  border-radius: var(--radius-full, 9999px);
   cursor: pointer;
   backdrop-filter: blur(var(--blur-xs, 4px));
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   opacity: 0;
   transform: scale(0.4);
-  transition: opacity var(--hi-duration-fast, 0.15s) ease, transform var(--hi-duration-fast, 0.15s) ease;
+  transition: opacity var(--duration-fast, 0.15s) ease, transform var(--duration-fast, 0.15s) ease;
 
   .hk-fab-mini-icon {
     display: inline-flex;

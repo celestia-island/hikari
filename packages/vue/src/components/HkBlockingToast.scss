@@ -19,7 +19,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-12, 12px);
+  gap: var(--space-12, 12px);
 }
 
 .hk-blocking-toast-slot {
@@ -30,10 +30,10 @@
 .hk-blocking-toast-card {
   display: flex;
   align-items: flex-start;
-  gap: var(--hi-space-8, 8px);
-  padding: var(--hi-space-12, 12px) var(--hi-space-16, 16px);
+  gap: var(--space-8, 8px);
+  padding: var(--space-12, 12px) var(--space-16, 16px);
   border-radius: var(--hi-radius-sm, 4px);
-  font-size: var(--hi-text-base, 0.875rem);
+  font-size: var(--text-base, 0.875rem);
   line-height: 1.4;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
@@ -52,7 +52,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
 }
 
 .hk-blocking-toast-title {
@@ -71,7 +71,7 @@
 .hk-blocking-toast-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
 }
 
 // Variant backgrounds follow the HkToast conventions (including the

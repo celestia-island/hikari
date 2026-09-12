@@ -73,7 +73,7 @@
 .hk-tree[data-size="xs"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
   min-height: 22px;
 
-  .hk-tree-label { font-size: var(--hi-text-xs, 0.75rem); }
+  .hk-tree-label { font-size: var(--text-xs, 0.75rem); }
   .hk-tree-icon { width: 14px; height: 14px; }
   .hk-tree-leaf { width: 4px; height: 4px; }
 }
@@ -82,7 +82,7 @@
 .hk-tree[data-size="sm"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
   min-height: 28px;
 
-  .hk-tree-label { font-size: var(--hi-text-xs, 0.75rem); }
+  .hk-tree-label { font-size: var(--text-xs, 0.75rem); }
   .hk-tree-icon { width: 16px; height: 16px; }
   .hk-tree-leaf { width: 5px; height: 5px; }
 }
@@ -91,7 +91,7 @@
 .hk-tree[data-size="md"] .hk-tree-children > .hk-tree-node > .hk-tree-row {
   min-height: 34px;
 
-  .hk-tree-label { font-size: var(--hi-text-sm, 0.875rem); }
+  .hk-tree-label { font-size: var(--text-sm, 0.875rem); }
   .hk-tree-icon { width: 18px; height: 18px; }
   .hk-tree-leaf { width: 6px; height: 6px; }
 }

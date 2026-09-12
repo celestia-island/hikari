@@ -20,13 +20,13 @@
 .hk-dp-native {
   width: 100%;
   min-height: 2.5rem;
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   color: rgb(var(--color-text));
   font-family: inherit;
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   line-height: 1.5;
   transition:
     background-color var(--hi-duration-fast, 0.15s) ease,
@@ -38,7 +38,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--hi-space-6, 6px);
+  gap: var(--space-6, 6px);
   cursor: pointer;
   user-select: none;
 }
@@ -75,8 +75,8 @@
 
 .hk-dp-trigger-sm {
   min-height: 2rem;
-  padding: var(--hi-space-4, 4px) var(--hi-space-10, 10px);
-  font-size: var(--hi-text-xs, 0.75rem);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
 }
 
 .hk-dp-value {
@@ -131,13 +131,13 @@
 /* ── Calendar panel ──────────────────────────────────────────── */
 
 .hk-dp-popover.hk-popover-panel {
-  padding: var(--hi-space-10, 10px) var(--hi-space-12, 12px) var(--hi-space-8, 8px);
+  padding: var(--space-10, 10px) var(--space-12, 12px) var(--space-8, 8px);
 }
 
 .hk-dp-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
   min-width: 17.5rem;
   user-select: none;
   color: var(--hi-color-text-primary);
@@ -159,7 +159,7 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
   /* Fixed height keeps the header row — and therefore the shared stage
    * height — identical in every view and locale (enlarged on touch). */
   height: var(--hk-picker-header);
@@ -168,7 +168,7 @@
 .hk-dp-header-side {
   display: flex;
   align-items: center;
-  gap: var(--hi-space-2, 2px);
+  gap: var(--space-2, 2px);
   min-width: 0;
 }
 
@@ -212,21 +212,21 @@
 }
 
 .hk-dp-title {
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   font-weight: 600;
   color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
 }
 
 .hk-dp-title-btn {
   appearance: none;
   background: transparent;
   border: 0;
-  padding: var(--hi-space-2, 2px) var(--hi-space-4, 4px);
+  padding: var(--space-2, 2px) var(--space-4, 4px);
   font: inherit;
   font-weight: 600;
   color: inherit;
@@ -265,7 +265,7 @@
 
 .hk-dp-wd {
   text-align: center;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
   height: var(--hk-picker-wd);
@@ -289,7 +289,7 @@
   justify-content: center;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
   cursor: pointer;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-variant-numeric: tabular-nums;
   transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
@@ -338,7 +338,7 @@
 .hk-dp-footer {
   display: flex;
   justify-content: center;
-  padding-top: var(--hi-space-6, 6px);
+  padding-top: var(--space-6, 6px);
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 

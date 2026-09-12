@@ -93,7 +93,6 @@
   @include item-tokens;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: var(--hk-menu-item-gap);
   width: 100%;
   min-height: var(--hk-menu-item-min-h);
@@ -106,7 +105,7 @@
   font-weight: var(--hk-menu-item-weight);
   font-family: inherit;
   line-height: var(--hk-menu-item-lh);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   appearance: none;
   user-select: none;
@@ -142,7 +141,9 @@
   &[data-danger] {
     color: rgb(var(--color-danger, 240 70 80) / 90%);
 
-    &:hover:not(:disabled):not([data-disabled]):not([data-active]) {
+    /* Same checked-row guard as the base hover above: a checked danger
+     * row keeps its checked face instead of flashing the hover wash. */
+    &:hover:not(:disabled):not([data-disabled]):not([data-active]):not([data-checked]) {
       background: rgb(var(--color-danger, 240 70 80) / 10%);
       border-color: rgb(var(--color-danger, 240 70 80) / 25%);
       color: rgb(var(--color-danger, 240 70 80));

@@ -32,23 +32,23 @@
 }
 
 .hk-divider-spacing-xs {
-  --hk-divider-space: var(--hi-space-2, 0.125rem);
+  --hk-divider-space: var(--space-2, 0.125rem);
 }
 
 .hk-divider-spacing-sm {
-  --hk-divider-space: var(--hi-space-4, 0.25rem);
+  --hk-divider-space: var(--space-4, 0.25rem);
 }
 
 .hk-divider-spacing-md {
-  --hk-divider-space: var(--hi-space-6, 0.375rem);
+  --hk-divider-space: var(--space-6, 0.375rem);
 }
 
 .hk-divider-spacing-lg {
-  --hk-divider-space: var(--hi-space-8, 0.5rem);
+  --hk-divider-space: var(--space-8, 0.5rem);
 }
 
 .hk-divider-spacing-xl {
-  --hk-divider-space: var(--hi-space-12, 0.75rem);
+  --hk-divider-space: var(--space-12, 0.75rem);
 }
 
 .hk-divider[class*="hk-divider-spacing-"]:not(.hk-divider-vertical) {
@@ -64,21 +64,21 @@
 }
 
 .hk-divider-vertical.hk-divider-length-xs {
-  height: var(--hi-space-8, 0.5rem);
+  height: var(--space-8, 0.5rem);
 }
 
 .hk-divider-vertical.hk-divider-length-sm {
-  height: var(--hi-space-12, 0.75rem);
+  height: var(--space-12, 0.75rem);
 }
 
 .hk-divider-vertical.hk-divider-length-md {
-  height: var(--hi-space-16, 1rem);
+  height: var(--space-16, 1rem);
 }
 
 .hk-divider-vertical.hk-divider-length-lg {
-  height: var(--hi-space-24, 1.5rem);
+  height: var(--space-24, 1.5rem);
 }
 
 .hk-divider-vertical.hk-divider-length-xl {
-  height: var(--hi-space-32, 2rem);
+  height: var(--space-32, 2rem);
 }

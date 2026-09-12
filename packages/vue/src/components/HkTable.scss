@@ -24,7 +24,7 @@
 
 .hk-table {
   width: 100%;
-  font-size: var(--hi-text-base, 1rem);
+  font-size: var(--text-base, 1rem);
   border-collapse: collapse;
   color: var(--hi-color-text-primary, #c9d1d9);
 }
@@ -36,9 +36,9 @@
 .hk-table-header-cell {
   /* md values live here: the wrapper always carries `hk-table-${size}`
      (default md), whose override used to mask these base paddings. */
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   text-align: start;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-text-secondary, #8b949e);
   text-transform: uppercase;
@@ -108,7 +108,7 @@
 
 .hk-table-cell {
   /* md values (see .hk-table-header-cell). */
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   color: var(--hi-color-text-primary, #c9d1d9);
   vertical-align: middle;
 }
@@ -117,20 +117,20 @@
 .hk-table-sm {
   .hk-table-header-cell,
   .hk-table-cell {
-    padding: var(--hi-space-4, 4px) var(--hi-space-8, 8px);
-    font-size: var(--hi-text-xs, 0.75rem);
+    padding: var(--space-4, 4px) var(--space-8, 8px);
+    font-size: var(--text-xs, 0.75rem);
   }
 }
 
 .hk-table-lg {
   .hk-table-header-cell,
   .hk-table-cell {
-    padding: var(--hi-space-16, 16px) var(--hi-space-24, 24px);
+    padding: var(--space-16, 16px) var(--space-24, 24px);
   }
 }
 
 .hk-table-empty {
-  padding: var(--hi-space-32, 32px) var(--hi-space-16, 16px);
+  padding: var(--space-32, 32px) var(--space-16, 16px);
   text-align: center;
   color: var(--hi-color-text-secondary, #8b949e);
 }

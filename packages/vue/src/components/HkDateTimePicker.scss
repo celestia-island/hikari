@@ -7,7 +7,7 @@
 .hk-dtp {
   display: flex;
   flex-direction: column;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
   user-select: none;
   /* Fill the host (inline sheets/dialogs) instead of collapsing to the
    * grid's min-content width — a bottom-sheet calendar should use the
@@ -20,7 +20,7 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
   /* Fixed height keeps the header row — and therefore the shared stage
    * height — identical in every view and locale (enlarged on touch). */
   height: var(--hk-picker-header);
@@ -29,7 +29,7 @@
 .hk-dtp-header-side {
   display: flex;
   align-items: center;
-  gap: var(--hi-space-2, 2px);
+  gap: var(--space-2, 2px);
   min-width: 0;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .hk-dtp-title {
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   font-weight: 600;
   color: var(--hi-color-text-primary);
   font-variant-numeric: tabular-nums;
@@ -46,14 +46,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
 }
 
 .hk-dtp-title-btn {
   appearance: none;
   background: transparent;
   border: 0;
-  padding: var(--hi-space-2, 2px) var(--hi-space-4, 4px);
+  padding: var(--space-2, 2px) var(--space-4, 4px);
   font: inherit;
   font-weight: 600;
   color: inherit;
@@ -108,7 +108,7 @@
 
 .hk-dtp-wd {
   text-align: center;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
   height: var(--hk-picker-wd);
@@ -132,7 +132,7 @@
   justify-content: center;
   color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
   cursor: pointer;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-variant-numeric: tabular-nums;
   transition: background var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
 
@@ -184,7 +184,7 @@
 
 .hk-dtp-cell[data-variant="pick"] {
   height: var(--hk-picker-pick);
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 500;
 }
 
@@ -208,7 +208,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--hi-space-10, 10px);
+  gap: var(--space-10, 10px);
   /* Spacing comes from the .hk-dtp gap (the row sits under the fixed
    * stage in every view); only the separator border remains. */
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
@@ -247,7 +247,7 @@
 }
 
 .hk-dtp-step-val {
-  font-size: var(--hi-text-base, 1rem);
+  font-size: var(--text-base, 1rem);
   font-variant-numeric: tabular-nums;
   min-width: 1.75rem;
   text-align: center;
@@ -256,19 +256,19 @@
 }
 
 .hk-dtp-time-sep {
-  font-size: var(--hi-text-base, 1rem);
+  font-size: var(--text-base, 1rem);
   color: var(--hi-color-muted);
-  padding-top: var(--hi-space-10, 10px);
+  padding-top: var(--space-10, 10px);
 }
 
 .hk-dtp-today {
-  margin-inline-start: var(--hi-space-4, 4px);
+  margin-inline-start: var(--space-4, 4px);
   appearance: none;
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
-  padding: var(--hi-space-4, 4px) var(--hi-space-10, 10px);
-  font-size: var(--hi-text-xs, 0.75rem);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-muted);
   cursor: pointer;
@@ -296,13 +296,13 @@
   appearance: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--hi-space-6, 6px);
-  padding: var(--hi-space-4, 4px) var(--hi-space-10, 10px);
+  gap: var(--space-6, 6px);
+  padding: var(--space-4, 4px) var(--space-10, 10px);
   background: var(--hi-color-surface);
   border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   color: color-mix(in srgb, var(--hi-color-text-secondary) 70%, transparent);
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: border-color var(--hi-duration-fast, 0.15s) ease, color var(--hi-duration-fast, 0.15s) ease;
@@ -344,7 +344,7 @@
 }
 
 .hk-dtp-popup {
-  padding: var(--hi-space-8, 8px);
+  padding: var(--space-8, 8px);
   min-width: 260px;
 }
 
@@ -368,8 +368,8 @@
 .hk-dtp-popup-foot {
   display: flex;
   justify-content: flex-end;
-  padding: var(--hi-space-8, 8px) var(--hi-space-2, 2px) var(--hi-space-2, 2px);
-  margin-top: var(--hi-space-8, 8px);
+  padding: var(--space-8, 8px) var(--space-2, 2px) var(--space-2, 2px);
+  margin-top: var(--space-8, 8px);
   border-top: 1px solid color-mix(in srgb, var(--hi-color-border) 10%, transparent);
 }
 
@@ -379,8 +379,8 @@
   color: rgb(var(--color-on-solid-text, 255 255 255));
   border: 0;
   border-radius: var(--hi-radius-sm, 4px);
-  padding: var(--hi-space-6, 6px) var(--hi-space-14, 14px);
-  font-size: var(--hi-text-xs, 0.75rem);
+  padding: var(--space-6, 6px) var(--space-14, 14px);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   cursor: pointer;
   transition: filter var(--hi-duration-fast, 0.15s) ease;
@@ -397,13 +397,13 @@
   width: 100%;
   min-height: 2.5rem;
   box-sizing: border-box;
-  padding: var(--hi-space-8, 8px) var(--hi-space-12, 12px);
+  padding: var(--space-8, 8px) var(--space-12, 12px);
   background: var(--hi-color-surface);
   border: 1px solid color-mix(in srgb, var(--hi-color-border) 18%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   color: var(--hi-color-text-primary);
   font-family: inherit;
-  font-size: var(--hi-text-sm, 0.875rem);
+  font-size: var(--text-sm, 0.875rem);
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
 

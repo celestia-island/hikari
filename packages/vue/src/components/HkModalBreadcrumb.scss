@@ -8,11 +8,11 @@
   z-index: var(--hk-breadcrumb-z, 2500);
   display: flex;
   align-items: center;
-  // --hi-space-N contract tokens are N px across the library (HkTable,
+  // --space-N contract tokens are N px across the library (HkTable,
   // HkAlert, HkDrawer); keep fallbacks on that scale so hosts defining the
   // family don't collapse this strip (8px→4px gap, 32px→16px padding).
-  gap: var(--hi-space-8, 0.5rem);
-  padding: var(--hi-space-12, 0.75rem) var(--hi-space-32, 2rem);
+  gap: var(--space-8, 0.5rem);
+  padding: var(--space-12, 0.75rem) var(--space-32, 2rem);
   background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
   border: 1px solid var(--hk-breadcrumb-border, rgba(0, 0, 0, 0.06));
   border-radius: var(--hi-radius-md, 0.5rem);
@@ -26,14 +26,14 @@
 .hk-modal-breadcrumb-crumb {
   display: inline-flex;
   align-items: center;
-  gap: var(--hi-space-8, 0.5rem);
+  gap: var(--space-8, 0.5rem);
 }
 
 .hk-modal-breadcrumb-item {
   display: inline-flex;
   align-items: center;
   line-height: 1.4;
-  font-size: var(--hi-text-xs, 0.75rem);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   color: var(--hi-color-text-secondary, #666);
   white-space: nowrap;

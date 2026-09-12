@@ -1,14 +1,14 @@
 .hk-tag {
   display: inline-flex;
   align-items: center;
-  gap: var(--hi-space-4, 4px);
-  font-size: var(--hi-text-xs, 0.75rem);
+  gap: var(--space-4, 4px);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;
   border: 1px solid transparent;
   border-radius: var(--hi-radius-sm, 4px);
-  padding: var(--hi-space-2, 2px) var(--hi-space-8, 8px);
+  padding: var(--space-2, 2px) var(--space-8, 8px);
   user-select: none;
 }
 
@@ -42,7 +42,7 @@
   opacity: 0.5;
   padding: 0;
   /* Trailing edge of the chip in both directions. */
-  margin-inline-start: var(--hi-space-2, 2px);
+  margin-inline-start: var(--space-2, 2px);
   border-radius: var(--hi-radius-sm, 4px);
   transition: opacity var(--hi-duration-fast, 0.15s) ease;
 }

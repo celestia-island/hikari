@@ -53,7 +53,7 @@
 .hk-timeline[data-mode="window"] .hk-timeline-step {
   flex-direction: column;
   align-items: center;
-  gap: var(--hi-space-4, 4px);
+  gap: var(--space-4, 4px);
 
   [data-el="label"] {
     display: block;
@@ -239,7 +239,7 @@
 .hk-timeline-step {
   display: flex;
   align-items: center;
-  gap: var(--hi-space-8, 8px);
+  gap: var(--space-8, 8px);
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
@@ -262,7 +262,7 @@
   }
 
   [data-el="num"] {
-    font-size: var(--hi-text-xs, 0.75rem);
+    font-size: var(--text-xs, 0.75rem);
     font-weight: 600;
     line-height: 1;
     display: block;
@@ -273,7 +273,7 @@
   }
 
   [data-el="label"] {
-    font-size: var(--hi-text-xs, 0.75rem);
+    font-size: var(--text-xs, 0.75rem);
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -282,7 +282,7 @@
     height: var(--hk-timeline-link-thickness);
     flex: 1 1 0%;
     min-width: 0.5rem;
-    margin: 0 var(--hi-space-4, 4px);
+    margin: 0 var(--space-4, 4px);
   }
 }
 
@@ -299,7 +299,7 @@
   // step's node circle. Padding and rail height share the token, so the
   // rail always lands flush on both circles — no floating dashes, no
   // overlap, whatever the rhythm is tuned to.
-  --hk-timeline-vert-gap: var(--hi-space-24, 24px);
+  --hk-timeline-vert-gap: var(--space-24, 24px);
   padding-bottom: var(--hk-timeline-vert-gap);
 
   [data-el="connector"] {

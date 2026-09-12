@@ -695,10 +695,13 @@ export default defineComponent({
       if (slots.footer) {
         return <div class="hk-modal-footer">{slots.footer()}</div>;
       }
-      if (props.footerActions && props.footerActions.length > 0) {
+      const hasLead = Boolean(slots.footerLead);
+      const hasActions = Boolean(props.footerActions && props.footerActions.length > 0);
+      if (hasLead || hasActions) {
         return (
-          <div class="hk-modal-footer">
-            {props.footerActions.map((action, i) => (
+          <div class={["hk-modal-footer", hasLead ? "hk-modal-footer--lead" : ""]}>
+            {hasLead && <div class="hk-modal-footer-lead">{slots.footerLead?.()}</div>}
+            {props.footerActions?.map((action, i) => (
               <HButton
                 key={i}
                 variant={action.variant ?? "secondary"}

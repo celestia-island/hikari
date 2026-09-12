@@ -298,6 +298,21 @@
   }
 }
 
+// Lead content (e.g. a ghost jump link into the admin console) rendered at
+// the footer's inline-start with the action buttons still pinned at
+// inline-end — the footer counterpart of .hk-modal-header-lead. The lead's
+// auto inline-end margin absorbs the slack (same distribution trick the
+// header uses), so the layout mirrors correctly in RTL without a
+// space-between override.
+.hk-modal-footer--lead {
+  .hk-modal-footer-lead {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-end: auto;
+  }
+}
+
 // ------
 // Responsive — full-screen on narrow viewports
 // ------

@@ -1,0 +1,61 @@
+/* HkCrossfade — same-position simultaneous dissolve host.
+ *
+ * Geometry: the host is a one-cell grid and every item occupies THAT cell
+ * (grid-area: 1/1). During a swap the leaving item keeps the cell, so old
+ * and new stack in the SAME box: no exit blank phase, no side-by-side
+ * reflow, and the host stays as tall as the taller of the two items until
+ * the leave completes — variable-height content never collapses mid-
+ * dissolve. This is the height-safe generalization of HkPickerPane's fixed
+ * stage + absolute leave (no known stage size needed, so whole pages can
+ * swap through it).
+ *
+ * Consumers size the host from the outside (width/height/flex are theirs);
+ * the component only guarantees the stacking geometry and the dissolve.
+ */
+.hk-crossfade {
+  display: grid;
+
+  > .hk-crossfade-item {
+    grid-area: 1 / 1;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Dissolve curves: BOTH sides run --duration-normal so the exchange is a
+ * true cross-fade (not a fade-out-then-in), and both ease OUT (fast
+ * start) — midway through the swap the incoming layer already carries most
+ * of the opacity while the outgoing one has already shed most of its, so
+ * the composite never dips toward the background (the classic
+ * double-exposure artifact of symmetric linear fades). The leaving item
+ * also drops pointer events: it is dead content and must not intercept
+ * clicks while it dissolves under the incoming one. */
+.hk-crossfade-enter-active {
+  transition:
+    opacity
+    var(--duration-normal, 0.3s)
+    var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hk-crossfade-leave-active {
+  transition: opacity var(--duration-normal, 0.3s) ease-out;
+  pointer-events: none;
+}
+
+.hk-crossfade-enter-from,
+.hk-crossfade-leave-to {
+  opacity: 0;
+}
+
+/* Reduced motion: keep the opacity exchange (a fade carries no movement —
+ * HkPhaseTransition precedent), just shorter. Hosts driving the global
+ * animation switch (`html[data-css-animations="0"]`) already pin every
+ * transition via theme.scss's global rule, so no extra variant is needed
+ * here (that variant exists for ANIMATIONS, which the global rule pauses
+ * per-play-state; transitions die through its transition-duration clamp). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-crossfade-enter-active,
+  .hk-crossfade-leave-active {
+    transition: opacity var(--duration-fast, 0.15s) ease;
+  }
+}

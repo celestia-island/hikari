@@ -25,9 +25,10 @@ export const TOOLTIP_GAP_PX = 8;
  * `width: max-content` is the position-independence contract (same rule
  * as .hk-popover-panel): a fixed element otherwise shrink-to-fits against
  * `viewport - left`, so a trigger near the viewport edge squeezes the
- * bubble down to the leftover space — the vertical "跳转到日期" one-glyph
- * column on mobile. max-content sizes the box to its text wherever it
- * sits; applyTooltipPosition then clamps it back into the viewport.
+ * bubble down to the leftover space — the vertical one-glyph-per-line
+ * column on mobile (the jump-to-date tooltip report). max-content sizes
+ * the box to its text wherever it sits; applyTooltipPosition then clamps
+ * it back into the viewport.
  */
 export function tooltipPositionStyle(
   rect: DOMRect,

@@ -11,8 +11,10 @@
  *   - the viewport cap on `--viewport-gutter` (16px desktop / 8px
  *     mobile) — the panel can never exceed the space between the
  *     gutters, matching .hk-popover-panel;
- *   - `min-width: 180px` BEFORE (and losing to) the inline
- *     matchAnchorWidth style, per the original floor documentation.
+ *   - the `min-width: 180px` floor — which must stay BEATABLE by the
+ *     inline matchAnchorWidth style (stylesheet loses to inline on the
+ *     same element; declaration ORDER inside this block is irrelevant,
+ *     so it is deliberately not pinned here).
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -39,10 +41,7 @@ describe("HkSelectPanel popout viewport width contract", () => {
     );
   });
 
-  it("declares the width pair after the 180px floor (floor still wins for narrow anchors)", () => {
-    expect(block.indexOf("min-width: 180px;")).toBeGreaterThanOrEqual(0);
-    expect(block.indexOf("width: max-content;")).toBeGreaterThan(
-      block.indexOf("min-width: 180px;"),
-    );
+  it("keeps the 180px floor on the host (narrow anchors never collapse the panel)", () => {
+    expect(block).toContain("min-width: 180px;");
   });
 });

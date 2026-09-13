@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkModal, { MODAL_WIDTH_PRESETS, modalFrameMaxWidth, resolveModalWidth } from "./HkModal";
+import HkModal, { MODAL_WIDTH_PRESETS, resolveModalWidth } from "./HkModal";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -113,16 +113,6 @@ describe("HkModal width rendering", () => {
     const content = await mountModal("560px");
     expect(content.style.maxWidth).toBe(
       "min(560px, calc(100% - 2 * var(--viewport-gutter, 16px)))",
-    );
-  });
-
-  it("caps the desktop frame at the viewport gutter on both sides", () => {
-    // The centered frame must never run edge-to-edge: the resolved width
-    // is wrapped in a min() against 100% minus two gutters (the ≤767px
-    // sheet branch overrides max-width back to 100% !important, so the
-    // intentional full-bleed mobile sheet keeps spanning).
-    expect(modalFrameMaxWidth("32rem")).toBe(
-      "min(32rem, calc(100% - 2 * var(--viewport-gutter, 16px)))",
     );
   });
 });

@@ -5,14 +5,16 @@ import { HkAboutModal } from "./HkAboutModal";
 import { setLocale } from "../i18n/context";
 
 /**
- * HkAboutModal contract tests for the branding wave:
+ * HkAboutModal contract tests for the branding + redesign waves:
  * - the first-letter tile is the default identity and `logoSrc` swaps it
- *   for an image
- * - tagline / description / author / license / copyright render the given
- *   strings, authorHref turns the author value into an external link
+ *   for an image inside the identity frame
+ * - version and tagline share one subtitle line
+ * - description / made-by / license / copyright render the given strings,
+ *   madeByNameHref turns the author name into an external link
+ * - component rows split the machine value from an optional meta pill
  * - the backdrop factory renders inside the clipped backdrop layer
- * - links render as external chips
- * - author / license labels resolve through the i18n bundles
+ * - licenses and links render as chips under one centered block
+ * - footer (filing) links render as external links
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -117,10 +119,10 @@ describe("HkAboutModal branding", () => {
     expect(document.body.querySelector(".s-about-modal-row-link")).toBeNull();
   });
 
-  it("renders software-component version rows", async () => {
+  it("renders software-component version rows with a meta pill and tone", async () => {
     mountAbout({
       componentVersions: [
-        { label: "WebUI 版本", value: "0.1.138 REW2HF 生产" },
+        { label: "WebUI 版本", value: "0.1.138 REW2HF", meta: "生产", metaTone: "positive" },
         { label: "计算引擎版本", value: "0.1.0" },
       ],
     });
@@ -128,8 +130,25 @@ describe("HkAboutModal branding", () => {
     const rows = [...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row")];
     expect(rows.length).toBe(2);
     expect(rows[0]!.textContent).toContain("WebUI 版本");
-    expect(rows[0]!.textContent).toContain("0.1.138 REW2HF 生产");
-    expect(rows[1]!.textContent).toContain("计算引擎版本");
+    // The number and the environment word are separate nodes: the value
+    // stays machine-readable, the tag carries the typography.
+    const number = query<HTMLElement>(".s-about-modal-row-number");
+    expect(number.textContent).toBe("0.1.138 REW2HF");
+    const meta = query<HTMLElement>(".s-about-modal-row-meta");
+    expect(meta.textContent).toBe("生产");
+    expect(meta.getAttribute("data-tone")).toBe("positive");
+    // The second row has no meta, so it renders no pill.
+    expect(rows[1]!.querySelector(".s-about-modal-row-meta")).toBeNull();
+  });
+
+  it("defaults the meta pill to the neutral tone", async () => {
+    mountAbout({
+      componentVersions: [{ label: "计算引擎版本", value: "0.1.0", meta: "测试" }],
+    });
+    await flushModal();
+    expect(query<HTMLElement>(".s-about-modal-row-meta").getAttribute("data-tone")).toBe(
+      "neutral",
+    );
   });
 
   it("renders centered license chips", async () => {
@@ -205,5 +224,43 @@ describe("HkAboutModal branding", () => {
     expect(document.body.querySelectorAll(".s-about-modal-row").length).toBe(0);
     expect(document.body.querySelector(".s-about-modal-made-by")).toBeNull();
     expect(document.body.querySelector(".s-about-modal-links")).toBeNull();
+    expect(document.body.querySelector(".s-about-modal-chips")).toBeNull();
+    expect(document.body.querySelector(".s-about-modal-credits")).toBeNull();
+  });
+
+  it("groups license and link chips under one centered chips block", async () => {
+    mountAbout({
+      licenses: [{ label: "SySL-1.0", href: "https://example.test/sysl" }],
+      links: [{ label: "celestia.world", href: "https://celestia.world" }],
+    });
+    await flushModal();
+    const chips = query<HTMLElement>(".s-about-modal-chips");
+    const slots = [...chips.querySelectorAll<HTMLElement>(".s-about-modal-links")].map((el) =>
+      el.getAttribute("data-slot"),
+    );
+    expect(slots).toEqual(["licenses", "links"]);
+    expect(
+      [...chips.querySelectorAll<HTMLAnchorElement>(".s-about-modal-link")].map(
+        (chip) => chip.textContent,
+      ),
+    ).toEqual(["SySL-1.0", "celestia.world"]);
+  });
+
+  it("frames the logo image inside the identity frame", async () => {
+    mountAbout({ logoSrc: "data:image/webp;base64,AAA" });
+    await flushModal();
+    const frame = query<HTMLElement>(".s-about-modal-logo-frame");
+    expect(frame.querySelector("img.s-about-modal-logo-img")).toBeTruthy();
+  });
+
+  it("keeps version and tagline on one subtitle line", async () => {
+    mountAbout({ version: "9.9.9", tagline: "Chat with your agents" });
+    await flushModal();
+    const subtitle = query<HTMLElement>(".s-about-modal-subtitle");
+    expect(subtitle.querySelector(".s-about-modal-version")?.textContent).toContain("9.9.9");
+    expect(subtitle.querySelector(".s-about-modal-tagline")?.textContent).toBe(
+      "Chat with your agents",
+    );
+    expect(subtitle.querySelector(".s-about-modal-subtitle-sep")).toBeTruthy();
   });
 });

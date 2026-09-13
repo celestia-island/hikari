@@ -28,27 +28,39 @@ const methods = [
 ];
 
 describe("HkAuthMethodList", () => {
-  it("renders the provider row as an icon button group with an optional divider", () => {
+  it("renders centered independent framed tiles with an optional divider", () => {
     // The card's `methods` slot owns the `.s-auth-methods` container —
-    // reproduce that context here (the divider and the group row are layout
+    // reproduce that context here (the divider and the tile row are layout
     // children of it through the component's display:contents wrapper).
     const c = mount(
       h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { divider: "其他方式登录", methods })),
     );
     const divider = c.querySelector(".s-auth-methods-divider");
     expect(divider?.textContent).toContain("其他方式登录");
-    const group = c.querySelector<HTMLElement>(".s-auth-methods .hk-icon-group");
-    expect(group).toBeTruthy();
-    expect(group!.classList.contains("hk-icon-group-buttons")).toBe(true);
-    const buttons = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .hk-icon-group-item");
-    expect(buttons.length).toBe(2);
+    const tiles = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .s-auth-methods-tile");
+    expect(tiles.length).toBe(2);
     // Icon-only: the label is the accessible name + tooltip, never visible text.
-    expect(buttons[0]!.getAttribute("aria-label")).toBe("GitHub");
-    expect(buttons[1]!.getAttribute("aria-label")).toBe("LinuxDo");
-    expect(buttons[0]!.textContent).not.toContain("GitHub");
+    expect(tiles[0]!.getAttribute("aria-label")).toBe("GitHub");
+    expect(tiles[1]!.getAttribute("aria-label")).toBe("LinuxDo");
+    expect(tiles[0]!.textContent).not.toContain("GitHub");
   });
 
-  it("wraps every item in a tooltip carrying the provider label", () => {
+  it("never wraps the providers in a button-group track", () => {
+    // 2026-09-14 user direction: a shared group frame (one wide bordered
+    // track with the icons floating inside) is NOT this component's
+    // grammar — every provider is an independent framed tile. A regression
+    // back to HkIconButtonGroup (or any .hk-icon-group markup) must fail
+    // here, because the button group is reserved for selectors and tight
+    // action strips.
+    const c = mount(
+      h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })),
+    );
+    expect(c.querySelector(".s-auth-methods .hk-icon-group")).toBeNull();
+    expect(c.querySelector(".s-auth-methods [role='group']")).toBeNull();
+    expect(c.querySelector(".s-auth-methods [role='radiogroup']")).toBeNull();
+  });
+
+  it("wraps every tile in a tooltip carrying the provider label", () => {
     const c = mount(
       h("div", { class: "s-auth-methods" }, h(HkAuthMethodList, { methods })),
     );
@@ -71,12 +83,12 @@ describe("HkAuthMethodList", () => {
         },
       })),
     );
-    const buttons = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .hk-icon-group-item");
-    buttons[1]!.click();
+    const tiles = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .s-auth-methods-tile");
+    tiles[1]!.click();
     await nextTick();
     // Both rows are asserted so a constant-literal emit cannot ride an
     // accidental fixture coincidence.
-    buttons[0]!.click();
+    tiles[0]!.click();
     await nextTick();
     expect(picked).toEqual(["linuxdo", "github"]);
   });
@@ -95,15 +107,15 @@ describe("HkAuthMethodList", () => {
         },
       })),
     );
-    const buttons = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .hk-icon-group-item");
-    expect(buttons.length).toBe(3);
-    // The prebuilt brand vnode renders inside the icon column.
-    expect(buttons[0]!.querySelector(".brand-gh")).toBeTruthy();
+    const tiles = c.querySelectorAll<HTMLButtonElement>(".s-auth-methods .s-auth-methods-tile");
+    expect(tiles.length).toBe(3);
+    // The prebuilt brand vnode renders inside the icon box.
+    expect(tiles[0]!.querySelector(".brand-gh")).toBeTruthy();
     // A missing icon falls back to the label initial (never an empty box).
-    expect(buttons[2]!.querySelector<HTMLElement>(".hk-icon-group-item-initial")?.textContent).toBe("F");
+    expect(tiles[2]!.querySelector<HTMLElement>(".s-auth-methods-tile-initial")?.textContent).toBe("F");
     // Disabled entries render dead and swallow clicks.
-    expect(buttons[1]!.disabled).toBe(true);
-    buttons[1]!.click();
+    expect(tiles[1]!.disabled).toBe(true);
+    tiles[1]!.click();
     await nextTick();
     expect(picked).toBe("");
   });

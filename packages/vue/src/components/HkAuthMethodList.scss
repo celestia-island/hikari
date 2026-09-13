@@ -1,8 +1,12 @@
-/* Alternative sign-in methods as an icon button group (login card). The
-   block container `.s-auth-methods` and its spacing are owned by
-   HkAuthCard's slot styles (styles/admin-tokens.scss); this file only
-   styles the divider and the icon group row the component renders into
-   that slot. */
+/* Alternative sign-in methods as CENTERED INDEPENDENT framed icon tiles
+ * (login card). The block container `.s-auth-methods` and its spacing are
+ * owned by HkAuthCard's slot styles (styles/admin-tokens.scss); this file
+ * only styles the divider and the tile row the component renders into that
+ * slot.
+ *
+ * Deliberately NOT a button group (2026-09-14 user direction): no shared
+ * track, no shared frame — each provider carries its own border so the row
+ * stays as wide as its content, centered in the card. */
 
 /* "Other ways to sign in" divider row between rules. */
 .s-auth-methods-divider {
@@ -24,16 +28,91 @@
 }
 
 /* The component's own wrapper is `display: contents` — layout-wise the
-   divider and the group row remain direct children of HkAuthCard's
+   divider and the tile row remain direct children of HkAuthCard's
    `.s-auth-methods` slot container. */
 .s-auth-methods-list {
   display: contents;
 }
 
-/* The icon button group row: fill the card column and center the
-   provider tiles inside it (descendant match off `.s-auth-methods` —
-   the wrapper generates no box of its own). */
-.s-auth-methods .hk-icon-group.s-auth-methods-group {
-  width: 100%;
+/* The tile row: fill the card column and center the independent tiles
+   inside it. The gap between tiles is the INDEPENDENT-action spacing
+   (--space-12) — comfortable air, unlike a group's shoulder-to-shoulder
+   track gap. */
+.s-auth-methods .s-auth-methods-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: var(--space-12, 0.75rem);
+  width: 100%;
+}
+
+/* The HkTooltip wrapper span is the flex child between tiles — let it
+   shrink to the button so the row gap (not the wrapper) spaces them. */
+.s-auth-methods .s-auth-methods-tiles > .hk-tooltip-wrapper {
+  display: inline-flex;
+  flex: none;
+}
+
+/* One provider tile: a framed 44px square (the login-chooser tile size,
+   same as the icon group's md item). Each tile owns its whole frame —
+   border, hover wash, focus ring — with no track around the row. */
+.s-auth-methods-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  font: inherit;
+  color: rgb(var(--color-text, 25 30 40));
+  background: rgb(var(--color-surface, 255 255 255) / 55%);
+  border: 1px solid rgb(var(--color-border, 222 224 228) / 55%);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  outline: none;
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: var(--duration-short, 0.15s);
+  transition-timing-function: ease;
+
+  /* A real <button disabled> still matches :hover — guard the dead ones. */
+  &:hover:not(:disabled) {
+    color: rgb(var(--color-text, 25 30 40));
+    background: var(--c-primary-faint, rgb(var(--color-primary, 90 140 255) / 5%));
+    border-color: var(--c-primary-medium, rgb(var(--color-primary, 90 140 255) / 25%));
+  }
+
+  /* Tactile press feedback — the button-family cadence. */
+  &:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  /* Outset double ring, same grammar as .hk-btn. */
+  &:focus-visible {
+    box-shadow:
+      0 0 0 2px rgb(var(--color-surface, 255 255 255)),
+      0 0 0 4px rgb(var(--color-primary, 90 140 255));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.s-auth-methods-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  /* Brand marks (svg/img vnodes) at their intrinsic size; lucide comps
+     sized by the host. The box never grows past the square. */
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.s-auth-methods-tile-initial {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1;
 }

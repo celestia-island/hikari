@@ -94,40 +94,62 @@ describe("HkAboutModal branding", () => {
     expect(query<HTMLElement>(".s-about-modal-description").textContent).toBe("Save the world.");
   });
 
-  it("renders the made-by row with a linked origin", async () => {
+  it("renders the made-by sentence with a linked author name", async () => {
     mountAbout({
-      author: "由 伊欧 主创",
-      origin: "来自 Celestia Island",
-      originHref: "https://github.com/celestia-island",
-      license: "BUSL-1.1",
+      madeByPrefix: "由",
+      madeByName: "伊欧",
+      madeByNameHref: "https://github.com/langyo",
+      madeBySuffix: " 主创，来自 Celestia Island",
     });
     await flushModal();
-    const row = query<HTMLElement>(".s-about-modal-row");
-    expect(row.querySelector(".s-about-modal-row-label")?.textContent).toBe("由 伊欧 主创");
+    const line = query<HTMLElement>(".s-about-modal-made-by");
+    expect(line.textContent).toBe("由伊欧 主创，来自 Celestia Island");
     const link = query<HTMLAnchorElement>(".s-about-modal-row-link");
-    expect(link.textContent).toBe("来自 Celestia Island");
-    expect(link.getAttribute("href")).toBe("https://github.com/celestia-island");
+    expect(link.textContent).toBe("伊欧");
+    expect(link.getAttribute("href")).toBe("https://github.com/langyo");
     expect(link.getAttribute("target")).toBe("_blank");
-    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row")];
-    const licenseRow = rows.find((row) => row.textContent?.includes("BUSL-1.1"));
-    expect(licenseRow, "license row renders").toBeTruthy();
-    expect(licenseRow!.textContent).toContain("License");
   });
 
-  it("renders the made-by row as plain text without originHref", async () => {
-    mountAbout({ author: "由 伊欧 主创", origin: "来自 Celestia Island" });
+  it("renders the made-by sentence without a link when no href", async () => {
+    mountAbout({ madeByPrefix: "由", madeByName: "伊欧", madeBySuffix: " 主创" });
     await flushModal();
-    expect(query<HTMLElement>(".s-about-modal-row").textContent).toContain("来自 Celestia Island");
+    expect(query<HTMLElement>(".s-about-modal-made-by").textContent).toBe("由伊欧 主创");
     expect(document.body.querySelector(".s-about-modal-row-link")).toBeNull();
   });
 
-  it("renders the centered slogan and centered legal footer links", async () => {
+  it("renders software-component version rows", async () => {
     mountAbout({
-      slogan: "技术宅拯救世界。",
+      componentVersions: [
+        { label: "WebUI 版本", value: "0.1.138 REW2HF 生产" },
+        { label: "计算引擎版本", value: "0.1.0" },
+      ],
+    });
+    await flushModal();
+    const rows = [...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row")];
+    expect(rows.length).toBe(2);
+    expect(rows[0]!.textContent).toContain("WebUI 版本");
+    expect(rows[0]!.textContent).toContain("0.1.138 REW2HF 生产");
+    expect(rows[1]!.textContent).toContain("计算引擎版本");
+  });
+
+  it("renders centered license chips", async () => {
+    mountAbout({
+      licenses: [
+        { label: "SySL-1.0", href: "https://github.com/celestia-island/hikari/blob/master/LICENSE" },
+        { label: "BUSL-1.1", href: "https://github.com/celestia-island/shittim-chest/blob/master/LICENSE" },
+      ],
+    });
+    await flushModal();
+    const chips = [...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-link")];
+    expect(chips.map((chip) => chip.textContent)).toEqual(["SySL-1.0", "BUSL-1.1"]);
+    for (const chip of chips) expect(chip.getAttribute("target")).toBe("_blank");
+  });
+
+  it("renders centered legal footer links", async () => {
+    mountAbout({
       footerLinks: [{ label: "京ICP备2026xxxx号", href: "https://beian.miit.gov.cn/" }],
     });
     await flushModal();
-    expect(query<HTMLElement>(".s-about-modal-slogan").textContent).toBe("技术宅拯救世界。");
     const links = [
       ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-footer-link"),
     ];
@@ -177,19 +199,11 @@ describe("HkAboutModal branding", () => {
     expect(badge.textContent).toContain(`© ${year} Test App`);
   });
 
-  it("localizes the license label", async () => {
-    mountAbout({ license: "BUSL-1.1" });
+  it("renders no branding rows when no branding props are given", async () => {
+    mountAbout();
     await flushModal();
-    const labels = () => [
-      ...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row-label"),
-    ];
-
-    setLocale("zh-Hans");
-    await flushModal();
-    expect(labels().some((el) => el.textContent === "许可证")).toBe(true);
-
-    setLocale("en");
-    await flushModal();
-    expect(labels().some((el) => el.textContent === "License")).toBe(true);
+    expect(document.body.querySelectorAll(".s-about-modal-row").length).toBe(0);
+    expect(document.body.querySelector(".s-about-modal-made-by")).toBeNull();
+    expect(document.body.querySelector(".s-about-modal-links")).toBeNull();
   });
 });

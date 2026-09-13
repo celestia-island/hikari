@@ -10,18 +10,23 @@ export interface HAboutLink {
   href: string;
 }
 
+/** One software-component version row (label left, composed value right). */
+export interface HAboutComponentVersion {
+  label: string;
+  value: string;
+}
+
 /**
  * HkAboutModal — version / about dialog.
  * (Upstreamed from shittim-chest's plana-legacy layer.)
  *
- * Shows the app identity and version metadata plus optional branding: a
- * logo image, tagline, centered slogan + organization line, a made-by /
- * origin row, license row, a decorative backdrop layer (canvas or anything
- * else, rendered behind the content and pointer-inert), external link
- * chips and centered legal footer links (e.g. ICP filings). Version/build
- * hashes render as short hashes when longer than 12 chars (full value in
- * `title` tooltip). Every branding prop is optional — the modal degrades
- * to the plain identity + version card when none are given.
+ * Shows a centered identity block (logo above the name above the tagline)
+ * plus optional branding: a made-by sentence with a linked author name, a
+ * centered organization line, software-component version rows, license and
+ * external link chips, a decorative backdrop layer (canvas or anything
+ * else, rendered behind the content and pointer-inert) and centered legal
+ * footer links (e.g. ICP filings). Every branding prop is optional — the
+ * modal degrades to the plain identity card when none are given.
  */
 export const HkAboutModal = defineComponent({
   name: "HkAboutModal",
@@ -31,28 +36,27 @@ export const HkAboutModal = defineComponent({
     appName: { type: String, required: true },
     /** Application version (e.g. "0.1.4"). */
     version: { type: String, required: true },
-    /** Optional app build hash / commit. */
-    buildHash: { type: String, default: undefined },
-    /** Optional engine version (backend), e.g. "0.2.1". */
-    engineVersion: { type: String, default: undefined },
-    /** Optional engine build hash / commit. */
-    engineBuildHash: { type: String, default: undefined },
     /** Optional logo image URL — replaces the first-letter tile. */
     logoSrc: { type: String, default: undefined },
     /** Optional one-liner under the version (e.g. the app tagline). */
     tagline: { type: String, default: undefined },
-    /** Optional centered slogan below the header (the app's one-liner). */
-    slogan: { type: String, default: undefined },
-    /** Optional centered small line under the slogan (organization blurb). */
+    /** Optional centered small line under the header (organization blurb). */
     description: { type: String, default: undefined },
-    /** Optional made-by row: left label (e.g. "由 伊欧 主创"). */
-    author: { type: String, default: undefined },
-    /** Optional right value of the made-by row (e.g. "来自 Celestia Island"). */
-    origin: { type: String, default: undefined },
-    /** Optional link applied to the origin value. */
-    originHref: { type: String, default: undefined },
-    /** Optional license identifier row (e.g. "BUSL-1.1"). */
-    license: { type: String, default: undefined },
+    /** Made-by sentence: text before the linked author name (e.g. "由"). */
+    madeByPrefix: { type: String, default: undefined },
+    /** Made-by sentence: the linked author name (e.g. "伊欧"). */
+    madeByName: { type: String, default: undefined },
+    /** Link applied to the author name (e.g. the GitHub profile). */
+    madeByNameHref: { type: String, default: undefined },
+    /** Made-by sentence: text after the name (e.g. " 主创，来自 …"). */
+    madeBySuffix: { type: String, default: undefined },
+    /** License chips (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */
+    licenses: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Software-component version rows (WebUI / engines), label + value. */
+    componentVersions: {
+      type: Array as PropType<HAboutComponentVersion[]>,
+      default: () => [],
+    },
     /** Optional copyright holder in the footer (defaults to the app name). */
     copyright: { type: String, default: undefined },
     /** Optional external links (e.g. GitHub, docs). */
@@ -73,21 +77,26 @@ export const HkAboutModal = defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
 
-    function shortHash(hash: string): string {
-      return hash.length > 12 ? `${hash.slice(0, 12)}…` : hash;
-    }
-
-    const renderOriginValue = () => {
-      if (!props.originHref) return props.origin;
-      return (
+    const renderMadeBy = () => {
+      if (!props.madeByName) return null;
+      const name = props.madeByNameHref ? (
         <a
           class="s-about-modal-row-link"
-          href={props.originHref}
+          href={props.madeByNameHref}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {props.origin}
+          {props.madeByName}
         </a>
+      ) : (
+        <span>{props.madeByName}</span>
+      );
+      return (
+        <p class="s-about-modal-made-by">
+          {props.madeByPrefix}
+          {name}
+          {props.madeBySuffix}
+        </p>
       );
     };
 
@@ -120,51 +129,37 @@ export const HkAboutModal = defineComponent({
               </div>
             </header>
 
-            {props.slogan && <p class="s-about-modal-slogan">{props.slogan}</p>}
+            {renderMadeBy()}
             {props.description && <p class="s-about-modal-description">{props.description}</p>}
 
-            <div class="s-about-modal-rows">
-              {(props.author || props.origin) && (
-                <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">{props.author}</span>
-                  <span class="s-about-modal-row-value">{renderOriginValue()}</span>
+            {props.componentVersions.length > 0 && (
+              <div class="s-about-modal-rows">
+                {props.componentVersions.map((component) => (
+                  <div class="s-about-modal-row" key={component.label}>
+                    <span class="s-about-modal-row-label">{component.label}</span>
+                    <span class="s-about-modal-row-value">{component.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {props.licenses.length > 0 && (
+              <div class="s-about-modal-links">
+                <div class="s-about-modal-links-list">
+                  {props.licenses.map((license) => (
+                    <a
+                      key={license.href}
+                      href={license.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="s-about-modal-link"
+                    >
+                      {license.label}
+                    </a>
+                  ))}
                 </div>
-              )}
-              {props.license && (
-                <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">
-                    {t("hikari::about.license", "License")}
-                  </span>
-                  <span class="s-about-modal-row-value">{props.license}</span>
-                </div>
-              )}
-              {props.buildHash && (
-                <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">{t("hikari::about.buildHash", "Build")}</span>
-                  <span class="s-about-modal-row-value" title={props.buildHash}>
-                    {shortHash(props.buildHash)}
-                  </span>
-                </div>
-              )}
-              {props.engineVersion && (
-                <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">
-                    {t("hikari::about.engineVersion", "Engine version")}
-                  </span>
-                  <span class="s-about-modal-row-value">{props.engineVersion}</span>
-                </div>
-              )}
-              {props.engineBuildHash && (
-                <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">
-                    {t("hikari::about.engineBuildHash", "Engine build")}
-                  </span>
-                  <span class="s-about-modal-row-value" title={props.engineBuildHash}>
-                    {shortHash(props.engineBuildHash)}
-                  </span>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {props.links.length > 0 && (
               <div class="s-about-modal-links">

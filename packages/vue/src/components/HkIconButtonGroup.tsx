@@ -25,13 +25,21 @@ export interface HkIconButtonGroupOption {
  * HkIconButtonGroup — the icon-only variant of the button-group family
  * (the same centered strip grammar as HkTabs, minus the text).
  *
- * Three working modes:
- *   - "buttons"  a plain action group (no selection state) — the auth
- *                card's OAuth provider row
- *   - "single"   a radiogroup: one active key (v-model), re-clicking the
- *                active key is a no-op — radio semantics
- *   - "multiple" a toggle group: v-model is a string[] of active keys,
- *                every item carries aria-pressed
+ * The group has exactly TWO fundamental jobs (2026-09-14 user direction
+ * — a group is a semantic component, not a generic box to throw buttons
+ * into), carried by three working modes:
+ *   - a SELECTOR: "single" (radiogroup: one active key via v-model,
+ *     re-clicking the active key is a no-op — radio semantics) or
+ *     "multiple" (toggle set: v-model is a string[] of active keys,
+ *     every item carries aria-pressed)
+ *   - a TIGHT ACTION STRIP: "buttons" (no selection state) — related
+ *     actions packed shoulder-to-shoulder in ONE shared track, the
+ *     toolbar grammar
+ *
+ * Anything else is NOT a group: independent actions that merely live on
+ * the same row (e.g. a login card's third-party provider tiles) render
+ * as separate framed buttons with comfortable spacing — see
+ * HkAuthMethodList for the reference pattern.
  *
  * Every item is icon-only and rides one size taller than a standard
  * icon button (md = 44px vs the 32px icon button / 40px text button) —

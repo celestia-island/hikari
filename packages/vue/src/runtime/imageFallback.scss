@@ -1,0 +1,13 @@
+/* installHkImageFallback — the `.hk-img-broken` treatment.
+ *
+ * The bundled placeholder SVG carries its own muted tile + glyph; this
+ * sheet only keeps the img box polite while it shows the placeholder
+ * (never stretches it, faint surface behind transparent areas) and
+ * neutralizes any fancy borders a consumer put on the healthy image. */
+
+img.hk-img-broken {
+  object-fit: contain;
+  background: rgb(var(--color-surface, 255 255 255) / 30%);
+  border-radius: var(--radius-sm, 4px);
+  box-shadow: none;
+}

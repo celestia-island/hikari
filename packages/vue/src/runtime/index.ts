@@ -4,6 +4,19 @@ export * from "./intervalBus";
 export * from "./pageLifecycle";
 export * from "./mobileViewport";
 export {
+  installHkTooltipBridge,
+  type HkTooltipBridgeOptions,
+} from "./tooltipBridge";
+export {
+  installHkImageFallback,
+  type HkImageFallbackOptions,
+} from "./imageFallback";
+export {
+  tooltipPositionStyle,
+  TOOLTIP_GAP_PX,
+  type TooltipPlacement,
+} from "./tooltipPosition";
+export {
   sanitizeHistoryUrl,
   installHistorySafetyNet,
   type HistorySafetyNetOptions,

@@ -264,6 +264,8 @@ export type {
 } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";
 export type { SizeMorph } from "./composables/useSizeMorph";
+export { useImage } from "./composables/useImage";
+export type { ImageStatus, UseImageReturn } from "./composables/useImage";
 
 export { useZoomPan } from "./composables/useZoomPan";
 export type { ZoomPanOptions, ZoomPanState } from "./composables/useZoomPan";

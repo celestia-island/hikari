@@ -10,23 +10,34 @@ export interface HAboutLink {
   href: string;
 }
 
-/** One software-component version row (label left, composed value right). */
+/**
+ * One software-component version row.
+ *
+ * `value` is the machine-readable half (version, optionally plus a build
+ * hash) and renders in the mono/tabular face; `meta` is the optional
+ * human-facing trailing tag (e.g. the environment word 生产 / 测试),
+ * rendered as a separate muted pill so it never melts into the version
+ * string. `metaTone` tints that pill when the tag carries a status
+ * meaning (e.g. a production environment).
+ */
 export interface HAboutComponentVersion {
   label: string;
   value: string;
+  meta?: string;
+  metaTone?: "neutral" | "positive" | "caution";
 }
 
 /**
  * HkAboutModal — version / about dialog.
  * (Upstreamed from shittim-chest's plana-legacy layer.)
  *
- * Shows a centered identity block (logo above the name above the tagline)
- * plus optional branding: a made-by sentence with a linked author name, a
- * centered organization line, software-component version rows, license and
- * external link chips, a decorative backdrop layer (canvas or anything
- * else, rendered behind the content and pointer-inert) and centered legal
- * footer links (e.g. ICP filings). Every branding prop is optional — the
- * modal degrades to the plain identity card when none are given.
+ * Layout (2026-09 redesign): a centered identity hero (haloed logo, name,
+ * then version + tagline on one compact line), an optional credits block
+ * (made-by sentence with a linked author name + organization blurb), a
+ * bordered spec card holding the software-component versions, ghost chip
+ * rows for licenses / external links, and a muted legal footer (filing
+ * links + copyright). Every branding prop is optional — the modal degrades
+ * to the plain identity card when none are given.
  */
 export const HkAboutModal = defineComponent({
   name: "HkAboutModal",
@@ -38,9 +49,9 @@ export const HkAboutModal = defineComponent({
     version: { type: String, required: true },
     /** Optional logo image URL — replaces the first-letter tile. */
     logoSrc: { type: String, default: undefined },
-    /** Optional one-liner under the version (e.g. the app tagline). */
+    /** Optional one-liner shown beside the version (e.g. the app tagline). */
     tagline: { type: String, default: undefined },
-    /** Optional centered small line under the header (organization blurb). */
+    /** Optional centered small line under the credits (organization blurb). */
     description: { type: String, default: undefined },
     /** Made-by sentence: text before the linked author name (e.g. "由"). */
     madeByPrefix: { type: String, default: undefined },
@@ -100,6 +111,27 @@ export const HkAboutModal = defineComponent({
       );
     };
 
+    const renderChips = (items: HAboutLink[], slot: string) => {
+      if (items.length === 0) return null;
+      return (
+        <div class="s-about-modal-links" data-slot={slot}>
+          <div class="s-about-modal-links-list">
+            {items.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="s-about-modal-link"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
     return () => (
       <HModal
         modelValue={props.modelValue}
@@ -115,67 +147,70 @@ export const HkAboutModal = defineComponent({
           )}
           <div class="s-about-modal-body">
             <header class="s-about-modal-header">
-              {props.logoSrc ? (
-                <img class="s-about-modal-logo-img" src={props.logoSrc} alt="" draggable={false} />
-              ) : (
-                <div class="s-about-modal-logo">{props.appName.slice(0, 1).toUpperCase()}</div>
-              )}
-              <div>
+              <div class="s-about-modal-logo-frame">
+                {props.logoSrc ? (
+                  <img
+                    class="s-about-modal-logo-img"
+                    src={props.logoSrc}
+                    alt=""
+                    draggable={false}
+                  />
+                ) : (
+                  <div class="s-about-modal-logo">{props.appName.slice(0, 1).toUpperCase()}</div>
+                )}
+              </div>
+              <div class="s-about-modal-identity">
                 <h2 class="s-about-modal-name">{props.appName}</h2>
-                <p class="s-about-modal-version">
-                  {t("hikari::about.version", "Version")} {props.version}
+                <p class="s-about-modal-subtitle">
+                  <span class="s-about-modal-version">
+                    {t("hikari::about.version", "Version")} {props.version}
+                  </span>
+                  {props.tagline && (
+                    <>
+                      <span class="s-about-modal-subtitle-sep" aria-hidden="true">
+                        ·
+                      </span>
+                      <span class="s-about-modal-tagline">{props.tagline}</span>
+                    </>
+                  )}
                 </p>
-                {props.tagline && <p class="s-about-modal-tagline">{props.tagline}</p>}
               </div>
             </header>
 
-            {renderMadeBy()}
-            {props.description && <p class="s-about-modal-description">{props.description}</p>}
+            {(props.madeByName || props.description) && (
+              <div class="s-about-modal-credits">
+                {renderMadeBy()}
+                {props.description && (
+                  <p class="s-about-modal-description">{props.description}</p>
+                )}
+              </div>
+            )}
 
             {props.componentVersions.length > 0 && (
               <div class="s-about-modal-rows">
                 {props.componentVersions.map((component) => (
                   <div class="s-about-modal-row" key={component.label}>
                     <span class="s-about-modal-row-label">{component.label}</span>
-                    <span class="s-about-modal-row-value">{component.value}</span>
+                    <span class="s-about-modal-row-value">
+                      <span class="s-about-modal-row-number">{component.value}</span>
+                      {component.meta && (
+                        <span
+                          class="s-about-modal-row-meta"
+                          data-tone={component.metaTone ?? "neutral"}
+                        >
+                          {component.meta}
+                        </span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
 
-            {props.licenses.length > 0 && (
-              <div class="s-about-modal-links">
-                <div class="s-about-modal-links-list">
-                  {props.licenses.map((license) => (
-                    <a
-                      key={license.href}
-                      href={license.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="s-about-modal-link"
-                    >
-                      {license.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {props.links.length > 0 && (
-              <div class="s-about-modal-links">
-                <div class="s-about-modal-links-list">
-                  {props.links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="s-about-modal-link"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
+            {(props.licenses.length > 0 || props.links.length > 0) && (
+              <div class="s-about-modal-chips">
+                {renderChips(props.licenses, "licenses")}
+                {renderChips(props.links, "links")}
               </div>
             )}
 

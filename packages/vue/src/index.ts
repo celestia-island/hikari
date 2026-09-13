@@ -353,7 +353,11 @@ export { HkSecretRevealModal as HSecretRevealModal } from "./components/HkSecret
 export { HkCaptchaWidget as HCaptchaWidget, type HkCaptchaProvider } from "./components/HkCaptchaWidget";
 export { HkCaptchaModal as HCaptchaModal } from "./components/HkCaptchaModal";
 export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal";
-export { HkAboutModal as HAboutModal, type HAboutLink } from "./components/HkAboutModal";
+export {
+  HkAboutModal as HAboutModal,
+  type HAboutComponentVersion,
+  type HAboutLink,
+} from "./components/HkAboutModal";
 export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
 export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";
 export {

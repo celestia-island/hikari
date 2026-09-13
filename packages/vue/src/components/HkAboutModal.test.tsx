@@ -151,6 +151,18 @@ describe("HkAboutModal branding", () => {
     );
   });
 
+  it("carries the caution tone through to the pill", async () => {
+    mountAbout({
+      componentVersions: [
+        { label: "云模型调度引擎版本", value: "0.1.26", meta: "预发", metaTone: "caution" },
+      ],
+    });
+    await flushModal();
+    expect(query<HTMLElement>(".s-about-modal-row-meta").getAttribute("data-tone")).toBe(
+      "caution",
+    );
+  });
+
   it("renders centered license chips", async () => {
     mountAbout({
       licenses: [

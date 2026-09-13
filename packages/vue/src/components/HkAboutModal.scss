@@ -242,6 +242,14 @@
   gap: var(--space-8, 0.5rem);
 }
 
+// One chip group (licenses / links). Must span the chips block — inside an
+// `align-items: center` column a plain block would shrink to fit-content and
+// a long chip list would then wrap against that collapsed width instead of
+// the modal's.
+.s-about-modal-links {
+  width: 100%;
+}
+
 .s-about-modal-links-list {
   display: flex;
   flex-wrap: wrap;

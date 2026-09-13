@@ -72,6 +72,14 @@
   color: rgb(var(--color-muted));
 }
 
+.s-about-modal-slogan {
+  margin: 0;
+  font-size: var(--text-base, 1rem);
+  font-weight: 600;
+  text-align: center;
+  color: rgb(var(--color-text));
+}
+
 .s-about-modal-tagline {
   margin: var(--space-2, 0.125rem) 0 0;
   font-size: var(--text-xs, 0.75rem);
@@ -80,8 +88,9 @@
 
 .s-about-modal-description {
   margin: 0;
-  font-size: var(--text-sm, 0.8125rem);
-  line-height: 1.55;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.6;
+  text-align: center;
   color: rgb(var(--color-muted));
 }
 
@@ -127,6 +136,7 @@
 .s-about-modal-links-list {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-8, 0.5rem);
 }
 
@@ -154,7 +164,25 @@
     0 0 0 4px rgb(var(--color-primary));
 }
 
+.s-about-modal-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-12, 0.75rem);
+}
+
+.s-about-modal-footer-link {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  text-decoration: none;
+}
+
+.s-about-modal-footer-link:hover {
+  color: rgb(var(--color-primary));
+  text-decoration: underline;
+}
+
 .s-about-modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }

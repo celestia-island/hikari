@@ -11,6 +11,24 @@ export interface HAboutLink {
 }
 
 /**
+ * One piece of the credits line.
+ *
+ * The line is a sentence assembled from parts so a host can phrase (and
+ * order) it freely per locale: literal `text` runs sit between linked
+ * `name` chips (organization first, author second, …). The names render as
+ * the same chips as the license / link rows — every link in this dialog is
+ * a tag.
+ */
+export interface HAboutCredit {
+  /** Literal sentence fragment (mutually exclusive with `name`). */
+  text?: string;
+  /** Linked chip label (mutually exclusive with `text`). */
+  name?: string;
+  /** Target for a `name` chip; opens in a new tab. */
+  href?: string;
+}
+
+/**
  * One software-component version row.
  *
  * `value` is the machine-readable half (version, optionally plus a build
@@ -33,10 +51,11 @@ export interface HAboutComponentVersion {
  *
  * Layout (2026-09 redesign): a centered identity hero (haloed logo, name,
  * then version + tagline on one compact line), an optional credits block
- * (made-by sentence with a linked author name + organization blurb), a
- * bordered spec card holding the software-component versions, ghost chip
- * rows for licenses / external links, and a muted legal footer (filing
- * links + copyright). Every branding prop is optional — the modal degrades
+ * (a sentence built from text runs and linked name chips, plus the
+ * organization blurb), a
+ * bordered spec card holding the software-component versions, and the
+ * link rows — licenses, external links, legal filings and the credits
+ * names all render as the same ghost tag. Every one opens in a new tab. Every branding prop is optional — the modal degrades
  * to the plain identity card when none are given.
  */
 export const HkAboutModal = defineComponent({
@@ -53,14 +72,12 @@ export const HkAboutModal = defineComponent({
     tagline: { type: String, default: undefined },
     /** Optional centered small line under the credits (organization blurb). */
     description: { type: String, default: undefined },
-    /** Made-by sentence: text before the linked author name (e.g. "由"). */
-    madeByPrefix: { type: String, default: undefined },
-    /** Made-by sentence: the linked author name (e.g. "伊欧"). */
-    madeByName: { type: String, default: undefined },
-    /** Link applied to the author name (e.g. the GitHub profile). */
-    madeByNameHref: { type: String, default: undefined },
-    /** Made-by sentence: text after the name (e.g. " 主创，来自 …"). */
-    madeBySuffix: { type: String, default: undefined },
+    /**
+     * Credits sentence, assembled from text runs and linked name chips
+     * (e.g. 来自 <Celestia Island>，由 <伊欧> 倾力设计). Names render as the
+     * same chips as the license / link rows.
+     */
+    credits: { type: Array as PropType<HAboutCredit[]>, default: () => [] },
     /** License chips (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */
     licenses: { type: Array as PropType<HAboutLink[]>, default: () => [] },
     /** Software-component version rows (WebUI / engines), label + value. */
@@ -88,25 +105,38 @@ export const HkAboutModal = defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
 
-    const renderMadeBy = () => {
-      if (!props.madeByName) return null;
-      const name = props.madeByNameHref ? (
-        <a
-          class="s-about-modal-row-link"
-          href={props.madeByNameHref}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {props.madeByName}
-        </a>
-      ) : (
-        <span>{props.madeByName}</span>
-      );
+    // One chip renderer for every link in the dialog: credits names,
+    // licenses, external links and the legal filings all render as tags.
+    const renderChip = (label: string, href: string, extraClass: string) => (
+      <a
+        key={`${extraClass}:${href}`}
+        class={`s-about-modal-link ${extraClass}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {label}
+      </a>
+    );
+
+    const renderCredits = () => {
+      const parts = props.credits.filter((part) => part.text || part.name);
+      if (parts.length === 0) return null;
       return (
-        <p class="s-about-modal-made-by">
-          {props.madeByPrefix}
-          {name}
-          {props.madeBySuffix}
+        <p class="s-about-modal-credits-line">
+          {parts.map((part, index) =>
+            part.name ? (
+              part.href ? (
+                renderChip(part.name, part.href, "s-about-modal-credit-link")
+              ) : (
+                <span key={`name:${index}`} class="s-about-modal-credit-name">
+                  {part.name}
+                </span>
+              )
+            ) : (
+              <span key={`text:${index}`}>{part.text}</span>
+            ),
+          )}
         </p>
       );
     };
@@ -116,17 +146,7 @@ export const HkAboutModal = defineComponent({
       return (
         <div class="s-about-modal-links" data-slot={slot}>
           <div class="s-about-modal-links-list">
-            {items.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="s-about-modal-link"
-              >
-                {item.label}
-              </a>
-            ))}
+            {items.map((item) => renderChip(item.label, item.href, ""))}
           </div>
         </div>
       );
@@ -177,9 +197,9 @@ export const HkAboutModal = defineComponent({
               </div>
             </header>
 
-            {(props.madeByName || props.description) && (
+            {(props.credits.length > 0 || props.description) && (
               <div class="s-about-modal-credits">
-                {renderMadeBy()}
+                {renderCredits()}
                 {props.description && (
                   <p class="s-about-modal-description">{props.description}</p>
                 )}
@@ -216,17 +236,9 @@ export const HkAboutModal = defineComponent({
 
             {props.footerLinks.length > 0 && (
               <div class="s-about-modal-footer-links">
-                {props.footerLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="s-about-modal-footer-link"
-                  >
-                    {link.label}
-                  </a>
-                ))}
+                {props.footerLinks.map((link) =>
+                  renderChip(link.label, link.href, "s-about-modal-footer-link"),
+                )}
               </div>
             )}
 

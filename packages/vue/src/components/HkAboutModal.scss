@@ -126,7 +126,7 @@
   color: rgb(var(--color-muted));
 }
 
-/* ── Credits: made-by sentence + organization blurb ────────────────────── */
+/* ── Credits: credits sentence + organization blurb ────────────────────── */
 
 .s-about-modal-credits {
   display: flex;
@@ -136,24 +136,19 @@
   margin-top: calc(-1 * var(--space-4, 0.25rem));
 }
 
-.s-about-modal-made-by {
+// Inline flow (not flex): the sentence is assembled from text runs and
+// chips, and the runs carry their own spaces around the chips.
+.s-about-modal-credits-line {
   margin: 0;
   font-size: var(--text-sm, 0.8125rem);
+  line-height: 2;
   text-align: center;
+  text-wrap: pretty;
   color: rgb(var(--color-text));
 }
 
-.s-about-modal-made-by .s-about-modal-row-link {
-  margin: 0 0.15em;
-}
-
-.s-about-modal-row-link {
-  color: rgb(var(--color-primary));
-  text-decoration: none;
-}
-
-.s-about-modal-row-link:hover {
-  text-decoration: underline;
+.s-about-modal-credit-name {
+  color: rgb(var(--color-text));
 }
 
 .s-about-modal-description {
@@ -257,8 +252,8 @@
   gap: var(--space-6, 0.375rem);
 }
 
-// Ghost pills: the chips are secondary navigation, so they carry a hairline
-// instead of a filled brand block.
+// Ghost pills: every link in this dialog is a tag, so they share one face —
+// credits names, licenses, external links and the legal filings.
 .s-about-modal-link {
   padding: var(--space-2, 0.125rem) var(--space-10, 0.625rem);
   border: 1px solid var(--border-subtle, rgb(100 100 100 / 12%));
@@ -271,6 +266,14 @@
     color var(--duration-short, 0.15s) ease,
     border-color var(--duration-short, 0.15s) ease,
     background var(--duration-short, 0.15s) ease;
+}
+
+// Chips inside the credits sentence sit in a text run: keep them on the
+// baseline and let the surrounding spaces do the spacing.
+.s-about-modal-credit-link {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.1em;
 }
 
 .s-about-modal-link:hover {
@@ -292,23 +295,18 @@
 
 /* ── Legal footer: filing links + copyright ───────────────────────────── */
 
+// Filing numbers are long, so the legal chips render a notch smaller than
+// the license / link rows.
+.s-about-modal-footer-link {
+  font-size: var(--text-2xs, 0.625rem);
+}
+
 .s-about-modal-footer-links {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-16, 1rem);
+  gap: var(--space-6, 0.375rem);
   margin-top: calc(-1 * var(--space-4, 0.25rem));
-}
-
-.s-about-modal-footer-link {
-  font-size: var(--text-xs, 0.75rem);
-  color: rgb(var(--color-muted));
-  text-decoration: none;
-}
-
-.s-about-modal-footer-link:hover {
-  color: rgb(var(--color-primary));
-  text-decoration: underline;
 }
 
 .s-about-modal-footer {

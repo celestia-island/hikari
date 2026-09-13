@@ -356,6 +356,7 @@ export { HkProtocolModal as HProtocolModal } from "./components/HkProtocolModal"
 export {
   HkAboutModal as HAboutModal,
   type HAboutComponentVersion,
+  type HAboutCredit,
   type HAboutLink,
 } from "./components/HkAboutModal";
 export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";

@@ -9,8 +9,9 @@ import { setLocale } from "../i18n/context";
  * - the first-letter tile is the default identity and `logoSrc` swaps it
  *   for an image inside the identity frame
  * - version and tagline share one subtitle line
- * - description / made-by / license / copyright render the given strings,
- *   madeByNameHref turns the author name into an external link
+ * - the credits sentence assembles text runs and linked name chips, and a
+ *   name without an href stays plain text
+ * - description / license / copyright render the given strings
  * - component rows split the machine value from an optional meta pill
  * - the backdrop factory renders inside the clipped backdrop layer
  * - licenses and links render as chips under one centered block
@@ -96,27 +97,44 @@ describe("HkAboutModal branding", () => {
     expect(query<HTMLElement>(".s-about-modal-description").textContent).toBe("Save the world.");
   });
 
-  it("renders the made-by sentence with a linked author name", async () => {
+  it("renders the credits sentence with linked name chips", async () => {
     mountAbout({
-      madeByPrefix: "由",
-      madeByName: "伊欧",
-      madeByNameHref: "https://github.com/langyo",
-      madeBySuffix: " 主创，来自 Celestia Island",
+      credits: [
+        { text: "来自 " },
+        { name: "Celestia Island", href: "https://github.com/celestia-island" },
+        { text: "，由 " },
+        { name: "伊欧", href: "https://github.com/langyo" },
+        { text: " 倾力设计" },
+      ],
     });
     await flushModal();
-    const line = query<HTMLElement>(".s-about-modal-made-by");
-    expect(line.textContent).toBe("由伊欧 主创，来自 Celestia Island");
-    const link = query<HTMLAnchorElement>(".s-about-modal-row-link");
-    expect(link.textContent).toBe("伊欧");
-    expect(link.getAttribute("href")).toBe("https://github.com/langyo");
-    expect(link.getAttribute("target")).toBe("_blank");
+    const line = query<HTMLElement>(".s-about-modal-credits-line");
+    expect(line.textContent).toBe("来自 Celestia Island，由 伊欧 倾力设计");
+    const chips = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-credit-link"),
+    ];
+    expect(chips.map((chip) => chip.textContent)).toEqual(["Celestia Island", "伊欧"]);
+    // Every link in the dialog is a tag and opens in a new tab.
+    for (const chip of chips) {
+      expect(chip.classList.contains("s-about-modal-link")).toBe(true);
+      expect(chip.getAttribute("target")).toBe("_blank");
+      expect(chip.getAttribute("rel")).toContain("noopener");
+    }
+    expect(chips[0]!.getAttribute("href")).toBe("https://github.com/celestia-island");
   });
 
-  it("renders the made-by sentence without a link when no href", async () => {
-    mountAbout({ madeByPrefix: "由", madeByName: "伊欧", madeBySuffix: " 主创" });
+  it("keeps a credit name as plain text when no href is given", async () => {
+    mountAbout({ credits: [{ text: "由 " }, { name: "伊欧" }, { text: " 主创" }] });
     await flushModal();
-    expect(query<HTMLElement>(".s-about-modal-made-by").textContent).toBe("由伊欧 主创");
-    expect(document.body.querySelector(".s-about-modal-row-link")).toBeNull();
+    expect(query<HTMLElement>(".s-about-modal-credits-line").textContent).toBe("由 伊欧 主创");
+    expect(query<HTMLElement>(".s-about-modal-credit-name").textContent).toBe("伊欧");
+    expect(document.body.querySelector(".s-about-modal-credit-link")).toBeNull();
+  });
+
+  it("skips empty credit parts", async () => {
+    mountAbout({ credits: [{ text: "" }, { name: "" }, { text: "仅此一句。" }] });
+    await flushModal();
+    expect(query<HTMLElement>(".s-about-modal-credits-line").textContent).toBe("仅此一句。");
   });
 
   it("renders software-component version rows with a meta pill and tone", async () => {
@@ -234,7 +252,7 @@ describe("HkAboutModal branding", () => {
     mountAbout();
     await flushModal();
     expect(document.body.querySelectorAll(".s-about-modal-row").length).toBe(0);
-    expect(document.body.querySelector(".s-about-modal-made-by")).toBeNull();
+    expect(document.body.querySelector(".s-about-modal-credits-line")).toBeNull();
     expect(document.body.querySelector(".s-about-modal-links")).toBeNull();
     expect(document.body.querySelector(".s-about-modal-chips")).toBeNull();
     expect(document.body.querySelector(".s-about-modal-credits")).toBeNull();

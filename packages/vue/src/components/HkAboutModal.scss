@@ -32,8 +32,16 @@
 
 .s-about-modal-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-12, 0.75rem);
+  gap: var(--space-8, 0.5rem);
+  text-align: center;
+}
+
+.s-about-modal-header > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .s-about-modal-logo-img {
@@ -76,6 +84,13 @@
   margin: 0;
   font-size: var(--text-base, 1rem);
   font-weight: 600;
+  text-align: center;
+  color: rgb(var(--color-text));
+}
+
+.s-about-modal-made-by {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
   text-align: center;
   color: rgb(var(--color-text));
 }

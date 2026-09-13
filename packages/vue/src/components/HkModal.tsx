@@ -115,6 +115,20 @@ export function resolveModalWidth(width: string): string {
   return value;
 }
 
+/**
+ * Cap the resolved max-width so the centered desktop frame always keeps
+ * the shared viewport gutter (--viewport-gutter: 16px desktop / 8px
+ * mobile) clear on both sides — a frame wider than the window can spare
+ * used to run edge-to-edge. `100%` resolves against the fixed frame's
+ * containing block (the initial containing block), so the cap tracks the
+ * live window; the ≤767px sheet branch overrides max-width with
+ * `100% !important` in the SCSS, so the intentional full-bleed mobile
+ * sheet is untouched.
+ */
+export function modalFrameMaxWidth(resolved: string): string {
+  return `min(${resolved}, calc(100% - 2 * var(--viewport-gutter, 16px)))`;
+}
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -194,7 +208,9 @@ export default defineComponent({
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);
-    const resolvedWidth = computed(() => resolveModalWidth(props.width));
+    const resolvedWidth = computed(() =>
+      modalFrameMaxWidth(resolveModalWidth(props.width)),
+    );
     // Layer/dialog name: the explicit surface name wins over the header
     // title (which header-less surfaces never pass).
     const resolvedSurfaceName = computed(() => props.surfaceTitle ?? props.title);

@@ -223,4 +223,16 @@ describe("HkTooltip anchoring", () => {
     await settle();
     expect(popup().style.maxWidth).toBe("220px");
   });
+
+  it("sizes the popup to its content (max-content) for the gutter clamp", async () => {
+    // The compression fix: the popup box must be position-independent
+    // (width: max-content) so a screen-edge trigger cannot shrink it to
+    // the containing block's leftover space; applyTooltipPosition then
+    // clamps the measured box into the viewport gutter (no-op here —
+    // happy-dom reports a zero rect).
+    const { container } = mount({ text: "sized", delay: 0 });
+    enter(container);
+    await settle();
+    expect(popup().style.width).toBe("max-content");
+  });
 });

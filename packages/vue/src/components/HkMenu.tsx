@@ -14,6 +14,7 @@ import { Check, ChevronRight } from "lucide-vue-next";
 
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { viewportGutterPx } from "../runtime/viewportGutter";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
 import "./HkMenu.scss";
 
@@ -58,8 +59,6 @@ export interface HkMenuItem {
   children?: HkMenuItem[];
 }
 
-/** Viewport padding mirrored from HkSelectPanel's popout geometry. */
-const VIEWPORT_PAD = 8;
 /** Width estimate used ONLY to pick a cascade's flip side; the real
  *  panel box is measured by HkSelectPanel itself. */
 const CASCADE_PANEL_W = 224;
@@ -415,8 +414,10 @@ export default defineComponent({
             const r = row.getBoundingClientRect();
             if (!r.width && !r.height) return pointRect(0, 0); // detached
             const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
-            const openRight = r.right + cascadeW <= window.innerWidth - VIEWPORT_PAD;
-            const left = openRight ? r.right : Math.max(VIEWPORT_PAD, r.left - cascadeW);
+            // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
+            const pad = viewportGutterPx();
+            const openRight = r.right + cascadeW <= window.innerWidth - pad;
+            const left = openRight ? r.right : Math.max(pad, r.left - cascadeW);
             return pointRect(left, r.top);
           },
           contains: (node) => !!rowRefs.value[id]?.contains(node),
@@ -438,11 +439,13 @@ export default defineComponent({
           if (!r.width && !r.height) return pointRect(0, 0);
           const gap = props.offset; // visual-space gap, same as the native placements
           const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
-          const openRight = r.right + gap + cascadeW <= window.innerWidth - VIEWPORT_PAD;
+          // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
+          const pad = viewportGutterPx();
+          const openRight = r.right + gap + cascadeW <= window.innerWidth - pad;
           const left =
             side === "right" && openRight
               ? r.right + gap
-              : Math.max(VIEWPORT_PAD, r.left - cascadeW - gap);
+              : Math.max(pad, r.left - cascadeW - gap);
           return pointRect(left, r.top);
         },
         contains: (node) => !!props.anchorRef?.contains(node),

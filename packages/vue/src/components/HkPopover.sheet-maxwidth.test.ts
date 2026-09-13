@@ -6,8 +6,9 @@
  * / HkSelectPanel sheets, hence "some have it, some don't").
  *
  * Root cause: the base `.hk-popover-panel` rule sets
- * `max-width: calc(100vw - 2 * 8px)` (the anchored panel's
- * anti-ratchet clamp, #421). The mobile sheet branch overrides
+ * `max-width: calc(100vw - 2 * <viewport pad>)` (the anchored panel's
+ * anti-ratchet clamp, #421; today the shared `--viewport-gutter` token).
+ * The mobile sheet branch overrides
  * `width: auto` but inherited the max-width, over-constraining the
  * inline `left: 0; right: 0` docking — the used width resolved to
  * 100vw - 16px and LTR dropped the `right` constraint. Pinned here so

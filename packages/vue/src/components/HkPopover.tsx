@@ -15,6 +15,7 @@ import {
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { clampWithGutter, viewportGutterPx } from "../runtime/viewportGutter";
 import { useI18n } from "../i18n/context";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
@@ -38,8 +39,6 @@ function parsePlacement(p: PopupPlacement): { side: BaseSide; align: Align } {
   const [side, align] = p.split("-") as [BaseSide, Align | undefined];
   return { side, align: align ?? "center" };
 }
-
-const VIEWPORT_PAD = 8;
 
 export default defineComponent({
   name: "HkPopover",
@@ -323,6 +322,10 @@ export default defineComponent({
       }
       const vw = window.innerWidth;
       const vh = window.innerHeight;
+      // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
+      // desktop) — read per reposition so a viewport crossing the
+      // breakpoint re-clamps with the right value on the next pass.
+      const pad = viewportGutterPx();
 
       let { side } = parsePlacement(props.placement);
       const { align } = parsePlacement(props.placement);
@@ -331,25 +334,25 @@ export default defineComponent({
         if (side === "bottom") {
           const spaceBelow = vh - anchorRect.bottom;
           const spaceAbove = anchorRect.top;
-          if (spaceBelow < panelRect.height + VIEWPORT_PAD && spaceAbove > spaceBelow) {
+          if (spaceBelow < panelRect.height + pad && spaceAbove > spaceBelow) {
             side = "top";
           }
         } else if (side === "top") {
           const spaceAbove = anchorRect.top;
           const spaceBelow = vh - anchorRect.bottom;
-          if (spaceAbove < panelRect.height + VIEWPORT_PAD && spaceBelow > spaceAbove) {
+          if (spaceAbove < panelRect.height + pad && spaceBelow > spaceAbove) {
             side = "bottom";
           }
         } else if (side === "right") {
           const spaceRight = vw - anchorRect.right;
           const spaceLeft = anchorRect.left;
-          if (spaceRight < panelRect.width + VIEWPORT_PAD && spaceLeft > spaceRight) {
+          if (spaceRight < panelRect.width + pad && spaceLeft > spaceRight) {
             side = "left";
           }
         } else if (side === "left") {
           const spaceLeft = anchorRect.left;
           const spaceRight = vw - anchorRect.right;
-          if (spaceLeft < panelRect.width + VIEWPORT_PAD && spaceRight > spaceLeft) {
+          if (spaceLeft < panelRect.width + pad && spaceRight > spaceLeft) {
             side = "right";
           }
         }
@@ -374,7 +377,7 @@ export default defineComponent({
       } else {
         crossPos = anchorStart + (anchorSize - panelSize) / 2;
       }
-      crossPos = Math.max(VIEWPORT_PAD, Math.min(crossPos, viewportSize - panelSize - VIEWPORT_PAD));
+      crossPos = clampWithGutter(crossPos, panelSize, viewportSize, pad);
 
       if (side === "bottom") {
         c.top = anchorRect.bottom + off;
@@ -391,13 +394,13 @@ export default defineComponent({
       }
 
       if (side === "bottom") {
-        c.top = Math.max(VIEWPORT_PAD, Math.min(c.top!, vh - panelRect.height - VIEWPORT_PAD));
+        c.top = clampWithGutter(c.top!, panelRect.height, vh, pad);
       } else if (side === "top") {
-        c.bottom = Math.max(VIEWPORT_PAD, Math.min(c.bottom ?? 0, vh - panelRect.height - VIEWPORT_PAD));
+        c.bottom = clampWithGutter(c.bottom ?? 0, panelRect.height, vh, pad);
       } else if (side === "right") {
-        c.left = Math.max(VIEWPORT_PAD, Math.min(c.left!, vw - panelRect.width - VIEWPORT_PAD));
+        c.left = clampWithGutter(c.left!, panelRect.width, vw, pad);
       } else {
-        c.right = Math.max(VIEWPORT_PAD, Math.min(c.right ?? 0, vw - panelRect.width - VIEWPORT_PAD));
+        c.right = clampWithGutter(c.right ?? 0, panelRect.width, vw, pad);
       }
 
       coords.value = c;

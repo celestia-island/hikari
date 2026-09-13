@@ -14,6 +14,7 @@ import { useOverlay } from "../runtime/useOverlay";
 import { useBreakpoint } from "../runtime/useBreakpoint";
 import { createBackGuard } from "../runtime/backStack";
 import { ancestorZoom } from "../runtime/cssZoom";
+import { clampWithGutter, viewportGutterPx } from "../runtime/viewportGutter";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
@@ -71,8 +72,6 @@ export type SelectPanelPlacement =
   | "top-start"
   | "top-center"
   | "top-end";
-
-const VIEWPORT_PAD = 8;
 
 export default defineComponent({
   name: "HkSelectPanel",
@@ -542,16 +541,19 @@ export default defineComponent({
       const phRaw = panelRef.value?.offsetHeight || 0;
       const pw = pwRaw > 0 ? pwRaw * z : Math.max(r.width, 180);
       const ph = phRaw > 0 ? phRaw * z : 200;
+      // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
+      // desktop), read per positioning pass.
+      const pad = viewportGutterPx();
       let side: "top" | "bottom" = props.placement.startsWith("top-") ? "top" : "bottom";
       let top =
         side === "top"
           ? r.top - props.offset - ph
           : r.bottom + props.offset;
       // Auto-flip when the chosen side cannot host the panel.
-      if (side === "bottom" && top + ph > window.innerHeight - VIEWPORT_PAD) {
+      if (side === "bottom" && top + ph > window.innerHeight - pad) {
         side = "top";
         top = r.top - props.offset - ph;
-      } else if (side === "top" && top < VIEWPORT_PAD) {
+      } else if (side === "top" && top < pad) {
         side = "bottom";
         top = r.bottom + props.offset;
       }
@@ -566,22 +568,20 @@ export default defineComponent({
       // bottom→top into a negative top that was applied verbatim. Clamp so
       // the whole panel stays on-screen; when content exceeds the CSS cap
       // the panel's own internal scroll takes over.
-      const maxTop = Math.max(VIEWPORT_PAD, window.innerHeight - VIEWPORT_PAD - ph);
-      top = Math.min(Math.max(top, VIEWPORT_PAD), maxTop);
+      top = clampWithGutter(top, ph, window.innerHeight, pad);
       // -center balances the panel on the anchor's horizontal midpoint
       // (still clamped, so a half-off-screen anchor keeps the panel
       // readable instead of mirroring the overflow to both edges).
-      let left =
+      const left =
         align === "center"
           ? r.left + (r.width - pw) / 2
           : props.placement.endsWith("-end")
             ? r.right - pw
             : r.left;
-      const maxLeft = Math.max(VIEWPORT_PAD, window.innerWidth - VIEWPORT_PAD - pw);
-      left = Math.min(Math.max(left, VIEWPORT_PAD), maxLeft);
+      const clampedLeft = clampWithGutter(left, pw, window.innerWidth, pad);
       coords.value = {
         top: `${Math.round(top / z)}px`,
-        left: `${Math.round(left / z)}px`,
+        left: `${Math.round(clampedLeft / z)}px`,
         ...(props.matchAnchorWidth ? { minWidth: `${Math.round(r.width / z)}px` } : {}),
       };
     }

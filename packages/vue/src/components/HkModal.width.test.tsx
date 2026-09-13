@@ -104,11 +104,15 @@ describe("HkModal width rendering", () => {
 
   it("renders a named preset as the frame's max-width", async () => {
     const content = await mountModal("sm");
-    expect(content.style.maxWidth).toBe("32rem");
+    expect(content.style.maxWidth).toBe(
+      "min(32rem, calc(100% - 2 * var(--viewport-gutter, 16px)))",
+    );
   });
 
   it("renders an arbitrary CSS length as the frame's max-width", async () => {
     const content = await mountModal("560px");
-    expect(content.style.maxWidth).toBe("560px");
+    expect(content.style.maxWidth).toBe(
+      "min(560px, calc(100% - 2 * var(--viewport-gutter, 16px)))",
+    );
   });
 });

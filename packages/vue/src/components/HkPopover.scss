@@ -9,7 +9,7 @@
 
 .hk-popover-panel {
   min-width: 0;
-  max-height: min(70vh, calc(100vh - 2 * 8px));
+  max-height: min(70vh, calc(100vh - 2 * var(--viewport-gutter, 16px)));
   /* Width MUST be position-independent (max-content, viewport-capped).
    * The anchored panel is fixed-positioned with shrink-to-fit sizing,
    * and computePosition places it as `left = anchorEnd - panelWidth`
@@ -21,9 +21,10 @@
    * wider frame by frame (demo.dev field report 2026-09-07). Pinning
    * the width to max-content breaks the loop: the panel sizes to its
    * content wherever it sits, and positioning converges in one pass.
-   * VIEWPORT_PAD is 8 (script side). */
+   * The script-side pad reads the same --viewport-gutter token
+   * (runtime/viewportGutter). */
   width: max-content;
-  max-width: calc(100vw - 2 * 8px);
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
 }
 
 /* Pop motion family tokens (--hk-pop-* in theme.scss) — the reference

@@ -1,6 +1,6 @@
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, Teleport, type CSSProperties, type PropType } from "vue";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
-import { tooltipPositionStyle, type TooltipPlacement } from "../runtime/tooltipPosition";
+import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipPosition";
 import "./HkTooltip.scss";
 
 export default defineComponent({
@@ -14,7 +14,7 @@ export default defineComponent({
   setup(props, { slots }) {
     const visible = ref(false);
     const wrapperRef = ref<HTMLElement | null>(null);
-    const tooltipStyle = ref<CSSProperties>({});
+    const popupRef = ref<HTMLElement | null>(null);
     let showTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Registers with the popup manager (kind "tooltip") so tooltips hold
@@ -31,13 +31,16 @@ export default defineComponent({
     });
 
     function updatePosition() {
-      if (!wrapperRef.value) return;
+      if (!wrapperRef.value || !popupRef.value) return;
       const rect = wrapperRef.value.getBoundingClientRect();
       // Placement geometry lives in the shared runtime helper (it also
       // serves the document-level tooltip bridge) — including the
       // ancestor-zoom division that keeps teleported popups pinned to
-      // their trigger inside scaled roots.
-      tooltipStyle.value = tooltipPositionStyle(rect, props.placement, props.maxWidth);
+      // their trigger inside scaled roots, and the measure-and-clamp pass
+      // that keeps the measured bubble inside the viewport gutter (flip,
+      // cap, shift) instead of spilling off-screen or shrinking to the
+      // containing block's leftover space.
+      applyTooltipPosition(popupRef.value, rect, props.placement, props.maxWidth);
     }
 
     function show() {
@@ -74,10 +77,12 @@ export default defineComponent({
       visible.value ? "hk-tooltip-visible" : "",
     ]);
 
-    const popupStyle = computed<CSSProperties>(() => ({
-      ...tooltipStyle.value,
-      ...(zIndex.value != null ? { zIndex: zIndex.value } : {}),
-    }));
+    // Only the popup-manager z rides the vnode; the geometry is written
+    // straight onto the element by applyTooltipPosition (same as the
+    // tooltip bridge) so a re-render can never clobber a clamp shift.
+    const popupStyle = computed<CSSProperties>(() =>
+      zIndex.value != null ? { zIndex: zIndex.value } : {},
+    );
 
     return () => (
       <span
@@ -94,6 +99,7 @@ export default defineComponent({
         </span>
         <Teleport to="body">
           <div
+            ref={popupRef}
             class={tooltipCls.value}
             style={popupStyle.value}
           >

@@ -16,6 +16,14 @@
   padding: var(--space-4) var(--space-8);
   border: none;
   border-radius: var(--radius-sm);
+  /* Width is position-independent (same contract as .hk-popover-panel):
+   * max-content sizes the bubble to its text wherever it sits — a fixed
+   * element otherwise shrink-to-fits against `viewport - left` and a
+   * trigger near the screen edge squeezes it into a one-glyph column.
+   * The inline style from runtime/tooltipPosition carries the same
+   * declaration; this sheet rule keeps the bridge/standalone faces
+   * covered even where the inline pass does not run. */
+  width: max-content;
   /* Default cap lives on the popup so the inline maxWidth prop
      legitimately overrides it (the content div would shadow the prop). */
   max-width: 280px;

@@ -119,6 +119,17 @@
   position: fixed;
   min-width: 180px;
 
+  /* Width is position-independent (same contract as .hk-popover-panel):
+   * max-content sizes the popout to its rows wherever it sits, instead
+   * of shrink-to-fitting against `viewport - left` — an anchor near the
+   * right screen edge used to squeeze the panel down to the leftover
+   * space. The viewport cap (2 × the --viewport-gutter token, 16px
+   * desktop / 8px mobile) bounds it on both edges; the inline
+   * matchAnchorWidth min-width still wins over both, as documented
+   * above. */
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--viewport-gutter, 16px));
+
   /* Pop motion family — the popout grows out of the anchor edge (or
    * midpoint, for the -center placements) it sits on (data-side/data-align
    * are set by HkSelectPanel from the RESOLVED placement, including after

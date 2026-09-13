@@ -27,7 +27,9 @@ describe("HkPopover glass layer surface hooks", () => {
   it("pins the anchored panel width to max-content and resets the sheet", () => {
     const base = src.match(/\.hk-popover-panel\s*{[^}]*}/)![0];
     expect(base).toContain("width: max-content");
-    expect(base).toContain("max-width: calc(100vw - 2 * 8px)");
+    // The viewport caps ride the shared --viewport-gutter token (16px
+    // desktop / 8px mobile) — the same value the script-side clamp reads.
+    expect(base).toContain("max-width: calc(100vw - 2 * var(--viewport-gutter, 16px))");
     const sheet = src.match(/\.hk-popover-panel\.hk-is-sheet\s*{[^}]*}/)![0];
     expect(sheet).toContain("width: auto");
   });

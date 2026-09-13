@@ -71,8 +71,25 @@
   --z-header: 100;
   --z-sidebar: 900;
 
+  /* Viewport gutter — the minimum distance every floating layer (tooltip,
+   * popover, menu, select popout, modal frame, toasts) keeps from the
+   * viewport edge. Anchored popups clamp their position to it; intentional
+   * full-bleed surfaces (drawers, bottom sheets) are exempt. 16px on
+   * desktop-width viewports, 8px on mobile (runtime/viewportGutter.ts
+   * reads the same token so the JS clamps and the CSS caps never drift). */
+  --viewport-gutter: 16px;
+
   /* Fonts — keep in sync with packages/vue/src/theme/fontContext.ts */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --font-reading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Microsoft YaHei", monospace;
+}
+
+/* Mobile viewports halve the floating-layer gutter. The breakpoint mirrors
+ * runtime/useBreakpoint (isMobile = width < 768) so the CSS override and
+ * the JS fallback switch on the same line. */
+@media (max-width: 767px) {
+  :root {
+    --viewport-gutter: 8px;
+  }
 }

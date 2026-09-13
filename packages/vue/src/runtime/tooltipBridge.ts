@@ -9,8 +9,8 @@
 //     → the element's title is moved aside into `data-hk-title` and the
 //       attribute is REMOVED — the native tooltip can no longer appear
 //     → after the delay the shared `.hk-tooltip-popup` element is filled,
-//       positioned (tooltipPositionStyle: same placement/zoom math as
-//       HkTooltip) and faded in
+//       positioned (applyTooltipPosition: same placement/zoom math as
+//       HkTooltip, plus the viewport-gutter clamp) and faded in
 //   disengage (pointerout / focusout / scroll / resize / Esc); pointerdown
 //     only hides the popup — the hold stays so no native tooltip flashes
 //     → the popup fades out and the title attribute is RESTORED, so
@@ -28,7 +28,7 @@
 // popups share the tooltip z band with component tooltips. Installing
 // twice on the same document is idempotent: the second install returns
 // the first install's uninstall.
-import { tooltipPositionStyle, type TooltipPlacement } from "./tooltipPosition";
+import { applyTooltipPosition, type TooltipPlacement } from "./tooltipPosition";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 // The popup reuses HkTooltip's popup classes — carry the sheet so a host
@@ -127,12 +127,16 @@ function showPopup(state: BridgeState, el: Element) {
   if (!text || !state.popup.isConnected) return;
   state.content.textContent = text;
   // Same geometry as component tooltips: the fixed popup pins to the
-  // trigger rect with the shared placement switch (ancestor zoom aware).
-  Object.assign(state.popup.style, tooltipPositionStyle(
+  // trigger rect with the shared placement switch (ancestor zoom aware),
+  // then the measured box is clamped into the viewport gutter — a title
+  // trigger hugging the screen edge shows a full-width bubble shifted
+  // inside the gutter, never the squeezed leftover-space column.
+  applyTooltipPosition(
+    state.popup,
     el.getBoundingClientRect(),
     state.placement,
     state.maxWidth,
-  ));
+  );
   state.popup.classList.add("hk-tooltip-visible");
   el.setAttribute("aria-describedby", state.describedBy);
   state.shown += 1;

@@ -324,13 +324,14 @@ describe("HkSelectPanel custom invocation", () => {
     expect(host.dataset.side).toBe("top");
 
     // A centered panel poking past the left edge clamps to the viewport
-    // pad instead of mirroring the overflow to both sides: anchor
-    // 0..40 → raw left (20 - 180/2) = -70 → clamped to 8.
+    // gutter instead of mirroring the overflow to both sides: anchor
+    // 0..40 → raw left (20 - 180/2) = -70 → clamped to the desktop
+    // gutter (16px; happy-dom's viewport is desktop-width).
     anchor.getBoundingClientRect = () =>
       ({ top: 500, bottom: 520, left: 0, right: 40, width: 40, height: 20 }) as DOMRect;
     window.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(host.style.left).toBe("8px");
+    expect(host.style.left).toBe("16px");
   });
 
   it("reports center alignment through an auto-flip so the pop origin follows", async () => {
@@ -371,7 +372,8 @@ describe("HkSelectPanel custom invocation", () => {
 
   it("clamps a centered popout at the right viewport pad near the right edge", async () => {
     // Anchor hugging the right edge: raw balanced left 1100 + (80 - 180)/2
-    // = 1050 would poke past 1200 - 8 - 180 = 1012 → pinned at the pad.
+    // = 1050 would poke past 1200 - 16 - 180 = 1004 → pinned at the
+    // desktop gutter.
     // The expected left edge is viewport arithmetic, so pin the width here
     // (happy-dom's bare default is 1024 — the afterEach reset only helps
     // full-file runs, not -t filtering; afterEach re-asserts 1200 anyway).
@@ -386,7 +388,7 @@ describe("HkSelectPanel custom invocation", () => {
     await nextTick();
 
     const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host")!;
-    expect(host.style.left).toBe("1012px");
+    expect(host.style.left).toBe("1004px");
   });
 
   it("clamps a tall flipped popout into the viewport instead of going negative", async () => {
@@ -419,11 +421,11 @@ describe("HkSelectPanel custom invocation", () => {
       await nextTick();
 
       const top = Number.parseInt(host.style.top, 10);
-      // Whole panel on-screen: top edge at/inside the viewport pad and the
-      // bottom edge inside it too — overflow beyond that is the panel's
-      // own internal scroll, never off-screen geometry.
-      expect(top).toBeGreaterThanOrEqual(8);
-      expect(top + 576).toBeLessThanOrEqual(800 - 8);
+      // Whole panel on-screen: top edge at/inside the viewport gutter and
+      // the bottom edge inside it too — overflow beyond that is the
+      // panel's own internal scroll, never off-screen geometry.
+      expect(top).toBeGreaterThanOrEqual(16);
+      expect(top + 576).toBeLessThanOrEqual(800 - 16);
     } finally {
       window.innerHeight = prevHeight;
     }

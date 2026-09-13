@@ -13,9 +13,19 @@ export {
 } from "./imageFallback";
 export {
   tooltipPositionStyle,
+  applyTooltipPosition,
+  resolveTooltipFlip,
   TOOLTIP_GAP_PX,
   type TooltipPlacement,
 } from "./tooltipPosition";
+export {
+  viewportGutterPx,
+  clampWithGutter,
+  VIEWPORT_GUTTER_VAR,
+  MOBILE_GUTTER_PX,
+  DESKTOP_GUTTER_PX,
+  GUTTER_MOBILE_MAX_WIDTH,
+} from "./viewportGutter";
 export {
   sanitizeHistoryUrl,
   installHistorySafetyNet,

@@ -24,6 +24,7 @@ export { default as HExpansionPanel } from "./components/HkExpansionPanel";
 export { default as HFab, type HFabAction } from "./components/HkFab";
 export { default as HIcon } from "./components/HkIcon";
 export { default as HIconButton } from "./components/HkIconButton";
+export { default as HIconButtonGroup, type HkIconButtonGroupOption } from "./components/HkIconButtonGroup";
 export { default as HImageLightbox } from "./components/HkImageLightbox";
 export { default as HImagePreview, type ImagePreviewObjectFit } from "./components/HkImagePreview";
 export { default as HInput } from "./components/HkInput";
@@ -239,6 +240,10 @@ export {
   type SafeAreaInsets,
   type BackGuard,
   type BackGuardOptions,
+  installHkTooltipBridge,
+  type HkTooltipBridgeOptions,
+  installHkImageFallback,
+  type HkImageFallbackOptions,
 } from "./runtime";
 
 // i18n

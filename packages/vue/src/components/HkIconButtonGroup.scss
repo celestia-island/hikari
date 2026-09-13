@@ -1,0 +1,104 @@
+/* HkIconButtonGroup — the icon-only button-group variant.
+ *
+ * Same visual language as the HkTabs strip (the ONE shared button-group
+ * look): inset track, muted items, primary accent on the active item,
+ * tactile press scale. Only the working-mode extras differ — the items
+ * are square, icon-only, and one size taller than a standard icon
+ * button (md 44px vs 32px), the Windows/macOS-style login chooser.
+ *
+ * Sizing is a component var so hosts can retune one axis per context:
+ *   --hk-icon-group-item-size
+ */
+
+.hk-icon-group {
+  --hk-icon-group-item-size: 2.75rem; /* md */
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.125rem);
+  max-width: 100%;
+  padding: var(--space-2, 0.125rem);
+  border: 1px solid var(--border-faint);
+  border-radius: var(--radius-md, 8px);
+  background: rgb(var(--color-surface, 240 244 248) / 60%);
+}
+
+.hk-icon-group-sm {
+  --hk-icon-group-item-size: 2.25rem;
+}
+
+.hk-icon-group-lg {
+  --hk-icon-group-item-size: 3.25rem;
+}
+
+/* The HkTooltip wrapper span is the flex child between items — let it
+   shrink to the button so the track gap (not the wrapper) spaces them. */
+.hk-icon-group > .hk-tooltip-wrapper {
+  display: inline-flex;
+  flex: none;
+}
+
+.hk-icon-group-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hk-icon-group-item-size);
+  height: var(--hk-icon-group-item-size);
+  padding: 0;
+  font: inherit;
+  color: rgb(var(--color-muted, 120 130 145));
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  outline: none;
+  transition: color var(--duration-short, 0.15s) ease,
+              background-color var(--duration-short, 0.15s) ease,
+              transform var(--duration-short, 0.15s) ease;
+
+  /* A real <button disabled> still matches :hover — guard the dead ones. */
+  &:hover:not(:disabled):not([data-active]) {
+    color: rgb(var(--color-text, 25 30 40));
+    background: rgb(var(--color-text, 25 30 40) / 6%);
+  }
+
+  /* Tactile press feedback — the button-group family cadence. */
+  &:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  &[data-active] {
+    color: rgb(var(--color-primary, 90 140 255));
+    background: rgb(var(--color-primary, 90 140 255) / 12%);
+  }
+
+  /* Inset ring: the track padding would clip an outset outline. */
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary, 90 140 255));
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hk-icon-group-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  /* Brand marks (svg/img vnodes) at their intrinsic size; lucide comps
+     sized by the host. The box never grows past the square. */
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.hk-icon-group-item-initial {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1;
+}

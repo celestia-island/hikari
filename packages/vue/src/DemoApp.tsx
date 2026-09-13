@@ -5,7 +5,7 @@ import { computed, defineComponent, ref } from "vue";
 import { ChevronDown, ChevronUp, PackageOpen } from "lucide-vue-next";
 import { HIKARI_FONT_MONO } from "./theme/fontContext";
 import {
-  HButton, HIconButton, HTooltip, HBadge, HTag, HIcon, HSpinner,
+  HButton, HIconButton, HIconButtonGroup, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
   HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
   HFileField,
@@ -158,6 +158,8 @@ export default defineComponent({
         : panel.value.checked.filter((k) => k !== key);
     }
     const tabs = ref({ active: "tab1", items: [{ key: "tab1", label: "Overview" }, { key: "tab2", label: "Details" }, { key: "tab3", label: "Settings" }] });
+    const iconGroupPick = ref<string | null>("totp");
+    const iconGroupMulti = ref<string[]>(["flag"]);
     const mediaSliderRatio = ref(0.42);
     const demoAudioSrc = makeSilentWav();
     const demoImageSrc =
@@ -268,6 +270,40 @@ export default defineComponent({
             <HIconButton icon="search" variant="ghost" size={16} />
             <HIconButton icon="settings" variant="secondary" size={24} />
             <HIconButton icon="heart" variant="primary" size={40} />
+          </div>
+        </section>
+
+        <section>
+          <h2>HIconButtonGroup</h2>
+          <div class="row" style={{ flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
+            <HIconButtonGroup
+              mode="single"
+              modelValue={iconGroupPick.value}
+              onUpdate:modelValue={(v: string | string[]) => (iconGroupPick.value = v as string)}
+              options={[
+                { key: "totp", label: "验证器 App (TOTP)", icon: <HIcon name="settings" size={20} /> },
+                { key: "passkey", label: "Passkey", icon: <HIcon name="key" size={20} /> },
+                { key: "sms", label: "短信验证码", icon: <HIcon name="send" size={20} /> },
+              ]}
+            />
+            <HIconButtonGroup
+              mode="buttons"
+              size="sm"
+              options={[
+                { key: "github", label: "GitHub" },
+                { key: "linuxdo", label: "LinuxDo" },
+              ]}
+            />
+            <HIconButtonGroup
+              mode="multiple"
+              modelValue={iconGroupMulti.value}
+              onUpdate:modelValue={(v: string | string[]) => (iconGroupMulti.value = v as string[])}
+              options={[
+                { key: "alarm", label: "Alarm", icon: <HIcon name="bell" size={20} /> },
+                { key: "star", label: "Star", icon: <HIcon name="star" size={20} />, disabled: true },
+                { key: "flag", label: "Flag", icon: <HIcon name="flag" size={20} /> },
+              ]}
+            />
           </div>
         </section>
 

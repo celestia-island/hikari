@@ -30,6 +30,7 @@
 // the first install's uninstall.
 import { tooltipPositionStyle, type TooltipPlacement } from "./tooltipPosition";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 // The popup reuses HkTooltip's popup classes — carry the sheet so a host
 // that installs the bridge without mounting HkTooltip still renders the
 // house look (scss imports are deduped, so double-import is free).
@@ -63,6 +64,10 @@ interface BridgeState {
   selector: string;
   exclude: string;
   describedBy: string;
+  /** How many tooltips this install has shown (registry meta). */
+  shown: number;
+  /** Runtime-registry handle for this install (the "context of contexts"). */
+  runtime?: HkRuntimeHandle;
 }
 
 const INSTALLS = new WeakMap<Document, BridgeState>();
@@ -130,6 +135,8 @@ function showPopup(state: BridgeState, el: Element) {
   ));
   state.popup.classList.add("hk-tooltip-visible");
   el.setAttribute("aria-describedby", state.describedBy);
+  state.shown += 1;
+  state.runtime?.pulse({ shown: state.shown });
 }
 
 function engage(state: BridgeState, el: Element) {
@@ -175,12 +182,15 @@ function uninstall(state: BridgeState) {
     state.handle = null;
   }
   state.popup.remove();
+  state.runtime?.dispose();
 }
 
 /**
  * Install the document-level native-tooltip replacement. Returns the
  * uninstaller (removes listeners, restores any held title, drops the
- * popup element). Idempotent per document.
+ * popup element). Idempotent per document. The install reports itself to
+ * the runtime registry (`tooltipBridge`, kind "hook") and pulses with a
+ * running `shown` count — the signature and options are unchanged.
  */
 export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): () => void {
   if (typeof document === "undefined") return () => undefined;
@@ -209,8 +219,20 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
     selector: options.selector ?? "[title]",
     exclude: options.exclude ?? "",
     describedBy: `hk-tooltip-bridge-${++bridgeSeq}`,
+    shown: 0,
   };
   popup.id = state.describedBy;
+  state.runtime = reportHkRuntime("tooltipBridge", {
+    kind: "hook",
+    description: "Document-level native-tooltip replacement: any [title] element gets the HkTooltip-styled popup.",
+    meta: {
+      delay: state.delay,
+      placement: state.placement,
+      selector: state.selector,
+      shown: 0,
+    },
+    read: () => ({ installed: true, engaged: state.active !== null, shown: state.shown }),
+  });
 
   // One popup-manager handle for the bridge's lifetime: its popups hold
   // the tooltip band (above overlays, below toasts) exactly like

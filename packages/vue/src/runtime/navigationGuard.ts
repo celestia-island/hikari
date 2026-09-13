@@ -13,6 +13,7 @@
  */
 
 import { installHistorySafetyNet, type HistorySafetyNetOptions } from "./historySafetyNet";
+import { reportHkRuntime } from "./registry";
 
 /** Bare literals that read as a producer bug, never a real target. */
 const POISONED_LITERALS = new Set(["undefined", "null", "nan"]);
@@ -41,17 +42,34 @@ export interface NavigationSafetyNetOptions extends HistorySafetyNetOptions {
   router?: GuardRouter;
 }
 
+// Runtime-registry reporting (the "context of contexts"): the guard
+// reports itself on INSTALL (not at module init — importing the module
+// must not claim an installed guard) and counts blocked navigations —
+// the install signature is unchanged.
+let blocked = 0;
+let navGuardRuntime: ReturnType<typeof reportHkRuntime> | null = null;
+function ensureNavGuardRuntime() {
+  return (navGuardRuntime ??= reportHkRuntime("navigationGuard", {
+    kind: "hook",
+    description: "Router-level poisoned-target guard: bad navigation targets die as in-app redirects to the landing route.",
+    read: () => ({ blocked }),
+  }));
+}
+
 /** Register the beforeEach poisoned-target fold on a router. */
 export function createPoisonedLocationGuard(
   router: GuardRouter,
   fallback = "/",
 ): void {
+  ensureNavGuardRuntime();
   router.beforeEach((to: GuardRoute) => {
     const path = to.path ?? "";
     if (!path.startsWith("/") || POISONED_LITERALS.has(path)) {
       console.warn(
         `[Router] Blocked poisoned navigation target "${path}" (fullPath "${to.fullPath}") — redirecting to "${fallback}"`,
       );
+      blocked += 1;
+      navGuardRuntime?.pulse({ blocked });
       return fallback;
     }
     return true;
@@ -63,5 +81,7 @@ export function createPoisonedLocationGuard(
  *  navigation (module scope of the app's router setup is ideal). */
 export function installNavigationSafetyNet(options: NavigationSafetyNetOptions = {}): void {
   installHistorySafetyNet(options);
+  ensureNavGuardRuntime().setMeta({ routerGuard: Boolean(options.router), fallback: options.fallback ?? "/" });
+  ensureNavGuardRuntime().pulse();
   if (options.router) createPoisonedLocationGuard(options.router, options.fallback ?? "/");
 }

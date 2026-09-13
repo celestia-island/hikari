@@ -22,6 +22,8 @@
  * next field occurrence can be attributed.
  */
 
+import { reportHkRuntime } from "./registry";
+
 /** Bare literals that read as a producer bug, never a real target. */
 const POISONED_LITERALS = new Set(["undefined", "null", "nan"]);
 
@@ -80,12 +82,47 @@ export function sanitizeHistoryUrl(
  *  harness) is detected and re-patched. */
 const PATCH_MARKER = "__hikariHistoryNet";
 
+// Runtime-registry reporting (the "context of contexts"): the net is
+// install-and-forget, so it reports itself on INSTALL (not at module
+// init — importing the module must not claim an installed hook) and
+// pulses on every (re)install and every coercion — the install
+// signature is unchanged. Coercions bump a running counter in the read
+// facet so field occurrences are countable from
+// readHkRuntime("historySafetyNet").
+let coercions = 0;
+let historyNetRuntime: ReturnType<typeof reportHkRuntime> | null = null;
+/** Options captured by the CURRENTLY-PATCHED closure. A re-install while
+ *  our patch is still on the prototype skips re-patching (the `continue`
+ *  below), so the first install's fallback/evidence stay in effect — the
+ *  registry meta must report THOSE, not the newest call's options, or it
+ *  would misreport the active fold target. */
+let activeFallback = "/";
+let activeEvidenceKey: string | false = DEFAULT_EVIDENCE_KEY;
+function ensureHistoryNetRuntime() {
+  return (historyNetRuntime ??= reportHkRuntime("historySafetyNet", {
+    kind: "hook",
+    description: "History.prototype pushState/replaceState net: off-origin or poisoned targets fold onto the app landing before the native call.",
+    read: () => ({ coercions }),
+  }));
+}
+
 /** Patch History.prototype. Safe to call multiple times: already-
  *  patched methods are left alone, but a method overwritten back to a
  *  foreign implementation is patched again (self-healing). */
 export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): void {
   const fallback = options.fallback ?? "/";
   const evidenceKey = options.evidenceKey === undefined ? DEFAULT_EVIDENCE_KEY : options.evidenceKey;
+  const alreadyPatched =
+    typeof (History.prototype as unknown as Record<string, unknown>).pushState === "function" &&
+    ((History.prototype as unknown as Record<string, unknown>).pushState as { [PATCH_MARKER]?: boolean })[PATCH_MARKER] === true;
+  if (!alreadyPatched) {
+    // Only an install that actually patches may claim its options as
+    // active; a no-op re-install keeps the first install's capture.
+    activeFallback = fallback;
+    activeEvidenceKey = evidenceKey;
+  }
+  ensureHistoryNetRuntime().setMeta({ fallback: activeFallback, evidenceKey: activeEvidenceKey === false ? "off" : activeEvidenceKey });
+  ensureHistoryNetRuntime().pulse();
   for (const method of ["pushState", "replaceState"] as const) {
     const current: unknown = (History.prototype as unknown as Record<string, unknown>)[method];
     if (
@@ -100,6 +137,8 @@ export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): 
       const safe = sanitizeHistoryUrl(url, fallback);
       if (safe !== url) {
         const info: HistoryCoercion = { method, raw: String(url ?? ""), foldedTo: fallback };
+        coercions += 1;
+        historyNetRuntime?.pulse({ coercions });
         reportCoercion(info, evidenceKey, options);
       }
       return native.call(this, state as never, title, safe as never);

@@ -1,5 +1,7 @@
 import { setCssAnimationsEnabled } from "../animation/registerAnimations";
 
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
+
 export interface FrameContext {
   delta: number;
   elapsed: number;
@@ -79,6 +81,35 @@ function uid(): string {
 
 function busyCount(): number {
   return syncEntries.size + normalEntries.size + idleEntries.size + intervalEntries.size + activeTransitions.size;
+}
+
+// Runtime-registry reporting (the "context of contexts"). Lazy: the bus
+// reports itself the first time anything schedules onto it and pulses on
+// every scheduling call / reduced-motion flip. The read facet exposes
+// live load (entries per tier, paused) and the write facet lets another
+// context or a host plugin flip reduced motion plugin-style via
+// writeHkRuntime("animationBus", { type: "setReducedMotion", value }).
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("animationBus", {
+    kind: "bus",
+    description: "The shared rAF frame bus: sync/normal/idle tiers, one-shots, transitions and bus-ridden intervals.",
+    read: () => ({
+      sync: syncEntries.size,
+      normal: normalEntries.size,
+      idle: idleEntries.size,
+      intervals: intervalEntries.size,
+      transitions: activeTransitions.size,
+      paused,
+    }),
+    write: (op) => {
+      if (op.type === "setReducedMotion" && typeof op.value === "boolean") {
+        setReducedMotion(op.value);
+        return;
+      }
+      throw new Error(`unknown animationBus write op "${op.type}"`);
+    },
+  }));
 }
 
 function pickRegistry(priority: Priority): Map<string, Entry> {
@@ -195,7 +226,10 @@ export function setReducedMotion(flag: boolean) {
   // the switch on every call so a direct setCssAnimationsEnabled(false)
   // from a performance-context caller is undone when motion resumes.
   setCssAnimationsEnabled(!flag);
-  if (paused === flag) return;
+  if (paused === flag) {
+    ensureRuntimeReport().pulse({ paused });
+    return;
+  }
   paused = flag;
   if (flag) {
     if (raf !== 0) {
@@ -209,6 +243,7 @@ export function setReducedMotion(flag: boolean) {
   } else {
     ensure();
   }
+  ensureRuntimeReport().pulse({ paused });
 }
 
 export function notifyScrollStart() {
@@ -225,6 +260,7 @@ export function onFrame(cb: Callback, priority: Priority = "sync"): AnimationHan
   const registry = pickRegistry(priority);
   registry.set(id, { cb, priority, lastRun: 0 });
   ensure();
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       registry.delete(id);
@@ -252,6 +288,7 @@ function pumpOneShots(now: number): void {
 export function onceFrame(cb: Callback): void {
   oneShotEntries.set(uid(), { cb, cancelled: false });
   ensureOneShotDrain();
+  ensureRuntimeReport().pulse();
 }
 
 export function scheduleFrame(cb: Callback): AnimationHandle {
@@ -259,6 +296,7 @@ export function scheduleFrame(cb: Callback): AnimationHandle {
   const id = uid();
   oneShotEntries.set(id, entry);
   ensureOneShotDrain();
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       entry.cancelled = true;
@@ -271,6 +309,7 @@ export function reportTransition(durationMs: number): AnimationHandle {
   const id = uid();
   activeTransitions.add(id);
   ensure();
+  ensureRuntimeReport().pulse();
   const timer = setTimeout(() => {
     activeTransitions.delete(id);
     halt();
@@ -288,6 +327,7 @@ export function scheduleEvery(cb: () => void, intervalMs: number): AnimationHand
   const id = uid();
   intervalEntries.set(id, { cb, interval: intervalMs, lastRun: 0, once: false });
   ensure();
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       intervalEntries.delete(id);
@@ -300,6 +340,7 @@ export function scheduleAfter(cb: () => void, delayMs: number): AnimationHandle 
   const id = uid();
   intervalEntries.set(id, { cb, interval: delayMs, lastRun: performance.now(), once: true });
   ensure();
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       intervalEntries.delete(id);

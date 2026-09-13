@@ -244,6 +244,22 @@ export {
   type HkTooltipBridgeOptions,
   installHkImageFallback,
   type HkImageFallbackOptions,
+  reportHkRuntime,
+  getHkRuntimeEntry,
+  listHkRuntime,
+  readHkRuntime,
+  writeHkRuntime,
+  hkRuntimeSnapshot,
+  useHkRegistry,
+  type HkRuntimeKind,
+  type HkRuntimeStatus,
+  type HkRuntimeMeta,
+  type HkRuntimeEntryState,
+  type HkRuntimeReport,
+  type HkRuntimeHandle,
+  type HkRuntimeWriteOp,
+  type HkRuntimeSnapshot,
+  type HkRuntimeSnapshotEntry,
 } from "./runtime";
 
 // i18n

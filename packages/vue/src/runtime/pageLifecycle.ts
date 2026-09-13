@@ -14,6 +14,8 @@
  */
 import { readonly, ref, type Ref } from "vue";
 
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
+
 interface PageLifecycleState {
   visible: boolean;
   online: boolean;
@@ -26,11 +28,24 @@ let installed = false;
 type LifecycleListener = (state: PageLifecycleState) => void;
 const listeners = new Set<LifecycleListener>();
 
+// Runtime-registry reporting (the "context of contexts"). Lazy: the
+// lifecycle context reports itself on first subscribe/probe and pulses
+// on every visibility/online transition it fans out.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("pageLifecycle", {
+    kind: "context",
+    description: "The page lifecycle context: visibility + online/offline state fanned out to framework-free listeners.",
+    read: () => ({ ...currentState(), listeners: listeners.size }),
+  }));
+}
+
 function currentState(): PageLifecycleState {
   return { visible: visible.value, online: online.value };
 }
 
 function notify(): void {
+  runtimeReport?.pulse({ ...currentState() });
   const snapshot = currentState();
   for (const listener of listeners) {
     try {
@@ -66,6 +81,7 @@ export function usePageLifecycle(): {
   online: Readonly<Ref<boolean>>;
 } {
   install();
+  ensureRuntimeReport();
   return { visible: readonly(visible), online: readonly(online) };
 }
 
@@ -76,15 +92,19 @@ export function usePageLifecycle(): {
  */
 export function onPageLifecycle(listener: LifecycleListener): () => void {
   install();
+  ensureRuntimeReport();
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
   };
 }
 
-/** Imperative probe — no subscription. */
+/** Imperative probe — no subscription. Reports to the runtime registry
+ * too, so an install-through-probe (no subscriber ever) is still
+ * observable. */
 export function pageLifecycleState(): PageLifecycleState {
   install();
+  ensureRuntimeReport();
   return currentState();
 }
 

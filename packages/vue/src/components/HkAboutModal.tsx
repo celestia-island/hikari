@@ -15,12 +15,13 @@ export interface HAboutLink {
  * (Upstreamed from shittim-chest's plana-legacy layer.)
  *
  * Shows the app identity and version metadata plus optional branding: a
- * logo image, tagline, organization blurb, author / license rows, a
- * decorative backdrop layer (canvas or anything else, rendered behind the
- * content and pointer-inert) and external links. Version/build hashes
- * render as short hashes when longer than 12 chars (full value in `title`
- * tooltip). Every branding prop is optional — the modal degrades to the
- * plain identity + version card when none are given.
+ * logo image, tagline, centered slogan + organization line, a made-by /
+ * origin row, license row, a decorative backdrop layer (canvas or anything
+ * else, rendered behind the content and pointer-inert), external link
+ * chips and centered legal footer links (e.g. ICP filings). Version/build
+ * hashes render as short hashes when longer than 12 chars (full value in
+ * `title` tooltip). Every branding prop is optional — the modal degrades
+ * to the plain identity + version card when none are given.
  */
 export const HkAboutModal = defineComponent({
   name: "HkAboutModal",
@@ -40,18 +41,24 @@ export const HkAboutModal = defineComponent({
     logoSrc: { type: String, default: undefined },
     /** Optional one-liner under the version (e.g. the app tagline). */
     tagline: { type: String, default: undefined },
-    /** Optional paragraph below the header (vision / organization blurb). */
+    /** Optional centered slogan below the header (the app's one-liner). */
+    slogan: { type: String, default: undefined },
+    /** Optional centered small line under the slogan (organization blurb). */
     description: { type: String, default: undefined },
-    /** Optional author / organization row. */
+    /** Optional made-by row: left label (e.g. "由 伊欧 主创"). */
     author: { type: String, default: undefined },
-    /** Optional link applied to the author value. */
-    authorHref: { type: String, default: undefined },
+    /** Optional right value of the made-by row (e.g. "来自 Celestia Island"). */
+    origin: { type: String, default: undefined },
+    /** Optional link applied to the origin value. */
+    originHref: { type: String, default: undefined },
     /** Optional license identifier row (e.g. "BUSL-1.1"). */
     license: { type: String, default: undefined },
     /** Optional copyright holder in the footer (defaults to the app name). */
     copyright: { type: String, default: undefined },
     /** Optional external links (e.g. GitHub, docs). */
     links: { type: Array as PropType<HAboutLink[]>, default: () => [] },
+    /** Optional centered legal links above the copyright (ICP filings). */
+    footerLinks: { type: Array as PropType<HAboutLink[]>, default: () => [] },
     /**
      * Optional decorative backdrop factory, rendered behind the content
      * inside a clipped, pointer-inert layer. The modal owns only the layer —
@@ -70,16 +77,16 @@ export const HkAboutModal = defineComponent({
       return hash.length > 12 ? `${hash.slice(0, 12)}…` : hash;
     }
 
-    const renderAuthorValue = () => {
-      if (!props.authorHref) return props.author;
+    const renderOriginValue = () => {
+      if (!props.originHref) return props.origin;
       return (
         <a
           class="s-about-modal-row-link"
-          href={props.authorHref}
+          href={props.originHref}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {props.author}
+          {props.origin}
         </a>
       );
     };
@@ -113,13 +120,14 @@ export const HkAboutModal = defineComponent({
               </div>
             </header>
 
+            {props.slogan && <p class="s-about-modal-slogan">{props.slogan}</p>}
             {props.description && <p class="s-about-modal-description">{props.description}</p>}
 
             <div class="s-about-modal-rows">
-              {props.author && (
+              {(props.author || props.origin) && (
                 <div class="s-about-modal-row">
-                  <span class="s-about-modal-row-label">{t("hikari::about.author", "Author")}</span>
-                  <span class="s-about-modal-row-value">{renderAuthorValue()}</span>
+                  <span class="s-about-modal-row-label">{props.author}</span>
+                  <span class="s-about-modal-row-value">{renderOriginValue()}</span>
                 </div>
               )}
               {props.license && (
@@ -173,6 +181,22 @@ export const HkAboutModal = defineComponent({
                     </a>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {props.footerLinks.length > 0 && (
+              <div class="s-about-modal-footer-links">
+                {props.footerLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="s-about-modal-footer-link"
+                  >
+                    {link.label}
+                  </a>
+                ))}
               </div>
             )}
 

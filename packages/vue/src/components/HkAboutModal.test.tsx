@@ -94,15 +94,18 @@ describe("HkAboutModal branding", () => {
     expect(query<HTMLElement>(".s-about-modal-description").textContent).toBe("Save the world.");
   });
 
-  it("renders author and license rows with an linked author", async () => {
+  it("renders the made-by row with a linked origin", async () => {
     mountAbout({
-      author: "Celestia Island",
-      authorHref: "https://github.com/celestia-island",
+      author: "由 伊欧 主创",
+      origin: "来自 Celestia Island",
+      originHref: "https://github.com/celestia-island",
       license: "BUSL-1.1",
     });
     await flushModal();
+    const row = query<HTMLElement>(".s-about-modal-row");
+    expect(row.querySelector(".s-about-modal-row-label")?.textContent).toBe("由 伊欧 主创");
     const link = query<HTMLAnchorElement>(".s-about-modal-row-link");
-    expect(link.textContent).toBe("Celestia Island");
+    expect(link.textContent).toBe("来自 Celestia Island");
     expect(link.getAttribute("href")).toBe("https://github.com/celestia-island");
     expect(link.getAttribute("target")).toBe("_blank");
     const rows = [...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row")];
@@ -111,11 +114,26 @@ describe("HkAboutModal branding", () => {
     expect(licenseRow!.textContent).toContain("License");
   });
 
-  it("renders the author row as plain text without authorHref", async () => {
-    mountAbout({ author: "Celestia Island" });
+  it("renders the made-by row as plain text without originHref", async () => {
+    mountAbout({ author: "由 伊欧 主创", origin: "来自 Celestia Island" });
     await flushModal();
-    expect(query<HTMLElement>(".s-about-modal-row").textContent).toContain("Celestia Island");
+    expect(query<HTMLElement>(".s-about-modal-row").textContent).toContain("来自 Celestia Island");
     expect(document.body.querySelector(".s-about-modal-row-link")).toBeNull();
+  });
+
+  it("renders the centered slogan and centered legal footer links", async () => {
+    mountAbout({
+      slogan: "技术宅拯救世界。",
+      footerLinks: [{ label: "京ICP备2026xxxx号", href: "https://beian.miit.gov.cn/" }],
+    });
+    await flushModal();
+    expect(query<HTMLElement>(".s-about-modal-slogan").textContent).toBe("技术宅拯救世界。");
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-footer-link"),
+    ];
+    expect(links.length).toBe(1);
+    expect(links[0]!.textContent).toBe("京ICP备2026xxxx号");
+    expect(links[0]!.getAttribute("href")).toBe("https://beian.miit.gov.cn/");
   });
 
   it("renders the backdrop factory inside the clipped layer", async () => {
@@ -159,23 +177,19 @@ describe("HkAboutModal branding", () => {
     expect(badge.textContent).toContain(`© ${year} Test App`);
   });
 
-  it("localizes the author and license labels", async () => {
-    mountAbout({ author: "Celestia Island", license: "BUSL-1.1" });
+  it("localizes the license label", async () => {
+    mountAbout({ license: "BUSL-1.1" });
     await flushModal();
-    const rows = () => [
+    const labels = () => [
       ...document.body.querySelectorAll<HTMLElement>(".s-about-modal-row-label"),
     ];
 
     setLocale("zh-Hans");
     await flushModal();
-    let text = rows().map((el) => el.textContent);
-    expect(text.some((t) => t === "作者")).toBe(true);
-    expect(text.some((t) => t === "许可证")).toBe(true);
+    expect(labels().some((el) => el.textContent === "许可证")).toBe(true);
 
     setLocale("en");
     await flushModal();
-    text = rows().map((el) => el.textContent);
-    expect(text.some((t) => t === "Author")).toBe(true);
-    expect(text.some((t) => t === "License")).toBe(true);
+    expect(labels().some((el) => el.textContent === "License")).toBe(true);
   });
 });

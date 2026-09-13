@@ -1,5 +1,7 @@
 import { ref, type Ref } from "vue";
 
+import { reportHkRuntime, type HkRuntimeHandle } from "../runtime/registry";
+
 /** Where a reported error came from. */
 export type HkErrorSource = "vue" | "window" | "rejection" | "manual";
 
@@ -66,6 +68,10 @@ export function getErrorReportingOptions(): HkErrorReportingOptions {
 
 export function setErrorReportingOptions(options: HkErrorReportingOptions): void {
   activeOptions = options;
+  runtimeReport?.setMeta({
+    captureWindow: options.captureWindow !== false,
+    captureRejection: options.captureRejection !== false,
+  });
 }
 
 export function useErrorReportingState(): Ref<HkReportedError | null> {
@@ -86,6 +92,11 @@ export function reportError(err: unknown, source: HkErrorSource, info?: string):
 
   if (currentError.value !== null) return null;
 
+  // Accepted onto the landing (first-error-wins): later errors while the
+  // landing is up still log/fire onError above but do not count.
+  acceptedReports += 1;
+  runtimeReport?.pulse({ reports: acceptedReports });
+
   const normalized = normalizeError(err);
   const record: HkReportedError = {
     source,
@@ -102,3 +113,22 @@ export function reportError(err: unknown, source: HkErrorSource, info?: string):
 export function clearErrorReportingState(): void {
   currentError.value = null;
 }
+
+// Runtime-registry reporting (the "context of contexts"): the error
+// reporting module is a global singleton, so it reports itself at module
+// init and pulses on every accepted error. The read facet keeps the
+// current landing card observable (name/message/source only — never the
+// whole error object) from readHkRuntime("errorReporting").
+let acceptedReports = 0;
+const runtimeReport: HkRuntimeHandle = reportHkRuntime("errorReporting", {
+  kind: "plugin",
+  description: "The global error reporting landing: app.config.errorHandler + window/rejection hooks with the full-screen error card.",
+  meta: { captureWindow: activeOptions.captureWindow !== false, captureRejection: activeOptions.captureRejection !== false },
+  read: () => ({
+    reports: acceptedReports,
+    landingUp: currentError.value !== null,
+    current: currentError.value
+      ? { name: currentError.value.name, message: currentError.value.message, source: currentError.value.source }
+      : null,
+  }),
+});

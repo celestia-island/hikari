@@ -1,5 +1,7 @@
 import { readonly, ref } from "vue";
 
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
+
 export type PopupKind = "dropdown" | "modal" | "drawer" | "tooltip" | "toast";
 
 /**
@@ -123,6 +125,31 @@ function uid(): string {
 const registry = ref<Map<string, PopupEntry>>(new Map());
 let scrollLockCount = 0;
 
+// Runtime-registry reporting (the "context of contexts"). Lazy: the
+// popup context reports itself on first usePopupManager() call and
+// pulses on every register/unregister/reband, so the modal-stack state
+// (how many windows/anchored surfaces are live, scroll locks) is
+// answerable from readHkRuntime("popupManager") without touching this
+// module. The registration API itself is unchanged.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("popupManager", {
+    kind: "context",
+    description: "The popup manager: z-banded stacking of modals, drawers, anchored popovers, tooltips and toasts.",
+    read: () => {
+      const byKind: Record<string, number> = {};
+      for (const entry of registry.value.values()) {
+        byKind[entry.kind] = (byKind[entry.kind] ?? 0) + 1;
+      }
+      return {
+        open: registry.value.size,
+        byKind,
+        scrollLocks: scrollLockCount,
+      };
+    },
+  }));
+}
+
 function updateBodyScroll() {
   if (scrollLockCount > 0) {
     document.body.style.overflow = "hidden";
@@ -137,6 +164,7 @@ export interface PopupHandle {
 }
 
 export function usePopupManager() {
+  ensureRuntimeReport();
   function register(
     kind: PopupKind,
     locksScroll = false,
@@ -163,6 +191,7 @@ export function usePopupManager() {
       scrollLockCount++;
       updateBodyScroll();
     }
+    runtimeReport?.pulse();
     return { id, zIndex };
   }
 
@@ -171,6 +200,7 @@ export function usePopupManager() {
     if (!entry) return;
     entry.title = title;
     registry.value = new Map(registry.value);
+    runtimeReport?.pulse();
   }
 
   /**
@@ -199,6 +229,7 @@ export function usePopupManager() {
     entry.zIndex = band + (maxSlot + 1) * POPUP_Z_STEP;
     registry.value = new Map(registry.value);
     if (blocking) warnUntitled(entry.kind, true, entry.title);
+    runtimeReport?.pulse();
   }
 
   function unregister(id: string) {
@@ -209,6 +240,7 @@ export function usePopupManager() {
       scrollLockCount = Math.max(0, scrollLockCount - 1);
       updateBodyScroll();
     }
+    runtimeReport?.pulse();
   }
 
   function isOpen(id: string): boolean {

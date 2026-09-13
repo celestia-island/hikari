@@ -1,5 +1,7 @@
 import { reactive } from "vue";
 
+import { reportHkRuntime } from "../runtime/registry";
+
 type Messages = Record<string, string>;
 
 interface LocaleModule {
@@ -63,6 +65,7 @@ export async function setLocale(locale: string): Promise<void> {
     ...(mergedMessages["en"] ?? {}),
     ...(mergedMessages[locale] ?? {}),
   };
+  runtime.pulse({ locale });
 }
 
 export function mergeMessages(userMessages: Messages, locale?: string): void {
@@ -82,6 +85,7 @@ export function mergeMessages(userMessages: Messages, locale?: string): void {
     ...(mergedMessages["en"] ?? {}),
     ...(mergedMessages[state.locale] ?? {}),
   };
+  runtime.pulse({ locale: state.locale });
 }
 
 export function useI18n() {
@@ -96,3 +100,31 @@ export function useI18n() {
 
   return { t, locale: state.locale };
 }
+
+// Runtime-registry reporting (the "context of contexts"): the i18n
+// context is a module singleton, so it reports itself at module init and
+// pulses on every locale switch / message merge. The facets make the
+// locale tree reachable and steerable from anywhere via
+// readHkRuntime("i18n") / writeHkRuntime("i18n", …) without importing
+// this module.
+const runtime = reportHkRuntime("i18n", {
+  kind: "context",
+  description: "The i18n context: active locale, message tables and per-locale merged overrides.",
+  meta: { locale: state.locale },
+  read: () => ({
+    locale: state.locale,
+    keys: Object.keys(state.messages).length,
+    mergedLocales: Object.keys(mergedMessages),
+  }),
+  write: (op) => {
+    if (op.type === "setLocale" && typeof op.locale === "string") {
+      void setLocale(op.locale);
+      return;
+    }
+    if (op.type === "mergeMessages" && typeof op.messages === "object" && op.messages !== null) {
+      mergeMessages(op.messages as Messages, typeof op.locale === "string" ? op.locale : undefined);
+      return;
+    }
+    throw new Error(`unknown i18n write op "${op.type}"`);
+  },
+});

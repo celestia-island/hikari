@@ -29,6 +29,7 @@
  * burning down on a throttled timer.
  */
 import { onPageLifecycle } from "./pageLifecycle";
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export interface IntervalHandle {
   disconnect(): void;
@@ -45,6 +46,19 @@ interface Slot {
 
 const slots = new Set<Slot>();
 let lifecycleUnsub: (() => void) | null = null;
+
+// Runtime-registry reporting (the "context of contexts"). Lazy: the bus
+// reports itself on first schedule and pulses on every schedule/
+// disconnect, so polling liveness is answerable from
+// readHkRuntime("intervalBus") without importing this module.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("intervalBus", {
+    kind: "bus",
+    description: "The visibility-aware interval bus for data polling (parks while hidden, catches up on return).",
+    read: () => ({ slots: slots.size, once: Array.from(slots).filter((s) => s.once).length }),
+  }));
+}
 
 /** Run a slot callback with bus isolation: a throwing consumer is
  *  reported but never takes the shared timer/lifecycle machinery down
@@ -149,12 +163,14 @@ export function scheduleInterval(cb: () => void, intervalMs: number): IntervalHa
   if (typeof document === "undefined" || !document.hidden) {
     arm(slot);
   }
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       slot.disconnected = true;
       park(slot);
       slots.delete(slot);
       maybePark();
+      runtimeReport?.pulse();
     },
   };
 }
@@ -178,12 +194,14 @@ export function scheduleIntervalAfter(cb: () => void, delayMs: number): Interval
   if (typeof document === "undefined" || !document.hidden) {
     arm(slot);
   }
+  ensureRuntimeReport().pulse();
   return {
     disconnect() {
       slot.disconnected = true;
       park(slot);
       slots.delete(slot);
       maybePark();
+      runtimeReport?.pulse();
     },
   };
 }

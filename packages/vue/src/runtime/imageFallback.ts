@@ -27,6 +27,8 @@
 //     no src swap — for hosts that style the class themselves)
 import "./imageFallback.scss";
 
+import { reportHkRuntime } from "./registry";
+
 export interface HkImageFallbackOptions {
   /** Which images are covered. Default: `img`. */
   selector?: string;
@@ -57,6 +59,10 @@ interface FallbackState {
   selector: string;
   exclude: string;
   fallbackSrc: string;
+  /** How many images this install has re-rendered (registry meta). */
+  marked: number;
+  /** Runtime-registry handle for this install (the "context of contexts"). */
+  runtime?: ReturnType<typeof reportHkRuntime>;
 }
 
 const INSTALLS = new WeakMap<Document, FallbackState>();
@@ -72,6 +78,8 @@ function onError(state: FallbackState, e: Event) {
   if (state.fallbackSrc && target.getAttribute("src") !== state.fallbackSrc) {
     target.src = state.fallbackSrc;
   }
+  state.marked += 1;
+  state.runtime?.pulse({ marked: state.marked });
 }
 
 function onLoad(state: FallbackState, e: Event) {
@@ -91,12 +99,16 @@ function uninstall(state: FallbackState) {
   for (const [type, fn] of state.listeners.splice(0)) {
     state.root.removeEventListener(type, fn, true);
   }
+  state.runtime?.dispose();
 }
 
 /**
  * Install the document-level broken-image re-render. Returns the
  * uninstaller (removes listeners; already-marked images keep their
- * placeholder). Idempotent per document.
+ * placeholder). Idempotent per document. The install reports itself to
+ * the runtime registry (`imageFallback`, kind "hook") and pulses with a
+ * running `marked` count as images are re-rendered — the signature and
+ * options are unchanged.
  */
 export function installHkImageFallback(options: HkImageFallbackOptions = {}): () => void {
   if (typeof document === "undefined") return () => undefined;
@@ -109,7 +121,19 @@ export function installHkImageFallback(options: HkImageFallbackOptions = {}): ()
     selector: options.selector ?? "img",
     exclude: options.exclude ?? "[data-hk-img-native]",
     fallbackSrc: options.fallbackSrc !== undefined ? options.fallbackSrc : DEFAULT_FALLBACK_SRC,
+    marked: 0,
   };
+  state.runtime = reportHkRuntime("imageFallback", {
+    kind: "hook",
+    description: "Document-level broken-image re-render: swaps failed <img> loads for the muted placeholder tile.",
+    meta: {
+      selector: state.selector,
+      exclude: state.exclude,
+      fallback: state.fallbackSrc === "" ? "class-only" : state.fallbackSrc === DEFAULT_FALLBACK_SRC ? "bundled" : "custom",
+      marked: 0,
+    },
+    read: () => ({ installed: true, marked: state.marked }),
+  });
 
   // Resource errors never bubble — capture phase is the only delegation
   // point that sees them from the document.

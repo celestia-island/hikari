@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export type ToastType = "error" | "success" | "warning" | "info" | "loading";
 
@@ -40,6 +41,24 @@ export const MAX_TOASTS_PER_SLOT = 5;
 
 const state = reactive<{ toasts: ToastItem[] }>({ toasts: [] });
 
+// Runtime-registry reporting (the "context of contexts"). Lazy: the
+// toast context reports itself on first useToast() call and pulses on
+// every actual push/remove, so the live toast tree is answerable from
+// readHkRuntime("toast") without importing this module. The
+// registration API itself is unchanged.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("toast", {
+    kind: "context",
+    description: "The toast context: the stacked global toast slots (error/success/warning/info/loading).",
+    read: () => ({
+      slots: state.toasts.length,
+      messages: state.toasts.reduce((n, t) => n + t.messages.length, 0),
+      types: state.toasts.map((t) => t.type),
+    }),
+  }));
+}
+
 let nextSlotId = 0;
 let nextMsgId = 0;
 
@@ -57,6 +76,7 @@ function removeSlot(slotId: number) {
   const idx = state.toasts.findIndex((t) => t.id === slotId);
   if (idx !== -1) state.toasts.splice(idx, 1);
   clearTimer(slotId);
+  if (idx !== -1) runtimeReport?.pulse(); // unknown-id no-ops stay pulse-silent
 }
 
 function scheduleAutoDismiss(slot: ToastItem) {
@@ -107,10 +127,12 @@ function push(
     slot.messages.shift();
   }
   scheduleAutoDismiss(slot);
+  runtimeReport?.pulse();
   return msgId;
 }
 
 export function useToast() {
+  ensureRuntimeReport();
   function show(
     message: string,
     options: Partial<Omit<ToastItem, "id" | "messages">> = {},

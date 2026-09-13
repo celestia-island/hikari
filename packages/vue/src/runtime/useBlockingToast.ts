@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "./cronBus";
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
 
 export type BlockingToastVariant = "info" | "warning" | "danger";
 
@@ -49,6 +50,19 @@ export interface BlockingToastItem {
  */
 const state = reactive<{ queue: BlockingToastItem[] }>({ queue: [] });
 
+// Runtime-registry reporting (the "context of contexts"). Lazy: the
+// blocking-toast context reports itself on first prompt and pulses on
+// every show/settle, so pending gates are answerable from
+// readHkRuntime("blockingToast") without importing this module.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("blockingToast", {
+    kind: "context",
+    description: "The blocking-toast gate: stacked toast-shaped confirmation prompts that block their flow until answered.",
+    read: () => ({ pending: state.queue.length }),
+  }));
+}
+
 const resolvers = new Map<number, (value: boolean) => void>();
 const timers = new Map<number, CronHandle>();
 let nextId = 0;
@@ -64,6 +78,7 @@ function settle(id: number, value: boolean) {
   }
   const idx = state.queue.findIndex((item) => item.id === id);
   if (idx !== -1) state.queue.splice(idx, 1);
+  runtimeReport?.pulse();
   resolve(value);
 }
 
@@ -84,6 +99,7 @@ export function showBlockingToast(
     timeoutMs: opts.timeoutMs,
   };
   return new Promise<boolean>((resolve) => {
+    ensureRuntimeReport().pulse();
     state.queue.push(item);
     resolvers.set(id, resolve);
     const timeout = opts.timeoutMs ?? 0;

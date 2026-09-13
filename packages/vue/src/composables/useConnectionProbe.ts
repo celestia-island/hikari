@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted, ref, type Ref } from "vue";
 
 import { scheduleInterval, scheduleIntervalAfter, type IntervalHandle } from "../runtime/intervalBus";
+import { reportHkRuntime, type HkRuntimeHandle } from "../runtime/registry";
 
 /** Fetch-based connectivity probe — the hikari-local successor of the
  *  plana-ui probe. Polls `/api/health` (or a custom endpoint set via
@@ -27,6 +28,20 @@ const DEFAULT_POLL_MS = 15_000;
 const DEFAULT_RETRY_TOTAL = 3;
 
 let probeEndpoint: string | (() => string) = "";
+
+// Runtime-registry reporting (the "context of contexts"): the probe is a
+// per-component composable, so the MODULE is the hook — one registry
+// entry counting live probe instances, with the configured endpoint in
+// the read facet. Registration API unchanged.
+let liveProbes = 0;
+let probeRuntime: HkRuntimeHandle | null = null;
+function ensureProbeRuntime(): HkRuntimeHandle {
+  return (probeRuntime ??= reportHkRuntime("connectionProbe", {
+    kind: "hook",
+    description: "The fetch-based connectivity probe: per-component /api/health polling with retry and countdown.",
+    read: () => ({ liveProbes, endpoint: endpointUrl() }),
+  }));
+}
 
 /** Override the probed endpoint (defaults to same-origin `/api/health`). */
 export function setProbeEndpoint(endpoint: string | (() => string)): void {
@@ -127,11 +142,15 @@ export function useConnectionProbe(): {
   }
 
   onMounted(() => {
+    liveProbes += 1;
+    ensureProbeRuntime().pulse({ liveProbes });
     void probeOnce();
     tickHandle = scheduleInterval(applyCountdown, 1000);
   });
 
   onUnmounted(() => {
+    liveProbes = Math.max(0, liveProbes - 1);
+    probeRuntime?.pulse({ liveProbes });
     pollHandle?.disconnect();
     pollHandle = null;
     tickHandle?.disconnect();

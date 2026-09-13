@@ -1,5 +1,7 @@
 import { onUnmounted, ref, type Ref } from "vue";
 
+import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
+
 interface OverlayRegistryEntry {
   id: string;
   name: string;
@@ -17,6 +19,24 @@ interface OverlayRegistryEntry {
  *  closeAll()/isOverlayOpen() and leaking the first instance's open state.
  *  The name/group metadata is retained for lookups and group closing. */
 const registry = new Map<string, OverlayRegistryEntry>();
+
+// Runtime-registry reporting (the "context of contexts"). Lazy: the
+// overlay context reports itself on first useOverlay() call and pulses
+// on every register/unregister/group-close, so "which popouts are live"
+// is answerable from readHkRuntime("overlay") without importing this
+// module. The registration API itself is unchanged.
+let runtimeReport: HkRuntimeHandle | null = null;
+function ensureRuntimeReport(): HkRuntimeHandle {
+  return (runtimeReport ??= reportHkRuntime("overlay", {
+    kind: "context",
+    description: "The overlay context: open/close bookkeeping for named popout surfaces (selects, popovers, menus).",
+    read: () => {
+      const names = new Set<string>();
+      for (const entry of registry.values()) names.add(entry.name);
+      return { open: registry.size, names: Array.from(names) };
+    },
+  }));
+}
 
 function uid(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -42,12 +62,15 @@ function runEntryClose(entry: OverlayRegistryEntry) {
 }
 
 function closeGroup(group: string) {
+  let closed = 0;
   for (const [, entry] of registry) {
     if (entry.group === group) {
       runEntryClose(entry);
       registry.delete(entry.id);
+      closed++;
     }
   }
+  if (closed > 0) runtimeReport?.pulse();
 }
 
 function register(
@@ -58,16 +81,18 @@ function register(
   onCloseRequested?: () => void,
 ) {
   registry.set(id, { id, name, close, group, onCloseRequested });
+  runtimeReport?.pulse();
 }
 
 function unregister(id: string) {
-  registry.delete(id);
+  if (registry.delete(id)) runtimeReport?.pulse();
 }
 
 export function closeAll() {
   for (const [, entry] of registry) {
     runEntryClose(entry);
   }
+  if (registry.size > 0) runtimeReport?.pulse();
   registry.clear();
 }
 
@@ -95,6 +120,7 @@ export interface OverlayHandle {
 }
 
 export function useOverlay(opts: UseOverlayOptions): OverlayHandle {
+  ensureRuntimeReport();
   const isOpen = ref(false);
   const id = uid();
 

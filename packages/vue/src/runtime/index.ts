@@ -49,3 +49,21 @@ export { provideScrollWindow, useScrollWindow, type ScrollWindowContext } from "
 export { useReportedTransition, type ReportedTransition, type ReportedTransitionTrack } from "../composables/useReportedTransition";
 export { showProgressDialog, useProgressDialog, type ProgressDialogHandle, type ProgressDialogState } from "../composables/useProgressDialog";
 export { useSafeArea, type SafeAreaInsets } from "../composables/useSafeArea";
+export {
+  reportHkRuntime,
+  getHkRuntimeEntry,
+  listHkRuntime,
+  readHkRuntime,
+  writeHkRuntime,
+  hkRuntimeSnapshot,
+  useHkRegistry,
+  type HkRuntimeKind,
+  type HkRuntimeStatus,
+  type HkRuntimeMeta,
+  type HkRuntimeEntryState,
+  type HkRuntimeReport,
+  type HkRuntimeHandle,
+  type HkRuntimeWriteOp,
+  type HkRuntimeSnapshot,
+  type HkRuntimeSnapshotEntry,
+} from "./registry";

@@ -56,18 +56,18 @@
   z-index: 1;
   top: 50%;
   left: 50%;
+  // The centering translate is part of EVERY transform state — the
+  // enter/leave choreography scales on top of it and must never re-seat
+  // the frame.
   transform: translate(-50%, -50%);
-  interpolate-size: allow-keywords;
   width: 100%;
   // Size changes animate instead of snapping: `height: auto` growth
   // cannot fire a CSS transition (verified in Chromium — neither auto
   // nor calc-size(auto, size) changes its computed value on content
-  // growth, even under interpolate-size), so HkModal's useSizeMorph
-  // measures the frame's natural (capped) height and pins it as px on
-  // every content change — the transition below animates old→new px.
-  // `interpolate-size: allow-keywords` stays for the enter/leave height
-  // choreography's calc-size() keywords. The enter/leave classes below
-  // override this transition during open/close, as they always have.
+  // growth), so HkModal's useSizeMorph measures the frame's natural
+  // (capped) height and pins it as px on every content change — the
+  // transition below animates old→new px. Both pinned values are
+  // explicit px, so this needs no interpolate-size keyword support.
   transition:
     height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
     max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
@@ -88,47 +88,46 @@
 // ------
 // Content enter/leave transitions
 //
-// Height-clipped reveal: the frame grows from 80% of its
-// natural height to full height while fading in. Content
-// children are pinned at natural size (not squashed) —
-// overflow: hidden on the frame clips the viewport.
+// Compositor-driven pop: the frame fades and scales 0.94 → 1 — transform
+// and opacity ONLY, no layout properties. The previous desktop reveal
+// animated `height` (calc-size keywords): height is a layout property, so
+// every animation frame re-laid-out the entire modal subtree — for a
+// content-heavy modal (a full graph stage, long report bodies) that is
+// visible frame drops through the whole open/close, made worse by the
+// frame's own backdrop-filter whose sampling region then also changed per
+// frame. transform/opacity run on the compositor: zero layout, zero
+// paint, and the blurred surface keeps a constant region. Mirrors the
+// mobile sheet's translateY reveal, which has always been transform-based.
 // ------
 
 .hk-modal-content-enter-active {
   transition:
     opacity var(--hk-modal-duration, 0.3s)
       var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    height var(--hk-modal-duration, 0.3s)
+    transform var(--hk-modal-duration, 0.3s)
       var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  will-change: height, opacity;
+  will-change: transform, opacity;
 }
 
 .hk-modal-content-leave-active {
   transition:
     opacity var(--hk-modal-duration, 0.25s)
       var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
-    height var(--hk-modal-duration, 0.25s)
+    transform var(--hk-modal-duration, 0.25s)
       var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
-  will-change: height, opacity;
-}
-
-// Pin children to natural flex-basis during animation so the
-// frame's overflow: hidden does the clipping, not flex-shrink.
-.hk-modal-content-enter-active > *,
-.hk-modal-content-leave-active > * {
-  flex: 0 0 auto;
+  will-change: transform, opacity;
 }
 
 .hk-modal-content-enter-from,
 .hk-modal-content-leave-to {
   opacity: 0;
-  height: calc-size(auto, size * 0.8);
+  transform: translate(-50%, -50%) scale(0.94);
 }
 
 .hk-modal-content-enter-to,
 .hk-modal-content-leave-from {
   opacity: 1;
-  height: auto;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 // ------

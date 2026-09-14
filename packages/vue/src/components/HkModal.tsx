@@ -344,7 +344,8 @@ export default defineComponent({
           surfTrack.cancel();
           onAfterEnter();
           // Size morphs arm once the open choreography finished —
-          // pinning during enter would override its height reveal.
+          // pinning during enter would fight the reveal's transform
+          // transition.
           morph.start();
         } else if (to === "closingFrom") {
           // Close-request bookkeeping (was the watcher's close arm): the

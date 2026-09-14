@@ -181,7 +181,8 @@
     "hikari::toast.msgs": "رسائل",
     "hikari::zoomToolbar.reset": "إعادة تعيين التكبير",
     "hikari::zoomToolbar.zoomIn": "تكبير",
-    "hikari::zoomToolbar.zoomOut": "تصغير"
+    "hikari::zoomToolbar.zoomOut": "تصغير",
+    "hikari::zoomToolbar.zoomSlider": "مستوى التكبير"
   },
   "hikari::affixPicker.unset": "غير محدد",
   "hikari::affixPicker.title": "الخيارات",

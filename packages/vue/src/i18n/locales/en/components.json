@@ -186,7 +186,8 @@
     "hikari::toast.msgs": "msgs",
     "hikari::zoomToolbar.reset": "Reset zoom",
     "hikari::zoomToolbar.zoomIn": "Zoom in",
-    "hikari::zoomToolbar.zoomOut": "Zoom out"
+    "hikari::zoomToolbar.zoomOut": "Zoom out",
+    "hikari::zoomToolbar.zoomSlider": "Zoom level"
   },
   "hikari::affixPicker.title": "Options",
   "hikari::affixPicker.search": "Search",

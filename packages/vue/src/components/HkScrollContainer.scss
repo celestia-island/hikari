@@ -53,6 +53,38 @@
   mask-image: linear-gradient(to left, transparent 0, #000 var(--hk-scroll-fade-size));
 }
 
+/* ── Anchored docks (dockTop / dockBottom slots) ─────────────────
+   A dock renders as a NON-scrolling flex sibling of the viewport: it
+   stays pinned to its edge, never scrolls, and occupies layout space —
+   the flex: 1 viewport shrinks by the dock's height, so the content's
+   scroll end lands exactly at the dock's edge and can never slide
+   under it. The container measures each mounted dock (ResizeObserver)
+   and publishes --hk-scroll-dock-top / --hk-scroll-dock-bottom on the
+   host, so a consumer's content end-padding clears the dock with
+   breathing room (padding-bottom: calc(var(--hk-scroll-dock-bottom)
+   + 2rem)) instead of hand-rolled px guesses that go stale when the
+   dock reflows. */
+.hk-scroll-dock {
+  flex: none;
+  min-height: 0;
+}
+
+/* Dock-edge fade: mid-scroll content dissolving at the dock's edge
+   (opacity 100 -> 0 across --hk-scroll-dock-fade) reads as intentional
+   instead of a hard clip against the dock's top edge. Content never
+   sits under the dock, so this fades the viewport's last few pixels,
+   not the dock itself. */
+.hk-scroll-container[data-dock-fade="bottom"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hk-scroll-dock-fade, 2rem)), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--hk-scroll-dock-fade, 2rem)), transparent);
+}
+
+.hk-scroll-container[data-dock-fade="top"] > .hk-scroll-container-viewport {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--hk-scroll-dock-fade, 2rem));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--hk-scroll-dock-fade, 2rem));
+}
+
+
 .hk-scroll-container[data-fade="true"][data-h-overflow="start"] > .hk-scroll-container-viewport {
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));
   mask-image: linear-gradient(to right, transparent 0, #000 var(--hk-scroll-fade-size));

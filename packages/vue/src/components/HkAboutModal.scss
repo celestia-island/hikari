@@ -228,7 +228,7 @@
   color: rgb(var(--color-warning));
 }
 
-/* ── Chips: licenses and external links ───────────────────────────────── */
+/* ── Links: licenses, external links, credits names and filings ───────── */
 
 .s-about-modal-chips {
   display: flex;
@@ -237,10 +237,10 @@
   gap: var(--space-8, 0.5rem);
 }
 
-// One chip group (licenses / links). Must span the chips block — inside an
+// One link group (licenses / links). Must span the chips block — inside an
 // `align-items: center` column a plain block would shrink to fit-content and
-// a long chip list would then wrap against that collapsed width instead of
-// the modal's.
+// a long list would then wrap against that collapsed width instead of the
+// modal's.
 .s-about-modal-links {
   width: 100%;
 }
@@ -250,10 +250,12 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-6, 0.375rem);
+  // The row's own size, so it holds for either face: `plain` links inherit
+  // it (chips set their own).
+  font-size: var(--text-xs, 0.75rem);
 }
 
-// Ghost pills: every link in this dialog is a tag, so they share one face —
-// credits names, licenses, external links and the legal filings.
+// Chip face (default) — the ghost pill.
 .s-about-modal-link {
   padding: var(--space-2, 0.125rem) var(--space-10, 0.625rem);
   border: 1px solid var(--border-subtle, rgb(100 100 100 / 12%));
@@ -266,6 +268,55 @@
     color var(--duration-short, 0.15s) ease,
     border-color var(--duration-short, 0.15s) ease,
     background var(--duration-short, 0.15s) ease;
+}
+
+// Plain face: a bare text link (user direction 2026-09-14 — the organization
+// / author names, the site domains and the filing numbers read as ordinary
+// sentence text, not as tags). No frame, no pill padding, no underline; the
+// hover colour shift is the entire affordance. Colour and size are inherited
+// so the link melts into the run it sits in — the credits sentence
+// (full-contrast text) or a muted link row.
+//
+// The face never has to out-shout the base `:hover` rules below: this rule
+// (0,2,0) beats the chip base (0,1,0), and the `[data-face="plain"]:hover` /
+// `:active` rules (0,3,0) are what keep the hover surface-free and the colour
+// shift alive. Drop those two and the plain face silently regains the chip's
+// tinted hover box.
+.s-about-modal-link[data-face="plain"] {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+// A link carrying an icon is one aligned unit (the mark, then the optional
+// label) — icon-only links are how the GitHub mark rides beside the domains.
+// Same specificity as the `plain` block above, so source order decides: this
+// one wins the tie, which is what turns an icon-only link into inline-flex
+// instead of the plain `inline`.
+.s-about-modal-link.s-about-modal-link-has-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  vertical-align: middle;
+}
+
+.s-about-modal-link-icon {
+  flex-shrink: 0;
+}
+
+// An icon-only link carries no text to click, so the mark buys its target
+// width here; its height is whatever the row's line box gives it (the mark is
+// centred in that), which keeps a row of plain links exactly as tall as its
+// text.
+.s-about-modal-link[data-face="plain"].s-about-modal-link-has-icon {
+  padding: 0 var(--space-6, 0.375rem);
 }
 
 // Chips inside the credits sentence sit in a text run: keep them on the
@@ -282,8 +333,19 @@
   color: rgb(var(--color-primary));
 }
 
+// The plain face owns no surface to tint — only the glyph changes colour.
+.s-about-modal-link[data-face="plain"]:hover {
+  background: none;
+  color: rgb(var(--color-primary));
+}
+
 .s-about-modal-link:active {
   background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
+}
+
+.s-about-modal-link[data-face="plain"]:active {
+  background: none;
+  color: var(--c-primary-strong, rgb(var(--color-primary) / 40%));
 }
 
 .s-about-modal-link:focus-visible {
@@ -295,7 +357,7 @@
 
 /* ── Legal footer: filing links + copyright ───────────────────────────── */
 
-// Filing numbers are long, so the legal chips render a notch smaller than
+// Filing numbers are long, so the legal row renders a notch smaller than
 // the license / link rows.
 .s-about-modal-footer-link {
   font-size: var(--text-2xs, 0.625rem);
@@ -307,6 +369,7 @@
   justify-content: center;
   gap: var(--space-6, 0.375rem);
   margin-top: calc(-1 * var(--space-4, 0.25rem));
+  font-size: var(--text-2xs, 0.625rem);
 }
 
 .s-about-modal-footer {

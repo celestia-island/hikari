@@ -16,6 +16,9 @@ import { setLocale } from "../i18n/context";
  * - the backdrop factory renders inside the clipped backdrop layer
  * - licenses and links render as chips under one centered block
  * - footer (filing) links render as external links
+ * - `face: "plain"` turns any of them into a bare text link (still a link,
+ *   still a new tab), and an entry carrying an `icon` renders the mark, with
+ *   an accessible name when it has no label to be named by
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -104,23 +107,188 @@ describe("HkAboutModal branding", () => {
         { name: "Celestia Island", href: "https://github.com/celestia-island" },
         { text: "，由 " },
         { name: "伊欧", href: "https://github.com/langyo" },
-        { text: " 倾力设计" },
+        { text: " 主创" },
       ],
     });
     await flushModal();
     const line = query<HTMLElement>(".s-about-modal-credits-line");
-    expect(line.textContent).toBe("来自 Celestia Island，由 伊欧 倾力设计");
+    expect(line.textContent).toBe("来自 Celestia Island，由 伊欧 主创");
     const chips = [
       ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-credit-link"),
     ];
     expect(chips.map((chip) => chip.textContent)).toEqual(["Celestia Island", "伊欧"]);
-    // Every link in the dialog is a tag and opens in a new tab.
+    // Every link in the dialog opens in a new tab; the chip is the default
+    // face, so an entry that asks for nothing keeps the tag.
     for (const chip of chips) {
       expect(chip.classList.contains("s-about-modal-link")).toBe(true);
+      expect(chip.getAttribute("data-face")).toBe("chip");
       expect(chip.getAttribute("target")).toBe("_blank");
       expect(chip.getAttribute("rel")).toContain("noopener");
     }
     expect(chips[0]!.getAttribute("href")).toBe("https://github.com/celestia-island");
+  });
+
+  it("renders a credit name as a plain text link when the entry asks for it", async () => {
+    mountAbout({
+      credits: [
+        { text: "来自 " },
+        { name: "Celestia Island", href: "https://github.com/celestia-island", face: "plain" },
+        { text: "，由 " },
+        { name: "伊欧", href: "https://github.com/langyo", face: "plain" },
+        { text: " 主创" },
+      ],
+    });
+    await flushModal();
+    // The names stay inside the sentence — same text, same flow, no frame.
+    expect(query<HTMLElement>(".s-about-modal-credits-line").textContent).toBe(
+      "来自 Celestia Island，由 伊欧 主创",
+    );
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-credit-link"),
+    ];
+    expect(links.map((link) => link.textContent)).toEqual(["Celestia Island", "伊欧"]);
+    for (const link of links) {
+      expect(link.getAttribute("data-face")).toBe("plain");
+      expect(link.classList.contains("s-about-modal-link")).toBe(true);
+      expect(link.getAttribute("target")).toBe("_blank");
+      // A text link is named by its own text — no redundant aria-label.
+      expect(link.getAttribute("aria-label")).toBeNull();
+    }
+  });
+
+  it("renders plain faces across the link rows and the legal filings", async () => {
+    mountAbout({
+      links: [
+        { label: "celestia.world", href: "https://celestia.world", face: "plain" },
+        { label: "celestia.ac.cn", href: "https://celestia.ac.cn", face: "plain" },
+      ],
+      footerLinks: [
+        { label: "苏ICP备2025155733号-2", href: "https://beian.miit.gov.cn/", face: "plain" },
+      ],
+    });
+    await flushModal();
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(
+        ".s-about-modal-links-list .s-about-modal-link",
+      ),
+    ];
+    expect(links.map((link) => link.textContent)).toEqual(["celestia.world", "celestia.ac.cn"]);
+    expect(links.map((link) => link.getAttribute("data-face"))).toEqual(["plain", "plain"]);
+    expect(
+      query<HTMLElement>(".s-about-modal-footer-link").getAttribute("data-face"),
+    ).toBe("plain");
+  });
+
+  it("renders an icon-only link with an accessible name beside the text links", async () => {
+    mountAbout({
+      links: [
+        { label: "celestia.world", href: "https://celestia.world", face: "plain" },
+        {
+          icon: "github",
+          href: "https://github.com/celestia-island/shittim-chest",
+          face: "plain",
+          ariaLabel: "GitHub",
+        },
+      ],
+    });
+    await flushModal();
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(
+        ".s-about-modal-links-list .s-about-modal-link",
+      ),
+    ];
+    expect(links.length).toBe(2);
+    const mark = links[1]!;
+    expect(mark.textContent).toBe("");
+    expect(mark.classList.contains("s-about-modal-link-has-icon")).toBe(true);
+    expect(mark.getAttribute("aria-label")).toBe("GitHub");
+    expect(mark.getAttribute("href")).toBe("https://github.com/celestia-island/shittim-chest");
+    expect(mark.getAttribute("target")).toBe("_blank");
+    expect(mark.querySelector(".s-about-modal-link-icon svg")).toBeTruthy();
+    // …and it is the GitHub mark, not just any glyph.
+    expect(
+      mark
+        .querySelector(".s-about-modal-link-icon svg")!
+        .classList.contains("lucide-github-icon"),
+    ).toBe(true);
+    // The mark is decoration: it must not join the link's accessible name.
+    expect(
+      mark.querySelector(".s-about-modal-link-icon")!.getAttribute("aria-hidden"),
+    ).toBe("true");
+    // The text link next to it stays text: no mark, no extra naming.
+    expect(links[0]!.querySelector("svg")).toBeNull();
+    expect(links[0]!.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("names an icon-only link from the icon when none is given", async () => {
+    mountAbout({ links: [{ icon: "github", href: "https://example.test/repo", face: "plain" }] });
+    await flushModal();
+    const mark = query<HTMLElement>(".s-about-modal-link");
+    expect(mark.getAttribute("aria-label")).toBe("GitHub");
+    expect(mark.getAttribute("data-face")).toBe("plain");
+  });
+
+  it("lets a host name a text link explicitly", async () => {
+    mountAbout({
+      links: [
+        {
+          label: "celestia.world",
+          href: "https://celestia.world",
+          ariaLabel: "Celestia World 官网",
+        },
+      ],
+    });
+    await flushModal();
+    // An explicit name outranks the visible text (and the visible text stays).
+    const link = query<HTMLAnchorElement>(".s-about-modal-link");
+    expect(link.getAttribute("aria-label")).toBe("Celestia World 官网");
+    expect(link.textContent).toBe("celestia.world");
+  });
+
+  it("drops a link entry with neither a label nor an icon", async () => {
+    mountAbout({
+      links: [
+        { label: "celestia.world", href: "https://celestia.world", face: "plain" },
+        // No text and no mark: an invisible but focusable link named by its
+        // raw URL is worse than no link.
+        { href: "https://example.test/blank" },
+      ],
+    });
+    await flushModal();
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(
+        ".s-about-modal-links-list .s-about-modal-link",
+      ),
+    ];
+    expect(links.map((link) => link.textContent)).toEqual(["celestia.world"]);
+    expect(document.body.textContent).not.toContain("example.test/blank");
+  });
+
+  it("renders no link row when every entry is empty", async () => {
+    mountAbout({ links: [{ href: "https://example.test/blank" }] });
+    await flushModal();
+    expect(document.body.querySelector(".s-about-modal-links")).toBeNull();
+  });
+
+  it("drops an empty legal entry too", async () => {
+    mountAbout({
+      footerLinks: [
+        { label: "苏ICP备2025155733号-2", href: "https://beian.miit.gov.cn/" },
+        { href: "https://example.test/blank-filing" },
+      ],
+    });
+    await flushModal();
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-footer-link"),
+    ];
+    expect(links.map((link) => link.textContent)).toEqual(["苏ICP备2025155733号-2"]);
+    expect(document.body.textContent).not.toContain("example.test/blank-filing");
+  });
+
+  it("renders no legal row when every filing is empty", async () => {
+    mountAbout({ footerLinks: [{ href: "https://example.test/blank-filing" }] });
+    await flushModal();
+    expect(document.body.querySelector(".s-about-modal-footer-links")).toBeNull();
   });
 
   it("keeps a credit name as plain text when no href is given", async () => {

@@ -1,13 +1,45 @@
 import { defineComponent, type PropType } from "vue";
+import { Github } from "lucide-vue-next";
 import { HBadge, HModal } from "@celestia-island/hikari";
 
 import { useI18n } from "../i18n/context";
 
 import "./HkAboutModal.scss";
 
+/**
+ * How a link presents itself.
+ *
+ * `chip` is the dialog's original face — a ghost tag. `plain` is bare text:
+ * no frame, no underline, so the hover colour shift is the whole
+ * affordance. Chosen per link, because one dialog can want both (the
+ * credits names / URLs / filings read as sentence text, the licenses stay
+ * tags).
+ */
+export type HAboutLinkFace = "chip" | "plain";
+
+/** Leading icon a link can carry; an icon-only link shows it alone. */
+export type HAboutLinkIcon = "github";
+
+// The mark behind each icon key. Brand names are locale-invariant, so they
+// double as the accessible name of an icon-only link.
+const ICONS: Record<HAboutLinkIcon, typeof Github> = { github: Github };
+const ICON_NAMES: Record<HAboutLinkIcon, string> = { github: "GitHub" };
+
 export interface HAboutLink {
-  label: string;
+  /** Visible text. Omit for an icon-only link — then name it with
+   *  `ariaLabel`. */
+  label?: string;
   href: string;
+  /** Optional leading icon (e.g. the project's GitHub home). */
+  icon?: HAboutLinkIcon;
+  /** Link face; defaults to `chip`. */
+  face?: HAboutLinkFace;
+  /**
+   * Accessible name for an icon-only link — falls back to `label`, then to
+   * the icon's own name (brand names are locale-invariant, so they need no
+   * i18n key of their own).
+   */
+  ariaLabel?: string;
 }
 
 /**
@@ -15,17 +47,19 @@ export interface HAboutLink {
  *
  * The line is a sentence assembled from parts so a host can phrase (and
  * order) it freely per locale: literal `text` runs sit between linked
- * `name` chips (organization first, author second, …). The names render as
- * the same chips as the license / link rows — every link in this dialog is
- * a tag.
+ * `name` runs (organization first, author second, …). Each linked name
+ * carries its own `face`, so one dialog can mix a chip here with bare text
+ * there (and an unlinked name is always plain text).
  */
 export interface HAboutCredit {
   /** Literal sentence fragment (mutually exclusive with `name`). */
   text?: string;
-  /** Linked chip label (mutually exclusive with `text`). */
+  /** Linked name (mutually exclusive with `text`). */
   name?: string;
-  /** Target for a `name` chip; opens in a new tab. */
+  /** Target for a `name`; opens in a new tab. */
   href?: string;
+  /** Face for a linked `name` (an unlinked name stays plain text). */
+  face?: HAboutLinkFace;
 }
 
 /**
@@ -51,12 +85,14 @@ export interface HAboutComponentVersion {
  *
  * Layout (2026-09 redesign): a centered identity hero (haloed logo, name,
  * then version + tagline on one compact line), an optional credits block
- * (a sentence built from text runs and linked name chips, plus the
+ * (a sentence built from text runs and linked names, plus the
  * organization blurb), a
  * bordered spec card holding the software-component versions, and the
- * link rows — licenses, external links, legal filings and the credits
- * names all render as the same ghost tag. Every one opens in a new tab. Every branding prop is optional — the modal degrades
- * to the plain identity card when none are given.
+ * link rows — licenses, external links and legal filings. Every link opens
+ * in a new tab and renders in the face its entry asks for: the ghost chip,
+ * or bare text (`plain`) for names / URLs / filings that should read as
+ * ordinary sentence text. Every branding prop is optional — the modal
+ * degrades to the plain identity card when none are given.
  */
 export const HkAboutModal = defineComponent({
   name: "HkAboutModal",
@@ -73,12 +109,12 @@ export const HkAboutModal = defineComponent({
     /** Optional centered small line under the credits (organization blurb). */
     description: { type: String, default: undefined },
     /**
-     * Credits sentence, assembled from text runs and linked name chips
-     * (e.g. 来自 <Celestia Island>，由 <伊欧> 倾力设计). Names render as the
-     * same chips as the license / link rows.
+     * Credits sentence, assembled from text runs and linked names
+     * (e.g. 来自 <Celestia Island>，由 <伊欧> 主创). Each name renders in the
+     * face its entry asks for — `chip`, or bare text with `plain`.
      */
     credits: { type: Array as PropType<HAboutCredit[]>, default: () => [] },
-    /** License chips (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */
+    /** License links (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */
     licenses: { type: Array as PropType<HAboutLink[]>, default: () => [] },
     /** Software-component version rows (WebUI / engines), label + value. */
     componentVersions: {
@@ -87,7 +123,11 @@ export const HkAboutModal = defineComponent({
     },
     /** Optional copyright holder in the footer (defaults to the app name). */
     copyright: { type: String, default: undefined },
-    /** Optional external links (e.g. GitHub, docs). */
+    /**
+     * Optional external links (e.g. the site domains, the project's GitHub
+     * home). An entry may carry an `icon` instead of a `label` — that is how
+     * the GitHub mark rides at the end of the domain row.
+     */
     links: { type: Array as PropType<HAboutLink[]>, default: () => [] },
     /** Optional centered legal links above the copyright (ICP filings). */
     footerLinks: { type: Array as PropType<HAboutLink[]>, default: () => [] },
@@ -105,19 +145,45 @@ export const HkAboutModal = defineComponent({
   setup(props, { emit }) {
     const { t } = useI18n();
 
-    // One chip renderer for every link in the dialog: credits names,
-    // licenses, external links and the legal filings all render as tags.
-    const renderChip = (label: string, href: string, extraClass: string) => (
-      <a
-        key={`${extraClass}:${href}`}
-        class={`s-about-modal-link ${extraClass}`}
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {label}
-      </a>
-    );
+    // One link renderer for every link in the dialog: credits names,
+    // licenses, external links and the legal filings. `face` picks the tag
+    // or the bare-text face; an `icon` may replace or lead the label.
+    const renderLink = (
+      item: HAboutLink,
+      extraClass: string,
+      key: string,
+    ) => {
+      const label = item.label ?? "";
+      const Icon = item.icon ? ICONS[item.icon] : undefined;
+      const classes = ["s-about-modal-link", extraClass];
+      if (Icon) classes.push("s-about-modal-link-has-icon");
+      return (
+        <a
+          key={key}
+          class={classes}
+          data-face={item.face ?? "chip"}
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          // A text link is named by its own label unless the host names it
+          // explicitly; an icon-only link has no text to be named by, so it
+          // always needs a name of its own.
+          aria-label={
+            item.ariaLabel ?? (label ? undefined : item.icon ? ICON_NAMES[item.icon] : item.href)
+          }
+        >
+          {Icon && (
+            // Wrapped rather than classed on the lucide component: lucide
+            // merges its own classes with the passed ones and emits the token
+            // twice.
+            <span class="s-about-modal-link-icon" aria-hidden="true">
+              <Icon size={14} />
+            </span>
+          )}
+          {label}
+        </a>
+      );
+    };
 
     const renderCredits = () => {
       const parts = props.credits.filter((part) => part.text || part.name);
@@ -127,7 +193,11 @@ export const HkAboutModal = defineComponent({
           {parts.map((part, index) =>
             part.name ? (
               part.href ? (
-                renderChip(part.name, part.href, "s-about-modal-credit-link")
+                renderLink(
+                  { label: part.name, href: part.href, face: part.face },
+                  "s-about-modal-credit-link",
+                  `name:${index}`,
+                )
               ) : (
                 <span key={`name:${index}`} class="s-about-modal-credit-name">
                   {part.name}
@@ -141,12 +211,19 @@ export const HkAboutModal = defineComponent({
       );
     };
 
-    const renderChips = (items: HAboutLink[], slot: string) => {
-      if (items.length === 0) return null;
+    // An entry with neither text nor a mark would render an invisible but
+    // focusable link whose only name is its raw URL — drop it rather than
+    // ship a blank target. Every row filters through here.
+    const visibleLinks = (items: HAboutLink[]) =>
+      items.filter((item) => item.label || item.icon);
+
+    const renderLinks = (items: HAboutLink[], slot: string) => {
+      const visible = visibleLinks(items);
+      if (visible.length === 0) return null;
       return (
         <div class="s-about-modal-links" data-slot={slot}>
           <div class="s-about-modal-links-list">
-            {items.map((item) => renderChip(item.label, item.href, ""))}
+            {visible.map((item, index) => renderLink(item, "", `${slot}:${index}`))}
           </div>
         </div>
       );
@@ -229,15 +306,15 @@ export const HkAboutModal = defineComponent({
 
             {(props.licenses.length > 0 || props.links.length > 0) && (
               <div class="s-about-modal-chips">
-                {renderChips(props.licenses, "licenses")}
-                {renderChips(props.links, "links")}
+                {renderLinks(props.licenses, "licenses")}
+                {renderLinks(props.links, "links")}
               </div>
             )}
 
-            {props.footerLinks.length > 0 && (
+            {visibleLinks(props.footerLinks).length > 0 && (
               <div class="s-about-modal-footer-links">
-                {props.footerLinks.map((link) =>
-                  renderChip(link.label, link.href, "s-about-modal-footer-link"),
+                {visibleLinks(props.footerLinks).map((link, index) =>
+                  renderLink(link, "s-about-modal-footer-link", `legal:${index}`),
                 )}
               </div>
             )}

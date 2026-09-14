@@ -55,4 +55,140 @@ describe("HkAboutModal stylesheet contract", () => {
       .sort();
     expect(dead, "stylesheet selectors with no matching element").toEqual([]);
   });
+
+  /**
+   * Declaration-level guards for the two link faces.
+   *
+   * The checks above only compare class *names*, so the whole
+   * `[data-face="plain"]` contract — the part the user actually asked for —
+   * was invisible to them: emptying that rule (Dart Sass then drops the
+   * selector entirely), re-adding a pill padding, or losing `font-size:
+   * inherit` all left the suite green while turning bare text links back
+   * into chips. These assertions read the compiled declarations instead.
+   */
+  describe("link faces", () => {
+    /**
+     * Body of one compiled rule, by exact selector (Sass drops the quotes
+     * around an attribute value: `[data-face=plain]`).
+     *
+     * The selector must compile exactly once: a second copy — say inside a
+     * media query, or a later override — would otherwise stay invisible here
+     * while still winning the cascade.
+     */
+    function ruleBody(sheet: string, selector: string): string {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const matches = [...sheet.matchAll(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`, "g"))];
+      expect(matches, `${selector} compiles exactly once`).toHaveLength(1);
+      return matches[0]?.[1] ?? "";
+    }
+
+    /**
+     * One declaration's value inside a rule body.
+     *
+     * A property declared twice is a failure rather than a coincidence: CSS
+     * resolves a repeat last-wins, so a first-match reader would report the
+     * stale value and happily accept the override.
+     */
+    function declaration(body: string, property: string): string {
+      const values = [
+        ...body.matchAll(new RegExp(`(?:^|;)\\s*${property}\\s*:([^;]*)`, "g")),
+      ].map((match) => match[1]!.trim());
+      expect(values.length, `${property} is declared at most once`).toBeLessThanOrEqual(1);
+      return values[0] ?? "";
+    }
+
+    const PLAIN = ".s-about-modal-link[data-face=plain]";
+
+    it("keeps the plain face a bare text link", () => {
+      const plain = ruleBody(css, PLAIN);
+      expect(plain, "the plain-face rule must survive compilation").not.toBe("");
+      expect({
+        padding: declaration(plain, "padding"),
+        border: declaration(plain, "border"),
+        radius: declaration(plain, "border-radius"),
+        background: declaration(plain, "background"),
+        // Inherited colour and size are what let a name melt into the credits
+        // sentence (13px) or a domain into the 12px link row, instead of
+        // keeping the chip's own 12px scale.
+        color: declaration(plain, "color"),
+        fontSize: declaration(plain, "font-size"),
+        lineHeight: declaration(plain, "line-height"),
+      }).toEqual({
+        padding: "0",
+        border: "0",
+        radius: "0",
+        background: "none",
+        color: "inherit",
+        fontSize: "inherit",
+        lineHeight: "inherit",
+      });
+      // Both faces promise "no underline" (these rows are text with a click
+      // target, not document links): the base rule turns the UA underline off
+      // and the plain face must not bring one back.
+      expect(declaration(ruleBody(css, ".s-about-modal-link"), "text-decoration")).toBe("none");
+      expect(declaration(plain, "text-decoration")).not.toContain("underline");
+    });
+
+    it("keeps the plain hover a colour shift, not a tinted box", () => {
+      const hover = ruleBody(css, `${PLAIN}:hover`);
+      expect(declaration(hover, "background")).toBe("none");
+      expect(declaration(hover, "color")).toBe("rgb(var(--color-primary))");
+      expect(declaration(ruleBody(css, `${PLAIN}:active`), "background")).toBe("none");
+    });
+
+    it("keeps an icon link one aligned unit with a visible mark", () => {
+      const iconLink = ruleBody(css, ".s-about-modal-link.s-about-modal-link-has-icon");
+      expect(declaration(iconLink, "display")).toBe("inline-flex");
+      expect(declaration(iconLink, "align-items")).toBe("center");
+      // The wrapper is what the alignment hangs off — a hidden or collapsing
+      // one takes the mark with it, leaving an icon-only link as an invisible
+      // target (the failure the empty-entry filter exists to prevent).
+      const iconWrap = ruleBody(css, ".s-about-modal-link-icon");
+      expect(declaration(iconWrap, "flex-shrink")).toBe("0");
+      expect(declaration(iconWrap, "display")).not.toBe("none");
+      // Icon-only: the mark carries no text, so the padding is the target.
+      expect(declaration(ruleBody(css, `${PLAIN}.s-about-modal-link-has-icon`), "padding")).toBe(
+        "0 var(--space-6, 0.375rem)",
+      );
+    });
+
+    it("sizes every row the plain face inherits from", () => {
+      // The plain face inherits, so the rows own the type scale the chips used
+      // to bring themselves (16px body text otherwise): the credits sentence
+      // supplies the names' 13px, the link row the domains' 12px, the legal
+      // row the filings' 10px.
+      expect(declaration(ruleBody(css, ".s-about-modal-credits-line"), "font-size")).toBe(
+        "var(--text-sm, 0.8125rem)",
+      );
+      expect(declaration(ruleBody(css, ".s-about-modal-links-list"), "font-size")).toBe(
+        "var(--text-xs, 0.75rem)",
+      );
+      expect(declaration(ruleBody(css, ".s-about-modal-footer-links"), "font-size")).toBe(
+        "var(--text-2xs, 0.625rem)",
+      );
+    });
+
+    it("keeps the pill the hosts that ask for nothing already ship", () => {
+      // The plain face is additive: a consumer passing `{ label, href }` must
+      // keep exactly the tag it had, so the chip's geometry is pinned here
+      // instead of being assumed.
+      const chip = ruleBody(css, ".s-about-modal-link");
+      expect(declaration(chip, "padding")).toBe(
+        "var(--space-2, 0.125rem) var(--space-10, 0.625rem)",
+      );
+      expect(declaration(chip, "border")).toContain("1px solid var(--border-subtle");
+      expect(declaration(chip, "border-radius")).toBe("var(--radius-full, 9999px)");
+      expect(declaration(chip, "color")).toBe("rgb(var(--color-muted))");
+    });
+
+    it("keeps the icon rule after the plain rule it refines", () => {
+      // Both are (0,2,0), so source order is the only thing that turns an
+      // icon link into inline-flex rather than the plain `inline` — the
+      // tie-break is part of the contract, not an accident of file layout.
+      const plainAt = css.indexOf(`${PLAIN} {`);
+      const iconAt = css.indexOf(".s-about-modal-link.s-about-modal-link-has-icon {");
+      expect(plainAt).toBeGreaterThanOrEqual(0);
+      expect(iconAt).toBeGreaterThan(plainAt);
+    });
+  });
 });

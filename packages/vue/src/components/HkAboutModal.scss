@@ -295,6 +295,28 @@
   vertical-align: baseline;
 }
 
+// Accent face: bare text like `plain`, but tinted in the primary colour so
+// the link visibly stands out of the run it sits in — the "this is
+// clickable" cue (user direction 2026-09-15; the pure `plain` face melted
+// the credits names into the sentence too well). No frame, no pill padding,
+// and no underline at rest; the hover deepens the tint and adds one.
+//
+// Same specificity story as the `plain` block above: this rule (0,2,0) beats
+// the chip base (0,1,0), and the `[data-face="accent"]:hover` / `:active`
+// rules below (0,3,0) keep the chip's tinted hover box off the bare text.
+.s-about-modal-link[data-face="accent"] {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: rgb(var(--color-primary));
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
 // A link carrying an icon is one aligned unit (the mark, then the optional
 // label) — icon-only links are how the GitHub mark rides beside the domains.
 // Same specificity as the `plain` block above, so source order decides: this
@@ -339,6 +361,15 @@
   color: rgb(var(--color-primary));
 }
 
+// The accent face already rests in the primary colour, so the hover cue is
+// the deepened tint plus an underline — the glyph colour alone cannot move.
+.s-about-modal-link[data-face="accent"]:hover {
+  background: none;
+  color: var(--c-primary-strong, rgb(var(--color-primary) / 80%));
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .s-about-modal-link:active {
   background: var(--c-primary-subtle, rgb(var(--color-primary) / 8%));
 }
@@ -346,6 +377,11 @@
 .s-about-modal-link[data-face="plain"]:active {
   background: none;
   color: var(--c-primary-strong, rgb(var(--color-primary) / 40%));
+}
+
+.s-about-modal-link[data-face="accent"]:active {
+  background: none;
+  color: rgb(var(--color-muted));
 }
 
 .s-about-modal-link:focus-visible {

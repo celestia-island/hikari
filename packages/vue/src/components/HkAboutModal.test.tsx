@@ -16,7 +16,8 @@ import { setLocale } from "../i18n/context";
  * - the backdrop factory renders inside the clipped backdrop layer
  * - licenses and links render as chips under one centered block
  * - footer (filing) links render as external links
- * - `face: "plain"` turns any of them into a bare text link (still a link,
+ * - `face: "plain"` / `face: "accent"` turn any of them into a bare text
+ *   link (still a link,
  *   still a new tab), and an entry carrying an `icon` renders the mark, with
  *   an accessible name when it has no label to be named by
  *
@@ -152,6 +153,31 @@ describe("HkAboutModal branding", () => {
       expect(link.classList.contains("s-about-modal-link")).toBe(true);
       expect(link.getAttribute("target")).toBe("_blank");
       // A text link is named by its own text — no redundant aria-label.
+      expect(link.getAttribute("aria-label")).toBeNull();
+    }
+  });
+
+  it("renders a credit name as a tinted accent link when the entry asks for it", async () => {
+    mountAbout({
+      credits: [
+        { text: "来自 " },
+        { name: "Celestia Island", href: "https://github.com/celestia-island", face: "accent" },
+        { text: "，由 " },
+        { name: "伊欧", href: "https://github.com/langyo", face: "accent" },
+        { text: " 主创" },
+      ],
+    });
+    await flushModal();
+    const links = [
+      ...document.body.querySelectorAll<HTMLAnchorElement>(".s-about-modal-credit-link"),
+    ];
+    // Same bare-text shape as `plain` (no chip geometry), but the entry's
+    // face reaches the stylesheet as `accent`.
+    expect(links.map((link) => link.textContent)).toEqual(["Celestia Island", "伊欧"]);
+    for (const link of links) {
+      expect(link.getAttribute("data-face")).toBe("accent");
+      expect(link.classList.contains("s-about-modal-link")).toBe(true);
+      expect(link.getAttribute("target")).toBe("_blank");
       expect(link.getAttribute("aria-label")).toBeNull();
     }
   });

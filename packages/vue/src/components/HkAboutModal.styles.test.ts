@@ -136,6 +136,44 @@ describe("HkAboutModal stylesheet contract", () => {
       expect(declaration(ruleBody(css, `${PLAIN}:active`), "background")).toBe("none");
     });
 
+    const ACCENT = ".s-about-modal-link[data-face=accent]";
+
+    it("keeps the accent face a bare text link tinted in the primary colour", () => {
+      const accent = ruleBody(css, ACCENT);
+      expect(accent, "the accent-face rule must survive compilation").not.toBe("");
+      expect({
+        padding: declaration(accent, "padding"),
+        border: declaration(accent, "border"),
+        radius: declaration(accent, "border-radius"),
+        background: declaration(accent, "background"),
+        // The tint IS the face: bare geometry like `plain`, but the colour
+        // comes from the theme's primary token rather than `inherit`.
+        color: declaration(accent, "color"),
+        fontSize: declaration(accent, "font-size"),
+        lineHeight: declaration(accent, "line-height"),
+      }).toEqual({
+        padding: "0",
+        border: "0",
+        radius: "0",
+        background: "none",
+        color: "rgb(var(--color-primary))",
+        fontSize: "inherit",
+        lineHeight: "inherit",
+      });
+      // No underline at rest — the tint is the cue; the hover adds one.
+      expect(declaration(accent, "text-decoration")).not.toContain("underline");
+    });
+
+    it("gives the accent hover an added cue beyond the resting tint", () => {
+      // The accent face already rests in the primary colour, so a hover that
+      // only re-set the same colour would be invisible — the deepened tint
+      // plus the underline is the contract.
+      const hover = ruleBody(css, `${ACCENT}:hover`);
+      expect(declaration(hover, "background")).toBe("none");
+      expect(declaration(hover, "text-decoration")).toContain("underline");
+      expect(declaration(ruleBody(css, `${ACCENT}:active`), "background")).toBe("none");
+    });
+
     it("keeps an icon link one aligned unit with a visible mark", () => {
       const iconLink = ruleBody(css, ".s-about-modal-link.s-about-modal-link-has-icon");
       expect(declaration(iconLink, "display")).toBe("inline-flex");

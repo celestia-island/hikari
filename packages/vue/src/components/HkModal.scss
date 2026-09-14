@@ -118,31 +118,42 @@
     will-change: transform, opacity, clip-path;
   }
 
+  // Close: the whole frame fades and drifts down as ONE piece — the
+  // unveil's clip does NOT re-run on close. Re-clipping first made the
+  // bottom band (usually the footer) vanish at the very first frame of
+  // the close while the rest was still on screen, which read as broken
+  // (user report 2026-09-14).
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.25s)
         var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
       transform var(--hk-modal-duration, 0.25s)
-        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
-      clip-path var(--hk-modal-duration, 0.25s)
         var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
-    will-change: transform, opacity, clip-path;
+    will-change: transform, opacity;
   }
 
-  .hk-modal-content-enter-from,
-  .hk-modal-content-leave-to {
+  .hk-modal-content-enter-from {
     opacity: 0;
     transform: translate(-50%, -50%) translateY(5%);
     clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
                                  var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
-  .hk-modal-content-enter-to,
-  .hk-modal-content-leave-from {
+  .hk-modal-content-enter-to {
     opacity: 1;
     transform: translate(-50%, -50%);
     clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
                               var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
+
+  .hk-modal-content-leave-from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+
+  .hk-modal-content-leave-to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(5%);
   }
 }
 

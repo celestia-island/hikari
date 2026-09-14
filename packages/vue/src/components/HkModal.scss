@@ -86,48 +86,64 @@
 }
 
 // ------
-// Content enter/leave transitions
+// Content enter/leave transitions (desktop ≥768px)
 //
-// Compositor-driven pop: the frame fades and scales 0.94 → 1 — transform
-// and opacity ONLY, no layout properties. The previous desktop reveal
-// animated `height` (calc-size keywords): height is a layout property, so
-// every animation frame re-laid-out the entire modal subtree — for a
-// content-heavy modal (a full graph stage, long report bodies) that is
-// visible frame drops through the whole open/close, made worse by the
-// frame's own backdrop-filter whose sampling region then also changed per
-// frame. transform/opacity run on the compositor: zero layout, zero
-// paint, and the blurred surface keeps a constant region. Mirrors the
-// mobile sheet's translateY reveal, which has always been transform-based.
+// Height-style unveil WITHOUT layout: the visible box starts at 90% of
+// its height and grows to 100% while the frame settles from a +5% offset
+// back to rest (user spec 2026-09-14). Numbers line up so the character
+// of the old height-grow reveal is preserved exactly:
+//   t=0  box [center−0.45h, center+0.45h] shifted +0.05h, bottom 10%
+//        clipped → visible [center−0.40h, center+0.40h] (the old 80%
+//        centered start);
+//   t=1  clip 0, offset 0 → visible [center−0.50h, center+0.50h];
+//   the bottom edge is pinned at its final line the whole time and the
+//   top edge sweeps up 0.1h — content rides rigidly (never squashed).
+// Implemented with transform (translate) + clip-path (inset) + opacity:
+// all compositor/paint-level, zero layout per frame — the previous
+// height-keyword reveal re-laid-out the entire modal subtree every frame
+// and re-filtered the frame's own backdrop blur per frame (visible frame
+// drops on content-heavy modals, chest history topic detail). Scoped to
+// ≥768px; ≤767px keeps the sheet's translateY choreography below.
 // ------
 
-.hk-modal-content-enter-active {
-  transition:
-    opacity var(--hk-modal-duration, 0.3s)
-      var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    transform var(--hk-modal-duration, 0.3s)
-      var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  will-change: transform, opacity;
-}
+@media (min-width: 768px) {
+  .hk-modal-content-enter-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.3s)
+        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+      transform var(--hk-modal-duration, 0.3s)
+        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+      clip-path var(--hk-modal-duration, 0.3s)
+        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+    will-change: transform, opacity, clip-path;
+  }
 
-.hk-modal-content-leave-active {
-  transition:
-    opacity var(--hk-modal-duration, 0.25s)
-      var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
-    transform var(--hk-modal-duration, 0.25s)
-      var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
-  will-change: transform, opacity;
-}
+  .hk-modal-content-leave-active {
+    transition:
+      opacity var(--hk-modal-duration, 0.25s)
+        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
+      transform var(--hk-modal-duration, 0.25s)
+        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
+      clip-path var(--hk-modal-duration, 0.25s)
+        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+    will-change: transform, opacity, clip-path;
+  }
 
-.hk-modal-content-enter-from,
-.hk-modal-content-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.94);
-}
+  .hk-modal-content-enter-from,
+  .hk-modal-content-leave-to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(5%);
+    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
 
-.hk-modal-content-enter-to,
-.hk-modal-content-leave-from {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  .hk-modal-content-enter-to,
+  .hk-modal-content-leave-from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                              var(--hk-modal-radius, var(--radius-lg, 12px)));
+  }
 }
 
 // ------

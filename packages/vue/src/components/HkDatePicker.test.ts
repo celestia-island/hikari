@@ -41,13 +41,6 @@ function panel(): HTMLElement | null {
   return document.querySelector<HTMLElement>(".hk-dp-panel");
 }
 
-/** Let Vue's leave transitions (frame/timeout based) finish in happy-dom. */
-async function settle() {
-  await nextTick();
-  await new Promise((r) => setTimeout(r, 20));
-  await nextTick();
-}
-
 /** Poll until the drilled view's title button reads `expected`. The drill
  *  transition is frame/timeout based and a fixed 20 ms settle raced it on
  *  the CI runner (the year-grid test once read the previous view's title),
@@ -67,10 +60,23 @@ async function waitForTitle(expected: string): Promise<void> {
   }
 }
 
-/** Generic state poll over the same drill race: wait until `probe` holds. */
+/** Generic state poll over the same drill race: wait until `probe` holds
+ *  STABLY. A single true evaluation can be a mid-transition transient
+ *  (the leaving pane's cells vanish one tick before its container
+ *  unmounts), so the probe must hold across a 10 ms window before the
+ *  wait resolves — otherwise the raw asserts after it race the teardown
+ *  timers (observed on the hosted runner: pickCount read 24 right after
+ *  a "settled" poll). */
 async function waitForView(desc: string, probe: () => boolean): Promise<void> {
   const deadline = Date.now() + 2000;
-  while (!probe()) {
+  let holdSince: number | null = null;
+  for (;;) {
+    if (probe()) {
+      holdSince ??= Date.now();
+      if (Date.now() - holdSince >= 10) return;
+    } else {
+      holdSince = null;
+    }
     if (Date.now() > deadline) throw new Error(`view never reached: ${desc}`);
     await new Promise((r) => setTimeout(r, 10));
   }
@@ -163,8 +169,7 @@ describe("HkDatePicker", () => {
     expect(panel()?.querySelectorAll(".hk-dp-cell").length).toBe(42);
 
     panel()?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    await settle();
-    expect(panel()).toBeNull();
+    await waitForView("the popup to close on Escape", () => panel() === null);
   });
 
   it("derives weekday header labels from Intl for the locale", async () => {
@@ -185,8 +190,7 @@ describe("HkDatePicker", () => {
     clickDay(20);
     await nextTick();
     expect(p.emitted).toEqual(["2026-08-20"]);
-    await settle();
-    expect(panel()).toBeNull();
+    await waitForView("the popup to close after picking a day", () => panel() === null);
   });
 
   it("disables days outside the inclusive min/max bounds", async () => {
@@ -244,8 +248,7 @@ describe("HkDatePicker", () => {
     await nextTick();
     expect(panel()).not.toBeNull();
     trigger?.click();
-    await settle();
-    expect(panel()).toBeNull();
+    await waitForView("the popup to close on trigger toggle", () => panel() === null);
 
     const d = mountPicker({ modelValue: "2026-08-16", disabled: true });
     const disabledTrigger = d.container.querySelector<HTMLElement>(".hk-dp-trigger");
@@ -345,7 +348,10 @@ describe("HkDatePicker", () => {
     await nextTick();
     const stage = panel()?.querySelector<HTMLElement>(".hk-dp-stage");
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
+    // Wait out the drill transition before reading the grid: a raced
+    // read still sees the leaving days pane (54 cells).
+    await waitForView("the months grid settled to one pane", () =>
+      panel()?.querySelectorAll(".hk-dp-cell").length === 12);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     const picks = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
     expect(picks.length).toBe(12);
@@ -354,9 +360,9 @@ describe("HkDatePicker", () => {
         new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(2024, i, 15))),
     );
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
-    await settle();
+    await waitForView("the days grid settled to one pane", () =>
+      panel()?.querySelectorAll(".hk-dp-cell").length === 42);
     expect(stage?.getAttribute("data-dir")).toBe("back");
-    expect(panel()?.querySelectorAll(".hk-dp-cell").length).toBe(42);
   });
 
   it("picks a year from the year grid and lands back on days with that year", async () => {
@@ -378,7 +384,12 @@ describe("HkDatePicker", () => {
     pickCells().find((c) => c.textContent === "2027")?.click();
     // Picking a year lands on the months grid of that year.
     await waitForTitle("2027");
-    pickCells()[6]?.click(); // July
+    // Click July BY LABEL: a positional click would hit whatever the
+    // grid shows if the view drifted (here it once clicked the 2022
+    // year cell and the title read "August 2022").
+    await waitForView("the July cell in the months grid", () =>
+      pickCells().some((c) => c.textContent === "Jul"));
+    pickCells().find((c) => c.textContent === "Jul")?.click();
     // ...and picking a month lands back on the days grid.
     await waitForView("the days grid", () => panel()?.querySelectorAll(".hk-dp-cell").length === 42);
     const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
@@ -392,7 +403,6 @@ describe("HkDatePicker", () => {
     openViaEnter(p);
     await nextTick();
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
     await waitForTitle("2026");
     const navs = () => panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-nav");
     navs()?.[1].click();
@@ -423,25 +433,21 @@ describe("HkDatePicker", () => {
           stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length === 42
         : pickCount() === 12 && stage?.children.length === 1;
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
     await waitForView("the months grid settled to one pane", settledDrill(false));
     expect(panel()?.querySelector<HTMLElement>(".hk-dp-stage")).toBe(stage);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(stage?.children.length).toBe(1); // one pane at a time after settle
     expect(pickCount()).toBe(12);
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
     await waitForView("the years grid settled to one pane", settledDrill(false));
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(pickCount()).toBe(12);
     // back steps down the stack one level at a time: years → months → days.
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
-    await settle();
     await waitForView("the months grid again, one pane", settledDrill(false));
     expect(stage?.getAttribute("data-dir")).toBe("back");
     expect(pickCount()).toBe(12);
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
-    await settle();
     await waitForView("the days grid settled to one pane", settledDrill(true));
     expect(stage?.getAttribute("data-dir")).toBe("back");
     expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length).toBe(42);

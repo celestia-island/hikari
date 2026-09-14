@@ -19,6 +19,16 @@
     grid-area: 1 / 1;
     width: 100%;
     min-width: 0;
+    // The block-axis twin of min-width: 0. Grid items refuse to shrink
+    // below their content (min-height: auto) — for whole-page swaps the
+    // item's content is the entire app body, so a host constrained by the
+    // outside (an app shell viewport) had the item overflow it by the
+    // full content height, with the excess clipped by upstream
+    // overflow: hidden: unreachable content, dead inner scroll, misaligned
+    // absolute overlays (chest history page, 2026-09-14). The auto-height
+    // host contract is unaffected: the track still sizes to the taller
+    // item's contribution, so a dissolve never collapses mid-swap.
+    min-height: 0;
   }
 }
 

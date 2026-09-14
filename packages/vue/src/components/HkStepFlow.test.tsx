@@ -244,3 +244,52 @@ describe("HkStepFlow", () => {
     await settle();
   });
 });
+
+// ── Sticky-header pin strategy resolution (2026-09-14 scroll-pin wave) ──
+// The timeline root rides HkScrollPin's contract; the strategy must flip
+// to "offset" when the nearest host paints its gutters (data-pad-cover,
+// HkModal) and stay "bleed" under a plain host. Behavioral, not
+// tautological: happy-dom resolves the attribute scan fine (no custom
+// properties involved).
+describe("HkStepFlow sticky-header pin strategy", () => {
+  async function mountWithHost(hostAttrs: Record<string, string> | null) {
+    const container = document.createElement("div");
+    const host = document.createElement("div");
+    host.className = "hk-scroll-pin-host";
+    for (const [k, v] of Object.entries(hostAttrs ?? {})) host.setAttribute(k, v);
+    host.appendChild(container);
+    document.body.appendChild(host);
+    containers.push(host);
+    const current = ref("a");
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkStepFlow, {
+            steps: STEPS,
+            modelValue: current.value,
+            stickyHeader: true,
+            "onUpdate:modelValue": (key: string) => { current.value = key; },
+          }, { a: () => h("p", "a"), b: () => h("p", "b"), c: () => h("p", "c"), d: () => h("p", "d") });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    mounts.push(app);
+    // Resolution runs onMounted; the flip lands one flush later.
+    await nextTick();
+    await nextTick();
+    return container.querySelector<HTMLElement>(".hk-timeline");
+  }
+
+  it("resolves offset under a cover host (HkModal-style)", async () => {
+    const tl = await mountWithHost({ "data-pad-cover": "", "data-scroll-axis": "vertical" });
+    expect(tl!.dataset.strategy).toBe("offset");
+    expect(tl!.dataset.side).toBe("top");
+    expect(tl!.classList.contains("hk-scroll-pin")).toBe(true);
+  });
+
+  it("keeps bleed under a plain host", async () => {
+    const tl = await mountWithHost({ "data-scroll-axis": "vertical" });
+    expect(tl!.dataset.strategy).toBe("bleed");
+  });
+});

@@ -235,6 +235,51 @@
   color: var(--hk-modal-body-color, var(--hi-color-text-primary, #1e1e1e));
   flex: 1;
   min-height: 0;
+
+  // Scroll-pin host contract: the body padding physically lives on
+  // .hk-modal-body-inner (a child of the scroller), where sticky can
+  // never hold it in place — pins read these instead, and the gutter
+  // covers below consume the same vars. Declared HERE (the scroller's
+  // parent): custom properties inherit downward, so the covers, the
+  // scroller and the inner all resolve them. The mobile sheet block
+  // retunes the vars only.
+  --hk-scroll-pad-top: var(--hk-modal-padding-body, 1.5rem);
+  --hk-scroll-pad-right: var(--hk-modal-padding-body, 1.5rem);
+  --hk-scroll-pad-bottom: var(--hk-modal-padding-body, 1.5rem);
+  --hk-scroll-pad-left: var(--hk-modal-padding-body, 1.5rem);
+
+  // Gutter covers (scroll-pin contract, 2026-09-14): the body's top and
+  // bottom whitespace stays paintable OUTSIDE the scroll flow, so a
+  // pinned child (HkScrollPin strategy="offset") stops below the gutter
+  // with the whitespace intact, and scrolled content vanishes under the
+  // cover instead of sliding through a see-through gap. At rest the
+  // covers sit over empty padding — same surface color, invisible.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    pointer-events: none;
+    // Same paint source as the content frame by default; a host that
+    // re-themes the body itself overrides --hk-scroll-pin-cover-bg so the
+    // covers never surface as foreign bands over the padding.
+    background: var(
+      --hk-scroll-pin-cover-bg,
+      var(--hk-modal-bg, var(--hi-color-surface, rgba(240, 244, 248, 0.95)))
+    );
+  }
+
+  &::before {
+    top: 0;
+    height: var(--hk-scroll-pad-top, 0px);
+  }
+
+  &::after {
+    bottom: 0;
+    height: var(--hk-scroll-pad-bottom, 0px);
+  }
 }
 
 .hk-modal-body-scroll {
@@ -253,7 +298,8 @@
 }
 
 .hk-modal-body-inner {
-  padding: var(--hk-modal-padding-body, 1.5rem);
+  padding: var(--hk-scroll-pad-top, 1.5rem) var(--hk-scroll-pad-right, 1.5rem)
+    var(--hk-scroll-pad-bottom, 1.5rem) var(--hk-scroll-pad-left, 1.5rem);
 
   // Default vertical rhythm between bare stacked children (user direction
   // 2026-09-08: window bodies keep a little distance between their elements
@@ -423,8 +469,13 @@
     padding: 0.625rem 1rem 0.625rem;
   }
 
-  .hk-modal-body-inner {
-    padding: 1rem;
+  // The gutter contract retunes here too — the covers and the inner's
+  // padding both consume the vars, so one override moves both.
+  .hk-modal-body {
+    --hk-scroll-pad-top: 1rem;
+    --hk-scroll-pad-right: 1rem;
+    --hk-scroll-pad-bottom: 1rem;
+    --hk-scroll-pad-left: 1rem;
   }
 
   // Lift the desktop 70vh body cap on phones: with a docked sheet the cap

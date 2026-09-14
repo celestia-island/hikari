@@ -29,6 +29,14 @@
     max-height: none;
     display: flex;
     flex-direction: column;
+
+    // Immersive override: the body is un-padded here, so the pin contract's
+    // gutters (and the covers with them) collapse to zero too. Declared on
+    // the body so its own covers read them (inheritance runs downward).
+    --hk-scroll-pad-top: 0px;
+    --hk-scroll-pad-right: 0px;
+    --hk-scroll-pad-bottom: 0px;
+    --hk-scroll-pad-left: 0px;
   }
 
   .hk-modal-body-scroll {

@@ -60,13 +60,6 @@ function mountPicker(props: Record<string, unknown> = {}): PickerHarness {
   return { container, emitted };
 }
 
-/** Let Vue's leave transitions (frame/timeout based) finish in happy-dom. */
-async function settle() {
-  await nextTick();
-  await new Promise((r) => setTimeout(r, 20));
-  await nextTick();
-}
-
 /** Poll until the drilled view's title button reads `expected`. The drill
  *  transition is frame/timeout based and a fixed 20 ms settle raced it
  *  under full-suite load (the assertion once read the days-view title),
@@ -88,10 +81,23 @@ function pickCells(): HTMLButtonElement[] {
   return Array.from(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']") ?? []);
 }
 
-/** Generic state poll over the same drill race: wait until `probe` holds. */
+/** Generic state poll over the same drill race: wait until `probe` holds
+ *  STABLY. A single true evaluation can be a mid-transition transient
+ *  (the leaving pane's cells vanish one tick before its container
+ *  unmounts), so the probe must hold across a 10 ms window before the
+ *  wait resolves — otherwise the raw asserts after it race the teardown
+ *  timers (observed on the hosted runner: pickCount read 24 right after
+ *  a "settled" poll). */
 async function waitForView(desc: string, probe: () => boolean): Promise<void> {
   const deadline = Date.now() + 2000;
-  while (!probe()) {
+  let holdSince: number | null = null;
+  for (;;) {
+    if (probe()) {
+      holdSince ??= Date.now();
+      if (Date.now() - holdSince >= 10) return;
+    } else {
+      holdSince = null;
+    }
     if (Date.now() > deadline) throw new Error(`view never reached: ${desc}`);
     await new Promise((r) => setTimeout(r, 10));
   }
@@ -191,7 +197,6 @@ describe("HkDateTimePicker", () => {
     mountPicker();
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
-    await settle();
     // Destination state = the months pane mounted AND the leaving days
     // pane gone — mid-transition both conditions half-hold.
     await waitForView("the months grid settled to one pane", () =>
@@ -213,7 +218,6 @@ describe("HkDateTimePicker", () => {
     expect(stage?.children.length).toBe(1); // the single days pane
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
-    await settle();
     // Destination state = months pane mounted AND the leaving days pane
     // gone — mid-transition the cell counts already read final while the
     // stage still carries both panes.
@@ -223,13 +227,11 @@ describe("HkDateTimePicker", () => {
       stage?.children.length === 1);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(picker()?.querySelector<HTMLElement>(".hk-dtp-stage")).toBe(stage);
-    expect(stage?.children.length).toBe(1); // one pane at a time after settle
     // The time row lives outside the transitioned pane and stays in every
     // view, so the picker's footprint never changes.
     expect(picker()?.querySelectorAll(".hk-dtp-time").length).toBe(1);
     expect(picker()?.querySelectorAll(".hk-dtp-step").length).toBe(2);
     picker()?.querySelector<HTMLButtonElement>(".hk-dtp-back")?.click();
-    await settle();
     await waitForView("the days grid settled to one pane", () =>
       dayCells().length === 42 && stage?.children.length === 1);
     expect(stage?.getAttribute("data-dir")).toBe("back");
@@ -239,7 +241,6 @@ describe("HkDateTimePicker", () => {
     mountPicker();
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
-    await settle();
     await waitForTitle(String(BASE.getFullYear()));
     const navs = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-nav");
     navs?.[1].click();
@@ -254,7 +255,6 @@ describe("HkDateTimePicker", () => {
     mountPicker();
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
-    await settle();
     // Destination state = months pane mounted AND the leaving days pane
     // gone — mid-transition the cell counts already read final while the
     // stage still carries both panes.

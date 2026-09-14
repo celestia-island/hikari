@@ -465,11 +465,16 @@ describe("HkMenu slots", () => {
     expect(level).toBeTruthy();
     expect(level.querySelector(".menu-header")!.textContent).toBe("Identity Block");
     expect(level.querySelector(".menu-footer")!.textContent).toBe("Footer Note");
-    // Ordering: header → rows → footer.
+    // Ordering: header → rows → footer, with the header/footer riding
+    // the standard .hk-menu-slot wrappers (their rows inherit the
+    // panel's inset; consumers' markup stays untouched inside).
     const children = Array.from(level.children).map((el) => el.className);
-    expect(children[0]).toContain("menu-header");
+    expect(children[0]).toContain("hk-menu-slot--head");
     expect(children[1]).toContain("hk-menu-row");
-    expect(children[children.length - 1]).toContain("menu-footer");
+    expect(children[children.length - 1]).toContain("hk-menu-slot--foot");
+    // The consumer's own markup lives untouched INSIDE the wrappers.
+    expect(level.querySelector(".hk-menu-slot--head")!.querySelector(".menu-header")).not.toBeNull();
+    expect(level.querySelector(".hk-menu-slot--foot")!.querySelector(".menu-footer")).not.toBeNull();
   });
 
   it("renders header/footer inside the mobile sheet too", async () => {
@@ -806,11 +811,13 @@ describe("HkMenu sidebar variant", () => {
     app.mount(container);
 
     // The identity block leads the same inline surface (drawer account
-    // menu grammar) — first child of the nav, before any row.
+    // menu grammar) — inside the standard slot wrapper, first child of
+    // the nav, before any row.
     const nav = container.querySelector(".hk-menu-sidebar");
     const identity = nav?.querySelector(".sidebar-identity");
     expect(identity).not.toBeNull();
-    expect(nav!.firstElementChild).toBe(identity);
+    expect(nav!.firstElementChild).toBe(nav!.querySelector(".hk-menu-slot--head"));
+    expect(nav!.querySelector(".hk-menu-slot--head")!.contains(identity!)).toBe(true);
   });
 
   it("renders the check column on rows that opt in (checked !== undefined)", async () => {

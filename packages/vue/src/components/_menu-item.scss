@@ -82,8 +82,28 @@
   .s-theme-item-btn,
   .s-popup-menu-item,
   .hk-popup-menu-item,
-  .hk-breadcrumb-dropdown-item {
+  .hk-breadcrumb-dropdown-item,
+  .hk-menu-divider {
     @include item-sheet-tokens;
+  }
+}
+
+/* Modal-hosted rows ride the sheet geometry too: unlike the three
+ * surfaces above, HkModal's docked sheet is the same .hk-modal-content
+ * element on every viewport (the docking happens in its own media
+ * query), so the token swap needs its own narrow scope instead of a
+ * class hook. Keep the breakpoint identical to the sheet family's. */
+@media (max-width: 767px) {
+  .hk-modal-content {
+    .hk-menu-row,
+    .hk-menu-action-item,
+    .hk-select-option,
+    .s-theme-item-btn,
+    .s-popup-menu-item,
+    .hk-popup-menu-item,
+    .hk-menu-divider {
+      @include item-sheet-tokens;
+    }
   }
 }
 
@@ -178,4 +198,21 @@
   white-space: nowrap;
   position: relative;
   top: var(--hk-menu-item-optical);
+}
+
+/* ── Divider row ──────────────────────────────────────────────────────
+ * A separator BETWEEN rows: one hairline, inset by the row grammar's
+ * own horizontal padding so it lines up with labels, with a row's
+ * worth of breathing room above and below. Reads the SAME tokens the
+ * item mixin declares, so registering the adopting class in the sheet
+ * context above widens the insets on sheets automatically. Never
+ * hand-roll a border-top divider inside a menu again (PlatformSwitcher
+ * shipped one that drifted). */
+@mixin divider {
+  flex: none;
+  height: 1px;
+  margin: var(--hk-menu-item-pad-y, 6px) auto;
+  width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
+  background: rgb(var(--color-border, 120 120 120) / 18%);
+  border: none;
 }

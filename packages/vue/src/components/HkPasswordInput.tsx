@@ -9,6 +9,7 @@ import {
 } from "vue";
 
 import { useI18n } from "../i18n/context";
+import { credentialAutocomplete } from "../runtime/credentialAutofill";
 
 import { onFrame, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
@@ -763,7 +764,7 @@ export default defineComponent({
             type="password"
             value={props.modelValue}
             name={props.name}
-            autocomplete={props.autocomplete ?? "off"}
+            autocomplete={props.autocomplete ?? credentialAutocomplete("password", "off")}
             data-1p-ignore
             data-lpignore="true"
             disabled={props.disabled}

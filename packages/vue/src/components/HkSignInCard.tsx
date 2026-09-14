@@ -1,3 +1,4 @@
+import { credentialAutocomplete } from "../runtime/credentialAutofill";
 import { defineComponent, ref } from "vue";
 import { useI18n } from "../i18n/context";
 
@@ -56,9 +57,11 @@ export const HkSignInCard = defineComponent({
     loading: { type: Boolean, default: false },
     /** Extra guard on top of the built-in empty-field check. */
     disabled: { type: Boolean, default: false },
-    /** autocomplete hints, override only when the flow demands it. */
-    usernameAutocomplete: { type: String, default: "username" },
-    passwordAutocomplete: { type: String, default: "current-password" },
+    /** Autocomplete hints. Undefined (the default) resolves through
+     * the runtime credential policy: browser = standard tokens, Tauri
+     * webview = suppression (no native credential chrome). */
+    usernameAutocomplete: { type: String, default: undefined },
+    passwordAutocomplete: { type: String, default: undefined },
     /** Submit label; defaults to the hikari::signIn.submit locale. */
     submitLabel: { type: String, default: undefined },
     /** Username-field type; switch to "email" for identifier logins. */
@@ -100,7 +103,7 @@ export const HkSignInCard = defineComponent({
                   onUpdate:modelValue={(v: string) => (username.value = v)}
                   type={props.usernameType}
                   name="signin-username"
-                  autocomplete={props.usernameAutocomplete}
+                  autocomplete={props.usernameAutocomplete ?? credentialAutocomplete("username", "username")}
                   placeholder={
                     props.usernamePlaceholder ??
                     t("hikari::signIn.usernamePlaceholder", "Username")
@@ -136,7 +139,7 @@ export const HkSignInCard = defineComponent({
                 modelValue={password.value}
                 onUpdate:modelValue={(v: string) => (password.value = v)}
                 name="signin-password"
-                autocomplete={props.passwordAutocomplete}
+                autocomplete={props.passwordAutocomplete ?? credentialAutocomplete("password", "current-password")}
                 placeholder={t("hikari::signIn.passwordPlaceholder", "Password")}
                 disabled={props.loading || props.disabled}
                 submitOnEnter={attemptSubmit}

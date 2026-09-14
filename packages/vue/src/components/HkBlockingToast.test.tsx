@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkBlockingToast from "./HkBlockingToast";
@@ -122,14 +122,22 @@ describe("HkBlockingToast", () => {
   });
 
   it("resolves false when timeoutMs expires", async () => {
+    // Virtual clock: a real 40ms timer races suite load on busy runners
+    // (the card teardown could lag past the resolution window). settle()'s
+    // own sleeps ride the same clock via advanceTimersByTimeAsync.
+    vi.useFakeTimers();
     mountHost();
     const gate = showBlockingToast("Times out", { timeoutMs: 40 });
-    await settle();
+    await vi.advanceTimersByTimeAsync(30);
+    await nextTick();
     expect(cards().length).toBe(1);
 
+    await vi.advanceTimersByTimeAsync(41);
     await expect(gate).resolves.toBe(false);
-    await settle();
+    await vi.advanceTimersByTimeAsync(30);
+    await nextTick();
     expect(cards().length).toBe(0);
+    vi.useRealTimers();
   });
 
   it("stacks multiple prompts that resolve independently", async () => {

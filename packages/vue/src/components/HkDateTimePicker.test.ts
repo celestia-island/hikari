@@ -214,7 +214,13 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
-    await waitForView("the months grid", () => pickCells().length === 12);
+    // Destination state = months pane mounted AND the leaving days pane
+    // gone — mid-transition the cell counts already read final while the
+    // stage still carries both panes.
+    await waitForView("the months grid settled to one pane", () =>
+      pickCells().length === 12 &&
+      picker()?.querySelectorAll(".hk-dtp-cell").length === 12 &&
+      stage?.children.length === 1);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(picker()?.querySelector<HTMLElement>(".hk-dtp-stage")).toBe(stage);
     expect(stage?.children.length).toBe(1); // one pane at a time after settle

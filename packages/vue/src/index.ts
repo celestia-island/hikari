@@ -380,6 +380,8 @@ export {
   type HAboutComponentVersion,
   type HAboutCredit,
   type HAboutLink,
+  type HAboutLinkFace,
+  type HAboutLinkIcon,
 } from "./components/HkAboutModal";
 export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
 export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";

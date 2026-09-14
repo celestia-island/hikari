@@ -83,6 +83,20 @@ async function waitForTitle(expected: string): Promise<void> {
   }
 }
 
+/** The pick cells of the drilled months view (exactly 12 once mounted). */
+function pickCells(): HTMLButtonElement[] {
+  return Array.from(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']") ?? []);
+}
+
+/** Generic state poll over the same drill race: wait until `probe` holds. */
+async function waitForView(desc: string, probe: () => boolean): Promise<void> {
+  const deadline = Date.now() + 2000;
+  while (!probe()) {
+    if (Date.now() > deadline) throw new Error(`view never reached: ${desc}`);
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
 function picker(): HTMLElement | null {
   return document.querySelector<HTMLElement>(".hk-dtp");
 }
@@ -178,6 +192,10 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
+    // Destination state = the months pane mounted AND the leaving days
+    // pane gone — mid-transition both conditions half-hold.
+    await waitForView("the months grid settled to one pane", () =>
+      pickCells().length === 12 && picker()?.querySelectorAll(".hk-dtp-cell").length === 12);
     const cells = Array.from(picker()?.querySelectorAll<HTMLElement>(".hk-dtp-cell") ?? [])
       .map((c) => c.textContent ?? "");
     const expected = Array.from({ length: 12 }, (_, i) =>
@@ -196,6 +214,7 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
+    await waitForView("the months grid", () => pickCells().length === 12);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(picker()?.querySelector<HTMLElement>(".hk-dtp-stage")).toBe(stage);
     expect(stage?.children.length).toBe(1); // one pane at a time after settle
@@ -205,8 +224,9 @@ describe("HkDateTimePicker", () => {
     expect(picker()?.querySelectorAll(".hk-dtp-step").length).toBe(2);
     picker()?.querySelector<HTMLButtonElement>(".hk-dtp-back")?.click();
     await settle();
+    await waitForView("the days grid settled to one pane", () =>
+      dayCells().length === 42 && stage?.children.length === 1);
     expect(stage?.getAttribute("data-dir")).toBe("back");
-    expect(dayCells().length).toBe(42);
   });
 
   it("shifts the year with the chevrons inside the month view", async () => {
@@ -229,7 +249,8 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
-    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']").length).toBe(12);
+    await waitForView("the months grid", () => pickCells().length === 12);
+    expect(pickCells().length).toBe(12);
     // The first step button is "Hour +"; bumping it changes only the time
     // part of the model, which must not yank the view back to days.
     const upBtn = picker()?.querySelector<HTMLButtonElement>(".hk-dtp-step-btn");

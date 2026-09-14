@@ -80,12 +80,21 @@ export default defineComponent({
      *  approaching (`approachEnd`). Read live, so runtime changes need
      *  no remount. */
     approachDistance: { type: Number, default: 160 },
+    /** Fade the viewport's bottom edge (CSS mask, --hk-scroll-dock-fade
+     *  tall, opacity 100 -> 0) while a dock slot is mounted, so mid-
+     *  scroll content dissolving at the dock's edge reads as
+     *  intentional instead of a hard clip. */
+    dockFade: { type: Boolean, default: true },
   },
   emits: { approachEnd: () => true },
   setup(props, { slots, expose, emit }) {
     const { t } = useI18n();
     const viewportRef = ref<HTMLElement>();
+    const hostRef = ref<HTMLElement>();
+    const dockTopRef = ref<HTMLElement>();
+    const dockBottomRef = ref<HTMLElement>();
     let ro: ResizeObserver | null = null;
+    let dockRO: ResizeObserver | null = null;
     let scheduled: AnimationHandle | null = null;
     // Overlay track/thumb machinery lives in the shared composable;
     // this component keeps overflow sensing, autoFollow, the aligner,
@@ -292,9 +301,39 @@ export default defineComponent({
       }
     }
 
+    /** Publish each mounted dock's measured height as a host-level custom
+     *  property (`--hk-scroll-dock-top` / `--hk-scroll-dock-bottom`). The
+     *  dock is a non-scrolling flex sibling, so the viewport already
+     *  shrinks by its height; the published var exists so a consumer's
+     *  content end-padding can clear the dock with breathing room
+     *  (padding-bottom: calc(var(--hk-scroll-dock-bottom, 0px) + 2rem))
+     *  instead of hand-rolled px guesses that go stale when the dock
+     *  reflows. ResizeObserver keeps it live across dock reflows. */
+    function publishDockSizes() {
+      const host = hostRef.value;
+      if (!host) return;
+      const top = dockTopRef.value;
+      const bottom = dockBottomRef.value;
+      host.style.setProperty(
+        "--hk-scroll-dock-top",
+        top ? `${Math.round(top.getBoundingClientRect().height)}px` : "0px",
+      );
+      host.style.setProperty(
+        "--hk-scroll-dock-bottom",
+        bottom ? `${Math.round(bottom.getBoundingClientRect().height)}px` : "0px",
+      );
+    }
+
     onMounted(() => {
       const vp = viewportRef.value;
       if (!vp) return;
+
+      if (dockTopRef.value || dockBottomRef.value) {
+        dockRO = new ResizeObserver(publishDockSizes);
+        if (dockTopRef.value) dockRO.observe(dockTopRef.value);
+        if (dockBottomRef.value) dockRO.observe(dockBottomRef.value);
+        publishDockSizes();
+      }
 
       if (props.scrollbar) {
         mountScrollbars();
@@ -340,6 +379,8 @@ export default defineComponent({
       settleHandle = null;
       ro?.disconnect();
       ro = null;
+      dockRO?.disconnect();
+      dockRO = null;
       followRO?.disconnect();
       followRO = null;
       alignRO?.disconnect();
@@ -431,13 +472,34 @@ export default defineComponent({
       if (alignCenter()) {
         content = <div ref={setAligner} class="hk-scroll-container-aligner">{content}</div>;
       }
+      // Anchored dock slots: a dock renders as a NON-scrolling flex
+      // sibling of the viewport — it stays pinned to its edge, never
+      // scrolls, and occupies layout space (the flex: 1 viewport shrinks
+      // by the dock's height). The container measures each mounted dock
+      // and publishes --hk-scroll-dock-top/bottom so consumers can size
+      // their content end-padding against the dock without guessing px.
+      const dockTopSlot = slots.dockTop;
+      const dockBottomSlot = slots.dockBottom;
       return (
         <Tag
+          ref={hostRef}
           class="hk-scroll-container"
           data-axis={props.axis}
           data-align={alignCenter() ? "center" : undefined}
           data-fade={props.fade ? "true" : undefined}
+          data-dock-fade={
+            props.dockFade && dockBottomSlot
+              ? "bottom"
+              : props.dockFade && dockTopSlot
+                ? "top"
+                : undefined
+          }
         >
+          {dockTopSlot && (
+            <div ref={dockTopRef} class="hk-scroll-dock" data-side="top">
+              {dockTopSlot()}
+            </div>
+          )}
           {/* Scroll-pin host marker: the viewport participates in the pin
               contract with its live axis; generic containers declare no
               standard padding, so pins inside resolve their strategy from
@@ -449,6 +511,11 @@ export default defineComponent({
           >
             {content}
           </div>
+          {dockBottomSlot && (
+            <div ref={dockBottomRef} class="hk-scroll-dock" data-side="bottom">
+              {dockBottomSlot()}
+            </div>
+          )}
           {showAutoTag.value && (
             <span class="hk-scroll-container-autotag" aria-hidden="true">{t("hikari::scrollContainer.auto", "Auto")}</span>
           )}

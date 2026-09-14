@@ -393,7 +393,7 @@ describe("HkDatePicker", () => {
     await nextTick();
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
     await settle();
-    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2026");
+    await waitForTitle("2026");
     const navs = () => panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-nav");
     navs()?.[1].click();
     await nextTick();
@@ -413,23 +413,36 @@ describe("HkDatePicker", () => {
     const stage = panel()?.querySelector<HTMLElement>(".hk-dp-stage");
     expect(stage).not.toBeNull();
     expect(stage?.children.length).toBe(1); // the single days pane
+    const pickCount = () =>
+      stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length ?? 0;
+    // Destination state = the entering pane mounted AND the leaving pane
+    // gone; mid-transition both conditions half-hold.
+    const settledDrill = (days: boolean) => (): boolean =>
+      days
+        ? stage?.children.length === 1 &&
+          stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length === 42
+        : pickCount() === 12 && stage?.children.length === 1;
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
     await settle();
+    await waitForView("the months grid settled to one pane", settledDrill(false));
     expect(panel()?.querySelector<HTMLElement>(".hk-dp-stage")).toBe(stage);
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
     expect(stage?.children.length).toBe(1); // one pane at a time after settle
-    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    expect(pickCount()).toBe(12);
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
     await settle();
+    await waitForView("the years grid settled to one pane", settledDrill(false));
     expect(stage?.getAttribute("data-dir")).toBe("fwd");
-    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    expect(pickCount()).toBe(12);
     // back steps down the stack one level at a time: years → months → days.
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
     await settle();
+    await waitForView("the months grid again, one pane", settledDrill(false));
     expect(stage?.getAttribute("data-dir")).toBe("back");
-    expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']").length).toBe(12);
+    expect(pickCount()).toBe(12);
     panel()?.querySelector<HTMLButtonElement>(".hk-dp-back")?.click();
     await settle();
+    await waitForView("the days grid settled to one pane", settledDrill(true));
     expect(stage?.getAttribute("data-dir")).toBe("back");
     expect(stage?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell:not([data-variant])").length).toBe(42);
   });

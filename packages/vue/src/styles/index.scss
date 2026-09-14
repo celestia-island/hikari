@@ -21,6 +21,7 @@
 // import them granularly only for legacy compositions. The previous
 // version of this file re-exported packages/theme + packages/components
 // through paths that escape the npm package and did not compile.
+@use "./reset.scss";
 @use "./theme/channels.scss";
 @use "./theme/scale.scss";
 @use "./admin-tokens.scss";

@@ -8,6 +8,29 @@ const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
 const originalWidth = window.innerWidth;
 
+/** The fixed model the suite mounts with. Every expected year/month/day
+ *  in the assertions derives from THIS constant — never from a bare
+ *  literal, and never from Date.now() — so the file cannot rot when a
+ *  calendar year rolls over. */
+const BASE = new Date(2026, 7, 16, 9, 30);
+
+/** Local-ISO day (`YYYY-MM-DD`) — the native date input's wire format. */
+function isoDay(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Local-ISO minute (`YYYY-MM-DDTHH:mm`) — datetime-local's wire format. */
+function isoMinute(d: Date): string {
+  return `${isoDay(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** A day inside the mounted (BASE) month, optionally with a clock time. */
+function dayOf(day: number, hours?: number, minutes?: number): Date {
+  return hours === undefined
+    ? new Date(BASE.getFullYear(), BASE.getMonth(), day)
+    : new Date(BASE.getFullYear(), BASE.getMonth(), day, hours, minutes ?? 0);
+}
+
 interface PickerHarness {
   container: HTMLElement;
   emitted: Date[];
@@ -18,7 +41,7 @@ function mountPicker(props: Record<string, unknown> = {}): PickerHarness {
   document.body.appendChild(container);
   containers.push(container);
 
-  const value = ref(props.modelValue as Date ?? new Date(2026, 7, 16, 9, 30));
+  const value = ref(props.modelValue as Date ?? BASE);
   const emitted: Date[] = [];
   const Wrapper = defineComponent({
     setup() {
@@ -42,6 +65,22 @@ async function settle() {
   await nextTick();
   await new Promise((r) => setTimeout(r, 20));
   await nextTick();
+}
+
+/** Poll until the drilled view's title button reads `expected`. The drill
+ *  transition is frame/timeout based and a fixed 20 ms settle raced it
+ *  under full-suite load (the assertion once read the days-view title),
+ *  so the view STATE — not a sleep — is what this waits on. */
+async function waitForTitle(expected: string): Promise<void> {
+  const deadline = Date.now() + 2000;
+  for (;;) {
+    const title = picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent ?? "";
+    if (title === expected) return;
+    if (Date.now() > deadline) {
+      throw new Error(`title never became ${JSON.stringify(expected)} (last: ${JSON.stringify(title)})`);
+    }
+    await new Promise((r) => setTimeout(r, 10));
+  }
 }
 
 function picker(): HTMLElement | null {
@@ -124,7 +163,9 @@ describe("HkDateTimePicker", () => {
 
   it("re-derives month and weekday labels after a locale switch", async () => {
     mountPicker();
-    const zhMonth = new Intl.DateTimeFormat("zh-Hans", { month: "long" }).format(new Date(2026, 7, 1));
+    const zhMonth = new Intl.DateTimeFormat("zh-Hans", { month: "long" }).format(
+      new Date(BASE.getFullYear(), BASE.getMonth(), 1),
+    );
     await setLocale("zh-Hans");
     await nextTick();
     const title = picker()?.querySelector<HTMLElement>(".hk-dtp-title-btn")?.textContent ?? "";
@@ -173,14 +214,14 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
-    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2026");
+    await waitForTitle(String(BASE.getFullYear()));
     const navs = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-nav");
     navs?.[1].click();
     await nextTick();
-    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2027");
+    await waitForTitle(String(BASE.getFullYear() + 1));
     navs?.[0].click();
     await nextTick();
-    expect(picker()?.querySelector<HTMLButtonElement>(".hk-dtp-title-btn")?.textContent).toBe("2026");
+    await waitForTitle(String(BASE.getFullYear()));
   });
 
   it("time stepper bumps keep the drilled month view instead of snapping back", async () => {
@@ -205,14 +246,14 @@ describe("HkDateTimePicker", () => {
     expect(p.emitted.length).toBe(1);
     const d = p.emitted[0];
     expect(d instanceof Date).toBe(true);
-    expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([2026, 7, 20]);
+    expect([d.getFullYear(), d.getMonth(), d.getDate()]).toEqual([BASE.getFullYear(), BASE.getMonth(), 20]);
     expect([d.getHours(), d.getMinutes()]).toEqual([9, 30]);
   });
 
   it("disables days outside the inclusive min/max bounds", () => {
     mountPicker({
-      min: new Date(2026, 7, 10, 0, 0),
-      max: new Date(2026, 7, 20, 23, 59),
+      min: new Date(BASE.getFullYear(), BASE.getMonth(), 10, 0, 0),
+      max: new Date(BASE.getFullYear(), BASE.getMonth(), 20, 23, 59),
     });
     const byDay = new Map(
       dayCells().filter((c) => !c.classList.contains("is-out")).map((c) => [c.textContent ?? "", c]),
@@ -224,14 +265,14 @@ describe("HkDateTimePicker", () => {
   });
 
   it("blocked days never emit an update when clicked", async () => {
-    const p = mountPicker({ max: new Date(2026, 7, 20, 23, 59) });
+    const p = mountPicker({ max: dayOf(20, 23, 59) });
     clickDay(25);
     await nextTick();
     expect(p.emitted).toEqual([]);
   });
 
   it("marks days present in markedDays with a dot", () => {
-    mountPicker({ markedDays: new Set(["2026-08-18"]) });
+    mountPicker({ markedDays: new Set([isoDay(dayOf(18))]) });
     const marked = Array.from(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell") ?? [])
       .filter((c) => c.querySelector(".hk-dtp-cell-dot"));
     expect(marked.length).toBe(1);
@@ -257,7 +298,7 @@ describe("HkDateTimePicker", () => {
     const input = nativeInput(p.container);
     expect(input).not.toBeNull();
     expect(input?.type).toBe("datetime-local");
-    expect(input?.value).toBe("2026-08-16T09:30");
+    expect(input?.value).toBe(isoMinute(BASE));
     expect(p.container.querySelector(".hk-dtp")).toBeNull();
     expect(p.container.querySelector(".hk-dtp-grid")).toBeNull();
   });
@@ -267,18 +308,15 @@ describe("HkDateTimePicker", () => {
     const p = mountPicker({ showTime: false });
     const input = nativeInput(p.container);
     expect(input?.type).toBe("date");
-    expect(input?.value).toBe("2026-08-16");
+    expect(input?.value).toBe(isoDay(BASE));
   });
 
   it("passes min/max through to the native input in its wire format", () => {
     useMobileViewport();
-    const p = mountPicker({
-      min: new Date(2026, 7, 10, 8, 0),
-      max: new Date(2026, 7, 20, 18, 30),
-    });
+    const p = mountPicker({ min: dayOf(10, 8, 0), max: dayOf(20, 18, 30) });
     const input = nativeInput(p.container);
-    expect(input?.min).toBe("2026-08-10T08:00");
-    expect(input?.max).toBe("2026-08-20T18:30");
+    expect(input?.min).toBe(isoMinute(dayOf(10, 8, 0)));
+    expect(input?.max).toBe(isoMinute(dayOf(20, 18, 30)));
   });
 
   it("keeps the custom calendar on mobile when nativeOnMobile is false", () => {
@@ -295,33 +333,34 @@ describe("HkDateTimePicker", () => {
     useMobileViewport();
     const p = mountPicker();
     const input = nativeInput(p.container);
-    input!.value = "2026-08-20T14:05";
+    input!.value = isoMinute(dayOf(20, 14, 5));
     input!.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(p.emitted.length).toBe(1);
-    expect(p.emitted[0].getTime()).toBe(new Date(2026, 7, 20, 14, 5).getTime());
-    expect(input?.value).toBe("2026-08-20T14:05");
+    expect(p.emitted[0].getTime()).toBe(dayOf(20, 14, 5).getTime());
+    expect(input?.value).toBe(isoMinute(dayOf(20, 14, 5)));
   });
 
   it("native date edits preserve the clock time when showTime is false", async () => {
     useMobileViewport();
     const p = mountPicker({ showTime: false });
     const input = nativeInput(p.container);
-    input!.value = "2026-08-20";
+    input!.value = isoDay(dayOf(20));
     input!.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
-    expect(p.emitted[0].getTime()).toBe(new Date(2026, 7, 20, 9, 30).getTime());
+    expect(p.emitted[0].getTime()).toBe(dayOf(20, 9, 30).getTime());
   });
 
   it("native input edits outside the bounds are rejected and re-synced", async () => {
     useMobileViewport();
-    const p = mountPicker({ max: new Date(2026, 7, 20, 23, 59) });
+    const p = mountPicker({ max: dayOf(20, 23, 59) });
     const input = nativeInput(p.container);
-    input!.value = "2026-09-01T10:00";
+    // Next month, past the max bound.
+    input!.value = isoMinute(new Date(BASE.getFullYear(), BASE.getMonth() + 1, 1, 10, 0));
     input!.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(p.emitted).toEqual([]);
-    expect(input?.value).toBe("2026-08-16T09:30");
+    expect(input?.value).toBe(isoMinute(BASE));
   });
 
   it("clearing the native input falls back to the model value", async () => {
@@ -332,7 +371,7 @@ describe("HkDateTimePicker", () => {
     input!.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(p.emitted).toEqual([]);
-    expect(input?.value).toBe("2026-08-16T09:30");
+    expect(input?.value).toBe(isoMinute(BASE));
   });
 
   it("native input replaces even the popup chrome on mobile", () => {

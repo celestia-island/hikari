@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { installHistorySafetyNet, sanitizeHistoryUrl } from "./historySafetyNet";
+import { getHkRuntimeEntry } from "./registry";
 
 /**
  * The field bug this net closes (chest #754 lineage): some producer
@@ -135,5 +136,29 @@ describe("installHistorySafetyNet", () => {
     expect(seen).toEqual(["https://evil.example/a", "https://evil.example/b"]);
     expect(sessionStorage.getItem("hikari:historyNet")).toBeNull();
     vi.restoreAllMocks();
+  });
+
+  it("keeps the first install's fold target when a HALF-overwritten net re-patches", () => {
+    // The recorded half-self-heal edge: pushState keeps our patch while an
+    // external lib restores replaceState to native. A re-install with new
+    // options must NOT silently adopt them for the re-patched method —
+    // the still-installed first capture wins for behavior AND meta, or a
+    // per-method option split ships to production unnoticed.
+    installHistorySafetyNet({ fallback: "/" });
+    // Another library restores replaceState (pushState stays ours).
+    History.prototype.replaceState = nativeReplace;
+    // Re-install with a different fallback: the pushState marker makes
+    // this a no-op claim, so "/" must stay the active fold target.
+    installHistorySafetyNet({ fallback: "/landing" });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    history.replaceState(null, "", "https://evil.example/x");
+    // Folded to the FIRST install's "/" — never the re-install's
+    // "/landing" (which, being same-origin, would have navigated).
+    expect(window.location.pathname).toBe("/");
+    expect(sessionStorage.getItem("hikari:historyNet")).toContain("evil.example/x");
+    // ...and the registry meta reports the option set that is actually
+    // wired into the prototype, not the newest call's.
+    expect(getHkRuntimeEntry("historySafetyNet")?.meta?.fallback).toBe("/");
+    warn.mockRestore();
   });
 });

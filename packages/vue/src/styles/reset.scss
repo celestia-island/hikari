@@ -1,0 +1,60 @@
+/* ── Host reset (L2) ────────────────────────────────────────────────────
+ * The base normalization every hikari host needs and none of them should
+ * have to hand-roll. Component sheets self-declare their critical box
+ * geometry (`.hk-input-element`'s border-box, borders, appearance), but
+ * the wrappers and the native controls they contain still inherit the
+ * UA's default typography chain — measured 2026-09-14 in the flasher on
+ * hikari 0.49: without a host reset the sign-in fields render ~100px
+ * (min-height 2.5rem plus UA line-height/font inflation of the in-flow
+ * content), with one exactly ~40px. The chest webui historically rode
+ * UnoCSS with preflight planned around it; hosts without a utility
+ * layer had nothing. This sheet is that nothing: preflight-equivalent,
+ * token-aware, and part of the canonical composition (index.scss).
+ *
+ * Order: FIRST in the composition. It only ever lowers UA defaults;
+ * component sheets and host styles override it by specificity/order. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: rgb(var(--color-border, 120 120 120) / 40%);
+}
+
+html {
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif);
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  cursor: pointer;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}

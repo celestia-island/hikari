@@ -11,11 +11,13 @@ import "./HkAboutModal.scss";
  *
  * `chip` is the dialog's original face — a ghost tag. `plain` is bare text:
  * no frame, no underline, so the hover colour shift is the whole
- * affordance. Chosen per link, because one dialog can want both (the
- * credits names / URLs / filings read as sentence text, the licenses stay
- * tags).
+ * affordance. `accent` is also bare text, but tinted in the primary colour
+ * so the link visibly stands out of the sentence it sits in — the "this is
+ * clickable" cue (user direction 2026-09-15). Chosen per link, because one
+ * dialog can want both (the credits names / URLs / filings read as sentence
+ * text, the licenses stay tags).
  */
-export type HAboutLinkFace = "chip" | "plain";
+export type HAboutLinkFace = "chip" | "plain" | "accent";
 
 /** Leading icon a link can carry; an icon-only link shows it alone. */
 export type HAboutLinkIcon = "github";
@@ -90,8 +92,8 @@ export interface HAboutComponentVersion {
  * bordered spec card holding the software-component versions, and the
  * link rows — licenses, external links and legal filings. Every link opens
  * in a new tab and renders in the face its entry asks for: the ghost chip,
- * or bare text (`plain`) for names / URLs / filings that should read as
- * ordinary sentence text. Every branding prop is optional — the modal
+ * or bare text (`plain` / tinted `accent`) for names / URLs / filings that
+ * should read as ordinary sentence text. Every branding prop is optional — the modal
  * degrades to the plain identity card when none are given.
  */
 export const HkAboutModal = defineComponent({
@@ -111,7 +113,8 @@ export const HkAboutModal = defineComponent({
     /**
      * Credits sentence, assembled from text runs and linked names
      * (e.g. 来自 <Celestia Island>，由 <伊欧> 主创). Each name renders in the
-     * face its entry asks for — `chip`, or bare text with `plain`.
+     * face its entry asks for — `chip`, bare text with `plain`, or bare
+     * text tinted in the primary colour with `accent`.
      */
     credits: { type: Array as PropType<HAboutCredit[]>, default: () => [] },
     /** License links (e.g. SySL-1.0 / BUSL-1.1), rendered centered. */

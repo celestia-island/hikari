@@ -95,9 +95,15 @@ let historyNetRuntime: ReturnType<typeof reportHkRuntime> | null = null;
  *  our patch is still on the prototype skips re-patching (the `continue`
  *  below), so the first install's fallback/evidence stay in effect — the
  *  registry meta must report THOSE, not the newest call's options, or it
- *  would misreport the active fold target. */
+ *  would misreport the active fold target. The re-patch closure reads
+ *  THESE module captures, never the invocation locals: when a net is
+ *  HALF overwritten (say replaceState restored to native while pushState
+ *  is still ours) a re-install patches the foreign method with the
+ *  still-active capture, so behavior and meta can never diverge into
+ *  per-method options. */
 let activeFallback = "/";
 let activeEvidenceKey: string | false = DEFAULT_EVIDENCE_KEY;
+let activeOptions: HistorySafetyNetOptions = {};
 function ensureHistoryNetRuntime() {
   return (historyNetRuntime ??= reportHkRuntime("historySafetyNet", {
     kind: "hook",
@@ -120,6 +126,7 @@ export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): 
     // active; a no-op re-install keeps the first install's capture.
     activeFallback = fallback;
     activeEvidenceKey = evidenceKey;
+    activeOptions = options;
   }
   ensureHistoryNetRuntime().setMeta({ fallback: activeFallback, evidenceKey: activeEvidenceKey === false ? "off" : activeEvidenceKey });
   ensureHistoryNetRuntime().pulse();
@@ -133,13 +140,16 @@ export function installHistorySafetyNet(options: HistorySafetyNetOptions = {}): 
     }
     const native = current as (this: History, state: unknown, title: string, url?: string | URL | null) => unknown;
     if (typeof native !== "function") continue;
+    // The closure reads the ACTIVE capture, never this call's locals —
+    // the half-overwrite path above re-patches a foreign method while
+    // the first install's options stay in effect.
     const patched = function (this: History, state: unknown, title: string, url?: string | URL | null) {
-      const safe = sanitizeHistoryUrl(url, fallback);
+      const safe = sanitizeHistoryUrl(url, activeFallback);
       if (safe !== url) {
-        const info: HistoryCoercion = { method, raw: String(url ?? ""), foldedTo: fallback };
+        const info: HistoryCoercion = { method, raw: String(url ?? ""), foldedTo: activeFallback };
         coercions += 1;
         historyNetRuntime?.pulse({ coercions });
-        reportCoercion(info, evidenceKey, options);
+        reportCoercion(info, activeEvidenceKey, activeOptions);
       }
       return native.call(this, state as never, title, safe as never);
     };

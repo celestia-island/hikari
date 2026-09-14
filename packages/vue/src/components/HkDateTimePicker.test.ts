@@ -255,15 +255,22 @@ describe("HkDateTimePicker", () => {
     const monthBtn = picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-title-btn")[0];
     monthBtn?.click();
     await settle();
-    await waitForView("the months grid", () => pickCells().length === 12);
+    // Destination state = months pane mounted AND the leaving days pane
+    // gone — mid-transition the cell counts already read final while the
+    // stage still carries both panes.
+    await waitForView("the months grid settled to one pane", () =>
+      pickCells().length === 12 &&
+      picker()?.querySelectorAll(".hk-dtp-cell:not([data-variant])").length === 0);
     expect(pickCells().length).toBe(12);
     // The first step button is "Hour +"; bumping it changes only the time
     // part of the model, which must not yank the view back to days.
     const upBtn = picker()?.querySelector<HTMLButtonElement>(".hk-dtp-step-btn");
     upBtn?.click();
     await nextTick();
-    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell[data-variant='pick']").length).toBe(12);
-    expect(picker()?.querySelectorAll<HTMLButtonElement>(".hk-dtp-cell:not([data-variant])").length).toBe(0);
+    await waitForView("still the settled months grid after the bump", () =>
+      pickCells().length === 12 &&
+      picker()?.querySelectorAll(".hk-dtp-cell:not([data-variant])").length === 0);
+    expect(picker()?.querySelectorAll(".hk-dtp-cell:not([data-variant])").length).toBe(0);
   });
 
   it("selecting a day emits a new Date preserving the time of day", async () => {

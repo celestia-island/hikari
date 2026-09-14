@@ -384,7 +384,12 @@ describe("HkDatePicker", () => {
     pickCells().find((c) => c.textContent === "2027")?.click();
     // Picking a year lands on the months grid of that year.
     await waitForTitle("2027");
-    pickCells()[6]?.click(); // July
+    // Click July BY LABEL: a positional click would hit whatever the
+    // grid shows if the view drifted (hosted CI once clicked the 2022
+    // year cell here and the title read "August 2022").
+    await waitForView("the July cell in the months grid", () =>
+      pickCells().some((c) => c.textContent === "Jul"));
+    pickCells().find((c) => c.textContent === "Jul")?.click();
     // ...and picking a month lands back on the days grid.
     await waitForView("the days grid", () => panel()?.querySelectorAll(".hk-dp-cell").length === 42);
     const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });

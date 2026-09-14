@@ -48,6 +48,43 @@ async function settle() {
   await nextTick();
 }
 
+/** Poll until the drilled view's title button reads `expected`. The drill
+ *  transition is frame/timeout based and a fixed 20 ms settle raced it on
+ *  the CI runner (the year-grid test once read the previous view's title),
+ *  so the view STATE — not a sleep — is what this waits on. */
+function titleText(): string {
+  return panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent ?? "";
+}
+
+async function waitForTitle(expected: string): Promise<void> {
+  const deadline = Date.now() + 2000;
+  for (;;) {
+    if (titleText() === expected) return;
+    if (Date.now() > deadline) {
+      throw new Error(`title never became ${JSON.stringify(expected)} (last: ${JSON.stringify(titleText())})`);
+    }
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
+/** Generic state poll over the same drill race: wait until `probe` holds. */
+async function waitForView(desc: string, probe: () => boolean): Promise<void> {
+  const deadline = Date.now() + 2000;
+  while (!probe()) {
+    if (Date.now() > deadline) throw new Error(`view never reached: ${desc}`);
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
+function titleBtn(): HTMLButtonElement | null | undefined {
+  return panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn");
+}
+
+/** The pick cells of the CURRENT view (months or years, both carry 12). */
+function pickCells(): HTMLButtonElement[] {
+  return Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
+}
+
 function openViaEnter(harness: PickerHarness) {
   const trigger = harness.container.querySelector<HTMLElement>(".hk-dp-trigger");
   trigger?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
@@ -326,23 +363,24 @@ describe("HkDatePicker", () => {
     const p = mountPicker({ modelValue: "2026-08-16" });
     openViaEnter(p);
     await nextTick();
-    // days → months
-    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
-    // months → years (the year button is the months-view title)
-    panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.click();
-    await settle();
-    const yearCells = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
-    expect(yearCells.length).toBe(12);
-    // 2027 sits inside the 2016–2027 block of the 2026 view year.
-    const t2027 = yearCells.find((c) => c.textContent === "2027");
-    t2027?.click();
-    await settle();
-    expect(panel()?.querySelector<HTMLButtonElement>(".hk-dp-title-btn")?.textContent).toBe("2027");
-    const months = Array.from(panel()?.querySelectorAll<HTMLButtonElement>(".hk-dp-cell[data-variant='pick']") ?? []);
-    months[6]?.click(); // July
-    await settle();
-    expect(panel()?.querySelectorAll(".hk-dp-cell").length).toBe(42);
+    // Every drill below waits for the DESTINATION view's state, not a
+    // fixed settle: the transition is frame/timeout based and the CI
+    // runner raced both the days→months click (the second click landed
+    // mid-transition and was swallowed) and the months→years read.
+    // days → months: the title button becomes the view year.
+    titleBtn()?.click();
+    await waitForView("the months grid of 2026", () => titleText() === "2026");
+    // months → years (the year button is the months-view title): the
+    // 2016–2027 block of the 2026 view year holds a 2027 cell.
+    titleBtn()?.click();
+    await waitForView("the year grid showing 2027", () =>
+      pickCells().some((c) => c.textContent === "2027"));
+    pickCells().find((c) => c.textContent === "2027")?.click();
+    // Picking a year lands on the months grid of that year.
+    await waitForTitle("2027");
+    pickCells()[6]?.click(); // July
+    // ...and picking a month lands back on the days grid.
+    await waitForView("the days grid", () => panel()?.querySelectorAll(".hk-dp-cell").length === 42);
     const fmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "long" });
     expect(panel()?.querySelector<HTMLElement>(".hk-dp-title")?.textContent).toContain(
       fmt.format(new Date(2027, 6, 1)),

@@ -31,7 +31,7 @@
   // handle hasn't resolved yet — zIndex briefly starts at 0).
   z-index: 0;
   background: var(--hk-modal-overlay-bg, rgba(0, 0, 0, 0.45));
-  backdrop-filter: var(--hk-modal-overlay-blur, blur(6px));
+  backdrop-filter: var(--hk-modal-overlay-blur, blur(3px));
   pointer-events: auto;
 }
 
@@ -40,10 +40,10 @@
 // viewport in place, never sliding or scaling with the content frame.
 @include sf.scrim-fade(
   "hk-modal-overlay",
-  $enter-duration: var(--hk-modal-duration, 0.3s),
-  $enter-ease: var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-  $leave-duration: var(--hk-modal-duration, 0.3s),
-  $leave-ease: var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1))
+  $enter-duration: var(--hk-modal-duration, 0.42s),
+  $enter-ease: var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+  $leave-duration: var(--hk-modal-duration, 0.42s),
+  $leave-ease: var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1))
 );
 
 // ------
@@ -72,7 +72,7 @@
     height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
     max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
-  backdrop-filter: var(--hk-modal-blur, blur(12px));
+  backdrop-filter: var(--hk-modal-blur, none);
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
   border-radius: var(--hk-modal-radius, var(--radius-lg, 12px));
   box-shadow:
@@ -109,12 +109,12 @@
 @media (min-width: 768px) {
   .hk-modal-content-enter-active {
     transition:
-      opacity var(--hk-modal-duration, 0.3s)
-        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-      transform var(--hk-modal-duration, 0.3s)
-        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-      clip-path var(--hk-modal-duration, 0.3s)
-        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      opacity var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      transform var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1)),
+      clip-path var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
     will-change: transform, opacity, clip-path;
   }
 
@@ -125,16 +125,11 @@
   // (user report 2026-09-14).
   .hk-modal-content-leave-active {
     transition:
-      opacity var(--hk-modal-duration, 0.25s)
-        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1)),
-      transform var(--hk-modal-duration, 0.25s)
-        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+      opacity var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
+      transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
     will-change: transform, opacity;
-    // Collapse toward the frame's own top edge: the height shrink reads as
-    // the box folding upward (the unveil's reverse), not as a centered
-    // shrink — and the top-of-content (header) keeps its anchor while the
-    // rest eases down and out with the fade.
-    transform-origin: 50% 0;
   }
 
   .hk-modal-content-enter-from {
@@ -153,12 +148,12 @@
 
   .hk-modal-content-leave-from {
     opacity: 1;
-    transform: translate(-50%, -50%) scaleY(1);
+    transform: translate(-50%, -50%);
   }
 
   .hk-modal-content-leave-to {
     opacity: 0;
-    transform: translate(-50%, -50%) scaleY(0.9);
+    transform: translate(-50%, -50%) translateY(5%);
   }
 }
 
@@ -445,17 +440,17 @@
   // Sheet slide reveal replaces the height-clip reveal on mobile.
   .hk-modal-content-enter-active {
     transition:
-      opacity var(--hk-modal-duration, 0.3s) ease-out,
-      transform var(--hk-modal-duration, 0.3s)
-        var(--hk-modal-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+      opacity var(--hk-modal-duration, 0.42s) ease-out,
+      transform var(--hk-modal-duration, 0.42s)
+        var(--hk-modal-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
     will-change: transform, opacity;
   }
 
   .hk-modal-content-leave-active {
     transition:
-      opacity var(--hk-modal-duration, 0.25s) ease-in,
-      transform var(--hk-modal-duration, 0.25s)
-        var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
+      opacity var(--hk-modal-duration, 0.32s) ease-in,
+      transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
     will-change: transform, opacity;
   }
 
@@ -474,13 +469,8 @@
     padding: 0.625rem 1rem 0.625rem;
   }
 
-  // The gutter contract retunes here too — the covers and the inner's
-  // padding both consume the vars, so one override moves both.
-  .hk-modal-body {
-    --hk-scroll-pad-top: 1rem;
-    --hk-scroll-pad-right: 1rem;
-    --hk-scroll-pad-bottom: 1rem;
-    --hk-scroll-pad-left: 1rem;
+  .hk-modal-body-inner {
+    padding: 1rem;
   }
 
   // Lift the desktop 70vh body cap on phones: with a docked sheet the cap
@@ -491,6 +481,13 @@
   // scrolls, and the footer always sits on the sheet's bottom edge.
   .hk-modal-body {
     max-height: none;
+
+    // The gutter contract retunes here too — the covers and the inner's
+    // padding both consume the vars, so one override moves both.
+    --hk-scroll-pad-top: 1rem;
+    --hk-scroll-pad-right: 1rem;
+    --hk-scroll-pad-bottom: 1rem;
+    --hk-scroll-pad-left: 1rem;
   }
 
   .hk-modal-footer {

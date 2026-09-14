@@ -1,3 +1,4 @@
+export { credentialAutocomplete } from "./credentialAutofill";
 export * from "./animationBus";
 export * from "./cronBus";
 export * from "./intervalBus";

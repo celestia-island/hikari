@@ -30,6 +30,9 @@ import {
 } from "./filePicker";
 import HButton from "./HkButton";
 import HModal from "./HkModal";
+// The list head rides the scroll-pin contract; its stylesheet ships the
+// pin rules.
+import "./HkScrollPin.scss";
 import HSelect, { type HkSelectOption } from "./HkSelect";
 import HSpinner from "./HkSpinner";
 import "./HkFileBrowserDialog.scss";
@@ -657,7 +660,16 @@ export default defineComponent({
     function renderList(rows: RemoteFileEntry[]) {
       return (
         <div class="hk-file-browser-list">
-          <div class="hk-file-browser-list-head" aria-hidden="true">
+          {/* Scroll pin (static "offset"): rides the scroll host's gutter
+              contract so the pinned head keeps the body's top whitespace.
+              Under a host without the contract it degrades to a plain
+              flush sticky (the vars resolve to 0). */}
+          <div
+            class="hk-file-browser-list-head hk-scroll-pin"
+            data-side="top"
+            data-strategy="offset"
+            aria-hidden="true"
+          >
             <span class="hk-file-browser-col-name">
               {t("hikari::filePicker.name", "Name")}
             </span>

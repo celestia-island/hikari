@@ -1,0 +1,109 @@
+// HkScrollPin.scss
+// The pinned-content contract between a scroll host and its pins.
+//
+// HOST declares (on the scrolling viewport, class .hk-scroll-pin-host):
+//   --hk-scroll-pad-top/right/bottom/left  the padding that pinned
+//     children must keep between themselves and the host's edge;
+//   data-scroll-axis="vertical|horizontal|both"  which sides may pin;
+//   data-pad-cover  present when the host paints its gutters itself
+//     (HkModal) — pins may simply stop at the gutter line ("offset").
+// PIN declares: data-side, data-strategy (resolved by the component).
+//
+// The 2026-09-14 bug this standardizes away: a sticky child pinned
+// inside a host whose padding lives on an in-flow wrapper loses the
+// padding the moment it pins (CSS sticky offsets resolve against the
+// scrollport, never against a wrapper's padding), so the pinned element
+// sat flush against the window chrome.
+
+.hk-scroll-pin {
+  position: sticky;
+  z-index: var(--hk-scroll-pin-z, 10);
+  // Floating-chrome surface: near-opaque surface tint + blur so scrolled
+  // content never bleeds through the pinned row (same look the step-flow
+  // sticky header introduced; hosts retune through --hk-scroll-pin-bg).
+  background: var(
+    --hk-scroll-pin-bg,
+    color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
+  );
+  backdrop-filter: var(--hk-scroll-pin-blur, blur(6px));
+}
+
+// ------
+// "offset" — the host paints its gutters; the pin stops at the gutter
+// line. Works for pins anywhere in the flow (no margin games), and the
+// host's cover hides scrolled content while it passes under the gutter.
+// ------
+
+.hk-scroll-pin[data-strategy="offset"][data-side="top"] {
+  top: var(--hk-scroll-pad-top, 0px);
+}
+
+.hk-scroll-pin[data-strategy="offset"][data-side="bottom"] {
+  bottom: var(--hk-scroll-pad-bottom, 0px);
+}
+
+.hk-scroll-pin[data-strategy="offset"][data-side="left"] {
+  left: var(--hk-scroll-pad-left, 0px);
+}
+
+.hk-scroll-pin[data-strategy="offset"][data-side="right"] {
+  right: var(--hk-scroll-pad-right, 0px);
+}
+
+// ------
+// "bleed" — the host's padding lives in the scroll flow (a wrapper
+// child); the pin absorbs it with padding + negative margin so its own
+// background paints over the padding zone and the whitespace pins
+// together with the content. Verified geometry (headless Chromium):
+// at rest the pin's CONTENT stays at its natural position (the negative
+// margin cancels the added padding exactly); pinned, the border box
+// rests flush at the scrollport edge with the padding painted.
+// Boundary contract: a top bleed pin must be the first element of the
+// scroll content, a bottom bleed pin the last — otherwise the negative
+// margin overlaps a sibling.
+// ------
+
+.hk-scroll-pin[data-strategy="bleed"][data-side="top"] {
+  top: 0;
+  padding-top: var(--hk-scroll-pad-top, 0px);
+  margin-top: calc(-1 * var(--hk-scroll-pad-top, 0px));
+}
+
+.hk-scroll-pin[data-strategy="bleed"][data-side="bottom"] {
+  bottom: 0;
+  padding-bottom: var(--hk-scroll-pad-bottom, 0px);
+  margin-bottom: calc(-1 * var(--hk-scroll-pad-bottom, 0px));
+}
+
+.hk-scroll-pin[data-strategy="bleed"][data-side="left"] {
+  left: 0;
+  padding-left: var(--hk-scroll-pad-left, 0px);
+  margin-left: calc(-1 * var(--hk-scroll-pad-left, 0px));
+}
+
+.hk-scroll-pin[data-strategy="bleed"][data-side="right"] {
+  right: 0;
+  padding-right: var(--hk-scroll-pad-right, 0px);
+  margin-right: calc(-1 * var(--hk-scroll-pad-right, 0px));
+}
+
+// ------
+// "none" — plain sticky flush at the edge: hosts without a declared
+// padding contract, and consumers opting out.
+// ------
+
+.hk-scroll-pin[data-strategy="none"][data-side="top"] {
+  top: 0;
+}
+
+.hk-scroll-pin[data-strategy="none"][data-side="bottom"] {
+  bottom: 0;
+}
+
+.hk-scroll-pin[data-strategy="none"][data-side="left"] {
+  left: 0;
+}
+
+.hk-scroll-pin[data-strategy="none"][data-side="right"] {
+  right: 0;
+}

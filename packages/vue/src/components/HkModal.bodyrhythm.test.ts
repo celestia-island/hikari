@@ -35,6 +35,13 @@ describe("HkModal body rhythm contract", () => {
   });
 
   it("keeps the body padding hook unchanged", () => {
-    expect(inner).toContain("padding: var(--hk-modal-padding-body");
+    // 2026-09-14 scroll-pin contract: the padding consumes the declared
+    // --hk-scroll-pad-* vars (single source with the gutter covers and
+    // the pins); the vars themselves derive from --hk-modal-padding-body,
+    // so the host-tunable hook keeps working.
+    expect(inner).toContain("padding: var(--hk-scroll-pad-top");
+    // The old direct source must stay retired — a stale literal here
+    // would desync the pins from the padding.
+    expect(inner).not.toContain("padding: var(--hk-modal-padding-body");
   });
 });

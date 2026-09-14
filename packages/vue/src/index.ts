@@ -99,6 +99,8 @@ export { default as HTimeline } from "./components/HkTimeline";
 export { default as HTitleBar } from "./components/HkTitleBar";
 export { default as HStepFlow } from "./components/HkStepFlow";
 export type { StepFlowSlotProps } from "./components/HkStepFlow";
+export { default as HScrollPin, SCROLL_HOST_CLASS } from "./components/HkScrollPin";
+export type { ScrollPinSide, ScrollPinStrategy } from "./components/HkScrollPin";
 
 // Media player kit
 export { default as HMediaPlayer, MEDIA_RATES } from "./components/HkMediaPlayer";

@@ -130,6 +130,11 @@
       transform var(--hk-modal-duration, 0.25s)
         var(--hk-modal-ease-in, cubic-bezier(0.4, 0, 1, 1));
     will-change: transform, opacity;
+    // Collapse toward the frame's own top edge: the height shrink reads as
+    // the box folding upward (the unveil's reverse), not as a centered
+    // shrink — and the top-of-content (header) keeps its anchor while the
+    // rest eases down and out with the fade.
+    transform-origin: 50% 0;
   }
 
   .hk-modal-content-enter-from {
@@ -148,12 +153,12 @@
 
   .hk-modal-content-leave-from {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scaleY(1);
   }
 
   .hk-modal-content-leave-to {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(5%);
+    transform: translate(-50%, -50%) scaleY(0.9);
   }
 }
 

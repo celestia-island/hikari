@@ -135,7 +135,6 @@ export default defineComponent({
           <Transition
             name={dir === "back" ? "hk-stepflow-back" : "hk-stepflow-fwd"}
             mode="out-in"
-            appear
           >
             <div key={props.modelValue} class="hk-stepflow-body">
               {slotFn?.({ key: props.modelValue, index, direction: dir })}

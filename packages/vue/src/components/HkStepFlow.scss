@@ -20,18 +20,24 @@
   margin-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-// Sticky header mode: keeps the step indicator visible while the body
-// scrolls inside long modal hosts. Surface tint + blur approximate the
-// floating-chrome look; hosts retune through the custom properties.
-.hk-step-flow[data-sticky-header] > .hk-timeline {
-  position: sticky;
-  top: var(--hk-stepflow-sticky-top, 0px);
-  z-index: var(--hk-stepflow-sticky-z, 10);
-  background: var(
+// Sticky header mode: positioning, surface and the whitespace contract
+// live on the shared .hk-scroll-pin rules (HkScrollPin.scss) — the
+// timeline root carries the class plus data-side/data-strategy. This
+// block keeps only what is step-flow-specific: the body gap folded into
+// the pinned header's own padding (so the tint stays continuous while
+// the body scrolls underneath) and the legacy styling knobs mapped onto
+// the pin's custom properties. The doubled class selector must beat
+// .hk-scroll-pin's own declarations regardless of import order.
+.hk-step-flow[data-sticky-header] > .hk-timeline.hk-scroll-pin {
+  --hk-scroll-pin-z: var(--hk-stepflow-sticky-z, 10);
+  --hk-scroll-pin-bg: var(
     --hk-stepflow-sticky-bg,
     color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
   );
-  backdrop-filter: blur(6px);
+  // --hk-stepflow-sticky-top lifts the pin below a host chrome edge; this
+  // doubled selector outranks .hk-scroll-pin's own `top:` in every
+  // strategy, so the knob always wins when set.
+  top: var(--hk-stepflow-sticky-top, 0px);
   margin-bottom: 0;
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }

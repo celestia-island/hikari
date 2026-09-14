@@ -52,7 +52,10 @@ describe("HkModal mobile sheet spacing contract", () => {
     beforeAll(() => {
       block = src.slice(src.indexOf("@media (max-width: 767px)"));
       content = block.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
-      body = block.match(/\.hk-modal-body\s*{[^}]*}/)?.[0] ?? "";
+      // 2026-09-14: the sheet block carries more than one .hk-modal-body
+      // rule (the scroll-pin gutter-var override + the body-cap lift) —
+      // assertions below must see both, so concatenate them all.
+      body = (block.match(/\.hk-modal-body\s*{[^}]*}/g) ?? []).join("\n");
       footer = block.match(/\.hk-modal-footer\s*{[\s\S]*?^  }/m)?.[0] ?? "";
     });
 

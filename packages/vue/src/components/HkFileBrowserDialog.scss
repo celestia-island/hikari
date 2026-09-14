@@ -385,10 +385,14 @@
   text-align: start;
 }
 
-.hk-file-browser-list-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
+// The head is a scroll pin (class + data-side/data-strategy on the
+// element): positioning/z ride the shared .hk-scroll-pin rules, and the
+// doubled class keeps this explicit surface above the pin's default tint
+// regardless of stylesheet import order. Pinned under a gutter-cover
+// host (HkModal) it stops below the body's top whitespace instead of
+// jamming against the window chrome; the cover masks rows while they
+// pass under the gutter.
+.hk-file-browser-list-head.hk-scroll-pin {
   font-size: var(--text-xs);
   font-weight: 600;
   color: rgb(var(--color-muted));

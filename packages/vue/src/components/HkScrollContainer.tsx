@@ -15,6 +15,7 @@ import "./HkScrollContainer.scss";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useApproachEnd, type ApproachEndHandle } from "../composables/useApproachEnd";
 import { provideScrollWindow } from "../composables/useScrollWindow";
+import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 import { scheduleFrame, notifyScrollStart, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import HFab from "./HkFab";
 
@@ -437,7 +438,15 @@ export default defineComponent({
           data-align={alignCenter() ? "center" : undefined}
           data-fade={props.fade ? "true" : undefined}
         >
-          <div ref={viewportRef} class="hk-scroll-container-viewport">
+          {/* Scroll-pin host marker: the viewport participates in the pin
+              contract with its live axis; generic containers declare no
+              standard padding, so pins inside resolve their strategy from
+              whatever --hk-scroll-pad-* the consumer put on this viewport. */}
+          <div
+            ref={viewportRef}
+            class={["hk-scroll-container-viewport", SCROLL_HOST_CLASS]}
+            data-scroll-axis={props.axis}
+          >
             {content}
           </div>
           {showAutoTag.value && (

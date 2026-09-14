@@ -804,7 +804,13 @@ export default defineComponent({
                   <div ref={bodyRef} class="hk-modal-body">
                     <div
                       ref={scrollContainerRef}
-                      class="hk-modal-body-scroll"
+                      class="hk-modal-body-scroll hk-scroll-pin-host"
+                      data-scroll-axis="vertical"
+                      // The body gutters (top/bottom whitespace) are painted
+                      // by .hk-modal-body's covers, so pins stop at the
+                      // gutter line instead of absorbing the padding (see
+                      // HkScrollPin's strategy contract).
+                      data-pad-cover=""
                       onScroll={onBodyScroll}
                     >
                       <div ref={innerRef} class="hk-modal-body-inner">

@@ -1,8 +1,13 @@
-import { defineComponent, Transition, watch, ref, type PropType } from "vue";
+import { defineComponent, Transition, onMounted, ref, watch, type PropType } from "vue";
 
 import HkTimeline from "./HkTimeline";
 import type { TimelineCollapse, TimelineStep } from "./HkTimeline";
+import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 
+// Sticky header mode rides the shared scroll-pin contract (class + data
+// attributes on the timeline root); the pin stylesheet ships those
+// styles, so it is imported here directly.
+import "./HkScrollPin.scss";
 import "./HkStepFlow.scss";
 
 /** Scoped argument every step-keyed slot receives. */
@@ -34,7 +39,13 @@ export default defineComponent({
     /**
      * Pin the header to the top of the nearest scroll container (modal
      * body hosts) so the step indicator stays visible over long bodies.
-     * Styling knobs: --hk-stepflow-sticky-top/-z/-bg.
+     * The header rides the shared scroll-pin contract (HkScrollPin's
+     * class + data attributes on the timeline root): inside a host that
+     * declares the padding contract the header keeps the body's top
+     * whitespace when pinned instead of sitting flush against the
+     * window chrome (2026-09-14 wizard report). Legacy styling knobs
+     * --hk-stepflow-sticky-top/-z/-bg keep working through the pin's
+     * custom properties.
      */
     stickyHeader: { type: Boolean, default: false },
     collapse: {
@@ -78,6 +89,24 @@ export default defineComponent({
       },
     );
 
+    // Sticky-header whitespace strategy (2026-09-14): the timeline is the
+    // flow's boundary element, but content may sit ABOVE the whole flow
+    // inside the same scroll body — a bleed pin's negative margin would
+    // overlap it. Inside a host that paints its gutters (`data-pad-cover`,
+    // HkModal) the pin therefore stops at the gutter line ("offset",
+    // overlap-free anywhere in the flow); every other host keeps "bleed",
+    // where the flow is the de-facto boundary element. Resolution happens
+    // on mount (attribute scan only — no geometry), so CSR surfaces see
+    // the attribute flip once right after hydration; hikari renders
+    // client-side only.
+    const flowRef = ref<HTMLDivElement | null>(null);
+    const pinStrategy = ref<"offset" | "bleed">("bleed");
+
+    onMounted(() => {
+      const host = flowRef.value?.closest(`.${SCROLL_HOST_CLASS}`);
+      if (host?.hasAttribute("data-pad-cover")) pinStrategy.value = "offset";
+    });
+
     return () => {
       const index = indexOf(props.modelValue);
       // An unknown key finds no slot: the body simply renders empty, no
@@ -87,6 +116,7 @@ export default defineComponent({
 
       return (
         <div
+          ref={flowRef}
           class="hk-step-flow"
           data-sticky-header={props.stickyHeader || undefined}
         >
@@ -97,6 +127,9 @@ export default defineComponent({
               clickable={props.timelineClickable}
               collapse={props.collapse}
               onSelect={(key: string) => emit("update:modelValue", key)}
+              class={props.stickyHeader ? "hk-scroll-pin" : undefined}
+              data-side={props.stickyHeader ? "top" : undefined}
+              data-strategy={props.stickyHeader ? pinStrategy.value : undefined}
             />
           )}
           <Transition

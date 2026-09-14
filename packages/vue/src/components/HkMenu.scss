@@ -16,6 +16,13 @@
   @include mi.item;
 }
 
+/* Header/footer/extra slot wrappers: geometry-neutral by contract (the
+ * panel's own inset applies), but they are the DOM hook that says rows
+ * in here speak the menu-item grammar. */
+.hk-menu-slot {
+  display: block;
+}
+
 .hk-menu-flag {
   flex-shrink: 0;
   font-size: var(--text-base);

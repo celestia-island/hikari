@@ -346,7 +346,12 @@ export const HkThemeToggle = defineComponent({
               <span class="s-theme-item-name">{t("hikari::theme.customize")}</span>
             </button>
           </div>
-          {slots["menu-extra"]?.()}
+          {(() => {
+            const extra = slots["menu-extra"]?.() ?? [];
+            return extra.length ? (
+              <div class="hk-menu-slot hk-menu-slot--extra">{extra}</div>
+            ) : null;
+          })()}
         </HPopover>
 
         {!props.externalCustomize && (

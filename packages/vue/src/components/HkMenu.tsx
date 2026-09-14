@@ -542,16 +542,35 @@ export default defineComponent({
     }
 
     /** One level's content inside the shared panel surface: header slot →
-     *  rows (or the consumer's default-slot rows) → footer slot. Custom
-     *  slots ride the root level, where an identity block belongs. */
+     *  rows (or the consumer's default-slot rows) → footer slot. Header
+     *  and footer ride a standard `.hk-menu-slot` wrapper so their rows
+     *  inherit the panel's inset and tests/contracts get a stable DOM
+     *  hook — raw slot vnodes used to splice straight into the level,
+     *  and every consumer hand-rolled its own spacing (PlatformSwitcher
+     *  shipped a drifted divider that way). The wrapper renders only
+     *  when the slot has content: an empty one would cost a phantom
+     *  flex gap in headerless surfaces. */
+    function slotWrapper(kind: "head" | "foot" | "extra", nodes: VNode[]): VNode | null {
+      return nodes.length ? (
+        <div class={`hk-menu-slot hk-menu-slot--${kind}`}>{nodes}</div>
+      ) : null;
+    }
+
     function renderLevelBody(level: number, list: HkMenuItem[]): VNode[] {
-      const head: VNode[] = level === 0 ? (slots.header?.() ?? []) : [];
-      const tail: VNode[] = level === 0 ? (slots.footer?.() ?? []) : [];
+      const out: VNode[] = [];
+      const head = level === 0 ? slots.header?.() ?? [] : [];
+      const foot = level === 0 ? slots.footer?.() ?? [] : [];
+      const headWrap = level === 0 ? slotWrapper("head", head) : null;
+      const footWrap = slotWrapper("foot", foot);
+      if (headWrap) out.push(headWrap);
       if (slots.default) {
-        return [...head, ...slots.default(), ...tail];
+        out.push(...slots.default());
+      } else {
+        const reserved = checkReserved(list);
+        out.push(...list.map((it) => renderRow(it, level, reserved)));
       }
-      const reserved = checkReserved(list);
-      return [...head, ...list.map((it) => renderRow(it, level, reserved)), ...tail];
+      if (footWrap) out.push(footWrap);
+      return out;
     }
 
     function levelSurface(level: number, list: HkMenuItem[]): VNode {
@@ -796,10 +815,11 @@ export default defineComponent({
       return (
         <nav class="hk-menu-sidebar" aria-label={props.title || "menu"}>
           {/* Header slot (identity block, section label, …) above the
-              rows — mirrors the popup variant's level-0 header, so an
-              account menu renders the same grammar whether it pops up
-              on desktop or lives inside a drawer on mobile. */}
-          {slots.header?.()}
+              rows — mirrors the popup variant's level-0 header (same
+              .hk-menu-slot wrapper), so an account menu renders the same
+              grammar whether it pops up on desktop or lives inside a
+              drawer on mobile. */}
+          {slotWrapper("head", slots.header?.() ?? [])}
           {props.items.map((it) => renderSidebarItem(it, 0))}
         </nav>
       );

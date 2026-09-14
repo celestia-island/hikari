@@ -344,6 +344,27 @@
   background: var(--c-primary-dim, rgb(var(--color-primary) / 10%));
 }
 
+/* The divider row of the menu-item grammar (hikari _menu-item.scss
+ * @mixin divider): one hairline inset by the row padding. Declared
+ * globally here so host apps can drop a .hk-menu-divider between rows
+ * without importing the scss partial — the sheet media block below
+ * mirrors the grammar's 44px/10×16 sheet geometry. */
+.hk-menu-divider {
+  flex: none;
+  height: 1px;
+  margin: var(--hk-menu-item-pad-y, 6px) auto;
+  width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
+  background: rgb(var(--color-border, 120 120 120) / 18%);
+  border: none;
+}
+
+@media (max-width: 767px) {
+  .hk-menu-divider {
+    margin: var(--hk-menu-item-pad-y, 10px) auto;
+    width: calc(100% - 2 * var(--hk-menu-item-pad-x, 16px));
+  }
+}
+
 /* ── User identity header (shared) ─ */
 /* One identity block for every account surface — the admin user
    dropdown's header, a mobile drawer's user panel footer — so all

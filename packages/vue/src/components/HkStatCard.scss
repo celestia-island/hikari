@@ -61,7 +61,12 @@
 .hk-stat-card-value {
   font-size: var(--text-2xl, 1.5rem);
   font-weight: 700;
-  line-height: 1.2;
+  /* `overflow: hidden` below hangs the ellipsis on the line box, so the line
+   * box has to cover the ink box: 1.2 (28.8px at the 24px token) cleared the
+   * shipped Latin stacks by only 0.6-1.1px and clipped 2.9-3.1px per edge as
+   * soon as a host swapped --font-sans for a CJK fallback (ascent+descent
+   * 1.34-1.45em, see theme/fontContext). 1.35 covers those metrics. */
+  line-height: 1.35;
   color: rgb(var(--color-text));
   overflow: hidden;
   text-overflow: ellipsis;

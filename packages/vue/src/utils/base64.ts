@@ -9,6 +9,18 @@ export function bytesToBase64(bytes: ArrayBuffer | Uint8Array): string {
   return btoa(binary);
 }
 
+/**
+ * Encode a JS string as base64, UTF-8 first.
+ *
+ * `btoa` throws `InvalidCharacterError` on any code point above U+00FF, which
+ * silently kills whatever called it — the demo gallery died on an em dash
+ * inside an inline SVG (`Hikari — zoom / pan demo`). Encode through
+ * `TextEncoder` so every string is encodable.
+ */
+export function utf8ToBase64(text: string): string {
+  return bytesToBase64(new TextEncoder().encode(text));
+}
+
 /** Decode a base64 string into raw bytes. */
 export function base64ToBytes(b64: string): Uint8Array {
   const binary = atob(b64);

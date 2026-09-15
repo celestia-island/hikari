@@ -68,9 +68,14 @@
   // (capped) height and pins it as px on every content change — the
   // transition below animates old→new px. Both pinned values are
   // explicit px, so this needs no interpolate-size keyword support.
+  // clip-path rides the same token pair for the mobile sheet's reveal
+  // morph (--hk-sheet-morph: clip below): the pin lands instantly and
+  // the top edge sweeps up paint-only — no per-frame layout, no
+  // per-frame backdrop re-raster over the resizing fixed layer.
   transition:
     height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   background: var(--hk-modal-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
   backdrop-filter: var(--hk-modal-blur, none);
   border: 1px solid var(--hk-modal-border-color, var(--hi-color-border, rgba(100,100,100,0.08)));
@@ -402,6 +407,19 @@
 //   - rounded top corners only, full width
 // ------
 @media (max-width: 767px) {
+  // Docked sheets never re-filter their backdrop per frame: the sheet
+  // is a fixed, full-width layer whose geometry changes with every
+  // content morph, and a backdrop-filter on a resizing layer re-rasters
+  // the blurred region each frame — on a phone GPU that lag shows as
+  // patchy flicker along the moving edge (2026-09-15 chest report:
+  // model dialog etc. while content streamed). The scrim already dims
+  // the page, so an opaque-ish sheet reads identically. Hosts restore
+  // the finish per surface with --hk-modal-blur-mobile /
+  // --hk-modal-bg-mobile.
+  .hk-modal-overlay {
+    backdrop-filter: var(--hk-modal-overlay-blur-mobile, none);
+  }
+
   .hk-modal-content {
     // !important beats the inline maxWidth (width prop); base width: 100%
     // already applies at every viewport, so only the cap is re-asserted.
@@ -419,6 +437,22 @@
     left: 0;
     right: 0;
     transform: none;
+    // Content morphs reveal by clip instead of animating height (see
+    // useSizeMorph): the pin lands instantly and the top edge sweeps up
+    // as a paint-only clip with the box's own corner radii — the same
+    // "content rides rigidly" grammar as the desktop unveil, and the
+    // CSS flag keeps the media query the single owner of the behavior.
+    --hk-sheet-morph: clip;
+    // Scope layout/style invalidation to the sheet subtree: the page
+    // behind a phone sheet is usually streaming (chat updates), and
+    // containment keeps those invalidations — and the sheet's own —
+    // from cascading into each other.
+    contain: layout style;
+    backdrop-filter: var(--hk-modal-blur-mobile, none);
+    background: var(
+      --hk-modal-bg-mobile,
+      var(--hk-modal-bg, var(--hi-color-surface, rgba(240, 244, 248, 0.95)))
+    );
     border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
                    var(--hk-modal-radius, var(--radius-lg, 12px))
                    0 0;

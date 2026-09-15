@@ -253,3 +253,177 @@ describe("useSizeMorph", () => {
     expect(h.frame.style.height).toBe("");
   });
 });
+
+// ── Clip reveal mode (--hk-sheet-morph: clip, mobile sheets) ─────────
+// Growth morphs reveal through paint-only clip-path instead of an
+// animated height: the pin lands instantly and the top edge sweeps up,
+// keeping the stretch look without per-frame layout on the fixed,
+// backdrop-carrying sheet layer (2026-09-15 mobile flicker report).
+
+/** happy-dom has no TransitionEvent constructor on some builds — the
+ * generic Event plus an assigned propertyName reads the same to the
+ * composable's listener. */
+function fireTransitionEnd(el: HTMLElement, propertyName: string): void {
+  // happy-dom's TransitionEvent (when present) ignores the init dict's
+  // propertyName — always build the generic event and assign the field.
+  const ev = new Event("transitionend");
+  Object.defineProperty(ev, "propertyName", { value: propertyName });
+  el.dispatchEvent(ev);
+}
+
+describe("useSizeMorph clip reveal", () => {
+  it("reveals growth through clip-path with an instant pin", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    expect(h.frame.style.height).toBe("300px");
+
+    h.setNatural(360);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    // The pin landed at the new height with no height animation staged.
+    expect(h.frame.style.height).toBe("360px");
+    // The sweep runs: end-state clip + layer promotion in flight.
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.willChange).toBe("clip-path");
+    expect(h.frame.style.transition).toBe("");
+
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("starts the sweep from the old visual edge (delta inset)", () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    // The dance overwrites the inline clip synchronously (start → flush
+    // → end), so the START state is only observable at the forced-layout
+    // flush: wrap the frame's offsetHeight getter to record the clip
+    // each flush reads.
+    const reads: string[] = [];
+    const desc = Object.getOwnPropertyDescriptor(h.frame, "offsetHeight")!;
+    Object.defineProperty(h.frame, "offsetHeight", {
+      configurable: true,
+      get: () => {
+        reads.push(h.frame.style.clipPath);
+        return (desc.get as () => number)();
+      },
+    });
+
+    h.setNatural(420);
+    h.remeasure();
+    // Flush sequence: the released measure (clip ""), then the staged
+    // start state — the reveal hides exactly the 120px the sheet grew
+    // (420 − 300), putting the visible top edge back at the old line.
+    expect(reads).toEqual([
+      "",
+      "inset(120px 0 0 0 round 0px 0px 0px 0px)",
+    ]);
+    expect(h.frame.style.height).toBe("420px");
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+  });
+
+  it("keeps the height morph for shrink and sub-threshold growth", async () => {
+    const h = mountHarness(400);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    // Shrink: no clip state, the pin flips under the height transition.
+    h.setNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("320px");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+
+    // Sub-threshold growth (2px < REVEAL_MIN_PX): snaps, no reveal.
+    h.setNatural(322);
+    h.remeasure();
+    expect(h.frame.style.height).toBe("322px");
+    expect(h.frame.style.clipPath).toBe("");
+  });
+
+  it("never clips without the mode flag (desktop height morph intact)", async () => {
+    const h = mountHarness(300);
+    h.start();
+
+    h.setNatural(400);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("400px");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("clears an in-flight reveal when a new dance starts", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(380);
+    h.remeasure();
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+
+    // A second growth lands before transitionend fired: the stale clip
+    // must come off inside the new dance, then the new reveal stages.
+    h.setNatural(450);
+    h.remeasure();
+    expect(h.frame.style.height).toBe("450px");
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.willChange).toBe("clip-path");
+  });
+
+  it("clears an interrupted reveal inside the next dance (no transitionend)", () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(380);
+    h.remeasure();
+    expect(h.frame.style.clipPath).not.toBe("");
+
+    // A SHRINK lands before the reveal's transitionend fired: unlike a
+    // follow-up growth (which restages its own clip), the height-morph
+    // branch writes no clip at all — the dance-start teardown is the
+    // only thing that returns the frame to CSS ownership (R1 mutation
+    // M1 evidence: without it the stale inset(0px) + will-change ride
+    // the shrink and linger at rest).
+    h.setNatural(310);
+    h.remeasure();
+    expect(h.frame.style.height).toBe("310px");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("releases the clip state on stop so the leave animation owns the frame", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(380);
+    h.remeasure();
+    expect(h.frame.style.clipPath).not.toBe("");
+
+    h.stop();
+    expect(h.frame.style.height).toBe("");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("ignores transitionend events for other properties", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(360);
+    h.remeasure();
+    fireTransitionEnd(h.frame, "height");
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    fireTransitionEnd(h.frame, "opacity");
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(h.frame.style.clipPath).toBe("");
+  });
+});

@@ -22,9 +22,19 @@
   display: flex;
   flex-direction: column;
   background: var(--hk-drawer-bg, var(--hi-color-surface, rgba(240,244,248,0.95)));
-  backdrop-filter: blur(12px);
+  // Token-gated (was a hard blur(12px)): the drawer resizes through
+  // animated width/height, and a backdrop-filter on a resizing fixed
+  // layer re-rasters the blurred region every frame — on phones that
+  // lag shows as patchy flicker along the moving edge. The mobile
+  // guard below turns it off ≤767px; hosts restore a finish per
+  // surface with --hk-drawer-blur / --hk-drawer-blur-mobile.
+  backdrop-filter: var(--hk-drawer-blur, blur(12px));
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   outline: none;
+  // Scope layout/style invalidation to the drawer subtree — the page
+  // behind a phone drawer is usually streaming, and containment keeps
+  // those invalidations from cascading into each other.
+  contain: layout style;
   transition:
     width var(--duration-normal, 0.3s) ease,
     height var(--duration-normal, 0.3s) ease;
@@ -178,6 +188,20 @@
 // family's 44px touch lift. Same geometry, same tokens, one family.
 // ------
 @media (max-width: 767px) {
+  // Phones: docked drawers never backdrop-filter — the panel resizes
+  // through animated width/height, and a backdrop-filter on a resizing
+  // fixed layer re-rasters the blurred region every frame; on a phone
+  // GPU that lag shows as patchy flicker along the moving edge (same
+  // family guard as the modal/select sheets, 2026-09-15 chest report).
+  // The scrim's dim alone reads correctly there.
+  .hk-drawer-overlay {
+    backdrop-filter: var(--hk-drawer-overlay-blur-mobile, none);
+  }
+
+  .hk-drawer-panel {
+    backdrop-filter: var(--hk-drawer-blur-mobile, none);
+  }
+
   .hk-drawer-bottom {
     bottom: var(--hk-sheet-bottom-gap, 0px);
     border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))

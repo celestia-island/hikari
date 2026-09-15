@@ -4,6 +4,7 @@
 import { computed, defineComponent, ref } from "vue";
 import { ChevronDown, ChevronUp, PackageOpen } from "lucide-vue-next";
 import { HIKARI_FONT_MONO } from "./theme/fontContext";
+import { utf8ToBase64 } from "./utils/base64";
 import {
   HButton, HIconButton, HIconButtonGroup, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
@@ -164,7 +165,7 @@ export default defineComponent({
     const demoAudioSrc = makeSilentWav();
     const demoImageSrc =
       "data:image/svg+xml;base64," +
-      btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
+      utf8ToBase64(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900">
     <rect width="1600" height="900" fill="#1b2333"/>
     <g stroke="#2c3a55" stroke-width="1">
       ${Array.from({ length: 15 }, (_, i) => `<line x1="${i * 110}" y1="0" x2="${i * 110}" y2="900"/>`).join("")}

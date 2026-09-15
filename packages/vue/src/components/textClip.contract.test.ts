@@ -149,8 +149,13 @@ describe("stylesheet descender-clipping contract", () => {
   it("never pairs a clip box with a line box shorter than the ink box", { timeout: 60_000 }, () => {
     const findings: string[] = [];
     const allowed = new Set(ALLOWED.map((entry) => `${entry.file}|${entry.selector}`));
+    const files = sheets();
+    // The scan above only fails when it actually sees sheets; a moved/renamed
+    // styles directory would otherwise make it pass over an empty input set.
+    expect(files.length, "stylesheets discovered for the scan").toBeGreaterThan(100);
+    let clipRulesSeen = 0;
 
-    for (const file of sheets()) {
+    for (const file of files) {
       const name = file.slice(file.indexOf("/src/") + 1);
       // sass keeps `/* … */` comments in expanded output, and a comment that
       // *talks* about `overflow: hidden` or `line-height: 1` would otherwise be
@@ -163,6 +168,7 @@ describe("stylesheet descender-clipping contract", () => {
       const blocks = [...blocksOf(css, name)];
       for (const block of blocks) {
         if (!clipsOverflow(block.body)) continue;
+        clipRulesSeen++;
         const ratio = effectiveRatio(block, blocks);
         if (ratio === null || ratio >= SAFE_LINE_HEIGHT_RATIO) continue;
         if (allowed.has(`${block.file}|${block.selector}`)) continue;
@@ -172,7 +178,52 @@ describe("stylesheet descender-clipping contract", () => {
       }
     }
 
+    expect(clipRulesSeen, "clip boxes discovered across the sheets").toBeGreaterThan(20);
     expect(findings.sort(), "clip boxes whose line box is too short for the font's ink").toEqual([]);
+  });
+
+  it("keeps the reviewed rules descender-safe", { timeout: 60_000 }, () => {
+    // The generic scan above only inspects rules that declare `overflow`
+    // themselves. These rules were fixed for the same class but carry no clip
+    // in-tree — `.hk-gauge-ring-value` is centred inside the ring and gets its
+    // clip from whatever host wrapper truncates — so a refactor that quietly
+    // drops their ratio would pass the scan. Pin them by selector.
+    const pinned: ReadonlyArray<{ file: string; selector: string; minRatio: number }> = [
+      { file: "HkColorPicker.scss", selector: ".hk-color-picker-label", minRatio: 1.4 },
+      { file: "HkStatCard.scss", selector: ".hk-stat-card-value", minRatio: 1.3 },
+      { file: "HkGaugeRing.scss", selector: ".hk-gauge-ring-value", minRatio: 1.4 },
+    ];
+
+    const compiled = new Map<string, ReturnType<typeof compile>["css"]>();
+    const found: string[] = [];
+    for (const pin of pinned) {
+      const file = resolve(componentDir, pin.file);
+      if (!compiled.has(file)) {
+        compiled.set(
+          file,
+          compile(file, { style: "expanded", loadPaths: [componentDir, stylesDir] }).css.replace(
+            /\/\*[\s\S]*?\*\//g,
+            "",
+          ),
+        );
+      }
+      const css = compiled.get(file)!;
+      const block = [...blocksOf(css, pin.file)].find((entry) => entry.selector === pin.selector);
+      if (!block) {
+        found.push(`${pin.file} — ${pin.selector} — the pinned rule no longer exists`);
+        continue;
+      }
+      const ratio = ratioOf(block.body);
+      if (ratio === null) {
+        found.push(`${pin.file} — ${pin.selector} — declares no line-height of its own any more`);
+      } else if (ratio < pin.minRatio) {
+        found.push(
+          `${pin.file} — ${pin.selector} — line-height ratio ${ratio.toFixed(2)} fell below the reviewed floor ${pin.minRatio}`,
+        );
+      }
+    }
+
+    expect(found.sort(), "pinned descender-safe rules regressed").toEqual([]);
   });
 
   it("keeps the review list honest", () => {

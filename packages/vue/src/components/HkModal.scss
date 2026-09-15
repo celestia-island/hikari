@@ -123,18 +123,26 @@
     will-change: transform, opacity, clip-path;
   }
 
-  // Close: the whole frame fades and drifts down as ONE piece — the
-  // unveil's clip does NOT re-run on close. Re-clipping first made the
-  // bottom band (usually the footer) vanish at the very first frame of
-  // the close while the rest was still on screen, which read as broken
-  // (user report 2026-09-14).
+  // Close: the unveil's TRUE reverse — the visible box collapses back
+  // toward the center (top edge sweeps down, bottom edge sweeps up,
+  // content rides rigidly — never squashed) while the frame fades
+  // (user report 2026-09-15: the fade+drift close read as the box
+  // shrinking straight down instead of folding back into its center).
+  // The earlier re-clip attempt (#508) broke because leave-from had no
+  // clip at all: interpolating `none → inset()` is DISCRETE, so the
+  // bottom band (the footer) vanished at the first frame. Pinning the
+  // identity clip in leave-from — byte-identical to enter-to — makes
+  // the same-shape insets interpolate continuously, which structurally
+  // rules that jump out while restoring the symmetric collapse.
   .hk-modal-content-leave-active {
     transition:
       opacity var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
       transform var(--hk-modal-duration, 0.32s)
+        var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1)),
+      clip-path var(--hk-modal-duration, 0.32s)
         var(--hk-modal-ease-in, cubic-bezier(0.45, 0, 0.55, 1));
-    will-change: transform, opacity;
+    will-change: transform, opacity, clip-path;
   }
 
   .hk-modal-content-enter-from {
@@ -154,11 +162,20 @@
   .hk-modal-content-leave-from {
     opacity: 1;
     transform: translate(-50%, -50%);
+    // The pinned identity clip: identical to enter-to so the leave's
+    // clip interpolates (never jumps) — see the close note above.
+    clip-path: inset(0 0 0 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                              var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 
   .hk-modal-content-leave-to {
     opacity: 0;
+    // Mirror of enter-from: shifted +5% with the bottom 10% clipped, the
+    // visible box is 90% and centered — both edges ease toward the
+    // center line, exactly reversing the unveil.
     transform: translate(-50%, -50%) translateY(5%);
+    clip-path: inset(0 0 10% 0 round 0 0 var(--hk-modal-radius, var(--radius-lg, 12px))
+                                 var(--hk-modal-radius, var(--radius-lg, 12px)));
   }
 }
 

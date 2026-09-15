@@ -5,7 +5,14 @@
  * Consolidates the hand-rolled copies previously scattered across
  * arona (formatDate/formatUptime/formatNumber) and shittim-chest
  * (formatTokenCount/formatMediaTime).
- */
+ *
+ * Every locale-sensitive formatter resolves its locale through the
+ * hikari i18n state (activeLocale()), NOT the browser default: the app
+ * selects its language explicitly (setLocale on switch), and dates that
+ * follow the browser while every word around them follows the app read
+ * as mixed-language output (2026-09-15 user report: "9月 13" headings
+ * under a zh-Hans app on an en browser). */
+import { activeLocale } from "../i18n/context";
 
 /** "1234" -> "1.2k", "2500000" -> "2.5M". */
 export function formatTokenCount(n: number): string {
@@ -75,14 +82,15 @@ export function formatRelativeTime(
       t?.("common.time.weeksAgo", "{n} w ago", { n: weeks }) ?? `${weeks}w ago`
     );
   }
-  return d.toLocaleDateString();
+  return d.toLocaleDateString(activeLocale());
 }
 
 // Media timestamps ("m:ss") already live on the media-player kit — one
 // definition, re-exported so `../utils/format` is the single import site.
 export { formatMediaTime } from "../components/HkMediaControlBar";
 
-/** Absolute timestamp formatting with a shared locale-aware renderer. */
+/** Absolute timestamp formatting with a shared locale-aware renderer.
+ *  Follows the app-selected hikari locale (see activeLocale). */
 export function formatDateTime(
   input: string | number | Date,
   opts?: { dateStyle?: "short" | "medium" | "long"; timeStyle?: "short" | "medium" },
@@ -90,10 +98,37 @@ export function formatDateTime(
   if (!input) return "";
   const d = input instanceof Date ? input : new Date(input);
   if (isNaN(d.getTime())) return "";
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(activeLocale(), {
     dateStyle: opts?.dateStyle ?? "medium",
     timeStyle: opts?.timeStyle ?? "short",
   });
+}
+
+/** Date-only rendering (no time), following the app-selected hikari
+ *  locale. `opts` is the raw Intl.DateTimeFormatOptions passthrough —
+ *  omit it for the locale's whole-date default, or scope to a slice
+ *  (e.g. { month: "short", day: "numeric" } for day-group headings). */
+export function formatDate(
+  input: string | number | Date,
+  opts?: Intl.DateTimeFormatOptions,
+): string {
+  if (!input) return "";
+  const d = input instanceof Date ? input : new Date(input);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(activeLocale(), opts);
+}
+
+/** Time-only rendering (no date), following the app-selected hikari
+ *  locale. `opts` is the raw Intl.DateTimeFormatOptions passthrough —
+ *  omit it for the locale's default (en "3:24 PM", zh "15:24"). */
+export function formatTime(
+  input: string | number | Date,
+  opts?: Intl.DateTimeFormatOptions,
+): string {
+  if (!input) return "";
+  const d = input instanceof Date ? input : new Date(input);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(activeLocale(), opts);
 }
 
 /** Milliseconds for latency/duration displays: sub-second keeps one

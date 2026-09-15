@@ -54,6 +54,13 @@ localeCache.set("en", enFallback);
 // every language without knowing which locale is currently active.
 let mergedMessages: Record<string, Messages> = {};
 
+/** The app-selected hikari locale ("en" until setLocale runs). Date and
+ *  time formatters consume this so display follows the user's chosen
+ *  language instead of the browser's. */
+export function activeLocale(): string {
+  return state.locale;
+}
+
 export async function setLocale(locale: string): Promise<void> {
   if (!localeCache.has(locale)) {
     localeCache.set(locale, buildLocaleMessages(locale));

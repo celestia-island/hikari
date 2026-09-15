@@ -21,6 +21,7 @@ jobs:
   audit:
     name: cargo audit
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
 
@@ -33,6 +34,7 @@ jobs:
   deny:
     name: cargo deny
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
 

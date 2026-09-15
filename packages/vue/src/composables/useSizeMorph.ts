@@ -8,6 +8,11 @@ import { onBeforeUnmount, type Ref } from "vue";
 const CHROME_ALLOWANCE_FLOOR = 96;
 const CHROME_ALLOWANCE_SLACK = 32;
 
+/** Growth below this (px) snaps instead of revealing — under half a
+ * text row the sweep is imperceptible and not worth promoting a
+ * layer for. */
+const REVEAL_MIN_PX = 3;
+
 export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
    *  height on every change. Call once the surface finished its open
@@ -48,6 +53,17 @@ export interface SizeMorph {
  * pin chases the target with the CSS transition — bounded, one-shot
  * choreography, not an infinite per-frame animation.
  *
+ * Growth morphs on clip-mode surfaces (the mobile sheet docking, flagged
+ * `--hk-sheet-morph: clip` in CSS) reveal instead of animating height:
+ * the new pin lands instantly and the box's top edge sweeps up through
+ * `clip-path: inset()` — same duration/ease tokens as the height
+ * transition, same "content rides rigidly" grammar as the modal unveil,
+ * but paint/compositor-level: no per-frame layout and no per-frame
+ * backdrop-filter re-raster over the resizing fixed layer (the mobile
+ * patchy-flicker source, 2026-09-15 chest report). Shrinks and every
+ * height-mode surface keep the height transition — the rare direction
+ * is not worth the flex-compression look-ahead trade.
+ *
  * Reduced motion / the global animation switch stay honored: the frame's
  * transition-duration collapses to one frame under
  * `html[data-css-animations="0"]`, so the pin updates snap.
@@ -68,10 +84,70 @@ export function useSizeMorph(
    *  bodies that overflow at rest, plus subpixel slack. See the guard in
    *  remeasure(). */
   let chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
+  /** In-flight clip reveal (clip-mode growth morph): the frame whose
+   *  inline clip-path/will-change must come off again once the sweep
+   *  lands, plus the listener that does it. */
+  let revealEl: HTMLElement | null = null;
+  let revealEnd: ((ev: Event) => void) | null = null;
+
+  /** Tear down an in-flight clip reveal: drop the listener and return
+   *  the inline clip/will-change to CSS ownership. Safe to call when no
+   *  reveal is running (every dance start, stop, and unmount). */
+  function stopReveal(): void {
+    if (revealEl && revealEnd) {
+      revealEl.removeEventListener("transitionend", revealEnd);
+    }
+    if (revealEl) {
+      revealEl.style.clipPath = "";
+      revealEl.style.willChange = "";
+    }
+    revealEl = null;
+    revealEnd = null;
+  }
+
+  /** Clip-mode opt-in, owned by CSS: the modal's mobile media block
+   *  sets `--hk-sheet-morph: clip` inside its ≤767px query, and the
+   *  select sheet sets it on its class rule directly (that class only
+   *  renders in JS-gated sheet mode, so the breakpoint still owns the
+   *  behavior); a host can override per surface either way (an inline
+   *  custom property wins over the stylesheet's). */
+  function clipMode(f: HTMLElement): boolean {
+    const inline = f.style.getPropertyValue("--hk-sheet-morph").trim();
+    if (inline) return inline === "clip";
+    try {
+      return getComputedStyle(f).getPropertyValue("--hk-sheet-morph").trim() === "clip";
+    } catch {
+      return false;
+    }
+  }
+
+  /** The frame's corner radii for the reveal's `round` clause — the
+   *  moving clip edge keeps the sheet's own rounded corners instead of
+   *  shaving them straight for the sweep's duration. First token only
+   *  (horizontal radius); non-px values degrade to square. */
+  function cornerRadii(f: HTMLElement): string {
+    let cs: CSSStyleDeclaration | null = null;
+    try {
+      cs = getComputedStyle(f);
+    } catch {
+      cs = null;
+    }
+    const first = (v: string | undefined): string => {
+      const token = (v ?? "").trim().split(/\s+/)[0] ?? "";
+      return token.endsWith("px") ? token : "0px";
+    };
+    return [
+      first(cs?.borderTopLeftRadius),
+      first(cs?.borderTopRightRadius),
+      first(cs?.borderBottomRightRadius),
+      first(cs?.borderBottomLeftRadius),
+    ].join(" ");
+  }
 
   function release(): void {
     const f = frame.value;
     if (f) f.style.height = "";
+    stopReveal();
     pinned = 0;
   }
 
@@ -98,15 +174,23 @@ export function useSizeMorph(
     if (!f || !c) return;
     // 1. Disable transitions, release the pin and measure the frame's
     //    natural (CSS-capped) height in one layout flush.
-    // 2. Re-establish the OLD pin (still transition-disabled) and flush
-    //    it, so the style history is exactly "old height" when the live
-    //    CSS transition returns.
-    // 3. Flip to the NEW pin under the live transition — the computed
-    //    value changes old→new, so the height transition animates.
+    // 2. Clip-mode growth: pin the NEW height outright and stage the
+    //    clip start (still transition-disabled), so the reveal that
+    //    follows sweeps a fully-laid-out box — layout happens once,
+    //    here, never per frame.
+    //    Otherwise re-establish the OLD pin (still transition-disabled)
+    //    and flush it, so the style history is exactly "old height" when
+    //    the live CSS transition returns.
+    // 3. Flip to the new state under the live transition — a real
+    //    computed-value change, so the CSS transition animates.
     // No paint happens between the steps: they run in one task and the
     //    layout flushes are invisible to the screen.
     const inlineTransition = f.style.transition;
     f.style.transition = "none";
+    // A second content change mid-reveal restarts from the new delta
+    // (the settle debounce already collapses bursts; this makes it a
+    // hard guarantee that no stale clip survives into the new dance).
+    stopReveal();
     f.style.height = "";
     const natural = f.offsetHeight;
     if (natural <= 0) {
@@ -130,12 +214,51 @@ export function useSizeMorph(
       f.style.transition = inlineTransition;
       return;
     }
-    if (pinned > 0) f.style.height = `${pinned}px`;
-    // Flush the old-pin state before re-enabling the transition.
+    const next = Math.round(natural);
+    const growth = next - pinned;
+    // Clip reveal (see the composable doc): the pin lands instantly and
+    // the top edge sweeps up through paint-only clip-path, with the
+    // box's own corner radii riding the moving edge. The frame's
+    // stylesheet owns the clip-path transition (duration/ease tokens
+    // shared with the height transition), so reduced-motion and the
+    // global animation switch collapse it exactly like the height morph
+    // they already govern. Everything else — shrink, first pin,
+    // sub-threshold growth, height-mode surfaces — keeps the height
+    // morph below (desktop stays exactly as it was).
+    const reveal = pinned > 0 && growth >= REVEAL_MIN_PX && clipMode(f);
+    let radii = "";
+    if (reveal) {
+      radii = cornerRadii(f);
+      f.style.height = `${next}px`;
+      f.style.clipPath = `inset(${growth}px 0 0 0 round ${radii})`;
+    } else if (pinned > 0) {
+      f.style.height = `${pinned}px`;
+    }
+    // Flush the staged state (new pin + clip start, or the old pin)
+    // before re-enabling the transition, so the sweep starts from the
+    // old visual edge / the height transition starts from the old pin.
     void f.offsetHeight;
     f.style.transition = inlineTransition;
-    f.style.height = `${Math.round(natural)}px`;
-    pinned = Math.round(natural);
+    if (reveal) {
+      const onEnd = (ev: Event): void => {
+        // transitionend bubbles: a descendant animating its own
+        // clip-path must not end the frame's reveal early.
+        if (
+          ev.target === f &&
+          (ev as TransitionEvent).propertyName === "clip-path"
+        ) {
+          stopReveal();
+        }
+      };
+      f.addEventListener("transitionend", onEnd);
+      revealEl = f;
+      revealEnd = onEnd;
+      f.style.willChange = "clip-path";
+      f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
+    } else {
+      f.style.height = `${next}px`;
+    }
+    pinned = next;
     // Self-heal the allowance on every VALIDATED pin: chrome that grew
     // after calibration (an async footer, a header slot mounting
     // mid-open) updates the baseline instead of tripping the guard on
@@ -204,6 +327,7 @@ export function useSizeMorph(
     ro?.disconnect();
     if (settleTimer) clearTimeout(settleTimer);
     if (raf) cancelAnimationFrame(raf);
+    stopReveal();
   });
 
   return { start, stop, remeasure };

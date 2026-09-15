@@ -304,11 +304,19 @@
    * cannot fire a CSS transition, so HkSelectPanel's useSizeMorph pins
    * the measured natural height as px (see useSizeMorph) and the
    * transition below animates old→new px; `interpolate-size: allow-keywords`
-   * stays harmless for the enter/leave slide. */
+   * stays harmless for the enter/leave slide. Growth reveals through
+   * clip-path instead (--hk-sheet-morph: clip, see useSizeMorph): the
+   * pin lands instantly and the top edge sweeps up paint-only — the
+   * sheet is a fixed full-width layer, and an animated height relaid
+   * out + repainted it every frame (mobile patchy-flicker source,
+   * 2026-09-15). Same duration/ease tokens, same stretch look. */
   interpolate-size: allow-keywords;
+  --hk-sheet-morph: clip;
+  contain: layout style;
   transition:
     height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+    max-height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   max-height: min(
     72vh,
     calc(

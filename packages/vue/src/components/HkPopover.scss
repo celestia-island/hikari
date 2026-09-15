@@ -106,6 +106,15 @@
    * rule's max-content width would over-constrain it (left+right+width
    * drops `right` in LTR) and dock it at content width instead. */
   width: auto;
+  /* Docked popover sheets never backdrop-filter: the sheet is a fixed
+   * full-width layer over a usually-streaming page, and a
+   * backdrop-filter re-rasters the blurred region on every repaint
+   * behind it — on phones that lag shows as patchy flicker (same
+   * family guard as the modal/select sheets, 2026-09-15). Hosts
+   * restore a finish with --hk-popover-blur-mobile. Containment
+   * scopes the sheet's layout/style invalidations away from the page. */
+  backdrop-filter: var(--hk-popover-blur-mobile, none);
+  contain: layout style;
   /* The base .hk-popover-panel max-width clamp (calc(100vw - 16px), the
    * anchored panel's ratchet guard) must NOT leak into the sheet: with
    * the inline left:0 + right:0 docking the clamp over-constrains the

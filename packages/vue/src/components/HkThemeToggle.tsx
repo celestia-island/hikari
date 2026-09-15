@@ -56,6 +56,15 @@ export interface ThemeItemScope {
  * group (before the divider). Mode-adjacent host chrome that is NOT a
  * theme-editor concern lives here (e.g. display-scale control).
  *
+ * `closeMenu()` (setup expose) — programmatic close for host content
+ * living INSIDE the menu (row slot affordances). A host that opens a
+ * delegated second-level window from a row (e.g. a per-theme editor)
+ * calls it to dismiss the menu; the menu is ONE state in both its forms
+ * (desktop popover, mobile bottom sheet), so this closes whichever is
+ * showing — a mobile-aware host decides whether to call it at all, no
+ * automatic close fires from here. InstanceType does not carry
+ * expose() members — type the ref structurally at the consumer.
+ *
  * Color-mode group: the unified HTabs strip in segmented (radiogroup)
  * working mode (Auto | Light | Dark) — same pill chrome as every other
  * group. In AUTO mode the Light/Dark halves merge into the strip's
@@ -84,7 +93,7 @@ export const HkThemeToggle = defineComponent({
     "update:scheme": (_theme: HCustomTheme) => true,
     "open-customize": () => true,
   },
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
     const { currentTheme, currentMode, effectiveMode, geo, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme, customThemes } = useTheme();
 
@@ -103,6 +112,19 @@ export const HkThemeToggle = defineComponent({
     const menuOpen = ref(false);
     const triggerRef = ref<HTMLElement | null>(null);
     const schemeDialogOpen = ref(false);
+
+    /** Programmatic close for host content inside the menu (row slot
+     *  affordances): a host opening a delegated second-level window from
+     *  a theme row calls this to dismiss the menu. The menu is ONE state
+     *  in both its forms — desktop popover and mobile bottom sheet — so
+     *  this closes whichever is showing, with no breakpoint branching
+     *  here; a mobile-aware host decides whether to call it at all.
+     *  Same teardown as every internal close — the alt-timer cleanup
+     *  rides the menuOpen watcher. */
+    function closeMenu() {
+      menuOpen.value = false;
+    }
+    expose({ closeMenu });
 
     // ── Solar-altitude readout (auto-mode merged cell) ──────────────
     // `geo` comes from the theme clock (timezone estimate until the real
@@ -189,7 +211,7 @@ export const HkThemeToggle = defineComponent({
 
     function onSelectTheme(id: ThemeId) {
       setTheme(id);
-      menuOpen.value = false;
+      closeMenu();
     }
 
     function onConfirmScheme(theme: HCustomTheme) {
@@ -334,7 +356,7 @@ export const HkThemeToggle = defineComponent({
               type="button"
               class="s-theme-item-btn s-theme-item-customize"
               onClick={() => {
-                menuOpen.value = false;
+                closeMenu();
                 if (props.externalCustomize) {
                   emit("open-customize");
                 } else {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import { HkThemeToggle } from "./HkThemeToggle";
 import { themePresets, useTheme, type CustomThemePreset } from "../theme";
@@ -354,5 +354,67 @@ describe("HkThemeToggle item slots", () => {
       expect(p!.dark?.primary).toBeTruthy();
       expect(p!.light?.primary).toBeTruthy();
     }
+  });
+});
+
+describe("HkThemeToggle exposed closeMenu", () => {
+  /** Public surface HkThemeToggle exposes via setup expose() —
+   *  InstanceType does not carry expose() members, so type it
+   *  structurally (the consumer-side contract this ships for). */
+  interface ThemeTogglePublic {
+    closeMenu: () => void;
+  }
+
+  function mountToggleWithRef(): {
+    container: HTMLElement;
+    toggle: () => ThemeTogglePublic;
+  } {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const handle = ref<ThemeTogglePublic | null>(null);
+    const app = createApp({
+      render: () => h(HkThemeToggle, { ref: handle, externalCustomize: true }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    return {
+      container,
+      toggle: () => {
+        const t = handle.value;
+        if (!t) throw new Error("HkThemeToggle ref never populated");
+        return t;
+      },
+    };
+  }
+
+  it("closes the open menu through the exposed closeMenu", async () => {
+    const { container, toggle } = mountToggleWithRef();
+    await settle();
+
+    openMenu(container);
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
+
+    // Host-row affordances (e.g. a per-theme edit button) open delegated
+    // second-level windows: the desktop popover must be dismissable
+    // programmatically — the same teardown path as every internal close.
+    toggle().closeMenu();
+    await settle();
+
+    expect(document.body.querySelector(".s-theme-menu")).toBeNull();
+  });
+
+  it("closeMenu is a no-op while the menu is closed", async () => {
+    const { container, toggle } = mountToggleWithRef();
+    await settle();
+
+    expect(() => toggle().closeMenu()).not.toThrow();
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu")).toBeNull();
+
+    // The menu still opens normally afterwards.
+    openMenu(container);
+    await settle();
+    expect(document.body.querySelector(".s-theme-menu")).toBeTruthy();
   });
 });

@@ -16,7 +16,6 @@ jobs:
   verify-versions:
     name: Verify version consistency
     uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@master
-    timeout-minutes: 90
 
   rustfmt:
     name: Check Formatting

@@ -45,7 +45,7 @@ export const HkAdminShell = defineComponent({
     };
 
     return () => (
-      <div class="flex flex-col h-full w-full overflow-hidden">
+      <div class="s-admin-shell">
         {slots.header && (
           <div style={{ flexShrink: 0 }}>
             {slots.header({
@@ -61,7 +61,7 @@ export const HkAdminShell = defineComponent({
           </div>
         )}
 
-        <div class="flex flex-1 min-h-0" style={{ paddingBottom: props.footerHeight }}>
+        <div class="s-admin-shell-body" style={{ paddingBottom: props.footerHeight }}>
           {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (
             <aside
               style={{
@@ -75,8 +75,8 @@ export const HkAdminShell = defineComponent({
               {slots.sidebar({ collapsed: false, onNavigate: closeSidebar })}
             </aside>
           )}
-          <main class="flex-1 flex flex-col min-w-0 min-h-0">
-            <HScrollContainer class="flex-1 min-h-0">
+          <main class="s-admin-shell-main">
+            <HScrollContainer class="s-admin-shell-scroll">
               {/* Padding lives INSIDE the scroll viewport (an inner
                   wrapper) so card box-shadows are not clipped at the
                   viewport edges. */}

@@ -131,7 +131,7 @@ export default defineComponent({
       <div ref={wrapperHostRef} class="hk-table-host">
         <div ref={wrapperRef} class="hk-table-wrapper">
         <table class={tableCls.value}>
-          {props.caption && <caption class="sr-only">{props.caption}</caption>}
+          {props.caption && <caption class="hk-table-sr-only">{props.caption}</caption>}
           <thead>
             <tr class="hk-table-header-row">
               {props.selectable && (

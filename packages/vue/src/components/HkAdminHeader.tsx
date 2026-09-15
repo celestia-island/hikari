@@ -166,7 +166,7 @@ export const HkAdminHeader = defineComponent({
       <header
         class={[
           "s-glass-header",
-          props.compact ? "px-4 gap-2" : "px-6 gap-3",
+          props.compact ? "s-glass-header--compact" : "",
         ]}
       >
         {props.showHamburger && (
@@ -175,13 +175,13 @@ export const HkAdminHeader = defineComponent({
             size="sm"
             onClick={() => emit("hamburger")}
           >
-            <Menu size={20} class="w-5 h-5" />
+            <Menu size={20} class="s-admin-header-hamburger-icon" />
           </HButton>
         )}
 
-        <div ref={userTriggerRef} class="flex items-center gap-2 min-w-0">
+        <div ref={userTriggerRef} class="s-admin-header-user">
           <button
-            class="w-7 h-7 rounded-full overflow-hidden shrink-0 cursor-pointer transition-opacity relative group p-0 border-0"
+            class="s-admin-header-avatar"
             aria-label={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
             aria-haspopup={props.avatarAction === "drawer" ? "dialog" : "menu"}
             aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
@@ -191,7 +191,7 @@ export const HkAdminHeader = defineComponent({
               <img
                 src={props.avatarUrl}
                 alt={props.username}
-                class="w-full h-full object-cover"
+                class="s-admin-header-avatar-img"
                 onError={() => { avatarFailed.value = true; }}
               />
             ) : (
@@ -205,24 +205,19 @@ export const HkAdminHeader = defineComponent({
               </span>
             )}
             {props.avatarAction === "menu" && (
-              <div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera size={10} class="text-white" />
+              <div class="s-admin-header-avatar-veil">
+                <Camera size={10} class="s-admin-header-veil-icon" />
               </div>
             )}
           </button>
           {/* WHERE am I — the open view's title, not the nickname. The
-              explicit 1.5 line-height keeps descenders (g, y, p) inside
-              the truncate clip box: the default text-sm box is exactly
-              the em advance, so zoom/subpixel rounding in a scaled root
-              shaves the ink off at the bottom (user report 2026-09-12:
-              the "g" tail of the nickname was visibly cut). */}
+              1.5 line-height (in the class) keeps descenders (g, y, p)
+              inside the truncate clip box: the default text-sm box is
+              exactly the em advance, so zoom/subpixel rounding in a
+              scaled root shaves the ink off at the bottom (user report
+              2026-09-12: the "g" tail of the nickname was visibly cut). */}
           {props.avatarAction === "menu" && props.title && (
-            <span
-              class="text-sm font-semibold text-text truncate max-w-[8rem]"
-              style={{ lineHeight: "1.5" }}
-            >
-              {props.title}
-            </span>
+            <span class="s-admin-header-title">{props.title}</span>
           )}
         </div>
 
@@ -289,15 +284,15 @@ export const HkAdminHeader = defineComponent({
           }}
         </HkMenu>
 
-        <div class="ml-auto flex items-center gap-1.5 shrink-0">
+        <div class="s-admin-header-actions">
           {props.showEmergencyStop && (
             <button
               class={[
-                "px-3 py-1 rounded-md text-xs font-bold border transition-all",
-                props.emergencyStopLoading ? "opacity-50 cursor-wait" : "cursor-pointer",
-                props.emergencyStopActive
-                  ? "bg-red-600 text-white border-red-700 animate-pulse"
-                  : "bg-red-600/10 text-red-500 border-red-500/40 hover:bg-red-600/25",
+                "s-admin-header-emergency",
+                props.emergencyStopLoading
+                  ? "is-loading"
+                  : "",
+                props.emergencyStopActive ? "is-active" : "",
               ]}
               disabled={props.emergencyStopLoading}
               title={props.emergencyStopActive
@@ -312,7 +307,7 @@ export const HkAdminHeader = defineComponent({
           )}
           {slots["emergency-stop-extra"]?.()}
           {(props.actions || []).map((vnode, i) => (
-            <span key={i} class="flex items-center gap-1">
+            <span key={i} class="s-admin-header-action">
               {vnode}
             </span>
           ))}

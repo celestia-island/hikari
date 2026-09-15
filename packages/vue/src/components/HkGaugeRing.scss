@@ -3,14 +3,42 @@
   display: inline-flex;
 }
 
-/* Centre readout. The TSX used to pin this with the host utility
- * `leading-none` (line-height: 1), which put the descender of any g/j/p/q/y
- * ~0.95px below the 18px line box: it overlapped the label 2px underneath and
- * was cut outright inside any host wrapper that truncates. The ring owns the
- * ratio instead of borrowing a host utility, and 1.45 covers the CJK fallback
- * metrics (ascent+descent up to 1.45em). */
+/* The centered read-out. The markup used to borrow the HOST's atomic layer
+ * for its whole anatomy (`absolute inset-0 flex flex-col items-center
+ * justify-center pointer-events-none` + `text-lg font-bold text-text
+ * leading-none` / `text-2xs text-muted mt-0.5`): a host without one (the
+ * evernight flasher) rendered the value as a static sibling beside the ring,
+ * and a host WITH one (chest/UnoCSS) owned values the design system could not
+ * fix. Self-contained rules below instead. */
+.hk-gauge-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* The 1.45 ratio is load-bearing: `leading-none` pinned line-height: 1, which
+ * put the descender of any g/j/p/q/y ~0.95px below the 18px line box — it
+ * overlapped the label underneath and was cut outright inside a truncating
+ * wrapper. 1.45 covers the CJK fallback metrics (ascent+descent up to 1.45em),
+ * so the ring owns the ratio instead of borrowing a host utility. */
 .hk-gauge-ring-value {
+  font-size: var(--text-lg);
+  font-weight: 700;
   line-height: 1.45;
+  color: rgb(var(--color-text));
+}
+
+.hk-gauge-ring-label {
+  font-size: var(--text-2xs);
+  /* Uno's font-size utilities also emit `line-height: 1`; the label is a
+   * single clipped-free line, so the host rendering is kept here. */
+  line-height: 1;
+  color: rgb(var(--color-muted));
+  margin-top: 0.125rem;
 }
 
 // The 0.8s dash sweep rides an INLINE transition on the progress circles

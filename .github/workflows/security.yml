@@ -9,7 +9,7 @@ on:
       - '**/Cargo.toml'
       - '**/Cargo.lock'
   push:
-    branches: [master, dev]
+    branches: [master]
   schedule:
     - cron: '0 6 * * 1'
 

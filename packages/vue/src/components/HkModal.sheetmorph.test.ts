@@ -44,50 +44,66 @@ describe("sheet family morph-performance contract", () => {
     mobileModal = modal.slice(modal.indexOf("@media (max-width: 767px)"));
   });
 
+  // Declaration assertions are LINE-ANCHORED (property → value →
+  // semicolon, own line): a plain toContain() on the token happily
+  // matches the explanatory COMMENT beside the rule — R2 mutation N2
+  // proved the select-sheet flag could be deleted with the suite still
+  // green because its comment mentions the same token.
+
   it("flags the docked modal sheet for clip-mode growth morphs", () => {
-    expect(mobileModal).toContain("--hk-sheet-morph: clip");
+    expect(mobileModal).toMatch(/^[ \t]*--hk-sheet-morph:[ \t]*clip;$/m);
   });
 
   it("carries a clip-path transition on the morph timing tokens", () => {
     // Same duration/ease pair as the height morph — the reveal must keep
     // the stretch look, not invent new timing.
     const frame = modal.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
-    expect(frame).toContain(
-      "clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1))",
+    expect(frame).toMatch(
+      /^[ \t]*clip-path var\(--duration-fast, 0\.15s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
     );
   });
 
   it("never backdrop-filters the docked modal sheet or its scrim", () => {
-    expect(mobileModal).toContain("--hk-modal-blur-mobile, none");
-    expect(mobileModal).toContain("--hk-modal-overlay-blur-mobile, none");
+    expect(mobileModal).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-modal-blur-mobile, none\);$/m,
+    );
+    expect(mobileModal).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-modal-overlay-blur-mobile, none\);$/m,
+    );
   });
 
   it("scopes the docked modal sheet with layout containment", () => {
-    expect(mobileModal).toContain("contain: layout style");
+    expect(mobileModal).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
   });
 
   it("applies the same grammar to the select sheet panel", () => {
     const panel = select.match(/\.hk-select-sheet-panel\s*{[\s\S]*?^}/m)?.[0] ?? "";
-    expect(panel).toContain("--hk-sheet-morph: clip");
-    expect(panel).toContain("contain: layout style");
-    expect(panel).toContain(
-      "clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1))",
+    expect(panel).toMatch(/^[ \t]*--hk-sheet-morph:[ \t]*clip;$/m);
+    expect(panel).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
+    expect(panel).toMatch(
+      /^[ \t]*clip-path var\(--duration-fast, 0\.15s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
     );
     // Opaque already — the panel must not regress to a translucent
     // finish that re-composites against the streaming page.
-    expect(panel).toContain("background: rgb(var(--color-surface))");
+    expect(panel).toMatch(/^[ \t]*background:[ \t]*rgb\(var\(--color-surface\)\);$/m);
   });
 
   it("token-gates the drawer panel blur and guards it on phones", () => {
     // Desktop keeps its finish through the token; the hard-coded blur
     // must not return (it escaped the mobile guard entirely).
     const panel = drawer.match(/\.hk-drawer-panel\s*{[^}]*}/)?.[0] ?? "";
-    expect(panel).toContain("backdrop-filter: var(--hk-drawer-blur, blur(12px))");
-    expect(panel).toContain("contain: layout style");
+    expect(panel).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-blur, blur\(12px\)\);$/m,
+    );
+    expect(panel).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
 
     const mobile = drawer.slice(drawer.indexOf("@media (max-width: 767px)"));
-    expect(mobile).toContain("--hk-drawer-blur-mobile, none");
-    expect(mobile).toContain("--hk-drawer-overlay-blur-mobile, none");
+    expect(mobile).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-blur-mobile, none\);$/m,
+    );
+    expect(mobile).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-drawer-overlay-blur-mobile, none\);$/m,
+    );
   });
 
   it("keeps the drawer's mobile rules in ONE media block", () => {
@@ -103,7 +119,9 @@ describe("sheet family morph-performance contract", () => {
 
   it("guards the popover sheet variant the same way", () => {
     const sheet = popover.match(/\.hk-popover-panel\.hk-is-sheet\s*{[\s\S]*?^}/m)?.[0] ?? "";
-    expect(sheet).toContain("--hk-popover-blur-mobile, none");
-    expect(sheet).toContain("contain: layout style");
+    expect(sheet).toMatch(
+      /^[ \t]*backdrop-filter:[ \t]*var\(--hk-popover-blur-mobile, none\);$/m,
+    );
+    expect(sheet).toMatch(/^[ \t]*contain:[ \t]*layout style;$/m);
   });
 });

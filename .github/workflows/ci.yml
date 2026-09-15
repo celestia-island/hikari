@@ -20,6 +20,7 @@ jobs:
   rustfmt:
     name: Check Formatting
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - name: Checkout Project
         uses: actions/checkout@v7
@@ -47,6 +48,7 @@ jobs:
   lint:
     name: Lint
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - name: Checkout Project
         uses: actions/checkout@v7
@@ -82,6 +84,7 @@ jobs:
   test:
     name: Run tests
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - name: Checkout Project
         uses: actions/checkout@v7

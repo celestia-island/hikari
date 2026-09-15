@@ -19,6 +19,7 @@ jobs:
   format:
     name: Format
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
 
     steps:
       - uses: actions/checkout@v7

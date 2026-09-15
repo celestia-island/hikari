@@ -268,6 +268,7 @@ export {
 export {
   useI18n,
   setLocale,
+  activeLocale,
   mergeMessages,
 } from "./i18n/context";
 
@@ -455,6 +456,8 @@ export {
   formatPriceUsd,
   formatRelativeTime,
   formatDateTime,
+  formatDate,
+  formatTime,
   formatMs,
   type RelativeTimeT,
 } from "./utils/format";

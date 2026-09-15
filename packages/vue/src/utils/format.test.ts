@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatRelativeTime, type RelativeTimeT } from "./format";
+import { formatDate, formatDateTime, formatRelativeTime, formatTime, type RelativeTimeT } from "./format";
 
 const MIN = 60_000;
 const HOUR = 3_600_000;
@@ -112,5 +112,49 @@ describe("formatRelativeTime", () => {
     const d = ago(45 * DAY);
     expect(formatRelativeTime(d, t)).toBe(d.toLocaleDateString());
     expect(calls).toHaveLength(0);
+  });
+});
+
+// ── Locale awareness (2026-09-15) ────────────────────────────────────
+// Every locale-sensitive formatter must follow the app-selected hikari
+// locale (setLocale), not the browser default: a zh-Hans app on an en
+// browser used to render dates as "9/13/2026" next to zh words.
+
+describe("locale-aware date formatting", () => {
+  it("formatDate composes the locale's full day label", async () => {
+    const { setLocale } = await import("../i18n/context");
+    const d = new Date(2026, 8, 13);
+    await setLocale("zh-Hans");
+    expect(formatDate(d, { month: "short", day: "numeric" })).toBe("9月13日");
+    await setLocale("en");
+    expect(formatDate(d, { month: "short", day: "numeric" })).toBe("Sep 13");
+    // Whole-date default: no opts = the locale's own date format.
+    expect(formatDate(d)).toContain("2026");
+  });
+
+  it("formatTime follows the locale's clock convention", async () => {
+    const { setLocale } = await import("../i18n/context");
+    const d = new Date(2026, 8, 13, 15, 24);
+    await setLocale("en");
+    expect(formatTime(d)).toMatch(/3:24/);
+    await setLocale("zh-Hans");
+    expect(formatTime(d)).toMatch(/15:24/);
+  });
+
+  it("formatDateTime renders through the app locale", async () => {
+    const { setLocale } = await import("../i18n/context");
+    await setLocale("ja");
+    const out = formatDateTime(new Date(2026, 8, 13, 15, 24));
+    expect(out).toMatch(/2026/);
+    // ja month rendering carries the 月 particle from the ja locale data.
+    expect(out).toMatch(/9月13日|9\/13/);
+    await setLocale("en");
+  });
+
+  it("formatDate/formatTime return empty for missing or invalid input", () => {
+    expect(formatDate("")).toBe("");
+    expect(formatDate("nope")).toBe("");
+    expect(formatTime(0)).toBe("");
+    expect(formatTime("junk")).toBe("");
   });
 });

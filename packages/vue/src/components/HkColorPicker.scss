@@ -71,7 +71,13 @@
   margin-bottom: var(--space-4);
   color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
   white-space: nowrap;
-  line-height: 1;
+  /* The row layout below clips this label with `overflow: hidden` for its
+   * ellipsis, and that clip box IS the line box: at `line-height: 1` the 12px
+   * box was shorter than the font's ink box (14.05px Roboto, 17.38px once a
+   * CJK fallback renders the glyphs), so every g/j/p/q/y in a colour name lost
+   * its tail. 1.5 = 18px, exactly the swatch height in the row layout, so the
+   * dense grids keep their geometry. */
+  line-height: 1.5;
   transition: color var(--duration-short);
 
   .hk-color-picker-swatch-btn:hover & {

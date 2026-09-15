@@ -3,6 +3,16 @@
   display: inline-flex;
 }
 
+/* Centre readout. The TSX used to pin this with the host utility
+ * `leading-none` (line-height: 1), which put the descender of any g/j/p/q/y
+ * ~0.95px below the 18px line box: it overlapped the label 2px underneath and
+ * was cut outright inside any host wrapper that truncates. The ring owns the
+ * ratio instead of borrowing a host utility, and 1.45 covers the CJK fallback
+ * metrics (ascent+descent up to 1.45em). */
+.hk-gauge-ring-value {
+  line-height: 1.45;
+}
+
 // The 0.8s dash sweep rides an INLINE transition on the progress circles
 // (HkGaugeRing.tsx), so the guard needs !important to beat it.
 @media (prefers-reduced-motion: reduce) {

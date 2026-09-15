@@ -200,8 +200,8 @@
   color: rgb(var(--color-on-solid-icon, 255 255 255));
 }
 
-/* SR-only utility */
-.sr-only {
+/* Visually hidden caption (kept in the a11y tree) */
+.hk-table-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;

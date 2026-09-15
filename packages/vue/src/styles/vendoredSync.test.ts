@@ -48,6 +48,10 @@ function stripProvenanceHeader(source: string): string {
 const VENDORED_FROM_VUE: Array<[string, string]> = [
   ["theme/channels.scss", "tokens.scss"],
   ["theme/scale.scss", "scale.scss"],
+  // The overlay-scrollbar chrome lives with the other theme partials
+  // (packages/theme/styles) and is vendored here so npm consumers can
+  // resolve it — the exports map only exposes ./styles/*.
+  ["theme/scrollbar.scss", "../../theme/styles/_scrollbar.scss"],
 ];
 
 

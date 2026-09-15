@@ -103,6 +103,9 @@ registerCssAnimation("s-voice-wave-bounce", { infinite: true });
 // components/HkPlaceholderMarquee.scss — overflowing placeholder sweep
 // (loops forever; pure CSS, loop geometry on inline custom properties).
 registerCssAnimation("hk-placeholder-marquee-scroll", { infinite: true });
+// styles/admin-tokens.scss — admin header emergency-stop chip while
+// engaged (loops forever).
+registerCssAnimation("s-admin-header-emergency-pulse", { infinite: true });
 // The styles/theme/mixins.scss ambient/glow/entrance keyframes were
 // retired with the legacy Gen-1 sheet vendoring (hikari #476) — their
 // registrar entries went with them.

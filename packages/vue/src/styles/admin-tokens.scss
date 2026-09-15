@@ -316,12 +316,203 @@
   z-index: var(--z-header);
   display: flex;
   align-items: center;
+  /* Horizontal rhythm + gap live in the class (not in host utilities):
+   * the markup used to carry `px-6 gap-3` / `px-4 gap-2` utility classes,
+   * which a host WITHOUT an atomic layer simply did not have — the header
+   * silently fell back to this file's old `padding: 0 var(--space-12)`
+   * and no gap at all. */
+  gap: var(--space-12);
+  padding: 0 var(--space-24);
   height: var(--s-header-height);
-  padding: 0 var(--space-12);
   background: rgb(var(--color-surface) / var(--opacity-half));
   backdrop-filter: blur(var(--blur-md));
   border-bottom: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   flex-shrink: 0;
+}
+
+.s-glass-header--compact {
+  gap: var(--space-8);
+  padding: 0 var(--space-16);
+}
+
+/* ── Admin header chrome (HkAdminHeader) ────────────────────────────────
+ * The header's own layout. Every declaration below replaces a utility
+ * class the markup used to depend on (`w-7 h-7`, `rounded-full`,
+ * `object-cover`, `max-w-[8rem]`, `animate-pulse`, …) — a host without an
+ * atomic layer rendered the header without them, and a host with one
+ * (chest/UnoCSS) owned values the design system could not fix. Values are
+ * the verified computed ones (audit 2026-09-15 against chest's generated
+ * CSS), so no host's rendering changes. */
+
+.s-admin-header-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.s-admin-header-avatar {
+  position: relative;
+  width: var(--space-28);
+  height: var(--space-28);
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The hamburger's leading icon (lucide `Menu`), sized in rem so it tracks
+ * a scaled root the way the utility it replaces did. */
+.s-admin-header-hamburger-icon {
+  width: var(--space-20);
+  height: var(--space-20);
+}
+
+.s-admin-header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hover veil: the "change avatar" affordance over the trigger. The Uno
+ * form was `group-hover:opacity-100` scoped by a `group` marker class on
+ * the button; this descendant selector expresses the same scope. */
+.s-admin-header-avatar-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: rgb(0 0 0 / 30%);
+  opacity: 0;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.s-admin-header-avatar:hover .s-admin-header-avatar-veil {
+  opacity: 1;
+}
+
+.s-admin-header-veil-icon {
+  color: #fff;
+}
+
+/* The open view's title. The 1.5 line-height is load-bearing: the default
+ * text-sm box is exactly the em advance, so descenders (g, y, p) fall
+ * outside the truncate clip box under subpixel rounding (user report
+ * 2026-09-12: the "g" tail of the nickname was visibly cut). */
+.s-admin-header-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+  line-height: 1.5;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.s-admin-header-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Emergency stop chip: quiet destructive by default, solid red + pulse
+ * while engaged (`is-active`), dimmed + wait cursor while the request is
+ * in flight (`is-loading`). */
+.s-admin-header-emergency {
+  padding: var(--space-4) var(--space-12);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  font-size: var(--text-xs);
+  /* Uno's font-size utilities also emit `line-height: 1`; the chip
+   * rendered that way in chest, so the class keeps it. */
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(220 38 38 / 10%);
+  color: #ef4444;
+  border-color: rgb(239 68 68 / 40%);
+}
+
+.s-admin-header-emergency:hover {
+  background: rgb(220 38 38 / 25%);
+}
+
+.s-admin-header-emergency.is-loading {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.s-admin-header-emergency.is-active {
+  background: #dc2626;
+  color: #fff;
+  border-color: #b91c1c;
+  animation: s-admin-header-emergency-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes s-admin-header-emergency-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-admin-header-emergency.is-active {
+    animation: none;
+  }
+}
+
+/* ── Admin shell layout (HkAdminShell) ──────────────────────────────────
+ * Replaces the `flex flex-col h-full w-full overflow-hidden` /
+ * `flex-1 min-h-0` utility chain the shell used to require. */
+.s-admin-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.s-admin-shell-body {
+  display: flex;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.s-admin-shell-main {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.s-admin-shell-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* ── Nav sidebar labels (HkNavSidebar) ─ */
+.s-nav-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Popup menu items ─ */
@@ -556,6 +747,14 @@
   border-radius: var(--hi-radius-sm, 4px);
   box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
   animation: s-auth-card-in 0.45s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)) both;
+}
+
+/* Field leading icon (HkSignInCard's inline user glyph) — sized in rem so
+ * it tracks a scaled root, the way the `w-4 h-4` utility it replaces did
+ * only in hosts that had an atomic layer. */
+.s-auth-card-field-icon {
+  width: var(--space-16);
+  height: var(--space-16);
 }
 
 @keyframes s-auth-card-in {

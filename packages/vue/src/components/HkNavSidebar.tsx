@@ -75,7 +75,7 @@ export const HkNavSidebar = defineComponent({
                       icon: () => (IconComp ? h(IconComp, { size: 16 }) : null),
                       default: () => (
                         <span class="s-nav-item-content">
-                          <span class="truncate">{item.label}</span>
+                          <span class="s-nav-item-label">{item.label}</span>
                           {item.badge && (
                             <span
                               class="s-nav-item-badge"

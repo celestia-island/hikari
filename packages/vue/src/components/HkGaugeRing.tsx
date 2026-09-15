@@ -115,12 +115,12 @@ export default defineComponent({
           ))}
         </svg>
         {(props.centerValue || props.centerLabel) && (
-          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <div class="hk-gauge-ring-center">
             {props.centerValue && (
-              <div class="hk-gauge-ring-value text-lg font-bold text-text">{props.centerValue}</div>
+              <div class="hk-gauge-ring-value">{props.centerValue}</div>
             )}
             {props.centerLabel && (
-              <div class="text-2xs text-muted mt-0.5">{props.centerLabel}</div>
+              <div class="hk-gauge-ring-label">{props.centerLabel}</div>
             )}
           </div>
         )}

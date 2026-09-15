@@ -9,7 +9,10 @@
 //   2. theme/scale.scss — the L2 scale tokens: spacing, type, radius,
 //      blur, opacity, durations, easings, z bands, fonts (vendored from
 //      src/scale.scss).
-//   3. admin-tokens.scss — the plana-ui shared surface: layout tokens,
+//   3. theme/scrollbar.scss — the shared overlay-scrollbar chrome
+//      (.hk-scrollbar-track/thumb) that attachOverlayScrollbars() attaches
+//      to every scroll region (vendored from packages/theme/styles).
+//   4. admin-tokens.scss — the plana-ui shared surface: layout tokens,
 //      brand-color aliases and the shared admin component classes.
 //
 // initTheme() (runtime) writes only deltas against this base into a
@@ -24,4 +27,5 @@
 @use "./reset.scss";
 @use "./theme/channels.scss";
 @use "./theme/scale.scss";
+@use "./theme/scrollbar.scss";
 @use "./admin-tokens.scss";

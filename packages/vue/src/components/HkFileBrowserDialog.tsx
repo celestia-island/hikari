@@ -81,7 +81,7 @@ function formatModified(value: string | number | undefined): string {
   if (value === undefined) return "";
   if (typeof value === "number") {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? String(value) : formatDateTime(date);
   }
   return value;
 }

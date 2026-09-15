@@ -56,7 +56,8 @@ export type RelativeTimeT = (
  *  Pass an optional translator for localized variants; defaults to
  *  compact English text. Tiers: <1min justNow, <60min minutes,
  *  <24h hours, <7d days, <30d weeks, otherwise an absolute
- *  locale-rendered date (browser locale, like formatDateTime).
+ *  locale-rendered date (the app-selected hikari locale, like
+ *  formatDateTime).
  *  The translator owns {n} interpolation — hikari's own useI18n().t
  *  does NOT interpolate named params, so wrap it (the canonical key
  *  set lives in the per-locale i18n time bundles). */

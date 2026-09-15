@@ -55,12 +55,16 @@ describe("formatRelativeTime", () => {
     expect(formatRelativeTime(ago(29 * DAY))).toBe("4w ago");
   });
 
-  it("falls to the absolute-date path at >= 30d", () => {
+  it("falls to the absolute-date path at >= 30d, in the app locale", async () => {
     const d = ago(30 * DAY);
-    // Do not pin a locale-specific rendering; assert the value comes
-    // from the same Date's toLocaleDateString().
-    expect(formatRelativeTime(d)).toBe(d.toLocaleDateString());
-    expect(formatRelativeTime(d).length).toBeGreaterThan(0);
+    // The absolute tier must follow the app-selected hikari locale (the
+    // R2 sweep found the old assertion compared the BROWSER default,
+    // which proves nothing about locale-following).
+    const { setLocale } = await import("../i18n/context");
+    await setLocale("zh-Hans");
+    expect(formatRelativeTime(d)).toBe(d.toLocaleDateString("zh-Hans"));
+    await setLocale("en");
+    expect(formatRelativeTime(d)).toBe(d.toLocaleDateString("en"));
   });
 
   it("clamps future timestamps into the justNow tier", () => {
@@ -107,10 +111,11 @@ describe("formatRelativeTime", () => {
     });
   });
 
-  it("keeps absolute dates away from the translator", () => {
+  it("keeps absolute dates away from the translator", async () => {
     const { t, calls } = makeCaptureT();
     const d = ago(45 * DAY);
-    expect(formatRelativeTime(d, t)).toBe(d.toLocaleDateString());
+    const { activeLocale } = await import("../i18n/context");
+    expect(formatRelativeTime(d, t)).toBe(d.toLocaleDateString(activeLocale()));
     expect(calls).toHaveLength(0);
   });
 });

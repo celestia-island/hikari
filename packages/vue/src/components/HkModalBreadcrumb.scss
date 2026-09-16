@@ -133,9 +133,11 @@
   border: 0;
   border-radius: var(--radius-sm, 0.25rem);
   background: transparent;
-  /* font-family only: the item class above owns size and weight. */
+  /* font-family only: the item classes above own size, weight AND colour —
+     redeclaring `color` here would repaint every cut crumb (and drop the
+     current layer's accent) because an equally specific rule later in the
+     file wins. */
   font-family: inherit;
-  color: inherit;
   text-align: start;
   cursor: pointer;
   pointer-events: auto;

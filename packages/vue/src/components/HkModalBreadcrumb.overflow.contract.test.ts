@@ -122,12 +122,29 @@ describe("HkModalBreadcrumb overflow fence", () => {
     // also under half a fingertip, and this is the phone-primary
     // affordance. Grow the hit area, not the chrome.
     const block = rule(".hk-modal-breadcrumb-item-reveal");
-    expect(block).toContain("padding: 0");
+    // `padding: 0` exactly — the old `padding: 0 var(--space-4, …)` also
+    // satisfied a bare "padding: 0" substring, so the guard was vacuous.
+    expect(block).toMatch(/padding:\s*0;/);
     expect(block).toContain("pointer-events: auto");
     expect(block).toContain("text-align: start");
     const hitArea = scss.match(/\.hk-modal-breadcrumb-item-reveal::after\s*{[^}]*}/)?.[0] ?? "";
     expect(hitArea).toContain("position: absolute");
     expect(hitArea).toContain("inset: calc(-1 * var(--space-8");
+  });
+
+  it("leaves the label palette to the item classes", () => {
+    // The button carries the item classes too, and an equally specific rule
+    // later in the file wins: redeclaring `color` here repainted every cut
+    // crumb (and dropped the current layer's accent) in exactly the
+    // long-title case this feature exists for (2026-09-16 final review).
+    const block = rule(".hk-modal-breadcrumb-item-reveal");
+    expect(block).not.toContain("color:");
+    expect(rule(".hk-modal-breadcrumb-item")).toContain(
+      "color: var(--hi-color-text-secondary",
+    );
+    expect(rule(".hk-modal-breadcrumb-item-current")).toContain(
+      "color: var(--hi-color-primary",
+    );
   });
 
   it("opens the revealed name in the same popover family as the menu", () => {

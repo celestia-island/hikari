@@ -240,7 +240,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-2, 4px);
-  margin-inline-start: var(--space-8, 8px);
+  /* Pin to inline-end: the header is space-between, so without this the
+     actions cell becomes the middle child and floats to the center
+     (user report 2026-09-16 — the login sheet's gear landed mid-header). */
+  margin-inline-start: auto;
   flex-shrink: 0;
 }
 

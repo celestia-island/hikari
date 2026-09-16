@@ -221,8 +221,11 @@ export class RevealNoisePainter {
    * Composite one frame: background noise translated by the background
    * drift, then the glyph mask — rebuilt only when `maskKey` (value +
    * canvas size) changes — re-filled with noise translated by the glyph
-   * drift and stamped over it. Returns false (and latches
-   * `available` off) when the engine cannot support the pattern path.
+   * drift and stamped over it. Returns false (WITHOUT latching
+   * `available` off — pattern-null engines retry the pattern path every
+   * frame by design, so a later working pattern resumes the
+   * kinematogram; only a thrown error latches the painter off) when the
+   * engine cannot support the pattern path this frame.
    */
   paint(
     ctx: CanvasRenderingContext2D,

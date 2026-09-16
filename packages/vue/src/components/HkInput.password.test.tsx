@@ -1050,6 +1050,74 @@ describe("HkInput password hold-to-reveal eye", () => {
     }
   });
 
+  it("degrades to the legacy jitter when only the visible canvas lacks patterns", async () => {
+    // The mirrored asymmetry: the VISIBLE canvas's createPattern yields
+    // null while the offscreen mask's works. Now the BACKGROUND guard
+    // in paint() is the only decision point — deleting it alone must
+    // redden this test (the frame would keep "succeeding" with the
+    // visible fill falling back to a stale fillStyle, stamping
+    // noise-through-glyphs over a flat wash — structure a screenshot
+    // could pick up). Together with the offscreen-null test, each
+    // pattern guard is now pinned alone.
+    const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = seen.find((r) => r.canvas === this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], drawImages: 0 };
+        seen.push(rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        drawImage: () => r.drawImages++,
+        createPattern: () =>
+          r.canvas === document.querySelector(".hk-pwd-dots")
+            ? null
+            : ({} as CanvasPattern),
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = seen.find((r) => r.canvas === visible)!;
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.drawImages).toBe(0);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
   it("degrades within the hold when reduced motion is switched on mid-hold", async () => {
     // Frames already arrived (bus live), then the host parks the bus:
     // the recurring watchdog must flip the hold to the static fallback

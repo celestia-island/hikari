@@ -23,6 +23,10 @@
 .hk-radio {
   display: inline-flex;
   align-items: center;
+  /* House parity (HkCheckbox/HkSwitch): keeps the box on the text's
+   * visual midline when a radio row is lifted out of the group into an
+   * inline text context. No-op inside the flex group. */
+  vertical-align: middle;
   gap: var(--space-8, 0.5rem);
   cursor: pointer;
   user-select: none;
@@ -44,7 +48,8 @@
   background: var(--hi-color-surface);
   transition:
     border-color var(--duration-normal, 0.3s) ease,
-    background var(--duration-normal, 0.3s) ease;
+    background var(--duration-normal, 0.3s) ease,
+    scale var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   flex-shrink: 0;
   position: relative;
 
@@ -71,6 +76,11 @@
 
 .hk-radio:not([data-disabled]):hover .hk-radio-box:not([data-checked]) {
   border-color: var(--hi-color-primary);
+}
+
+/* Press feedback (house parity: HkCheckbox box / HkSwitch thumb). */
+.hk-radio:not([data-disabled]):active .hk-radio-box {
+  scale: 0.9;
 }
 
 /* --- Hidden input --- */

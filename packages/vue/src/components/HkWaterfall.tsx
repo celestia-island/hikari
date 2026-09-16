@@ -49,13 +49,18 @@ export interface WaterfallRailSlotProps {
   jumpToBucket: (key: string) => void;
 }
 
-/** The container handle the waterfall uses (narrowed to what it needs:
- *  read the scroll element, and ask the container to scroll to a node —
- *  the container owns the offset math, which must run in the layout space
- *  the scroll offset lives in, not on drawn rects). */
+/** The container handle the waterfall uses: read the scroll element, ask the
+ *  container to scroll to a node (it owns the offset math, which must run in
+ *  the layout space the scroll offset lives in, not on drawn rects), and
+ *  forward the container-only affordances — a host that needs to re-measure
+ *  after slot content changed, or to read the live offset, should not have
+ *  to reach past the waterfall for them. */
 interface ScrollHost {
   getScrollElement: () => HTMLElement | undefined;
   scrollToElement: (el: HTMLElement | null, behavior?: ScrollBehavior) => void;
+  scrollTo: (top: number, behavior?: ScrollBehavior) => void;
+  getScrollTop: () => number;
+  refresh: () => void;
 }
 
 /**
@@ -110,10 +115,23 @@ export default defineComponent({
     columns: { type: [Number, String] as PropType<number | "auto">, default: 1 },
     /** Minimum column width (px) used by `columns="auto"`. */
     columnMinWidth: { type: Number, default: 320 },
-    /** Estimated card height (px) for the windowing placeholder. */
+    /** Estimated card height (px) for the windowing placeholder. The
+     *  per-card form below wins when both are set. */
     estimatedItemHeight: { type: Number, default: 120 },
+    /** Per-card estimate, for views whose cards differ by kind or by
+     *  breakpoint — a single number mis-sizes every other tier, and a
+     *  mis-sized placeholder reads as a blank gap in the list. Receives the
+     *  item's index inside its own column. */
+    estimatedItemHeightOf: {
+      type: Function as PropType<(item: unknown, index: number) => number>,
+      default: undefined,
+    },
     /** Screens of overscan kept mounted on either side of the viewport. */
     overscanScreens: { type: Number, default: 1 },
+    /** Whether list enter/leave/move animations run. Hosts turn this off
+     *  while a bulk hydration lands, so fifty cards arriving in one patch do
+     *  not animate at once. */
+    animate: { type: Boolean, default: true },
     /** Active bucket key (`v-model:active-bucket`). An external write syncs
      *  the internal highlight; scrolling then re-derives it from the
      *  sections' geometry and emits the new key — while the user scrolls the
@@ -132,6 +150,11 @@ export default defineComponent({
      *  also set. Without it the signal falls back to the single
      *  `top > backTopShow` test. */
     backTopHide: { type: Number, default: undefined },
+    /** Attribute carrying each section's bucket key. Override it when the
+     *  consuming view (and its tests) already addresses sections by another
+     *  name. Must be a plain `data-*` attribute; anything else falls back to
+     *  the default. */
+    sectionAttr: { type: String, default: "data-waterfall-bucket" },
     /** Accessible label for the waterfall region. */
     ariaLabel: { type: String, default: undefined },
   },
@@ -205,13 +228,23 @@ export default defineComponent({
     );
 
     // ── scroll ────────────────────────────────────────────────────────
-    /** The section element for a bucket key — matched through `dataset`,
-     *  never through a selector: the key is data, and a key carrying a
-     *  quote, a backslash or a newline would make a selector throw. */
+    /** The attribute each section carries its bucket key on. The prop is
+     *  free text, so it is validated before it can become a selector: only a
+     *  plain `data-*` attribute passes, everything else falls back. */
+    const sectionAttribute = computed(() => {
+      const raw = props.sectionAttr;
+      return /^data-[a-z0-9-]+$/.test(raw) ? raw : "data-waterfall-bucket";
+    });
+
+    /** The section element for a bucket key — matched through the attribute
+     *  map, never through a selector built from the key itself: the key is
+     *  data, and a key carrying a quote, a backslash or a newline would make
+     *  such a selector throw. */
     function findBucketSection(key: string): HTMLElement | null {
       if (!scrollEl) return null;
-      for (const section of scrollEl.querySelectorAll<HTMLElement>("[data-waterfall-bucket]")) {
-        if (section.dataset.waterfallBucket === key) return section;
+      const attr = sectionAttribute.value;
+      for (const section of scrollEl.querySelectorAll<HTMLElement>(`[${attr}]`)) {
+        if (section.getAttribute(attr) === key) return section;
       }
       return null;
     }
@@ -239,13 +272,14 @@ export default defineComponent({
       }
 
       const viewportTop = scrollEl.getBoundingClientRect().top;
-      const sections = scrollEl.querySelectorAll<HTMLElement>("[data-waterfall-bucket]");
+      const attr = sectionAttribute.value;
+      const sections = scrollEl.querySelectorAll<HTMLElement>(`[${attr}]`);
       let best: string | undefined;
       for (const section of sections) {
         // Viewport-relative comparison: robust whichever ancestor is the
         // sections' offsetParent.
         if (section.getBoundingClientRect().top - viewportTop - props.activeThreshold <= 0) {
-          best = section.dataset.waterfallBucket;
+          best = section.getAttribute(attr) ?? undefined;
         } else {
           break;
         }
@@ -348,6 +382,14 @@ export default defineComponent({
       buckets,
       activeBucket: activeKey,
       backTopVisible,
+      // Container affordances forwarded so a host never reaches past the
+      // waterfall for them (see the ScrollHost note).
+      scrollToElement: (el: HTMLElement | null, behavior?: ScrollBehavior) =>
+        scrollHost.value?.scrollToElement(el, behavior),
+      scrollTo: (top: number, behavior?: ScrollBehavior) =>
+        scrollHost.value?.scrollTo(top, behavior),
+      getScrollTop: () => scrollHost.value?.getScrollTop() ?? scrollEl?.scrollTop ?? 0,
+      refresh: () => scrollHost.value?.refresh(),
     });
 
     return () => (
@@ -368,59 +410,77 @@ export default defineComponent({
           mode="windowed"
           overscanScreens={props.overscanScreens}
         >
-          {buckets.value.length === 0
-            ? (slots.empty?.() ?? null)
-            : layout.value.map(({ bucket, columns }, bucketIndex) => (
-                <section
-                  key={`${bucketIndex}\u0000${bucket.key}`}
-                  class="hk-waterfall-bucket"
-                  data-waterfall-bucket={bucket.key}
-                >
-                  {slots.bucketHeader?.({
-                    bucketKey: bucket.key,
-                    bucketIndex,
-                    items: bucket.items,
-                  })}
-                  <div class="hk-waterfall-columns">
-                    {columns.map((column, columnIndex) => (
-                      <HListTransition
-                        key={columnIndex}
-                        tag="div"
-                        class="hk-waterfall-column"
-                        variant="reveal"
-                        move={true}
-                      >
-                        {column.map((item, index) => {
-                          // The transition group requires a key on every
-                          // child. `itemKeyOf` supplies the stable identity
-                          // (so an arriving card animates only its own
-                          // column); without it the positional fallback
-                          // keeps the group valid at the cost of re-mounting
-                          // rows when the list is prepended to.
-                          const itemKey =
-                            props.itemKeyOf?.(item, index) ??
-                            `${bucket.key}#${columnIndex}#${index}`;
-                          return (
-                            <HWindowedItem
-                              key={itemKey}
-                              itemKey={itemKey}
-                              estimatedHeight={props.estimatedItemHeight}
-                              overscanScreens={props.overscanScreens}
-                            >
-                              {slots.card?.({
-                                item,
-                                index,
-                                bucketKey: bucket.key,
-                                bucketIndex,
-                              })}
-                            </HWindowedItem>
-                          );
-                        })}
-                      </HListTransition>
-                    ))}
-                  </div>
-                </section>
-              ))}
+          {{
+            default: () =>
+              buckets.value.length === 0
+                ? (slots.empty?.() ?? null)
+                : layout.value.map(({ bucket, columns }, bucketIndex) => (
+                    <section
+                      key={`${bucketIndex}\u0000${bucket.key}`}
+                      class="hk-waterfall-bucket"
+                      {...{ [sectionAttribute.value]: bucket.key }}
+                    >
+                      {slots.bucketHeader?.({
+                        bucketKey: bucket.key,
+                        bucketIndex,
+                        items: bucket.items,
+                      })}
+                      <div class="hk-waterfall-columns">
+                        {columns.map((column, columnIndex) => (
+                          <HListTransition
+                            key={columnIndex}
+                            tag="div"
+                            class="hk-waterfall-column"
+                            // An empty column — a bucket with fewer cards
+                            // than columns — must not keep eating a share of
+                            // the row, or the surviving card renders half
+                            // width beside a ghost.
+                            data-empty={column.length === 0 ? "" : undefined}
+                            variant="reveal"
+                            move={true}
+                            disabled={!props.animate}
+                          >
+                            {column.map((item, index) => {
+                              // The transition group requires a key on every
+                              // child. `itemKeyOf` supplies the stable
+                              // identity (so an arriving card animates only
+                              // its own column); without it the positional
+                              // fallback keeps the group valid at the cost of
+                              // re-mounting rows when the list is prepended
+                              // to.
+                              const itemKey =
+                                props.itemKeyOf?.(item, index) ??
+                                `${bucket.key}#${columnIndex}#${index}`;
+                              return (
+                                <HWindowedItem
+                                  key={itemKey}
+                                  itemKey={itemKey}
+                                  estimatedHeight={
+                                    props.estimatedItemHeightOf?.(item, index) ??
+                                    props.estimatedItemHeight
+                                  }
+                                  overscanScreens={props.overscanScreens}
+                                >
+                                  {slots.card?.({
+                                    item,
+                                    index,
+                                    bucketKey: bucket.key,
+                                    bucketIndex,
+                                  })}
+                                </HWindowedItem>
+                              );
+                            })}
+                          </HListTransition>
+                        ))}
+                      </div>
+                    </section>
+                  )),
+            // Forwarded so a view whose layout docks its own chrome (an
+            // input bar under the list) keeps the container's dock contract
+            // — including the `--hk-scroll-dock-*` heights it publishes.
+            dockTop: slots.dockTop,
+            dockBottom: slots.dockBottom,
+          }}
         </HScrollContainer>
         {slots.overlay?.()}
       </div>

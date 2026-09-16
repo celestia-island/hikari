@@ -56,16 +56,14 @@ function rectOf(top: number, left = 0, width = 10, height = 100): DOMRect {
   } as DOMRect;
 }
 
-function mount(props: Record<string, unknown>, withEmpty = false): Mounted {
+function mount(props: Record<string, unknown>, extraSlots: Record<string, unknown> = {}): Mounted {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
 
   const instance = ref<WaterfallInstance | null>(null);
   const cardSlot = ({ item }: { item: unknown }) => h("div", { class: "card" }, String(item));
-  const slots = withEmpty
-    ? { card: cardSlot, empty: () => h("p", { class: "none" }, "none") }
-    : { card: cardSlot };
+  const slots = { card: cardSlot, ...extraSlots };
   const Root = defineComponent({
     setup() {
       return () =>
@@ -169,6 +167,132 @@ describe("HkWaterfall", () => {
     expect(sectionColumnTexts(mounted.root, "b")).toEqual([["b1"], []]);
   });
 
+  it("forwards the dock slots so a view can dock its own chrome", async () => {
+    // HistoryView docks its composer through the container's dock contract
+    // (and consumes the `--hk-scroll-dock-*` heights it publishes); the
+    // waterfall has to pass the slots through or the view cannot migrate.
+    const mounted = mount(
+      { items: ["a1"] },
+      { dockBottom: () => h("div", { class: "docked" }, "docked") },
+    );
+    await nextTick();
+    expect(mounted.root.querySelector(".docked")?.textContent).toBe("docked");
+  });
+
+  it("lets a consumer keep its own section attribute name", async () => {
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+    });
+    await nextTick();
+    const sections = [...mounted.root.querySelectorAll<HTMLElement>("[data-day-section]")];
+    expect(sections.map((section) => section.dataset.daySection)).toEqual(["a", "b"]);
+    expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(0);
+  });
+
+  it("falls back when the section attribute is not a plain data-* name", async () => {
+    // The prop becomes a selector, so anything that is not a plain data-*
+    // attribute must fall back rather than reach querySelectorAll.
+    const mounted = mount({
+      items: ["a1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "] , script",
+    });
+    await nextTick();
+    expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(1);
+  });
+
+  it("marks an empty column so it collapses instead of eating the row", async () => {
+    const mounted = mount({ items: ["only"], columns: 2 });
+    await nextTick();
+    const columns = [...mounted.root.querySelectorAll<HTMLElement>(".hk-waterfall-column")];
+    expect(columns).toHaveLength(2);
+    expect(columns[0].hasAttribute("data-empty")).toBe(false);
+    expect(columns[1].hasAttribute("data-empty")).toBe(true);
+  });
+
+  it("keeps the dock content inside the container's dock contract", async () => {
+    // The point of forwarding is that the chrome lands in the CONTAINER's
+    // dock slot (which publishes `--hk-scroll-dock-*` and drives the fade),
+    // not merely somewhere in the waterfall's own tree — a variant that
+    // rendered the slot locally passed a tree-presence assertion.
+    const mounted = mount(
+      { items: ["a1"] },
+      {
+        dockTop: () => h("div", { class: "docked-top" }, "top"),
+        dockBottom: () => h("div", { class: "docked" }, "bottom"),
+      },
+    );
+    await nextTick();
+    const top = mounted.root.querySelector(".hk-scroll-dock[data-side='top']");
+    const bottom = mounted.root.querySelector(".hk-scroll-dock[data-side='bottom']");
+    expect(top?.querySelector(".docked-top")?.textContent).toBe("top");
+    expect(bottom?.querySelector(".docked")?.textContent).toBe("bottom");
+  });
+
+  it("jumps through the validated section attribute", async () => {
+    // The lookup and the rendered attribute must agree: a variant whose
+    // lookup kept the default name while the DOM used the custom one found
+    // no section and silently did nothing.
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+    });
+    await nextTick();
+    await nextTick();
+    const scroller = mounted.instance.value?.getScrollElement();
+    const scrollTo = vi.fn();
+    (scroller as unknown as { scrollTo: typeof scrollTo }).scrollTo = scrollTo;
+
+    mounted.instance.value?.jumpToBucket("b");
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for a per-card estimate, card by card", async () => {
+    const asked: Array<[string, number]> = [];
+    const mounted = mount({
+      items: ["a1", "a2", "a3"],
+      columns: 1,
+      estimatedItemHeightOf: (item: unknown, index: number) => {
+        asked.push([String(item), index]);
+        return 100 + index;
+      },
+    });
+    await nextTick();
+    // Every card is asked, in its own column's order — a single call per
+    // bucket (or per column) would not distinguish the tiers.
+    expect(asked.map(([item]) => item).sort()).toEqual(["a1", "a2", "a3"]);
+    expect(asked.every(([, index]) => Number.isInteger(index))).toBe(true);
+  });
+
+  it("tracks the active bucket through the validated section attribute", async () => {
+    // The second, independent read path: the jump above and the scroll
+    // tracking below each look the section up themselves, and a mutation of
+    // one stays invisible to a case that only exercises the other.
+    const active: string[] = [];
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      if (this.getAttribute?.("data-day-section") === "b") return rectOf(10);
+      return rectOf(0, 0, 10, 300);
+    };
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+      "onUpdate:activeBucket": (value: string) => active.push(value),
+    });
+    await nextTick();
+    await nextTick();
+    const scroller = mounted.instance.value?.getScrollElement();
+    Object.defineProperty(scroller, "scrollTop", { value: 50, configurable: true });
+    scroller?.dispatchEvent(new Event("scroll"));
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    await nextTick();
+    await nextTick();
+    expect(active.at(-1)).toBe("b");
+  });
+
   it("reports its buckets through the exposed instance", async () => {
     const mounted = mount({
       items: ["a1", "a2", "b1"],
@@ -206,7 +330,7 @@ describe("HkWaterfall", () => {
   });
 
   it("renders the empty slot when there is nothing to show", async () => {
-    const mounted = mount({ items: [] }, true);
+    const mounted = mount({ items: [] }, { empty: () => h("p", { class: "none" }, "none") });
     await nextTick();
     expect(mounted.root.querySelector(".none")?.textContent).toBe("none");
     expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(0);

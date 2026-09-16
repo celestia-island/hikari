@@ -198,6 +198,8 @@ async function main() {
   // HkEmptyState
   results.push(await renderComponent("HkEmptyState", HkEmptyState,
     { title: "Nothing here", description: "Add some data" }));
+  results.push(await renderComponent("HkEmptyState (boxed)", HkEmptyState,
+    { title: "Nothing here", description: "Opt-in surface", boxed: true }));
 
   // HkColorPicker (stack + row layouts)
   results.push(await renderComponent("HkColorPicker", HkColorPicker,

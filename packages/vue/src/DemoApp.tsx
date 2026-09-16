@@ -537,13 +537,14 @@ export default defineComponent({
           <h2>HEmptyState</h2>
           <div class="col">
             <HEmptyState
+              boxed
               title="No items"
               description="Nothing to show here yet."
               v-slots={{ action: () => <HButton size="sm">Create item</HButton> }}
             />
             <HEmptyState
               title="Nothing found"
-              description="Search returned no matches — try a different query."
+              description="Bare by default — the host (card/modal/panel) provides the surface; pass boxed when the empty state stands on the page alone."
               icon={PackageOpen}
             />
             <HEmptyState

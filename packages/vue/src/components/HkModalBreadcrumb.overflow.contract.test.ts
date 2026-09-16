@@ -62,6 +62,11 @@ describe("HkModalBreadcrumb overflow fence", () => {
     expect(trigger).toContain("pointer-events: auto");
     expect(trigger).toContain("flex: none");
     expect(trigger).toMatch(/min-width: var\(--hk-breadcrumb-more-size/);
+    // 24px of chrome is under half a fingertip: the hit area is grown by a
+    // pseudo-element instead of inflating the drawn control.
+    const hitArea = scss.match(/\.hk-modal-breadcrumb-more::after\s*{[^}]*}/)?.[0] ?? "";
+    expect(hitArea).toContain("position: absolute");
+    expect(hitArea).toContain("inset: calc(-1 * var(--space-8");
   });
 
   it("routes the hidden-layers menu through the shared form-factor rule", () => {

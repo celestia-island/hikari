@@ -145,12 +145,21 @@ export default defineComponent({
       return Number.isFinite(n) ? n : fallback;
     }
 
+    /** The shared viewport gutter in the VISUAL px the crumb rects and
+     *  `innerWidth` come back in. The token itself is a length inside the
+     *  strip's (possibly zoomed) subtree, so it scales at paint like the
+     *  strip's own padding — runtime/viewportGutter leaves the correction to
+     *  its callers, and this is a caller that mixes it with gBCR numbers. */
+    function visualGutter(z: number): number {
+      return viewportGutterPx() * z;
+    }
+
     /** Content-box budget of the strip, in the visual px the crumb rects
      *  come back in: the viewport minus the shared gutter, the strip's own
-     *  side padding and its border. The padding is authored in the strip's
-     *  LOCAL px (a host root zoom scales it at paint), so it is converted
-     *  once — the instrument HkPopover's positioning uses for the same
-     *  reason. */
+     *  side padding and its border. Every term but the viewport is authored
+     *  in the strip's LOCAL px (a host root zoom scales them at paint), so
+     *  they are converted once — the instrument HkPopover's positioning uses
+     *  for the same reason. */
     function contentBudget(): number {
       const nav = navRef.value;
       const vw = typeof window === "undefined" ? 0 : window.innerWidth;
@@ -163,7 +172,7 @@ export default defineComponent({
         z;
       const border =
         (readPx(cs.borderLeftWidth, BORDER_PX) + readPx(cs.borderRightWidth, BORDER_PX)) * z;
-      return vw - viewportGutterPx() * 2 - pad - border;
+      return vw - visualGutter(z) * 2 - pad - border;
     }
 
     /** The strip's inter-crumb gap (local px → visual px). */
@@ -292,10 +301,28 @@ export default defineComponent({
       topPx.value = appTop + headerH / 2;
     }
 
+    /** Viewport fence, in the strip's OWN px. The stylesheet cap is
+     *  authored in vw units, which a host root zoom multiplies at paint
+     *  (chest's manual DPI scale): taken literally it would license a strip
+     *  zoom× wider than the screen. The fence is therefore re-derived here
+     *  from the live viewport and written as local px — the same conversion
+     *  the strip's own `top` already needs. */
+    const maxWidthPx = ref<number | null>(null);
+    function resyncBox() {
+      resyncTop();
+      const vw = typeof window === "undefined" ? 0 : window.innerWidth;
+      if (!(vw > 0)) {
+        maxWidthPx.value = null;
+        return;
+      }
+      const z = ancestorZoom(navRef.value ?? document.body);
+      maxWidthPx.value = (vw - visualGutter(z) * 2) / z;
+    }
+
     /** Viewport changed: the header may have moved AND the tail that fits
      *  almost certainly changed. */
     function onViewportChange() {
-      resyncTop();
+      resyncBox();
       measureStrip();
     }
 
@@ -303,7 +330,7 @@ export default defineComponent({
      *  move the strip's own padding — a budget change the clone's box
      *  never reports — so the fold is re-decided here too. */
     function onSlowTick() {
-      resyncTop();
+      resyncBox();
       measureStrip();
     }
 
@@ -332,7 +359,7 @@ export default defineComponent({
       visible,
       (v) => {
         if (v) {
-          resyncTop();
+          resyncBox();
           enterAnim.run();
           if (!handle) handle = scheduleEvery(onSlowTick, 1000);
           window.addEventListener("resize", onViewportChange);
@@ -407,7 +434,10 @@ export default defineComponent({
             class="hk-modal-breadcrumb"
             aria-label={t("hikari::modal.stackLabel", "Window layers")}
             aria-live="polite"
-            style={{ top: `${topPx.value}px` }}
+            style={{
+              top: `${topPx.value}px`,
+              maxWidth: maxWidthPx.value == null ? undefined : `${maxWidthPx.value}px`,
+            }}
           >
             {/* Measurement clone: every layer, always, out of flow and out
                 of the a11y tree. It is the strip's own ruler — the visible
@@ -474,7 +504,12 @@ export default defineComponent({
             }}
             anchorRef={moreRef.value}
             placement="bottom-start"
-            offset={4}
+            // The strip paints ABOVE the anchored band on purpose (z 2500 vs
+            // the dropdown band's 2000), and the trigger sits inside its
+            // padding box — a 4px offset would tuck the menu's first pixels
+            // under the strip's own bar. 16px clears the 12px padding plus
+            // the 1px border.
+            offset={16}
             sheetOnMobile
             title={menuLabel.value}
             class="hk-modal-breadcrumb-menu"

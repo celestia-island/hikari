@@ -296,6 +296,61 @@ describe("HkModalBreadcrumb overflow fold", () => {
     }
   });
 
+  it("derives its fence AND its budget through a host root zoom", async () => {
+    // chest scales the app root by hand. The strip is teleported to <body>
+    // (inside that zoomed subtree), so both its own px and the shared gutter
+    // scale at paint while the viewport and every rect stay visual: neither
+    // the fence nor the fold budget may be taken literally.
+    setViewport(1200);
+    const zoom = 2;
+    const original = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(
+      (el: Element, pseudo?: string | null): CSSStyleDeclaration => {
+        const decl = original(el, pseudo ?? undefined);
+        return new Proxy(decl, {
+          get(target, prop, recv) {
+            if (prop === "zoom") return el === document.documentElement ? String(zoom) : undefined;
+            const v = Reflect.get(target, prop, recv);
+            return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+          },
+        });
+      },
+    );
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    const restore = stubWidths((el) =>
+      el.classList.contains("hk-modal-breadcrumb-more") ? 24 : 500,
+    );
+    try {
+      await mountStrip();
+      // (1200 − 2 · 16local · 2zoom) / 2zoom
+      expect(strip()!.style.maxWidth).toBe("568px");
+      // 500 + 500 + a 16px (8local · 2) gap overflows the zoom-scaled budget
+      // (1200 − 64 gutter − 128 padding − 4 border = 1004) and must fold;
+      // an uncorrected gutter would have called 1036 and kept both.
+      expect(more()).not.toBeNull();
+      expect(labels()).toEqual(["第二层"]);
+    } finally {
+      restore();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("writes the viewport fence in the strip's own px", async () => {
+    // A vw-authored cap would be scaled by a host root zoom at paint, so the
+    // fence is re-derived from the live viewport (minus the shared gutter)
+    // and written as local px — exactly like the strip's `top`.
+    setViewport(360);
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    await mountStrip();
+    expect(strip()!.style.maxWidth).toBe("344px");
+
+    setViewport(1200);
+    await nextTick();
+    expect(strip()!.style.maxWidth).toBe("1168px");
+  });
+
   it("re-decides the fold when the viewport widens", async () => {
     setViewport(320);
     manager.register("modal", true, "第一层标题占位一二三");

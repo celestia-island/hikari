@@ -90,6 +90,17 @@
      only the trigger takes clicks. */
   pointer-events: auto;
   flex: none;
+  position: relative;
+}
+
+/* Touch target: the drawn trigger is 24px (the strip's own scale), which is
+   under half a fingertip — the hit area is grown to ~40px without moving a
+   single pixel of the chrome around it. The neighbours are
+   pointer-transparent, so nothing else is stolen by the expansion. */
+.hk-modal-breadcrumb-more::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-8, 0.5rem));
 }
 
 .hk-modal-breadcrumb-more:hover {

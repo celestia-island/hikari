@@ -54,14 +54,17 @@ import {
  *    layout engine. A subject that is ONLY a functional pseudo-class is the
  *    same kind of limit: the guard reads the class names its arguments mention,
  *    so `:not(.s-auth-card)`, `:has(.s-auth-card)` and
- *    `:not(.s-auth-card--wide)` count as card-relevant (fail-closed — the first
- *    cannot select the card but does select the measuring wrapper, which costs a
- *    false red, and the last is a true positive because that subject DOES match
- *    the bare card), while a pseudo naming any other class (`:not(.foo)`,
- *    `:has(.foo)`) is not card-relevant and a rule naming no auth class at all
- *    is outside this scan: a bare `:not(.foo) { width: 50% }` in an auth sheet is
- *    therefore NOT caught — that needs a selector engine over the DOM, i.e. a
- *    real-browser check;
+ *    `:not(.s-auth-card--wide)` count as card-relevant (fail-closed: the last is
+ *    a plain true positive — that subject DOES match the bare card — and the
+ *    other two select a card surface as well, since `:not(.s-auth-card)` still
+ *    matches the measuring wrapper, which the contract covers; the report that
+ *    is genuinely over-strict is `:has(.s-auth-card)`, an ancestor, and the
+ *    doubly negative `:not(.s-auth-card):not(.s-auth-card-height)`, which
+ *    selects neither surface), while a pseudo naming any other class
+ *    (`:not(.foo)`, `:has(.foo)`) is not card-relevant and a rule naming no auth
+ *    class at all is outside this scan: a bare `:not(.foo) { width: 50% }` in an
+ *    auth sheet is therefore NOT caught — that needs a selector engine over the
+ *    DOM, i.e. a real-browser check;
  *  - two further fail-closed costs, neither chased here: `!important` on an
  *    otherwise correct declaration is read as part of its value (reported), and
  *    a backslash escape inside a class name is read as the class before it

@@ -166,12 +166,15 @@ export default defineComponent({
     /** The last request made of a controlled host, with the camera it was
      *  asked against: repeating it is pointless while the host has not moved
      *  anywhere, and is required as soon as it has. */
-    let lastRequested: { request: NodeCanvasCamera; at: NodeCanvasCamera } | null = null;
+    let lastRequested: NodeCanvasCamera | null = null;
+    /** A request is outstanding until the host writes anything back. */
+    let pendingEcho = false;
 
     /** Write a camera through to the host (controlled) or the local state. */
     function writeCamera(normalized: NodeCanvasCamera) {
       if (props.camera) {
-        lastRequested = { request: normalized, at: camera.value };
+        lastRequested = normalized;
+        pendingEcho = true;
         emit("update:camera", normalized);
       } else {
         inner.value = normalized;
@@ -239,11 +242,12 @@ export default defineComponent({
       // padding budget wider than the viewport); framing with a zero or
       // non-finite scale would put NaN into every coordinate derived from it.
       if (!Number.isFinite(k) || k <= 0) return camera.value;
-      return {
-        k,
-        x: (width - bounds.width * k) / 2 - bounds.x * k,
-        y: (height - bounds.height * k) / 2 - bounds.y * k,
-      };
+      const x = (width - bounds.width * k) / 2 - bounds.x * k;
+      const y = (height - bounds.height * k) / 2 - bounds.y * k;
+      // A finite but enormous origin (1e308) overflows the translation into
+      // Infinity: the browser then drops the whole transform.
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return camera.value;
+      return { k, x, y };
     }
 
     /** Frame the content. Automatic while the camera is untouched, and exposed
@@ -262,13 +266,7 @@ export default defineComponent({
       // but only while the host is still where it was when we asked: a host
       // that moved the camera itself (a restored viewport, a minimap jump) is
       // asking us to frame, and must get an answer.
-      if (
-        lastRequested &&
-        sameCamera(next, lastRequested.request) &&
-        sameCamera(camera.value, lastRequested.at)
-      ) {
-        return false;
-      }
+      if (lastRequested && sameCamera(next, lastRequested)) return false;
       writeCamera(next); // already normalised by computeFit
       return true;
     }
@@ -285,7 +283,7 @@ export default defineComponent({
      *  (a throttled mirror, a 10 Hz store), so composing from its echo would
      *  make the surface trail the pointer; our own last request is the truth. */
     function gestureBase(): NodeCanvasCamera {
-      if (props.camera && lastRequested) return lastRequested.request;
+      if (props.camera && lastRequested && pendingEcho) return lastRequested;
       return camera.value;
     }
 
@@ -305,7 +303,9 @@ export default defineComponent({
 
     function zoomBy(direction: 1 | -1, at?: { x: number; y: number }) {
       const point = at ?? { x: viewport.value.width / 2, y: viewport.value.height / 2 };
-      const current = camera.value.k;
+      // Same base as the translation applied below, or a step computed from one
+      // camera lands on another.
+      const current = gestureBase().k;
       const scaled = current * (direction > 0 ? props.zoomFactor : 1 / props.zoomFactor);
       // Below k = 0.5 a 1.05 step is smaller than half a grid step, so snapping
       // would round it straight back and the wheel would do nothing at all.
@@ -425,7 +425,11 @@ export default defineComponent({
     }
 
     /** A blur carries no pointer id: whatever was being dragged is over. */
-    function loseFocus() {
+    function loseFocus(event: FocusEvent) {
+      // `blur` reaches this capture listener for ELEMENT blurs too (pressing the
+      // canvas clears focus), and ending the gesture there would kill the first
+      // pan after any click. Only the window's own blur ends it.
+      if (event.target && event.target !== window) return;
       if (!panning) return;
       const pointerId = panning.pointerId;
       panning = null;
@@ -477,9 +481,15 @@ export default defineComponent({
         // moves with it. Then a later, different camera — including the one
         // that was live when we asked, as a "reset view" writes — counts as
         // the host moving, and the next `fit()` answers.
-        if (next && lastRequested && sameCamera(next, lastRequested.request)) {
-          lastRequested = { request: lastRequested.request, at: next };
+        if (!next) return;
+        // Any write while a request is outstanding is the host taking it (it may
+        // have transformed it); a write with nothing outstanding is the host
+        // moving on its own, and the next fit() must answer.
+        if (pendingEcho) {
+          pendingEcho = false;
+          return;
         }
+        lastRequested = null;
       },
     );
 

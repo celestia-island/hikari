@@ -648,16 +648,23 @@ describe("HkNodeCanvas", () => {
     expect(instance.value!.camera).toEqual({ k: 1.5, x: 40, y: 25 });
   });
 
-  it("ends a pan when the window loses focus", async () => {
+  it("does not end the pan on an element blur", async () => {
+    // Pressing the canvas clears focus, and `blur` reaches a window capture
+    // listener for element blurs too: ending the gesture there would kill the
+    // first pan after any click. (A real window blur still ends it — that path
+    // is covered by the browser probe, not by this environment.)
     const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
     await nextTick();
+    const input = document.createElement("input");
+    root.appendChild(input);
     root.setPointerCapture = vi.fn();
     root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 31, clientX: 100, clientY: 100 }));
     root.dispatchEvent(pointerEvent("pointermove", { pointerId: 31, clientX: 160, clientY: 100 }));
-    const dragged = instance.value!.camera.x;
-    window.dispatchEvent(new Event("blur"));
-    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 31, clientX: 300, clientY: 100 }));
-    expect(instance.value!.camera.x).toBe(dragged);
+    expect(instance.value!.camera.x).toBeCloseTo(60, 6);
+
+    input.dispatchEvent(new Event("blur"));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 31, clientX: 220, clientY: 100 }));
+    expect(instance.value!.camera.x).toBeCloseTo(120, 6);
   });
 
   it("lets a host subtree inside its own chrome keep panning", async () => {

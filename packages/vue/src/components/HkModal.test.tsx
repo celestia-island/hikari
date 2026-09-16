@@ -3,6 +3,7 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
 import { closeAll } from "../runtime/useOverlay";
+import { usePopupManager } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -65,6 +66,81 @@ describe("HkModal overlay integration", () => {
     closeAll();
     await nextTick();
     expect(emitted).toEqual([]);
+  });
+
+  it("closeAbove() closes an open closable modal through its update:modelValue", async () => {
+    // The modal-stack breadcrumb jumps back through the popup manager's
+    // close channel — a real modal must close exactly as it does for
+    // closeAll(), not merely forget its layer.
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+
+      const open = ref(true);
+      const emitted: boolean[] = [];
+      const Wrapper = defineComponent({
+        setup() {
+          return () =>
+            h(HkModal, {
+              modelValue: open.value,
+              closable: true,
+              title: "Settings",
+              "onUpdate:modelValue": (v: boolean) => { emitted.push(v); open.value = v; },
+            }, { default: () => h("div", "content") });
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      await nextTick();
+
+      expect(manager.closeAbove(below.id)).toBe(1);
+      await nextTick();
+      expect(emitted).toEqual([false]);
+    } finally {
+      manager.unregister(below.id);
+    }
+  });
+
+  it("closeAbove() cannot close a non-closable modal", async () => {
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+
+      const open = ref(true);
+      const emitted: boolean[] = [];
+      const Wrapper = defineComponent({
+        setup() {
+          return () =>
+            h(HkModal, {
+              modelValue: open.value,
+              closable: false,
+              title: "Locked",
+              "onUpdate:modelValue": (v: boolean) => { emitted.push(v); open.value = v; },
+            }, { default: () => h("div", "content") });
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      await nextTick();
+
+      // The channel exists (the owner is asked, so the stack knows the
+      // layer is there), but a locked modal refuses exactly as it does for
+      // Escape and the overlay click.
+      expect(manager.closeAbove(below.id)).toBe(1);
+      await nextTick();
+      expect(emitted).toEqual([]);
+      expect(open.value).toBe(true);
+    } finally {
+      manager.unregister(below.id);
+    }
   });
 });
 

@@ -93,6 +93,15 @@ export interface PopupEntry {
    * registration).
    */
   blocking: boolean;
+  /**
+   * How the owning surface lets go of this layer, when it can be closed
+   * from the outside at all (a v-model window, an overlay-registered
+   * popout). This is the channel the modal-stack breadcrumb navigates
+   * back through: the strip knows the STACK, only the owner knows how to
+   * close its own surface — so a layer without a channel is left exactly
+   * as it is rather than torn down behind its owner's back.
+   */
+  requestClose?: () => void;
 }
 
 /**
@@ -170,6 +179,7 @@ export function usePopupManager() {
     locksScroll = false,
     title?: string,
     blocking = false,
+    requestClose?: () => void,
   ): PopupHandle {
     const id = uid();
     const band = effectiveBand(kind, blocking);
@@ -184,7 +194,7 @@ export function usePopupManager() {
       if (slot > maxSlot) maxSlot = slot;
     }
     const zIndex = band + (maxSlot + 1) * POPUP_Z_STEP;
-    const entry: PopupEntry = { id, kind, locksScroll, zIndex, title, blocking };
+    const entry: PopupEntry = { id, kind, locksScroll, zIndex, title, blocking, requestClose };
     registry.value.set(id, entry);
     warnUntitled(kind, blocking, title);
     if (locksScroll) {
@@ -247,6 +257,36 @@ export function usePopupManager() {
     return registry.value.has(id);
   }
 
+  /**
+   * Ask every live layer stacked ABOVE `id` to close, highest first — the
+   * "go back to this window" gesture of the modal-stack breadcrumb. The
+   * requests go out inside-out (top z first) so nested surfaces unwind in
+   * the order they were opened, and each one rides its own owner's close
+   * path (animations, back-guard rewinds, v-model all behave exactly as a
+   * user close). Entries are NOT removed here: a surface forgets itself
+   * when its leave completes. Layers whose owner registered no
+   * `requestClose` are skipped — the stack does not tear down state it
+   * does not own. Returns how many layers were asked to close.
+   */
+  function closeAbove(id: string): number {
+    const target = registry.value.get(id);
+    if (!target) return 0;
+    const above = [...registry.value.values()]
+      .filter((entry) => entry.zIndex > target.zIndex)
+      .sort((a, b) => b.zIndex - a.zIndex);
+    let asked = 0;
+    for (const entry of above) {
+      if (!entry.requestClose) continue;
+      asked++;
+      try {
+        entry.requestClose();
+      } catch (err) {
+        console.warn("[hikari] popup requestClose threw for", entry.kind, err);
+      }
+    }
+    return asked;
+  }
+
   return {
     registry: readonly(registry),
     register,
@@ -254,5 +294,6 @@ export function usePopupManager() {
     setBlocking,
     unregister,
     isOpen,
+    closeAbove,
   };
 }

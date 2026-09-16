@@ -28,6 +28,12 @@ export {
   GUTTER_MOBILE_MAX_WIDTH,
 } from "./viewportGutter";
 export {
+  displayWidthUnits,
+  glyphWidthUnits,
+  clampToDisplayWidth,
+  ELLIPSIS,
+} from "./displayWidth";
+export {
   sanitizeHistoryUrl,
   installHistorySafetyNet,
   type HistorySafetyNetOptions,

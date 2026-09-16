@@ -219,5 +219,6 @@
   "hikari::tagInput.empty": "没有匹配项",
   "hikari::tagInput.remove": "移除",
   "hikari::tagInput.addCustom": "使用「{q}」",
-  "hikari::tagInput.reorder": "拖动排序 — {label}"
+  "hikari::tagInput.reorder": "拖动排序 — {label}",
+  "hikari::modal.hiddenLayers": "隐藏层级"
 }

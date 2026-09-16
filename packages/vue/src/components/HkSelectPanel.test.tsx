@@ -3,6 +3,7 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import type { ComponentPublicInstance } from "vue";
 
 import HkSelectPanel from "./HkSelectPanel";
+import { usePopupManager } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -810,5 +811,25 @@ describe("HkSelectPanel enter-class watchdog (frozen-rAF repair)", () => {
     (document.body.querySelector<HTMLElement>(".hk-select-sheet-scrim"))!.click();
     await nextTick();
     expect(open.value).toBe(false);
+  });
+});
+
+describe("HkSelectPanel window-stack close channel", () => {
+  it("closes a blocking sheet when the stack navigates back past it", async () => {
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      setViewport(375);
+      const { open } = mountPanel();
+      await nextTick();
+      open.value = true;
+      await nextTick();
+
+      expect(manager.closeAbove(below.id)).toBe(1);
+      await nextTick();
+      expect(open.value).toBe(false);
+    } finally {
+      manager.unregister(below.id);
+    }
   });
 });

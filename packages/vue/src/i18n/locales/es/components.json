@@ -210,5 +210,6 @@
   "hikari::tagInput.empty": "Sin coincidencias",
   "hikari::tagInput.remove": "Quitar",
   "hikari::tagInput.addCustom": "Usar «{q}»",
-  "hikari::tagInput.reorder": "Reordenar — {label}"
+  "hikari::tagInput.reorder": "Reordenar — {label}",
+  "hikari::modal.hiddenLayers": "Capas ocultas"
 }

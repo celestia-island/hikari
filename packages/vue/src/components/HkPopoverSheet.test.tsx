@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkPopover from "./HkPopover";
+import { usePopupManager } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -176,5 +177,25 @@ describe("HkPopover sheetOnMobile", () => {
     expect(panel.querySelector(".hk-popover-sheet-header")).toBeNull();
     expect(panel.querySelector(".hk-popover-sheet-title")).toBeNull();
     expect(panel.querySelector(".hk-popover-sheet-close")).toBeNull();
+  });
+});
+
+describe("HkPopover window-stack close channel", () => {
+  it("closes a blocking sheet when the stack navigates back past it", async () => {
+    // A docked sheet IS a window layer, so the modal-stack breadcrumb can
+    // jump back over it — through the owner's own close path (the popover
+    // emits update:modelValue), never by yanking it off the stack.
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      setViewport(375);
+      const { open } = mountPopover({ sheetOnMobile: true, title: "Themes" });
+      await nextTick();
+
+      expect(manager.closeAbove(below.id)).toBe(1);
+      expect(open.value).toBe(false);
+    } finally {
+      manager.unregister(below.id);
+    }
   });
 });

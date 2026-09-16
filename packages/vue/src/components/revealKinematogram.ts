@@ -13,10 +13,11 @@
  *
  * The glyph mask never reaches the visible canvas as geometry: glyphs
  * are rasterized into an offscreen mask whose pixels are immediately
- * re-composited with noise (`source-in`), so the visible canvas only
- * ever receives two noise fills and a final `drawImage` of noise-on-
- * noise. This is the invariant the component tests pin: no `fillText`
- * with password content may ever target the visible canvas.
+ * re-composited with noise (`source-in` on the mask itself), so the
+ * visible canvas only ever receives ONE background noise fill and a
+ * final `drawImage` of noise-on-noise. This is the invariant the
+ * component tests pin: no `fillText` with password content may ever
+ * target the visible canvas.
  *
  * Threat model & limits: this defeats single-frame capture (screenshots,
  * scrapers, bystander photos). Motion must exist for the human to read,

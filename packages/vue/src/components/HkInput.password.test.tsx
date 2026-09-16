@@ -973,6 +973,145 @@ describe("HkInput password hold-to-reveal eye", () => {
       HTMLCanvasElement.prototype.getContext = originalGetContext;
     }
   });
+
+  it("degrades to the legacy jitter when canvas patterns are unavailable", async () => {
+    // Engines where createPattern yields null: the painter must hand
+    // the frame back (paint() → false) so the surface falls to the
+    // legacy jitter on the VISIBLE canvas. Pinning the guard matters:
+    // without it, paint() would keep "succeeding" and stamp the mask
+    // with whatever fillStyle was left on it (#fff from the raster) —
+    // clean white glyphs, i.e. exactly the leak this PR exists to kill.
+    const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = seen.find((r) => r.canvas === this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], drawImages: 0 };
+        seen.push(rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        drawImage: () => r.drawImages++,
+        // The engine under test: patterns do not exist here.
+        createPattern: () => null,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container, input } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = seen.find((r) => r.canvas === visible)!;
+      // The fallback engaged: glyphs (deliberately) on the visible
+      // canvas, and the noise-composite stamp never happened.
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.drawImages).toBe(0);
+      expect(input.type).toBe("password");
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
+  it("degrades within the hold when reduced motion is switched on mid-hold", async () => {
+    // Frames already arrived (bus live), then the host parks the bus:
+    // the recurring watchdog must flip the hold to the static fallback
+    // even though revealFrames > 0 at the 160ms tick — the mid-hold
+    // branch of isAnimationParked() coverage.
+    const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let texts = textsByCanvas.get(this);
+      if (!texts) {
+        texts = [];
+        textsByCanvas.set(this, texts);
+      }
+      const t = texts;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => t.push(String(text)),
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      // Let real bus frames flow first: past the 160ms tick the hold
+      // must STILL be on the noise path (frames arrived ⇒ no flip).
+      // This is what separates the mid-hold branch from the
+      // no-frames branch the other test pins.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(textsByCanvas.get(visible)).toEqual([]);
+      // Park the bus MID-HOLD (this is the branch no other test hits).
+      setReducedMotion(true);
+      await new Promise((r) => setTimeout(r, 600));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // Latched: no re-draws on later ticks.
+      await new Promise((r) => setTimeout(r, 220));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      setReducedMotion(false);
+    }
+  });
 });
 
 /** happy-dom's own ResizeObserver never fires (no layout engine): this one

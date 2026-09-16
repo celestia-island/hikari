@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-vue-next";
 import {
+  Comment,
   computed,
   defineComponent,
   onMounted,
@@ -210,6 +211,11 @@ export default defineComponent({
     let ro: ResizeObserver | null = null;
 
     function parseColorTriple(raw: string): [number, number, number] | null {
+      // Modern color functions (oklch/lab/color()) would split into
+      // garbage numeric triples — reject them and keep the caller's
+      // previous base instead (latent for consumer themes authored in
+      // those functions; hikari's own themes use rgb triplets/hex).
+      if (/^(oklch|oklab|lab|lch|color)\(/i.test(raw.trim())) return null;
       const ns = raw.split(/[\s,()rgba]+/).map(Number).filter((n) => !isNaN(n));
       return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
     }
@@ -269,16 +275,25 @@ export default defineComponent({
       }
     }
 
-    function monoFontStack(): string {
+    // Cached alongside textHsl at each reveal start: reading computed
+    // styles per animation frame is measurable layout thrash for zero
+    // benefit (the stack cannot change mid-hold any more than the base
+    // color can).
+    let cachedMonoFont = "";
+    function syncMonoFont(): string {
       try {
         const raw = getComputedStyle(document.documentElement)
           .getPropertyValue("--font-mono")
           .trim();
-        if (raw) return raw;
+        if (raw) {
+          cachedMonoFont = raw;
+          return cachedMonoFont;
+        }
       } catch {
         // ignore
       }
-      return "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      cachedMonoFont = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      return cachedMonoFont;
     }
 
     function resize() {
@@ -317,7 +332,7 @@ export default defineComponent({
       const aW = W / dpr;
       const aH = H / dpr;
       const basePx = clamp(aH * 0.58, 12, 18);
-      const mono = monoFontStack();
+      const mono = cachedMonoFont || syncMonoFont();
       ctx.font = `${basePx}px ${mono}`;
       // Iterate CODE POINTS on both passes (Array.from splits surrogate
       // pairs): indexing the string by code unit below would draw lone
@@ -459,6 +474,7 @@ export default defineComponent({
     function startReveal() {
       if (!props.modelValue || props.disabled) return;
       syncTextHsl();
+      syncMonoFont();
       revealing.value = true;
       // Parked animation bus (reduced motion): the loop never fires, so
       // paint one synchronous frame — a static jitter is still better
@@ -778,7 +794,16 @@ export default defineComponent({
       // mirrors the text variants: #prefix beats #prefixIcon, #suffix
       // beats #suffixIcon, and an explicit suffix suppresses the built-in
       // trailing affordance (the retired native toggle behaved the same).
-      const nonEmpty = (v: unknown) => (Array.isArray(v) ? v.length > 0 : !!v);
+      // Comment vnodes count as ABSENT: a `v-if`'d-out slot template
+      // compiles to a [comment] array which must not hide the default
+      // lock or stand the built-in affordances down. (Vue's Comment
+      // vnode type is the exported Symbol, not a string.)
+      const isCommentVNode = (n: unknown) =>
+        typeof n === "object" &&
+        n !== null &&
+        (n as { type?: unknown }).type === Comment;
+      const nonEmpty = (v: unknown) =>
+        Array.isArray(v) ? v.some((n) => n != null && !isCommentVNode(n)) : !!v;
       const prefixContent = slots.prefix?.() ?? [];
       const hasPrefix = nonEmpty(prefixContent);
       const callerIcon = hasPrefix ? [] : (slots.prefixIcon?.() ?? []);
@@ -916,7 +941,7 @@ export default defineComponent({
                   class="hk-pwd-strength"
                   data-level={level.value}
                   role="img"
-                  aria-label={levelLabel.value}
+                  aria-label={strengthTooltip.value}
                 />
               </HkTooltip>
             ) : null}

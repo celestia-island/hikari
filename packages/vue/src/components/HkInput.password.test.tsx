@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick, ref, type Slot } from "vue";
+import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vue";
 
 import HkInput from "./HkInput";
 import { passwordLevel } from "../utils/password";
@@ -136,6 +136,21 @@ describe("HkInput password surface identity", () => {
     );
     expect(container.querySelector(".hk-pwd-lock .full-prefix")).not.toBeNull();
     expect(container.querySelector(".hk-pwd-lock .icon-only")).toBeNull();
+  });
+
+  it("treats a v-if'd-out (comment-only) slot as absent and keeps the default lock", () => {
+    // A conditional SFC slot template compiles to [Comment] when its
+    // condition is false — that must not hide the default lock or
+    // stand the built-in eye down.
+    const commentOnly = () => [createVNode(Comment as never, null, "v-if out")];
+    const { container } = mountPasswordInput(
+      "x",
+      {},
+      { prefix: commentOnly, suffix: commentOnly },
+    );
+    expect(container.querySelector(".hk-pwd-lock svg")).not.toBeNull();
+    expect(container.querySelector("button.hk-pwd-eye")).not.toBeNull();
+    expect(container.querySelector(".hk-pwd-suffix")).toBeNull();
   });
 
   it("suppresses the built-in eye when a suffix slot is provided", () => {

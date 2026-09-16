@@ -29,16 +29,24 @@ const EXPECTED_LOCALES = [
   "ar", "de", "en", "es", "fr", "ja", "ko", "pt", "ru", "zh-Hans", "zh-Hant",
 ];
 
-/** String leaves of every nested object section, keyed "section::leaf". */
-function nestedStringLeaves(bundle: Record<string, unknown>): Record<string, string> {
-  const out: Record<string, string> = {};
+/** String leaves of every nested object section, keyed "section::leaf",
+ *  plus the list of NON-STRING leaves (a nested object/number where a
+ *  message string belongs is a bundle-shape bug — the old skip-only
+ *  behavior let it smuggle past the bidirectional key-set check). */
+function nestedStringLeaves(bundle: Record<string, unknown>): {
+  leaves: Record<string, string>;
+  nonStringLeaves: string[];
+} {
+  const leaves: Record<string, string> = {};
+  const nonStringLeaves: string[] = [];
   for (const [section, value] of Object.entries(bundle)) {
     if (value === null || typeof value !== "object") continue;
     for (const [key, leaf] of Object.entries(value as Record<string, unknown>)) {
-      if (typeof leaf === "string") out[`${section}::${key}`] = leaf;
+      if (typeof leaf === "string") leaves[`${section}::${key}`] = leaf;
+      else nonStringLeaves.push(`${section}::${key}`);
     }
   }
-  return out;
+  return { leaves, nonStringLeaves };
 }
 
 /** Intentional locale-specific keys: HkStatusBar region names are
@@ -57,11 +65,24 @@ describe("components.json flat-key parity", () => {
     flat: Object.fromEntries(
       Object.entries(mod.default).filter(([, v]) => typeof v === "string"),
     ) as Record<string, string>,
-    nested: nestedStringLeaves(mod.default),
+    flatAll: Object.keys(mod.default).filter(
+      (k) => typeof mod.default[k] === "string",
+    ),
+    nested: nestedStringLeaves(mod.default).leaves,
+    nonStringLeaves: nestedStringLeaves(mod.default).nonStringLeaves,
   }));
 
   it("covers all 11 locales", () => {
     expect(bundles.map((b) => b.locale).sort()).toEqual(EXPECTED_LOCALES);
+  });
+
+  it("keeps every nested leaf a string", () => {
+    // A nested object/number where a message belongs would silently
+    // fall back to English at runtime while the key-set checks stay
+    // green (the skip-only leaf collection let exactly that smuggle).
+    for (const { locale, nonStringLeaves } of bundles) {
+      expect(nonStringLeaves, `${locale} has non-string nested leaves`).toEqual([]);
+    }
   });
 
   it("defines every en flat key in every locale, non-empty", () => {
@@ -74,6 +95,19 @@ describe("components.json flat-key parity", () => {
         expect(typeof flat[key], `${locale} must define ${key}`).toBe("string");
         expect((flat[key] ?? "").length, `${locale} ${key} must not be empty`).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("carries no flat key unknown to en", () => {
+    // Reverse direction of the flat check: a key deleted from en only
+    // (or smuggled into one locale) must not survive either.
+    const en = bundles.find((b) => b.locale === "en");
+    expect(en, "en bundle renders").toBeTruthy();
+    for (const { locale, flatAll } of bundles) {
+      expect(
+        flatAll.filter((k) => !(k in en!.flat)),
+        `${locale} must not carry flat keys unknown to en`,
+      ).toEqual([]);
     }
   });
 

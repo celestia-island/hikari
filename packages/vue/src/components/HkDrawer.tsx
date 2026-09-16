@@ -19,6 +19,7 @@ import { createBackGuard } from "../runtime/backStack";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
+import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
@@ -269,6 +270,8 @@ export default defineComponent({
       cleanup();
     });
 
+    const contentHold = useSurfaceContentHold(machine.phase);
+
     return () => {
       if (!machine.mounted.value) return null;
       const panelPrefix = `hk-drawer-${props.side}`;
@@ -295,7 +298,11 @@ export default defineComponent({
                 else if (e.key === "Tab" && panelRef.value) trapFocus(panelRef.value, e);
               }}
             >
-              {props.title || slots.header ? (
+              {/* Same close-fold content hold as HkModal: the sheet's
+                  slide-away plays over the last live content even when
+                  the consumer tears its state down on close. */}
+              {contentHold.hold(() => [
+              props.title || slots.header ? (
                 <div class="hk-drawer-header">
                   {slots.header ? (
                     slots.header()
@@ -314,13 +321,14 @@ export default defineComponent({
                     </HIconButton>
                   ) : null}
                 </div>
-              ) : null}
+              ) : null,
               <div ref={bodyWrapRef} class="hk-drawer-body-wrap">
                 <div ref={bodyRef} class="hk-drawer-body">{slots.default?.()}</div>
-              </div>
-              {slots.footer ? (
+              </div>,
+              slots.footer ? (
                 <div class="hk-drawer-footer">{slots.footer()}</div>
-              ) : null}
+              ) : null,
+              ])}
             </div>
       </Teleport>
       );

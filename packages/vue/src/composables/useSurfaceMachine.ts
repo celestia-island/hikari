@@ -58,7 +58,10 @@ export interface SurfaceMachine {
  * - The ONLY correctness clock is setTimeout: every animation phase arms
  *   exactly one deadline timer; the frame flip is double-rAF (smooth)
  *   with a flip timer as the starved fallback. Duplicate FLIPs are
- *   absorbed by the table (idempotent self-loops).
+ *   absorbed by the table (idempotent self-loops). transitionend (TEND)
+ *   settles a phase early; transitionstart re-arms the deadline once so
+ *   a frame-starved, late-latched transition still completes — both are
+ *   advisory optimizations, never the correctness clock.
  * - Phase changes clear every pending timer/rAF before arming the next
  *   phase's — at most one flip + one deadline exist at any moment, so
  *   timers cannot leak or fire stale (the machine has no "late
@@ -257,10 +260,41 @@ export function useSurfaceMachine(options: SurfaceMachineOptions): SurfaceMachin
         if (measured > 0) {
           rearmDeadline(measured + slack);
           armTend(measured);
+          armStart(measured);
         } else {
           completeNow();
         }
       }
+    }
+  }
+
+  /** transitionstart re-arm: under frame starvation the CSS transition
+   *  only LATCHES when the first frame after the flip is produced, while
+   *  this phase's deadline was armed at the flip — a transition starting
+   *  300ms late would be cut mid-flight by its own deadline, snapping the
+   *  surface to rest (2026-09-16 chest field report: the desktop modal
+   *  enter freezes at its low/transparent from-pair, then jumps). When
+   *  the browser reports the transition actually started, re-arm the
+   *  deadline from that moment so a late-started transition still runs
+   *  to completion. A never-started transition (frames never come) fires
+   *  nothing — the flip-relative deadline stays the bound (A2), so this
+   *  changes settle latency only when the animation genuinely runs.
+   *  One re-arm per layer per phase: every animated property fires its
+   *  own transitionstart on the same frame. */
+  function armStart(expectedMs: number): void {
+    const seen = new Set<HTMLElement>();
+    for (const layer of options.layers) {
+      const el = layer.el?.();
+      if (!el || !el.isConnected || seen.has(el)) continue;
+      seen.add(el);
+      let rearmed = false;
+      const onStart = (e: TransitionEvent) => {
+        if (e.target !== el || rearmed) return;
+        rearmed = true;
+        rearmDeadline(expectedMs + slack);
+      };
+      el.addEventListener("transitionstart", onStart);
+      tendCleanups.push(() => el.removeEventListener("transitionstart", onStart));
     }
   }
 

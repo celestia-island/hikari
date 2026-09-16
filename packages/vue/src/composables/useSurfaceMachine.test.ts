@@ -240,6 +240,56 @@ describe("useSurfaceMachine driver", () => {
     expect(rig.edges.length).toBe(edgesAtRest);
   });
 
+  it("transitionstart re-arms the deadline once so a late-latched transition completes", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 0 as unknown as number);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const realGCS = window.getComputedStyle.bind(window);
+    vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
+      const style = realGCS(el as Element, ...(rest as []));
+      return { ...style, transitionDuration: "0.3s" } as CSSStyleDeclaration;
+    });
+    const rig = mountRig(true);
+    rig.send("OPEN");
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(130); // flip timer forced the FLIP
+    expect(rig.phase()).toBe("openingTo");
+    // Flip-relative deadline: 300 + 80 → settles at t≈500 unless the
+    // browser reports the transition ACTUALLY started late (frame
+    // starvation latches the transition on the first post-flip frame).
+    const panel = document.querySelector<HTMLElement>(".panel")!;
+
+    // t=330: the transition latches 200ms after the flip.
+    await vi.advanceTimersByTimeAsync(200);
+    panel.dispatchEvent(new Event("transitionstart", { bubbles: true }));
+    // → deadline re-armed to 330 + 300 + 80 = 710.
+
+    // t=390: a bubbled report from a NON-layer descendant (target filter)
+    // and a duplicate report on the panel (one re-arm per phase) are
+    // both ignored — either would push the deadline to 770.
+    await vi.advanceTimersByTimeAsync(60);
+    const child = document.createElement("span");
+    panel.appendChild(child);
+    child.dispatchEvent(new Event("transitionstart", { bubbles: true }));
+    panel.dispatchEvent(new Event("transitionstart", { bubbles: true }));
+
+    // The flip-relative deadline (t=500) passes without settling — the
+    // re-arm is real…
+    await vi.advanceTimersByTimeAsync(300); // t=690
+    expect(rig.phase()).toBe("openingTo");
+    // …and the latch-relative deadline completes the open (t=710), ahead
+    // of where a second re-arm would have put it (t=770).
+    await vi.advanceTimersByTimeAsync(30); // t=720
+    expect(rig.phase()).toBe("open");
+    await nextTick();
+    expect(scrimClasses(rig)).toEqual([]);
+    // No late timers fire afterwards.
+    const edgesAtRest = rig.edges.length;
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(rig.phase()).toBe("open");
+    expect(rig.edges.length).toBe(edgesAtRest);
+  });
+
   it("UNMOUNT from any phase clears every clock and walks to closed", async () => {
     vi.useFakeTimers();
     const rig = mountRig();

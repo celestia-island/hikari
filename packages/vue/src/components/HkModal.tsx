@@ -21,6 +21,7 @@ import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composables/useOverlayScrollbar";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
+import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph } from "../composables/useSizeMorph";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
@@ -201,8 +202,19 @@ export default defineComponent({
      *  useSizeMorph). */
     const innerRef = ref<HTMLElement>();
     // Content-driven size morphing: the frame follows content growth with
-    // the height transition instead of snapping (see useSizeMorph).
-    const morph = useSizeMorph(contentRef, innerRef);
+    // the height transition instead of snapping (see useSizeMorph). The
+    // gate freezes resize-driven re-measurement through the enter unfold:
+    // the choreography's geometry is height-relative (translateY 5% +
+    // bottom-10% clip of the frame height), so content streaming in
+    // mid-enter would otherwise recompute the pixel geometry under the
+    // running animation (2026-09-16 chest field report — the frame
+    // snapped 459→697px mid-unfold). The open phase edge flushes the
+    // deferred growth with an animated remeasure.
+    const morph = useSizeMorph(contentRef, innerRef, {
+      deferRemeasure: () =>
+        machine.phase.value === "openingFrom" ||
+        machine.phase.value === "openingTo",
+    });
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
@@ -347,13 +359,29 @@ export default defineComponent({
             backGuard.push();
           }
           surfTrack.run();
+          // Arm the size morph WITH the enter (one tick later, once the
+          // mounting patch landed): the pin locks the frame's height for
+          // the whole unfold so late-streaming content cannot move the
+          // choreography mid-flight (see the morph's gate above). The
+          // zero-duration fast paths reach `open` before the tick — the
+          // open branch's own start() covers them.
+          void nextTick(() => {
+            const p = machine.phase.value;
+            if (p === "openingFrom" || p === "openingTo") morph.start();
+          });
         } else if (to === "open") {
           surfTrack.cancel();
           onAfterEnter();
-          // Size morphs arm once the open choreography finished —
-          // pinning during enter would fight the reveal's transform
-          // transition.
+          // Idempotent re-arm for the fast paths (see openingFrom); the
+          // morph is usually armed already by the enter-edge tick.
           morph.start();
+          // Flush the growth deferred through the unfold. One tick later
+          // the transition classes are off the frame, so the base height
+          // transition animates the pin change instead of the enter's
+          // transform/clip-only transition list swallowing it as a snap.
+          void nextTick(() => {
+            if (machine.phase.value === "open") morph.remeasure();
+          });
         } else if (to === "closingFrom") {
           // Close-request bookkeeping (was the watcher's close arm): the
           // registries forget the surface at request time; the finalize
@@ -361,8 +389,18 @@ export default defineComponent({
           surfTrack.run();
           overlay.close();
           backGuard.release();
-          // Release the pinned height so the leave owns the frame.
-          morph.stop();
+          // Keep the height PIN through the leave: the fold owns the
+          // frame's geometry and a mid-leave content change must not
+          // resize it. The pin releases on the finalize edge below.
+          morph.hold();
+          // The leave must not chase a live tail — the window folds over
+          // the final frame of content, not over a moving stream. A
+          // self-updating child inside the held content could still
+          // mutate the DOM mid-fold (the observer would re-pin the
+          // scroll), so auto-follow tears down with the close request;
+          // a reopen interrupt re-arms it at the open edge
+          // (onAfterEnter → setupAutoFollow).
+          teardownAutoFollow();
         } else if (
           to === "closed" &&
           (from === "closingFrom" || from === "closingTo") &&
@@ -373,6 +411,10 @@ export default defineComponent({
           event !== "UNMOUNT"
         ) {
           surfTrack.cancel();
+          // Bookkeeping reset for the NEXT open cycle: zeroes the morph's
+          // pin so the next enter starts clean (release() writes on the
+          // invisible, about-to-unmount frame — no visual effect).
+          morph.stop();
           onAfterLeaveFinalize();
         }
         // to === "closed" via UNMOUNT: teardown is owned by
@@ -743,6 +785,8 @@ export default defineComponent({
       return null;
     }
 
+    const contentHold = useSurfaceContentHold(machine.phase);
+
     return () => {
       if (!machine.mounted.value) return null;
 
@@ -773,7 +817,12 @@ export default defineComponent({
                   onClick={onContentClick}
                   tabindex={-1}
                 >
-                  {headerShown && (
+                  {/* Content hold: while the machine is in a closing
+                      phase this serves the last live-rendered children,
+                      so a consumer tearing down its state on close
+                      cannot blank the window mid-fold. */}
+                  {contentHold.hold(() => [
+                  headerShown ? (
                     <>
                       <div
                         class={[
@@ -807,7 +856,7 @@ export default defineComponent({
                         <div class="hk-modal-subheader">{slots.header()}</div>
                       )}
                     </>
-                  )}
+                  ) : null,
                   <div ref={bodyRef} class="hk-modal-body">
                     <div
                       ref={scrollContainerRef}
@@ -851,8 +900,9 @@ export default defineComponent({
                         )}
                       </>
                     )}
-                  </div>
-                  {renderFooter()}
+                  </div>,
+                  renderFooter(),
+                  ])}
                 </div>
           </div>
         </Teleport>

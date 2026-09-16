@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
-import { useSizeMorph } from "./useSizeMorph";
+import { useSizeMorph, type SizeMorphOptions } from "./useSizeMorph";
 
 /** Injectable ResizeObserver: captures the callback so tests can fire
  *  content changes deterministically (happy-dom's own RO never fires —
@@ -35,10 +35,11 @@ interface Harness {
   setContentNatural(height: number): void;
   start(): void;
   stop(): void;
+  hold(): void;
   remeasure(): void;
 }
 
-function mountHarness(initialHeight: number, initialContentHeight = 0): Harness {
+function mountHarness(initialHeight: number, initialContentHeight = 0, options?: SizeMorphOptions): Harness {
   const container = document.createElement("div");
   document.body.appendChild(container);
   let frameEl: HTMLElement | null = null;
@@ -50,7 +51,7 @@ function mountHarness(initialHeight: number, initialContentHeight = 0): Harness 
     setup() {
       const frame = ref<HTMLElement | null>(null);
       const content = ref<HTMLElement | null>(null);
-      morph = useSizeMorph(frame, content);
+      morph = useSizeMorph(frame, content, options);
       return () =>
         h("div", [
           h("div", {
@@ -96,6 +97,7 @@ function mountHarness(initialHeight: number, initialContentHeight = 0): Harness 
     },
     start: () => morph!.start(),
     stop: () => morph!.stop(),
+    hold: () => morph!.hold(),
     remeasure: () => morph!.remeasure(),
   };
 }
@@ -425,5 +427,75 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
     fireTransitionEnd(h.frame, "clip-path");
     expect(h.frame.style.clipPath).toBe("");
+  });
+});
+
+// ── Leave-window hold + enter-window defer (2026-09-16 modal report) ──
+// The modal's close fold owns the frame's geometry for the whole leave:
+// hold() keeps the pin (a mid-leave content change must not resize the
+// folding frame) and the reopen-interrupt path animates FROM that pin.
+// The enter unfold is height-relative geometry (translateY 5% + bottom
+// 10% clip of the frame height), so deferRemeasure freezes resize-driven
+// re-pins through the enter and the open edge flushes them.
+
+describe("useSizeMorph hold + deferRemeasure", () => {
+  it("hold keeps the pin and stops observing (leave-window stability)", () => {
+    const h = mountHarness(120, 100);
+    h.start();
+    expect(h.frame.style.height).toBe("120px");
+
+    h.hold();
+    // The pin STAYS (unlike stop's release to auto)…
+    expect(h.frame.style.height).toBe("120px");
+    // …and the observer is disarmed: no content change can re-pin.
+    expect(FakeResizeObserver.instances[0]!.disconnected).toBe(true);
+  });
+
+  it("stop after a hold still releases (full-close bookkeeping)", () => {
+    const h = mountHarness(120, 100);
+    h.start();
+    h.hold();
+    h.stop();
+    expect(h.frame.style.height).toBe("");
+  });
+
+  it("start after a hold re-arms and animates from the held pin", () => {
+    const h = mountHarness(120, 100);
+    h.start();
+    h.hold();
+    // Reopen interrupt: the natural height changed while held — the next
+    // arm re-pins to it (from the held 120px, per the dance's re-pin).
+    h.setNatural(200);
+    h.start();
+    expect(h.frame.style.height).toBe("200px");
+    // A FRESH observer owns the new cycle.
+    expect(FakeResizeObserver.instances.length).toBe(2);
+    expect(FakeResizeObserver.instances[1]!.disconnected).toBe(false);
+  });
+
+  it("deferRemeasure freezes RO-driven re-pins; explicit remeasure flushes", async () => {
+    let gated = true;
+    const h = mountHarness(120, 100, { deferRemeasure: () => gated });
+    h.start();
+    // The initial pin is NOT gated (arming must pin immediately).
+    expect(h.frame.style.height).toBe("120px");
+
+    // Content streams in mid-enter: the RO fires but the pin must not
+    // move — the unfold's height-relative geometry stays put.
+    h.setNatural(160);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("120px");
+
+    // The open edge flushes the deferred growth.
+    h.remeasure();
+    expect(h.frame.style.height).toBe("160px");
+
+    // Gate off: RO-driven updates flow again.
+    gated = false;
+    h.setNatural(200);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("200px");
   });
 });

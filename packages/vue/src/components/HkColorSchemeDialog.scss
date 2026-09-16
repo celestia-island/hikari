@@ -6,6 +6,25 @@
 
 .s-scheme-mode-switch {
   align-self: center;
+
+  /* The strip needs a track of its own: pill-on-dialog-surface is
+     same-on-same in dark mode and read as bare text links (user report
+     2026-09-16), hiding that it is a segmented control — and that it
+     picks the EDITING target, not the applied app mode. */
+  .hk-tabs-list {
+    background: color-mix(in srgb, var(--hi-color-text-primary, rgb(var(--color-text))) 8%, transparent);
+    padding: var(--space-2, 2px);
+    border-radius: var(--hi-radius-sm, 4px);
+  }
+}
+
+/* Why-this-strip note: the tabs switch which palette you are EDITING;
+   the applied mode lives in the theme popup's color-mode strip. */
+.s-scheme-mode-hint {
+  align-self: center;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  margin-top: calc(var(--space-8, 0.5rem) * -1);
 }
 
 .s-scheme-colors {

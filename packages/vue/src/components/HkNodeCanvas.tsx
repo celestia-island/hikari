@@ -179,12 +179,18 @@ export default defineComponent({
     }
 
     function setCamera(next: NodeCanvasCamera) {
+      const k = normalizeZoom(next.k);
+      // A host camera with a zero or non-finite scale turns every coordinate
+      // derived from it into Infinity, and the browser drops the transform —
+      // the surface freezes with no way back. Refuse to propagate it.
+      if (!Number.isFinite(k) || k <= 0) return;
+      if (!Number.isFinite(next.x) || !Number.isFinite(next.y)) return;
       // Any non-automatic camera move is the user's: a late `contentBounds`
       // must not throw that work away. It also means the host is somewhere
       // else, so a later `fit()` may ask for the same camera again.
       movedByHand = true;
       lastRequested = null;
-      writeCamera({ k: normalizeZoom(next.k), x: next.x, y: next.y });
+      writeCamera({ k, x: next.x, y: next.y });
     }
 
     /** The camera that frames `contentBounds` inside the viewport. */
@@ -275,8 +281,16 @@ export default defineComponent({
       fit();
     }
 
+    /** The camera a gesture builds on. A controlled host may write back late
+     *  (a throttled mirror, a 10 Hz store), so composing from its echo would
+     *  make the surface trail the pointer; our own last request is the truth. */
+    function gestureBase(): NodeCanvasCamera {
+      if (props.camera && lastRequested) return lastRequested.request;
+      return camera.value;
+    }
+
     function zoomAt(nextK: number, at: { x: number; y: number }) {
-      const current = camera.value;
+      const current = gestureBase();
       const k = normalizeZoom(nextK);
       if (!Number.isFinite(k) || k <= 0 || k === current.k) return;
       // Keep the world point under `at` fixed: the content moves opposite to
@@ -302,7 +316,7 @@ export default defineComponent({
     }
 
     function panBy(dx: number, dy: number) {
-      const current = camera.value;
+      const current = gestureBase();
       setCamera({ k: current.k, x: current.x + dx, y: current.y + dy });
     }
 
@@ -459,6 +473,13 @@ export default defineComponent({
       () => props.camera,
       (next, previous) => {
         if (!next && previous) inner.value = previous;
+        // The host took what we asked for: the mark of "where the host is"
+        // moves with it. Then a later, different camera — including the one
+        // that was live when we asked, as a "reset view" writes — counts as
+        // the host moving, and the next `fit()` answers.
+        if (next && lastRequested && sameCamera(next, lastRequested.request)) {
+          lastRequested = { request: lastRequested.request, at: next };
+        }
       },
     );
 

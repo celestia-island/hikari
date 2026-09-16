@@ -568,6 +568,59 @@ describe("HkNodeCanvas", () => {
     expect(camera.value.x).toBe(150);
   });
 
+  it("re-frames when the host restores the camera it had before the last fit", async () => {
+    // A "reset view" writes exactly the camera that was live when the component
+    // asked, so "the host moved" cannot be decided by looking only at the value
+    // it moved back to.
+    const camera = ref({ k: 1, x: 0, y: 0 });
+    const { instance } = mount({
+      contentBounds: BOUNDS,
+      camera,
+      "onUpdate:camera": (next: { k: number; x: number; y: number }) => {
+        camera.value = next;
+      },
+    });
+    await nextTick();
+    instance.value?.fit();
+    await nextTick();
+    expect(camera.value.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+
+    camera.value = { k: 1, x: 0, y: 0 };
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    await nextTick();
+    expect(camera.value.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+  });
+
+  it("keeps panning with the pointer when the host writes back late", async () => {
+    // A throttled mirror means the `camera` prop lags: composing the drag from
+    // it would make the surface trail the pointer by however much is in flight.
+    const onUpdate = vi.fn();
+    const { instance } = mount({
+      contentBounds: BOUNDS,
+      camera: { k: 1, x: 0, y: 0 },
+      fitOnLoad: false,
+      "onUpdate:camera": onUpdate,
+    });
+    await nextTick();
+    instance.value?.panBy(30, 0);
+    instance.value?.panBy(30, 0);
+    expect(onUpdate).toHaveBeenLastCalledWith({ k: 1, x: 60, y: 0 });
+  });
+
+  it("refuses to propagate a camera it cannot compute", async () => {
+    const onUpdate = vi.fn();
+    const { instance } = mount({
+      contentBounds: BOUNDS,
+      camera: { k: 0, x: 0, y: 0 },
+      fitOnLoad: false,
+      "onUpdate:camera": onUpdate,
+    });
+    await nextTick();
+    instance.value?.zoomBy(1);
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
   it("leaves the camera alone for bounds it cannot frame", async () => {
     const { instance } = mount({
       contentBounds: { x: Number.NaN, y: 0, width: 400, height: 200 },

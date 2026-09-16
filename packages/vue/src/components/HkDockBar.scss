@@ -1,0 +1,95 @@
+/**
+ * HkDockBar.scss — the shared dock surface chrome (single source of
+ * truth). `--hk-dock-inset` is declared by the foundation layer so every
+ * dock reads a defined value; change it once, all surfaces move
+ * together.
+ */
+
+.hk-dock-bar {
+  /* Transparent anchor box — never intercepts canvas gestures around
+   * the docked surface. */
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4, 4px);
+
+  /* ── page anchor: absolute bottom-center of the nearest positioned
+   *     ancestor, resting --hk-dock-inset above its content floor. */
+  &[data-anchor="page"] {
+    position: absolute;
+    left: 50%;
+    bottom: var(--hk-dock-inset, 12px);
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+
+  /* ── plane anchor: in-flow inside a host plane (a fixed footer band);
+   *     the host owns the positioning, this container centers the
+   *     surface horizontally and lifts it by the shared dock inset. */
+  &[data-anchor="plane"] {
+    margin: 0 auto var(--hk-dock-inset, 12px);
+  }
+
+  /* ── corner anchors: absolute attachment with the same inset, for
+   *     pagers, toolbars and HUD panels that live off-center. */
+  &[data-anchor="top-left"],
+  &[data-anchor="top-right"],
+  &[data-anchor="bottom-left"],
+  &[data-anchor="bottom-right"] {
+    position: absolute;
+    z-index: 50;
+  }
+
+  &[data-anchor="top-left"] {
+    top: var(--hk-dock-inset, 12px);
+    left: var(--hk-dock-inset, 12px);
+    align-items: flex-start;
+  }
+
+  &[data-anchor="top-right"] {
+    top: var(--hk-dock-inset, 12px);
+    right: var(--hk-dock-inset, 12px);
+    align-items: flex-end;
+  }
+
+  &[data-anchor="bottom-left"] {
+    bottom: var(--hk-dock-inset, 12px);
+    left: var(--hk-dock-inset, 12px);
+    align-items: flex-start;
+  }
+
+  &[data-anchor="bottom-right"] {
+    bottom: var(--hk-dock-inset, 12px);
+    right: var(--hk-dock-inset, 12px);
+    align-items: flex-end;
+  }
+}
+
+.hk-dock-bar-surface {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: var(--dock-width, auto);
+  max-width: var(--dock-max-width, calc(100vw - var(--space-16, 16px)));
+  padding: var(--dock-padding, var(--space-8, 8px) var(--space-12, 12px));
+  background: rgb(var(--color-surface));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  /* Reverse soft light — dark mode: white halo; light mode: soft black
+   * shadow. Strength scales with --glow-scale (Style → Shadow). */
+  box-shadow: var(--glow-dock);
+}
+
+/* Glass surface (default) — blur the page canvas behind the dock. */
+.hk-dock-bar[data-surface="glass"] .hk-dock-bar-surface {
+  backdrop-filter: blur(var(--blur-lg));
+}
+
+/* Solid surface — no blur, for moving 3D canvases (per-frame backdrop
+ * re-sampling over a live WebGL scene is expensive; the surface must
+ * stay opaque anyway for contrast over the scene). */
+.hk-dock-bar[data-surface="solid"] .hk-dock-bar-surface {
+  backdrop-filter: none;
+}

@@ -18,6 +18,11 @@ export { HkColorSchemeEditor } from "./components/HkColorSchemeEditor";
 export { default as HConfirmDialog } from "./components/HkConfirmDialog";
 export { default as HCrossfade } from "./components/HkCrossfade";
 export { default as HDivider } from "./components/HkDivider";
+export {
+  default as HDockBar,
+  type HkDockBarAnchor as HDockBarAnchor,
+  type HkDockBarSurface as HDockBarSurface,
+} from "./components/HkDockBar";
 export { default as HDrawer } from "./components/HkDrawer";
 export { default as HEmptyState } from "./components/HkEmptyState";
 export { default as HExpansionPanel } from "./components/HkExpansionPanel";

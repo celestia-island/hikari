@@ -27,9 +27,10 @@
  * the accepted trade-off.
  *
  * Reduced motion: the shared animation bus parks, so the field would
- * freeze into unreadable pure noise. HkPasswordSurface therefore watches
- * for the first bus frame after a hold starts (a bare-timer watchdog)
- * and degrades to the legacy static per-glyph jitter drawing instead.
+ * freeze into unreadable pure noise. HkPasswordSurface therefore checks
+ * the park state directly at hold start and re-checks it for the whole
+ * hold on a recurring bare-timer watchdog, degrading to the legacy
+ * static per-glyph jitter drawing instead.
  */
 
 /** One glyph's placement on the offscreen mask, in DEVICE pixels. */

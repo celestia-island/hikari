@@ -1006,8 +1006,17 @@ describe("HkInput password hold-to-reveal eye", () => {
         measureText: () => ({ width: 10 }),
         fillText: (text: string) => r.texts.push(String(text)),
         drawImage: () => r.drawImages++,
-        // The engine under test: patterns do not exist here.
-        createPattern: () => null,
+        // ASYMMETRIC pattern failure: only the OFFSCREEN mask canvas
+        // (and the never-patterned tile) sees a null pattern; the
+        // VISIBLE canvas gets a working one. The glyph-pattern guard
+        // in paint() is then the only thing standing between the null
+        // and a white-stamped mask — deleting that guard (and only
+        // it) must send this test red, which a both-null mock cannot
+        // express (the background guard would absorb the mutation).
+        createPattern: () =>
+          r.canvas === document.querySelector(".hk-pwd-dots")
+            ? ({} as CanvasPattern)
+            : null,
         createImageData: (w: number, h: number) => ({
           data: new Uint8ClampedArray(w * h * 4),
         }),

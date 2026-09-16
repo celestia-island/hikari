@@ -432,6 +432,11 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     // was opened from.
     const blocking = [...manager.registry.value.values()].filter((entry) => entry.blocking);
     expect(blocking.map((entry) => entry.title)).toContain("Hidden layers");
+    // It is a window layer in every sense — including naming itself as the
+    // current crumb of the very strip it was opened from.
+    expect(
+      strip()!.querySelector(".hk-modal-breadcrumb-item-current")!.textContent,
+    ).toBe("Hidden layers");
   });
 
   it("anchors the menu under the trigger on desktop", async () => {

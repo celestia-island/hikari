@@ -143,4 +143,77 @@ describe("HkKanban", () => {
     const card = root.querySelector<HTMLElement>(".hk-kanban-card");
     expect(card?.hasAttribute("draggable")).toBe(false);
   });
+
+  it("scrolls the strip on BOTH axes when the axis is both", async () => {
+    // `both` used to be a value nothing consumed: the strip was horizontal
+    // whatever it said. A board whose lanes and cards both overflow has to
+    // travel on either axis.
+    const root = mount({ ...base, axis: "both" });
+    await nextTick();
+    expect(root.querySelector(".hk-kanban")?.getAttribute("data-axis")).toBe("both");
+    expect(root.querySelector(".hk-scroll-container")?.getAttribute("data-axis")).toBe("both");
+  });
+
+  it("scrolls the strip down when the axis is vertical", async () => {
+    const root = mount({ ...base, axis: "vertical" });
+    await nextTick();
+    expect(root.querySelector(".hk-scroll-container")?.getAttribute("data-axis")).toBe("vertical");
+  });
+
+  it("passes the lane size through as the shared variable", async () => {
+    const root = mount({ ...base, laneSize: "22rem" });
+    await nextTick();
+    const lanes = root.querySelector<HTMLElement>(".hk-kanban-lanes");
+    expect(lanes?.style.getPropertyValue("--hk-kanban-lane-size")).toBe("22rem");
+  });
+
+  it("accepts a drop anywhere on the lane, not only on a card", async () => {
+    // The whole lane is highlighted as a target, so the whole lane has to be
+    // one: hovering the header used to show the outline and then swallow the
+    // drop silently.
+    const moves: Array<Record<string, unknown>> = [];
+    const root = mount({
+      ...base,
+      draggable: true,
+      onMove: (m: Record<string, unknown>) => moves.push(m),
+    });
+    await nextTick();
+    root.querySelector<HTMLElement>(".hk-kanban-card")?.dispatchEvent(dragEvent("dragstart"));
+    const header = root.querySelector<HTMLElement>(
+      ".hk-kanban-lane[data-lane='doing'] .hk-kanban-lane-header",
+    );
+    header?.dispatchEvent(dragEvent("dragover"));
+    header?.dispatchEvent(dragEvent("drop"));
+
+    expect(moves).toHaveLength(1);
+    expect(moves[0]).toMatchObject({ card: "a", toLaneKey: "doing", toIndex: 1 });
+  });
+
+  it("marks the drop as handled, so the browser cannot fall back", async () => {
+    const root = mount({ ...base, draggable: true });
+    await nextTick();
+    root.querySelector<HTMLElement>(".hk-kanban-card")?.dispatchEvent(dragEvent("dragstart"));
+    const event = dragEvent("drop");
+    root.querySelector<HTMLElement>(".hk-kanban-lane[data-lane='doing']")?.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("keeps the highlight while the pointer crosses cards inside one lane", async () => {
+    // dragleave bubbles from every child, so an unguarded handler blinks the
+    // outline off when the pointer moves from one card to the next.
+    const root = mount({ ...base, draggable: true });
+    await nextTick();
+    const cards = root.querySelectorAll<HTMLElement>(".hk-kanban-card");
+    const lane = root.querySelector<HTMLElement>(".hk-kanban-lane[data-lane='todo']");
+    cards[0]?.dispatchEvent(dragEvent("dragstart"));
+    lane?.dispatchEvent(dragEvent("dragover"));
+    await nextTick();
+    expect(lane?.hasAttribute("data-drop-target")).toBe(true);
+
+    const leave = dragEvent("dragleave");
+    Object.defineProperty(leave, "relatedTarget", { value: cards[1], configurable: true });
+    cards[0]?.dispatchEvent(leave);
+    await nextTick();
+    expect(lane?.hasAttribute("data-drop-target")).toBe(true);
+  });
 });

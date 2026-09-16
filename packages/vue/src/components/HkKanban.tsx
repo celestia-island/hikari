@@ -36,6 +36,9 @@ export interface KanbanMove {
   fromLaneKey: string;
   fromIndex: number;
   toLaneKey: string;
+  /** Where the card lands in the target lane, in the TARGET's coordinates:
+   *  the host inserts at this index AFTER removing the card from its source
+   *  lane (so moving a card to the end is `toIndex === targetLength`). */
   toIndex: number;
 }
 
@@ -104,9 +107,11 @@ export default defineComponent({
 
     const cardsFor = (lane: unknown, index: number) => props.cardsOf(lane, index);
 
-    /** The scroll axis of the lane strip itself: stacked lanes scroll down,
-     *  side-by-side lanes scroll across. */
-    const stripAxis = computed(() => (props.axis === "vertical" ? "vertical" : "horizontal"));
+    /** The scroll axis of the lane strip itself, straight from `axis`: a
+     *  horizontal board scrolls across, a vertical one down, and `both`
+     *  scrolls the strip BOTH ways (the lane axis and the card axis are
+     *  independent, and a board may need to travel on either). */
+    const stripAxis = computed(() => props.axis);
 
     function onDragStart(card: unknown, laneKey: string, index: number, event: DragEvent) {
       if (!props.draggable) return;
@@ -123,14 +128,33 @@ export default defineComponent({
       dropTarget.value = laneKey;
     }
 
-    function onDragLeave(laneKey: string) {
+    function onDragLeave(laneKey: string, event: DragEvent) {
+      // dragleave bubbles from every child the pointer crosses, so a move
+      // from one card to the next inside the SAME lane would otherwise blink
+      // the highlight off; only a leave that exits the lane counts.
+      const next = event.relatedTarget as Node | null;
+      const lane = event.currentTarget as Node | null;
+      if (next && lane && lane.contains(next)) return;
       if (dropTarget.value === laneKey) dropTarget.value = null;
     }
 
-    function onDrop(lane: unknown, laneKey: string, index: number, event: DragEvent) {
+    /** Where a drop lands inside a lane: on the card under the pointer, or
+     *  at the end when the pointer is over the lane's header, footer, the
+     *  gaps between cards, or the tail. The whole lane is a target because
+     *  the whole lane is highlighted as one. */
+    function dropIndexWithin(event: DragEvent, cardCount: number): number {
+      const target = event.target as HTMLElement | null;
+      const card = target?.closest?.("[data-card-index]");
+      const raw = card?.getAttribute("data-card-index");
+      const index = raw === null || raw === undefined ? Number.NaN : Number(raw);
+      return Number.isInteger(index) && index >= 0 && index < cardCount ? index : cardCount;
+    }
+
+    function onDrop(laneKey: string, cardCount: number, event: DragEvent) {
       if (!props.draggable || !dragging.value) return;
       event.preventDefault();
       const from = dragging.value;
+      const index = dropIndexWithin(event, cardCount);
       dragging.value = null;
       dropTarget.value = null;
       // A drop on the card it started from is not a move — the host should
@@ -170,12 +194,10 @@ export default defineComponent({
             >
               <div
                 class="hk-kanban-lanes"
+                // One variable; the stylesheet decides whether it is the
+                // lane's width (horizontal boards) or its height (vertical).
                 style={
-                  props.laneSize
-                    ? props.axis === "vertical"
-                      ? { "--hk-kanban-lane-size": props.laneSize }
-                      : { "--hk-kanban-lane-size": props.laneSize }
-                    : undefined
+                  props.laneSize ? { "--hk-kanban-lane-size": props.laneSize } : undefined
                 }
               >
                 {props.lanes.map((lane, laneIndex) => {
@@ -188,7 +210,8 @@ export default defineComponent({
                       data-lane={laneKey}
                       data-drop-target={dropTarget.value === laneKey ? "" : undefined}
                       onDragover={(event: DragEvent) => onDragOver(laneKey, event)}
-                      onDragleave={() => onDragLeave(laneKey)}
+                      onDragleave={(event: DragEvent) => onDragLeave(laneKey, event)}
+                      onDrop={(event: DragEvent) => onDrop(laneKey, cards.length, event)}
                     >
                       <header class="hk-kanban-lane-header">
                         {slots.laneHeader?.({
@@ -207,12 +230,11 @@ export default defineComponent({
                               key={cardKey}
                               class="hk-kanban-card"
                               data-card={cardKey}
+                              data-card-index={cardIndex}
                               draggable={props.draggable || undefined}
                               onDragstart={(event: DragEvent) =>
                                 onDragStart(card, laneKey, cardIndex, event)
                               }
-                              onDragover={(event: DragEvent) => onDragOver(laneKey, event)}
-                              onDrop={(event: DragEvent) => onDrop(lane, laneKey, cardIndex, event)}
                               onDragend={onDragEnd}
                             >
                               {slots.card?.({
@@ -225,13 +247,9 @@ export default defineComponent({
                             </div>
                           );
                         })}
-                        {/* The lane's own tail is a drop target too, so a card
-                            can be appended to an empty or full lane. */}
-                        <div
-                          class="hk-kanban-lane-tail"
-                          onDragover={(event: DragEvent) => onDragOver(laneKey, event)}
-                          onDrop={(event: DragEvent) => onDrop(lane, laneKey, cards.length, event)}
-                        />
+                        {/* The tail keeps the lane's empty space hittable
+                            (the lane itself owns the drop). */}
+                        <div class="hk-kanban-lane-tail" />
                       </div>
                       {slots.laneFooter?.({ lane, laneIndex, laneKey, cards })}
                     </section>

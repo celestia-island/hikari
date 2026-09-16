@@ -375,28 +375,10 @@
   object-fit: cover;
 }
 
-/* Hover veil: the "change avatar" affordance over the trigger. The Uno
- * form was `group-hover:opacity-100` scoped by a `group` marker class on
- * the button; this descendant selector expresses the same scope. */
-.s-admin-header-avatar-veil {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: rgb(0 0 0 / 30%);
-  opacity: 0;
-  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.s-admin-header-avatar:hover .s-admin-header-avatar-veil {
-  opacity: 1;
-}
-
-.s-admin-header-veil-icon {
-  color: #fff;
-}
+/* The old hover camera veil ("change avatar" affordance) is gone: the
+ * avatar trigger opens the account MENU — the avatar edit is the Camera
+ * item inside it — so the veil promised an action the click never
+ * delivered (user report 2026-09-16). */
 
 /* The open view's title. The 1.5 line-height is load-bearing: the default
  * text-sm box is exactly the em advance, so descenders (g, y, p) fall

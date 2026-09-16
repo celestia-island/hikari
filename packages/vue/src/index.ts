@@ -102,6 +102,13 @@ export type {
   KanbanHeaderSlotProps,
   KanbanMove,
 } from "./components/HkKanban";
+export { default as HNodeCanvas, NODE_CANVAS_DEFAULTS } from "./components/HkNodeCanvas";
+export type {
+  NodeCanvasCamera,
+  NodeCanvasBounds,
+  NodeCanvasSlotProps,
+  MinimapPlacement,
+} from "./components/HkNodeCanvas";
 export type {
   WaterfallBucket,
   WaterfallCardSlotProps,

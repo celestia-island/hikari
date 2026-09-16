@@ -294,6 +294,17 @@
   flex: 0 0 auto;
 }
 
+/* Disabled step: visible so the flow's shape reads, but dimmed and inert
+   (data-clickable is withheld upstream; cursor says so too). */
+.hk-timeline-step[data-disabled] {
+  cursor: default;
+
+  & [data-el="label"],
+  & [data-el="indicator"] {
+    opacity: 0.45;
+  }
+}
+
 .hk-timeline[data-orientation="vertical"][data-mode="full"] .hk-timeline-step {
   flex-direction: row;
   flex: 0 0 auto;

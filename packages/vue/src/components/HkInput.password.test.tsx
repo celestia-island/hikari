@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vue";
 
 import HkInput from "./HkInput";
+import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
+import { setReducedMotion } from "../runtime/animationBus";
 
 /**
  * HkInput variant="password" contract tests (the unified password field —
@@ -634,11 +636,12 @@ describe("HkInput password hold-to-reveal eye", () => {
   });
 
   it("reads the mono font stack once per reveal, never per frame", async () => {
-    // The reveal pass re-randomizes glyphs EVERY frame; reading
-    // computed styles at that rate is layout thrash. The cache warms
-    // at reveal start (or lazily on the first draw) and every
-    // subsequent frame must hit it — a wholesale cache removal would
-    // silently pass the suite without this count.
+    // The reveal pass rebuilds the glyph mask / layout per hold and
+    // drifts the noise EVERY frame; reading computed styles at that
+    // rate is layout thrash. The cache warms at reveal start (or
+    // lazily on the first draw) and every subsequent frame must hit it
+    // — a wholesale cache removal would silently pass the suite
+    // without this count.
     const ctxStub = {
       canvas: {},
       clearRect: () => {},
@@ -646,6 +649,15 @@ describe("HkInput password hold-to-reveal eye", () => {
       beginPath: () => {}, arc: () => {}, fill: () => {},
       measureText: () => ({ width: 10 }),
       fillText: () => {},
+      fillRect: () => {},
+      drawImage: () => {},
+      createPattern: () => ({}) as CanvasPattern,
+      createImageData: (w: number, h: number) => ({
+        data: new Uint8ClampedArray(w * h * 4),
+      }),
+      putImageData: () => {},
+      imageSmoothingEnabled: false,
+      globalCompositeOperation: "source-over",
       font: "", fillStyle: "", textAlign: "", textBaseline: "",
     };
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
@@ -693,86 +705,488 @@ describe("HkInput password hold-to-reveal eye", () => {
     }
   });
 
-  it("draws the password on the canvas with per-frame jitter (anti-OCR)", async () => {
-    // Recording canvas context: happy-dom's getContext is null, so the
-    // drawing path never runs there — stub it and drive the jitter
-    // deterministically by pinning Math.random per frame.
-    const calls: Array<{ font: string; fillStyle: string; text: string }> = [];
-    const ctxStub = {
-      canvas: {},
-      clearRect: () => {},
-      save: () => {},
-      restore: () => {},
-      translate: () => {},
-      rotate: () => {},
-      beginPath: () => {},
-      arc: () => {},
-      fill: () => {},
-      measureText: () => ({ width: 10 }),
-      fillText: (text: string) => {
-        calls.push({
-          font: String(ctxStub.font),
-          fillStyle: String(ctxStub.fillStyle),
-          text,
-        });
-      },
-      font: "",
-      fillStyle: "",
-      textAlign: "",
-      textBaseline: "",
-    };
+  it("reveals via counter-drifting noise — no glyph ever lands on the visible canvas", async () => {
+    // Recording canvas contexts, one per canvas element: happy-dom's
+    // getContext is null, so the drawing path never runs there. The
+    // per-canvas recorder can tell the VISIBLE dot canvas apart from
+    // the painter's offscreen tile/mask canvases, which is exactly
+    // what the screenshot-safety contract needs: the visible canvas
+    // may only ever receive noise fills and a noise-composited stamp,
+    // never glyph geometry.
+    interface CanvasRec {
+      canvas: HTMLCanvasElement;
+      texts: string[];
+      translateXs: number[];
+      patternFills: number;
+      drawImages: number;
+    }
+    const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
     const originalGetContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = (() =>
-      ctxStub) as unknown as typeof HTMLCanvasElement.prototype.getContext;
-    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = byCanvas.get(this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], translateXs: [], patternFills: 0, drawImages: 0 };
+        byCanvas.set(this, rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: (x: number) => r.translateXs.push(x),
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        fillRect: () => {},
+        drawImage: () => r.drawImages++,
+        createPattern: () => {
+          r.patternFills++;
+          return {} as CanvasPattern;
+        },
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
       const { container, input } = mountPasswordInput("abc");
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
 
-      // Frame 1 (hold): every glyph drawn exactly once, mid-jitter.
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
       );
       await nextTick();
-      expect(calls.map((c) => c.text)).toEqual(["a", "b", "c"]);
+      // Let the animation bus render a few real frames while held. The
+      // bus's "normal" tier fires on a 33ms budget, so mix in real
+      // timeouts — rAF alone can fire back-to-back with no elapsed
+      // time, which would never cross the tier budget.
+      for (let i = 0; i < 12; i++) {
+        await new Promise((r) => setTimeout(r, 15));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = byCanvas.get(visible);
+      expect(vis).toBeTruthy();
+
+      // ── Screenshot safety (the point of the change) ──
+      // Any single frame of the visible canvas is pure noise: no glyph
+      // text may ever be drawn on it. A regression back to the jitter
+      // reveal (or any direct fillText on the visible surface) fails
+      // here — this is the "break it and it goes red" guard.
+      expect(vis!.texts).toEqual([]);
+      // The visible surface only carries noise pattern fills and the
+      // noise-through-mask stamp.
+      expect(vis!.patternFills).toBeGreaterThan(0);
+      expect(vis!.drawImages).toBeGreaterThan(0);
+
+      // ── Motion ──
+      // The noise translation must differ across frames: a frozen
+      // offset would leave the field as unreadable pure noise forever.
+      expect(new Set(vis!.translateXs).size).toBeGreaterThan(1);
+
+      // ── Glyphs live only OFFSCREEN ──
+      // The password raster exists only on a mask canvas that is never
+      // the visible element, and is fully re-composited with noise.
+      const maskRecs = [...byCanvas.values()].filter((r) => r.texts.length > 0);
+      expect(maskRecs.length).toBeGreaterThan(0);
+      expect(maskRecs.every((r) => r.canvas !== visible)).toBe(true);
+      expect(maskRecs.some((r) => r.texts.join("") === "abc")).toBe(true);
+
+      // The noise tile backing store must be the full tile size: a
+      // fresh canvas defaults to 300×150 and would silently clip the
+      // 512×128 tile (real period 300, transparent rows below 128,
+      // drift wrap desynced) — the R3 P1, pinned structurally here.
+      const tileCanvas = [...byCanvas.keys()].find(
+        (c) => c !== visible && c.width === NOISE_TILE_W && c.height === NOISE_TILE_H,
+      );
+      expect(tileCanvas, "an offscreen canvas sized to the noise tile exists").toBeTruthy();
+
+      // The DOM value still never flips to a text input.
       expect(input.type).toBe("password");
-      const frame1Fonts = calls.map((c) => c.font);
-      const frame1Colors = calls.map((c) => c.fillStyle);
-      const frame1 = frame1Fonts.map((f, i) => `${f}|${frame1Colors[i]}`);
 
-      // Frame 2 (a second hold with a different random stream): the
-      // SAME value must render with DIFFERENT font sizes AND colors —
-      // each dimension is asserted SEPARATELY so a regression that
-      // freezes only one of them (e.g. size→constant, color still
-      // jittering) still fails this test.
+      // Release: the reveal pass stops — no further glyph draws.
+      const textsBefore = [...byCanvas.values()].reduce((s, r) => s + r.texts.length, 0);
+      const patternsBefore = vis!.patternFills;
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
-      calls.length = 0;
-      randomSpy.mockReturnValue(0.9);
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      const textsAfter = [...byCanvas.values()].reduce((s, r) => s + r.texts.length, 0);
+      expect(textsAfter).toBe(textsBefore);
+      expect(vis!.patternFills).toBe(patternsBefore);
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
+  it("degrades to static jittered glyphs when the animation bus is parked (reduced motion)", async () => {
+    // Parked bus (reduced motion): the kinematogram would freeze into
+    // unreadable noise, so a bare-timer watchdog must flip the reveal
+    // to the legacy static per-glyph jitter — the feature stays usable
+    // and motion-sensitive users keep their preference.
+    setReducedMotion(true);
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let texts = textsByCanvas.get(this);
+      if (!texts) {
+        texts = [];
+        textsByCanvas.set(this, texts);
+      }
+      const t = texts;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => t.push(String(text)),
+        fillRect: () => {},
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
       );
       await nextTick();
-      const frame2 = calls.map((c) => `${c.font}|${c.fillStyle}`);
-      expect(calls.map((c) => c.text)).toEqual(["a", "b", "c"]);
-      expect(frame1.join(";")).not.toBe(frame2.join(";"));
-      expect(
-        calls.map((c) => c.font),
-        "glyph SIZE jitter must vary across frames",
-      ).not.toEqual(frame1Fonts);
-      expect(
-        calls.map((c) => c.fillStyle),
-        "glyph COLOR jitter must vary across frames",
-      ).not.toEqual(frame1Colors);
-
-      // Release: the reveal pass must stop — no more glyph draws.
-      calls.length = 0;
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      // Parked bus ⇒ the degrade is IMMEDIATE (isAnimationParked, no
+      // 160ms of unreadable noise first): the static jitter renders the
+      // glyphs on the very first synchronous frame.
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // And it stays stable: no bus frames, and the watchdog must not
+      // re-draw over the fallback.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
-      expect(calls.length).toBe(0);
     } finally {
-      randomSpy.mockRestore();
       HTMLCanvasElement.prototype.getContext = originalGetContext;
+      setReducedMotion(false);
+    }
+  });
+
+  it("falls back through the watchdog when no bus frames arrive although the bus is not parked", async () => {
+    // Hidden document / extreme jank: rAF never fires, so the animation
+    // bus delivers no frames, but the bus is NOT parked — exactly the
+    // scenario the recurring cronBus watchdog covers (the instant
+    // isAnimationParked branch cannot). Neutering the watchdog must
+    // leave this test red, or the guard has no teeth.
+    const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let texts = textsByCanvas.get(this);
+      if (!texts) {
+        texts = [];
+        textsByCanvas.set(this, texts);
+      }
+      const t = texts;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => t.push(String(text)),
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    // Freeze the frame bus without parking it: rAF callbacks never run.
+    vi.stubGlobal("requestAnimationFrame", () => 0);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      // Bus not parked ⇒ the first synchronous frame is the noise pass.
+      expect(textsByCanvas.get(visible)).toEqual([]);
+      // The recurring watchdog flips to the static fallback on a bare
+      // timer even though no bus frame ever arrived.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // Latched: later ticks must not re-draw over the fallback.
+      await new Promise((r) => setTimeout(r, 220));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      vi.unstubAllGlobals();
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
+  it("degrades to the legacy jitter when canvas patterns are unavailable", async () => {
+    // Engines where createPattern yields null: the painter must hand
+    // the frame back (paint() → false) so the surface falls to the
+    // legacy jitter on the VISIBLE canvas. Pinning the guard matters:
+    // without it, paint() would keep "succeeding" and stamp the mask
+    // with whatever fillStyle was left on it (#fff from the raster) —
+    // clean white glyphs, i.e. exactly the leak this PR exists to kill.
+    const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = seen.find((r) => r.canvas === this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], drawImages: 0 };
+        seen.push(rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        drawImage: () => r.drawImages++,
+        // ASYMMETRIC pattern failure: only the OFFSCREEN mask canvas
+        // (and the never-patterned tile) sees a null pattern; the
+        // VISIBLE canvas gets a working one. The glyph-pattern guard
+        // in paint() is then the only thing standing between the null
+        // and a white-stamped mask — deleting that guard (and only
+        // it) must send this test red, which a both-null mock cannot
+        // express (the background guard would absorb the mutation).
+        createPattern: () =>
+          r.canvas === document.querySelector(".hk-pwd-dots")
+            ? ({} as CanvasPattern)
+            : null,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container, input } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = seen.find((r) => r.canvas === visible)!;
+      // The fallback engaged: glyphs (deliberately) on the visible
+      // canvas, and the noise-composite stamp never happened.
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.drawImages).toBe(0);
+      expect(input.type).toBe("password");
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
+  it("degrades to the legacy jitter when only the visible canvas lacks patterns", async () => {
+    // The mirrored asymmetry: the VISIBLE canvas's createPattern yields
+    // null while the offscreen mask's works. Now the BACKGROUND guard
+    // in paint() is the only decision point — deleting it alone must
+    // redden this test (the frame would keep "succeeding" with the
+    // visible fill falling back to a stale fillStyle, stamping
+    // noise-through-glyphs over a flat wash — structure a screenshot
+    // could pick up). Together with the offscreen-null test, each
+    // pattern guard is now pinned alone.
+    const seen: Array<{ canvas: HTMLCanvasElement; texts: string[]; drawImages: number }> = [];
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = seen.find((r) => r.canvas === this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], drawImages: 0 };
+        seen.push(rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        drawImage: () => r.drawImages++,
+        createPattern: () =>
+          r.canvas === document.querySelector(".hk-pwd-dots")
+            ? null
+            : ({} as CanvasPattern),
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = seen.find((r) => r.canvas === visible)!;
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.drawImages).toBe(0);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
+  it("degrades within the hold when reduced motion is switched on mid-hold", async () => {
+    // Frames already arrived (bus live), then the host parks the bus:
+    // the recurring watchdog must flip the hold to the static fallback
+    // even though revealFrames > 0 at the 160ms tick — the mid-hold
+    // branch of isAnimationParked() coverage.
+    const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let texts = textsByCanvas.get(this);
+      if (!texts) {
+        texts = [];
+        textsByCanvas.set(this, texts);
+      }
+      const t = texts;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => t.push(String(text)),
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      // Let real bus frames flow first: past the 160ms tick the hold
+      // must STILL be on the noise path (frames arrived ⇒ no flip).
+      // This is what separates the mid-hold branch from the
+      // no-frames branch the other test pins.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(textsByCanvas.get(visible)).toEqual([]);
+      // Park the bus MID-HOLD (this is the branch no other test hits).
+      setReducedMotion(true);
+      await new Promise((r) => setTimeout(r, 600));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // Latched: no re-draws on later ticks.
+      await new Promise((r) => setTimeout(r, 220));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      setReducedMotion(false);
     }
   });
 });

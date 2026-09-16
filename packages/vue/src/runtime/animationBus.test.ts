@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { onFrame, type AnimationHandle } from "./animationBus";
+import { onFrame, isAnimationParked, setReducedMotion, type AnimationHandle } from "./animationBus";
 
 // ── Fake-RAF harness ──────────────────────────────────────────────────
 // The bus arms the next frame by calling requestAnimationFrame(tick); the
@@ -108,5 +108,22 @@ describe("animationBus per-entry delta", () => {
     fireRaf(4000);
 
     expect(deltas).toEqual([0.1, 0.1]);
+  });
+});
+
+describe("isAnimationParked", () => {
+  it("tracks the reduced-motion switch for callers that cannot wait for a frame", () => {
+    // Callers like the password surface's motion reveal branch on this
+    // BEFORE holding anything: a parked bus never delivers a frame, so
+    // waiting to find out would render unreadable noise in the meantime.
+    const original = isAnimationParked();
+    try {
+      setReducedMotion(true);
+      expect(isAnimationParked()).toBe(true);
+      setReducedMotion(false);
+      expect(isAnimationParked()).toBe(false);
+    } finally {
+      setReducedMotion(original);
+    }
   });
 });

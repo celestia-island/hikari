@@ -58,9 +58,12 @@ export default defineComponent({
     /**
      * Right-edge affordance for `variant="password"`:
      * - "eye" (default): hold-to-reveal button. While held, the canvas
-     *   draws the password text with a per-frame random perturbation of
-     *   glyph size, baseline, rotation and color (anti-OCR) instead of
-     *   the dot matrix; release restores the dots.
+     *   renders a counter-drifting noise kinematogram instead of the
+     *   dot matrix: the noise through the password glyphs drifts one
+     *   way, the background noise the opposite way — readable by
+     *   motion to a human, pure noise (nothing to OCR) in any single
+     *   screenshot. Reduced motion falls back to the legacy static
+     *   per-glyph jitter; release restores the dots.
      * - "strength": the traffic-light dot (weak / fair / strong via the
      *   shared `passwordLevel` classifier, overridable through
      *   `strengthEvaluator`) with a localized tooltip on hover and on

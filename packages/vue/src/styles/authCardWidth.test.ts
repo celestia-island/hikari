@@ -56,6 +56,9 @@ import {
  *  - the positive control wants each surface capped once: a second, identical
  *    cap is reported rather than tolerated (fail-closed — harmless today, but
  *    it is how a duplicate drifts out of sync tomorrow);
+ *  - the "no other auth rule caps a width" contract is deliberately wider than
+ *    the card: it fires on ANY `.s-auth-*` rule carrying a cap, because a third
+ *    auth surface declared tomorrow is exactly what it exists to catch;
  *  - Sass indirection is judged by what it COMPILES to: a `@extend`ed
  *    placeholder is fine while it carries the property, and fails once it
  *    compiles back into a literal — which is the behaviour we want, since the
@@ -68,11 +71,26 @@ const stylesDir = resolve(dirname(fileURLToPath(import.meta.url)));
 const sheetPath = resolve(stylesDir, "index.scss");
 const sheetSource = readFileSync(sheetPath, "utf8");
 
-function stripComments(css: string): string {
-  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+/** Drop comments and blank the CONTENTS of every quoted string (keeping the
+ *  quotes), in ONE left-to-right pass so neither can confuse the other: CSS
+ *  values really do carry braces (`content: "{"`, a `data:image/svg+xml,…{}`
+ *  URI) and a brace inside a string otherwise ended the rule early, hiding the
+ *  declarations after it (a `max-width: 40rem` past a `content: "}"` escaped);
+ *  conversely an apostrophe in a comment — "the card's own sizing contract" —
+ *  used to open a phantom string that swallowed the next rule whole. Strings
+ *  stop at a newline, which CSS forbids inside them, so an unterminated quote
+ *  cannot run past its own rule. */
+function maskStringsAndComments(css: string): string {
+  return css.replace(
+    /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g,
+    (m) =>
+      m.startsWith("/*") || m.length < 2
+        ? ""
+        : `${m[0]}${"x".repeat(m.length - 2)}${m[m.length - 1]}`,
+  );
 }
 
-const compiled = stripComments(
+const compiled = maskStringsAndComments(
   // `url` gives the sheet its own directory as the base for `@use`/`@import`,
   // the same resolution the `sass` CLI applies when given the file path.
   compileString(sheetSource, {
@@ -134,14 +152,41 @@ function subjectOf(selector: string): string {
   return selector.slice(start);
 }
 
+/** `:not()`/`:has()` arguments do NOT make the subject the card — `.s-auth-footer:not(.s-auth-card)`
+ *  still lands on the footer — while `:is()`/`:where()` are subject-transparent
+ *  and must keep their argument. Drop the former before reading class tokens. */
+function withoutForeignSubjects(compound: string): string {
+  let out = compound;
+  for (const fn of [":not(", ":has("]) {
+    let at = out.indexOf(fn);
+    while (at !== -1) {
+      let depth = 1;
+      let i = at + fn.length;
+      while (i < out.length && depth > 0) {
+        if (out[i] === "(") depth += 1;
+        else if (out[i] === ")") depth -= 1;
+        i += 1;
+      }
+      out = out.slice(0, at) + out.slice(i);
+      at = out.indexOf(fn);
+    }
+  }
+  return out;
+}
+
 /** The class tokens a compound can carry: `.x` and `[class~="x"]` reach the
- *  same element, and both spellings must be recognised. */
+ *  same element, and both spellings must be recognised. Attribute names are
+ *  case-insensitive in HTML and the `i` flag makes the value so too, so
+ *  `[CLASS~="S-AUTH-CARD" i]` names the card as well. */
 function classTokens(compound: string): string[] {
+  const subject = withoutForeignSubjects(compound);
   return [
-    ...[...compound.matchAll(/\.([\w-]+)/g)].map((m) => m[1]),
-    ...[...compound.matchAll(/\[class[~|^$*]?=\s*["']?([\w-]+)["']?\]/g)].map(
-      (m) => m[1],
-    ),
+    ...[...subject.matchAll(/\.([\w-]+)/g)].map((m) => m[1]),
+    ...[
+      ...subject.matchAll(
+        /\[\s*class\s*[~|^$*]?=\s*["']?([\w-]+)["']?(?:\s+[is])?\s*\]/gi,
+      ),
+    ].map((m) => m[1].toLowerCase()),
   ];
 }
 
@@ -198,6 +243,16 @@ describe("auth card width contract", () => {
       for (const m of body.matchAll(MIN_WIDTH_PROPERTY)) {
         expect.fail(`${selectors.join(", ")} must not set a minimum width (${m[1].trim()})`);
       }
+    }
+    // Positive control: the loop above is vacuous if a surface loses the
+    // declaration altogether — a deleted `width: 100%` (the collapse the
+    // measuring wrapper exists to prevent) must not pass.
+    for (const selector of CARD_SELECTORS) {
+      const declared = authRules
+        .filter(([s]) => s.includes(selector))
+        .flatMap(([, body]) => [...body.matchAll(WIDTH_PROPERTY)])
+        .map((m) => normalize(m[1]));
+      expect(declared, selector).toEqual(["100%"]);
     }
   });
 

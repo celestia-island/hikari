@@ -328,6 +328,11 @@ function flushRewinds(): void {
     rewindQueue.delete(g);
     g.count.value = g.desired;
   }
+  // The loop can end with every claim gone and every guard unmounted (a
+  // teardown that only had foreign entries above it): nothing is left to
+  // observe, so the listener goes with it. The traversal path returns
+  // early instead — its landing re-checks.
+  maybeDropListener();
 }
 
 function scheduleRewind(record: GuardRecord): void {

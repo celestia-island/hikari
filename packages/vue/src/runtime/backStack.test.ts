@@ -258,25 +258,61 @@ describe("createBackGuard", () => {
   });
 
   it("does not judge ownership while a traversal is still in flight", async () => {
-    // The window above is destroyed (its own synchronous rewind is on its
-    // way) while the window below has already given up its entry. A flush
-    // that judged ownership at that instant sees the TOP still owned by the
-    // dying guard and would abandon the live claim below it — stranding
-    // that marker. The flush must wait for the landing instead.
-    const onBackA = vi.fn();
-    const a = createBackGuard({ onBack: onBackA });
+    // A window below has given up its entry while the window above is being
+    // destroyed — and that teardown rewinds synchronously, so its traversal
+    // is still on its way when the deferred flush runs. The flush must NOT
+    // read ownership at that instant: the top still shows the dying guard's
+    // marker, and the live claim below would be abandoned, stranding it.
+    //
+    // happy-dom lands history.go() synchronously, so the landing is
+    // WITHHELD here: real browsers dispatch the popstate asynchronously,
+    // which is the only shape in which this race is observable.
+    const a = createBackGuard({ onBack: vi.fn() });
     const b = createBackGuard({ onBack: vi.fn() });
     a.push();
     b.push();
 
-    a.release(); // bottom: queued (top is not ours yet)
-    b.destroy(); // top: rewinds synchronously, traversal still in flight
+    const withheld: number[] = [];
+    const goSpy = vi.spyOn(window.history, "go").mockImplementation((delta?: number) => {
+      withheld.push(delta ?? 0);
+    });
+    try {
+      a.release(); // queued: the top is not ours yet
+      b.destroy(); // asks for its own rewind — withheld
+      await settle();
 
+      // The flush ran with a traversal in flight: the claim survived
+      // instead of being abandoned against the doomed top.
+      expect(withheld).toEqual([-1]);
+      expect(a.entries).toBe(1);
+      expect(window.history.state).not.toBeNull();
+    } finally {
+      goSpy.mockRestore();
+    }
+
+    // The withheld landing now arrives; the re-armed flush finishes the job.
+    window.history.go(-1);
     await settle();
     expect(a.entries).toBe(0);
-    expect(onBackA).not.toHaveBeenCalled();
     expect(window.history.state).toBeNull();
     a.destroy();
+  });
+
+  it("drops the listener after a flush that only had foreign entries", async () => {
+    // A router entry above ours: the claim is abandoned where it lies (not
+    // ours to rewind), and once that flush leaves nothing to observe — no
+    // guards, no claims — the listener must go with it rather than sit on
+    // the document forever.
+    const g = createBackGuard({ onBack: vi.fn() });
+    g.push();
+    window.history.pushState({ router: true }, "");
+    g.destroy();
+
+    await settle();
+    expect(g.entries).toBe(0);
+    expect(__registeredBackGuards()).toBe(0);
+    expect(__backListenerActive()).toBe(false);
+    expect((window.history.state as Record<string, unknown>)?.router).toBe(true);
   });
 
   it("close A then open B in the same tick never fires a spurious back into B", async () => {

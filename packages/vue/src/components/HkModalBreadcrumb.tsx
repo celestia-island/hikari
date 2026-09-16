@@ -207,9 +207,13 @@ export default defineComponent({
     function crumbFootprint(crumb: Crumb, index: number, gap: number, z: number): number {
       const measured = measuredWidth(cloneEls.get(crumb.id));
       if (measured > 0) return measured;
+      // The measured branch is the contract: a crumb's own box is
+      // [chevron][inner gap][label] — never the strip's inter-crumb gap,
+      // which measureStrip adds across the list. Adding it here too would
+      // count every gap after the first twice (the error the second review
+      // round found in the other direction).
       const inner = index > 0 ? SEPARATOR_PX + gap / z : 0;
-      const local = displayWidthUnits(crumb.text) * LABEL_FONT_PX + inner;
-      return local * z + (index > 0 ? gap : 0);
+      return (displayWidthUnits(crumb.text) * LABEL_FONT_PX + inner) * z;
     }
 
     function measureStrip(): void {

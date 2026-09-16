@@ -274,6 +274,26 @@ describe("HkModalBreadcrumb overflow fold", () => {
     expect(crumbs[1].querySelector(".hk-modal-breadcrumb-sep")).not.toBeNull();
   });
 
+  it("estimates the same box model the measurement would report", async () => {
+    // No layout engine in this DOM, so the strip estimates: a non-first
+    // crumb is [chevron 12px][inner gap 8px][label], and the strip's own
+    // inter-crumb gap is added once per pair — never inside the crumb as
+    // well. Two 3-ideograph labels (36px each) are 36 + (12 + 8 + 36) + 8 =
+    // 100px, so a 104px content budget keeps both.
+    setViewport(186); // 186 − 16 gutter − 64 padding − 2 border = 104
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    await mountStrip();
+    expect(more()).toBeNull();
+    expect(labels()).toEqual(["第一层", "第二层"]);
+
+    // 96px: one 8px gap more than the stack needs.
+    setViewport(178);
+    await nextTick();
+    expect(more()).not.toBeNull();
+    expect(labels()).toEqual(["第二层"]);
+  });
+
   it("folds the leading layers into a … trigger on a narrow viewport", async () => {
     setViewport(360);
     manager.register("modal", true, "第一层标题占位");

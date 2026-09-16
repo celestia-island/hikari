@@ -29,7 +29,6 @@ import HkModal from "../src/components/HkModal";
 import HkMorphingTabs from "../src/components/HkMorphingTabs";
 import HkNavItem from "../src/components/HkNavItem";
 import HkNumberInput from "../src/components/HkNumberInput";
-import HkPasswordInput from "../src/components/HkPasswordInput";
 import HkPhaseTransition from "../src/components/HkPhaseTransition";
 import HkPopover from "../src/components/HkPopover";
 import HkProgressBar from "../src/components/HkProgressBar";

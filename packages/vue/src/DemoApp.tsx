@@ -8,7 +8,7 @@ import { utf8ToBase64 } from "./utils/base64";
 import {
   HButton, HIconButton, HIconButtonGroup, HTooltip, HBadge, HTag, HIcon, HSpinner,
   HProgressBar, HProgressRing, HGaugeRing,
-  HInput, HSearchInput, HNumberInput, HPasswordInput, HTextarea,
+  HInput, HSearchInput, HNumberInput, HTextarea,
   HFileField,
   HFilePickerField,
   type PickedFile, type RemoteFsAdapter,
@@ -360,13 +360,15 @@ export default defineComponent({
         </section>
 
         <section>
-          <h2>HInput / HSearchInput / HNumberInput / HPasswordInput / HTextarea</h2>
+          <h2>HInput (text / password) / HSearchInput / HNumberInput / HTextarea</h2>
           <div class="form-grid">
             <HInput modelValue={form.value.text} onUpdate:modelValue={(v: string) => (form.value.text = v)} placeholder="Text input" />
             <HInput modelValue={form.value.text} onUpdate:modelValue={(v: string) => (form.value.text = v)} placeholder="Disabled" disabled />
             <HSearchInput modelValue={form.value.search} onUpdate:modelValue={(v: string | number) => (form.value.search = String(v))} placeholder="Search..." />
             <HNumberInput modelValue={form.value.number} onUpdate:modelValue={(v: number) => (form.value.number = v)} placeholder="Number" />
-            <HPasswordInput modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password" />
+            <HInput variant="password" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (hold the eye)" />
+            <HInput variant="password" passwordTrailing="strength" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (strength light)" />
+            <HInput variant="password" passwordTrailing="none" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (no affordance)" />
             <HTextarea modelValue={form.value.textarea} onUpdate:modelValue={(v: string) => (form.value.textarea = v)} placeholder="Textarea" rows={3} />
           </div>
           {anyForm.value ? <p class="result">Form: {anyForm.value}</p> : null}

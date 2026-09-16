@@ -30,6 +30,15 @@ export function validatePassword(
 export type PasswordLevel = "weak" | "fair" | "strong";
 
 /**
+ * Pluggable strength classifier for HkInput's password variant. Receives
+ * the live field value, returns the traffic-light level (or null while
+ * the field is empty / no indicator should show). The default
+ * implementation is `passwordLevel`; pass `strength-evaluator` to
+ * override it with a house policy (zxcvbn bucketing, server hints, …).
+ */
+export type PasswordStrengthEvaluator = (password: string) => PasswordLevel | null;
+
+/**
  * Password strength level for a traffic-light indicator:
  * - "strong": ≥ 10 chars + upper + lower + special (green)
  * - "fair":   ≥ 8 chars + letters + digits (yellow)

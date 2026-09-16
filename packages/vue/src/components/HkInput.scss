@@ -255,37 +255,8 @@
   caret-color: rgb(var(--color-text));
 }
 
-/* Password-variant visibility toggle */
-.hk-input-password-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  /* Contract tokens, not the raw app triplets: --color-text-secondary is a
-   * bare "R G B" triplet, so using it directly as a color is invalid at
-   * computed-value time (the rule silently inherits); --color-text-primary
-   * is not defined anywhere. --hi-color-* wrap the triplets in rgb(). */
-  color: var(--hi-color-text-secondary, #666666);
-  cursor: pointer;
+/* The password variant's right-edge affordance (hold-to-reveal eye /
+ * strength traffic light) lives in HkPasswordSurface.scss — the retired
+ * .hk-input-password-toggle click-toggle was removed with the
+ * unification. */
 
-  &:hover {
-    color: var(--hi-color-text-primary, #1e1e1e);
-  }
-
-  // Keyboard parity (house icon-button pattern, HkIconButton): this real
-  // <button> had a hover state only, so keyboard focus was invisible.
-  // Offset 2px is safe here — the toggle rides the box's inline padding,
-  // well inside the box's overflow:hidden clip edge.
-  &:focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  // Press feedback matching the house button pattern (HkButton variants).
-  &:active {
-    filter: brightness(0.95);
-  }
-}

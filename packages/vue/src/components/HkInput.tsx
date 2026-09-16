@@ -1,9 +1,9 @@
-import { Eye, EyeOff } from "lucide-vue-next";
-import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch } from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, useAttrs, useId, watch, type PropType } from "vue";
 
-import { useI18n } from "../i18n/context";
+import type { PasswordStrengthEvaluator } from "../utils/password";
 
 import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
+import HkPasswordSurface from "./HkPasswordSurface";
 import "./HkInput.scss";
 
 export default defineComponent({
@@ -34,21 +34,51 @@ export default defineComponent({
      * under correct input reads as an error.
      */
     spellcheck: { type: Boolean, default: undefined },
-    /** Submit intent on Enter (no modifiers) — see HkPasswordInput. */
+    /** Submit intent on Enter (no modifiers) — shared by every variant
+     * (the password surface intercepts Enter the same way). */
     submitOnEnter: { type: Function, default: undefined },
-    autocomplete: { type: String, default: "off" },
+    /** Undefined keeps the element attribute off in the browser for the
+     * password variant (where the runtime credential policy resolves
+     * it); every other variant falls back to "off". */
+    autocomplete: { type: String, default: undefined },
     rows: { type: Number, default: 3 },
     autoGrow: { type: Boolean, default: false },
     size: { type: String as () => "sm" | "md" | "lg", default: "md" },
     /**
-     * Input variant. `password` renders a password field with a built-in
-     * visibility toggle (HPasswordInput layers strength / caps-lock /
-     * full-width extras on top of this base behavior). `number` maps to the
+     * Input variant. `password` renders the hikari password surface:
+     * the canvas dot matrix with input ripples, the centered breathing
+     * placeholder, caps-lock / full-width hints, and a selectable
+     * right-edge affordance (`passwordTrailing`). `number` maps to the
      * numeric input type. Defaults to "text".
      */
     variant: {
       type: String as () => "text" | "password" | "number",
       default: "text",
+    },
+    /**
+     * Right-edge affordance for `variant="password"`:
+     * - "eye" (default): hold-to-reveal button. While held, the canvas
+     *   draws the password text with a per-frame random perturbation of
+     *   glyph size, baseline, rotation and color (anti-OCR) instead of
+     *   the dot matrix; release restores the dots.
+     * - "strength": the traffic-light dot (weak / fair / strong via the
+     *   shared `passwordLevel` classifier, overridable through
+     *   `strengthEvaluator`) with a localized tooltip on hover and on
+     *   touch tap. The usual choice for registration fields.
+     * - "none": no right-edge affordance at all.
+     */
+    passwordTrailing: {
+      type: String as () => "eye" | "strength" | "none",
+      default: "eye",
+    },
+    /**
+     * Overrides the built-in password strength classifier
+     * (`passwordLevel` from `@celestia-island/hikari`). Only consulted
+     * while `passwordTrailing` is "strength".
+     */
+    strengthEvaluator: {
+      type: Function as PropType<PasswordStrengthEvaluator>,
+      default: undefined,
     },
     /**
      * Horizontal alignment of the text line. The centered default
@@ -85,11 +115,9 @@ export default defineComponent({
     keydown: (_e: KeyboardEvent) => true,
   },
   setup(props, { emit, slots }) {
-    const { t } = useI18n();
     const attrs = useAttrs();
     const inputRef = ref<HTMLElement>();
 
-    const revealing = ref(false);
     const marqueeRef = ref<{
       setActive(active: boolean): void;
       measure(): void;
@@ -118,10 +146,11 @@ export default defineComponent({
         : "",
     );
 
+    // The password variant never renders the native element path — it
+    // delegates to HkPasswordSurface, which keeps the real input
+    // type="password" at all times (the reveal pass draws on the canvas,
+    // so the DOM value is never exposed as text).
     const resolvedType = computed(() => {
-      if (props.variant === "password") {
-        return revealing.value ? "text" : "password";
-      }
       if (props.variant === "number") return "number";
       return props.type;
     });
@@ -267,6 +296,10 @@ export default defineComponent({
     ]);
 
     const isText = !isTextarea.value;
+    // The password variant renders its own surface (dot-matrix canvas,
+    // placeholder layers, hints, right-edge affordance) — it does not
+    // flow through the native input/textarea branch below.
+    const isPassword = computed(() => props.variant === "password");
 
     return () => (
       <div class="hk-input-wrapper">
@@ -276,6 +309,48 @@ export default defineComponent({
             {props.required && <span class="hk-input-required">*</span>}
           </label>
         )}
+        {isPassword.value ? (
+          <HkPasswordSurface
+            {...filteredAttrs.value}
+            modelValue={props.modelValue}
+            onUpdate:modelValue={(v: string) => emit("update:modelValue", v)}
+            onFocus={(e: FocusEvent) => emit("focus", e)}
+            onBlur={(e: FocusEvent) => emit("blur", e)}
+            onKeydown={(e: KeyboardEvent) => emit("keydown", e)}
+            placeholder={props.placeholder}
+            placeholderVariant={props.placeholderVariant}
+            disabled={props.disabled}
+            readonly={props.readonly}
+            required={props.required}
+            error={!!props.error}
+            name={props.name}
+            autocomplete={props.autocomplete}
+            id={fieldId.value}
+            submitOnEnter={props.submitOnEnter}
+            passwordTrailing={props.passwordTrailing}
+            strengthEvaluator={props.strengthEvaluator}
+            size={props.size}
+          >
+            {/* Slot forwarding for the password surface: the affix slots
+             * behave exactly like the text variants' (#prefix beats
+             * #prefixIcon, #suffix beats #suffixIcon, an explicit suffix
+             * suppresses the built-in eye/strength affordance). Keep the
+             * children an OBJECT LITERAL or a bare identifier — the
+             * runtime _isSlot guard passes both through as slots; a
+             * ternary/member/call expression gets array-wrapped into the
+             * DEFAULT slot by @vue/babel-plugin-jsx and the surface would
+             * silently lose every affix (HkInput.password.test pins this
+             * with slot-forwarding cases). An absent caller slot forwards
+             * an empty array, which the surface reads as "not provided"
+             * (comment-only arrays from v-if'd-out templates included). */}
+            {{
+              prefix: () => slots.prefix?.() ?? [],
+              prefixIcon: () => slots.prefixIcon?.() ?? [],
+              suffix: () => slots.suffix?.() ?? [],
+              suffixIcon: () => slots.suffixIcon?.() ?? [],
+            }}
+          </HkPasswordSurface>
+        ) : (
         <div
           class={boxClass.value}
           style={boxVars.value}
@@ -308,7 +383,7 @@ export default defineComponent({
               readonly={props.readonly}
               spellcheck={props.spellcheck}
               name={props.name}
-              autocomplete={props.autocomplete}
+              autocomplete={props.autocomplete ?? "off"}
               data-1p-ignore
               data-lpignore="true"
               class="hk-input-element"
@@ -344,7 +419,7 @@ export default defineComponent({
               spellcheck={props.spellcheck}
               rows={props.rows}
               name={props.name}
-              autocomplete={props.autocomplete}
+              autocomplete={props.autocomplete ?? "off"}
               data-1p-ignore
               data-lpignore="true"
               class={[
@@ -404,23 +479,8 @@ export default defineComponent({
               {slots.suffixIcon()}
             </span>
           )}
-          {props.variant === "password" && !slots.suffix && !slots.suffixIcon && (
-            <span ref={suffixAffixRef} class="hk-input-affix hk-input-suffix">
-              <button
-                type="button"
-                class="hk-input-password-toggle"
-                aria-label={
-                  revealing.value
-                    ? t("hikari::input.hidePassword", "Hide password")
-                    : t("hikari::input.showPassword", "Show password")
-                }
-                onClick={() => { revealing.value = !revealing.value; }}
-              >
-                {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </span>
-          )}
         </div>
+        )}
         {props.error ? (
           <p class="hk-input-error-msg">{props.error}</p>
         ) : props.hint ? (

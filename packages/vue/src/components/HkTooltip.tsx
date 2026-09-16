@@ -51,9 +51,16 @@ export default defineComponent({
       }, props.delay);
     }
 
+    function showNow() {
+      clearShowTimer();
+      visible.value = true;
+      requestAnimationFrame(updatePosition);
+    }
+
     function hide() {
       clearShowTimer();
       visible.value = false;
+      dismissTouchListener();
     }
 
     function clearShowTimer() {
@@ -63,8 +70,48 @@ export default defineComponent({
       }
     }
 
+    // ── touch taps ──────────────────────────────────────────────────
+    // Touch has no hover: a finger tap must open the bubble immediately
+    // (no delay) and the NEXT tap — anywhere else — must close it.
+    // Tap-derived synthetic mouseenter/mouseleave events are ignored for
+    // a short window after a touch so they cannot re-open what the tap
+    // just closed.
+    // -Infinity sentinel: a plain 0 would suppress hover during the
+    // first 600ms of page life (performance.now() starts near 0) and
+    // under test fake timers (frozen at 0).
+    let lastTouchAt = -Infinity;
+    let touchDismiss: ((e: PointerEvent) => void) | null = null;
+
+    function dismissTouchListener() {
+      if (touchDismiss) {
+        document.removeEventListener("pointerdown", touchDismiss, true);
+        touchDismiss = null;
+      }
+    }
+
+    function onPointerdown(e: PointerEvent) {
+      if (e.pointerType !== "touch") return;
+      lastTouchAt = performance.now();
+      if (visible.value) {
+        hide();
+        return;
+      }
+      showNow();
+      touchDismiss = (ev: PointerEvent) => {
+        const node = wrapperRef.value;
+        if (node && ev.target instanceof Node && node.contains(ev.target)) {
+          // A re-tap on the trigger itself is the toggle case — handled
+          // by the branch above on its own pointerdown.
+          return;
+        }
+        hide();
+      };
+      document.addEventListener("pointerdown", touchDismiss, true);
+    }
+
     onBeforeUnmount(() => {
       clearShowTimer();
+      dismissTouchListener();
       if (popupHandle) {
         manager.unregister(popupHandle.id);
         popupHandle = null;
@@ -89,7 +136,13 @@ export default defineComponent({
         ref={wrapperRef}
         class="hk-tooltip-wrapper"
         data-position={props.placement}
-        onMouseenter={show}
+        onPointerdown={onPointerdown}
+        onMouseenter={() => {
+          // Synthetic mouseenter right after a touch tap must not
+          // re-open the bubble the tap just toggled closed.
+          if (performance.now() - lastTouchAt < 600) return;
+          show();
+        }}
         onMouseleave={hide}
         onFocusin={show}
         onFocusout={hide}

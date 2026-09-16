@@ -112,6 +112,11 @@ export default defineComponent({
      *  cannot throw the user's view away; `fit()` stays available to re-frame
      *  on demand. */
     fitOnLoad: { type: Boolean, default: true },
+    /** Also frame a host-supplied `camera`, which is otherwise left alone: the
+     *  host owns that camera and calls `fit()` when it wants one. Opt in when
+     *  the host wants the component to seed the first frame anyway — framing
+     *  still stops as soon as the camera is moved by hand. */
+    fitControlled: { type: Boolean, default: false },
     /** Whether dragging pans the camera. */
     pannable: { type: Boolean, default: true },
     /** Whether the wheel zooms. */
@@ -158,16 +163,26 @@ export default defineComponent({
       return a.k === b.k && a.x === b.x && a.y === b.y;
     }
 
+    /** The camera last asked of a controlled host, so an identical request is
+     *  not repeated at it. */
+    let lastRequested: NodeCanvasCamera | null = null;
+
     /** Write a camera through to the host (controlled) or the local state. */
     function writeCamera(normalized: NodeCanvasCamera) {
-      if (props.camera) emit("update:camera", normalized);
-      else inner.value = normalized;
+      if (props.camera) {
+        lastRequested = normalized;
+        emit("update:camera", normalized);
+      } else {
+        inner.value = normalized;
+      }
     }
 
     function setCamera(next: NodeCanvasCamera) {
       // Any non-automatic camera move is the user's: a late `contentBounds`
-      // must not throw that work away.
+      // must not throw that work away. It also means the host is somewhere
+      // else, so a later `fit()` may ask for the same camera again.
       movedByHand = true;
+      lastRequested = null;
       writeCamera({ k: normalizeZoom(next.k), x: next.x, y: next.y });
     }
 
@@ -192,7 +207,12 @@ export default defineComponent({
       // padding budget and squeeze (or push) the content past the viewport.
       // Flooring can only lower k, so the upper bound after it is maxZoom:
       // minZoom must still win over a fitCap configured below it.
-      const floored = step > 0 ? Math.floor(raw / step + 1e-9) * step : raw;
+      // A graph too large for one grid step floors to 0, which is not a scale
+      // this camera can draw at: keep the smallest step the grid expresses
+      // instead of refusing to frame (the content then overflows, which is what
+      // the requested minimum asks for).
+      const floorValue = step > 0 ? Math.floor(raw / step + 1e-9) * step : raw;
+      const floored = step > 0 ? Math.max(floorValue, step) : floorValue;
       // The multiplication leaves binary dust (6 * 0.05 is 0.30000000000000004),
       // and a camera whose k differs from what `normalizeZoom` would return for
       // the same factor makes the first gesture after a fit jump a hair. Round
@@ -211,21 +231,28 @@ export default defineComponent({
 
     /** Frame the content. Automatic while the camera is untouched, and exposed
      *  for the host to re-frame whenever it likes. */
-    function fit() {
+    function fit(): boolean {
       const next = computeFit();
       // Degenerate bounds return the live camera unchanged, and an unchanged
       // camera must not be written back: a host that spells `contentBounds` as
       // a fresh object literal re-renders on every emit, so comparing by
       // identity would loop — fit emits, the host writes the value back, the
       // object identity changes, the watcher fits again. Compare by value.
-      if (sameCamera(next, camera.value)) return;
+      if (sameCamera(next, camera.value)) return false;
+      // A host may transform what it stores (rounding, clamping, a 10 Hz
+      // mirror). Its value never equals what we asked for, so a host that
+      // frames on every update would ask again for ever. One request stands
+      // until a gesture proves the host has moved somewhere else.
+      if (lastRequested && sameCamera(next, lastRequested)) return false;
       writeCamera(next); // already normalised by computeFit
+      return true;
     }
 
     /** Automatic framing: the component's own camera only, and only until the
      *  host or the user has taken the view over. */
     function autoFit() {
-      if (!props.fitOnLoad || props.camera || movedByHand) return;
+      if (!props.fitOnLoad || movedByHand) return;
+      if (props.camera && !props.fitControlled) return;
       fit();
     }
 
@@ -291,6 +318,19 @@ export default defineComponent({
       // phase, so it sees the flag. Without an opt-out the root's capture
       // would retarget the gesture and cut the host's drag short.
       if (event.defaultPrevented) return;
+      // The overlay and minimap slots carry the host's chrome — inspectors,
+      // rails, sliders. A press there is the chrome's, not the canvas's. A host
+      // that draws its own interactive nodes in the default slot marks them
+      // with `data-hk-canvas-no-pan` (or claims the gesture with
+      // `preventDefault`, above).
+      const target = event.target as Element | null;
+      if (
+        target?.closest?.(
+          ".hk-node-canvas-overlay, .hk-node-canvas-minimap, [data-hk-canvas-no-pan]",
+        )
+      ) {
+        return;
+      }
       panning = {
         pointerId: event.pointerId,
         x: event.clientX,
@@ -299,6 +339,11 @@ export default defineComponent({
         startY: event.clientY,
         captured: false,
       };
+      // A release outside this element never reaches it, and the gesture is
+      // only captured once it passes the slop: listen for the release on the
+      // window so a pan cannot outlive the button.
+      window.addEventListener("pointerup", endPan, true);
+      window.addEventListener("pointercancel", endPan, true);
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -307,8 +352,8 @@ export default defineComponent({
       // happens outside the canvas never reaches this element. Without this the
       // pan would stay armed and the next button-less hover would move the
       // camera on its own.
-      if (event.buttons === 0) {
-        panning = null;
+      if (event.buttons === 0 && !panning.captured) {
+        endPan(event);
         return;
       }
       if (!panning.captured) {
@@ -329,6 +374,8 @@ export default defineComponent({
     function endPan(event: PointerEvent) {
       if (!panning || event.pointerId !== panning.pointerId) return;
       panning = null;
+      window.removeEventListener("pointerup", endPan, true);
+      window.removeEventListener("pointercancel", endPan, true);
       rootEl.value?.releasePointerCapture?.(event.pointerId);
     }
 
@@ -364,10 +411,15 @@ export default defineComponent({
     // Late-arriving bounds (the usual case: the graph loads after mount) are
     // framed as soon as they exist, still before the host has drawn at the
     // wrong scale.
+    // Keyed on the VALUES: a host that mutates its bounds object in place (or
+    // reuses one instance) still gets framed.
     watch(
-      () => props.contentBounds,
-      (bounds) => {
-        if (bounds) autoFit();
+      () => {
+        const bounds = props.contentBounds;
+        return bounds ? `${bounds.x}|${bounds.y}|${bounds.width}|${bounds.height}` : null;
+      },
+      (key) => {
+        if (key) autoFit();
       },
     );
 
@@ -375,6 +427,8 @@ export default defineComponent({
       ro?.disconnect();
       ro = null;
       panning = null;
+      window.removeEventListener("pointerup", endPan, true);
+      window.removeEventListener("pointercancel", endPan, true);
     });
 
     expose({

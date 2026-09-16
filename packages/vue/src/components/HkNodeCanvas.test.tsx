@@ -12,7 +12,7 @@ import HkNodeCanvas, { NODE_CANVAS_DEFAULTS } from "./HkNodeCanvas";
 interface Instance {
   camera: { k: number; x: number; y: number };
   viewport: { width: number; height: number };
-  fit: () => void;
+  fit: () => boolean;
   zoomBy: (direction: 1 | -1, at?: { x: number; y: number }) => void;
   panBy: (dx: number, dy: number) => void;
   screenToWorld: (p: { x: number; y: number }) => { x: number; y: number };
@@ -33,6 +33,8 @@ const BOUNDS = { x: 0, y: 0, width: 400, height: 200 };
 
 /** What the mocked `getBoundingClientRect` reports; 0×0 stands for "not laid out yet". */
 let viewportRect = { ...VIEWPORT };
+/** Where the canvas sits on the page, so a test can offset the root rect. */
+let viewportOffset = { left: 0, top: 0 };
 /** Live ResizeObserver callbacks, so a test can play the "tab became visible" beat. */
 let resizeCallbacks: Array<() => void> = [];
 
@@ -42,6 +44,7 @@ function triggerResize() {
 
 beforeEach(() => {
   viewportRect = { ...VIEWPORT };
+  viewportOffset = { left: 0, top: 0 };
   resizeCallbacks = [];
   originalRect = HTMLElement.prototype.getBoundingClientRect;
   HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
@@ -49,12 +52,12 @@ beforeEach(() => {
       return {
         width: viewportRect.width,
         height: viewportRect.height,
-        top: 0,
-        left: 0,
-        right: viewportRect.width,
-        bottom: viewportRect.height,
-        x: 0,
-        y: 0,
+        top: viewportOffset.top,
+        left: viewportOffset.left,
+        right: viewportOffset.left + viewportRect.width,
+        bottom: viewportOffset.top + viewportRect.height,
+        x: viewportOffset.left,
+        y: viewportOffset.top,
         toJSON: () => ({}),
       } as DOMRect;
     }
@@ -520,6 +523,220 @@ describe("HkNodeCanvas", () => {
     const without = mount({ contentBounds: BOUNDS, minimap: false });
     await nextTick();
     expect(without.container.querySelector(".hk-node-canvas-minimap")).toBeNull();
+  });
+
+  it("still frames a graph too large for one grid step when zooming out is allowed", async () => {
+    // A fit that floors to zero is not a scale anything can be drawn at; the
+    // smallest step the grid expresses is, and refusing to frame would leave
+    // the graph at 1:1 with its corners nowhere in sight.
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 100000, height: 80000 },
+      minZoom: 0,
+      fitOnLoad: true,
+    });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.zoomGridStep);
+  });
+
+  it("keeps a captured drag alive across a button-less move", async () => {
+    // Browsers can deliver a move whose `buttons` reads 0 in the middle of a
+    // gesture; once the gesture is captured it is real, so it must not be
+    // cancelled by one odd event.
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+    root.releasePointerCapture = vi.fn();
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 21, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 21, clientX: 120, clientY: 100 }));
+    root.dispatchEvent(
+      pointerEvent("pointermove", { pointerId: 21, clientX: 140, clientY: 100, buttons: 0 }),
+    );
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 21, clientX: 160, clientY: 100 }));
+    expect(instance.value!.camera.x).toBeCloseTo(60, 6);
+  });
+
+  it("ends a pan when the button comes up anywhere on the page", async () => {
+    // The release may land on a neighbouring pane; without a window-level
+    // listener the next press-and-drag would resume the old gesture and jump.
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 22, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 22, clientX: 130, clientY: 100 }));
+    const afterDrag = instance.value!.camera.x;
+    document.body.dispatchEvent(
+      pointerEvent("pointerup", { pointerId: 22, clientX: 130, clientY: 100, buttons: 0 }),
+    );
+    // A fresh, button-less drag from elsewhere must not move the camera.
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 22, clientX: 300, clientY: 280 }));
+    expect(instance.value!.camera.x).toBe(afterDrag);
+  });
+
+  it("leaves the presses that belong to its own chrome alone", async () => {
+    // Inspectors, rails and sliders live in the overlay; a press there is not a
+    // pan. Hosts mark their own interactive nodes with the data attribute.
+    const overlay = document.createElement("div");
+    overlay.className = "hk-node-canvas-overlay";
+    const slider = document.createElement("input");
+    overlay.appendChild(slider);
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false }, {
+      overlay: () => h("div", { class: "chrome" }, [h("input", { class: "slider" })]),
+    });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+    const chrome = root.querySelector<HTMLElement>(".hk-node-canvas-overlay")!;
+    chrome.dispatchEvent(pointerEvent("pointerdown", { pointerId: 23, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 23, clientX: 200, clientY: 100 }));
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+
+    const marked = document.createElement("div");
+    marked.setAttribute("data-hk-canvas-no-pan", "");
+    root.appendChild(marked);
+    marked.dispatchEvent(pointerEvent("pointerdown", { pointerId: 24, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 24, clientX: 240, clientY: 100 }));
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+  });
+
+  it("frames a host-supplied camera only when the host opts in", async () => {
+    const camera = ref({ k: 1, x: 0, y: 0 });
+    const onUpdate = (next: { k: number; x: number; y: number }) => {
+      camera.value = next;
+    };
+    const optIn = mount(
+      { contentBounds: BOUNDS, camera, fitOnLoad: true, fitControlled: true, "onUpdate:camera": onUpdate },
+    );
+    await nextTick();
+    expect(camera.value.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+    optIn.instance.value?.fit();
+    expect(camera.value.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+  });
+
+  it("does not keep asking a host that stores a transformed camera", async () => {
+    // The real store rounds and clamps what it is given, so its value never
+    // equals the request. A host that frames on every update would then ask for
+    // ever; one request has to stand until a gesture moves the camera away.
+    const camera = ref({ k: 1, x: 0, y: 0 });
+    let emits = 0;
+    const instance = ref<Instance | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const Root = defineComponent({
+      setup() {
+        return () =>
+          h(HkNodeCanvas, {
+            ref: instance as never,
+            contentBounds: { x: 0, y: 0, width: 100, height: 1571 },
+            camera: camera.value,
+            fitControlled: true,
+            "onUpdate:camera": (next: { k: number; x: number; y: number }) => {
+              emits++;
+              camera.value = { k: next.k, x: Math.round(next.x), y: Math.round(next.y) };
+            },
+          });
+      },
+    });
+    const app = createApp(Root);
+    app.mount(container);
+    apps.push(app);
+
+    for (let frame = 0; frame < 3; frame++) await nextTick();
+    const afterMount = emits;
+    for (let round = 0; round < 5; round++) {
+      instance.value?.fit();
+      await nextTick();
+    }
+    expect(afterMount).toBe(1);
+    expect(emits).toBe(afterMount);
+    expect(camera.value.k).toBe(0.3);
+
+    // Once the user moves, framing may ask again (a controlled gesture emits
+    // its own update too, so the count is taken after it).
+    instance.value?.panBy(10, 10);
+    await nextTick();
+    const afterPan = emits;
+    instance.value?.fit();
+    await nextTick();
+    expect(emits).toBe(afterPan + 1);
+  });
+
+  it("re-frames when the host mutates its bounds in place", async () => {
+    const bounds = ref<Bounds | null>({ x: 0, y: 0, width: 400, height: 200 });
+    const { instance } = mount({ contentBounds: bounds, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+
+    bounds.value!.width = 2880;
+    bounds.value!.height = 2080;
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.25);
+  });
+
+  it("reports whether fit actually changed anything", async () => {
+    const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    expect(instance.value!.fit()).toBe(false);
+  });
+
+  it("measures the wheel's focal point against the canvas, not the page", async () => {
+    viewportOffset = { left: 120, top: 40 };
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    const local = { x: 600, y: 150 };
+    const worldBefore = instance.value!.screenToWorld(local);
+    const page = { x: local.x + viewportOffset.left, y: local.y + viewportOffset.top };
+    root.dispatchEvent(wheelEvent({ deltaY: -100, clientX: page.x, clientY: page.y }));
+    const worldAfter = instance.value!.screenToWorld(local);
+    expect(instance.value!.camera.k).toBeGreaterThan(1);
+    expect(worldAfter.x).toBeCloseTo(worldBefore.x, 6);
+    expect(worldAfter.y).toBeCloseTo(worldBefore.y, 6);
+    // A wheel read against the page point would settle somewhere else.
+    expect(worldAfter.x).not.toBeCloseTo(instance.value!.screenToWorld(page).x, 3);
+  });
+
+  it("stops zooming at the configured range", async () => {
+    const { instance } = mount({
+      contentBounds: BOUNDS,
+      minZoom: 0.5,
+      maxZoom: 1,
+      fitOnLoad: false,
+    });
+    await nextTick();
+    for (let tick = 0; tick < 40; tick++) instance.value?.zoomBy(1);
+    expect(instance.value!.camera.k).toBe(1);
+    for (let tick = 0; tick < 40; tick++) instance.value?.zoomBy(-1);
+    expect(instance.value!.camera.k).toBe(0.5);
+  });
+
+  it("derives the fit translation from the scale it renders, off the origin", async () => {
+    const offset = { x: 300, y: 700, width: 100, height: 1571 };
+    const { instance } = mount({ contentBounds: offset, fitOnLoad: true });
+    await nextTick();
+    const topLeft = instance.value!.worldToScreen({ x: offset.x, y: offset.y });
+    expect(topLeft.x).toBeCloseTo((VIEWPORT.width - offset.width * instance.value!.camera.k) / 2, 6);
+    expect(topLeft.y).toBeCloseTo((VIEWPORT.height - offset.height * instance.value!.camera.k) / 2, 6);
+  });
+
+  it("does not re-frame a visible canvas just because it was resized", async () => {
+    const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+    viewportRect = { width: 400, height: 300 };
+    triggerResize();
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+  });
+
+  it("fits the viewport it measured, not a truncated one", async () => {
+    // 801.7 rounds to 802: with the rounded width a 2888-unit graph fits at
+    // exactly 0.25, while a truncated 801 would land a step lower.
+    viewportRect = { width: 801.7, height: 600 };
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 2888, height: 100 },
+      fitOnLoad: true,
+    });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.25);
   });
 
   it("emits camera updates instead of keeping them when controlled", async () => {

@@ -210,5 +210,6 @@
   "hikari::tagInput.empty": "一致なし",
   "hikari::tagInput.remove": "削除",
   "hikari::tagInput.addCustom": "「{q}」を使用",
-  "hikari::tagInput.reorder": "並べ替え — {label}"
+  "hikari::tagInput.reorder": "並べ替え — {label}",
+  "hikari::theme.modeTabHint": "このタブは編集対象のパレットを選ぶだけです。アプリ全体の明/暗はテーマポップアップ上部のモードストリップで切り替えてください。"
 }

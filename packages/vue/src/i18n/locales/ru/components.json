@@ -210,5 +210,6 @@
   "hikari::tagInput.empty": "Нет совпадений",
   "hikari::tagInput.remove": "Удалить",
   "hikari::tagInput.addCustom": "Использовать «{q}»",
-  "hikari::tagInput.reorder": "Изменить порядок — {label}"
+  "hikari::tagInput.reorder": "Изменить порядок — {label}",
+  "hikari::theme.modeTabHint": "Вкладки выбирают редактируемую палитру; общесистемное переключение светлой/тёмной — в полосе режимов вверху меню темы."
 }

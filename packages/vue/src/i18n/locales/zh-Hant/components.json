@@ -219,5 +219,6 @@
   "hikari::tagInput.empty": "沒有符合項目",
   "hikari::tagInput.remove": "移除",
   "hikari::tagInput.addCustom": "使用「{q}」",
-  "hikari::tagInput.reorder": "拖曳排序 — {label}"
+  "hikari::tagInput.reorder": "拖曳排序 — {label}",
+  "hikari::theme.modeTabHint": "切換這裡編輯的是對應模式的調色盤；要切換應用整體深/淺，請用主題彈窗頂部的模式條。"
 }

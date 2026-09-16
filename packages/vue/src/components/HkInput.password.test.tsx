@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vue";
 
 import HkInput from "./HkInput";
+import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
 
@@ -804,6 +805,15 @@ describe("HkInput password hold-to-reveal eye", () => {
       expect(maskRecs.length).toBeGreaterThan(0);
       expect(maskRecs.every((r) => r.canvas !== visible)).toBe(true);
       expect(maskRecs.some((r) => r.texts.join("") === "abc")).toBe(true);
+
+      // The noise tile backing store must be the full tile size: a
+      // fresh canvas defaults to 300×150 and would silently clip the
+      // 512×128 tile (real period 300, transparent rows below 128,
+      // drift wrap desynced) — the R3 P1, pinned structurally here.
+      const tileCanvas = [...byCanvas.keys()].find(
+        (c) => c !== visible && c.width === NOISE_TILE_W && c.height === NOISE_TILE_H,
+      );
+      expect(tileCanvas, "an offscreen canvas sized to the noise tile exists").toBeTruthy();
 
       // The DOM value still never flips to a text input.
       expect(input.type).toBe("password");

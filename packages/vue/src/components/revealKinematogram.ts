@@ -187,6 +187,13 @@ export class RevealNoisePainter {
     try {
       if (typeof document === "undefined") return false;
       this.tile ??= document.createElement("canvas");
+      // Size the backing store to the noise tile BEFORE putImageData:
+      // a fresh canvas defaults to 300×150, which would silently clip
+      // the 512×128 ImageData (real pattern period 300 instead of 512,
+      // transparent rows below 128) and desync wrapDrift's modulus
+      // from the actual pattern period.
+      this.tile.width = NOISE_TILE_W;
+      this.tile.height = NOISE_TILE_H;
       const tctx = this.tile.getContext("2d");
       if (!tctx || typeof tctx.createImageData !== "function") return false;
       const img = tctx.createImageData(NOISE_TILE_W, NOISE_TILE_H);

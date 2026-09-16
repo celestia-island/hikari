@@ -246,6 +246,15 @@ export function setReducedMotion(flag: boolean) {
   ensureRuntimeReport().pulse({ paused });
 }
 
+/** Whether the bus is currently parked by `setReducedMotion(true)` —
+ *  i.e. NO frame callback will fire until motion is re-enabled. Callers
+ *  that must render something usable when frames cannot arrive (the
+ *  password surface's motion-based reveal) branch on this instead of
+ *  guessing from frame-arrival timeouts. */
+export function isAnimationParked(): boolean {
+  return paused;
+}
+
 export function notifyScrollStart() {
   scrolling = true;
   if (scrollTimer) clearTimeout(scrollTimer);

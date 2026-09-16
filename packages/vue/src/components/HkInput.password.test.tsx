@@ -876,9 +876,12 @@ describe("HkInput password hold-to-reveal eye", () => {
       );
       await nextTick();
       const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
-      // The synchronous first frame is still the noise pass: no glyphs.
-      expect(textsByCanvas.get(visible)).toEqual([]);
-      // The watchdog fires on a bare timer even with the bus parked.
+      // Parked bus ⇒ the degrade is IMMEDIATE (isAnimationParked, no
+      // 160ms of unreadable noise first): the static jitter renders the
+      // glyphs on the very first synchronous frame.
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // And it stays stable: no bus frames, and the watchdog must not
+      // re-draw over the fallback.
       await new Promise((r) => setTimeout(r, 260));
       expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));

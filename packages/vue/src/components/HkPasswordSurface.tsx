@@ -14,7 +14,7 @@ import {
 import { useI18n } from "../i18n/context";
 import { credentialAutocomplete } from "../runtime/credentialAutofill";
 
-import { onFrame, onceFrame, type AnimationHandle } from "../runtime/animationBus";
+import { onFrame, onceFrame, isAnimationParked, type AnimationHandle } from "../runtime/animationBus";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { passwordLevel, type PasswordLevel, type PasswordStrengthEvaluator } from "../utils/password";
@@ -556,19 +556,26 @@ export default defineComponent({
       revealFrames = 0;
       revealNoise.beginHold(textHsl);
       revealing.value = true;
+      // A parked bus (reduced motion) will never deliver a frame, so
+      // the kinematogram would freeze into unreadable pure noise —
+      // degrade immediately to the legacy static jitter drawing.
+      // Motion-sensitive users keep their preference and the reveal
+      // stays usable.
+      if (isAnimationParked()) {
+        revealStaticFallback = true;
+      }
       // Paint one synchronous frame so the reveal appears instantly;
       // the bus takes over from the next tick.
       draw(0);
-      // Parked-bus watchdog (reduced motion or a hidden document): the
-      // kinematogram would freeze into unreadable pure noise, so if no
-      // bus frame arrived shortly after the hold began, degrade to the
-      // legacy static jitter drawing — motion-sensitive users keep
-      // their preference and the reveal stays usable. cronBus one-shot
-      // on purpose: the animation bus never fires while parked.
+      // Belt-and-suspenders watchdog for frames that never arrive
+      // WITHOUT the bus being parked (hidden document, extreme jank):
+      // same degradation, decided on a bare timer because the rAF
+      // loop itself is the thing that is not firing. cronBus on
+      // purpose — the animation bus never fires while parked.
       revealWatchdog?.disconnect();
       revealWatchdog = scheduleCronAfter(() => {
         revealWatchdog = null;
-        if (revealing.value && revealFrames === 0) {
+        if (revealing.value && !revealStaticFallback && revealFrames === 0) {
           revealStaticFallback = true;
           draw(0);
         }

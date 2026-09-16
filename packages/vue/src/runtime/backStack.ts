@@ -215,7 +215,11 @@ function ensureListener(): void {
  */
 function maybeDropListener(): void {
   if (!hasWindow || !listening) return;
-  if (guards.length > 0 || traversalInFlight) return;
+  // A pending claim still needs its landings OBSERVED: the re-armed flush
+  // runs from onPopState, so dropping the listener early would leave the
+  // rest of a teardown chain traversing unobserved — the chain then stops
+  // one hop short and strands a marker as the live entry.
+  if (guards.length > 0 || traversalInFlight || hasPendingRewind()) return;
   listening = false;
   window.removeEventListener("popstate", onPopState);
   suppressCount = 0;
@@ -228,6 +232,16 @@ function hasPendingRewind(): boolean {
   if (rewindQueue.size > 0) return true;
   for (const g of guards) {
     if (g.count.value > g.desired) return true;
+  }
+  return false;
+}
+
+/** Does the record owning the live entry still hold a claim of its own —
+ *  in the candidate pool, which also carries records whose guard was
+ *  destroyed (they are no longer in `guards` but still own markers)? */
+function holdsClaim(pool: Set<GuardRecord>, id: string): boolean {
+  for (const record of pool) {
+    if (record.id === id) return record.count.value > record.desired;
   }
   return false;
 }
@@ -266,6 +280,14 @@ function flushRewinds(): void {
       rewindQueue.delete(g);
       continue;
     }
+    if (traversalInFlight) {
+      // A traversal is already moving the history top (an earlier hop of
+      // this chain, or a destroyed guard's synchronous rewind): the entry
+      // this flush would judge ownership against is about to change, so
+      // judging now abandons live claims. Defer the whole flush — its
+      // landing re-arms it.
+      continue;
+    }
     const st = readState();
     const owner = st?.[BACK_GUARD_MARKER];
     if (owner === g.id) {
@@ -288,10 +310,7 @@ function flushRewinds(): void {
       // the owners still below (see onPopState).
       return;
     }
-    if (
-      owner != null &&
-      guards.some((other) => other.id === owner && other.count.value > other.desired)
-    ) {
+    if (owner != null && holdsClaim(candidates, owner)) {
       // DEFERRED, not abandoned: the live entry on top belongs to another
       // window that still holds a claim of its own, so this record's turn
       // comes once that one traverses. Abandoning here is what stranded

@@ -197,15 +197,18 @@ export default defineComponent({
 
     /** One crumb's footprint: its label, plus the chevron it carries when
      *  it follows another crumb (index > 0) — exactly how the clone lays
-     *  them out (the chevron and its own 8px gap live INSIDE the crumb; the
-     *  strip's inter-crumb gap is added by measureStrip). A DOM without
-     *  boxes falls back to the type-size estimate: the layout constants are
-     *  the strip's own local px, so they scale with the host's root zoom
-     *  exactly like the measured rects do. */
+     *  them out. A non-first crumb is [chevron][its own 8px gap][label]: both
+     *  halves live INSIDE the crumb, while the strip's inter-crumb gap is
+     *  added by measureStrip — the two gaps are different boxes and must not
+     *  be collapsed into one. A DOM without boxes falls back to the
+     *  type-size estimate: those constants are the strip's own local px, so
+     *  they scale with the host's root zoom exactly like measured rects do,
+     *  and the (already visual) gaps ride on top. */
     function crumbFootprint(crumb: Crumb, index: number, gap: number, z: number): number {
       const measured = measuredWidth(cloneEls.get(crumb.id));
       if (measured > 0) return measured;
-      const local = displayWidthUnits(crumb.text) * LABEL_FONT_PX + (index > 0 ? SEPARATOR_PX : 0);
+      const inner = index > 0 ? SEPARATOR_PX + gap / z : 0;
+      const local = displayWidthUnits(crumb.text) * LABEL_FONT_PX + inner;
       return local * z + (index > 0 ? gap : 0);
     }
 

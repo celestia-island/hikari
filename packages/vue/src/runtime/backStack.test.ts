@@ -241,6 +241,44 @@ describe("createBackGuard", () => {
     c.destroy();
   });
 
+  it("unwinds a whole teardown chain (every guard destroyed in one tick)", async () => {
+    // An app unmounting with several windows open destroys its guards in
+    // one tick, in DOM order — bottom-up. Each destroyed guard rewinds
+    // through the queue (its record is out of `guards`), and the chain must
+    // still reach the page base: a marker left as the live entry swallows
+    // the next Back press.
+    const gs = [vi.fn(), vi.fn(), vi.fn()].map((onBack) => createBackGuard({ onBack }));
+    gs.forEach((g) => g.push());
+    gs.forEach((g) => g.destroy());
+
+    await settle();
+    expect(window.history.state).toBeNull();
+    expect(__registeredBackGuards()).toBe(0);
+    expect(__backListenerActive()).toBe(false);
+  });
+
+  it("does not judge ownership while a traversal is still in flight", async () => {
+    // The window above is destroyed (its own synchronous rewind is on its
+    // way) while the window below has already given up its entry. A flush
+    // that judged ownership at that instant sees the TOP still owned by the
+    // dying guard and would abandon the live claim below it — stranding
+    // that marker. The flush must wait for the landing instead.
+    const onBackA = vi.fn();
+    const a = createBackGuard({ onBack: onBackA });
+    const b = createBackGuard({ onBack: vi.fn() });
+    a.push();
+    b.push();
+
+    a.release(); // bottom: queued (top is not ours yet)
+    b.destroy(); // top: rewinds synchronously, traversal still in flight
+
+    await settle();
+    expect(a.entries).toBe(0);
+    expect(onBackA).not.toHaveBeenCalled();
+    expect(window.history.state).toBeNull();
+    a.destroy();
+  });
+
   it("close A then open B in the same tick never fires a spurious back into B", async () => {
     // The classic pattern: select a menu leaf → closeAll() → a modal
     // opens synchronously. A's rewind must not compute from a history

@@ -96,6 +96,13 @@ export { default as HWindowedItem } from "./components/HkWindowedItem";
 export { default as HWaterfall } from "./components/HkWaterfall";
 export { default as HBlankCanvas } from "./components/HkBlankCanvas";
 export type { BlankCanvasSize } from "./components/HkBlankCanvas";
+export { default as HKanban } from "./components/HkKanban";
+export type {
+  KanbanAxis,
+  KanbanCardSlotProps,
+  KanbanHeaderSlotProps,
+  KanbanMove,
+} from "./components/HkKanban";
 export type {
   WaterfallBucket,
   WaterfallCardSlotProps,

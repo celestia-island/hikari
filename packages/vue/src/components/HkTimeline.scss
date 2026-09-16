@@ -239,7 +239,9 @@
 .hk-timeline-step {
   display: flex;
   align-items: center;
-  gap: var(--space-8, 8px);
+  // Host-tunable rhythm: the node→label breathing room (a rail host with
+  // roomy rows raises it; the 8px stock keeps compact wizards tight).
+  gap: var(--hk-timeline-step-gap, var(--space-8, 8px));
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
@@ -273,7 +275,9 @@
   }
 
   [data-el="label"] {
-    font-size: var(--text-xs, 0.75rem);
+    // Host-tunable: rails in side columns read better a notch up from
+    // the compact --text-xs wizard label.
+    font-size: var(--hk-timeline-label-size, var(--text-xs, 0.75rem));
     white-space: nowrap;
     flex-shrink: 0;
   }

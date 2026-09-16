@@ -37,10 +37,11 @@ import {
  * selector, the element the declarations land on — carrying the card's own
  * class token (< 0.54.5 matched the whole selector text, so `:is(.s-auth-card)`,
  * `[class~="s-auth-card"]` and `.s-auth-shell .s-auth-card` slipped past with a
- * fixed `inline-size`). Statement at-rules (`@charset "UTF-8";`,
- * `@layer base, components;`) are dropped before parsing: otherwise the
- * leftover text is glued onto the next selector, which hid a rule from the card
- * checks and flagged a correct sheet as an offender.
+ * fixed `inline-size`). Both spellings count, attribute names are case-folded by
+ * HTML and an `i` flag folds the value too. Statement at-rules
+ * (`@charset "UTF-8";`, `@layer base, components;`) are dropped before parsing:
+ * otherwise the leftover text is glued onto the next selector, which hid a rule
+ * from the card checks and flagged a correct sheet as an offender.
  *
  * Scope notes (deliberately narrow, fail-closed):
  *  - the scan starts at `index.scss`, the package's style entrypoint, so a cap
@@ -49,13 +50,16 @@ import {
  *  - stylesheet-level escapes stay out: `@scope`/positional selectors
  *    (`@scope (.s-auth-card) { :scope { … } }`, `.hk-auth-shell > *`) name their
  *    target without the class, a `!important` SCSS override or `.s-auth-card`
- *    variant declared by a host is beyond a static scan, and jsdom has no
- *    layout engine — those need a real-browser check, not this guard;
+ *    variant declared by a host is beyond a static scan, a subject that is only
+ *    a nested negation (`:not(:has(.foo))`) cannot be resolved without the DOM,
+ *    and jsdom has no layout engine — those need a real-browser check, not this
+ *    guard;
  *  - logical block properties (`block-size`, `min-block-size`) and
  *    `aspect-ratio` are left to the layout review;
- *  - the positive control wants each surface capped once: a second, identical
- *    cap is reported rather than tolerated (fail-closed — harmless today, but
- *    it is how a duplicate drifts out of sync tomorrow);
+ *  - the positive controls want each surface capped AND sized once: a second,
+ *    identical cap or `width: 100%` is reported rather than tolerated
+ *    (fail-closed — harmless today, but it is how a duplicate drifts out of
+ *    sync tomorrow);
  *  - the "no other auth rule caps a width" contract is deliberately wider than
  *    the card: it fires on ANY `.s-auth-*` rule carrying a cap, because a third
  *    auth surface declared tomorrow is exactly what it exists to catch;
@@ -71,22 +75,28 @@ const stylesDir = resolve(dirname(fileURLToPath(import.meta.url)));
 const sheetPath = resolve(stylesDir, "index.scss");
 const sheetSource = readFileSync(sheetPath, "utf8");
 
-/** Drop comments and blank the CONTENTS of every quoted string (keeping the
- *  quotes), in ONE left-to-right pass so neither can confuse the other: CSS
- *  values really do carry braces (`content: "{"`, a `data:image/svg+xml,…{}`
- *  URI) and a brace inside a string otherwise ended the rule early, hiding the
- *  declarations after it (a `max-width: 40rem` past a `content: "}"` escaped);
- *  conversely an apostrophe in a comment — "the card's own sizing contract" —
- *  used to open a phantom string that swallowed the next rule whole. Strings
- *  stop at a newline, which CSS forbids inside them, so an unterminated quote
- *  cannot run past its own rule. */
+/** Drop comments and blank the CONTENTS of quoted strings and of `url()`
+ *  payloads, in ONE left-to-right pass so none of them can confuse the others:
+ *  CSS values really do carry braces (`content: "{"`, a `data:image/svg+xml,…{}`
+ *  URI — and an UNQUOTED `url(data:…{})` is equally legal) and a brace inside
+ *  one otherwise ended the rule early, hiding the declarations after it (a
+ *  `max-width: 40rem` past a `content: "}"` escaped). Conversely an apostrophe
+ *  in a comment — "the card's own sizing contract" — used to open a phantom
+ *  string that swallowed the next rule whole. Strings stop at a newline, which
+ *  CSS forbids inside them, so an unterminated quote cannot run past its own
+ *  rule. */
 function maskStringsAndComments(css: string): string {
   return css.replace(
-    /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g,
-    (m) =>
-      m.startsWith("/*") || m.length < 2
-        ? ""
-        : `${m[0]}${"x".repeat(m.length - 2)}${m[m.length - 1]}`,
+    /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|url\(\s*"(?:[^"\\\n]|\\.)*"\s*\)|url\(\s*'(?:[^'\\\n]|\\.)*'\s*\)|url\([^)]*\)/g,
+    (m) => {
+      if (m.startsWith("/*")) return "";
+      if (m.startsWith("url(")) {
+        return `url(${"x".repeat(Math.max(0, m.length - 5))})`;
+      }
+      return m.length < 2
+        ? m
+        : `${m[0]}${"x".repeat(m.length - 2)}${m[m.length - 1]}`;
+    },
   );
 }
 
@@ -176,18 +186,30 @@ function withoutForeignSubjects(compound: string): string {
 
 /** The class tokens a compound can carry: `.x` and `[class~="x"]` reach the
  *  same element, and both spellings must be recognised. Attribute names are
- *  case-insensitive in HTML and the `i` flag makes the value so too, so
- *  `[CLASS~="S-AUTH-CARD" i]` names the card as well. */
+ *  case-insensitive in HTML and an `i` flag makes the VALUE so too
+ *  (`[CLASS~="S-AUTH-CARD" i]` names the card), while without a flag
+ *  `[class~="S-AUTH-CARD"]` is a DIFFERENT class — CSS class values are
+ *  case-sensitive — and must not be read as the card. */
 function classTokens(compound: string): string[] {
-  const subject = withoutForeignSubjects(compound);
-  return [
-    ...[...subject.matchAll(/\.([\w-]+)/g)].map((m) => m[1]),
-    ...[
-      ...subject.matchAll(
-        /\[\s*class\s*[~|^$*]?=\s*["']?([\w-]+)["']?(?:\s+[is])?\s*\]/gi,
-      ),
-    ].map((m) => m[1].toLowerCase()),
-  ];
+  const tokens: string[] = [];
+  for (const m of compound.matchAll(/\.([\w-]+)/g)) tokens.push(m[1]);
+  for (const m of compound.matchAll(
+    /\[\s*class\s*[~|^$*]?=\s*["']?([\w-]+)["']?(\s+[is])?\s*\]/gi,
+  )) {
+    const flag = (m[2] ?? "").trim().toLowerCase();
+    tokens.push(flag === "i" ? m[1].toLowerCase() : m[1]);
+  }
+  return tokens;
+}
+
+/** The subject's class tokens. `:not()`/`:has()` arguments do NOT make the
+ *  subject the card — `.s-auth-footer:not(.s-auth-card)` still lands on the
+ *  footer — but a compound that is ONLY the negation does match the card
+ *  (`:not(.s-auth-card--wide)` is true OF the bare card), so the arguments are
+ *  dropped only while a class token remains to name the subject. */
+function subjectClassTokens(compound: string): string[] {
+  const tokens = classTokens(withoutForeignSubjects(compound));
+  return tokens.length > 0 ? tokens : classTokens(compound);
 }
 
 function normalize(value: string): string {
@@ -202,12 +224,14 @@ function normalize(value: string): string {
 const compiledRules = rules(compiled);
 // Matched by the class NAME rather than a `.s-auth` prefix: `[class~="…"]`
 // and `:is(.s-auth-card)` reach the same elements and must not slip past.
+// Case-insensitive: `[class~="S-AUTH-CARD" i]` names the card, and the scan
+// must not drop it before `classTokens` gets to judge the class value.
 const authRules = compiledRules.filter(([selectors]) =>
-  selectors.some((s) => /s-auth[\w-]*/.test(s)),
+  selectors.some((s) => /s-auth[\w-]*/i.test(s)),
 );
 const isCardRule = (selectors: string[]) =>
   selectors.some((s) =>
-    classTokens(subjectOf(s)).some((c) => CARD_SURFACE_CLASS.test(c)),
+    subjectClassTokens(subjectOf(s)).some((c) => CARD_SURFACE_CLASS.test(c)),
   );
 
 describe("auth card width contract", () => {

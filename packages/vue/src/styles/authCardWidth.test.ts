@@ -50,10 +50,11 @@ import {
  *  - stylesheet-level escapes stay out: `@scope`/positional selectors
  *    (`@scope (.s-auth-card) { :scope { … } }`, `.hk-auth-shell > *`) name their
  *    target without the class, a `!important` SCSS override or `.s-auth-card`
- *    variant declared by a host is beyond a static scan, a subject that is only
- *    a nested negation (`:not(:has(.foo))`) cannot be resolved without the DOM,
- *    and jsdom has no layout engine — those need a real-browser check, not this
- *    guard;
+ *    variant declared by a host is beyond a static scan, a subject that is ONLY
+ *    a functional pseudo-class (`:not(.foo)`, `:has(.foo)`, nested) cannot be
+ *    resolved without the DOM — it may still select a card surface, so it is
+ *    treated as card-relevant (fail-closed) — and jsdom has no layout engine:
+ *    those need a real-browser check, not this guard;
  *  - logical block properties (`block-size`, `min-block-size`) and
  *    `aspect-ratio` are left to the layout review;
  *  - the positive controls want each surface capped AND sized once: a second,
@@ -84,13 +85,16 @@ const sheetSource = readFileSync(sheetPath, "utf8");
  *  in a comment — "the card's own sizing contract" — used to open a phantom
  *  string that swallowed the next rule whole. Strings stop at a newline, which
  *  CSS forbids inside them, so an unterminated quote cannot run past its own
- *  rule. */
+ *  rule. The unquoted `url()` arm honours backslash escapes, because a `url()`
+ *  may legally carry `\)` — stopping at the escaped paren would leave the
+ *  braces after it loose in the declaration (a real-parser differential found
+ *  exactly that hole). */
 function maskStringsAndComments(css: string): string {
   return css.replace(
-    /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|url\(\s*"(?:[^"\\\n]|\\.)*"\s*\)|url\(\s*'(?:[^'\\\n]|\\.)*'\s*\)|url\([^)]*\)/g,
+    /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|url\(\s*"(?:[^"\\\n]|\\.)*"\s*\)|url\(\s*'(?:[^'\\\n]|\\.)*'\s*\)|url\((?:[^)\\\n]|\\.)*\)/gi,
     (m) => {
       if (m.startsWith("/*")) return "";
-      if (m.startsWith("url(")) {
+      if (/^url\(/i.test(m)) {
         return `url(${"x".repeat(Math.max(0, m.length - 5))})`;
       }
       return m.length < 2

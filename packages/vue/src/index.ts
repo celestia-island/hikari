@@ -349,6 +349,7 @@ export { downloadBlob, downloadTextAsFile } from "./utils/download";
 export { bytesToBase64, utf8ToBase64, base64ToBytes, blobToBase64 } from "./utils/base64";
 
 export { THEME_MODE_STORAGE_KEY } from "./theme/useTheme";
+export { HK_AUTH_CARD_MAX_WIDTH, HK_AUTH_CARD_MAX_WIDTH_VAR } from "./theme/authCard";
 
 export { isTauri } from "./runtime/env";
 

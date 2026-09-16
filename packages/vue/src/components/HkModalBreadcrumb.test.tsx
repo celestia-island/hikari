@@ -360,6 +360,82 @@ describe("HkModalBreadcrumb label budget", () => {
     expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")!.textContent).toBe(longer);
   });
 
+  it("does not reopen the reveal after the strip comes back", async () => {
+    // The strip unmounts when the stack drops to one layer: the reveal goes
+    // with it (its surface is rendered inside), and a stale `revealed` would
+    // otherwise spring back — anchored to the element that no longer exists
+    // — the moment another window opens (review round two).
+    setViewport(1200);
+    manager.register("modal", true, LONG);
+    const other = manager.register("modal", true, "细节");
+    await mountStrip();
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await nextTick();
+    await nextTick();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeTruthy();
+
+    manager.unregister(other.id); // one layer left: the strip goes away
+    await nextTick();
+    expect(strip()).toBeNull();
+    manager.register("modal", true, "新来的层级");
+    await nextTick();
+    await nextTick();
+    expect(strip()).not.toBeNull();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
+  });
+
+  it("closes the anchored reveal when its crumb folds behind the trigger", async () => {
+    // A fold that unmounts the anchor would leave the anchored panel
+    // measuring a detached 0×0 rect on its next reposition, which parks it
+    // in the viewport corner (review round two). The sheet form needs no
+    // anchor and keeps the name (see the phone test above).
+    setViewport(1200);
+    manager.register("modal", true, LONG);
+    manager.register("modal", true, "第二个很长的层级标题占位一二三");
+    manager.register("modal", true, "第三个很长的层级标题占位一二三");
+    manager.register("modal", true, "细节");
+    await mountStrip();
+    expect(more()).toBeNull();
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await nextTick();
+    await nextTick();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeTruthy();
+
+    // More windows push the tapped crumb behind the trigger (the fold is
+    // re-decided a tick after the labels land, then rendered).
+    STACK_TITLES.forEach((title) => manager.register("modal", true, title));
+    await until(() => more() !== null, 300);
+    expect(more()).not.toBeNull();
+    expect(strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")).not.toBeNull();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
+  });
+
+  it("closes an open reveal when the folded-layers menu opens", async () => {
+    // On a phone the strip paints above the sheet's scrim, so its trigger
+    // stays tappable while a reveal is docked (review round two). The menu
+    // must take over from the reveal, not stack on top of it: one Escape,
+    // one surface.
+    setViewport(360);
+    [LONG, LONG, LONG, LONG].forEach((title, i) =>
+      manager.register("modal", true, `${i}：${title}`),
+    );
+    await mountStrip();
+    expect(more()).not.toBeNull();
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await until(() => document.body.querySelector(".hk-modal-breadcrumb-reveal") !== null);
+    expect(more()!.getAttribute("aria-expanded")).toBe("false");
+
+    more()!.click();
+    await nextTick();
+    await nextTick();
+    expect(more()!.getAttribute("aria-expanded")).toBe("true");
+    // The reveal's own sheet plays its leave out before the DOM drops it —
+    // and with nothing closing it, it never does (this assertion is what
+    // pins the symmetric close).
+    await until(() => document.body.querySelector(".hk-modal-breadcrumb-reveal") === null, 900);
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
+  });
+
   it("closes whichever surface is open on Escape", async () => {
     setViewport(1200);
     STACK_TITLES.forEach((title) => manager.register("modal", true, title));

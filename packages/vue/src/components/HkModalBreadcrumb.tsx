@@ -14,6 +14,7 @@ import { useReportedTransition } from "../composables/useReportedTransition";
 import { scheduleEvery } from "../runtime/animationBus";
 import { ancestorZoom } from "../runtime/cssZoom";
 import { viewportGutterPx } from "../runtime/viewportGutter";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import { clampToDisplayWidth, displayWidthUnits, ELLIPSIS } from "../runtime/displayWidth";
 import HkPopover from "./HkPopover";
 import HkMenuPanel from "./HkMenuPanel";
@@ -69,6 +70,7 @@ export default defineComponent({
   setup(props) {
     const manager = usePopupManager();
     const { t } = useI18n();
+    const { isMobile } = useBreakpoint();
 
     /** Which entries the strip navigates. Windows (modal/drawer) always;
      *  dropdown-kind surfaces only while they BLOCK like a window — the
@@ -274,6 +276,12 @@ export default defineComponent({
 
     function openMenu(): void {
       if (!hidden.value.length) return;
+      // The two surfaces are never open together — and the symmetric close
+      // matters on a phone: the strip paints above the sheet's scrim, so
+      // its trigger stays tappable while a reveal is docked (review round
+      // two), and a menu opening underneath it would leave the pair
+      // fighting over one Escape.
+      revealed.value = null;
       menuItems.value = hidden.value.map(({ id, label }) => ({ id, label }));
       menuOpen.value = true;
     }
@@ -330,11 +338,20 @@ export default defineComponent({
     // (a retitle makes its crumb plain text again — an open panel would
     // then be anchored to nothing while showing a name that no longer
     // exists); a retitle that keeps cutting follows the live name.
-    watch(crumbs, (list) => {
+    watch([crumbs, tail], ([list, visibleTail]) => {
       const open = revealed.value;
       if (!open) return;
       const crumb = list.find((entry) => entry.id === open.id);
       if (!crumb || !crumb.truncated) {
+        revealed.value = null;
+        return;
+      }
+      // An ANCHORED panel whose crumb folded behind the trigger would keep
+      // a detached element as its anchor, and the next reposition (a
+      // resize, a panel resize) would measure a 0×0 rect and fly the panel
+      // into the viewport corner (review round two). The mobile sheet
+      // needs no anchor and keeps showing the name.
+      if (!isMobile.value && !visibleTail.some((entry) => entry.id === open.id)) {
         revealed.value = null;
         return;
       }

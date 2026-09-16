@@ -119,9 +119,14 @@ export default defineComponent({
     // painter owns the noise tile + offscreen glyph mask; revealFrames
     // counts bus-driven frames so the watchdog can tell a parked
     // animation bus (reduced motion) from a live one; the layout memo
-    // keeps measureText off the per-frame path.
+    // keeps measureText off the per-frame path (inputs compared as
+    // fields, the string key built only on an actual rebuild).
     const revealNoise = new RevealNoisePainter();
     let revealFrames = 0;
+    let revealLayoutValue = "";
+    let revealLayoutW = -1;
+    let revealLayoutH = -1;
+    let revealLayoutMono = "";
     let revealStaticFallback = false;
     let revealWatchdog: CronHandle | null = null;
     let revealLayout: RevealLayout | null = null;
@@ -353,8 +358,13 @@ export default defineComponent({
       const value = props.modelValue;
       if (!value) return null;
       const mono = cachedMonoFont || syncMonoFont();
-      const key = `${value}|${W}x${H}|${mono}`;
-      if (!revealLayout || revealLayoutKey !== key) {
+      if (
+        !revealLayout ||
+        revealLayoutValue !== value ||
+        revealLayoutW !== W ||
+        revealLayoutH !== H ||
+        revealLayoutMono !== mono
+      ) {
         revealLayout = layoutRevealGlyphs(
           Array.from(value),
           (ch, fontPx) => {
@@ -365,7 +375,13 @@ export default defineComponent({
           H / dpr,
           dpr,
         );
-        revealLayoutKey = key;
+        revealLayoutValue = value;
+        revealLayoutW = W;
+        revealLayoutH = H;
+        revealLayoutMono = mono;
+        // JSON encoding: delimiter-unambiguous even for adversarial
+        // font stacks, and only rebuilt when the layout actually is.
+        revealLayoutKey = JSON.stringify([value, W, H, mono]);
       }
       return revealLayout;
     }

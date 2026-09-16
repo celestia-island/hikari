@@ -16,7 +16,7 @@ use crate::prelude::*;
 pub struct ThemeProviderProps {
     /// Initial theme identifier ("hikari" or "tairitsu")
     pub initial_palette: String,
-    /// Language code ("en-US", "zh-CHS", etc.)
+    /// Language code ("en-US", "zh-Hans", etc.)
     pub language: String,
     /// Layout direction ("ltr" or "rtl")
     pub direction: String,
@@ -47,7 +47,7 @@ impl Default for ThemeProviderProps {
 /// rsx! {
 ///     ThemeProvider {
 ///         initial_palette: "tairitsu",
-///         language: "zh-CHS",
+///         language: "zh-Hans",
 ///         direction: "ltr",
 ///     } {
 ///         // Children here

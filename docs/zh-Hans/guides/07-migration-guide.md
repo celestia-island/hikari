@@ -320,8 +320,8 @@ assert!(props1.page_size == props2.page_size);
 ### 翻译
 
 所有文档更新应翻译到所有支持的语言：
-- yes `zh-CHS`（简体中文）
-- `zh-CHT`（繁体中文）
+- yes `zh-Hans`（简体中文）
+- `zh-Hant`（繁体中文）
 - `ja-JP`（日语）
 - `ko-KR`（韩语）
 - `es-ES`（西班牙语）

@@ -28,6 +28,19 @@
   &[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
   &[data-cols="4"] { grid-template-columns: repeat(4, 1fr); }
 
+  /* Adaptive floor mode (minItemWidth prop): the column count derives from
+   * the available width — every track is at least the floor, and hosts
+   * wide enough for one more column simply get it. The min(..., 100%)
+   * guard keeps a lone track capped at the container width, so nothing
+   * overflows below one floor of space. Fluid grids emit no data-cols, so
+   * the narrow-viewport overrides further down never fight this rule. */
+  &[data-fluid] {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(min(var(--hk-selection-grid-item-min, 240px), 100%), 1fr)
+    );
+  }
+
   &[data-dense] {
     gap: var(--space-6, 0.375rem);
 

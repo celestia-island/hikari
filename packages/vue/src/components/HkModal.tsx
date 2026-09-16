@@ -780,6 +780,16 @@ export default defineComponent({
                         <h2 class="hk-modal-title">
                           {slots.header ? (props.title ?? "") : (props.title ?? "")}
                         </h2>
+                        {slots.headerActions && (
+                          // Caller's header actions (icon buttons, status
+                          // pills) — parked at inline-end, just before the
+                          // close button. The container participates in the
+                          // header flex; the title's auto margin keeps the
+                          // title+actions cluster apart.
+                          <div class="hk-modal-header-actions">
+                            {slots.headerActions()}
+                          </div>
+                        )}
                         {props.closable && (
                           // Unified window-close affordance: the shared
                           // icon button + registry X glyph (see

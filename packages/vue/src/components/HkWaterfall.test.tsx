@@ -93,6 +93,15 @@ function columnTexts(root: HTMLElement, columnIndex: number): string[] {
   return [...column.querySelectorAll<HTMLElement>(".card")].map((el) => el.textContent ?? "");
 }
 
+/** Per-column card text of ONE bucket section. */
+function sectionColumnTexts(root: HTMLElement, bucketKey: string): string[][] {
+  const section = root.querySelector<HTMLElement>(`[data-waterfall-bucket="${bucketKey}"]`);
+  if (!section) return [];
+  return [...section.querySelectorAll<HTMLElement>(".hk-waterfall-column")].map((column) =>
+    [...column.querySelectorAll<HTMLElement>(".card")].map((el) => el.textContent ?? ""),
+  );
+}
+
 describe("HkWaterfall", () => {
   it("lays a bucket out newest-first across columns, walking oldest first", async () => {
     // Three columns on purpose: with two, the mirrored greedy walk lands on
@@ -141,6 +150,23 @@ describe("HkWaterfall", () => {
     const sections = [...mounted.root.querySelectorAll<HTMLElement>("[data-waterfall-bucket]")];
     expect(sections.map((s) => s.dataset.waterfallBucket)).toEqual(["a", "b"]);
     expect(columnTexts(mounted.root, 0)).toEqual(["a1", "a2"]);
+  });
+
+  it("restarts the column layout inside every bucket", async () => {
+    // Each section lays out on its own. A walk shared across buckets would
+    // carry the first section's column heights into the second and pull its
+    // cards into the wrong columns (found by mutation: the whole-suite run
+    // stayed green under that variant until this case existed).
+    const mounted = mount({
+      items: ["a1", "a2", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      columns: 2,
+    });
+    await nextTick();
+    // Section "a" walks a2 -> col0, a1 -> col1; section "b" starts over with
+    // b1 -> col0 and leaves col1 empty.
+    expect(sectionColumnTexts(mounted.root, "a")).toEqual([["a2"], ["a1"]]);
+    expect(sectionColumnTexts(mounted.root, "b")).toEqual([["b1"], []]);
   });
 
   it("reports its buckets through the exposed instance", async () => {

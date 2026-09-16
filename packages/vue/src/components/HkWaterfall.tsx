@@ -49,10 +49,13 @@ export interface WaterfallRailSlotProps {
   jumpToBucket: (key: string) => void;
 }
 
-/** The scroll-element handle the container exposes (narrowed: the waterfall
- *  only needs to read the element and scroll it). */
+/** The container handle the waterfall uses (narrowed to what it needs:
+ *  read the scroll element, and ask the container to scroll to a node —
+ *  the container owns the offset math, which must run in the layout space
+ *  the scroll offset lives in, not on drawn rects). */
 interface ScrollHost {
   getScrollElement: () => HTMLElement | undefined;
+  scrollToElement: (el: HTMLElement | null, behavior?: ScrollBehavior) => void;
 }
 
 /**
@@ -90,13 +93,15 @@ export default defineComponent({
     /** Items in display order (newest-first for the chat waterfalls). */
     items: { type: Array as PropType<readonly unknown[]>, required: true },
     /** Bucket key for an item; `null`/`undefined`/`""` lands in the same
-     *  unnamed bucket. Absent = one flat list. */
+     *  unnamed bucket. Absent = one flat list. Receives the item's index in
+     *  the WHOLE stream, unlike `itemKeyOf`. */
     bucketOf: {
       type: Function as PropType<(item: unknown, index: number) => string | null | undefined>,
       default: undefined,
     },
     /** Stable key for a card (forwarded to `HWindowedItem`). Without it the
-     *  windowed wrapper falls back to positional keys. */
+     *  windowed wrapper falls back to positional keys. Receives the item's
+     *  index inside its own column. */
     itemKeyOf: {
       type: Function as PropType<(item: unknown, index: number) => string>,
       default: undefined,
@@ -107,8 +112,13 @@ export default defineComponent({
     columnMinWidth: { type: Number, default: 320 },
     /** Estimated card height (px) for the windowing placeholder. */
     estimatedItemHeight: { type: Number, default: 120 },
+    /** Screens of overscan kept mounted on either side of the viewport. */
     overscanScreens: { type: Number, default: 1 },
-    /** Controlled active bucket key (`v-model:active-bucket`). */
+    /** Active bucket key (`v-model:active-bucket`). An external write syncs
+     *  the internal highlight; scrolling then re-derives it from the
+     *  sections' geometry and emits the new key — while the user scrolls the
+     *  component is the authority, so a mount-time deep link is settled by
+     *  the geometry, not by the prop. */
     activeBucket: { type: String, default: undefined },
     /** How far (px) a section top must pass the viewport top to count as
      *  the active bucket. */
@@ -122,6 +132,7 @@ export default defineComponent({
      *  also set. Without it the signal falls back to the single
      *  `top > backTopShow` test. */
     backTopHide: { type: Number, default: undefined },
+    /** Accessible label for the waterfall region. */
     ariaLabel: { type: String, default: undefined },
   },
   emits: ["update:activeBucket", "update:backTopVisible"],
@@ -194,8 +205,15 @@ export default defineComponent({
     );
 
     // ── scroll ────────────────────────────────────────────────────────
-    function selectorFor(key: string): string {
-      return `[data-waterfall-bucket="${key.replace(/["\\]/g, "\\$&")}"]`;
+    /** The section element for a bucket key — matched through `dataset`,
+     *  never through a selector: the key is data, and a key carrying a
+     *  quote, a backslash or a newline would make a selector throw. */
+    function findBucketSection(key: string): HTMLElement | null {
+      if (!scrollEl) return null;
+      for (const section of scrollEl.querySelectorAll<HTMLElement>("[data-waterfall-bucket]")) {
+        if (section.dataset.waterfallBucket === key) return section;
+      }
+      return null;
     }
 
     function recomputeActive() {
@@ -248,22 +266,33 @@ export default defineComponent({
       return scrollEl ?? undefined;
     }
 
-    /** Scroll the section for `key` to the top of the viewport. The offset
-     *  is computed against the raw scroll element (the handle the active
-     *  tracking already relies on) so a jump can never throw. */
+    /** Programmatic scrolls are JS-driven, so the CSS reduced-motion sheet
+     *  cannot reach them: `behavior: "smooth"` would still animate. Read the
+     *  preference the same way `HkAuthCard` does and snap instead. */
+    function scrollBehavior(): ScrollBehavior {
+      const reduced =
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+      return reduced ? "auto" : "smooth";
+    }
+
+    /** Scroll the section for `key` to the top of the viewport.
+     *
+     *  The offset math belongs to the container: it measures in the layout
+     *  space the scroll offset actually lives in, so a zoomed host (chest
+     *  drives `documentElement.style.zoom`) or a nested viewport does not
+     *  overshoot by the scale factor — a raw `getBoundingClientRect` delta
+     *  overshoots by ~2x at 200% zoom. */
     function jumpToBucket(key: string) {
-      if (!scrollEl) return;
-      const target = scrollEl.querySelector<HTMLElement>(selectorFor(key));
+      const host = scrollHost.value;
+      if (!host) return;
+      const target = findBucketSection(key);
       if (!target) return;
-      const top =
-        target.getBoundingClientRect().top -
-        scrollEl.getBoundingClientRect().top +
-        scrollEl.scrollTop;
-      scrollEl.scrollTo({ top, behavior: "smooth" });
+      host.scrollToElement(target, scrollBehavior());
     }
 
     function backToTop() {
-      scrollEl?.scrollTo({ top: 0, behavior: "smooth" });
+      scrollEl?.scrollTo({ top: 0, behavior: scrollBehavior() });
     }
 
     function attach() {
@@ -286,9 +315,21 @@ export default defineComponent({
       }
     });
 
+    // Re-attach whenever the host resolves late: the one-shot nextTick above
+    // covers the normal mount order, and this covers a container that
+    // reports its viewport only later (otherwise the view would silently
+    // stay without scroll tracking).
+    watch(scrollHost, () => {
+      void nextTick(attach);
+    });
+
     onBeforeUnmount(() => {
       scrollEl?.removeEventListener("scroll", onScroll);
       scrollEl = null;
+      // The pending frame would otherwise run once against a null element;
+      // the replaced views cancelled it explicitly, so keep that discipline.
+      scrollRaf?.disconnect();
+      scrollRaf = null;
       ro?.disconnect();
       ro = null;
     });
@@ -331,7 +372,7 @@ export default defineComponent({
             ? (slots.empty?.() ?? null)
             : layout.value.map(({ bucket, columns }, bucketIndex) => (
                 <section
-                  key={bucket.key || "__waterfall_all__"}
+                  key={`${bucketIndex}\u0000${bucket.key}`}
                   class="hk-waterfall-bucket"
                   data-waterfall-bucket={bucket.key}
                 >

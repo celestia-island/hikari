@@ -63,6 +63,25 @@ function find(all: Rule[], selector: string): Rule {
   return hit!;
 }
 
+/**
+ * The R2 adversarial round smuggled a `.hk-switch-md &` override past the
+ * per-size assertions (the render picked it up, the tests kept reading the
+ * base rule — a 0,2,0 selector beats the 0,1,0 base at runtime). Any
+ * geometry face pinned here must therefore pin its WHOLE selector set:
+ * a reader can only trust the values below when no unlisted, more
+ * specific rule also touches the class.
+ */
+function expectSelectorSet(all: Rule[], classSuffix: string, expected: string[]) {
+  const present = all
+    .map((r) => r.selector)
+    .filter((s) => {
+      const last = s.split(/\s+>/).pop()!.trim().split(" ").pop()!;
+      return last === classSuffix && !s.startsWith("[dir=");
+    })
+    .sort();
+  expect(present, `selector set touching \`${classSuffix}\``).toEqual(expected.sort());
+}
+
 /** `2.25rem` / `14px` / `-1rem` → signed px number (1rem = 16px; bare numbers = rem). */
 function toPx(decl: string): number {
   const m = decl.match(/(-?[\d.]+)(rem|px)?$/);
@@ -190,6 +209,20 @@ describe("HkSwitch geometry", () => {
       expect(toPx(valueOf(onBody, "inset-inline-end"))).toBe(trackW - 2 - travel);
     },
   );
+
+  it("pins the whole selector set of each caption face (R2 M7 blind spot)", () => {
+    // A more specific override (e.g. `.hk-switch-md .hk-switch-content-off`)
+    // wins at runtime but is invisible to the per-size assertions above,
+    // which read the base rule — the ONLY sanctioned scoped faces are the
+    // sm/lg ones; anything else must fail here first.
+    for (const face of [".hk-switch-content-off", ".hk-switch-content-on"]) {
+      expectSelectorSet(sw, face, [
+        face,
+        `.hk-switch-sm ${face}`,
+        `.hk-switch-lg ${face}`,
+      ]);
+    }
+  });
 
   it("resting off track is a filled neutral, not a bare surface", () => {
     const body = find(sw, ".hk-switch-track").body;

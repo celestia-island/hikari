@@ -221,14 +221,6 @@ function maybeDropListener(): void {
   suppressCount = 0;
 }
 
-/**
- * Deferred rewind flush, re-validated at execution time. Only the
- * record that still OWNS the current entry may traverse — a foreign or
- * newer window push above it makes its count unreliable, so it DROPS
- * the claim instead (its markers stay buried, inert, self-releasing).
- * Destroyed records keep their place in the queue: their markers live
- * in history regardless of the component tree.
- */
 /** Is any guard still holding entries it wants to give back? A queued
  *  record counts even when it is already destroyed — its markers live in
  *  history regardless of the component tree. */
@@ -247,6 +239,14 @@ function scheduleFlush(): void {
   setTimeout(flushRewinds, 0);
 }
 
+/**
+ * Deferred rewind flush, re-validated at execution time. Only the
+ * record that still OWNS the current entry may traverse — a foreign or
+ * newer window push above it makes its count unreliable, so it DROPS
+ * the claim instead (its markers stay buried, inert, self-releasing).
+ * Destroyed records keep their place in the queue: their markers live
+ * in history regardless of the component tree.
+ */
 function flushRewinds(): void {
   flushScheduled = false;
   // A record can sit in the rewind queue AND still be registered (the

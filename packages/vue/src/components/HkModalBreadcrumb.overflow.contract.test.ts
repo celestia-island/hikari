@@ -116,6 +116,20 @@ describe("HkModalBreadcrumb overflow fence", () => {
     expect(rule(".hk-modal-breadcrumb-item-reveal")).toContain("pointer-events: auto");
   });
 
+  it("keeps the tappable label the same box the ruler measures", () => {
+    // The clone renders a plain span per label, so padding on the button
+    // would make the fold under-count its own crumb; the ~17px text line is
+    // also under half a fingertip, and this is the phone-primary
+    // affordance. Grow the hit area, not the chrome.
+    const block = rule(".hk-modal-breadcrumb-item-reveal");
+    expect(block).toContain("padding: 0");
+    expect(block).toContain("pointer-events: auto");
+    expect(block).toContain("text-align: start");
+    const hitArea = scss.match(/\.hk-modal-breadcrumb-item-reveal::after\s*{[^}]*}/)?.[0] ?? "";
+    expect(hitArea).toContain("position: absolute");
+    expect(hitArea).toContain("inset: calc(-1 * var(--space-8");
+  });
+
   it("opens the revealed name in the same popover family as the menu", () => {
     // Two surfaces, one form-factor rule: both are HkPopovers that dock as
     // a sheet on mobile, anchored to the crumb they belong to.

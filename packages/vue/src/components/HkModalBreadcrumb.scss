@@ -125,17 +125,29 @@
    popover family as the hidden-layers menu. The strip is pointer-
    transparent, so only these buttons (and the "…" trigger) take the click. */
 .hk-modal-breadcrumb-item-reveal {
+  /* No padding: the strip's ruler measures a plain item, so a padded
+     button would make the fold under-count its own crumb. The hit area is
+     grown by a pseudo-element instead, exactly like the "…" trigger. */
   margin: 0;
-  padding: 0 var(--space-4, 0.25rem);
+  padding: 0;
   border: 0;
   border-radius: var(--radius-sm, 0.25rem);
   background: transparent;
   /* font-family only: the item class above owns size and weight. */
   font-family: inherit;
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   pointer-events: auto;
+  position: relative;
+}
+
+/* A label is one text line tall (~17px) — under half a fingertip, and this
+   is the phone-primary affordance. Grow the hit area, not the chrome. */
+.hk-modal-breadcrumb-item-reveal::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-8, 0.5rem)) 0;
 }
 
 .hk-modal-breadcrumb-item-reveal:hover,

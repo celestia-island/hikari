@@ -317,23 +317,46 @@ export default defineComponent({
       }
       if (!crumbEls.has(crumb.id)) return;
       menuOpen.value = false;
-      // The anchor must be on the surface BEFORE it opens: HkPopover reads
-      // the prop when its open edge runs, and the click's own render has
-      // not landed yet.
       revealAnchor.value = crumbEls.get(crumb.id) ?? null;
-      void nextTick(() => {
-        revealed.value = { id: crumb.id, label: crumb.label };
-      });
+      revealed.value = { id: crumb.id, label: crumb.label };
     }
 
-    // The revealed crumb can fold away under a narrower budget: its anchor
-    // goes with it, so the surface must too.
-    watch(tail, (visibleTail) => {
+    // What keeps the reveal alive is the LAYER, never the fold: opening it
+    // on a phone docks a blocking sheet, which joins the stack the strip
+    // lists and re-decides the tail underneath — a fold that carried the
+    // tapped crumb behind the trigger used to close the surface in the same
+    // frame it opened (2026-09-16 review). It goes away when the layer
+    // itself does, and when the layer stops being cut in the first place
+    // (a retitle makes its crumb plain text again — an open panel would
+    // then be anchored to nothing while showing a name that no longer
+    // exists); a retitle that keeps cutting follows the live name.
+    watch(crumbs, (list) => {
       const open = revealed.value;
-      if (open && !visibleTail.some((crumb) => crumb.id === open.id)) {
+      if (!open) return;
+      const crumb = list.find((entry) => entry.id === open.id);
+      if (!crumb || !crumb.truncated) {
         revealed.value = null;
+        return;
+      }
+      if (crumb.label !== open.label) {
+        revealed.value = { id: crumb.id, label: crumb.label };
       }
     });
+
+    // Escape closes whichever strip surface is open. HkPopover owns Escape
+    // for its SHEET form (the panel takes focus there); the anchored form
+    // has no focusable panel, so a document listener covers both.
+    function onSurfaceKeydown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (revealed.value) revealed.value = null;
+      else if (menuOpen.value) menuOpen.value = false;
+    }
+    const surfaceOpen = computed(() => revealed.value !== null || menuOpen.value);
+    watch(surfaceOpen, (open) => {
+      if (open) document.addEventListener("keydown", onSurfaceKeydown);
+      else document.removeEventListener("keydown", onSurfaceKeydown);
+    });
+    onBeforeUnmount(() => document.removeEventListener("keydown", onSurfaceKeydown));
 
     const topPx = ref(24);
     function resyncTop() {

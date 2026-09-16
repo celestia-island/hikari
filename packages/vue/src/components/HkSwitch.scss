@@ -197,7 +197,9 @@
   /* Both faces anchor AWAY from the thumb that would cover them (content
    * sits at z-index 0, the thumb at 1): the off face starts clear of the
    * resting thumb (2px inset + thumb + 2px gap = 20/24/28), the on face
-   * ends clear of the checked one (travel + 4 = 20/24/28). A label longer
+   * ends clear of the checked one (thumb + 4 = 20/24/28: with travel =
+   * track − 2×(border+inset) − thumb, the checked thumb starts
+   * thumb + 4 from the padding-box end). A label longer
    * than its free zone clips at the far seam instead of sliding under the
    * thumb — the R1 verification measured 3–5px of coverage with the old
    * far-edge anchors once the track grew. */

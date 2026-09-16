@@ -212,6 +212,61 @@ describe("HkWaterfall", () => {
     expect(columns[1].hasAttribute("data-empty")).toBe(true);
   });
 
+  it("keeps the dock content inside the container's dock contract", async () => {
+    // The point of forwarding is that the chrome lands in the CONTAINER's
+    // dock slot (which publishes `--hk-scroll-dock-*` and drives the fade),
+    // not merely somewhere in the waterfall's own tree — a variant that
+    // rendered the slot locally passed a tree-presence assertion.
+    const mounted = mount(
+      { items: ["a1"] },
+      {
+        dockTop: () => h("div", { class: "docked-top" }, "top"),
+        dockBottom: () => h("div", { class: "docked" }, "bottom"),
+      },
+    );
+    await nextTick();
+    const top = mounted.root.querySelector(".hk-scroll-dock[data-side='top']");
+    const bottom = mounted.root.querySelector(".hk-scroll-dock[data-side='bottom']");
+    expect(top?.querySelector(".docked-top")?.textContent).toBe("top");
+    expect(bottom?.querySelector(".docked")?.textContent).toBe("bottom");
+  });
+
+  it("jumps through the validated section attribute", async () => {
+    // The lookup and the rendered attribute must agree: a variant whose
+    // lookup kept the default name while the DOM used the custom one found
+    // no section and silently did nothing.
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+    });
+    await nextTick();
+    await nextTick();
+    const scroller = mounted.instance.value?.getScrollElement();
+    const scrollTo = vi.fn();
+    (scroller as unknown as { scrollTo: typeof scrollTo }).scrollTo = scrollTo;
+
+    mounted.instance.value?.jumpToBucket("b");
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for a per-card estimate, card by card", async () => {
+    const asked: Array<[string, number]> = [];
+    const mounted = mount({
+      items: ["a1", "a2", "a3"],
+      columns: 1,
+      estimatedItemHeightOf: (item: unknown, index: number) => {
+        asked.push([String(item), index]);
+        return 100 + index;
+      },
+    });
+    await nextTick();
+    // Every card is asked, in its own column's order — a single call per
+    // bucket (or per column) would not distinguish the tiers.
+    expect(asked.map(([item]) => item).sort()).toEqual(["a1", "a2", "a3"]);
+    expect(asked.every(([, index]) => Number.isInteger(index))).toBe(true);
+  });
+
   it("reports its buckets through the exposed instance", async () => {
     const mounted = mount({
       items: ["a1", "a2", "b1"],

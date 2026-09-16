@@ -22,6 +22,11 @@ import { passwordLevel, type PasswordLevel, type PasswordStrengthEvaluator } fro
 import HListTransition from "./HkListTransition";
 import HkTooltip from "./HkTooltip";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
+import {
+  layoutRevealGlyphs,
+  RevealNoisePainter,
+  type RevealLayout,
+} from "./revealKinematogram";
 import "./HkPasswordSurface.scss";
 import { drawnScale } from "../composables/layoutGeometry";
 
@@ -44,10 +49,15 @@ interface Ripple {
  *
  * Right-edge affordance (`passwordTrailing`):
  * - "eye" (default): a hold-to-reveal button. While held the canvas
- *   stops drawing the dot matrix and draws the password TEXT instead —
- *   each glyph gets a per-frame random perturbation of size, baseline,
- *   rotation and color, so a screenshot (or an automated scraper)
- *   never sees a stable, OCR-friendly rendering.
+ *   stops drawing the dot matrix and renders a counter-drifting noise
+ *   kinematogram instead (see revealKinematogram.ts): one shared noise
+ *   tile, with the noise sampled through the password glyphs drifting
+ *   one way and the background noise the opposite way. A human reads
+ *   the glyphs off the motion, while any single frame — a screenshot —
+ *   is pure noise with no glyph structure for OCR to lock onto. When
+ *   the animation bus is parked (reduced motion) or the engine cannot
+ *   run the pattern path, the reveal degrades to the legacy static
+ *   per-glyph jitter drawing.
  * - "strength": the traffic-light dot (weak / fair / strong) with a
  *   localized tooltip on hover AND on touch tap.
  * - "none": no affordance at all.
@@ -105,6 +115,17 @@ export default defineComponent({
     const composing = ref(false);
     const preComposeValue = ref("");
     const revealing = ref(false);
+    // Hold-to-reveal rendering state (see revealKinematogram.ts): the
+    // painter owns the noise tile + offscreen glyph mask; revealFrames
+    // counts bus-driven frames so the watchdog can tell a parked
+    // animation bus (reduced motion) from a live one; the layout memo
+    // keeps measureText off the per-frame path.
+    const revealNoise = new RevealNoisePainter();
+    let revealFrames = 0;
+    let revealStaticFallback = false;
+    let revealWatchdog: CronHandle | null = null;
+    let revealLayout: RevealLayout | null = null;
+    let revealLayoutKey = "";
     const pendingClear = ref(false);
     // Flipped by the opt-in marquee overlay when the placeholder actually
     // overflows — the static text below is then hidden so the scrolling
@@ -320,13 +341,66 @@ export default defineComponent({
     }
 
     /**
-     * Anti-OCR reveal pass: the password is drawn as text on the same
-     * canvas that usually carries the dot matrix, with every glyph
-     * re-randomized per frame — size, baseline, rotation and color all
-     * wobble, so no two frames (and no two screenshots) render the same
-     * pixel grid and automated recognition never gets a stable target.
+     * Resolve (and memoize by value + canvas size) the glyph layout for
+     * the noise reveal. Measuring text is a per-hold cost, not a
+     * per-frame one: the mask must stay perfectly still while only the
+     * noise sampled through it drifts.
      */
-    function drawRevealText(ctx: CanvasRenderingContext2D, W: number, H: number) {
+    function revealLayoutFor(ctx: CanvasRenderingContext2D, W: number, H: number): RevealLayout | null {
+      const value = props.modelValue;
+      if (!value) return null;
+      const key = `${value}|${W}x${H}`;
+      if (!revealLayout || revealLayoutKey !== key) {
+        const mono = cachedMonoFont || syncMonoFont();
+        revealLayout = layoutRevealGlyphs(
+          Array.from(value),
+          (ch, fontPx) => {
+            ctx.font = `${fontPx}px ${mono}`;
+            return ctx.measureText(ch).width;
+          },
+          W / dpr,
+          H / dpr,
+          dpr,
+        );
+        revealLayoutKey = key;
+      }
+      return revealLayout;
+    }
+
+    /**
+     * Motion reveal pass (the default): one frame of the counter-
+     * drifting noise kinematogram — background noise translated by the
+     * accumulated background drift, then the (offscreen) glyph mask
+     * re-composited with noise translated the opposite way. The glyph
+     * geometry itself never touches the visible canvas, so a single
+     * frame is pure noise. Returns false when the pattern path is
+     * unavailable, handing the frame to the legacy jitter fallback.
+     */
+    function drawRevealNoise(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number): boolean {
+      const layout = revealLayoutFor(ctx, W, H);
+      if (!layout) return true; // empty value: nothing to reveal at all
+      revealNoise.advance(dt, dpr);
+      return revealNoise.paint(
+        ctx,
+        W,
+        H,
+        layout,
+        cachedMonoFont || syncMonoFont(),
+        revealLayoutKey,
+      );
+    }
+
+    /**
+     * Legacy anti-OCR fallback, used only when frames cannot drive the
+     * kinematogram (parked animation bus — reduced motion — or an
+     * engine without canvas patterns): the password is drawn as text
+     * with every glyph re-randomized per frame — size, baseline,
+     * rotation and color all wobble — so automated recognition never
+     * gets a stable target. A parked bus renders exactly ONE such
+     * frame per hold; with patterns unavailable it degrades to the old
+     * per-frame behavior.
+     */
+    function drawRevealJitterText(ctx: CanvasRenderingContext2D, W: number, H: number) {
       const value = props.modelValue;
       if (!value) return;
       const aW = W / dpr;
@@ -382,7 +456,8 @@ export default defineComponent({
       ctx.clearRect(0, 0, W, H);
 
       if (revealing.value) {
-        drawRevealText(ctx, W, H);
+        if (!revealStaticFallback && drawRevealNoise(ctx, W, H, dt)) return;
+        drawRevealJitterText(ctx, W, H);
         return;
       }
 
@@ -452,8 +527,10 @@ export default defineComponent({
       // priority so the reduced-motion switch parks it like every other
       // JS-driven animation. The draw callback clamps the delta exactly
       // like the old self-scheduling rAF loop did. While revealing, the
-      // same loop drives the per-frame anti-OCR re-jitter.
+      // same loop advances the noise kinematogram (and counts its
+      // frames for the parked-bus watchdog in startReveal).
       loopHandle = onFrame((ctx) => {
+        if (revealing.value) revealFrames++;
         draw(ctx.delta); // the bus already clamps per-entry delta to MAX_DELTA
       }, "normal");
     }
@@ -475,12 +552,27 @@ export default defineComponent({
       if (!props.modelValue || props.disabled) return;
       syncTextHsl();
       syncMonoFont();
+      revealStaticFallback = false;
+      revealFrames = 0;
+      revealNoise.beginHold(textHsl);
       revealing.value = true;
-      // Parked animation bus (reduced motion): the loop never fires, so
-      // paint one synchronous frame — a static jitter is still better
-      // for OCR than nothing, and motion-sensitive users keep their
-      // preference.
+      // Paint one synchronous frame so the reveal appears instantly;
+      // the bus takes over from the next tick.
       draw(0);
+      // Parked-bus watchdog (reduced motion or a hidden document): the
+      // kinematogram would freeze into unreadable pure noise, so if no
+      // bus frame arrived shortly after the hold began, degrade to the
+      // legacy static jitter drawing — motion-sensitive users keep
+      // their preference and the reveal stays usable. cronBus one-shot
+      // on purpose: the animation bus never fires while parked.
+      revealWatchdog?.disconnect();
+      revealWatchdog = scheduleCronAfter(() => {
+        revealWatchdog = null;
+        if (revealing.value && revealFrames === 0) {
+          revealStaticFallback = true;
+          draw(0);
+        }
+      }, 160);
       document.addEventListener("pointerup", endReveal, { once: true });
       document.addEventListener("pointercancel", endReveal, { once: true });
     }
@@ -488,6 +580,8 @@ export default defineComponent({
     function endReveal() {
       if (!revealing.value) return;
       revealing.value = false;
+      revealWatchdog?.disconnect();
+      revealWatchdog = null;
       draw(0);
       document.removeEventListener("pointerup", endReveal);
       document.removeEventListener("pointercancel", endReveal);

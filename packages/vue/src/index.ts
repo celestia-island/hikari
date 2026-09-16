@@ -94,6 +94,8 @@ export { default as HTooltip } from "./components/HkTooltip";
 export { default as HTree } from "./components/HkTree";
 export { default as HWindowedItem } from "./components/HkWindowedItem";
 export { default as HWaterfall } from "./components/HkWaterfall";
+export { default as HBlankCanvas } from "./components/HkBlankCanvas";
+export type { BlankCanvasSize } from "./components/HkBlankCanvas";
 export type {
   WaterfallBucket,
   WaterfallCardSlotProps,

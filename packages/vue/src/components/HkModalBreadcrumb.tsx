@@ -14,6 +14,7 @@ import { useReportedTransition } from "../composables/useReportedTransition";
 import { scheduleEvery } from "../runtime/animationBus";
 import { ancestorZoom } from "../runtime/cssZoom";
 import { viewportGutterPx } from "../runtime/viewportGutter";
+import { useBreakpoint } from "../runtime/useBreakpoint";
 import { clampToDisplayWidth, displayWidthUnits, ELLIPSIS } from "../runtime/displayWidth";
 import HkPopover from "./HkPopover";
 import HkMenuPanel from "./HkMenuPanel";
@@ -69,6 +70,7 @@ export default defineComponent({
   setup(props) {
     const manager = usePopupManager();
     const { t } = useI18n();
+    const { isMobile } = useBreakpoint();
 
     /** Which entries the strip navigates. Windows (modal/drawer) always;
      *  dropdown-kind surfaces only while they BLOCK like a window — the
@@ -274,6 +276,12 @@ export default defineComponent({
 
     function openMenu(): void {
       if (!hidden.value.length) return;
+      // The two surfaces are never open together — and the symmetric close
+      // matters on a phone: the strip paints above the sheet's scrim, so
+      // its trigger stays tappable while a reveal is docked (review round
+      // two), and a menu opening underneath it would leave the pair
+      // fighting over one Escape.
+      revealed.value = null;
       menuItems.value = hidden.value.map(({ id, label }) => ({ id, label }));
       menuOpen.value = true;
     }
@@ -293,6 +301,79 @@ export default defineComponent({
     watch(folded, (stillFolded) => {
       if (!stillFolded) menuOpen.value = false;
     });
+
+    // ── Truncated-name reveal ─────────────────────────────────────────
+    // A cut label travels whole to assistive tech, and the folded layers
+    // get the menu above — but a layer that is VISIBLE and still cut had no
+    // way to read it. Tapping such a crumb opens the same popover family
+    // (anchored under the crumb on desktop, bottom-up sheet on mobile) with
+    // the whole name, because the strip's own bar is not a place long text
+    // can be read from.
+    const revealed = ref<{ id: string; label: string } | null>(null);
+    const revealAnchor = ref<HTMLElement | null>(null);
+    const crumbEls = new Map<string, HTMLElement>();
+
+    function setCrumbEl(id: string, el: Element | null): void {
+      if (el) crumbEls.set(id, el as HTMLElement);
+      else crumbEls.delete(id);
+    }
+
+    function toggleReveal(crumb: Crumb): void {
+      if (revealed.value?.id === crumb.id) {
+        revealed.value = null;
+        return;
+      }
+      if (!crumbEls.has(crumb.id)) return;
+      menuOpen.value = false;
+      revealAnchor.value = crumbEls.get(crumb.id) ?? null;
+      revealed.value = { id: crumb.id, label: crumb.label };
+    }
+
+    // What keeps the reveal alive is the LAYER, never the fold: opening it
+    // on a phone docks a blocking sheet, which joins the stack the strip
+    // lists and re-decides the tail underneath — a fold that carried the
+    // tapped crumb behind the trigger used to close the surface in the same
+    // frame it opened (2026-09-16 review). It goes away when the layer
+    // itself does, and when the layer stops being cut in the first place
+    // (a retitle makes its crumb plain text again — an open panel would
+    // then be anchored to nothing while showing a name that no longer
+    // exists); a retitle that keeps cutting follows the live name.
+    watch([crumbs, tail], ([list, visibleTail]) => {
+      const open = revealed.value;
+      if (!open) return;
+      const crumb = list.find((entry) => entry.id === open.id);
+      if (!crumb || !crumb.truncated) {
+        revealed.value = null;
+        return;
+      }
+      // An ANCHORED panel whose crumb folded behind the trigger would keep
+      // a detached element as its anchor, and the next reposition (a
+      // resize, a panel resize) would measure a 0×0 rect and fly the panel
+      // into the viewport corner (review round two). The mobile sheet
+      // needs no anchor and keeps showing the name.
+      if (!isMobile.value && !visibleTail.some((entry) => entry.id === open.id)) {
+        revealed.value = null;
+        return;
+      }
+      if (crumb.label !== open.label) {
+        revealed.value = { id: crumb.id, label: crumb.label };
+      }
+    });
+
+    // Escape closes whichever strip surface is open. HkPopover owns Escape
+    // for its SHEET form (the panel takes focus there); the anchored form
+    // has no focusable panel, so a document listener covers both.
+    function onSurfaceKeydown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (revealed.value) revealed.value = null;
+      else if (menuOpen.value) menuOpen.value = false;
+    }
+    const surfaceOpen = computed(() => revealed.value !== null || menuOpen.value);
+    watch(surfaceOpen, (open) => {
+      if (open) document.addEventListener("keydown", onSurfaceKeydown);
+      else document.removeEventListener("keydown", onSurfaceKeydown);
+    });
+    onBeforeUnmount(() => document.removeEventListener("keydown", onSurfaceKeydown));
 
     const topPx = ref(24);
     function resyncTop() {
@@ -394,6 +475,7 @@ export default defineComponent({
           window.removeEventListener("resize", onViewportChange);
           releaseClone();
           menuOpen.value = false;
+          revealed.value = null;
           hiddenCount.value = 0;
         }
       },
@@ -502,16 +584,23 @@ export default defineComponent({
                 {/* A chevron separates two items — the FIRST rendered item
                     carries none, whether or not the trigger precedes it. */}
                 {(triggerShown.value || i > 0) && separator()}
-                <span class={itemClass(crumb)}>
-                  {crumb.truncated ? (
-                    <>
-                      <span aria-hidden="true">{crumb.text}</span>
-                      <span class="hk-modal-breadcrumb-sr-only">{crumb.label}</span>
-                    </>
-                  ) : (
-                    crumb.text
-                  )}
-                </span>
+                {crumb.truncated ? (
+                  // Cut label: tappable, and the full name is the button's
+                  // accessible name (a cut string is not a name).
+                  <button
+                    type="button"
+                    ref={(el) => setCrumbEl(crumb.id, el as Element | null)}
+                    class={`${itemClass(crumb)} hk-modal-breadcrumb-item-reveal`}
+                    aria-haspopup="dialog"
+                    aria-expanded={revealed.value?.id === crumb.id}
+                    aria-label={crumb.label}
+                    onClick={() => toggleReveal(crumb)}
+                  >
+                    {crumb.text}
+                  </button>
+                ) : (
+                  <span class={itemClass(crumb)}>{crumb.text}</span>
+                )}
               </span>
             ))}
           </nav>
@@ -541,6 +630,26 @@ export default defineComponent({
                 />
               ))}
             </HkMenuPanel>
+          </HkPopover>
+          <HkPopover
+            modelValue={revealed.value !== null}
+            onUpdate:modelValue={(v: boolean) => {
+              if (!v) revealed.value = null;
+            }}
+            anchorRef={revealAnchor.value}
+            placement="bottom-start"
+            // Same clearance as the menu: the crumb sits inside the strip's
+            // own padding box, which paints above the anchored band.
+            offset={16}
+            sheetOnMobile
+            // The name is the surface's reason to exist, so it names it.
+            // The sheet heading ellipsises (it is chrome) — the panel body
+            // below carries the whole name and wraps.
+            title={revealed.value?.label ?? ""}
+          >
+            {revealed.value && (
+              <p class="hk-modal-breadcrumb-reveal">{revealed.value.label}</p>
+            )}
           </HkPopover>
         </Teleport>
       ) : null;

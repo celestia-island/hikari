@@ -109,7 +109,52 @@ describe("HkModalBreadcrumb overflow fence", () => {
   it("keeps the fold off the accessibility tree and the names on it", () => {
     // The clone duplicates every label — it must stay invisible to AT.
     expect(tsx).toMatch(/hk-modal-breadcrumb-measure"[^>]*aria-hidden="true"/);
-    // A cut label still announces its whole name.
-    expect(tsx).toMatch(/hk-modal-breadcrumb-sr-only/);
+    // A cut label IS a button, and a cut string is not a name: the whole
+    // layer name travels as its accessible name.
+    expect(tsx).toMatch(/aria-label=\{crumb\.label\}/);
+    // The tappable label must reach through the pointer-transparent strip.
+    expect(rule(".hk-modal-breadcrumb-item-reveal")).toContain("pointer-events: auto");
+  });
+
+  it("keeps the tappable label the same box the ruler measures", () => {
+    // The clone renders a plain span per label, so padding on the button
+    // would make the fold under-count its own crumb; the ~17px text line is
+    // also under half a fingertip, and this is the phone-primary
+    // affordance. Grow the hit area, not the chrome.
+    const block = rule(".hk-modal-breadcrumb-item-reveal");
+    // `padding: 0` exactly — the old `padding: 0 var(--space-4, …)` also
+    // satisfied a bare "padding: 0" substring, so the guard was vacuous.
+    expect(block).toMatch(/padding:\s*0;/);
+    expect(block).toContain("pointer-events: auto");
+    expect(block).toContain("text-align: start");
+    const hitArea = scss.match(/\.hk-modal-breadcrumb-item-reveal::after\s*{[^}]*}/)?.[0] ?? "";
+    expect(hitArea).toContain("position: absolute");
+    expect(hitArea).toContain("inset: calc(-1 * var(--space-8");
+  });
+
+  it("leaves the label palette to the item classes", () => {
+    // The button carries the item classes too, and an equally specific rule
+    // later in the file wins: redeclaring `color` here repainted every cut
+    // crumb (and dropped the current layer's accent) in exactly the
+    // long-title case this feature exists for (2026-09-16 final review).
+    const block = rule(".hk-modal-breadcrumb-item-reveal");
+    expect(block).not.toContain("color:");
+    expect(rule(".hk-modal-breadcrumb-item")).toContain(
+      "color: var(--hi-color-text-secondary",
+    );
+    expect(rule(".hk-modal-breadcrumb-item-current")).toContain(
+      "color: var(--hi-color-primary",
+    );
+  });
+
+  it("opens the revealed name in the same popover family as the menu", () => {
+    // Two surfaces, one form-factor rule: both are HkPopovers that dock as
+    // a sheet on mobile, anchored to the crumb they belong to.
+    expect(tsx.match(/<HkPopover/g)).toHaveLength(2);
+    expect(tsx.match(/sheetOnMobile/g)).toHaveLength(2);
+    // A revealed name wraps instead of cutting.
+    const block = rule(".hk-modal-breadcrumb-reveal");
+    expect(block).toContain("overflow-wrap: anywhere");
+    expect(block).not.toContain("text-overflow: ellipsis");
   });
 });

@@ -121,19 +121,60 @@
   --hk-menu-panel-inset: var(--space-4, 0.25rem);
 }
 
-/* Full layer name for assistive tech when the visible label is cut — the
-   strip is an aria-live region, and "自动化测试流水线冒烟请巡…" announces as
-   noise unless the whole name travels alongside it. */
-.hk-modal-breadcrumb-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
+/* A visible-but-cut label is tappable: it opens the whole name in the same
+   popover family as the hidden-layers menu. The strip is pointer-
+   transparent, so only these buttons (and the "…" trigger) take the click. */
+.hk-modal-breadcrumb-item-reveal {
+  /* No padding: the strip's ruler measures a plain item, so a padded
+     button would make the fold under-count its own crumb. The hit area is
+     grown by a pseudo-element instead, exactly like the "…" trigger. */
+  margin: 0;
   padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
   border: 0;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: transparent;
+  /* font-family only: the item classes above own size, weight AND colour —
+     redeclaring `color` here would repaint every cut crumb (and drop the
+     current layer's accent) because an equally specific rule later in the
+     file wins. */
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+}
+
+/* A label is one text line tall (~17px) — under half a fingertip, and this
+   is the phone-primary affordance. Grow the hit area, not the chrome. */
+.hk-modal-breadcrumb-item-reveal::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-8, 0.5rem)) 0;
+}
+
+.hk-modal-breadcrumb-item-reveal:hover,
+.hk-modal-breadcrumb-item-reveal[aria-expanded="true"] {
+  background: var(--hk-breadcrumb-more-hover, rgba(0, 0, 0, 0.06));
+  color: var(--hi-color-text, #1f2328);
+}
+
+.hk-modal-breadcrumb-item-reveal:focus-visible {
+  outline: 2px solid var(--hi-color-primary, #7aa2f7);
+  outline-offset: 1px;
+}
+
+/* The revealed name itself: the strip's own type, wrapping instead of
+   cutting, and selectable (the strip around it is not). */
+.hk-modal-breadcrumb-reveal {
+  margin: 0;
+  padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
+  max-width: min(24rem, calc(100vw - 2 * var(--viewport-gutter, 1rem)));
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hi-color-text, #1f2328);
+  overflow-wrap: anywhere;
+  user-select: text;
 }
 
 /* The strip's own ruler: every layer laid out at its natural width so the

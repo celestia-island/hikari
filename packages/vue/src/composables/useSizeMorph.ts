@@ -17,14 +17,39 @@ export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
    *  height on every change. Call once the surface finished its open
    *  enter transition — pinning during enter would override the
-   *  choreography's own height animation. */
+   *  choreography's own height animation. (Surfaces whose enter is
+   *  height-INDEPENDENT — HkModal's clip+transform unfold — may arm
+   *  earlier with a `deferRemeasure` gate, see below.) */
   start(): void;
   /** Disarm the morph and release the frame to `height: auto` — call
    *  before a surface's leave/close so the exit animation owns the
    *  height again. */
   stop(): void;
+  /** Leave-window hold: disarm the observer/timers and cancel any
+   *  mid-flight reveal like stop(), but KEEP the height pin — the close
+   *  choreography owns the frame's geometry through the whole leave and
+   *  the pin keeps it stable (a mid-leave content change must not resize
+   *  the folding frame). The next start() re-arms and, because the pin
+   *  was kept, a re-pin to the SAME natural height is a no-op (the
+   *  typical reopen-interrupt case — held content is unchanged, delta
+   *  zero; a re-pin to a CHANGED natural while an enter's transition
+   *  classes own the frame lands without a height animation, i.e. snaps
+   *  — acceptable, the enter's own choreography owns that moment). */
+  hold(): void;
   /** Re-measure and pin now (resize events, open flows). */
   remeasure(): void;
+}
+
+export interface SizeMorphOptions {
+  /** While this returns true, resize-driven re-measurements are deferred
+   *  (the current pin stays). HkModal freezes the frame's height during
+   *  the enter unfold: the choreography's translateY(5%) + bottom-10%
+   *  clip are fractions of the frame height, so late-streaming content
+   *  resizing the frame mid-enter would recompute the geometry under the
+   *  running animation (2026-09-16 chest field report — the frame snapped
+   *  459→697px mid-unfold). The caller flushes the deferred growth with
+   *  an explicit remeasure() at the open edge. */
+  deferRemeasure?: () => boolean;
 }
 
 /**
@@ -71,6 +96,7 @@ export interface SizeMorph {
 export function useSizeMorph(
   frame: Ref<HTMLElement | null | undefined>,
   content: Ref<HTMLElement | null | undefined>,
+  options: SizeMorphOptions = {},
 ): SizeMorph {
   let ro: ResizeObserver | null = null;
   let raf = 0;
@@ -155,7 +181,13 @@ export function useSizeMorph(
    *  finished) frame — the only moment guaranteed free of transition-class
    *  flex rules. Never calibrate from a remeasure sample: the first
    *  remeasure can itself be the contaminated one (a frozen enter leaves
-   *  the flex rules behind when the surface is mid-repair). */
+   *  the flex rules behind when the surface is mid-repair). HkModal's
+   *  reopen-interrupt arm violates the precondition on purpose (it
+   *  calibrates a pinned, enter-classed frame): benign today because no
+   *  current enter/leave class carries height/flex rules (the inline pin
+   *  beats the mobile sheet's static height:auto), and the contamination
+   *  guard below degrades any future SCSS regression to a dropped pin
+   *  rather than a corrupted one. */
   function calibrate(): void {
     const f = frame.value;
     const c = content.value;
@@ -271,6 +303,10 @@ export function useSizeMorph(
   }
 
   function onResize(): void {
+    // Frozen window (e.g. HkModal's enter unfold): keep the current pin;
+    // the caller flushes the accumulated change with an explicit
+    // remeasure() once the choreography hands the height back.
+    if (options.deferRemeasure?.()) return;
     // Debounce the choreography: content can change in a burst (a list
     // transition shrinking rows over several frames, a textarea growing
     // per keystroke). Dancing to every intermediate would restart the
@@ -304,7 +340,7 @@ export function useSizeMorph(
     remeasure();
   }
 
-  function stop(): void {
+  function hold(): void {
     if (!armed) return;
     armed = false;
     ro?.disconnect();
@@ -320,6 +356,17 @@ export function useSizeMorph(
     // The next start() re-calibrates against whatever chrome that open
     // cycle carries.
     chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
+    stopReveal();
+    // Deliberately no release(): the pin stays on the frame so the close
+    // fold plays on a stable box, and a reopen interrupt animates from it.
+  }
+
+  function stop(): void {
+    // Disarm only when armed — after hold() the morph is already
+    // disarmed and only the release is owed. release() is internally
+    // guarded (no pin / no frame → no-op), so a never-armed stop()
+    // stays the no-op it always was.
+    if (armed) hold();
     release();
   }
 
@@ -330,5 +377,5 @@ export function useSizeMorph(
     stopReveal();
   });
 
-  return { start, stop, remeasure };
+  return { start, stop, hold, remeasure };
 }

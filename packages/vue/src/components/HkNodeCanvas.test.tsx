@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick, ref, type App } from "vue";
+import { createApp, defineComponent, h, isRef, nextTick, ref, type App } from "vue";
 
 import HkNodeCanvas, { NODE_CANVAS_DEFAULTS } from "./HkNodeCanvas";
 
@@ -19,22 +19,40 @@ interface Instance {
   worldToScreen: (p: { x: number; y: number }) => { x: number; y: number };
 }
 
+interface Bounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 const apps: App[] = [];
 let originalRect: typeof HTMLElement.prototype.getBoundingClientRect;
 const VIEWPORT = { width: 800, height: 600 };
 const BOUNDS = { x: 0, y: 0, width: 400, height: 200 };
 
+/** What the mocked `getBoundingClientRect` reports; 0×0 stands for "not laid out yet". */
+let viewportRect = { ...VIEWPORT };
+/** Live ResizeObserver callbacks, so a test can play the "tab became visible" beat. */
+let resizeCallbacks: Array<() => void> = [];
+
+function triggerResize() {
+  for (const callback of resizeCallbacks) callback();
+}
+
 beforeEach(() => {
+  viewportRect = { ...VIEWPORT };
+  resizeCallbacks = [];
   originalRect = HTMLElement.prototype.getBoundingClientRect;
   HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
     if (this.classList?.contains("hk-node-canvas")) {
       return {
-        width: VIEWPORT.width,
-        height: VIEWPORT.height,
+        width: viewportRect.width,
+        height: viewportRect.height,
         top: 0,
         left: 0,
-        right: VIEWPORT.width,
-        bottom: VIEWPORT.height,
+        right: viewportRect.width,
+        bottom: viewportRect.height,
         x: 0,
         y: 0,
         toJSON: () => ({}),
@@ -43,6 +61,9 @@ beforeEach(() => {
     return originalRect.call(this);
   };
   (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
+    constructor(callback: () => void) {
+      resizeCallbacks.push(callback);
+    }
     observe(): void {}
     disconnect(): void {}
     unobserve(): void {}
@@ -60,13 +81,50 @@ function mount(props: Record<string, unknown>, slots: Record<string, unknown> = 
   const instance = ref<Instance | null>(null);
   const Root = defineComponent({
     setup() {
-      return () => h(HkNodeCanvas, { ref: instance as never, ...props }, slots);
+      return () => {
+        // Refs are read inside the render, so a test can change a prop (a graph
+        // arriving after mount) and watch the component react to it.
+        const resolved: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(props)) {
+          resolved[key] = isRef(value) ? value.value : value;
+        }
+        return h(HkNodeCanvas, { ref: instance as never, ...resolved }, slots);
+      };
     },
   });
   const app = createApp(Root);
   app.mount(container);
   apps.push(app);
-  return { container, instance };
+  return {
+    container,
+    instance,
+    root: container.querySelector<HTMLElement>(".hk-node-canvas")!,
+  };
+}
+
+/** A pointer event, whatever the environment's constructor support is. */
+function pointerEvent(
+  type: string,
+  init: { pointerId: number; clientX: number; clientY: number },
+): Event {
+  const Ctor = (globalThis as { PointerEvent?: typeof MouseEvent }).PointerEvent ?? MouseEvent;
+  const event = new Ctor(type, { bubbles: true, cancelable: true, button: 0 });
+  for (const [key, value] of Object.entries(init)) {
+    Object.defineProperty(event, key, { value, configurable: true });
+  }
+  return event;
+}
+
+/**
+ * happy-dom's WheelEvent drops clientX/clientY (its MouseEvent does not), so
+ * the cursor position has to be attached by hand for the cursor-anchored wheel
+ * path to be exercised at all.
+ */
+function wheelEvent(init: { deltaY: number; clientX: number; clientY: number }): WheelEvent {
+  const event = new WheelEvent("wheel", { deltaY: init.deltaY, bubbles: true, cancelable: true });
+  Object.defineProperty(event, "clientX", { value: init.clientX, configurable: true });
+  Object.defineProperty(event, "clientY", { value: init.clientY, configurable: true });
+  return event;
 }
 
 describe("HkNodeCanvas", () => {
@@ -141,17 +199,209 @@ describe("HkNodeCanvas", () => {
     expect(back.y).toBeCloseTo(screen.y, 6);
   });
 
-  it("does not zoom when zooming is off, nor pan when panning is off", async () => {
-    const { instance } = mount({ contentBounds: BOUNDS, zoomable: false, pannable: false, fitOnLoad: false });
+  it("ignores the wheel when zooming is off and the drag when panning is off", async () => {
+    // zoomBy/panBy are the imperative API and stay available to the host; the
+    // flags gate the GESTURES, so this has to dispatch real events.
+    const { instance, root } = mount({
+      contentBounds: BOUNDS,
+      zoomable: false,
+      pannable: false,
+      fitOnLoad: false,
+    });
     await nextTick();
     const before = { ...instance.value!.camera };
-    instance.value?.zoomBy(1);
-    // zoomBy is the imperative API and stays available; the GESTURE is what
-    // the flags gate, so assert the rendered surface carries the flags.
-    const { container } = mount({ contentBounds: BOUNDS, zoomable: false, pannable: false });
+
+    const wheel = wheelEvent({ deltaY: -100, clientX: 400, clientY: 300 });
+    root.dispatchEvent(wheel);
+    // A surface that cannot zoom must not swallow the page scroll either.
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(instance.value!.camera).toEqual(before);
+
+    const capture = vi.fn();
+    root.setPointerCapture = capture;
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 1, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 1, clientX: 160, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointerup", { pointerId: 1, clientX: 160, clientY: 100 }));
+    expect(capture).not.toHaveBeenCalled();
+    expect(instance.value!.camera).toEqual(before);
+    expect(root.hasAttribute("data-pannable")).toBe(false);
+
+    const on = mount({ contentBounds: BOUNDS, fitOnLoad: false });
     await nextTick();
-    expect(container.querySelector(".hk-node-canvas")?.hasAttribute("data-pannable")).toBe(false);
-    expect(before.k).toBe(1);
+    expect(on.root.hasAttribute("data-pannable")).toBe(true);
+  });
+
+  it("zooms towards the cursor on the wheel", async () => {
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    const at = { x: 600, y: 150 };
+    const worldBefore = instance.value!.screenToWorld(at);
+    const wheel = wheelEvent({ deltaY: -100, clientX: at.x, clientY: at.y });
+    root.dispatchEvent(wheel);
+    expect(wheel.defaultPrevented).toBe(true);
+    expect(instance.value!.camera.k).toBeGreaterThan(1);
+    const worldAfter = instance.value!.screenToWorld(at);
+    expect(worldAfter.x).toBeCloseTo(worldBefore.x, 6);
+    expect(worldAfter.y).toBeCloseTo(worldBefore.y, 6);
+  });
+
+  it("centres content whose bounds do not start at the origin", async () => {
+    // Every bounds fixture with x = y = 0 lets a fit that forgets the
+    // `- bounds.x * k` term pass unnoticed; this one does not.
+    const offset = { x: 1000, y: 500, width: 400, height: 200 };
+    const { instance } = mount({ contentBounds: offset, fitOnLoad: true });
+    await nextTick();
+    const cam = instance.value!.camera;
+    const topLeft = instance.value!.worldToScreen({ x: offset.x, y: offset.y });
+    const bottomRight = instance.value!.worldToScreen({
+      x: offset.x + offset.width,
+      y: offset.y + offset.height,
+    });
+    expect(topLeft.x).toBeCloseTo(VIEWPORT.width - bottomRight.x, 6);
+    expect(topLeft.y).toBeCloseTo(VIEWPORT.height - bottomRight.y, 6);
+    expect(topLeft.x).toBeCloseTo((VIEWPORT.width - offset.width * cam.k) / 2, 6);
+    expect(topLeft.y).toBeCloseTo((VIEWPORT.height - offset.height * cam.k) / 2, 6);
+  });
+
+  it("fits off-grid bounds inside the padding budget", async () => {
+    // 520 / 1571 is 0.331, six and a bit grid steps. Rounding that to seven
+    // renders at 0.35 and pushes the content past the edge, so the fit has to
+    // snap DOWN — and derive the translation from the scale it actually
+    // renders. The floor also leaves binary dust (6 * 0.05), which a camera
+    // shared with the host must not carry.
+    const tall = { x: 0, y: 0, width: 100, height: 1571 };
+    const { instance } = mount({ contentBounds: tall, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.3);
+
+    const topLeft = instance.value!.worldToScreen({ x: 0, y: 0 });
+    const bottomRight = instance.value!.worldToScreen({ x: tall.width, y: tall.height });
+    const pad = NODE_CANVAS_DEFAULTS.fitPadding - 1e-6;
+    expect(topLeft.x).toBeGreaterThanOrEqual(pad);
+    expect(topLeft.y).toBeGreaterThanOrEqual(pad);
+    expect(VIEWPORT.width - bottomRight.x).toBeGreaterThanOrEqual(pad);
+    expect(VIEWPORT.height - bottomRight.y).toBeGreaterThanOrEqual(pad);
+  });
+
+  it("moves the zoom on every wheel tick, including where a grid step is coarser than the factor", async () => {
+    // 0.25 * 1.05 = 0.2625 is less than half a grid step away from where it
+    // started, so multiplying and snapping rounds straight back and the wheel
+    // dies in the whole band below k = 0.5 — which is exactly where a large
+    // graph lands when it is fitted.
+    const large = { x: 0, y: 0, width: 2880, height: 2080 };
+    const { instance } = mount({ contentBounds: large, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.25);
+
+    let previous = instance.value!.camera.k;
+    for (let tick = 0; tick < 8; tick++) {
+      instance.value?.zoomBy(1);
+      const next = instance.value!.camera.k;
+      expect(next).toBeGreaterThan(previous);
+      previous = next;
+    }
+
+    instance.value?.fit();
+    let ticks = 0;
+    while (instance.value!.camera.k > NODE_CANVAS_DEFAULTS.minZoom) {
+      const before = instance.value!.camera.k;
+      instance.value?.zoomBy(-1);
+      const after = instance.value!.camera.k;
+      expect(after).toBeLessThan(before);
+      previous = after;
+      if (++ticks > 60) break;
+    }
+    expect(previous).toBe(NODE_CANVAS_DEFAULTS.minZoom);
+  });
+
+  it("captures the pointer only once a drag is real, so card clicks survive", async () => {
+    // Capturing on pointerdown retargets the gesture's click to the capturing
+    // element, and clicks on node cards stop reaching their handlers.
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    const capture = vi.fn();
+    root.setPointerCapture = capture;
+    root.releasePointerCapture = vi.fn();
+
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 7, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 7, clientX: 103, clientY: 102 }));
+    root.dispatchEvent(pointerEvent("pointerup", { pointerId: 7, clientX: 103, clientY: 102 }));
+    expect(capture).not.toHaveBeenCalled();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 8, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 8, clientX: 110, clientY: 100 }));
+    expect(capture).toHaveBeenCalledWith(8);
+    root.dispatchEvent(pointerEvent("pointerup", { pointerId: 8, clientX: 110, clientY: 100 }));
+    expect(instance.value!.camera.x).toBeCloseTo(10, 6);
+  });
+
+  it("does not throw away a camera the user already moved when the graph arrives late", async () => {
+    const bounds = ref<Bounds | undefined>(undefined);
+    const { instance } = mount({ contentBounds: bounds, fitOnLoad: true });
+    await nextTick();
+    instance.value?.panBy(30, 20);
+    const moved = { ...instance.value!.camera };
+    expect(moved.x).toBe(30);
+
+    bounds.value = BOUNDS;
+    await nextTick();
+    expect(instance.value!.camera).toEqual(moved);
+  });
+
+  it("still frames a late graph when nobody has touched the camera", async () => {
+    const bounds = ref<Bounds | undefined>(undefined);
+    const { instance } = mount({ contentBounds: bounds, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(1);
+
+    bounds.value = BOUNDS;
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+
+    // A graph that keeps growing is still followed: framing the content is not
+    // the user taking over, so it must not switch the automatic fit off.
+    bounds.value = { x: 0, y: 0, width: 2880, height: 2080 };
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.25);
+  });
+
+  it("frames the graph once a canvas mounted inside a hidden tab becomes measurable", async () => {
+    viewportRect = { width: 0, height: 0 };
+    const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+
+    viewportRect = { ...VIEWPORT };
+    triggerResize();
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
+  });
+
+  it("does not re-frame on reveal if the user moved the camera while it was hidden", async () => {
+    viewportRect = { width: 0, height: 0 };
+    const { instance } = mount({ contentBounds: BOUNDS, fitOnLoad: true });
+    await nextTick();
+    instance.value?.panBy(25, 5);
+
+    viewportRect = { ...VIEWPORT };
+    triggerResize();
+    await nextTick();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 25, y: 5 });
+  });
+
+  it("leaves a controlled camera alone when the bounds cannot describe a fit", async () => {
+    const onUpdate = vi.fn();
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 0, height: 0 },
+      camera: { k: 0.123456, x: 5, y: 6 },
+      fitOnLoad: true,
+      "onUpdate:camera": onUpdate,
+    });
+    await nextTick();
+    instance.value?.fit();
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(instance.value!.camera).toEqual({ k: 0.123456, x: 5, y: 6 });
   });
 
   it("mounts the minimap by default and takes it away when asked", async () => {

@@ -54,6 +54,9 @@ export const NODE_CANVAS_DEFAULTS = {
 
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
 
+/** Movement (px) a pointer must travel before it stops being a tap. */
+const PAN_SLOP = 6;
+
 /**
  * HkNodeCanvas — the base view for a pannable, zoomable node surface.
  *
@@ -121,7 +124,16 @@ export default defineComponent({
     const viewport = ref({ width: 0, height: 0 });
     const inner = ref<NodeCanvasCamera>({ k: 1, x: 0, y: 0 });
     /** Panning state: the last pointer position while a drag is live. */
-    let panning: { pointerId: number; x: number; y: number } | null = null;
+    let panning: {
+      pointerId: number;
+      x: number;
+      y: number;
+      startX: number;
+      startY: number;
+      captured: boolean;
+    } | null = null;
+    /** Set by setCamera (gestures and imperative calls) — never by `fit`. */
+    let movedByHand = false;
 
     const camera = computed<NodeCanvasCamera>(() => props.camera ?? inner.value);
 
@@ -134,10 +146,17 @@ export default defineComponent({
       return clamp(Number(snapped.toFixed(6)), props.minZoom, props.maxZoom);
     }
 
-    function setCamera(next: NodeCanvasCamera) {
-      const normalized = { k: normalizeZoom(next.k), x: next.x, y: next.y };
+    /** Write a camera through to the host (controlled) or the local state. */
+    function writeCamera(normalized: NodeCanvasCamera) {
       if (props.camera) emit("update:camera", normalized);
       else inner.value = normalized;
+    }
+
+    function setCamera(next: NodeCanvasCamera) {
+      // Any non-automatic camera move is the user's: a late `contentBounds`
+      // must not throw that work away.
+      movedByHand = true;
+      writeCamera({ k: normalizeZoom(next.k), x: next.x, y: next.y });
     }
 
     /** The camera that frames `contentBounds` inside the viewport. */
@@ -148,11 +167,25 @@ export default defineComponent({
         return camera.value;
       }
       const pad = props.fitPadding;
-      const k = clamp(
+      // Snap FIRST: the translation below has to be derived from the k that is
+      // actually rendered, or the content lands off-centre and a tall graph can
+      // run past the viewport edge.
+      const step = props.zoomGridStep;
+      const raw = clamp(
         Math.min((width - pad * 2) / bounds.width, (height - pad * 2) / bounds.height),
         props.minZoom,
         Math.min(props.maxZoom, props.fitCap),
       );
+      // Snap DOWN: rounding fit to the nearest grid step can land above the
+      // padding budget and squeeze (or push) the content past the viewport.
+      // Flooring can only lower k, so the upper bound after it is maxZoom:
+      // minZoom must still win over a fitCap configured below it.
+      const floored = step > 0 ? Math.floor(raw / step) * step : raw;
+      // The multiplication leaves binary dust (6 * 0.05 is 0.30000000000000004),
+      // and a camera whose k differs from what `normalizeZoom` would return for
+      // the same factor makes the first gesture after a fit jump a hair. Round
+      // it exactly like `normalizeZoom` does.
+      const k = clamp(Number(floored.toFixed(6)), props.minZoom, props.maxZoom);
       return {
         k,
         x: (width - bounds.width * k) / 2 - bounds.x * k,
@@ -162,7 +195,11 @@ export default defineComponent({
 
     /** Frame the content. Called on load when `fitOnLoad`, and exposed. */
     function fit() {
-      setCamera(computeFit());
+      const next = computeFit();
+      // Degenerate bounds return the live camera unchanged: nothing to frame,
+      // and re-normalising it would rewrite a host-controlled camera.
+      if (next === camera.value) return;
+      writeCamera(next); // already normalised by computeFit
     }
 
     function zoomAt(nextK: number, at: { x: number; y: number }) {
@@ -181,7 +218,14 @@ export default defineComponent({
 
     function zoomBy(direction: 1 | -1, at?: { x: number; y: number }) {
       const point = at ?? { x: viewport.value.width / 2, y: viewport.value.height / 2 };
-      zoomAt(camera.value.k * (direction > 0 ? props.zoomFactor : 1 / props.zoomFactor), point);
+      const current = camera.value.k;
+      const scaled = current * (direction > 0 ? props.zoomFactor : 1 / props.zoomFactor);
+      // Below k = 0.5 a 1.05 step is smaller than half a grid step, so snapping
+      // would round it straight back and the wheel would do nothing at all.
+      const step = props.zoomGridStep;
+      const next =
+        step > 0 && Math.abs(scaled - current) < step ? current + direction * step : scaled;
+      zoomAt(next, point);
     }
 
     function panBy(dx: number, dy: number) {
@@ -215,15 +259,30 @@ export default defineComponent({
 
     function onPointerDown(event: PointerEvent) {
       if (!props.pannable || event.button !== 0) return;
-      panning = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      rootEl.value?.setPointerCapture?.(event.pointerId);
+      panning = {
+        pointerId: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        startX: event.clientX,
+        startY: event.clientY,
+        captured: false,
+      };
     }
 
     function onPointerMove(event: PointerEvent) {
       if (!panning || event.pointerId !== panning.pointerId) return;
+      if (!panning.captured) {
+        // Capturing at pointerdown retargets the gesture's click to the capture
+        // element and kills clicks on node cards (shittim-chest #818).
+        if (Math.hypot(event.clientX - panning.startX, event.clientY - panning.startY) < PAN_SLOP) {
+          return;
+        }
+        rootEl.value?.setPointerCapture?.(event.pointerId);
+        panning = { ...panning, captured: true };
+      }
       const dx = event.clientX - panning.x;
       const dy = event.clientY - panning.y;
-      panning = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+      panning = { ...panning, x: event.clientX, y: event.clientY };
       panBy(dx, dy);
     }
 
@@ -252,7 +311,11 @@ export default defineComponent({
       if (props.fitOnLoad && props.contentBounds) fit();
       if (typeof ResizeObserver !== "undefined" && rootEl.value) {
         ro = new ResizeObserver(() => {
+          const wasUnmeasurable = viewport.value.width <= 0 || viewport.value.height <= 0;
           measureViewport();
+          // Mounted inside a hidden tab there was nothing to fit into; frame it
+          // now that it has a viewport (unless the host or the user drives it).
+          if (wasUnmeasurable && props.fitOnLoad && props.contentBounds && !movedByHand) fit();
         });
         ro.observe(rootEl.value);
       }
@@ -264,7 +327,7 @@ export default defineComponent({
     watch(
       () => props.contentBounds,
       (bounds) => {
-        if (bounds && props.fitOnLoad) fit();
+        if (bounds && props.fitOnLoad && !movedByHand) fit();
       },
     );
 

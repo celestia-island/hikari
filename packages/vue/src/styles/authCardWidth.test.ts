@@ -50,11 +50,22 @@ import {
  *  - stylesheet-level escapes stay out: `@scope`/positional selectors
  *    (`@scope (.s-auth-card) { :scope { … } }`, `.hk-auth-shell > *`) name their
  *    target without the class, a `!important` SCSS override or `.s-auth-card`
- *    variant declared by a host is beyond a static scan, a subject that is ONLY
- *    a functional pseudo-class (`:not(.foo)`, `:has(.foo)`, nested) cannot be
- *    resolved without the DOM — it may still select a card surface, so it is
- *    treated as card-relevant (fail-closed) — and jsdom has no layout engine:
- *    those need a real-browser check, not this guard;
+ *    variant declared by a host is beyond a static scan, and jsdom has no
+ *    layout engine. A subject that is ONLY a functional pseudo-class is the
+ *    same kind of limit: the guard reads the class names its arguments mention,
+ *    so `:not(.s-auth-card)`, `:has(.s-auth-card)` and
+ *    `:not(.s-auth-card--wide)` count as card-relevant (fail-closed — the first
+ *    cannot select the card but does select the measuring wrapper, which costs a
+ *    false red, and the last is a true positive because that subject DOES match
+ *    the bare card), while a pseudo naming any other class (`:not(.foo)`,
+ *    `:has(.foo)`) is not card-relevant and a rule naming no auth class at all
+ *    is outside this scan: a bare `:not(.foo) { width: 50% }` in an auth sheet is
+ *    therefore NOT caught — that needs a selector engine over the DOM, i.e. a
+ *    real-browser check;
+ *  - two further fail-closed costs, neither chased here: `!important` on an
+ *    otherwise correct declaration is read as part of its value (reported), and
+ *    a backslash escape inside a class name is read as the class before it
+ *    (`s-auth-card\,x` counts as the card);
  *  - logical block properties (`block-size`, `min-block-size`) and
  *    `aspect-ratio` are left to the layout review;
  *  - the positive controls want each surface capped AND sized once: a second,
@@ -132,16 +143,40 @@ const MIN_WIDTH_PROPERTY = /(?:^|[\s;])(?:min-width|min-inline-size)\s*:\s*([^;]
  *  under a statement stayed green) and turned a correct sheet red. */
 const AT_RULE_STATEMENT = /(^|[\n}])\s*@[\w-]+[^;{}]*;/g;
 
+/** Split a selector list on its TOP-LEVEL commas only: a comma inside
+ *  `:is(.a, .b)`, `[data-x="a,b"]` or an escaped `\,` belongs to one selector,
+ *  and splitting there invented extra subjects that hid the real one
+ *  (`:not(:is(.a, .b)):not(.s-auth-card--x)` stayed green). */
+function splitSelectors(text: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let buf = "";
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === "\\") {
+      buf += ch + (text[i + 1] ?? "");
+      i += 1;
+      continue;
+    }
+    if (ch === "(" || ch === "[") depth += 1;
+    else if (ch === ")" || ch === "]") depth -= 1;
+    if (ch === "," && depth === 0) {
+      parts.push(buf);
+      buf = "";
+      continue;
+    }
+    buf += ch;
+  }
+  parts.push(buf);
+  return parts.map((s) => s.trim().replace(/\s+/g, " ")).filter(Boolean);
+}
+
 /** `selector { declarations }` pairs from the flattened sheet. */
 function rules(css: string): Array<[string[], string]> {
   const out: Array<[string[], string]> = [];
   const stripped = css.replace(AT_RULE_STATEMENT, "$1");
   for (const m of stripped.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selectors = m[1]
-      .split(",")
-      .map((s) => s.trim().replace(/\s+/g, " "))
-      .filter(Boolean);
-    out.push([selectors, m[2]]);
+    out.push([splitSelectors(m[1]), m[2]]);
   }
   return out;
 }

@@ -15,7 +15,7 @@ import { useI18n } from "../i18n/context";
 import { credentialAutocomplete } from "../runtime/credentialAutofill";
 
 import { onFrame, onceFrame, isAnimationParked, type AnimationHandle } from "../runtime/animationBus";
-import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
+import { scheduleCron, scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { passwordLevel, type PasswordLevel, type PasswordStrengthEvaluator } from "../utils/password";
 
@@ -341,17 +341,20 @@ export default defineComponent({
     }
 
     /**
-     * Resolve (and memoize by value + canvas size) the glyph layout for
-     * the noise reveal. Measuring text is a per-hold cost, not a
-     * per-frame one: the mask must stay perfectly still while only the
-     * noise sampled through it drifts.
+     * Resolve (and memoize by value + canvas size + mono stack) the
+     * glyph layout for the noise reveal. Measuring text is a per-hold
+     * cost, not a per-frame one: the mask must stay perfectly still
+     * while only the noise sampled through it drifts. The mono stack is
+     * part of the key so a theme/font change BETWEEN holds (same value,
+     * same size) rebuilds the layout and the mask instead of reusing a
+     * stale raster in the old font.
      */
     function revealLayoutFor(ctx: CanvasRenderingContext2D, W: number, H: number): RevealLayout | null {
       const value = props.modelValue;
       if (!value) return null;
-      const key = `${value}|${W}x${H}`;
+      const mono = cachedMonoFont || syncMonoFont();
+      const key = `${value}|${W}x${H}|${mono}`;
       if (!revealLayout || revealLayoutKey !== key) {
-        const mono = cachedMonoFont || syncMonoFont();
         revealLayout = layoutRevealGlyphs(
           Array.from(value),
           (ch, fontPx) => {
@@ -380,14 +383,7 @@ export default defineComponent({
       const layout = revealLayoutFor(ctx, W, H);
       if (!layout) return true; // empty value: nothing to reveal at all
       revealNoise.advance(dt, dpr);
-      return revealNoise.paint(
-        ctx,
-        W,
-        H,
-        layout,
-        cachedMonoFont || syncMonoFont(),
-        revealLayoutKey,
-      );
+      return revealNoise.paint(ctx, W, H, layout, cachedMonoFont || syncMonoFont(), revealLayoutKey);
     }
 
     /**
@@ -567,15 +563,18 @@ export default defineComponent({
       // Paint one synchronous frame so the reveal appears instantly;
       // the bus takes over from the next tick.
       draw(0);
-      // Belt-and-suspenders watchdog for frames that never arrive
-      // WITHOUT the bus being parked (hidden document, extreme jank):
-      // same degradation, decided on a bare timer because the rAF
-      // loop itself is the thing that is not firing. cronBus on
-      // purpose — the animation bus never fires while parked.
+      // Recurring belt-and-suspenders watchdog (cronBus on purpose:
+      // bare timers fire even when the rAF-driven bus is parked or
+      // throttled). While held it degrades to the static fallback as
+      // soon as the hold is undrivable: the bus parked — possibly
+      // MID-hold, reduced motion flipped on after frames already
+      // arrived — or no bus frame ever arrived at all (hidden
+      // document, extreme jank). The fallback latches for the rest of
+      // the hold; the next hold re-probes from scratch.
       revealWatchdog?.disconnect();
-      revealWatchdog = scheduleCronAfter(() => {
-        revealWatchdog = null;
-        if (revealing.value && !revealStaticFallback && revealFrames === 0) {
+      revealWatchdog = scheduleCron(() => {
+        if (!revealing.value || revealStaticFallback) return;
+        if (isAnimationParked() || revealFrames === 0) {
           revealStaticFallback = true;
           draw(0);
         }

@@ -891,6 +891,78 @@ describe("HkInput password hold-to-reveal eye", () => {
       setReducedMotion(false);
     }
   });
+
+  it("falls back through the watchdog when no bus frames arrive although the bus is not parked", async () => {
+    // Hidden document / extreme jank: rAF never fires, so the animation
+    // bus delivers no frames, but the bus is NOT parked — exactly the
+    // scenario the recurring cronBus watchdog covers (the instant
+    // isAnimationParked branch cannot). Neutering the watchdog must
+    // leave this test red, or the guard has no teeth.
+    const textsByCanvas = new Map<HTMLCanvasElement, string[]>();
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let texts = textsByCanvas.get(this);
+      if (!texts) {
+        texts = [];
+        textsByCanvas.set(this, texts);
+      }
+      const t = texts;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => t.push(String(text)),
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    // Freeze the frame bus without parking it: rAF callbacks never run.
+    vi.stubGlobal("requestAnimationFrame", () => 0);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      // Bus not parked ⇒ the first synchronous frame is the noise pass.
+      expect(textsByCanvas.get(visible)).toEqual([]);
+      // The recurring watchdog flips to the static fallback on a bare
+      // timer even though no bus frame ever arrived.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      // Latched: later ticks must not re-draw over the fallback.
+      await new Promise((r) => setTimeout(r, 220));
+      expect(textsByCanvas.get(visible)).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      vi.unstubAllGlobals();
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
 });
 
 /** happy-dom's own ResizeObserver never fires (no layout engine): this one

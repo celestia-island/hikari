@@ -20,13 +20,19 @@ export interface AuthSubmitContext {
  * 3. `onCaptcha` (optional) — acquire a captcha verification token.
  * 4. Call `onSubmit` with the assembled `AuthSubmitContext`.
  *
- * While solving, the button shows its own spinner; `loading` stays
- * external so callers can reflect server-side submission progress.
+ * While solving or submitting, the button renders its loading look —
+ * a leading spinner beside the caller's label (chest-style; user report
+ * 2026-09-16: swapping the whole caption for a challenge string read as
+ * a different control). Hosts that want the verbose challenge caption
+ * can opt back in with `solvingLabel`.
  */
 export default defineComponent({
   name: "HkAuthSubmitButton",
   props: {
     label: { type: String, required: true },
+    /** Optional caption while the challenge is being solved; defaults to
+     *  the regular label beside the spinner. */
+    solvingLabel: { type: String, default: undefined },
     loading: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
     error: { type: String, default: undefined },
@@ -83,8 +89,8 @@ export default defineComponent({
           disabled={props.disabled || busy.value}
           onClick={() => void handleClick()}
         >
-          {solving.value
-            ? t("hikari::auth.solvingChallenge", "Verifying challenge…")
+          {solving.value && props.solvingLabel
+            ? props.solvingLabel
             : props.label}
         </HButton>
         {props.error && <p class="s-auth-submit-error">{props.error}</p>}

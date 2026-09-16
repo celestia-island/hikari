@@ -161,10 +161,33 @@ describe("HkSwitch geometry", () => {
     (size, trackW, _trackH, thumb) => {
       const body = find(sw, `.hk-switch-${size}[data-checked] .hk-switch-thumb`).body;
       const inset = toPx(valueOf(find(sw, ".hk-switch-thumb").body, "inset-inline-start"));
+      const border = toPx(valueOf(find(sw, ".hk-switch-track").body, "border").split(" ")[0]!);
       const travel = toPx(valueOf(body, "transform").replace("translateX(", "").replace(")", ""));
-      // travel = track − 2×inset − thumb, so the checked thumb's inline-end
-      // gap equals the resting inline-start inset.
-      expect(travel).toBe(trackW - 2 * inset - thumb);
+      // travel = track − 2×(border + inset) − thumb: inset-inline-start
+      // resolves against the padding box, so the 1px border counts on BOTH
+      // sides — the checked gap then equals the resting gap (3px) exactly.
+      expect(travel).toBe(trackW - 2 * (border + inset) - thumb);
+    },
+  );
+
+  it.each(geometry)(
+    "%s off/on content anchors clear of the covering thumb",
+    (size, trackW, _trackH, thumb) => {
+      // md carries the base declaration; sm/lg get size overrides.
+      const scoped = (base: string) =>
+        find(sw, `.hk-switch-${size} ${base}`.replace(".hk-switch-md ", "")).body;
+      const offBody = scoped(".hk-switch-content-off");
+      const onBody = scoped(".hk-switch-content-on");
+      // off face: starts after the resting thumb (2px inset + thumb + 2px gap).
+      expect(toPx(valueOf(offBody, "inset-inline-start"))).toBe(2 + thumb + 2);
+      // on face: ends before the checked thumb — the checked thumb starts
+      // `2 + travel` from the padding-box start, i.e. (track−2−travel) from
+      // the end, plus the 2px gap.
+      const travel = toPx(
+        valueOf(find(sw, `.hk-switch-${size}[data-checked] .hk-switch-thumb`).body, "transform")
+          .replace("translateX(", "").replace(")", ""),
+      );
+      expect(toPx(valueOf(onBody, "inset-inline-end"))).toBe(trackW - 2 - travel);
     },
   );
 
@@ -203,5 +226,25 @@ describe("HkSwitch geometry", () => {
       const rtl = find(sw, `[dir=rtl] .hk-switch-${size}[data-checked] .hk-switch-thumb`).body;
       expect(toPx(valueOf(rtl, "transform").replace("translateX(", "").replace(")", ""))).toBe(-ltr);
     }
+  });
+
+  it.each([
+    ["HkCheckbox", "HkCheckbox", ".hk-checkbox-box"],
+    ["HkRadio", "HkRadio", ".hk-radio-box"],
+    ["HkSwitch", "HkSwitch", ".hk-switch-thumb"],
+  ])("%s press feedback is disabled under prefers-reduced-motion", (_name, sheet, selector) => {
+    // Parse ONLY the reduced-motion block (the flat splitter would read the
+    // base rule and make this pass vacuously).
+    const css = compile(resolve(componentDir, `${sheet}.scss`), { style: "expanded" }).css;
+    const marker = css.match(/@media[^{]*prefers-reduced-motion[^{]*{/);
+    expect(marker, `reduced-motion block in ${sheet}.scss`).not.toBeNull();
+    const blockRules = rules(css.slice(marker!.index! + marker![0]!.length));
+    // The switch block groups `.hk-switch-thumb, .hk-switch-content` in one
+    // rule — compare per selector in the list, whitespace-normalized.
+    const hit = blockRules.find((r) =>
+      r.selector.replace(/\s+/g, " ").split(", ").includes(selector),
+    );
+    expect(hit, `${selector} inside the reduced-motion block`).toBeDefined();
+    expect(valueOf(hit!.body, "transition")).toBe("none");
   });
 });

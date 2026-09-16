@@ -143,32 +143,35 @@
     scale: 0.88;
   }
 
-  /* Travel = track width − 2 × 2px inset − thumb width:
-     sm 36−4−16=16 · md 44−4−20=20 · lg 52−4−24=24. */
+  /* Travel = track − 2×(1px border + 2px inset) − thumb width, so the
+     checked thumb clears the border by the same 3px as the resting one
+     (inset-inline-start resolves against the padding box — the 1px border
+     must count twice or the two gaps render asymmetric):
+     sm 36−6−16=14 · md 44−6−20=18 · lg 52−6−24=22. */
   .hk-switch-sm[data-checked] & {
-    transform: translateX(1rem);
+    transform: translateX(0.875rem);
   }
 
   .hk-switch-md[data-checked] & {
-    transform: translateX(1.25rem);
+    transform: translateX(1.125rem);
   }
 
   .hk-switch-lg[data-checked] & {
-    transform: translateX(1.5rem);
+    transform: translateX(1.375rem);
   }
 
   /* RTL: the checked slide mirrors — the thumb travels back toward the
      inline-start (physically leftward) edge. */
   [dir="rtl"] .hk-switch-sm[data-checked] & {
-    transform: translateX(-1rem);
+    transform: translateX(-0.875rem);
   }
 
   [dir="rtl"] .hk-switch-md[data-checked] & {
-    transform: translateX(-1.25rem);
+    transform: translateX(-1.125rem);
   }
 
   [dir="rtl"] .hk-switch-lg[data-checked] & {
-    transform: translateX(-1.5rem);
+    transform: translateX(-1.375rem);
   }
 }
 
@@ -191,14 +194,37 @@
     font-size: 0.6875rem;
   }
 
+  /* Both faces anchor AWAY from the thumb that would cover them (content
+   * sits at z-index 0, the thumb at 1): the off face starts clear of the
+   * resting thumb (2px inset + thumb + 2px gap = 20/24/28), the on face
+   * ends clear of the checked one (travel + 4 = 20/24/28). A label longer
+   * than its free zone clips at the far seam instead of sliding under the
+   * thumb — the R1 verification measured 3–5px of coverage with the old
+   * far-edge anchors once the track grew. */
   &-off {
-    inset-inline-end: 6px;
+    inset-inline-start: 24px;
     color: var(--hi-color-text-secondary);
+
+    .hk-switch-sm & {
+      inset-inline-start: 20px;
+    }
+
+    .hk-switch-lg & {
+      inset-inline-start: 28px;
+    }
   }
 
   &-on {
-    inset-inline-start: 6px;
+    inset-inline-end: 24px;
     color: rgb(var(--color-on-solid-text, 255 255 255));
+
+    .hk-switch-sm & {
+      inset-inline-end: 20px;
+    }
+
+    .hk-switch-lg & {
+      inset-inline-end: 28px;
+    }
   }
 }
 

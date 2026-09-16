@@ -155,3 +155,11 @@
 .hk-checkbox[data-animating] .hk-checkbox-box {
   will-change: border-color, background;
 }
+
+/* Reduced motion: the press squish snaps instead of tweening (house
+   pattern: HkSwitch.scss / HkSlider.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-checkbox-box {
+    transition: none;
+  }
+}

@@ -172,6 +172,75 @@ describe("createBackGuard", () => {
     b.destroy();
   });
 
+  it("unwinds a three-window chain released top-down (breadcrumb jump)", async () => {
+    // The strip's jump back closes everything above the chosen layer,
+    // highest first, inside one tick. Every one of the three markers must
+    // rewind: one flush issues one traversal, and the two below it are
+    // DEFERRED (not abandoned) for the flushes their landings re-arm.
+    const onBacks = [vi.fn(), vi.fn(), vi.fn()];
+    const gs = onBacks.map((onBack) => createBackGuard({ onBack }));
+    gs.forEach((g) => g.push());
+    expect(window.history.state).not.toBeNull();
+
+    gs[2].release(); // top
+    gs[1].release(); // middle
+    gs[0].release(); // bottom
+
+    await settle();
+    expect(gs.map((g) => g.entries)).toEqual([0, 0, 0]);
+    onBacks.forEach((fn) => expect(fn).not.toHaveBeenCalled());
+    // Page base — nothing left owning live history.
+    expect(window.history.state).toBeNull();
+    gs.forEach((g) => g.destroy());
+  });
+
+  it("unwinds a three-window chain released bottom-up (closeAll order)", async () => {
+    // useOverlay.closeAll() walks its registry in open order, so the
+    // BOTTOM window asks first — its claim must survive on the queue while
+    // the two above it traverse, or it strands behind them.
+    const onBacks = [vi.fn(), vi.fn(), vi.fn()];
+    const gs = onBacks.map((onBack) => createBackGuard({ onBack }));
+    gs.forEach((g) => g.push());
+
+    gs[0].release();
+    gs[1].release();
+    gs[2].release();
+
+    await settle();
+    expect(gs.map((g) => g.entries)).toEqual([0, 0, 0]);
+    onBacks.forEach((fn) => expect(fn).not.toHaveBeenCalled());
+    expect(window.history.state).toBeNull();
+    gs.forEach((g) => g.destroy());
+  });
+
+  it("rewinds a destroyed guard queued behind a later traversal", async () => {
+    // A surface unmounted while its rewind waited: the record is out of
+    // `guards`, so the QUEUE is its only home — and the flush must still
+    // reach it once the landings arrive, or its marker keeps the current
+    // history entry and eats a Back press.
+    const onBackA = vi.fn();
+    const onBackC = vi.fn();
+    const a = createBackGuard({ onBack: onBackA });
+    const b = createBackGuard({ onBack: vi.fn() });
+    const c = createBackGuard({ onBack: onBackC });
+    a.push();
+    b.push();
+    c.push();
+
+    c.release(); // top window closes
+    b.destroy(); // middle one unmounts before the flush runs
+    a.release(); // bottom closes too
+
+    await settle();
+    expect(a.entries).toBe(0);
+    expect(c.entries).toBe(0);
+    expect(onBackA).not.toHaveBeenCalled();
+    expect(onBackC).not.toHaveBeenCalled();
+    expect(window.history.state).toBeNull();
+    a.destroy();
+    c.destroy();
+  });
+
   it("close A then open B in the same tick never fires a spurious back into B", async () => {
     // The classic pattern: select a menu leaf → closeAll() → a modal
     // opens synchronously. A's rewind must not compute from a history

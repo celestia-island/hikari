@@ -256,11 +256,20 @@ function flushRewinds(): void {
   for (const g of guards) {
     if (g.count.value > g.desired) candidates.add(g);
   }
-  rewindQueue.clear();
+  // Claims leave the queue one at a time as they are RESOLVED. Records
+  // this flush never reaches (it returns after the single traversal it is
+  // allowed) keep their place, which is the only home a destroyed record
+  // has left — and the landing re-arms the flush for them.
   for (const g of candidates) {
-    if (g.count.value <= g.desired) continue;
+    if (g.count.value <= g.desired) {
+      // Satisfied, retracted (abandon/forget), or already rewound.
+      rewindQueue.delete(g);
+      continue;
+    }
     const st = readState();
-    if (st?.[BACK_GUARD_MARKER] === g.id) {
+    const owner = st?.[BACK_GUARD_MARKER];
+    if (owner === g.id) {
+      rewindQueue.delete(g);
       const n = g.count.value - g.desired;
       g.count.value = g.desired;
       if (n > 0) {
@@ -279,10 +288,25 @@ function flushRewinds(): void {
       // the owners still below (see onPopState).
       return;
     }
+    if (
+      owner != null &&
+      guards.some((other) => other.id === owner && other.count.value > other.desired)
+    ) {
+      // DEFERRED, not abandoned: the live entry on top belongs to another
+      // window that still holds a claim of its own, so this record's turn
+      // comes once that one traverses. Abandoning here is what stranded
+      // every claimant below the first whenever several windows gave up
+      // their entries inside one tick — the modal-stack breadcrumb's jump
+      // back closes its layers top-down, useOverlay.closeAll() bottom-up —
+      // and each stranded marker then swallowed one Back press. The claim
+      // stays in the queue for the re-armed flush.
+      continue;
+    }
     // Not ours to rewind (a router or newer window pushed above):
     // abandon the entries where they lie — dead markers are
     // released by the landing cleanup whenever the user reaches
     // them, and forward-stack entries simply die with the session.
+    rewindQueue.delete(g);
     g.count.value = g.desired;
   }
 }

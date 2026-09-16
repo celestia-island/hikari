@@ -27,6 +27,24 @@ describe("displayWidthUnits", () => {
     expect(displayWidthUnits("\u{1F600}")).toBe(1);
   });
 
+  it("counts a non-wide astral glyph as ONE half-width glyph", () => {
+    // U+10400 (Deseret) is astral but outside the wide ranges: half a unit.
+    // A UTF-16 code-unit walk would read the lone surrogate halves (both
+    // 0.5) and charge a full unit — every such label would then be cut one
+    // glyph early.
+    expect(displayWidthUnits("\u{10400}")).toBe(0.5);
+    expect(displayWidthUnits("\u{10400}\u{10401}")).toBe(1);
+    expect(clampToDisplayWidth("\u{10400}\u{10401}\u{10402}", 1.5)).toBe(
+      `\u{10400}\u{10401}\u{10402}`,
+    );
+    // Four such glyphs are 2 units; a 1.5-unit budget keeps half a unit of
+    // them (the ellipsis takes the other) — a code-unit walk would have
+    // charged the first glyph a full unit and kept NONE of it.
+    expect(clampToDisplayWidth("\u{10400}\u{10401}\u{10402}\u{10403}", 1.5)).toBe(
+      `\u{10400}${ELLIPSIS}`,
+    );
+  });
+
   it("gives combining marks and joiners no width of their own", () => {
     expect(displayWidthUnits("e\u0301")).toBe(0.5);
     expect(displayWidthUnits("\u200B")).toBe(0);

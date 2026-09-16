@@ -14,6 +14,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { POPUP_Z_BANDS } from "../runtime/usePopupManager";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const tsx = readFileSync(join(here, "HkModalBreadcrumb.tsx"), "utf-8");
 const scss = readFileSync(join(here, "HkModalBreadcrumb.scss"), "utf-8");
@@ -67,6 +69,31 @@ describe("HkModalBreadcrumb overflow fence", () => {
     const hitArea = scss.match(/\.hk-modal-breadcrumb-more::after\s*{[^}]*}/)?.[0] ?? "";
     expect(hitArea).toContain("position: absolute");
     expect(hitArea).toContain("inset: calc(-1 * var(--space-8");
+  });
+
+  it("z-bands the strip above the anchored surfaces it floats over", () => {
+    // The strip reaches over an anchored dropdown's panel on purpose (it
+    // must stay readable over the window it annotates); dropping it into
+    // the window band would bury it under every open sheet instead.
+    const z = Number(scss.match(/z-index:\s*var\(--hk-breadcrumb-z,\s*(\d+)\)/)?.[1]);
+    expect(Number.isFinite(z), "the strip declares a z fallback").toBe(true);
+    expect(z).toBeGreaterThan(POPUP_Z_BANDS.dropdown);
+    expect(z).toBeLessThan(POPUP_Z_BANDS.tooltip);
+  });
+
+  it("opens the menu clear of the strip's own bar", () => {
+    // The trigger sits INSIDE the strip's padding box, so a small offset
+    // tucks the panel's first pixels under the strip's opaque bar. The
+    // offset must clear the bottom padding plus the border.
+    const offset = Number(tsx.match(/offset=\{(\d+)\}/)?.[1]);
+    expect(Number.isFinite(offset), "the popover offset is a literal").toBe(true);
+    const block = rule(".hk-modal-breadcrumb");
+    const padding = block.match(/padding:\s*var\(--space-\d+,\s*([\d.]+)rem\)/)?.[1];
+    const border = block.match(/border:\s*([\d.]+)px/)?.[1];
+    expect(padding, "the strip declares its vertical padding").toBeTruthy();
+    expect(border, "the strip declares its border").toBeTruthy();
+    const clearance = Number(padding) * 16 + Number(border);
+    expect(offset).toBeGreaterThan(clearance);
   });
 
   it("routes the hidden-layers menu through the shared form-factor rule", () => {

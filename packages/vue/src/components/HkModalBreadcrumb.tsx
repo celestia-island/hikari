@@ -164,7 +164,7 @@ export default defineComponent({
       const nav = navRef.value;
       const vw = typeof window === "undefined" ? 0 : window.innerWidth;
       if (!nav || !(vw > 0)) return Number.POSITIVE_INFINITY;
-      const z = ancestorZoom(nav);
+      const z = currentZoom();
       const cs = window.getComputedStyle(nav);
       const pad =
         (readPx(cs.paddingLeft, SIDE_PADDING_PX) +
@@ -181,7 +181,13 @@ export default defineComponent({
       if (!nav) return GAP_PX;
       const cs = window.getComputedStyle(nav);
       const gap = cs.columnGap && cs.columnGap !== "normal" ? cs.columnGap : cs.gap;
-      return readPx(gap, GAP_PX) * ancestorZoom(nav);
+      return readPx(gap, GAP_PX) * currentZoom();
+    }
+
+    /** The zoom between the strip and the viewport root, read at the strip
+     *  itself (it may be teleported into a host's zoomed subtree). */
+    function currentZoom(): number {
+      return ancestorZoom(navRef.value ?? document.body);
     }
 
     function measuredWidth(el: HTMLElement | null | undefined): number {
@@ -191,12 +197,16 @@ export default defineComponent({
 
     /** One crumb's footprint: its label, plus the chevron it carries when
      *  it follows another crumb (index > 0) — exactly how the clone lays
-     *  them out. A DOM without boxes falls back to the type-size estimate
-     *  (units × 12px, the strip's own label font). */
-    function crumbFootprint(crumb: Crumb, index: number, gap: number): number {
+     *  them out (the chevron and its own 8px gap live INSIDE the crumb; the
+     *  strip's inter-crumb gap is added by measureStrip). A DOM without
+     *  boxes falls back to the type-size estimate: the layout constants are
+     *  the strip's own local px, so they scale with the host's root zoom
+     *  exactly like the measured rects do. */
+    function crumbFootprint(crumb: Crumb, index: number, gap: number, z: number): number {
       const measured = measuredWidth(cloneEls.get(crumb.id));
       if (measured > 0) return measured;
-      return displayWidthUnits(crumb.text) * LABEL_FONT_PX + (index > 0 ? SEPARATOR_PX + gap : 0);
+      const local = displayWidthUnits(crumb.text) * LABEL_FONT_PX + (index > 0 ? SEPARATOR_PX : 0);
+      return local * z + (index > 0 ? gap : 0);
     }
 
     function measureStrip(): void {
@@ -211,14 +221,15 @@ export default defineComponent({
         hiddenCount.value = 0;
         return;
       }
+      const z = currentZoom();
       const gap = navGap();
-      const widths = list.map((crumb, i) => crumbFootprint(crumb, i, gap));
+      const widths = list.map((crumb, i) => crumbFootprint(crumb, i, gap, z));
       const full = widths.reduce((sum, w) => sum + w, 0) + gap * (n - 1);
       if (full <= budget) {
         hiddenCount.value = 0;
         return;
       }
-      const more = measuredWidth(triggerClone) || MORE_PX;
+      const more = measuredWidth(triggerClone) || MORE_PX * z;
       // Longest visible tail wins: leading layers fold one at a time until
       // trigger + tail fits. The last layer is never folded away — if even
       // the current layer alone overflows, it keeps the strip and its own

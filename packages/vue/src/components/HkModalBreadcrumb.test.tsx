@@ -367,6 +367,50 @@ describe("HkModalBreadcrumb overflow fold", () => {
     }
   });
 
+  it("converts the header height through a root zoom for its own top", async () => {
+    // The strip is teleported into the host's zoomed root: the header's
+    // rect is VISUAL px while the inline top it writes is LOCAL px, so the
+    // height is divided by the zoom. Forgetting the division drifts the
+    // strip (zoom − 1) · height / 2 down its window.
+    const app = document.createElement("div");
+    app.id = "app";
+    app.style.top = "10px";
+    const header = document.createElement("div");
+    header.className = "hk-glass-header";
+    app.appendChild(header);
+    document.body.appendChild(app);
+
+    const original = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(
+      (el: Element, pseudo?: string | null): CSSStyleDeclaration => {
+        const decl = original(el, pseudo ?? undefined);
+        return new Proxy(decl, {
+          get(target, prop, recv) {
+            if (prop === "zoom") return el === document.documentElement ? "2" : undefined;
+            const v = Reflect.get(target, prop, recv);
+            return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+          },
+        });
+      },
+    );
+    const rect = (height: number): DOMRect =>
+      ({ x: 0, y: 0, width: 200, height, top: 0, left: 0, right: 200, bottom: height, toJSON: () => ({}) }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      return this === header ? rect(96) : rect(0);
+    });
+    try {
+      setViewport(1200);
+      manager.register("modal", true, "第一层");
+      manager.register("modal", true, "第二层");
+      await mountStrip();
+      // 10 (app top, local) + (96 visual / 2 zoom) / 2
+      expect(strip()!.style.top).toBe("34px");
+    } finally {
+      vi.restoreAllMocks();
+      app.remove();
+    }
+  });
+
   it("writes the viewport fence in the strip's own px", async () => {
     // A vw-authored cap would be scaled by a host root zoom at paint, so the
     // fence is re-derived from the live viewport (minus the shared gutter)

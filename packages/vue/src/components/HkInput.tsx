@@ -334,12 +334,15 @@ export default defineComponent({
             {/* Slot forwarding for the password surface: the affix slots
              * behave exactly like the text variants' (#prefix beats
              * #prefixIcon, #suffix beats #suffixIcon, an explicit suffix
-             * suppresses the built-in eye/strength affordance). The
-             * vue-jsx transform only honors an OBJECT LITERAL as
-             * component children — keep this a literal, not a computed
-             * expression, or it array-wraps into the default slot. An
-             * absent caller slot forwards an empty array, which the
-             * surface reads as "not provided". */}
+             * suppresses the built-in eye/strength affordance). Keep the
+             * children an OBJECT LITERAL or a bare identifier — the
+             * runtime _isSlot guard passes both through as slots; a
+             * ternary/member/call expression gets array-wrapped into the
+             * DEFAULT slot by @vue/babel-plugin-jsx and the surface would
+             * silently lose every affix (HkInput.password.test pins this
+             * with slot-forwarding cases). An absent caller slot forwards
+             * an empty array, which the surface reads as "not provided"
+             * (comment-only arrays from v-if'd-out templates included). */}
             {{
               prefix: () => slots.prefix?.() ?? [],
               prefixIcon: () => slots.prefixIcon?.() ?? [],

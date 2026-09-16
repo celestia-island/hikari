@@ -590,6 +590,66 @@ describe("HkInput password hold-to-reveal eye", () => {
     expect(eye.hasAttribute("data-revealing")).toBe(false);
   });
 
+  it("reads the mono font stack once per reveal, never per frame", async () => {
+    // The reveal pass re-randomizes glyphs EVERY frame; reading
+    // computed styles at that rate is layout thrash. The cache warms
+    // at reveal start (or lazily on the first draw) and every
+    // subsequent frame must hit it — a wholesale cache removal would
+    // silently pass the suite without this count.
+    const ctxStub = {
+      canvas: {},
+      clearRect: () => {},
+      save: () => {}, restore: () => {}, translate: () => {}, rotate: () => {},
+      beginPath: () => {}, arc: () => {}, fill: () => {},
+      measureText: () => ({ width: 10 }),
+      fillText: () => {},
+      font: "", fillStyle: "", textAlign: "", textBaseline: "",
+    };
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (() =>
+      ctxStub) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    const originalGCS = window.getComputedStyle;
+    let monoReads = 0;
+    window.getComputedStyle = ((el: Element, ...rest: unknown[]) => {
+      const real = originalGCS.call(window, el, ...(rest as []));
+      return {
+        getPropertyValue: (key: string) => {
+          if (key === "--font-mono") monoReads++;
+          return real.getPropertyValue(key);
+        },
+      } as CSSStyleDeclaration;
+    }) as typeof window.getComputedStyle;
+    try {
+      const { container } = mountPasswordInput("abcdef");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      // Let the animation bus render a few real frames while held.
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(monoReads, "exactly one warm read (eager or lazy), frames hit the cache").toBe(1);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+      // A second hold re-syncs (theme may have changed between holds):
+      // one more read, still not per-frame.
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(monoReads).toBe(2);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    } finally {
+      window.getComputedStyle = originalGCS;
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
   it("draws the password on the canvas with per-frame jitter (anti-OCR)", async () => {
     // Recording canvas context: happy-dom's getContext is null, so the
     // drawing path never runs there — stub it and drive the jitter

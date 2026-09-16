@@ -135,4 +135,16 @@ describe("HkEmptyState", () => {
     expect(cls).toContain("hk-empty-state--fill");
     expect(cls).not.toContain("hk-empty-state--page");
   });
+
+  it("does not draw its own surface by default (the host provides it)", () => {
+    const c = mount(h(HkEmptyState, { title: "x" }));
+    const cls = (c.querySelector(".hk-empty-state") as HTMLElement).className;
+    expect(cls).not.toContain("hk-empty-state--boxed");
+  });
+
+  it("opt-in boxed restores the surface modifier", () => {
+    const c = mount(h(HkEmptyState, { title: "x", boxed: true }));
+    const cls = (c.querySelector(".hk-empty-state") as HTMLElement).className;
+    expect(cls).toContain("hk-empty-state--boxed");
+  });
 });

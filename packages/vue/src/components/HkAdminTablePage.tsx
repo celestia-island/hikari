@@ -53,7 +53,7 @@ export const HkAdminTablePage = defineComponent({
           ) : props.loading && !props.rows.length ? (
             <HSpinner center />
           ) : !props.rows.length ? (
-            <HEmptyState title={emptyTitle} description={props.emptyDescription} />
+            <HEmptyState boxed title={emptyTitle} description={props.emptyDescription} />
           ) : (
             <HCard padded={false}>
               <HTable columns={props.columns} rows={props.rows} rowKey={props.rowKey}>

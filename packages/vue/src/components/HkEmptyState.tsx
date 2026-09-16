@@ -19,6 +19,12 @@ export default defineComponent({
       type: String as PropType<"page" | "fill">,
       default: "page",
     },
+    /** Draw the component's own surface (background, border, blur). Off by
+     *  default: most hosts (cards, modals, panels) already provide a
+     *  surface, and a boxed empty state inside them reads as a second
+     *  nested placeholder layer. Set this only when the empty state stands
+     *  directly on the page with no outer frame of its own. */
+    boxed: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const { t } = useI18n();
@@ -28,6 +34,7 @@ export default defineComponent({
           "hk-empty-state",
           props.fit === "fill" ? "hk-empty-state--fill" : "hk-empty-state--page",
           props.loading && "hk-empty-state--loading",
+          props.boxed && "hk-empty-state--boxed",
         ]}
         role={props.loading ? "status" : undefined}
         aria-busy={props.loading ? "true" : undefined}

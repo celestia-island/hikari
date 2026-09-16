@@ -33,6 +33,72 @@
   --hk-icon-group-item-size: 3.25rem;
 }
 
+/* ── Visual variants (orthogonal to the semantic mode) ──────────────────
+ *
+ * "track" (the default above) is the bordered inset strip. The two
+ * frameless variants drop the outer chrome — a frame is a host choice,
+ * not part of a group's meaning (2026-09-17 user direction):
+ *  - "plain": independent buttons, still spaced, each tinting itself;
+ *  - "slider": gapless packed row + one thumb pill that slides to the
+ *    active item (single-selection only; the position is the active
+ *    index × the item-size variable, so retuning the size keeps the
+ *    thumb aligned with no JS measurement).
+ */
+
+.hk-icon-group-plain {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.hk-icon-group-slider {
+  /* A hair of inset so the thumb's rounded corners never clip — nothing
+   * like the track's full frame. */
+  --hk-icon-group-inset: 0.125rem;
+
+  position: relative;
+  padding: var(--hk-icon-group-inset);
+  border: none;
+  background: transparent;
+  gap: 0;
+  flex-wrap: nowrap;
+}
+
+.hk-icon-group-slider .hk-icon-group-item {
+  position: relative;
+  /* Items ride above the thumb so their hit targets and tooltips stay
+   * first-class while the pill glides behind them. */
+  z-index: 1;
+  /* Tooltip-less items are DIRECT flex children here — without this a
+   * width-constrained host could compress them while the thumb keeps
+   * the full item-size width (misalignment). Wrapped items are already
+   * flex:none via .hk-tooltip-wrapper. */
+  flex: none;
+}
+
+/* The active item in slider mode carries no tint of its own — the thumb
+ * IS its highlight (keeps the sliding illusion seamless). Scoped to
+ * single mode: in "multiple" + slider the thumb is suppressed and the
+ * per-item tint is the ONLY active indication left. */
+.hk-icon-group-single.hk-icon-group-slider .hk-icon-group-item[data-active] {
+  background: transparent;
+}
+
+.hk-icon-group-slider-thumb {
+  position: absolute;
+  top: var(--hk-icon-group-inset);
+  left: var(--hk-icon-group-inset);
+  width: var(--hk-icon-group-item-size);
+  height: var(--hk-icon-group-item-size);
+  border-radius: var(--radius-sm, 4px);
+  background: rgb(var(--color-primary, 90 140 255) / 14%);
+  transform: translateX(
+    calc(var(--hk-icon-group-active-index, 0) * var(--hk-icon-group-item-size))
+  );
+  transition: transform var(--duration, 0.18s) ease;
+  pointer-events: none;
+}
+
 /* The HkTooltip wrapper span is the flex child between items — let it
    shrink to the button so the track gap (not the wrapper) spaces them. */
 .hk-icon-group > .hk-tooltip-wrapper {

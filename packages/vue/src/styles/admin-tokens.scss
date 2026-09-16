@@ -15,34 +15,34 @@
    * loads before this sheet. Only plana-specific tokens remain below. */
 
   /* ── Shared color aliases ─ */
-  --c-primary: rgb(var(--color-primary, 255 107 157));
-  --c-primary-light: rgb(var(--color-primary, 255 107 157) / 15%);
-  --c-primary-subtle: rgb(var(--color-primary, 255 107 157) / 8%);
-  --c-primary-overlay: rgb(var(--color-primary, 255 107 157) / 15%);
+  --c-primary: rgb(var(--color-primary, 122 162 247));
+  --c-primary-light: rgb(var(--color-primary, 122 162 247) / 15%);
+  --c-primary-subtle: rgb(var(--color-primary, 122 162 247) / 8%);
+  --c-primary-overlay: rgb(var(--color-primary, 122 162 247) / 15%);
 
   /* ── Hikari color bridge ─ */
-  --hi-color-primary: rgb(var(--color-primary, 255 107 157));
-  --hi-color-primary-rgb: var(--color-primary, 255 107 157);
-  --hi-color-surface: rgb(var(--color-surface, 255 255 255));
+  --hi-color-primary: rgb(var(--color-primary, 122 162 247));
+  --hi-color-primary-rgb: var(--color-primary, 122 162 247);
+  --hi-color-surface: rgb(var(--color-surface, 240 244 248));
   --hi-color-border: rgb(var(--color-border, 100 100 100) / 15%);
-  --hi-color-text-primary: rgb(var(--color-text, 0 0 0));
+  --hi-color-text-primary: rgb(var(--color-text, 30 30 30));
   --hi-color-text-on-primary: rgb(var(--color-on-primary, 255 255 255)); /* deprecated in-tree: prefer the on-solid slots */
   --color-on-solid: 255 255 255;
   --color-on-solid-text: 255 255 255;
   --color-on-solid-icon: 255 255 255;
   --hi-color-text-on-solid: rgb(var(--color-on-solid-text, 255 255 255));
   --hi-color-icon-on-solid: rgb(var(--color-on-solid-icon, 255 255 255));
-  --hi-color-text-secondary: color-mix(in srgb, rgb(var(--color-text, 0 0 0)) 60%, transparent);
-  --hi-color-muted: rgb(var(--color-muted, 100 100 100));
-  --hi-color-background: rgb(var(--color-background, 246 246 246));
-  --hi-color-bg-canvas: rgb(var(--color-background, 246 246 246));
-  --hi-color-bg-elevated: rgb(var(--color-surface, 255 255 255));
-  --hi-color-bg-subtle: rgb(var(--color-surface, 255 255 255) / 0.5);
-  --hi-secondary-bg: rgb(var(--color-surface, 255 255 255) / 0.5);
-  --hi-color-danger: rgb(var(--color-error, 200 50 50));
-  --hi-color-success: rgb(var(--color-success, 0 150 0));
-  --hi-color-warning: rgb(var(--color-warning, 200 150 0));
-  --hi-color-info: rgb(var(--color-info, 255 107 157));
+  --hi-color-text-secondary: color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 60%, transparent);
+  --hi-color-muted: rgb(var(--color-muted, 108 108 108));
+  --hi-color-background: rgb(var(--color-background, 214 236 240));
+  --hi-color-bg-canvas: rgb(var(--color-background, 214 236 240));
+  --hi-color-bg-elevated: rgb(var(--color-surface, 240 244 248));
+  --hi-color-bg-subtle: rgb(var(--color-surface, 240 244 248) / 0.5);
+  --hi-secondary-bg: rgb(var(--color-surface, 240 244 248) / 0.5);
+  --hi-color-danger: rgb(var(--color-error, 247 118 142));
+  --hi-color-success: rgb(var(--color-success, 14 184 64));
+  --hi-color-warning: rgb(var(--color-warning, 238 214 119));
+  --hi-color-info: rgb(var(--color-info, 106 190 214));
   --hi-color-black-10: rgb(0 0 0 / 0.1);
   --hi-color-white-5: rgb(255 255 255 / 0.05);
   --hi-color-white-10: rgb(255 255 255 / 0.1);
@@ -58,8 +58,8 @@
    * by load order. (--hk-surface's only in-tree consumer — the retired
    * HTabs tail overlay — is gone; the token stays published for
    * external plana-ui readers.) */
-  --hk-surface: var(--color-surface, 255 255 255);
-  --hk-primary: var(--color-primary, 60 120 240);
+  --hk-surface: var(--color-surface, 240 244 248);
+  --hk-primary: var(--color-primary, 122 162 247);
 }
 
 /* Global reset (opt-in: import this explicitly) */
@@ -545,7 +545,7 @@
   height: 1px;
   margin: var(--hk-menu-item-pad-y, 6px) auto;
   width: calc(100% - 2 * var(--hk-menu-item-pad-x, 12px));
-  background: rgb(var(--color-border, 120 120 120) / 18%);
+  background: rgb(var(--color-border, 100 100 100) / 18%);
   border: none;
 }
 
@@ -754,7 +754,7 @@
      depend on the host having loaded the reset sheet (without it a 1px
      border pushes the box 2px past its max-width and off-centre). */
   box-sizing: border-box;
-  background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 70%, transparent);
+  background: color-mix(in srgb, rgb(var(--color-surface, 240 244 248)) 70%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 12%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
@@ -879,8 +879,8 @@
   gap: var(--space-8, 0.5rem);
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-danger, #f85149);
-  background: color-mix(in srgb, var(--hi-color-danger, #ef4444) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-danger, #ef4444) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
   border-radius: 6px;
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
 }
@@ -967,8 +967,8 @@
 
 .s-auth-invite-banner.expired {
   color: var(--hi-color-danger, #f85149);
-  background: color-mix(in srgb, var(--hi-color-danger, #ef4444) 10%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-danger, #ef4444) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
 }
 
 @media (max-width: 480px) {
@@ -992,7 +992,7 @@
 }
 
 .a-text-danger {
-  color: var(--hi-color-danger, #ef4444);
+  color: var(--hi-color-danger, rgb(247 118 142));
 }
 
 .a-icon-inline {
@@ -1000,11 +1000,11 @@
 }
 
 .a-icon-success {
-  color: var(--color-success, #22c55e);
+  color: var(--color-success, rgb(14 184 64));
 }
 
 .a-icon-warning {
-  color: var(--color-warning, #f59e0b);
+  color: var(--color-warning, rgb(238 214 119));
 }
 
 .a-bg-secondary {
@@ -1022,7 +1022,7 @@
 
 .a-error-banner {
   background: var(--hi-color-danger, rgba(239, 68, 68, 0.1));
-  border: 1px solid color-mix(in srgb, var(--hi-color-danger, #ef4444) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
 }
 
 .a-tabular-nums {

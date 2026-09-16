@@ -95,12 +95,17 @@ function columnTexts(root: HTMLElement, columnIndex: number): string[] {
 
 describe("HkWaterfall", () => {
   it("lays a bucket out newest-first across columns, walking oldest first", async () => {
-    const mounted = mount({ items: ["a", "b", "c", "d", "e"], columns: 2 });
+    // Three columns on purpose: with two, the mirrored greedy walk lands on
+    // the same layout, so the case could not tell the two directions apart
+    // (found by mutation — the newest-first variant survived the 2-column
+    // fixture).
+    const mounted = mount({ items: ["a", "b", "c", "d", "e"], columns: 3 });
     await nextTick();
     // Walk oldest -> newest into the shortest column, then keep newest-first:
-    //   e -> col0; d -> col1; c -> col0; b -> col1; a -> col0
-    expect(columnTexts(mounted.root, 0)).toEqual(["a", "c", "e"]);
-    expect(columnTexts(mounted.root, 1)).toEqual(["b", "d"]);
+    //   e -> col0; d -> col1; c -> col2; b -> col0; a -> col1
+    expect(columnTexts(mounted.root, 0)).toEqual(["b", "e"]);
+    expect(columnTexts(mounted.root, 1)).toEqual(["a", "d"]);
+    expect(columnTexts(mounted.root, 2)).toEqual(["c"]);
   });
 
   it("keeps older items in their column when a newer item is prepended", async () => {
@@ -167,6 +172,11 @@ describe("HkWaterfall", () => {
     mounted.instance.value?.backToTop();
     expect(scrollTo).toHaveBeenCalledTimes(2);
     expect(scrollTo.mock.calls[1][0]).toMatchObject({ top: 0, behavior: "smooth" });
+
+    // An unknown bucket key is a no-op, not a throw: the jump is driven by
+    // data the host may have replaced mid-render.
+    mounted.instance.value?.jumpToBucket("nope");
+    expect(scrollTo).toHaveBeenCalledTimes(2);
   });
 
   it("renders the empty slot when there is nothing to show", async () => {
@@ -174,6 +184,40 @@ describe("HkWaterfall", () => {
     await nextTick();
     expect(mounted.root.querySelector(".none")?.textContent).toBe("none");
     expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(0);
+  });
+
+  it("holds the back-to-top signal through the hysteresis band", async () => {
+    const backTop: boolean[] = [];
+
+    const mounted = mount({
+      items: ["a1"],
+      backTopShow: 10,
+      backTopHide: 4,
+      "onUpdate:backTopVisible": (v: boolean) => backTop.push(v),
+    });
+    await nextTick();
+    await nextTick();
+
+    const scroller = mounted.instance.value?.getScrollElement();
+    expect(scroller).toBeTruthy();
+
+    const scrollTo = async (top: number) => {
+      Object.defineProperty(scroller, "scrollTop", { value: top, configurable: true });
+      scroller?.dispatchEvent(new Event("scroll"));
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      await nextTick();
+    };
+
+    await scrollTo(50);
+    expect(backTop).toEqual([true]);
+
+    // Inside the band (hide < top < show) the signal holds and emits
+    // nothing — the hysteresis a plain `top > show` test would lose.
+    await scrollTo(6);
+    expect(backTop).toEqual([true]);
+
+    await scrollTo(2);
+    expect(backTop).toEqual([true, false]);
   });
 
   it("publishes the active bucket and the back-to-top signal from one scroll pass", async () => {

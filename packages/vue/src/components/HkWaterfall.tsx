@@ -114,8 +114,13 @@ export default defineComponent({
      *  the active bucket. */
     activeThreshold: { type: Number, default: 24 },
     /** Opt in to back-to-top visibility reporting: the FAB appears past
-     *  `backTopShow` px and hides again below `backTopHide` (hysteresis). */
+     *  `backTopShow` px and hides again below `backTopHide` (hysteresis).
+     *  `backTopShow` gates the whole signal — a lone `backTopHide` is
+     *  ignored, since there would be no threshold to appear at. */
     backTopShow: { type: Number, default: undefined },
+    /** Hide threshold of the hysteresis; only read when `backTopShow` is
+     *  also set. Without it the signal falls back to the single
+     *  `top > backTopShow` test. */
     backTopHide: { type: Number, default: undefined },
     ariaLabel: { type: String, default: undefined },
   },

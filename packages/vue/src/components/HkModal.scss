@@ -233,6 +233,17 @@
   flex-shrink: 0;
 }
 
+// Caller's header actions (HkModal's headerActions slot): a gap-separated
+// row of icon buttons / pills sitting at inline-end, one beat before the
+// close button (which keeps its own flex-shrink: 0 and glyph).
+.hk-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 4px);
+  margin-inline-start: var(--space-8, 8px);
+  flex-shrink: 0;
+}
+
 // ------
 // Sub-header (caller-provided slot)
 // ------

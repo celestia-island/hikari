@@ -20,6 +20,10 @@ export interface TimelineStep {
   key: string;
   label: string;
   icon?: string;
+  /** Greyed and inert when set — a gate the host enforces elsewhere (a
+   *  login wall, an unsatisfied precondition); the step stays visible so
+   *  the flow's shape reads, it just cannot be clicked into. */
+  disabled?: boolean;
 }
 
 /**
@@ -246,17 +250,19 @@ export default defineComponent({
           data-status={status}
           data-last={opts.last || undefined}
           aria-current={status === "active" ? "step" : undefined}
-          data-clickable={(props.clickable && status === "completed") || undefined}
-          role={props.clickable ? "button" : undefined}
-          tabindex={props.clickable && status === "completed" ? 0 : undefined}
+          data-disabled={step.disabled || undefined}
+          data-clickable={(props.clickable && status === "completed" && !step.disabled) || undefined}
+          role={props.clickable && !step.disabled ? "button" : undefined}
+          tabindex={props.clickable && status === "completed" && !step.disabled ? 0 : undefined}
           onClick={() => {
-            if (props.clickable && status === "completed")
+            if (props.clickable && status === "completed" && !step.disabled)
               emit("select", step.key);
           }}
           onKeydown={(e: KeyboardEvent) => {
             if (
               props.clickable &&
               status === "completed" &&
+              !step.disabled &&
               (e.key === "Enter" || e.key === " ")
             ) {
               e.preventDefault();

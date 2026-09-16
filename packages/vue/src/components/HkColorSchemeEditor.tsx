@@ -418,6 +418,7 @@ export const HkColorSchemeEditor = defineComponent({
           onUpdate:modelValue={(v: string) => { modeTab.value = v; }}
           tabs={modeTabs.value}
         />
+        <p class="s-scheme-mode-hint">{t("hikari::theme.modeTabHint")}</p>
         <div class="s-scheme-colors">
           {editableTokens.map((key) => (
             <HColorPicker

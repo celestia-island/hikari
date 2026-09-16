@@ -112,11 +112,27 @@ export default defineComponent({
     let lastInputAt = 0;
 
     // ── strength (traffic light) ────────────────────────────────────
+    // A throwing evaluator is a consumer bug, but it must never take
+    // the whole field down (the computed runs inside the render fn):
+    // degrade to the built-in classifier and warn once per instance.
+    let warnedEvaluator = false;
     const level = computed<PasswordLevel | null>(() => {
       if (props.passwordTrailing !== "strength" || !props.modelValue) {
         return null;
       }
-      return (props.strengthEvaluator ?? passwordLevel)(props.modelValue);
+      const evaluate = props.strengthEvaluator ?? passwordLevel;
+      try {
+        return evaluate(props.modelValue);
+      } catch (err) {
+        if (!warnedEvaluator) {
+          warnedEvaluator = true;
+          console.warn(
+            "[hikari] strengthEvaluator threw; falling back to passwordLevel",
+            err,
+          );
+        }
+        return passwordLevel(props.modelValue);
+      }
     });
 
     const levelLabel = computed(() => {
@@ -303,9 +319,13 @@ export default defineComponent({
       const basePx = clamp(aH * 0.58, 12, 18);
       const mono = monoFontStack();
       ctx.font = `${basePx}px ${mono}`;
+      // Iterate CODE POINTS on both passes (Array.from splits surrogate
+      // pairs): indexing the string by code unit below would draw lone
+      // surrogates for astral glyphs (emoji) and desync the width table.
+      const chars = Array.from(value);
       const widths: number[] = [];
       let raw = 0;
-      for (const ch of value) {
+      for (const ch of chars) {
         const w = ctx.measureText(ch).width;
         widths.push(w);
         raw += w;
@@ -315,8 +335,8 @@ export default defineComponent({
       let x = (aW - raw * scale) / 2;
       const midY = aH / 2;
       const [bh, bs, bl] = textHsl;
-      for (let i = 0; i < value.length; i++) {
-        const ch = value[i]!;
+      for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i]!;
         const advance = widths[i]! * scale;
         const sizeJ = basePx * scale * (1 + (Math.random() * 2 - 1) * 0.16);
         const yJ = (Math.random() * 2 - 1) * aH * 0.09;
@@ -433,8 +453,11 @@ export default defineComponent({
     }
 
     // ── hold-to-reveal (eye) ────────────────────────────────────────
+    // Readonly fields keep the reveal (the old lock-reveal allowed it —
+    // a stored, uneditable password is exactly the value a user wants
+    // to eyeball); only disabled hides the control entirely.
     function startReveal() {
-      if (!props.modelValue || props.disabled || props.readonly) return;
+      if (!props.modelValue || props.disabled) return;
       syncTextHsl();
       revealing.value = true;
       // Parked animation bus (reduced motion): the loop never fires, so
@@ -745,19 +768,26 @@ export default defineComponent({
       endReveal();
     });
 
-    const showEye = computed(
-      () => props.passwordTrailing === "eye" && !props.disabled && !props.readonly,
-    );
+    const showEye = computed(() => props.passwordTrailing === "eye" && !props.disabled);
 
     return () => {
       const { class: _c, style: _s, ...restAttrs } = attrs as Record<string, unknown>;
-      // HkInput forwards its prefixIcon slot unconditionally (the vue-jsx
-      // transform only accepts a literal slots object); an empty array
-      // means "no caller icon" and falls back to the default lock.
-      const callerIcon = slots.prefixIcon?.();
-      const hasCallerIcon = Array.isArray(callerIcon)
-        ? callerIcon.length > 0
-        : !!callerIcon;
+      // Slot resolution. HkInput forwards its affix slots unconditionally
+      // (the vue-jsx transform only accepts a literal slots object); an
+      // empty array means "no caller content" and falls back. Precedence
+      // mirrors the text variants: #prefix beats #prefixIcon, #suffix
+      // beats #suffixIcon, and an explicit suffix suppresses the built-in
+      // trailing affordance (the retired native toggle behaved the same).
+      const nonEmpty = (v: unknown) => (Array.isArray(v) ? v.length > 0 : !!v);
+      const prefixContent = slots.prefix?.() ?? [];
+      const hasPrefix = nonEmpty(prefixContent);
+      const callerIcon = hasPrefix ? [] : (slots.prefixIcon?.() ?? []);
+      const hasCallerIcon = nonEmpty(callerIcon);
+      const suffixContent = slots.suffix?.() ?? [];
+      const hasSuffix = nonEmpty(suffixContent);
+      const suffixIconContent = hasSuffix ? [] : (slots.suffixIcon?.() ?? []);
+      const hasSuffixIcon = nonEmpty(suffixIconContent);
+      const hasCustomSuffix = hasSuffix || hasSuffixIcon;
       return (
         <>
           <div
@@ -774,9 +804,11 @@ export default defineComponent({
                 props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
               ]}
             >
-              {hasCallerIcon ? (
-                callerIcon
-              ) : (
+              {hasPrefix
+                ? prefixContent
+                : hasCallerIcon
+                  ? callerIcon
+                  : (
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -872,7 +904,9 @@ export default defineComponent({
               onCompositionend={onCompositionEnd}
               onAnimationstart={onAutofillAnim}
             />
-            {props.passwordTrailing === "strength" && level.value ? (
+            {!hasCustomSuffix &&
+              props.passwordTrailing === "strength" &&
+              level.value ? (
               <HkTooltip
                 text={strengthTooltip.value}
                 placement="top"
@@ -886,7 +920,7 @@ export default defineComponent({
                 />
               </HkTooltip>
             ) : null}
-            {showEye.value ? (
+            {!hasCustomSuffix && showEye.value ? (
               <button
                 type="button"
                 class="hk-pwd-eye"
@@ -912,6 +946,11 @@ export default defineComponent({
               >
                 {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
+            ) : null}
+            {hasCustomSuffix ? (
+              <span class="hk-pwd-suffix">
+                {hasSuffix ? suffixContent : suffixIconContent}
+              </span>
             ) : null}
           </div>
           <div class="hk-pwd-hints">

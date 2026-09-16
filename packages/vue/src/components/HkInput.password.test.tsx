@@ -125,6 +125,111 @@ describe("HkInput password surface identity", () => {
     expect(container.querySelector(".hk-pwd-lock svg")).toBeNull();
   });
 
+  it("lets the prefix slot win over prefixIcon (text-variant precedence)", () => {
+    const { container } = mountPasswordInput(
+      "",
+      {},
+      {
+        prefix: () => [h("span", { class: "full-prefix" }, "p")],
+        prefixIcon: () => [h("span", { class: "icon-only" }, "i")],
+      },
+    );
+    expect(container.querySelector(".hk-pwd-lock .full-prefix")).not.toBeNull();
+    expect(container.querySelector(".hk-pwd-lock .icon-only")).toBeNull();
+  });
+
+  it("suppresses the built-in eye when a suffix slot is provided", () => {
+    const { container } = mountPasswordInput(
+      "",
+      {},
+      { suffix: () => [h("span", { class: "my-suffix" }, "s")] },
+    );
+    expect(container.querySelector("button.hk-pwd-eye")).toBeNull();
+    expect(container.querySelector(".hk-pwd-suffix .my-suffix")).not.toBeNull();
+  });
+
+  it("suppresses the strength dot when a suffixIcon slot is provided", () => {
+    const { container } = mountPasswordInput(
+      "hunter2",
+      { passwordTrailing: "strength" },
+      { suffixIcon: () => [h("span", { class: "my-suffix-icon" }, "i")] },
+    );
+    expect(container.querySelector(".hk-pwd-strength")).toBeNull();
+    expect(container.querySelector(".hk-pwd-suffix .my-suffix-icon")).not.toBeNull();
+  });
+
+  it("keeps the eye on readonly fields and reveals the stored value", async () => {
+    const { container } = mountPasswordInput("stored", { readonly: true });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+    expect(eye).toBeTruthy();
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+    document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+
+  it("falls back to passwordLevel when a strengthEvaluator throws", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const { container } = mountPasswordInput("Password1", {
+        passwordTrailing: "strength",
+        strengthEvaluator: () => {
+          throw new Error("consumer bug");
+        },
+      });
+      // The field must mount (a render-fn throw would take the whole
+      // subtree down) and degrade to the built-in classifier.
+      expect(container.querySelector(".hk-pwd-box")).toBeTruthy();
+      expect(
+        container.querySelector(".hk-pwd-strength")?.getAttribute("data-level"),
+      ).toBe("fair");
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("draws astral-plane glyphs whole instead of lone surrogates", async () => {
+    const calls: string[] = [];
+    const ctxStub = {
+      canvas: {},
+      clearRect: () => {},
+      save: () => {},
+      restore: () => {},
+      translate: () => {},
+      rotate: () => {},
+      beginPath: () => {},
+      arc: () => {},
+      fill: () => {},
+      measureText: () => ({ width: 10 }),
+      fillText: (text: string) => calls.push(text),
+      font: "",
+      fillStyle: "",
+      textAlign: "",
+      textBaseline: "",
+    };
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (() =>
+      ctxStub) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("😀ab");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      // ONE fillText per code point, astral glyph intact — the old
+      // code-unit indexing drew lone surrogates and NaN-positioned
+      // everything after the pair.
+      expect(calls).toEqual(["😀", "a", "b"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+
   it("associates the rendered label with the field id", () => {
     const { container, input } = mountPasswordInput("", { label: "Password" });
     const label = container.querySelector("label.hk-input-label");
@@ -513,11 +618,15 @@ describe("HkInput password hold-to-reveal eye", () => {
       await nextTick();
       expect(calls.map((c) => c.text)).toEqual(["a", "b", "c"]);
       expect(input.type).toBe("password");
-      const frame1 = calls.map((c) => `${c.font}|${c.fillStyle}`);
+      const frame1Fonts = calls.map((c) => c.font);
+      const frame1Colors = calls.map((c) => c.fillStyle);
+      const frame1 = frame1Fonts.map((f, i) => `${f}|${frame1Colors[i]}`);
 
       // Frame 2 (a second hold with a different random stream): the
-      // SAME value must render with DIFFERENT font sizes and colors —
-      // a static rendering would be an OCR target.
+      // SAME value must render with DIFFERENT font sizes AND colors —
+      // each dimension is asserted SEPARATELY so a regression that
+      // freezes only one of them (e.g. size→constant, color still
+      // jittering) still fails this test.
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
       calls.length = 0;
@@ -529,6 +638,14 @@ describe("HkInput password hold-to-reveal eye", () => {
       const frame2 = calls.map((c) => `${c.font}|${c.fillStyle}`);
       expect(calls.map((c) => c.text)).toEqual(["a", "b", "c"]);
       expect(frame1.join(";")).not.toBe(frame2.join(";"));
+      expect(
+        calls.map((c) => c.font),
+        "glyph SIZE jitter must vary across frames",
+      ).not.toEqual(frame1Fonts);
+      expect(
+        calls.map((c) => c.fillStyle),
+        "glyph COLOR jitter must vary across frames",
+      ).not.toEqual(frame1Colors);
 
       // Release: the reveal pass must stop — no more glyph draws.
       calls.length = 0;

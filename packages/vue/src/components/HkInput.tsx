@@ -331,16 +331,20 @@ export default defineComponent({
             strengthEvaluator={props.strengthEvaluator}
             size={props.size}
           >
-            {/* Slot forwarding for the password surface: the leading
-             * lock is replaceable through the same prefixIcon slot the
-             * text variants use (e.g. a shield glyph on confirm fields).
-             * The vue-jsx transform only honors an OBJECT LITERAL as
+            {/* Slot forwarding for the password surface: the affix slots
+             * behave exactly like the text variants' (#prefix beats
+             * #prefixIcon, #suffix beats #suffixIcon, an explicit suffix
+             * suppresses the built-in eye/strength affordance). The
+             * vue-jsx transform only honors an OBJECT LITERAL as
              * component children — keep this a literal, not a computed
              * expression, or it array-wraps into the default slot. An
              * absent caller slot forwards an empty array, which the
-             * surface reads as "use the default lock". */}
+             * surface reads as "not provided". */}
             {{
+              prefix: () => slots.prefix?.() ?? [],
               prefixIcon: () => slots.prefixIcon?.() ?? [],
+              suffix: () => slots.suffix?.() ?? [],
+              suffixIcon: () => slots.suffixIcon?.() ?? [],
             }}
           </HkPasswordSurface>
         ) : (

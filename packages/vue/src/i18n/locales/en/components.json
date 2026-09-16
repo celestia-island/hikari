@@ -123,7 +123,6 @@
     "hikari::passwordInput.fullWidth": "Full-width characters not allowed",
     "hikari::passwordInput.holdToReveal": "Hold to show password",
     "hikari::passwordInput.passwordEntered": "Entered, click to focus and clear the existing password",
-    "hikari::passwordInput.placeholderConfirm": "Confirm your password",
     "hikari::passwordInput.placeholderPassword": "Enter your password",
     "hikari::passwordInput.strengthFair": "Fair",
     "hikari::passwordInput.strengthLabel": "Password strength",

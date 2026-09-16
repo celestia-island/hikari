@@ -125,6 +125,49 @@ describe("HkInput password surface identity", () => {
     expect(container.querySelector(".hk-pwd-lock svg")).toBeNull();
   });
 
+  it("lifts caller prefix content to the interactive plane (affix parity)", () => {
+    // The default lock is decorative (click-through); a caller icon or
+    // prefix must carry the interactive lift so buttons/tooltip triggers
+    // inside the slot work above the invisible full-bleed input.
+    const withIcon = mountPasswordInput(
+      "",
+      {},
+      { prefixIcon: () => [h("span", { class: "custom-shield" }, "s")] },
+    );
+    expect(
+      withIcon.container
+        .querySelector(".hk-pwd-lock")
+        ?.classList.contains("hk-pwd-lock-custom"),
+    ).toBe(true);
+
+    const withPrefix = mountPasswordInput(
+      "",
+      {},
+      { prefix: () => [h("span", { class: "full-prefix" }, "p")] },
+    );
+    expect(
+      withPrefix.container
+        .querySelector(".hk-pwd-lock")
+        ?.classList.contains("hk-pwd-lock-custom"),
+    ).toBe(true);
+
+    const byDefault = mountPasswordInput("");
+    expect(
+      byDefault.container
+        .querySelector(".hk-pwd-lock")
+        ?.classList.contains("hk-pwd-lock-custom"),
+    ).toBe(false);
+
+    // A v-if'd-out (comment-only) slot must NOT claim the lift either.
+    const commentOnly = () => [createVNode(Comment as never, null, "v-if out")];
+    const withEmpty = mountPasswordInput("", {}, { prefixIcon: commentOnly });
+    expect(
+      withEmpty.container
+        .querySelector(".hk-pwd-lock")
+        ?.classList.contains("hk-pwd-lock-custom"),
+    ).toBe(false);
+  });
+
   it("lets the prefix slot win over prefixIcon (text-variant precedence)", () => {
     const { container } = mountPasswordInput(
       "",

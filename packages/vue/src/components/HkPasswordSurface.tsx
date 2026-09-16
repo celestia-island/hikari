@@ -827,6 +827,11 @@ export default defineComponent({
               class={[
                 "hk-pwd-lock",
                 props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
+                // Caller-provided prefix content must be interactive like
+                // the text variants' affixes (a button / tooltip trigger
+                // in #prefix or #prefixIcon): the default lock stays a
+                // decorative, click-through glyph.
+                hasPrefix || hasCallerIcon ? "hk-pwd-lock-custom" : "",
               ]}
             >
               {hasPrefix

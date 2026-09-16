@@ -20,3 +20,4 @@ export type { GeoLocation, GeoLocationProvider } from "./useSolarTime";
 export { refreshThemeClock, stopThemeClock } from "./useTheme";
 export { startLuminanceSampler, stopLuminanceSampler, sampleLuminanceNow, invalidateLuminanceCache } from "./useBackgroundLuminance";
 export type { TimePeriod } from "./useSolarTime";
+export { HK_AUTH_CARD_MAX_WIDTH, HK_AUTH_CARD_MAX_WIDTH_VAR } from "./authCard";

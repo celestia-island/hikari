@@ -739,9 +739,21 @@
 }
 
 /* ── Auth card (login/register pages) ─ */
+/* ONE width contract for every auth surface: the card and its measuring
+   wrapper resolve the same custom property, whose fallback is the same
+   literal `HK_AUTH_CARD_MAX_WIDTH` carries in theme/authCard.ts (SCSS cannot
+   read a TS constant; styles/authCardWidth.test.ts keeps the two equal — and
+   runs on the COMPILED sheet, so a width nested in @media cannot hide).
+   Host shells that cap their own slot to the card read the property (or the
+   constant) instead of copying the literal — a wider slot renders a
+   max-width card flush left. */
 .s-auth-card {
-  max-width: 28rem;
+  max-width: var(--hk-auth-card-max-width, 28rem);
   width: 100%;
+  /* The measuring wrapper sets border-box explicitly; the card must not
+     depend on the host having loaded the reset sheet (without it a 1px
+     border pushes the box 2px past its max-width and off-centre). */
+  box-sizing: border-box;
   background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 70%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 12%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
@@ -774,14 +786,15 @@
      global border-box reset. */
   box-sizing: border-box;
   /* Mirror the card's own sizing contract (.s-auth-card below:
-     `width: 100%; max-width: 28rem`). The card's percentage width now
+     `width: 100%; max-width: var(--hk-auth-card-max-width, …)`). The card's
+     percentage width now
      resolves against THIS wrapper, and a bare wrapper inside a centered
      flex/grid host shrink-wraps to the card's content — collapsing the
      panel to its intrinsic width. Presenting the same definite sizing
      context here restores the exact pre-wrapper geometry in every host
      formatting context. Keep the two declarations in sync. */
   width: 100%;
-  max-width: 28rem;
+  max-width: var(--hk-auth-card-max-width, 28rem);
   transition: height 0.3s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
 
   &.s-auth-card--measuring {

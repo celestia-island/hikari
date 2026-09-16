@@ -187,6 +187,10 @@ export const HkAdminHeader = defineComponent({
             aria-expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
             onClick={onAvatarClick}
           >
+            {/* Deliberately NO hover veil here: the trigger opens the user
+             *  MENU (the avatar edit lives one row down as the Camera
+             *  item), so a camera overlay would promise click-to-change
+             *  and lie (user report 2026-09-16). */}
             {props.avatarUrl && !avatarFailed.value ? (
               <img
                 src={props.avatarUrl}
@@ -203,11 +207,6 @@ export const HkAdminHeader = defineComponent({
               <span class="s-user-avatar">
                 {props.username?.charAt(0).toUpperCase() || "?"}
               </span>
-            )}
-            {props.avatarAction === "menu" && (
-              <div class="s-admin-header-avatar-veil">
-                <Camera size={10} class="s-admin-header-veil-icon" />
-              </div>
             )}
           </button>
           {/* WHERE am I — the open view's title, not the nickname. The

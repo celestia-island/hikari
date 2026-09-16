@@ -12,6 +12,10 @@ import HkSelectionGrid, { type SelectionGridItem } from "./HkSelectionGrid";
  * - `select` fires for already-selected cards too — the consumer owns the
  *   toggle, the grid only reports the click
  * - the optional `hint` renders under the grid and is absent when unset
+ * - `minItemWidth` flips the grid into adaptive floor mode: `data-fluid` +
+ *   the floor as a CSS var, and NO `data-cols` hook (the narrow-viewport
+ *   overrides key off data-cols and must not fight the fluid template)
+ * - without `minItemWidth` the fixed `columns` contract is unchanged
  *
  * House style: raw createApp mounts on a shared container list torn down
  * after each case; DOM assertions via document queries.
@@ -115,5 +119,50 @@ describe("HkSelectionGrid hint", () => {
   it("renders no hint node when the prop is unset", () => {
     const container = mount(h(HkSelectionGrid, { items: ITEMS }));
     expect(container.querySelector(".hk-selection-grid-hint")).toBeNull();
+  });
+});
+
+describe("HkSelectionGrid adaptive floor mode (minItemWidth)", () => {
+  function gridEl(container: HTMLElement) {
+    return container.querySelector<HTMLElement>(".hk-selection-grid-grid")!;
+  }
+
+  it("switches the grid to fluid mode and publishes the floor as a CSS var", () => {
+    const container = mount(h(HkSelectionGrid, { items: ITEMS, minItemWidth: 240 }));
+    const grid = gridEl(container);
+    expect(grid.hasAttribute("data-fluid")).toBe(true);
+    expect(grid.style.getPropertyValue("--hk-selection-grid-item-min")).toBe("240px");
+  });
+
+  it("owns the track template: no data-cols hook the narrow overrides could flip", () => {
+    const container = mount(
+      h(HkSelectionGrid, { items: ITEMS, minItemWidth: 240, columns: 4 }),
+    );
+    const grid = gridEl(container);
+    expect(grid.hasAttribute("data-cols")).toBe(false);
+  });
+
+  it("stays in fixed-columns mode when minItemWidth is unset", () => {
+    const container = mount(h(HkSelectionGrid, { items: ITEMS, columns: 3 }));
+    const grid = gridEl(container);
+    expect(grid.hasAttribute("data-fluid")).toBe(false);
+    expect(grid.getAttribute("data-cols")).toBe("3");
+    expect(grid.style.getPropertyValue("--hk-selection-grid-item-min")).toBe("");
+  });
+
+  it("renders every item in fluid mode like in fixed mode", () => {
+    const container = mount(h(HkSelectionGrid, { items: ITEMS, minItemWidth: 240 }));
+    expect(cards(container).length).toBe(ITEMS.length);
+  });
+
+  it("ignores floors that cannot form a track minimum (0 / negative / NaN)", () => {
+    for (const bad of [0, -240, Number.NaN]) {
+      const container = mount(
+        h(HkSelectionGrid, { items: ITEMS, minItemWidth: bad, columns: 3 }),
+      );
+      const grid = gridEl(container);
+      expect(grid.hasAttribute("data-fluid")).toBe(false);
+      expect(grid.getAttribute("data-cols")).toBe("3");
+    }
   });
 });

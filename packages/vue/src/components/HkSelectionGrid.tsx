@@ -25,6 +25,15 @@ export default defineComponent({
     },
     multi: { type: Boolean, default: false },
     columns: { type: Number as PropType<SelectionGridCols>, default: 2 },
+    /** Adaptive floor mode: when set (px), the column count is DERIVED from
+     *  the available width instead of the fixed `columns` number — every
+     *  track is at least this wide, so a wide host (e.g. an 896px modal)
+     *  lays three 240px options per row while narrow hosts step down to
+     *  two, then one, without a horizontal overflow at any width. Takes
+     *  precedence over `columns` (which stays the contract for hosts that
+     *  want an exact count). Values that cannot form a floor (non-finite
+     *  or ≤ 0) are ignored and fall back to fixed `columns`. */
+    minItemWidth: { type: Number, default: undefined },
     groupTitle: { type: String, default: undefined },
     hint: { type: String, default: undefined },
     dense: { type: Boolean, default: false },
@@ -36,6 +45,14 @@ export default defineComponent({
     return () => {
       if (!props.items.length) return null;
 
+      // A floor must be a usable track minimum: non-finite or non-positive
+      // values fall back to the fixed `columns` contract instead of
+      // producing a degenerate (0px → dozens of tracks) or invalid grid.
+      const fluid =
+        props.minItemWidth != null &&
+        Number.isFinite(props.minItemWidth) &&
+        props.minItemWidth > 0;
+
       return (
         <div class="hk-selection-grid">
           {props.groupTitle && (
@@ -43,8 +60,15 @@ export default defineComponent({
           )}
           <div
             class="hk-selection-grid-grid"
-            data-cols={props.columns}
+            // Fluid mode owns the track template (auto-fill with the floor),
+            // so the data-cols hooks — and their narrow-viewport overrides —
+            // stay out of its way entirely.
+            data-cols={fluid ? undefined : props.columns}
+            data-fluid={fluid || undefined}
             data-dense={props.dense || undefined}
+            style={fluid
+              ? ({ "--hk-selection-grid-item-min": `${props.minItemWidth}px` })
+              : undefined}
           >
             {props.items.map((item) => {
               const isSelected = props.multi

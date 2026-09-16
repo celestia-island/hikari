@@ -3,6 +3,7 @@ import { createApp, nextTick } from "vue";
 
 import HkModalBreadcrumb from "./HkModalBreadcrumb";
 import { usePopupManager } from "../runtime/usePopupManager";
+import { displayWidthUnits } from "../runtime/displayWidth";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -219,6 +220,24 @@ describe("HkModalBreadcrumb label budget", () => {
     expect(
       nav.querySelector(".hk-modal-breadcrumb-measure")!.getAttribute("aria-hidden"),
     ).toBe("true");
+  });
+
+  it("fits the reported phone scenario without folding anything away", async () => {
+    // The report: two ordinary chest titles on a phone. Both layers must
+    // still be READABLE (a fold would hide one behind the trigger) and each
+    // label must stay inside the ten-unit budget.
+    setViewport(390);
+    manager.register("modal", true, LONG);
+    manager.register("drawer", true, "任务节点 e2e-w0-002310");
+    await mountStrip();
+    const shown = labels();
+    expect(more()).toBeNull();
+    expect(shown).toHaveLength(2);
+    expect(shown[0]).toBe(LONG_TAIL);
+    expect(shown[1].endsWith("…")).toBe(true);
+    for (const text of shown) {
+      expect(displayWidthUnits(text)).toBeLessThanOrEqual(10);
+    }
   });
 
   it("honours a narrower budget from the host", async () => {

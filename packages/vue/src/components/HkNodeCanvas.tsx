@@ -103,7 +103,14 @@ export default defineComponent({
     fitPadding: { type: Number, default: NODE_CANVAS_DEFAULTS.fitPadding },
     /** Largest zoom "fit" will choose, so a tiny graph is not blown up. */
     fitCap: { type: Number, default: NODE_CANVAS_DEFAULTS.fitCap },
-    /** Frame the content immediately instead of starting at 1:1. */
+    /** Frame the content immediately instead of starting at 1:1.
+     *
+     *  Only the component's OWN camera is framed: a host that passes `camera`
+     *  owns the view and calls `fit()` when it wants one. Automatic framing
+     *  also stops for good once the camera has been moved by hand — a gesture,
+     *  or an imperative `zoomBy`/`panBy`/`setCamera` — so a late `contentBounds`
+     *  cannot throw the user's view away; `fit()` stays available to re-frame
+     *  on demand. */
     fitOnLoad: { type: Boolean, default: true },
     /** Whether dragging pans the camera. */
     pannable: { type: Boolean, default: true },
@@ -146,6 +153,11 @@ export default defineComponent({
       return clamp(Number(snapped.toFixed(6)), props.minZoom, props.maxZoom);
     }
 
+    /** Whether two cameras describe the same view. */
+    function sameCamera(a: NodeCanvasCamera, b: NodeCanvasCamera) {
+      return a.k === b.k && a.x === b.x && a.y === b.y;
+    }
+
     /** Write a camera through to the host (controlled) or the local state. */
     function writeCamera(normalized: NodeCanvasCamera) {
       if (props.camera) emit("update:camera", normalized);
@@ -180,12 +192,16 @@ export default defineComponent({
       // padding budget and squeeze (or push) the content past the viewport.
       // Flooring can only lower k, so the upper bound after it is maxZoom:
       // minZoom must still win over a fitCap configured below it.
-      const floored = step > 0 ? Math.floor(raw / step) * step : raw;
+      const floored = step > 0 ? Math.floor(raw / step + 1e-9) * step : raw;
       // The multiplication leaves binary dust (6 * 0.05 is 0.30000000000000004),
       // and a camera whose k differs from what `normalizeZoom` would return for
       // the same factor makes the first gesture after a fit jump a hair. Round
       // it exactly like `normalizeZoom` does.
       const k = clamp(Number(floored.toFixed(6)), props.minZoom, props.maxZoom);
+      // A host can configure a range that cannot describe a fit (minZoom 0, a
+      // padding budget wider than the viewport); framing with a zero or
+      // non-finite scale would put NaN into every coordinate derived from it.
+      if (!Number.isFinite(k) || k <= 0) return camera.value;
       return {
         k,
         x: (width - bounds.width * k) / 2 - bounds.x * k,
@@ -193,19 +209,30 @@ export default defineComponent({
       };
     }
 
-    /** Frame the content. Called on load when `fitOnLoad`, and exposed. */
+    /** Frame the content. Automatic while the camera is untouched, and exposed
+     *  for the host to re-frame whenever it likes. */
     function fit() {
       const next = computeFit();
-      // Degenerate bounds return the live camera unchanged: nothing to frame,
-      // and re-normalising it would rewrite a host-controlled camera.
-      if (next === camera.value) return;
+      // Degenerate bounds return the live camera unchanged, and an unchanged
+      // camera must not be written back: a host that spells `contentBounds` as
+      // a fresh object literal re-renders on every emit, so comparing by
+      // identity would loop — fit emits, the host writes the value back, the
+      // object identity changes, the watcher fits again. Compare by value.
+      if (sameCamera(next, camera.value)) return;
       writeCamera(next); // already normalised by computeFit
+    }
+
+    /** Automatic framing: the component's own camera only, and only until the
+     *  host or the user has taken the view over. */
+    function autoFit() {
+      if (!props.fitOnLoad || props.camera || movedByHand) return;
+      fit();
     }
 
     function zoomAt(nextK: number, at: { x: number; y: number }) {
       const current = camera.value;
       const k = normalizeZoom(nextK);
-      if (k === current.k) return;
+      if (!Number.isFinite(k) || k <= 0 || k === current.k) return;
       // Keep the world point under `at` fixed: the content moves opposite to
       // the growth of the scale.
       const scale = k / current.k;
@@ -259,6 +286,11 @@ export default defineComponent({
 
     function onPointerDown(event: PointerEvent) {
       if (!props.pannable || event.button !== 0) return;
+      // A host that drags its own nodes suppresses the pan by preventing the
+      // default on its card's pointerdown: the root listens in the bubble
+      // phase, so it sees the flag. Without an opt-out the root's capture
+      // would retarget the gesture and cut the host's drag short.
+      if (event.defaultPrevented) return;
       panning = {
         pointerId: event.pointerId,
         x: event.clientX,
@@ -271,6 +303,14 @@ export default defineComponent({
 
     function onPointerMove(event: PointerEvent) {
       if (!panning || event.pointerId !== panning.pointerId) return;
+      // The gesture is only captured once it passes the slop, so a release that
+      // happens outside the canvas never reaches this element. Without this the
+      // pan would stay armed and the next button-less hover would move the
+      // camera on its own.
+      if (event.buttons === 0) {
+        panning = null;
+        return;
+      }
       if (!panning.captured) {
         // Capturing at pointerdown retargets the gesture's click to the capture
         // element and kills clicks on node cards (shittim-chest #818).
@@ -308,14 +348,14 @@ export default defineComponent({
       // `fitOnLoad` this is what makes the first painted frame already be the
       // fitted one instead of 1:1 and then a snap.
       measureViewport();
-      if (props.fitOnLoad && props.contentBounds) fit();
+      if (props.contentBounds) autoFit();
       if (typeof ResizeObserver !== "undefined" && rootEl.value) {
         ro = new ResizeObserver(() => {
           const wasUnmeasurable = viewport.value.width <= 0 || viewport.value.height <= 0;
           measureViewport();
           // Mounted inside a hidden tab there was nothing to fit into; frame it
           // now that it has a viewport (unless the host or the user drives it).
-          if (wasUnmeasurable && props.fitOnLoad && props.contentBounds && !movedByHand) fit();
+          if (wasUnmeasurable && props.contentBounds) autoFit();
         });
         ro.observe(rootEl.value);
       }
@@ -327,7 +367,7 @@ export default defineComponent({
     watch(
       () => props.contentBounds,
       (bounds) => {
-        if (bounds && props.fitOnLoad && !movedByHand) fit();
+        if (bounds) autoFit();
       },
     );
 
@@ -362,6 +402,11 @@ export default defineComponent({
           class="hk-node-canvas"
           data-pannable={props.pannable ? "" : undefined}
           aria-label={props.ariaLabel}
+          style={{
+            // Only a surface that consumes the gesture may take touch scrolling
+            // away from the page.
+            touchAction: props.pannable || props.zoomable ? "none" : undefined,
+          }}
           onWheel={onWheel}
           onPointerdown={onPointerDown}
           onPointermove={onPointerMove}

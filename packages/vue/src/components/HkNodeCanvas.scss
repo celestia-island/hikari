@@ -5,9 +5,9 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  /* The surface owns its gestures: without this a touch drag scrolls the
-     page instead of panning the camera. */
-  touch-action: none;
+  /* The gesture flags decide this, not the stylesheet: a surface that cannot
+     pan or zoom must not eat the page's touch scrolling. The component sets
+     `touch-action: none` inline when either gesture is on. */
 }
 
 .hk-node-canvas[data-pannable] {

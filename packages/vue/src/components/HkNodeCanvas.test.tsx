@@ -105,11 +105,13 @@ function mount(props: Record<string, unknown>, slots: Record<string, unknown> = 
 /** A pointer event, whatever the environment's constructor support is. */
 function pointerEvent(
   type: string,
-  init: { pointerId: number; clientX: number; clientY: number },
+  init: { pointerId: number; clientX: number; clientY: number; buttons?: number },
 ): Event {
   const Ctor = (globalThis as { PointerEvent?: typeof MouseEvent }).PointerEvent ?? MouseEvent;
-  const event = new Ctor(type, { bubbles: true, cancelable: true, button: 0 });
-  for (const [key, value] of Object.entries(init)) {
+  // A real drag carries the held button on every move; a hover carries none.
+  const buttons = init.buttons ?? (type === "pointerup" ? 0 : 1);
+  const event = new Ctor(type, { bubbles: true, cancelable: true, button: 0, buttons });
+  for (const [key, value] of Object.entries({ ...init, buttons })) {
     Object.defineProperty(event, key, { value, configurable: true });
   }
   return event;
@@ -143,6 +145,107 @@ describe("HkNodeCanvas", () => {
 
     const layer = container.querySelector<HTMLElement>(".hk-node-canvas-layer");
     expect(layer?.style.transform).toContain(`scale(${cam!.k})`);
+  });
+
+  it("uses the whole grid step when the ideal factor lands exactly on the grid", async () => {
+    // 720 / 1200 is exactly 0.6, twelve grid steps — but in binary it is
+    // 11.999999999999998 steps, so a bare floor throws a whole step away and
+    // frames the content 8% smaller than the padding budget allows.
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 1200, height: 800 },
+      fitOnLoad: true,
+    });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.6);
+  });
+
+  it("does not keep a pan armed after a release that happens off the canvas", async () => {
+    // The gesture is only captured once it passes the slop, so a press near the
+    // edge that drifts out and releases outside never sends this element a
+    // pointerup. A later hover must not move the camera on its own.
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    const capture = vi.fn();
+    root.setPointerCapture = capture;
+
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 11, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 11, clientX: 102, clientY: 101 }));
+    document.body.dispatchEvent(
+      pointerEvent("pointerup", { pointerId: 11, clientX: 102, clientY: 101, buttons: 0 }),
+    );
+
+    root.dispatchEvent(
+      pointerEvent("pointermove", { pointerId: 11, clientX: 300, clientY: 260, buttons: 0 }),
+    );
+    expect(capture).not.toHaveBeenCalled();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+  });
+
+  it("leaves the pan to the host when the host claims the pointerdown", async () => {
+    // Node dragging is the core gesture of every consumer: a card that prevents
+    // the default on its own pointerdown keeps the pan — and the root capture
+    // that would cut its drag short — out of the way.
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    const card = document.createElement("div");
+    card.addEventListener("pointerdown", (event) => event.preventDefault());
+    root.appendChild(card);
+    const capture = vi.fn();
+    root.setPointerCapture = capture;
+
+    const press = pointerEvent("pointerdown", { pointerId: 12, clientX: 100, clientY: 100 });
+    card.dispatchEvent(press);
+    expect(press.defaultPrevented).toBe(true);
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 12, clientX: 160, clientY: 100 }));
+    expect(capture).not.toHaveBeenCalled();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+  });
+
+  it("does not loop when the host writes the emitted camera back", async () => {
+    // The natural host spelling: `v-model:camera` plus a bounds object literal,
+    // which is a fresh identity on every render. Framing has to settle instead
+    // of emitting, re-rendering and framing again for ever.
+    const camera = ref({ k: 1, x: 0, y: 0 });
+    let renders = 0;
+    let emits = 0;
+    const instance = ref<Instance | null>(null);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const Root = defineComponent({
+      setup() {
+        return () => {
+          renders++;
+          return h(HkNodeCanvas, {
+            ref: instance as never,
+            contentBounds: { x: 0, y: 0, width: BOUNDS.width, height: BOUNDS.height },
+            camera: camera.value,
+            "onUpdate:camera": (next: { k: number; x: number; y: number }) => {
+              emits++;
+              camera.value = next;
+            },
+          });
+        };
+      },
+    });
+    const app = createApp(Root);
+    app.mount(container);
+    apps.push(app);
+
+    for (let frame = 0; frame < 5; frame++) await nextTick();
+    expect(renders).toBeLessThan(10);
+    // The host owns a controlled camera: automatic framing never touches it.
+    expect(camera.value).toEqual({ k: 1, x: 0, y: 0 });
+
+    // An imperative fit frames it once; the second one has nothing to change,
+    // so it must stay silent instead of emitting the same camera again.
+    instance.value?.fit();
+    await nextTick();
+    const afterFirst = emits;
+    expect(afterFirst).toBeGreaterThan(0);
+    instance.value?.fit();
+    instance.value?.fit();
+    await nextTick();
+    expect(emits).toBe(afterFirst);
   });
 
   it("does not blow a small graph up past the fit cap", async () => {
@@ -225,10 +328,13 @@ describe("HkNodeCanvas", () => {
     expect(capture).not.toHaveBeenCalled();
     expect(instance.value!.camera).toEqual(before);
     expect(root.hasAttribute("data-pannable")).toBe(false);
+    // Nothing consumes the gesture, so the page keeps its touch scrolling.
+    expect(root.style.touchAction).toBe("");
 
     const on = mount({ contentBounds: BOUNDS, fitOnLoad: false });
     await nextTick();
     expect(on.root.hasAttribute("data-pannable")).toBe(true);
+    expect(on.root.style.touchAction).toBe("none");
   });
 
   it("zooms towards the cursor on the wheel", async () => {

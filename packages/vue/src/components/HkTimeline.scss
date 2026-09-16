@@ -400,15 +400,12 @@
     outline-offset: 2px;
   }
 
+  /* Highlight only — no scale pop: enlarging the node clipped it against
+     tight hosts (a top-of-rail circle poked out of its overflow box) and
+     read as jitter (user direction 2026-09-16). */
   &:hover [data-el="indicator"] {
-    transform: scale(1.12);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary) 15%, transparent);
-    transition: transform var(--duration-normal, 0.3s) ease, box-shadow var(--duration-normal, 0.3s) ease;
-  }
-
-  // Press feedback mirroring the hover pop (role="button" affordance).
-  &:active [data-el="indicator"] {
-    transform: scale(0.96);
+    transition: box-shadow var(--duration-normal, 0.3s) ease;
   }
 }
 
@@ -416,8 +413,8 @@
 // animation under reduced motion, keeping the state change itself
 // (house pattern: HkIconButton.scss).
 @media (prefers-reduced-motion: reduce) {
-  .hk-timeline-step[data-clickable]:hover [data-el="indicator"],
-  .hk-timeline-step[data-clickable]:active [data-el="indicator"] {
+  .hk-timeline-step[data-clickable]:hover [data-el="indicator"] {
     transition: none;
   }
+}
 }

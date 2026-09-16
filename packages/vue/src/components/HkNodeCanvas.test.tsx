@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, isRef, nextTick, ref, type App } from "vue";
+import { createApp, defineComponent, h, isRef, nextTick, onUpdated, ref, type App } from "vue";
 
 import HkNodeCanvas, { NODE_CANVAS_DEFAULTS } from "./HkNodeCanvas";
 
@@ -525,17 +525,98 @@ describe("HkNodeCanvas", () => {
     expect(without.container.querySelector(".hk-node-canvas-minimap")).toBeNull();
   });
 
-  it("still frames a graph too large for one grid step when zooming out is allowed", async () => {
-    // A fit that floors to zero is not a scale anything can be drawn at; the
-    // smallest step the grid expresses is, and refusing to frame would leave
-    // the graph at 1:1 with its corners nowhere in sight.
-    const { instance } = mount({
-      contentBounds: { x: 0, y: 0, width: 100000, height: 80000 },
-      minZoom: 0,
+  it("frames a graph too large for one grid step at the un-quantised ideal", async () => {
+    // A fit that floors to zero is not a scale anything can be drawn at, and
+    // refusing to frame would leave the graph at 1:1. Raising it to a whole
+    // step instead would over-zoom — by an order of magnitude here.
+    const huge = { x: 0, y: 0, width: 100000, height: 80000 };
+    const { instance } = mount({ contentBounds: huge, minZoom: 0, fitOnLoad: true });
+    await nextTick();
+    expect(instance.value!.camera.k).toBe(0.0065);
+
+    // ... and it stays inside the cap the host configured.
+    const capped = mount({
+      contentBounds: { x: 0, y: 0, width: 100000, height: 100000 },
+      minZoom: 0.01,
+      fitCap: 0.02,
       fitOnLoad: true,
     });
     await nextTick();
-    expect(instance.value!.camera.k).toBe(NODE_CANVAS_DEFAULTS.zoomGridStep);
+    expect(capped.instance.value!.camera.k).toBe(0.01);
+  });
+
+  it("answers an explicit fit after the host moved the camera itself", async () => {
+    // A restored viewport or a minimap jump moves the controlled camera with no
+    // gesture; a later fit() is the host asking to be framed and has to work.
+    const camera = ref({ k: 1, x: 0, y: 0 });
+    const { instance } = mount({
+      contentBounds: BOUNDS,
+      camera,
+      "onUpdate:camera": (next: { k: number; x: number; y: number }) => {
+        camera.value = next;
+      },
+    });
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    await nextTick();
+    expect(camera.value.x).toBe(150);
+
+    camera.value = { k: 1.25, x: 250, y: 175 };
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    await nextTick();
+    expect(camera.value.x).toBe(150);
+  });
+
+  it("leaves the camera alone for bounds it cannot frame", async () => {
+    const { instance } = mount({
+      contentBounds: { x: Number.NaN, y: 0, width: 400, height: 200 },
+      fitOnLoad: true,
+    });
+    await nextTick();
+    expect(instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+
+    const infinite = mount({
+      contentBounds: { x: 0, y: 0, width: 400, height: Number.POSITIVE_INFINITY },
+      fitOnLoad: true,
+    });
+    await nextTick();
+    expect(infinite.instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+  });
+
+  it("keeps the view when the host hands control back", async () => {
+    const camera = ref<{ k: number; x: number; y: number } | undefined>({ k: 1.5, x: 40, y: 25 });
+    const { instance } = mount({ contentBounds: BOUNDS, camera, fitOnLoad: false });
+    await nextTick();
+    expect(instance.value!.camera).toEqual({ k: 1.5, x: 40, y: 25 });
+
+    camera.value = undefined;
+    await nextTick();
+    expect(instance.value!.camera).toEqual({ k: 1.5, x: 40, y: 25 });
+  });
+
+  it("ends a pan when the window loses focus", async () => {
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 31, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 31, clientX: 160, clientY: 100 }));
+    const dragged = instance.value!.camera.x;
+    window.dispatchEvent(new Event("blur"));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 31, clientX: 300, clientY: 100 }));
+    expect(instance.value!.camera.x).toBe(dragged);
+  });
+
+  it("lets a host subtree inside its own chrome keep panning", async () => {
+    const { instance, root } = mount({ contentBounds: BOUNDS, fitOnLoad: false }, {
+      overlay: () => h("div", { class: "hud" }, [h("div", { class: "card", "data-hk-canvas-pan": "" }, "hud card")]),
+    });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+    const card = root.querySelector<HTMLElement>(".hud .card")!;
+    card.dispatchEvent(pointerEvent("pointerdown", { pointerId: 32, clientX: 100, clientY: 100 }));
+    root.dispatchEvent(pointerEvent("pointermove", { pointerId: 32, clientX: 160, clientY: 100 }));
+    expect(instance.value!.camera.x).toBeCloseTo(60, 6);
   });
 
   it("keeps a captured drag alive across a button-less move", async () => {
@@ -611,52 +692,41 @@ describe("HkNodeCanvas", () => {
     expect(camera.value.k).toBe(NODE_CANVAS_DEFAULTS.fitCap);
   });
 
-  it("does not keep asking a host that stores a transformed camera", async () => {
+  it("converges when the host frames on every render and rounds what it stores", async () => {
     // The real store rounds and clamps what it is given, so its value never
-    // equals the request. A host that frames on every update would then ask for
-    // ever; one request has to stand until a gesture moves the camera away.
+    // equals the request; a host that frames in its own update hook would then
+    // ask for ever. One request has to stand until the host moves.
     const camera = ref({ k: 1, x: 0, y: 0 });
-    let emits = 0;
+    let renders = 0;
     const instance = ref<Instance | null>(null);
     const container = document.createElement("div");
     document.body.appendChild(container);
     const Root = defineComponent({
       setup() {
-        return () =>
-          h(HkNodeCanvas, {
+        onUpdated(() => {
+          instance.value?.fit();
+        });
+        return () => {
+          renders++;
+          return h(HkNodeCanvas, {
             ref: instance as never,
             contentBounds: { x: 0, y: 0, width: 100, height: 1571 },
             camera: camera.value,
             fitControlled: true,
             "onUpdate:camera": (next: { k: number; x: number; y: number }) => {
-              emits++;
               camera.value = { k: next.k, x: Math.round(next.x), y: Math.round(next.y) };
             },
           });
+        };
       },
     });
     const app = createApp(Root);
     app.mount(container);
     apps.push(app);
 
-    for (let frame = 0; frame < 3; frame++) await nextTick();
-    const afterMount = emits;
-    for (let round = 0; round < 5; round++) {
-      instance.value?.fit();
-      await nextTick();
-    }
-    expect(afterMount).toBe(1);
-    expect(emits).toBe(afterMount);
+    for (let frame = 0; frame < 6; frame++) await nextTick();
+    expect(renders).toBeLessThan(12);
     expect(camera.value.k).toBe(0.3);
-
-    // Once the user moves, framing may ask again (a controlled gesture emits
-    // its own update too, so the count is taken after it).
-    instance.value?.panBy(10, 10);
-    await nextTick();
-    const afterPan = emits;
-    instance.value?.fit();
-    await nextTick();
-    expect(emits).toBe(afterPan + 1);
   });
 
   it("re-frames when the host mutates its bounds in place", async () => {

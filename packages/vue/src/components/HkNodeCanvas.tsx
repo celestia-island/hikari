@@ -163,14 +163,15 @@ export default defineComponent({
       return a.k === b.k && a.x === b.x && a.y === b.y;
     }
 
-    /** The camera last asked of a controlled host, so an identical request is
-     *  not repeated at it. */
-    let lastRequested: NodeCanvasCamera | null = null;
+    /** The last request made of a controlled host, with the camera it was
+     *  asked against: repeating it is pointless while the host has not moved
+     *  anywhere, and is required as soon as it has. */
+    let lastRequested: { request: NodeCanvasCamera; at: NodeCanvasCamera } | null = null;
 
     /** Write a camera through to the host (controlled) or the local state. */
     function writeCamera(normalized: NodeCanvasCamera) {
       if (props.camera) {
-        lastRequested = normalized;
+        lastRequested = { request: normalized, at: camera.value };
         emit("update:camera", normalized);
       } else {
         inner.value = normalized;
@@ -190,7 +191,17 @@ export default defineComponent({
     function computeFit(): NodeCanvasCamera {
       const bounds = props.contentBounds;
       const { width, height } = viewport.value;
-      if (!bounds || bounds.width <= 0 || bounds.height <= 0 || width <= 0 || height <= 0) {
+      if (
+        !bounds ||
+        !(bounds.width > 0) ||
+        !(bounds.height > 0) ||
+        !Number.isFinite(bounds.x) ||
+        !Number.isFinite(bounds.y) ||
+        !Number.isFinite(bounds.width) ||
+        !Number.isFinite(bounds.height) ||
+        !(width > 0) ||
+        !(height > 0)
+      ) {
         return camera.value;
       }
       const pad = props.fitPadding;
@@ -207,12 +218,12 @@ export default defineComponent({
       // padding budget and squeeze (or push) the content past the viewport.
       // Flooring can only lower k, so the upper bound after it is maxZoom:
       // minZoom must still win over a fitCap configured below it.
-      // A graph too large for one grid step floors to 0, which is not a scale
-      // this camera can draw at: keep the smallest step the grid expresses
-      // instead of refusing to frame (the content then overflows, which is what
-      // the requested minimum asks for).
       const floorValue = step > 0 ? Math.floor(raw / step + 1e-9) * step : raw;
-      const floored = step > 0 ? Math.max(floorValue, step) : floorValue;
+      // A graph too large for one grid step floors to 0. Raising it to a whole
+      // step would over-zoom (up to 10x past the budget, and past `fitCap`);
+      // the un-quantised ideal is already inside [minZoom, min(fitCap, maxZoom)],
+      // so that is what frames it.
+      const floored = floorValue <= 0 ? raw : floorValue;
       // The multiplication leaves binary dust (6 * 0.05 is 0.30000000000000004),
       // and a camera whose k differs from what `normalizeZoom` would return for
       // the same factor makes the first gesture after a fit jump a hair. Round
@@ -240,10 +251,18 @@ export default defineComponent({
       // object identity changes, the watcher fits again. Compare by value.
       if (sameCamera(next, camera.value)) return false;
       // A host may transform what it stores (rounding, clamping, a 10 Hz
-      // mirror). Its value never equals what we asked for, so a host that
-      // frames on every update would ask again for ever. One request stands
-      // until a gesture proves the host has moved somewhere else.
-      if (lastRequested && sameCamera(next, lastRequested)) return false;
+      // mirror), so its value never equals what we asked for and a host that
+      // frames on every update would ask again for ever. One request stands —
+      // but only while the host is still where it was when we asked: a host
+      // that moved the camera itself (a restored viewport, a minimap jump) is
+      // asking us to frame, and must get an answer.
+      if (
+        lastRequested &&
+        sameCamera(next, lastRequested.request) &&
+        sameCamera(camera.value, lastRequested.at)
+      ) {
+        return false;
+      }
       writeCamera(next); // already normalised by computeFit
       return true;
     }
@@ -324,10 +343,13 @@ export default defineComponent({
       // with `data-hk-canvas-no-pan` (or claims the gesture with
       // `preventDefault`, above).
       const target = event.target as Element | null;
+      if (target?.closest?.("[data-hk-canvas-no-pan]")) return;
+      // Chrome is not a pan surface, unless the host marks a subtree inside it
+      // as one (`data-hk-canvas-pan`), which is how a HUD wrapper that covers
+      // the whole canvas stays pannable.
       if (
-        target?.closest?.(
-          ".hk-node-canvas-overlay, .hk-node-canvas-minimap, [data-hk-canvas-no-pan]",
-        )
+        !target?.closest?.("[data-hk-canvas-pan]") &&
+        target?.closest?.(".hk-node-canvas-overlay, .hk-node-canvas-minimap")
       ) {
         return;
       }
@@ -344,6 +366,8 @@ export default defineComponent({
       // window so a pan cannot outlive the button.
       window.addEventListener("pointerup", endPan, true);
       window.addEventListener("pointercancel", endPan, true);
+      // A release swallowed by a focus change never arrives as an event.
+      window.addEventListener("blur", loseFocus, true);
     }
 
     function onPointerMove(event: PointerEvent) {
@@ -371,12 +395,28 @@ export default defineComponent({
       panBy(dx, dy);
     }
 
-    function endPan(event: PointerEvent) {
-      if (!panning || event.pointerId !== panning.pointerId) return;
-      panning = null;
+    /** Stop watching for a release (the gesture is over either way). */
+    function stopWindowWatch() {
       window.removeEventListener("pointerup", endPan, true);
       window.removeEventListener("pointercancel", endPan, true);
-      rootEl.value?.releasePointerCapture?.(event.pointerId);
+      window.removeEventListener("blur", loseFocus, true);
+    }
+
+    function endPan(event: PointerEvent) {
+      if (!panning || event.pointerId !== panning.pointerId) return;
+      const pointerId = panning.pointerId;
+      panning = null;
+      stopWindowWatch();
+      rootEl.value?.releasePointerCapture?.(pointerId);
+    }
+
+    /** A blur carries no pointer id: whatever was being dragged is over. */
+    function loseFocus() {
+      if (!panning) return;
+      const pointerId = panning.pointerId;
+      panning = null;
+      stopWindowWatch();
+      rootEl.value?.releasePointerCapture?.(pointerId);
     }
 
     let ro: ResizeObserver | null = null;
@@ -413,6 +453,15 @@ export default defineComponent({
     // wrong scale.
     // Keyed on the VALUES: a host that mutates its bounds object in place (or
     // reuses one instance) still gets framed.
+    // Handing control back (the host drops the `camera` prop) keeps the view
+    // the host was showing instead of jumping to the internal seed.
+    watch(
+      () => props.camera,
+      (next, previous) => {
+        if (!next && previous) inner.value = previous;
+      },
+    );
+
     watch(
       () => {
         const bounds = props.contentBounds;
@@ -429,6 +478,7 @@ export default defineComponent({
       panning = null;
       window.removeEventListener("pointerup", endPan, true);
       window.removeEventListener("pointercancel", endPan, true);
+      window.removeEventListener("blur", loseFocus, true);
     });
 
     expose({

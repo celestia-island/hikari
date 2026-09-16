@@ -109,7 +109,21 @@ describe("HkModalBreadcrumb overflow fence", () => {
   it("keeps the fold off the accessibility tree and the names on it", () => {
     // The clone duplicates every label — it must stay invisible to AT.
     expect(tsx).toMatch(/hk-modal-breadcrumb-measure"[^>]*aria-hidden="true"/);
-    // A cut label still announces its whole name.
-    expect(tsx).toMatch(/hk-modal-breadcrumb-sr-only/);
+    // A cut label IS a button, and a cut string is not a name: the whole
+    // layer name travels as its accessible name.
+    expect(tsx).toMatch(/aria-label=\{crumb\.label\}/);
+    // The tappable label must reach through the pointer-transparent strip.
+    expect(rule(".hk-modal-breadcrumb-item-reveal")).toContain("pointer-events: auto");
+  });
+
+  it("opens the revealed name in the same popover family as the menu", () => {
+    // Two surfaces, one form-factor rule: both are HkPopovers that dock as
+    // a sheet on mobile, anchored to the crumb they belong to.
+    expect(tsx.match(/<HkPopover/g)).toHaveLength(2);
+    expect(tsx.match(/sheetOnMobile/g)).toHaveLength(2);
+    // A revealed name wraps instead of cutting.
+    const block = rule(".hk-modal-breadcrumb-reveal");
+    expect(block).toContain("overflow-wrap: anywhere");
+    expect(block).not.toContain("text-overflow: ellipsis");
   });
 });

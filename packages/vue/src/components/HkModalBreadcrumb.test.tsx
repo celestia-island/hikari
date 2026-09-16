@@ -218,16 +218,20 @@ describe("HkModalBreadcrumb label budget", () => {
     expect(labels()).toEqual(["abcdefghijklmnopqrst", "abcdefghijklmnopqr…"]);
   });
 
-  it("keeps the whole layer name for assistive tech when it cuts", async () => {
+  it("keeps the whole layer name on a cut label", async () => {
     manager.register("modal", true, LONG);
     manager.register("modal", true, "细节");
     await mountStrip();
     const nav = strip()!;
-    const first = nav.querySelector<HTMLElement>(
-      ":scope > .hk-modal-breadcrumb-crumb .hk-modal-breadcrumb-item",
+    const first = nav.querySelector<HTMLButtonElement>(
+      ":scope > .hk-modal-breadcrumb-crumb button.hk-modal-breadcrumb-item",
     )!;
-    expect(first.querySelector('[aria-hidden="true"]')!.textContent).toBe(LONG_TAIL);
-    expect(first.querySelector(".hk-modal-breadcrumb-sr-only")!.textContent).toBe(LONG);
+    // Rendered cut, announced whole: a truncated string is not a name.
+    expect(first.textContent).toBe(LONG_TAIL);
+    expect(first.getAttribute("aria-label")).toBe(LONG);
+    expect(first.getAttribute("aria-expanded")).toBe("false");
+    // An uncut label stays plain text — no new interaction surface.
+    expect(nav.querySelectorAll("button.hk-modal-breadcrumb-item")).toHaveLength(1);
     // The measurement clone must never join the a11y tree.
     expect(
       nav.querySelector(".hk-modal-breadcrumb-measure")!.getAttribute("aria-hidden"),
@@ -250,6 +254,89 @@ describe("HkModalBreadcrumb label budget", () => {
     for (const text of shown) {
       expect(displayWidthUnits(text)).toBeLessThanOrEqual(10);
     }
+  });
+
+  it("reveals a cut label on the same crumb's popover", async () => {
+    setViewport(1200);
+    manager.register("modal", true, LONG);
+    manager.register("modal", true, "细节");
+    await mountStrip();
+    const cut = () =>
+      strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!;
+    expect(document.body.querySelector(".hk-popover-panel")).toBeNull();
+
+    cut().click();
+    await nextTick();
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel).toBeTruthy();
+    // Desktop: an anchored popover carrying the WHOLE name, wrapping.
+    expect(panel.classList.contains("hk-is-sheet")).toBe(false);
+    expect(panel.querySelector(".hk-modal-breadcrumb-reveal")!.textContent).toBe(LONG);
+    expect(cut().getAttribute("aria-expanded")).toBe("true");
+
+    // Tapping the same crumb again puts it away.
+    cut().click();
+    await nextTick();
+    await nextTick();
+    expect(cut().getAttribute("aria-expanded")).toBe("false");
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
+  });
+
+  it("docks the revealed name as a bottom sheet on mobile", async () => {
+    setViewport(360);
+    manager.register("modal", true, LONG);
+    manager.register("modal", true, "细节");
+    await mountStrip();
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await nextTick();
+    await nextTick();
+    const panel = document.body.querySelector<HTMLElement>(".hk-popover-panel")!;
+    expect(panel.classList.contains("hk-is-sheet")).toBe(true);
+    expect(panel.querySelector(".hk-modal-breadcrumb-reveal")!.textContent).toBe(LONG);
+    // It registers as a window layer like any other blocking sheet, and the
+    // name it reveals is the name it carries.
+    const blocking = [...manager.registry.value.values()].filter((entry) => entry.blocking);
+    expect(blocking.map((entry) => entry.title)).toContain(LONG);
+  });
+
+  it("puts the revealed name away when its crumb folds out of the tail", async () => {
+    setViewport(1200);
+    manager.register("modal", true, LONG);
+    manager.register("modal", true, "细节");
+    await mountStrip();
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await nextTick();
+    await nextTick();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeTruthy();
+
+    // A narrower viewport folds the leading layer behind the trigger: its
+    // anchor leaves the strip, so the surface goes with it.
+    setViewport(320);
+    await nextTick();
+    await nextTick();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeNull();
+  });
+
+  it("opens the reveal instead of the hidden-layers menu", async () => {
+    // The two surfaces are never open together: tapping a crumb closes the
+    // menu it was opened from (its leave plays out, so the logical state is
+    // what the assertion reads).
+    setViewport(800);
+    STACK_TITLES.forEach((title) => manager.register("modal", true, title));
+    manager.register("modal", true, "细节");
+    await mountStrip();
+    more()!.click();
+    await nextTick();
+    await nextTick();
+    expect(menuRows().length).toBeGreaterThan(0);
+    expect(more()!.getAttribute("aria-expanded")).toBe("true");
+
+    strip()!.querySelector<HTMLButtonElement>("button.hk-modal-breadcrumb-item")!.click();
+    await nextTick();
+    await nextTick();
+    expect(document.body.querySelector(".hk-modal-breadcrumb-reveal")).toBeTruthy();
+    expect(more()!.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("honours a narrower budget from the host", async () => {

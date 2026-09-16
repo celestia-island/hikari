@@ -294,6 +294,47 @@ export default defineComponent({
       if (!stillFolded) menuOpen.value = false;
     });
 
+    // ── Truncated-name reveal ─────────────────────────────────────────
+    // A cut label travels whole to assistive tech, and the folded layers
+    // get the menu above — but a layer that is VISIBLE and still cut had no
+    // way to read it. Tapping such a crumb opens the same popover family
+    // (anchored under the crumb on desktop, bottom-up sheet on mobile) with
+    // the whole name, because the strip's own bar is not a place long text
+    // can be read from.
+    const revealed = ref<{ id: string; label: string } | null>(null);
+    const revealAnchor = ref<HTMLElement | null>(null);
+    const crumbEls = new Map<string, HTMLElement>();
+
+    function setCrumbEl(id: string, el: Element | null): void {
+      if (el) crumbEls.set(id, el as HTMLElement);
+      else crumbEls.delete(id);
+    }
+
+    function toggleReveal(crumb: Crumb): void {
+      if (revealed.value?.id === crumb.id) {
+        revealed.value = null;
+        return;
+      }
+      if (!crumbEls.has(crumb.id)) return;
+      menuOpen.value = false;
+      // The anchor must be on the surface BEFORE it opens: HkPopover reads
+      // the prop when its open edge runs, and the click's own render has
+      // not landed yet.
+      revealAnchor.value = crumbEls.get(crumb.id) ?? null;
+      void nextTick(() => {
+        revealed.value = { id: crumb.id, label: crumb.label };
+      });
+    }
+
+    // The revealed crumb can fold away under a narrower budget: its anchor
+    // goes with it, so the surface must too.
+    watch(tail, (visibleTail) => {
+      const open = revealed.value;
+      if (open && !visibleTail.some((crumb) => crumb.id === open.id)) {
+        revealed.value = null;
+      }
+    });
+
     const topPx = ref(24);
     function resyncTop() {
       const app = document.getElementById(props.appRootId);
@@ -394,6 +435,7 @@ export default defineComponent({
           window.removeEventListener("resize", onViewportChange);
           releaseClone();
           menuOpen.value = false;
+          revealed.value = null;
           hiddenCount.value = 0;
         }
       },
@@ -502,16 +544,23 @@ export default defineComponent({
                 {/* A chevron separates two items — the FIRST rendered item
                     carries none, whether or not the trigger precedes it. */}
                 {(triggerShown.value || i > 0) && separator()}
-                <span class={itemClass(crumb)}>
-                  {crumb.truncated ? (
-                    <>
-                      <span aria-hidden="true">{crumb.text}</span>
-                      <span class="hk-modal-breadcrumb-sr-only">{crumb.label}</span>
-                    </>
-                  ) : (
-                    crumb.text
-                  )}
-                </span>
+                {crumb.truncated ? (
+                  // Cut label: tappable, and the full name is the button's
+                  // accessible name (a cut string is not a name).
+                  <button
+                    type="button"
+                    ref={(el) => setCrumbEl(crumb.id, el as Element | null)}
+                    class={`${itemClass(crumb)} hk-modal-breadcrumb-item-reveal`}
+                    aria-haspopup="dialog"
+                    aria-expanded={revealed.value?.id === crumb.id}
+                    aria-label={crumb.label}
+                    onClick={() => toggleReveal(crumb)}
+                  >
+                    {crumb.text}
+                  </button>
+                ) : (
+                  <span class={itemClass(crumb)}>{crumb.text}</span>
+                )}
               </span>
             ))}
           </nav>
@@ -541,6 +590,26 @@ export default defineComponent({
                 />
               ))}
             </HkMenuPanel>
+          </HkPopover>
+          <HkPopover
+            modelValue={revealed.value !== null}
+            onUpdate:modelValue={(v: boolean) => {
+              if (!v) revealed.value = null;
+            }}
+            anchorRef={revealAnchor.value}
+            placement="bottom-start"
+            // Same clearance as the menu: the crumb sits inside the strip's
+            // own padding box, which paints above the anchored band.
+            offset={16}
+            sheetOnMobile
+            // The name is the surface's reason to exist, so it names it.
+            // The sheet heading ellipsises (it is chrome) — the panel body
+            // below carries the whole name and wraps.
+            title={revealed.value?.label ?? ""}
+          >
+            {revealed.value && (
+              <p class="hk-modal-breadcrumb-reveal">{revealed.value.label}</p>
+            )}
           </HkPopover>
         </Teleport>
       ) : null;

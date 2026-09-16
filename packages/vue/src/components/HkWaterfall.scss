@@ -33,3 +33,11 @@
   flex-direction: column;
   gap: var(--space-12);
 }
+
+/* A bucket with fewer cards than columns leaves an empty column behind.
+   Without this it keeps its `flex: 1 1 0` share of the row and the
+   surviving card renders at half width beside a ghost; collapsed, the card
+   takes the full width until the bucket grows a card for that column. */
+.hk-waterfall-column[data-empty] {
+  flex: 0 0 0;
+}

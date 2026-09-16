@@ -56,16 +56,14 @@ function rectOf(top: number, left = 0, width = 10, height = 100): DOMRect {
   } as DOMRect;
 }
 
-function mount(props: Record<string, unknown>, withEmpty = false): Mounted {
+function mount(props: Record<string, unknown>, extraSlots: Record<string, unknown> = {}): Mounted {
   const container = document.createElement("div");
   document.body.appendChild(container);
   containers.push(container);
 
   const instance = ref<WaterfallInstance | null>(null);
   const cardSlot = ({ item }: { item: unknown }) => h("div", { class: "card" }, String(item));
-  const slots = withEmpty
-    ? { card: cardSlot, empty: () => h("p", { class: "none" }, "none") }
-    : { card: cardSlot };
+  const slots = { card: cardSlot, ...extraSlots };
   const Root = defineComponent({
     setup() {
       return () =>
@@ -169,6 +167,51 @@ describe("HkWaterfall", () => {
     expect(sectionColumnTexts(mounted.root, "b")).toEqual([["b1"], []]);
   });
 
+  it("forwards the dock slots so a view can dock its own chrome", async () => {
+    // HistoryView docks its composer through the container's dock contract
+    // (and consumes the `--hk-scroll-dock-*` heights it publishes); the
+    // waterfall has to pass the slots through or the view cannot migrate.
+    const mounted = mount(
+      { items: ["a1"] },
+      { dockBottom: () => h("div", { class: "docked" }, "docked") },
+    );
+    await nextTick();
+    expect(mounted.root.querySelector(".docked")?.textContent).toBe("docked");
+  });
+
+  it("lets a consumer keep its own section attribute name", async () => {
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+    });
+    await nextTick();
+    const sections = [...mounted.root.querySelectorAll<HTMLElement>("[data-day-section]")];
+    expect(sections.map((section) => section.dataset.daySection)).toEqual(["a", "b"]);
+    expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(0);
+  });
+
+  it("falls back when the section attribute is not a plain data-* name", async () => {
+    // The prop becomes a selector, so anything that is not a plain data-*
+    // attribute must fall back rather than reach querySelectorAll.
+    const mounted = mount({
+      items: ["a1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "] , script",
+    });
+    await nextTick();
+    expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(1);
+  });
+
+  it("marks an empty column so it collapses instead of eating the row", async () => {
+    const mounted = mount({ items: ["only"], columns: 2 });
+    await nextTick();
+    const columns = [...mounted.root.querySelectorAll<HTMLElement>(".hk-waterfall-column")];
+    expect(columns).toHaveLength(2);
+    expect(columns[0].hasAttribute("data-empty")).toBe(false);
+    expect(columns[1].hasAttribute("data-empty")).toBe(true);
+  });
+
   it("reports its buckets through the exposed instance", async () => {
     const mounted = mount({
       items: ["a1", "a2", "b1"],
@@ -206,7 +249,7 @@ describe("HkWaterfall", () => {
   });
 
   it("renders the empty slot when there is nothing to show", async () => {
-    const mounted = mount({ items: [] }, true);
+    const mounted = mount({ items: [] }, { empty: () => h("p", { class: "none" }, "none") });
     await nextTick();
     expect(mounted.root.querySelector(".none")?.textContent).toBe("none");
     expect(mounted.root.querySelectorAll("[data-waterfall-bucket]")).toHaveLength(0);

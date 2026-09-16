@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
 import { credentialAutocomplete } from "./credentialAutofill";
-import HkPasswordInput from "../components/HkPasswordInput";
+import HkInput from "../components/HkInput";
 import { HkSignInCard } from "../components/HkSignInCard";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -77,14 +77,14 @@ describe("HkSignInCard credential fields", () => {
   });
 });
 
-describe("HkPasswordInput credential field", () => {
+describe("HkInput password variant credential field", () => {
   it("keeps the off default in the browser and degrades in Tauri", () => {
     setTauri(false);
-    const browser = mount(h(HkPasswordInput, { modelValue: "" }));
+    const browser = mount(h(HkInput, { modelValue: "", variant: "password" }));
     expect((browser.querySelector(".hk-pwd-input") as HTMLInputElement).autocomplete).toBe("off");
 
     setTauri(true);
-    const tauri = mount(h(HkPasswordInput, { modelValue: "" }));
+    const tauri = mount(h(HkInput, { modelValue: "", variant: "password" }));
     expect((tauri.querySelector(".hk-pwd-input") as HTMLInputElement).autocomplete).toBe("new-password");
   });
 });

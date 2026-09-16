@@ -37,7 +37,6 @@ export { default as HMarkdownRenderer } from "./components/HkMarkdownRenderer";
 export { default as HModal } from "./components/HkModal";
 export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
-export { default as HPasswordInput } from "./components/HkPasswordInput";
 export { default as HPhoneInput } from "./components/HkPhoneInput";
 export { default as HAffixPicker, type HkAffixOption } from "./components/HkAffixPicker";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
@@ -292,8 +291,7 @@ export {
 export { fuzzyScore, fuzzyScoreFields, fuzzySearch } from "./utils/fuzzy";
 export type { FuzzyMatch } from "./utils/fuzzy";
 export { validatePassword, passwordLevel } from "./utils/password";
-export type { PasswordValidationResult, PasswordLevel } from "./utils/password";
-
+export type { PasswordValidationResult, PasswordLevel, PasswordStrengthEvaluator } from "./utils/password";
 export { FOCUSABLE_SELECTOR, getFocusableElements, focusFirst, trapFocus, scrollToElement } from "./utils/dom";
 export { useApproachEnd } from "./composables/useApproachEnd";
 export type { ApproachEndOptions, ApproachEndHandle } from "./composables/useApproachEnd";

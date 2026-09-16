@@ -82,9 +82,9 @@ registerCssAnimation("hk-skeleton-shimmer", { infinite: true });
 registerCssAnimation("hk-image-preview-shimmer", { infinite: true });
 // components/HkProgressBar.scss — indeterminate bar sweep (loops forever).
 registerCssAnimation("hk-progress-indeterminate", { infinite: true });
-// components/HkPasswordInput.scss — caps-lock warning flash (plays once).
+// components/HkPasswordSurface.scss — caps-lock warning flash (plays once).
 registerCssAnimation("hk-pwd-flash");
-// components/HkPasswordInput.scss — breathing hint glow (loops forever).
+// components/HkPasswordSurface.scss — breathing hint glow (loops forever).
 registerCssAnimation("hk-pwd-breathe", { infinite: true });
 // components/HkPickerPane.scss — date/time picker view drill forward
 // (plays once, shared by HkDatePicker and HkDateTimePicker).

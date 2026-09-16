@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from "lucide-vue-next";
 import {
   computed,
   defineComponent,
@@ -6,6 +7,7 @@ import {
   ref,
   watch,
   type PropType,
+  useAttrs,
 } from "vue";
 
 import { useI18n } from "../i18n/context";
@@ -14,10 +16,12 @@ import { credentialAutocomplete } from "../runtime/credentialAutofill";
 import { onFrame, onceFrame, type AnimationHandle } from "../runtime/animationBus";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
+import { passwordLevel, type PasswordLevel, type PasswordStrengthEvaluator } from "../utils/password";
 
 import HListTransition from "./HkListTransition";
+import HkTooltip from "./HkTooltip";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
-import "./HkPasswordInput.scss";
+import "./HkPasswordSurface.scss";
 import { drawnScale } from "../composables/layoutGeometry";
 
 interface Ripple {
@@ -25,67 +29,61 @@ interface Ripple {
   peak: number;
 }
 
-type PasswordVariant = "password" | "confirm";
-type PasswordIcon = PasswordVariant | "custom";
-
+/**
+ * HkPasswordSurface — the internal rendering engine behind
+ * `HkInput variant="password"`.
+ *
+ * It carries the hikari password-field visual language (canvas dot matrix
+ * with input ripples, centered breathing placeholder, caps-lock / full-
+ * width hints, blur "entered" hint) and the password-specific behaviors
+ * (pending-clear refocus semantics, IME composition, autofill polling).
+ * HkInput owns the wrapper / label / error / hint chrome and delegates
+ * here — the public API is HkInput's, this file is an implementation
+ * detail and is NOT exported from the package index.
+ *
+ * Right-edge affordance (`passwordTrailing`):
+ * - "eye" (default): a hold-to-reveal button. While held the canvas
+ *   stops drawing the dot matrix and draws the password TEXT instead —
+ *   each glyph gets a per-frame random perturbation of size, baseline,
+ *   rotation and color, so a screenshot (or an automated scraper)
+ *   never sees a stable, OCR-friendly rendering.
+ * - "strength": the traffic-light dot (weak / fair / strong) with a
+ *   localized tooltip on hover AND on touch tap.
+ * - "none": no affordance at all.
+ */
 export default defineComponent({
-  name: "HkPasswordInput",
+  name: "HkPasswordSurface",
+  inheritAttrs: false,
   props: {
     modelValue: { type: String, default: "" },
-    /**
-     * Placeholder shown when the field is empty and unfocused. When empty,
-     * the component falls back to the `variant` default from hikari's own
-     * i18n (`hikari::passwordInput.placeholderPassword` /
-     * `hikari::passwordInput.placeholderConfirm`). Custom text is usually
-     * obtained from the caller's i18n `t()` function, e.g.
-     * `:placeholder="t('auth.register.confirmPassword')"`.
-     */
     placeholder: { type: String, default: "" },
-    /**
-     * Overflow strategy when the placeholder text is longer than the field:
-     * `marquee` scrolls it like a storefront sign (three copies through a
-     * clipping window, driven by the animation bus — same semantics as
-     * HkInput); `truncate` hard-cuts it with an ellipsis. Defaults to
-     * `truncate` because the password field already renders a custom
-     * centered placeholder layer with its own focus states.
-     */
     placeholderVariant: {
       type: String as () => PlaceholderVariant,
       default: "truncate",
     },
-    /**
-     * Selects the default placeholder text and default icon. Only a
-     * fallback: an explicit `placeholder` or `icon` prop overrides the
-     * variant default. `confirm` pairs the confirm placeholder with a
-     * shield-with-check icon so a second field can be visually distinct.
-     */
-    variant: { type: String as PropType<PasswordVariant>, default: "password" },
-    /**
-     * Overrides the leading icon. `password` renders the lock, `confirm`
-     * renders a shield-with-check, and `custom` renders the `#icon` slot so
-     * callers can inject any SVG. Defaults to following `variant`.
-     */
-    icon: { type: String as PropType<PasswordIcon>, default: undefined },
-    label: { type: String, default: undefined },
-    error: { type: String, default: undefined },
-    hint: { type: String, default: undefined },
     disabled: { type: Boolean, default: false },
     readonly: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
+    /** Error styling on the box (the message itself is HkInput's). */
+    error: { type: Boolean, default: false },
     name: { type: String, default: undefined },
+    /** Undefined resolves through the runtime credential policy. */
     autocomplete: { type: String, default: undefined },
-    strength: { type: Boolean, default: false },
-    passwordEnteredText: { type: String, default: undefined },
-    allSelectedText: { type: String, default: undefined },
-    capsLockText: { type: String, default: undefined },
-    /**
-     * Submit intent on Enter (no modifiers). Auth forms wire this to their
-     * submit handler so pressing Enter in the password field logs in —
-     * the native form-submit path does not fire because the visible action
-     * button is type="button".
-     */
+    /** Label target — the invisible input still owns the field id. */
+    id: { type: String, default: undefined },
+    /** Submit intent on Enter (no modifiers) — see HkInput. */
     submitOnEnter: { type: Function, default: undefined },
-    fullWidthWarningText: { type: String, default: undefined },
+    /** Right-edge affordance — see the component docblock. */
+    passwordTrailing: {
+      type: String as () => "eye" | "strength" | "none",
+      default: "eye",
+    },
+    /** Overrides the built-in passwordLevel classifier. */
+    strengthEvaluator: {
+      type: Function as PropType<PasswordStrengthEvaluator>,
+      default: undefined,
+    },
+    size: { type: String as () => "sm" | "md" | "lg", default: "md" },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -95,6 +93,7 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    const attrs = useAttrs();
     const inputRef = ref<HTMLInputElement>();
     const dotCanvasRef = ref<HTMLCanvasElement>();
     const boxRef = ref<HTMLElement>();
@@ -112,19 +111,12 @@ export default defineComponent({
     const marqueeOverflow = ref(false);
     let lastInputAt = 0;
 
-    const level = computed(() => {
-      if (!props.strength || !props.modelValue) return null;
-      const v = props.modelValue;
-      let score = 0;
-      if (v.length >= 8) score++;
-      if (/[a-z]/.test(v) && /[A-Z]/.test(v)) score++;
-      if (/\d/.test(v)) score++;
-      if (/[^a-zA-Z0-9]/.test(v)) score++;
-      if (v.length >= 14) score++;
-      if (score <= 1) return "weak";
-      if (score <= 2) return "fair";
-      if (score <= 3) return "strong";
-      return "strong";
+    // ── strength (traffic light) ────────────────────────────────────
+    const level = computed<PasswordLevel | null>(() => {
+      if (props.passwordTrailing !== "strength" || !props.modelValue) {
+        return null;
+      }
+      return (props.strengthEvaluator ?? passwordLevel)(props.modelValue);
     });
 
     const levelLabel = computed(() => {
@@ -135,29 +127,25 @@ export default defineComponent({
       return t("hikari::passwordInput.strengthStrong", "Strong");
     });
 
-    const resolvedIcon = computed<PasswordIcon>(
-      () => props.icon ?? props.variant,
+    const strengthTooltip = computed(() =>
+      level.value
+        ? `${t("hikari::passwordInput.strengthLabel", "Password strength")}: ${levelLabel.value}`
+        : "",
     );
 
-    const variantPlaceholderKey = computed(() =>
-      props.variant === "confirm"
-        ? "hikari::passwordInput.placeholderConfirm"
-        : "hikari::passwordInput.placeholderPassword",
+    const idlePlaceholder = computed(
+      () => props.placeholder || t("hikari::passwordInput.placeholderPassword"),
     );
 
-    function startReveal() {
-      if (!props.modelValue || props.disabled) return;
-      revealing.value = true;
-      document.addEventListener("pointerup", endReveal, { once: true });
-      document.addEventListener("pointercancel", endReveal, { once: true });
-    }
+    const resolvedPlaceholder = computed(() =>
+      pendingClear.value && props.modelValue
+        ? t("hikari::passwordInput.focusedHasValuePlaceholder")
+        : focused.value
+          ? t("hikari::passwordInput.focusedPlaceholder")
+          : idlePlaceholder.value,
+    );
 
-    function endReveal() {
-      revealing.value = false;
-      document.removeEventListener("pointerup", endReveal);
-      document.removeEventListener("pointercancel", endReveal);
-    }
-
+    // ── canvas: dot matrix / reveal text ────────────────────────────
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
     const ROWS = 3;
     const GAP = 8;
@@ -176,6 +164,10 @@ export default defineComponent({
     let dists: number[][] = [];
     let MAX_D = 1;
     let rgb: [number, number, number] = [88, 166, 255];
+    // Base text color for the reveal pass, in HSL — synced from the
+    // computed box color each time a reveal starts so theme switches
+    // are picked up without a remount.
+    let textHsl: [number, number, number] = [220, 10, 15];
 
     function rebuildGrid(cols: number) {
       if (cols < 3) cols = 3;
@@ -201,33 +193,76 @@ export default defineComponent({
     const ripples: Ripple[] = [];
     let ro: ResizeObserver | null = null;
 
+    function parseColorTriple(raw: string): [number, number, number] | null {
+      const ns = raw.split(/[\s,()rgba]+/).map(Number).filter((n) => !isNaN(n));
+      return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
+    }
+
     function syncColor() {
       try {
-        const raw = getComputedStyle(document.documentElement)
-          .getPropertyValue("--hi-color-primary-rgb")
-          .trim();
-        if (!raw) {
-          const hex = getComputedStyle(document.documentElement)
-            .getPropertyValue("--hi-color-primary")
-            .trim();
-          if (hex.startsWith("#")) {
-            rgb = [
-              parseInt(hex.slice(1, 3), 16),
-              parseInt(hex.slice(3, 5), 16),
-              parseInt(hex.slice(5, 7), 16),
-            ];
+        const cs = getComputedStyle(document.documentElement);
+        const raw = cs.getPropertyValue("--hi-color-primary-rgb").trim();
+        if (raw) {
+          const triple = parseColorTriple(raw);
+          if (triple) {
+            rgb = triple;
             return;
           }
-          const ns = hex.split(/[\s,\(\)]+/).map(Number).filter((n) => !isNaN(n));
-          if (ns.length >= 3) rgb = [ns[0], ns[1], ns[2]];
+        }
+        const hex = cs.getPropertyValue("--hi-color-primary").trim();
+        if (hex.startsWith("#")) {
+          rgb = [
+            parseInt(hex.slice(1, 3), 16),
+            parseInt(hex.slice(3, 5), 16),
+            parseInt(hex.slice(5, 7), 16),
+          ];
           return;
         }
-        const ns = raw.split(/\s+/).map(Number);
-        if (ns.length >= 3 && ns.every((n) => !isNaN(n)))
-          rgb = [ns[0], ns[1], ns[2]];
+        const triple = parseColorTriple(hex);
+        if (triple) rgb = triple;
       } catch {
         // ignore
       }
+    }
+
+    function syncTextHsl() {
+      const box = boxRef.value;
+      if (!box) return;
+      try {
+        const triple = parseColorTriple(getComputedStyle(box).color);
+        if (!triple) return;
+        const [r, g, b] = triple;
+        const rn = r / 255,
+          gn = g / 255,
+          bn = b / 255;
+        const max = Math.max(rn, gn, bn),
+          min = Math.min(rn, gn, bn);
+        const l = (max + min) / 2;
+        let h = 0;
+        let s = 0;
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+          else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+          else h = ((rn - gn) / d + 4) / 6;
+        }
+        textHsl = [h * 360, s * 100, l * 100];
+      } catch {
+        // ignore — keep the previous base
+      }
+    }
+
+    function monoFontStack(): string {
+      try {
+        const raw = getComputedStyle(document.documentElement)
+          .getPropertyValue("--font-mono")
+          .trim();
+        if (raw) return raw;
+      } catch {
+        // ignore
+      }
+      return "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
     }
 
     function resize() {
@@ -249,6 +284,59 @@ export default defineComponent({
       rebuildGrid(cols);
     }
 
+    function clamp(n: number, lo: number, hi: number): number {
+      return Math.min(hi, Math.max(lo, n));
+    }
+
+    /**
+     * Anti-OCR reveal pass: the password is drawn as text on the same
+     * canvas that usually carries the dot matrix, with every glyph
+     * re-randomized per frame — size, baseline, rotation and color all
+     * wobble, so no two frames (and no two screenshots) render the same
+     * pixel grid and automated recognition never gets a stable target.
+     */
+    function drawRevealText(ctx: CanvasRenderingContext2D, W: number, H: number) {
+      const value = props.modelValue;
+      if (!value) return;
+      const aW = W / dpr;
+      const aH = H / dpr;
+      const basePx = clamp(aH * 0.58, 12, 18);
+      const mono = monoFontStack();
+      ctx.font = `${basePx}px ${mono}`;
+      const widths: number[] = [];
+      let raw = 0;
+      for (const ch of value) {
+        const w = ctx.measureText(ch).width;
+        widths.push(w);
+        raw += w;
+      }
+      const avail = Math.max(16, aW - 28);
+      const scale = raw > avail ? Math.max(0.4, avail / raw) : 1;
+      let x = (aW - raw * scale) / 2;
+      const midY = aH / 2;
+      const [bh, bs, bl] = textHsl;
+      for (let i = 0; i < value.length; i++) {
+        const ch = value[i]!;
+        const advance = widths[i]! * scale;
+        const sizeJ = basePx * scale * (1 + (Math.random() * 2 - 1) * 0.16);
+        const yJ = (Math.random() * 2 - 1) * aH * 0.09;
+        const rotJ = (Math.random() * 2 - 1) * 0.1;
+        const hJ = bh + (Math.random() * 2 - 1) * 24;
+        const sJ = clamp(bs + (Math.random() * 2 - 1) * 26, 10, 80);
+        const lJ = clamp(bl + (Math.random() * 2 - 1) * 18, 12, 88);
+        ctx.save();
+        ctx.translate((x + advance / 2) * dpr, (midY + yJ) * dpr);
+        ctx.rotate(rotJ);
+        ctx.font = `${sizeJ.toFixed(2)}px ${mono}`;
+        ctx.fillStyle = `hsl(${hJ.toFixed(1)} ${sJ.toFixed(1)}% ${lJ.toFixed(1)}%)`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(ch, 0, 0);
+        ctx.restore();
+        x += advance;
+      }
+    }
+
     function draw(dt: number) {
       const cv = dotCanvasRef.value;
       if (!cv) return;
@@ -258,7 +346,10 @@ export default defineComponent({
         H = cv.height;
       ctx.clearRect(0, 0, W, H);
 
-      if (revealing.value) return;
+      if (revealing.value) {
+        drawRevealText(ctx, W, H);
+        return;
+      }
 
       const [pr, pg, pb] = rgb;
       const hasVal = !!props.modelValue;
@@ -325,7 +416,8 @@ export default defineComponent({
       // The ripple canvas runs on the shared animation bus at "normal"
       // priority so the reduced-motion switch parks it like every other
       // JS-driven animation. The draw callback clamps the delta exactly
-      // like the old self-scheduling rAF loop did.
+      // like the old self-scheduling rAF loop did. While revealing, the
+      // same loop drives the per-frame anti-OCR re-jitter.
       loopHandle = onFrame((ctx) => {
         draw(ctx.delta); // the bus already clamps per-entry delta to MAX_DELTA
       }, "normal");
@@ -338,6 +430,28 @@ export default defineComponent({
 
     function kickRipple() {
       ripples.push({ radius: 0, peak: 1 });
+    }
+
+    // ── hold-to-reveal (eye) ────────────────────────────────────────
+    function startReveal() {
+      if (!props.modelValue || props.disabled || props.readonly) return;
+      syncTextHsl();
+      revealing.value = true;
+      // Parked animation bus (reduced motion): the loop never fires, so
+      // paint one synchronous frame — a static jitter is still better
+      // for OCR than nothing, and motion-sensitive users keep their
+      // preference.
+      draw(0);
+      document.addEventListener("pointerup", endReveal, { once: true });
+      document.addEventListener("pointercancel", endReveal, { once: true });
+    }
+
+    function endReveal() {
+      if (!revealing.value) return;
+      revealing.value = false;
+      draw(0);
+      document.removeEventListener("pointerup", endReveal);
+      document.removeEventListener("pointercancel", endReveal);
     }
 
     function clearAndFocus() {
@@ -631,190 +745,193 @@ export default defineComponent({
       endReveal();
     });
 
-    return () => (
-      <div class="hk-pwd-wrapper">
-        {props.label ? (
-          <label class="hk-pwd-label">
-            {props.label}
-            {props.required ? <span class="hk-pwd-required">*</span> : null}
-          </label>
-        ) : null}
-        <div
-          ref={boxRef}
-          class="hk-pwd-box"
-          data-focused={focused.value || undefined}
-          data-error={props.error || undefined}
-          data-disabled={props.disabled || undefined}
-          data-fw={fullWidthPaused.value || undefined}
-        >
-          <div
-            class={[
-              "hk-pwd-lock",
-              props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
-            ]}
-            data-icon={resolvedIcon.value}
-            data-revealing={revealing.value || undefined}
-            onPointerdown={(e: PointerEvent) => {
-              e.preventDefault();
-              startReveal();
-            }}
-          >
-            {resolvedIcon.value === "custom" ? (
-              slots.icon?.()
-            ) : resolvedIcon.value === "confirm" ? (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                width="16"
-                height="16"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                width="16"
-                height="16"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            )}
-          </div>
-          <canvas ref={dotCanvasRef} class="hk-pwd-dots" />
-          {(!props.modelValue || (pendingClear.value && focused.value)) &&
-          !revealing.value ? (
-            <span
-              key={`ph-${pendingClear.value && props.modelValue ? "has-value" : focused.value ? "focused" : "idle"}`}
-              class="hk-pwd-placeholder"
-              onPointerdown={(e: PointerEvent) => {
-                // Tapping the placeholder refocuses the field — after an
-                // extension or IME steals focus the input otherwise stops
-                // responding to typing.
-                e.preventDefault();
-                inputRef.value?.focus();
-              }}
-            >
-              <span
-                class="hk-pwd-placeholder-text"
-                style={
-                  props.placeholderVariant === "marquee" && marqueeOverflow.value
-                    ? { visibility: "hidden" }
-                    : undefined
-                }
-              >
-                {pendingClear.value && props.modelValue
-                  ? t("hikari::passwordInput.focusedHasValuePlaceholder")
-                  : focused.value
-                    ? t("hikari::passwordInput.focusedPlaceholder")
-                    : props.placeholder || t(variantPlaceholderKey.value)}
-              </span>
-              {props.placeholderVariant === "marquee" && (
-                <HkPlaceholderMarquee
-                  text={
-                    pendingClear.value && props.modelValue
-                      ? t("hikari::passwordInput.focusedHasValuePlaceholder")
-                      : focused.value
-                        ? t("hikari::passwordInput.focusedPlaceholder")
-                        : props.placeholder || t(variantPlaceholderKey.value)
-                  }
-                  variant={props.placeholderVariant}
-                  onOverflowChange={(v: boolean) => {
-                    marqueeOverflow.value = v;
-                  }}
-                />
-              )}
-            </span>
-          ) : null}
-          {props.modelValue &&
-          !focused.value &&
-          !revealing.value &&
-          !pendingClear.value ? (
-            <span
-              class="hk-pwd-blur-hint"
-              onPointerdown={(e: PointerEvent) => {
-                e.preventDefault();
-                clearAndFocus();
-              }}
-            >
-              {props.passwordEnteredText ??
-                t("hikari::passwordInput.passwordEntered")}
-            </span>
-          ) : null}
-          {focused.value && allSelected.value ? (
-            <span class="hk-pwd-select-hint">
-              {props.allSelectedText ?? t("hikari::passwordInput.allSelected")}
-            </span>
-          ) : null}
-          {revealing.value ? (
-            <span class="hk-pwd-reveal-text">{props.modelValue}</span>
-          ) : null}
-          <input
-            ref={inputRef}
-            type="password"
-            value={props.modelValue}
-            name={props.name}
-            autocomplete={props.autocomplete ?? credentialAutocomplete("password", "off")}
-            data-1p-ignore
-            data-lpignore="true"
-            disabled={props.disabled}
-            readonly={props.readonly}
-            required={props.required}
-            class="hk-pwd-input"
-            onInput={onInput}
-            onBeforeinput={onBeforeinput}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            onKeydown={onKeydown}
-            onKeyup={onKeyup}
-            onSelect={onSelect}
-            onPointerup={onPointerup}
-            onCompositionstart={onCompositionStart}
-            onCompositionend={onCompositionEnd}
-            onAnimationstart={onAutofillAnim}
-          />
-          {level.value ? (
-            <span
-              class="hk-pwd-strength"
-              data-level={level.value}
-              title={levelLabel.value}
-              aria-label={levelLabel.value}
-            />
-          ) : null}
-        </div>
-        <div class="hk-pwd-hints">
-          <HListTransition tag="div">
-            {capsLock.value ? (
-              <span key="caps" class="hk-pwd-hint" data-variant="caps">
-                {props.capsLockText ?? t("hikari::passwordInput.capsLock")}
-              </span>
-            ) : null}
-          </HListTransition>
-          <HListTransition tag="div">
-            {fullWidthPaused.value ? (
-              <span key="fw" class="hk-pwd-hint" data-variant="fw">
-                {props.fullWidthWarningText ??
-                  t("hikari::passwordInput.fullWidth")}
-              </span>
-            ) : null}
-          </HListTransition>
-        </div>
-        {props.error ? (
-          <p class="hk-pwd-error">{props.error}</p>
-        ) : props.hint ? (
-          <p class="hk-pwd-hint-text">{props.hint}</p>
-        ) : null}
-      </div>
+    const showEye = computed(
+      () => props.passwordTrailing === "eye" && !props.disabled && !props.readonly,
     );
+
+    return () => {
+      const { class: _c, style: _s, ...restAttrs } = attrs as Record<string, unknown>;
+      // HkInput forwards its prefixIcon slot unconditionally (the vue-jsx
+      // transform only accepts a literal slots object); an empty array
+      // means "no caller icon" and falls back to the default lock.
+      const callerIcon = slots.prefixIcon?.();
+      const hasCallerIcon = Array.isArray(callerIcon)
+        ? callerIcon.length > 0
+        : !!callerIcon;
+      return (
+        <>
+          <div
+            ref={boxRef}
+            class={["hk-pwd-box", `hk-pwd-box-${props.size}`]}
+            data-focused={focused.value || undefined}
+            data-error={props.error || undefined}
+            data-disabled={props.disabled || undefined}
+            data-fw={fullWidthPaused.value || undefined}
+          >
+            <div
+              class={[
+                "hk-pwd-lock",
+                props.modelValue ? "hk-pwd-lock-filled" : "hk-pwd-lock-empty",
+              ]}
+            >
+              {hasCallerIcon ? (
+                callerIcon
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="16"
+                  height="16"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              )}
+            </div>
+            <canvas ref={dotCanvasRef} class="hk-pwd-dots" />
+            {(!props.modelValue || (pendingClear.value && focused.value)) &&
+            !revealing.value ? (
+              <span
+                key={`ph-${pendingClear.value && props.modelValue ? "has-value" : focused.value ? "focused" : "idle"}`}
+                class="hk-pwd-placeholder"
+                onPointerdown={(e: PointerEvent) => {
+                  // Tapping the placeholder refocuses the field — after an
+                  // extension or IME steals focus the input otherwise stops
+                  // responding to typing.
+                  e.preventDefault();
+                  inputRef.value?.focus();
+                }}
+              >
+                <span
+                  class="hk-pwd-placeholder-text"
+                  style={
+                    props.placeholderVariant === "marquee" && marqueeOverflow.value
+                      ? { visibility: "hidden" }
+                      : undefined
+                  }
+                >
+                  {resolvedPlaceholder.value}
+                </span>
+                {props.placeholderVariant === "marquee" && (
+                  <HkPlaceholderMarquee
+                    text={resolvedPlaceholder.value}
+                    variant={props.placeholderVariant}
+                    onOverflowChange={(v: boolean) => {
+                      marqueeOverflow.value = v;
+                    }}
+                  />
+                )}
+              </span>
+            ) : null}
+            {props.modelValue &&
+            !focused.value &&
+            !revealing.value &&
+            !pendingClear.value ? (
+              <span
+                class="hk-pwd-blur-hint"
+                onPointerdown={(e: PointerEvent) => {
+                  e.preventDefault();
+                  clearAndFocus();
+                }}
+              >
+                {t("hikari::passwordInput.passwordEntered")}
+              </span>
+            ) : null}
+            {focused.value && allSelected.value ? (
+              <span class="hk-pwd-select-hint">
+                {t("hikari::passwordInput.allSelected")}
+              </span>
+            ) : null}
+            <input
+              ref={inputRef}
+              id={props.id}
+              type="password"
+              value={props.modelValue}
+              name={props.name}
+              autocomplete={props.autocomplete ?? credentialAutocomplete("password", "off")}
+              data-1p-ignore
+              data-lpignore="true"
+              disabled={props.disabled}
+              readonly={props.readonly}
+              required={props.required}
+              class="hk-pwd-input"
+              {...restAttrs}
+              onInput={onInput}
+              onBeforeinput={onBeforeinput}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              onKeydown={onKeydown}
+              onKeyup={onKeyup}
+              onSelect={onSelect}
+              onPointerup={onPointerup}
+              onCompositionstart={onCompositionStart}
+              onCompositionend={onCompositionEnd}
+              onAnimationstart={onAutofillAnim}
+            />
+            {props.passwordTrailing === "strength" && level.value ? (
+              <HkTooltip
+                text={strengthTooltip.value}
+                placement="top"
+                delay={150}
+              >
+                <span
+                  class="hk-pwd-strength"
+                  data-level={level.value}
+                  role="img"
+                  aria-label={levelLabel.value}
+                />
+              </HkTooltip>
+            ) : null}
+            {showEye.value ? (
+              <button
+                type="button"
+                class="hk-pwd-eye"
+                data-revealing={revealing.value || undefined}
+                aria-label={t("hikari::passwordInput.holdToReveal", "Hold to show password")}
+                onPointerdown={(e: PointerEvent) => {
+                  // No focus steal: the caret stays in the field while
+                  // the affordance is pressed.
+                  e.preventDefault();
+                  startReveal();
+                }}
+                onContextmenu={(e: Event) => e.preventDefault()}
+                onKeydown={(e: KeyboardEvent) => {
+                  if (e.key !== " " && e.key !== "Enter") return;
+                  e.preventDefault();
+                  startReveal();
+                }}
+                onKeyup={(e: KeyboardEvent) => {
+                  if (e.key !== " " && e.key !== "Enter") return;
+                  e.preventDefault();
+                  endReveal();
+                }}
+              >
+                {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            ) : null}
+          </div>
+          <div class="hk-pwd-hints">
+            <HListTransition tag="div">
+              {capsLock.value ? (
+                <span key="caps" class="hk-pwd-hint" data-variant="caps">
+                  {t("hikari::passwordInput.capsLock")}
+                </span>
+              ) : null}
+            </HListTransition>
+            <HListTransition tag="div">
+              {fullWidthPaused.value ? (
+                <span key="fw" class="hk-pwd-hint" data-variant="fw">
+                  {t("hikari::passwordInput.fullWidth")}
+                </span>
+              ) : null}
+            </HListTransition>
+          </div>
+        </>
+      );
+    };
   },
 });

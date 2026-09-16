@@ -4,17 +4,16 @@ import { useI18n } from "../i18n/context";
 
 import { HkAuthCard } from "./HkAuthCard";
 import HkInput from "./HkInput";
-import HkPasswordInput from "./HkPasswordInput";
 import HkAuthSubmitButton from "./HkAuthSubmitButton";
 
 /**
  * HkSignInCard — the shared credential form for every Celestia front end.
  *
  * One controlled composition of the auth kit: `HkAuthCard` shell + `HkInput`
- * (username, prefix-icon slot) + `HkPasswordInput` (centered placeholder
- * layer, caps-lock / full-width / all-selected hints — all from hikari's own
- * i18n, no per-consumer prop plumbing) + `HkAuthSubmitButton` (block submit
- * with external loading).
+ * (username, prefix-icon slot) + `HkInput variant="password"` (dot-matrix
+ * surface, centered placeholder layer, caps-lock / full-width hints and a
+ * hold-to-reveal eye — all from hikari's own i18n, no per-consumer prop
+ * plumbing) + `HkAuthSubmitButton` (block submit with external loading).
  *
  * Control contract: the fields live INSIDE the card; the consumer injects
  * `onSubmit(username, password)` and feeds the in-flight state back through
@@ -133,7 +132,8 @@ export const HkSignInCard = defineComponent({
                     ),
                 }}
               </HkInput>
-              <HkPasswordInput
+              <HkInput
+                variant="password"
                 modelValue={password.value}
                 onUpdate:modelValue={(v: string) => (password.value = v)}
                 name="signin-password"

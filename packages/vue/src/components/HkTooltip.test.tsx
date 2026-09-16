@@ -190,6 +190,73 @@ describe("HkTooltip show/hide", () => {
   });
 });
 
+describe("HkTooltip touch taps", () => {
+  function tap(el: Element) {
+    el.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    );
+  }
+
+  it("shows immediately (no hover delay) on a touch tap", async () => {
+    const { container } = mount({ text: "tapped", delay: 3000 });
+    tap(wrapper(container));
+    await nextTick();
+    // The 3000ms hover delay must NOT gate the touch path.
+    expect(popup().className).toContain("hk-tooltip-visible");
+  });
+
+  it("toggles closed when the trigger is tapped again", async () => {
+    const { container } = mount({ text: "toggle", delay: 3000 });
+    tap(wrapper(container));
+    await nextTick();
+    expect(popup().className).toContain("hk-tooltip-visible");
+
+    tap(wrapper(container));
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("closes on a tap anywhere else (capture-phase document listener)", async () => {
+    const { container } = mount({ text: "outside", delay: 0 });
+    tap(wrapper(container));
+    await nextTick();
+    expect(popup().className).toContain("hk-tooltip-visible");
+
+    const elsewhere = document.createElement("div");
+    document.body.appendChild(elsewhere);
+    tap(elsewhere);
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+    elsewhere.remove();
+  });
+
+  it("ignores mouse pointerdown (the hover path owns mice)", async () => {
+    const { container } = mount({ text: "mouse", delay: 3000 });
+    wrapper(container).dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("does not re-open from the synthetic mouseenter right after a closing tap", async () => {
+    const { container } = mount({ text: "synthetic", delay: 0 });
+    tap(wrapper(container));
+    await nextTick();
+    expect(popup().className).toContain("hk-tooltip-visible");
+
+    tap(wrapper(container)); // close via toggle
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+
+    // The tap's synthetic mouseenter arrives synchronously after the
+    // pointerdown — it must not resurrect the bubble.
+    enter(container);
+    await settle();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+});
+
 describe("HkTooltip anchoring", () => {
   it("places the popup above the anchor with the top placement (gap + transform)", async () => {
     const { container } = mount({ text: "up", delay: 0, placement: "top" });

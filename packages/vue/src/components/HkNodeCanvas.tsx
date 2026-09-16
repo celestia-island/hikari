@@ -57,6 +57,26 @@ const clamp = (value: number, low: number, high: number) => Math.min(high, Math.
 /** Movement (px) a pointer must travel before it stops being a tap. */
 const PAN_SLOP = 6;
 
+/** How long a request made of a controlled host stays in flight before the host
+ *  is presumed not to have applied it. Long enough for an async write-back (a
+ *  store behind an RPC queue answers late), short enough that a request the
+ *  host dropped cannot become the camera the next gesture composes from — or
+ *  leave `fit()` refusing for ever. */
+const REQUEST_GRACE_MS = 250;
+
+/** How many unanswered requests are remembered. A drag asks once per pointer
+ *  move, so an in-order echo can lag by a second's worth and still be named. */
+const MAX_PENDING_REQUESTS = 64;
+
+/** A camera asked of a controlled host that it has not answered yet. */
+interface PendingRequest {
+  camera: NodeCanvasCamera;
+  /** A `fit()` request: absolute and one-off, unlike a gesture's relative move. */
+  framing: boolean;
+  /** When it was written, so a request nobody answered can expire. */
+  at: number;
+}
+
 /**
  * HkNodeCanvas — the base view for a pannable, zoomable node surface.
  *
@@ -163,18 +183,26 @@ export default defineComponent({
       return a.k === b.k && a.x === b.x && a.y === b.y;
     }
 
-    /** The last request made of a controlled host, with the camera it was
-     *  asked against: repeating it is pointless while the host has not moved
-     *  anywhere, and is required as soon as it has. */
+    /** The requests made of a controlled host that it has not answered yet,
+     *  newest first. A drag asks once per pointer move, and a store behind a
+     *  queue echoes them in order: only by naming the request a write belongs
+     *  to can a host that is still catching up be told from one that answered
+     *  the newest ask. */
+    let pending: PendingRequest[] = [];
+    /** Set once the host answers a request — it applies what it is asked to. */
+    let hostApplied = false;
+    /** The newest camera asked of the host. Repeating it is pointless while the
+     *  host has not moved anywhere, and required as soon as it has. */
     let lastRequested: NodeCanvasCamera | null = null;
-    /** A request is outstanding until the host writes anything back. */
-    let pendingEcho = false;
 
-    /** Write a camera through to the host (controlled) or the local state. */
-    function writeCamera(normalized: NodeCanvasCamera) {
+    /** Write a camera through to the host (controlled) or the local state.
+     *  `framing` marks a `fit()` request: it is absolute and one-off, so it is
+     *  never part of the gesture chain a drag composes from. */
+    function writeCamera(normalized: NodeCanvasCamera, framing = false) {
       if (props.camera) {
         lastRequested = normalized;
-        pendingEcho = true;
+        pending.unshift({ camera: normalized, framing, at: Date.now() });
+        if (pending.length > MAX_PENDING_REQUESTS) pending.length = MAX_PENDING_REQUESTS;
         emit("update:camera", normalized);
       } else {
         inner.value = normalized;
@@ -266,8 +294,18 @@ export default defineComponent({
       // but only while the host is still where it was when we asked: a host
       // that moved the camera itself (a restored viewport, a minimap jump) is
       // asking us to frame, and must get an answer.
-      if (lastRequested && sameCamera(next, lastRequested)) return false;
-      writeCamera(next); // already normalised by computeFit
+      //
+      // `false` therefore means "nothing was written": the camera is already the
+      // fitted one, the same request is still standing, or the host has not had
+      // the grace to answer it. What it must not mean is "for ever": a host that
+      // dropped the write would never be frameable again and could not be told
+      // apart from one with nothing to change, so an unanswered request expires
+      // and a later fit() asks again. A host that frames on every update cannot
+      // loop that way — it answers, and an answered request stands.
+      if (lastRequested && sameCamera(next, lastRequested)) {
+        if (!pending.length || Date.now() - pending[0].at <= REQUEST_GRACE_MS) return false;
+      }
+      writeCamera(next, true); // already normalised by computeFit
       return true;
     }
 
@@ -279,12 +317,31 @@ export default defineComponent({
       fit();
     }
 
-    /** The camera a gesture builds on. A controlled host may write back late
-     *  (a throttled mirror, a 10 Hz store), so composing from its echo would
-     *  make the surface trail the pointer; our own last request is the truth. */
+    /** The camera a gesture builds on. A controlled host may write back late — a
+     *  throttled mirror, a store behind an RPC queue — so composing from its
+     *  echo would make the surface trail the pointer, and an in-order queue
+     *  makes it step backwards. The newest request is the truth until the host
+     *  answers it. */
     function gestureBase(): NodeCanvasCamera {
-      if (props.camera && lastRequested && pendingEcho) return lastRequested;
+      if (props.camera) {
+        const base = requestBase();
+        if (base) return base;
+      }
       return camera.value;
+    }
+
+    /** The newest request, while it is still the camera the surface is being
+     *  built on. A gesture is relative, so its request stays the base until the
+     *  host answers it. A framing request is absolute and one-off: it is the
+     *  base only while it is plausibly still in flight, and only for a host that
+     *  has shown it applies what it is asked to — one that dropped it never had
+     *  that camera, and a drag composed from it teleports the surface. */
+    function requestBase(): NodeCanvasCamera | null {
+      const newest = pending[0];
+      if (!newest) return null;
+      if (!newest.framing) return newest.camera;
+      if (!hostApplied) return null;
+      return Date.now() - newest.at <= REQUEST_GRACE_MS ? newest.camera : null;
     }
 
     function zoomAt(nextK: number, at: { x: number; y: number }) {
@@ -476,17 +533,30 @@ export default defineComponent({
     watch(
       () => props.camera,
       (next, previous) => {
-        if (!next && previous) inner.value = previous;
-        // The host took what we asked for: the mark of "where the host is"
-        // moves with it. Then a later, different camera — including the one
-        // that was live when we asked, as a "reset view" writes — counts as
-        // the host moving, and the next `fit()` answers.
-        if (!next) return;
-        // Any write while a request is outstanding is the host taking it (it may
-        // have transformed it); a write with nothing outstanding is the host
-        // moving on its own, and the next fit() must answer.
-        if (pendingEcho) {
-          pendingEcho = false;
+        if (!next) {
+          if (previous) inner.value = previous;
+          // The requests we made of it are moot.
+          pending = [];
+          lastRequested = null;
+          return;
+        }
+        // Which request is this the answer to? A store behind a queue echoes
+        // them in order, so a write that reproduces an OLDER request is the host
+        // catching up — the newest request has not been seen yet, and the
+        // gesture under the pointer must keep composing from it. Drop what the
+        // host has consumed and leave the newer requests standing.
+        const index = pending.findIndex((request) => sameCamera(request.camera, next));
+        if (index > 0) {
+          pending = pending.slice(0, index);
+          hostApplied = true;
+          return;
+        }
+        // The host answered the newest request — it may have transformed it, so
+        // this camera is where the surface is now — or it moved on its own, and
+        // then a later `fit()` may ask for the same camera again.
+        if (pending.length) {
+          pending = [];
+          hostApplied = true;
           return;
         }
         lastRequested = null;

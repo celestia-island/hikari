@@ -26,6 +26,13 @@ interface Bounds {
   height: number;
 }
 
+/** A camera as a test's store sees it. */
+interface Cam {
+  k: number;
+  x: number;
+  y: number;
+}
+
 const apps: App[] = [];
 let originalRect: typeof HTMLElement.prototype.getBoundingClientRect;
 const VIEWPORT = { width: 800, height: 600 };
@@ -606,6 +613,171 @@ describe("HkNodeCanvas", () => {
     instance.value?.panBy(30, 0);
     instance.value?.panBy(30, 0);
     expect(onUpdate).toHaveBeenLastCalledWith({ k: 1, x: 60, y: 0 });
+  });
+
+  it("keeps the drag on the newest request when the store echoes older ones", async () => {
+    // A store behind an async transport (an RPC, a queue) echoes every write, in
+    // order, a beat later — so the camera it publishes mid-drag belongs to an
+    // OLDER request than the pointer has already made. Reading that echo as the
+    // answer steps the surface backwards and throws most of the drag away (a
+    // 300 px drag moved the view 100 px): the gesture has to stay on the newest
+    // request until the host answers *that* one.
+    const LAG = 6; // ~100 ms of a 16 ms-per-move drag
+    const asked: Cam[] = [];
+    const queue: Cam[] = [];
+    const camera = ref<Cam>({ k: 1, x: 0, y: 0 });
+    const { root } = mount({
+      contentBounds: BOUNDS,
+      camera,
+      fitOnLoad: false,
+      "onUpdate:camera": (next: Cam) => {
+        asked.push(next);
+        queue.push(next);
+      },
+    });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+
+    const echoed: number[] = [];
+    root.dispatchEvent(pointerEvent("pointerdown", { pointerId: 41, clientX: 100, clientY: 100 }));
+    for (let step = 1; step <= 24; step++) {
+      root.dispatchEvent(
+        pointerEvent("pointermove", { pointerId: 41, clientX: 100 + step * 12.5, clientY: 100 }),
+      );
+      // One echo per move, oldest first: the host walks its queue behind us.
+      if (queue.length > LAG) camera.value = queue.shift()!;
+      await nextTick();
+      echoed.push(camera.value.x);
+    }
+
+    // The component's own asks never step backwards...
+    expect(asked.map((c) => c.x)).toEqual([...asked.map((c) => c.x)].sort((a, b) => a - b));
+    // ...and the drag lands where the pointer went, not where the echo was.
+    expect(asked[asked.length - 1].x).toBeCloseTo(300, 6);
+    // The host's own value drains to the same place, still in order.
+    while (queue.length) camera.value = queue.shift()!;
+    await nextTick();
+    expect(camera.value.x).toBeCloseTo(300, 6);
+    expect(echoed).toEqual([...echoed].sort((a, b) => a - b));
+  });
+
+  it("re-anchors the gesture to the camera the host actually kept", async () => {
+    // A host with a pan limit (the content has to keep covering the viewport)
+    // clamps what it is given. Composing the way back from the request instead
+    // of from the clamp makes the pointer travel the whole overshoot again
+    // before anything moves: an answer to the NEWEST request is where the
+    // surface is, and the gesture has to build on it.
+    const camera = ref<Cam>({ k: 1, x: 0, y: 0 });
+    const { instance, root } = mount({
+      contentBounds: BOUNDS,
+      camera,
+      fitOnLoad: false,
+      "onUpdate:camera": (next: Cam) => {
+        camera.value = { ...next, x: Math.min(0, next.x) };
+      },
+    });
+    await nextTick();
+    root.setPointerCapture = vi.fn();
+
+    const drag = async (pointerId: number, fromX: number, toX: number) => {
+      root.dispatchEvent(pointerEvent("pointerdown", { pointerId, clientX: fromX, clientY: 300 }));
+      for (let step = 1; step <= 8; step++) {
+        root.dispatchEvent(
+          pointerEvent("pointermove", {
+            pointerId,
+            clientX: fromX + ((toX - fromX) * step) / 8,
+            clientY: 300,
+          }),
+        );
+        await nextTick();
+      }
+      root.dispatchEvent(pointerEvent("pointerup", { pointerId, clientX: toX, clientY: 300 }));
+      await nextTick();
+    };
+
+    await drag(42, 400, 600); // 200 px into the wall
+    expect(instance.value!.camera.x).toBe(0);
+    await drag(43, 400, 200); // and 200 px back out
+    expect(instance.value!.camera.x).toBeCloseTo(-200, 6);
+  });
+
+  it("re-frames after a rounding store restores the camera it had before the last fit", async () => {
+    // The echo rule has to be "the host answered, or it moved on its own", never
+    // "the host wrote back the camera we asked for": a store that rounds (or
+    // clamps, or snaps) never echoes exactly, and a "reset view" writes back
+    // exactly the camera that was live when the component asked.
+    const camera = ref<Cam>({ k: 1, x: 0, y: 0 });
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 100, height: 1571 },
+      camera,
+      "onUpdate:camera": (next: Cam) => {
+        camera.value = { k: next.k, x: Math.round(next.x), y: Math.round(next.y) };
+      },
+    });
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    await nextTick();
+    expect(camera.value).toEqual({ k: 0.3, x: 385, y: 64 });
+
+    camera.value = { k: 1, x: 0, y: 0 };
+    await nextTick();
+    expect(instance.value!.fit()).toBe(true);
+    await nextTick();
+    expect(camera.value).toEqual({ k: 0.3, x: 385, y: 64 });
+  });
+
+  it("asks again when the host never applied the request", async () => {
+    // A host that drops the write can never be framed while one unanswered
+    // request stands for ever: `fit()` keeps answering `false` — the same answer
+    // as "there was nothing to change" — and the surface stays unframed with no
+    // way back. A request the host never answered expires, so a later explicit
+    // fit() asks again.
+    const onUpdate = vi.fn();
+    const { instance } = mount({
+      contentBounds: { x: 0, y: 0, width: 100, height: 1571 },
+      camera: { k: 1, x: 0, y: 0 },
+      fitControlled: true,
+      "onUpdate:camera": onUpdate,
+    });
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledTimes(1); // the mount fit
+
+    expect(instance.value!.fit()).toBe(false);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+
+    // Past the grace the host has had its chance: the request expires and the
+    // next fit() is allowed to ask again.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(instance.value!.fit()).toBe(true);
+    expect(onUpdate).toHaveBeenCalledTimes(2);
+    const reAsked = onUpdate.mock.calls[1][0] as Cam;
+    expect(reAsked.k).toBe(0.3);
+    expect(reAsked.x).toBeCloseTo(385, 6);
+    expect(reAsked.y).toBeCloseTo(64.35, 6);
+  });
+
+  it("refuses a fit whose translation would overflow", async () => {
+    // 1.7e308 * 1.25 overflows: writing that transform makes the browser drop it
+    // and the surface freezes at whatever it was showing. The guard has to cover
+    // the translation the fit derives, not only the scale it picked.
+    const bounds = { x: -1.7e308, y: 0, width: 100, height: 100 };
+    const onUpdate = vi.fn();
+    const { instance } = mount({
+      contentBounds: bounds,
+      camera: { k: 1, x: 0, y: 0 },
+      fitOnLoad: false,
+      "onUpdate:camera": onUpdate,
+    });
+    await nextTick();
+    expect(instance.value!.fit()).toBe(false);
+    expect(onUpdate).not.toHaveBeenCalled();
+
+    const own = mount({ contentBounds: bounds, fitOnLoad: true });
+    await nextTick();
+    expect(Number.isFinite(own.instance.value!.camera.x)).toBe(true);
+    expect(own.instance.value!.camera).toEqual({ k: 1, x: 0, y: 0 });
+    const layer = own.container.querySelector<HTMLElement>(".hk-node-canvas-layer")!;
+    expect(layer.style.transform).not.toContain("Infinity");
   });
 
   it("refuses to propagate a camera it cannot compute", async () => {

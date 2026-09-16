@@ -93,6 +93,13 @@ export { default as HToast } from "./components/HkToast";
 export { default as HTooltip } from "./components/HkTooltip";
 export { default as HTree } from "./components/HkTree";
 export { default as HWindowedItem } from "./components/HkWindowedItem";
+export { default as HWaterfall } from "./components/HkWaterfall";
+export type {
+  WaterfallBucket,
+  WaterfallCardSlotProps,
+  WaterfallHeaderSlotProps,
+  WaterfallRailSlotProps,
+} from "./components/HkWaterfall";
 export { default as HDateTimePicker } from "./components/HkDateTimePicker";
 export { default as HDatePicker } from "./components/HkDatePicker";
 export { default as HTimeline } from "./components/HkTimeline";

@@ -1,0 +1,35 @@
+.hk-waterfall {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.hk-waterfall-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Section rhythm: the day buckets of the chat waterfalls read as separate
+   groups, so adjacent buckets get the same gutter as the cards inside them
+   (twice the card gap would over-separate the newest sections). */
+.hk-waterfall-bucket + .hk-waterfall-bucket {
+  margin-top: var(--space-12);
+}
+
+.hk-waterfall-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+
+/* Independent columns (not CSS columns): each keeps its own transition
+   group, so a card arriving in one column never reflows the other. */
+.hk-waterfall-column {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}

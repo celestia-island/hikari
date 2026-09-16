@@ -1,0 +1,81 @@
+.hk-kanban {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.hk-kanban-strip {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Lanes are flex items, not CSS columns: each keeps its own header and its
+   own card scroller, so a card moving between lanes never reflows the strip. */
+.hk-kanban-lanes {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-12);
+  min-height: 100%;
+}
+
+.hk-kanban[data-axis="vertical"] .hk-kanban-lanes {
+  flex-direction: column;
+}
+
+.hk-kanban-lane {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: var(--hk-kanban-lane-size, 18rem);
+  border-radius: var(--radius-lg, 0.75rem);
+}
+
+.hk-kanban[data-axis="vertical"] .hk-kanban-lane {
+  width: auto;
+  height: var(--hk-kanban-lane-size, 12rem);
+}
+
+/* The one drop affordance the board owns: the host styles the cards. */
+.hk-kanban-lane[data-drop-target] {
+  outline: 2px dashed currentColor;
+  outline-offset: -2px;
+}
+
+.hk-kanban-lane-header {
+  flex: 0 0 auto;
+  padding: var(--space-8);
+}
+
+/* The card scroller is per lane, so a long lane scrolls without moving the
+   strip — and the lane axis stays free for the board's own scrolling. */
+.hk-kanban-cards {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: 0 var(--space-8) var(--space-8);
+  overflow-y: auto;
+}
+
+.hk-kanban-card {
+  flex: 0 0 auto;
+}
+
+.hk-kanban-card[draggable="true"] {
+  cursor: grab;
+}
+
+.hk-kanban[data-dragging] .hk-kanban-card {
+  cursor: grabbing;
+}
+
+/* The tail is a drop target so a card can be appended to any lane,
+   including an empty one. */
+.hk-kanban-lane-tail {
+  flex: 1 1 auto;
+  min-height: var(--space-24);
+}

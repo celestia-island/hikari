@@ -126,7 +126,12 @@ export default defineComponent({
           // Register with the drawer title so the modal-stack breadcrumb
           // labels this layer by name — a drawer is a window on every
           // form factor and must never fall back to a generic label.
-          handle.value = manager.register("drawer", true, props.title);
+          // Close channel for the modal-stack breadcrumb (see
+          // usePopupManager): the drawer owns its dismissal, and a
+          // non-closable drawer refuses like it does for Escape.
+          handle.value = manager.register("drawer", true, props.title, false, () => {
+            if (props.closable) close();
+          });
           overlayHook.open();
           previouslyFocused = document.activeElement as HTMLElement | null;
           if (backGuardEnabled() && backGuard.entries === 0) {

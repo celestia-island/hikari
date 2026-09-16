@@ -278,3 +278,63 @@ describe("usePopupManager window stack (blocking sheets reband)", () => {
     expect(editor.zIndex).toBeGreaterThan(sheet.zIndex);
   });
 });
+
+describe("usePopupManager closeAbove", () => {
+  it("asks every layer above the target to close, highest first", () => {
+    const m = freshManager();
+    const order: string[] = [];
+    const bottom = m.register("modal", true, "Bottom", false, () => order.push("bottom"));
+    const middle = m.register("modal", true, "Middle", false, () => order.push("middle"));
+    m.register("drawer", true, "Top", false, () => order.push("top"));
+
+    expect(m.closeAbove(middle.id)).toBe(1);
+    expect(order).toEqual(["top"]);
+
+    order.length = 0;
+    // The chosen layer stays: a jump goes BACK to it, never past it.
+    expect(m.closeAbove(bottom.id)).toBe(2);
+    expect(order).toEqual(["top", "middle"]);
+  });
+
+  it("skips layers whose owner registered no close channel", () => {
+    const m = freshManager();
+    const closed = vi.fn();
+    const bottom = m.register("modal", true, "Bottom", false, closed);
+    m.register("modal", true, "Unowned");
+    m.register("drawer", true, "Top", false, closed);
+
+    // One of the two layers above has no channel: only the other is asked.
+    expect(m.closeAbove(bottom.id)).toBe(1);
+    expect(closed).toHaveBeenCalledTimes(1);
+    // Nothing was torn out of the registry: each surface forgets itself
+    // when its own leave completes.
+    expect(m.registry.value.size).toBe(3);
+  });
+
+  it("closes anchored surfaces above the target too, and no-ops on a dead id", () => {
+    const m = freshManager();
+    const anchored = vi.fn();
+    const target = m.register("modal", true, "Target");
+    m.register("dropdown", false, "Menu", false, anchored);
+    expect(m.closeAbove(target.id)).toBe(1);
+    expect(anchored).toHaveBeenCalledTimes(1);
+    expect(m.closeAbove("not-a-popup")).toBe(0);
+  });
+
+  it("keeps a throwing close channel from aborting the rest", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const m = freshManager();
+      const healthy = vi.fn();
+      const target = m.register("modal", true, "Target");
+      m.register("modal", true, "Bad", false, () => {
+        throw new Error("boom");
+      });
+      m.register("modal", true, "Good", false, healthy);
+      expect(m.closeAbove(target.id)).toBe(2);
+      expect(healthy).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+});

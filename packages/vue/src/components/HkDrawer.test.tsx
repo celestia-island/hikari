@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkDrawer from "./HkDrawer";
+import { usePopupManager } from "../runtime/usePopupManager";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -87,5 +88,61 @@ describe("HkDrawer back-guard (window-first back priority)", () => {
 
     expect((window.history.state as Record<string, unknown>)?.__hkBack).toBeUndefined();
     app.unmount();
+  });
+});
+
+describe("HkDrawer window-stack close channel", () => {
+  function mount(open: { value: boolean }, closable: boolean, title: string) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkDrawer, {
+            modelValue: open.value,
+            closable,
+            title,
+            "onUpdate:modelValue": (v: boolean) => { open.value = v; },
+          }, { default: () => h("div", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return app;
+  }
+
+  it("closes through the popup manager when the stack navigates back", async () => {
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      const open = ref(true);
+      mount(open, true, "Details");
+      await nextTick();
+
+      expect(manager.closeAbove(below.id)).toBe(1);
+      await nextTick();
+      expect(open.value).toBe(false);
+    } finally {
+      manager.unregister(below.id);
+    }
+  });
+
+  it("cannot close a non-closable drawer", async () => {
+    const manager = usePopupManager();
+    const below = manager.register("modal", true, "Below");
+    try {
+      const open = ref(true);
+      mount(open, false, "Locked");
+      await nextTick();
+
+      // Asked, but the drawer refuses — exactly as it does for Escape.
+      expect(manager.closeAbove(below.id)).toBe(1);
+      await nextTick();
+      expect(open.value).toBe(true);
+    } finally {
+      manager.unregister(below.id);
+    }
   });
 });

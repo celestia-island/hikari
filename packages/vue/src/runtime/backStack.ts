@@ -158,6 +158,17 @@ function onPopState(e: PopStateEvent): void {
     // Our own rewind traversal landing — not a user gesture.
     suppressCount--;
     traversalInFlight = false;
+    // The landing hands the history TOP to whatever sits below it, which
+    // is what the next pending owner has been waiting for. Several windows
+    // can give up their entries inside ONE tick (the modal-stack
+    // breadcrumb's jump back closes every layer above the chosen one, and
+    // closeAll() does the same on logout), but a flush issues exactly one
+    // traversal — nothing else owns the top at that instant. Without this
+    // re-arm the remaining claims fail the next flush's ownership check
+    // and are dropped, stranding their markers as the current entry: each
+    // one then silently swallows a Back press. Re-arm only while a claim
+    // is actually live, so the chain always terminates.
+    if (hasPendingRewind()) scheduleFlush();
     maybeDropListener();
     return;
   }
@@ -204,10 +215,42 @@ function ensureListener(): void {
  */
 function maybeDropListener(): void {
   if (!hasWindow || !listening) return;
-  if (guards.length > 0 || traversalInFlight) return;
+  // A pending claim still needs its landings OBSERVED: the re-armed flush
+  // runs from onPopState, so dropping the listener early would leave the
+  // rest of a teardown chain traversing unobserved — the chain then stops
+  // one hop short and strands a marker as the live entry.
+  if (guards.length > 0 || traversalInFlight || hasPendingRewind()) return;
   listening = false;
   window.removeEventListener("popstate", onPopState);
   suppressCount = 0;
+}
+
+/** Is any guard still holding entries it wants to give back? A queued
+ *  record counts even when it is already destroyed — its markers live in
+ *  history regardless of the component tree. */
+function hasPendingRewind(): boolean {
+  if (rewindQueue.size > 0) return true;
+  for (const g of guards) {
+    if (g.count.value > g.desired) return true;
+  }
+  return false;
+}
+
+/** Does the record owning the live entry still hold a claim of its own —
+ *  in the candidate pool, which also carries records whose guard was
+ *  destroyed (they are no longer in `guards` but still own markers)? */
+function holdsClaim(pool: Set<GuardRecord>, id: string): boolean {
+  for (const record of pool) {
+    if (record.id === id) return record.count.value > record.desired;
+  }
+  return false;
+}
+
+/** Single-flight macrotask scheduler for the rewind flush. */
+function scheduleFlush(): void {
+  if (flushScheduled) return;
+  flushScheduled = true;
+  setTimeout(flushRewinds, 0);
 }
 
 /**
@@ -218,48 +261,84 @@ function maybeDropListener(): void {
  * Destroyed records keep their place in the queue: their markers live
  * in history regardless of the component tree.
  */
+function flushRewinds(): void {
+  flushScheduled = false;
+  // A record can sit in the rewind queue AND still be registered (the
+  // normalizer's release-then-push), so collect into a Set to visit
+  // each exactly once.
+  const candidates = new Set<GuardRecord>(rewindQueue);
+  for (const g of guards) {
+    if (g.count.value > g.desired) candidates.add(g);
+  }
+  // Claims leave the queue one at a time as they are RESOLVED. Records
+  // this flush never reaches (it returns after the single traversal it is
+  // allowed) keep their place, which is the only home a destroyed record
+  // has left — and the landing re-arms the flush for them.
+  for (const g of candidates) {
+    if (g.count.value <= g.desired) {
+      // Satisfied, retracted (abandon/forget), or already rewound.
+      rewindQueue.delete(g);
+      continue;
+    }
+    if (traversalInFlight) {
+      // A traversal is already moving the history top (an earlier hop of
+      // this chain, or a destroyed guard's synchronous rewind): the entry
+      // this flush would judge ownership against is about to change, so
+      // judging now abandons live claims. Defer the whole flush — its
+      // landing re-arms it.
+      continue;
+    }
+    const st = readState();
+    const owner = st?.[BACK_GUARD_MARKER];
+    if (owner === g.id) {
+      rewindQueue.delete(g);
+      const n = g.count.value - g.desired;
+      g.count.value = g.desired;
+      if (n > 0) {
+        if (listening) {
+          suppressCount++;
+          traversalInFlight = true;
+        }
+        // With no listener attached (every guard unmounted before
+        // this flush ran), the landing popstate goes unobserved —
+        // issuing suppression bookkeeping anyway would leak the
+        // expectation into the next listener generation and eat a
+        // genuine gesture.
+        window.history.go(-n);
+      }
+      // One traversal per flush; the landing re-arms the next one for
+      // the owners still below (see onPopState).
+      return;
+    }
+    if (owner != null && holdsClaim(candidates, owner)) {
+      // DEFERRED, not abandoned: the live entry on top belongs to another
+      // window that still holds a claim of its own, so this record's turn
+      // comes once that one traverses. Abandoning here is what stranded
+      // every claimant below the first whenever several windows gave up
+      // their entries inside one tick — the modal-stack breadcrumb's jump
+      // back closes its layers top-down, useOverlay.closeAll() bottom-up —
+      // and each stranded marker then swallowed one Back press. The claim
+      // stays in the queue for the re-armed flush.
+      continue;
+    }
+    // Not ours to rewind (a router or newer window pushed above):
+    // abandon the entries where they lie — dead markers are
+    // released by the landing cleanup whenever the user reaches
+    // them, and forward-stack entries simply die with the session.
+    rewindQueue.delete(g);
+    g.count.value = g.desired;
+  }
+  // The loop can end with every claim gone and every guard unmounted (a
+  // teardown that only had foreign entries above it): nothing is left to
+  // observe, so the listener goes with it. The traversal path returns
+  // early instead — its landing re-checks.
+  maybeDropListener();
+}
+
 function scheduleRewind(record: GuardRecord): void {
   if (!hasWindow) return;
   rewindQueue.add(record);
-  if (flushScheduled) return;
-  flushScheduled = true;
-  setTimeout(() => {
-    flushScheduled = false;
-    // A record can sit in the rewind queue AND still be registered (the
-    // normalizer's release-then-push), so collect into a Set to visit
-    // each exactly once.
-    const candidates = new Set<GuardRecord>(rewindQueue);
-    for (const g of guards) {
-      if (g.count.value > g.desired) candidates.add(g);
-    }
-    rewindQueue.clear();
-    for (const g of candidates) {
-      if (g.count.value <= g.desired) continue;
-      const st = readState();
-      if (st?.[BACK_GUARD_MARKER] === g.id) {
-        const n = g.count.value - g.desired;
-        g.count.value = g.desired;
-        if (n > 0) {
-          if (listening) {
-            suppressCount++;
-            traversalInFlight = true;
-          }
-          // With no listener attached (every guard unmounted before
-          // this flush ran), the landing popstate goes unobserved —
-          // issuing suppression bookkeeping anyway would leak the
-          // expectation into the next listener generation and eat a
-          // genuine gesture.
-          window.history.go(-n);
-        }
-        return; // one traversal per flush; nothing else can own the top
-      }
-      // Not ours to rewind (a router or newer window pushed above):
-      // abandon the entries where they lie — dead markers are
-      // released by the landing cleanup whenever the user reaches
-      // them, and forward-stack entries simply die with the session.
-      g.count.value = g.desired;
-    }
-  }, 0);
+  scheduleFlush();
 }
 
 /**

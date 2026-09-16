@@ -210,5 +210,6 @@
   "hikari::tagInput.empty": "一致なし",
   "hikari::tagInput.remove": "削除",
   "hikari::tagInput.addCustom": "「{q}」を使用",
-  "hikari::tagInput.reorder": "並べ替え — {label}"
+  "hikari::tagInput.reorder": "並べ替え — {label}",
+  "hikari::modal.hiddenLayers": "非表示の階層"
 }

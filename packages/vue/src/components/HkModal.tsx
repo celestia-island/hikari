@@ -334,7 +334,14 @@ export default defineComponent({
           if (handle.value) {
             manager.unregister(handle.value.id);
           }
-          handle.value = manager.register("modal", true, resolvedSurfaceName.value);
+          // The fifth argument is the close channel the modal-stack
+          // breadcrumb navigates back through: a folded layer it lists
+          // can be returned to, and a non-closable modal refuses exactly
+          // as it does for Escape / the overlay (closable is the one
+          // authority on "may this window be dismissed").
+          handle.value = manager.register("modal", true, resolvedSurfaceName.value, false, () => {
+            if (props.closable) close();
+          });
           overlay.open();
           if (backGuardEnabled() && backGuard.entries === 0) {
             backGuard.push();

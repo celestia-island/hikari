@@ -179,11 +179,14 @@ export default defineComponent({
       // this layer by its i18n name. Blocking follows the sheet
       // decision: the desktop popout is a hidden level, the mobile
       // bottom sheet is a window layer that must be listed.
+      // Close channel for the modal-stack breadcrumb: the sheet form of
+      // this panel is a window layer while it blocks.
       handle.value = manager.register(
         "dropdown",
         false,
         props.title || undefined,
         sheetMode.value,
+        close,
       );
       overlay.open();
       // Release-then-push (the HkMenu normalizer form): a same-tick

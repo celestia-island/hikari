@@ -141,11 +141,19 @@ export default defineComponent({
           // popover is a hidden breadcrumb level, docked as a bottom
           // sheet (mobile) it is a window layer and must be listed —
           // hence the i18n `title` riding along.
+          // Close channel for the modal-stack breadcrumb: the sheet form
+          // of this popover IS a window layer while it blocks, so a
+          // breadcrumb jump back past it must be able to dismiss it.
+          // `closeOnEscape` / `closeOnBackdrop` are NOT consulted here —
+          // they govern accidental DISMISSAL GESTURES, not closability, and
+          // the sheet always renders its own ✕ (this popover has no
+          // `closable` to mirror HkModal's).
           handle.value = manager.register(
             "dropdown",
             false,
             props.title || undefined,
             sheetMode.value,
+            close,
           );
           if (sheetMode.value) {
             // Bottom sheet: nothing to anchor-measure; the scrim handles

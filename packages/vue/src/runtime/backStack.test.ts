@@ -144,6 +144,34 @@ describe("createBackGuard", () => {
     b.destroy();
   });
 
+  it("unwinds every guard when several windows close in the same tick", async () => {
+    // The modal-stack breadcrumb's jump back closes each layer stacked
+    // above the chosen one, and the owners all release their entries
+    // inside the same tick. Every one of them must still rewind: a
+    // stranded marker stays in the session history and silently swallows
+    // the user's next Back press.
+    const onBackA = vi.fn();
+    const onBackB = vi.fn();
+    const a = createBackGuard({ onBack: onBackA });
+    const b = createBackGuard({ onBack: onBackB });
+
+    a.push(); // window opened first (bottom layer)
+    b.push(); // window opened second (top layer)
+
+    b.release(); // jump back: top layer closes first …
+    a.release(); // … then the bottom one, same tick
+
+    await settle();
+    expect(a.entries).toBe(0);
+    expect(b.entries).toBe(0);
+    expect(onBackA).not.toHaveBeenCalled();
+    expect(onBackB).not.toHaveBeenCalled();
+    // Page base: no marker left owning live history.
+    expect(window.history.state).toBeNull();
+    a.destroy();
+    b.destroy();
+  });
+
   it("close A then open B in the same tick never fires a spurious back into B", async () => {
     // The classic pattern: select a menu leaf → closeAll() → a modal
     // opens synchronously. A's rewind must not compute from a history

@@ -42,6 +42,18 @@ function stubWidths(widthOf: (el: HTMLElement) => number): () => void {
   };
 }
 
+/** Wait until pred() holds (surfaces leave the registry asynchronously —
+ *  happy-dom never fires transitionend, so a closing sheet lingers until
+ *  its machine's own deadline). */
+async function until(pred: () => boolean, ms = 1000): Promise<void> {
+  const deadline = Date.now() + ms;
+  while (!pred() && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
+  await nextTick();
+}
+
 function setViewport(width: number): void {
   window.innerWidth = width;
   window.dispatchEvent(new Event("resize"));
@@ -370,6 +382,70 @@ describe("HkModalBreadcrumb overflow fold", () => {
     expect(strip()!.style.maxWidth).toBe("1168px");
   });
 
+  it("never folds the current layer away, even when nothing else fits", async () => {
+    // The last layer IS the strip's reason to exist: when no tail fits at
+    // all it keeps the strip and its own CSS ellipsis does the rest. Only
+    // the trigger may be left standing if the loop ever walked past it.
+    setViewport(120);
+    manager.register("modal", true, "第一层");
+    manager.register("modal", true, "第二层");
+    manager.register("modal", true, "第三层");
+    const restore = stubWidths((el) =>
+      el.classList.contains("hk-modal-breadcrumb-more") ? 24 : 400,
+    );
+    try {
+      await mountStrip();
+      expect(more()).not.toBeNull();
+      expect(labels()).toEqual(["第三层"]);
+    } finally {
+      restore();
+    }
+  });
+
+  it("re-measures when the clone's box moves (late webfont, host type scale)", async () => {
+    // The strip's ruler is observed: a font swap changes every crumb's
+    // width without a resize, and the fold must follow it.
+    class FakeRO {
+      static instances: FakeRO[] = [];
+      observed: Element[] = [];
+      constructor(private readonly cb: () => void) {
+        FakeRO.instances.push(this);
+      }
+      observe(el: Element): void {
+        this.observed.push(el);
+      }
+      unobserve(): void {}
+      disconnect(): void {
+        this.observed = [];
+      }
+      fire(): void {
+        this.cb();
+      }
+    }
+    vi.stubGlobal("ResizeObserver", FakeRO);
+    let width = 20; // a narrow font: everything fits
+    const restore = stubWidths(() => width);
+    try {
+      setViewport(360);
+      manager.register("modal", true, "第一层标题占位一二三");
+      manager.register("modal", true, "第二层标题占位一二三");
+      await mountStrip();
+      expect(more()).toBeNull();
+      const ro = FakeRO.instances.find((inst) =>
+        inst.observed.some((el) => el.classList.contains("hk-modal-breadcrumb-measure")),
+      );
+      expect(ro, "the clone answers the observer").toBeTruthy();
+
+      width = 400; // the webfont lands: the same labels now measure wide
+      ro!.fire();
+      await nextTick();
+      expect(more()).not.toBeNull();
+    } finally {
+      restore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("re-decides the fold when the viewport widens", async () => {
     setViewport(320);
     manager.register("modal", true, "第一层标题占位一二三");
@@ -437,6 +513,31 @@ describe("HkModalBreadcrumb hidden-layers menu", () => {
     expect(
       strip()!.querySelector(".hk-modal-breadcrumb-item-current")!.textContent,
     ).toBe("Hidden layers");
+  });
+
+  it("drops the trigger and the menu once the stack stops folding", async () => {
+    setViewport(360);
+    manager.register("modal", true, "自动化测试流水线冒烟");
+    manager.register("modal", true, "自动化测试流水线冒烟");
+    manager.register("modal", true, "自动化测试流水线冒烟");
+    await mountStrip();
+    more()!.click();
+    await nextTick();
+    await nextTick();
+    expect(menuRows().length).toBeGreaterThan(0);
+    expect(more()!.getAttribute("aria-expanded")).toBe("true");
+
+    // Wide enough for the whole stack, still the same form factor (so the
+    // popover's own breakpoint rule is not what closes it): nothing is left
+    // to list, and the trigger the menu is anchored to must go with it.
+    setViewport(760);
+    await until(
+      () =>
+        more() === null &&
+        ![...manager.registry.value.values()].some((entry) => entry.blocking),
+    );
+    expect(more()).toBeNull();
+    expect(labels()).toHaveLength(3);
   });
 
   it("anchors the menu under the trigger on desktop", async () => {

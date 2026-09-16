@@ -267,6 +267,32 @@ describe("HkWaterfall", () => {
     expect(asked.every(([, index]) => Number.isInteger(index))).toBe(true);
   });
 
+  it("tracks the active bucket through the validated section attribute", async () => {
+    // The second, independent read path: the jump above and the scroll
+    // tracking below each look the section up themselves, and a mutation of
+    // one stays invisible to a case that only exercises the other.
+    const active: string[] = [];
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      if (this.getAttribute?.("data-day-section") === "b") return rectOf(10);
+      return rectOf(0, 0, 10, 300);
+    };
+    const mounted = mount({
+      items: ["a1", "b1"],
+      bucketOf: (item: unknown) => String(item)[0],
+      sectionAttr: "data-day-section",
+      "onUpdate:activeBucket": (value: string) => active.push(value),
+    });
+    await nextTick();
+    await nextTick();
+    const scroller = mounted.instance.value?.getScrollElement();
+    Object.defineProperty(scroller, "scrollTop", { value: 50, configurable: true });
+    scroller?.dispatchEvent(new Event("scroll"));
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    await nextTick();
+    await nextTick();
+    expect(active.at(-1)).toBe("b");
+  });
+
   it("reports its buckets through the exposed instance", async () => {
     const mounted = mount({
       items: ["a1", "a2", "b1"],

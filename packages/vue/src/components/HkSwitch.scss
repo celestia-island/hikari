@@ -1,6 +1,11 @@
 .hk-switch {
   display: inline-flex;
   align-items: center;
+  /* When the switch sits INLINE among text (not in a host flex row), the
+   * default `vertical-align: baseline` parks the inline-flex's bottom edge
+   * on the text baseline and rides the track ~5px above the text's visual
+   * center. `middle` is the house parity value (HkCheckbox/HkRadio). */
+  vertical-align: middle;
   gap: var(--space-8, 0.5rem);
   cursor: pointer;
   user-select: none;
@@ -24,8 +29,8 @@
    the label; house pattern: HkButton double ring). */
 .hk-switch-input:focus-visible ~ .hk-switch-track {
   box-shadow:
-    0 0 0 2px rgb(var(--color-surface)),
-    0 0 0 4px rgb(var(--color-primary));
+    0 0 0 2px var(--hi-color-surface, rgba(240, 244, 248, 0.95)),
+    0 0 0 4px var(--hi-color-primary, #7aa2f7);
 }
 
 /* --- Track --- */
@@ -35,27 +40,32 @@
   display: flex;
   align-items: center;
   border-radius: 9999px;
-  border: 1px solid var(--hi-color-border);
-  background: var(--hi-color-surface);
+  /* Resting state is a softly FILLED neutral track (iOS-style) rather
+   * than a bare surface sliver: the off state must read as a control
+   * even on a same-colored card. The border rides one step ahead of the
+   * fill so the pill keeps its edge on tinted host surfaces too. */
+  border: 1px solid color-mix(in srgb, var(--hi-color-text-secondary, rgb(120 130 150)) 26%, transparent);
+  background: color-mix(in srgb, var(--hi-color-text-secondary, rgb(120 130 150)) 14%, transparent);
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    filter var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   flex-shrink: 0;
   overflow: hidden;
 
   .hk-switch-sm & {
-    width: 2rem;
-    height: 1.125rem;
+    width: 2.25rem;
+    height: 1.25rem;
   }
 
   .hk-switch-md & {
-    width: 2.5rem;
-    height: 1.375rem;
+    width: 2.75rem;
+    height: 1.5rem;
   }
 
   .hk-switch-lg & {
-    width: 3rem;
-    height: 1.625rem;
+    width: 3.25rem;
+    height: 1.75rem;
   }
 
   .hk-switch-primary[data-checked] & {
@@ -79,6 +89,19 @@
   }
 }
 
+/* Hover / press feedback (house parity: HkRadio box hover). The checked
+   track brightens a touch instead of recoloring, so the four state colors
+   keep their exact resting identity. Note the state markers live on the
+   ROOT label, not the track, so the :not() rides there too. */
+.hk-switch:not([data-disabled]):not([data-checked]):hover .hk-switch-track {
+  background: color-mix(in srgb, var(--hi-color-text-secondary, rgb(120 130 150)) 22%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-text-secondary, rgb(120 130 150)) 34%, transparent);
+}
+
+.hk-switch:not([data-disabled])[data-checked]:hover .hk-switch-track {
+  filter: brightness(1.07) saturate(1.05);
+}
+
 /* --- Thumb --- */
 
 .hk-switch-thumb {
@@ -91,31 +114,46 @@
      the luminance-computed on-primary that went near-black on bright
      primaries (synthwave pink) while HkButton labels stayed white. */
   background: rgb(var(--color-on-solid-icon, 255 255 255));
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  transition:
+    transform var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    scale var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 1;
 
   .hk-switch-sm & {
-    width: 0.75rem;
-    height: 0.75rem;
+    width: 1rem;
+    height: 1rem;
   }
 
   .hk-switch-md & {
-    width: 0.9375rem;
-    height: 0.9375rem;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 
   .hk-switch-lg & {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
+  /* Press squish composes with the slide via the independent `scale`
+     property (transform owns the translation only). */
+  .hk-switch:not([data-disabled]):active & {
+    scale: 0.88;
+  }
+
+  /* Travel = track − 2×(1px border + 2px inset) − thumb width, so the
+     checked thumb clears the border by the same 3px as the resting one
+     (inset-inline-start resolves against the padding box — the 1px border
+     must count twice or the two gaps render asymmetric):
+     sm 36−6−16=14 · md 44−6−20=18 · lg 52−6−24=22. */
   .hk-switch-sm[data-checked] & {
-    transform: translateX(0.813rem);
+    transform: translateX(0.875rem);
   }
 
   .hk-switch-md[data-checked] & {
-    transform: translateX(1.12rem);
+    transform: translateX(1.125rem);
   }
 
   .hk-switch-lg[data-checked] & {
@@ -125,11 +163,11 @@
   /* RTL: the checked slide mirrors — the thumb travels back toward the
      inline-start (physically leftward) edge. */
   [dir="rtl"] .hk-switch-sm[data-checked] & {
-    transform: translateX(-0.813rem);
+    transform: translateX(-0.875rem);
   }
 
   [dir="rtl"] .hk-switch-md[data-checked] & {
-    transform: translateX(-1.12rem);
+    transform: translateX(-1.125rem);
   }
 
   [dir="rtl"] .hk-switch-lg[data-checked] & {
@@ -141,7 +179,7 @@
 
 .hk-switch-content {
   position: absolute;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -149,21 +187,46 @@
   transition: opacity 0.2s ease;
 
   .hk-switch-sm & {
-    font-size: 0.4375rem;
+    font-size: 0.5rem;
   }
 
   .hk-switch-lg & {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
   }
 
+  /* Both faces anchor AWAY from the thumb that would cover them (content
+   * sits at z-index 0, the thumb at 1): the off face starts clear of the
+   * resting thumb (2px inset + thumb + 2px gap = 20/24/28), the on face
+   * ends clear of the checked one (thumb + 4 = 20/24/28: with travel =
+   * track − 2×(border+inset) − thumb, the checked thumb starts
+   * thumb + 4 from the padding-box end). A label longer
+   * than its free zone clips at the far seam instead of sliding under the
+   * thumb — the R1 verification measured 3–5px of coverage with the old
+   * far-edge anchors once the track grew. */
   &-off {
-    inset-inline-end: 4px;
+    inset-inline-start: 24px;
     color: var(--hi-color-text-secondary);
+
+    .hk-switch-sm & {
+      inset-inline-start: 20px;
+    }
+
+    .hk-switch-lg & {
+      inset-inline-start: 28px;
+    }
   }
 
   &-on {
-    inset-inline-start: 4px;
+    inset-inline-end: 24px;
     color: rgb(var(--color-on-solid-text, 255 255 255));
+
+    .hk-switch-sm & {
+      inset-inline-end: 20px;
+    }
+
+    .hk-switch-lg & {
+      inset-inline-end: 28px;
+    }
   }
 }
 

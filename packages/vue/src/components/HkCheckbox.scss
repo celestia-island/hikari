@@ -5,6 +5,11 @@
 .hk-checkbox {
   display: inline-flex;
   align-items: center;
+  /* When the control sits INLINE among text (not in a host flex row), the
+   * default `vertical-align: baseline` parks the inline-flex's bottom edge
+   * on the text baseline and rides the box ~4px above the text's visual
+   * center. `middle` is the house parity value (HkSwitch/HkRadio). */
+  vertical-align: middle;
   gap: var(--space-8, 0.5rem);
   cursor: pointer;
   user-select: none;
@@ -28,9 +33,34 @@
   background: var(--hi-color-surface, rgba(240,244,248,0.95));
   transition:
     border-color var(--duration-normal, 0.3s) ease,
-    background var(--duration-normal, 0.3s) ease;
+    background var(--duration-normal, 0.3s) ease,
+    scale var(--duration-short, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   flex-shrink: 0;
   position: relative;
+
+  /* Box scales with the size modifier — it previously ignored `size`
+   * entirely (an lg row carried an md box, floating 2px high next to
+   * 16px text). sm/md/lg now match HkRadio's box scale. */
+  .hk-checkbox-sm & {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .hk-checkbox-lg & {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+}
+
+/* Press feedback (house parity: HkSwitch thumb squish). */
+.hk-checkbox:not([data-disabled]):active .hk-checkbox-box {
+  scale: 0.9;
+}
+
+/* Hover parity with HkRadio: an unchecked box picks up the primary edge
+   under the pointer. Checked/indeterminate keep their solid fill. */
+.hk-checkbox:not([data-disabled]):hover .hk-checkbox-box:not([data-checked]):not([data-indeterminate]) {
+  border-color: var(--hi-color-primary, #7aa2f7);
 }
 
 .hk-checkbox[data-type="radio"] .hk-checkbox-box {
@@ -74,6 +104,16 @@
   color: rgb(var(--color-on-solid-icon, 255 255 255));
   width: 14px;
   height: 14px;
+
+  .hk-checkbox-sm & {
+    width: 11px;
+    height: 11px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .hk-checkbox-dot {
@@ -82,6 +122,16 @@
   border-radius: 50%;
   background: rgb(var(--color-on-solid-icon, 255 255 255));
   z-index: var(--hi-z-above, 1);
+
+  .hk-checkbox-sm & {
+    width: 5px;
+    height: 5px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 8px;
+    height: 8px;
+  }
 }
 
 .hk-checkbox-indeterminate {
@@ -90,10 +140,26 @@
   border-radius: 1px;
   background: rgb(var(--color-on-solid-icon, 255 255 255));
   z-index: var(--hi-z-above, 1);
+
+  .hk-checkbox-sm & {
+    width: 6px;
+  }
+
+  .hk-checkbox-lg & {
+    width: 10px;
+  }
 }
 
 /* ---------- label ---------- */
 
 .hk-checkbox[data-animating] .hk-checkbox-box {
   will-change: border-color, background;
+}
+
+/* Reduced motion: the press squish snaps instead of tweening (house
+   pattern: HkSwitch.scss / HkSlider.scss). */
+@media (prefers-reduced-motion: reduce) {
+  .hk-checkbox-box {
+    transition: none;
+  }
 }

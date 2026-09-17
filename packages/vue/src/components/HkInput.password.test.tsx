@@ -1664,9 +1664,12 @@ describe("HkInput password reveal strategies", () => {
       expect(gr!).toBeLessThan(245);
       expect(gg!).toBe(gr);
       expect(gb!).toBe(gr);
-      // Halo color follows the theme: BLACK over a light ground.
+      // Halo color follows the theme: BLACK over a light ground —
+      // peak AND endpoints share the theme channel (R2 F1).
       expect(vis.gradientStops, "light theme paints a BLACK halo").toContain("rgba(0,0,0,0.1)");
       expect(vis.gradientStops).not.toContain("rgba(255,255,255,0.1)");
+      expect(vis.gradientStops, "light halo endpoints fade on BLACK").toContain("rgba(0,0,0,0)");
+      expect(vis.gradientStops).not.toContain("rgba(255,255,255,0)");
       // The glyph apertures rasterize BOLD.
       expect(
         mask!.fonts.some((f) => f.startsWith("bold ")),
@@ -1767,15 +1770,56 @@ describe("HkInput password reveal strategies", () => {
         inkMean - bgMean,
         `dark theme: glyph pedestal shifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
+      // Strict grayscale on the dark side too (R2 F4).
+      for (const tile of tiles) {
+        for (const fill of tile.fillStyles.filter((f) => f.startsWith("rgb("))) {
+          const [r8, g8, b8] = fill.slice(4, -1).split(",").map(Number);
+          expect(r8 === g8 && g8 === b8, `dark spatter must be grayscale, got ${fill}`).toBe(true);
+        }
+      }
+      // Matched texture statistics (R2 F2): the two layers must carry
+      // the SAME dot count and (pedestal aside) the same lightness
+      // RANGE — a diverging spread/density is the single-frame
+      // segmentation leak the docblock promises cannot happen.
+      const dotStats = (r: (typeof tiles)[number]) => {
+        const dots = r.fillStyles.slice(1).filter((f) => f.startsWith("rgb("));
+        let min = 255, max = 0;
+        for (const f of dots) {
+          const v = Number(f.slice(4, -1).split(",")[0]);
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+        return { count: dots.length, range: max - min };
+      };
+      const bgStats = dotStats(tiles[0]!);
+      const inkStats = dotStats(tiles[1]!);
+      expect(inkStats.count, "both layers carry the same dot density").toBe(bgStats.count);
+      expect(
+        Math.abs(inkStats.range - bgStats.range),
+        `matched lightness spread (bg ${bgStats.range} vs ink ${inkStats.range})`,
+      ).toBeLessThan(6);
+      // The pedestal lifts ground AND dots together: the two grounds
+      // sit exactly one pedestal apart (~10 L ≈ 25 rgb), so an ink
+      // ground that loses or doubles its shift goes red (R2 C1b).
+      const groundOf = (r: (typeof tiles)[number]) =>
+        Number(r.fillStyles[0]!.slice(4, -1).split(",")[0]);
+      const groundDelta = Math.abs(groundOf(tiles[1]!) - groundOf(tiles[0]!));
+      expect(
+        groundDelta >= 20 && groundDelta <= 30,
+        `grounds one pedestal apart (delta ${groundDelta})`,
+      ).toBe(true);
       // Near-black ground: L 10 → rgb ≈ 26.
       const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
       expect(gr!, "dark-theme ground is near-black").toBeGreaterThan(18);
       expect(gr!).toBeLessThan(34);
       expect(gg!).toBe(gr);
       expect(gb!).toBe(gr);
-      // White halo over the dark ground.
+      // White halo over the dark ground — peak AND endpoints share
+      // the theme channel (an endpoint desync must go red, R2 F1).
       expect(vis.gradientStops, "dark theme paints a WHITE halo").toContain("rgba(255,255,255,0.1)");
       expect(vis.gradientStops).not.toContain("rgba(0,0,0,0.1)");
+      expect(vis.gradientStops, "dark halo endpoints fade on WHITE").toContain("rgba(255,255,255,0)");
+      expect(vis.gradientStops).not.toContain("rgba(0,0,0,0)");
       // Same screenshot contract and bold apertures as the light theme.
       const mask = allRecs.find((r) => r.texts.length > 0)!;
       expect(mask.texts).toEqual(["a", "b", "c"]);
@@ -1813,6 +1857,41 @@ describe("HkInput password reveal strategies", () => {
       const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
       expect(gr!, "fallback ink → LIGHT anchors (near-white ground)").toBeGreaterThan(230);
       expect(vis.gradientStops, "black halo in the degrade").toContain("rgba(0,0,0,0.1)");
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      restoreInk();
+    }
+  });
+
+  it("filter degrades the same way for color()-function inks", async () => {
+    // Locks the DEGRADE SEMANTICS for color() inks: the modern-
+    // function rejection yields null → the fallback dark ink → LIGHT
+    // anchors. Honest limit (verified during R2 remedies): spec-valid
+    // color() values are 0–1 floats, so even a DELETED guard parses
+    // them into sub-1 triples (L < 1 → light) — guard deletion is not
+    // observable through the filter theme. The guard's real consumer
+    // is the NOISE painter's colored tiles (it prevents deriving a
+    // garbage hue from e.g. [0.5,0.2,0.8]); this pin keeps any future
+    // "auto-interpret color()" change (×255 scaling → L 50 → dark)
+    // from silently re-theming the filter.
+    const restoreInk = forceInkColor("color(display-p3 1 0 0)");
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const allRecs = Array.from(rec.byCanvas.values());
+      const tiles = allRecs.filter(
+        (r) => r.fillStyles.filter((f) => f.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length).toBe(2);
+      const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
+      expect(gr!, "color() ink degrades to the LIGHT anchors").toBeGreaterThan(230);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
     } finally {

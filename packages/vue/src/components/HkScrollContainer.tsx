@@ -96,7 +96,9 @@ export default defineComponent({
     backTopShow: { type: Number, default: undefined },
     /** Hide threshold of the hysteresis; only read when `backTopShow`
      *  is also set. Without it the signal falls back to the single
-     *  `top > backTopShow` test. */
+     *  `top > backTopShow` test. A misconfigured `backTopHide >=
+     *  backTopShow` degrades the same way (the show test wins first),
+     *  so the band only widens, never inverts. */
     backTopHide: { type: Number, default: undefined },
   },
   emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },

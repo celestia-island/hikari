@@ -24,6 +24,7 @@ import HkTooltip from "./HkTooltip";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
 import {
   layoutRevealGlyphs,
+  RevealFilterPainter,
   RevealNoisePainter,
   sweepWindow,
   type RevealLayout,
@@ -51,24 +52,29 @@ interface Ripple {
  * Right-edge affordance (`passwordTrailing`):
  * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
  *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
- *   - strategy "sweep" (default): a readable window — the password is
- *     drawn as ordinary high-contrast text inside a narrow band that
- *     sweeps across the row over the boiling-noise field (see
- *     revealKinematogram.ts). Reading is effortless; a single frame —
- *     a screenshot — shows only the characters under the band, the rest
- *     stays noise (partial capture resistance). Reduced motion or a
- *     pattern-less engine degrades to the fully readable static plain
- *     text.
+ *   - strategy "filter" (default): dual counter-drifting spatter
+ *     layers — the glyph row is a set of STATIC apertures filled with a
+ *     spatter texture drifting one way, over a statistically identical
+ *     spatter field drifting the other way, the glyphs lifted by a
+ *     small lightness pedestal with a soft halo band around the row
+ *     (see revealKinematogram.ts). The whole row stays readable in
+ *     motion while any single frame — a screenshot — carries no glyph
+ *     structure, only a weak mean-luminance signal dissolved into the
+ *     halo ramp. Reduced motion or a pattern-less engine degrades to
+ *     the fully readable static plain text.
+ *   - strategy "sweep": a readable window — the password is drawn as
+ *     ordinary high-contrast text inside a narrow band that sweeps
+ *     across the row over the boiling-noise field. Reading is
+ *     effortless; a single frame shows the characters under the band
+ *     in the clear (partial capture resistance only).
  *   - strategy "noise": the screenshot-safe boiling-noise kinematogram:
  *     one shared noise tile, the background drifting sideways while the
  *     noise sampled through the password glyphs is re-sampled at a
- *     random phase every frame. A human reads the glyph silhouettes off
- *     the flicker-vs-drift contrast, while any single frame — a
- *     screenshot — is pure noise with no glyph structure for OCR to
- *     lock onto. The hardest to read; opt-in for high-exposure
- *     surfaces. When the animation bus is parked (reduced motion) or
- *     the engine cannot run the pattern path, the reveal degrades to
- *     the legacy static per-glyph jitter drawing.
+ *     random phase every frame. Statistically pure noise in ANY single
+ *     frame (nothing for OCR), but the hardest to read; opt-in for
+ *     high-exposure surfaces. When the animation bus is parked
+ *     (reduced motion) or the engine cannot run the pattern path, the
+ *     reveal degrades to the legacy static per-glyph jitter drawing.
  *   - strategy "plain": the industry-standard readable reveal — the
  *     password is drawn as ordinary text on the canvas while revealed
  *     (the DOM input stays type="password"). Readable by everyone,
@@ -112,11 +118,14 @@ export default defineComponent({
     },
     /**
      * What the eye reveal SHOWS:
-     * - "sweep" (default): a readable window — the password is drawn as
-     *   ordinary high-contrast text inside a narrow band that sweeps
-     *   across the row over the boiling-noise field. Genuinely easy to
-     *   read; a single screenshot leaks only the characters under the
-     *   band (partial capture resistance).
+     * - "filter" (default): dual counter-drifting spatter layers —
+     *   static glyph apertures over an oppositely drifting, statisti-
+     *   cally matched spatter field, plus a small lightness pedestal
+     *   and halo. Readable in motion; a single screenshot carries no
+     *   glyph structure, only a weak luminance signal.
+     * - "sweep": a readable window — ordinary high-contrast text inside
+     *   a narrow band sweeping across the row. Easy to read; a single
+     *   screenshot leaks the band's characters in the clear.
      * - "noise": the screenshot-safe boiling-noise kinematogram —
      *   statistically pure noise in any single frame, nothing for OCR,
      *   but the hardest to read (opt-in for high-exposure surfaces).
@@ -124,8 +133,8 @@ export default defineComponent({
      *   screenshot-visible — pick per threat model).
      */
     revealStrategy: {
-      type: String as () => "sweep" | "noise" | "plain",
-      default: "sweep",
+      type: String as () => "filter" | "sweep" | "noise" | "plain",
+      default: "filter",
     },
     /**
      * How the eye reveal is TRIGGERED: "hold" (default) = press-and-
@@ -177,6 +186,7 @@ export default defineComponent({
     // drives the sweep strategy's window position (seconds since the
     // reveal started).
     const revealNoise = new RevealNoisePainter();
+    const revealFilter = new RevealFilterPainter();
     let revealFrames = 0;
     let revealLayoutValue = "";
     let revealLayoutW = -1;
@@ -494,7 +504,7 @@ export default defineComponent({
     }
 
     /**
-     * Sweep reveal pass (`revealStrategy="sweep"`, the default): the
+     * Sweep reveal pass (`revealStrategy="sweep"`): the
      * boiling-noise field stays as the base layer, and the password is
      * drawn as ordinary high-contrast text ONLY inside a narrow window
      * that sweeps across the row (sweepWindow kinematics: constant
@@ -545,6 +555,28 @@ export default defineComponent({
       ctx.clip();
       drawRevealPlainText(ctx, W, H);
       ctx.restore();
+    }
+
+    /**
+     * Filter reveal pass (`revealStrategy="filter"`, the default): the
+     * whole row stays on screen at all times — static glyph apertures
+     * filled with one spatter texture, over a statistically identical
+     * spatter field drifting the OPPOSITE way, plus a small lightness
+     * pedestal and a halo band. A human reads the row continuously off
+     * the counter-motion + pedestal; a single frame carries no glyph
+     * structure (matched texture statistics), only the weak pedestal
+     * signal dissolved into the halo ramp. Like the sweep, a pattern-
+     * less engine latches the static fallback to PLAIN text — filter
+     * exists for readability, never degrade to frozen noise.
+     */
+    function drawRevealFilterFrame(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number) {
+      const layout = revealLayoutFor(ctx, W, H);
+      if (!layout || layout.glyphs.length === 0) return;
+      revealFilter.advance(dt, dpr);
+      if (!revealFilter.paint(ctx, W, H, layout, cachedMonoFont || syncMonoFont(), revealLayoutKey)) {
+        revealStaticFallback = true;
+        drawRevealPlainText(ctx, W, H);
+      }
     }
 
     /**
@@ -626,6 +658,16 @@ export default defineComponent({
             return;
           }
           drawRevealSweepFrame(ctx, W, H, dt);
+          return;
+        }
+        if (props.revealStrategy === "filter") {
+          // Same degrade contract as the sweep: readable in motion,
+          // plain text when motion cannot run.
+          if (revealStaticFallback) {
+            drawRevealPlainText(ctx, W, H);
+            return;
+          }
+          drawRevealFilterFrame(ctx, W, H, dt);
           return;
         }
         if (!revealStaticFallback && drawRevealNoise(ctx, W, H, dt)) return;
@@ -724,27 +766,37 @@ export default defineComponent({
       if (!props.modelValue || props.disabled || revealing.value) return;
       syncTextHsl();
       syncMonoFont();
-      // The plain strategy is static — no painter, no watchdog. Both
-      // motion strategies (sweep default, noise opt-in) drive the noise
+      // The plain strategy is static — no painter, no watchdog. The
+      // motion strategies (filter default, sweep, noise) drive their
       // painter per frame and degrade to a STATIC fallback when frames
-      // cannot drive them: sweep falls back to plain text (its whole
-      // point is readability), noise to the legacy jitter.
+      // cannot drive them: filter and sweep fall back to plain text
+      // (their whole point is readability), noise to the legacy jitter.
+      // A parked bus (reduced motion) will never deliver a frame, so
+      // the motion reveals would freeze — filter and sweep into an
+      // unreadable mid-state, noise into pure noise — degrade
+      // immediately to the strategy's static fallback (plain text for
+      // filter and sweep, legacy jitter for noise). Motion-sensitive
+      // users keep their preference and the reveal stays usable. The
+      // plain strategy needs no degrade: its static text is already
+      // motion-free. The parked check runs BEFORE beginHold so a
+      // reduced-motion hold never builds noise/spatter tiles it will
+      // never paint.
       const isPlain = props.revealStrategy === "plain";
+      const parked = !isPlain && isAnimationParked();
       if (!isPlain) {
         revealStaticFallback = false;
         revealFrames = 0;
         sweepT = 0;
-        revealNoise.beginHold(textHsl);
+        if (!parked) {
+          if (props.revealStrategy === "filter") {
+            revealFilter.beginHold(textHsl, dpr);
+          } else {
+            revealNoise.beginHold(textHsl);
+          }
+        }
       }
       revealing.value = true;
-      // A parked bus (reduced motion) will never deliver a frame, so
-      // the motion reveals would freeze — the sweep into unreadable
-      // mid-state noise, the noise into pure noise — degrade immediately
-      // to the strategy's static fallback (plain text for sweep, legacy
-      // jitter for noise). Motion-sensitive users keep their preference
-      // and the reveal stays usable. The plain strategy needs no
-      // degrade: its static text is already motion-free.
-      if (!isPlain && isAnimationParked()) {
+      if (parked) {
         revealStaticFallback = true;
       }
       // Paint one synchronous frame so the reveal appears instantly;

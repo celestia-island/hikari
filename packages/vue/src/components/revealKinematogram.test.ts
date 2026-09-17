@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   BACKGROUND_DRIFT_PX_S,
+  FILTER_DRIFT_PX_S,
   layoutRevealGlyphs,
   NOISE_TILE_W,
+  RevealFilterPainter,
   RevealNoisePainter,
   sweepWindow,
   SWEEP_END_PAUSE_S,
@@ -127,6 +129,65 @@ describe("RevealNoisePainter", () => {
 
   it("never throws without a 2d context and stays unusable (fallback path)", () => {
     const p = new RevealNoisePainter();
+    expect(() => p.beginHold([220, 10, 15])).not.toThrow();
+    expect(p.available).toBe(false);
+  });
+});
+
+describe("RevealFilterPainter", () => {
+  it("seeds both layer phases from randomness at each hold", () => {
+    const p = new RevealFilterPainter();
+    const rand = vi.spyOn(Math, "random").mockReturnValue(0.25);
+    try {
+      p.beginHold([220, 10, 15]);
+      // Drift-sign draw, then one phase draw per layer before retile;
+      // happy-dom has no 2d context, so the tile builds bail before
+      // consuming any more randomness.
+      const d = p.peekDrift();
+      expect(d.background).toBeCloseTo(0.25 * NOISE_TILE_W, 10);
+      expect(d.ink).toBeCloseTo(0.25 * NOISE_TILE_W, 10);
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it("drifts the two layers in OPPOSITE directions at equal speed", () => {
+    // The segregation cue IS the 180° direction difference: a mutation
+    // sending both layers the same way (or at unequal speeds) must go
+    // red here.
+    const p = new RevealFilterPainter();
+    const rand = vi.spyOn(Math, "random").mockReturnValue(0.25); // driftSign = +1
+    try {
+      p.beginHold([220, 10, 15]);
+      const before = p.peekDrift();
+      p.advance(0.25, 2);
+      const after = p.peekDrift();
+      const step = FILTER_DRIFT_PX_S * 2 * 0.25;
+      expect(after.background - before.background).toBeCloseTo(step, 10);
+      expect(after.ink - before.ink).toBeCloseTo(-step, 10);
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it("flips both drift directions when the per-hold draw says so", () => {
+    const p = new RevealFilterPainter();
+    const rand = vi.spyOn(Math, "random").mockReturnValue(0.75); // driftSign = -1
+    try {
+      p.beginHold([220, 10, 15]);
+      const before = p.peekDrift();
+      p.advance(0.25, 2);
+      const after = p.peekDrift();
+      const step = FILTER_DRIFT_PX_S * 2 * 0.25;
+      expect(after.background - before.background).toBeCloseTo(-step, 10);
+      expect(after.ink - before.ink).toBeCloseTo(step, 10);
+    } finally {
+      rand.mockRestore();
+    }
+  });
+
+  it("never throws without a 2d context and stays unusable (fallback path)", () => {
+    const p = new RevealFilterPainter();
     expect(() => p.beginHold([220, 10, 15])).not.toThrow();
     expect(p.available).toBe(false);
   });

@@ -1,10 +1,12 @@
 /**
  * revealKinematogram — the canvas rendering behind the HkPasswordSurface
  * reveal strategies: the boiling-noise kinematogram (the "noise"
- * strategy — screenshot-safe in any single frame) and the sweep-window
+ * strategy — screenshot-safe in any single frame), the sweep-window
  * kinematics for the "sweep" strategy (a readable band over the noise;
- * deliberately NOT single-frame safe). Both serve hold and toggle
- * triggers; the "plain" strategy bypasses this module entirely.
+ * deliberately NOT single-frame safe), and the dual counter-drifting
+ * spatter layers of the "filter" strategy (readable in motion, only a
+ * weak luminance signal in any single frame). All serve hold and
+ * toggle triggers; the "plain" strategy bypasses this module entirely.
  *
  * Principle: the whole reveal area is filled with ONE shared noise tile.
  * The glyph mask stays perfectly still while the BACKGROUND noise drifts
@@ -377,6 +379,276 @@ export class RevealNoisePainter {
       ctx.fillStyle = patBg;
       ctx.fillRect(ob, 0, W + 2, H);
       ctx.restore();
+      ctx.drawImage(this.mask, 0, 0);
+      return true;
+    } catch {
+      this.ok = false;
+      return false;
+    }
+  }
+}
+
+/** ── Filter strategy: dual counter-drifting spatter layers ──────────
+ *
+ * Design (literature-grounded, chosen over the sweep when screenshot
+ * resistance matters more than instant legibility): the whole reveal
+ * area carries ONE spatter texture drifting in one direction; the
+ * password glyphs are STATIC apertures carrying a SECOND spatter
+ * texture — statistically identical (same generator, dot size and
+ * lightness distribution) but drifting the OPPOSITE way and lifted by
+ * a small lightness pedestal, with a soft halo band brightening the
+ * surround of the glyph row. A human segments the two layers
+ * effortlessly (motion transparency at a 180° direction difference is
+ * the strongest segregation cue the visual system has) and reads the
+ * row aided by the pedestal + halo, while any SINGLE frame carries no
+ * motion at all: the glyph boundary survives only as a small mean-
+ * luminance step inside a smooth halo ramp — nothing for a global or
+ * adaptive threshold to plateau on, and (matched statistics) nothing
+ * for a texture classifier either.
+ *
+ * Why these parameters (the failure modes of video CAPTCHAs say what
+ * to avoid — NuCAPTCHA & animated-GIF schemes died to per-frame OCR +
+ * cross-frame registration; the kinematogram above replaced an earlier
+ * counter-DRIFT variant of this module that was illegible at field
+ * font sizes):
+ * - Spatter dots ~0.6–1.4× the stroke width, not 1px grain: masking
+ *   and motion signal both peak near the letters' diagnostic spatial
+ *   band, so MODERATE noise contrast suffices (the old design's fine
+ *   grain + fast ±40px/s drift is exactly what made it unreadable).
+ * - Drift ±FILTER_DRIFT_PX_S: slow enough to track coherently at field
+ *   sizes, fast enough that a single frame carries no usable motion
+ *   energy (form-from-motion needs ~100–200ms of integration).
+ * - The glyph APERTURES never move — only the texture inside them
+ *   flows. Cross-frame registration of the glyph shapes (the attack
+ *   that killed video CAPTCHAs) finds nothing to align.
+ * - The pedestal is deliberately SMALL: it is a static first-order cue
+ *   and therefore the one signal a single frame leaks. Kept at
+ *   FILTER_PEDESTAL_L lightness points and spread by the halo ramp, it
+ *   aids human pop-out without giving thresholding a plateau. An
+ *   attacker averaging MANY frames can in principle recover the
+ *   pedestal's DC component (same cost class as the video attack on
+ *   the noise strategy) — accepted risk, documented; consumers that
+ *   cannot accept it pick "noise" (zero static signal) or "plain"
+ *   (full readability).
+ * - The drift sign is re-randomized per hold (and both tiles are
+ *   freshly generated per hold) so two holds never replay the same
+ *   frame sequence.
+ *
+ * Invariants the tests pin: glyph geometry NEVER touches the visible
+ * canvas (mask → `source-in` noise stamp, exactly like the noise
+ * painter); the two tiles differ in mean luminance (the pedestal);
+ * the halo gradient is drawn every frame; a pattern-less or
+ * gradient-less engine degrades to the static plain text (filter
+ * exists FOR readability — never to frozen noise). */
+
+/** Counter-drift speed of each layer in CSS px/s (opposite signs). */
+export const FILTER_DRIFT_PX_S = 84;
+
+/** Lightness pedestal of the glyph layer over the background layer,
+ * in HSL lightness points (clamped into [L_MIN, L_MAX] like every
+ * sample). Small on purpose — see the strategy docblock. */
+export const FILTER_PEDESTAL_L = 10;
+
+/** Peak alpha of the halo band (white, at the glyph-row midline). */
+export const FILTER_HALO_ALPHA = 0.1;
+
+/** Halo half-height as a multiple of the glyph font size (device px):
+ * the ramp spans ±this × fontPx around the row midline, so the
+ * pedestal step dissolves into a gradient ~1–2 letter heights wide. */
+export const FILTER_HALO_FONT_SCALE = 1.2;
+
+/** Spatter dot radius band in CSS px (scaled by dpr into the device-px
+ * tile): ≈0.6–1.4× the stroke width of the 13–22px reveal band, the
+ * spatial scale where masking is most efficient per unit contrast. */
+const FILTER_SPATTER_R_MIN_CSS = 1.2;
+const FILTER_SPATTER_R_MAX_CSS = 2.8;
+
+/** Spatter coverage: one dot per this many tile px². BOTH layers share
+ * the density, size and lightness distributions — matched texture
+ * statistics are the single-frame defense; only the mean luminance
+ * (pedestal) and the drift direction differ. */
+const FILTER_SPATTER_PX_PER_DOT = 45;
+
+/** Dot lightness spread around the layer base (both layers share it). */
+const FILTER_SPATTER_L_SPREAD = 22;
+
+/** Tile ground sits this far below the layer base so the dots read as
+ * speckles on a darker field; the pedestal lifts ground AND dots
+ * together so the whole glyph aperture carries the +pedestal mean. */
+const FILTER_SPATTER_GROUND_L = 30;
+
+export class RevealFilterPainter {
+  private bgTile: HTMLCanvasElement | null = null;
+  private inkTile: HTMLCanvasElement | null = null;
+  private mask: HTMLCanvasElement | null = null;
+  private maskKey = "";
+  private offsetBackground = 0;
+  private offsetInk = 0;
+  private driftSign = 1;
+  private dpr = 1;
+  private ok = true;
+
+  /** False once canvas 2D is unusable: the caller degrades to the
+   * static plain text (filter exists for readability). */
+  get available(): boolean {
+    return this.ok;
+  }
+
+  /** Accumulated pre-wrap drift of both layers in device px (test
+   * window: the two must move in OPPOSITE directions at equal speed). */
+  peekDrift(): { background: number; ink: number } {
+    return { background: this.offsetBackground, ink: this.offsetInk };
+  }
+
+  /** Start a hold: two FRESH spatter tiles (background at the base
+   * lightness, glyph layer lifted by the pedestal), randomized phases
+   * and a randomized drift direction, so replays are never
+   * pixel-identical and automation cannot precompute the motion. */
+  beginHold(base: Hsl, dpr = 1): void {
+    this.dpr = dpr;
+    this.driftSign = Math.random() < 0.5 ? 1 : -1;
+    this.offsetBackground = Math.random() * NOISE_TILE_W;
+    this.offsetInk = Math.random() * NOISE_TILE_W;
+    this.maskKey = ""; // force a mask rebuild on the first paint
+    this.ok = this.retile(base, 0, "bg") && this.retile(base, FILTER_PEDESTAL_L, "ink");
+  }
+
+  advance(dt: number, dpr: number): void {
+    const step = FILTER_DRIFT_PX_S * dpr * dt;
+    this.offsetBackground += this.driftSign * step;
+    this.offsetInk -= this.driftSign * step;
+  }
+
+  /** (Re)build one spatter tile: a darkened ground of the ink color,
+   * then a fixed-density scatter of soft dots at the layer lightness.
+   * Draw order is deterministic (bg tile first, then ink) so tests can
+   * attribute the per-canvas recordings. */
+  private retile(base: Hsl, pedestalL: number, which: "bg" | "ink"): boolean {
+    try {
+      if (typeof document === "undefined") return false;
+      if (which === "bg") {
+        this.bgTile ??= document.createElement("canvas");
+      } else {
+        this.inkTile ??= document.createElement("canvas");
+      }
+      const tile = (which === "bg" ? this.bgTile : this.inkTile)!;
+      tile.width = NOISE_TILE_W;
+      tile.height = NOISE_TILE_H;
+      const tctx = tile.getContext("2d");
+      if (!tctx) return false;
+      const [h, s, l] = base;
+      const lift = (v: number) => Math.min(L_MAX, Math.max(L_MIN, v));
+      const [gr, gg, gb] = hslToRgb(h, s, lift(l + pedestalL - FILTER_SPATTER_GROUND_L));
+      tctx.fillStyle = `rgb(${gr},${gg},${gb})`;
+      tctx.fillRect(0, 0, NOISE_TILE_W, NOISE_TILE_H);
+      const count = Math.round((NOISE_TILE_W * NOISE_TILE_H) / FILTER_SPATTER_PX_PER_DOT);
+      const rMin = FILTER_SPATTER_R_MIN_CSS * this.dpr;
+      const rMax = FILTER_SPATTER_R_MAX_CSS * this.dpr;
+      for (let i = 0; i < count; i++) {
+        const dl = lift(l + pedestalL + (Math.random() * 2 - 1) * FILTER_SPATTER_L_SPREAD);
+        const [r, g, b] = hslToRgb(h, s, dl);
+        tctx.fillStyle = `rgb(${r},${g},${b})`;
+        const rad = rMin + Math.random() * (rMax - rMin);
+        tctx.beginPath();
+        tctx.arc(Math.random() * NOISE_TILE_W, Math.random() * NOISE_TILE_H, rad, 0, Math.PI * 2);
+        tctx.fill();
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Composite one frame: background spatter translated by its
+   * accumulated drift, the halo ramp centered on the glyph row, then
+   * the glyph mask — rebuilt only when `maskKey` changes — re-filled
+   * with the ink spatter at ITS accumulated counter-drift and stamped
+   * on top. Returns false (latching ONLY on a thrown error, like the
+   * noise painter) when the pattern/gradient path is unavailable.
+   */
+  paint(
+    ctx: CanvasRenderingContext2D,
+    W: number,
+    H: number,
+    layout: RevealLayout,
+    monoFont: string,
+    maskKey: string,
+  ): boolean {
+    if (!this.bgTile || !this.inkTile || !this.ok) return false;
+    try {
+      if (typeof document === "undefined") return false;
+      // Capability pre-check BEFORE anything is drawn: a partial frame
+      // (spatter without halo or text) must never flash on screen.
+      if (
+        typeof ctx.createPattern !== "function" ||
+        typeof ctx.createLinearGradient !== "function"
+      ) {
+        return false;
+      }
+      // Create the halo gradient up front as well: creation draws
+      // nothing, so a bail here still leaves the visible canvas
+      // untouched (no partial frame — see the pre-check above).
+      const bandH = Math.min(H / 2, FILTER_HALO_FONT_SCALE * layout.fontPx);
+      const midY = H / 2;
+      const grad = ctx.createLinearGradient(0, midY - bandH, 0, midY + bandH);
+      if (!grad) return false;
+      grad.addColorStop(0, "rgba(255,255,255,0)");
+      grad.addColorStop(0.5, `rgba(255,255,255,${FILTER_HALO_ALPHA})`);
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      this.mask ??= document.createElement("canvas");
+      if (this.mask.width !== W || this.mask.height !== H) {
+        this.mask.width = W;
+        this.mask.height = H;
+        this.maskKey = "";
+      }
+      const mctx = this.mask.getContext("2d");
+      if (!mctx) return false;
+
+      if (this.maskKey !== maskKey) {
+        mctx.globalCompositeOperation = "source-over";
+        mctx.clearRect(0, 0, W, H);
+        mctx.fillStyle = "#fff";
+        mctx.textAlign = "left";
+        mctx.textBaseline = "middle";
+        mctx.font = `${layout.fontPx.toFixed(2)}px ${monoFont}`;
+        for (const g of layout.glyphs) {
+          mctx.fillText(g.ch, g.x, H / 2);
+        }
+        this.maskKey = maskKey;
+      }
+
+      const patInk = mctx.createPattern(this.inkTile, "repeat");
+      if (!patInk) return false;
+      mctx.save();
+      mctx.globalCompositeOperation = "source-in";
+      mctx.imageSmoothingEnabled = false;
+      const oi = Math.round(wrapDrift(this.offsetInk, NOISE_TILE_W));
+      mctx.translate(-oi, 0);
+      mctx.fillStyle = patInk;
+      mctx.fillRect(oi, 0, W + 2, H);
+      mctx.restore();
+
+      const patBg = ctx.createPattern(this.bgTile, "repeat");
+      if (!patBg) return false;
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      const ob = Math.round(wrapDrift(this.offsetBackground, NOISE_TILE_W));
+      ctx.translate(-ob, 0);
+      ctx.fillStyle = patBg;
+      ctx.fillRect(ob, 0, W + 2, H);
+      ctx.restore();
+
+      // Halo: a smooth vertical ramp centered on the glyph row — the
+      // surround of the text sits slightly brighter, aiding pop-out
+      // while dissolving the pedestal step into a gradient with no
+      // plateau for thresholding to lock onto (gradient created up
+      // front, before any visible drawing).
+      ctx.save();
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, midY - bandH, W, bandH * 2);
+      ctx.restore();
+
       ctx.drawImage(this.mask, 0, 0);
       return true;
     } catch {

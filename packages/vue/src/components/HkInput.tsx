@@ -58,12 +58,12 @@ export default defineComponent({
     /**
      * Right-edge affordance for `variant="password"`:
      * - "eye" (default): the reveal button. While revealed, the canvas
-     *   renders the reveal chosen by `revealStrategy` (the sweep
-     *   readable-window by default; boiling-noise and plain text on
-     *   opt-in); the trigger is `revealTrigger` (press-and-hold by
-     *   default, click-toggle on opt-in). The DOM value stays inside
-     *   the type="password" input at all times — every strategy draws
-     *   on the canvas.
+     *   renders the reveal chosen by `revealStrategy` (the dual-layer
+     *   counter-drifting spatter "filter" by default; sweep readable-
+     *   window, boiling-noise and plain text on opt-in); the trigger
+     *   is `revealTrigger` (press-and-hold by default, click-toggle on
+     *   opt-in). The DOM value stays inside the type="password" input
+     *   at all times — every strategy draws on the canvas.
      * - "strength": the traffic-light dot (weak / fair / strong via the
      *   shared `passwordLevel` classifier, overridable through
      *   `strengthEvaluator`) with a localized tooltip on hover and on
@@ -77,11 +77,17 @@ export default defineComponent({
     /**
      * Reveal content for the password eye (`variant="password"`,
      * `passwordTrailing="eye"`):
-     * - "sweep" (default): a readable window — ordinary high-contrast
-     *   text inside a narrow band sweeping across the row over the
-     *   boiling-noise field. Easy to read; a single screenshot leaks
-     *   only the characters under the band (partial capture
-     *   resistance).
+     * - "filter" (default): dual counter-drifting spatter layers —
+     *   static glyph apertures filled with one spatter texture over a
+     *   statistically matched field drifting the opposite way, plus a
+     *   small lightness pedestal and a halo band around the row. The
+     *   whole row stays readable in motion; a single-frame screenshot
+     *   carries no glyph structure, only a weak luminance signal
+     *   dissolved into the halo.
+     * - "sweep": a readable window — ordinary high-contrast text inside
+     *   a narrow band sweeping across the row over the boiling-noise
+     *   field. Easy to read; a single screenshot leaks the characters
+     *   under the band in the clear (partial capture resistance).
      * - "noise": the boiling-noise kinematogram — statistically pure
      *   noise in any single-frame screenshot (nothing for OCR to lock
      *   onto), but the hardest to read. Opt-in for high-exposure
@@ -92,8 +98,8 @@ export default defineComponent({
      *   shoulder surfers. Pick per threat model.
      */
     revealStrategy: {
-      type: String as () => "sweep" | "noise" | "plain",
-      default: "sweep",
+      type: String as () => "filter" | "sweep" | "noise" | "plain",
+      default: "filter",
     },
     /**
      * Reveal interaction for the password eye: "hold" (default) reveals

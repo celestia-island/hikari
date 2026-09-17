@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vue";
 
 import HkInput from "./HkInput";
+import HkPasswordSurface from "./HkPasswordSurface";
 import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
@@ -14,9 +15,9 @@ import { setReducedMotion } from "../runtime/animationBus";
  *   hint, caps-lock / full-width hints, pending-clear refocus semantics
  * - right-edge affordance (passwordTrailing): eye reveal (default) /
  *   strength traffic light / none
- * - reveal strategy (revealStrategy): "sweep" readable window (default)
- *   vs "noise" boiling kinematogram (screenshot-safe) vs "plain"
- *   readable text
+ * - reveal strategy (revealStrategy): "filter" dual counter-drifting
+ *   spatter layers (default) vs "sweep" readable window vs "noise"
+ *   boiling kinematogram (screenshot-safe) vs "plain" readable text
  * - reveal trigger (revealTrigger): press-and-hold (default) vs
  *   click-to-toggle with auto-hide (revealAutoHideMs)
  * - the strength dot classifies through the shared passwordLevel util
@@ -1313,13 +1314,27 @@ describe("HkInput password reveal eye", () => {
 /** Installs a per-canvas recording getContext stub (happy-dom has no
  * real 2d): every canvas element gets its own recorder so a test can
  * tell the visible dot canvas apart from offscreen painter canvases. */
-function stubRecordingContexts() {
+function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
+  // linearGradients: false simulates a pattern-ful but gradient-less
+  // engine (the filter painter must hand the frame back BEFORE any
+  // visible drawing so the component can latch the plain fallback).
+  const { linearGradients = true } = opts;
   interface CanvasRec {
     canvas: HTMLCanvasElement;
     texts: string[];
     patternFills: number;
     drawImages: number;
     putImageDatas: number;
+    gradients: number;
+    /** fillRect calls that actually ran with a gradient as fillStyle —
+     * the halo DRAWN pin (creation alone proves nothing, R2 M3). */
+    gradientFills: number;
+    /** globalCompositeOperation assignments, in order — the mask MUST
+     * see "source-in" before its pattern fill or the glyphs never get
+     * carved out of the ink spatter (R3 F2: without this the password
+     * would render INVISIBLE on a real canvas, silently). */
+    compositeOps: string[];
+    fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
   }
@@ -1336,13 +1351,20 @@ function stubRecordingContexts() {
         patternFills: 0,
         drawImages: 0,
         putImageDatas: 0,
+        gradients: 0,
+        gradientFills: 0,
+        compositeOps: [],
+        fillStyles: [],
         clips: [],
         translates: [],
       };
       byCanvas.set(this, rec);
     }
     const r = rec;
-    return {
+    let fillStyleBox: string | CanvasGradient | CanvasPattern = "";
+    let gradientArmed = false;
+    let compositeOpBox: GlobalCompositeOperation = "source-over";
+    const stub: Record<string, unknown> = {
       canvas: this,
       clearRect: () => {},
       save: () => {},
@@ -1352,13 +1374,22 @@ function stubRecordingContexts() {
       beginPath: () => {},
       arc: () => {},
       fill: () => {},
-      fillRect: () => {},
+      fillRect: () => {
+        if (gradientArmed) {
+          r.gradientFills++;
+          gradientArmed = false;
+        }
+      },
       measureText: () => ({ width: 10 }),
       fillText: (text: string) => r.texts.push(String(text)),
       drawImage: () => r.drawImages++,
       createPattern: () => {
         r.patternFills++;
         return {} as CanvasPattern;
+      },
+      createLinearGradient: () => {
+        r.gradients++;
+        return { __recGradient: true, addColorStop: () => {} } as unknown as CanvasGradient;
       },
       createImageData: (w: number, h: number) => ({
         data: new Uint8ClampedArray(w * h * 4),
@@ -1368,12 +1399,30 @@ function stubRecordingContexts() {
         r.clips.push({ x, y, w, h }),
       clip: () => {},
       imageSmoothingEnabled: false,
-      globalCompositeOperation: "source-over",
+      get globalCompositeOperation() {
+        return compositeOpBox;
+      },
+      set globalCompositeOperation(v: GlobalCompositeOperation) {
+        compositeOpBox = v;
+        r.compositeOps.push(String(v));
+      },
       font: "",
-      fillStyle: "",
+      get fillStyle() {
+        return fillStyleBox;
+      },
+      set fillStyle(v: string | CanvasGradient | CanvasPattern) {
+        fillStyleBox = v;
+        gradientArmed =
+          typeof v === "object" &&
+          v !== null &&
+          (v as { __recGradient?: boolean }).__recGradient === true;
+        if (typeof v === "string") r.fillStyles.push(v);
+      },
       textAlign: "",
       textBaseline: "",
-    } as unknown as CanvasRenderingContext2D;
+    };
+    if (!linearGradients) delete stub.createLinearGradient;
+    return stub as unknown as CanvasRenderingContext2D;
   }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
   return {
     byCanvas,
@@ -1384,13 +1433,15 @@ function stubRecordingContexts() {
 }
 
 describe("HkInput password reveal strategies", () => {
-  it("sweep (default) draws readable text inside a moving window over the noise field", async () => {
-    // The default reveal: real high-contrast text clipped to a band
+  it("sweep draws readable text inside a moving window over the noise field", async () => {
+    // The opt-in readable band: real high-contrast text clipped to a band
     // that sweeps across the row (sweepWindow), on top of the boiling
     // noise field. A single frame leaks only the band's characters.
     const rec = stubRecordingContexts();
     try {
-      const { container, input } = mountPasswordInput("abc");
+      const { container, input } = mountPasswordInput("abc", {
+        revealStrategy: "sweep",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1437,7 +1488,9 @@ describe("HkInput password reveal strategies", () => {
     // left it (R2 mutation M23 — the sweepT reset had no pin).
     const rec = stubRecordingContexts();
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "sweep",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1483,7 +1536,9 @@ describe("HkInput password reveal strategies", () => {
     setReducedMotion(true);
     const rec = stubRecordingContexts();
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "sweep",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1505,6 +1560,240 @@ describe("HkInput password reveal strategies", () => {
     } finally {
       rec.restore();
       setReducedMotion(false);
+    }
+  });
+
+  it("filter (default) keeps glyphs off the visible canvas: counter-drifting spatter, pedestal, halo", async () => {
+    // The default reveal: STATIC glyph apertures filled with one
+    // spatter texture, over a statistically matched spatter field
+    // drifting the opposite way; the glyphs lifted by a small lightness
+    // pedestal with a halo band around the row. Glyph geometry must
+    // NEVER reach the visible canvas (mask → source-in stamp only) —
+    // that is the screenshot contract. Math.random is pinned at 0.5 so
+    // the dot lightness equals the exact layer base (deterministic
+    // pedestal comparison).
+    const rand = vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const rec = stubRecordingContexts();
+    try {
+      const { container, input } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // No glyph on the visible canvas — the screenshot sees spatter,
+      // halo and a noise-composited stamp, never letterforms…
+      expect(vis.texts).toEqual([]);
+      // …while the offscreen mask rasterized the row exactly once.
+      const allRecs = Array.from(rec.byCanvas.values());
+      const mask = allRecs.find((r) => r.texts.length > 0);
+      expect(mask, "offscreen glyph mask").toBeTruthy();
+      expect(mask!.texts).toEqual(["a", "b", "c"]);
+      // The mask MUST carve the glyphs out of the ink spatter via
+      // source-in compositing — losing it renders the password
+      // INVISIBLE on a real canvas (R3 F2, a silent total-loss
+      // regression the suite previously could not see).
+      expect(mask!.compositeOps, "mask carves glyphs via source-in").toContain("source-in");
+      // The first frame already carries background spatter (pattern),
+      // the halo ramp (gradient CREATED and then actually FILLED) and
+      // the mask stamp (drawImage).
+      expect(vis.patternFills).toBeGreaterThan(0);
+      expect(vis.gradients, "halo gradient created").toBeGreaterThan(0);
+      expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
+      expect(vis.drawImages).toBeGreaterThan(0);
+      // The two spatter tiles: bg first, ink second (deterministic
+      // draw order), each with hundreds of solid-color dot fills. The
+      // ink tile's mean color must sit ABOVE the bg tile's — the
+      // lightness pedestal the human pop-out cue (and the only signal
+      // a single frame leaks).
+      const tiles = allRecs.filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length, "exactly two spatter tiles").toBe(2);
+      const meanOf = (r: (typeof tiles)[number]) => {
+        const samples = r.fillStyles.filter((s) => s.startsWith("rgb("));
+        let sum = 0;
+        for (const s of samples) {
+          const [r8, g8, b8] = s.slice(4, -1).split(",").map(Number);
+          sum += (r8! + g8! + b8!) / 3;
+        }
+        return sum / samples.length;
+      };
+      const bgMean = meanOf(tiles[0]!);
+      const inkMean = meanOf(tiles[1]!);
+      expect(
+        inkMean - bgMean,
+        `glyph layer carries the lightness pedestal (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
+      ).toBeGreaterThan(8);
+      // The DOM input still never flips.
+      expect(input.type).toBe("password");
+      // Bus frames advance BOTH layer drifts (fresh pattern phases on
+      // the visible ctx for the background, on the mask ctx for the
+      // glyph layer).
+      const visTranslates = vis.translates.length;
+      const maskTranslates = mask!.translates.length;
+      const visPatterns = vis.patternFills;
+      const visGradientFills = vis.gradientFills;
+      // Distinct drift PHASES, not just repeat calls — a frozen
+      // accumulator re-pushes the same wrapped offset every frame and
+      // count-only pins cannot tell (R3 F1).
+      const visDistinct = new Set(vis.translates).size;
+      const maskDistinct = new Set(mask!.translates).size;
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => setTimeout(r, 45));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(vis.patternFills, "background layer keeps drifting").toBeGreaterThan(visPatterns);
+      expect(vis.translates.length, "background pattern phase advances").toBeGreaterThan(visTranslates);
+      expect(mask!.translates.length, "glyph layer counter-drifts").toBeGreaterThan(maskTranslates);
+      expect(new Set(vis.translates).size, "background drift phases CHANGE").toBeGreaterThan(visDistinct);
+      expect(new Set(mask!.translates).size, "glyph drift phases CHANGE").toBeGreaterThan(maskDistinct);
+      expect(vis.gradientFills, "halo redrawn every frame").toBeGreaterThan(visGradientFills);
+      // Still no glyph on the visible canvas after all those frames.
+      expect(vis.texts).toEqual([]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      rand.mockRestore();
+    }
+  });
+
+  it("filter regenerates both spatter tiles on every hold", async () => {
+    // Fresh noise per hold is an anti-replay contract: two holds of the
+    // same password must never replay the same frame sequence. Pin: the
+    // tile canvases receive a full redraw (ground + every dot) per hold.
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      const hold = async () => {
+        eye.dispatchEvent(
+          new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+        );
+        await nextTick();
+        document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+        await nextTick();
+      };
+      await hold();
+      const tiles = Array.from(rec.byCanvas.values()).filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length).toBe(2);
+      const counts1 = tiles.map((r) => r.fillStyles.length);
+      expect(counts1[0]!, "ground + dots on hold 1").toBeGreaterThan(1000);
+      await hold();
+      const counts2 = tiles.map((r) => r.fillStyles.length);
+      expect(counts2[0]).toBe(counts1[0]! * 2);
+      expect(counts2[1]).toBe(counts1[1]! * 2);
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("filter degrades to static plain text when the animation bus is parked (reduced motion)", async () => {
+    // Filter's static frame is camouflaged noise BY DESIGN — exactly
+    // what a reduced-motion user cannot trade on. The degrade target is
+    // therefore the fully readable plain text, like the sweep's.
+    setReducedMotion(true);
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      // No filter machinery on the visible canvas in the degraded state…
+      expect(vis.patternFills).toBe(0);
+      expect(vis.gradients).toBe(0);
+      // …and the degrade target is PLAIN text, not the legacy jitter
+      // (the jitter translates per glyph, plain never does).
+      expect(vis.translates.length, "static plain, not jitter").toBe(0);
+      await new Promise((r) => setTimeout(r, 260));
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      setReducedMotion(false);
+    }
+  });
+
+  it("filter hands the frame back untouched on a gradient-less engine, then latches the plain fallback", async () => {
+    // A pattern-ful but gradient-less engine: the painter's pre-check
+    // must bail BEFORE any visible drawing (no partial spatter frame),
+    // and the component then shows the readable plain fallback — the
+    // pin for the capability guard (R1 weak pin C2).
+    const rec = stubRecordingContexts({ linearGradients: false });
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // The painter handed the frame back WITHOUT drawing anything…
+      expect(vis.patternFills, "no partial spatter frame").toBe(0);
+      expect(vis.drawImages).toBe(0);
+      // …and the fallback that engaged is the readable plain text.
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("filter is the surface-level default too (direct HkPasswordSurface mount)", async () => {
+    // HkInput declares and forwards its own default, which is where the
+    // user-facing pin lives — but the surface ALSO declares a default,
+    // and the two must not silently drift apart (R1 weak pin M7). The
+    // surface is internal (never exported), so mount it directly.
+    const rec = stubRecordingContexts();
+    const model = ref("abc");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render() {
+        return h(HkPasswordSurface, {
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
+        });
+      },
+    });
+    app.mount(container);
+    try {
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // Filter signature: glyphs only on the offscreen mask, two
+      // spatter tiles, halo gradient — with NO revealStrategy prop.
+      expect(vis.texts).toEqual([]);
+      const tiles = Array.from(rec.byCanvas.values()).filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length, "two spatter tiles = filter, not sweep/noise").toBe(2);
+      expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      app.unmount();
+      container.remove();
+      rec.restore();
     }
   });
 
@@ -1888,10 +2177,13 @@ describe("HkInput password reveal trigger", () => {
     // intervening release must not re-seed the painter mid-hold (fresh
     // noise + phase reset would visibly flash the field). Observable
     // pin: beginHold retiles the noise canvas — exactly ONE
-    // putImageData per reveal.
+    // putImageData per reveal (the NOISE painter's signature; the
+    // filter painter retiles with vector fills instead).
     const rec = stubRecordingContexts();
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),

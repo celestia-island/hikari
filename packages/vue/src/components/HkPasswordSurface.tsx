@@ -53,15 +53,17 @@ interface Ripple {
  * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
  *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
  *   - strategy "filter" (default): dual counter-drifting spatter
- *     layers — the glyph row is a set of STATIC apertures filled with a
- *     spatter texture drifting one way, over a statistically identical
- *     spatter field drifting the other way, the glyphs lifted by a
- *     small lightness pedestal with a soft halo band around the row
- *     (see revealKinematogram.ts). The whole row stays readable in
- *     motion while any single frame — a screenshot — carries no glyph
- *     structure, only a weak mean-luminance signal dissolved into the
- *     halo ramp. Reduced motion or a pattern-less engine degrades to
- *     the fully readable static plain text.
+ *     layers in strict BLACK/WHITE/GRAY — the glyph row is a set of
+ *     STATIC bold apertures filled with a gray spatter texture
+ *     drifting one way, over a statistically identical spatter field
+ *     drifting the other way on the theme's ground (near-black in a
+ *     dark theme, near-white in a light one), the glyphs shifted by a
+ *     small lightness pedestal toward visibility with a soft halo
+ *     band around the row (see revealKinematogram.ts). The whole row
+ *     stays readable in motion while any single frame — a screenshot
+ *     — carries no glyph structure, only a weak mean-luminance signal
+ *     dissolved into the halo ramp. Reduced motion or a pattern-less
+ *     engine degrades to the fully readable static plain text.
  *   - strategy "sweep": a readable window — the password is drawn as
  *     ordinary high-contrast text inside a narrow band that sweeps
  *     across the row over the boiling-noise field. Reading is
@@ -118,11 +120,13 @@ export default defineComponent({
     },
     /**
      * What the eye reveal SHOWS:
-     * - "filter" (default): dual counter-drifting spatter layers —
-     *   static glyph apertures over an oppositely drifting, statisti-
-     *   cally matched spatter field, plus a small lightness pedestal
-     *   and halo. Readable in motion; a single screenshot carries no
-     *   glyph structure, only a weak luminance signal.
+     * - "filter" (default): dual counter-drifting spatter layers in
+     *   strict black/white/gray — static BOLD glyph apertures over an
+     *   oppositely drifting, statistically matched gray spatter field
+     *   on the theme's ground (near-black dark theme / near-white
+     *   light theme), plus a small visibility-direction lightness
+     *   pedestal and halo. Readable in motion; a single screenshot
+     *   carries no glyph structure, only a weak luminance signal.
      * - "sweep": a readable window — ordinary high-contrast text inside
      *   a narrow band sweeping across the row. Easy to read; a single
      *   screenshot leaks the band's characters in the clear.
@@ -313,7 +317,16 @@ export default defineComponent({
       // previous base instead (latent for consumer themes authored in
       // those functions; hikari's own themes use rgb triplets/hex).
       if (/^(oklch|oklab|lab|lch|color)\(/i.test(raw.trim())) return null;
-      const ns = raw.split(/[\s,()rgba]+/).map(Number).filter((n) => !isNaN(n));
+      // Leading separators are REAL here: a computed `rgb(r, g, b)`
+      // string starts with "rgb(" and the split would yield a leading
+      // EMPTY token — Number("") === 0, which silently shifts the
+      // triple to [0, r, g] and skews every derived HSL channel (the
+      // filter theme proxy read a light ink as 45.7% lightness).
+      const ns = raw
+        .split(/[\s,()rgba]+/)
+        .filter((t) => t !== "")
+        .map(Number)
+        .filter((n) => !isNaN(n));
       return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
     }
 
@@ -789,7 +802,12 @@ export default defineComponent({
         sweepT = 0;
         if (!parked) {
           if (props.revealStrategy === "filter") {
-            revealFilter.beginHold(textHsl, dpr);
+            // Grayscale spatter anchored to the effective theme: dark
+            // themes carry light field ink, so the ink lightness is
+            // the theme proxy — light ink (>= 50) means a dark theme
+            // (near-black ground), dark ink a light theme (near-white
+            // ground). No theme hue survives into the spatter.
+            revealFilter.beginHold(textHsl[2] >= 50 ? "dark" : "light", dpr);
           } else {
             revealNoise.beginHold(textHsl);
           }

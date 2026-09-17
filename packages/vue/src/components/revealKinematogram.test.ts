@@ -5,6 +5,9 @@ import {
   layoutRevealGlyphs,
   NOISE_TILE_W,
   RevealNoisePainter,
+  sweepWindow,
+  SWEEP_END_PAUSE_S,
+  SWEEP_SPEED_CSS_PX_S,
   wrapDrift,
 } from "./revealKinematogram";
 
@@ -126,5 +129,43 @@ describe("RevealNoisePainter", () => {
     const p = new RevealNoisePainter();
     expect(() => p.beginHold([220, 10, 15])).not.toThrow();
     expect(p.available).toBe(false);
+  });
+});
+
+describe("sweepWindow", () => {
+  const dpr = 1;
+  // A 100px travel at 220 CSS px/s ≈ 0.4545s of movement per cycle.
+  const start = 100;
+  const end = 200;
+  const winW = 60;
+
+  it("starts the window center at the span start and moves right", () => {
+    expect(sweepWindow(start, end, winW, 0, dpr).x).toBe(start);
+    const mid = sweepWindow(start, end, winW, 0.2, dpr);
+    expect(mid.x).toBeGreaterThan(start);
+    expect(mid.x).toBeLessThan(end);
+  });
+
+  it("reaches the span end and dwells there for the pause", () => {
+    const moveT = (end - start) / SWEEP_SPEED_CSS_PX_S;
+    expect(sweepWindow(start, end, winW, moveT, dpr).x).toBe(end);
+    // Mid-dwell: still at the end, not yet looping.
+    expect(sweepWindow(start, end, winW, moveT + SWEEP_END_PAUSE_S / 2, dpr).x).toBe(end);
+  });
+
+  it("loops with a period of travel + pause, phase-aligned", () => {
+    const cycle = (end - start) / SWEEP_SPEED_CSS_PX_S + SWEEP_END_PAUSE_S;
+    const a = sweepWindow(start, end, winW, 0.1, dpr);
+    const b = sweepWindow(start, end, winW, 0.1 + cycle, dpr);
+    expect(b.x).toBeCloseTo(a.x, 10);
+    // Negative t folds into the same cycle (defensive modulo).
+    expect(sweepWindow(start, end, winW, 0.1 - cycle, dpr).x).toBeCloseTo(a.x, 10);
+  });
+
+  it("carries the window width through and survives a degenerate span", () => {
+    expect(sweepWindow(start, end, winW, 0.1, dpr).w).toBe(winW);
+    // start == end: travel clamps to >=1, never divides by zero.
+    expect(() => sweepWindow(50, 50, winW, 0.1, dpr)).not.toThrow();
+    expect(sweepWindow(50, 50, winW, 0.1, dpr).x).toBeGreaterThanOrEqual(50);
   });
 });

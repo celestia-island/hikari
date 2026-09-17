@@ -366,7 +366,8 @@ export default defineComponent({
             <HInput modelValue={form.value.text} onUpdate:modelValue={(v: string) => (form.value.text = v)} placeholder="Disabled" disabled />
             <HSearchInput modelValue={form.value.search} onUpdate:modelValue={(v: string | number) => (form.value.search = String(v))} placeholder="Search..." />
             <HNumberInput modelValue={form.value.number} onUpdate:modelValue={(v: number) => (form.value.number = v)} placeholder="Number" />
-            <HInput variant="password" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (hold the eye)" />
+            <HInput variant="password" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (sweep reveal — default)" />
+            <HInput variant="password" revealStrategy="noise" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (noise reveal — screenshot-safe)" />
             <HInput variant="password" revealStrategy="plain" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (plain reveal)" />
             <HInput variant="password" revealTrigger="toggle" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (click eye toggles)" />
             <HInput variant="password" passwordTrailing="strength" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (strength light)" />

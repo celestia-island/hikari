@@ -35,8 +35,14 @@
  * Threat model & limits: this defeats single-frame capture (screenshots,
  * scrapers, bystander photos). Motion must exist for the human to read,
  * so it also exists for software: an attacker recording video and
- * correlating frames can in principle recover the glyph boundary. The
- * reveal is user-initiated (hold, or toggle with auto-hide); that
+ * correlating frames can in principle recover the glyph boundary. One
+ * finer nuance, for completeness: because both regions sample the SAME
+ * tile, the glyph texture is an exact duplicate of the background
+ * texture at one shift, so a pixel-exact capture could in principle
+ * recover the mask by shifted self-correlation — no OCR needed, but
+ * strictly costlier than the video attack above, and inherent to any
+ * shared-tile kinematogram (the old counter-drift design included).
+ * The reveal is user-initiated (hold, or toggle with auto-hide); that
  * residual risk is the accepted trade-off. Consumers that do NOT want
  * this threat model can pick `revealStrategy="plain"` on HkInput for the
  * industry-standard readable reveal.

@@ -995,6 +995,16 @@ export default defineComponent({
       if (v) endReveal();
     });
 
+    watch([() => props.revealStrategy, () => props.revealTrigger], () => {
+      // The reveal knobs are read once at reveal start (painter setup,
+      // watchdog, trigger listeners all branch on them); flipping either
+      // mid-reveal would strand the hold in a half-old/half-new state
+      // (a painter without beginHold, a toggle without its auto-hide).
+      // The props are per-instance configuration — reconcile by simply
+      // ending the reveal; the next interaction re-reads them fresh.
+      endReveal();
+    });
+
     onMounted(() => {
       syncColor();
       resize();

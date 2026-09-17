@@ -1303,6 +1303,7 @@ function stubRecordingContexts() {
     texts: string[];
     patternFills: number;
     drawImages: number;
+    putImageDatas: number;
   }
   const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
   const original = HTMLCanvasElement.prototype.getContext;
@@ -1311,7 +1312,7 @@ function stubRecordingContexts() {
   ): CanvasRenderingContext2D {
     let rec = byCanvas.get(this);
     if (!rec) {
-      rec = { canvas: this, texts: [], patternFills: 0, drawImages: 0 };
+      rec = { canvas: this, texts: [], patternFills: 0, drawImages: 0, putImageDatas: 0 };
       byCanvas.set(this, rec);
     }
     const r = rec;
@@ -1336,7 +1337,7 @@ function stubRecordingContexts() {
       createImageData: (w: number, h: number) => ({
         data: new Uint8ClampedArray(w * h * 4),
       }),
-      putImageData: () => {},
+      putImageData: () => r.putImageDatas++,
       imageSmoothingEnabled: false,
       globalCompositeOperation: "source-over",
       font: "",
@@ -1542,6 +1543,66 @@ describe("HkInput password reveal strategies", () => {
       rec.restore();
     }
   });
+
+  it("ends the reveal when the reveal props flip mid-reveal", async () => {
+    // strategy/trigger are read once at reveal start (painter setup,
+    // watchdog, trigger listeners all branch on them) — a mid-reveal
+    // flip reconciles by ending the reveal, never by stranding a
+    // half-old/half-new hold.
+    const rec = stubRecordingContexts();
+    const strategy = ref<"noise" | "plain">("plain");
+    const model = ref("secret");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render() {
+        return h(HkInput, {
+          variant: "password",
+          revealStrategy: strategy.value,
+          revealTrigger: "toggle",
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
+        });
+      },
+    });
+    app.mount(container);
+    try {
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      expect(eye.hasAttribute("data-revealing")).toBe(true);
+      strategy.value = "noise";
+      await nextTick();
+      expect(eye.hasAttribute("data-revealing")).toBe(false);
+      // And the noise strategy works fine on the NEXT reveal.
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const textsBeforeNoise = rec.byCanvas.get(visible)!.texts.length;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      expect(eye.hasAttribute("data-revealing")).toBe(true);
+      for (let i = 0; i < 2; i++) {
+        await new Promise((r) => setTimeout(r, 45));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      // Noise mode: glyphs stay off the visible canvas — the plain
+      // reveal's earlier text draws are the last ones it ever saw.
+      expect(rec.byCanvas.get(visible)!.texts.length).toBe(textsBeforeNoise);
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+    } finally {
+      app.unmount();
+      container.remove();
+      rec.restore();
+    }
+  });
 });
 
 describe("HkInput password reveal trigger", () => {
@@ -1666,6 +1727,36 @@ describe("HkInput password reveal trigger", () => {
     document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
     await nextTick();
     expect(eye.hasAttribute("data-revealing")).toBe(false);
+  });
+
+  it("ignores a second press without release (one painter seed per reveal)", async () => {
+    // The startReveal double-start guard: two pointerdowns without an
+    // intervening release must not re-seed the painter mid-hold (fresh
+    // noise + phase reset would visibly flash the field). Observable
+    // pin: beginHold retiles the noise canvas — exactly ONE
+    // putImageData per reveal.
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const tilePuts = [...rec.byCanvas.values()].reduce(
+        (s, r) => s + r.putImageDatas,
+        0,
+      );
+      expect(tilePuts).toBe(1);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+    }
   });
 });
 

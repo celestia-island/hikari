@@ -1706,20 +1706,18 @@ describe("HkInput password reveal strategies", () => {
     }
   });
 
-  it("filter inverts its grayscale anchors for a dark theme (light field ink)", async () => {
-    // Light field ink = a dark theme: near-black ground, light-gray
-    // speckle, a BRIGHTER glyph pedestal and a WHITE halo — every
-    // anchor flips with the theme while the mechanism stays identical.
-    // The theme proxy is the computed field-ink lightness (>= 50 =
-    // dark theme), so feed a light ink through getComputedStyle.
-    const originalGCS = window.getComputedStyle;
+  /**
+   * Force the computed `.color` (the reveal's ink + theme proxy) while
+   * forwarding every other computed-style query to the real engine.
+   * Returns a restore function.
+   */
+  function forceInkColor(color: string): () => void {
+    const original = window.getComputedStyle;
     window.getComputedStyle = ((el: Element, ...rest: unknown[]) => {
-      const real = originalGCS.call(window, el, ...(rest as []));
-      // Force a LIGHT ink through `.color` (the theme proxy) while
-      // forwarding every other query to the real computed style.
+      const real = original.call(window, el, ...(rest as []));
       return new Proxy(real, {
         get(target, prop) {
-          if (prop === "color") return "rgb(148, 233, 211)";
+          if (prop === "color") return color;
           const v = Reflect.get(target, prop, target);
           return typeof v === "function"
             ? (v as (...a: unknown[]) => unknown).bind(target)
@@ -1727,6 +1725,18 @@ describe("HkInput password reveal strategies", () => {
         },
       });
     }) as typeof window.getComputedStyle;
+    return () => {
+      window.getComputedStyle = original;
+    };
+  }
+
+  it("filter inverts its grayscale anchors for a dark theme (light field ink)", async () => {
+    // Light field ink = a dark theme: near-black ground, light-gray
+    // speckle, a BRIGHTER glyph pedestal and a WHITE halo — every
+    // anchor flips with the theme while the mechanism stays identical.
+    // The theme proxy is the computed field-ink lightness (>= 50 =
+    // dark theme), so feed a light ink through getComputedStyle.
+    const restoreInk = forceInkColor("rgb(148, 233, 211)");
     const rec = stubRecordingContexts();
     try {
       const { container } = mountPasswordInput("abc");
@@ -1775,7 +1785,68 @@ describe("HkInput password reveal strategies", () => {
       await nextTick();
     } finally {
       rec.restore();
-      window.getComputedStyle = originalGCS;
+      restoreInk();
+    }
+  });
+
+  it("filter keeps the documented light-anchor degrade for modern color-function inks", async () => {
+    // oklch()/lab()/color() inks cannot be parsed into a triple — the
+    // documented degrade keeps the fallback ink (a DARK ink → light
+    // anchors), never throwing and never guessing a theme. Locked as
+    // intentional (R1 finding F1).
+    const restoreInk = forceInkColor("oklch(70% 0.1 200)");
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      const allRecs = Array.from(rec.byCanvas.values());
+      const tiles = allRecs.filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length).toBe(2);
+      const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
+      expect(gr!, "fallback ink → LIGHT anchors (near-white ground)").toBeGreaterThan(230);
+      expect(vis.gradientStops, "black halo in the degrade").toContain("rgba(0,0,0,0.1)");
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      restoreInk();
+    }
+  });
+
+  it("filter treats exactly-50 ink lightness as a dark theme (boundary)", async () => {
+    // rgb(255,0,0): max+min halves to EXACTLY 0.5 (128/255 does not)
+    // — L === 50 on the nose, so the >= side of the theme proxy wins
+    // and the reveal anchors dark (R1 finding F2).
+    const restoreInk = forceInkColor("rgb(255, 0, 0)");
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const allRecs = Array.from(rec.byCanvas.values());
+      const tiles = allRecs.filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length).toBe(2);
+      const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
+      expect(gr!, "L === 50 anchors DARK (near-black ground)").toBeGreaterThan(18);
+      expect(gr!).toBeLessThan(34);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      restoreInk();
     }
   });
 

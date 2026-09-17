@@ -630,12 +630,14 @@ export class RevealFilterPainter {
       // over a light one.
       const bandH = Math.min(H / 2, FILTER_HALO_FONT_SCALE * layout.fontPx);
       const midY = H / 2;
+      // Endpoints derive from the SAME theme channel string as the
+      // peak — no literal compare that could silently desync them.
       const haloRGB = this.theme === "dark" ? "255,255,255" : "0,0,0";
       const grad = ctx.createLinearGradient(0, midY - bandH, 0, midY + bandH);
       if (!grad) return false;
-      grad.addColorStop(0, `${haloRGB === "255,255,255" ? "rgba(255,255,255,0)" : "rgba(0,0,0,0)"}`);
+      grad.addColorStop(0, `rgba(${haloRGB},0)`);
       grad.addColorStop(0.5, `rgba(${haloRGB},${FILTER_HALO_ALPHA})`);
-      grad.addColorStop(1, `${haloRGB === "255,255,255" ? "rgba(255,255,255,0)" : "rgba(0,0,0,0)"}`);
+      grad.addColorStop(1, `rgba(${haloRGB},0)`);
       this.mask ??= document.createElement("canvas");
       if (this.mask.width !== W || this.mask.height !== H) {
         this.mask.width = W;

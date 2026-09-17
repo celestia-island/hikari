@@ -205,6 +205,13 @@ export default defineComponent({
       scheduleUpdate();
     }, { flush: "post" });
 
+    // Runtime threshold changes re-sense immediately (same live-read
+    // contract as approachDistance): without this, a backTopShow toggle
+    // after mount would emit nothing until the next scroll/resize.
+    watch(() => [props.backTopShow, props.backTopHide] as const, () => {
+      scheduleUpdate();
+    });
+
     /** Build the overlay tracks for the enabled axes (scrollbar on). */
     function mountScrollbars() {
       const vp = viewportRef.value;

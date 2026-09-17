@@ -327,10 +327,52 @@ describe("HkScrollContainer back-to-top signal", () => {
     await flushFrames();
     expect(instance.value?.backTopVisible).toBe(true);
 
+    // Show-only mode hides at the SAME threshold it shows at: 50 < 100
+    // must read false (the hysteresis fallback `top > show` is what
+    // pins this — a mutant `top > 0` would keep it true here).
+    stubGeometry(viewport, { scrollTop: 50, scrollHeight: 5000, clientHeight: 400 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(instance.value?.backTopVisible).toBe(false);
+
     stubGeometry(viewport, { scrollTop: 0, scrollHeight: 5000, clientHeight: 400 });
     viewport.dispatchEvent(new Event("scroll"));
     await flushFrames();
     expect(instance.value?.backTopVisible).toBe(false);
+    app.unmount();
+  });
+
+  it("re-senses immediately when the thresholds change at runtime", async () => {
+    // Live-read contract (same as approachDistance): toggling backTopShow
+    // after mount must emit without waiting for the next scroll event —
+    // a consumer that swaps thresholds while idle gets a truthful signal.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const emitted: boolean[] = [];
+    const props = reactive({ backTopShow: undefined as number | undefined });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, {
+            backTopShow: props.backTopShow,
+            "onUpdate:backTopVisible": (v: boolean) => emitted.push(v),
+          }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport");
+    if (!viewport) throw new Error("no viewport");
+    stubGeometry(viewport, { scrollTop: 500, scrollHeight: 5000, clientHeight: 400 });
+    await flushFrames();
+    expect(emitted).toEqual([]); // inert while unset, geometry already past
+
+    props.backTopShow = 100;
+    await nextTick();
+    await flushFrames();
+    expect(emitted).toEqual([true]); // re-sensed without any scroll event
     app.unmount();
   });
 

@@ -1,7 +1,10 @@
 /**
- * revealKinematogram — the screenshot-safe rendering behind the
- * HkPasswordSurface noise reveal (hold or toggle; a random-dot
- * kinematogram).
+ * revealKinematogram — the canvas rendering behind the HkPasswordSurface
+ * reveal strategies: the boiling-noise kinematogram (the "noise"
+ * strategy — screenshot-safe in any single frame) and the sweep-window
+ * kinematics for the "sweep" strategy (a readable band over the noise;
+ * deliberately NOT single-frame safe). Both serve hold and toggle
+ * triggers; the "plain" strategy bypasses this module entirely.
  *
  * Principle: the whole reveal area is filled with ONE shared noise tile.
  * The glyph mask stays perfectly still while the BACKGROUND noise drifts

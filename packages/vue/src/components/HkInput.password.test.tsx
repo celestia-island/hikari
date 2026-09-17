@@ -1412,6 +1412,50 @@ describe("HkInput password reveal strategies", () => {
       expect(vis.clips.length).toBeGreaterThanOrEqual(2);
       const xs = new Set(vis.clips.map((c) => c.x));
       expect(xs.size, "the window travels across the row").toBeGreaterThan(1);
+      // The band must traverse (essentially) the WHOLE row, not stop
+      // mid-row: on the degenerate 0-width happy-dom canvas the layout
+      // scale floors at 0.5, giving advance 6 and an 18px row for
+      // "abc" — the clip centers must span ≥ 12px of that travel
+      // (center = clip.x + w/2; the sweep spans first-glyph left edge
+      // to the row's right edge).
+      const centers = vis.clips.map((c) => c.x + c.w / 2);
+      expect(
+        Math.max(...centers) - Math.min(...centers),
+        "the sweep reaches the row tail",
+      ).toBeGreaterThanOrEqual(12);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("restarts the sweep from the row head on the second hold", async () => {
+    // sweepT resets per reveal: hold-release-hold must show the window
+    // at the row START again, not resume from wherever the last hold
+    // left it (R2 mutation M23 — the sweepT reset had no pin).
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      const firstHoldFirstClip = vis.clips[0]!;
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+      // Second hold: the very first frame's window must sit at the row
+      // head again (same clip as the first hold's first frame).
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const secondHoldFirstClip = vis.clips[vis.clips.length - 1]!;
+      expect(secondHoldFirstClip.x).toBe(firstHoldFirstClip.x);
+      expect(secondHoldFirstClip.w).toBe(firstHoldFirstClip.w);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
     } finally {

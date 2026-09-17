@@ -1,30 +1,52 @@
 /**
  * revealKinematogram — the screenshot-safe rendering behind the
- * HkPasswordSurface hold-to-reveal pass (a random-dot kinematogram).
+ * HkPasswordSurface noise reveal (hold or toggle; a random-dot
+ * kinematogram).
  *
- * Principle: the whole reveal area is filled with ONE shared noise tile,
- * and the only difference between the password glyphs and the background
- * is the direction their slice of that noise drifts — the noise sampled
- * through the glyph mask translates one way, the background noise the
- * opposite way. Human vision segments the glyphs by motion coherence;
- * any SINGLE frame is statistically identical noise inside and outside
- * the glyphs, so a screenshot carries no shape, edge or contrast signal
- * for OCR to lock onto.
+ * Principle: the whole reveal area is filled with ONE shared noise tile.
+ * The glyph mask stays perfectly still while the BACKGROUND noise drifts
+ * sideways; the noise sampled through the glyph mask is RE-SAMPLED at a
+ * random tile phase every frame ("boiling"). A human segments the glyphs
+ * instantly — a stable silhouette of flicker against a calmly drifting
+ * surround — while any SINGLE frame is statistically identical noise
+ * inside and outside the glyphs (both regions sample the same tile), so
+ * a screenshot carries no shape, edge or contrast signal for OCR to lock
+ * onto. The earlier design drifted glyph and background noise in opposite
+ * directions; direction-opponent motion alone proved too weak a
+ * segmentation cue at field font sizes (fine 1px grain + fast ±40px/s
+ * drift rendered the reveal illegible in practice).
+ *
+ * Readability levers (all preserve the single-frame uniformity invariant):
+ * - NOISE_GRAIN: the tile is random per 2×2 device-px block, not per
+ *   pixel — coarse grain carries a far stronger temporal/motion signal,
+ *   especially at dpr 1.
+ * - Boiling glyph noise (see above): frame-rate independent — even a
+ *   throttled ~15fps bus still shows flicker vs drift.
+ * - The glyph layout uses a larger size band with letter spacing (see
+ *   layoutRevealGlyphs).
  *
  * The glyph mask never reaches the visible canvas as geometry: glyphs
  * are rasterized into an offscreen mask whose pixels are immediately
  * re-composited with noise (`source-in` on the mask itself), so the
- * visible canvas only ever receives ONE background noise fill and a
- * final `drawImage` of noise-on-noise. This is the invariant the
- * component tests pin: no `fillText` with password content may ever
- * target the visible canvas.
+ * visible canvas only ever receives noise fills and a noise-composited
+ * stamp. This is the invariant the component tests pin: no `fillText`
+ * with password content may ever target the visible canvas while the
+ * noise strategy is active.
  *
  * Threat model & limits: this defeats single-frame capture (screenshots,
  * scrapers, bystander photos). Motion must exist for the human to read,
  * so it also exists for software: an attacker recording video and
- * correlating frames can in principle recover the drift boundary. The
- * reveal is hold-to-reveal and user-initiated; that residual risk is
- * the accepted trade-off.
+ * correlating frames can in principle recover the glyph boundary. One
+ * finer nuance, for completeness: because both regions sample the SAME
+ * tile, the glyph texture is an exact duplicate of the background
+ * texture at one shift, so a pixel-exact capture could in principle
+ * recover the mask by shifted self-correlation — no OCR needed, but
+ * strictly costlier than the video attack above, and inherent to any
+ * shared-tile kinematogram (the old counter-drift design included).
+ * The reveal is user-initiated (hold, or toggle with auto-hide); that
+ * residual risk is the accepted trade-off. Consumers that do NOT want
+ * this threat model can pick `revealStrategy="plain"` on HkInput for the
+ * industry-standard readable reveal.
  *
  * Reduced motion: the shared animation bus parks, so the field would
  * freeze into unreadable pure noise. HkPasswordSurface therefore checks
@@ -36,9 +58,12 @@
 /** One glyph's placement on the offscreen mask, in DEVICE pixels. */
 export interface RevealGlyph {
   ch: string;
-  /** Left edge of the glyph's advance box. */
+  /** Left edge of the glyph's advance box — also the draw position:
+   *  rasterizers draw textAlign="left" at x, so the ×1.2 letter-spacing
+   *  lands entirely trailing and the row sits a fraction of a glyph left
+   *  of exact center (imperceptible; not worth a centering pass). */
   x: number;
-  /** Advance width (the box the glyph is centered inside). */
+  /** Advance width (measured glyph width × the letter-spacing factor). */
   advance: number;
 }
 
@@ -55,11 +80,20 @@ export interface RevealLayout {
 export const NOISE_TILE_W = 512;
 export const NOISE_TILE_H = 128;
 
-/** Counter-drift speeds in CSS px/s (glyph noise →, background noise ←).
- * Opposite directions maximize motion segregation at a relative speed
- * that reads clearly without becoming dizzying at ~30fps. */
-export const GLYPH_DRIFT_PX_S = 40;
-export const BACKGROUND_DRIFT_PX_S = -40;
+/** Noise grain in device px: the tile is randomized per GRAIN×GRAIN
+ * block instead of per pixel. Coarse grain is THE readability lever for
+ * the kinematogram — 1px noise at dpr 1 is below the spatial frequency
+ * where flicker/motion segmentation reads glyph silhouettes, so every
+ * glyph boundary smeared into static. Both regions sample the SAME
+ * tile, so grain size never breaks single-frame uniformity. */
+export const NOISE_GRAIN = 2;
+
+/** Background drift speed in CSS px/s (background noise ←). Slow enough
+ * that the eye can track the texture; the segmentation signal is the
+ * flicker-vs-drift contrast, not raw speed. The glyph region does NOT
+ * drift — its noise is re-sampled at a random tile phase every frame
+ * (boiling), which reads at any frame rate. */
+export const BACKGROUND_DRIFT_PX_S = -22;
 
 /** Lightness spread of the noise around the field's ink color. Both
  * regions sample the SAME tile, so any spread is shared and a single
@@ -72,6 +106,13 @@ const L_MAX = 96;
  * does not hide text under the lock / eye affordances. */
 const SIDE_MARGIN_CSS = 14;
 
+/** Extra advance width per glyph, as a multiple of the measured width.
+ * Password characters pack edge-to-edge at the natural advance, and at
+ * noise-reveal resolutions that crowding is the difference between
+ * reading a string and guessing it — 20% tracking buys the separation
+ * at a modest width cost. */
+const LETTER_SPACING_SCALE = 1.2;
+
 /** Fold an accumulated drift (device px) into the tile period: a value
  * in [0, tile) usable as a pattern translation, correct for negative
  * accumulators (background drifts towards −∞) and periodic in t. */
@@ -82,9 +123,10 @@ export function wrapDrift(px: number, tile: number): number {
 
 /**
  * Lay the password glyphs out centered in the reveal area, scaling the
- * row down (floor 0.4×) when it overflows — the same fitting contract
- * the legacy jitter pass used, but WITHOUT per-frame randomness: the
- * mask must stay still while only the noise through it moves.
+ * row down (floor 0.5×) when it overflows. The mask must stay perfectly
+ * still while only the noise through it moves, so nothing here is
+ * per-frame random. (The legacy jitter fallback keeps its own older
+ * fitting band; this layout serves the noise mask and the plain pass.)
  * `measure` receives CSS-px font sizes and returns CSS-px widths.
  */
 export function layoutRevealGlyphs(
@@ -94,13 +136,15 @@ export function layoutRevealGlyphs(
   aH: number,
   dpr: number,
 ): RevealLayout {
-  // Visual size matches the legacy pass: ~58% of the box height, pinned
-  // to a readable band regardless of box size.
-  const basePx = Math.min(18, Math.max(12, aH * 0.58));
-  const widths = chars.map((ch) => measure(ch, basePx));
+  // Visual size band: ~62% of the box height, clamped to [13, 22] CSS
+  // px — the 12–18 band was the main illegibility complaint (18px noise
+  // glyphs are at the edge of letterform recognition; shrinking long
+  // passwords to 0.4× of that was hopeless).
+  const basePx = Math.min(22, Math.max(13, aH * 0.62));
+  const widths = chars.map((ch) => measure(ch, basePx) * LETTER_SPACING_SCALE);
   const raw = widths.reduce((s, w) => s + w, 0);
   const avail = Math.max(16, aW - SIDE_MARGIN_CSS * 2);
-  const scale = raw > avail ? Math.max(0.4, avail / raw) : 1;
+  const scale = raw > avail ? Math.max(0.5, avail / raw) : 1;
   const fontPx = basePx * scale * dpr;
   const advanceScale = scale * dpr;
   let x = (aW / 2 - (raw * scale) / 2) * dpr;
@@ -147,16 +191,15 @@ type Hsl = readonly [number, number, number];
 
 /**
  * Stateful painter for one password surface instance: owns the noise
- * tile and the offscreen glyph mask, accumulates the two drift offsets,
+ * tile and the offscreen glyph mask, accumulates the background drift,
  * and composites one frame per animation-bus tick. All state resets per
  * hold (`beginHold`): fresh noise so two holds of the same password
- * never replay the same frame sequence, plus randomized drift phases.
+ * never replay the same frame sequence, plus a randomized drift phase.
  */
 export class RevealNoisePainter {
   private tile: HTMLCanvasElement | null = null;
   private mask: HTMLCanvasElement | null = null;
   private maskKey = "";
-  private offsetGlyph = 0;
   private offsetBackground = 0;
   private ok = true;
 
@@ -166,22 +209,22 @@ export class RevealNoisePainter {
     return this.ok;
   }
 
-  /** Current accumulated drifts in device px (test/debug window). */
-  peekDrift(): { glyph: number; background: number } {
-    return { glyph: this.offsetGlyph, background: this.offsetBackground };
+  /** Current accumulated background drift in device px (test/debug
+   * window). The glyph region has no accumulator — its phase is a fresh
+   * random draw per frame (boiling). */
+  peekDrift(): { background: number } {
+    return { background: this.offsetBackground };
   }
 
-  /** Start a hold: fresh noise tile around the field's ink color and
-   * randomized phases so replays are never pixel-identical. */
+  /** Start a hold: fresh noise tile around the field's ink color and a
+   * randomized background phase so replays are never pixel-identical. */
   beginHold(base: Hsl): void {
-    this.offsetGlyph = Math.random() * NOISE_TILE_W;
     this.offsetBackground = Math.random() * NOISE_TILE_W;
     this.maskKey = ""; // force a mask rebuild on the first paint
     this.ok = this.retile(base);
   }
 
   advance(dt: number, dpr: number): void {
-    this.offsetGlyph += GLYPH_DRIFT_PX_S * dpr * dt;
     this.offsetBackground += BACKGROUND_DRIFT_PX_S * dpr * dt;
   }
 
@@ -202,13 +245,24 @@ export class RevealNoisePainter {
       if (!img) return false;
       const data = img.data;
       const [h, s, l] = base;
-      for (let i = 0; i < data.length; i += 4) {
-        const nl = Math.min(L_MAX, Math.max(L_MIN, l + (Math.random() * 2 - 1) * L_SPREAD));
-        const [r, g, b] = hslToRgb(h, s, nl);
-        data[i] = r;
-        data[i + 1] = g;
-        data[i + 2] = b;
-        data[i + 3] = 255;
+      // Randomize per GRAIN×GRAIN block, then stamp the block's pixels:
+      // coarse grain is what makes the boiling/drift silhouette readable
+      // (see the NOISE_GRAIN comment).
+      for (let y = 0; y < NOISE_TILE_H; y += NOISE_GRAIN) {
+        for (let x = 0; x < NOISE_TILE_W; x += NOISE_GRAIN) {
+          const nl = Math.min(L_MAX, Math.max(L_MIN, l + (Math.random() * 2 - 1) * L_SPREAD));
+          const [r, g, b] = hslToRgb(h, s, nl);
+          for (let dy = 0; dy < NOISE_GRAIN; dy++) {
+            const row = (y + dy) * NOISE_TILE_W;
+            for (let dx = 0; dx < NOISE_GRAIN; dx++) {
+              const i = (row + x + dx) * 4;
+              data[i] = r;
+              data[i + 1] = g;
+              data[i + 2] = b;
+              data[i + 3] = 255;
+            }
+          }
+        }
       }
       tctx.putImageData(img, 0, 0);
       return true;
@@ -218,14 +272,16 @@ export class RevealNoisePainter {
   }
 
   /**
-   * Composite one frame: background noise translated by the background
-   * drift, then the glyph mask — rebuilt only when `maskKey` (value +
-   * canvas size) changes — re-filled with noise translated by the glyph
-   * drift and stamped over it. Returns false (WITHOUT latching
-   * `available` off — pattern-null engines retry the pattern path every
-   * frame by design, so a later working pattern resumes the
-   * kinematogram; only a thrown error latches the painter off) when the
-   * engine cannot support the pattern path this frame.
+   * Composite one frame: background noise translated by the accumulated
+   * background drift, then the glyph mask — rebuilt only when `maskKey`
+   * (value + canvas size) changes — re-filled with noise sampled at a
+   * FRESH RANDOM tile phase (the boiling that makes glyphs pop without
+   * any single-frame glyph signal) and stamped over the background.
+   * Returns false (WITHOUT latching `available` off — pattern-null
+   * engines retry the pattern path every frame by design, so a later
+   * working pattern resumes the kinematogram; only a thrown error
+   * latches the painter off) when the engine cannot support the pattern
+   * path this frame.
    */
   paint(
     ctx: CanvasRenderingContext2D,
@@ -268,7 +324,13 @@ export class RevealNoisePainter {
       mctx.save();
       mctx.globalCompositeOperation = "source-in";
       mctx.imageSmoothingEnabled = false;
-      const og = Math.round(wrapDrift(this.offsetGlyph, NOISE_TILE_W));
+      // Boiling: a fresh random tile phase EVERY frame, not an
+      // accumulated drift. The glyph region flickers while the
+      // background slides — a flicker-vs-drift silhouette the eye
+      // segments instantly, at any frame rate, while a single frame
+      // stays statistically uniform noise (same tile, same
+      // distribution, random phase).
+      const og = Math.floor(Math.random() * NOISE_TILE_W);
       mctx.translate(-og, 0);
       mctx.fillStyle = patGlyph;
       mctx.fillRect(og, 0, W + 2, H);

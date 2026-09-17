@@ -57,13 +57,12 @@ export default defineComponent({
     },
     /**
      * Right-edge affordance for `variant="password"`:
-     * - "eye" (default): hold-to-reveal button. While held, the canvas
-     *   renders a counter-drifting noise kinematogram instead of the
-     *   dot matrix: the noise through the password glyphs drifts one
-     *   way, the background noise the opposite way — readable by
-     *   motion to a human, pure noise (nothing to OCR) in any single
-     *   screenshot. Reduced motion falls back to the legacy static
-     *   per-glyph jitter; release restores the dots.
+     * - "eye" (default): the reveal button. While revealed, the canvas
+     *   renders the reveal chosen by `revealStrategy` (boiling-noise
+     *   kinematogram by default, plain text on opt-in); the trigger is
+     *   `revealTrigger` (press-and-hold by default, click-toggle on
+     *   opt-in). The DOM value stays inside the type="password" input
+     *   at all times — every strategy draws on the canvas.
      * - "strength": the traffic-light dot (weak / fair / strong via the
      *   shared `passwordLevel` classifier, overridable through
      *   `strengthEvaluator`) with a localized tooltip on hover and on
@@ -74,6 +73,37 @@ export default defineComponent({
       type: String as () => "eye" | "strength" | "none",
       default: "eye",
     },
+    /**
+     * Reveal content for the password eye (`variant="password"`,
+     * `passwordTrailing="eye"`):
+     * - "noise" (default): the boiling-noise kinematogram — readable by
+     *   a watching human, statistically pure noise in any single-frame
+     *   screenshot (nothing for OCR to lock onto).
+     * - "plain": ordinary readable text while revealed (the industry-
+     *   standard reveal) — readable by everyone including
+     *   reduced-motion users, but fully visible to screenshots and
+     *   shoulder surfers. Pick per threat model.
+     */
+    revealStrategy: {
+      type: String as () => "noise" | "plain",
+      default: "noise",
+    },
+    /**
+     * Reveal interaction for the password eye: "hold" (default) reveals
+     * only while the button is pressed; "toggle" reveals on click and
+     * hides on the next click or after `revealAutoHideMs`. Space/Enter
+     * on the focused button follow the same mode.
+     */
+    revealTrigger: {
+      type: String as () => "hold" | "toggle",
+      default: "hold",
+    },
+    /**
+     * Toggle mode only (`revealTrigger="toggle"`): auto-hide the reveal
+     * after this many ms so a forgotten reveal does not linger on
+     * screen. Defaults to 8000; `0` disables the timer.
+     */
+    revealAutoHideMs: { type: Number, default: 8000 },
     /**
      * Overrides the built-in password strength classifier
      * (`passwordLevel` from `@celestia-island/hikari`). Only consulted
@@ -331,6 +361,9 @@ export default defineComponent({
             id={fieldId.value}
             submitOnEnter={props.submitOnEnter}
             passwordTrailing={props.passwordTrailing}
+            revealStrategy={props.revealStrategy}
+            revealTrigger={props.revealTrigger}
+            revealAutoHideMs={props.revealAutoHideMs}
             strengthEvaluator={props.strengthEvaluator}
             size={props.size}
           >

@@ -48,16 +48,28 @@ interface Ripple {
  * detail and is NOT exported from the package index.
  *
  * Right-edge affordance (`passwordTrailing`):
- * - "eye" (default): a hold-to-reveal button. While held the canvas
- *   stops drawing the dot matrix and renders a counter-drifting noise
- *   kinematogram instead (see revealKinematogram.ts): one shared noise
- *   tile, with the noise sampled through the password glyphs drifting
- *   one way and the background noise the opposite way. A human reads
- *   the glyphs off the motion, while any single frame — a screenshot —
- *   is pure noise with no glyph structure for OCR to lock onto. When
- *   the animation bus is parked (reduced motion) or the engine cannot
- *   run the pattern path, the reveal degrades to the legacy static
- *   per-glyph jitter drawing.
+ * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
+ *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
+ *   - strategy "noise" (default): the canvas stops drawing the dot
+ *     matrix and renders the boiling-noise kinematogram instead (see
+ *     revealKinematogram.ts): one shared noise tile, the background
+ *     drifting sideways while the noise sampled through the password
+ *     glyphs is re-sampled at a random phase every frame. A human reads
+ *     the glyph silhouettes off the flicker-vs-drift contrast, while
+ *     any single frame — a screenshot — is pure noise with no glyph
+ *     structure for OCR to lock onto. When the animation bus is parked
+ *     (reduced motion) or the engine cannot run the pattern path, the
+ *     reveal degrades to the legacy static per-glyph jitter drawing.
+ *   - strategy "plain": the industry-standard readable reveal — the
+ *     password is drawn as ordinary text on the canvas while revealed
+ *     (the DOM input stays type="password"). Readable by everyone,
+ *     motion-free, but fully visible to screenshots and shoulder
+ *     surfers — the consumer picks this when the screenshot threat
+ *     model does not apply.
+ *   - trigger "hold" (default): press-and-hold the eye; release hides.
+ *   - trigger "toggle": click the eye to show, click again to hide;
+ *     an auto-hide timer (`revealAutoHideMs`, default 8s, 0 disables)
+ *     hides a forgotten reveal. Space/Enter toggles from the keyboard.
  * - "strength": the traffic-light dot (weak / fair / strong) with a
  *   localized tooltip on hover AND on touch tap.
  * - "none": no affordance at all.
@@ -89,6 +101,30 @@ export default defineComponent({
       type: String as () => "eye" | "strength" | "none",
       default: "eye",
     },
+    /**
+     * What the eye reveal SHOWS: "noise" (default) = the screenshot-
+     * safe boiling-noise kinematogram; "plain" = ordinary readable text
+     * drawn on the canvas (screenshot-visible — pick per threat model).
+     */
+    revealStrategy: {
+      type: String as () => "noise" | "plain",
+      default: "noise",
+    },
+    /**
+     * How the eye reveal is TRIGGERED: "hold" (default) = press-and-
+     * hold; "toggle" = click to show, click again (or the auto-hide
+     * timer) to hide. Keyboard follows the same mode (Space/Enter).
+     */
+    revealTrigger: {
+      type: String as () => "hold" | "toggle",
+      default: "hold",
+    },
+    /**
+     * Toggle mode only: hide the reveal automatically after this many
+     * ms (default 8s) so a forgotten reveal does not linger. `0`
+     * disables the timer. Ignored in hold mode.
+     */
+    revealAutoHideMs: { type: Number, default: 8000 },
     /** Overrides the built-in passwordLevel classifier. */
     strengthEvaluator: {
       type: Function as PropType<PasswordStrengthEvaluator>,
@@ -129,8 +165,13 @@ export default defineComponent({
     let revealLayoutMono = "";
     let revealStaticFallback = false;
     let revealWatchdog: CronHandle | null = null;
+    let revealAutoHide: CronHandle | null = null;
     let revealLayout: RevealLayout | null = null;
     let revealLayoutKey = "";
+    // Raw computed `color` of the box, cached at reveal start — the
+    // plain strategy's fillStyle (textHsl is the same read parsed for
+    // the noise tile base).
+    let cachedInkColor = "";
     const pendingClear = ref(false);
     // Flipped by the opt-in marquee overlay when the placeholder actually
     // overflows — the static text below is then hidden so the scrolling
@@ -277,7 +318,9 @@ export default defineComponent({
       const box = boxRef.value;
       if (!box) return;
       try {
-        const triple = parseColorTriple(getComputedStyle(box).color);
+        const color = getComputedStyle(box).color;
+        const triple = parseColorTriple(color);
+        if (color) cachedInkColor = color;
         if (!triple) return;
         const [r, g, b] = triple;
         const rn = r / 255,
@@ -339,6 +382,10 @@ export default defineComponent({
       const usable = width * 0.8;
       const cols = Math.max(3, Math.floor(usable / GAP) + 1);
       rebuildGrid(cols);
+      // Assigning canvas width/height wiped the bitmap: while a reveal
+      // is on, repaint synchronously instead of waiting for the next
+      // bus frame (a parked bus — reduced motion — never delivers one).
+      if (revealing.value) draw(0);
     }
 
     function clamp(n: number, lo: number, hi: number): number {
@@ -387,19 +434,43 @@ export default defineComponent({
     }
 
     /**
-     * Motion reveal pass (the default): one frame of the counter-
-     * drifting noise kinematogram — background noise translated by the
-     * accumulated background drift, then the (offscreen) glyph mask
-     * re-composited with noise translated the opposite way. The glyph
-     * geometry itself never touches the visible canvas, so a single
-     * frame is pure noise. Returns false when the pattern path is
-     * unavailable, handing the frame to the legacy jitter fallback.
+     * Motion reveal pass (the "noise" strategy, default): one frame of
+     * the boiling-noise kinematogram — background noise translated by
+     * the accumulated drift, then the (offscreen) glyph mask
+     * re-composited with noise sampled at a fresh random phase. The
+     * glyph geometry itself never touches the visible canvas, so a
+     * single frame is pure noise. Returns false when the pattern path
+     * is unavailable, handing the frame to the legacy jitter fallback.
      */
     function drawRevealNoise(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number): boolean {
       const layout = revealLayoutFor(ctx, W, H);
       if (!layout) return true; // empty value: nothing to reveal at all
       revealNoise.advance(dt, dpr);
       return revealNoise.paint(ctx, W, H, layout, cachedMonoFont || syncMonoFont(), revealLayoutKey);
+    }
+
+    /**
+     * Plain reveal pass (`revealStrategy="plain"`): the industry-
+     * standard readable reveal — the password as ordinary text, in the
+     * box's own ink color, laid out by the SAME memoized fit-scale
+     * layout as the noise mask (identical geometry, no jitter, no
+     * motion — readable by everyone, including reduced-motion users,
+     * at the cost of being fully screenshot-visible). The DOM input
+     * still never flips: this is canvas paint, the value is never DOM
+     * text beyond the type="password" input itself.
+     */
+    function drawRevealPlainText(ctx: CanvasRenderingContext2D, W: number, H: number) {
+      const layout = revealLayoutFor(ctx, W, H);
+      if (!layout) return;
+      ctx.save();
+      ctx.font = `${layout.fontPx.toFixed(2)}px ${cachedMonoFont || syncMonoFont()}`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = cachedInkColor || "#fff";
+      for (const g of layout.glyphs) {
+        ctx.fillText(g.ch, g.x, H / 2);
+      }
+      ctx.restore();
     }
 
     /**
@@ -468,6 +539,10 @@ export default defineComponent({
       ctx.clearRect(0, 0, W, H);
 
       if (revealing.value) {
+        if (props.revealStrategy === "plain") {
+          drawRevealPlainText(ctx, W, H);
+          return;
+        }
         if (!revealStaticFallback && drawRevealNoise(ctx, W, H, dt)) return;
         drawRevealJitterText(ctx, W, H);
         return;
@@ -556,47 +631,69 @@ export default defineComponent({
       ripples.push({ radius: 0, peak: 1 });
     }
 
-    // ── hold-to-reveal (eye) ────────────────────────────────────────
+    // ── reveal (eye) ────────────────────────────────────────────────
     // Readonly fields keep the reveal (the old lock-reveal allowed it —
     // a stored, uneditable password is exactly the value a user wants
     // to eyeball); only disabled hides the control entirely.
     function startReveal() {
-      if (!props.modelValue || props.disabled) return;
+      if (!props.modelValue || props.disabled || revealing.value) return;
       syncTextHsl();
       syncMonoFont();
-      revealStaticFallback = false;
-      revealFrames = 0;
-      revealNoise.beginHold(textHsl);
+      const isPlain = props.revealStrategy === "plain";
+      if (!isPlain) {
+        revealStaticFallback = false;
+        revealFrames = 0;
+        revealNoise.beginHold(textHsl);
+      }
       revealing.value = true;
       // A parked bus (reduced motion) will never deliver a frame, so
       // the kinematogram would freeze into unreadable pure noise —
       // degrade immediately to the legacy static jitter drawing.
       // Motion-sensitive users keep their preference and the reveal
-      // stays usable.
-      if (isAnimationParked()) {
+      // stays usable. The plain strategy needs no degrade: its static
+      // text is already motion-free.
+      if (!isPlain && isAnimationParked()) {
         revealStaticFallback = true;
       }
       // Paint one synchronous frame so the reveal appears instantly;
-      // the bus takes over from the next tick.
+      // the bus takes over from the next tick (the plain strategy is
+      // static — that one frame IS the whole reveal until the value or
+      // the canvas size changes).
       draw(0);
-      // Recurring belt-and-suspenders watchdog (cronBus on purpose:
-      // bare timers fire even when the rAF-driven bus is parked or
-      // throttled). While held it degrades to the static fallback as
-      // soon as the hold is undrivable: the bus parked — possibly
-      // MID-hold, reduced motion flipped on after frames already
-      // arrived — or no bus frame ever arrived at all (hidden
-      // document, extreme jank). The fallback latches for the rest of
-      // the hold; the next hold re-probes from scratch.
-      revealWatchdog?.disconnect();
-      revealWatchdog = scheduleCron(() => {
-        if (!revealing.value || revealStaticFallback) return;
-        if (isAnimationParked() || revealFrames === 0) {
-          revealStaticFallback = true;
-          draw(0);
-        }
-      }, 160);
-      document.addEventListener("pointerup", endReveal, { once: true });
-      document.addEventListener("pointercancel", endReveal, { once: true });
+      if (!isPlain) {
+        // Recurring belt-and-suspenders watchdog (cronBus on purpose:
+        // bare timers fire even when the rAF-driven bus is parked or
+        // throttled). While held it degrades to the static fallback as
+        // soon as the hold is undrivable: the bus parked — possibly
+        // MID-hold, reduced motion flipped on after frames already
+        // arrived — or no bus frame ever arrived at all (hidden
+        // document, extreme jank). The fallback latches for the rest of
+        // the hold; the next hold re-probes from scratch.
+        revealWatchdog?.disconnect();
+        revealWatchdog = scheduleCron(() => {
+          if (!revealing.value || revealStaticFallback) return;
+          if (isAnimationParked() || revealFrames === 0) {
+            revealStaticFallback = true;
+            draw(0);
+          }
+        }, 160);
+      }
+      if (props.revealTrigger === "toggle") {
+        // A toggled reveal must not linger forgotten on screen —
+        // auto-hide (0 disables). cronBus, not the parked-prone
+        // animation bus, so the hide always fires.
+        revealAutoHide?.disconnect();
+        revealAutoHide =
+          props.revealAutoHideMs > 0
+            ? scheduleCronAfter(() => {
+                revealAutoHide = null;
+                endReveal();
+              }, props.revealAutoHideMs)
+            : null;
+      } else {
+        document.addEventListener("pointerup", endReveal, { once: true });
+        document.addEventListener("pointercancel", endReveal, { once: true });
+      }
     }
 
     function endReveal() {
@@ -604,9 +701,16 @@ export default defineComponent({
       revealing.value = false;
       revealWatchdog?.disconnect();
       revealWatchdog = null;
+      revealAutoHide?.disconnect();
+      revealAutoHide = null;
       draw(0);
       document.removeEventListener("pointerup", endReveal);
       document.removeEventListener("pointercancel", endReveal);
+    }
+
+    function toggleReveal() {
+      if (revealing.value) endReveal();
+      else startReveal();
     }
 
     function clearAndFocus() {
@@ -873,6 +977,32 @@ export default defineComponent({
       // the pending-clear state so the placeholder falls back to the
       // waiting-for-input message.
       if (!v) pendingClear.value = false;
+      if (revealing.value) {
+        // Editing (or clearing) the password mid-reveal: an empty value
+        // ends the reveal outright; otherwise the STATIC reveal frames
+        // (plain text, or the latched jitter fallback under a parked
+        // bus) must repaint with the new layout now, not on some future
+        // bus frame that reduced motion may never deliver.
+        if (!v) endReveal();
+        else if (props.revealStrategy === "plain" || revealStaticFallback) draw(0);
+      }
+    });
+
+    watch(() => props.disabled, (v) => {
+      // Disabling the field mid-reveal unmounts the eye (showEye gates
+      // on disabled) — never leave a reveal up on a disabled field,
+      // especially a toggle with the auto-hide timer switched off.
+      if (v) endReveal();
+    });
+
+    watch([() => props.revealStrategy, () => props.revealTrigger], () => {
+      // The reveal knobs are read once at reveal start (painter setup,
+      // watchdog, trigger listeners all branch on them); flipping either
+      // mid-reveal would strand the hold in a half-old/half-new state
+      // (a painter without beginHold, a toggle without its auto-hide).
+      // The props are per-instance configuration — reconcile by simply
+      // ending the reveal; the next interaction re-reads them fresh.
+      endReveal();
     });
 
     onMounted(() => {
@@ -901,6 +1031,14 @@ export default defineComponent({
     });
 
     const showEye = computed(() => props.passwordTrailing === "eye" && !props.disabled);
+
+    const eyeLabel = computed(() =>
+      props.revealTrigger === "toggle"
+        ? revealing.value
+          ? t("hikari::input.hidePassword", "Hide password")
+          : t("hikari::input.showPassword", "Show password")
+        : t("hikari::passwordInput.holdToReveal", "Hold to show password"),
+    );
 
     return () => {
       const { class: _c, style: _s, ...restAttrs } = attrs as Record<string, unknown>;
@@ -1071,23 +1209,29 @@ export default defineComponent({
                 type="button"
                 class="hk-pwd-eye"
                 data-revealing={revealing.value || undefined}
-                aria-label={t("hikari::passwordInput.holdToReveal", "Hold to show password")}
+                aria-label={eyeLabel.value}
                 onPointerdown={(e: PointerEvent) => {
                   // No focus steal: the caret stays in the field while
                   // the affordance is pressed.
                   e.preventDefault();
-                  startReveal();
+                  if (props.revealTrigger === "toggle") toggleReveal();
+                  else startReveal();
                 }}
                 onContextmenu={(e: Event) => e.preventDefault()}
                 onKeydown={(e: KeyboardEvent) => {
                   if (e.key !== " " && e.key !== "Enter") return;
                   e.preventDefault();
-                  startReveal();
+                  // Held-key auto-repeat: harmless for hold mode
+                  // (startReveal no-ops while revealing), but it would
+                  // flap a toggle on/off.
+                  if (e.repeat) return;
+                  if (props.revealTrigger === "toggle") toggleReveal();
+                  else startReveal();
                 }}
                 onKeyup={(e: KeyboardEvent) => {
                   if (e.key !== " " && e.key !== "Enter") return;
                   e.preventDefault();
-                  endReveal();
+                  if (props.revealTrigger === "hold") endReveal();
                 }}
               >
                 {revealing.value ? <EyeOff size={15} /> : <Eye size={15} />}

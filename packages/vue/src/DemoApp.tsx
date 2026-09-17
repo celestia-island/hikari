@@ -367,6 +367,8 @@ export default defineComponent({
             <HSearchInput modelValue={form.value.search} onUpdate:modelValue={(v: string | number) => (form.value.search = String(v))} placeholder="Search..." />
             <HNumberInput modelValue={form.value.number} onUpdate:modelValue={(v: number) => (form.value.number = v)} placeholder="Number" />
             <HInput variant="password" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (hold the eye)" />
+            <HInput variant="password" revealStrategy="plain" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (plain reveal)" />
+            <HInput variant="password" revealTrigger="toggle" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (click eye toggles)" />
             <HInput variant="password" passwordTrailing="strength" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (strength light)" />
             <HInput variant="password" passwordTrailing="none" modelValue={form.value.password} onUpdate:modelValue={(v: string) => (form.value.password = v)} placeholder="Password (no affordance)" />
             <HTextarea modelValue={form.value.textarea} onUpdate:modelValue={(v: string) => (form.value.textarea = v)} placeholder="Textarea" rows={3} />

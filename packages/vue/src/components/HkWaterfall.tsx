@@ -252,25 +252,11 @@ export default defineComponent({
     function recomputeActive() {
       scrollRaf = null;
       if (!scrollEl) return;
-      const top = scrollEl.scrollTop;
-
-      if (props.backTopShow !== undefined) {
-        const show = props.backTopShow;
-        const hide = props.backTopHide;
-        const next =
-          hide !== undefined
-            ? top > show
-              ? true
-              : top < hide
-                ? false
-                : backTopVisible.value
-            : top > show;
-        if (next !== backTopVisible.value) {
-          backTopVisible.value = next;
-          emit("update:backTopVisible", next);
-        }
-      }
-
+      // Back-to-top visibility is no longer derived here: the shared
+      // scroll host (HkScrollContainer) senses it on its own throttled
+      // pass and this view mirrors the host's signal (see the render
+      // wiring below) — one scroll pass, one source of truth, and every
+      // other scrollable template gets the same signal for free.
       const viewportTop = scrollEl.getBoundingClientRect().top;
       const attr = sectionAttribute.value;
       const sections = scrollEl.querySelectorAll<HTMLElement>(`[${attr}]`);
@@ -409,6 +395,18 @@ export default defineComponent({
           class="hk-waterfall-scroll"
           mode="windowed"
           overscanScreens={props.overscanScreens}
+          // Back-to-top sensing lives on the scroll host now; this view
+          // forwards the thresholds and mirrors the emitted signal so its
+          // own public contract (update:backTopVisible + exposed
+          // backTopVisible) is unchanged for consumers.
+          backTopShow={props.backTopShow}
+          backTopHide={props.backTopHide}
+          onUpdate:backTopVisible={(v: boolean) => {
+            if (v !== backTopVisible.value) {
+              backTopVisible.value = v;
+              emit("update:backTopVisible", v);
+            }
+          }}
         >
           {{
             default: () =>

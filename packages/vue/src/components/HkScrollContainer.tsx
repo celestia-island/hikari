@@ -85,8 +85,21 @@ export default defineComponent({
      *  scroll content dissolving at the dock's edge reads as
      *  intentional instead of a hard clip. */
     dockFade: { type: Boolean, default: true },
+    /** Back-to-top signal (scroll parameter every scrollable template
+     *  can hand to a floating quick-action pad): while set, the
+     *  container derives a visibility signal from its own throttled
+     *  scroll pass — visible once scrollTop passes SHOW px, hidden
+     *  again below HIDE px. The HIDE < SHOW hysteresis band stops the
+     *  signal from flickering when the user idles at one threshold.
+     *  Emits `update:backTopVisible` on change; inert (never emitted)
+     *  while unset. */
+    backTopShow: { type: Number, default: undefined },
+    /** Hide threshold of the hysteresis; only read when `backTopShow`
+     *  is also set. Without it the signal falls back to the single
+     *  `top > backTopShow` test. */
+    backTopHide: { type: Number, default: undefined },
   },
-  emits: { approachEnd: () => true },
+  emits: { approachEnd: () => true, "update:backTopVisible": (_v: boolean) => true },
   setup(props, { slots, expose, emit }) {
     const { t } = useI18n();
     const viewportRef = ref<HTMLElement>();
@@ -112,6 +125,12 @@ export default defineComponent({
 
     const pinned = ref(true);
     const FOLLOW_THRESHOLD = 24;
+
+    // Back-to-top visibility (see the backTopShow prop doc). Starts
+    // false and only ever changes through the sensed hysteresis below —
+    // the same semantics HkWaterfall shipped before the signal moved
+    // down to the shared scroll host.
+    const backTopVisible = ref(false);
     const autoFollowContent = shallowRef<HTMLElement | null>(null);
     let followRO: ResizeObserver | null = null;
     const showAutoTag = computed(() => props.autoFollow && props.scrollbar && pinned.value);
@@ -261,6 +280,30 @@ export default defineComponent({
       const vp = viewportRef.value;
       if (!vp) return;
       senseOverflow(vp);
+      senseBackTop(vp);
+    }
+
+    /** Back-to-top hysteresis, derived on the same throttled pass as the
+     *  overflow sensing (scroll / resize / content resize / refresh) so
+     *  every scrollable template gets the signal for free — no consumer
+     *  installs a second scroll listener. */
+    function senseBackTop(vp: HTMLElement) {
+      if (props.backTopShow === undefined) return;
+      const top = vp.scrollTop;
+      const show = props.backTopShow;
+      const hide = props.backTopHide;
+      const next =
+        hide !== undefined
+          ? top > show
+            ? true
+            : top < hide
+              ? false
+              : backTopVisible.value
+          : top > show;
+      if (next !== backTopVisible.value) {
+        backTopVisible.value = next;
+        emit("update:backTopVisible", next);
+      }
     }
 
     /** Mirror the live scroll geometry onto the root element as
@@ -455,7 +498,7 @@ export default defineComponent({
       approachHandle.value?.recheck();
     }
 
-    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd, recheck });
+    expose({ scrollTo, scrollToElement, getScrollElement, getScrollTop, refresh, getOverflow, isNearEnd, recheck, backTopVisible });
 
     return () => {
       const Tag = props.as as "div" | "section" | "nav" | "main" | "aside";

@@ -248,3 +248,114 @@ describe("HkScrollContainer approachEnd", () => {
     expect(emissions.length).toBe(2);
   });
 });
+
+// ── Back-to-top signal (scroll parameter every template can hand to a
+// floating quick-action pad) — sensed on the container's own throttled
+// pass; HkWaterfall forwards these thresholds and mirrors the emit. ──
+describe("HkScrollContainer back-to-top signal", () => {
+  async function flushFrames(): Promise<void> {
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
+
+  it("emits update:backTopVisible with the SHOW/HIDE hysteresis band", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+
+    const emitted: boolean[] = [];
+    const instance = ref<{ backTopVisible?: boolean } | null>(null);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, {
+            ref: instance as never,
+            backTopShow: 360,
+            backTopHide: 240,
+            "onUpdate:backTopVisible": (v: boolean) => emitted.push(v),
+          }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport");
+    if (!viewport) throw new Error("no viewport");
+
+    const scrollTo = async (top: number) => {
+      stubGeometry(viewport, { scrollTop: top, scrollHeight: 5000, clientHeight: 400 });
+      viewport.dispatchEvent(new Event("scroll"));
+      await flushFrames();
+    };
+
+    await scrollTo(0);
+    expect(emitted).toEqual([]); // below: never emits
+    await scrollTo(300);
+    expect(emitted).toEqual([]); // inside the band, was hidden: stays hidden
+    await scrollTo(400);
+    expect(emitted).toEqual([true]); // past SHOW: emits true
+    emitted.length = 0;
+    await scrollTo(300);
+    expect(emitted).toEqual([]); // inside the band, was visible: stays visible
+    await scrollTo(200);
+    expect(emitted).toEqual([false]); // below HIDE: emits false
+    app.unmount();
+  });
+
+  it("exposes the sensed state as backTopVisible", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const instance = ref<{ backTopVisible?: boolean } | null>(null);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, {
+            ref: instance as never,
+            backTopShow: 100,
+          }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport");
+    if (!viewport) throw new Error("no viewport");
+
+    stubGeometry(viewport, { scrollTop: 500, scrollHeight: 5000, clientHeight: 400 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(instance.value?.backTopVisible).toBe(true);
+
+    stubGeometry(viewport, { scrollTop: 0, scrollHeight: 5000, clientHeight: 400 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(instance.value?.backTopVisible).toBe(false);
+    app.unmount();
+  });
+
+  it("never emits while backTopShow is unset", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const emitted: boolean[] = [];
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkScrollContainer, {
+            "onUpdate:backTopVisible": (v: boolean) => emitted.push(v),
+          }, { default: () => h("span", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const viewport = container.querySelector<HTMLElement>(".hk-scroll-container-viewport");
+    if (!viewport) throw new Error("no viewport");
+    stubGeometry(viewport, { scrollTop: 5000, scrollHeight: 5000, clientHeight: 400 });
+    viewport.dispatchEvent(new Event("scroll"));
+    await flushFrames();
+    expect(emitted).toEqual([]);
+    app.unmount();
+  });
+});

@@ -1631,6 +1631,16 @@ describe("HkInput password reveal strategies", () => {
         (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
       );
       expect(tiles.length, "exactly two spatter tiles").toBe(2);
+
+      // Backing-store tripwire (R3 F1): a shrunken tile silently
+      // drops ~75% of its dots and desyncs the pattern period from
+      // wrapDrift's modulus (the noise painter's documented P1 class).
+      expect(
+        tiles.every(
+          (t) => t.canvas.width === NOISE_TILE_W && t.canvas.height === NOISE_TILE_H,
+        ),
+        "spatter tiles sized to the noise tile backing store",
+      ).toBe(true);
       const meanOf = (r: (typeof tiles)[number]) => {
         const samples = r.fillStyles.filter((s) => s.startsWith("rgb("));
         let sum = 0;

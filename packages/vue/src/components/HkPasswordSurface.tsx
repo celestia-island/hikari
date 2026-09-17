@@ -979,12 +979,20 @@ export default defineComponent({
       if (!v) pendingClear.value = false;
       if (revealing.value) {
         // Editing (or clearing) the password mid-reveal: an empty value
-        // ends the reveal outright; otherwise the plain strategy — a
-        // static frame — must repaint with the new layout now, not on
-        // some future bus frame that reduced motion may never deliver.
+        // ends the reveal outright; otherwise the STATIC reveal frames
+        // (plain text, or the latched jitter fallback under a parked
+        // bus) must repaint with the new layout now, not on some future
+        // bus frame that reduced motion may never deliver.
         if (!v) endReveal();
-        else if (props.revealStrategy === "plain") draw(0);
+        else if (props.revealStrategy === "plain" || revealStaticFallback) draw(0);
       }
+    });
+
+    watch(() => props.disabled, (v) => {
+      // Disabling the field mid-reveal unmounts the eye (showEye gates
+      // on disabled) — never leave a reveal up on a disabled field,
+      // especially a toggle with the auto-hide timer switched off.
+      if (v) endReveal();
     });
 
     onMounted(() => {

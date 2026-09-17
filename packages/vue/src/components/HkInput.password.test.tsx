@@ -1465,6 +1465,83 @@ describe("HkInput password reveal strategies", () => {
       rec.restore();
     }
   });
+
+  it("repaints the latched jitter fallback when the value changes mid-reveal (parked bus)", async () => {
+    // Reduced motion + noise strategy: the reveal is a STATIC jitter
+    // frame that no bus frame will ever refresh — a mid-reveal value
+    // change must repaint it, or the field would keep showing the OLD
+    // password until release.
+    setReducedMotion(true);
+    const rec = stubRecordingContexts();
+    try {
+      const { container, model } = mountPasswordInput("abc", {
+        revealTrigger: "toggle",
+      });
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c"]);
+      model.value = "abcz";
+      await nextTick();
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c", "a", "b", "c", "z"]);
+    } finally {
+      rec.restore();
+      setReducedMotion(false);
+    }
+  });
+
+  it("ends the reveal when the field is disabled mid-reveal", async () => {
+    // showEye gates on disabled, so the eye unmounts — but the reveal
+    // must not linger on a disabled field (above all a toggle with the
+    // auto-hide timer off).
+    const rec = stubRecordingContexts();
+    const dis = ref(false);
+    const model = ref("secret");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render() {
+        return h(HkInput, {
+          variant: "password",
+          revealStrategy: "plain",
+          revealTrigger: "toggle",
+          revealAutoHideMs: 0,
+          disabled: dis.value,
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
+        });
+      },
+    });
+    app.mount(container);
+    try {
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      expect(vis.texts).toEqual(["s", "e", "c", "r", "e", "t"]);
+      dis.value = true;
+      await nextTick();
+      // The eye is gone and the reveal pass ended: the dot-matrix
+      // repaint after endReveal adds no further text draws.
+      expect(container.querySelector("button.hk-pwd-eye")).toBeNull();
+      for (let i = 0; i < 2; i++) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(vis.texts).toEqual(["s", "e", "c", "r", "e", "t"]);
+    } finally {
+      app.unmount();
+      container.remove();
+      rec.restore();
+    }
+  });
 });
 
 describe("HkInput password reveal trigger", () => {

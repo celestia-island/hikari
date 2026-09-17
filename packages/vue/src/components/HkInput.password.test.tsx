@@ -12,8 +12,12 @@ import { setReducedMotion } from "../runtime/animationBus";
  * - the hikari password visual identity survives: canvas dot matrix,
  *   centered breathing placeholder with focus states, blur "entered"
  *   hint, caps-lock / full-width hints, pending-clear refocus semantics
- * - right-edge affordance (passwordTrailing): eye hold-to-reveal
- *   (default) / strength traffic light / none
+ * - right-edge affordance (passwordTrailing): eye reveal (default) /
+ *   strength traffic light / none
+ * - reveal strategy (revealStrategy): "noise" boiling kinematogram
+ *   (screenshot-safe, default) vs "plain" readable text
+ * - reveal trigger (revealTrigger): press-and-hold (default) vs
+ *   click-to-toggle with auto-hide (revealAutoHideMs)
  * - the strength dot classifies through the shared passwordLevel util
  *   unless strengthEvaluator overrides it, and carries a localized
  *   tooltip that opens on hover AND on touch tap
@@ -705,7 +709,7 @@ describe("HkInput password hold-to-reveal eye", () => {
     }
   });
 
-  it("reveals via counter-drifting noise — no glyph ever lands on the visible canvas", async () => {
+  it("reveals via the boiling-noise kinematogram — no glyph ever lands on the visible canvas", async () => {
     // Recording canvas contexts, one per canvas element: happy-dom's
     // getContext is null, so the drawing path never runs there. The
     // per-canvas recorder can tell the VISIBLE dot canvas apart from
@@ -1188,6 +1192,403 @@ describe("HkInput password hold-to-reveal eye", () => {
       HTMLCanvasElement.prototype.getContext = originalGetContext;
       setReducedMotion(false);
     }
+  });
+
+  it("boils the glyph noise: a fresh random tile phase per frame, not an accumulating drift", async () => {
+    // Boiling is the readability mechanism: the glyph region must
+    // RE-SAMPLE the noise tile at a random phase every frame while the
+    // background slides smoothly. A regression back to an accumulated
+    // glyph drift (the old counter-drift design nobody could read) must
+    // go red here. The painter consumes exactly ONE Math.random per
+    // frame (the glyph phase), so a cycling mock makes the expected
+    // mask translations fully deterministic — a drift accumulator would
+    // ignore the mock entirely and produce monotone offsets instead.
+    interface CanvasRec {
+      canvas: HTMLCanvasElement;
+      texts: string[];
+      translateXs: number[];
+    }
+    const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = (function (
+      this: HTMLCanvasElement,
+    ): CanvasRenderingContext2D {
+      let rec = byCanvas.get(this);
+      if (!rec) {
+        rec = { canvas: this, texts: [], translateXs: [] };
+        byCanvas.set(this, rec);
+      }
+      const r = rec;
+      return {
+        canvas: this,
+        clearRect: () => {},
+        save: () => {},
+        restore: () => {},
+        translate: (x: number) => r.translateXs.push(x),
+        rotate: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        fillRect: () => {},
+        measureText: () => ({ width: 10 }),
+        fillText: (text: string) => r.texts.push(String(text)),
+        drawImage: () => {},
+        createPattern: () => ({}) as CanvasPattern,
+        createImageData: (w: number, h: number) => ({
+          data: new Uint8ClampedArray(w * h * 4),
+        }),
+        putImageData: () => {},
+        imageSmoothingEnabled: false,
+        globalCompositeOperation: "source-over",
+        font: "",
+        fillStyle: "",
+        textAlign: "",
+        textBaseline: "",
+      } as unknown as CanvasRenderingContext2D;
+    }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const maskRec = [...byCanvas.values()].find((r) => r.texts.length > 0);
+      expect(maskRec, "the offscreen glyph mask exists").toBeTruthy();
+      // Install the cycling mock AFTER the synchronous first frame: that
+      // frame consumed its glyph phase from real randomness, and
+      // beginHold's tile build is done consuming randomness too. From
+      // here each painted frame draws exactly one mock value.
+      const cycle = [0.5, 0.25, 0.75];
+      let calls = 0;
+      const rand = vi
+        .spyOn(Math, "random")
+        .mockImplementation(() => cycle[calls++ % cycle.length]!);
+      const before = maskRec!.translateXs.length;
+      try {
+        // A few bus frames (the "normal" tier needs ~33ms between
+        // deliveries — mix real timeouts with rAF like the other
+        // reveal tests).
+        for (let i = 0; i < 3; i++) {
+          await new Promise((r) => setTimeout(r, 45));
+          await new Promise((r) => requestAnimationFrame(() => r(null)));
+        }
+      } finally {
+        rand.mockRestore();
+      }
+      const fresh = maskRec!.translateXs.slice(before);
+      expect(fresh.length, "frames painted while the mock was live").toBeGreaterThanOrEqual(2);
+      // Frame i consumes cycle[i % 3]: the expected mask translation
+      // sequence is the cycle repeated, truncated to the frame count.
+      const mapped = cycle.map((v) => -Math.floor(v * NOISE_TILE_W));
+      const expected = fresh.map((_, i) => mapped[i % mapped.length]!);
+      expect(
+        fresh,
+        "each frame re-samples the glyph phase from the mock cycle",
+      ).toEqual(expected);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    }
+  });
+});
+
+/** Installs a per-canvas recording getContext stub (happy-dom has no
+ * real 2d): every canvas element gets its own recorder so a test can
+ * tell the visible dot canvas apart from offscreen painter canvases. */
+function stubRecordingContexts() {
+  interface CanvasRec {
+    canvas: HTMLCanvasElement;
+    texts: string[];
+    patternFills: number;
+    drawImages: number;
+  }
+  const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
+  const original = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = (function (
+    this: HTMLCanvasElement,
+  ): CanvasRenderingContext2D {
+    let rec = byCanvas.get(this);
+    if (!rec) {
+      rec = { canvas: this, texts: [], patternFills: 0, drawImages: 0 };
+      byCanvas.set(this, rec);
+    }
+    const r = rec;
+    return {
+      canvas: this,
+      clearRect: () => {},
+      save: () => {},
+      restore: () => {},
+      translate: () => {},
+      rotate: () => {},
+      beginPath: () => {},
+      arc: () => {},
+      fill: () => {},
+      fillRect: () => {},
+      measureText: () => ({ width: 10 }),
+      fillText: (text: string) => r.texts.push(String(text)),
+      drawImage: () => r.drawImages++,
+      createPattern: () => {
+        r.patternFills++;
+        return {} as CanvasPattern;
+      },
+      createImageData: (w: number, h: number) => ({
+        data: new Uint8ClampedArray(w * h * 4),
+      }),
+      putImageData: () => {},
+      imageSmoothingEnabled: false,
+      globalCompositeOperation: "source-over",
+      font: "",
+      fillStyle: "",
+      textAlign: "",
+      textBaseline: "",
+    } as unknown as CanvasRenderingContext2D;
+  }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  return {
+    byCanvas,
+    restore() {
+      HTMLCanvasElement.prototype.getContext = original;
+    },
+  };
+}
+
+describe("HkInput password reveal strategies", () => {
+  it("plain strategy draws readable text on the VISIBLE canvas — and nothing else", async () => {
+    // The opt-in readable reveal (revealStrategy="plain"): glyphs ARE
+    // the visible frame — no noise fills, no mask stamp — while the DOM
+    // input still never flips to type="text".
+    const rec = stubRecordingContexts();
+    try {
+      const { container, input } = mountPasswordInput("abc", {
+        revealStrategy: "plain",
+      });
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      expect(vis, "visible canvas recorder").toBeTruthy();
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.patternFills).toBe(0);
+      expect(vis.drawImages).toBe(0);
+      // No offscreen mask/tile canvases at all in plain mode.
+      expect(rec.byCanvas.size).toBe(1);
+      expect(input.type).toBe("password");
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+      // After release the reveal pass stops: no further text draws.
+      const drawn = vis.texts.length;
+      for (let i = 0; i < 2; i++) {
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(vis.texts.length).toBe(drawn);
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("plain strategy stays readable under reduced motion (no motion to lose)", async () => {
+    // The a11y win of the plain strategy: a parked animation bus cannot
+    // freeze it into noise — the static text IS the reveal.
+    setReducedMotion(true);
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "plain",
+      });
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c"]);
+      // And it stays put — no watchdog flips, no redraws.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      setReducedMotion(false);
+    }
+  });
+
+  it("plain strategy repaints when the value changes mid-reveal", async () => {
+    setReducedMotion(true); // parked bus: only explicit repaints draw
+    const rec = stubRecordingContexts();
+    try {
+      const { container, model } = mountPasswordInput("abc", {
+        revealStrategy: "plain",
+        revealTrigger: "toggle",
+      });
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c"]);
+      // Typing while revealed: the static frame must follow the value
+      // even though no bus frame will ever arrive.
+      model.value = "abcz";
+      await nextTick();
+      expect(rec.byCanvas.get(visible)!.texts).toEqual(["a", "b", "c", "a", "b", "c", "z"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      setReducedMotion(false);
+    }
+  });
+
+  it("clearing the value mid-reveal ends the reveal", async () => {
+    const rec = stubRecordingContexts();
+    try {
+      const { container, model } = mountPasswordInput("abc", {
+        revealStrategy: "plain",
+        revealTrigger: "toggle",
+      });
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      expect(eye.hasAttribute("data-revealing")).toBe(true);
+      model.value = "";
+      await nextTick();
+      expect(eye.hasAttribute("data-revealing")).toBe(false);
+    } finally {
+      rec.restore();
+    }
+  });
+});
+
+describe("HkInput password reveal trigger", () => {
+  it("toggle mode reveals on click, survives release, hides on the next click", async () => {
+    const { container } = mountPasswordInput("secret", {
+      revealTrigger: "toggle",
+    });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+
+    // Releasing the pointer must NOT end a toggled reveal.
+    document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(false);
+  });
+
+  it("toggle mode hides automatically after revealAutoHideMs", async () => {
+    const { container } = mountPasswordInput("secret", {
+      revealTrigger: "toggle",
+      revealAutoHideMs: 120,
+    });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+    await new Promise((r) => setTimeout(r, 260));
+    expect(eye.hasAttribute("data-revealing")).toBe(false);
+  });
+
+  it("revealAutoHideMs=0 disables the toggle auto-hide", async () => {
+    const { container } = mountPasswordInput("secret", {
+      revealTrigger: "toggle",
+      revealAutoHideMs: 0,
+    });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 260));
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(false);
+  });
+
+  it("toggle mode keyboard: Space toggles, keyup does not hide, auto-repeat does not flap", async () => {
+    const { container } = mountPasswordInput("secret", {
+      revealTrigger: "toggle",
+    });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+
+    eye.dispatchEvent(
+      new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+
+    // keyup is a no-op in toggle mode (hold semantics would hide here).
+    eye.dispatchEvent(
+      new KeyboardEvent("keyup", { key: " ", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+
+    // Held-key auto-repeat must not flap the toggle.
+    eye.dispatchEvent(
+      new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true, repeat: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+
+    eye.dispatchEvent(
+      new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(false);
+  });
+
+  it("switches the eye aria-label between show and hide in toggle mode", async () => {
+    const { container } = mountPasswordInput("secret", {
+      revealTrigger: "toggle",
+    });
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+    expect(eye.getAttribute("aria-label")).toBe("Show password");
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.getAttribute("aria-label")).toBe("Hide password");
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.getAttribute("aria-label")).toBe("Show password");
+  });
+
+  it("hold mode keeps the hold-to-reveal aria-label and semantics", async () => {
+    const { container } = mountPasswordInput("secret");
+    const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+    expect(eye.getAttribute("aria-label")).toBe("Hold to show password");
+    eye.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+    );
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(true);
+    document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+    await nextTick();
+    expect(eye.hasAttribute("data-revealing")).toBe(false);
   });
 });
 

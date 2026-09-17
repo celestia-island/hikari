@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   BACKGROUND_DRIFT_PX_S,
-  GLYPH_DRIFT_PX_S,
   layoutRevealGlyphs,
   NOISE_TILE_W,
   RevealNoisePainter,
@@ -11,10 +10,11 @@ import {
 
 /**
  * Pure-contract tests for the noise kinematogram behind the password
- * hold-to-reveal pass: drift wrapping/accumulation (the motion that
- * makes glyphs readable) and the glyph layout math (the mask that must
- * stay still). The screenshot-safety invariant itself — no glyph ever
- * drawn on the visible canvas — is pinned in HkInput.password.test.tsx.
+ * hold-to-reveal pass: drift wrapping/accumulation (the background
+ * motion beside the boiling glyph noise) and the glyph layout math
+ * (the mask that must stay still). The screenshot-safety invariant
+ * itself — no glyph ever drawn on the visible canvas while the noise
+ * strategy is active — is pinned in HkInput.password.test.tsx.
  */
 
 describe("wrapDrift", () => {
@@ -32,6 +32,7 @@ describe("wrapDrift", () => {
 });
 
 describe("layoutRevealGlyphs", () => {
+  // Per-glyph advance = measured 10px × the 1.2 letter-spacing factor.
   const measure10 = (_ch: string, _px: number) => 10;
 
   it("keeps surrogate pairs as single glyphs", () => {
@@ -40,15 +41,24 @@ describe("layoutRevealGlyphs", () => {
   });
 
   it("centers a fitting row without scaling (device-px coordinates)", () => {
-    // basePx clamps to 18 at a 40px-tall box; raw 30 < avail 272 → no
+    // basePx clamps to 22 at a 40px-tall box (0.62 band); advances are
+    // 10 × 1.2 letter-spacing = 12 CSS px; raw 36 < avail 272 → no
     // shrink; the row is centered and advances are dpr-scaled.
     const l = layoutRevealGlyphs(["a", "b", "c"], measure10, 300, 40, 2);
-    expect(l.fontPx).toBe(36);
-    expect(l.glyphs.map((g) => g.x)).toEqual([270, 290, 310]);
-    expect(l.glyphs.every((g) => g.advance === 20)).toBe(true);
+    expect(l.fontPx).toBe(44);
+    expect(l.glyphs.map((g) => g.x)).toEqual([264, 288, 312]);
+    expect(l.glyphs.every((g) => g.advance === 24)).toBe(true);
   });
 
-  it("scales an overflowing row down with a 0.4 floor", () => {
+  it("adds letter-spacing to every advance", () => {
+    // The spacing is what separates packed password characters at noise
+    // resolutions — pin the factor itself so a "simplification" back to
+    // the raw advance goes red.
+    const l = layoutRevealGlyphs(["a", "b"], measure10, 300, 40, 1);
+    expect(l.glyphs[0]!.advance).toBeCloseTo(12, 10);
+  });
+
+  it("scales an overflowing row down with a 0.5 floor", () => {
     const narrow = layoutRevealGlyphs(
       Array.from("x".repeat(40)),
       measure10,
@@ -56,8 +66,8 @@ describe("layoutRevealGlyphs", () => {
       40,
       1,
     );
-    // raw 400 > avail 272 → scale 0.68.
-    expect(narrow.fontPx).toBeCloseTo(18 * 0.68, 10);
+    // raw 480 > avail 272 → scale 0.5667.
+    expect(narrow.fontPx).toBeCloseTo(22 * (272 / 480), 10);
     const extreme = layoutRevealGlyphs(
       Array.from("x".repeat(200)),
       measure10,
@@ -65,14 +75,14 @@ describe("layoutRevealGlyphs", () => {
       40,
       1,
     );
-    expect(extreme.fontPx).toBeCloseTo(18 * 0.4, 10);
+    expect(extreme.fontPx).toBeCloseTo(22 * 0.5, 10);
   });
 
   it("keeps the visual size band regardless of box height", () => {
     const tiny = layoutRevealGlyphs(["a"], measure10, 300, 8, 1);
     const huge = layoutRevealGlyphs(["a"], measure10, 300, 400, 1);
-    expect(tiny.fontPx).toBe(12);
-    expect(huge.fontPx).toBe(18);
+    expect(tiny.fontPx).toBe(13);
+    expect(huge.fontPx).toBe(22);
   });
 
   it("returns an empty layout for an empty row", () => {
@@ -82,34 +92,33 @@ describe("layoutRevealGlyphs", () => {
 });
 
 describe("RevealNoisePainter", () => {
-  it("seeds both drift phases from randomness at each hold", () => {
+  it("seeds the background drift phase from randomness at each hold", () => {
     const p = new RevealNoisePainter();
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.25);
     try {
       p.beginHold([220, 10, 15]);
-      // Two phase draws before retile; happy-dom has no 2d context, so
-      // the tile build bails before consuming any more randomness.
-      expect(p.peekDrift().glyph).toBeCloseTo(0.25 * NOISE_TILE_W, 10);
+      // One phase draw before retile; happy-dom has no 2d context, so
+      // the tile build bails before consuming any more randomness. The
+      // glyph region has NO phase accumulator — its boiling phase is a
+      // fresh random draw per paint frame.
       expect(p.peekDrift().background).toBeCloseTo(0.25 * NOISE_TILE_W, 10);
     } finally {
       rand.mockRestore();
     }
   });
 
-  it("accumulates the two counter-drifts in device px", () => {
+  it("accumulates the background drift in device px", () => {
     const p = new RevealNoisePainter();
     p.beginHold([220, 10, 15]);
     const before = p.peekDrift();
     p.advance(0.25, 2);
     const mid = p.peekDrift();
-    expect(mid.glyph - before.glyph).toBeCloseTo(GLYPH_DRIFT_PX_S * 2 * 0.25, 10);
     expect(mid.background - before.background).toBeCloseTo(
       BACKGROUND_DRIFT_PX_S * 2 * 0.25,
       10,
     );
     p.advance(0.25, 2);
     const after = p.peekDrift();
-    expect(after.glyph - mid.glyph).toBeCloseTo(GLYPH_DRIFT_PX_S * 0.5, 10);
     expect(after.background - mid.background).toBeCloseTo(BACKGROUND_DRIFT_PX_S * 0.5, 10);
   });
 

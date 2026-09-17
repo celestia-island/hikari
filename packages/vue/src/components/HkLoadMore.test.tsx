@@ -46,7 +46,7 @@ describe("HkLoadMore", () => {
     expect(button.disabled).toBe(true);
     expect(button.getAttribute("aria-busy")).toBe("true");
     expect(button.textContent).toContain("Loading…");
-    expect(c.querySelector(".hk-spinner")).not.toBeNull();
+    expect(c.querySelector(".hk-btn-ring")).not.toBeNull();
   });
 
   it("end state swaps the button for the reached-the-end status note", () => {

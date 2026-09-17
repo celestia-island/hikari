@@ -14,8 +14,9 @@ import { setReducedMotion } from "../runtime/animationBus";
  *   hint, caps-lock / full-width hints, pending-clear refocus semantics
  * - right-edge affordance (passwordTrailing): eye reveal (default) /
  *   strength traffic light / none
- * - reveal strategy (revealStrategy): "noise" boiling kinematogram
- *   (screenshot-safe, default) vs "plain" readable text
+ * - reveal strategy (revealStrategy): "sweep" readable window (default)
+ *   vs "noise" boiling kinematogram (screenshot-safe) vs "plain"
+ *   readable text
  * - reveal trigger (revealTrigger): press-and-hold (default) vs
  *   click-to-toggle with auto-hide (revealAutoHideMs)
  * - the strength dot classifies through the shared passwordLevel util
@@ -1445,6 +1446,19 @@ describe("HkInput password reveal strategies", () => {
       const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
       const vis = rec.byCanvas.get(visible)!;
       const firstHoldFirstClip = vis.clips[0]!;
+      // Drive real bus frames DURING the first hold so sweepT actually
+      // advances past the row before release — without this, both
+      // holds' first frames draw at sweepT = 0 and the reset pin below
+      // passes vacuously. The self-check makes a frameless environment
+      // fail loudly instead of slipping through.
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => setTimeout(r, 45));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(
+        vis.clips.length,
+        "bus frames advanced the sweep during hold 1",
+      ).toBeGreaterThanOrEqual(2);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
       // Second hold: the very first frame's window must sit at the row

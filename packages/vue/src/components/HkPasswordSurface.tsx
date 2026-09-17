@@ -503,7 +503,12 @@ export default defineComponent({
      * window band's characters. The window geometry needs the text
      * extent, so it derives from the memoized layout: span = first
      * glyph's left edge to the last advance's right edge, window width
-     * = ~6 advances (clamped into the field).
+     * = 6.5 advances (clamped into the field).
+     *
+     * Accepted risk: a row NARROWER than the window floor (≤ ~4 very
+     * short characters) fits entirely inside the band, so one frame
+     * leaks the whole password — for tiny secrets the sweep is
+     * effectively the plain strategy. Documented trade-off, not a bug.
      *
      * If the noise pattern path is unavailable this latches the static
      * fallback (plain text, like the reduced-motion degrade) instead of
@@ -524,9 +529,11 @@ export default defineComponent({
       const rowStart = first.x;
       const rowEnd = last.x + last.advance;
       const advance = last.advance;
-      // Window width: ~6 advances, never wider than half the field,
+      // Window width: 6.5 advances, never wider than half the field,
       // but never below a readable floor (a degenerate canvas width
-      // must not collapse the band to zero).
+      // must not collapse the band to zero — and a row shorter than
+      // the floor fits the band entirely: accepted risk, see the
+      // docblock above).
       const winW = Math.max(56 * dpr, Math.min(W * 0.5, 6.5 * advance));
       // Window-center span: from the first glyph's left edge to the
       // row's right edge (so the band starts showing the head and ends

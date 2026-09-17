@@ -1329,6 +1329,11 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     /** fillRect calls that actually ran with a gradient as fillStyle —
      * the halo DRAWN pin (creation alone proves nothing, R2 M3). */
     gradientFills: number;
+    /** globalCompositeOperation assignments, in order — the mask MUST
+     * see "source-in" before its pattern fill or the glyphs never get
+     * carved out of the ink spatter (R3 F2: without this the password
+     * would render INVISIBLE on a real canvas, silently). */
+    compositeOps: string[];
     fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
@@ -1348,6 +1353,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         putImageDatas: 0,
         gradients: 0,
         gradientFills: 0,
+        compositeOps: [],
         fillStyles: [],
         clips: [],
         translates: [],
@@ -1357,6 +1363,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     const r = rec;
     let fillStyleBox: string | CanvasGradient | CanvasPattern = "";
     let gradientArmed = false;
+    let compositeOpBox: GlobalCompositeOperation = "source-over";
     const stub: Record<string, unknown> = {
       canvas: this,
       clearRect: () => {},
@@ -1392,7 +1399,13 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         r.clips.push({ x, y, w, h }),
       clip: () => {},
       imageSmoothingEnabled: false,
-      globalCompositeOperation: "source-over",
+      get globalCompositeOperation() {
+        return compositeOpBox;
+      },
+      set globalCompositeOperation(v: GlobalCompositeOperation) {
+        compositeOpBox = v;
+        r.compositeOps.push(String(v));
+      },
       font: "",
       get fillStyle() {
         return fillStyleBox;
@@ -1578,6 +1591,11 @@ describe("HkInput password reveal strategies", () => {
       const mask = allRecs.find((r) => r.texts.length > 0);
       expect(mask, "offscreen glyph mask").toBeTruthy();
       expect(mask!.texts).toEqual(["a", "b", "c"]);
+      // The mask MUST carve the glyphs out of the ink spatter via
+      // source-in compositing — losing it renders the password
+      // INVISIBLE on a real canvas (R3 F2, a silent total-loss
+      // regression the suite previously could not see).
+      expect(mask!.compositeOps, "mask carves glyphs via source-in").toContain("source-in");
       // The first frame already carries background spatter (pattern),
       // the halo ramp (gradient CREATED and then actually FILLED) and
       // the mask stamp (drawImage).
@@ -1617,6 +1635,12 @@ describe("HkInput password reveal strategies", () => {
       const visTranslates = vis.translates.length;
       const maskTranslates = mask!.translates.length;
       const visPatterns = vis.patternFills;
+      const visGradientFills = vis.gradientFills;
+      // Distinct drift PHASES, not just repeat calls — a frozen
+      // accumulator re-pushes the same wrapped offset every frame and
+      // count-only pins cannot tell (R3 F1).
+      const visDistinct = new Set(vis.translates).size;
+      const maskDistinct = new Set(mask!.translates).size;
       for (let i = 0; i < 3; i++) {
         await new Promise((r) => setTimeout(r, 45));
         await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -1624,6 +1648,9 @@ describe("HkInput password reveal strategies", () => {
       expect(vis.patternFills, "background layer keeps drifting").toBeGreaterThan(visPatterns);
       expect(vis.translates.length, "background pattern phase advances").toBeGreaterThan(visTranslates);
       expect(mask!.translates.length, "glyph layer counter-drifts").toBeGreaterThan(maskTranslates);
+      expect(new Set(vis.translates).size, "background drift phases CHANGE").toBeGreaterThan(visDistinct);
+      expect(new Set(mask!.translates).size, "glyph drift phases CHANGE").toBeGreaterThan(maskDistinct);
+      expect(vis.gradientFills, "halo redrawn every frame").toBeGreaterThan(visGradientFills);
       // Still no glyph on the visible canvas after all those frames.
       expect(vis.texts).toEqual([]);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));

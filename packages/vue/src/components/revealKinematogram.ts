@@ -1,6 +1,7 @@
 /**
  * revealKinematogram — the screenshot-safe rendering behind the
- * HkPasswordSurface hold-to-reveal pass (a random-dot kinematogram).
+ * HkPasswordSurface noise reveal (hold or toggle; a random-dot
+ * kinematogram).
  *
  * Principle: the whole reveal area is filled with ONE shared noise tile.
  * The glyph mask stays perfectly still while the BACKGROUND noise drifts

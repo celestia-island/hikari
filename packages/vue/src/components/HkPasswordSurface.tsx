@@ -631,7 +631,7 @@ export default defineComponent({
       ripples.push({ radius: 0, peak: 1 });
     }
 
-    // ── hold-to-reveal (eye) ────────────────────────────────────────
+    // ── reveal (eye) ────────────────────────────────────────────────
     // Readonly fields keep the reveal (the old lock-reveal allowed it —
     // a stored, uneditable password is exactly the value a user wants
     // to eyeball); only disabled hides the control entirely.

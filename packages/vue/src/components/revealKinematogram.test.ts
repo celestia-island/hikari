@@ -10,7 +10,7 @@ import {
 
 /**
  * Pure-contract tests for the noise kinematogram behind the password
- * hold-to-reveal pass: drift wrapping/accumulation (the background
+ * reveal pass: drift wrapping/accumulation (the background
  * motion beside the boiling glyph noise) and the glyph layout math
  * (the mask that must stay still). The screenshot-safety invariant
  * itself — no glyph ever drawn on the visible canvas while the noise

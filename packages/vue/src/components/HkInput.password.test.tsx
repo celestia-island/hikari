@@ -580,7 +580,7 @@ describe("HkInput password strength traffic light", () => {
   });
 });
 
-describe("HkInput password hold-to-reveal eye", () => {
+describe("HkInput password reveal eye", () => {
   it("renders the eye by default and hides it for none", () => {
     const def = mountPasswordInput("");
     expect(def.container.querySelector("button.hk-pwd-eye")).toBeTruthy();

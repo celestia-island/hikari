@@ -66,7 +66,51 @@ export default defineComponent({
           aria-busy={props.loading || undefined}
           onClick={(e) => emit("click", e)}
         >
-          {props.loading ? <HSpinner size="xs" tone="current" /> : null}
+          {props.loading ? (
+            /* Loading ring as inline SVG + SMIL: renders identically in
+               WebView2 hosts where CSS-border rings got lost to border-
+               color pipelines or where the animation context suspends CSS
+               animations in rAF-starved background windows (user report
+               2026-09-16: an empty gap where the login ring should be).
+               Stroke follows currentcolor; SMIL rotates independently of
+               the CSS animation suspension switch. */
+            <svg
+              class="hk-btn-ring"
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              aria-hidden="true"
+            >
+              <circle
+                cx="8"
+                cy="8"
+                r="6.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-opacity="0.3"
+                stroke-width="1.8"
+              />
+              <circle
+                cx="8"
+                cy="8"
+                r="6.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-dasharray="30 11"
+              >
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 8 8"
+                  to="360 8 8"
+                  dur="0.7s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+            </svg>
+          ) : null}
           {!props.loading && props.icon ? (
             <span class="hk-btn-icon">
               <HIcon name={props.icon} size={16} />

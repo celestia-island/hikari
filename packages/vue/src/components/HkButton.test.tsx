@@ -104,7 +104,7 @@ describe("HkButton click guard", () => {
 
   it("clears the loading state back to a clickable button (aria-busy drops off)", () => {
     const busy = mount(h(HkButton, { loading: true }, () => "x"));
-    expect(busy.querySelector(".hk-spinner")).not.toBeNull();
+    expect(busy.querySelector(".hk-btn-ring")).not.toBeNull();
     const idle = mount(h(HkButton, () => "x"));
     const btn = button(idle);
     expect(idle.querySelector(".hk-spinner")).toBeNull();
@@ -123,7 +123,7 @@ describe("HkButton content slots", () => {
     // Loading swaps the icon out for the spinner — never both.
     const busy = mount(h(HkButton, { icon: "close", loading: true }, () => "x"));
     expect(busy.querySelector(".hk-btn-icon")).toBeNull();
-    expect(busy.querySelector(".hk-spinner")).not.toBeNull();
+    expect(busy.querySelector(".hk-btn-ring")).not.toBeNull();
   });
 
   it("renders the suffix icon slot", () => {

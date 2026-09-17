@@ -1326,6 +1326,9 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     drawImages: number;
     putImageDatas: number;
     gradients: number;
+    /** fillRect calls that actually ran with a gradient as fillStyle —
+     * the halo DRAWN pin (creation alone proves nothing, R2 M3). */
+    gradientFills: number;
     fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
@@ -1344,6 +1347,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         drawImages: 0,
         putImageDatas: 0,
         gradients: 0,
+        gradientFills: 0,
         fillStyles: [],
         clips: [],
         translates: [],
@@ -1352,6 +1356,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     }
     const r = rec;
     let fillStyleBox: string | CanvasGradient | CanvasPattern = "";
+    let gradientArmed = false;
     const stub: Record<string, unknown> = {
       canvas: this,
       clearRect: () => {},
@@ -1362,7 +1367,12 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       beginPath: () => {},
       arc: () => {},
       fill: () => {},
-      fillRect: () => {},
+      fillRect: () => {
+        if (gradientArmed) {
+          r.gradientFills++;
+          gradientArmed = false;
+        }
+      },
       measureText: () => ({ width: 10 }),
       fillText: (text: string) => r.texts.push(String(text)),
       drawImage: () => r.drawImages++,
@@ -1372,7 +1382,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       },
       createLinearGradient: () => {
         r.gradients++;
-        return { addColorStop: () => {} } as unknown as CanvasGradient;
+        return { __recGradient: true, addColorStop: () => {} } as unknown as CanvasGradient;
       },
       createImageData: (w: number, h: number) => ({
         data: new Uint8ClampedArray(w * h * 4),
@@ -1389,6 +1399,10 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       },
       set fillStyle(v: string | CanvasGradient | CanvasPattern) {
         fillStyleBox = v;
+        gradientArmed =
+          typeof v === "object" &&
+          v !== null &&
+          (v as { __recGradient?: boolean }).__recGradient === true;
         if (typeof v === "string") r.fillStyles.push(v);
       },
       textAlign: "",
@@ -1565,9 +1579,11 @@ describe("HkInput password reveal strategies", () => {
       expect(mask, "offscreen glyph mask").toBeTruthy();
       expect(mask!.texts).toEqual(["a", "b", "c"]);
       // The first frame already carries background spatter (pattern),
-      // the halo ramp (gradient) and the mask stamp (drawImage).
+      // the halo ramp (gradient CREATED and then actually FILLED) and
+      // the mask stamp (drawImage).
       expect(vis.patternFills).toBeGreaterThan(0);
-      expect(vis.gradients, "halo band drawn").toBeGreaterThan(0);
+      expect(vis.gradients, "halo gradient created").toBeGreaterThan(0);
+      expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
       expect(vis.drawImages).toBeGreaterThan(0);
       // The two spatter tiles: bg first, ink second (deterministic
       // draw order), each with hundreds of solid-color dot fills. The
@@ -1744,7 +1760,7 @@ describe("HkInput password reveal strategies", () => {
         (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
       );
       expect(tiles.length, "two spatter tiles = filter, not sweep/noise").toBe(2);
-      expect(vis.gradients).toBeGreaterThan(0);
+      expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
     } finally {

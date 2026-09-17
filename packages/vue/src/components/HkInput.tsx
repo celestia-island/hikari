@@ -58,11 +58,12 @@ export default defineComponent({
     /**
      * Right-edge affordance for `variant="password"`:
      * - "eye" (default): the reveal button. While revealed, the canvas
-     *   renders the reveal chosen by `revealStrategy` (boiling-noise
-     *   kinematogram by default, plain text on opt-in); the trigger is
-     *   `revealTrigger` (press-and-hold by default, click-toggle on
-     *   opt-in). The DOM value stays inside the type="password" input
-     *   at all times — every strategy draws on the canvas.
+     *   renders the reveal chosen by `revealStrategy` (the sweep
+     *   readable-window by default; boiling-noise and plain text on
+     *   opt-in); the trigger is `revealTrigger` (press-and-hold by
+     *   default, click-toggle on opt-in). The DOM value stays inside
+     *   the type="password" input at all times — every strategy draws
+     *   on the canvas.
      * - "strength": the traffic-light dot (weak / fair / strong via the
      *   shared `passwordLevel` classifier, overridable through
      *   `strengthEvaluator`) with a localized tooltip on hover and on
@@ -76,17 +77,23 @@ export default defineComponent({
     /**
      * Reveal content for the password eye (`variant="password"`,
      * `passwordTrailing="eye"`):
-     * - "noise" (default): the boiling-noise kinematogram — readable by
-     *   a watching human, statistically pure noise in any single-frame
-     *   screenshot (nothing for OCR to lock onto).
+     * - "sweep" (default): a readable window — ordinary high-contrast
+     *   text inside a narrow band sweeping across the row over the
+     *   boiling-noise field. Easy to read; a single screenshot leaks
+     *   only the characters under the band (partial capture
+     *   resistance).
+     * - "noise": the boiling-noise kinematogram — statistically pure
+     *   noise in any single-frame screenshot (nothing for OCR to lock
+     *   onto), but the hardest to read. Opt-in for high-exposure
+     *   surfaces.
      * - "plain": ordinary readable text while revealed (the industry-
      *   standard reveal) — readable by everyone including
      *   reduced-motion users, but fully visible to screenshots and
      *   shoulder surfers. Pick per threat model.
      */
     revealStrategy: {
-      type: String as () => "noise" | "plain",
-      default: "noise",
+      type: String as () => "sweep" | "noise" | "plain",
+      default: "sweep",
     },
     /**
      * Reveal interaction for the password eye: "hold" (default) reveals

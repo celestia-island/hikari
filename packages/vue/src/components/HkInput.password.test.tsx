@@ -651,6 +651,7 @@ describe("HkInput password reveal eye", () => {
       clearRect: () => {},
       save: () => {}, restore: () => {}, translate: () => {}, rotate: () => {},
       beginPath: () => {}, arc: () => {}, fill: () => {},
+      rect: () => {}, clip: () => {},
       measureText: () => ({ width: 10 }),
       fillText: () => {},
       fillRect: () => {},
@@ -766,7 +767,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container, input } = mountPasswordInput("abc");
+      const { container, input } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
 
       eye.dispatchEvent(
@@ -883,7 +886,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -954,7 +959,9 @@ describe("HkInput password reveal eye", () => {
     vi.stubGlobal("requestAnimationFrame", () => 0);
     vi.stubGlobal("cancelAnimationFrame", () => {});
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1034,7 +1041,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container, input } = mountPasswordInput("abc");
+      const { container, input } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1105,7 +1114,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1166,7 +1177,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1247,7 +1260,9 @@ describe("HkInput password reveal eye", () => {
       } as unknown as CanvasRenderingContext2D;
     }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     try {
-      const { container } = mountPasswordInput("abc");
+      const { container } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
+      });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
       eye.dispatchEvent(
         new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
@@ -1304,6 +1319,8 @@ function stubRecordingContexts() {
     patternFills: number;
     drawImages: number;
     putImageDatas: number;
+    clips: Array<{ x: number; y: number; w: number; h: number }>;
+    translates: number[];
   }
   const byCanvas = new Map<HTMLCanvasElement, CanvasRec>();
   const original = HTMLCanvasElement.prototype.getContext;
@@ -1312,7 +1329,15 @@ function stubRecordingContexts() {
   ): CanvasRenderingContext2D {
     let rec = byCanvas.get(this);
     if (!rec) {
-      rec = { canvas: this, texts: [], patternFills: 0, drawImages: 0, putImageDatas: 0 };
+      rec = {
+        canvas: this,
+        texts: [],
+        patternFills: 0,
+        drawImages: 0,
+        putImageDatas: 0,
+        clips: [],
+        translates: [],
+      };
       byCanvas.set(this, rec);
     }
     const r = rec;
@@ -1321,7 +1346,7 @@ function stubRecordingContexts() {
       clearRect: () => {},
       save: () => {},
       restore: () => {},
-      translate: () => {},
+      translate: (x: number) => r.translates.push(x),
       rotate: () => {},
       beginPath: () => {},
       arc: () => {},
@@ -1338,6 +1363,9 @@ function stubRecordingContexts() {
         data: new Uint8ClampedArray(w * h * 4),
       }),
       putImageData: () => r.putImageDatas++,
+      rect: (x: number, y: number, w: number, h: number) =>
+        r.clips.push({ x, y, w, h }),
+      clip: () => {},
       imageSmoothingEnabled: false,
       globalCompositeOperation: "source-over",
       font: "",
@@ -1355,6 +1383,73 @@ function stubRecordingContexts() {
 }
 
 describe("HkInput password reveal strategies", () => {
+  it("sweep (default) draws readable text inside a moving window over the noise field", async () => {
+    // The default reveal: real high-contrast text clipped to a band
+    // that sweeps across the row (sweepWindow), on top of the boiling
+    // noise field. A single frame leaks only the band's characters.
+    const rec = stubRecordingContexts();
+    try {
+      const { container, input } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // The sync first frame already carries text + noise base.
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      expect(vis.patternFills).toBeGreaterThan(0);
+      expect(vis.clips.length).toBeGreaterThanOrEqual(1);
+      expect(vis.clips[0]!.w).toBeGreaterThan(0);
+      // The DOM input still never flips.
+      expect(input.type).toBe("password");
+      // Frames move the window: clip x changes across the sweep.
+      for (let i = 0; i < 3; i++) {
+        await new Promise((r) => setTimeout(r, 45));
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+      }
+      expect(vis.clips.length).toBeGreaterThanOrEqual(2);
+      const xs = new Set(vis.clips.map((c) => c.x));
+      expect(xs.size, "the window travels across the row").toBeGreaterThan(1);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("sweep degrades to static plain text when the animation bus is parked (reduced motion)", async () => {
+    // A parked bus cannot move the window, so the sweep falls back to
+    // the fully readable static plain text — never to frozen noise.
+    setReducedMotion(true);
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      // No noise machinery on the visible canvas in the degraded state.
+      expect(vis.patternFills).toBe(0);
+      // And the degrade target is PLAIN text, not the legacy jitter:
+      // the plain pass never translates per glyph (the jitter does).
+      expect(vis.translates.length, "static plain, not jitter").toBe(0);
+      // And it stays put — the static frame is the whole reveal.
+      await new Promise((r) => setTimeout(r, 260));
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      setReducedMotion(false);
+    }
+  });
+
   it("plain strategy draws readable text on the VISIBLE canvas — and nothing else", async () => {
     // The opt-in readable reveal (revealStrategy="plain"): glyphs ARE
     // the visible frame — no noise fills, no mask stamp — while the DOM
@@ -1476,6 +1571,7 @@ describe("HkInput password reveal strategies", () => {
     const rec = stubRecordingContexts();
     try {
       const { container, model } = mountPasswordInput("abc", {
+        revealStrategy: "noise",
         revealTrigger: "toggle",
       });
       const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;

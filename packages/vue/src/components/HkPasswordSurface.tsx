@@ -25,6 +25,7 @@ import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMa
 import {
   layoutRevealGlyphs,
   RevealNoisePainter,
+  sweepWindow,
   type RevealLayout,
 } from "./revealKinematogram";
 import "./HkPasswordSurface.scss";
@@ -50,16 +51,24 @@ interface Ripple {
  * Right-edge affordance (`passwordTrailing`):
  * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
  *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
- *   - strategy "noise" (default): the canvas stops drawing the dot
- *     matrix and renders the boiling-noise kinematogram instead (see
- *     revealKinematogram.ts): one shared noise tile, the background
- *     drifting sideways while the noise sampled through the password
- *     glyphs is re-sampled at a random phase every frame. A human reads
- *     the glyph silhouettes off the flicker-vs-drift contrast, while
- *     any single frame — a screenshot — is pure noise with no glyph
- *     structure for OCR to lock onto. When the animation bus is parked
- *     (reduced motion) or the engine cannot run the pattern path, the
- *     reveal degrades to the legacy static per-glyph jitter drawing.
+ *   - strategy "sweep" (default): a readable window — the password is
+ *     drawn as ordinary high-contrast text inside a narrow band that
+ *     sweeps across the row over the boiling-noise field (see
+ *     revealKinematogram.ts). Reading is effortless; a single frame —
+ *     a screenshot — shows only the characters under the band, the rest
+ *     stays noise (partial capture resistance). Reduced motion or a
+ *     pattern-less engine degrades to the fully readable static plain
+ *     text.
+ *   - strategy "noise": the screenshot-safe boiling-noise kinematogram:
+ *     one shared noise tile, the background drifting sideways while the
+ *     noise sampled through the password glyphs is re-sampled at a
+ *     random phase every frame. A human reads the glyph silhouettes off
+ *     the flicker-vs-drift contrast, while any single frame — a
+ *     screenshot — is pure noise with no glyph structure for OCR to
+ *     lock onto. The hardest to read; opt-in for high-exposure
+ *     surfaces. When the animation bus is parked (reduced motion) or
+ *     the engine cannot run the pattern path, the reveal degrades to
+ *     the legacy static per-glyph jitter drawing.
  *   - strategy "plain": the industry-standard readable reveal — the
  *     password is drawn as ordinary text on the canvas while revealed
  *     (the DOM input stays type="password"). Readable by everyone,
@@ -102,13 +111,21 @@ export default defineComponent({
       default: "eye",
     },
     /**
-     * What the eye reveal SHOWS: "noise" (default) = the screenshot-
-     * safe boiling-noise kinematogram; "plain" = ordinary readable text
-     * drawn on the canvas (screenshot-visible — pick per threat model).
+     * What the eye reveal SHOWS:
+     * - "sweep" (default): a readable window — the password is drawn as
+     *   ordinary high-contrast text inside a narrow band that sweeps
+     *   across the row over the boiling-noise field. Genuinely easy to
+     *   read; a single screenshot leaks only the characters under the
+     *   band (partial capture resistance).
+     * - "noise": the screenshot-safe boiling-noise kinematogram —
+     *   statistically pure noise in any single frame, nothing for OCR,
+     *   but the hardest to read (opt-in for high-exposure surfaces).
+     * - "plain": ordinary readable text drawn on the canvas (fully
+     *   screenshot-visible — pick per threat model).
      */
     revealStrategy: {
-      type: String as () => "noise" | "plain",
-      default: "noise",
+      type: String as () => "sweep" | "noise" | "plain",
+      default: "sweep",
     },
     /**
      * How the eye reveal is TRIGGERED: "hold" (default) = press-and-
@@ -156,7 +173,9 @@ export default defineComponent({
     // counts bus-driven frames so the watchdog can tell a parked
     // animation bus (reduced motion) from a live one; the layout memo
     // keeps measureText off the per-frame path (inputs compared as
-    // fields, the string key built only on an actual rebuild).
+    // fields, the string key built only on an actual rebuild). sweepT
+    // drives the sweep strategy's window position (seconds since the
+    // reveal started).
     const revealNoise = new RevealNoisePainter();
     let revealFrames = 0;
     let revealLayoutValue = "";
@@ -168,6 +187,7 @@ export default defineComponent({
     let revealAutoHide: CronHandle | null = null;
     let revealLayout: RevealLayout | null = null;
     let revealLayoutKey = "";
+    let sweepT = 0;
     // Raw computed `color` of the box, cached at reveal start — the
     // plain strategy's fillStyle (textHsl is the same read parsed for
     // the noise tile base).
@@ -434,8 +454,8 @@ export default defineComponent({
     }
 
     /**
-     * Motion reveal pass (the "noise" strategy, default): one frame of
-     * the boiling-noise kinematogram — background noise translated by
+     * Motion reveal pass (the "noise" strategy): one frame of the
+     * boiling-noise kinematogram — background noise translated by
      * the accumulated drift, then the (offscreen) glyph mask
      * re-composited with noise sampled at a fresh random phase. The
      * glyph geometry itself never touches the visible canvas, so a
@@ -470,6 +490,53 @@ export default defineComponent({
       for (const g of layout.glyphs) {
         ctx.fillText(g.ch, g.x, H / 2);
       }
+      ctx.restore();
+    }
+
+    /**
+     * Sweep reveal pass (`revealStrategy="sweep"`, the default): the
+     * boiling-noise field stays as the base layer, and the password is
+     * drawn as ordinary high-contrast text ONLY inside a narrow window
+     * that sweeps across the row (sweepWindow kinematics: constant
+     * pace, dwell at the end, loop while held). Reading is effortless —
+     * real text under the window — while a single frame leaks only the
+     * window band's characters. The window geometry needs the text
+     * extent, so it derives from the memoized layout: span = first
+     * glyph's left edge to the last advance's right edge, window width
+     * = ~6 advances (clamped into the field).
+     *
+     * If the noise pattern path is unavailable this latches the static
+     * fallback (plain text, like the reduced-motion degrade) instead of
+     * the legacy jitter: sweep exists FOR readability.
+     */
+    function drawRevealSweepFrame(ctx: CanvasRenderingContext2D, W: number, H: number, dt: number) {
+      const layout = revealLayoutFor(ctx, W, H);
+      if (!layout || layout.glyphs.length === 0) return;
+      sweepT += dt;
+      revealNoise.advance(dt, dpr);
+      if (!revealNoise.paint(ctx, W, H, layout, cachedMonoFont || syncMonoFont(), revealLayoutKey)) {
+        revealStaticFallback = true;
+        drawRevealPlainText(ctx, W, H);
+        return;
+      }
+      const first = layout.glyphs[0]!;
+      const last = layout.glyphs[layout.glyphs.length - 1]!;
+      const rowStart = first.x;
+      const rowEnd = last.x + last.advance;
+      const advance = last.advance;
+      // Window width: ~6 advances, never wider than half the field,
+      // but never below a readable floor (a degenerate canvas width
+      // must not collapse the band to zero).
+      const winW = Math.max(56 * dpr, Math.min(W * 0.5, 6.5 * advance));
+      // Window-center span: from the first glyph's left edge to the
+      // row's right edge (so the band starts showing the head and ends
+      // showing the tail).
+      const { x, w } = sweepWindow(rowStart, rowEnd, winW, sweepT, dpr);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - w / 2, 0, w, H);
+      ctx.clip();
+      drawRevealPlainText(ctx, W, H);
       ctx.restore();
     }
 
@@ -541,6 +608,17 @@ export default defineComponent({
       if (revealing.value) {
         if (props.revealStrategy === "plain") {
           drawRevealPlainText(ctx, W, H);
+          return;
+        }
+        if (props.revealStrategy === "sweep") {
+          // Static fallback (reduced motion / pattern-less engine):
+          // sweep exists for readability, so its degrade target is the
+          // fully readable plain text, not the legacy jitter.
+          if (revealStaticFallback) {
+            drawRevealPlainText(ctx, W, H);
+            return;
+          }
+          drawRevealSweepFrame(ctx, W, H, dt);
           return;
         }
         if (!revealStaticFallback && drawRevealNoise(ctx, W, H, dt)) return;
@@ -639,19 +717,26 @@ export default defineComponent({
       if (!props.modelValue || props.disabled || revealing.value) return;
       syncTextHsl();
       syncMonoFont();
+      // The plain strategy is static — no painter, no watchdog. Both
+      // motion strategies (sweep default, noise opt-in) drive the noise
+      // painter per frame and degrade to a STATIC fallback when frames
+      // cannot drive them: sweep falls back to plain text (its whole
+      // point is readability), noise to the legacy jitter.
       const isPlain = props.revealStrategy === "plain";
       if (!isPlain) {
         revealStaticFallback = false;
         revealFrames = 0;
+        sweepT = 0;
         revealNoise.beginHold(textHsl);
       }
       revealing.value = true;
       // A parked bus (reduced motion) will never deliver a frame, so
-      // the kinematogram would freeze into unreadable pure noise —
-      // degrade immediately to the legacy static jitter drawing.
-      // Motion-sensitive users keep their preference and the reveal
-      // stays usable. The plain strategy needs no degrade: its static
-      // text is already motion-free.
+      // the motion reveals would freeze — the sweep into unreadable
+      // mid-state noise, the noise into pure noise — degrade immediately
+      // to the strategy's static fallback (plain text for sweep, legacy
+      // jitter for noise). Motion-sensitive users keep their preference
+      // and the reveal stays usable. The plain strategy needs no
+      // degrade: its static text is already motion-free.
       if (!isPlain && isAnimationParked()) {
         revealStaticFallback = true;
       }

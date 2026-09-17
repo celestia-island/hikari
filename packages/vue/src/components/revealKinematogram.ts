@@ -121,6 +121,35 @@ export function wrapDrift(px: number, tile: number): number {
   return m < 0 ? m + tile : m;
 }
 
+/** Sweep-window kinematics for the "sweep" reveal strategy (all values
+ * in DEVICE px): the readable window's CENTER travels from `spanStart`
+ * to `spanEnd` at a constant pace, dwells at the end for
+ * SWEEP_END_PAUSE_S so the tail characters get read, then loops for as
+ * long as the reveal is held. Pure math — unit-pinned.
+ *
+ * Readability contract: inside the window the password is drawn as
+ * ordinary high-contrast text (the eye reads it effortlessly); outside
+ * it, the boiling-noise field continues. A single screenshot therefore
+ * leaks only the characters under the window — weaker than the "noise"
+ * strategy's full single-frame safety, but far more readable. */
+export const SWEEP_SPEED_CSS_PX_S = 220;
+export const SWEEP_END_PAUSE_S = 0.45;
+
+export function sweepWindow(
+  spanStart: number,
+  spanEnd: number,
+  winW: number,
+  t: number,
+  dpr: number,
+): { x: number; w: number } {
+  const travel = Math.max(1, spanEnd - spanStart);
+  const moveT = travel / (SWEEP_SPEED_CSS_PX_S * dpr);
+  const cycle = moveT + SWEEP_END_PAUSE_S;
+  const phase = ((t % cycle) + cycle) % cycle;
+  const x = phase >= moveT ? spanEnd : spanStart + travel * (phase / moveT);
+  return { x, w: winW };
+}
+
 /**
  * Lay the password glyphs out centered in the reveal area, scaling the
  * row down (floor 0.5×) when it overflows. The mask must stay perfectly

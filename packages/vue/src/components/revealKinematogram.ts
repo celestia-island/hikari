@@ -51,9 +51,12 @@
 /** One glyph's placement on the offscreen mask, in DEVICE pixels. */
 export interface RevealGlyph {
   ch: string;
-  /** Left edge of the glyph's advance box. */
+  /** Left edge of the glyph's advance box — also the draw position:
+   *  rasterizers draw textAlign="left" at x, so the ×1.2 letter-spacing
+   *  lands entirely trailing and the row sits a fraction of a glyph left
+   *  of exact center (imperceptible; not worth a centering pass). */
   x: number;
-  /** Advance width (the box the glyph is centered inside). */
+  /** Advance width (measured glyph width × the letter-spacing factor). */
   advance: number;
 }
 
@@ -113,9 +116,10 @@ export function wrapDrift(px: number, tile: number): number {
 
 /**
  * Lay the password glyphs out centered in the reveal area, scaling the
- * row down (floor 0.4×) when it overflows — the same fitting contract
- * the legacy jitter pass used, but WITHOUT per-frame randomness: the
- * mask must stay still while only the noise through it moves.
+ * row down (floor 0.5×) when it overflows. The mask must stay perfectly
+ * still while only the noise through it moves, so nothing here is
+ * per-frame random. (The legacy jitter fallback keeps its own older
+ * fitting band; this layout serves the noise mask and the plain pass.)
  * `measure` receives CSS-px font sizes and returns CSS-px widths.
  */
 export function layoutRevealGlyphs(

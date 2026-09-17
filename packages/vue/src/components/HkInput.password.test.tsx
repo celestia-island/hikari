@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vue";
 
 import HkInput from "./HkInput";
+import HkPasswordSurface from "./HkPasswordSurface";
 import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
@@ -1313,7 +1314,11 @@ describe("HkInput password reveal eye", () => {
 /** Installs a per-canvas recording getContext stub (happy-dom has no
  * real 2d): every canvas element gets its own recorder so a test can
  * tell the visible dot canvas apart from offscreen painter canvases. */
-function stubRecordingContexts() {
+function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
+  // linearGradients: false simulates a pattern-ful but gradient-less
+  // engine (the filter painter must hand the frame back BEFORE any
+  // visible drawing so the component can latch the plain fallback).
+  const { linearGradients = true } = opts;
   interface CanvasRec {
     canvas: HTMLCanvasElement;
     texts: string[];
@@ -1347,7 +1352,7 @@ function stubRecordingContexts() {
     }
     const r = rec;
     let fillStyleBox: string | CanvasGradient | CanvasPattern = "";
-    return {
+    const stub: Record<string, unknown> = {
       canvas: this,
       clearRect: () => {},
       save: () => {},
@@ -1388,7 +1393,9 @@ function stubRecordingContexts() {
       },
       textAlign: "",
       textBaseline: "",
-    } as unknown as CanvasRenderingContext2D;
+    };
+    if (!linearGradients) delete stub.createLinearGradient;
+    return stub as unknown as CanvasRenderingContext2D;
   }) as unknown as typeof HTMLCanvasElement.prototype.getContext;
   return {
     byCanvas,
@@ -1672,6 +1679,78 @@ describe("HkInput password reveal strategies", () => {
     } finally {
       rec.restore();
       setReducedMotion(false);
+    }
+  });
+
+  it("filter hands the frame back untouched on a gradient-less engine, then latches the plain fallback", async () => {
+    // A pattern-ful but gradient-less engine: the painter's pre-check
+    // must bail BEFORE any visible drawing (no partial spatter frame),
+    // and the component then shows the readable plain fallback — the
+    // pin for the capability guard (R1 weak pin C2).
+    const rec = stubRecordingContexts({ linearGradients: false });
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // The painter handed the frame back WITHOUT drawing anything…
+      expect(vis.patternFills, "no partial spatter frame").toBe(0);
+      expect(vis.drawImages).toBe(0);
+      // …and the fallback that engaged is the readable plain text.
+      expect(vis.texts).toEqual(["a", "b", "c"]);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+    }
+  });
+
+  it("filter is the surface-level default too (direct HkPasswordSurface mount)", async () => {
+    // HkInput declares and forwards its own default, which is where the
+    // user-facing pin lives — but the surface ALSO declares a default,
+    // and the two must not silently drift apart (R1 weak pin M7). The
+    // surface is internal (never exported), so mount it directly.
+    const rec = stubRecordingContexts();
+    const model = ref("abc");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render() {
+        return h(HkPasswordSurface, {
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            model.value = v;
+          },
+        });
+      },
+    });
+    app.mount(container);
+    try {
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      // Filter signature: glyphs only on the offscreen mask, two
+      // spatter tiles, halo gradient — with NO revealStrategy prop.
+      expect(vis.texts).toEqual([]);
+      const tiles = Array.from(rec.byCanvas.values()).filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length, "two spatter tiles = filter, not sweep/noise").toBe(2);
+      expect(vis.gradients).toBeGreaterThan(0);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      app.unmount();
+      container.remove();
+      rec.restore();
     }
   });
 

@@ -504,7 +504,7 @@ export default defineComponent({
     }
 
     /**
-     * Sweep reveal pass (`revealStrategy="sweep"`, the default): the
+     * Sweep reveal pass (`revealStrategy="sweep"`): the
      * boiling-noise field stays as the base layer, and the password is
      * drawn as ordinary high-contrast text ONLY inside a narrow window
      * that sweeps across the row (sweepWindow kinematics: constant
@@ -771,18 +771,6 @@ export default defineComponent({
       // painter per frame and degrade to a STATIC fallback when frames
       // cannot drive them: filter and sweep fall back to plain text
       // (their whole point is readability), noise to the legacy jitter.
-      const isPlain = props.revealStrategy === "plain";
-      if (!isPlain) {
-        revealStaticFallback = false;
-        revealFrames = 0;
-        sweepT = 0;
-        if (props.revealStrategy === "filter") {
-          revealFilter.beginHold(textHsl, dpr);
-        } else {
-          revealNoise.beginHold(textHsl);
-        }
-      }
-      revealing.value = true;
       // A parked bus (reduced motion) will never deliver a frame, so
       // the motion reveals would freeze — filter and sweep into an
       // unreadable mid-state, noise into pure noise — degrade
@@ -790,8 +778,25 @@ export default defineComponent({
       // filter and sweep, legacy jitter for noise). Motion-sensitive
       // users keep their preference and the reveal stays usable. The
       // plain strategy needs no degrade: its static text is already
-      // motion-free.
-      if (!isPlain && isAnimationParked()) {
+      // motion-free. The parked check runs BEFORE beginHold so a
+      // reduced-motion hold never builds noise/spatter tiles it will
+      // never paint.
+      const isPlain = props.revealStrategy === "plain";
+      const parked = !isPlain && isAnimationParked();
+      if (!isPlain) {
+        revealStaticFallback = false;
+        revealFrames = 0;
+        sweepT = 0;
+        if (!parked) {
+          if (props.revealStrategy === "filter") {
+            revealFilter.beginHold(textHsl, dpr);
+          } else {
+            revealNoise.beginHold(textHsl);
+          }
+        }
+      }
+      revealing.value = true;
+      if (parked) {
         revealStaticFallback = true;
       }
       // Paint one synchronous frame so the reveal appears instantly;

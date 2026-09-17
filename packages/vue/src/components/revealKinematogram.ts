@@ -586,6 +586,16 @@ export class RevealFilterPainter {
       ) {
         return false;
       }
+      // Create the halo gradient up front as well: creation draws
+      // nothing, so a bail here still leaves the visible canvas
+      // untouched (no partial frame — see the pre-check above).
+      const bandH = Math.min(H / 2, FILTER_HALO_FONT_SCALE * layout.fontPx);
+      const midY = H / 2;
+      const grad = ctx.createLinearGradient(0, midY - bandH, 0, midY + bandH);
+      if (!grad) return false;
+      grad.addColorStop(0, "rgba(255,255,255,0)");
+      grad.addColorStop(0.5, `rgba(255,255,255,${FILTER_HALO_ALPHA})`);
+      grad.addColorStop(1, "rgba(255,255,255,0)");
       this.mask ??= document.createElement("canvas");
       if (this.mask.width !== W || this.mask.height !== H) {
         this.mask.width = W;
@@ -632,14 +642,8 @@ export class RevealFilterPainter {
       // Halo: a smooth vertical ramp centered on the glyph row — the
       // surround of the text sits slightly brighter, aiding pop-out
       // while dissolving the pedestal step into a gradient with no
-      // plateau for thresholding to lock onto.
-      const bandH = Math.min(H / 2, FILTER_HALO_FONT_SCALE * layout.fontPx);
-      const midY = H / 2;
-      const grad = ctx.createLinearGradient(0, midY - bandH, 0, midY + bandH);
-      if (!grad) return false;
-      grad.addColorStop(0, "rgba(255,255,255,0)");
-      grad.addColorStop(0.5, `rgba(255,255,255,${FILTER_HALO_ALPHA})`);
-      grad.addColorStop(1, "rgba(255,255,255,0)");
+      // plateau for thresholding to lock onto (gradient created up
+      // front, before any visible drawing).
       ctx.save();
       ctx.fillStyle = grad;
       ctx.fillRect(0, midY - bandH, W, bandH * 2);

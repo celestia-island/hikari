@@ -1334,6 +1334,11 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
      * carved out of the ink spatter (R3 F2: without this the password
      * would render INVISIBLE on a real canvas, silently). */
     compositeOps: string[];
+    /** Gradient stop colors, in order — pins the halo's THEME color
+     * (white over a dark ground, black over a light one). */
+    gradientStops: string[];
+    /** Font string assignments — pins the BOLD glyph aperture. */
+    fonts: string[];
     fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
@@ -1354,6 +1359,8 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         gradients: 0,
         gradientFills: 0,
         compositeOps: [],
+        gradientStops: [],
+        fonts: [],
         fillStyles: [],
         clips: [],
         translates: [],
@@ -1364,6 +1371,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     let fillStyleBox: string | CanvasGradient | CanvasPattern = "";
     let gradientArmed = false;
     let compositeOpBox: GlobalCompositeOperation = "source-over";
+    let fontBox = "";
     const stub: Record<string, unknown> = {
       canvas: this,
       clearRect: () => {},
@@ -1389,7 +1397,10 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       },
       createLinearGradient: () => {
         r.gradients++;
-        return { __recGradient: true, addColorStop: () => {} } as unknown as CanvasGradient;
+        return {
+          __recGradient: true,
+          addColorStop: (_o: number, c: string) => r.gradientStops.push(String(c)),
+        } as unknown as CanvasGradient;
       },
       createImageData: (w: number, h: number) => ({
         data: new Uint8ClampedArray(w * h * 4),
@@ -1406,7 +1417,13 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         compositeOpBox = v;
         r.compositeOps.push(String(v));
       },
-      font: "",
+      get font() {
+        return fontBox;
+      },
+      set font(v: string) {
+        fontBox = v;
+        r.fonts.push(String(v));
+      },
       get fillStyle() {
         return fillStyleBox;
       },
@@ -1564,14 +1581,15 @@ describe("HkInput password reveal strategies", () => {
   });
 
   it("filter (default) keeps glyphs off the visible canvas: counter-drifting spatter, pedestal, halo", async () => {
-    // The default reveal: STATIC glyph apertures filled with one
-    // spatter texture, over a statistically matched spatter field
-    // drifting the opposite way; the glyphs lifted by a small lightness
-    // pedestal with a halo band around the row. Glyph geometry must
-    // NEVER reach the visible canvas (mask → source-in stamp only) —
-    // that is the screenshot contract. Math.random is pinned at 0.5 so
-    // the dot lightness equals the exact layer base (deterministic
-    // pedestal comparison).
+    // The default reveal: STATIC BOLD glyph apertures filled with one
+    // GRAYSCALE spatter texture, over a statistically matched spatter
+    // field drifting the opposite way on the theme-anchored ground;
+    // the glyphs shifted by a small pedestal toward the theme's
+    // visibility direction with a halo band around the row. Glyph
+    // geometry must NEVER reach the visible canvas (mask → source-in
+    // stamp only) — that is the screenshot contract. Math.random is
+    // pinned at 0.5 so the dot lightness equals the exact layer base
+    // (deterministic pedestal comparison).
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.5);
     const rec = stubRecordingContexts();
     try {
@@ -1604,10 +1622,11 @@ describe("HkInput password reveal strategies", () => {
       expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
       expect(vis.drawImages).toBeGreaterThan(0);
       // The two spatter tiles: bg first, ink second (deterministic
-      // draw order), each with hundreds of solid-color dot fills. The
-      // ink tile's mean color must sit ABOVE the bg tile's — the
-      // lightness pedestal the human pop-out cue (and the only signal
-      // a single frame leaks).
+      // draw order), each with hundreds of solid-color dot fills.
+      // happy-dom resolves no computed color, so the ink stays at the
+      // pre-sync fallback (a DARK ink) — the effective theme here is
+      // LIGHT: near-white ground, dark-gray speckle, and the pedestal
+      // shifts the glyph layer DARKER (visibility direction).
       const tiles = allRecs.filter(
         (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
       );
@@ -1624,9 +1643,35 @@ describe("HkInput password reveal strategies", () => {
       const bgMean = meanOf(tiles[0]!);
       const inkMean = meanOf(tiles[1]!);
       expect(
-        inkMean - bgMean,
-        `glyph layer carries the lightness pedestal (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
+        bgMean - inkMean,
+        `light theme: glyph pedestal shifts DARKER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
+      // Strict grayscale: no theme hue may survive into the spatter —
+      // every solid fill is a NEUTRAL gray (r === g === b).
+      for (const tile of tiles) {
+        for (const fill of tile.fillStyles.filter((s) => s.startsWith("rgb("))) {
+          const [r8, g8, b8] = fill.slice(4, -1).split(",").map(Number);
+          expect(
+            r8 === g8 && g8 === b8,
+            `spatter must be grayscale, got ${fill}`,
+          ).toBe(true);
+        }
+      }
+      // Theme anchor: the LIGHT theme's ground is near-white (first
+      // fill on the bg tile is the ground wash; L 93 → rgb ≈ 237).
+      const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
+      expect(gr!, "light-theme ground is near-white").toBeGreaterThan(230);
+      expect(gr!).toBeLessThan(245);
+      expect(gg!).toBe(gr);
+      expect(gb!).toBe(gr);
+      // Halo color follows the theme: BLACK over a light ground.
+      expect(vis.gradientStops, "light theme paints a BLACK halo").toContain("rgba(0,0,0,0.1)");
+      expect(vis.gradientStops).not.toContain("rgba(255,255,255,0.1)");
+      // The glyph apertures rasterize BOLD.
+      expect(
+        mask!.fonts.some((f) => f.startsWith("bold ")),
+        "glyph apertures rasterize bold",
+      ).toBe(true);
       // The DOM input still never flips.
       expect(input.type).toBe("password");
       // Bus frames advance BOTH layer drifts (fresh pattern phases on
@@ -1658,6 +1703,79 @@ describe("HkInput password reveal strategies", () => {
     } finally {
       rec.restore();
       rand.mockRestore();
+    }
+  });
+
+  it("filter inverts its grayscale anchors for a dark theme (light field ink)", async () => {
+    // Light field ink = a dark theme: near-black ground, light-gray
+    // speckle, a BRIGHTER glyph pedestal and a WHITE halo — every
+    // anchor flips with the theme while the mechanism stays identical.
+    // The theme proxy is the computed field-ink lightness (>= 50 =
+    // dark theme), so feed a light ink through getComputedStyle.
+    const originalGCS = window.getComputedStyle;
+    window.getComputedStyle = ((el: Element, ...rest: unknown[]) => {
+      const real = originalGCS.call(window, el, ...(rest as []));
+      // Force a LIGHT ink through `.color` (the theme proxy) while
+      // forwarding every other query to the real computed style.
+      return new Proxy(real, {
+        get(target, prop) {
+          if (prop === "color") return "rgb(148, 233, 211)";
+          const v = Reflect.get(target, prop, target);
+          return typeof v === "function"
+            ? (v as (...a: unknown[]) => unknown).bind(target)
+            : v;
+        },
+      });
+    }) as typeof window.getComputedStyle;
+    const rec = stubRecordingContexts();
+    try {
+      const { container } = mountPasswordInput("abc");
+      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
+      eye.dispatchEvent(
+        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
+      );
+      await nextTick();
+      const visible = container.querySelector<HTMLCanvasElement>(".hk-pwd-dots")!;
+      const vis = rec.byCanvas.get(visible)!;
+      const allRecs = Array.from(rec.byCanvas.values());
+      const tiles = allRecs.filter(
+        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
+      );
+      expect(tiles.length).toBe(2);
+      const meanOf = (r: (typeof tiles)[number]) => {
+        const samples = r.fillStyles.filter((s) => s.startsWith("rgb("));
+        let sum = 0;
+        for (const s of samples) {
+          const [r8, g8, b8] = s.slice(4, -1).split(",").map(Number);
+          sum += (r8! + g8! + b8!) / 3;
+        }
+        return sum / samples.length;
+      };
+      const bgMean = meanOf(tiles[0]!);
+      const inkMean = meanOf(tiles[1]!);
+      expect(
+        inkMean - bgMean,
+        `dark theme: glyph pedestal shifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
+      ).toBeGreaterThan(8);
+      // Near-black ground: L 10 → rgb ≈ 26.
+      const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
+      expect(gr!, "dark-theme ground is near-black").toBeGreaterThan(18);
+      expect(gr!).toBeLessThan(34);
+      expect(gg!).toBe(gr);
+      expect(gb!).toBe(gr);
+      // White halo over the dark ground.
+      expect(vis.gradientStops, "dark theme paints a WHITE halo").toContain("rgba(255,255,255,0.1)");
+      expect(vis.gradientStops).not.toContain("rgba(0,0,0,0.1)");
+      // Same screenshot contract and bold apertures as the light theme.
+      const mask = allRecs.find((r) => r.texts.length > 0)!;
+      expect(mask.texts).toEqual(["a", "b", "c"]);
+      expect(vis.texts).toEqual([]);
+      expect(mask.fonts.some((f) => f.startsWith("bold "))).toBe(true);
+      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      await nextTick();
+    } finally {
+      rec.restore();
+      window.getComputedStyle = originalGCS;
     }
   });
 

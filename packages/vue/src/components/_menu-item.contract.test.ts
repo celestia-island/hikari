@@ -87,4 +87,28 @@ describe("menu-item grammar contract", () => {
     expect(adminTokens).toMatch(/\.hk-menu-divider \{[^}]*--hk-menu-item-pad-y, 6px/);
     expect(adminTokens).toMatch(/\.hk-menu-divider \{[^}]*--hk-menu-item-pad-x, 12px/);
   });
+
+  it("lands the identity header on the rows' content edge inside HkMenu surfaces", () => {
+    // The account identity block (`.s-user-header` — the admin header's
+    // dropdown header slot and every consumer's HkMenu header slot) shares
+    // its container with the menu rows, so its inline padding must BE the
+    // rows' content edge: their 1px transparent border plus pad-x, in the
+    // grammar's own px units. A fixed rem value read 1px off at the
+    // default root, 4.5px at a 20px root, and 3px the other way on sheets
+    // (measured 2026-09-17): pin both scoped rules and their branch values.
+    expect(adminTokens).toMatch(
+      /\.hk-select-popout-host \.s-user-header \{[^}]*padding-inline: calc\(1px \+ var\(--hk-menu-item-pad-x, 12px\)\)/,
+    );
+    expect(adminTokens).toMatch(
+      /\.hk-select-sheet-panel \.s-user-header \{[^}]*padding-inline: calc\(1px \+ var\(--hk-menu-item-pad-x, 16px\)\)/,
+    );
+    // The sheet branch value must follow the sheet tokens, not the popout's.
+    expect(adminTokens).not.toMatch(
+      /\.hk-select-sheet-panel \.s-user-header \{[^}]*--hk-menu-item-pad-x, 12px/,
+    );
+    // Bare surfaces (no rows beside the block) keep the block's own value.
+    expect(adminTokens).toMatch(
+      /\.s-user-header \{[^}]*padding: var\(--space-10\) var\(--space-14\) var\(--space-12\)/,
+    );
+  });
 });

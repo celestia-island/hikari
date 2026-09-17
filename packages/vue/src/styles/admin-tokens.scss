@@ -550,12 +550,33 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  /* In menus this aligns with .s-popup-menu-item's own space-14 (menu
-     padding applies equally to both); bare surfaces (the popover
-     wrapper) rely on it entirely. The bottom margin restores the
-     separation the removed section divider used to provide. */
+  /* The 14px inline is the BARE-surface value (a wrapper with no menu rows
+     beside it). Inside HkMenu's surfaces the scoped rules below take over:
+     the unified menu-item grammar moved rows to a 12px pad plus a 1px
+     transparent border (sheets 16px), so a fixed 14px aligned with nothing
+     — 1px off at the default root, 4.5px at a 20px root, and 3px the other
+     way on sheets (measured 2026-09-17, chest account menus). The bottom
+     margin restores the separation the removed section divider used to
+     provide. */
   padding: var(--space-10) var(--space-14) var(--space-12);
   margin-bottom: var(--space-4);
+}
+
+/* Inside HkMenu's popout/sheet surfaces the block shares its container with
+   the menu rows, so its inline padding IS the rows' content edge — their
+   1px transparent border plus pad-x — expressed in the grammar's own units
+   (px formulas: the row paddings are px literals declared on the rows, so
+   a rem here drifts at any other root font-size; the fallback literals must
+   follow _menu-item.scss if the row padding ever moves). Scoped to the two
+   surfaces that host the block, so bare surfaces keep the 14px and plain
+   HkSelect / HkPopupSelect panels are untouched. Consumers that re-anchor
+   the block (a drawer footer) keep their own context overrides. */
+.hk-select-popout-host .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 12px));
+}
+
+.hk-select-sheet-panel .s-user-header {
+  padding-inline: calc(1px + var(--hk-menu-item-pad-x, 16px));
 }
 
 /* Profile variant — avatar chip beside the identity column, the ONE

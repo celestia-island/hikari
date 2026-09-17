@@ -48,6 +48,19 @@ export interface HkIconButtonGroupOption {
  * (text = the option's label unless overridden), so the hover reveal is
  * built in rather than left to every consumer.
  *
+ * Visual variants (`variant`, orthogonal to the semantic `mode` — the
+ * 2026-09-17 user direction: a frame is not part of a group's meaning,
+ * and hosts must be able to tune it):
+ *  - "track" (default): the bordered inset strip — the HkTabs grammar
+ *    this component shipped with;
+ *  - "plain": no outer frame at all — independent icon buttons packed
+ *    shoulder-to-shoulder, each tinting its own active state;
+ *  - "slider": frameless and gapless with a sliding thumb pill behind
+ *    the active item (single-selection mode; "multiple" falls back to
+ *    per-item tints). The thumb rides a CSS-variable index
+ *    (`--hk-icon-group-active-index`) times the item-size variable, so
+ *    it stays correct when hosts retune the size.
+ *
  * Known a11y limitation (documented 2026-09-13): single mode uses a
  * radiogroup role with every item tabbable, not the full WAI-APG roving
  * tabindex. All-items-tabbable keeps keyboard reachability identical
@@ -63,6 +76,8 @@ export default defineComponent({
      *  active — required/ignored by "buttons" mode. */
     modelValue: { type: [String, Array] as PropType<string | string[] | null>, default: null },
     mode: { type: String as PropType<"buttons" | "single" | "multiple">, default: "buttons" },
+    /** Visual treatment of the strip — see the component doc. */
+    variant: { type: String as PropType<"track" | "plain" | "slider">, default: "track" },
     size: { type: String as PropType<"sm" | "md" | "lg">, default: "md" },
     disabled: { type: Boolean, default: false },
     tooltipPlacement: { type: String as PropType<TooltipPlacement>, default: "top" },
@@ -79,10 +94,35 @@ export default defineComponent({
     const cls = computed(() => [
       "hk-icon-group",
       `hk-icon-group-${props.mode}`,
+      `hk-icon-group-${props.variant}`,
       `hk-icon-group-${props.size}`,
     ]);
 
     const groupRole = computed(() => (props.mode === "single" ? "radiogroup" : "group"));
+
+    /** Index of the single active option, -1 when none — drives the
+     *  slider thumb's CSS-variable position. */
+    const activeIndex = computed(() =>
+      props.options.findIndex((o) => isActive(o.key)),
+    );
+
+    /** The slider thumb exists only for a single-selection strip with an
+     *  active key: "multiple" tints each item instead (one thumb cannot
+     *  hop between simultaneous selections), "buttons" has no selection
+     *  at all. */
+    const showThumb = computed(
+      () =>
+        props.variant === "slider" &&
+        props.mode === "single" &&
+        activeIndex.value >= 0,
+    );
+
+    const thumbStyle = computed(() => ({
+      // The transition lives in the stylesheet; the position is pure
+      // arithmetic on the active index so a retuned item-size variable
+      // keeps the thumb aligned without JS measurement.
+      "--hk-icon-group-active-index": String(Math.max(activeIndex.value, 0)),
+    }));
 
     function isActive(key: string): boolean {
       if (props.mode === "multiple") {
@@ -111,6 +151,13 @@ export default defineComponent({
 
     return () => (
       <div class={cls.value} role={groupRole.value} {...attrs}>
+        {showThumb.value && (
+          <span
+            class="hk-icon-group-slider-thumb"
+            aria-hidden="true"
+            style={thumbStyle.value}
+          />
+        )}
         {props.options.map((option) => {
           const tooltip = option.tooltip !== undefined ? option.tooltip : option.label;
           const active = isActive(option.key);

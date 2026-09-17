@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
@@ -178,5 +180,126 @@ describe("HkIconButtonGroup", () => {
     const group = c.querySelector<HTMLElement>(".hk-icon-group")!;
     expect(group.getAttribute("aria-label")).toBe("验证方式");
     expect(group.getAttribute("data-test")).toBe("probe");
+  });
+
+  describe("visual variants", () => {
+    it("defaults to the track treatment", () => {
+      const c = mountComp(() => h(HkIconButtonGroup, { options }));
+      const group = c.querySelector<HTMLElement>(".hk-icon-group")!;
+      expect(group.classList.contains("hk-icon-group-track")).toBe(true);
+      expect(c.querySelector(".hk-icon-group-slider-thumb")).toBeNull();
+    });
+
+    it("plain drops the frame class without touching semantics", async () => {
+      const model = ref<string | null>("totp");
+      const c = mountComp(() =>
+        h(HkIconButtonGroup, {
+          options,
+          mode: "single",
+          variant: "plain",
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string | string[]) => {
+            model.value = v as string;
+          },
+        }),
+      );
+      const group = c.querySelector<HTMLElement>(".hk-icon-group")!;
+      expect(group.classList.contains("hk-icon-group-plain")).toBe(true);
+      expect(group.classList.contains("hk-icon-group-track")).toBe(false);
+      // Selection semantics unchanged.
+      const buttons = [...c.querySelectorAll<HTMLButtonElement>(".hk-icon-group-item")];
+      expect(buttons[0]!.dataset.active).toBe("true");
+      buttons[1]!.click();
+      await nextTick();
+      expect(model.value).toBe("passkey");
+      expect(c.querySelector(".hk-icon-group-slider-thumb")).toBeNull();
+    });
+
+    it("slider renders a thumb that slides to the active index", async () => {
+      const model = ref<string | null>("totp");
+      const c = mountComp(() =>
+        h(HkIconButtonGroup, {
+          options,
+          mode: "single",
+          variant: "slider",
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string | string[]) => {
+            model.value = v as string;
+          },
+        }),
+      );
+      const group = c.querySelector<HTMLElement>(".hk-icon-group")!;
+      expect(group.classList.contains("hk-icon-group-slider")).toBe(true);
+      const thumb = c.querySelector<HTMLElement>(".hk-icon-group-slider-thumb")!;
+      expect(thumb.getAttribute("aria-hidden")).toBe("true");
+      // Position = active index × item size, expressed through the CSS
+      // variable so a retuned size stays aligned.
+      expect(thumb.getAttribute("style")).toContain("--hk-icon-group-active-index: 0");
+
+      const buttons = [...c.querySelectorAll<HTMLButtonElement>(".hk-icon-group-item")];
+      buttons[1]!.click();
+      await nextTick();
+      const thumbAfter = c.querySelector<HTMLElement>(".hk-icon-group-slider-thumb")!;
+      expect(thumbAfter.getAttribute("style")).toContain("--hk-icon-group-active-index: 1");
+      expect(buttons[1]!.dataset.active).toBe("true");
+    });
+
+    it("slider suppresses the thumb without a single active key", () => {
+      const noSelection = mountComp(() =>
+        h(HkIconButtonGroup, { options, mode: "single", variant: "slider", modelValue: null }),
+      );
+      expect(noSelection.querySelector(".hk-icon-group-slider-thumb")).toBeNull();
+
+      const multiple = mountComp(() =>
+        h(HkIconButtonGroup, {
+          options,
+          mode: "multiple",
+          variant: "slider",
+          modelValue: ["totp"],
+        }),
+      );
+      // "multiple" tints each item instead — one thumb cannot hop
+      // between simultaneous selections.
+      expect(multiple.querySelector(".hk-icon-group-slider-thumb")).toBeNull();
+      const items = [...multiple.querySelectorAll<HTMLElement>(".hk-icon-group-item")];
+      expect(items[0]!.dataset.active).toBe("true");
+
+      const buttons = mountComp(() =>
+        h(HkIconButtonGroup, { options, mode: "buttons", variant: "slider" }),
+      );
+      expect(buttons.querySelector(".hk-icon-group-slider-thumb")).toBeNull();
+    });
+
+    it("keeps the per-item active tint in multiple+slider (SCSS contract)", () => {
+      // jsdom cannot compute styles, so pin the selector itself: the
+      // "active item paints transparent, the thumb is its highlight"
+      // rule must be scoped to single mode — in multiple+slider the
+      // thumb is suppressed and the per-item tint is the only active
+      // indication left (R1 finding: an unscoped rule wiped it).
+      // vitest transforms this file — import.meta.url is not a file:
+      // URL here; resolve from the package root (the runner's cwd).
+      const scss = readFileSync(
+        join(process.cwd(), "src/components/HkIconButtonGroup.scss"),
+        "utf-8",
+      );
+      expect(scss).toContain(
+        ".hk-icon-group-single.hk-icon-group-slider .hk-icon-group-item[data-active]",
+      );
+      // Anchored to line start: the scoped selector CONTAINS the
+      // unscoped substring, so only a BOL match proves the rule lost
+      // its single-mode scoping.
+      expect(scss).not.toMatch(
+        /^\.hk-icon-group-slider \.hk-icon-group-item\[data-active\]/m,
+      );
+      // Same contract, sibling guard (R2 M6): direct-child items must
+      // not flex-shrink under a width-constrained host — the thumb keeps
+      // the full item-size width and would silently misalign behind
+      // compressed items.
+      const itemBlock = scss.match(
+        /\.hk-icon-group-slider \.hk-icon-group-item \{[^}]*\}/,
+      );
+      expect(itemBlock).toBeTruthy();
+      expect(itemBlock![0]).toContain("flex: none");
+    });
   });
 });

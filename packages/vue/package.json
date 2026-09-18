@@ -1,10 +1,6 @@
 {
   "name": "@celestia-island/hikari",
-<<<<<<< HEAD
-  "version": "0.55.26",
-=======
   "version": "0.55.27",
->>>>>>> 5120ede7 (⬆️ Republish the theme-vars selector fix as 0.55.27.)
   "private": false,
   "type": "module",
   "description": "Hikari Vue 3 component library \u2014 production-grade UI components based on shittim-chest design system",

@@ -3,7 +3,7 @@ import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vu
 
 import HkInput from "./HkInput";
 import HkPasswordSurface from "./HkPasswordSurface";
-import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
+import { FILTER_PEDESTAL_L, NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
 
@@ -1817,9 +1817,10 @@ describe("HkInput password reveal strategies", () => {
       const groundOf = (r: (typeof tiles)[number]) =>
         Number(r.fillStyles[0]!.slice(4, -1).split(",")[0]);
       const groundDelta = Math.abs(groundOf(tiles[1]!) - groundOf(tiles[0]!));
+      const pedRgb = FILTER_PEDESTAL_L * 2.55;
       expect(
-        groundDelta >= 20 && groundDelta <= 30,
-        `grounds one pedestal apart (delta ${groundDelta})`,
+        groundDelta >= pedRgb - 6 && groundDelta <= pedRgb + 6,
+        `grounds one pedestal apart (delta ${groundDelta}, want ~${pedRgb.toFixed(0)})`,
       ).toBe(true);
       // Near-black ground regardless of the ink: L 10 → rgb ≈ 26.
       const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);

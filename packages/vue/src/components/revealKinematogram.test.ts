@@ -135,18 +135,6 @@ describe("RevealNoisePainter", () => {
   });
 });
 
-describe("FILTER_DRIFT_PX_S persistence floor", () => {
-  it("keeps the counter-drift fast enough for persistence reading", () => {
-    // The readability mechanism RELIES on speed: within one
-    // persistence-of-vision window (~100ms) the texture must keep
-    // crossing dot spacings (the mean spacing is ~7px — ~2 crossings
-    // at the 150 floor, several at the shipped 300) so the static
-    // aperture interiors time-average into near-solid glyphs (R1 F7,
-    // R3 wording note).
-    expect(FILTER_DRIFT_PX_S).toBeGreaterThanOrEqual(150);
-  });
-});
-
 describe("parseColorTriple", () => {
   it("parses computed rgb() strings without the leading-empty-token shift", () => {
     // The bug this pins: "rgb(148, 233, 211)" used to split into a

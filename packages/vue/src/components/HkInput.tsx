@@ -77,14 +77,13 @@ export default defineComponent({
     /**
      * Reveal content for the password eye (`variant="password"`,
      * `passwordTrailing="eye"`):
-     * - "filter" (default): dual FAST counter-drifting spatter layers
-     *   in strict black/white/gray — static BOLD glyph apertures
-     *   filled with one gray spatter texture over a statistically
-     *   matched field streaming the opposite way on a UNIFORM
-     *   near-black ground (white-on-black in every theme), plus a
-     *   small brightening pedestal and a white halo; the speed lets
-     *   persistence of vision average the glyphs readable. A
-     *   single-frame screenshot carries no glyph structure.
+     * - "filter" (default): dual counter-drifting spatter layers in
+     *   strict black/white/gray — static BOLD glyph apertures filled
+     *   with a BRIGHT dense gray spatter over a statistically matched
+     *   DIM field drifting the opposite way on a UNIFORM near-black
+     *   ground (white-on-black in every theme), plus a large
+     *   brightening pedestal and a white halo. A single-frame
+     *   screenshot carries no glyph structure.
      * - "sweep": a readable window — ordinary high-contrast text inside
      *   a narrow band sweeping across the row over the boiling-noise
      *   field. Easy to read; a single screenshot leaks the characters

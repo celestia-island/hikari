@@ -53,17 +53,17 @@ interface Ripple {
  * Right-edge affordance (`passwordTrailing`):
  * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
  *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
- *   - strategy "filter" (default): dual FAST counter-drifting spatter
+ *   - strategy "filter" (default): dual counter-drifting spatter
  *     layers in strict BLACK/WHITE/GRAY — the glyph row is a set of
- *     STATIC bold apertures filled with a gray spatter texture
- *     streaming one way, over a statistically identical spatter field
- *     streaming the other way, both on a UNIFORM near-black ground
- *     (white-on-black reading in every theme). The drift is very fast
- *     so persistence of vision averages the aperture interiors into
- *     readable near-solid glyphs. A single frame — a screenshot —
- *     carries no glyph structure, only a weak mean-luminance signal
- *     dissolved into the halo ramp. Reduced motion or a pattern-less
- *     engine degrades to the fully readable static plain text.
+ *     STATIC bold apertures filled with a bright gray spatter texture
+ *     drifting one way, over a statistically matched DIM spatter
+ *     field drifting the other way, both on a UNIFORM near-black
+ *     ground (white-on-black reading in every theme; legibility lives
+ *     in the brightness channel — dense dots, dim surround, bright
+ *     text layer). A single frame — a screenshot — carries no glyph
+ *     structure, only the mean-luminance signal dissolved into the
+ *     halo ramp. Reduced motion or a pattern-less engine degrades to
+ *     the fully readable static plain text.
  *   - strategy "sweep": a readable window — the password is drawn as
  *     ordinary high-contrast text inside a narrow band that sweeps
  *     across the row over the boiling-noise field. Reading is
@@ -120,13 +120,13 @@ export default defineComponent({
     },
     /**
      * What the eye reveal SHOWS:
-     * - "filter" (default): dual FAST counter-drifting spatter layers
-     *   in strict black/white/gray — static BOLD glyph apertures over
-     *   an oppositely streaming, statistically matched gray spatter
-     *   field on a UNIFORM near-black ground (white-on-black in every
-     *   theme), plus a small brightening pedestal and white halo; the
-     *   speed lets persistence of vision average the glyphs readable.
-     *   A single screenshot carries no glyph structure.
+     * - "filter" (default): dual counter-drifting spatter layers in
+     *   strict black/white/gray — static BOLD glyph apertures filled
+     *   with a BRIGHT dense gray spatter over an oppositely drifting,
+     *   statistically matched DIM spatter field on a UNIFORM
+     *   near-black ground (white-on-black in every theme), plus a
+     *   large brightening pedestal and white halo. A single
+     *   screenshot carries no glyph structure.
      * - "sweep": a readable window — ordinary high-contrast text inside
      *   a narrow band sweeping across the row. Easy to read; a single
      *   screenshot leaks the band's characters in the clear.

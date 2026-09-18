@@ -423,18 +423,24 @@ export class RevealNoisePainter {
  *   and motion signal both peak near the letters' diagnostic spatial
  *   band, so MODERATE noise contrast suffices (the old design's fine
  *   grain + fast ±40px/s drift is exactly what made it unreadable).
+ * - Legibility lives in the BRIGHTNESS channel (live-tuned): the
+ *   surround dots sit LOW (FILTER_BASE_L) on the near-black ground so
+ *   the background reads dim, the glyph layer is lifted by a LARGE
+ *   pedestal (FILTER_PEDESTAL_L) so the text reads bright, and the
+ *   dots are DENSE (FILTER_SPATTER_PX_PER_DOT) so both fields read as
+ *   textured surfaces rather than sparse speckle. The large pedestal
+ *   is a bigger single-frame leak than the original small one — an
+ *   accepted trade per the readability-first direction.
  * - The glyph apertures rasterize in BOLD: a heavier stroke exposes
  *   more of the counter-drifting texture inside each glyph (stronger
  *   signal under interference); the shared layout's 1.2× letter
  *   spacing absorbs the wider advances.
- * - Drift ±FILTER_DRIFT_PX_S, deliberately VERY fast: within one
- *   persistence-of-vision window (~100ms) the texture travels ~30px —
- *   several dot spacings (the mean spacing is ~7px) — so the aperture
- *   interior time-averages into a clean pedestal + spatter mean and
- *   the glyphs read near-solid, while the counter-motion segregation
- *   only sharpens. A single frame still carries no motion energy at
- *   all (form-from-motion needs the temporal integration that only
- *   the live eye provides).
+ * - Drift ±FILTER_DRIFT_PX_S: moderate — slow enough to track
+ *   coherently at field font sizes, fast enough that a single frame
+ *   carries no usable motion energy. (A 300px/s persistence-of-vision
+ *   experiment read worse live: the eye never got a stable surface to
+ *   bind, so the speed came back down and legibility moved into the
+ *   brightness channel instead.)
  * - The glyph APERTURES never move — only the texture inside them
  *   flows. Cross-frame registration of the glyph shapes (the attack
  *   that killed video CAPTCHAs) finds nothing to align.
@@ -462,14 +468,18 @@ export class RevealNoisePainter {
  * never to frozen noise). */
 
 /** Counter-drift speed of each layer in CSS px/s (opposite signs).
- * Deliberately very fast — see the persistence rationale above. */
-export const FILTER_DRIFT_PX_S = 300;
+ * The 300px/s persistence experiment read WORSE live (the eye never
+ * got a stable surface to bind); 84 tracks coherently at field sizes
+ * and is the settled value. */
+export const FILTER_DRIFT_PX_S = 84;
 
 /** Lightness pedestal of the glyph layer (brighter — the text reads
  * white-on-black), in HSL lightness points (clamped into
- * [L_MIN, L_MAX] like every sample). Small on purpose — see the
+ * [L_MIN, L_MAX] like every sample). Deliberately LARGE (live-tuned
+ * readability-first): a dim surround and a bright text layer. The
+ * static single-frame leak grows with it — accepted trade, see the
  * strategy docblock. */
-export const FILTER_PEDESTAL_L = 10;
+export const FILTER_PEDESTAL_L = 26;
 
 /** Peak alpha of the halo band (white, at the glyph-row midline). */
 export const FILTER_HALO_ALPHA = 0.1;
@@ -485,19 +495,20 @@ export const FILTER_HALO_FONT_SCALE = 1.2;
 const FILTER_SPATTER_R_MIN_CSS = 1.2;
 const FILTER_SPATTER_R_MAX_CSS = 2.8;
 
-/** Spatter coverage: one dot per this many tile px². BOTH layers share
- * the density, size and lightness distributions — matched texture
- * statistics are the single-frame defense; only the mean luminance
- * (pedestal) and the drift direction differ. */
-const FILTER_SPATTER_PX_PER_DOT = 45;
+/** Spatter coverage: one dot per this many tile px² — DENSE
+ * (live-tuned) so both fields read as textured surfaces. BOTH layers
+ * share the density, size and lightness distributions — matched
+ * texture statistics are the single-frame defense; only the mean
+ * luminance (pedestal) and the drift direction differ. */
+const FILTER_SPATTER_PX_PER_DOT = 28;
 
 /** Dot lightness spread around the layer base (both layers share it). */
 const FILTER_SPATTER_L_SPREAD = 22;
 
-/** The one anchor pair: near-black ground, mid-light gray speckle —
- * white-on-black reading in EVERY theme (the light variant read far
- * worse and was dropped). */
-const FILTER_BASE_L = 64;
+/** The one anchor set: near-black ground + DIM gray speckle for the
+ * surround — white-on-black reading in EVERY theme with the brightness
+ * doing the work (the light variant read far worse and was dropped). */
+const FILTER_BASE_L = 48;
 const FILTER_GROUND_L = 10;
 
 /** Glyph aperture weight: bold strokes expose more of the counter-

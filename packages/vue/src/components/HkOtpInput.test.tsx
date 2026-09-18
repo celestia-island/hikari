@@ -633,83 +633,46 @@ describe("HkOtpInput review regressions", () => {
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("24.0px");
   });
 
-  it("stands down while the glyph is pinned, and resumes when it is released", async () => {
-    // The documented pin route is an inline `style` on the component, which
-    // lands on the ROW — so the guard has to read the row, not only the
-    // wrapper. A sentinel proves the stand-down: while pinned the fit must
-    // not touch the published value at all.
+  it("caps the fit under a pin instead of standing down", async () => {
+    // A pin still wins where it is declared (`--hk-otp-font-size` precedes
+    // `--hk-otp-fitted-font` in the cell's font chain), but the fit keeps
+    // publishing — a stand-down was state that only an event this component
+    // never receives could refresh, so removing a pin left the row on the
+    // ramp literal (Chromium: a 20px glyph clipped inside a 13px cell).
     const otp = mountOtp({ modelValue: "123456" });
     await nextTick();
     const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
-
     otp.fitGlyph(40);
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
 
-    // Pin, plant a sentinel the fit would overwrite if it ran…
-    row.style.setProperty("--hk-otp-font-size", "30px");
-    row.style.setProperty("--hk-otp-fitted-font", "99.9px");
+    // The documented route: an inline `style` pin, which lands on the row.
+    row.style.setProperty("--hk-otp-font-size", "14px");
     otp.fitGlyph(40);
-    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("99.9px");
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("14.0px");
 
-    // …and release: the fit takes the row back.
+    // Releasing the pin gives the ruled size back.
     row.style.removeProperty("--hk-otp-font-size");
     otp.fitGlyph(40);
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
-
-    // A pin inherited from an ancestor takes the same decision through the
-    // computed style; happy-dom does not compute custom-property
-    // inheritance, so that branch is asserted in the browser instead.
   });
 
-  it("consumes the focus exemption on arrival", async () => {
-    // The marker exempts exactly ONE arrival. If it survived, every later
-    // advance onto that cell would be misread as programmatic — and the
-    // symptom is precise: with the caret parked collapsed at the END of a
-    // filled cell, the next keystroke is refused by maxlength=1 instead of
-    // replacing the digit. (`selectionStart` is deliberately not asserted:
-    // its maintenance after a synthetic input event is not portable across
-    // DOM implementations, which is how three earlier tests passed locally
-    // and failed on the hosted runner.)
-    const otp = mountOtp();
-    await nextTick();
-    const cells = otp.cells();
-    cells[0]!.focus();
-    await nextTick();
-    typeInto(cells[0]!, "1");
-    await nextTick();
-    typeInto(cells[1]!, "2");
-    await nextTick();
-    expect(otp.model.value).toBe("12");
-    expect(document.activeElement).toBe(cells[2]);
-
-    // Land back on the filled first cell (an explicit navigation selects
-    // it) and then re-enter it: the second arrival must still behave as a
-    // user arrival, so its glyph is selected and the keystroke replaces it.
-    cells[0]!.focus();
-    cells[0]!.dispatchEvent(new FocusEvent("focus"));
-    typeInto(cells[0]!, "9");
-    await nextTick();
-    expect(otp.model.value).toBe("92");
-    expect(cells[0]!.value).toBe("9");
-  });
-
-  it("does not re-emit a caller value that is already the field value", async () => {
-    // A host that stores exactly what the field produced must not be told
-    // about its own value on every mount — only a value the field had to
-    // change is worth an event.
+  it("always publishes a fit, even while a pin is in force", async () => {
+    // The regression this pins: with a pin in force at mount the row used
+    // to publish NOTHING, and the removal of that pin (a host-side style
+    // mutation: no box change, no re-render) left the glyph on the literal
+    // forever. There is no such state any more.
     const otp = mountOtp({ modelValue: "123456" });
     await nextTick();
-    expect(otp.emitted()).toEqual([]);
-    expect(otp.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
-  });
-
-  it("keeps the legibility floor above the ratio on a tiny cell", async () => {
-    // Below a ~20px cell the two bounds conflict and the floor wins: the
-    // digit is clipped by geometry rather than rendered illegibly small.
-    const otp = mountOtp();
-    await nextTick();
     const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
-    otp.fitGlyph(12);
+    row.style.setProperty("--hk-otp-font-size", "30px");
+    otp.fitGlyph(15);
+    const pinnedValue = row.style.getPropertyValue("--hk-otp-fitted-font");
+    expect(pinnedValue).not.toBe("");
+    expect(pinnedValue).toBe("11.0px");
+
+    // …so releasing it needs no event at all: the value is already correct
+    // for the released state.
+    row.style.removeProperty("--hk-otp-font-size");
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("11.0px");
   });
 
@@ -723,6 +686,119 @@ describe("HkOtpInput review regressions", () => {
     expect(onKeydown).toHaveBeenCalledTimes(1);
     // …and a composing Enter is still not a submit.
     expect(onKeydown.mock.calls[0]![0].isComposing).toBe(true);
+  });
+});
+
+describe("HkOtpInput focus marker and announce contracts", () => {
+  it("lets a user re-entering the tail of a completed code replace its digit", async () => {
+    // The 6th keystroke advances onto the tail cell WHILE IT ALREADY HOLDS
+    // FOCUS, so no focus event fires and a marker written unconditionally
+    // there would stay pending and disarm the next real arrival. Proven by
+    // the replacement: the arrival must select the digit for the keystroke
+    // to take its place (a collapsed caret refuses it at maxlength=1).
+    const otp = mountOtp();
+    await nextTick();
+    for (let i = 0; i < 6; i += 1) {
+      typeInto(otp.cells()[i]!, String(i + 1));
+      await nextTick();
+    }
+    expect(otp.model.value).toBe("123456");
+
+    const tail = otp.cells()[5]!;
+    tail.blur();
+    await nextTick();
+    tail.focus();
+    await nextTick();
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123457");
+  });
+
+  it("lets a user re-entering an advanced-to cell replace its digit", async () => {
+    // Every advance writes a marker for the cell it lands on; if the marker
+    // were never consumed, the FIRST later user arrival on that cell would
+    // match it and land unselected.
+    const otp = mountOtp();
+    await nextTick();
+    typeInto(otp.cells()[0]!, "1");
+    await nextTick();
+    typeInto(otp.cells()[1]!, "2");
+    await nextTick();
+    expect(otp.model.value).toBe("12");
+    expect(document.activeElement).toBe(otp.cells()[2]);
+
+    const target = otp.cells()[2]!;
+    target.blur();
+    await nextTick();
+    target.focus();
+    await nextTick();
+    typeInto(target, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("129");
+  });
+
+  it("does not announce the caller's own value after a length change", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const model = ref("1234");
+    const length = ref(4);
+    const updates: string[] = [];
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            modelValue: model.value,
+            length: length.value,
+            "onUpdate:modelValue": (v: string) => {
+              updates.push(v);
+              model.value = v;
+            },
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    expect(updates).toEqual([]);
+
+    length.value = 6; // the row grows; the code itself did not change
+    await nextTick();
+    expect(
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value),
+    ).toEqual(["1", "2", "3", "4", "", ""]);
+    expect(updates).toEqual([]);
+  });
+
+  it("reports a caller value it had to sanitize after mount", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const model = ref("1234");
+    const updates: string[] = [];
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            modelValue: model.value,
+            "onUpdate:modelValue": (v: string) => {
+              updates.push(v);
+              model.value = v;
+            },
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    expect(updates).toEqual([]);
+
+    model.value = "1234 56"; // the raw SMS shape arrives after mount
+    await nextTick();
+    expect(
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value),
+    ).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(updates).toContain("123456");
   });
 });
 

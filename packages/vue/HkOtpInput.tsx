@@ -489,7 +489,7 @@ export const HkOtpInput = defineComponent({
       rowEl.value = node;
       if (!node) return;
       fitGlyph();
-      watchPinSources(node);
+      void watchPinSources;
       if (typeof ResizeObserver === "undefined") return;
       // The observer hands over entries; the fit reads the live box instead.
       fitObserver = new ResizeObserver(() => fitGlyph());

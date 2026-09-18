@@ -1632,6 +1632,10 @@ describe("HkInput password reveal strategies", () => {
         (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
       );
       expect(tiles.length, "exactly two spatter tiles").toBe(2);
+      expect(
+        tiles[0]!.fillStyles.length,
+        "both layers carry the same dot density",
+      ).toBe(tiles[1]!.fillStyles.length);
 
       // Backing-store tripwire (R3 F1): a shrunken tile silently
       // drops ~75% of its dots and desyncs the pattern period from

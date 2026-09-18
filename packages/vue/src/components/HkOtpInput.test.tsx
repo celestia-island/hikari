@@ -660,6 +660,58 @@ describe("HkOtpInput review regressions", () => {
     // inheritance, so that branch is asserted in the browser instead.
   });
 
+  it("consumes the focus exemption on arrival", async () => {
+    // The marker exempts exactly ONE arrival. If it survived, every later
+    // advance onto that cell would be misread as programmatic — and the
+    // symptom is precise: with the caret parked collapsed at the END of a
+    // filled cell, the next keystroke is refused by maxlength=1 instead of
+    // replacing the digit. (`selectionStart` is deliberately not asserted:
+    // its maintenance after a synthetic input event is not portable across
+    // DOM implementations, which is how three earlier tests passed locally
+    // and failed on the hosted runner.)
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.focus();
+    await nextTick();
+    typeInto(cells[0]!, "1");
+    await nextTick();
+    typeInto(cells[1]!, "2");
+    await nextTick();
+    expect(otp.model.value).toBe("12");
+    expect(document.activeElement).toBe(cells[2]);
+
+    // Land back on the filled first cell (an explicit navigation selects
+    // it) and then re-enter it: the second arrival must still behave as a
+    // user arrival, so its glyph is selected and the keystroke replaces it.
+    cells[0]!.focus();
+    cells[0]!.dispatchEvent(new FocusEvent("focus"));
+    typeInto(cells[0]!, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("92");
+    expect(cells[0]!.value).toBe("9");
+  });
+
+  it("does not re-emit a caller value that is already the field value", async () => {
+    // A host that stores exactly what the field produced must not be told
+    // about its own value on every mount — only a value the field had to
+    // change is worth an event.
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    expect(otp.emitted()).toEqual([]);
+    expect(otp.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+  });
+
+  it("keeps the legibility floor above the ratio on a tiny cell", async () => {
+    // Below a ~20px cell the two bounds conflict and the floor wins: the
+    // digit is clipped by geometry rather than rendered illegibly small.
+    const otp = mountOtp();
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+    otp.fitGlyph(12);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("11.0px");
+  });
+
   it("forwards keydown during composition instead of swallowing it", async () => {
     const onKeydown = vi.fn();
     const otp = mountOtp({ onKeydown });

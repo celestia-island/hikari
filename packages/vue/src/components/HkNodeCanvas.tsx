@@ -11,6 +11,33 @@ import {
 
 import "./HkNodeCanvas.scss";
 
+import {
+  computeLod,
+  edgeMidpoint,
+  edgePath,
+  LOD_DEFAULTS,
+  PAPER_SIZES,
+  type EdgeRouting,
+  type LodLevel,
+  type LodThresholds,
+  type NodeCanvasEdge,
+  type NodeCanvasFrameContext,
+  type NodeCanvasPainter,
+  type PrintPaper,
+} from "./nodeCanvasTypes";
+
+// Re-export shared types so consumers can import from the component.
+export type {
+  EdgeRouting,
+  LodLevel,
+  LodThresholds,
+  NodeCanvasEdge,
+  NodeCanvasFrameContext,
+  NodeCanvasPainter,
+  PrintPaper,
+} from "./nodeCanvasTypes";
+export { computeLod, edgePath, edgeMidpoint, LOD_DEFAULTS, PAPER_SIZES } from "./nodeCanvasTypes";
+
 /** A camera: zoom factor plus the translation of the content origin. */
 export interface NodeCanvasCamera {
   /** Zoom factor (1 = 1:1). */
@@ -88,9 +115,23 @@ interface PendingRequest {
  * maps back into content coordinates. That is what this component owns, and
  * it owns it once instead of three times.
  *
- * What it does NOT own: edges, nodes, routing, layout. The host draws those
- * through the default slot, which lives inside the transformed layer, so the
- * host only has to think in content coordinates.
+ * In addition to the camera, the upgraded base owns:
+ *
+ *   - a **Canvas2D painter layer** beneath the DOM: hosts register
+ *     painters (`registerPainter`) that draw strokes, grids, pipes —
+ *     anything Canvas2D does better than SVG — in world coordinates,
+ *     driven by the same camera in a single frame loop.
+ *   - an **edge layer** (`edges` prop): routing (bezier / orthogonal /
+ *     direct), labels, styles, and optional flow animation, rendered as
+ *     SVG so CSS and accessibility work for free.
+ *   - **LOD** (level of detail): a zoom-derived detail level hosts can
+ *     read to simplify their nodes at low zoom.
+ *   - a **print mode**: disables gestures, fixes the camera, and exposes
+ *     `exportSVG()` for vector output.
+ *
+ * What it still does NOT own: what nodes look like, what data drives
+ * them, or how they are laid out. The host draws node content through
+ * the default slot in world coordinates.
  *
  * Two behaviours are deliberate:
  *
@@ -149,6 +190,35 @@ export default defineComponent({
       default: "bottom-right",
     },
     ariaLabel: { type: String, default: undefined },
+
+    // ── Rendering base upgrades ──────────────────────────────────
+
+    /** Edges to render between nodes. Routed and styled by the canvas. */
+    edges: { type: Array as PropType<NodeCanvasEdge[]>, default: () => [] },
+    /** Default routing strategy for edges. Individual edges can override. */
+    edgeRouting: {
+      type: String as PropType<EdgeRouting>,
+      default: "bezier" as EdgeRouting,
+    },
+    /** Zoom thresholds for level-of-detail. At or above `medium`:
+     *  full detail. At or above `low`: outlines + labels. Below: outlines. */
+    lodThresholds: {
+      type: Object as PropType<LodThresholds>,
+      default: () => ({ ...LOD_DEFAULTS }),
+    },
+    /** Frame callback: called every animation frame with camera, dt, LOD,
+     *  and the Canvas2D context. Use for animations and real-time overlays. */
+    onFrame: {
+      type: Function as PropType<((frame: NodeCanvasFrameContext) => void) | undefined>,
+      default: undefined,
+    },
+    /** Print mode: disables gestures, fixes proportions for export. */
+    printMode: { type: Boolean, default: false },
+    /** Paper size for print mode (ignored when printMode is false). */
+    printPaper: {
+      type: String as PropType<PrintPaper>,
+      default: "auto" as PrintPaper,
+    },
   },
   emits: ["update:camera"],
   setup(props, { slots, emit, expose }) {
@@ -166,6 +236,29 @@ export default defineComponent({
     } | null = null;
     /** Set by setCamera (gestures and imperative calls) — never by `fit`. */
     let movedByHand = false;
+
+    // ── Canvas2D painter layer ───────────────────────────────────
+    const canvasEl = shallowRef<HTMLCanvasElement | null>(null);
+    /** Registered painters, sorted by z on each frame. */
+    const painters = shallowRef<NodeCanvasPainter[]>([]);
+    /** The animation frame loop handle (null when idle). */
+    let rafHandle: number | null = null;
+    /** Timestamp of the last frame (for dt). */
+    let lastFrameTime = 0;
+
+    // ── LOD ──────────────────────────────────────────────────────
+    const levelOfDetail = computed<LodLevel>(() =>
+      computeLod(camera.value.k, props.lodThresholds),
+    );
+
+    // ── Edge rendering (computed SVG paths) ──────────────────────
+    const edgePaths = computed(() =>
+      props.edges.map((edge) => ({
+        edge,
+        path: edgePath(edge, edge.routing ?? props.edgeRouting),
+        mid: edgeMidpoint(edge, edge.routing ?? props.edgeRouting),
+      })),
+    );
 
     const camera = computed<NodeCanvasCamera>(() => props.camera ?? inner.value);
 
@@ -505,6 +598,7 @@ export default defineComponent({
       viewport.value = next;
     }
 
+    onMounted(() => { ensureFrameLoop(); });
     onMounted(() => {
       // Measure BEFORE the first paint the watcher can react to: with
       // `fitOnLoad` this is what makes the first painted frame already be the
@@ -574,6 +668,7 @@ export default defineComponent({
     );
 
     onBeforeUnmount(() => {
+      stopFrameLoop();
       ro?.disconnect();
       ro = null;
       panning = null;
@@ -581,6 +676,149 @@ export default defineComponent({
       window.removeEventListener("pointercancel", endPan, true);
       window.removeEventListener("blur", loseFocus, true);
     });
+
+    // ── Canvas painter management ────────────────────────────────
+
+    function registerPainter(painter: NodeCanvasPainter): void {
+      const next = [...painters.value, painter].sort((a, b) => (a.z ?? 0) - (b.z ?? 0));
+      painters.value = next;
+      ensureFrameLoop();
+    }
+
+    function unregisterPainter(painterId: string): void {
+      painters.value = painters.value.filter((p) => p.id !== painterId);
+      if (painters.value.length === 0 && !props.onFrame) {
+        stopFrameLoop();
+      }
+    }
+
+    // ── Frame loop ───────────────────────────────────────────────
+    // A single rAF loop drives the Canvas2D layer. It only runs when
+    // there are painters or an onFrame callback — zero cost otherwise.
+
+    function ensureFrameLoop(): void {
+      if (rafHandle !== null) return;
+      if (painters.value.length === 0 && !props.onFrame) return;
+      lastFrameTime = performance.now();
+      rafHandle = requestAnimationFrame(frameTick);
+    }
+
+    function stopFrameLoop(): void {
+      if (rafHandle !== null) {
+        cancelAnimationFrame(rafHandle);
+        rafHandle = null;
+      }
+    }
+
+    function frameTick(now: number): void {
+      const dt = now - lastFrameTime;
+      lastFrameTime = now;
+      const cam = camera.value;
+      const vp = viewport.value;
+      const lod = levelOfDetail.value;
+
+      // Paint the canvas layer.
+      const canvas = canvasEl.value;
+      if (canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        const w = vp.width;
+        const h = vp.height;
+        // Only resize when dimensions actually changed (avoid clearing).
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+        }
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          // Apply camera transform so painters draw in world coordinates.
+          ctx.translate(cam.x, cam.y);
+          ctx.scale(cam.k, cam.k);
+
+          const frame: NodeCanvasFrameContext = {
+            camera: cam,
+            viewport: vp,
+            dt,
+            lod,
+            ctx,
+          };
+
+          for (const painter of painters.value) {
+            painter.draw(frame);
+          }
+
+          // View-level frame callback (after painters, so it can overlay).
+          props.onFrame?.(frame);
+        }
+      }
+
+      rafHandle = requestAnimationFrame(frameTick);
+    }
+
+    // Start/stop the loop when props change.
+    watch(
+      () => props.onFrame,
+      (fn) => {
+        if (fn) ensureFrameLoop();
+        else if (painters.value.length === 0) stopFrameLoop();
+      },
+    );
+
+    // ── Print / Export ───────────────────────────────────────────
+
+    /** Export the edge layer as an SVG element (nodes are NOT included —
+     *  hosts that need node content in the export should compose it
+     *  separately). Useful for print-mode output and documentation. */
+    function exportSVG(): SVGElement {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      const paper = PAPER_SIZES[props.printPaper];
+      const vp = viewport.value;
+      svg.setAttribute("width", String(paper?.width ?? vp.width));
+      svg.setAttribute("height", String(paper?.height ?? vp.height));
+      svg.setAttribute("viewBox", `0 0 ${paper?.width ?? vp.width} ${paper?.height ?? vp.height}`);
+
+      // Copy edge paths into the export SVG.
+      const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      for (const { edge, path } of edgePaths.value) {
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", path);
+        p.setAttribute("fill", "none");
+        p.setAttribute("stroke", edge.color ?? "currentColor");
+        p.setAttribute("stroke-width", String(edge.width ?? 1.5));
+        if (edge.dashed) p.setAttribute("stroke-dasharray", "6 4");
+        edgesGroup.appendChild(p);
+        if (edge.label) {
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          const mid = edgeMidpoint(edge, edge.routing ?? props.edgeRouting);
+          text.setAttribute("x", String(mid.x));
+          text.setAttribute("y", String(mid.y - 6));
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("font-size", "12");
+          text.textContent = edge.label;
+          edgesGroup.appendChild(text);
+        }
+      }
+      svg.appendChild(edgesGroup);
+      return svg;
+    }
+
+    /** Export the canvas as a PNG image element. */
+    function exportPNG(): HTMLCanvasElement {
+      const source = canvasEl.value;
+      if (!source) {
+        // Return an empty canvas if no canvas layer exists.
+        const empty = document.createElement("canvas");
+        empty.width = 1;
+        empty.height = 1;
+        return empty;
+      }
+      const copy = document.createElement("canvas");
+      copy.width = source.width;
+      copy.height = source.height;
+      copy.getContext("2d")?.drawImage(source, 0, 0);
+      return copy;
+    }
 
     expose({
       camera,
@@ -591,6 +829,12 @@ export default defineComponent({
       screenToWorld,
       worldToScreen,
       setCamera,
+      // ── New: rendering base capabilities ──
+      levelOfDetail,
+      registerPainter,
+      unregisterPainter,
+      exportSVG,
+      exportPNG,
     });
 
     const slotProps = computed<NodeCanvasSlotProps>(() => ({
@@ -601,23 +845,79 @@ export default defineComponent({
 
     return () => {
       const { k, x, y } = camera.value;
+      const isPrint = props.printMode;
+      const paper = isPrint ? PAPER_SIZES[props.printPaper] : null;
       return (
         <div
           ref={rootEl}
-          class="hk-node-canvas"
-          data-pannable={props.pannable ? "" : undefined}
+          class={{
+            "hk-node-canvas": true,
+            "hk-node-canvas--print": isPrint,
+          }}
+          data-pannable={!isPrint && props.pannable ? "" : undefined}
           aria-label={props.ariaLabel}
           style={{
             // Only a surface that consumes the gesture may take touch scrolling
-            // away from the page.
-            touchAction: props.pannable || props.zoomable ? "none" : undefined,
+            // away from the page. Print mode never takes scrolling.
+            touchAction: !isPrint && (props.pannable || props.zoomable) ? "none" : undefined,
+            ...(paper && { width: `${paper.width}px`, height: `${paper.height}px` }),
           }}
-          onWheel={onWheel}
-          onPointerdown={onPointerDown}
-          onPointermove={onPointerMove}
-          onPointerup={endPan}
-          onPointercancel={endPan}
+          onWheel={isPrint ? undefined : onWheel}
+          onPointerdown={isPrint ? undefined : onPointerDown}
+          onPointermove={isPrint ? undefined : onPointerMove}
+          onPointerup={isPrint ? undefined : endPan}
+          onPointercancel={isPrint ? undefined : endPan}
         >
+          {/* Canvas2D layer: painters draw strokes/grids/pipes in world
+              coordinates, driven by the same camera as the DOM layer. */}
+          <canvas
+            ref={canvasEl}
+            class="hk-node-canvas-canvas"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+            }}
+          />
+          {/* SVG edge layer: routed edges between nodes, rendered as SVG
+              for CSS styling and accessibility. Lives inside the camera
+              transform so edges stay in sync with DOM nodes. */}
+          {edgePaths.value.length > 0 && (
+            <svg
+              class="hk-node-canvas-edges"
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                overflow: "visible",
+              }}
+            >
+              <g transform={`translate(${x} ${y}) scale(${k})`}>
+                {edgePaths.value.map(({ edge, path, mid }) => (
+                  <g key={edge.id} class="hk-node-canvas-edge" data-edge-type={edge.type}>
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke={edge.color ?? "var(--hk-border-3, #555)"}
+                      stroke-width={edge.width ?? 1.5}
+                      stroke-dasharray={edge.dashed ? "6 4" : undefined}
+                    />
+                    {edge.label && (
+                      <text
+                        x={mid.x}
+                        y={mid.y - 6}
+                        text-anchor="middle"
+                        font-size="11"
+                        fill="var(--hk-text-2, #aaa)"
+                      >
+                        {edge.label}
+                      </text>
+                    )}
+                  </g>
+                ))}
+              </g>
+            </svg>
+          )}
           {/* The transformed layer: the host draws in CONTENT coordinates and
               this transform puts it on screen. */}
           <div
@@ -627,7 +927,7 @@ export default defineComponent({
             {slots.default?.(slotProps.value)}
           </div>
           <div class="hk-node-canvas-overlay">{slots.overlay?.(slotProps.value)}</div>
-          {props.minimap && (
+          {!isPrint && props.minimap && (
             <div
               class="hk-node-canvas-minimap"
               data-placement={props.minimapPlacement}

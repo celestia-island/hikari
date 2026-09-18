@@ -28,6 +28,12 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
  * - `usernamePlaceholder` / `usernameType` — override the username field
  *   (e.g. email-identifier logins); the placeholder falls back to the
  *   `hikari::signIn.usernamePlaceholder` locale when unset.
+ * - `passwordField: false` — account-first sign-in: the card collects ONLY
+ *   the account name and `submit` fires with an empty password. The
+ *   password itself is proven in the consumer's NEXT step (chest's
+ *   verify-account panel), where it reappears as one factor among several.
+ *   Pair with `initialUsername` so the typed name survives the step-flow
+ *   round-trip (the card remounts when the user navigates back).
  * - `footer` slot — content below the submit button (remember-me,
  *   protocol links, …).
  * - `methods` slot — forwarded to HkAuthCard's full-width methods block
@@ -67,21 +73,31 @@ export const HkSignInCard = defineComponent({
     usernameType: { type: String, default: "text" },
     /** Username placeholder; defaults to the hikari::signIn locale. */
     usernamePlaceholder: { type: String, default: undefined },
+    /** Account-first flows: hide the password field entirely — the card
+     *  collects only the account name and `submit` fires with an empty
+     *  password (the consumer's next step owns the actual proof). Default
+     *  keeps the classic two-field card. */
+    passwordField: { type: Boolean, default: true },
+    /** Seed for the username field. Step flows remount this card when the
+     *  user navigates back from a later step, so the typed account name
+     *  must travel through a prop rather than module state. */
+    initialUsername: { type: String, default: "" },
   },
   emits: {
-    /** Fired on explicit click or Enter; never with empty fields or while busy. */
+    /** Fired on explicit click or Enter; never with an empty username (or
+     *  an empty password while `passwordField` is on) or while busy. */
     submit: (_username: string, _password: string) => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
-    const username = ref("");
+    const username = ref(props.initialUsername);
     const password = ref("");
 
     function attemptSubmit() {
       if (props.loading || props.disabled) return;
       const u = username.value.trim();
-      if (!u || !password.value) return;
-      emit("submit", u, password.value);
+      if (!u || (props.passwordField && !password.value)) return;
+      emit("submit", u, props.passwordField ? password.value : "");
     }
 
     return () => (
@@ -132,21 +148,27 @@ export const HkSignInCard = defineComponent({
                     ),
                 }}
               </HkInput>
-              <HkInput
-                variant="password"
-                modelValue={password.value}
-                onUpdate:modelValue={(v: string) => (password.value = v)}
-                name="signin-password"
-                autocomplete={props.passwordAutocomplete ?? credentialAutocomplete("password", "current-password")}
-                placeholder={t("hikari::signIn.passwordPlaceholder", "Password")}
-                disabled={props.loading || props.disabled}
-                submitOnEnter={attemptSubmit}
-              />
+              {/* Account-first mode omits the field entirely — not hides
+                  it with CSS: a hidden password input would still plant a
+                  credential-manager save prompt and an autocomplete target
+                  on a form that never carries a password. */}
+              {props.passwordField && (
+                <HkInput
+                  variant="password"
+                  modelValue={password.value}
+                  onUpdate:modelValue={(v: string) => (password.value = v)}
+                  name="signin-password"
+                  autocomplete={props.passwordAutocomplete ?? credentialAutocomplete("password", "current-password")}
+                  placeholder={t("hikari::signIn.passwordPlaceholder", "Password")}
+                  disabled={props.loading || props.disabled}
+                  submitOnEnter={attemptSubmit}
+                />
+              )}
               <HkAuthSubmitButton
                 label={props.submitLabel ?? t("hikari::signIn.submit", "Sign in")}
                 block
                 loading={props.loading}
-                disabled={props.disabled || !username.value.trim() || !password.value}
+                disabled={props.disabled || !username.value.trim() || (props.passwordField && !password.value)}
                 doSubmit={() => Promise.resolve(attemptSubmit())}
               />
               </form>

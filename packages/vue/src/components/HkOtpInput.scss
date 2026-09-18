@@ -16,6 +16,14 @@
  * a shared base) on purpose: a `var()` chain whose fallback resolves
  * through an UNSET custom property is invalid at computed-value time, so
  * every declaration below must stand on its own with a literal fallback.
+ *
+ * Token note: the scale family consumed here (--space-*, --text-*,
+ * --radius-*, --duration-*, --ease-*) lives in the canonical scale root,
+ * which ships through the `@celestia-island/hikari/styles` aggregate —
+ * this sheet `@use`s only ../tokens (the color channels), like every
+ * other component sheet. A host that loads ONE component sheet in
+ * isolation therefore gets the color tokens but not the scale ones; the
+ * fallbacks below keep the row renderable in that case.
  */
 
 .hk-otp-wrapper {
@@ -25,10 +33,10 @@
 
 .hk-otp-label {
   display: block;
-  font-size: var(--text-xs);
+  font-size: var(--text-xs, 0.75rem);
   font-weight: 600;
   letter-spacing: 0.02em;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-4, 0.25rem);
   color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
 }
 
@@ -75,8 +83,10 @@
    * note above) — a 24px digit in a 34px cell overruns it. `cqw` resolves
    * against the cell's own inline size (cells are size containers), so
    * this holds at every narrowness AND every preset ramp; the ramp sets
-   * its own bound through --hk-otp-font-size. */
-  font-size: var(--hk-otp-font-size, clamp(0.75rem, 38cqw, var(--text-xl)));
+   * its own bound through --hk-otp-font-size. Both fallbacks are literals:
+   * --font-mono / --text-* are in the canonical scale root, which this
+   * sheet does not @use (see the header note). */
+  font-size: var(--hk-otp-font-size, clamp(0.75rem, 38cqw, 1.25rem));
   font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -95,12 +105,15 @@
    * bleeds across the visual gaps the cells do not actually have. */
   user-select: text;
 
-  &:hover:not(:disabled):not(:read-only) {
+  /* `:not(:focus)` is load-bearing, not decoration: the hover selector
+   * weighs (0,4,0) against `:focus`'s (0,2,0), so without the exclusion a
+   * focused cell under the pointer painted the HOVER border over the
+   * focus border (the focus box-shadow survived, which is exactly why it
+   * read as a near-miss rather than an obvious bug). */
+  &:hover:not(:focus):not(:disabled):not(:read-only) {
     border-color: var(--c-primary-strong);
   }
 
-  /* The focus bucket must outrank the idle border above: same
-   * specificity, so it is declared after it. */
   &:focus {
     border-color: rgb(var(--color-focused-border));
     box-shadow: var(--shadow-focus);
@@ -157,14 +170,14 @@
 }
 
 .hk-otp-error-msg {
-  margin: var(--space-6) 0 0;
-  font-size: var(--text-xs);
+  margin: var(--space-6, 0.375rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-error));
 }
 
 .hk-otp-hint {
-  margin: var(--space-6) 0 0;
-  font-size: var(--text-xs);
+  margin: var(--space-6, 0.375rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));
 }
 

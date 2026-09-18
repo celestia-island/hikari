@@ -274,7 +274,15 @@ export const HkOtpInput = defineComponent({
     function focusCell(index: number, select = false) {
       const el = cellInputs.value[index];
       if (!el) return;
-      programmaticFocus.value = index;
+      // Focusing the cell that already holds focus fires NO focus event, so
+      // a marker written there would never be consumed. It cannot disarm a
+      // later real click either — the browser fires the focus event exactly
+      // when the focused node CHANGES, so a no-op focus() (already-focused
+      // cell, or a marker left over from an earlier cell) is invisible to a
+      // user: their click either fires a focus (no marker matches, so it
+      // selects) or fires nothing at all (the caret keeps the position the
+      // click itself set). Chromium probes of both shapes held.
+      if (document.activeElement !== el) programmaticFocus.value = index;
       el.focus();
       if (select) el.select();
     }

@@ -1339,6 +1339,8 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     gradientStops: string[];
     /** Font string assignments — pins the BOLD glyph aperture. */
     fonts: string[];
+    /** arc() radii, in call order — pins the spatter dot SIZE band. */
+    arcRadii: number[];
     fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
@@ -1361,6 +1363,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         compositeOps: [],
         gradientStops: [],
         fonts: [],
+        arcRadii: [],
         fillStyles: [],
         clips: [],
         translates: [],
@@ -1380,7 +1383,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       translate: (x: number) => r.translates.push(x),
       rotate: () => {},
       beginPath: () => {},
-      arc: () => {},
+      arc: (_x: number, _y: number, radius: number) => r.arcRadii.push(radius),
       fill: () => {},
       fillRect: () => {
         if (gradientArmed) {
@@ -1661,6 +1664,13 @@ describe("HkInput password reveal strategies", () => {
         inkMean - bgMean,
         `glyph pedestal lifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
+      // Magnitude pin (R1 F4): the pedestal is LARGE by design (26 L ≈
+      // 66 rgb here) — a revert to the old small 10 L pedestal (~26
+      // rgb) must go red, not just stay above the sign threshold.
+      expect(
+        inkMean - bgMean,
+        "the bright-text pedestal is LARGE, not merely positive",
+      ).toBeGreaterThan(36);
       // Strict grayscale: no theme hue may survive into the spatter —
       // every solid fill is a NEUTRAL gray (r === g === b).
       for (const tile of tiles) {
@@ -1689,6 +1699,18 @@ describe("HkInput password reveal strategies", () => {
         mask!.fonts.some((f) => f.startsWith("bold ")),
         "glyph apertures rasterize bold",
       ).toBe(true);
+      // Dot size band (R1 F6): ~0.6–1.4× the stroke width — dpr is 1
+      // in this environment, so every spatter radius sits in the CSS
+      // band [1.2, 2.8]; a blown-up radius constant must go red.
+      for (const tile of tiles) {
+        expect(tile.arcRadii.length, "spatter dots drawn as arcs").toBeGreaterThan(1000);
+        for (const rad of tile.arcRadii) {
+          expect(
+            rad >= 1.2 && rad <= 2.8,
+            `dot radius inside the stroke band, got ${rad}`,
+          ).toBe(true);
+        }
+      }
       // The DOM input still never flips.
       expect(input.type).toBe("password");
       // Bus frames advance BOTH layer drifts (fresh pattern phases on
@@ -1932,7 +1954,9 @@ describe("HkInput password reveal strategies", () => {
       );
       expect(tiles.length).toBe(2);
       const counts1 = tiles.map((r) => r.fillStyles.length);
-      expect(counts1[0]!, "ground + dots on hold 1").toBeGreaterThan(1000);
+      // Dense field (R1 F5): ~2341 dots per tile at 28 px²/dot — the
+      // old sparse 45 px²/dot (1457 fills) must fail this floor.
+      expect(counts1[0]!, "dense spatter field on hold 1").toBeGreaterThan(2000);
       await hold();
       const counts2 = tiles.map((r) => r.fillStyles.length);
       expect(counts2[0]).toBe(counts1[0]! * 2);

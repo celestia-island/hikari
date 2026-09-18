@@ -444,15 +444,16 @@ export class RevealNoisePainter {
  * - The glyph APERTURES never move — only the texture inside them
  *   flows. Cross-frame registration of the glyph shapes (the attack
  *   that killed video CAPTCHAs) finds nothing to align.
- * - The pedestal is deliberately SMALL: it is a static first-order cue
- *   and therefore the one signal a single frame leaks. Kept at
- *   FILTER_PEDESTAL_L lightness points and spread by the halo ramp, it
- *   aids human pop-out without giving thresholding a plateau. An
- *   attacker averaging MANY frames can in principle recover the
- *   pedestal's DC component (same cost class as the video attack on
- *   the noise strategy) — accepted risk, documented; consumers that
- *   cannot accept it pick "noise" (zero static signal) or "plain"
- *   (full readability).
+ * - The pedestal is deliberately LARGE (live-tuned readability
+ *   first): it is a static first-order cue and therefore the one
+ *   signal a single frame leaks, and the current magnitude leaks MORE
+ *   of it than the original small one — the accepted trade for a dim
+ *   surround and a bright text layer. The halo ramp still spreads the
+ *   step so thresholding finds no plateau, and an attacker averaging
+ *   MANY frames can in principle recover the pedestal's DC component
+ *   (same cost class as the video attack on the noise strategy) —
+ *   consumers that cannot accept this trade pick "noise" (zero static
+ *   signal) or "plain" (full readability).
  * - The drift sign is re-randomized per hold (and both tiles are
  *   freshly generated per hold) so two holds never replay the same
  *   frame sequence.

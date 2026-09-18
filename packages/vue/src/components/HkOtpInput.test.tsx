@@ -656,6 +656,34 @@ describe("HkOtpInput review regressions", () => {
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
   });
 
+  it("re-fits on its own when a pin appears or disappears on the wrapper", async () => {
+    // The published value must track the pin WITHOUT any box change and
+    // without a re-render: neither the ResizeObserver nor a host render
+    // fires for a bare `style` mutation on the wrapper, so the component
+    // watches for it itself. (Driving this through real style mutations is
+    // what gives the test teeth — deleting the watcher call, or watching
+    // the wrong attribute, leaves the published value frozen.)
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+    const wrapper = otp.container.querySelector<HTMLElement>(".hk-otp-wrapper")!;
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // A small pin arrives on the wrapper (the row inherits it). The next
+    // publish must be capped by it.
+    wrapper.style.setProperty("--hk-otp-font-size", "12px");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    otp.fitGlyph = otp.fitGlyph; // no direct call — the watcher must act
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    // Removing the pin releases the cap on the next publish.
+    wrapper.style.removeProperty("--hk-otp-font-size");
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+  });
+
   it("always publishes a fit, even while a pin is in force", async () => {
     // The regression this pins: with a pin in force at mount the row used
     // to publish NOTHING, and the removal of that pin (a host-side style

@@ -13,10 +13,10 @@
  *   --hk-otp-font-max    cap the fitted glyph (set by the size ramps)
  *   --hk-otp-gap         gap between cells
  *   --hk-otp-gap-group   gap at the `separated` split
- * The two font knobs are deliberately separate: `-font-size` is an
- * override (and an absolute value there makes the component stop fitting
- * altogether), while `-font-max` is the ramp's ceiling the measured fit
- * clamps under.
+ * The two font knobs are deliberately separate: `-font-size` wins the
+ * cascade outright (the cell's font chain reads it first), while
+ * `-font-max` is the ramp's ceiling the measured fit clamps under — the
+ * fit keeps publishing either way, so releasing a pin needs no event.
  * The size classes are written as complete rule sets (not as deltas over
  * a shared base) on purpose: a `var()` chain whose fallback resolves
  * through an UNSET custom property is invalid at computed-value time, so

@@ -433,7 +433,8 @@ export const HkOtpInput = defineComponent({
       // the glyph a pure function of the current cell width and pin, which
       // cannot go stale. The pin still wins where it is declared, because
       // `--hk-otp-font-size` precedes `--hk-otp-fitted-font` in the cell's
-      // font chain.
+      // font chain; the pin watcher above is what keeps this published
+      // value honest across pin changes that no other observer sees.
       const published = `${fitted.toFixed(1)}px`;
       if (row.style.getPropertyValue(FITTED_FONT_VAR) !== published) {
         row.style.setProperty(FITTED_FONT_VAR, published);
@@ -463,18 +464,21 @@ export const HkOtpInput = defineComponent({
         attributes: true,
         attributeFilter: ["style"],
       };
-      // The WHOLE ancestor chain, not just the row and its wrapper: a pin
-      // can sit on any ancestor (a card, a layout column), and the removal
-      // that matters is the one that leaves no trace on the row — no box
-      // change and no re-render, so neither observer above would ever fire.
-      // The chain stops at the row's offsetParent (its containing block, the
-      // nearest positioned ancestor or the body); anything above that cannot
-      // affect this row's inherited value in a way a box observer misses.
+      // Every ancestor, up to the document root. A pin can sit anywhere
+      // above the row (a card, a layout column, the app root), and the
+      // transition that matters leaves no trace on the row itself: no box
+      // change, and a host-side `style` mutation renders nothing.
+      //
+      // The walk cannot rely on `offsetParent`: `bindRow` first runs while
+      // the subtree is still DETACHED (offsetParent null, chain truncated —
+      // measured: two nodes observed at mount, seven after the first
+      // re-render, and a card mutation silent in between). Walking to the
+      // root costs a handful of observers and closes that gap; `onMounted`
+      // re-runs it once the row is actually in the document.
       let el: HTMLElement | null = node;
       let guard = 0;
       while (el && guard < 64) {
         pinObserver.observe(el, options);
-        if (el === node.offsetParent) break;
         el = el.parentElement;
         guard += 1;
       }
@@ -640,6 +644,10 @@ export const HkOtpInput = defineComponent({
     }
 
     onMounted(() => {
+      // The subtree is connected by now: re-point the pin watcher at the
+      // real ancestor chain (at bind time the row was still detached and
+      // the walk stopped short).
+      if (rowEl.value) watchPinSources(rowEl.value);
       // A host whose stored value is not a clean code (over-long, or
       // carrying characters this field never accepts) is told once, at
       // mount, what the field actually holds — the watcher only covers

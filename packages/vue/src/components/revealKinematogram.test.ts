@@ -5,6 +5,7 @@ import {
   FILTER_DRIFT_PX_S,
   layoutRevealGlyphs,
   NOISE_TILE_W,
+  parseColorTriple,
   RevealFilterPainter,
   RevealNoisePainter,
   sweepWindow,
@@ -131,6 +132,42 @@ describe("RevealNoisePainter", () => {
     const p = new RevealNoisePainter();
     expect(() => p.beginHold([220, 10, 15])).not.toThrow();
     expect(p.available).toBe(false);
+  });
+});
+
+describe("FILTER_DRIFT_PX_S persistence floor", () => {
+  it("keeps the counter-drift fast enough for persistence reading", () => {
+    // The readability mechanism RELIES on speed: within one
+    // persistence-of-vision window (~100ms) the texture must travel
+    // at least a full dot spacing (~15px) so the static aperture
+    // interiors time-average into near-solid glyphs. 150 px/s is the
+    // floor; the shipped value is far above it (R1 F7).
+    expect(FILTER_DRIFT_PX_S).toBeGreaterThanOrEqual(150);
+  });
+});
+
+describe("parseColorTriple", () => {
+  it("parses computed rgb() strings without the leading-empty-token shift", () => {
+    // The bug this pins: "rgb(148, 233, 211)" used to split into a
+    // leading EMPTY token that Number() turned into 0, shifting the
+    // triple to [0, 148, 233] and skewing every derived HSL channel.
+    expect(parseColorTriple("rgb(148, 233, 211)")).toEqual([148, 233, 211]);
+    expect(parseColorTriple("rgb(255, 0, 0)")).toEqual([255, 0, 0]);
+  });
+
+  it("parses bare and alpha-suffixed triples, ignoring extra channels", () => {
+    expect(parseColorTriple("148 233 211")).toEqual([148, 233, 211]);
+    expect(parseColorTriple("148,233,211")).toEqual([148, 233, 211]);
+    expect(parseColorTriple("rgba(148, 233, 211, 0.5)")).toEqual([148, 233, 211]);
+  });
+
+  it("rejects modern color functions and non-triples", () => {
+    expect(parseColorTriple("oklch(70% 0.1 200)")).toBeNull();
+    expect(parseColorTriple("oklab(0.7 0.1 200)")).toBeNull();
+    expect(parseColorTriple("lab(52% 40 59)")).toBeNull();
+    expect(parseColorTriple("color(display-p3 1 0 0)")).toBeNull();
+    expect(parseColorTriple("teal")).toBeNull();
+    expect(parseColorTriple("")).toBeNull();
   });
 });
 

@@ -24,6 +24,7 @@ import HkTooltip from "./HkTooltip";
 import { HkPlaceholderMarquee, type PlaceholderVariant } from "./HkPlaceholderMarquee";
 import {
   layoutRevealGlyphs,
+  parseColorTriple,
   RevealFilterPainter,
   RevealNoisePainter,
   sweepWindow,
@@ -309,25 +310,6 @@ export default defineComponent({
 
     const ripples: Ripple[] = [];
     let ro: ResizeObserver | null = null;
-
-    function parseColorTriple(raw: string): [number, number, number] | null {
-      // Modern color functions (oklch/lab/color()) would split into
-      // garbage numeric triples — reject them and keep the caller's
-      // previous base instead (latent for consumer themes authored in
-      // those functions; hikari's own themes use rgb triplets/hex).
-      if (/^(oklch|oklab|lab|lch|color)\(/i.test(raw.trim())) return null;
-      // Leading separators are REAL here: a computed `rgb(r, g, b)`
-      // string starts with "rgb(" and the split would yield a leading
-      // EMPTY token — Number("") === 0, which silently shifts the
-      // triple to [0, r, g] and skews every derived HSL channel (the
-      // filter theme proxy read a light ink as 45.7% lightness).
-      const ns = raw
-        .split(/[\s,()rgba]+/)
-        .filter((t) => t !== "")
-        .map(Number)
-        .filter((n) => !isNaN(n));
-      return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
-    }
 
     function syncColor() {
       try {

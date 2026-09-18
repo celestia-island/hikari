@@ -494,7 +494,7 @@ const FILTER_SPATTER_PX_PER_DOT = 45;
 const FILTER_SPATTER_L_SPREAD = 22;
 
 /** The one anchor pair: near-black ground, mid-light gray speckle —
- * black-on-white reading in EVERY theme (the light variant read far
+ * white-on-black reading in EVERY theme (the light variant read far
  * worse and was dropped). */
 const FILTER_BASE_L = 64;
 const FILTER_GROUND_L = 10;
@@ -502,6 +502,27 @@ const FILTER_GROUND_L = 10;
 /** Glyph aperture weight: bold strokes expose more of the counter-
  * drifting texture inside each glyph. */
 const FILTER_APERTURE_WEIGHT = "bold";
+
+/**
+ * Parse an `rgb(r, g, b)` / `rgba(...)` / bare `r g b` triple out of a
+ * color string, rejecting the modern color functions (oklch/lab/
+ * color() would split into garbage numeric triples — the caller keeps
+ * its previous base instead). Leading separators are REAL here: a
+ * computed `rgb(...)` string starts with separators and the split
+ * would yield a leading EMPTY token — `Number("") === 0` silently
+ * shifts the triple to [0, r, g] and skews every derived HSL channel
+ * (the noise painter's ink base read a light ink as 45.7% lightness
+ * before this was fixed).
+ */
+export function parseColorTriple(raw: string): [number, number, number] | null {
+  if (/^(oklch|oklab|lab|lch|color)\(/i.test(raw.trim())) return null;
+  const ns = raw
+    .split(/[\s,()rgba]+/)
+    .filter((t) => t !== "")
+    .map(Number)
+    .filter((n) => !isNaN(n));
+  return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
+}
 
 export class RevealFilterPainter {
   private bgTile: HTMLCanvasElement | null = null;
@@ -546,11 +567,10 @@ export class RevealFilterPainter {
     this.offsetInk -= this.driftSign * step;
   }
 
-  /** (Re)build one spatter tile: the theme's ground (near-black over a
-   * dark theme, near-white over a light one), then a fixed-density
-   * scatter of NEUTRAL-GRAY dots around the theme's base lightness.
-   * Draw order is deterministic (bg tile first, then ink) so tests can
-   * attribute the per-canvas recordings. */
+  /** (Re)build one spatter tile: the ONE near-black ground anchor,
+   * then a fixed-density scatter of NEUTRAL-GRAY dots around the one
+   * base lightness. Draw order is deterministic (bg tile first, then
+   * ink) so tests can attribute the per-canvas recordings. */
   private retile(pedestalL: number, which: "bg" | "ink"): boolean {
     try {
       if (typeof document === "undefined") return false;

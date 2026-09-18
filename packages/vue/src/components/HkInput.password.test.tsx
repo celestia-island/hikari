@@ -1334,8 +1334,8 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
      * carved out of the ink spatter (R3 F2: without this the password
      * would render INVISIBLE on a real canvas, silently). */
     compositeOps: string[];
-    /** Gradient stop colors, in order — pins the halo's THEME color
-     * (white over a dark ground, black over a light one). */
+    /** Gradient stop colors, in order — pins the halo's color (the
+     * filter halo is ALWAYS white). */
     gradientStops: string[];
     /** Font string assignments — pins the BOLD glyph aperture. */
     fonts: string[];
@@ -1583,9 +1583,9 @@ describe("HkInput password reveal strategies", () => {
   it("filter (default) keeps glyphs off the visible canvas: counter-drifting spatter, pedestal, halo", async () => {
     // The default reveal: STATIC BOLD glyph apertures filled with one
     // GRAYSCALE spatter texture, over a statistically matched spatter
-    // field drifting the opposite way on the theme-anchored ground;
-    // the glyphs shifted by a small pedestal toward the theme's
-    // visibility direction with a halo band around the row. Glyph
+    // field streaming the opposite way on the uniform near-black
+    // ground; the glyphs lifted by a small brightening pedestal with a
+    // white halo band around the row. Glyph
     // geometry must NEVER reach the visible canvas (mask → source-in
     // stamp only) — that is the screenshot contract. Math.random is
     // pinned at 0.5 so the dot lightness equals the exact layer base
@@ -1720,8 +1720,8 @@ describe("HkInput password reveal strategies", () => {
   });
 
   /**
-   * Force the computed `.color` (the reveal's ink + theme proxy) while
-   * forwarding every other computed-style query to the real engine.
+   * Force the computed `.color` (the reveal's ink) while forwarding
+   * every other computed-style query to the real engine.
    * Returns a restore function.
    */
   function forceInkColor(color: string): () => void {
@@ -1841,11 +1841,11 @@ describe("HkInput password reveal strategies", () => {
     }
   });
 
-  it("filter keeps the documented light-anchor degrade for modern color-function inks", async () => {
+  it("filter degrades without throwing for modern color-function inks", async () => {
     // oklch()/lab()/color() inks cannot be parsed into a triple — the
-    // documented degrade keeps the fallback ink (a DARK ink → light
-    // anchors), never throwing and never guessing a theme. Locked as
-    // intentional (R1 finding F1).
+    // documented degrade keeps the fallback ink and NEVER throws or
+    // guesses; the anchors are uniform anyway, so the reveal keeps
+    // painting the same near-black ground + white halo.
     const restoreInk = forceInkColor("oklch(70% 0.1 200)");
     const rec = stubRecordingContexts();
     try {
@@ -1876,15 +1876,10 @@ describe("HkInput password reveal strategies", () => {
 
   it("filter degrades the same way for color()-function inks", async () => {
     // Locks the DEGRADE SEMANTICS for color() inks: the modern-
-    // function rejection yields null → the fallback dark ink → LIGHT
-    // anchors. Honest limit (verified during R2 remedies): spec-valid
-    // color() values are 0–1 floats, so even a DELETED guard parses
-    // them into sub-1 triples (L < 1 → light) — guard deletion is not
-    // observable through the filter theme. The guard's real consumer
-    // is the NOISE painter's colored tiles (it prevents deriving a
-    // garbage hue from e.g. [0.5,0.2,0.8]); this pin keeps any future
-    // "auto-interpret color()" change (×255 scaling → L 50 → dark)
-    // from silently re-theming the filter.
+    // function rejection yields null → the fallback ink → the same
+    // uniform anchors, never a thrown parse. (The guard also protects
+    // the NOISE painter's colored tiles from garbage hues — that side
+    // is pinned by the parseColorTriple unit tests.)
     const restoreInk = forceInkColor("color(display-p3 1 0 0)");
     const rec = stubRecordingContexts();
     try {

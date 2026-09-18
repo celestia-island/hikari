@@ -1585,10 +1585,10 @@ describe("HkInput password reveal strategies", () => {
 
   it("filter (default) keeps glyphs off the visible canvas: counter-drifting spatter, pedestal, halo", async () => {
     // The default reveal: STATIC BOLD glyph apertures filled with one
-    // GRAYSCALE spatter texture, over a statistically matched spatter
-    // field streaming the opposite way on the uniform near-black
-    // ground; the glyphs lifted by a small brightening pedestal with a
-    // white halo band around the row. Glyph
+    // BRIGHT GRAYSCALE spatter texture, over a statistically matched
+    // DIM spatter field drifting the opposite way on the uniform
+    // near-black ground; the glyphs lifted by a LARGE brightening
+    // pedestal with a white halo band around the row. Glyph
     // geometry must NEVER reach the visible canvas (mask → source-in
     // stamp only) — that is the screenshot contract. Math.random is
     // pinned at 0.5 so the dot lightness equals the exact layer base
@@ -1700,8 +1700,11 @@ describe("HkInput password reveal strategies", () => {
         "glyph apertures rasterize bold",
       ).toBe(true);
       // Dot size band (R1 F6): ~0.6–1.4× the stroke width — dpr is 1
-      // in this environment, so every spatter radius sits in the CSS
-      // band [1.2, 2.8]; a blown-up radius constant must go red.
+      // in this environment (guarded below), so every spatter radius
+      // sits in the CSS band [1.2, 2.8]. NOTE: with random pinned at
+      // 0.5 every radius is the band MIDPOINT — the min-side teeth
+      // live in the light-ink test's unmocked band check (R2 F1).
+      expect(window.devicePixelRatio || 1).toBe(1);
       for (const tile of tiles) {
         expect(tile.arcRadii.length, "spatter dots drawn as arcs").toBeGreaterThan(1000);
         for (const rad of tile.arcRadii) {
@@ -1812,6 +1815,33 @@ describe("HkInput password reveal strategies", () => {
           expect(r8 === g8 && g8 === b8, `dark spatter must be grayscale, got ${fill}`).toBe(true);
         }
       }
+      // Dot size band with REAL randomness (R2 F1): the default test's
+      // pinned 0.5 random freezes every radius at the band MIDPOINT,
+      // which is blind on the min side — here thousands of uniform
+      // samples must ALL sit in [1.2, 2.8] AND the empirical extremes
+      // must touch both edges, so a shrunken rMin (sub-pixel speckle)
+      // or a blown rMax both go red. dpr is 1 in this environment —
+      // the guard makes that assumption explicit (R2 F2).
+      expect(window.devicePixelRatio || 1).toBe(1);
+      {
+        let min = Infinity;
+        let max = -Infinity;
+        let count = 0;
+        for (const tile of tiles) {
+          for (const rad of tile.arcRadii) {
+            if (rad < min) min = rad;
+            if (rad > max) max = rad;
+            count++;
+            expect(
+              rad >= 1.2 && rad <= 2.8,
+              `dot radius inside the stroke band, got ${rad}`,
+            ).toBe(true);
+          }
+        }
+        expect(count, "thousands of spatter dots sampled").toBeGreaterThan(3000);
+        expect(min, "the small edge of the band is actually used").toBeLessThan(1.5);
+        expect(max, "the large edge of the band is actually used").toBeGreaterThan(2.5);
+      }
       // Matched texture statistics (R2 F2): the two layers must carry
       // the SAME dot count and (pedestal aside) the same lightness
       // RANGE — a diverging spread/density is the single-frame
@@ -1834,7 +1864,8 @@ describe("HkInput password reveal strategies", () => {
         `matched lightness spread (bg ${bgStats.range} vs ink ${inkStats.range})`,
       ).toBeLessThan(6);
       // The pedestal lifts ground AND dots together: the two grounds
-      // sit exactly one pedestal apart (~10 L ≈ 25 rgb), so an ink
+      // sit exactly one pedestal apart (26 L ≈ 66 rgb at the current
+      // tuning; the threshold derives from the constant), so an ink
       // ground that loses or doubles its shift goes red (R2 C1b).
       const groundOf = (r: (typeof tiles)[number]) =>
         Number(r.fillStyles[0]!.slice(4, -1).split(",")[0]);

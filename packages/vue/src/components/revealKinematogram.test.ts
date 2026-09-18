@@ -139,7 +139,7 @@ describe("RevealFilterPainter", () => {
     const p = new RevealFilterPainter();
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.25);
     try {
-      p.beginHold("dark");
+      p.beginHold();
       // Drift-sign draw, then one phase draw per layer before retile;
       // happy-dom has no 2d context, so the tile builds bail before
       // consuming any more randomness.
@@ -158,7 +158,7 @@ describe("RevealFilterPainter", () => {
     const p = new RevealFilterPainter();
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.25); // driftSign = +1
     try {
-      p.beginHold("dark");
+      p.beginHold();
       const before = p.peekDrift();
       p.advance(0.25, 2);
       const after = p.peekDrift();
@@ -174,7 +174,7 @@ describe("RevealFilterPainter", () => {
     const p = new RevealFilterPainter();
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.75); // driftSign = -1
     try {
-      p.beginHold("dark");
+      p.beginHold();
       const before = p.peekDrift();
       p.advance(0.25, 2);
       const after = p.peekDrift();
@@ -188,7 +188,7 @@ describe("RevealFilterPainter", () => {
 
   it("never throws without a 2d context and stays unusable (fallback path)", () => {
     const p = new RevealFilterPainter();
-    expect(() => p.beginHold("dark")).not.toThrow();
+    expect(() => p.beginHold()).not.toThrow();
     expect(p.available).toBe(false);
   });
 });

@@ -52,16 +52,15 @@ interface Ripple {
  * Right-edge affordance (`passwordTrailing`):
  * - "eye" (default): the reveal button. What the reveal SHOWS is chosen
  *   by `revealStrategy`, how it is TRIGGERED by `revealTrigger`:
- *   - strategy "filter" (default): dual counter-drifting spatter
+ *   - strategy "filter" (default): dual FAST counter-drifting spatter
  *     layers in strict BLACK/WHITE/GRAY — the glyph row is a set of
  *     STATIC bold apertures filled with a gray spatter texture
- *     drifting one way, over a statistically identical spatter field
- *     drifting the other way on the theme's ground (near-black in a
- *     dark theme, near-white in a light one), the glyphs shifted by a
- *     small lightness pedestal toward visibility with a soft halo
- *     band around the row (see revealKinematogram.ts). The whole row
- *     stays readable in motion while any single frame — a screenshot
- *     — carries no glyph structure, only a weak mean-luminance signal
+ *     streaming one way, over a statistically identical spatter field
+ *     streaming the other way, both on a UNIFORM near-black ground
+ *     (white-on-black reading in every theme). The drift is very fast
+ *     so persistence of vision averages the aperture interiors into
+ *     readable near-solid glyphs. A single frame — a screenshot —
+ *     carries no glyph structure, only a weak mean-luminance signal
  *     dissolved into the halo ramp. Reduced motion or a pattern-less
  *     engine degrades to the fully readable static plain text.
  *   - strategy "sweep": a readable window — the password is drawn as
@@ -120,13 +119,13 @@ export default defineComponent({
     },
     /**
      * What the eye reveal SHOWS:
-     * - "filter" (default): dual counter-drifting spatter layers in
-     *   strict black/white/gray — static BOLD glyph apertures over an
-     *   oppositely drifting, statistically matched gray spatter field
-     *   on the theme's ground (near-black dark theme / near-white
-     *   light theme), plus a small visibility-direction lightness
-     *   pedestal and halo. Readable in motion; a single screenshot
-     *   carries no glyph structure, only a weak luminance signal.
+     * - "filter" (default): dual FAST counter-drifting spatter layers
+     *   in strict black/white/gray — static BOLD glyph apertures over
+     *   an oppositely streaming, statistically matched gray spatter
+     *   field on a UNIFORM near-black ground (white-on-black in every
+     *   theme), plus a small brightening pedestal and white halo; the
+     *   speed lets persistence of vision average the glyphs readable.
+     *   A single screenshot carries no glyph structure.
      * - "sweep": a readable window — ordinary high-contrast text inside
      *   a narrow band sweeping across the row. Easy to read; a single
      *   screenshot leaks the band's characters in the clear.
@@ -802,12 +801,10 @@ export default defineComponent({
         sweepT = 0;
         if (!parked) {
           if (props.revealStrategy === "filter") {
-            // Grayscale spatter anchored to the effective theme: dark
-            // themes carry light field ink, so the ink lightness is
-            // the theme proxy — light ink (>= 50) means a dark theme
-            // (near-black ground), dark ink a light theme (near-white
-            // ground). No theme hue survives into the spatter.
-            revealFilter.beginHold(textHsl[2] >= 50 ? "dark" : "light", dpr);
+            // Grayscale spatter on the uniform near-black ground — the
+            // reveal reads white-on-black in EVERY theme (the theme-
+            // following light variant read far worse and was dropped).
+            revealFilter.beginHold(dpr);
           } else {
             revealNoise.beginHold(textHsl);
           }

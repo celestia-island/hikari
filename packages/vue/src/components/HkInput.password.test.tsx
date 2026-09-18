@@ -1622,11 +1622,12 @@ describe("HkInput password reveal strategies", () => {
       expect(vis.gradientFills, "halo band drawn").toBeGreaterThan(0);
       expect(vis.drawImages).toBeGreaterThan(0);
       // The two spatter tiles: bg first, ink second (deterministic
-      // draw order), each with hundreds of solid-color dot fills.
-      // happy-dom resolves no computed color, so the ink stays at the
-      // pre-sync fallback (a DARK ink) — the effective theme here is
-      // LIGHT: near-white ground, dark-gray speckle, and the pedestal
-      // shifts the glyph layer DARKER (visibility direction).
+      // draw order), each with hundreds of solid-color dot fills. The
+      // anchors are UNIFORM (white-on-black reading in every theme):
+      // near-black ground, light-gray speckle, and the pedestal lifts
+      // the glyph layer BRIGHTER. happy-dom resolves no computed
+      // color, so the ink stays at the pre-sync fallback (a DARK ink)
+      // — irrelevant now, the anchors follow nothing.
       const tiles = allRecs.filter(
         (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
       );
@@ -1653,8 +1654,8 @@ describe("HkInput password reveal strategies", () => {
       const bgMean = meanOf(tiles[0]!);
       const inkMean = meanOf(tiles[1]!);
       expect(
-        bgMean - inkMean,
-        `light theme: glyph pedestal shifts DARKER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
+        inkMean - bgMean,
+        `glyph pedestal lifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
       // Strict grayscale: no theme hue may survive into the spatter —
       // every solid fill is a NEUTRAL gray (r === g === b).
@@ -1667,19 +1668,18 @@ describe("HkInput password reveal strategies", () => {
           ).toBe(true);
         }
       }
-      // Theme anchor: the LIGHT theme's ground is near-white (first
-      // fill on the bg tile is the ground wash; L 93 → rgb ≈ 237).
+      // Ground anchor: ALWAYS near-black (first fill on the bg tile
+      // is the ground wash; L 10 → rgb ≈ 26).
       const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
-      expect(gr!, "light-theme ground is near-white").toBeGreaterThan(230);
-      expect(gr!).toBeLessThan(245);
+      expect(gr!, "ground is ALWAYS near-black").toBeGreaterThan(18);
+      expect(gr!).toBeLessThan(34);
       expect(gg!).toBe(gr);
       expect(gb!).toBe(gr);
-      // Halo color follows the theme: BLACK over a light ground —
-      // peak AND endpoints share the theme channel (R2 F1).
-      expect(vis.gradientStops, "light theme paints a BLACK halo").toContain("rgba(0,0,0,0.1)");
-      expect(vis.gradientStops).not.toContain("rgba(255,255,255,0.1)");
-      expect(vis.gradientStops, "light halo endpoints fade on BLACK").toContain("rgba(0,0,0,0)");
-      expect(vis.gradientStops).not.toContain("rgba(255,255,255,0)");
+      // Halo is ALWAYS white — peak AND endpoints (R2 F1).
+      expect(vis.gradientStops, "halo is always WHITE").toContain("rgba(255,255,255,0.1)");
+      expect(vis.gradientStops).not.toContain("rgba(0,0,0,0.1)");
+      expect(vis.gradientStops, "halo endpoints fade on WHITE").toContain("rgba(255,255,255,0)");
+      expect(vis.gradientStops).not.toContain("rgba(0,0,0,0)");
       // The glyph apertures rasterize BOLD.
       expect(
         mask!.fonts.some((f) => f.startsWith("bold ")),
@@ -1743,12 +1743,11 @@ describe("HkInput password reveal strategies", () => {
     };
   }
 
-  it("filter inverts its grayscale anchors for a dark theme (light field ink)", async () => {
-    // Light field ink = a dark theme: near-black ground, light-gray
-    // speckle, a BRIGHTER glyph pedestal and a WHITE halo — every
-    // anchor flips with the theme while the mechanism stays identical.
-    // The theme proxy is the computed field-ink lightness (>= 50 =
-    // dark theme), so feed a light ink through getComputedStyle.
+  it("filter anchors white-on-black regardless of the field ink (light ink)", async () => {
+    // UNIFORMITY pin: the anchors follow NOTHING — feed a LIGHT field
+    // ink through getComputedStyle and the reveal must still paint the
+    // same near-black ground, light-gray speckle, brighter pedestal
+    // and white halo as the default (dark-ink) mount.
     const restoreInk = forceInkColor("rgb(148, 233, 211)");
     const rec = stubRecordingContexts();
     try {
@@ -1778,7 +1777,7 @@ describe("HkInput password reveal strategies", () => {
       const inkMean = meanOf(tiles[1]!);
       expect(
         inkMean - bgMean,
-        `dark theme: glyph pedestal shifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
+        `pedestal lifts BRIGHTER under a light ink too (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
       // Strict grayscale on the dark side too (R2 F4).
       for (const tile of tiles) {
@@ -1818,17 +1817,16 @@ describe("HkInput password reveal strategies", () => {
         groundDelta >= 20 && groundDelta <= 30,
         `grounds one pedestal apart (delta ${groundDelta})`,
       ).toBe(true);
-      // Near-black ground: L 10 → rgb ≈ 26.
+      // Near-black ground regardless of the ink: L 10 → rgb ≈ 26.
       const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
-      expect(gr!, "dark-theme ground is near-black").toBeGreaterThan(18);
+      expect(gr!, "ground near-black under a light ink").toBeGreaterThan(18);
       expect(gr!).toBeLessThan(34);
       expect(gg!).toBe(gr);
       expect(gb!).toBe(gr);
-      // White halo over the dark ground — peak AND endpoints share
-      // the theme channel (an endpoint desync must go red, R2 F1).
-      expect(vis.gradientStops, "dark theme paints a WHITE halo").toContain("rgba(255,255,255,0.1)");
+      // White halo under a light ink too — peak AND endpoints (R2 F1).
+      expect(vis.gradientStops, "halo stays WHITE under a light ink").toContain("rgba(255,255,255,0.1)");
       expect(vis.gradientStops).not.toContain("rgba(0,0,0,0.1)");
-      expect(vis.gradientStops, "dark halo endpoints fade on WHITE").toContain("rgba(255,255,255,0)");
+      expect(vis.gradientStops, "halo endpoints fade on WHITE").toContain("rgba(255,255,255,0)");
       expect(vis.gradientStops).not.toContain("rgba(0,0,0,0)");
       // Same screenshot contract and bold apertures as the light theme.
       const mask = allRecs.find((r) => r.texts.length > 0)!;
@@ -1865,8 +1863,9 @@ describe("HkInput password reveal strategies", () => {
       );
       expect(tiles.length).toBe(2);
       const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
-      expect(gr!, "fallback ink → LIGHT anchors (near-white ground)").toBeGreaterThan(230);
-      expect(vis.gradientStops, "black halo in the degrade").toContain("rgba(0,0,0,0.1)");
+      expect(gr!, "degrade keeps the uniform near-black ground").toBeGreaterThan(18);
+      expect(gr!).toBeLessThan(34);
+      expect(vis.gradientStops, "white halo in the degrade").toContain("rgba(255,255,255,0.1)");
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();
     } finally {
@@ -1901,35 +1900,7 @@ describe("HkInput password reveal strategies", () => {
       );
       expect(tiles.length).toBe(2);
       const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
-      expect(gr!, "color() ink degrades to the LIGHT anchors").toBeGreaterThan(230);
-      document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
-      await nextTick();
-    } finally {
-      rec.restore();
-      restoreInk();
-    }
-  });
-
-  it("filter treats exactly-50 ink lightness as a dark theme (boundary)", async () => {
-    // rgb(255,0,0): max+min halves to EXACTLY 0.5 (128/255 does not)
-    // — L === 50 on the nose, so the >= side of the theme proxy wins
-    // and the reveal anchors dark (R1 finding F2).
-    const restoreInk = forceInkColor("rgb(255, 0, 0)");
-    const rec = stubRecordingContexts();
-    try {
-      const { container } = mountPasswordInput("abc");
-      const eye = container.querySelector<HTMLElement>("button.hk-pwd-eye")!;
-      eye.dispatchEvent(
-        new PointerEvent("pointerdown", { pointerType: "mouse", bubbles: true }),
-      );
-      await nextTick();
-      const allRecs = Array.from(rec.byCanvas.values());
-      const tiles = allRecs.filter(
-        (r) => r.fillStyles.filter((s) => s.startsWith("rgb(")).length > 100,
-      );
-      expect(tiles.length).toBe(2);
-      const [gr] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
-      expect(gr!, "L === 50 anchors DARK (near-black ground)").toBeGreaterThan(18);
+      expect(gr!, "color() ink degrades to the uniform near-black ground").toBeGreaterThan(18);
       expect(gr!).toBeLessThan(34);
       document.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
       await nextTick();

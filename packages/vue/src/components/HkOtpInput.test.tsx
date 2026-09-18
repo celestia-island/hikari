@@ -424,9 +424,9 @@ describe("HkOtpInput editing", () => {
   });
 
   it("leaves no highlighted glyph behind when the row auto-completes", async () => {
-    // Regression: the 6th keystroke used to land on its own (occupied) cell
-    // with the caret expanded, so the last digit rendered selected and the
-    // next keystroke silently rewrote it. The observable contract: after a
+    // The 6th keystroke must not leave its own (occupied) cell selected,
+    // or the last digit renders highlighted and the next keystroke
+    // silently rewrites it. The observable contract: after a
     // completed code the tail cell holds its digit and a stray keystroke
     // changes nothing, while a deliberate edit still can.
     const otp = mountOtp();
@@ -463,9 +463,9 @@ describe("HkOtpInput editing", () => {
 
 describe("HkOtpInput review regressions", () => {
   it("leaves the landing cell unselected on a plain forward advance", async () => {
-    // The blocker: publish() asked for `select: false`, but the focus
-    // event's own select-on-entry default re-expanded the caret over the
-    // digit the advance had just landed on.
+    // A forward advance must not select: publish() asks for
+    // `select: false`, and the focus event's own select-on-entry default
+    // used to re-expand the caret over the digit just landed on.
     const otp = mountOtp();
     await nextTick();
     const cells = otp.cells();
@@ -488,8 +488,9 @@ describe("HkOtpInput review regressions", () => {
   });
 
   it("leaves the tail cell unselected when a paste fills the row", async () => {
-    // Same blocker on the documented SMS-paste path: the paste lands on
-    // the tail (occupied) cell, so a stray keystroke used to rewrite it.
+    // The same contract on the documented SMS-paste path: the paste lands
+    // on the tail (occupied) cell, so a stray keystroke must not rewrite
+    // it.
     const otp = mountOtp({ modelValue: "12345" });
     await nextTick();
     const cells = otp.cells();

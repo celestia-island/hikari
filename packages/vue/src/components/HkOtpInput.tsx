@@ -2,6 +2,7 @@ import {
   computed,
   defineComponent,
   nextTick,
+  onBeforeUnmount,
   onMounted,
   ref,
   useAttrs,
@@ -11,6 +12,39 @@ import {
 } from "vue";
 
 import "./HkOtpInput.scss";
+
+/** The custom property the fit publishes on a row. */
+const FITTED_FONT_VAR = "--hk-otp-fitted-font";
+
+/** Resolve any CSS length to computed pixels by letting the engine do it:
+ *  a detached probe carries `font-size: <value>`, and the computed
+ *  font-size always comes back in px. Returns null when the value is not
+ *  a length at all (an unresolved `var()` reference, an empty string) —
+ *  the engine reports those by refusing the declaration, not by throwing.
+ *
+ *  This exists because `parseFloat` cannot do the job: it reads
+ *  `"1.25rem"` as 1.25, and 1.25 is not a pixel count. Two earlier
+ *  versions of the fit cross-bred the units that way (every glyph clamped
+ *  to ~1px, then every glyph rendered 320px). */
+function probeCssLength(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const probe = document.createElement("span");
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  probe.style.fontSize = trimmed;
+  if (probe.style.fontSize === "") return null;
+  document.body.appendChild(probe);
+  const pixels = Number.parseFloat(getComputedStyle(probe).fontSize);
+  probe.remove();
+  return Number.isFinite(pixels) && pixels > 0 ? pixels : null;
+}
+
+/** Probe a length that was read off an element. Same resolver. */
+function parseCssLength(raw: string): number | null {
+  return probeCssLength(raw);
+}
 
 /** One cell's character, or "" while the code is still short. */
 type CellChar = string;
@@ -81,10 +115,13 @@ function splitChars(value: string): string[] {
  *   host can wire "submit as soon as the 6th digit lands" with one prop.
  * - Everything typed is filtered: digits only by default, or
  *   `[0-9A-Za-z]` with `alphanumeric` (case is the caller's business —
- *   the component neither upper- nor lower-cases the value). A caller-fed
- *   `modelValue` is taken as the code verbatim (separators aside): filter
- *   it yourself if you store something else, because cells display what
- *   they are given rather than re-projecting the value.
+ *   the component neither upper- nor lower-cases the value).
+ * - A caller-fed `modelValue` goes through the same sanitize + filter, so
+ *   a host holding the raw shape ("123 456", a value longer than the row,
+ *   a letter in digits-only mode) is handed back the code the field
+ *   actually holds via `update:modelValue` instead of silently disagreeing
+ *   with what is on screen. Re-projecting is the only way the two can stay
+ *   in step; hosts that already store a clean code see no event at all.
  * - The row never overflows the box it is given: the size ramp is a
  *   ceiling, and the cells shrink together (keeping their square shape,
  *   and their glyph scaling with them) when the container is narrower
@@ -154,7 +191,7 @@ export const HkOtpInput = defineComponent({
     blur: (_e: FocusEvent) => true,
     keydown: (_e: KeyboardEvent) => true,
   },
-  setup(props, { emit, slots }) {
+  setup(props, { emit, slots, expose }) {
     const attrs = useAttrs();
 
     /** DOM attributes (autocomplete, data-*, aria-*, tests' id hooks) ride
@@ -166,13 +203,14 @@ export const HkOtpInput = defineComponent({
       return rest;
     });
 
-    /** The other half of that split: only `class` / `style` belong on the
-     *  row. Anything else (a `title`, a `data-*`) is already on the cells,
-     *  and a stray `id` must not land on the row as well. */
+    /** The other half of that split: only `style` belongs on the row
+     *  (`class` is merged explicitly in the render, so spreading it here
+     *  too would merge the host's classes twice). Anything else — a
+     *  `title`, a `data-*`, a stray `id` — stays off the row: the cells
+     *  carry the attributes. */
     const rootAttrs = computed(() => {
-      const source = attrs as { class?: unknown; style?: unknown };
+      const source = attrs as { style?: unknown };
       return {
-        class: (source.class ?? undefined) as string | string[] | undefined,
         style: (source.style ?? undefined) as string | Record<string, string> | undefined,
       };
     });
@@ -188,6 +226,11 @@ export const HkOtpInput = defineComponent({
     });
 
     const cellInputs = ref<Array<HTMLInputElement | null>>([]);
+
+    /** Cell index a programmatic focus is heading for, consumed by the
+     *  focus handler so it can tell "we moved the caret there" from
+     *  "the user navigated there" (see focusCell / onCellFocus). */
+    const programmaticFocus = ref<number | null>(null);
 
     /** Cells seeded from the incoming value — a prefilled code (a retry
      *  after a rejected attempt, a code handed over by the host) must be
@@ -222,10 +265,16 @@ export const HkOtpInput = defineComponent({
      *  (the tail cell of a filled row, a cell the typed run already
      *  filled) with an expanded caret leaves that digit highlighted, and
      *  the next keystroke would silently replace it instead of filling
-     *  the empty cell ahead. */
+     *  the empty cell ahead.
+     *
+     *  `programmaticFocus` is what makes that hold: focusing fires a real
+     *  focus event, and the focus handler's own select-on-entry default
+     *  would otherwise re-expand the caret right after this call asked it
+     *  not to. */
     function focusCell(index: number, select = false) {
       const el = cellInputs.value[index];
       if (!el) return;
+      programmaticFocus.value = index;
       el.focus();
       if (select) el.select();
     }
@@ -261,33 +310,143 @@ export const HkOtpInput = defineComponent({
       }
     }
 
-    /** Keep the cells in step with a caller-driven `modelValue` (a retry
-     *  clearing the field, a code prefilled from the URL, a paste the host
-     *  normalized itself). An identical recomposition is a no-op, so our
-     *  own emits never bounce back into an extra render or focus jump. */
+    /** Keep the cells in step with a caller-driven `modelValue`. The
+     *  incoming value is sanitized and filtered on the way in, so a host
+     *  that holds the raw shape ("123 456", a value longer than the row)
+     *  is told what the field actually holds instead of silently
+     *  disagreeing with it. An identical recomposition is a no-op. */
     watch(
       () => props.modelValue,
-      (raw) => {
-        const text = sanitizeCode(String(raw ?? ""), props.alphanumeric);
-        if (text === valueArray.value.join("")) {
-          lastEmitted = text.slice(0, cellCount.value);
-          return;
-        }
-        lastEmitted = text.slice(0, cellCount.value);
-        valueArray.value = seedCells(text, cellCount.value);
-      },
+      (raw) => applyIncoming(raw),
     );
 
     /** `length` shrinking must not strand characters in removed cells. */
-    watch(cellCount, (n) => {
-      if (valueArray.value.length === n) return;
-      valueArray.value = seedCells(valueArray.value.join(""), n);
+    watch(cellCount, () => {
+      applyIncoming(valueArray.value.join(""));
     });
 
-    function onCellFocus(e: FocusEvent) {
-      const el = e.target as HTMLInputElement;
-      if (el.selectionStart === el.selectionEnd) el.select();
-      emit("focus", e);
+    /** Switching `alphanumeric` at runtime changes the field's alphabet,
+     *  so cells holding a now-rejected character are re-filtered rather
+     *  than left on screen under an inputmode that promises otherwise. */
+    watch(
+      () => props.alphanumeric,
+      () => {
+        applyIncoming(valueArray.value.join(""));
+      },
+    );
+
+    /** Adopt a caller-driven value: sanitize, filter, clamp to the row,
+     *  then publish. Emits only when the field's value actually differs
+     *  from what the caller passed — a well-behaved caller's exact value
+     *  must not bounce back as a spurious update. */
+    function applyIncoming(raw: unknown) {
+      const rawText = String(raw ?? "");
+      const text = sanitizeCode(rawText, props.alphanumeric);
+      const chars = seedCells(text, cellCount.value);
+      const joined = chars.join("");
+      lastEmitted = joined;
+      if (joined !== valueArray.value.join("")) valueArray.value = chars;
+      if (joined !== rawText) emit("update:modelValue", joined);
+    }
+
+    // ── glyph fit ─────────────────────────────────────────────────────
+    // The row shrinks its cells to fit any container (see the stylesheet),
+    // and a fixed font size would then overflow a shrunken cell. CSS
+    // cannot scale the glyph by the cell's own width — a container cannot
+    // query itself, and the cells have no children to query against — so
+    // the row MEASURES one cell and publishes the glyph size it can hold.
+    // The ramp keeps final say: it bounds the fit through
+    // --hk-otp-font-size (so a host can also pin the glyph outright).
+    const rowEl = ref<HTMLElement | null>(null);
+    let fitObserver: ResizeObserver | null = null;
+
+    /** Fraction of the cell's width the glyph may occupy, and the floor a
+     *  fit never shrinks below (a smaller digit stops being legible well
+     *  before it stops fitting). */
+    const FIT_RATIO = 0.55;
+    const FIT_MIN_PX = 11;
+    /** Fallback ceiling for a cell whose ramp value does not resolve (a
+     *  host that loaded this sheet without the canonical scale root). */
+    const FIT_MAX_PX = 24;
+
+    function fitGlyph(measuredWidth?: number) {
+      const row = rowEl.value;
+      const cell = row?.firstElementChild;
+      if (!row || !(cell instanceof HTMLElement)) return;
+      // `measuredWidth` is the seam the unit tests use: a DOM without a
+      // layout engine reports every box as 0, so the arithmetic has to be
+      // reachable without one. `offsetWidth` is the fallback for engines
+      // that lay out but do not implement getBoundingClientRect.
+      const width = measuredWidth ?? (cell.getBoundingClientRect().width || cell.offsetWidth);
+      if (!width) return;
+
+      const styles = getComputedStyle(cell);
+      // A host may pin the glyph outright on the wrapper: an absolute
+      // length there wins over the fit, so no fit is published at all.
+      const wrapper = row.parentElement;
+      if (wrapper) {
+        const pinned = parseCssLength(
+          getComputedStyle(wrapper).getPropertyValue("--hk-otp-font-size"),
+        );
+        if (pinned) return;
+      }
+
+      // Both bounds are read as COMPUTED PX through the probe, never with
+      // `parseFloat` on the raw custom property: `parseFloat("1.25rem")`
+      // is 1.25, and 1.25 is not a pixel count — the first version of
+      // this function clamped every glyph to ~1px that way, and the
+      // second wrote the rem NUMBER as px and rendered 320px digits.
+      const ceiling = probeCssLength(styles.getPropertyValue("--hk-otp-font-max")) ?? FIT_MAX_PX;
+      const fitted = Math.min(ceiling, Math.max(FIT_MIN_PX, width * FIT_RATIO));
+      const published = `${fitted.toFixed(1)}px`;
+      // Only touch the DOM when the value actually moves: this function is
+      // driven by a ResizeObserver on the cells, and writing a custom
+      // property that the cells' own font depends on is exactly the kind
+      // of edit that can keep a layout loop alive.
+      if (row.style.getPropertyValue(FITTED_FONT_VAR) !== published) {
+        row.style.setProperty(FITTED_FONT_VAR, published);
+      }
+    }
+
+    /** Watch the CELLS, not the row: `length` can change without the row's
+     *  own box moving, and it is the cell's width the glyph follows. */
+    function bindRow(el: unknown) {
+      const node = (el as HTMLElement | null) ?? null;
+      fitObserver?.disconnect();
+      fitObserver = null;
+      rowEl.value = node;
+      if (!node) return;
+      fitGlyph();
+      if (typeof ResizeObserver === "undefined") return;
+      // The observer hands over entries; the fit reads the live box instead.
+      fitObserver = new ResizeObserver(() => fitGlyph());
+      for (const cell of Array.from(node.children)) fitObserver.observe(cell);
+    }
+
+    onBeforeUnmount(() => {
+      fitObserver?.disconnect();
+      fitObserver = null;
+    });
+
+    watch([cellCount, () => props.size], () => {
+      void nextTick(() => bindRow(rowEl.value));
+    });
+
+    /** Focus arriving on a cell with a glyph in it selects that glyph, so
+     *  keyboard/AT navigation and a click both land ready-to-replace.
+     *
+     *  A focus this component asked for is exempt: `focusCell(…, false)`
+     *  is the forward-advance path (typing, pasting), where an expanded
+     *  caret would leave the just-written digit highlighted and turn the
+     *  next keystroke into a silent rewrite. The exemption is consumed on
+     *  arrival — a later user click on that same cell is a normal focus
+     *  and selects again. */
+    function onCellFocus(event: FocusEvent, index: number) {
+      const el = event.target as HTMLInputElement;
+      const programmatic = programmaticFocus.value === index;
+      programmaticFocus.value = null;
+      if (!programmatic && el.selectionStart === el.selectionEnd) el.select();
+      emit("focus", event);
     }
 
     function onCellInput(index: number, e: Event) {
@@ -343,7 +502,14 @@ export const HkOtpInput = defineComponent({
     }
 
     function onCellKeydown(index: number, e: KeyboardEvent) {
-      if (e.isComposing) return;
+      if (e.isComposing) {
+        // Composition keystrokes are the IME's, not the field's — but the
+        // host asked for every keydown (chat-style composers distinguish
+        // Enter from Shift+Enter themselves), so the event is forwarded
+        // BEFORE the early return rather than swallowed.
+        emit("keydown", e);
+        return;
+      }
       const key = e.key;
 
       if (key === "Backspace") {
@@ -399,6 +565,14 @@ export const HkOtpInput = defineComponent({
     }
 
     onMounted(() => {
+      // A host whose stored value is not a clean code (over-long, or
+      // carrying characters this field never accepts) is told once, at
+      // mount, what the field actually holds — the watcher only covers
+      // changes that arrive later. A well-behaved caller hears nothing.
+      const rawAtMount = String(props.modelValue ?? "");
+      if (valueArray.value.join("") !== rawAtMount) {
+        emit("update:modelValue", valueArray.value.join(""));
+      }
       if (!props.autofocus) return;
       void nextTick(() => focusCell(nextEmptyIndex()));
     });
@@ -419,6 +593,9 @@ export const HkOtpInput = defineComponent({
       props.readonly ? "hk-otp-readonly" : "",
     ]);
 
+    // The fit is exposed so a unit test can drive it with a measurement of
+    // its own (see fitGlyph); the browser asserts the real geometry.
+    expose({ fitGlyph });
     return () => {
       const n = cellCount.value;
       // Glue cell AFTER which the split gap opens (5 of 6 → "123 | 456").
@@ -454,7 +631,7 @@ export const HkOtpInput = defineComponent({
             {...forwardedAttrs.value}
             onInput={(e: Event) => onCellInput(index, e)}
             onPaste={(e: ClipboardEvent) => onCellPaste(index, e)}
-            onFocus={(e: FocusEvent) => onCellFocus(e)}
+            onFocus={(e: FocusEvent) => onCellFocus(e, index)}
             onBlur={(e: FocusEvent) => emit("blur", e)}
             onKeydown={(e: KeyboardEvent) => onCellKeydown(index, e)}
           />,
@@ -488,6 +665,7 @@ export const HkOtpInput = defineComponent({
             // inherited off (the wrapper must not wear them), so anything
             // not consumed here has to be forwarded explicitly — the
             // cells below take the rest.
+            ref={bindRow}
             {...rootAttrs.value}
             class={[groupClass.value, attrs.class]}
             role="group"

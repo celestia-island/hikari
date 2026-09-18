@@ -219,6 +219,26 @@ export default defineComponent({
       type: String as PropType<PrintPaper>,
       default: "auto" as PrintPaper,
     },
+
+    // ── Gesture & animation upgrades ─────────────────────────────
+
+    /** Camera tween duration in ms (0 disables tweening). `fit()` and
+     *  `tweenCamera()` animate over this duration with ease-out cubic.
+     *  Snaps instantly when prefers-reduced-motion is active and
+     *  `respectReducedMotion` is on (default). */
+    tweenMs: { type: Number, default: 0 },
+    /** Two-finger pinch-to-zoom on touch devices. */
+    pinchable: { type: Boolean, default: true },
+    /** Snap tweens when prefers-reduced-motion is active (default). */
+    respectReducedMotion: { type: Boolean, default: true },
+    /** DPI scale provider: maps pointer coordinates to drawn coordinates.
+     *  Needed when the canvas is inside a CSS `zoom` or `transform: scale()`
+     *  container — pointer events report unscaled page coordinates but the
+     *  camera measures the canvas's own pixels. */
+    pointerScale: {
+      type: Function as PropType<(() => { x: number; y: number }) | undefined>,
+      default: undefined,
+    },
   },
   emits: ["update:camera"],
   setup(props, { slots, emit, expose }) {
@@ -236,6 +256,27 @@ export default defineComponent({
     } | null = null;
     /** Set by setCamera (gestures and imperative calls) — never by `fit`. */
     let movedByHand = false;
+
+    // ── Pinch-to-zoom state ──────────────────────────────────────
+    /** Active pointers for pinch tracking (pointerId → screen position). */
+    const activePointers = new Map<number, { x: number; y: number }>();
+    /** Pinch gesture snapshot: start distance/zoom/midpoint for the ratio. */
+    let pinchSnapshot: {
+      startDist: number;
+      startZoom: number;
+      midX: number;
+      midY: number;
+    } | null = null;
+
+    // ── Camera tween state ───────────────────────────────────────
+    let tweenRaf: number | null = null;
+
+    // ── Motion constraints ───────────────────────────────────────
+    const reducedMotion = computed(() => {
+      if (!props.respectReducedMotion) return false;
+      return typeof window !== "undefined"
+        && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    });
 
     // ── Canvas2D painter layer ───────────────────────────────────
     const canvasEl = shallowRef<HTMLCanvasElement | null>(null);
@@ -495,6 +536,11 @@ export default defineComponent({
     }
 
     function onPointerDown(event: PointerEvent) {
+      // When a pinch is live, cancel any single-pointer pan.
+      if (pinchSnapshot !== null) {
+        panning = null;
+        return;
+      }
       if (!props.pannable || event.button !== 0) return;
       // A host that drags its own nodes suppresses the pan by preventing the
       // default on its card's pointerdown: the root listens in the bubble
@@ -517,6 +563,7 @@ export default defineComponent({
       ) {
         return;
       }
+      trackPointer(event);
       panning = {
         pointerId: event.pointerId,
         x: event.clientX,
@@ -535,6 +582,14 @@ export default defineComponent({
     }
 
     function onPointerMove(event: PointerEvent) {
+      // Update pinch tracking when a tracked pointer moves.
+      if (activePointers.has(event.pointerId)) {
+        activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pinchSnapshot !== null) {
+          updatePinch();
+          return;
+        }
+      }
       if (!panning || event.pointerId !== panning.pointerId) return;
       // The gesture is only captured once it passes the slop, so a release that
       // happens outside the canvas never reaches this element. Without this the
@@ -567,6 +622,8 @@ export default defineComponent({
     }
 
     function endPan(event: PointerEvent) {
+      endPointerTracking(event);
+      if (pinchSnapshot !== null) return;
       if (!panning || event.pointerId !== panning.pointerId) return;
       const pointerId = panning.pointerId;
       panning = null;
@@ -668,6 +725,7 @@ export default defineComponent({
     );
 
     onBeforeUnmount(() => {
+      cancelTween();
       stopFrameLoop();
       ro?.disconnect();
       ro = null;
@@ -820,6 +878,97 @@ export default defineComponent({
       return copy;
     }
 
+    // ── Pinch-to-zoom ────────────────────────────────────────────
+
+    /** Track active pointers for pinch detection. */
+    function trackPointer(event: PointerEvent): void {
+      activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (
+        props.pinchable
+        && !props.printMode
+        && activePointers.size === 2
+        && pinchSnapshot === null
+      ) {
+        const [a, b] = [...activePointers.values()];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        pinchSnapshot = {
+          startDist: Math.hypot(dx, dy),
+          startZoom: camera.value.k,
+          midX: (a.x + b.x) / 2,
+          midY: (a.y + b.y) / 2,
+        };
+      }
+    }
+
+    /** Update pinch zoom from current pointer positions. */
+    function updatePinch(): void {
+      if (!pinchSnapshot || activePointers.size < 2) return;
+      const [a, b] = [...activePointers.values()];
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      if (pinchSnapshot.startDist < 1) return;
+      const ratio = dist / pinchSnapshot.startDist;
+      const targetK = normalizeZoom(pinchSnapshot.startZoom * ratio);
+      // Zoom anchored at the pinch midpoint.
+      const rect = rootEl.value?.getBoundingClientRect();
+      if (!rect) return;
+      const scale = props.pointerScale?.() ?? { x: 1, y: 1 };
+      const midX = ((pinchSnapshot.midX - rect.left) / scale.x);
+      const midY = ((pinchSnapshot.midY - rect.top) / scale.y);
+      const cam = camera.value;
+      const k = targetK;
+      const x = midX - ((midX - cam.x) * k) / cam.k;
+      const y = midY - ((midY - cam.y) * k) / cam.k;
+      setCamera({ k, x, y });
+    }
+
+    /** End pinch tracking when a pointer lifts. */
+    function endPointerTracking(event: PointerEvent): void {
+      activePointers.delete(event.pointerId);
+      if (activePointers.size < 2) {
+        pinchSnapshot = null;
+      }
+    }
+
+    // ── Camera tween ─────────────────────────────────────────────
+
+    /** Cancel any running tween. */
+    function cancelTween(): void {
+      if (tweenRaf !== null) {
+        cancelAnimationFrame(tweenRaf);
+        tweenRaf = null;
+      }
+    }
+
+    /** Animate the camera to a target over `tweenMs`, or snap if
+     *  reduced-motion is active or tweenMs is 0. */
+    function tweenCamera(target: NodeCanvasCamera, durationMs?: number): void {
+      cancelTween();
+      const ms = durationMs ?? props.tweenMs;
+      if (ms <= 0 || reducedMotion.value) {
+        setCamera(target);
+        return;
+      }
+      const start = { ...camera.value };
+      const startTime = performance.now();
+
+      const step = (now: number) => {
+        const t = Math.min((now - startTime) / ms, 1);
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        setCamera({
+          k: start.k + (target.k - start.k) * eased,
+          x: start.x + (target.x - start.x) * eased,
+          y: start.y + (target.y - start.y) * eased,
+        });
+        if (t < 1) {
+          tweenRaf = requestAnimationFrame(step);
+        } else {
+          tweenRaf = null;
+        }
+      };
+      tweenRaf = requestAnimationFrame(step);
+    }
+
     expose({
       camera,
       viewport,
@@ -829,6 +978,7 @@ export default defineComponent({
       screenToWorld,
       worldToScreen,
       setCamera,
+      tweenCamera,
       // ── New: rendering base capabilities ──
       levelOfDetail,
       registerPainter,

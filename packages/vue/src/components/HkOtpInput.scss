@@ -89,7 +89,13 @@
   padding: 0;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--radius-sm, 4px);
+  /* --radius-md on purpose: the cells are large, prominent elements
+   * (48px at the md ramp), and at the small档's 4px they read as sharp
+   * rectangles next to every other control on the auth card (user
+   * report on the deployed step-up panel). The theme's radius LEVELS
+   * (chest's html[data-radius]) still rule — this only switches which
+   * level the cells follow. */
+  border-radius: var(--radius-md, 8px);
   outline: none;
   appearance: none;
   -webkit-appearance: none;

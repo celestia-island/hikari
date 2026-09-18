@@ -146,6 +146,38 @@ describe("HkOtpInput structure", () => {
     expect(label.textContent).toContain("验证码");
   });
 
+  it("wires a bare label to the generated first-cell id", async () => {
+    // No id prop: the label must still be a live caption (`for` pointing
+    // at the first cell), not a dead one.
+    const otp = mountOtp({ label: "验证码" });
+    await nextTick();
+    const label = otp.container.querySelector("label.hk-otp-label")!;
+    const first = otp.cells()[0]!;
+    expect(first.id).not.toBe("");
+    expect(label.getAttribute("for")).toBe(first.id);
+    // The caption also names the group.
+    expect(otp.container.querySelector(".hk-otp")!.getAttribute("aria-label")).toBe("验证码");
+  });
+
+  it("hands host class and style to the row, not to the wrapper", async () => {
+    // The geometry hooks (--hk-otp-cell-size …) are only reachable if a
+    // host `style` lands on the row; `inheritAttrs:false` makes that
+    // forwarding the component's job, and a silently-dropped style is how
+    // those hooks die.
+    const otp = mountOtp({
+      class: "host-row-class",
+      style: "--hk-otp-cell-size: 40px",
+      "data-testid": "otp",
+    });
+    await nextTick();
+    const row = otp.container.querySelector(".hk-otp")!;
+    expect(row.classList.contains("host-row-class")).toBe(true);
+    expect(row.getAttribute("style")).toContain("--hk-otp-cell-size: 40px");
+    expect(row.classList.contains("hk-otp-md")).toBe(true);
+    // …while the component's own classes stay on the wrapper.
+    expect(otp.container.querySelector(".hk-otp-wrapper")!.getAttribute("class")).toBe("hk-otp-wrapper");
+  });
+
   it("forwards host attributes to the cells", async () => {
     const otp = mountOtp({ "data-testid": "otp", autocomplete: "off" });
     await nextTick();
@@ -183,6 +215,24 @@ describe("HkOtpInput typing", () => {
     await nextTick();
     expect(otp.model.value).toBe("");
     expect(cells[0]!.value).toBe("");
+  });
+
+  it("restores an occupied cell when the rejected keystroke overwrote it", async () => {
+    // The rejected-input path only survives because it re-assigns the
+    // cells array: `el.value = ""` alone fixes an EMPTY cell, but when the
+    // browser had already painted the rejected character over an existing
+    // digit (selected glyph + keystroke), the array identity change is what
+    // forces Vue to patch the DOM back to the stored digit.
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cell = otp.cells()[0]!;
+    cell.focus();
+    cell.select();
+    cell.value = "a"; // the browser's paint of the rejected keystroke
+    cell.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(cell.value).toBe("1");
+    expect(otp.model.value).toBe("123");
   });
 
   it("accepts letters when alphanumeric is on", async () => {
@@ -295,6 +345,23 @@ describe("HkOtpInput editing", () => {
     );
     await nextTick();
     expect(otp.model.value).toBe("13456");
+    // The composed value alone CANNOT see the difference between a local
+    // clear and a left-shift — ["1","","3","4","5","6"] and
+    // ["1","3","4","5","6",""] both join to "13456". Pin the cells.
+    expect(otp.rendered()).toEqual(["1", "", "3", "4", "5", "6"]);
+  });
+
+  it("claims the Backspace and Delete keystrokes, leaving no DOM delete", async () => {
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cells = otp.cells();
+    for (const [index, key] of [[0, "Backspace"], [1, "Delete"]] as const) {
+      const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      cells[index]!.dispatchEvent(event);
+      expect(event.defaultPrevented, `${key} must be claimed`).toBe(true);
+    }
+    await nextTick();
+    expect(otp.rendered().slice(0, 3)).toEqual(["", "", "3"]);
   });
 
   it("walks the row with the arrow keys and Home/End", async () => {
@@ -452,6 +519,69 @@ describe("HkOtpInput external value", () => {
     otp.model.value = "123456";
     await nextTick();
     expect(otp.rendered()).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("strips separators out of an external value instead of storing them", async () => {
+    // A host that hands over the raw SMS shape must not end up with a
+    // space or a hyphen living in a cell: the row would display it and
+    // re-emit it as part of the code.
+    const spaced = mountOtp({ modelValue: "123 456" });
+    await nextTick();
+    expect(spaced.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
+    const dashed = mountOtp({ modelValue: "12-34-56" });
+    await nextTick();
+    expect(dashed.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
+    const dotted = mountOtp({ modelValue: "12.34_56\u00a0789" });
+    await nextTick();
+    expect(dotted.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+  });
+
+  it("filters an external value through the same alphabet as typing", async () => {
+    const digits = mountOtp({ modelValue: "12a34" });
+    await nextTick();
+    expect(digits.rendered()).toEqual(["1", "2", "3", "4", "", ""]);
+
+    const alpha = mountOtp({ alphanumeric: true, modelValue: "1a-2b!!3c" });
+    await nextTick();
+    expect(alpha.rendered()).toEqual(["1", "a", "2", "b", "3", "c"]);
+  });
+
+  it("clamps the row width to a renderable range", async () => {
+    const zero = mountOtp({ length: 0 });
+    await nextTick();
+    expect(zero.cells()).toHaveLength(1);
+
+    const negative = mountOtp({ length: -3 });
+    await nextTick();
+    expect(negative.cells()).toHaveLength(1);
+
+    const fractional = mountOtp({ length: 4.7 });
+    await nextTick();
+    expect(fractional.cells()).toHaveLength(4);
+
+    const huge = mountOtp({ length: 1000 });
+    await nextTick();
+    expect(huge.cells()).toHaveLength(12);
+
+    const nan = mountOtp({ length: Number.NaN });
+    await nextTick();
+    expect(nan.cells()).toHaveLength(6);
+  });
+
+  it("keeps surrogate pairs intact when an emoji is pasted in", async () => {
+    const otp = mountOtp({ alphanumeric: true, length: 4 });
+    await nextTick();
+    otp.paste(0, "😀1a");
+    await nextTick();
+    // The emoji is two UTF-16 units: it must be dropped WHOLE, never cut
+    // into lone surrogates that then occupy two cells.
+    expect(otp.rendered().slice(0, 2)).toEqual(["1", "a"]);
+    for (const ch of otp.rendered()) {
+      expect(ch.length).toBeLessThanOrEqual(1);
+      expect(/[\uD800-\uDBFF]/.test(ch) && ch.length === 1).toBe(false);
+    }
   });
 
   it("drops stranded characters when the row shrinks", async () => {

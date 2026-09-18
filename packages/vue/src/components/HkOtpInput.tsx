@@ -15,11 +15,27 @@ import "./HkOtpInput.scss";
 /** One cell's character, or "" while the code is still short. */
 type CellChar = string;
 
-/** A cell's characters the human way: leading/trailing whitespace dropped
- *  and commas (the JS `.length` spread hazard) collapsed — a pasted
- *  "123, 456" is a 6-digit code, not a 7-char one. */
+/** A code the human way: commas are collapsed and whitespace trimmed (the
+ *  JS `.length` spread hazard), and the separators pasted codes arrive
+ *  wrapped in - spaces, hyphens, tabs, newlines, NBSP - are dropped. What
+ *  survives is what the cells will display. */
 function sanitizeText(raw: string): string {
-  return raw.replace(/,/g, "").replace(/\s+/g, " ").trim();
+  return raw
+    .replace(/,/g, "")
+    .replace(/[\s\-–—_.]+/g, "")
+    .trim();
+}
+
+/** A caller-fed value is taken as the code (separators aside), so it must
+ *  not smuggle characters the field would never accept into a cell: the
+ *  cells and `modelValue` stay in step only when both sides hold the same
+ *  alphabet. Filtering here is what makes a host's `"12a34"` display the
+ *  same code the field itself would have produced from it. */
+function sanitizeCode(raw: string, alphanumeric: boolean): string {
+  const pattern = charPattern(alphanumeric);
+  return splitChars(sanitizeText(raw))
+    .filter((c) => pattern.test(c))
+    .join("");
 }
 
 /** The character class this instance accepts (see `alphanumeric`). */
@@ -65,7 +81,14 @@ function splitChars(value: string): string[] {
  *   host can wire "submit as soon as the 6th digit lands" with one prop.
  * - Everything typed is filtered: digits only by default, or
  *   `[0-9A-Za-z]` with `alphanumeric` (case is the caller's business —
- *   the component neither upper- nor lower-cases the value).
+ *   the component neither upper- nor lower-cases the value). A caller-fed
+ *   `modelValue` is taken as the code verbatim (separators aside): filter
+ *   it yourself if you store something else, because cells display what
+ *   they are given rather than re-projecting the value.
+ * - The row never overflows the box it is given: the size ramp is a
+ *   ceiling, and the cells shrink together (keeping their square shape,
+ *   and their glyph scaling with them) when the container is narrower
+ *   than `length` x ramp.
  *
  * Keyboard/AT contract:
  * - The cells form one `role="group"` carrying `aria-label` (or the
@@ -113,7 +136,11 @@ export const HkOtpInput = defineComponent({
     autoSubmit: { type: Boolean, default: false },
     /** Accessible name for the row (falls back to `label`). */
     ariaLabel: { type: String, default: undefined },
-    /** Per-cell accessible name; `{index}` is replaced by the 1-based position. */
+    /**
+     * Per-cell accessible name — a function of the 1-based position, so a
+     * localized host can return `t("auth.mfa.cell", { n })` and a
+     * digits-only host can keep the "Digit N" default.
+     */
     cellAriaLabel: {
       type: Function as PropType<(index: number) => string>,
       default: undefined,
@@ -131,16 +158,34 @@ export const HkOtpInput = defineComponent({
     const attrs = useAttrs();
 
     /** DOM attributes (autocomplete, data-*, aria-*, tests' id hooks) ride
-     *  every cell; `class`/`style` stay the root's — the same split HkInput
-     *  makes between its shell and its field element. */
+     *  every cell; `class`/`style` ride the ROW instead (see the render
+     *  below), which is the same split HkInput makes between its wrapper
+     *  and its field element. */
     const forwardedAttrs = computed(() => {
       const { class: _class, style: _style, ...rest } = attrs as Record<string, unknown>;
       return rest;
     });
 
-    const cellCount = computed(() =>
-      Math.max(1, Math.min(12, Math.floor(Number(props.length) || 6))),
-    );
+    /** The other half of that split: only `class` / `style` belong on the
+     *  row. Anything else (a `title`, a `data-*`) is already on the cells,
+     *  and a stray `id` must not land on the row as well. */
+    const rootAttrs = computed(() => {
+      const source = attrs as { class?: unknown; style?: unknown };
+      return {
+        class: (source.class ?? undefined) as string | string[] | undefined,
+        style: (source.style ?? undefined) as string | Record<string, string> | undefined,
+      };
+    });
+
+    /** Cell count, clamped to the range the row can actually render: at
+     *  least 1 (a zero-cell field is not a field) and at most 12 (the row
+     *  stops being readable past a dozen cells at the narrowest card).
+     *  A non-numeric `length` falls back to the 6-digit default. */
+    const cellCount = computed(() => {
+      const requested = Number(props.length);
+      if (!Number.isFinite(requested)) return 6;
+      return Math.max(1, Math.min(12, Math.floor(requested)));
+    });
 
     const cellInputs = ref<Array<HTMLInputElement | null>>([]);
 
@@ -148,7 +193,7 @@ export const HkOtpInput = defineComponent({
      *  after a rejected attempt, a code handed over by the host) must be
      *  on screen at first paint, not only after the next emit. */
     function seedCells(raw: unknown, count: number): CellChar[] {
-      const chars = splitChars(sanitizeText(String(raw ?? ""))).slice(0, count);
+      const chars = splitChars(sanitizeCode(String(raw ?? ""), props.alphanumeric)).slice(0, count);
       while (chars.length < count) chars.push("");
       return chars;
     }
@@ -223,7 +268,7 @@ export const HkOtpInput = defineComponent({
     watch(
       () => props.modelValue,
       (raw) => {
-        const text = sanitizeText(String(raw ?? ""));
+        const text = sanitizeCode(String(raw ?? ""), props.alphanumeric);
         if (text === valueArray.value.join("")) {
           lastEmitted = text.slice(0, cellCount.value);
           return;
@@ -426,13 +471,25 @@ export const HkOtpInput = defineComponent({
           {props.label && (
             <label
               class="hk-otp-label"
-              for={props.id ? firstCellId.value : undefined}
+              // Always wired: the first cell always has an id (explicit or
+              // generated), so the caption focuses the row on click even
+              // when the caller passed no id — a `for`-less label is a
+              // dead caption (HkInput wires `props.id ?? generatedId` too).
+              for={firstCellId.value}
             >
               {props.label}
             </label>
           )}
           <div
-            class={groupClass.value}
+            // Host `class` / `style` land HERE, on the row: that is what
+            // makes the documented geometry hooks reachable as
+            // `style="--hk-otp-cell-size: 40px"`, and what lets a utility
+            // host layer its own class on the row box. `$attrs` are
+            // inherited off (the wrapper must not wear them), so anything
+            // not consumed here has to be forwarded explicitly — the
+            // cells below take the rest.
+            {...rootAttrs.value}
+            class={[groupClass.value, attrs.class]}
             role="group"
             aria-label={props.ariaLabel || props.label || undefined}
             aria-describedby={props.hint && !props.error ? hintId : undefined}

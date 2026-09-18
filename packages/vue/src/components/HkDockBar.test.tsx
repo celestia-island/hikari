@@ -169,6 +169,21 @@ describe("HkDockBar anchor geometry contract", () => {
     expect(plane).not.toContain("position: absolute");
   });
 
+  it("consumes the size custom properties on every anchor via the base surface rule", () => {
+    // The anchor-agnostic base surface rule is the ONLY SCSS consumer of
+    // the size props for page/top/bottom/plane/corner docks — only the
+    // vertical side anchors get the viewport-aware cap override below.
+    // The style-hook tests above pin that the custom properties are set;
+    // this pins that the base rule still consumes them, so maxWidth /
+    // maxHeight cannot silently stop working off-side.
+    const base = scss.match(/\.hk-dock-bar-surface\s*\{[^}]*\}/)?.[0];
+    expect(base, "base surface rule must exist").toBeTruthy();
+    expect(base).toContain("width: var(--dock-width, auto)");
+    expect(base).toContain("max-width: var(--dock-max-width");
+    expect(base).toContain("max-height: var(--dock-max-height, none)");
+    expect(base).toContain("padding: var(--dock-padding");
+  });
+
   it("caps vertical side docks viewport-aware by default", () => {
     const sideCap = scss.match(
       /\.hk-dock-bar\[data-anchor="left"\] \.hk-dock-bar-surface[^{]*\{[^}]*\}/,

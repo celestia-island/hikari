@@ -105,8 +105,6 @@ export interface NodeCanvasEdge {
   width?: number;
   /** Dashed line. */
   dashed?: boolean;
-  /** Animated flow direction (arrow/pulse along the path). */
-  animated?: boolean;
 }
 
 // ── Edge Geometry (pure functions) ───────────────────────────────────────

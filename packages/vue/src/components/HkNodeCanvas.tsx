@@ -767,8 +767,9 @@ export default defineComponent({
 
     // ── Print / Export ───────────────────────────────────────────
 
-    /** Export the SVG edge layer + a snapshot of the DOM layer as an
-     *  SVG element. Useful for print-mode output and documentation. */
+    /** Export the edge layer as an SVG element (nodes are NOT included —
+     *  hosts that need node content in the export should compose it
+     *  separately). Useful for print-mode output and documentation. */
     function exportSVG(): SVGElement {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       const paper = PAPER_SIZES[props.printPaper];

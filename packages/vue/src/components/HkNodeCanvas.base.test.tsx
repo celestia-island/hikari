@@ -22,7 +22,7 @@ const CanvasHost = defineComponent({
   props: {
     edges: { type: Array, default: () => [] },
     printMode: { type: Boolean, default: false },
-    printPaper: { type: String, default: "auto" },
+    printPaper: { type: String as () => "a4-landscape" | "a3-landscape" | "auto", default: "auto" },
     minimap: { type: Boolean, default: false },
   },
   setup(props) {
@@ -67,12 +67,23 @@ describe("HkNodeCanvas rendering base upgrades", () => {
       expect(path).toBe("M 0 0 L 100 50");
     });
 
-    it("generates a bezier edge path with control points", () => {
+    it("generates a bezier edge path with correct control points", () => {
       const path = edgePath(
         { from: { x: 0, y: 0 }, to: { x: 200, y: 100 } },
         "bezier",
       );
-      expect(path).toMatch(/^M 0 0 C \d+ 0, \d+ 100, 200 100$/);
+      // cp = max(|dx| * 0.4, 40) = max(80, 40) = 80
+      // C (from.x+80) from.y, (to.x-80) to.y, to.x to.y
+      expect(path).toBe("M 0 0 C 80 0, 120 100, 200 100");
+    });
+
+    it("uses minimum control point offset for short edges", () => {
+      // dx = 50 → cp = max(20, 40) = 40 (minimum kicks in)
+      const path = edgePath(
+        { from: { x: 0, y: 0 }, to: { x: 50, y: 0 } },
+        "bezier",
+      );
+      expect(path).toBe("M 0 0 C 40 0, 10 0, 50 0");
     });
 
     it("generates an orthogonal (manhattan) edge path", () => {
@@ -160,15 +171,16 @@ describe("HkNodeCanvas rendering base upgrades", () => {
       const exposed: Record<string, unknown> = {};
       const Host = defineComponent({
         setup() {
-          const canvasRef = ref<InstanceType<typeof HkNodeCanvas> | null>(null);
+          const canvasRef = ref<unknown>(null);
           const check = () => {
-            if (canvasRef.value) {
+            const vm = canvasRef.value as Record<string, unknown> | null;
+            if (vm) {
               Object.assign(exposed, {
-                levelOfDetail: canvasRef.value.levelOfDetail,
-                registerPainter: canvasRef.value.registerPainter,
-                unregisterPainter: canvasRef.value.unregisterPainter,
-                exportSVG: canvasRef.value.exportSVG,
-                exportPNG: canvasRef.value.exportPNG,
+                levelOfDetail: vm.levelOfDetail,
+                registerPainter: vm.registerPainter,
+                unregisterPainter: vm.unregisterPainter,
+                exportSVG: vm.exportSVG,
+                exportPNG: vm.exportPNG,
               });
             }
           };

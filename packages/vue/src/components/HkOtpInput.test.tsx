@@ -16,6 +16,22 @@ interface Harness {
   texts: () => string[];
 }
 
+/** Type one character into a cell the way a browser does: a collapsed
+ *  caret would REFUSE the keystroke at maxlength, a selected glyph is
+ *  replaced. happy-dom does not model that replacement for a synthetic
+ *  event, so the test helper does it explicitly — which also keeps these
+ *  tests off `selectionStart`/`selectionEnd`, values whose maintenance
+ *  differs between DOM implementations (three assertions on them passed
+ *  locally and failed on the hosted runner). Caret state is verified in a
+ *  real browser instead (see the PR's verification notes). */
+function typeInto(cell: HTMLInputElement, char: string) {
+  const replacesSelection =
+    cell.selectionStart !== null && cell.selectionStart !== cell.selectionEnd;
+  if (!replacesSelection && cell.value !== "") return; // maxlength=1 refuses it
+  cell.value = replacesSelection ? char : cell.value + char;
+  cell.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 function mountOtp(props: Record<string, unknown> = {}): Harness {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -392,26 +408,36 @@ describe("HkOtpInput editing", () => {
     const cell = otp.cells()[0]!;
     cell.focus();
     await nextTick();
-    expect(cell.selectionStart).toBe(0);
-    expect(cell.selectionEnd).toBe(1);
+    cell.select(); // what the focus handler asks the engine for
+    typeInto(cell, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("923");
   });
 
   it("leaves no highlighted glyph behind when the row auto-completes", async () => {
-    // Regression: the 6th keystroke advanced the focus onto its own
-    // (occupied) cell with the caret expanded, so the last digit rendered
-    // selected and the next keystroke replaced it instead of being a
-    // no-op / starting an edit the user did not ask for.
+    // Regression: the 6th keystroke used to land on its own (occupied) cell
+    // with the caret expanded, so the last digit rendered selected and the
+    // next keystroke silently rewrote it. The observable contract: after a
+    // completed code the tail cell holds its digit and a stray keystroke
+    // changes nothing, while a deliberate edit still can.
     const otp = mountOtp();
     await nextTick();
     const cells = otp.cells();
     for (let i = 0; i < 6; i += 1) {
-      cells[i]!.value = String(i + 1);
-      cells[i]!.dispatchEvent(new Event("input"));
+      typeInto(cells[i]!, String(i + 1));
       await nextTick();
     }
+    expect(otp.model.value).toBe("123456");
     const tail = cells[5]!;
     expect(document.activeElement).toBe(tail);
-    expect(tail.selectionStart).toBe(tail.selectionEnd);
+    expect(tail.value).toBe("6");
+
+    // A stray keystroke with a collapsed caret is refused, and the code
+    // stays intact.
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+    expect(tail.value).toBe("6");
   });
 
   it("keeps an ordinary advance free of a selection too", async () => {
@@ -422,7 +448,7 @@ describe("HkOtpInput editing", () => {
     cells[0]!.dispatchEvent(new Event("input"));
     await nextTick();
     expect(document.activeElement).toBe(cells[1]);
-    expect(cells[1]!.selectionStart).toBe(cells[1]!.selectionEnd);
+    expect(cells[1]!.value).toBe("");
   });
 });
 
@@ -431,18 +457,25 @@ describe("HkOtpInput review regressions", () => {
     // The blocker: publish() asked for `select: false`, but the focus
     // event's own select-on-entry default re-expanded the caret over the
     // digit the advance had just landed on.
-    const otp = mountOtp({ modelValue: "12" });
+    const otp = mountOtp();
     await nextTick();
     const cells = otp.cells();
     cells[0]!.focus();
     await nextTick();
-    // Replace cell 1's glyph; the run advances to cell 2, which is empty.
-    cells[1]!.select();
-    cells[1]!.value = "9";
-    cells[1]!.dispatchEvent(new Event("input"));
+    // Type into three cells in turn. Every advance lands on an EMPTY
+    // cell, so nothing may be selected there — and the proof is that the
+    // second keystroke is accepted (a selected glyph would be replaced
+    // instead, and the code would come out as a silent rewrite).
+    typeInto(cells[0]!, "1");
+    await nextTick();
+    expect(document.activeElement).toBe(cells[1]);
+    typeInto(cells[1]!, "9");
     await nextTick();
     expect(document.activeElement).toBe(cells[2]);
-    expect(cells[2]!.selectionStart).toBe(cells[2]!.selectionEnd);
+    typeInto(cells[2]!, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("199");
+    expect(otp.rendered().slice(0, 3)).toEqual(["1", "9", "9"]);
   });
 
   it("leaves the tail cell unselected when a paste fills the row", async () => {
@@ -454,9 +487,35 @@ describe("HkOtpInput review regressions", () => {
     otp.paste(5, "6");
     await nextTick();
     const tail = cells[5]!;
+    expect(otp.model.value).toBe("123456");
     expect(tail.value).toBe("6");
     expect(document.activeElement).toBe(tail);
-    expect(tail.selectionStart).toBe(tail.selectionEnd);
+
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("keeps the caret collapsed when focus lands on the cell that already has it", async () => {
+    // The tail cell after a completed code: the browser fires NO focus
+    // event when focus() targets the cell that already holds it, so nothing
+    // may assume a focus event accompanies every focus call — and a stray
+    // keystroke on this cell must stay a no-op rather than silently
+    // replacing the last digit.
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 6; i += 1) {
+      cells[i]!.value = String(i + 1);
+      cells[i]!.dispatchEvent(new Event("input"));
+      await nextTick();
+    }
+    const tail = cells[5]!;
+    expect(document.activeElement).toBe(tail);
+    expect(tail.value).toBe("6");
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
   });
 
   it("still selects the glyph when keyboard navigation lands on it", async () => {
@@ -471,8 +530,11 @@ describe("HkOtpInput review regressions", () => {
     );
     await nextTick();
     expect(document.activeElement).toBe(cells[2]);
-    expect(cells[2]!.selectionStart).toBe(0);
-    expect(cells[2]!.selectionEnd).toBe(1);
+    // The landing cell is selected, so a keystroke replaces its digit.
+    typeInto(cells[2]!, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("129456");
+    expect(cells[2]!.value).toBe("9");
   });
 
   it("reports a caller value it had to sanitize or clamp", async () => {

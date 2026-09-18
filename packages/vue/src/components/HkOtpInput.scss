@@ -1,0 +1,231 @@
+@use "../tokens";
+
+/* ── HkOtpInput — one cell per character ─────────────────────────────
+ * A thin row of `.hk-otp-cell` inputs, styled from the same shell
+ * vocabulary as HkInput (55%-surface fill, 14% text border, focus ring
+ * on the focused cell) so a code field and a text field sit together
+ * without looking like two design systems.
+ *
+ * L3 hooks carry every geometric knob, so a host can resize the row
+ * without touching the library:
+ *   --hk-otp-cell-size   cell width AND height
+ *   --hk-otp-font-size   pin the character's size outright
+ *   --hk-otp-font-max    cap the fitted glyph (set by the size ramps)
+ *   --hk-otp-gap         gap between cells
+ *   --hk-otp-gap-group   gap at the `separated` split
+ * The two font knobs are deliberately separate: `-font-size` wins the
+ * cascade outright (the cell's font chain reads it first), while
+ * `-font-max` is the ramp's ceiling the measured fit clamps under — the
+ * fit keeps publishing either way, so releasing a pin needs no event.
+ * The size classes are written as complete rule sets (not as deltas over
+ * a shared base) on purpose: a `var()` chain whose fallback resolves
+ * through an UNSET custom property is invalid at computed-value time, so
+ * a ramp declares its cell size, its gap and its font fallback together.
+ *
+ * Which declarations carry a literal fallback today: the CELL box (width,
+ * min-height, radius, durations, easings, the font family and the font
+ * size chain), the label and the two messages. The RAMPS' own font values
+ * deliberately consume the scale tokens without a literal — they are the
+ * design's intended sizes, and a host that loaded this sheet alone still
+ * gets a correctly sized row through the fitted-font chain in the cell.
+ *
+ * Token note: the scale family consumed here (--space-*, --text-*,
+ * --radius-*, --duration-*, --ease-*) lives in the canonical scale root,
+ * which ships through the `@celestia-island/hikari/styles` aggregate —
+ * this sheet `@use`s only ../tokens (the color channels), like every
+ * other component sheet. A host that loads ONE component sheet in
+ * isolation therefore gets the color tokens but not the scale ones.
+ */
+
+.hk-otp-wrapper {
+  display: block;
+  width: 100%;
+}
+
+.hk-otp-label {
+  display: block;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-4, 0.25rem);
+  color: rgb(var(--color-text) / var(--hk-field-label-alpha, 72%));
+}
+
+.hk-otp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+/* The `separated` split (123 456): a slot that only widens the gap, so
+ * the two groups keep the row's own centering. */
+.hk-otp-gap {
+  flex: none;
+  width: calc(var(--hk-otp-gap-group, 1rem) - var(--hk-otp-gap, 0.5rem));
+}
+
+.hk-otp-cell {
+  /* Self-declared box model — the cells' centering must not depend on a
+   * host reset (same precedent as HkInput's element). */
+  box-sizing: border-box;
+  /* The ramp size is a CEILING, not a fixed width: with shrink enabled
+   * and a 0 floor the row always fits the box it is given, so a card
+   * narrower than N x ramp (eight cells in a 290px column, six cells in a
+   * phone card) shrinks the cells instead of overflowing the card and
+   * hiding the hint beside them. `aspect-ratio` keeps them square as they
+   * shrink; `max-width` keeps them from growing past the ramp when the
+   * row is wider than it needs. */
+  flex: 0 1 auto;
+  width: var(--hk-otp-cell-size, 3rem);
+  max-width: var(--hk-otp-cell-size, 3rem);
+  min-width: 0;
+  /* Without this the cells keep an automatic minimum HEIGHT and the square
+   * breaks once the width shrinks past the content height (12 cells in a
+   * 340px card render 17.67 x 26 without it). */
+  min-height: 0;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  /* Three levels, most specific first:
+   *   1. --hk-otp-font-size — a host pinning the glyph outright.
+   *   2. --hk-otp-fitted-font — published PER ROW by the component from a
+   *      measurement of one cell (see the glyph-fit block in the tsx):
+   *      CSS cannot size the glyph from the cell's own width, because a
+   *      container cannot query itself and an input has no children.
+   *   3. the literal — for a host that loaded this sheet without the
+   *      canonical scale root (see the header note).
+   * The ramps feed the fit through --hk-otp-font-max instead of writing
+   * here, so this property stays free of the fit's own output. */
+  font-size: var(--hk-otp-font-size, var(--hk-otp-fitted-font, 1.25rem));
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: rgb(var(--color-text));
+  caret-color: rgb(var(--color-primary));
+  transition-property: background-color, border-color, color, box-shadow, opacity;
+  transition-duration: var(--duration-normal, 0.3s);
+  transition-timing-function: var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+
+  /* `text` (not `none`): a drag inside a cell still selects its glyph for
+   * the keyboard-replace path, while a stray triple-click selection never
+   * bleeds across the visual gaps the cells do not actually have. */
+  user-select: text;
+
+  /* `:not(:focus)` is load-bearing, not decoration: the hover selector
+   * weighs (0,4,0) against `:focus`'s (0,2,0), so without the exclusion a
+   * focused cell under the pointer painted the HOVER border over the
+   * focus border (the focus box-shadow survived, which is exactly why it
+   * read as a near-miss rather than an obvious bug). */
+  &:hover:not(:focus):not(:disabled):not(:read-only) {
+    border-color: var(--c-primary-strong);
+  }
+
+  &:focus {
+    border-color: rgb(var(--color-focused-border));
+    box-shadow: var(--shadow-focus);
+    background: rgb(var(--color-surface));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:read-only {
+    cursor: default;
+  }
+
+  /* Chromium's autofill paint would otherwise flood the cell with the
+   * UA's own yellow/blue and hide the theme surface. */
+  &:-webkit-autofill {
+    -webkit-text-fill-color: rgb(var(--color-text));
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset;
+  }
+}
+
+/* Size ramps: the cell box and its type scale move together. */
+.hk-otp-sm {
+  --hk-otp-cell-size: 2.25rem;
+  --hk-otp-font-max: var(--text-base);
+  gap: var(--hk-otp-gap, 0.375rem);
+}
+
+.hk-otp-md {
+  --hk-otp-cell-size: 3rem;
+  --hk-otp-font-max: var(--text-xl);
+  gap: var(--hk-otp-gap, 0.5rem);
+}
+
+.hk-otp-lg {
+  --hk-otp-cell-size: 3.5rem;
+  --hk-otp-font-max: var(--text-2xl);
+  gap: var(--hk-otp-gap, 0.625rem);
+}
+
+.hk-otp-disabled {
+  opacity: 0.6;
+}
+
+.hk-otp-error .hk-otp-cell {
+  border-color: var(--c-error-strong);
+}
+
+.hk-otp-error .hk-otp-cell:focus {
+  border-color: rgb(var(--color-error));
+  box-shadow: var(--shadow-focus-error);
+}
+
+.hk-otp-error-msg {
+  margin: var(--space-6, 0.375rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-error));
+}
+
+.hk-otp-hint {
+  margin: var(--space-6, 0.375rem) 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+}
+
+/* Narrow viewports: shrink the ramps a step so a phone card shows the row
+ * at its intended pitch rather than at whatever the shrink-to-fit
+ * arithmetic lands on. (The cells would fit either way — this is about
+ * proportion, not overflow: a six-cell row in a 340px card measures ~40px
+ * per cell at this ramp and ~41px from the flexible shrink.) */
+@media (max-width: 480px) {
+  .hk-otp-sm {
+    --hk-otp-cell-size: 2rem;
+    gap: var(--hk-otp-gap, 0.3125rem);
+  }
+
+  .hk-otp-md {
+    --hk-otp-cell-size: 2.5rem;
+    --hk-otp-font-max: var(--text-lg);
+    gap: var(--hk-otp-gap, 0.375rem);
+  }
+
+  .hk-otp-lg {
+    --hk-otp-cell-size: 2.75rem;
+    --hk-otp-font-max: var(--text-xl);
+    gap: var(--hk-otp-gap, 0.5rem);
+  }
+
+  .hk-otp-gap {
+    width: calc(var(--hk-otp-gap-group, 0.75rem) - var(--hk-otp-gap, 0.375rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-otp-cell {
+    transition: none;
+  }
+}

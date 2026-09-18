@@ -1,0 +1,1044 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
+
+import { HkOtpInput } from "./HkOtpInput";
+
+const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+
+interface Harness {
+  container: HTMLElement;
+  model: { value: string };
+  cells: () => HTMLInputElement[];
+  emitted: () => string[];
+  /** Paste text into one cell through a real ClipboardEvent. */
+  paste: (index: number, text: string) => void;
+  rendered: () => string[];
+  texts: () => string[];
+  /** Drive the row's glyph fit with a measurement of the test's own. */
+  fitGlyph: (width: number) => void;
+}
+
+/** Type one character into a cell the way a browser does: a collapsed
+ *  caret would REFUSE the keystroke at maxlength, a selected glyph is
+ *  replaced. happy-dom does not model that replacement for a synthetic
+ *  event, so the test helper does it explicitly — which also keeps these
+ *  tests off `selectionStart`/`selectionEnd`, values whose maintenance
+ *  differs between DOM implementations (three assertions on them passed
+ *  locally and failed on the hosted runner). Caret state is verified in a
+ *  real browser instead (see the PR's verification notes). */
+function typeInto(cell: HTMLInputElement, char: string) {
+  const replacesSelection =
+    cell.selectionStart !== null && cell.selectionStart !== cell.selectionEnd;
+  if (!replacesSelection && cell.value !== "") return; // maxlength=1 refuses it
+  cell.value = replacesSelection ? char : cell.value + char;
+  cell.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function mountOtp(props: Record<string, unknown> = {}): Harness {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  const model = ref(String(props.modelValue ?? ""));
+  const updates: string[] = [];
+  const exposed = ref<{ fitGlyph: (width?: number) => void } | null>(null);
+  const Wrapper = defineComponent({
+    setup() {
+      return () =>
+        h(HkOtpInput, {
+          ...props,
+          ref: (el: unknown) => {
+            exposed.value = el as never;
+          },
+          modelValue: model.value,
+          "onUpdate:modelValue": (v: string) => {
+            updates.push(v);
+            model.value = v;
+          },
+        });
+    },
+  });
+  const app = createApp(Wrapper);
+  app.mount(container);
+  mounts.push({ app, container });
+
+  const cells = () => Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell"));
+  const emitted = () => updates.slice();
+
+  return {
+    container,
+    model,
+    cells,
+    emitted,
+    // The component exposes its fit for tests; happy-dom has no layout, so
+    // every fit assertion drives it with an explicit measurement.
+    fitGlyph: (width: number) => exposed.value!.fitGlyph(width),
+    rendered: () => cells().map((c) => c.value),
+    texts: () => cells().map((c) => c.value),
+    paste: (index: number, text: string) => {
+      const dt = new DataTransfer();
+      dt.setData("text", text);
+      cells()[index]!.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }),
+      );
+    },
+  };
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  while (mounts.length > 0) {
+    const { app, container } = mounts.pop()!;
+    app.unmount();
+    container.remove();
+  }
+});
+
+describe("HkOtpInput structure", () => {
+  it("renders one single-character cell per length", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    expect(otp.cells()).toHaveLength(6);
+    expect(otp.cells()[0]!.getAttribute("maxlength")).toBe("1");
+    expect(otp.container.querySelector(".hk-otp")!.getAttribute("class")).toContain("hk-otp-md");
+  });
+
+  it("honors a custom cell count", async () => {
+    const otp = mountOtp({ length: 4 });
+    await nextTick();
+    expect(otp.cells()).toHaveLength(4);
+  });
+
+  it("names the row as one group for assistive tech", async () => {
+    const otp = mountOtp({ ariaLabel: "验证码" });
+    await nextTick();
+    const group = otp.container.querySelector(".hk-otp")!;
+    expect(group.getAttribute("role")).toBe("group");
+    expect(group.getAttribute("aria-label")).toBe("验证码");
+    // Per-cell names stay positional and default without caller effort.
+    expect(otp.cells()[0]!.getAttribute("aria-label")).toBe("Digit 1");
+    expect(otp.cells()[5]!.getAttribute("aria-label")).toBe("Digit 6");
+  });
+
+  it("lets the caller rename the cells", async () => {
+    const otp = mountOtp({ cellAriaLabel: (i: number) => `第 ${i} 位` });
+    await nextTick();
+    expect(otp.cells()[2]!.getAttribute("aria-label")).toBe("第 3 位");
+  });
+
+  it("advertises one-time-code on the first cell only", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    expect(otp.cells()[0]!.getAttribute("autocomplete")).toBe("one-time-code");
+    expect(otp.cells()[0]!.getAttribute("inputmode")).toBe("numeric");
+    expect(otp.cells()[1]!.getAttribute("autocomplete")).toBe("off");
+  });
+
+  it("opens the split slot only when the row divides evenly", async () => {
+    const even = mountOtp({ separated: true });
+    await nextTick();
+    expect(even.container.querySelectorAll(".hk-otp-gap")).toHaveLength(1);
+    // The slot sits between cell 3 and cell 4 — the "123 456" shape.
+    const children = Array.from(even.container.querySelector(".hk-otp")!.children);
+    expect(children[3]!.classList.contains("hk-otp-gap")).toBe(true);
+
+    const odd = mountOtp({ separated: true, length: 5 });
+    await nextTick();
+    expect(odd.container.querySelectorAll(".hk-otp-gap")).toHaveLength(0);
+  });
+
+  it("announces errors and describes the row with the hint", async () => {
+    const errored = mountOtp({ error: "验证码不正确" });
+    await nextTick();
+    expect(errored.container.querySelector(".hk-otp")!.classList.contains("hk-otp-error")).toBe(true);
+    expect(errored.cells()[0]!.getAttribute("aria-invalid")).toBe("true");
+    const alert = errored.container.querySelector(".hk-otp-error-msg")!;
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("验证码不正确");
+
+    const hinted = mountOtp({ hint: "6 位数字", ariaLabel: "code" });
+    await nextTick();
+    const group = hinted.container.querySelector(".hk-otp")!;
+    const hint = hinted.container.querySelector(".hk-otp-hint")!;
+    expect(group.getAttribute("aria-describedby")).toBe(hint.id);
+    expect(hint.id).not.toBe("");
+  });
+
+  it("keeps an explicit id and points the label at it", async () => {
+    const otp = mountOtp({ id: "mfa-code", label: "验证码" });
+    await nextTick();
+    expect(otp.cells()[0]!.id).toBe("mfa-code");
+    const label = otp.container.querySelector("label.hk-otp-label")!;
+    expect(label.getAttribute("for")).toBe("mfa-code");
+    expect(label.textContent).toContain("验证码");
+  });
+
+  it("wires a bare label to the generated first-cell id", async () => {
+    // No id prop: the label must still be a live caption (`for` pointing
+    // at the first cell), not a dead one.
+    const otp = mountOtp({ label: "验证码" });
+    await nextTick();
+    const label = otp.container.querySelector("label.hk-otp-label")!;
+    const first = otp.cells()[0]!;
+    expect(first.id).not.toBe("");
+    expect(label.getAttribute("for")).toBe(first.id);
+    // The caption also names the group.
+    expect(otp.container.querySelector(".hk-otp")!.getAttribute("aria-label")).toBe("验证码");
+  });
+
+  it("hands host class and style to the row, not to the wrapper", async () => {
+    // The geometry hooks (--hk-otp-cell-size …) are only reachable if a
+    // host `style` lands on the row; `inheritAttrs:false` makes that
+    // forwarding the component's job, and a silently-dropped style is how
+    // those hooks die.
+    const otp = mountOtp({
+      class: "host-row-class",
+      style: "--hk-otp-cell-size: 40px",
+      "data-testid": "otp",
+    });
+    await nextTick();
+    const row = otp.container.querySelector(".hk-otp")!;
+    expect(row.classList.contains("host-row-class")).toBe(true);
+    expect(row.getAttribute("style")).toContain("--hk-otp-cell-size: 40px");
+    expect(row.classList.contains("hk-otp-md")).toBe(true);
+    // …while the component's own classes stay on the wrapper.
+    expect(otp.container.querySelector(".hk-otp-wrapper")!.getAttribute("class")).toBe("hk-otp-wrapper");
+  });
+
+  it("forwards host attributes to the cells", async () => {
+    const otp = mountOtp({ "data-testid": "otp", autocomplete: "off" });
+    await nextTick();
+    expect(otp.cells()[0]!.getAttribute("data-testid")).toBe("otp");
+    expect(otp.cells()[3]!.getAttribute("data-testid")).toBe("otp");
+    // A host-supplied attribute lands after ours: it wins.
+    expect(otp.cells()[0]!.getAttribute("autocomplete")).toBe("off");
+  });
+});
+
+describe("HkOtpInput typing", () => {
+  it("composes the code and advances the caret", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "1";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("1");
+    expect(document.activeElement).toBe(cells[1]);
+
+    cells[1]!.value = "2";
+    cells[1]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("12");
+    expect(document.activeElement).toBe(cells[2]);
+  });
+
+  it("drops characters the field does not accept", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "a";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("");
+    expect(cells[0]!.value).toBe("");
+  });
+
+  it("restores an occupied cell when the rejected keystroke overwrote it", async () => {
+    // The rejected-input path only survives because it re-assigns the
+    // cells array: `el.value = ""` alone fixes an EMPTY cell, but when the
+    // browser had already painted the rejected character over an existing
+    // digit (selected glyph + keystroke), the array identity change is what
+    // forces Vue to patch the DOM back to the stored digit.
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cell = otp.cells()[0]!;
+    cell.focus();
+    cell.select();
+    cell.value = "a"; // the browser's paint of the rejected keystroke
+    cell.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(cell.value).toBe("1");
+    expect(otp.model.value).toBe("123");
+  });
+
+  it("accepts letters when alphanumeric is on", async () => {
+    const otp = mountOtp({ alphanumeric: true, length: 4 });
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "a";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("a");
+    expect(cells[0]!.getAttribute("inputmode")).toBe("text");
+    expect(cells[0]!.hasAttribute("maxlength")).toBe(false);
+  });
+
+  it("spreads a multi-character input (autofill, IME) across the row", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "1234";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("1234");
+    expect(document.activeElement).toBe(cells[4]);
+  });
+
+  it("fires complete once the row fills, and not again while it stays full", async () => {
+    const onComplete = vi.fn();
+    const otp = mountOtp({ onComplete });
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 6; i += 1) {
+      cells[i]!.value = String(i + 1);
+      cells[i]!.dispatchEvent(new Event("input"));
+      await nextTick();
+    }
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith("123456");
+
+    // Editing one cell of a full code must not re-fire the event: the
+    // host would submit twice for one keystroke.
+    cells[2]!.value = "9";
+    cells[2]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(otp.model.value).toBe("129456");
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("auto-submits on the filling keystroke only", async () => {
+    const submit = vi.fn();
+    const otp = mountOtp({ autoSubmit: true, submitOnEnter: submit, length: 4 });
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 4; i += 1) {
+      cells[i]!.value = String(i + 1);
+      cells[i]!.dispatchEvent(new Event("input"));
+      await nextTick();
+    }
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(otp.model.value).toBe("1234");
+  });
+
+  it("submits on Enter", async () => {
+    const submit = vi.fn();
+    const otp = mountOtp({ submitOnEnter: submit });
+    await nextTick();
+    otp.cells()[0]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("HkOtpInput editing", () => {
+  it("steps back and clears the previous cell on an empty-cell Backspace", async () => {
+    const otp = mountOtp({ modelValue: "12" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[2]!.focus();
+    await nextTick();
+    cells[2]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Backspace", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(otp.model.value).toBe("1");
+    expect(otp.rendered().slice(0, 3)).toEqual(["1", "", ""]);
+    expect(document.activeElement).toBe(cells[1]);
+  });
+
+  it("clears the current cell in place when it holds a character", async () => {
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[1]!.focus();
+    await nextTick();
+    cells[1]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Backspace", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(otp.model.value).toBe("13");
+    expect(document.activeElement).toBe(cells[1]);
+  });
+
+  it("deletes forward without shifting the remaining digits", async () => {
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[1]!.focus();
+    cells[1]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Delete", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(otp.model.value).toBe("13456");
+    // The composed value alone CANNOT see the difference between a local
+    // clear and a left-shift — ["1","","3","4","5","6"] and
+    // ["1","3","4","5","6",""] both join to "13456". Pin the cells.
+    expect(otp.rendered()).toEqual(["1", "", "3", "4", "5", "6"]);
+  });
+
+  it("claims the Backspace and Delete keystrokes, leaving no DOM delete", async () => {
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cells = otp.cells();
+    for (const [index, key] of [[0, "Backspace"], [1, "Delete"]] as const) {
+      const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      cells[index]!.dispatchEvent(event);
+      expect(event.defaultPrevented, `${key} must be claimed`).toBe(true);
+    }
+    await nextTick();
+    expect(otp.rendered().slice(0, 3)).toEqual(["", "", "3"]);
+  });
+
+  it("walks the row with the arrow keys and Home/End", async () => {
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[2]!.focus();
+    const press = (key: string) =>
+      cells[2]!.dispatchEvent(
+        new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+      );
+
+    press("ArrowLeft");
+    expect(document.activeElement).toBe(cells[1]);
+    cells[1]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(cells[2]);
+    press("Home");
+    expect(document.activeElement).toBe(cells[0]);
+    press("End");
+    expect(document.activeElement).toBe(cells[5]);
+  });
+
+  it("selects the current glyph so the next keystroke replaces it", async () => {
+    const otp = mountOtp({ modelValue: "123" });
+    await nextTick();
+    const cell = otp.cells()[0]!;
+    cell.focus();
+    await nextTick();
+    cell.select(); // what the focus handler asks the engine for
+    typeInto(cell, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("923");
+  });
+
+  it("leaves no highlighted glyph behind when the row auto-completes", async () => {
+    // The 6th keystroke must not leave its own (occupied) cell selected,
+    // or the last digit renders highlighted and the next keystroke
+    // silently rewrites it. The observable contract: after a
+    // completed code the tail cell holds its digit and a stray keystroke
+    // changes nothing, while a deliberate edit still can.
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 6; i += 1) {
+      typeInto(cells[i]!, String(i + 1));
+      await nextTick();
+    }
+    expect(otp.model.value).toBe("123456");
+    const tail = cells[5]!;
+    expect(document.activeElement).toBe(tail);
+    expect(tail.value).toBe("6");
+
+    // A stray keystroke with a collapsed caret is refused, and the code
+    // stays intact.
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+    expect(tail.value).toBe("6");
+  });
+
+  it("keeps an ordinary advance free of a selection too", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "1";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(document.activeElement).toBe(cells[1]);
+    expect(cells[1]!.value).toBe("");
+  });
+});
+
+describe("HkOtpInput review regressions", () => {
+  it("leaves the landing cell unselected on a plain forward advance", async () => {
+    // A forward advance must not select: publish() asks for
+    // `select: false`, and the focus event's own select-on-entry default
+    // used to re-expand the caret over the digit just landed on.
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.focus();
+    await nextTick();
+    // Type into three cells in turn. Every advance lands on an EMPTY
+    // cell, so nothing may be selected there — and the proof is that the
+    // second keystroke is accepted (a selected glyph would be replaced
+    // instead, and the code would come out as a silent rewrite).
+    typeInto(cells[0]!, "1");
+    await nextTick();
+    expect(document.activeElement).toBe(cells[1]);
+    typeInto(cells[1]!, "9");
+    await nextTick();
+    expect(document.activeElement).toBe(cells[2]);
+    typeInto(cells[2]!, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("199");
+    expect(otp.rendered().slice(0, 3)).toEqual(["1", "9", "9"]);
+  });
+
+  it("leaves the tail cell unselected when a paste fills the row", async () => {
+    // The same contract on the documented SMS-paste path: the paste lands
+    // on the tail (occupied) cell, so a stray keystroke must not rewrite
+    // it.
+    const otp = mountOtp({ modelValue: "12345" });
+    await nextTick();
+    const cells = otp.cells();
+    otp.paste(5, "6");
+    await nextTick();
+    const tail = cells[5]!;
+    expect(otp.model.value).toBe("123456");
+    expect(tail.value).toBe("6");
+    expect(document.activeElement).toBe(tail);
+
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("keeps the caret collapsed when focus lands on the cell that already has it", async () => {
+    // The tail cell after a completed code: the browser fires NO focus
+    // event when focus() targets the cell that already holds it, so nothing
+    // may assume a focus event accompanies every focus call — and a stray
+    // keystroke on this cell must stay a no-op rather than silently
+    // replacing the last digit.
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 6; i += 1) {
+      cells[i]!.value = String(i + 1);
+      cells[i]!.dispatchEvent(new Event("input"));
+      await nextTick();
+    }
+    const tail = cells[5]!;
+    expect(document.activeElement).toBe(tail);
+    expect(tail.value).toBe("6");
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("still selects the glyph when keyboard navigation lands on it", async () => {
+    // The exemption must not disarm deliberate navigation: arrows select
+    // the landing cell so the next keystroke replaces it.
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[3]!.focus();
+    cells[3]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(document.activeElement).toBe(cells[2]);
+    // The landing cell is selected, so a keystroke replaces its digit.
+    typeInto(cells[2]!, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("129456");
+    expect(cells[2]!.value).toBe("9");
+  });
+
+  it("reports a caller value it had to sanitize or clamp", async () => {
+    const otp = mountOtp({ length: 4, modelValue: "123456" });
+    await nextTick();
+    expect(otp.rendered()).toEqual(["1", "2", "3", "4"]);
+    // The host and the field must not disagree silently.
+    expect(otp.emitted()).toContain("1234");
+  });
+
+  it("emits nothing when the caller's value already is the field value", async () => {
+    const otp = mountOtp({ modelValue: "1234" });
+    await nextTick();
+    expect(otp.emitted()).toEqual([]);
+  });
+
+  it("re-filters loaded cells when the alphabet flips at runtime", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const alpha = ref(true);
+    const App = defineComponent({
+      setup() {
+        return () => h(HkOtpInput, { alphanumeric: alpha.value, modelValue: "a1b2c3" });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    const read = () =>
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value);
+    expect(read()).toEqual(["a", "1", "b", "2", "c", "3"]);
+
+    alpha.value = false;
+    await nextTick();
+    // Letters the new mode rejects must leave the cells, not linger under
+    // an inputmode that promises digits only.
+    expect(read()).toEqual(["1", "2", "3", "", "", ""]);
+    expect(
+      container.querySelector(".hk-otp-cell")!.getAttribute("inputmode"),
+    ).toBe("numeric");
+  });
+
+  it("fits the glyph to a measured cell, under the ramp's ceiling", async () => {
+    // happy-dom has no layout engine (every box measures 0), so the fit
+    // arithmetic is driven through its measurement seam and the callbacks
+    // are read off the vnode props; the real geometry is asserted in the
+    // browser verification, not here.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const instance = ref<{ fitGlyph: (w?: number) => void } | null>(null);
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            ref: (el: unknown) => {
+              instance.value = el as never;
+            },
+            size: "md",
+            modelValue: "123456",
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+
+    const row = container.querySelector<HTMLElement>(".hk-otp")!;
+    expect(typeof instance.value?.fitGlyph).toBe("function");
+
+    // A cell too narrow to be measured at all publishes nothing.
+    instance.value!.fitGlyph(0);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("");
+
+    instance.value!.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // The floor keeps a 20px cell's glyph legible…
+    instance.value!.fitGlyph(20);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("11.0px");
+
+    // …and the ceiling stops a very wide cell from inflating it past the
+    // ramp (24px is the fallback cap when the ramp var does not resolve).
+    instance.value!.fitGlyph(200);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("24.0px");
+  });
+
+  it("caps the fit under a pin instead of standing down", async () => {
+    // A pin still wins where it is declared (`--hk-otp-font-size` precedes
+    // `--hk-otp-fitted-font` in the cell's font chain), but the fit keeps
+    // publishing — a stand-down was state that only an event this component
+    // never receives could refresh, so removing a pin left the row on the
+    // ramp literal (Chromium: a 20px glyph clipped inside a 13px cell).
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // The documented route: an inline `style` pin, which lands on the row.
+    row.style.setProperty("--hk-otp-font-size", "14px");
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("14.0px");
+
+    // Releasing the pin gives the ruled size back.
+    row.style.removeProperty("--hk-otp-font-size");
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+  });
+
+  it("re-fits on its own when a pin appears or disappears on the wrapper", async () => {
+    // The published value must track the pin WITHOUT any box change and
+    // without a re-render: neither the ResizeObserver nor a host render
+    // fires for a bare `style` mutation on the wrapper, so the component
+    // watches for it itself. happy-dom reports every box as 0, which would
+    // make the watcher's own `fitGlyph()` early-return — so the box is
+    // stubbed, and the assertions below deliberately make NO direct
+    // `fitGlyph` call: the watcher alone must move the published value
+    // (deleting the watcher, or watching the wrong attribute, turns this
+    // test red).
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40,
+               x: 0, y: 0, toJSON: () => ({}) }) as DOMRect,
+    );
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+    const wrapper = otp.container.querySelector<HTMLElement>(".hk-otp-wrapper")!;
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    wrapper.style.setProperty("--hk-otp-font-size", "12px");
+    await new Promise((r) => setTimeout(r, 40));
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("12.0px");
+
+    wrapper.style.removeProperty("--hk-otp-font-size");
+    await new Promise((r) => setTimeout(r, 40));
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+  });
+
+  it("always publishes a fit, even while a pin is in force", async () => {
+    // The regression this pins: with a pin in force at mount the row used
+    // to publish NOTHING, and the removal of that pin (a host-side style
+    // mutation: no box change, no re-render) left the glyph on the literal
+    // forever. There is no such state any more.
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+    row.style.setProperty("--hk-otp-font-size", "30px");
+    otp.fitGlyph(15);
+    const pinnedValue = row.style.getPropertyValue("--hk-otp-fitted-font");
+    expect(pinnedValue).not.toBe("");
+    expect(pinnedValue).toBe("11.0px");
+
+    // …so releasing it needs no event at all: the value is already correct
+    // for the released state.
+    row.style.removeProperty("--hk-otp-font-size");
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("11.0px");
+  });
+
+  it("forwards keydown during composition instead of swallowing it", async () => {
+    const onKeydown = vi.fn();
+    const otp = mountOtp({ onKeydown });
+    await nextTick();
+    otp.cells()[0]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", isComposing: true, bubbles: true, cancelable: true }),
+    );
+    expect(onKeydown).toHaveBeenCalledTimes(1);
+    // …and a composing Enter is still not a submit.
+    expect(onKeydown.mock.calls[0]![0].isComposing).toBe(true);
+  });
+});
+
+describe("HkOtpInput focus marker and announce contracts", () => {
+  it("lets a user re-entering the tail of a completed code replace its digit", async () => {
+    // The 6th keystroke advances onto the tail cell WHILE IT ALREADY HOLDS
+    // FOCUS, so no focus event fires and a marker written unconditionally
+    // there would stay pending and disarm the next real arrival. Proven by
+    // the replacement: the arrival must select the digit for the keystroke
+    // to take its place (a collapsed caret refuses it at maxlength=1).
+    const otp = mountOtp();
+    await nextTick();
+    for (let i = 0; i < 6; i += 1) {
+      typeInto(otp.cells()[i]!, String(i + 1));
+      await nextTick();
+    }
+    expect(otp.model.value).toBe("123456");
+
+    const tail = otp.cells()[5]!;
+    tail.blur();
+    await nextTick();
+    tail.focus();
+    await nextTick();
+    typeInto(tail, "7");
+    await nextTick();
+    expect(otp.model.value).toBe("123457");
+  });
+
+  it("lets a user re-entering an advanced-to cell replace its digit", async () => {
+    // Every advance writes a marker for the cell it lands on; if the marker
+    // were never consumed, the FIRST later user arrival on that cell would
+    // match it and land unselected.
+    const otp = mountOtp();
+    await nextTick();
+    typeInto(otp.cells()[0]!, "1");
+    await nextTick();
+    typeInto(otp.cells()[1]!, "2");
+    await nextTick();
+    expect(otp.model.value).toBe("12");
+    expect(document.activeElement).toBe(otp.cells()[2]);
+
+    const target = otp.cells()[2]!;
+    target.blur();
+    await nextTick();
+    target.focus();
+    await nextTick();
+    typeInto(target, "9");
+    await nextTick();
+    expect(otp.model.value).toBe("129");
+  });
+
+  it("does not announce the caller's own value after a length change", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const model = ref("1234");
+    const length = ref(4);
+    const updates: string[] = [];
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            modelValue: model.value,
+            length: length.value,
+            "onUpdate:modelValue": (v: string) => {
+              updates.push(v);
+              model.value = v;
+            },
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    expect(updates).toEqual([]);
+
+    length.value = 6; // the row grows; the code itself did not change
+    await nextTick();
+    expect(
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value),
+    ).toEqual(["1", "2", "3", "4", "", ""]);
+    expect(updates).toEqual([]);
+  });
+
+  it("reports a caller value it had to sanitize after mount", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const model = ref("1234");
+    const updates: string[] = [];
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            modelValue: model.value,
+            "onUpdate:modelValue": (v: string) => {
+              updates.push(v);
+              model.value = v;
+            },
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    expect(updates).toEqual([]);
+
+    model.value = "1234 56"; // the raw SMS shape arrives after mount
+    await nextTick();
+    expect(
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value),
+    ).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(updates).toContain("123456");
+  });
+});
+
+describe("HkOtpInput paste", () => {
+  it("distributes a pasted code from the focused cell", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.cells()[0]!.focus();
+    otp.paste(0, "123456");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+    expect(otp.rendered().join("")).toBe("123456");
+  });
+
+  it("strips the separators SMS clients ship with", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.paste(0, "123 456");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("keeps only the accepted characters of a noisy paste", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.paste(0, "code: 12-34-56");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("truncates a paste longer than the row", async () => {
+    const otp = mountOtp({ length: 4 });
+    await nextTick();
+    otp.paste(0, "12345678");
+    await nextTick();
+    expect(otp.model.value).toBe("1234");
+  });
+
+  it("fills forward from the paste cell and truncates what overruns", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.paste(4, "5678");
+    await nextTick();
+    // Only cells 5 and 6 exist after the paste point: the clipboard is
+    // consumed left to right, so its tail is what gets dropped. (Nothing
+    // is shifted into earlier cells — a paste fills forward, it never
+    // rewrites characters the user did not touch.)
+    expect(otp.model.value).toBe("56");
+    expect(otp.rendered()).toEqual(["", "", "", "", "5", "6"]);
+  });
+
+  it("replaces the whole row when a full-length code lands on the first cell", async () => {
+    const otp = mountOtp({ modelValue: "999999" });
+    await nextTick();
+    otp.paste(0, "123456");
+    await nextTick();
+    expect(otp.model.value).toBe("123456");
+  });
+
+  it("leaves a paste with nothing usable to the browser", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const dt = new DataTransfer();
+    dt.setData("text", "no digits here");
+    const event = new ClipboardEvent("paste", {
+      clipboardData: dt,
+      bubbles: true,
+      cancelable: true,
+    });
+    otp.cells()[0]!.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(false);
+    expect(otp.model.value).toBe("");
+  });
+});
+
+describe("HkOtpInput external value", () => {
+  it("mirrors a caller-driven modelValue into the cells", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.model.value = "987654";
+    await nextTick();
+    expect(otp.rendered()).toEqual(["9", "8", "7", "6", "5", "4"]);
+
+    // The retry path: the host clears the code after a rejected attempt.
+    otp.model.value = "";
+    await nextTick();
+    expect(otp.rendered()).toEqual(["", "", "", "", "", ""]);
+  });
+
+  it("truncates an over-long external value to the row", async () => {
+    const otp = mountOtp({ length: 4 });
+    await nextTick();
+    otp.model.value = "123456";
+    await nextTick();
+    expect(otp.rendered()).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("strips separators out of an external value instead of storing them", async () => {
+    // A host that hands over the raw SMS shape must not end up with a
+    // space or a hyphen living in a cell: the row would display it and
+    // re-emit it as part of the code.
+    const spaced = mountOtp({ modelValue: "123 456" });
+    await nextTick();
+    expect(spaced.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
+    const dashed = mountOtp({ modelValue: "12-34-56" });
+    await nextTick();
+    expect(dashed.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+
+    const dotted = mountOtp({ modelValue: "12.34_56\u00a0789" });
+    await nextTick();
+    expect(dotted.rendered()).toEqual(["1", "2", "3", "4", "5", "6"]);
+  });
+
+  it("filters an external value through the same alphabet as typing", async () => {
+    const digits = mountOtp({ modelValue: "12a34" });
+    await nextTick();
+    expect(digits.rendered()).toEqual(["1", "2", "3", "4", "", ""]);
+
+    const alpha = mountOtp({ alphanumeric: true, modelValue: "1a-2b!!3c" });
+    await nextTick();
+    expect(alpha.rendered()).toEqual(["1", "a", "2", "b", "3", "c"]);
+  });
+
+  it("clamps the row width to a renderable range", async () => {
+    const zero = mountOtp({ length: 0 });
+    await nextTick();
+    expect(zero.cells()).toHaveLength(1);
+
+    const negative = mountOtp({ length: -3 });
+    await nextTick();
+    expect(negative.cells()).toHaveLength(1);
+
+    const fractional = mountOtp({ length: 4.7 });
+    await nextTick();
+    expect(fractional.cells()).toHaveLength(4);
+
+    const huge = mountOtp({ length: 1000 });
+    await nextTick();
+    expect(huge.cells()).toHaveLength(12);
+
+    const nan = mountOtp({ length: Number.NaN });
+    await nextTick();
+    expect(nan.cells()).toHaveLength(6);
+  });
+
+  it("keeps surrogate pairs intact when an emoji is pasted in", async () => {
+    const otp = mountOtp({ alphanumeric: true, length: 4 });
+    await nextTick();
+    otp.paste(0, "😀1a");
+    await nextTick();
+    // The emoji is two UTF-16 units: it must be dropped WHOLE, never cut
+    // into lone surrogates that then occupy two cells.
+    expect(otp.rendered().slice(0, 2)).toEqual(["1", "a"]);
+    for (const ch of otp.rendered()) {
+      expect(ch.length).toBeLessThanOrEqual(1);
+      expect(/[\uD800-\uDBFF]/.test(ch) && ch.length === 1).toBe(false);
+    }
+  });
+
+  it("drops stranded characters when the row shrinks", async () => {
+    // One mounted instance whose `length` shrinks under it (a host that
+    // flips 6 → 4 must not leave two characters living in removed cells).
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const len = ref(6);
+    const App = defineComponent({
+      setup() {
+        return () => h(HkOtpInput, { length: len.value, modelValue: "123456" });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    expect(container.querySelectorAll(".hk-otp-cell")).toHaveLength(6);
+
+    len.value = 4;
+    await nextTick();
+    const cells = Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell"));
+    expect(cells).toHaveLength(4);
+    expect(cells.map((c) => c.value)).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("autofocuses the first empty cell", async () => {
+    const otp = mountOtp({ autofocus: true, modelValue: "12" });
+    await nextTick();
+    await nextTick();
+    expect(document.activeElement).toBe(otp.cells()[2]);
+  });
+
+  it("stays inert while disabled or readonly", async () => {
+    const disabled = mountOtp({ disabled: true });
+    await nextTick();
+    expect(disabled.cells()[0]!.disabled).toBe(true);
+    expect(disabled.container.querySelector(".hk-otp")!.classList.contains("hk-otp-disabled")).toBe(true);
+
+    const readonly = mountOtp({ readonly: true });
+    await nextTick();
+    expect(readonly.cells()[0]!.readOnly).toBe(true);
+  });
+
+  it("spreads an emitted code into the cells the test can read back", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    otp.paste(0, "424242");
+    await nextTick();
+    expect(otp.emitted()).toContain("424242");
+    expect(otp.texts().join("")).toBe("424242");
+  });
+});

@@ -388,7 +388,8 @@ export const HkOtpInput = defineComponent({
     // query itself, and the cells have no children to query against — so
     // the row MEASURES one cell and publishes the glyph size it can hold.
     // The ramp keeps final say: it bounds the fit through
-    // --hk-otp-font-size (so a host can also pin the glyph outright).
+    // --hk-otp-font-max (while --hk-otp-font-size is the host's outright
+    // pin, which wins the cascade — see pinnedCeiling).
     const rowEl = ref<HTMLElement | null>(null);
     let fitObserver: ResizeObserver | null = null;
     let pinObserver: MutationObserver | null = null;

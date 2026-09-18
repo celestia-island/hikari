@@ -135,15 +135,14 @@ describe("RevealNoisePainter", () => {
   });
 });
 
-describe("FILTER_DRIFT_PX_S persistence floor", () => {
-  it("keeps the counter-drift fast enough for persistence reading", () => {
-    // The readability mechanism RELIES on speed: within one
-    // persistence-of-vision window (~100ms) the texture must keep
-    // crossing dot spacings (the mean spacing is ~7px — ~2 crossings
-    // at the 150 floor, several at the shipped 300) so the static
-    // aperture interiors time-average into near-solid glyphs (R1 F7,
-    // R3 wording note).
-    expect(FILTER_DRIFT_PX_S).toBeGreaterThanOrEqual(150);
+describe("FILTER_DRIFT_PX_S settled band", () => {
+  it("keeps the drift in the live-tuned moderate band", () => {
+    // 84 px/s is the live-tuned settled value: the 300px/s
+    // persistence experiment read WORSE live (no stable surface for
+    // the eye to bind) and was reverted — a silent re-raise must go
+    // red. The band allows small tuning without test edits (R1 F2).
+    expect(FILTER_DRIFT_PX_S).toBeGreaterThanOrEqual(60);
+    expect(FILTER_DRIFT_PX_S).toBeLessThanOrEqual(120);
   });
 });
 
@@ -192,17 +191,24 @@ describe("RevealFilterPainter", () => {
   it("drifts the two layers in OPPOSITE directions at equal speed", () => {
     // The segregation cue IS the 180° direction difference: a mutation
     // sending both layers the same way (or at unequal speeds) must go
-    // red here.
+    // red here. TWO probe combos whose real steps differ (42 and 21)
+    // so no single hardcoded step constant passes both (R1 F3: the
+    // old 0.25/2-only probe was blind to `const step = 42`).
     const p = new RevealFilterPainter();
     const rand = vi.spyOn(Math, "random").mockReturnValue(0.25); // driftSign = +1
     try {
       p.beginHold();
-      const before = p.peekDrift();
-      p.advance(0.25, 2);
-      const after = p.peekDrift();
-      const step = FILTER_DRIFT_PX_S * 2 * 0.25;
-      expect(after.background - before.background).toBeCloseTo(step, 10);
-      expect(after.ink - before.ink).toBeCloseTo(-step, 10);
+      for (const [dt, dpr] of [
+        [0.25, 2],
+        [0.125, 2],
+      ] as const) {
+        const before = p.peekDrift();
+        p.advance(dt, dpr);
+        const after = p.peekDrift();
+        const step = FILTER_DRIFT_PX_S * dpr * dt;
+        expect(after.background - before.background).toBeCloseTo(step, 10);
+        expect(after.ink - before.ink).toBeCloseTo(-step, 10);
+      }
     } finally {
       rand.mockRestore();
     }

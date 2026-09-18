@@ -396,21 +396,22 @@ export class RevealNoisePainter {
  * password glyphs are STATIC apertures carrying a SECOND spatter
  * texture — statistically identical (same generator, dot size and
  * lightness distribution) but drifting the OPPOSITE way and shifted by
- * a small brightening lightness pedestal (white-on-black reading),
+ * a large brightening lightness pedestal (live-tuned, white-on-black
+ * reading),
  * with a soft halo band around the glyph row. A human segments the two
  * layers effortlessly (motion transparency at a 180° direction
  * difference is the strongest segregation cue the visual system has)
  * and reads the row aided by the pedestal + halo, while any SINGLE
  * frame carries no motion at all: the glyph boundary survives only as
- * a small mean-luminance step inside a smooth halo ramp — nothing for
+ * a mean-luminance step inside a smooth halo ramp — nothing for
  * a global or adaptive threshold to plateau on, and (matched
  * statistics) nothing for a texture classifier either.
  *
  * The palette is strictly GRAYSCALE and strictly UNIFORM — black,
  * white and grays only, no theme hue survives into the spatter (the
  * ink-colored variant read as an uncomfortable cyan), and the anchors
- * do NOT follow the theme: ALWAYS a near-black ground with light gray
- * speckle, a white halo and a brighter glyph pedestal (the theme-
+ * do NOT follow the theme: ALWAYS a near-black ground with dim gray
+ * speckle, a white halo and a much-brighter glyph pedestal (the theme-
  * following light variant read far worse and was dropped — a dark
  * reveal strip inside a light page is the accepted look).
  *
@@ -423,30 +424,37 @@ export class RevealNoisePainter {
  *   and motion signal both peak near the letters' diagnostic spatial
  *   band, so MODERATE noise contrast suffices (the old design's fine
  *   grain + fast ±40px/s drift is exactly what made it unreadable).
+ * - Legibility lives in the BRIGHTNESS channel (live-tuned): the
+ *   surround dots sit LOW (FILTER_BASE_L) on the near-black ground so
+ *   the background reads dim, the glyph layer is lifted by a LARGE
+ *   pedestal (FILTER_PEDESTAL_L) so the text reads bright, and the
+ *   dots are DENSE (FILTER_SPATTER_PX_PER_DOT) so both fields read as
+ *   textured surfaces rather than sparse speckle. The large pedestal
+ *   is a bigger single-frame leak than the original small one — an
+ *   accepted trade per the readability-first direction.
  * - The glyph apertures rasterize in BOLD: a heavier stroke exposes
  *   more of the counter-drifting texture inside each glyph (stronger
  *   signal under interference); the shared layout's 1.2× letter
  *   spacing absorbs the wider advances.
- * - Drift ±FILTER_DRIFT_PX_S, deliberately VERY fast: within one
- *   persistence-of-vision window (~100ms) the texture travels ~30px —
- *   several dot spacings (the mean spacing is ~7px) — so the aperture
- *   interior time-averages into a clean pedestal + spatter mean and
- *   the glyphs read near-solid, while the counter-motion segregation
- *   only sharpens. A single frame still carries no motion energy at
- *   all (form-from-motion needs the temporal integration that only
- *   the live eye provides).
+ * - Drift ±FILTER_DRIFT_PX_S: moderate — slow enough to track
+ *   coherently at field font sizes, fast enough that a single frame
+ *   carries no usable motion energy. (A 300px/s persistence-of-vision
+ *   experiment read worse live: the eye never got a stable surface to
+ *   bind, so the speed came back down and legibility moved into the
+ *   brightness channel instead.)
  * - The glyph APERTURES never move — only the texture inside them
  *   flows. Cross-frame registration of the glyph shapes (the attack
  *   that killed video CAPTCHAs) finds nothing to align.
- * - The pedestal is deliberately SMALL: it is a static first-order cue
- *   and therefore the one signal a single frame leaks. Kept at
- *   FILTER_PEDESTAL_L lightness points and spread by the halo ramp, it
- *   aids human pop-out without giving thresholding a plateau. An
- *   attacker averaging MANY frames can in principle recover the
- *   pedestal's DC component (same cost class as the video attack on
- *   the noise strategy) — accepted risk, documented; consumers that
- *   cannot accept it pick "noise" (zero static signal) or "plain"
- *   (full readability).
+ * - The pedestal is deliberately LARGE (live-tuned readability
+ *   first): it is a static first-order cue and therefore the one
+ *   signal a single frame leaks, and the current magnitude leaks MORE
+ *   of it than the original small one — the accepted trade for a dim
+ *   surround and a bright text layer. The halo ramp still spreads the
+ *   step so thresholding finds no plateau, and an attacker averaging
+ *   MANY frames can in principle recover the pedestal's DC component
+ *   (same cost class as the video attack on the noise strategy) —
+ *   consumers that cannot accept this trade pick "noise" (zero static
+ *   signal) or "plain" (full readability).
  * - The drift sign is re-randomized per hold (and both tiles are
  *   freshly generated per hold) so two holds never replay the same
  *   frame sequence.
@@ -462,14 +470,18 @@ export class RevealNoisePainter {
  * never to frozen noise). */
 
 /** Counter-drift speed of each layer in CSS px/s (opposite signs).
- * Deliberately very fast — see the persistence rationale above. */
-export const FILTER_DRIFT_PX_S = 300;
+ * The 300px/s persistence experiment read WORSE live (the eye never
+ * got a stable surface to bind); 84 tracks coherently at field sizes
+ * and is the settled value. */
+export const FILTER_DRIFT_PX_S = 84;
 
 /** Lightness pedestal of the glyph layer (brighter — the text reads
  * white-on-black), in HSL lightness points (clamped into
- * [L_MIN, L_MAX] like every sample). Small on purpose — see the
+ * [L_MIN, L_MAX] like every sample). Deliberately LARGE (live-tuned
+ * readability-first): a dim surround and a bright text layer. The
+ * static single-frame leak grows with it — accepted trade, see the
  * strategy docblock. */
-export const FILTER_PEDESTAL_L = 10;
+export const FILTER_PEDESTAL_L = 26;
 
 /** Peak alpha of the halo band (white, at the glyph-row midline). */
 export const FILTER_HALO_ALPHA = 0.1;
@@ -485,19 +497,20 @@ export const FILTER_HALO_FONT_SCALE = 1.2;
 const FILTER_SPATTER_R_MIN_CSS = 1.2;
 const FILTER_SPATTER_R_MAX_CSS = 2.8;
 
-/** Spatter coverage: one dot per this many tile px². BOTH layers share
- * the density, size and lightness distributions — matched texture
- * statistics are the single-frame defense; only the mean luminance
- * (pedestal) and the drift direction differ. */
-const FILTER_SPATTER_PX_PER_DOT = 45;
+/** Spatter coverage: one dot per this many tile px² — DENSE
+ * (live-tuned) so both fields read as textured surfaces. BOTH layers
+ * share the density, size and lightness distributions — matched
+ * texture statistics are the single-frame defense; only the mean
+ * luminance (pedestal) and the drift direction differ. */
+const FILTER_SPATTER_PX_PER_DOT = 28;
 
 /** Dot lightness spread around the layer base (both layers share it). */
 const FILTER_SPATTER_L_SPREAD = 22;
 
-/** The one anchor pair: near-black ground, mid-light gray speckle —
- * white-on-black reading in EVERY theme (the light variant read far
- * worse and was dropped). */
-const FILTER_BASE_L = 64;
+/** The one anchor set: near-black ground + DIM gray speckle for the
+ * surround — white-on-black reading in EVERY theme with the brightness
+ * doing the work (the light variant read far worse and was dropped). */
+const FILTER_BASE_L = 48;
 const FILTER_GROUND_L = 10;
 
 /** Glyph aperture weight: bold strokes expose more of the counter-

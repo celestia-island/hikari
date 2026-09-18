@@ -3,7 +3,7 @@ import { Comment, createApp, createVNode, h, nextTick, ref, type Slot } from "vu
 
 import HkInput from "./HkInput";
 import HkPasswordSurface from "./HkPasswordSurface";
-import { NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
+import { FILTER_PEDESTAL_L, NOISE_TILE_H, NOISE_TILE_W } from "./revealKinematogram";
 import { passwordLevel } from "../utils/password";
 import { setReducedMotion } from "../runtime/animationBus";
 
@@ -1339,6 +1339,8 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
     gradientStops: string[];
     /** Font string assignments — pins the BOLD glyph aperture. */
     fonts: string[];
+    /** arc() radii, in call order — pins the spatter dot SIZE band. */
+    arcRadii: number[];
     fillStyles: string[];
     clips: Array<{ x: number; y: number; w: number; h: number }>;
     translates: number[];
@@ -1361,6 +1363,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
         compositeOps: [],
         gradientStops: [],
         fonts: [],
+        arcRadii: [],
         fillStyles: [],
         clips: [],
         translates: [],
@@ -1380,7 +1383,7 @@ function stubRecordingContexts(opts: { linearGradients?: boolean } = {}) {
       translate: (x: number) => r.translates.push(x),
       rotate: () => {},
       beginPath: () => {},
-      arc: () => {},
+      arc: (_x: number, _y: number, radius: number) => r.arcRadii.push(radius),
       fill: () => {},
       fillRect: () => {
         if (gradientArmed) {
@@ -1582,10 +1585,10 @@ describe("HkInput password reveal strategies", () => {
 
   it("filter (default) keeps glyphs off the visible canvas: counter-drifting spatter, pedestal, halo", async () => {
     // The default reveal: STATIC BOLD glyph apertures filled with one
-    // GRAYSCALE spatter texture, over a statistically matched spatter
-    // field streaming the opposite way on the uniform near-black
-    // ground; the glyphs lifted by a small brightening pedestal with a
-    // white halo band around the row. Glyph
+    // BRIGHT GRAYSCALE spatter texture, over a statistically matched
+    // DIM spatter field drifting the opposite way on the uniform
+    // near-black ground; the glyphs lifted by a LARGE brightening
+    // pedestal with a white halo band around the row. Glyph
     // geometry must NEVER reach the visible canvas (mask → source-in
     // stamp only) — that is the screenshot contract. Math.random is
     // pinned at 0.5 so the dot lightness equals the exact layer base
@@ -1624,7 +1627,7 @@ describe("HkInput password reveal strategies", () => {
       // The two spatter tiles: bg first, ink second (deterministic
       // draw order), each with hundreds of solid-color dot fills. The
       // anchors are UNIFORM (white-on-black reading in every theme):
-      // near-black ground, light-gray speckle, and the pedestal lifts
+      // near-black ground, dim-gray speckle, and the pedestal lifts
       // the glyph layer BRIGHTER. happy-dom resolves no computed
       // color, so the ink stays at the pre-sync fallback (a DARK ink)
       // — irrelevant now, the anchors follow nothing.
@@ -1661,6 +1664,13 @@ describe("HkInput password reveal strategies", () => {
         inkMean - bgMean,
         `glyph pedestal lifts BRIGHTER (bg ${bgMean.toFixed(1)} vs ink ${inkMean.toFixed(1)})`,
       ).toBeGreaterThan(8);
+      // Magnitude pin (R1 F4): the pedestal is LARGE by design (26 L ≈
+      // 66 rgb here) — a revert to the old small 10 L pedestal (~26
+      // rgb) must go red, not just stay above the sign threshold.
+      expect(
+        inkMean - bgMean,
+        "the bright-text pedestal is LARGE, not merely positive",
+      ).toBeGreaterThan(36);
       // Strict grayscale: no theme hue may survive into the spatter —
       // every solid fill is a NEUTRAL gray (r === g === b).
       for (const tile of tiles) {
@@ -1689,6 +1699,21 @@ describe("HkInput password reveal strategies", () => {
         mask!.fonts.some((f) => f.startsWith("bold ")),
         "glyph apertures rasterize bold",
       ).toBe(true);
+      // Dot size band (R1 F6): ~0.6–1.4× the stroke width — dpr is 1
+      // in this environment (guarded below), so every spatter radius
+      // sits in the CSS band [1.2, 2.8]. NOTE: with random pinned at
+      // 0.5 every radius is the band MIDPOINT — the min-side teeth
+      // live in the light-ink test's unmocked band check (R2 F1).
+      expect(window.devicePixelRatio || 1).toBe(1);
+      for (const tile of tiles) {
+        expect(tile.arcRadii.length, "spatter dots drawn as arcs").toBeGreaterThan(1000);
+        for (const rad of tile.arcRadii) {
+          expect(
+            rad >= 1.2 && rad <= 2.8,
+            `dot radius inside the stroke band, got ${rad}`,
+          ).toBe(true);
+        }
+      }
       // The DOM input still never flips.
       expect(input.type).toBe("password");
       // Bus frames advance BOTH layer drifts (fresh pattern phases on
@@ -1750,7 +1775,7 @@ describe("HkInput password reveal strategies", () => {
   it("filter anchors white-on-black regardless of the field ink (light ink)", async () => {
     // UNIFORMITY pin: the anchors follow NOTHING — feed a LIGHT field
     // ink through getComputedStyle and the reveal must still paint the
-    // same near-black ground, light-gray speckle, brighter pedestal
+    // same near-black ground, dim-gray speckle, brighter pedestal
     // and white halo as the default (dark-ink) mount.
     const restoreInk = forceInkColor("rgb(148, 233, 211)");
     const rec = stubRecordingContexts();
@@ -1790,6 +1815,33 @@ describe("HkInput password reveal strategies", () => {
           expect(r8 === g8 && g8 === b8, `dark spatter must be grayscale, got ${fill}`).toBe(true);
         }
       }
+      // Dot size band with REAL randomness (R2 F1): the default test's
+      // pinned 0.5 random freezes every radius at the band MIDPOINT,
+      // which is blind on the min side — here thousands of uniform
+      // samples must ALL sit in [1.2, 2.8] AND the empirical extremes
+      // must touch both edges, so a shrunken rMin (sub-pixel speckle)
+      // or a blown rMax both go red. dpr is 1 in this environment —
+      // the guard makes that assumption explicit (R2 F2).
+      expect(window.devicePixelRatio || 1).toBe(1);
+      {
+        let min = Infinity;
+        let max = -Infinity;
+        let count = 0;
+        for (const tile of tiles) {
+          for (const rad of tile.arcRadii) {
+            if (rad < min) min = rad;
+            if (rad > max) max = rad;
+            count++;
+            expect(
+              rad >= 1.2 && rad <= 2.8,
+              `dot radius inside the stroke band, got ${rad}`,
+            ).toBe(true);
+          }
+        }
+        expect(count, "thousands of spatter dots sampled").toBeGreaterThan(3000);
+        expect(min, "the small edge of the band is actually used").toBeLessThan(1.5);
+        expect(max, "the large edge of the band is actually used").toBeGreaterThan(2.5);
+      }
       // Matched texture statistics (R2 F2): the two layers must carry
       // the SAME dot count and (pedestal aside) the same lightness
       // RANGE — a diverging spread/density is the single-frame
@@ -1812,14 +1864,16 @@ describe("HkInput password reveal strategies", () => {
         `matched lightness spread (bg ${bgStats.range} vs ink ${inkStats.range})`,
       ).toBeLessThan(6);
       // The pedestal lifts ground AND dots together: the two grounds
-      // sit exactly one pedestal apart (~10 L ≈ 25 rgb), so an ink
+      // sit exactly one pedestal apart (26 L ≈ 66 rgb at the current
+      // tuning; the threshold derives from the constant), so an ink
       // ground that loses or doubles its shift goes red (R2 C1b).
       const groundOf = (r: (typeof tiles)[number]) =>
         Number(r.fillStyles[0]!.slice(4, -1).split(",")[0]);
       const groundDelta = Math.abs(groundOf(tiles[1]!) - groundOf(tiles[0]!));
+      const pedRgb = FILTER_PEDESTAL_L * 2.55;
       expect(
-        groundDelta >= 20 && groundDelta <= 30,
-        `grounds one pedestal apart (delta ${groundDelta})`,
+        groundDelta >= pedRgb - 6 && groundDelta <= pedRgb + 6,
+        `grounds one pedestal apart (delta ${groundDelta}, want ~${pedRgb.toFixed(0)})`,
       ).toBe(true);
       // Near-black ground regardless of the ink: L 10 → rgb ≈ 26.
       const [gr, gg, gb] = tiles[0]!.fillStyles[0]!.slice(4, -1).split(",").map(Number);
@@ -1931,7 +1985,9 @@ describe("HkInput password reveal strategies", () => {
       );
       expect(tiles.length).toBe(2);
       const counts1 = tiles.map((r) => r.fillStyles.length);
-      expect(counts1[0]!, "ground + dots on hold 1").toBeGreaterThan(1000);
+      // Dense field (R1 F5): ~2341 dots per tile at 28 px²/dot — the
+      // old sparse 45 px²/dot (1457 fills) must fail this floor.
+      expect(counts1[0]!, "dense spatter field on hold 1").toBeGreaterThan(2000);
       await hold();
       const counts2 = tiles.map((r) => r.fillStyles.length);
       expect(counts2[0]).toBe(counts1[0]! * 2);

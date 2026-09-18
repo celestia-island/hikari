@@ -114,13 +114,15 @@ describe("useTheme lean cssvar injection", () => {
     });
   });
 
-  it("writes theme vars into a managed :root style block, never inline", () => {
+  it("writes theme vars into a managed html:root style block, never inline", () => {
     theme.initTheme();
     const styleEl = document.head.querySelector("style[data-hikari-theme-vars]");
     expect(styleEl).not.toBeNull();
     // Real browsers compute the static defaults, so the block holds only the
-    // true deltas; either way it is a :root block, not an inline attribute.
-    expect(styleEl!.textContent).toMatch(/^:root\{/);
+    // true deltas; either way it is an html:root block (specificity 0,1,1 —
+    // it must outrank every :root-level static seed regardless of document
+    // order), not an inline attribute.
+    expect(styleEl!.textContent).toMatch(/^html:root\{/);
     expect(styleEl!.textContent).toContain("--color-primary");
     // The html inline style attribute stays clean — no token vars on it.
     expect(document.documentElement.style.getPropertyValue("--color-primary")).toBe("");
@@ -133,8 +135,38 @@ describe("useTheme lean cssvar injection", () => {
     theme.useTheme().setTheme("nord");
     const blocks = document.head.querySelectorAll("style[data-hikari-theme-vars]");
     expect(blocks).toHaveLength(1);
-    expect(blocks[0].textContent).toMatch(/^:root\{/);
+    expect(blocks[0].textContent).toMatch(/^html:root\{/);
     expect(blocks[0].textContent).not.toBe(before);
+  });
+
+  it("a :root seed injected AFTER the managed block cannot un-theme the page", () => {
+    // The 2026-09-18 dev.cw incident: every hikari component sheet @uses
+    // tokens.scss, so a lazily-loaded route chunk re-emits the static seed
+    // as a `:root` rule appended to <head> after this block — same
+    // specificity, later in the cascade, and the brand palette lost to it
+    // on the login page. The managed block therefore carries html:root
+    // (0,1,1), which outranks any :root-level emission (0,1,0) regardless
+    // of document order.
+    theme.initTheme();
+    const styleEl = document.head.querySelector("style[data-hikari-theme-vars]")!;
+    expect(styleEl.textContent).toContain("--color-primary");
+
+    const computed = () =>
+      getComputedStyle(document.documentElement).getPropertyValue("--color-primary").trim();
+    const themed = computed();
+    expect(themed).not.toBe("");
+
+    // Simulate the route-chunk seed: a :root rule with the static default,
+    // appended LAST (exactly what a lazy chunk's <link> does).
+    const seed = document.createElement("style");
+    seed.textContent = ":root{--color-primary:122 162 247;--color-background:214 236 240;--color-surface:240 244 248;}";
+    document.head.appendChild(seed);
+    expect(computed()).toBe(themed);
+
+    // Re-applying the theme must keep winning, too (no one-shot luck).
+    theme.useTheme().setTheme("nord");
+    expect(computed()).not.toBe("122 162 247");
+    seed.remove();
   });
 });
 

@@ -149,7 +149,7 @@ const THEME_TRANSITION_DURATION = 300;
 let transitionTimer: CronHandle | null = null;
 
 /**
- * Theme vars live in ONE managed stylesheet block (`:root` overrides)
+ * Theme vars live in ONE managed stylesheet block (`html:root` overrides)
  * instead of a hundred inline declarations on `<html style="...">`.
  *  - Inline style attributes bloat the DOM, show up as giant devtools
  *    noise on the root element, defeat caching of the token set and make
@@ -162,8 +162,20 @@ let transitionTimer: CronHandle | null = null;
  *    so a token whose value already resolves identically needs no
  *    override at all — a default-ish theme injects a handful of vars
  *    instead of ~80.
+ *
+ * The selector is `html:root`, not plain `:root`, on purpose: the static
+ * seed is `:root`-level, and lazy route chunks re-emit it (every component
+ * sheet `@use`s tokens.scss) into `<link>`s appended to `<head>` AFTER
+ * this block — a same-specificity `:root` there would silently beat the
+ * runtime palette and un-theme every late-loaded route (2026-09-18,
+ * dev.cw login: the HkOtpInput chunk flattened the brand palette back to
+ * the static seed). `html:root` (0,1,1) outranks every `:root`-level
+ * declaration (0,1,0) regardless of document order, while staying below
+ * inline styles and equal to `html[data-theme]` decor rules (order
+ * decides between those two, so a later decor can still override).
  */
 const THEME_VARS_STYLE_ATTR = "data-hikari-theme-vars";
+const THEME_VARS_SELECTOR = "html:root";
 
 function normalizeVarValue(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -214,7 +226,7 @@ function injectThemeVars(el: HTMLElement, vars: Record<string, string>): void {
 
   const deltas = pickThemeVarDeltas(vars, baseline);
   styleEl.textContent = Object.keys(deltas).length > 0
-    ? `:root{${Object.entries(deltas).map(([key, value]) => `${key}:${value}`).join(";")}}`
+    ? `${THEME_VARS_SELECTOR}{${Object.entries(deltas).map(([key, value]) => `${key}:${value}`).join(";")}}`
     : "";
 }
 

@@ -171,16 +171,18 @@ export const HkOtpInput = defineComponent({
       return cells.length - 1;
     }
 
-    /** Focus one cell and select what it holds, so the next keystroke
-     *  replaces rather than appends. */
-    function focusCell(index: number) {
+    /** Focus one cell. `select` expands the caret over the cell's glyph,
+     *  which is what makes "type over an existing character" work — but
+     *  it stays OFF on a forward advance. Landing on an occupied cell
+     *  (the tail cell of a filled row, a cell the typed run already
+     *  filled) with an expanded caret leaves that digit highlighted, and
+     *  the next keystroke would silently replace it instead of filling
+     *  the empty cell ahead. */
+    function focusCell(index: number, select = false) {
       const el = cellInputs.value[index];
       if (!el) return;
       el.focus();
-      // A click already placed a caret (or a range) — leave that alone;
-      // programmatic focus parks at 0 and needs the select-all to make
-      // "type over an existing digit" work.
-      if (el.selectionStart === el.selectionEnd) el.select();
+      if (select) el.select();
     }
 
     /** Publish a cell array: normalize widths, sync focus, emit the code,
@@ -199,7 +201,14 @@ export const HkOtpInput = defineComponent({
         emit("update:modelValue", nextValue);
       }
       if (options.focus != null) {
-        void nextTick(() => focusCell(options.focus!));
+        const target = options.focus;
+        // An advance onto the tail cell of a now-full row would park an
+        // expanded caret on the digit just typed — stay on the terminal
+        // cell instead (`select: false`), which reads as "the code is
+        // complete, review it here" and keeps the next keystroke filling
+        // nothing rather than eating a digit.
+        const stayPut = !valueArray.value[target];
+        void nextTick(() => focusCell(target, stayPut));
       }
       if (!wasFull && nextValue.length >= n) {
         emit("complete", nextValue);
@@ -305,16 +314,18 @@ export const HkOtpInput = defineComponent({
         e.preventDefault();
       } else if (key === "ArrowLeft") {
         e.preventDefault();
-        if (index > 0) focusCell(index - 1);
+        // Explicit navigation selects the landing cell: the user asked to
+        // go there to edit it, so the next keystroke replaces its digit.
+        if (index > 0) focusCell(index - 1, true);
       } else if (key === "ArrowRight") {
         e.preventDefault();
-        if (index < cellCount.value - 1) focusCell(index + 1);
+        if (index < cellCount.value - 1) focusCell(index + 1, true);
       } else if (key === "Home") {
         e.preventDefault();
-        focusCell(0);
+        focusCell(0, true);
       } else if (key === "End") {
         e.preventDefault();
-        focusCell(cellCount.value - 1);
+        focusCell(cellCount.value - 1, true);
       } else if (key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         if (!props.disabled && !props.readonly) {
           e.preventDefault();

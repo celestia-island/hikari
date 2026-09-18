@@ -50,9 +50,18 @@
   /* Self-declared box model — the cells' centering must not depend on a
    * host reset (same precedent as HkInput's element). */
   box-sizing: border-box;
-  flex: none;
+  /* The ramp size is a CEILING, not a fixed width: with shrink enabled
+   * and a 0 floor the row always fits the box it is given, so a card
+   * narrower than N x ramp (eight cells in a 290px column, six cells in a
+   * phone card) shrinks the cells instead of overflowing the card and
+   * hiding the hint beside them. `aspect-ratio` keeps them square as they
+   * shrink; `max-width` keeps them from growing past the ramp when the
+   * row is wider than it needs. */
+  flex: 0 1 auto;
   width: var(--hk-otp-cell-size, 3rem);
-  height: var(--hk-otp-cell-size, 3rem);
+  max-width: var(--hk-otp-cell-size, 3rem);
+  min-width: 0;
+  aspect-ratio: 1;
   margin: 0;
   padding: 0;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
@@ -62,7 +71,12 @@
   appearance: none;
   -webkit-appearance: none;
   font-family: var(--font-mono);
-  font-size: var(--hk-otp-font-size, var(--text-xl));
+  /* Clamped so the glyph keeps up with a shrinking cell (see the flex
+   * note above) — a 24px digit in a 34px cell overruns it. `cqw` resolves
+   * against the cell's own inline size (cells are size containers), so
+   * this holds at every narrowness AND every preset ramp; the ramp sets
+   * its own bound through --hk-otp-font-size. */
+  font-size: var(--hk-otp-font-size, clamp(0.75rem, 38cqw, var(--text-xl)));
   font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -72,6 +86,9 @@
   transition-property: background-color, border-color, color, box-shadow, opacity;
   transition-duration: var(--duration-normal);
   transition-timing-function: var(--ease-standard);
+  /* The cell is the containment context its own font clamp measures
+   * against (see the font-size note above). */
+  container-type: inline-size;
 
   /* `text` (not `none`): a drag inside a cell still selects its glyph for
    * the keyboard-replace path, while a stray triple-click selection never

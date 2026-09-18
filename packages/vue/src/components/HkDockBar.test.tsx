@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, defineComponent, h, nextTick } from "vue";
 
 import HkDockBar from "./HkDockBar";
@@ -49,28 +52,137 @@ describe("HkDockBar", () => {
     expect(root.dataset.surface).toBe("glass");
   });
 
-  it.each(["plane", "top-left", "top-right", "bottom-left", "bottom-right"] as const)(
-    "accepts the %s anchor",
-    async (anchor) => {
-      const root = await mountDock({ anchor });
-      expect(root.dataset.anchor).toBe(anchor);
-    },
-  );
+  it.each(
+    [
+      "plane",
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+    ] as const,
+  )("accepts the %s anchor", async (anchor) => {
+    const root = await mountDock({ anchor });
+    expect(root.dataset.anchor).toBe(anchor);
+  });
 
-  it("exposes style hooks for width, max-width and padding", async () => {
+  it("exposes style hooks for width, max-width, max-height and padding", async () => {
     const root = await mountDock({
       width: "22rem",
       maxWidth: "30rem",
+      maxHeight: "60vh",
       padding: "4px 6px",
     });
     const style = root.style;
     expect(style.getPropertyValue("--dock-width")).toBe("22rem");
     expect(style.getPropertyValue("--dock-max-width")).toBe("30rem");
+    expect(style.getPropertyValue("--dock-max-height")).toBe("60vh");
     expect(style.getPropertyValue("--dock-padding")).toBe("4px 6px");
   });
 
   it("drops the blur on the solid surface", async () => {
     const root = await mountDock({ surface: "solid" });
     expect(root.dataset.surface).toBe("solid");
+  });
+});
+
+// ── Anchor geometry contract ──────────────────────────────────────────────
+// SCSS source contract (house pattern, cf. HkButton icon-only contract):
+// happy-dom does not lay out, so each compass direction's geometry is
+// pinned textually against HkDockBar.scss. Dropping any one direction's
+// rule — or regressing its mapping (inset side / centering transform) —
+// turns the matching assertion red.
+
+const here = dirname(fileURLToPath(import.meta.url));
+const scss = readFileSync(join(here, "HkDockBar.scss"), "utf8");
+
+/** Every SCSS rule body whose selector list mentions the anchor. */
+function rulesFor(anchor: string): string {
+  const re = new RegExp(`&\\[data-anchor="${anchor}"\\][^{]*\\{[^}]*\\}`, "g");
+  return scss.match(re)?.join("\n") ?? "";
+}
+
+describe("HkDockBar anchor geometry contract", () => {
+  const INSET = "var(--hk-dock-inset, 12px)";
+
+  it.each(["page", "bottom"] as const)(
+    "%s docks to the south edge, centered (the two spellings share geometry)",
+    (anchor) => {
+      const rules = rulesFor(anchor);
+      expect(rules, `${anchor} rules must exist`).toBeTruthy();
+      expect(rules).toContain("position: absolute");
+      expect(rules).toContain("left: 50%");
+      expect(rules).toContain(`bottom: ${INSET}`);
+      expect(rules).toContain("transform: translateX(-50%)");
+    },
+  );
+
+  it("top docks to the north edge, centered", () => {
+    const rules = rulesFor("top");
+    expect(rules, "top rules must exist").toBeTruthy();
+    expect(rules).toContain("position: absolute");
+    expect(rules).toContain("top: " + INSET);
+    expect(rules).toContain("left: 50%");
+    expect(rules).toContain("transform: translateX(-50%)");
+    expect(rules).not.toContain(`bottom: ${INSET}`);
+  });
+
+  it.each(["left", "right"] as const)(
+    "%s docks to the vertical edge midpoint, centered by translateY",
+    (anchor) => {
+      const rules = rulesFor(anchor);
+      expect(rules, `${anchor} rules must exist`).toBeTruthy();
+      expect(rules).toContain("position: absolute");
+      expect(rules).toContain("top: 50%");
+      expect(rules).toContain(`${anchor}: ${INSET}`);
+      expect(rules).toContain("transform: translateY(-50%)");
+      // A side dock must not pick up the horizontal-edge centering.
+      expect(rules).not.toContain("transform: translateX(-50%)");
+    },
+  );
+
+  it.each(
+    [
+      ["top-left", "top", "left", "flex-start"],
+      ["top-right", "top", "right", "flex-end"],
+      ["bottom-left", "bottom", "left", "flex-start"],
+      ["bottom-right", "bottom", "right", "flex-end"],
+    ] as const,
+  )("%s docks into its corner with both insets", (anchor, side1, side2, align) => {
+    const rules = rulesFor(anchor);
+    expect(rules, `${anchor} rules must exist`).toBeTruthy();
+    expect(rules).toContain("position: absolute");
+    expect(rules).toContain(`${side1}: ${INSET}`);
+    expect(rules).toContain(`${side2}: ${INSET}`);
+    expect(rules).toContain(`align-items: ${align}`);
+  });
+
+  it("page and plane stay semantically distinct: page floats, plane flows", () => {
+    const page = rulesFor("page");
+    const plane = rulesFor("plane");
+    expect(page).toContain("position: absolute");
+    expect(plane, "plane rule must exist").toBeTruthy();
+    expect(plane).toContain("margin: 0 auto");
+    expect(plane).not.toContain("position: absolute");
+  });
+
+  it("caps vertical side docks viewport-aware by default", () => {
+    const sideCap = scss.match(
+      /\.hk-dock-bar\[data-anchor="left"\] \.hk-dock-bar-surface[^{]*\{[^}]*\}/,
+    )?.[0];
+    expect(sideCap, "side-anchor surface cap rule must exist").toBeTruthy();
+    expect(sideCap).toContain("max-height: var(--dock-max-height");
+    expect(sideCap).toContain("100dvh");
+  });
+
+  it("solid surface drops the backdrop blur in CSS, not just in data", () => {
+    const solid = scss.match(
+      /\.hk-dock-bar\[data-surface="solid"\] \.hk-dock-bar-surface\s*\{[^}]*\}/,
+    )?.[0];
+    expect(solid, "solid surface rule must exist").toBeTruthy();
+    expect(solid).toContain("backdrop-filter: none");
   });
 });

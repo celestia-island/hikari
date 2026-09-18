@@ -6,24 +6,35 @@
  * on the focused cell) so a code field and a text field sit together
  * without looking like two design systems.
  *
- * Two L3 hooks carry every geometric knob, so a host can resize the row
+ * L3 hooks carry every geometric knob, so a host can resize the row
  * without touching the library:
  *   --hk-otp-cell-size   cell width AND height
- *   --hk-otp-font-size   the character's size
+ *   --hk-otp-font-size   pin the character's size outright
+ *   --hk-otp-font-max    cap the fitted glyph (set by the size ramps)
  *   --hk-otp-gap         gap between cells
  *   --hk-otp-gap-group   gap at the `separated` split
+ * The two font knobs are deliberately separate: `-font-size` is an
+ * override (and an absolute value there makes the component stop fitting
+ * altogether), while `-font-max` is the ramp's ceiling the measured fit
+ * clamps under.
  * The size classes are written as complete rule sets (not as deltas over
  * a shared base) on purpose: a `var()` chain whose fallback resolves
  * through an UNSET custom property is invalid at computed-value time, so
- * every declaration below must stand on its own with a literal fallback.
+ * a ramp declares its cell size, its gap and its font fallback together.
+ *
+ * Which declarations carry a literal fallback today: the CELL box (width,
+ * min-height, radius, durations, easings, the font family and the font
+ * size chain), the label and the two messages. The RAMPS' own font values
+ * deliberately consume the scale tokens without a literal — they are the
+ * design's intended sizes, and a host that loaded this sheet alone still
+ * gets a correctly sized row through the fitted-font chain in the cell.
  *
  * Token note: the scale family consumed here (--space-*, --text-*,
  * --radius-*, --duration-*, --ease-*) lives in the canonical scale root,
  * which ships through the `@celestia-island/hikari/styles` aggregate —
  * this sheet `@use`s only ../tokens (the color channels), like every
  * other component sheet. A host that loads ONE component sheet in
- * isolation therefore gets the color tokens but not the scale ones; the
- * fallbacks below keep the row renderable in that case.
+ * isolation therefore gets the color tokens but not the scale ones.
  */
 
 .hk-otp-wrapper {
@@ -69,24 +80,31 @@
   width: var(--hk-otp-cell-size, 3rem);
   max-width: var(--hk-otp-cell-size, 3rem);
   min-width: 0;
+  /* Without this the cells keep an automatic minimum HEIGHT and the square
+   * breaks once the width shrinks past the content height (12 cells in a
+   * 340px card render 17.67 x 26 without it). */
+  min-height: 0;
   aspect-ratio: 1;
   margin: 0;
   padding: 0;
   background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm, 4px);
   outline: none;
   appearance: none;
   -webkit-appearance: none;
-  font-family: var(--font-mono);
-  /* Clamped so the glyph keeps up with a shrinking cell (see the flex
-   * note above) — a 24px digit in a 34px cell overruns it. `cqw` resolves
-   * against the cell's own inline size (cells are size containers), so
-   * this holds at every narrowness AND every preset ramp; the ramp sets
-   * its own bound through --hk-otp-font-size. Both fallbacks are literals:
-   * --font-mono / --text-* are in the canonical scale root, which this
-   * sheet does not @use (see the header note). */
-  font-size: var(--hk-otp-font-size, clamp(0.75rem, 38cqw, 1.25rem));
+  font-family: var(--font-mono, ui-monospace, monospace);
+  /* Three levels, most specific first:
+   *   1. --hk-otp-font-size — a host pinning the glyph outright.
+   *   2. --hk-otp-fitted-font — published PER ROW by the component from a
+   *      measurement of one cell (see the glyph-fit block in the tsx):
+   *      CSS cannot size the glyph from the cell's own width, because a
+   *      container cannot query itself and an input has no children.
+   *   3. the literal — for a host that loaded this sheet without the
+   *      canonical scale root (see the header note).
+   * The ramps feed the fit through --hk-otp-font-max instead of writing
+   * here, so this property stays free of the fit's own output. */
+  font-size: var(--hk-otp-font-size, var(--hk-otp-fitted-font, 1.25rem));
   font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -94,11 +112,8 @@
   color: rgb(var(--color-text));
   caret-color: rgb(var(--color-primary));
   transition-property: background-color, border-color, color, box-shadow, opacity;
-  transition-duration: var(--duration-normal);
-  transition-timing-function: var(--ease-standard);
-  /* The cell is the containment context its own font clamp measures
-   * against (see the font-size note above). */
-  container-type: inline-size;
+  transition-duration: var(--duration-normal, 0.3s);
+  transition-timing-function: var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 
   /* `text` (not `none`): a drag inside a cell still selects its glyph for
    * the keyboard-replace path, while a stray triple-click selection never
@@ -140,19 +155,19 @@
 /* Size ramps: the cell box and its type scale move together. */
 .hk-otp-sm {
   --hk-otp-cell-size: 2.25rem;
-  --hk-otp-font-size: var(--text-base);
+  --hk-otp-font-max: var(--text-base);
   gap: var(--hk-otp-gap, 0.375rem);
 }
 
 .hk-otp-md {
   --hk-otp-cell-size: 3rem;
-  --hk-otp-font-size: var(--text-xl);
+  --hk-otp-font-max: var(--text-xl);
   gap: var(--hk-otp-gap, 0.5rem);
 }
 
 .hk-otp-lg {
   --hk-otp-cell-size: 3.5rem;
-  --hk-otp-font-size: var(--text-2xl);
+  --hk-otp-font-max: var(--text-2xl);
   gap: var(--hk-otp-gap, 0.625rem);
 }
 
@@ -192,13 +207,13 @@
 
   .hk-otp-md {
     --hk-otp-cell-size: 2.5rem;
-    --hk-otp-font-size: var(--text-lg);
+    --hk-otp-font-max: var(--text-lg);
     gap: var(--hk-otp-gap, 0.375rem);
   }
 
   .hk-otp-lg {
     --hk-otp-cell-size: 2.75rem;
-    --hk-otp-font-size: var(--text-xl);
+    --hk-otp-font-max: var(--text-xl);
     gap: var(--hk-otp-gap, 0.5rem);
   }
 

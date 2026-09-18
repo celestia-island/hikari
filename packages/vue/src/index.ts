@@ -43,7 +43,7 @@ export { default as HModal } from "./components/HkModal";
 export { default as HNavItem } from "./components/HkNavItem";
 export { default as HNumberInput } from "./components/HkNumberInput";
 export { default as HPhoneInput } from "./components/HkPhoneInput";
-export { HkOtpInput as HOtpInput, HkOtpInput } from "./components/HkOtpInput";
+export { HkOtpInput as HOtpInput } from "./components/HkOtpInput";
 export { default as HAffixPicker, type HkAffixOption } from "./components/HkAffixPicker";
 export { default as HPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HGaugeRing } from "./components/HkGaugeRing";

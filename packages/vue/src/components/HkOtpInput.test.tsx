@@ -426,6 +426,154 @@ describe("HkOtpInput editing", () => {
   });
 });
 
+describe("HkOtpInput review regressions", () => {
+  it("leaves the landing cell unselected on a plain forward advance", async () => {
+    // The blocker: publish() asked for `select: false`, but the focus
+    // event's own select-on-entry default re-expanded the caret over the
+    // digit the advance had just landed on.
+    const otp = mountOtp({ modelValue: "12" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.focus();
+    await nextTick();
+    // Replace cell 1's glyph; the run advances to cell 2, which is empty.
+    cells[1]!.select();
+    cells[1]!.value = "9";
+    cells[1]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(document.activeElement).toBe(cells[2]);
+    expect(cells[2]!.selectionStart).toBe(cells[2]!.selectionEnd);
+  });
+
+  it("leaves the tail cell unselected when a paste fills the row", async () => {
+    // Same blocker on the documented SMS-paste path: the paste lands on
+    // the tail (occupied) cell, so a stray keystroke used to rewrite it.
+    const otp = mountOtp({ modelValue: "12345" });
+    await nextTick();
+    const cells = otp.cells();
+    otp.paste(5, "6");
+    await nextTick();
+    const tail = cells[5]!;
+    expect(tail.value).toBe("6");
+    expect(document.activeElement).toBe(tail);
+    expect(tail.selectionStart).toBe(tail.selectionEnd);
+  });
+
+  it("still selects the glyph when keyboard navigation lands on it", async () => {
+    // The exemption must not disarm deliberate navigation: arrows select
+    // the landing cell so the next keystroke replaces it.
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const cells = otp.cells();
+    cells[3]!.focus();
+    cells[3]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true, cancelable: true }),
+    );
+    await nextTick();
+    expect(document.activeElement).toBe(cells[2]);
+    expect(cells[2]!.selectionStart).toBe(0);
+    expect(cells[2]!.selectionEnd).toBe(1);
+  });
+
+  it("reports a caller value it had to sanitize or clamp", async () => {
+    const otp = mountOtp({ length: 4, modelValue: "123456" });
+    await nextTick();
+    expect(otp.rendered()).toEqual(["1", "2", "3", "4"]);
+    // The host and the field must not disagree silently.
+    expect(otp.emitted()).toContain("1234");
+  });
+
+  it("emits nothing when the caller's value already is the field value", async () => {
+    const otp = mountOtp({ modelValue: "1234" });
+    await nextTick();
+    expect(otp.emitted()).toEqual([]);
+  });
+
+  it("re-filters loaded cells when the alphabet flips at runtime", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const alpha = ref(true);
+    const App = defineComponent({
+      setup() {
+        return () => h(HkOtpInput, { alphanumeric: alpha.value, modelValue: "a1b2c3" });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    const read = () =>
+      Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell")).map((c) => c.value);
+    expect(read()).toEqual(["a", "1", "b", "2", "c", "3"]);
+
+    alpha.value = false;
+    await nextTick();
+    // Letters the new mode rejects must leave the cells, not linger under
+    // an inputmode that promises digits only.
+    expect(read()).toEqual(["1", "2", "3", "", "", ""]);
+    expect(
+      container.querySelector(".hk-otp-cell")!.getAttribute("inputmode"),
+    ).toBe("numeric");
+  });
+
+  it("fits the glyph to a measured cell, under the ramp's ceiling", async () => {
+    // happy-dom has no layout engine (every box measures 0), so the fit
+    // arithmetic is driven through its measurement seam and the callbacks
+    // are read off the vnode props; the real geometry is asserted in the
+    // browser verification, not here.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const instance = ref<{ fitGlyph: (w?: number) => void } | null>(null);
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h(HkOtpInput, {
+            ref: (el: unknown) => {
+              instance.value = el as never;
+            },
+            size: "md",
+            modelValue: "123456",
+          });
+      },
+    });
+    const app = createApp(App);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+
+    const row = container.querySelector<HTMLElement>(".hk-otp")!;
+    expect(typeof instance.value?.fitGlyph).toBe("function");
+
+    // A cell too narrow to be measured at all publishes nothing.
+    instance.value!.fitGlyph(0);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("");
+
+    instance.value!.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // The floor keeps a 20px cell's glyph legible…
+    instance.value!.fitGlyph(20);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("11.0px");
+
+    // …and the ceiling stops a very wide cell from inflating it past the
+    // ramp (24px is the fallback cap when the ramp var does not resolve).
+    instance.value!.fitGlyph(200);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("24.0px");
+  });
+
+  it("forwards keydown during composition instead of swallowing it", async () => {
+    const onKeydown = vi.fn();
+    const otp = mountOtp({ onKeydown });
+    await nextTick();
+    otp.cells()[0]!.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", isComposing: true, bubbles: true, cancelable: true }),
+    );
+    expect(onKeydown).toHaveBeenCalledTimes(1);
+    // …and a composing Enter is still not a submit.
+    expect(onKeydown.mock.calls[0]![0].isComposing).toBe(true);
+  });
+});
+
 describe("HkOtpInput paste", () => {
   it("distributes a pasted code from the focused cell", async () => {
     const otp = mountOtp();

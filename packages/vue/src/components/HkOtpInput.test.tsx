@@ -14,6 +14,8 @@ interface Harness {
   paste: (index: number, text: string) => void;
   rendered: () => string[];
   texts: () => string[];
+  /** Drive the row's glyph fit with a measurement of the test's own. */
+  fitGlyph: (width: number) => void;
 }
 
 /** Type one character into a cell the way a browser does: a collapsed
@@ -38,11 +40,15 @@ function mountOtp(props: Record<string, unknown> = {}): Harness {
 
   const model = ref(String(props.modelValue ?? ""));
   const updates: string[] = [];
+  const exposed = ref<{ fitGlyph: (width?: number) => void } | null>(null);
   const Wrapper = defineComponent({
     setup() {
       return () =>
         h(HkOtpInput, {
           ...props,
+          ref: (el: unknown) => {
+            exposed.value = el as never;
+          },
           modelValue: model.value,
           "onUpdate:modelValue": (v: string) => {
             updates.push(v);
@@ -63,6 +69,9 @@ function mountOtp(props: Record<string, unknown> = {}): Harness {
     model,
     cells,
     emitted,
+    // The component exposes its fit for tests; happy-dom has no layout, so
+    // every fit assertion drives it with an explicit measurement.
+    fitGlyph: (width: number) => exposed.value!.fitGlyph(width),
     rendered: () => cells().map((c) => c.value),
     texts: () => cells().map((c) => c.value),
     paste: (index: number, text: string) => {
@@ -621,6 +630,34 @@ describe("HkOtpInput review regressions", () => {
     // ramp (24px is the fallback cap when the ramp var does not resolve).
     instance.value!.fitGlyph(200);
     expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("24.0px");
+  });
+
+  it("stands down while the glyph is pinned, and resumes when it is released", async () => {
+    // The documented pin route is an inline `style` on the component, which
+    // lands on the ROW — so the guard has to read the row, not only the
+    // wrapper. A sentinel proves the stand-down: while pinned the fit must
+    // not touch the published value at all.
+    const otp = mountOtp({ modelValue: "123456" });
+    await nextTick();
+    const row = otp.container.querySelector<HTMLElement>(".hk-otp")!;
+
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // Pin, plant a sentinel the fit would overwrite if it ran…
+    row.style.setProperty("--hk-otp-font-size", "30px");
+    row.style.setProperty("--hk-otp-fitted-font", "99.9px");
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("99.9px");
+
+    // …and release: the fit takes the row back.
+    row.style.removeProperty("--hk-otp-font-size");
+    otp.fitGlyph(40);
+    expect(row.style.getPropertyValue("--hk-otp-fitted-font")).toBe("22.0px");
+
+    // A pin inherited from an ancestor takes the same decision through the
+    // computed style; happy-dom does not compute custom-property
+    // inheritance, so that branch is asserted in the browser instead.
   });
 
   it("forwards keydown during composition instead of swallowing it", async () => {

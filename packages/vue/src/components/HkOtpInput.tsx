@@ -33,8 +33,13 @@ function probeCssLength(value: string): number | null {
   probe.style.position = "absolute";
   probe.style.visibility = "hidden";
   probe.style.pointerEvents = "none";
-  probe.style.fontSize = trimmed;
-  if (probe.style.fontSize === "") return null;
+  // `important` on purpose: a host rule like `body > span { font-size: … }`
+  // would otherwise win over the probe's inline declaration and corrupt the
+  // measured ceiling (measured: a 1px `!important` host rule drove a whole
+  // row's glyph to 1px). Only rules that ALSO say `!important` can still
+  // interfere, which is the documented limit of a DOM probe.
+  probe.style.setProperty("font-size", trimmed, "important");
+  if (probe.style.getPropertyValue("font-size") === "") return null;
   document.body.appendChild(probe);
   const pixels = Number.parseFloat(getComputedStyle(probe).fontSize);
   probe.remove();
@@ -44,6 +49,20 @@ function probeCssLength(value: string): number | null {
 /** Probe a length that was read off an element. Same resolver. */
 function parseCssLength(raw: string): number | null {
   return probeCssLength(raw);
+}
+
+/** Is the glyph pinned outright on this element (an absolute length, as
+ *  opposed to the ramp's `var(...)` reference or an inherited nothing)?
+ *
+ *  The inline declaration is consulted first and on purpose: it is the
+ *  documented route, and it is the only form whose owner is unambiguous —
+ *  a computed read also sees values inherited from an ancestor that never
+ *  meant to pin THIS row. Stylesheet pins (a host class) still register
+ *  through the computed read below. */
+function pinOn(el: HTMLElement): boolean {
+  const declared = el.style.getPropertyValue("--hk-otp-font-size").trim();
+  if (declared) return parseCssLength(declared) != null;
+  return parseCssLength(getComputedStyle(el).getPropertyValue("--hk-otp-font-size")) != null;
 }
 
 /** One cell's character, or "" while the code is still short. */
@@ -389,15 +408,13 @@ export const HkOtpInput = defineComponent({
       if (!width) return;
 
       const styles = getComputedStyle(cell);
-      // A host may pin the glyph outright on the wrapper: an absolute
-      // length there wins over the fit, so no fit is published at all.
+      // A host may pin the glyph outright: an absolute length wins over the
+      // fit, so no fit is published at all. Both places a pin can live are
+      // read — the row (where the documented `style` route lands) and the
+      // component's own wrapper (an ancestor pin the row inherits from).
+      if (pinOn(row)) return;
       const wrapper = row.parentElement;
-      if (wrapper) {
-        const pinned = parseCssLength(
-          getComputedStyle(wrapper).getPropertyValue("--hk-otp-font-size"),
-        );
-        if (pinned) return;
-      }
+      if (wrapper && pinOn(wrapper)) return;
 
       // Both bounds are read as COMPUTED PX through the probe, never with
       // `parseFloat` on the raw custom property: `parseFloat("1.25rem")`
@@ -429,6 +446,12 @@ export const HkOtpInput = defineComponent({
       // The observer hands over entries; the fit reads the live box instead.
       fitObserver = new ResizeObserver(() => fitGlyph());
       for (const cell of Array.from(node.children)) fitObserver.observe(cell);
+      // The wrapper is observed as well: a host that pins
+      // --hk-otp-font-size on an ancestor (or removes such a pin) changes
+      // nothing about a cell's box, so the cells alone would never trigger
+      // a re-fit and the glyph would stay on the stale value.
+      const wrapper = node.parentElement;
+      if (wrapper) fitObserver.observe(wrapper);
     }
 
     onBeforeUnmount(() => {

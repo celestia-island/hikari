@@ -429,11 +429,12 @@ export class RevealNoisePainter {
  *   spacing absorbs the wider advances.
  * - Drift ±FILTER_DRIFT_PX_S, deliberately VERY fast: within one
  *   persistence-of-vision window (~100ms) the texture travels ~30px —
- *   a full dot spacing — so the aperture interior time-averages into a
- *   clean pedestal + spatter mean and the glyphs read near-solid,
- *   while the counter-motion segregation only sharpens. A single
- *   frame still carries no motion energy at all (form-from-motion
- *   needs the temporal integration that only the live eye provides).
+ *   several dot spacings (the mean spacing is ~7px) — so the aperture
+ *   interior time-averages into a clean pedestal + spatter mean and
+ *   the glyphs read near-solid, while the counter-motion segregation
+ *   only sharpens. A single frame still carries no motion energy at
+ *   all (form-from-motion needs the temporal integration that only
+ *   the live eye provides).
  * - The glyph APERTURES never move — only the texture inside them
  *   flows. Cross-frame registration of the glyph shapes (the attack
  *   that killed video CAPTCHAs) finds nothing to align.

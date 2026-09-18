@@ -139,9 +139,9 @@ describe("FILTER_DRIFT_PX_S persistence floor", () => {
   it("keeps the counter-drift fast enough for persistence reading", () => {
     // The readability mechanism RELIES on speed: within one
     // persistence-of-vision window (~100ms) the texture must travel
-    // at least a full dot spacing (~15px) so the static aperture
-    // interiors time-average into near-solid glyphs. 150 px/s is the
-    // floor; the shipped value is far above it (R1 F7).
+    // several dot spacings (the mean spacing is ~7px) so the static
+    // aperture interiors time-average into near-solid glyphs. 150
+    // px/s is the floor; the shipped value is far above it (R1 F7).
     expect(FILTER_DRIFT_PX_S).toBeGreaterThanOrEqual(150);
   });
 });

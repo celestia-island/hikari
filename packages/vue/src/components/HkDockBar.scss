@@ -14,8 +14,10 @@
   align-items: center;
   gap: var(--space-4, 4px);
 
-  /* ── page anchor: absolute bottom-center of the nearest positioned
-   *     ancestor, resting --hk-dock-inset above its content floor. */
+  /* ── page anchor (SOUTH edge): absolute bottom-center of the nearest
+   *     positioned ancestor, resting --hk-dock-inset above its content
+   *     floor. `bottom` below is the compass spelling of the same
+   *     geometry. */
   &[data-anchor="page"] {
     position: absolute;
     left: 50%;
@@ -29,6 +31,42 @@
    *     surface horizontally and lifts it by the shared dock inset. */
   &[data-anchor="plane"] {
     margin: 0 auto var(--hk-dock-inset, 12px);
+  }
+
+  /* ── horizontal edge anchors: north and the compass spelling of the
+   *     south edge — absolute, centered along the edge. */
+  &[data-anchor="top"],
+  &[data-anchor="bottom"] {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+  }
+
+  &[data-anchor="top"] {
+    top: var(--hk-dock-inset, 12px);
+  }
+
+  &[data-anchor="bottom"] {
+    bottom: var(--hk-dock-inset, 12px);
+  }
+
+  /* ── vertical edge anchors (west / east): the dock runs vertically,
+   *     centered on the edge midpoint. */
+  &[data-anchor="left"],
+  &[data-anchor="right"] {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+  }
+
+  &[data-anchor="left"] {
+    left: var(--hk-dock-inset, 12px);
+  }
+
+  &[data-anchor="right"] {
+    right: var(--hk-dock-inset, 12px);
   }
 
   /* ── corner anchors: absolute attachment with the same inset, for
@@ -73,6 +111,7 @@
   align-items: stretch;
   width: var(--dock-width, auto);
   max-width: var(--dock-max-width, calc(100vw - var(--space-16, 16px)));
+  max-height: var(--dock-max-height, none);
   padding: var(--dock-padding, var(--space-8, 8px) var(--space-12, 12px));
   background: rgb(var(--color-surface));
   border: 1px solid var(--border-subtle);
@@ -80,6 +119,14 @@
   /* Reverse soft light — dark mode: white halo; light mode: soft black
    * shadow. Strength scales with --glow-scale (Style → Shadow). */
   box-shadow: var(--glow-dock);
+}
+
+/* Vertical side docks (west / east edges) stack along the viewport's
+ * tall axis — cap them viewport-aware by default so a tall dock never
+ * runs off-screen; --dock-max-height still overrides. */
+.hk-dock-bar[data-anchor="left"] .hk-dock-bar-surface,
+.hk-dock-bar[data-anchor="right"] .hk-dock-bar-surface {
+  max-height: var(--dock-max-height, calc(100dvh - var(--space-16, 16px)));
 }
 
 /* Glass surface (default) — blur the page canvas behind the dock. */

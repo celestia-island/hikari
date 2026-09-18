@@ -328,6 +328,35 @@ describe("HkOtpInput editing", () => {
     expect(cell.selectionStart).toBe(0);
     expect(cell.selectionEnd).toBe(1);
   });
+
+  it("leaves no highlighted glyph behind when the row auto-completes", async () => {
+    // Regression: the 6th keystroke advanced the focus onto its own
+    // (occupied) cell with the caret expanded, so the last digit rendered
+    // selected and the next keystroke replaced it instead of being a
+    // no-op / starting an edit the user did not ask for.
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    for (let i = 0; i < 6; i += 1) {
+      cells[i]!.value = String(i + 1);
+      cells[i]!.dispatchEvent(new Event("input"));
+      await nextTick();
+    }
+    const tail = cells[5]!;
+    expect(document.activeElement).toBe(tail);
+    expect(tail.selectionStart).toBe(tail.selectionEnd);
+  });
+
+  it("keeps an ordinary advance free of a selection too", async () => {
+    const otp = mountOtp();
+    await nextTick();
+    const cells = otp.cells();
+    cells[0]!.value = "1";
+    cells[0]!.dispatchEvent(new Event("input"));
+    await nextTick();
+    expect(document.activeElement).toBe(cells[1]);
+    expect(cells[1]!.selectionStart).toBe(cells[1]!.selectionEnd);
+  });
 });
 
 describe("HkOtpInput paste", () => {

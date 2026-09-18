@@ -222,8 +222,8 @@ export default defineComponent({
 
     // ── Gesture & animation upgrades ─────────────────────────────
 
-    /** Camera tween duration in ms (0 disables tweening). `fit()` and
-     *  `tweenCamera()` animate over this duration with ease-out cubic.
+    /** Camera tween duration in ms (0 disables tweening). Only
+     *  `tweenCamera()` animates over this duration with ease-out cubic.
      *  Snaps instantly when prefers-reduced-motion is active and
      *  `respectReducedMotion` is on (default). */
     tweenMs: { type: Number, default: 0 },
@@ -637,6 +637,11 @@ export default defineComponent({
       // canvas clears focus), and ending the gesture there would kill the first
       // pan after any click. Only the window's own blur ends it.
       if (event.target && event.target !== window) return;
+      // Clear pinch state too: a blur during a two-finger gesture would
+      // otherwise leave a stale snapshot that permanently suppresses pan
+      // (every pointerdown would hit the pinch-active early return).
+      activePointers.clear();
+      pinchSnapshot = null;
       if (!panning) return;
       const pointerId = panning.pointerId;
       panning = null;

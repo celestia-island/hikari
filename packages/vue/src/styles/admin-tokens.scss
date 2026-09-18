@@ -811,10 +811,15 @@
   }
 }
 
-.s-auth-card input {
+.s-auth-card input:not(.hk-otp-cell) {
   transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
   appearance: none;
   -webkit-appearance: none;
+  /* 0 radius here was always a visual no-op: the auth card's inputs are
+   * transparent linings inside their own rounded boxes (HkInput). The OTP
+   * cells are the first VISIBLE bare inputs on the card, and they follow
+   * --radius-md themselves — exempting them keeps the theme's radius
+   * levels (chest's html[data-radius]) in charge of their corners. */
   border-radius: 0;
 }
 

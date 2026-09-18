@@ -396,7 +396,8 @@ export class RevealNoisePainter {
  * password glyphs are STATIC apertures carrying a SECOND spatter
  * texture — statistically identical (same generator, dot size and
  * lightness distribution) but drifting the OPPOSITE way and shifted by
- * a small brightening lightness pedestal (white-on-black reading),
+ * a large brightening lightness pedestal (live-tuned, white-on-black
+ * reading),
  * with a soft halo band around the glyph row. A human segments the two
  * layers effortlessly (motion transparency at a 180° direction
  * difference is the strongest segregation cue the visual system has)
@@ -409,8 +410,8 @@ export class RevealNoisePainter {
  * The palette is strictly GRAYSCALE and strictly UNIFORM — black,
  * white and grays only, no theme hue survives into the spatter (the
  * ink-colored variant read as an uncomfortable cyan), and the anchors
- * do NOT follow the theme: ALWAYS a near-black ground with light gray
- * speckle, a white halo and a brighter glyph pedestal (the theme-
+ * do NOT follow the theme: ALWAYS a near-black ground with dim gray
+ * speckle, a white halo and a much-brighter glyph pedestal (the theme-
  * following light variant read far worse and was dropped — a dark
  * reveal strip inside a light page is the accepted look).
  *

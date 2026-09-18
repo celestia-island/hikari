@@ -1627,7 +1627,7 @@ describe("HkInput password reveal strategies", () => {
       // The two spatter tiles: bg first, ink second (deterministic
       // draw order), each with hundreds of solid-color dot fills. The
       // anchors are UNIFORM (white-on-black reading in every theme):
-      // near-black ground, light-gray speckle, and the pedestal lifts
+      // near-black ground, dim-gray speckle, and the pedestal lifts
       // the glyph layer BRIGHTER. happy-dom resolves no computed
       // color, so the ink stays at the pre-sync fallback (a DARK ink)
       // — irrelevant now, the anchors follow nothing.
@@ -1775,7 +1775,7 @@ describe("HkInput password reveal strategies", () => {
   it("filter anchors white-on-black regardless of the field ink (light ink)", async () => {
     // UNIFORMITY pin: the anchors follow NOTHING — feed a LIGHT field
     // ink through getComputedStyle and the reveal must still paint the
-    // same near-black ground, light-gray speckle, brighter pedestal
+    // same near-black ground, dim-gray speckle, brighter pedestal
     // and white halo as the default (dark-ink) mount.
     const restoreInk = forceInkColor("rgb(148, 233, 211)");
     const rec = stubRecordingContexts();

@@ -403,7 +403,7 @@ export class RevealNoisePainter {
  * difference is the strongest segregation cue the visual system has)
  * and reads the row aided by the pedestal + halo, while any SINGLE
  * frame carries no motion at all: the glyph boundary survives only as
- * a small mean-luminance step inside a smooth halo ramp — nothing for
+ * a mean-luminance step inside a smooth halo ramp — nothing for
  * a global or adaptive threshold to plateau on, and (matched
  * statistics) nothing for a texture classifier either.
  *

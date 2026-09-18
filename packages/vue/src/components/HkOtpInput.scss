@@ -196,9 +196,11 @@
   color: rgb(var(--color-muted));
 }
 
-/* Narrow viewports: six cells at the md ramp plus gaps overrun a phone
- * card. The cell width is fixed (never flexed), so the ramp — not the
- * container — is what has to give. */
+/* Narrow viewports: shrink the ramps a step so a phone card shows the row
+ * at its intended pitch rather than at whatever the shrink-to-fit
+ * arithmetic lands on. (The cells would fit either way — this is about
+ * proportion, not overflow: a six-cell row in a 340px card measures ~40px
+ * per cell at this ramp and ~41px from the flexible shrink.) */
 @media (max-width: 480px) {
   .hk-otp-sm {
     --hk-otp-cell-size: 2rem;

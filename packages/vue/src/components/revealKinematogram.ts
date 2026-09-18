@@ -396,7 +396,7 @@ export class RevealNoisePainter {
  * password glyphs are STATIC apertures carrying a SECOND spatter
  * texture — statistically identical (same generator, dot size and
  * lightness distribution) but drifting the OPPOSITE way and shifted by
- * a small lightness pedestal toward the theme's visibility direction,
+ * a small brightening lightness pedestal (white-on-black reading),
  * with a soft halo band around the glyph row. A human segments the two
  * layers effortlessly (motion transparency at a 180° direction
  * difference is the strongest segregation cue the visual system has)
@@ -406,14 +406,13 @@ export class RevealNoisePainter {
  * a global or adaptive threshold to plateau on, and (matched
  * statistics) nothing for a texture classifier either.
  *
- * The palette is strictly GRAYSCALE — black, white and grays only, no
- * theme hue survives into the spatter (the ink-colored variant read as
- * an uncomfortable cyan). The two anchors follow the EFFECTIVE theme:
- * a dark theme (light field ink) gets a near-black ground with light
- * gray speckle, a white halo and a BRIGHTER glyph pedestal; a light
- * theme (dark ink) inverts every one of those — near-white ground,
- * dark gray speckle, black halo, DARKER glyph pedestal. Visibility,
- * not absolute brightness, is the invariant.
+ * The palette is strictly GRAYSCALE and strictly UNIFORM — black,
+ * white and grays only, no theme hue survives into the spatter (the
+ * ink-colored variant read as an uncomfortable cyan), and the anchors
+ * do NOT follow the theme: ALWAYS a near-black ground with light gray
+ * speckle, a white halo and a brighter glyph pedestal (the theme-
+ * following light variant read far worse and was dropped — a dark
+ * reveal strip inside a light page is the accepted look).
  *
  * Why these parameters (the failure modes of video CAPTCHAs say what
  * to avoid — NuCAPTCHA & animated-GIF schemes died to per-frame OCR +
@@ -428,9 +427,14 @@ export class RevealNoisePainter {
  *   more of the counter-drifting texture inside each glyph (stronger
  *   signal under interference); the shared layout's 1.2× letter
  *   spacing absorbs the wider advances.
- * - Drift ±FILTER_DRIFT_PX_S: slow enough to track coherently at field
- *   sizes, fast enough that a single frame carries no usable motion
- *   energy (form-from-motion needs ~100–200ms of integration).
+ * - Drift ±FILTER_DRIFT_PX_S, deliberately VERY fast: within one
+ *   persistence-of-vision window (~100ms) the texture travels ~30px —
+ *   several dot spacings (the mean spacing is ~7px) — so the aperture
+ *   interior time-averages into a clean pedestal + spatter mean and
+ *   the glyphs read near-solid, while the counter-motion segregation
+ *   only sharpens. A single frame still carries no motion energy at
+ *   all (form-from-motion needs the temporal integration that only
+ *   the live eye provides).
  * - The glyph APERTURES never move — only the texture inside them
  *   flows. Cross-frame registration of the glyph shapes (the attack
  *   that killed video CAPTCHAs) finds nothing to align.
@@ -450,28 +454,24 @@ export class RevealNoisePainter {
  * Invariants the tests pin: glyph geometry NEVER touches the visible
  * canvas (mask → `source-in` noise stamp, exactly like the noise
  * painter); every spatter fill is a NEUTRAL gray (r === g === b); the
- * ground anchor follows the theme (near-black vs near-white); the two
- * tiles differ in mean luminance along the theme's pedestal direction;
- * the mask rasterizes in bold; the halo gradient is drawn every frame
- * in the theme's halo color; a pattern-less or gradient-less engine
+ * ground is ALWAYS the near-black anchor regardless of the theme or
+ * field ink; the two tiles differ in mean luminance along the
+ * pedestal; the mask rasterizes in bold; the halo gradient is drawn
+ * every frame in white; a pattern-less or gradient-less engine
  * degrades to the static plain text (filter exists FOR readability —
  * never to frozen noise). */
 
-/** Effective theme the filter anchors its grayscale palette to. */
-export type RevealFilterTheme = "dark" | "light";
+/** Counter-drift speed of each layer in CSS px/s (opposite signs).
+ * Deliberately very fast — see the persistence rationale above. */
+export const FILTER_DRIFT_PX_S = 300;
 
-/** Counter-drift speed of each layer in CSS px/s (opposite signs). */
-export const FILTER_DRIFT_PX_S = 84;
-
-/** Lightness pedestal of the glyph layer, in HSL lightness points
- * (clamped into [L_MIN, L_MAX] like every sample). The DIRECTION
- * follows the theme: brighter glyphs over a dark theme's ground,
- * darker glyphs over a light theme's. Small on purpose — see the
+/** Lightness pedestal of the glyph layer (brighter — the text reads
+ * white-on-black), in HSL lightness points (clamped into
+ * [L_MIN, L_MAX] like every sample). Small on purpose — see the
  * strategy docblock. */
 export const FILTER_PEDESTAL_L = 10;
 
-/** Peak alpha of the halo band (theme-colored, at the glyph midline):
- * white over a dark ground, black over a light ground. */
+/** Peak alpha of the halo band (white, at the glyph-row midline). */
 export const FILTER_HALO_ALPHA = 0.1;
 
 /** Halo half-height as a multiple of the glyph font size (device px):
@@ -494,17 +494,36 @@ const FILTER_SPATTER_PX_PER_DOT = 45;
 /** Dot lightness spread around the layer base (both layers share it). */
 const FILTER_SPATTER_L_SPREAD = 22;
 
-/** Dark theme anchors: near-black ground, mid-light gray speckle. */
-const FILTER_DARK_BASE_L = 64;
-const FILTER_DARK_GROUND_L = 10;
-
-/** Light theme anchors: near-white ground, mid-dark gray speckle. */
-const FILTER_LIGHT_BASE_L = 38;
-const FILTER_LIGHT_GROUND_L = 93;
+/** The one anchor pair: near-black ground, mid-light gray speckle —
+ * white-on-black reading in EVERY theme (the light variant read far
+ * worse and was dropped). */
+const FILTER_BASE_L = 64;
+const FILTER_GROUND_L = 10;
 
 /** Glyph aperture weight: bold strokes expose more of the counter-
  * drifting texture inside each glyph. */
 const FILTER_APERTURE_WEIGHT = "bold";
+
+/**
+ * Parse an `rgb(r, g, b)` / `rgba(...)` / bare `r g b` triple out of a
+ * color string, rejecting the modern color functions (oklch/lab/
+ * color() would split into garbage numeric triples — the caller keeps
+ * its previous base instead). Leading separators are REAL here: a
+ * computed `rgb(...)` string starts with separators and the split
+ * would yield a leading EMPTY token — `Number("") === 0` silently
+ * shifts the triple to [0, r, g] and skews every derived HSL channel
+ * (the noise painter's ink base read a light ink as 45.7% lightness
+ * before this was fixed).
+ */
+export function parseColorTriple(raw: string): [number, number, number] | null {
+  if (/^(oklch|oklab|lab|lch|color)\(/i.test(raw.trim())) return null;
+  const ns = raw
+    .split(/[\s,()rgba]+/)
+    .filter((t) => t !== "")
+    .map(Number)
+    .filter((n) => !isNaN(n));
+  return ns.length >= 3 ? [ns[0], ns[1], ns[2]] : null;
+}
 
 export class RevealFilterPainter {
   private bgTile: HTMLCanvasElement | null = null;
@@ -514,7 +533,6 @@ export class RevealFilterPainter {
   private offsetBackground = 0;
   private offsetInk = 0;
   private driftSign = 1;
-  private theme: RevealFilterTheme = "dark";
   private dpr = 1;
   private ok = true;
 
@@ -530,20 +548,18 @@ export class RevealFilterPainter {
     return { background: this.offsetBackground, ink: this.offsetInk };
   }
 
-  /** Start a hold: two FRESH grayscale spatter tiles anchored to the
-   * theme (near-black/near-white ground), the glyph layer shifted by
-   * the pedestal along the theme's visibility direction, randomized
-   * phases and a randomized drift direction, so replays are never
-   * pixel-identical and automation cannot precompute the motion. */
-  beginHold(theme: RevealFilterTheme = "dark", dpr = 1): void {
+  /** Start a hold: two FRESH grayscale spatter tiles on the uniform
+   * near-black ground, the glyph layer lifted by the pedestal, with
+   * randomized phases and a randomized drift direction, so replays
+   * are never pixel-identical and automation cannot precompute the
+   * motion. */
+  beginHold(dpr = 1): void {
     this.dpr = dpr;
-    this.theme = theme;
     this.driftSign = Math.random() < 0.5 ? 1 : -1;
     this.offsetBackground = Math.random() * NOISE_TILE_W;
     this.offsetInk = Math.random() * NOISE_TILE_W;
     this.maskKey = ""; // force a mask rebuild on the first paint
-    const pedestal = (theme === "dark" ? 1 : -1) * FILTER_PEDESTAL_L;
-    this.ok = this.retile(0, "bg") && this.retile(pedestal, "ink");
+    this.ok = this.retile(0, "bg") && this.retile(FILTER_PEDESTAL_L, "ink");
   }
 
   advance(dt: number, dpr: number): void {
@@ -552,11 +568,10 @@ export class RevealFilterPainter {
     this.offsetInk -= this.driftSign * step;
   }
 
-  /** (Re)build one spatter tile: the theme's ground (near-black over a
-   * dark theme, near-white over a light one), then a fixed-density
-   * scatter of NEUTRAL-GRAY dots around the theme's base lightness.
-   * Draw order is deterministic (bg tile first, then ink) so tests can
-   * attribute the per-canvas recordings. */
+  /** (Re)build one spatter tile: the ONE near-black ground anchor,
+   * then a fixed-density scatter of NEUTRAL-GRAY dots around the one
+   * base lightness. Draw order is deterministic (bg tile first, then
+   * ink) so tests can attribute the per-canvas recordings. */
   private retile(pedestalL: number, which: "bg" | "ink"): boolean {
     try {
       if (typeof document === "undefined") return false;
@@ -570,19 +585,17 @@ export class RevealFilterPainter {
       tile.height = NOISE_TILE_H;
       const tctx = tile.getContext("2d");
       if (!tctx) return false;
-      const dark = this.theme === "dark";
-      const baseL = dark ? FILTER_DARK_BASE_L : FILTER_LIGHT_BASE_L;
-      const groundL = dark ? FILTER_DARK_GROUND_L : FILTER_LIGHT_GROUND_L;
       const lift = (v: number) => Math.min(L_MAX, Math.max(L_MIN, v));
-      // Saturation is ZERO by construction — black/white/gray only.
-      const [gr, gg, gb] = hslToRgb(0, 0, lift(groundL + pedestalL));
+      // Saturation is ZERO by construction — black/white/gray only,
+      // on the ONE near-black ground anchor.
+      const [gr, gg, gb] = hslToRgb(0, 0, lift(FILTER_GROUND_L + pedestalL));
       tctx.fillStyle = `rgb(${gr},${gg},${gb})`;
       tctx.fillRect(0, 0, NOISE_TILE_W, NOISE_TILE_H);
       const count = Math.round((NOISE_TILE_W * NOISE_TILE_H) / FILTER_SPATTER_PX_PER_DOT);
       const rMin = FILTER_SPATTER_R_MIN_CSS * this.dpr;
       const rMax = FILTER_SPATTER_R_MAX_CSS * this.dpr;
       for (let i = 0; i < count; i++) {
-        const dl = lift(baseL + pedestalL + (Math.random() * 2 - 1) * FILTER_SPATTER_L_SPREAD);
+        const dl = lift(FILTER_BASE_L + pedestalL + (Math.random() * 2 - 1) * FILTER_SPATTER_L_SPREAD);
         const [r, g, b] = hslToRgb(0, 0, dl);
         tctx.fillStyle = `rgb(${r},${g},${b})`;
         const rad = rMin + Math.random() * (rMax - rMin);
@@ -626,13 +639,12 @@ export class RevealFilterPainter {
       // Create the halo gradient up front as well: creation draws
       // nothing, so a bail here still leaves the visible canvas
       // untouched (no partial frame — see the pre-check above). The
-      // halo color follows the theme: white over a dark ground, black
-      // over a light one.
+      // halo is ALWAYS white — the reveal reads white-on-black in
+      // every theme — and the endpoints derive from the same channel
+      // string as the peak (no literal-compare desync trap).
       const bandH = Math.min(H / 2, FILTER_HALO_FONT_SCALE * layout.fontPx);
       const midY = H / 2;
-      // Endpoints derive from the SAME theme channel string as the
-      // peak — no literal compare that could silently desync them.
-      const haloRGB = this.theme === "dark" ? "255,255,255" : "0,0,0";
+      const haloRGB = "255,255,255";
       const grad = ctx.createLinearGradient(0, midY - bandH, 0, midY + bandH);
       if (!grad) return false;
       grad.addColorStop(0, `rgba(${haloRGB},0)`);

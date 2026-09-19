@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "Выбрать",
     "hikari::filePicker.copy": "Копировать",
     "hikari::filePicker.copyPath": "Копировать путь",
+    "hikari::filePicker.currentPath": "Текущий путь",
     "hikari::filePicker.cut": "Вырезать",
     "hikari::filePicker.empty": "Эта папка пуста",
     "hikari::filePicker.fieldChooseMany": "Выбрать файлы…",
@@ -218,5 +219,6 @@
   "hikari::tagInput.addCustom": "Использовать «{q}»",
   "hikari::tagInput.reorder": "Изменить порядок — {label}",
   "hikari::modal.hiddenLayers": "Скрытые слои",
-  "hikari::theme.modeTabHint": "Вкладки выбирают редактируемую палитру; общесистемное переключение светлой/тёмной — в полосе режимов вверху меню темы."
+  "hikari::theme.modeTabHint": "Вкладки выбирают редактируемую палитру; общесистемное переключение светлой/тёмной — в полосе режимов вверху меню темы.",
+  "hikari::emptyState.loading": "Загрузка"
 }

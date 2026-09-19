@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "선택",
     "hikari::filePicker.copy": "복사",
     "hikari::filePicker.copyPath": "경로 복사",
+    "hikari::filePicker.currentPath": "현재 경로",
     "hikari::filePicker.cut": "잘라내기",
     "hikari::filePicker.empty": "이 폴더는 비어 있습니다",
     "hikari::filePicker.fieldChooseMany": "여러 파일 선택…",
@@ -218,5 +219,6 @@
   "hikari::tagInput.addCustom": "\"{q}\" 사용",
   "hikari::tagInput.reorder": "순서 변경 — {label}",
   "hikari::modal.hiddenLayers": "숨겨진 레이어",
-  "hikari::theme.modeTabHint": "이 탭은 편집할 팔레트를 고를 뿐입니다. 앱 전체 밝기/어둠은 테마 팝업 상단의 모드 스트립에서 바꾸세요."
+  "hikari::theme.modeTabHint": "이 탭은 편집할 팔레트를 고를 뿐입니다. 앱 전체 밝기/어둠은 테마 팝업 상단의 모드 스트립에서 바꾸세요.",
+  "hikari::emptyState.loading": "불러오는 중"
 }

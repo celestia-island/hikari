@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "Elegir",
     "hikari::filePicker.copy": "Copiar",
     "hikari::filePicker.copyPath": "Copiar ruta",
+    "hikari::filePicker.currentPath": "Ruta actual",
     "hikari::filePicker.cut": "Cortar",
     "hikari::filePicker.empty": "Esta carpeta está vacía",
     "hikari::filePicker.fieldChooseMany": "Elegir archivos…",
@@ -218,5 +219,6 @@
   "hikari::tagInput.addCustom": "Usar «{q}»",
   "hikari::tagInput.reorder": "Reordenar — {label}",
   "hikari::modal.hiddenLayers": "Capas ocultas",
-  "hikari::theme.modeTabHint": "Estas pestañas eligen la paleta que estás EDITANDO; para cambiar el modo claro/oscuro de toda la app, usa la franja de modos de la parte superior del panel de temas."
+  "hikari::theme.modeTabHint": "Estas pestañas eligen la paleta que estás EDITANDO; para cambiar el modo claro/oscuro de toda la app, usa la franja de modos de la parte superior del panel de temas.",
+  "hikari::emptyState.loading": "Cargando"
 }

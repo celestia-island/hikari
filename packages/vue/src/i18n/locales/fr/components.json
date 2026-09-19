@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "Choisir",
     "hikari::filePicker.copy": "Copier",
     "hikari::filePicker.copyPath": "Copier le chemin",
+    "hikari::filePicker.currentPath": "Chemin actuel",
     "hikari::filePicker.cut": "Couper",
     "hikari::filePicker.empty": "Ce dossier est vide",
     "hikari::filePicker.fieldChooseMany": "Choisir des fichiers…",
@@ -218,5 +219,6 @@
   "hikari::tagInput.addCustom": "Utiliser « {q} »",
   "hikari::tagInput.reorder": "Réorganiser — {label}",
   "hikari::modal.hiddenLayers": "Couches masquées",
-  "hikari::theme.modeTabHint": "Ces onglets choisissent la palette éditée ; pour basculer clair/sombre dans toute l’app, utilisez la barre de mode du menu de thème."
+  "hikari::theme.modeTabHint": "Ces onglets choisissent la palette éditée ; pour basculer clair/sombre dans toute l’app, utilisez la barre de mode du menu de thème.",
+  "hikari::emptyState.loading": "Chargement"
 }

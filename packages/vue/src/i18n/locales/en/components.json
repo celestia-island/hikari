@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "Choose",
     "hikari::filePicker.copy": "Copy",
     "hikari::filePicker.copyPath": "Copy path",
+    "hikari::filePicker.currentPath": "Current path",
     "hikari::filePicker.cut": "Cut",
     "hikari::filePicker.empty": "This folder is empty",
     "hikari::filePicker.fieldChooseMany": "Choose files…",
@@ -218,5 +219,6 @@
   "hikari::tagInput.addCustom": "Use “{q}”",
   "hikari::tagInput.reorder": "Reorder {label}",
   "hikari::modal.hiddenLayers": "Hidden layers",
-  "hikari::theme.modeTabHint": "These tabs pick which palette you are EDITING; to switch the app-wide light/dark, use the mode strip at the top of the theme popup."
+  "hikari::theme.modeTabHint": "These tabs pick which palette you are EDITING; to switch the app-wide light/dark, use the mode strip at the top of the theme popup.",
+  "hikari::emptyState.loading": "Loading"
 }

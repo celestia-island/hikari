@@ -17,6 +17,11 @@ export interface HkIconButtonGroupOption {
    *  host's vue differs. Missing icons fall back to the label's initial. */
   icon?: unknown;
   disabled?: boolean;
+  /** Status dot pinned to the item's bottom-right corner. `"success"`
+   *  draws a small green dot (step-proven factor, completed requirement);
+   *  the dot is decorative — pair it with `disabled` and an updated
+   *  tooltip when it means "this one is done". */
+  marker?: "success";
   /** Tooltip text override; an EMPTY string suppresses the tooltip. */
   tooltip?: string;
 }
@@ -168,6 +173,7 @@ export default defineComponent({
               class="hk-icon-group-item"
               data-key={option.key}
               data-active={active || undefined}
+              data-marker={option.marker || undefined}
               role={props.mode === "single" ? "radio" : undefined}
               aria-checked={props.mode === "single" ? active : undefined}
               aria-pressed={props.mode === "multiple" ? active : undefined}
@@ -185,6 +191,12 @@ export default defineComponent({
                     </span>
                   )}
               </span>
+              {option.marker && (
+                <span
+                  class={`hk-icon-group-item-marker hk-icon-group-item-marker-${option.marker}`}
+                  aria-hidden="true"
+                />
+              )}
             </button>
           );
           // An empty tooltip override suppresses the wrapper entirely.

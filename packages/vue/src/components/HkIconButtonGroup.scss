@@ -107,6 +107,7 @@
 }
 
 .hk-icon-group-item {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -167,4 +168,30 @@
   font-size: var(--text-sm, 0.8125rem);
   font-weight: 600;
   line-height: 1;
+}
+
+/* Status marker (HkIconButtonGroupOption.marker) — a small dot pinned to
+ * the item's bottom-right corner. "success" = the theme's success green
+ * with a surface-colored ring so it stays legible on top of the icon's
+ * corner and across active/muted tints. Purely decorative: the accessible
+ * meaning lives in the option's label/tooltip the host controls. */
+.hk-icon-group-item-marker {
+  position: absolute;
+  right: calc(var(--space-1, 0.25rem) / 2);
+  bottom: calc(var(--space-1, 0.25rem) / 2);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.hk-icon-group-item-marker-success {
+  background: rgb(var(--color-success, 14 184 64));
+  box-shadow: 0 0 0 0.125rem rgb(var(--color-surface, 240 244 248));
+}
+
+/* Slider items already establish position:relative for the thumb stack —
+ * keep the marker above the gliding pill, not under it. */
+.hk-icon-group-slider .hk-icon-group-item .hk-icon-group-item-marker {
+  z-index: 1;
 }

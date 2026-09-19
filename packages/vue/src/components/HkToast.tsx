@@ -185,20 +185,33 @@ export default defineComponent({
     // texts read as one squashed multi-line blob. The wrapper itself may
     // also have re-fit when the pin runs, so the right anchor is snapped
     // at snapshot time too (see LeaveBoxSnapshot.right).
+    //
+    // Sizes come from getBoundingClientRect, NOT the offset* family:
+    // offsetWidth/Height round to integers, and the pinned box shrinks
+    // whenever the real box rounds down — a toast whose text sits within
+    // that sub-pixel distance of the wrap boundary loses its last
+    // character to the next line the instant the leave pins it. Rect
+    // width/height are exact and translation-invariant (enter/move only
+    // ever translate these surfaces, and translation does not change a
+    // box's size), so the pin reproduces the visible box to the pixel.
+    // Positions stay on offsetTop/offsetLeft — the transform-immune
+    // layout slot, where the ±0.5px integer error is invisible.
     const hostRef = ref<{ $el?: Element } | null>(null);
     const preLeaveBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
     onBeforeUpdate(() => {
       const host = hostRef.value?.$el;
       if (host == null || host.nodeType !== 1) return;
-      const parentWidth = (host as HTMLElement).clientWidth;
+      const hostEl = host as HTMLElement;
+      const hostWidth = hostEl.getBoundingClientRect().width;
       for (const child of Array.from(host.children)) {
         const e = child as HTMLElement;
+        const rect = e.getBoundingClientRect();
         preLeaveBoxes.set(e, {
           top: e.offsetTop,
           left: e.offsetLeft,
-          width: e.offsetWidth,
-          height: e.offsetHeight,
-          right: parentWidth - (e.offsetLeft + e.offsetWidth),
+          width: rect.width,
+          height: rect.height,
+          right: hostWidth - (e.offsetLeft + rect.width),
         });
       }
     });

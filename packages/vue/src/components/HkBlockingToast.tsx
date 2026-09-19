@@ -118,26 +118,27 @@ export default defineComponent({
     const handles = new Map<number, PopupHandle>();
 
     // Pre-patch geometry of every card, refreshed on each update — same
-    // multi-removal guard as HkToast (see the full rationale there):
-    // within one patch pass an earlier leaving card's position:absolute
-    // re-fits the shrink-to-fit column before a later card's beforeLeave
-    // reads its box, so live offset reads would teleport and squash the
-    // later cards. Snap the right anchor at snapshot time too — the
-    // wrapper's live clientWidth is already re-fit when the pin runs.
+    // multi-removal guard as HkToast (see the full rationale there,
+    // including the getBoundingClientRect choice for sizes: offset*
+    // integer rounding would shrink the pinned card by up to half a
+    // pixel and rewrap its last character). Snap the right anchor at
+    // snapshot time too — the wrapper is already re-fit when the pin
+    // runs.
     const hostRef = ref<{ $el?: Element } | null>(null);
     const preLeaveBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
     onBeforeUpdate(() => {
       const host = hostRef.value?.$el;
       if (host == null || host.nodeType !== 1) return;
-      const parentWidth = (host as HTMLElement).clientWidth;
+      const hostWidth = (host as HTMLElement).getBoundingClientRect().width;
       for (const child of Array.from(host.children)) {
         const e = child as HTMLElement;
+        const rect = e.getBoundingClientRect();
         preLeaveBoxes.set(e, {
           top: e.offsetTop,
           left: e.offsetLeft,
-          width: e.offsetWidth,
-          height: e.offsetHeight,
-          right: parentWidth - (e.offsetLeft + e.offsetWidth),
+          width: rect.width,
+          height: rect.height,
+          right: hostWidth - (e.offsetLeft + rect.width),
         });
       }
     });

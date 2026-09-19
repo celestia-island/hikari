@@ -16,6 +16,10 @@ import { useToast } from "../runtime/useToast";
  *   same patch pass, so live offset reads in a later sibling's
  *   before-leave hook would teleport it onto the reflowed slot and
  *   squash its bar (HkListTransition's pre-patch snapshot pattern)
+ * - the pin reproduces the box EXACTLY (getBoundingClientRect sizes):
+ *   offsetWidth/Height round to integers, and pinning a round-down
+ *   integer shrank the box by the sub-pixel gap — enough to push a
+ *   last character onto a second line the instant the leave started
  * - the toast is gone after the leave settles
  *
  * (Repo test convention: raw createApp + document queries, no
@@ -48,16 +52,30 @@ function stubLayout(el: HTMLElement, over: Partial<{
   offsetLeft: number;
   offsetWidth: number;
   offsetHeight: number;
+  /** getBoundingClientRect width — the exact fractional box the pin
+   *  must reproduce (offsetWidth is its integer rounding). */
+  rectWidth: number;
+  rectHeight: number;
 }>): void {
   // happy-dom has no layout engine; feed the leave hook the geometry a
   // real browser would read from the laid-out stack.
   const wrapper = el.parentElement as HTMLElement;
+  const rectWidth = over.rectWidth ?? over.offsetWidth ?? 384;
+  const rectHeight = over.rectHeight ?? over.offsetHeight ?? 83;
   Object.defineProperty(wrapper, "clientWidth", { value: 384, configurable: true });
+  Object.defineProperty(wrapper, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({ width: rectWidth, height: 0, top: 0, left: 0 }),
+  });
   Object.defineProperty(el, "offsetParent", { value: wrapper, configurable: true });
   Object.defineProperty(el, "offsetTop", { value: over.offsetTop ?? 0, configurable: true });
   Object.defineProperty(el, "offsetLeft", { value: over.offsetLeft ?? 0, configurable: true });
   Object.defineProperty(el, "offsetWidth", { value: over.offsetWidth ?? 384, configurable: true });
   Object.defineProperty(el, "offsetHeight", { value: over.offsetHeight ?? 83, configurable: true });
+  Object.defineProperty(el, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({ width: rectWidth, height: rectHeight, top: 0, left: 0 }),
+  });
 }
 
 afterEach(async () => {
@@ -132,6 +150,10 @@ describe("HkToast", () => {
       configurable: true,
       get: () => (reflowed() ? 138 : 384),
     });
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: reflowed() ? 138 : 384, height: 0, top: 0, left: 0 }),
+    });
     const stub = (
       el: HTMLElement,
       pre: { top: number; left: number; width: number; height: number },
@@ -145,6 +167,15 @@ describe("HkToast", () => {
           get: () => (reflowed() ? post[short] : pre[short]),
         });
       }
+      Object.defineProperty(el, "getBoundingClientRect", {
+        configurable: true,
+        value: () => ({
+          width: reflowed() ? post.width : pre.width,
+          height: reflowed() ? post.height : pre.height,
+          top: 0,
+          left: 0,
+        }),
+      });
     };
     stub(first, { top: 0, left: 0, width: 384, height: 83 }, { top: 0, left: 0, width: 384, height: 83 });
     stub(second, { top: 95, left: 0, width: 384, height: 48 }, { top: 0, left: 0, width: 138, height: 48 });
@@ -166,6 +197,39 @@ describe("HkToast", () => {
     expect(pinSecond!.style.top).toBe("95px");
     expect(pinSecond!.style.width).toBe("384px");
     expect(pinSecond!.style.height).toBe("48px");
+
+    await settle();
+    expect(items().length).toBe(0);
+  });
+
+  it("pins the exact fractional box so the rounding gap cannot rewrap the text", async () => {
+    mountHost();
+    const toast = useToast();
+    toast.error("message whose single line sits within a half pixel of the boundary");
+    await settle();
+
+    const item = items()[0];
+    // offsetWidth rounds the real box DOWN (369.40625 → 369): pinning
+    // that integer shrank the box by the rounding gap, which pushed the
+    // last character to a second line the moment the leave started. The
+    // pin must reproduce the exact fractional box instead.
+    stubLayout(item, {
+      offsetTop: 0,
+      offsetLeft: 0,
+      offsetWidth: 369,
+      offsetHeight: 83,
+      rectWidth: 369.40625,
+      rectHeight: 83,
+    });
+
+    item.querySelector<HTMLButtonElement>(".hk-toast-close")!.click();
+    await nextTick();
+
+    const leaving = document.querySelector<HTMLElement>(".hk-toast-leave-active");
+    expect(leaving).not.toBeNull();
+    expect(leaving!.style.width).toBe("369.40625px");
+    expect(leaving!.style.right).toBe("0px");
+    expect(leaving!.style.height).toBe("83px");
 
     await settle();
     expect(items().length).toBe(0);

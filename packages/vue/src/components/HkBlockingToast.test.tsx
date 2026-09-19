@@ -215,11 +215,19 @@ describe("HkBlockingToast", () => {
     expect(slot).not.toBeNull();
     const wrapper = slot!.parentElement as HTMLElement;
     Object.defineProperty(wrapper, "clientWidth", { value: 384, configurable: true });
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 384, height: 0, top: 0, left: 0 }),
+    });
     Object.defineProperty(slot!, "offsetParent", { value: wrapper, configurable: true });
     Object.defineProperty(slot!, "offsetTop", { value: 0, configurable: true });
     Object.defineProperty(slot!, "offsetLeft", { value: 0, configurable: true });
     Object.defineProperty(slot!, "offsetWidth", { value: 384, configurable: true });
     Object.defineProperty(slot!, "offsetHeight", { value: 120, configurable: true });
+    Object.defineProperty(slot!, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 384, height: 120, top: 0, left: 0 }),
+    });
 
     // Dismiss (not confirm): this case only cares about the leave animation.
     cancelButton(cards()[0]).click();
@@ -256,6 +264,10 @@ describe("HkBlockingToast", () => {
       configurable: true,
       get: () => (reflowed() ? 138 : 384),
     });
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: reflowed() ? 138 : 384, height: 0, top: 0, left: 0 }),
+    });
     const stub = (
       el: HTMLElement,
       box: { top: number; left: number; width: number; height: number },
@@ -265,6 +277,15 @@ describe("HkBlockingToast", () => {
       Object.defineProperty(el, "offsetLeft", { configurable: true, get: () => (reflowed() ? 0 : box.left) });
       Object.defineProperty(el, "offsetWidth", { configurable: true, get: () => (reflowed() ? 138 : box.width) });
       Object.defineProperty(el, "offsetHeight", { configurable: true, get: () => box.height });
+      Object.defineProperty(el, "getBoundingClientRect", {
+        configurable: true,
+        value: () => ({
+          width: reflowed() ? 138 : box.width,
+          height: box.height,
+          top: 0,
+          left: 0,
+        }),
+      });
     };
     stub(first, { top: 0, left: 0, width: 384, height: 120 });
     stub(second, { top: 132, left: 0, width: 384, height: 120 });

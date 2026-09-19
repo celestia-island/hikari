@@ -217,5 +217,6 @@
   "hikari::tagInput.remove": "Entfernen",
   "hikari::tagInput.addCustom": "„{q}“ verwenden",
   "hikari::tagInput.reorder": "Neu anordnen — {label}",
-  "hikari::modal.hiddenLayers": "Verdeckte Ebenen"
+  "hikari::modal.hiddenLayers": "Verdeckte Ebenen",
+  "hikari::theme.modeTabHint": "Diese Reiter wählen die zu bearbeitende Palette; die appweite Hell/Dunkel-Umschaltung liegt im Modusstreifen des Themen-Popups."
 }

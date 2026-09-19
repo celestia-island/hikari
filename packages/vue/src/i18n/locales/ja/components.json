@@ -217,5 +217,6 @@
   "hikari::tagInput.remove": "削除",
   "hikari::tagInput.addCustom": "「{q}」を使用",
   "hikari::tagInput.reorder": "並べ替え — {label}",
-  "hikari::modal.hiddenLayers": "非表示の階層"
+  "hikari::modal.hiddenLayers": "非表示の階層",
+  "hikari::theme.modeTabHint": "このタブは編集対象のパレットを選ぶだけです。アプリ全体の明/暗はテーマポップアップ上部のモードストリップで切り替えてください。"
 }

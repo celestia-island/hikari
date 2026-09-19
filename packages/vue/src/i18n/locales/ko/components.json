@@ -217,5 +217,6 @@
   "hikari::tagInput.remove": "제거",
   "hikari::tagInput.addCustom": "\"{q}\" 사용",
   "hikari::tagInput.reorder": "순서 변경 — {label}",
-  "hikari::modal.hiddenLayers": "숨겨진 레이어"
+  "hikari::modal.hiddenLayers": "숨겨진 레이어",
+  "hikari::theme.modeTabHint": "이 탭은 편집할 팔레트를 고를 뿐입니다. 앱 전체 밝기/어둠은 테마 팝업 상단의 모드 스트립에서 바꾸세요."
 }

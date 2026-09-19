@@ -217,5 +217,6 @@
   "hikari::tagInput.remove": "Quitar",
   "hikari::tagInput.addCustom": "Usar «{q}»",
   "hikari::tagInput.reorder": "Reordenar — {label}",
-  "hikari::modal.hiddenLayers": "Capas ocultas"
+  "hikari::modal.hiddenLayers": "Capas ocultas",
+  "hikari::theme.modeTabHint": "Estas pestañas eligen la paleta que estás EDITANDO; para cambiar el modo claro/oscuro de toda la app, usa la franja de modos de la parte superior del panel de temas."
 }

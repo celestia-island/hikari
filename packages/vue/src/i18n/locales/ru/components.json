@@ -217,5 +217,6 @@
   "hikari::tagInput.remove": "Удалить",
   "hikari::tagInput.addCustom": "Использовать «{q}»",
   "hikari::tagInput.reorder": "Изменить порядок — {label}",
-  "hikari::modal.hiddenLayers": "Скрытые слои"
+  "hikari::modal.hiddenLayers": "Скрытые слои",
+  "hikari::theme.modeTabHint": "Вкладки выбирают редактируемую палитру; общесистемное переключение светлой/тёмной — в полосе режимов вверху меню темы."
 }

@@ -24,6 +24,13 @@ import { describe, expect, it } from "vitest";
  * belong to the HOST-app namespace (registered at runtime via
  * mergeMessages, or passed in as props.t) and are pinned by their own
  * suites (timeKeys.test.ts & co.) — out of scope here by construction.
+ *
+ * Interpolated keys cannot be pinned by literal, so their CONSTRUCTION
+ * SITES are scanned wherever the backtick template appears — adjacency to
+ * t() is NOT required (F1: HkStatusBar.tsx:233 builds the key into a
+ * variable first) — and each discovered family is whitelisted and, when
+ * its enum is closed inside hikari, pinned key-by-key (see
+ * CONSTRUCTED_FAMILY_KEYS).
  */
 const modules = import.meta.glob<{ default: Record<string, unknown> }>(
   "./locales/*/*.json",
@@ -75,18 +82,23 @@ function walkSources(dir: string, acc: string[] = []): string[] {
  *  `t(` and the key; the character class covers ", ', and ` so a template
  *  literal WITHOUT interpolation is still a pinned literal. */
 const STATIC_USE_RE = /\bt\(\s*(["'`])hikari::[A-Za-z0-9_.]+\1/g;
-/** Dynamic families: a template key with `${…}` interpolation can never be
- *  resolved statically — they are enumerated in DYNAMIC_KEY_FAMILIES. */
-const DYNAMIC_USE_RE = /\bt\(\s*`hikari::[A-Za-z0-9_.]*\$\{/g;
+/** Constructed key families: a template key with `${…}` interpolation can
+ *  never be resolved statically — they are enumerated in
+ *  DYNAMIC_KEY_FAMILIES. The regex matches the template construction
+ *  ANYWHERE in source, NOT only adjacent to `t(`: F1 (verify-hk603,
+ *  2026-09-19) — HkStatusBar.tsx builds `hikari::statusBar.tier.${tier}`
+ *  into a variable and only calls t(tierLabelKey) 135 lines later, so the
+ *  old adjacency-only regex never saw the family at all. */
+const CONSTRUCTED_KEY_RE = /`hikari::[A-Za-z0-9_.]*\$\{/g;
 
 interface Site {
   key: string;
   where: string;
 }
 
-function scanSources(): { statics: Site[]; dynamics: string[] } {
+function scanSources(): { statics: Site[]; constructed: Site[] } {
   const statics: Site[] = [];
-  const dynamics: string[] = [];
+  const constructed: Site[] = [];
   for (const path of walkSources(SRC_ROOT)) {
     const text = readFileSync(path, "utf8");
     const rel = path.slice(SRC_ROOT.length + 1);
@@ -94,13 +106,14 @@ function scanSources(): { statics: Site[]; dynamics: string[] } {
       const key = match[0].slice(match[0].indexOf("hikari::"), -1);
       statics.push({ key, where: `${rel}:${text.slice(0, match.index).split("\n").length}` });
     }
-    for (const match of text.matchAll(DYNAMIC_USE_RE)) {
+    for (const match of text.matchAll(CONSTRUCTED_KEY_RE)) {
       // The literal portion before "${" — e.g. "hikari::context." — which
       // is the family prefix the whitelist is keyed by.
-      dynamics.push(match[0].slice(match[0].indexOf("hikari::"), -2));
+      const family = match[0].slice(1, -2);
+      constructed.push({ key: family, where: `${rel}:${text.slice(0, match.index).split("\n").length}` });
     }
   }
-  return { statics, dynamics };
+  return { statics, constructed };
 }
 
 /** Interpolated key families that intentionally escape the static scan,
@@ -112,13 +125,25 @@ const DYNAMIC_KEY_FAMILIES: Record<string, string> = {
   "hikari::context.": "HkContextRing section keys — closed enum, pinned by name in contextKeys.test.ts.",
   "hikari::statusBar.backend.": "HkConnectionStatus — enumerated connection-state suffixes.",
   "hikari::statusBar.region.": "HkStatusBar region names — OPTIONAL per-locale overrides over Intl.DisplayNames (see LOCALE_SPECIFIC_NESTED in flatKeyParity.test.ts).",
+  "hikari::statusBar.tier.": "HkStatusBar transport tiers — constructed into a variable at a distance from its t() call (F1); the four concrete ids are pinned by name in CONSTRUCTED_FAMILY_KEYS below.",
   "hikari::theme.groups.": "Registry type: group/slot ids are registered by downstream apps; t() resolves via a resolveLocalizedText fallback, never a hikari bundle.",
   "hikari::theme.tokens.": "HkColorSchemeEditor token enum — closed set defined in platform.json locales.",
 };
 
+/** Concrete suffixes each constructed family resolves to, for families whose
+ *  enum is closed INSIDE hikari (the whitelist reason records which). Each
+ *  listed key is asserted to exist, non-empty, in every locale — that is
+ *  the tooth the adjacency regex lacked: deleting the whole family from
+ *  every bundle used to leave every audit pin green (F1 blind spot).
+ *  Families resolved by downstream apps (theme.groups.) or optional
+ *  per-locale overrides (statusBar.region.) deliberately stay out. */
+const CONSTRUCTED_FAMILY_KEYS: Record<string, string[]> = {
+  "hikari::statusBar.tier.": ["local", "poll", "sse", "ws"],
+};
+
 describe("t() usage surface vs locale bundles", () => {
   const universes = new Map(EXPECTED_LOCALES.map((l) => [l, buildLocaleUniverse(l)]));
-  const { statics, dynamics } = scanSources();
+  const { statics, constructed } = scanSources();
 
   it("covers all 11 locales in the merged bundle universe", () => {
     const found = new Set(
@@ -144,6 +169,11 @@ describe("t() usage surface vs locale bundles", () => {
     expect(firstSiteOf("hikari::filePicker.currentPath")).toMatch(/HkFileBrowserDialog\.tsx/);
     // Split-across-lines call form (t( and the key on different lines):
     expect(firstSiteOf("hikari::phoneInput.searchCountries")).toMatch(/HkPhoneInput\.tsx/);
+    // Constructed-key scan positive (F1): the tier template is built into a
+    // variable 135 lines away from its t() call — the scan must still see it.
+    expect(
+      constructed.find((s) => s.key === "hikari::statusBar.tier.")?.where ?? "NOT FOUND",
+    ).toMatch(/HkStatusBar\.tsx/);
   });
 
   it("resolves every statically referenced hikari:: key in every locale, non-empty", () => {
@@ -165,13 +195,36 @@ describe("t() usage surface vs locale bundles", () => {
     expect(violations, "every referenced key must resolve in all 11 locales").toEqual([]);
   });
 
-  it("enumerates exactly the whitelisted dynamic key families, both directions", () => {
-    const found = [...new Set(dynamics)].sort();
-    expect(found, "families found in source but missing from the whitelist").toEqual(
+  it("enumerates exactly the whitelisted constructed key families, both directions", () => {
+    const found = [...new Set(constructed.map((s) => s.key))].sort();
+    expect(found, "families constructed in source but missing from the whitelist").toEqual(
       Object.keys(DYNAMIC_KEY_FAMILIES).sort(),
     );
     for (const family of Object.keys(DYNAMIC_KEY_FAMILIES)) {
-      expect(found, `${family} is whitelisted but no longer used — prune it`).toContain(family);
+      expect(found, `${family} is whitelisted but no longer constructed — prune it`).toContain(family);
     }
+  });
+
+  it("resolves every named concrete key of the constructed families in every locale", () => {
+    const violations: string[] = [];
+    for (const [family, suffixes] of Object.entries(CONSTRUCTED_FAMILY_KEYS)) {
+      expect(
+        DYNAMIC_KEY_FAMILIES[family],
+        `${family} carries named keys but has no whitelist entry`,
+      ).toBeDefined();
+      for (const suffix of suffixes) {
+        const key = family + suffix;
+        for (const locale of EXPECTED_LOCALES) {
+          const value = universes.get(locale)!.get(key);
+          if (typeof value !== "string" || value.length === 0) {
+            violations.push(`${key} is missing or empty in ${locale}`);
+          }
+        }
+      }
+    }
+    expect(
+      violations,
+      "constructed families' concrete keys must resolve in all 11 locales",
+    ).toEqual([]);
   });
 });

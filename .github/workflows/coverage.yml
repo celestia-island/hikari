@@ -43,15 +43,6 @@ jobs:
           toolchain: nightly
           components: llvm-tools-preview
 
-      - name: Cache cargo
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:

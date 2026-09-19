@@ -49,6 +49,13 @@ export interface LeaveBoxSnapshot {
   left: number;
   width: number;
   height: number;
+  /** Right-pin offset (`containing-block width − (left + width)`)
+   *  computed at SNAPSHOT time. Right-anchored hosts need this because
+   *  the containing block itself re-fits mid-removal: by the time a
+   *  later sibling pins, a live `clientWidth` read would measure the
+   *  already-collapsed wrapper and shove the pinned box past the edge
+   *  the anchor is supposed to hold. */
+  right?: number;
 }
 
 /**
@@ -107,7 +114,10 @@ export function pinLeaveGeometry(
     // CSS `right` for an absolutely positioned box is measured from the
     // containing block's right padding-box edge; offsetLeft/offsetWidth
     // place the item's right border edge within that same padding box.
-    const right = parent.clientWidth - (left + width);
+    // Prefer the snapshot-time value: a live clientWidth here would
+    // measure the wrapper AFTER earlier siblings already left the flow
+    // (multi-element removal re-fits it synchronously).
+    const right = opts?.box?.right ?? parent.clientWidth - (left + width);
     node.style.right = `${right}px`;
   }
   node.style.top = `${top}px`;

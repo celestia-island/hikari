@@ -1,5 +1,5 @@
 import { CircleX as XCircle, X } from "lucide-vue-next";
-import { computed, defineComponent, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
+import { computed, defineComponent, onBeforeUpdate, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
 import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
 
 
@@ -7,7 +7,7 @@ import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../
 import { useClipboard } from "../runtime/useClipboard";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
-import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
+import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import "./HkToast.scss";
 
@@ -173,6 +173,36 @@ export default defineComponent({
     let popupHandle: PopupHandle | null = null;
     const containerZ = ref<number | null>(null);
 
+    // Pre-patch geometry of every toast, refreshed on each update (the
+    // DOM is still the pre-patch tree at onBeforeUpdate — same pattern
+    // as HkListTransition / HkTabs). During a multi-toast removal the
+    // first leaving sibling gets its leave-active class (position:
+    // absolute) synchronously inside the patch pass, so by the time the
+    // NEXT sibling's beforeLeave runs, the shrink-to-fit stack column
+    // has already re-fit: a live offset read there would freeze the
+    // reflowed box — toasts teleport onto the top slot, a narrow toast's
+    // bar collapses to its own max-content, and the overlapped fading
+    // texts read as one squashed multi-line blob. The wrapper itself may
+    // also have re-fit when the pin runs, so the right anchor is snapped
+    // at snapshot time too (see LeaveBoxSnapshot.right).
+    const hostRef = ref<{ $el?: Element } | null>(null);
+    const preLeaveBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    onBeforeUpdate(() => {
+      const host = hostRef.value?.$el;
+      if (host == null || host.nodeType !== 1) return;
+      const parentWidth = (host as HTMLElement).clientWidth;
+      for (const child of Array.from(host.children)) {
+        const e = child as HTMLElement;
+        preLeaveBoxes.set(e, {
+          top: e.offsetTop,
+          left: e.offsetLeft,
+          width: e.offsetWidth,
+          height: e.offsetHeight,
+          right: parentWidth - (e.offsetLeft + e.offsetWidth),
+        });
+      }
+    });
+
     onMounted(() => {
       popupHandle = manager.register("toast", false);
       containerZ.value = popupHandle.zIndex;
@@ -195,13 +225,14 @@ export default defineComponent({
       <Teleport to="body">
         <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
+            ref={hostRef}
             tag="div"
             name="hk-toast"
             onBeforeEnter={itemHooks.onBeforeEnter}
             onAfterEnter={itemHooks.onAfterEnter}
             onBeforeLeave={(el: Element) => {
               itemHooks.onBeforeLeave();
-              pinLeaveGeometry(el);
+              pinLeaveGeometry(el, { box: preLeaveBoxes.get(el) });
             }}
             onAfterLeave={itemHooks.onAfterLeave}
             onLeaveCancelled={(el: Element) => {

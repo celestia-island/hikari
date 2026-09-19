@@ -60,7 +60,13 @@
   padding: var(--hk-icon-group-inset);
   border: none;
   background: transparent;
-  gap: 0;
+  /* A visible gap between items (so the sliding thumb never visually
+   * merges neighbours) must ALSO feed the thumb's translate arithmetic —
+   * one custom property drives both, keeping the position pure index
+   * math with no JS measurement. Do not replace with a literal `gap: 0`;
+   * the thumb formula below consumes the same variable. */
+  --hk-icon-group-slider-gap: 0.375rem;
+  gap: var(--hk-icon-group-slider-gap);
   flex-wrap: nowrap;
 }
 
@@ -93,7 +99,10 @@
   border-radius: var(--radius-sm, 4px);
   background: rgb(var(--color-primary, 90 140 255) / 14%);
   transform: translateX(
-    calc(var(--hk-icon-group-active-index, 0) * var(--hk-icon-group-item-size))
+    calc(
+      var(--hk-icon-group-active-index, 0) *
+        (var(--hk-icon-group-item-size) + var(--hk-icon-group-slider-gap))
+    )
   );
   transition: transform var(--duration, 0.18s) ease;
   pointer-events: none;

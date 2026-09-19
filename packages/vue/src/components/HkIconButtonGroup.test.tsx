@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkIconButtonGroup from "./HkIconButtonGroup";
@@ -301,5 +301,43 @@ describe("HkIconButtonGroup", () => {
       expect(itemBlock).toBeTruthy();
       expect(itemBlock![0]).toContain("flex: none");
     });
+  });
+});
+describe("option markers", () => {
+  const baseOpts = (marker?: "success", disabled?: boolean) => [
+    { key: "totp", label: "TOTP" },
+    { key: "password", label: "Password", marker, disabled },
+  ];
+
+  it("renders the success marker dot and data-marker attribute", () => {
+    const c = mountComp(() => h(HkIconButtonGroup, {
+      mode: "single",
+      variant: "slider",
+      options: baseOpts("success"),
+      modelValue: "totp",
+    }));
+    const item = c.querySelector('.hk-icon-group-item[data-key="password"]') as HTMLElement;
+    expect(item).toBeTruthy();
+    expect(item.getAttribute("data-marker")).toBe("success");
+    expect(item.querySelector(".hk-icon-group-item-marker-success")).toBeTruthy();
+    // The untouched sibling carries no marker.
+    const sibling = c.querySelector('.hk-icon-group-item[data-key="totp"]') as HTMLElement;
+    expect(sibling.getAttribute("data-marker")).toBeNull();
+  });
+
+  it("ignores activation of a disabled marked option", async () => {
+    const onSelect = vi.fn();
+    const c = mountComp(() => h(HkIconButtonGroup, {
+      mode: "single",
+      variant: "slider",
+      options: baseOpts("success", true),
+      modelValue: "totp",
+      onSelect,
+    }));
+    const item = c.querySelector('.hk-icon-group-item[data-key="password"]') as HTMLButtonElement;
+    expect(item.getAttribute("disabled")).not.toBeNull();
+    item.click();
+    await Promise.resolve();
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });

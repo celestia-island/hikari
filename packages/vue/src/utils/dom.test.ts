@@ -110,6 +110,24 @@ describe("pinLeaveGeometry", () => {
     expect(el.style.boxSizing).toBe("border-box");
   });
 
+  it("prefers the snapshot's right pin over a live clientWidth on the right anchor", () => {
+    // Right-anchored hosts re-fit mid-removal: by the time a later
+    // sibling pins, the live clientWidth has already collapsed, so the
+    // snapshot-time right offset must win over the live computation.
+    const parent = { clientWidth: 138 };
+    const el = stubEl(parent, { offsetTop: 95, offsetLeft: 0, offsetWidth: 384, offsetHeight: 48 });
+
+    pinLeaveGeometry(el as unknown as Element, {
+      box: { top: 95, left: 0, width: 384, height: 48, right: 0 },
+    });
+
+    expect(el.style.right).toBe("0px");
+    expect(el.style.top).toBe("95px");
+    expect(el.style.width).toBe("384px");
+    expect(el.style.height).toBe("48px");
+    expect(el.style.boxSizing).toBe("border-box");
+  });
+
   it("clearLeaveGeometry strips exactly the pins pinLeaveGeometry wrote", () => {
     const parent = { clientWidth: 384 };
     const el = stubEl(parent, { offsetWidth: 384, offsetHeight: 83 });

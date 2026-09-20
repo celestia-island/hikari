@@ -156,6 +156,16 @@ export default defineComponent({
      * length, applied on the `dvh`-capable branch, never sanitized.
      */
     maxHeight: { type: String, default: undefined },
+    /**
+     * Sidebar variant only: every collapsible group renders EXPANDED
+     * until the user collapses it — nav sidebars that read as a table of
+     * contents instead of an accordion. Default false keeps the accordion
+     * behavior (only the group holding the active row auto-opens). The
+     * user's first toggle on a group still takes over and sticks:
+     * expansion is the default, never a resurrection. No-op in the
+     * popup variant (sub-levels there are cascades, not inline groups).
+     */
+    defaultExpandGroups: { type: Boolean, default: false },
   },
   emits: ["update:open", "select"],
   setup(props, { emit, slots }) {
@@ -696,6 +706,10 @@ export default defineComponent({
     const userCollapsed = ref<Set<string>>(new Set());
 
     function isGroupExpanded(key: string): boolean {
+      // Table-of-contents mode (defaultExpandGroups): open IS the default
+      // state — only an explicit user collapse closes a group, and it
+      // stays closed (no auto-resurrection on activeKey/items changes).
+      if (props.defaultExpandGroups) return !userCollapsed.value.has(key);
       if (userGroups.value.has(key)) return true;
       if (autoGroups.value.has(key)) return !userCollapsed.value.has(key);
       return false;
@@ -779,8 +793,10 @@ export default defineComponent({
 
     function renderSidebarItem(item: HkMenuItem, depth: number) {
       if (!isGroup(item)) return renderSidebarRow(item, depth);
-      // Auto-expanded when containing the active row (fresh mount shows
-      // where you are); the user's first toggle on a group takes over.
+      // Accordion mode: auto-expanded when containing the active row
+      // (fresh mount shows where you are). defaultExpandGroups mode:
+      // everything starts open instead. Either way the user's first
+      // toggle on a group takes over and sticks.
       const expanded = isGroupExpanded(item.key);
       return (
         <div key={item.key} class="hk-menu-sidebar-group" data-open={expanded || undefined}>

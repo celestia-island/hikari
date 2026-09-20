@@ -48,15 +48,6 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
 
-      - name: Cache cargo
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - name: Run clippy
         run: |
           cargo clippy \

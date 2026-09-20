@@ -877,6 +877,108 @@ describe("HkMenu sidebar variant", () => {
   });
 });
 
+describe("HkMenu sidebar defaultExpandGroups", () => {
+  /** Two INDEPENDENT groups, no active row anywhere — the shape where
+   *  accordion mode keeps everything closed and table-of-contents mode
+   *  must open everything. */
+  const groupedItems: HkMenuItem[] = [
+    { key: "g1", label: "Group One", children: [{ key: "g1-a", label: "One A" }] },
+    { key: "g2", label: "Group Two", children: [{ key: "g2-a", label: "Two A" }] },
+  ];
+
+  function mountSidebar(
+    items: HkMenuItem[],
+    props: Record<string, unknown> = {},
+  ): HTMLElement {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () => h(HkMenu, { variant: "sidebar", open: true, items, ...props }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    return container;
+  }
+
+  const toggleOf = (root: HTMLElement, label: string): HTMLButtonElement =>
+    Array.from(root.querySelectorAll(".hk-menu-sidebar-group-toggle")).find(
+      (r) => r.textContent?.includes(label),
+    ) as HTMLButtonElement;
+
+  it("keeps the accordion default when the prop is absent (additive no-op)", () => {
+    // Pinned at the DOM level: with no prop the group carries no open
+    // marker and its children stay unrendered — every existing consumer
+    // (drawer account menus, nav sidebars) is untouched.
+    const root = mountSidebar(groupedItems);
+    expect(root.textContent).not.toContain("One A");
+    expect(root.textContent).not.toContain("Two A");
+    expect(root.querySelector(".hk-menu-sidebar-group[data-open]")).toBeNull();
+  });
+
+  it("renders every group expanded at mount, active row or not", () => {
+    const root = mountSidebar(groupedItems, { defaultExpandGroups: true });
+    expect(root.textContent).toContain("One A");
+    expect(root.textContent).toContain("Two A");
+    expect(root.querySelectorAll(".hk-menu-sidebar-group[data-open]")).toHaveLength(2);
+    // The toggle rows' a11y state agrees with the rendered children.
+    for (const toggle of root.querySelectorAll(".hk-menu-sidebar-group-toggle")) {
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    }
+  });
+
+  it("a user collapse sticks across navigation — no auto-resurrection", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const activeKey = ref("none");
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: groupedItems,
+          activeKey: activeKey.value,
+          defaultExpandGroups: true,
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    // First toggle COLLAPSES (open is the default state here).
+    toggleOf(container, "Group One").click();
+    await settle();
+    expect(container.textContent).not.toContain("One A");
+    // The sibling keeps its default-open state.
+    expect(container.textContent).toContain("Two A");
+
+    // Navigating INTO the collapsed group must not resurrect it: the
+    // user's collapse is the user's word (the auto-expand watch fires on
+    // activeKey changes and must stay inert in this mode).
+    activeKey.value = "g1-a";
+    await settle();
+    expect(container.textContent).not.toContain("One A");
+
+    // Re-expanding works, lands the active row, and stays open.
+    toggleOf(container, "Group One").click();
+    await settle();
+    expect(container.textContent).toContain("One A");
+    const active = container.querySelector(".hk-menu-sidebar-row[data-active]");
+    expect(active?.textContent).toContain("One A");
+  });
+
+  it("collapsing one group never touches its siblings' default-open state", async () => {
+    const root = mountSidebar(groupedItems, { defaultExpandGroups: true });
+    await settle();
+    toggleOf(root, "Group Two").click();
+    await settle();
+    expect(root.textContent).toContain("One A");
+    expect(root.textContent).not.toContain("Two A");
+    expect(toggleOf(root, "Group One").getAttribute("aria-expanded")).toBe("true");
+  });
+});
+
 describe("HkMenu close linger (leave-transition window)", () => {
   it("keeps the panel tree mounted briefly after close, then unmounts", async () => {
     const openRef = ref(true);

@@ -977,6 +977,43 @@ describe("HkMenu sidebar defaultExpandGroups", () => {
     expect(root.textContent).not.toContain("Two A");
     expect(toggleOf(root, "Group One").getAttribute("aria-expanded")).toBe("true");
   });
+
+  it("expands nested groups too, and a parent round-trip restores the still-open inner group", async () => {
+    const root = mountSidebar(
+      [
+        {
+          key: "outer",
+          label: "Outer",
+          children: [
+            {
+              key: "inner",
+              label: "Inner",
+              children: [{ key: "leaf", label: "Deep Leaf" }],
+            },
+          ],
+        },
+      ],
+      { defaultExpandGroups: true },
+    );
+    await settle();
+
+    // Both levels render expanded at mount (depth > 1 included).
+    expect(root.textContent).toContain("Deep Leaf");
+    expect(root.querySelectorAll(".hk-menu-sidebar-group[data-open]")).toHaveLength(2);
+
+    // Collapse the parent: the whole subtree unmounts…
+    toggleOf(root, "Outer").click();
+    await settle();
+    expect(root.textContent).not.toContain("Deep Leaf");
+    expect(root.querySelectorAll(".hk-menu-sidebar-group[data-open]")).toHaveLength(0);
+
+    // …and re-expanding restores the inner group still open — its state
+    // lived in the key sets, so no re-toggle of "Inner" is needed.
+    toggleOf(root, "Outer").click();
+    await settle();
+    expect(root.textContent).toContain("Deep Leaf");
+    expect(root.querySelectorAll(".hk-menu-sidebar-group[data-open]")).toHaveLength(2);
+  });
 });
 
 describe("HkMenu close linger (leave-transition window)", () => {

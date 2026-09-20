@@ -3,7 +3,7 @@ name: Clippy
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
     paths:
       - '.github/workflows/clippy.yml'
       - 'packages/**/*'

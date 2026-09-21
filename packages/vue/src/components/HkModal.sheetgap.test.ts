@@ -74,6 +74,39 @@ describe("HkModal mobile sheet spacing contract", () => {
       expect(content).not.toMatch(/max-height:\s*none/);
     });
 
+    // 2026-09-21 IME cap-chase guard (Xiaomi WebView chest report): the
+    // keyboard animation steps the layout viewport — and the 100dvh term
+    // of the cap — every frame; with max-height in the transition list
+    // each step RETARGETS a 150ms transition and a cap-bound (tall)
+    // sheet chases its own viewport, re-rastering per step (black-block
+    // flicker). The phone sheet's transition list must therefore carry
+    // ONLY the content-driven channels: the height pin (one-shot per
+    // morph) and the clip reveal. The cap itself follows the viewport
+    // instantly — native sheet behavior.
+    it("drops max-height from the phone sheet transition (IME cap-chase guard)", () => {
+      // Extraction self-check: the mobile rule must exist and MUST carry
+      // a transition declaration at all (its absence is the regression,
+      // not a vacuous pass).
+      expect(content.length, "mobile .hk-modal-content rule extracted").toBeGreaterThan(0);
+      const tr = content.match(/transition:\s*([^;]+);/)?.[1] ?? "";
+      expect(tr.length, "mobile sheet transition declaration present").toBeGreaterThan(0);
+      expect(tr).toMatch(/\bheight\b/);
+      expect(tr).toMatch(/\bclip-path\b/);
+      expect(tr).not.toMatch(/\bmax-height\b/);
+    });
+
+    it("keeps the desktop frame transition list intact (base rule)", () => {
+      // The guard is phone-only by design: the base rule outside the
+      // media block keeps height+max-height+clip-path animated.
+      const base = src.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
+      expect(base.length, "base .hk-modal-content rule extracted").toBeGreaterThan(0);
+      const tr = base.match(/transition:\s*([^;]+);/)?.[1] ?? "";
+      expect(tr.length, "base transition declaration present").toBeGreaterThan(0);
+      expect(tr).toMatch(/\bheight\b/);
+      expect(tr).toMatch(/\bmax-height\b/);
+      expect(tr).toMatch(/\bclip-path\b/);
+    });
+
     it("lifts the 70vh body cap on phones so the footer sits on the bottom edge", () => {
       expect(body).toContain("max-height: none");
     });

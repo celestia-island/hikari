@@ -85,9 +85,13 @@ export interface SizeMorphOptions {
  * transition, same "content rides rigidly" grammar as the modal unveil,
  * but paint/compositor-level: no per-frame layout and no per-frame
  * backdrop-filter re-raster over the resizing fixed layer (the mobile
- * patchy-flicker source, 2026-09-15 chest report). Shrinks and every
- * height-mode surface keep the height transition — the rare direction
- * is not worth the flex-compression look-ahead trade.
+ * patchy-flicker source, 2026-09-15 chest report). Height-mode
+ * surfaces and the select sheet keep the height transition for shrinks
+ * (their stylesheets list it); the phone MODAL sheet narrowed its list
+ * to clip-path-only (2026-09-21 step-change shrink report — 150ms of
+ * per-frame layout on the fixed layer re-rastered the moving edge), so
+ * its shrinks snap: the L291-style pin flip lands instantly when the
+ * stylesheet no longer transitions height.
  *
  * Reduced motion / the global animation switch stay honored: the frame's
  * transition-duration collapses to one frame under

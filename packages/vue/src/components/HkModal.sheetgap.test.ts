@@ -74,24 +74,28 @@ describe("HkModal mobile sheet spacing contract", () => {
       expect(content).not.toMatch(/max-height:\s*none/);
     });
 
-    // 2026-09-21 IME cap-chase guard (Xiaomi WebView chest report): the
-    // keyboard animation steps the layout viewport — and the 100dvh term
-    // of the cap — every frame; with max-height in the transition list
-    // each step RETARGETS a 150ms transition and a cap-bound (tall)
-    // sheet chases its own viewport, re-rastering per step (black-block
-    // flicker). The phone sheet's transition list must therefore carry
-    // ONLY the content-driven channels: the height pin (one-shot per
-    // morph) and the clip reveal. The cap itself follows the viewport
-    // instantly — native sheet behavior.
-    it("drops max-height from the phone sheet transition (IME cap-chase guard)", () => {
+    // 2026-09-21 phone-sheet transition contract (two Xiaomi WebView
+    // chest reports the same day): the mobile list carries ONLY the
+    // clip-path reveal.
+    // ① IME cap-chase: the keyboard animation steps the 100dvh cap every
+    //   frame; max-height in the transition list made cap-bound sheets
+    //   chase their own viewport. The cap follows the viewport instantly.
+    // ② Step-change shrink flicker: useSizeMorph routes clip-mode
+    //   SHRINKS through the height transition — 150ms of per-frame
+    //   layout on a fixed layer re-rastering the moving edge (wizard
+    //   Prev/Next between different-height steps showed black blocks).
+    //   With height out of the list, shrinks snap (one layout, one
+    //   paint — native-sheet behavior); growth keeps its animated
+    //   reveal through the clip-path sweep.
+    it("narrows the phone sheet transition to clip-path only (IME + shrink guards)", () => {
       // Extraction self-check: the mobile rule must exist and MUST carry
       // a transition declaration at all (its absence is the regression,
       // not a vacuous pass).
       expect(content.length, "mobile .hk-modal-content rule extracted").toBeGreaterThan(0);
       const tr = content.match(/transition:\s*([^;]+);/)?.[1] ?? "";
       expect(tr.length, "mobile sheet transition declaration present").toBeGreaterThan(0);
-      expect(tr).toMatch(/\bheight\b/);
       expect(tr).toMatch(/\bclip-path\b/);
+      expect(tr).not.toMatch(/\bheight\b/);
       expect(tr).not.toMatch(/\bmax-height\b/);
     });
 

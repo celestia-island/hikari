@@ -1,0 +1,36 @@
+name: CNB Overflow Lane
+
+# Parallel CI lane: every PR push also runs cargo-check on CNB cloud (cnb.cool) via the
+# org ci-farm dispatch pipeline; the result lands as a cnb/cargo-check commit status on
+# the PR head. This relieves the 4-slot self-hosted farm with a second, independent
+# result lane. Architecture record: celestia-devtools PR #116 / #117.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: 'Commit SHA (empty = PR head / branch head)'
+        type: string
+        default: ''
+
+permissions:
+  statuses: write
+  actions: read
+
+concurrency:
+  group: cnb-overflow-lane-pr-${{ github.event.pull_request.number || 'manual' }}
+  cancel-in-progress: true
+
+jobs:
+  lane:
+    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@master
+    with:
+      target_repo: hikari
+      target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}
+      task: cargo-check
+      lane: pr-${{ github.event.pull_request.number || 'manual' }}
+      force_cnb: true
+      poll_minutes: 10
+    secrets: inherit

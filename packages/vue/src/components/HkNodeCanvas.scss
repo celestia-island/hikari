@@ -64,3 +64,44 @@
   top: var(--space-12);
   inset-inline-start: var(--space-12);
 }
+
+/* ── Interactive edges ───────────────────────────────────────────────
+   The halo paths are always in the DOM when `interactiveEdges` is on but
+   invisible until their edge is hovered or selected, so highlighting
+   costs no re-layout — only a visibility/opacity flip. Dimming fades the
+   strokes that are neither hovered nor selected while one is hovered,
+   which is what makes "which line am I on" readable on a busy canvas. */
+.hk-node-canvas-edge-halo {
+  visibility: hidden;
+}
+
+.hk-node-canvas-edge.is-hovered .hk-node-canvas-edge-halo,
+.hk-node-canvas-edge.is-selected .hk-node-canvas-edge-halo {
+  visibility: visible;
+  opacity: 0.28;
+}
+
+.hk-node-canvas-edge.is-selected .hk-node-canvas-edge-halo {
+  opacity: 0.4;
+}
+
+.hk-node-canvas-edge.is-dimmed > path:not(.hk-node-canvas-edge-halo) {
+  opacity: 0.25;
+}
+
+.hk-node-canvas-edge.is-dimmed text {
+  opacity: 0.4;
+}
+
+
+/* The invisible fat strokes that carry the pointer events. Transparent
+   (not none) so hit-testing still sees them; the cursor tells the user
+   the line is a target. A press-and-hold must not also summon the
+   platform's text-selection UI (iOS magnifier / callout). Hosts binding
+   their own long-press targets outside the canvas need the same
+   properties on those elements — see bindContextMenu's doc note. */
+.hk-node-canvas-edge-hit {
+  cursor: pointer;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

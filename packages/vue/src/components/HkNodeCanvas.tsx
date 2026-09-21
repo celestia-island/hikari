@@ -13,6 +13,7 @@ import "./HkNodeCanvas.scss";
 
 import {
   computeLod,
+  edgeHitWidth,
   edgeMidpoint,
   edgePath,
   LOD_DEFAULTS,
@@ -29,6 +30,8 @@ import {
 // Re-export shared types so consumers can import from the component.
 export type {
   EdgeRouting,
+  EdgeSide,
+  EdgeSubpath,
   LodLevel,
   LodThresholds,
   NodeCanvasEdge,
@@ -36,7 +39,19 @@ export type {
   NodeCanvasPainter,
   PrintPaper,
 } from "./nodeCanvasTypes";
-export { computeLod, edgePath, edgeMidpoint, LOD_DEFAULTS, PAPER_SIZES } from "./nodeCanvasTypes";
+export { computeLod, edgePath, edgeMidpoint, edgeHitWidth, sideOffset, oppositeSide, LOD_DEFAULTS, PAPER_SIZES } from "./nodeCanvasTypes";
+
+/** The pointer payload the edge events carry: a real MouseEvent for
+ * hover/click/contextmenu, or a synthesized stand-in when a touch
+ * long-press asked for the context menu. Only the fields a host needs
+ * to position its own menu are guaranteed. */
+export interface EdgePointerEvent {
+  clientX: number;
+  clientY: number;
+  /** The raw event when there was one (`false` for synthesized events). */
+  nativeEvent?: Event;
+  preventDefault(): void;
+}
 
 /** A camera: zoom factor plus the translation of the content origin. */
 export interface NodeCanvasCamera {
@@ -200,6 +215,20 @@ export default defineComponent({
       type: String as PropType<EdgeRouting>,
       default: "bezier" as EdgeRouting,
     },
+    /** Make the edge layer interactive: fat invisible hit strokes over
+     *  every edge (and every explicit subpath), hover highlighting with
+     *  dimming of the rest, and `edge-click` / `edge-contextmenu`
+     *  events. A touch long-press on an edge synthesizes
+     *  `edge-contextmenu`, so hosts get one menu path for pointer and
+     *  touch alike. Off by default — non-interactive canvases keep
+     *  today's zero-cost edge layer. */
+    interactiveEdges: { type: Boolean, default: false },
+    /** Edge id that stays highlighted regardless of hover (the host's
+     *  selection — e.g. an edge picked for a reconnect flow). */
+    selectedEdgeId: { type: String as PropType<string | null | undefined>, default: undefined },
+    /** Dim the edges that are neither hovered nor selected while one is
+     *  hovered — the "which line am I on" reading aid. */
+    hoverDimming: { type: Boolean, default: true },
     /** Zoom thresholds for level-of-detail. At or above `medium`:
      *  full detail. At or above `low`: outlines + labels. Below: outlines. */
     lodThresholds: {
@@ -240,7 +269,16 @@ export default defineComponent({
       default: undefined,
     },
   },
-  emits: ["update:camera"],
+  emits: [
+    "update:camera",
+    /** An edge's hit stroke was entered/left (`null` on leave). */
+    "edge-hover",
+    /** An edge's hit stroke was clicked (not after a pan). */
+    "edge-click",
+    /** An edge's hit stroke received a contextmenu (right-click, or a
+     *  synthesized touch long-press). Already `preventDefault()`ed. */
+    "edge-contextmenu",
+  ],
   setup(props, { slots, emit, expose }) {
     const rootEl = shallowRef<HTMLElement | null>(null);
     const viewport = ref({ width: 0, height: 0 });
@@ -293,13 +331,154 @@ export default defineComponent({
     );
 
     // ── Edge rendering (computed SVG paths) ──────────────────────
-    const edgePaths = computed(() =>
-      props.edges.map((edge) => ({
-        edge,
-        path: edgePath(edge, edge.routing ?? props.edgeRouting),
-        mid: edgeMidpoint(edge, edge.routing ?? props.edgeRouting),
-      })),
+    /** One stroke of an edge's visible geometry, resolved to concrete
+     * paint values (an explicit subpath override, or the single routed
+     * path). Widths/dash fall back to the edge-level values. */
+    interface EdgeStroke {
+      d: string;
+      width: number;
+      dashed: boolean;
+    }
+
+    interface EdgeRenderEntry {
+      edge: NodeCanvasEdge;
+      /** Visible strokes (≥1; subpath overrides may carry several). */
+      strokes: EdgeStroke[];
+      /** Path the label rides (the first stroke). */
+      primary: string;
+      mid: { x: number; y: number };
+    }
+
+    const edgeRenderList = computed<EdgeRenderEntry[]>(() =>
+      props.edges.map((edge) => {
+        const mid = edgeMidpoint(edge, edge.routing ?? props.edgeRouting);
+        if (edge.subpaths && edge.subpaths.length > 0) {
+          const strokes: EdgeStroke[] = edge.subpaths.map((sp) => ({
+            d: sp.d,
+            width: sp.width ?? edge.width ?? 1.5,
+            dashed: sp.dashed ?? edge.dashed ?? false,
+          }));
+          return { edge, strokes, primary: strokes[0].d, mid };
+        }
+        const d = edgePath(edge, edge.routing ?? props.edgeRouting);
+        return {
+          edge,
+          strokes: [{ d, width: edge.width ?? 1.5, dashed: edge.dashed ?? false }],
+          primary: d,
+          mid,
+        };
+      }),
     );
+
+    // ── Interactive edges (hover / click / context menu) ─────────
+    /** The hovered edge id (its hit stroke is under the pointer). */
+    const hoveredEdgeId = ref<string | null>(null);
+
+    /** A pan was captured since the last pointerdown: clicks that land
+     *  after a drag are the gesture's tail, not an edge pick. */
+    let panCapturedSincePress = false;
+
+    /** Drop a hover whose edge vanished from the props (roster churn) —
+     *  and tell the host, so its own hover bookkeeping (a tooltip, a
+     *  status bar) does not keep pointing at a dead edge. */
+    watch(
+      () => props.edges,
+      (edges) => {
+        if (hoveredEdgeId.value && !edges.some((e) => e.id === hoveredEdgeId.value)) {
+          hoveredEdgeId.value = null;
+          emit("edge-hover", null, {
+            clientX: 0,
+            clientY: 0,
+            preventDefault() { /* synthesized by the vanish, not a gesture */ },
+          });
+        }
+      },
+    );
+
+    function edgeById(id: string): NodeCanvasEdge | null {
+      return props.edges.find((e) => e.id === id) ?? null;
+    }
+
+    function hoverEdge(id: string, event: EdgePointerEvent): void {
+      if (hoveredEdgeId.value === id) return;
+      const edge = edgeById(id);
+      if (!edge) return;
+      hoveredEdgeId.value = id;
+      emit("edge-hover", edge, event);
+    }
+
+    function unhoverEdge(id: string, event: EdgePointerEvent): void {
+      if (hoveredEdgeId.value !== id) return;
+      hoveredEdgeId.value = null;
+      emit("edge-hover", null, event);
+    }
+
+    /** Touch long-press on an edge's hit stroke: synthesize the same
+     *  `edge-contextmenu` a right-click produces, at the press point. */
+    const EDGE_HOLD_MS = 480;
+    const EDGE_HOLD_SLOP = 8;
+    let edgeHoldTimer: ReturnType<typeof setTimeout> | null = null;
+    let edgeHoldEdgeId: string | null = null;
+    let edgeHoldOrigin: { x: number; y: number } | null = null;
+
+    function startEdgeHold(id: string, event: PointerEvent): void {
+      cancelEdgeHold();
+      if (event.pointerType === "mouse") return; // mice have a real button
+      edgeHoldEdgeId = id;
+      edgeHoldOrigin = { x: event.clientX, y: event.clientY };
+      const x = event.clientX;
+      const y = event.clientY;
+      edgeHoldTimer = setTimeout(() => {
+        edgeHoldTimer = null;
+        const edge = edgeById(id);
+        edgeHoldEdgeId = null;
+        edgeHoldOrigin = null;
+        if (!edge) return;
+        emit("edge-contextmenu", edge, {
+          clientX: x,
+          clientY: y,
+          nativeEvent: event,
+          preventDefault() { /* synthesized: nothing native to stop */ },
+        });
+      }, EDGE_HOLD_MS);
+    }
+
+    function moveEdgeHold(event: PointerEvent): void {
+      if (edgeHoldTimer === null || edgeHoldOrigin === null) return;
+      // Travel beyond the slop turns the hold into a gesture.
+      if (
+        Math.hypot(event.clientX - edgeHoldOrigin.x, event.clientY - edgeHoldOrigin.y)
+          > EDGE_HOLD_SLOP
+      ) {
+        cancelEdgeHold();
+      }
+    }
+
+    function cancelEdgeHold(): void {
+      if (edgeHoldTimer !== null) {
+        clearTimeout(edgeHoldTimer);
+        edgeHoldTimer = null;
+      }
+      edgeHoldEdgeId = null;
+      edgeHoldOrigin = null;
+    }
+
+    onBeforeUnmount(cancelEdgeHold);
+
+    /** Hit strokes: one fat invisible path per visible stroke, on top of
+     *  everything (SVG paints in document order). Width depends on the
+     *  camera so the hit area never falls under ~10 screen px. */
+    const edgeHitList = computed(() => {
+      if (!props.interactiveEdges) return [];
+      const k = camera.value.k;
+      return edgeRenderList.value.map((entry) => ({
+        edge: entry.edge,
+        strokes: entry.strokes.map((sp) => ({
+          d: sp.d,
+          width: edgeHitWidth({ width: sp.width }, k),
+        })),
+      }));
+    });
 
     const camera = computed<NodeCanvasCamera>(() => props.camera ?? inner.value);
 
@@ -564,6 +743,7 @@ export default defineComponent({
         return;
       }
       trackPointer(event);
+      panCapturedSincePress = false;
       panning = {
         pointerId: event.pointerId,
         x: event.clientX,
@@ -606,6 +786,7 @@ export default defineComponent({
           return;
         }
         rootEl.value?.setPointerCapture?.(event.pointerId);
+        panCapturedSincePress = true;
         panning = { ...panning, captured: true };
       }
       const dx = event.clientX - panning.x;
@@ -843,9 +1024,9 @@ export default defineComponent({
 
       // Copy edge paths into the export SVG.
       const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      for (const { edge, path } of edgePaths.value) {
+      for (const { edge, primary } of edgeRenderList.value) {
         const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        p.setAttribute("d", path);
+        p.setAttribute("d", primary);
         p.setAttribute("fill", "none");
         p.setAttribute("stroke", edge.color ?? "currentColor");
         p.setAttribute("stroke-width", String(edge.width ?? 1.5));
@@ -990,6 +1171,10 @@ export default defineComponent({
       unregisterPainter,
       exportSVG,
       exportPNG,
+      // ── New: interactive edges ──
+      /** Live hovered edge id (null when none) — the same state the
+       *  `edge-hover` events report. */
+      hoveredEdgeId,
     });
 
     const slotProps = computed<NodeCanvasSlotProps>(() => ({
@@ -1036,8 +1221,10 @@ export default defineComponent({
           />
           {/* SVG edge layer: routed edges between nodes, rendered as SVG
               for CSS styling and accessibility. Lives inside the camera
-              transform so edges stay in sync with DOM nodes. */}
-          {edgePaths.value.length > 0 && (
+              transform so edges stay in sync with DOM nodes. The layer
+              itself never takes pointer events; when `interactiveEdges`
+              is on, per-stroke hit paths re-enable them. */}
+          {edgeRenderList.value.length > 0 && (
             <svg
               class="hk-node-canvas-edges"
               style={{
@@ -1048,28 +1235,96 @@ export default defineComponent({
               }}
             >
               <g transform={`translate(${x} ${y}) scale(${k})`}>
-                {edgePaths.value.map(({ edge, path, mid }) => (
-                  <g key={edge.id} class="hk-node-canvas-edge" data-edge-type={edge.type}>
+                {edgeRenderList.value.map(({ edge, strokes, primary, mid }) => {
+                  const hovered = hoveredEdgeId.value === edge.id;
+                  const selected = props.selectedEdgeId === edge.id;
+                  const dimmed =
+                    props.hoverDimming
+                    && hoveredEdgeId.value !== null
+                    && !hovered
+                    && !selected;
+                  return (
+                    <g
+                      key={edge.id}
+                      class={{
+                        "hk-node-canvas-edge": true,
+                        "is-hovered": hovered,
+                        "is-selected": selected,
+                        "is-dimmed": dimmed,
+                      }}
+                      data-edge-id={edge.id}
+                      data-edge-type={edge.type}
+                    >
+                      {props.interactiveEdges && strokes.map((sp, i) => (
+                        <path
+                          key={`halo-${i}`}
+                          class="hk-node-canvas-edge-halo"
+                          d={sp.d}
+                          fill="none"
+                          stroke={edge.color ?? "var(--hk-border-3, #555)"}
+                          stroke-width={sp.width * 3}
+                          stroke-dasharray={sp.dashed ? "6 4" : undefined}
+                        />
+                      ))}
+                      {strokes.map((sp, i) => (
+                        <path
+                          key={`ink-${i}`}
+                          d={sp.d}
+                          fill="none"
+                          stroke={edge.color ?? "var(--hk-border-3, #555)"}
+                          stroke-width={sp.width}
+                          stroke-dasharray={sp.dashed ? "6 4" : undefined}
+                        />
+                      ))}
+                      {edge.label && (
+                        <text
+                          x={mid.x}
+                          y={mid.y - 6}
+                          text-anchor="middle"
+                          font-size="11"
+                          fill="var(--hk-text-2, #aaa)"
+                        >
+                          {edge.label}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+                {edgeHitList.value.map(({ edge, strokes }) =>
+                  strokes.map((sp, i) => (
                     <path
-                      d={path}
+                      key={`hit-${edge.id}-${i}`}
+                      class="hk-node-canvas-edge-hit"
+                      data-edge-id={edge.id}
+                      d={sp.d}
                       fill="none"
-                      stroke={edge.color ?? "var(--hk-border-3, #555)"}
-                      stroke-width={edge.width ?? 1.5}
-                      stroke-dasharray={edge.dashed ? "6 4" : undefined}
+                      stroke="transparent"
+                      stroke-width={sp.width}
+                      style={{ pointerEvents: "stroke" }}
+                      onPointerenter={(event: PointerEvent) =>
+                        hoverEdge(edge.id, event)}
+                      onPointerleave={(event: PointerEvent) =>
+                        unhoverEdge(edge.id, event)}
+                      onPointerdown={(event: PointerEvent) => {
+                        startEdgeHold(edge.id, event);
+                      }}
+                      onPointermove={(event: PointerEvent) => {
+                        moveEdgeHold(event);
+                      }}
+                      onPointerup={cancelEdgeHold}
+                      onPointercancel={cancelEdgeHold}
+                      onClick={(event: MouseEvent) => {
+                        cancelEdgeHold();
+                        if (panCapturedSincePress) return;
+                        emit("edge-click", edge, event);
+                      }}
+                      onContextmenu={(event: MouseEvent) => {
+                        event.preventDefault();
+                        emit("edge-contextmenu", edge, event);
+                      }}
                     />
-                    {edge.label && (
-                      <text
-                        x={mid.x}
-                        y={mid.y - 6}
-                        text-anchor="middle"
-                        font-size="11"
-                        fill="var(--hk-text-2, #aaa)"
-                      >
-                        {edge.label}
-                      </text>
-                    )}
-                  </g>
-                ))}
+                  )),
+                )}
               </g>
             </svg>
           )}

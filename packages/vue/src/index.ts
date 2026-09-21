@@ -56,6 +56,18 @@ export { default as HKeywordSearchModal } from "./components/HkKeywordSearchModa
 export { default as HModalBreadcrumb } from "./components/HkModalBreadcrumb";
 export { default as HPopover, type PopupPlacement } from "./components/HkPopover";
 export { default as HMenu, type HkMenuItem } from "./components/HkMenu";
+export { default as HContextMenuProvider } from "./components/HkContextMenuProvider";
+export {
+  useContextMenu,
+  useContextMenuTrigger,
+  bindContextMenu,
+  CONTEXT_MENU_KEY,
+  CONTEXT_HOLD_MS,
+  CONTEXT_HOLD_SLOP,
+  type ContextMenuApi,
+  type ContextMenuRequest,
+  type ContextTriggerPoint,
+} from "./composables/useContextMenu";
 export { default as HMessageBox, HkMessageBox, type HkMessageBoxOptions, type HkMessageBoxPrompt } from "./components/HkMessageBox";
 export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./components/HkLocalizedInput";
 export { default as HMenuPanel } from "./components/HkMenuPanel";
@@ -114,6 +126,11 @@ export type {
   NodeCanvasBounds,
   NodeCanvasSlotProps,
   MinimapPlacement,
+  NodeCanvasEdge,
+  EdgeRouting,
+  EdgeSide,
+  EdgeSubpath,
+  EdgePointerEvent,
 } from "./components/HkNodeCanvas";
 export type {
   WaterfallBucket,

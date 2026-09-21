@@ -417,9 +417,14 @@ export default defineComponent({
      *  `edge-contextmenu` a right-click produces, at the press point. */
     const EDGE_HOLD_MS = 480;
     const EDGE_HOLD_SLOP = 8;
+    /** How long after a synthesized long-press a native `contextmenu`
+     *  event is still the same gesture (some platforms synthesize one
+     *  right after the hold — the menu must not open twice). */
+    const EDGE_SUPPRESS_MS = 400;
     let edgeHoldTimer: ReturnType<typeof setTimeout> | null = null;
     let edgeHoldEdgeId: string | null = null;
     let edgeHoldOrigin: { x: number; y: number } | null = null;
+    let edgeHoldOpenedAt = 0;
 
     function startEdgeHold(id: string, event: PointerEvent): void {
       cancelEdgeHold();
@@ -434,6 +439,7 @@ export default defineComponent({
         edgeHoldEdgeId = null;
         edgeHoldOrigin = null;
         if (!edge) return;
+        edgeHoldOpenedAt = performance.now();
         emit("edge-contextmenu", edge, {
           clientX: x,
           clientY: y,
@@ -465,19 +471,24 @@ export default defineComponent({
 
     onBeforeUnmount(cancelEdgeHold);
 
-    /** Hit strokes: one fat invisible path per visible stroke, on top of
-     *  everything (SVG paints in document order). Width depends on the
-     *  camera so the hit area never falls under ~10 screen px. */
+    /** Hit strokes: ONE fat invisible path per edge, the concatenation
+     *  of its visible subpath geometries (SVG allows multiple M runs in
+     *  one path) — a single element means no enter/leave chatter when
+     *  the pointer crosses a subpath boundary inside the same edge, and
+     *  it sits on top of everything (SVG paints in document order).
+     *  Width depends on the camera so the hit area never falls under
+     *  ~10 screen px. */
     const edgeHitList = computed(() => {
       if (!props.interactiveEdges) return [];
       const k = camera.value.k;
-      return edgeRenderList.value.map((entry) => ({
-        edge: entry.edge,
-        strokes: entry.strokes.map((sp) => ({
-          d: sp.d,
-          width: edgeHitWidth({ width: sp.width }, k),
-        })),
-      }));
+      return edgeRenderList.value.map((entry) => {
+        const widths = entry.strokes.map((sp) => edgeHitWidth({ width: sp.width }, k));
+        return {
+          edge: entry.edge,
+          d: entry.strokes.map((sp) => sp.d).join(" "),
+          width: Math.max(...widths),
+        };
+      });
     });
 
     const camera = computed<NodeCanvasCamera>(() => props.camera ?? inner.value);
@@ -787,6 +798,12 @@ export default defineComponent({
         }
         rootEl.value?.setPointerCapture?.(event.pointerId);
         panCapturedSincePress = true;
+        // The capture retargets every subsequent pointer event to the
+        // root — the hit stroke's own move/up listeners (the long-press
+        // cancel path) never fire again. A touch pan MUST cancel the
+        // hold, or a ≥480 ms drag would end in a context menu (R1
+        // MAJOR-1).
+        cancelEdgeHold();
         panning = { ...panning, captured: true };
       }
       const dx = event.clientX - panning.x;
@@ -1022,16 +1039,19 @@ export default defineComponent({
       svg.setAttribute("height", String(paper?.height ?? vp.height));
       svg.setAttribute("viewBox", `0 0 ${paper?.width ?? vp.width} ${paper?.height ?? vp.height}`);
 
-      // Copy edge paths into the export SVG.
+      // Copy edge paths into the export SVG (every subpath — a bundled
+      // bus exports its stubs and its trunk, not just the first run).
       const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      for (const { edge, primary } of edgeRenderList.value) {
-        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        p.setAttribute("d", primary);
-        p.setAttribute("fill", "none");
-        p.setAttribute("stroke", edge.color ?? "currentColor");
-        p.setAttribute("stroke-width", String(edge.width ?? 1.5));
-        if (edge.dashed) p.setAttribute("stroke-dasharray", "6 4");
-        edgesGroup.appendChild(p);
+      for (const { edge, strokes } of edgeRenderList.value) {
+        for (const sp of strokes) {
+          const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          p.setAttribute("d", sp.d);
+          p.setAttribute("fill", "none");
+          p.setAttribute("stroke", edge.color ?? "currentColor");
+          p.setAttribute("stroke-width", String(sp.width));
+          if (sp.dashed) p.setAttribute("stroke-dasharray", "6 4");
+          edgesGroup.appendChild(p);
+        }
         if (edge.label) {
           const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
           const mid = edgeMidpoint(edge, edge.routing ?? props.edgeRouting);
@@ -1290,41 +1310,45 @@ export default defineComponent({
                     </g>
                   );
                 })}
-                {edgeHitList.value.map(({ edge, strokes }) =>
-                  strokes.map((sp, i) => (
-                    <path
-                      key={`hit-${edge.id}-${i}`}
-                      class="hk-node-canvas-edge-hit"
-                      data-edge-id={edge.id}
-                      d={sp.d}
-                      fill="none"
-                      stroke="transparent"
-                      stroke-width={sp.width}
-                      style={{ pointerEvents: "stroke" }}
-                      onPointerenter={(event: PointerEvent) =>
-                        hoverEdge(edge.id, event)}
-                      onPointerleave={(event: PointerEvent) =>
-                        unhoverEdge(edge.id, event)}
-                      onPointerdown={(event: PointerEvent) => {
-                        startEdgeHold(edge.id, event);
-                      }}
-                      onPointermove={(event: PointerEvent) => {
-                        moveEdgeHold(event);
-                      }}
-                      onPointerup={cancelEdgeHold}
-                      onPointercancel={cancelEdgeHold}
-                      onClick={(event: MouseEvent) => {
-                        cancelEdgeHold();
-                        if (panCapturedSincePress) return;
-                        emit("edge-click", edge, event);
-                      }}
-                      onContextmenu={(event: MouseEvent) => {
-                        event.preventDefault();
-                        emit("edge-contextmenu", edge, event);
-                      }}
-                    />
-                  )),
-                )}
+                 {edgeHitList.value.map(({ edge, d, width }) => (
+                  <path
+                    key={`hit-${edge.id}`}
+                    class="hk-node-canvas-edge-hit"
+                    data-edge-id={edge.id}
+                    d={d}
+                    fill="none"
+                    stroke="transparent"
+                    stroke-width={width}
+                    style={{ pointerEvents: "stroke" }}
+                    onPointerenter={(event: PointerEvent) =>
+                      hoverEdge(edge.id, event)}
+                    onPointerleave={(event: PointerEvent) =>
+                      unhoverEdge(edge.id, event)}
+                    onPointerdown={(event: PointerEvent) => {
+                      startEdgeHold(edge.id, event);
+                    }}
+                    onPointermove={(event: PointerEvent) => {
+                      moveEdgeHold(event);
+                    }}
+                    onPointerup={cancelEdgeHold}
+                    onPointercancel={cancelEdgeHold}
+                    onClick={(event: MouseEvent) => {
+                      cancelEdgeHold();
+                      if (panCapturedSincePress) return;
+                      emit("edge-click", edge, event);
+                    }}
+                    onContextmenu={(event: MouseEvent) => {
+                      event.preventDefault();
+                      // Our own long-press just fired for this gesture;
+                      // a platform-synthesized native event right after
+                      // it must not open the menu a second time.
+                      if (performance.now() - edgeHoldOpenedAt < EDGE_SUPPRESS_MS) {
+                        return;
+                      }
+                      emit("edge-contextmenu", edge, event);
+                    }}
+                  />
+                ))}
               </g>
             </svg>
           )}

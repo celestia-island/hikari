@@ -22,7 +22,7 @@
  * `useContextMenuTrigger()` (composables/useContextMenu).
  */
 
-import { computed, defineComponent, provide, ref } from "vue";
+import { computed, defineComponent, nextTick, provide, ref } from "vue";
 
 import HkMenu from "./HkMenu";
 import {
@@ -63,6 +63,12 @@ export default defineComponent({
   setup(_, { slots }) {
     const open = ref(false);
     const request = ref<ContextMenuRequest | null>(null);
+    /** The select handler just ran: HkMenu follows `select` with
+     *  `update:open(false)` (select first, then closeAll — HkMenu's
+     *  onItem). That trailing close belongs to the FINISHED menu: it
+     *  must not fire the new request's onClose nor close a menu the
+     *  onSelect handler opened in the meantime. One-shot flag. */
+    let justSelected = false;
 
     /** Close hooks fire exactly once per open. */
     function close(announce: boolean) {
@@ -75,7 +81,17 @@ export default defineComponent({
     const api: ContextMenuApi = {
       open(next: ContextMenuRequest) {
         request.value = next;
-        open.value = true;
+        if (open.value) {
+          // Replace-while-open: cycle through closed so HkMenu's
+          // open-watchers run their reset (cascade levels, back-guard)
+          // — a stale open submenu must not survive into the new menu.
+          open.value = false;
+          nextTick(() => {
+            if (request.value === next) open.value = true;
+          });
+        } else {
+          open.value = true;
+        }
       },
       close() {
         close(true);
@@ -98,11 +114,16 @@ export default defineComponent({
           items={request.value?.items ?? []}
           open={open.value}
           onUpdate:open={(v: boolean) => {
+            if (!v && justSelected) {
+              justSelected = false;
+              return;
+            }
             if (!v) close(true);
           }}
           onSelect={(key: string, item: { key: string }) => {
             const current = request.value;
             if (!current) return;
+            justSelected = true;
             open.value = false;
             request.value = null;
             current.onSelect?.(key, item as Parameters<NonNullable<ContextMenuRequest["onSelect"]>>[1]);

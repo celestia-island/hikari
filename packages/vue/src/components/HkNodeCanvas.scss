@@ -93,9 +93,15 @@
   opacity: 0.4;
 }
 
+
 /* The invisible fat strokes that carry the pointer events. Transparent
    (not none) so hit-testing still sees them; the cursor tells the user
-   the line is a target. */
+   the line is a target. A press-and-hold must not also summon the
+   platform's text-selection UI (iOS magnifier / callout). Hosts binding
+   their own long-press targets outside the canvas need the same
+   properties on those elements — see bindContextMenu's doc note. */
 .hk-node-canvas-edge-hit {
   cursor: pointer;
+  user-select: none;
+  -webkit-touch-callout: none;
 }

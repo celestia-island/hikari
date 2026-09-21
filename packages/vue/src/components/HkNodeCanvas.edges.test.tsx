@@ -187,6 +187,49 @@ describe("HkNodeCanvas interactive edges", () => {
     }
   });
 
+  it("suppresses the native contextmenu that follows a synthesized long-press", () => {
+    vi.useFakeTimers();
+    try {
+      const collected = { hover: [] as Array<string | null>, click: [] as string[], context: [] as string[], prevented: [] as boolean[] };
+      const el = mountToDom(makeEdgeHost(collected));
+      const hit = el.querySelector(".hk-node-canvas-edge-hit[data-edge-id='e1']") as HTMLElement;
+      hit.dispatchEvent(pointerEvent("pointerdown", { clientX: 40, clientY: 40 }));
+      vi.advanceTimersByTime(500);
+      expect(collected.context).toEqual(["e1"]);
+      // The platform synthesizes a contextmenu right after the hold:
+      // suppressed (prevented), not emitted as a second menu.
+      const native = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+      hit.dispatchEvent(native);
+      expect(collected.context).toEqual(["e1"]);
+      expect(native.defaultPrevented).toBe(true);
+      hit.dispatchEvent(pointerEvent("pointerup"));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("cancels the hold when the pan captures the pointer (R1 MAJOR-1)", () => {
+    vi.useFakeTimers();
+    try {
+      const collected = { hover: [] as Array<string | null>, click: [] as string[], context: [] as string[], prevented: [] as boolean[] };
+      const el = mountToDom(makeEdgeHost(collected));
+      const root = el.querySelector(".hk-node-canvas") as HTMLElement;
+      const hit = el.querySelector(".hk-node-canvas-edge-hit[data-edge-id='e1']") as HTMLElement;
+      // Touch press on the edge, then the press becomes a PAN: the root
+      // captures the pointer once the travel passes its slop — from
+      // then on the hit stroke hears nothing more. The hold must die
+      // with the capture, or a long drag would end in a menu.
+      hit.dispatchEvent(pointerEvent("pointerdown", { clientX: 100, clientY: 100 }));
+      root.dispatchEvent(pointerEvent("pointerdown", { clientX: 100, clientY: 100, button: 0 }));
+      root.dispatchEvent(pointerEvent("pointermove", { clientX: 160, clientY: 100 }));
+      vi.advanceTimersByTime(800);
+      expect(collected.context).toEqual([]);
+      root.dispatchEvent(pointerEvent("pointerup"));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("renders and hits explicit subpaths (bus trunk + stubs)", async () => {
     const busEdge: NodeCanvasEdge = {
       id: "bus",
@@ -212,12 +255,14 @@ describe("HkNodeCanvas interactive edges", () => {
     const group = el.querySelector(".hk-node-canvas-edge[data-edge-id='bus']") as HTMLElement;
     // 3 halo + 3 ink strokes.
     expect(group.querySelectorAll("path")).toHaveLength(6);
-    // One hit stroke per subpath, all mapped to the same edge.
+    // ONE combined hit path per edge (all subpath runs concatenated —
+    // crossing a stub→trunk boundary inside the same edge must not
+    // chatter enter/leave), its width the fattest of the members'.
     const hits = el.querySelectorAll(".hk-node-canvas-edge-hit[data-edge-id='bus']");
-    expect(hits).toHaveLength(3);
-    // The trunk hit is the fattest (its own width, camera-aware).
-    const widths = [...hits].map((p) => Number((p as SVGPathElement).getAttribute("stroke-width")));
-    expect(widths[1]).toBeGreaterThan(widths[0]);
+    expect(hits).toHaveLength(1);
+    const hit = hits[0] as SVGPathElement;
+    expect((hit.getAttribute("d") ?? "").split("M").length - 1).toBe(3);
+    expect(Number(hit.getAttribute("stroke-width"))).toBeGreaterThan(5);
   });
 
   it("clears the hover when the hovered edge disappears", async () => {

@@ -118,7 +118,7 @@ function mockApi() {
 describe("useContextMenu + HkContextMenuProvider", () => {
   it("opens a menu at the point through the injected API and reports the pick", async () => {
     const picked: string[] = [];
-    const { Component } = makeProviderHost((key) => picked.push(key));
+    const { Component, closed } = makeProviderHost((key) => picked.push(key));
     mountToDom(Component);
     expect(popouts()).toHaveLength(0);
 
@@ -132,7 +132,62 @@ describe("useContextMenu + HkContextMenuProvider", () => {
     del.click();
     await settle();
     expect(picked).toEqual(["delete"]);
+    // A selection is NOT a dismissal — onClose must stay silent (the
+    // R1 M5 guard gap: nothing asserted this before).
+    expect(closed).not.toHaveBeenCalled();
     await until(() => popouts().length === 0);
+  });
+
+  it("keeps a menu the select handler opens (the finished menu's trailing close must not kill it)", async () => {
+    const Inner = defineComponent({
+      name: "ReopenInner",
+      setup() {
+        const api = useContextMenu();
+        const phase = ref(0);
+        const open = () => {
+          phase.value = 1;
+          api.open({
+            x: 50,
+            y: 50,
+            title: "Step 1",
+            items: [{ key: "go2", label: "Go step 2" }],
+            onSelect: () => {
+              phase.value = 2;
+              // Reopen SYNCHRONOUSLY in the select callback — the old
+              // menu's closeAll is still about to emit update:open.
+              api.open({
+                x: 50,
+                y: 50,
+                title: "Step 2",
+                items: [{ key: "done", label: "Done" }],
+              });
+            },
+          });
+        };
+        return () => (
+          <button class="open-btn" onClick={open}>
+            open
+          </button>
+        );
+      },
+    });
+    const Host = defineComponent({
+      setup() {
+        return () => (
+          <HkContextMenuProvider>
+            <Inner />
+          </HkContextMenuProvider>
+        );
+      },
+    });
+    mountToDom(Host);
+    (document.querySelector(".open-btn") as HTMLElement).click();
+    await settle();
+    menuRows().find((r) => r.textContent === "Go step 2")!.click();
+    await settle();
+    // The second menu survived the first menu's trailing close.
+    expect(popouts().length).toBe(1);
+    expect(menuRows().map((r) => r.textContent)).toContain("Done");
   });
 
   it("falls back to a no-op API without a provider", () => {

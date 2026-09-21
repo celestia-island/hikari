@@ -12,8 +12,9 @@
  * Three triggers ship with the API (hosts can also call `open()`
  * directly — the canvas edge layer does, with its own long-press):
  *
- *   - right-click (`contextmenu`, always `preventDefault`ed — the app
- *     never shows the browser's own menu again);
+ *   - right-click (`contextmenu`, `preventDefault`ed when a binding on
+ *     the path opens a menu — a `null` build defers outward, and the
+ *     platform's own menu appears only when no binding claims it);
  *   - touch/pen long-press (480 ms hold, 8 px slop);
  *   - the keyboard menu key (ContextMenu / Shift+F10) at the focused
  *     element.
@@ -89,7 +90,15 @@ export interface ContextTriggerPoint {
  * long-press and the keyboard menu key. `build` returns the request to
  * open (items + callbacks) or `null` to let the event through untouched
  * — a `null` does NOT preventDefault, so a host can defer to an inner
- * binding (menus resolve innermost-first by DOM order).
+ * binding (menus resolve innermost-first by DOM order; the platform's
+ * own menu appears only if NO binding on the path opens one).
+ *
+ * Touch note: a press-and-hold can also summon the platform's
+ * selection UI (iOS callout/magnifier). The canvas's edge hit strokes
+ * suppress that in their own CSS; hosts binding long-press to custom
+ * DOM should give those elements `user-select: none` and
+ * `-webkit-touch-callout: none` (and `touch-action: none` when the
+ * element owns the gesture).
  *
  * Returns an unbind function.
  */

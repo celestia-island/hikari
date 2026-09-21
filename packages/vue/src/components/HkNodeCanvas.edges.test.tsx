@@ -196,16 +196,59 @@ describe("HkNodeCanvas interactive edges", () => {
       hit.dispatchEvent(pointerEvent("pointerdown", { clientX: 40, clientY: 40 }));
       vi.advanceTimersByTime(500);
       expect(collected.context).toEqual(["e1"]);
-      // The platform synthesizes a contextmenu right after the hold:
-      // suppressed (prevented), not emitted as a second menu.
-      const native = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+      // The platform synthesizes a contextmenu right after the hold at
+      // the SAME spot: suppressed (prevented), not emitted again.
+      const native = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 40, clientY: 40 });
       hit.dispatchEvent(native);
       expect(collected.context).toEqual(["e1"]);
       expect(native.defaultPrevented).toBe(true);
+      // A real right-click ELSEWHERE inside the window is a new
+      // gesture — it must emit (R2 NEW-MINOR-2).
+      const elsewhere = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 400, clientY: 300 });
+      hit.dispatchEvent(elsewhere);
+      expect(collected.context).toEqual(["e1", "e1"]);
+      // …and at the same spot once the window has expired.
+      vi.advanceTimersByTime(600);
+      const later = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 40, clientY: 40 });
+      hit.dispatchEvent(later);
+      expect(collected.context).toEqual(["e1", "e1", "e1"]);
       hit.dispatchEvent(pointerEvent("pointerup"));
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("exports every explicit subpath of an edge (bus trunk + stubs)", () => {
+    const busEdge: NodeCanvasEdge = {
+      id: "bus",
+      from: { x: 0, y: 0 },
+      to: { x: 100, y: 0 },
+      subpaths: [
+        { d: "M 0 0 L 0 20", width: 1.4 },
+        { d: "M 0 20 L 100 20", width: 5 },
+        { d: "M 100 20 L 100 0", width: 1.4 },
+      ],
+    };
+    const exposed: { exportSVG?: () => SVGElement | undefined } = {};
+    const Host = defineComponent({
+      setup() {
+        const canvas = ref<{ exportSVG: () => SVGElement } | null>(null);
+        exposed.exportSVG = () => canvas.value?.exportSVG();
+        return () =>
+          h(HkNodeCanvas, {
+            ref: canvas,
+            edges: [busEdge],
+            minimap: false,
+          }, { default: () => h("div", "x") });
+      },
+    });
+    mountToDom(Host);
+    const svg = exposed.exportSVG?.();
+    expect(svg).toBeDefined();
+    const paths = svg!.querySelectorAll("path");
+    // R2 V4: the whole bundle exports, not just the first run.
+    expect(paths).toHaveLength(3);
+    expect(paths[1].getAttribute("stroke-width")).toBe("5");
   });
 
   it("cancels the hold when the pan captures the pointer (R1 MAJOR-1)", () => {

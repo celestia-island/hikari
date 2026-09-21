@@ -98,7 +98,10 @@ export type EdgeSide = "N" | "S" | "E" | "W";
  * hovering any part of the bundle lights the whole edge.
  */
 export interface EdgeSubpath {
-  /** SVG path data, in world coordinates. */
+  /** SVG path data, in world coordinates. MUST start with an absolute
+   *  `M` command — subpaths are concatenated into ONE element for hit
+   *  testing, where a relative `m` would chain off the previous
+   *  subpath's endpoint instead of its own origin. */
   d: string;
   /** Stroke width in world units (defaults to the edge's `width`). */
   width?: number;

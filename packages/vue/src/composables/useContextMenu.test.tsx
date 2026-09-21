@@ -138,6 +138,99 @@ describe("useContextMenu + HkContextMenuProvider", () => {
     await until(() => popouts().length === 0);
   });
 
+  it("replaces an open menu with a fresh one (R2 NEW-MAJOR-1)", async () => {
+    let api: ReturnType<typeof useContextMenu> | null = null;
+    const Inner = defineComponent({
+      name: "ReplaceInner",
+      setup() {
+        api = useContextMenu();
+        const openA = () => {
+          api!.open({
+            x: 60,
+            y: 60,
+            title: "First",
+            items: [
+              { key: "a1", label: "Alpha One" },
+              { key: "a2", label: "Alpha Two", children: [{ key: "a2a", label: "Nested" }] },
+            ],
+          });
+        };
+        const openBWhileOpen = () => {
+          // The scenario: the menu is open, the user right-clicks
+          // ANOTHER target — the provider must swap to the new menu,
+          // not close into nothing.
+          api!.open({
+            x: 200,
+            y: 60,
+            title: "Second",
+            items: [{ key: "b1", label: "Beta One" }],
+          });
+        };
+        return () => (
+          <div>
+            <button class="open-btn" onClick={openA}>open</button>
+            <button class="replace-btn" onClick={openBWhileOpen}>replace</button>
+          </div>
+        );
+      },
+    });
+    const Host = defineComponent({
+      setup() {
+        return () => (
+          <HkContextMenuProvider>
+            <Inner />
+          </HkContextMenuProvider>
+        );
+      },
+    });
+    mountToDom(Host);
+    (document.querySelector(".open-btn") as HTMLElement).click();
+    await settle();
+    expect(menuRows().map((r) => r.textContent)).toContain("Alpha One");
+
+    (document.querySelector(".replace-btn") as HTMLElement).click();
+    await settle();
+    // The replacement menu IS open and shows ITS items.
+    expect(popouts().length).toBeGreaterThan(0);
+    const labels = menuRows().map((r) => r.textContent);
+    expect(labels).toContain("Beta One");
+    expect(labels).not.toContain("Alpha One");
+  });
+
+  it("opens the LAST request when two opens race in one tick (R2 NEW-MINOR-1)", async () => {
+    const Inner = defineComponent({
+      name: "RaceInner",
+      setup() {
+        const api = useContextMenu();
+        const race = () => {
+          api.open({ x: 10, y: 10, title: "B", items: [{ key: "b1", label: "Racer B" }] });
+          api.open({ x: 10, y: 10, title: "C", items: [{ key: "c1", label: "Racer C" }] });
+        };
+        return () => (
+          <button class="open-btn" onClick={race}>open</button>
+        );
+      },
+    });
+    const Host = defineComponent({
+      setup() {
+        return () => (
+          <HkContextMenuProvider>
+            <Inner />
+          </HkContextMenuProvider>
+        );
+      },
+    });
+    mountToDom(Host);
+    (document.querySelector(".open-btn") as HTMLElement).click();
+    await settle();
+    // Exactly one menu, showing the newest request — from a fresh
+    // instance (remount), not a half-updated one.
+    expect(popouts()).toHaveLength(1);
+    const labels = menuRows().map((r) => r.textContent);
+    expect(labels).toContain("Racer C");
+    expect(labels).not.toContain("Racer B");
+  });
+
   it("keeps a menu the select handler opens (the finished menu's trailing close must not kill it)", async () => {
     const Inner = defineComponent({
       name: "ReopenInner",

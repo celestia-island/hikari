@@ -421,10 +421,16 @@ export default defineComponent({
      *  event is still the same gesture (some platforms synthesize one
      *  right after the hold — the menu must not open twice). */
     const EDGE_SUPPRESS_MS = 400;
+    /** …and only when it lands near the press point: a real right-click
+     *  elsewhere within the window is a NEW gesture and must pass
+     *  (R2 NEW-MINOR-2) — platform-synthesized events fire at the
+     *  press coordinates, so proximity separates the two. */
+    const EDGE_SUPPRESS_RADIUS = 32;
     let edgeHoldTimer: ReturnType<typeof setTimeout> | null = null;
     let edgeHoldEdgeId: string | null = null;
     let edgeHoldOrigin: { x: number; y: number } | null = null;
     let edgeHoldOpenedAt = 0;
+    let edgeHoldPoint: { x: number; y: number } | null = null;
 
     function startEdgeHold(id: string, event: PointerEvent): void {
       cancelEdgeHold();
@@ -433,13 +439,13 @@ export default defineComponent({
       edgeHoldOrigin = { x: event.clientX, y: event.clientY };
       const x = event.clientX;
       const y = event.clientY;
-      edgeHoldTimer = setTimeout(() => {
-        edgeHoldTimer = null;
+      edgeHoldTimer = setTimeout(() => {        edgeHoldTimer = null;
         const edge = edgeById(id);
         edgeHoldEdgeId = null;
         edgeHoldOrigin = null;
         if (!edge) return;
         edgeHoldOpenedAt = performance.now();
+        edgeHoldPoint = { x, y };
         emit("edge-contextmenu", edge, {
           clientX: x,
           clientY: y,
@@ -467,6 +473,17 @@ export default defineComponent({
       }
       edgeHoldEdgeId = null;
       edgeHoldOrigin = null;
+    }
+
+    /** A native contextmenu that our own long-press just replaced: same
+     *  gesture, same spot, within the window. */
+    function isSuppressedNativeContextmenu(x: number, y: number): boolean {
+      if (edgeHoldPoint === null) return false;
+      if (performance.now() - edgeHoldOpenedAt >= EDGE_SUPPRESS_MS) return false;
+      return (
+        Math.abs(x - edgeHoldPoint.x) + Math.abs(y - edgeHoldPoint.y)
+          <= EDGE_SUPPRESS_RADIUS
+      );
     }
 
     onBeforeUnmount(cancelEdgeHold);
@@ -1339,10 +1356,11 @@ export default defineComponent({
                     }}
                     onContextmenu={(event: MouseEvent) => {
                       event.preventDefault();
-                      // Our own long-press just fired for this gesture;
-                      // a platform-synthesized native event right after
-                      // it must not open the menu a second time.
-                      if (performance.now() - edgeHoldOpenedAt < EDGE_SUPPRESS_MS) {
+                      // Our own long-press just fired for this gesture at
+                      // this spot; a platform-synthesized native event for
+                      // the SAME press must not open the menu twice. A
+                      // real right-click elsewhere passes (new gesture).
+                      if (isSuppressedNativeContextmenu(event.clientX, event.clientY)) {
                         return;
                       }
                       emit("edge-contextmenu", edge, event);

@@ -22,7 +22,7 @@
  * `useContextMenuTrigger()` (composables/useContextMenu).
  */
 
-import { computed, defineComponent, nextTick, provide, ref } from "vue";
+import { computed, defineComponent, provide, ref, shallowRef } from "vue";
 
 import HkMenu from "./HkMenu";
 import {
@@ -62,7 +62,14 @@ export default defineComponent({
   name: "HkContextMenuProvider",
   setup(_, { slots }) {
     const open = ref(false);
-    const request = ref<ContextMenuRequest | null>(null);
+    const request = shallowRef<ContextMenuRequest | null>(null);
+    /** Remount identity: every open() swaps the HkMenu instance, so a
+     *  replacement menu starts from a CLEAN slate — cascade levels,
+     *  back-guard, hovered submenus — without racing a
+     *  close-then-reopen toggle through Vue's scheduler (a same-tick
+     *  double open, or the reactive-proxy identity trap, both ride
+     *  that race; R2 NEW-MAJOR-1/NEW-MINOR-1). */
+    const menuEpoch = ref(0);
     /** The select handler just ran: HkMenu follows `select` with
      *  `update:open(false)` (select first, then closeAll — HkMenu's
      *  onItem). That trailing close belongs to the FINISHED menu: it
@@ -81,17 +88,8 @@ export default defineComponent({
     const api: ContextMenuApi = {
       open(next: ContextMenuRequest) {
         request.value = next;
-        if (open.value) {
-          // Replace-while-open: cycle through closed so HkMenu's
-          // open-watchers run their reset (cascade levels, back-guard)
-          // — a stale open submenu must not survive into the new menu.
-          open.value = false;
-          nextTick(() => {
-            if (request.value === next) open.value = true;
-          });
-        } else {
-          open.value = true;
-        }
+        menuEpoch.value += 1;
+        open.value = true;
       },
       close() {
         close(true);
@@ -110,6 +108,7 @@ export default defineComponent({
       <>
         {slots.default?.()}
         <HkMenu
+          key={menuEpoch.value}
           variant="popup"
           items={request.value?.items ?? []}
           open={open.value}

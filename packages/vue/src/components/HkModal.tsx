@@ -1,15 +1,4 @@
-import {
-  computed,
-  defineComponent,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  shallowRef,
-  Teleport,
-  watch,
-  type PropType,
-} from "vue";
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, Teleport, watch, type PropType,  } from "vue";
 
 import { useI18n } from "../i18n/context";
 import "./HkModal.scss";
@@ -23,6 +12,8 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph } from "../composables/useSizeMorph";
+
+import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -217,6 +208,22 @@ export default defineComponent({
     });
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
+
+    // HkStepFlow swaps dispatch STEPFLOW_SWAP_EVENT (bubbling) from the
+    // flow root the moment the entering body owns the flow height. The
+    // morph's settle debounce is tuned for streaming bursts, but a step
+    // swap is one clean change whose sheet sweep must start on the SAME
+    // frames as the crossfade (2026-09-21 user spec, round 7) — so the
+    // event short-circuits straight into remeasure().
+    const onStepflowSwap = (): void => {
+      if (machine.phase.value === "open") morph.remeasure();
+    };
+    onMounted(() => {
+      bodyRef.value?.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+    });
+    onBeforeUnmount(() => {
+      bodyRef.value?.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+    });
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
     const contentZ = computed(() => (handle.value?.zIndex ?? 0) + 1);

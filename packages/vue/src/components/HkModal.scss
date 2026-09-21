@@ -475,8 +475,13 @@
     //   clip-path sweep (the only transition left on phones).
     //
     // Desktop keeps the full base list (height + max-height + clip-path).
+    // 0.3s = the stepflow crossfade's family standard (2026-09-21 user
+    // spec, round 7): the clip sweep, the riding body and the fade must
+    // land together. Keyboard-driven height changes never animate
+    // through this list (height/max-height are not transitioned), so
+    // only content morphs ride this duration.
     transition:
-      clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+      clip-path var(--hk-modal-morph-duration, 0.3s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
     // !important beats the inline maxWidth (width prop); base width: 100%
     // already applies at every viewport, so only the cap is re-asserted.
     max-width: 100% !important;

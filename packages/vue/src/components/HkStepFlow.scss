@@ -1,17 +1,23 @@
-// Direction-aware step body transitions for HkStepFlow.
+// Crossfading step bodies for HkStepFlow.
 //
-// Forward slides the body leftward (the flow advances to a later step),
-// back mirrors it toward the right. Timings follow the phase-transition
-// family — an expressive ease-out on enter, a sharp ease-in on leave.
+// A swap renders BOTH bodies for the whole duration: the entering one in
+// the flow (so the container's height — and the hosting sheet's morph —
+// are the NEW geometry from frame one) and the leaving one absolutely
+// positioned over it. Exactly one body rides the sheet's moving top edge
+// while the other stays pinned (2026-09-21 user spec, round 7); the ride
+// and the opacity crossfade share one duration/ease pair so the sheet's
+// clip sweep, the ride and the fade all land together.
+//
 // Duration resolves from one local custom property so consumers can tune
-// every phase at once.
+// every phase at once; the default is the 0.3s family standard the spec
+// asked for.
 
 .hk-step-flow {
-  --hk-stepflow-duration: 0.2s;
+  --hk-stepflow-duration: 0.3s;
 }
 
-// Breathing room between the step indicator and the step body. Without it
-// the timeline row butts directly against the first body element (modal
+// Breathing room between the step indicator and the step bodies. Without
+// it the timeline row butts directly against the first body element (modal
 // wizards read as cramped). Tune or remove per host through
 // --hk-stepflow-header-gap; the sticky mode folds the gap into the pinned
 // header's own padding so the surface tint stays continuous while the
@@ -23,10 +29,10 @@
 // Sticky header mode: positioning, surface and the whitespace contract
 // live on the shared .hk-scroll-pin rules (HkScrollPin.scss) — the
 // timeline root carries the class plus data-side/data-strategy. This
-// block keeps only what is step-flow-specific: the body gap folded into
+// block keeps only what's step-flow-specific: the body gap folded into
 // the pinned header's own padding (so the tint stays continuous while
-// the body scrolls underneath) and the legacy styling knobs mapped onto
-// the pin's custom properties. The doubled class selector must beat
+// the body scrolls) and the legacy styling knobs mapped onto the pin's
+// custom properties. The doubled class selector must beat
 // .hk-scroll-pin's own declarations regardless of import order.
 .hk-step-flow[data-sticky-header] > .hk-timeline.hk-scroll-pin {
   --hk-scroll-pin-z: var(--hk-stepflow-sticky-z, 10);
@@ -42,76 +48,33 @@
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-.hk-stepflow-fwd-enter-active,
-.hk-stepflow-back-enter-active {
+// The swap stage: entering bodies own the flow's height; the leaving one
+// overlays it, out of flow and pointer-transparent for the fade.
+.hk-stepflow-bodies {
+  position: relative;
+}
+
+.hk-stepflow-body {
+  // The ride + fade (armed from script with a staged start state — see
+  // the component's swap dance): same tokens for both properties so the
+  // sheet's clip sweep, the ride and the crossfade stay in lockstep.
   transition:
-    opacity var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hk-stepflow-duration, 0.3s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--hk-stepflow-duration, 0.3s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
-.hk-stepflow-fwd-leave-active,
-.hk-stepflow-back-leave-active {
-  transition:
-    opacity var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.5, 0, 0.75, 0),
-    transform var(--hk-stepflow-duration, 0.2s) cubic-bezier(0.5, 0, 0.75, 0);
+.hk-stepflow-body.leaving {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
 }
 
-.hk-stepflow-fwd-enter-from {
-  opacity: 0;
-  transform: translateX(24px);
-}
-
-.hk-stepflow-fwd-leave-to {
-  opacity: 0;
-  transform: translateX(-24px);
-}
-
-.hk-stepflow-back-enter-from {
-  opacity: 0;
-  transform: translateX(-24px);
-}
-
-.hk-stepflow-back-leave-to {
-  opacity: 0;
-  transform: translateX(24px);
-}
-
-/* RTL: reading direction flips, so the slide mirrors — forward enters
- * from the left and exits right (house pattern: HkListTransition.scss
- * [dir="rtl"] form). */
-[dir="rtl"] .hk-stepflow-fwd-enter-from,
-[dir="rtl"] .hk-stepflow-back-leave-to {
-  transform: translateX(-24px);
-}
-
-[dir="rtl"] .hk-stepflow-fwd-leave-to,
-[dir="rtl"] .hk-stepflow-back-enter-from {
-  transform: translateX(24px);
-}
-
-/* Phone (≤767px): the body snaps between steps instead of sliding. On
- * the mobile sheet the frame's own size morph already carries the
- * spatial feedback, and the slide's transient layer promotion/demotion
- * costs a one-frame raster gap at both ends on phone GPUs — the
- * "content blinks once on every step" report (2026-09-21 chest field
- * report, AddProviderWizard Prev/Next). Same shape as the
- * reduced-motion block below; desktop keeps the directional slide. */
-@media (max-width: 767px) {
-  .hk-stepflow-fwd-enter-active,
-  .hk-stepflow-back-enter-active,
-  .hk-stepflow-fwd-leave-active,
-  .hk-stepflow-back-leave-active {
-    transition: none;
-  }
-}
-
-/* Reduced motion: the body snaps between steps instead of sliding
- * (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss). */
+/* Reduced motion: bodies swap instantly — no ride, no fade (the sheet
+ * morph collapses the same way through its own duration tokens). */
 @media (prefers-reduced-motion: reduce) {
-  .hk-stepflow-fwd-enter-active,
-  .hk-stepflow-back-enter-active,
-  .hk-stepflow-fwd-leave-active,
-  .hk-stepflow-back-leave-active {
+  .hk-stepflow-body {
     transition: none;
   }
 }

@@ -452,6 +452,31 @@
   }
 
   .hk-modal-content {
+    // Phone-sheet transition = clip-path ONLY (2026-09-21, two Xiaomi
+    // WebView chest reports same day):
+    //
+    // ① IME cap-chase: on adjustResize engines the keyboard animation
+    //   steps the layout viewport — and the 100dvh term of the
+    //   max-height cap — every frame. With max-height in the transition
+    //   list each step RETARGETS a 150ms transition, so a cap-bound
+    //   sheet (tall content: wizards, model pickers) stays permanently
+    //   mid-transition chasing its own viewport. The cap now follows
+    //   the viewport INSTANTLY — exactly how native sheets track the
+    //   keyboard.
+    //
+    // ② Step-change shrink flicker: useSizeMorph's clip mode pins
+    //   growth instantly and sweeps the top edge paint-only, but
+    //   SHRINKS still route through this height transition — 150ms of
+    //   per-frame layout on a fixed full-width layer, re-rastering the
+    //   moving edge every frame (wizard Prev/Next between
+    //   different-height steps showed black blocks along the top).
+    //   Shrinks now SNAP: one layout, one paint — the native-sheet
+    //   direction change. Growth keeps its animated reveal via the
+    //   clip-path sweep (the only transition left on phones).
+    //
+    // Desktop keeps the full base list (height + max-height + clip-path).
+    transition:
+      clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
     // !important beats the inline maxWidth (width prop); base width: 100%
     // already applies at every viewport, so only the cap is re-asserted.
     max-width: 100% !important;

@@ -5,7 +5,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
   workflow_dispatch:
 
 concurrency:
@@ -33,15 +33,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Restore Rust Cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - name: Run cargo fmt -- --check
         run: cargo +nightly fmt --all -- --check --unstable-features
 
@@ -61,15 +52,6 @@ jobs:
         with:
           components: rustfmt, clippy
           targets: wasm32-wasip2
-
-      - name: Restore Rust Cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run cargo clippy
         run: cargo clippy --all --all-features
@@ -97,15 +79,6 @@ jobs:
         with:
           components: rustfmt, clippy
           targets: wasm32-wasip2
-
-      - name: Restore Rust Cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run cargo test
         run: cargo test --all-features --all

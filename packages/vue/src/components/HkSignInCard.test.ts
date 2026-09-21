@@ -166,4 +166,57 @@ describe("HkSignInCard", () => {
     expect(c.querySelector(".s-auth-methods")).toBeTruthy();
     expect(c.querySelector(".methods-probe")).toBeTruthy();
   });
+
+  // ── Account-first mode (passwordField: false) ─────────────────────────
+
+  it("omits the password field entirely in account-first mode", () => {
+    const c = mount(h(HkSignInCard, { title: "T", passwordField: false }));
+    expect(usernameField(c)).toBeTruthy();
+    expect(passwordField(c)).toBeNull();
+    // No hidden input may survive either: a password-type field on a form
+    // that never carries a password would still trip credential-manager
+    // save prompts.
+    expect(c.querySelector('input[type="password"]')).toBeNull();
+  });
+
+  it("submits with an empty password once only the account name is typed", async () => {
+    const onSubmit = vi.fn();
+    const c = mount(h(HkSignInCard, { title: "T", passwordField: false, onSubmit }));
+    const btn = c.querySelector(".hk-btn-primary") as HTMLElement;
+    // Empty username still gates the submit.
+    expect(btn.getAttribute("disabled")).not.toBeNull();
+    typeInto(usernameField(c), "demiurge");
+    await Promise.resolve();
+    expect(btn.getAttribute("disabled")).toBeNull(); // no password expected
+    btn.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onSubmit).toHaveBeenCalledWith("demiurge", "");
+  });
+
+  it("does not submit on Enter with an empty username in account-first mode", async () => {
+    const onSubmit = vi.fn();
+    const c = mount(h(HkSignInCard, { title: "T", passwordField: false, onSubmit }));
+    usernameField(c).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+    await Promise.resolve();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("seeds the username field from initialUsername", () => {
+    const c = mount(
+      h(HkSignInCard, { title: "T", passwordField: false, initialUsername: "  demiurge " }),
+    );
+    expect((usernameField(c) as HTMLInputElement).value).toBe("  demiurge ");
+    // And the seeded name alone satisfies the submit guard.
+    const btn = c.querySelector(".hk-btn-primary") as HTMLElement;
+    expect(btn.getAttribute("disabled")).toBeNull();
+  });
+
+  it("keeps the password guard when passwordField is unset (default true)", () => {
+    const c = mount(h(HkSignInCard, { title: "T", initialUsername: "demiurge" }));
+    const btn = c.querySelector(".hk-btn-primary") as HTMLElement;
+    expect(btn.getAttribute("disabled")).not.toBeNull(); // password still empty
+  });
 });

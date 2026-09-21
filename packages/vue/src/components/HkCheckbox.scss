@@ -29,7 +29,10 @@
   width: 1.125rem;
   height: 1.125rem;
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--hi-color-border, rgba(100,100,100,0.08));
+  /* The resting outline is the palette border slot at FULL strength:
+   * --hi-color-border is the faint divider channel (15% alpha) and melts
+   * into white/dark surfaces. */
+  border: 1px solid rgb(var(--color-border, 100 100 100));
   background: var(--hi-color-surface, rgba(240,244,248,0.95));
   transition:
     border-color var(--duration-normal, 0.3s) ease,

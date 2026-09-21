@@ -115,6 +115,15 @@
   border-radius: 8px 0 0 0;
 }
 
+/* A maximized frame has no rounded window corner to follow: Windows 11
+   squares decorated windows itself and borderless hosts square the DWM
+   corners manually, so keeping the radius would round the hover fill
+   away from the (square) frame corner. The (0,3,0) compound out-ranks
+   both the base rule and the RTL mirror above. */
+.hk-titlebar[data-maximized] .hk-titlebar-btn-close {
+  border-radius: 0;
+}
+
 .hk-titlebar-btn-close:hover {
   background: var(--hk-tb-close-hover);
   color: var(--hi-color-text-on-danger, #ffffff);

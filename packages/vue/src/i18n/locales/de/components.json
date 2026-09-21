@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "Auswählen",
     "hikari::filePicker.copy": "Kopieren",
     "hikari::filePicker.copyPath": "Pfad kopieren",
+    "hikari::filePicker.currentPath": "Aktueller Pfad",
     "hikari::filePicker.cut": "Ausschneiden",
     "hikari::filePicker.empty": "Dieser Ordner ist leer",
     "hikari::filePicker.fieldChooseMany": "Dateien auswählen…",
@@ -217,5 +218,7 @@
   "hikari::tagInput.remove": "Entfernen",
   "hikari::tagInput.addCustom": "„{q}“ verwenden",
   "hikari::tagInput.reorder": "Neu anordnen — {label}",
-  "hikari::modal.hiddenLayers": "Verdeckte Ebenen"
+  "hikari::modal.hiddenLayers": "Verdeckte Ebenen",
+  "hikari::theme.modeTabHint": "Diese Reiter wählen die zu bearbeitende Palette; die appweite Hell/Dunkel-Umschaltung liegt im Modusstreifen des Themen-Popups.",
+  "hikari::emptyState.loading": "Wird geladen"
 }

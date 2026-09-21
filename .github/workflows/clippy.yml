@@ -3,7 +3,7 @@ name: Clippy
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
     paths:
       - '.github/workflows/clippy.yml'
       - 'packages/**/*'
@@ -47,15 +47,6 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
-
-      - name: Cache cargo
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Run clippy
         run: |

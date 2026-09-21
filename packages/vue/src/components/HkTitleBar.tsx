@@ -23,7 +23,9 @@ import "./HkTitleBar.scss";
  * to the LEFT of minimize, each emitting `action` with its id.
  *
  * The maximized state is data-driven: the host passes `maximized` and the
- * component swaps the maximize/restore glyph — no shell probing inside.
+ * component swaps the maximize/restore glyph and squares the close button's
+ * window corner radius (a maximized frame has no rounded corner to follow)
+ * — no shell probing inside.
  */
 export default defineComponent({
   name: "HkTitleBar",
@@ -51,7 +53,11 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     return () => (
-      <div class="hk-titlebar" data-drag-region>
+      <div
+        class="hk-titlebar"
+        data-drag-region
+        data-maximized={props.maximized || undefined}
+      >
         {slots.left?.() ?? (
           <span class="hk-titlebar-title">
             {props.icon && <img class="hk-titlebar-icon" src={props.icon} alt="" />}

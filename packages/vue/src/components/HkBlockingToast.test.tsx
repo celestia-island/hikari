@@ -215,11 +215,19 @@ describe("HkBlockingToast", () => {
     expect(slot).not.toBeNull();
     const wrapper = slot!.parentElement as HTMLElement;
     Object.defineProperty(wrapper, "clientWidth", { value: 384, configurable: true });
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 384, height: 0, top: 0, left: 0 }),
+    });
     Object.defineProperty(slot!, "offsetParent", { value: wrapper, configurable: true });
     Object.defineProperty(slot!, "offsetTop", { value: 0, configurable: true });
     Object.defineProperty(slot!, "offsetLeft", { value: 0, configurable: true });
     Object.defineProperty(slot!, "offsetWidth", { value: 384, configurable: true });
     Object.defineProperty(slot!, "offsetHeight", { value: 120, configurable: true });
+    Object.defineProperty(slot!, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: 384, height: 120, top: 0, left: 0 }),
+    });
 
     // Dismiss (not confirm): this case only cares about the leave animation.
     cancelButton(cards()[0]).click();
@@ -234,6 +242,72 @@ describe("HkBlockingToast", () => {
     expect(leaving!.style.boxSizing).toBe("border-box");
 
     await expect(gate).resolves.toBe(false);
+    await settle();
+    expect(cards().length).toBe(0);
+  });
+
+  it("pins simultaneously leaving card slots to their pre-patch boxes", async () => {
+    mountHost();
+    const gateA = showBlockingToast("First prompt", { title: "One" });
+    const gateB = showBlockingToast("Second prompt", { title: "Two" });
+    await settle();
+
+    // Same multi-removal stub as HkToast.test: once the first slot goes
+    // position:absolute mid-patch, the shrink-to-fit column re-fits, so
+    // a live read in the second slot's before-leave would freeze the
+    // reflowed box. The pin must carry the pre-patch geometry instead.
+    const slots = document.querySelectorAll<HTMLElement>(".hk-blocking-toast-slot");
+    const [first, second] = slots;
+    const wrapper = first.parentElement as HTMLElement;
+    const reflowed = () => first.classList.contains("hk-blocking-toast-leave-active");
+    Object.defineProperty(wrapper, "clientWidth", {
+      configurable: true,
+      get: () => (reflowed() ? 138 : 384),
+    });
+    Object.defineProperty(wrapper, "getBoundingClientRect", {
+      configurable: true,
+      value: () => ({ width: reflowed() ? 138 : 384, height: 0, top: 0, left: 0 }),
+    });
+    const stub = (
+      el: HTMLElement,
+      box: { top: number; left: number; width: number; height: number },
+    ) => {
+      Object.defineProperty(el, "offsetParent", { value: wrapper, configurable: true });
+      Object.defineProperty(el, "offsetTop", { configurable: true, get: () => (reflowed() ? 0 : box.top) });
+      Object.defineProperty(el, "offsetLeft", { configurable: true, get: () => (reflowed() ? 0 : box.left) });
+      Object.defineProperty(el, "offsetWidth", { configurable: true, get: () => (reflowed() ? 138 : box.width) });
+      Object.defineProperty(el, "offsetHeight", { configurable: true, get: () => box.height });
+      Object.defineProperty(el, "getBoundingClientRect", {
+        configurable: true,
+        value: () => ({
+          width: reflowed() ? 138 : box.width,
+          height: box.height,
+          top: 0,
+          left: 0,
+        }),
+      });
+    };
+    stub(first, { top: 0, left: 0, width: 384, height: 120 });
+    stub(second, { top: 132, left: 0, width: 384, height: 120 });
+
+    cancelButton(cards()[0]).click();
+    cancelButton(cards()[1]).click();
+    await nextTick();
+
+    const [pinFirst, pinSecond] =
+      document.querySelectorAll<HTMLElement>(".hk-blocking-toast-leave-active");
+    // The second slot's pin mirrors its PRE-patch box — full-width bar at
+    // its own row — not the reflowed sliver at the vacated top slot.
+    expect(pinFirst!.style.right).toBe("0px");
+    expect(pinFirst!.style.top).toBe("0px");
+    expect(pinFirst!.style.width).toBe("384px");
+    expect(pinFirst!.style.height).toBe("120px");
+    expect(pinSecond!.style.right).toBe("0px");
+    expect(pinSecond!.style.top).toBe("132px");
+    expect(pinSecond!.style.width).toBe("384px");
+    expect(pinSecond!.style.height).toBe("120px");
+
+    await Promise.allSettled([gateA, gateB]);
     await settle();
     expect(cards().length).toBe(0);
   });

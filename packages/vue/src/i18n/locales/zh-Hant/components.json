@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "選擇",
     "hikari::filePicker.copy": "複製",
     "hikari::filePicker.copyPath": "複製路徑",
+    "hikari::filePicker.currentPath": "目前路徑",
     "hikari::filePicker.cut": "剪下",
     "hikari::filePicker.empty": "此資料夾為空",
     "hikari::filePicker.fieldChooseMany": "選擇多個檔案…",
@@ -221,5 +222,7 @@
   "hikari::tagInput.remove": "移除",
   "hikari::tagInput.addCustom": "使用「{q}」",
   "hikari::tagInput.reorder": "拖曳排序 — {label}",
-  "hikari::modal.hiddenLayers": "隱藏層級"
+  "hikari::modal.hiddenLayers": "隱藏層級",
+  "hikari::theme.modeTabHint": "切換這裡編輯的是對應模式的調色盤；要切換應用整體深/淺，請用主題彈窗頂部的模式條。",
+  "hikari::emptyState.loading": "載入中"
 }

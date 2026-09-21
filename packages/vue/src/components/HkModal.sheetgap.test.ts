@@ -74,6 +74,43 @@ describe("HkModal mobile sheet spacing contract", () => {
       expect(content).not.toMatch(/max-height:\s*none/);
     });
 
+    // 2026-09-21 phone-sheet transition contract (two Xiaomi WebView
+    // chest reports the same day): the mobile list carries ONLY the
+    // clip-path reveal.
+    // ① IME cap-chase: the keyboard animation steps the 100dvh cap every
+    //   frame; max-height in the transition list made cap-bound sheets
+    //   chase their own viewport. The cap follows the viewport instantly.
+    // ② Step-change shrink flicker: useSizeMorph routes clip-mode
+    //   SHRINKS through the height transition — 150ms of per-frame
+    //   layout on a fixed layer re-rastering the moving edge (wizard
+    //   Prev/Next between different-height steps showed black blocks).
+    //   With height out of the list, shrinks snap (one layout, one
+    //   paint — native-sheet behavior); growth keeps its animated
+    //   reveal through the clip-path sweep.
+    it("narrows the phone sheet transition to clip-path only (IME + shrink guards)", () => {
+      // Extraction self-check: the mobile rule must exist and MUST carry
+      // a transition declaration at all (its absence is the regression,
+      // not a vacuous pass).
+      expect(content.length, "mobile .hk-modal-content rule extracted").toBeGreaterThan(0);
+      const tr = content.match(/transition:\s*([^;]+);/)?.[1] ?? "";
+      expect(tr.length, "mobile sheet transition declaration present").toBeGreaterThan(0);
+      expect(tr).toMatch(/\bclip-path\b/);
+      expect(tr).not.toMatch(/\bheight\b/);
+      expect(tr).not.toMatch(/\bmax-height\b/);
+    });
+
+    it("keeps the desktop frame transition list intact (base rule)", () => {
+      // The guard is phone-only by design: the base rule outside the
+      // media block keeps height+max-height+clip-path animated.
+      const base = src.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
+      expect(base.length, "base .hk-modal-content rule extracted").toBeGreaterThan(0);
+      const tr = base.match(/transition:\s*([^;]+);/)?.[1] ?? "";
+      expect(tr.length, "base transition declaration present").toBeGreaterThan(0);
+      expect(tr).toMatch(/\bheight\b/);
+      expect(tr).toMatch(/\bmax-height\b/);
+      expect(tr).toMatch(/\bclip-path\b/);
+    });
+
     it("lifts the 70vh body cap on phones so the footer sits on the bottom edge", () => {
       expect(body).toContain("max-height: none");
     });

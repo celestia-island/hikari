@@ -51,6 +51,7 @@
     "hikari::filePicker.confirm": "اختيار",
     "hikari::filePicker.copy": "نسخ",
     "hikari::filePicker.copyPath": "نسخ المسار",
+    "hikari::filePicker.currentPath": "المسار الحالي",
     "hikari::filePicker.cut": "قص",
     "hikari::filePicker.empty": "هذا المجلد فارغ",
     "hikari::filePicker.fieldChooseMany": "اختر ملفات…",
@@ -217,5 +218,7 @@
   "hikari::tagInput.remove": "إزالة",
   "hikari::tagInput.addCustom": "استخدام \"{q}\"",
   "hikari::tagInput.reorder": "إعادة الترتيب — {label}",
-  "hikari::modal.hiddenLayers": "الطبقات المخفية"
+  "hikari::modal.hiddenLayers": "الطبقات المخفية",
+  "hikari::theme.modeTabHint": "هذه التبويبات تختار لوحة الألوان التي تحرّرها؛ لتبديل الوضع الفاتح/الداكن للتطبيق كله استخدم شريط الأوضاع أعلى نافذة السمة.",
+  "hikari::emptyState.loading": "جارٍ التحميل"
 }

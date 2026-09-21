@@ -252,7 +252,10 @@ describe("HkCrossfade — stylesheet contract", () => {
 
 describe("HkCrossfade — wiring contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
-  const src = readFileSync(join(here, "HkCrossfade.tsx"), "utf-8");
+  // Windows checkouts (core.autocrlf) hand the working tree CRLF sources;
+  // normalize before text-pinning so the contract is EOL-agnostic instead
+  // of green-on-CI / red-on-Windows.
+  const src = readFileSync(join(here, "HkCrossfade.tsx"), "utf-8").replace(/\r\n?/g, "\n");
 
   it("runs the Transition in default (simultaneous) mode and never overrides its duration", () => {
     expect(src).toContain('<Transition\n            name="hk-crossfade"');

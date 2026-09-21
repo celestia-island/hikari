@@ -1,5 +1,5 @@
 import { CircleX as XCircle, X } from "lucide-vue-next";
-import { computed, defineComponent, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
+import { computed, defineComponent, onBeforeUpdate, onMounted, onUnmounted, ref, Teleport, Transition, TransitionGroup, watch } from "vue";
 import { AlertTriangle, CheckCircle, Copy, Info } from "lucide-vue-next";
 
 
@@ -7,7 +7,7 @@ import { useToast, type ToastItem, type ToastMessage, type ToastType } from "../
 import { useClipboard } from "../runtime/useClipboard";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
 import { useI18n } from "../i18n/context";
-import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
+import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import "./HkToast.scss";
 
@@ -173,6 +173,49 @@ export default defineComponent({
     let popupHandle: PopupHandle | null = null;
     const containerZ = ref<number | null>(null);
 
+    // Pre-patch geometry of every toast, refreshed on each update (the
+    // DOM is still the pre-patch tree at onBeforeUpdate — same pattern
+    // as HkListTransition / HkTabs). During a multi-toast removal the
+    // first leaving sibling gets its leave-active class (position:
+    // absolute) synchronously inside the patch pass, so by the time the
+    // NEXT sibling's beforeLeave runs, the shrink-to-fit stack column
+    // has already re-fit: a live offset read there would freeze the
+    // reflowed box — toasts teleport onto the top slot, a narrow toast's
+    // bar collapses to its own max-content, and the overlapped fading
+    // texts read as one squashed multi-line blob. The wrapper itself may
+    // also have re-fit when the pin runs, so the right anchor is snapped
+    // at snapshot time too (see LeaveBoxSnapshot.right).
+    //
+    // Sizes come from getBoundingClientRect, NOT the offset* family:
+    // offsetWidth/Height round to integers, and the pinned box shrinks
+    // whenever the real box rounds down — a toast whose text sits within
+    // that sub-pixel distance of the wrap boundary loses its last
+    // character to the next line the instant the leave pins it. Rect
+    // width/height are exact and translation-invariant (enter/move only
+    // ever translate these surfaces, and translation does not change a
+    // box's size), so the pin reproduces the visible box to the pixel.
+    // Positions stay on offsetTop/offsetLeft — the transform-immune
+    // layout slot, where the ±0.5px integer error is invisible.
+    const hostRef = ref<{ $el?: Element } | null>(null);
+    const preLeaveBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    onBeforeUpdate(() => {
+      const host = hostRef.value?.$el;
+      if (host == null || host.nodeType !== 1) return;
+      const hostEl = host as HTMLElement;
+      const hostWidth = hostEl.getBoundingClientRect().width;
+      for (const child of Array.from(host.children)) {
+        const e = child as HTMLElement;
+        const rect = e.getBoundingClientRect();
+        preLeaveBoxes.set(e, {
+          top: e.offsetTop,
+          left: e.offsetLeft,
+          width: rect.width,
+          height: rect.height,
+          right: hostWidth - (e.offsetLeft + rect.width),
+        });
+      }
+    });
+
     onMounted(() => {
       popupHandle = manager.register("toast", false);
       containerZ.value = popupHandle.zIndex;
@@ -195,13 +238,14 @@ export default defineComponent({
       <Teleport to="body">
         <div class="hk-toast-container" style={containerStyle.value}>
           <TransitionGroup
+            ref={hostRef}
             tag="div"
             name="hk-toast"
             onBeforeEnter={itemHooks.onBeforeEnter}
             onAfterEnter={itemHooks.onAfterEnter}
             onBeforeLeave={(el: Element) => {
               itemHooks.onBeforeLeave();
-              pinLeaveGeometry(el);
+              pinLeaveGeometry(el, { box: preLeaveBoxes.get(el) });
             }}
             onAfterLeave={itemHooks.onAfterLeave}
             onLeaveCancelled={(el: Element) => {

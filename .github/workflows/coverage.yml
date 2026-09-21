@@ -5,7 +5,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, synchronize]
     paths:
       - '.github/workflows/coverage.yml'
       - 'packages/**/*'
@@ -42,15 +42,6 @@ jobs:
         with:
           toolchain: nightly
           components: llvm-tools-preview
-
-      - name: Cache cargo
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ env.CARGO_HOME }}
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2

@@ -26,6 +26,8 @@ import { AlertTriangle, CircleX as XCircle, Info } from "lucide-vue-next";
 import {
   defineComponent,
   onBeforeUnmount,
+  onBeforeUpdate,
+  ref,
   Teleport,
   TransitionGroup,
   watchEffect,
@@ -33,7 +35,7 @@ import {
 
 import { useI18n } from "../i18n/context";
 import { usePopupManager, type PopupHandle } from "../runtime/usePopupManager";
-import { clearLeaveGeometry, pinLeaveGeometry } from "../utils/dom";
+import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import {
   resolveBlockingToast,
@@ -115,6 +117,32 @@ export default defineComponent({
     const itemHooks = useSurfaceTransition(320).hooks();
     const handles = new Map<number, PopupHandle>();
 
+    // Pre-patch geometry of every card, refreshed on each update — same
+    // multi-removal guard as HkToast (see the full rationale there,
+    // including the getBoundingClientRect choice for sizes: offset*
+    // integer rounding would shrink the pinned card by up to half a
+    // pixel and rewrap its last character). Snap the right anchor at
+    // snapshot time too — the wrapper is already re-fit when the pin
+    // runs.
+    const hostRef = ref<{ $el?: Element } | null>(null);
+    const preLeaveBoxes = new WeakMap<Element, LeaveBoxSnapshot>();
+    onBeforeUpdate(() => {
+      const host = hostRef.value?.$el;
+      if (host == null || host.nodeType !== 1) return;
+      const hostWidth = (host as HTMLElement).getBoundingClientRect().width;
+      for (const child of Array.from(host.children)) {
+        const e = child as HTMLElement;
+        const rect = e.getBoundingClientRect();
+        preLeaveBoxes.set(e, {
+          top: e.offsetTop,
+          left: e.offsetLeft,
+          width: rect.width,
+          height: rect.height,
+          right: hostWidth - (e.offsetLeft + rect.width),
+        });
+      }
+    });
+
     // Keep one popup-manager entry (kind "toast") per visible card so
     // registry introspection and stacking stay coherent; unregister on
     // removal. Cards register in queue order, so newer prompts get the
@@ -150,13 +178,14 @@ export default defineComponent({
       <Teleport to="body">
         <div class="hk-blocking-toast-container">
           <TransitionGroup
+            ref={hostRef}
             tag="div"
             name="hk-blocking-toast"
             onBeforeEnter={itemHooks.onBeforeEnter}
             onAfterEnter={itemHooks.onAfterEnter}
             onBeforeLeave={(el: Element) => {
               itemHooks.onBeforeLeave();
-              pinLeaveGeometry(el);
+              pinLeaveGeometry(el, { box: preLeaveBoxes.get(el) });
             }}
             onAfterLeave={itemHooks.onAfterLeave}
             onLeaveCancelled={(el: Element) => {

@@ -452,6 +452,22 @@
   }
 
   .hk-modal-content {
+    // IME cap-chase guard (2026-09-21, Xiaomi WebView chest report): on
+    // adjustResize engines the keyboard animation steps the layout
+    // viewport — and with it the 100dvh term of the max-height cap —
+    // every frame. With max-height in the base transition list each step
+    // RETARGETS a 150ms transition, so a sheet that binds the cap (tall
+    // content: multi-step wizards, model pickers) stays permanently
+    // mid-transition: the box chases the viewport, layout stays dirty,
+    // and the fixed layer re-rasters per step (black-block flicker).
+    // Short sheets never bind the cap and never noticed. The cap now
+    // follows the viewport INSTANTLY on phones — which is exactly how
+    // native iOS/Android sheets track the keyboard — while the height
+    // pin (content-driven, one-shot per morph) and the clip reveal
+    // keep their transition. Desktop keeps the full list.
+    transition:
+      height var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+      clip-path var(--duration-fast, 0.15s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
     // !important beats the inline maxWidth (width prop); base width: 100%
     // already applies at every viewport, so only the cap is re-asserted.
     max-width: 100% !important;

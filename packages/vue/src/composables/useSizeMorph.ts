@@ -1,5 +1,11 @@
 import { onBeforeUnmount, type Ref } from "vue";
 
+import {
+  reportTransition,
+  scheduleFrame,
+  type AnimationHandle,
+} from "../runtime/animationBus";
+
 /** Chrome-allowance calibration constants (px): the floor covers a
  *  standard header+footer+borders stack (and bodies that overflow at
  *  arm time, where the resting delta goes negative and says nothing
@@ -12,6 +18,18 @@ const CHROME_ALLOWANCE_SLACK = 32;
  * text row the sweep is imperceptible and not worth promoting a
  * layer for. */
 const REVEAL_MIN_PX = 3;
+
+/** Reveal warmup (bus frames): how long the staged clip holds before
+ *  the sweep starts. The pin + clip start + `will-change` land in one
+ *  task, so the promoted layer starts re-rastering the whole resized
+ *  box immediately; holding the sweep for two frames lets that raster
+ *  land before the moving edge reveals it. Starting the sweep in the
+ *  staging task outran the raster thread on phone GPUs and the
+ *  just-revealed band composited as black tiles (2026-09-21 chest
+ *  field report, AddProviderWizard step growth). The staged clip keeps
+ *  the new band hidden through the hold, so the visible geometry is
+ *  the pre-growth sheet while warming — the wait itself is invisible. */
+const REVEAL_WARMUP_FRAMES = 2;
 
 export interface SizeMorph {
   /** Arm the morph: observe the content and pin the frame's natural
@@ -85,13 +103,27 @@ export interface SizeMorphOptions {
  * transition, same "content rides rigidly" grammar as the modal unveil,
  * but paint/compositor-level: no per-frame layout and no per-frame
  * backdrop-filter re-raster over the resizing fixed layer (the mobile
- * patchy-flicker source, 2026-09-15 chest report). Height-mode
+ * patchy-flicker source, 2026-09-15 chest report). The sweep never
+ * starts in the staging task: a two-frame warmup (REVEAL_WARMUP_FRAMES)
+ * lets the promoted layer's raster land before the edge moves
+ * (2026-09-21 chest report — same-task starts revealed black tiles).
+ * Height-mode
  * surfaces and the select sheet keep the height transition for shrinks
  * (their stylesheets list it); the phone MODAL sheet narrowed its list
  * to clip-path-only (2026-09-21 step-change shrink report — 150ms of
  * per-frame layout on the fixed layer re-rastered the moving edge), so
- * its shrinks snap: the L291-style pin flip lands instantly when the
+ * its shrinks snap: the pin flip lands instantly when the
  * stylesheet no longer transitions height.
+ *
+ * Scheduling rides the shared animation context
+ * (`runtime/animationBus`): the measurement hop and the reveal warmup
+ * are bus one-shots (`scheduleFrame`), and the CSS sweep is reported
+ * (`reportTransition`) so the bus keeps beating through it and the
+ * runtime registry sees the load. The settle debounce stays a
+ * real-time timer on purpose — it gates MEASUREMENT, not motion, and a
+ * parked (reduced-motion) bus must never freeze layout by stalling it;
+ * bus one-shots fire even parked, so every frame path still completes
+ * and the motion collapse itself stays CSS-owned.
  *
  * Reduced motion / the global animation switch stay honored: the frame's
  * transition-duration collapses to one frame under
@@ -103,7 +135,7 @@ export function useSizeMorph(
   options: SizeMorphOptions = {},
 ): SizeMorph {
   let ro: ResizeObserver | null = null;
-  let raf = 0;
+  let raf: AnimationHandle | null = null;
   let settleTimer: ReturnType<typeof setTimeout> | null = null;
   let armed = false;
   /** Last pinned height (px) — the transition's "from" value. */
@@ -116,14 +148,26 @@ export function useSizeMorph(
   let chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
   /** In-flight clip reveal (clip-mode growth morph): the frame whose
    *  inline clip-path/will-change must come off again once the sweep
-   *  lands, plus the listener that does it. */
+   *  lands, the listener that does it, the warmup one-shot that starts
+   *  the sweep, and the sweep's bus transition report. */
   let revealEl: HTMLElement | null = null;
   let revealEnd: ((ev: Event) => void) | null = null;
+  let revealWarmup: AnimationHandle | null = null;
+  let revealReport: AnimationHandle | null = null;
 
-  /** Tear down an in-flight clip reveal: drop the listener and return
-   *  the inline clip/will-change to CSS ownership. Safe to call when no
-   *  reveal is running (every dance start, stop, and unmount). */
+  /** Tear down an in-flight clip reveal: cancel the pending warmup and
+   *  the bus report, drop the listener, and return the inline
+   *  clip/will-change to CSS ownership. Safe to call when no reveal is
+   *  running (every dance start, stop, and unmount). */
   function stopReveal(): void {
+    if (revealWarmup) {
+      revealWarmup.disconnect();
+      revealWarmup = null;
+    }
+    if (revealReport) {
+      revealReport.disconnect();
+      revealReport = null;
+    }
     if (revealEl && revealEnd) {
       revealEl.removeEventListener("transitionend", revealEnd);
     }
@@ -133,6 +177,49 @@ export function useSizeMorph(
     }
     revealEl = null;
     revealEnd = null;
+  }
+
+  /** The frame's computed clip-transition duration, for the bus report
+   *  at sweep start: the sweep is CSS-owned, so without a report the
+   *  bus goes quiet for its duration and starves concurrent entries
+   *  (and the runtime registry under-reports load). Max across the
+   *  duration list; falls back to the --duration-fast default when the
+   *  read fails (SSR) or carries no time token. */
+  function transitionDurationMs(f: HTMLElement): number {
+    let raw = "";
+    try {
+      raw = getComputedStyle(f).transitionDuration;
+    } catch {
+      raw = "";
+    }
+    let max = 0;
+    for (const m of raw.matchAll(/(\d+(?:\.\d+)?)(m?)s/g)) {
+      max = Math.max(max, parseFloat(m[1]!) * (m[2] ? 1 : 1000));
+    }
+    return max > 0 ? max : 150;
+  }
+
+  /** Begin the actual sweep: attach the end listener, report the CSS
+   *  transition to the bus so it keeps beating for the duration, and
+   *  flip the clip to the open state under the live transition. Only
+   *  ever called from the warmup's last frame — never synchronously
+   *  from the dance (see REVEAL_WARMUP_FRAMES). */
+  function startRevealSweep(f: HTMLElement, radii: string): void {
+    const onEnd = (ev: Event): void => {
+      // transitionend bubbles: a descendant animating its own
+      // clip-path must not end the frame's reveal early.
+      if (
+        ev.target === f &&
+        (ev as TransitionEvent).propertyName === "clip-path"
+      ) {
+        stopReveal();
+      }
+    };
+    f.addEventListener("transitionend", onEnd);
+    revealEl = f;
+    revealEnd = onEnd;
+    revealReport = reportTransition(transitionDurationMs(f));
+    f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
   }
 
   /** Clip-mode opt-in, owned by CSS: the modal's mobile media block
@@ -212,8 +299,8 @@ export function useSizeMorph(
     //    natural (CSS-capped) height in one layout flush.
     // 2. Clip-mode growth: pin the NEW height outright and stage the
     //    clip start (still transition-disabled), so the reveal that
-    //    follows sweeps a fully-laid-out box — layout happens once,
-    //    here, never per frame.
+    //    follows (after the warmup, started by the bus) sweeps a
+    //    fully-laid-out box — layout happens once, here, never per frame.
     //    Otherwise re-establish the OLD pin (still transition-disabled)
     //    and flush it, so the style history is exactly "old height" when
     //    the live CSS transition returns.
@@ -276,21 +363,29 @@ export function useSizeMorph(
     void f.offsetHeight;
     f.style.transition = inlineTransition;
     if (reveal) {
-      const onEnd = (ev: Event): void => {
-        // transitionend bubbles: a descendant animating its own
-        // clip-path must not end the frame's reveal early.
-        if (
-          ev.target === f &&
-          (ev as TransitionEvent).propertyName === "clip-path"
-        ) {
-          stopReveal();
-        }
-      };
-      f.addEventListener("transitionend", onEnd);
+      // Warmup (see REVEAL_WARMUP_FRAMES): promote the layer now and
+      // hold the staged clip; the sweep itself starts from the bus.
+      // Bus one-shots fire even while the bus is parked for reduced
+      // motion — they are scheduling primitives, not motion; the motion
+      // collapse stays CSS-owned (transition-duration → one frame), so
+      // a parked bus still lands the sweep instantly and transitionend
+      // cleans up exactly as before.
       revealEl = f;
-      revealEnd = onEnd;
       f.style.willChange = "clip-path";
-      f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
+      let framesLeft = REVEAL_WARMUP_FRAMES;
+      const armWarmup = (): void => {
+        revealWarmup = scheduleFrame(() => {
+          revealWarmup = null;
+          // Torn down mid-warmup (new dance / hold / stop / unmount).
+          if (revealEl !== f) return;
+          if (--framesLeft > 0) {
+            armWarmup();
+            return;
+          }
+          startRevealSweep(f, radii);
+        });
+      };
+      armWarmup();
     } else {
       f.style.height = `${next}px`;
     }
@@ -321,8 +416,13 @@ export function useSizeMorph(
     settleTimer = setTimeout(() => {
       settleTimer = null;
       if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
+      // Frame work rides the shared bus; the settle debounce above
+      // deliberately stays a real-time timer — it gates MEASUREMENT,
+      // not motion, and a parked (reduced-motion) bus must never freeze
+      // the layout by stalling a bus-ridden interval. One-shots fire
+      // even parked, so this hop is safe in every motion state.
+      raf = scheduleFrame(() => {
+        raf = null;
         remeasure();
       });
     }, 150);
@@ -354,8 +454,8 @@ export function useSizeMorph(
       settleTimer = null;
     }
     if (raf) {
-      cancelAnimationFrame(raf);
-      raf = 0;
+      raf.disconnect();
+      raf = null;
     }
     // The next start() re-calibrates against whatever chrome that open
     // cycle carries.
@@ -377,7 +477,7 @@ export function useSizeMorph(
   onBeforeUnmount(() => {
     ro?.disconnect();
     if (settleTimer) clearTimeout(settleTimer);
-    if (raf) cancelAnimationFrame(raf);
+    if (raf) raf.disconnect();
     stopReveal();
   });
 

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
 
+import { readHkRuntime } from "../runtime/registry";
+
 import { useSizeMorph, type SizeMorphOptions } from "./useSizeMorph";
 
 /** Injectable ResizeObserver: captures the callback so tests can fire
@@ -121,6 +123,15 @@ afterEach(() => {
 async function settle(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 220));
   await nextTick();
+}
+
+/** Await exactly N animation frames. The bus's one-shot pump is itself
+ *  rAF-driven and FIFO-ordered with these, so an awaited frame resolves
+ *  in the same tick the pump that ran before it did. */
+async function busFrames(n: number): Promise<void> {
+  for (let i = 0; i < n; i++) {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
 }
 
 describe("useSizeMorph", () => {
@@ -295,7 +306,61 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.willChange).toBe("");
   });
 
-  it("starts the sweep from the old visual edge (delta inset)", () => {
+  it("holds the staged clip through a two-frame warmup before the sweep starts", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(360);
+    h.remeasure();
+    // Staged synchronously — new pin, start inset, layer promotion —
+    // but NO sweep yet: the reveal must let the promoted layer raster
+    // the resized box first (2026-09-21 chest report — a same-task
+    // sweep outran the raster thread and the revealed band composited
+    // as black tiles).
+    expect(h.frame.style.height).toBe("360px");
+    expect(h.frame.style.clipPath).toBe("inset(60px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.willChange).toBe("clip-path");
+
+    // The hold is TWO frames, not one: after the first frame the staged
+    // start inset must still be in place (a one-frame warmup would have
+    // already opened the clip).
+    await busFrames(1);
+    expect(h.frame.style.clipPath).toBe("inset(60px 0 0 0 round 0px 0px 0px 0px)");
+
+    await settle();
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+  });
+
+  it("reports the sweep to the animation bus only once it starts", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    // Let any earlier test's report timer expire so the baseline is quiet.
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    const transitions = (): number =>
+      Number(readHkRuntime("animationBus")?.transitions ?? 0);
+    const base = transitions();
+
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // Warmup pending: no CSS transition is running yet, nothing reported.
+    expect(transitions()).toBe(base);
+
+    // Two warmup frames start the sweep; its 150ms report is live now
+    // (well inside the report's window — do NOT use the 220ms settle,
+    // it outlives the report).
+    await busFrames(3);
+    expect(transitions()).toBe(base + 1);
+
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(transitions()).toBe(base);
+  });
+
+  it("starts the sweep from the old visual edge (delta inset)", async () => {
     const h = mountHarness(300);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -324,6 +389,10 @@ describe("useSizeMorph clip reveal", () => {
       "inset(120px 0 0 0 round 0px 0px 0px 0px)",
     ]);
     expect(h.frame.style.height).toBe("420px");
+    // The staged start inset HOLDS through the warmup — the sweep is a
+    // bus one-shot now, never part of the staging task.
+    expect(h.frame.style.clipPath).toBe("inset(120px 0 0 0 round 0px 0px 0px 0px)");
+    await settle();
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
   });
 
@@ -366,18 +435,49 @@ describe("useSizeMorph clip reveal", () => {
 
     h.setNatural(380);
     h.remeasure();
+    // Staged: the sweep is still pending on the warmup.
+    expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
+    await settle();
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
 
-    // A second growth lands before transitionend fired: the stale clip
-    // must come off inside the new dance, then the new reveal stages.
+    // A second growth lands mid-sweep: the stale clip/listener/report
+    // must come off inside the new dance, then the new reveal stages
+    // from the NEW delta (450 − 380 = 70px).
     h.setNatural(450);
     h.remeasure();
     expect(h.frame.style.height).toBe("450px");
-    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
     expect(h.frame.style.willChange).toBe("clip-path");
   });
 
-  it("clears an interrupted reveal inside the next dance (no transitionend)", () => {
+  it("cancels a pending warmup when a second growth re-stages mid-warmup", async () => {
+    const h = mountHarness(300);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(380);
+    h.remeasure();
+    expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
+
+    // Burn exactly one of the first warmup's two frames, then re-stage.
+    // A LEAKED first warmup would run its sweep on the next frame; the
+    // cancelled one (disconnect in stopReveal) never does.
+    await busFrames(1);
+    h.setNatural(450);
+    h.remeasure();
+    expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
+
+    // One frame later the leak would have flipped the clip open; the
+    // freshly staged start inset must still hold.
+    await busFrames(1);
+    expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
+
+    // The NEW warmup's second frame starts its own sweep.
+    await busFrames(1);
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+  });
+
+  it("clears an interrupted reveal inside the next dance (no transitionend)", async () => {
     const h = mountHarness(300);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -386,15 +486,20 @@ describe("useSizeMorph clip reveal", () => {
     h.remeasure();
     expect(h.frame.style.clipPath).not.toBe("");
 
-    // A SHRINK lands before the reveal's transitionend fired: unlike a
-    // follow-up growth (which restages its own clip), the height-morph
-    // branch writes no clip at all — the dance-start teardown is the
-    // only thing that returns the frame to CSS ownership (R1 mutation
-    // M1 evidence: without it the stale inset(0px) + will-change ride
-    // the shrink and linger at rest).
+    // A SHRINK lands before the reveal finished: unlike a follow-up
+    // growth (which restages its own clip), the height-morph branch
+    // writes no clip at all — the dance-start teardown is the only
+    // thing that returns the frame to CSS ownership (R1 mutation M1
+    // evidence: without it the stale inset + will-change ride the
+    // shrink and linger at rest). It must also cancel the pending
+    // warmup, or a stale sweep lands after the shrink.
     h.setNatural(310);
     h.remeasure();
     expect(h.frame.style.height).toBe("310px");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
+
+    await settle();
     expect(h.frame.style.clipPath).toBe("");
     expect(h.frame.style.willChange).toBe("");
   });
@@ -412,6 +517,12 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.height).toBe("");
     expect(h.frame.style.clipPath).toBe("");
     expect(h.frame.style.willChange).toBe("");
+
+    // A leaked warmup would fire the sweep AFTER the stop and re-add
+    // the clip/promotion — disconnect() in stopReveal is the fix.
+    await settle();
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("");
   });
 
   it("ignores transitionend events for other properties", async () => {
@@ -421,6 +532,8 @@ describe("useSizeMorph clip reveal", () => {
 
     h.setNatural(360);
     h.remeasure();
+    // The listener only exists once the warmup started the sweep.
+    await settle();
     fireTransitionEnd(h.frame, "height");
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
     fireTransitionEnd(h.frame, "opacity");

@@ -89,6 +89,22 @@
   transform: translateX(24px);
 }
 
+/* Phone (≤767px): the body snaps between steps instead of sliding. On
+ * the mobile sheet the frame's own size morph already carries the
+ * spatial feedback, and the slide's transient layer promotion/demotion
+ * costs a one-frame raster gap at both ends on phone GPUs — the
+ * "content blinks once on every step" report (2026-09-21 chest field
+ * report, AddProviderWizard Prev/Next). Same shape as the
+ * reduced-motion block below; desktop keeps the directional slide. */
+@media (max-width: 767px) {
+  .hk-stepflow-fwd-enter-active,
+  .hk-stepflow-back-enter-active,
+  .hk-stepflow-fwd-leave-active,
+  .hk-stepflow-back-leave-active {
+    transition: none;
+  }
+}
+
 /* Reduced motion: the body snaps between steps instead of sliding
  * (house pattern: HkExpansionPanel.scss / HkAffixPicker.scss). */
 @media (prefers-reduced-motion: reduce) {

@@ -44,7 +44,10 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid var(--hi-color-border);
+  /* The resting outline is the palette border slot at FULL strength:
+   * --hi-color-border is the faint divider channel (15% alpha) and melts
+   * into white/dark surfaces. */
+  border: 1px solid rgb(var(--color-border, 100 100 100));
   background: var(--hi-color-surface);
   transition:
     border-color var(--duration-normal, 0.3s) ease,

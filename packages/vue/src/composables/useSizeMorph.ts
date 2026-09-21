@@ -96,24 +96,27 @@ export interface SizeMorphOptions {
  * pin chases the target with the CSS transition — bounded, one-shot
  * choreography, not an infinite per-frame animation.
  *
- * Growth morphs on clip-mode surfaces (the mobile sheet docking, flagged
- * `--hk-sheet-morph: clip` in CSS) reveal instead of animating height:
- * the new pin lands instantly and the box's top edge sweeps up through
- * `clip-path: inset()` — same duration/ease tokens as the height
- * transition, same "content rides rigidly" grammar as the modal unveil,
- * but paint/compositor-level: no per-frame layout and no per-frame
+ * Size morphs on clip-mode surfaces (the mobile sheet docking, flagged
+ * `--hk-sheet-morph: clip` in CSS) ride paint-only clip-path in BOTH
+ * directions — same duration/ease tokens as the height transition, same
+ * "content rides rigidly" grammar as the modal unveil, but
+ * compositor-level: no per-frame layout and no per-frame
  * backdrop-filter re-raster over the resizing fixed layer (the mobile
- * patchy-flicker source, 2026-09-15 chest report). The sweep never
- * starts in the staging task: a two-frame warmup (REVEAL_WARMUP_FRAMES)
- * lets the promoted layer's raster land before the edge moves
+ * patchy-flicker source, 2026-09-15 chest report). Growth REVEALS: the
+ * new pin lands instantly and the top edge sweeps up through the staged
+ * inset — never in the staging task, a two-frame warmup
+ * (REVEAL_WARMUP_FRAMES) lets the layer's raster land first
  * (2026-09-21 chest report — same-task starts revealed black tiles).
- * Height-mode
- * surfaces and the select sheet keep the height transition for shrinks
- * (their stylesheets list it); the phone MODAL sheet narrowed its list
- * to clip-path-only (2026-09-21 step-change shrink report — 150ms of
- * per-frame layout on the fixed layer re-rastered the moving edge), so
- * its shrinks snap: the pin flip lands instantly when the
- * stylesheet no longer transitions height.
+ * Shrink CONCEALS: the box keeps its old pin while the top edge folds
+ * down through the closing inset, and an atomic re-pin (transition-off
+ * height swap) lands the target when the sweep ends — restoring the
+ * shrink animation the clip-path-only transition list had lost
+ * (2026-09-21 chest report, round 5) without reintroducing a frame of
+ * per-frame layout. The layer promotion is RESIDENT for the whole arm
+ * cycle (applied at start(), cleared on hold/release): promoting at the
+ * step-change moment cost a one-frame see-through as the old layer died
+ * before the new one rastered (same report).
+ * Height-mode surfaces (desktop) keep the height morph unchanged.
  *
  * Scheduling rides the shared animation context
  * (`runtime/animationBus`): the measurement hop and the reveal warmup
@@ -146,19 +149,53 @@ export function useSizeMorph(
    *  bodies that overflow at rest, plus subpixel slack. See the guard in
    *  remeasure(). */
   let chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
-  /** In-flight clip reveal (clip-mode growth morph): the frame whose
-   *  inline clip-path/will-change must come off again once the sweep
-   *  lands, the listener that does it, the warmup one-shot that starts
-   *  the sweep, and the sweep's bus transition report. */
+  /** In-flight clip morph (clip-mode size change): the frame whose inline
+   *  clip-path must come off again once the sweep lands, the listener
+   *  that does it, the warmup one-shot that starts the sweep, the sweep's
+   *  bus transition report — and, for a CONCEAL (shrink), the target
+   *  height the atomic re-pin lands when the sweep ends. */
   let revealEl: HTMLElement | null = null;
   let revealEnd: ((ev: Event) => void) | null = null;
   let revealWarmup: AnimationHandle | null = null;
   let revealReport: AnimationHandle | null = null;
+  let revealDir: "reveal" | "conceal" | null = null;
+  let concealTo: number | null = null;
+  /** Resident layer promotion on clip-mode surfaces: applied at arm time
+   *  and cleared on hold/release. Promoting at the STEP-change moment
+   *  (0.55.38's per-sweep will-change) destroyed the old layer one frame
+   *  before the new one had rastered — on the phone GPU the sheet read
+   *  as a one-frame see-through flash exactly when the raster race had
+   *  just been fixed (2026-09-21 chest report, round 5). Promoting once
+   *  at open and KEEPING it means step morphs never cross a layer
+   *  boundary at all. */
+  let residentWill = false;
 
-  /** Tear down an in-flight clip reveal: cancel the pending warmup and
-   *  the bus report, drop the listener, and return the inline
-   *  clip/will-change to CSS ownership. Safe to call when no reveal is
-   *  running (every dance start, stop, and unmount). */
+  /** Land a conceal atomically: pin the target height and clear the clip
+   *  in one transition-disabled task. Called from the sweep's end, from
+   *  stopReveal() when a conceal is interrupted, and from hold/release.
+   *  Visually a no-op: the box top is exactly where the clip edge sits,
+   *  so the pin swap paints nothing. */
+  function finishConceal(f: HTMLElement): void {
+    const inlineTransition = f.style.transition;
+    f.style.transition = "none";
+    if (concealTo != null) {
+      f.style.height = `${concealTo}px`;
+      pinned = concealTo;
+    }
+    f.style.clipPath = "";
+    void f.offsetHeight;
+    f.style.transition = inlineTransition;
+    concealTo = null;
+  }
+
+  /** Tear down an in-flight clip morph: cancel the pending warmup and
+   *  the bus report, drop the listener, and land the frame in its rest
+   *  state — an interrupted conceal re-pins its target atomically
+   *  (clearing the clip alone would pop the box back to full height for
+   *  one frame); a reveal just clears the clip. The resident
+   *  will-change is NOT touched here (it belongs to the arm cycle, see
+   *  residentWill). Safe to call when nothing is running (every dance
+   *  start, stop, and unmount). */
   function stopReveal(): void {
     if (revealWarmup) {
       revealWarmup.disconnect();
@@ -172,11 +209,24 @@ export function useSizeMorph(
       revealEl.removeEventListener("transitionend", revealEnd);
     }
     if (revealEl) {
-      revealEl.style.clipPath = "";
-      revealEl.style.willChange = "";
+      if (revealDir === "conceal" && concealTo != null) {
+        finishConceal(revealEl);
+      } else {
+        revealEl.style.clipPath = "";
+      }
     }
     revealEl = null;
     revealEnd = null;
+    revealDir = null;
+    concealTo = null;
+  }
+
+  /** Drop the resident layer promotion (hold / release paths). */
+  function clearResidentWill(): void {
+    if (!residentWill) return;
+    residentWill = false;
+    const f = frame.value;
+    if (f) f.style.willChange = "";
   }
 
   /** The frame's computed clip-transition duration, for the bus report
@@ -201,13 +251,22 @@ export function useSizeMorph(
 
   /** Begin the actual sweep: attach the end listener, report the CSS
    *  transition to the bus so it keeps beating for the duration, and
-   *  flip the clip to the open state under the live transition. Only
-   *  ever called from the warmup's last frame — never synchronously
-   *  from the dance (see REVEAL_WARMUP_FRAMES). */
-  function startRevealSweep(f: HTMLElement, radii: string): void {
+   *  flip the clip to the sweep's END state under the live transition.
+   *  A reveal opens the clip (inset(delta)→inset(0), the top edge
+   *  sweeping up); a conceal closes it (inset(0)→inset(delta), the top
+   *  edge folding down while the box itself stays pinned at the OLD
+   *  height — the atomic re-pin lands in finishConceal when the sweep
+   *  ends). Only ever called from the warmup's last frame — never
+   *  synchronously from the dance (see REVEAL_WARMUP_FRAMES). */
+  function startRevealSweep(
+    f: HTMLElement,
+    radii: string,
+    dir: "reveal" | "conceal",
+    insetPx: number,
+  ): void {
     const onEnd = (ev: Event): void => {
       // transitionend bubbles: a descendant animating its own
-      // clip-path must not end the frame's reveal early.
+      // clip-path must not end the frame's morph early.
       if (
         ev.target === f &&
         (ev as TransitionEvent).propertyName === "clip-path"
@@ -218,8 +277,12 @@ export function useSizeMorph(
     f.addEventListener("transitionend", onEnd);
     revealEl = f;
     revealEnd = onEnd;
+    revealDir = dir;
     revealReport = reportTransition(transitionDurationMs(f));
-    f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
+    f.style.clipPath =
+      dir === "reveal"
+        ? `inset(0px 0 0 0 round ${radii})`
+        : `inset(${insetPx}px 0 0 0 round ${radii})`;
   }
 
   /** Clip-mode opt-in, owned by CSS: the modal's mobile media block
@@ -265,6 +328,7 @@ export function useSizeMorph(
     const f = frame.value;
     if (f) f.style.height = "";
     stopReveal();
+    clearResidentWill();
     pinned = 0;
   }
 
@@ -338,22 +402,31 @@ export function useSizeMorph(
       return;
     }
     const next = Math.round(natural);
-    const growth = next - pinned;
-    // Clip reveal (see the composable doc): the pin lands instantly and
-    // the top edge sweeps up through paint-only clip-path, with the
-    // box's own corner radii riding the moving edge. The frame's
-    // stylesheet owns the clip-path transition (duration/ease tokens
-    // shared with the height transition), so reduced-motion and the
-    // global animation switch collapse it exactly like the height morph
-    // they already govern. Everything else — shrink, first pin,
-    // sub-threshold growth, height-mode surfaces — keeps the height
-    // morph below (desktop stays exactly as it was).
-    const reveal = pinned > 0 && growth >= REVEAL_MIN_PX && clipMode(f);
+    const delta = next - pinned;
+    // Clip morphs (see the composable doc): on clip-mode surfaces BOTH
+    // directions ride paint-only clip-path — growth REVEALS (pin the new
+    // height outright, then sweep the top edge up through the staged
+    // inset) and shrink CONCEALS (keep the old pin, then fold the top
+    // edge down; the atomic re-pin lands when the sweep ends). No
+    // per-frame layout in either direction; the frame's stylesheet owns
+    // the clip-path transition (duration/ease tokens shared with the
+    // height transition), so reduced-motion and the global animation
+    // switch collapse both exactly like the height morph they govern.
+    // First pin, sub-threshold deltas and height-mode surfaces keep the
+    // height morph below (desktop stays exactly as it was).
+    const reveal = pinned > 0 && delta >= REVEAL_MIN_PX && clipMode(f);
+    const conceal = pinned > 0 && delta <= -REVEAL_MIN_PX && clipMode(f);
     let radii = "";
     if (reveal) {
       radii = cornerRadii(f);
       f.style.height = `${next}px`;
-      f.style.clipPath = `inset(${growth}px 0 0 0 round ${radii})`;
+      f.style.clipPath = `inset(${delta}px 0 0 0 round ${radii})`;
+    } else if (conceal) {
+      radii = cornerRadii(f);
+      // The box stays pinned at the OLD height (the visible start state
+      // needs no staging — the dance-start teardown already cleared any
+      // clip, so the box paints its full current height).
+      f.style.height = `${pinned}px`;
     } else if (pinned > 0) {
       f.style.height = `${pinned}px`;
     }
@@ -362,34 +435,47 @@ export function useSizeMorph(
     // old visual edge / the height transition starts from the old pin.
     void f.offsetHeight;
     f.style.transition = inlineTransition;
-    if (reveal) {
-      // Warmup (see REVEAL_WARMUP_FRAMES): promote the layer now and
-      // hold the staged clip; the sweep itself starts from the bus.
-      // Bus one-shots fire even while the bus is parked for reduced
-      // motion — they are scheduling primitives, not motion; the motion
-      // collapse stays CSS-owned (transition-duration → one frame), so
-      // a parked bus still lands the sweep instantly and transitionend
-      // cleans up exactly as before.
+    if (reveal || conceal) {
+      // Warmup (see REVEAL_WARMUP_FRAMES): hold the staged state for two
+      // bus frames so the layer's raster lands before the edge moves;
+      // the sweep itself starts from the bus. The layer is ALREADY
+      // promoted (resident will-change since start()), so the warmup
+      // costs no layer churn. Bus one-shots fire even while the bus is
+      // parked for reduced motion — they are scheduling primitives, not
+      // motion; the motion collapse stays CSS-owned
+      // (transition-duration → one frame), so a parked bus still lands
+      // the sweep instantly and transitionend cleans up exactly as
+      // before.
       revealEl = f;
-      f.style.willChange = "clip-path";
+      revealDir = reveal ? "reveal" : "conceal";
+      concealTo = conceal ? next : null;
+      const dir = revealDir;
+      const insetPx = Math.abs(delta);
       let framesLeft = REVEAL_WARMUP_FRAMES;
       const armWarmup = (): void => {
         revealWarmup = scheduleFrame(() => {
           revealWarmup = null;
           // Torn down mid-warmup (new dance / hold / stop / unmount).
-          if (revealEl !== f) return;
+          if (revealEl !== f || revealDir !== dir) return;
           if (--framesLeft > 0) {
             armWarmup();
             return;
           }
-          startRevealSweep(f, radii);
+          startRevealSweep(f, radii, dir, insetPx);
         });
       };
       armWarmup();
     } else {
       f.style.height = `${next}px`;
     }
-    pinned = next;
+    if (!conceal) {
+      // The pin bookkeeping is immediate for reveals (the box already
+      // sits at the new height) and snaps (nothing animates). A conceal
+      // keeps the OLD pin until finishConceal() lands the target — a
+      // mid-flight remeasure must see the still-visual height as its
+      // "from".
+      pinned = next;
+    }
     // Self-heal the allowance on every VALIDATED pin: chrome that grew
     // after calibration (an async footer, a header slot mounting
     // mid-open) updates the baseline instead of tripping the guard on
@@ -435,6 +521,15 @@ export function useSizeMorph(
     // its enter (callers arm in after-enter) and sits at rest, so the
     // frame-vs-content delta is pure chrome.
     calibrate();
+    // Resident promotion on clip-mode surfaces (see residentWill): the
+    // layer crosses no boundary during later step morphs. Applied here,
+    // at the open edge — one promotion per open cycle instead of one
+    // per resize.
+    const f0 = frame.value;
+    if (f0 && clipMode(f0)) {
+      f0.style.willChange = "clip-path";
+      residentWill = true;
+    }
     if (typeof ResizeObserver === "undefined" || !content.value) {
       remeasure();
       return;
@@ -461,6 +556,9 @@ export function useSizeMorph(
     // cycle carries.
     chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
     stopReveal();
+    // The leave fold no longer clips; drop the resident promotion with
+    // it (start() re-applies on the next open).
+    clearResidentWill();
     // Deliberately no release(): the pin stays on the frame so the close
     // fold plays on a stable box, and a reopen interrupt animates from it.
   }
@@ -479,6 +577,7 @@ export function useSizeMorph(
     if (settleTimer) clearTimeout(settleTimer);
     if (raf) raf.disconnect();
     stopReveal();
+    clearResidentWill();
   });
 
   return { start, stop, hold, remeasure };

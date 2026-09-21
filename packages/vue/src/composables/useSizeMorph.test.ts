@@ -410,10 +410,15 @@ describe("useSizeMorph clip reveal", () => {
     // the box keeps the OLD pin while the top edge folds down through
     // the closing inset — the pin swap lands only at the sweep's end.
     h.setNatural(320);
-    FakeResizeObserver.instances[0]!.callback();
+    h.remeasure();
+    // Mid-warmup: the explicit inset(0) start holds (regression
+    // contract — never a cleared/none start).
+    await busFrames(1);
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.height).toBe("400px");
     await settle();
-    // Warmup + sweep in flight: clip folding toward inset(80px), height
-    // still the old pin.
+    // Sweep in flight: clip folding toward inset(80px), height still
+    // the old pin.
     expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
     expect(h.frame.style.height).toBe("400px");
     // The sweep ends: atomic re-pin — height jumps to the target with
@@ -456,6 +461,33 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("inset(40px 0 0 0 round 0px 0px 0px 0px)");
     await settle();
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
+  });
+
+  it("lands the sweep via the watchdog when transitionend never fires", async () => {
+    const h = mountHarness(400);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.height).toBe("400px");
+
+    // Round-6 regression: a WebView that never delivers clip-path
+    // transitionend used to freeze the frame here forever. The watchdog
+    // (duration + 350ms grace; happy-dom resolves no computed duration,
+    // so the 150ms fallback applies -> ~500ms) must land the same
+    // atomic re-pin.
+    await new Promise((resolve) => setTimeout(resolve, 620));
+    expect(h.frame.style.height).toBe("320px");
+    expect(h.frame.style.clipPath).toBe("");
+    expect(h.frame.style.willChange).toBe("clip-path");
+
+    // The watchdog is disarmed on the normal close: a later unrelated
+    // transitionend must be a no-op (no double landing, no throw).
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(h.frame.style.height).toBe("320px");
   });
 
   it("never clips without the mode flag (desktop height morph intact)", async () => {
@@ -547,7 +579,10 @@ describe("useSizeMorph clip reveal", () => {
     h.setNatural(310);
     h.remeasure();
     expect(h.frame.style.height).toBe("380px");
-    expect(h.frame.style.clipPath).toBe("");
+    // Explicit inset(0) start — the round-6 regression contract: a
+    // cleared (none) start point made Chromium skip the clip transition
+    // AND its transitionend, freezing the sheet clipped at its old pin.
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
     await settle();
     expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
     fireTransitionEnd(h.frame, "clip-path");

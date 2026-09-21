@@ -160,6 +160,14 @@ export function useSizeMorph(
   let revealReport: AnimationHandle | null = null;
   let revealDir: "reveal" | "conceal" | null = null;
   let concealTo: number | null = null;
+  /** Sweep watchdog: transitionend is the normal closer, but a lost
+   *  event (a WebView that skips clip-path end events entirely — the
+   *  2026-09-21 round-6 regression: a none→inset() start point made
+   *  Chromium drop the transition AND its events, freezing the sheet
+   *  clipped at its old pin) must not freeze the frame forever. The
+   *  timer fires the exact same landing path and is disarmed on every
+   *  normal close. */
+  let revealWatchdog: ReturnType<typeof setTimeout> | null = null;
   /** Resident layer promotion on clip-mode surfaces: applied at arm time
    *  and cleared on hold/release. Promoting at the STEP-change moment
    *  (0.55.38's per-sweep will-change) destroyed the old layer one frame
@@ -204,6 +212,10 @@ export function useSizeMorph(
     if (revealReport) {
       revealReport.disconnect();
       revealReport = null;
+    }
+    if (revealWatchdog) {
+      clearTimeout(revealWatchdog);
+      revealWatchdog = null;
     }
     if (revealEl && revealEnd) {
       revealEl.removeEventListener("transitionend", revealEnd);
@@ -278,7 +290,13 @@ export function useSizeMorph(
     revealEl = f;
     revealEnd = onEnd;
     revealDir = dir;
-    revealReport = reportTransition(transitionDurationMs(f));
+    const durationMs = transitionDurationMs(f);
+    revealReport = reportTransition(durationMs);
+    // Watchdog (see revealWatchdog): same landing, forced, if the
+    // transitionend never arrives.
+    revealWatchdog = setTimeout(() => {
+      if (revealEl === f && revealDir === dir) stopReveal();
+    }, durationMs + 350);
     f.style.clipPath =
       dir === "reveal"
         ? `inset(0px 0 0 0 round ${radii})`
@@ -423,10 +441,15 @@ export function useSizeMorph(
       f.style.clipPath = `inset(${delta}px 0 0 0 round ${radii})`;
     } else if (conceal) {
       radii = cornerRadii(f);
-      // The box stays pinned at the OLD height (the visible start state
-      // needs no staging — the dance-start teardown already cleared any
-      // clip, so the box paints its full current height).
+      // The box stays pinned at the OLD height, and the clip start is an
+      // EXPLICIT inset(0) — not a cleared inline clip. Chromium does not
+      // interpolate clip-path between none and inset(), so a none start
+      // made the sweep jump to its end state and never fire
+      // transitionend, freezing the sheet clipped at its old pin
+      // (2026-09-21 round-6 regression report: "the top half is just cut
+      // off and then it stays there"). inset(0)→inset(N) interpolates.
       f.style.height = `${pinned}px`;
+      f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
     } else if (pinned > 0) {
       f.style.height = `${pinned}px`;
     }

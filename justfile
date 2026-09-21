@@ -15,9 +15,17 @@
 #   just clean           - Clean build artifacts
 
 set shell := ["bash", "-c"]
-set windows-shell := ["bash.exe", "-c"]
+# Windows: PowerShell (the 5.1 floor ships with every Windows; pwsh 7 is
+# NOT assumed). Linewise recipes must stay PS-5.1-safe: no `&&` chains,
+# `cd X; cmd` instead of `cd X && cmd`. Bash-only recipes use
+# [script('bash')] and need Git Bash (or WSL) when actually run.
+set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command", "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding']='utf8';"]
 set unstable
 set lists
+
+# Repo definitions override the shared template's (imported above).
+set allow-duplicate-recipes
+set allow-duplicate-variables
 
 # Shared celestia-devtools recipes — NOT in git. `import?` silently skips when
 # absent, so this justfile parses pre-fetch. Bootstrap once: celestia-devtools
@@ -28,25 +36,9 @@ import? "./.just/celestia-devtools.just"
 # Stage shared celestia-devtools recipes into .just/ (gitignored).
 # Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
 # curl honors HTTP_PROXY/HTTPS_PROXY/ALL_PROXY env vars automatically.
-[script('bash')]
 fetch URL='':
-    #!/usr/bin/env bash
-    set -euo pipefail
-    out=.just/celestia-devtools.just
-    mkdir -p .just
-    if [ -n "{{URL}}" ]; then
-      echo "[fetch] {{URL}} -> $out"
-      curl -fsSL "{{URL}}" -o "$out"
-    elif command -v celestia-devtools >/dev/null 2>&1; then
-      src=$(celestia-devtools include-path)
-      echo "[fetch] local bundle ($src) -> $out"
-      cp "$src" "$out"
-    else
-      echo "[fetch] github raw -> $out"
-      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/master/src/celestia_devtools/common.just" -o "$out"
-    fi
-    echo "[fetch] wrote $out"
-
+    {{ if os_family() == "windows" { "python" } else { "python3" } }} -c "import os; os.makedirs('.just', exist_ok=True)"
+    {{ if URL != "" { "curl -fsSL " + URL + " -o .just/celestia-devtools.just" } else if which("celestia-devtools") != "" { "celestia-devtools fetch-just" } else { "curl -fsSL https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just -o .just/celestia-devtools.just" } }}
 # Python command (platform adaptive)
 py := if os_family() == "windows" { "python" } else { "python3" }
 
@@ -78,7 +70,7 @@ check-tairitsu-packager:
 # Fetch MDI icons (optional - tairitsu will also handle this)
 fetch-icons:
     @echo "  →  Fetching MDI icons..."
-    @{{py}} scripts/icons/fetch_mdi_icons.py 2>&1 | grep -E "(OK:|ERROR:|WARNING:)" || true
+    @{{py}} scripts/icons/fetch_mdi_icons.py
 
 # ------
 # Build tasks
@@ -107,47 +99,37 @@ build-website: _check-lagrange
 
 # Verify the lagrange binary exists, with a helpful error if not.
 _check-lagrange:
-    @test -f "{{lagrange_bin}}" || { echo "[ERROR] lagrange not built: {{lagrange_bin}}"; echo "  Run: cd {{lagrange_root}} && cargo build --release"; exit 1; }
+    @{{py}} -c "import sys, pathlib; p = pathlib.Path(r'{{lagrange_bin}}'); sys.exit(0) if p.exists() else (print('[ERROR] lagrange not built: %s' % p), print('  Run: cd {{lagrange_root}} && cargo build --release'), sys.exit(1))"
 
 # Development mode: build docs with lagrange + serve with file-watch auto-restart
-# via malkuth. Watches docs/ for changes. Self-contained [script] (not a linewise
-# `just dev-watch` call) so it runs under the interop-pinned Git Bash even when
-# WSL shadows PATH.
-[script]
+# via malkuth. Watches docs/ for changes.
+[script('python')]
 dev:
-    #!/usr/bin/env bash
-    set -eu
-    # Ensure MSYS /usr/bin + cargo bin are on PATH (just spawns bash.exe
-    # without /etc/profile, so /usr/bin and ~/.cargo/bin may be absent).
-    case ":$PATH:" in
-      *":/usr/bin:"*) ;;
-      *) PATH="/usr/bin:$PATH" ;;
-    esac
-    case ":$PATH:" in
-      *":$HOME/.cargo/bin:"*) ;;
-      *) PATH="$HOME/.cargo/bin:$PATH" ;;
-    esac
-    # tracing-style log helper — matches lagrange_library's format:
-    # local time, "%Y-%m-%d %H:%M:%S", no T/Z.
-    log() { printf '%s  INFO hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
-    err() { printf '%s ERROR hikari-dev: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2; }
-    if [ ! -f "{{lagrange_bin}}" ]; then
-      err "lagrange not built: {{lagrange_bin}}"
-      err "run: cd {{lagrange_root}} && cargo build --release"
-      exit 1
-    fi
-    malkuth="${MALKUTH_BIN:-$(command -v malkuth 2>/dev/null || echo ../malkuth/target/release/malkuth)}"
-    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
-      malkuth="../malkuth/target/release/malkuth.exe"
-    fi
-    if ! command -v "$malkuth" >/dev/null 2>&1 && [ ! -f "$malkuth" ]; then
-      err "malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli"
-      exit 1
-    fi
-    log "supervising: {{lagrange_bin}} dev --src docs --out dist --port 3000"
-    log "watching: docs"
-    exec "$malkuth" --watch docs --drain-secs 2 -- \
-      "{{lagrange_bin}}" dev --src docs --out dist --port 3000
+    import os, shutil, subprocess, sys
+    from datetime import datetime
+
+    def log(msg):
+        print(f"{datetime.now():%Y-%m-%d %H:%M:%S}  INFO hikari-dev: {msg}")
+
+    def err(msg):
+        print(f"{datetime.now():%Y-%m-%d %H:%M:%S} ERROR hikari-dev: {msg}", file=sys.stderr)
+
+    lagrange_bin = r"{{lagrange_bin}}"
+    lagrange_root = r"{{lagrange_root}}"
+    if not os.path.isfile(lagrange_bin):
+        err(f"lagrange not built: {lagrange_bin}")
+        err(f"run: cd {lagrange_root} && cargo build --release")
+        sys.exit(1)
+    malkuth = os.environ.get("MALKUTH_BIN") or shutil.which("malkuth") or "../malkuth/target/release/malkuth"
+    if shutil.which(malkuth) is None and not os.path.isfile(malkuth):
+        malkuth = "../malkuth/target/release/malkuth.exe"
+    if shutil.which(malkuth) is None and not os.path.isfile(malkuth):
+        err("malkuth not found. Build it: cd ../malkuth && cargo build --release --features cli")
+        sys.exit(1)
+    log(f"supervising: {lagrange_bin} dev --src docs --out dist --port 3000")
+    log("watching: docs")
+    os.execvp(malkuth, [malkuth, "--watch", "docs", "--drain-secs", "2", "--",
+                        lagrange_bin, "dev", "--src", "docs", "--out", "dist", "--port", "3000"])
 
 # Start dev server (no watch, for AI agent)
 dev-by-agent: _check-lagrange
@@ -204,12 +186,12 @@ clean:
 # Run E2E screenshots in parallel
 e2e-parallel:
     @echo "  →  Running E2E tests..."
-    @./scripts/run_parallel_screenshots.sh
+    @{{py}} scripts/run_parallel_screenshots.py
     @echo "  ✓  Screenshots saved to: target/e2e_screenshots/"
 
 # Test specific route
 e2e-test route="":
-    @docker run --rm --network host -v "$(pwd)/target/e2e_screenshots:/tmp/e2e_screenshots" -v "$(pwd)/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}" > /dev/null
+    @docker run --rm --network host -v "{{justfile_directory()}}/target/e2e_screenshots:/tmp/e2e_screenshots" -v "{{justfile_directory()}}/public:/public:ro" hikari/screenshot:selenium /usr/local/bin/hikari-screenshot --start "{{route}}" --end "{{route}}"
 
 # ------
 # Unit Testing

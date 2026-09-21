@@ -63,6 +63,16 @@ describe("sheet family morph-performance contract", () => {
     );
   });
 
+  it("slows the phone sheet's clip sweep to the crossfade's 0.3s", () => {
+    // 2026-09-21 user spec, round 7: the clip sweep, the riding body and
+    // the fade must land together — the phone block overrides the fast
+    // desktop timing with the stepflow family standard. Desktop keeps
+    // the fast pair above.
+    expect(mobileModal).toMatch(
+      /^[ \t]*clip-path var\(--hk-modal-morph-duration, 0\.3s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\);$/m,
+    );
+  });
+
   it("never backdrop-filters the docked modal sheet or its scrim", () => {
     expect(mobileModal).toMatch(
       /^[ \t]*backdrop-filter:[ \t]*var\(--hk-modal-blur-mobile, none\);$/m,

@@ -121,3 +121,15 @@ describe("HkModal mobile sheet spacing contract", () => {
     });
   });
 });
+
+// 2026-09-21 user spec, round 7: the phone sheet's clip sweep shares the
+// stepflow crossfade's 0.3s family duration (the pair must land together).
+describe("HkModal phone morph duration contract", () => {
+  it("rides the clip sweep on --hk-modal-morph-duration (0.3s default)", () => {
+    const block = src.slice(src.indexOf("@media (max-width: 767px)"));
+    const content = block.match(/\.hk-modal-content\s*{[^}]*}/)?.[0] ?? "";
+    expect(content).toMatch(
+      /clip-path var\(--hk-modal-morph-duration, 0\.3s\) var\(--ease-standard, cubic-bezier\(0\.4, 0, 0\.2, 1\)\)/,
+    );
+  });
+});

@@ -68,9 +68,14 @@ function mountStepFlow(options: {
   return { container, setCurrent: (key) => { current.value = key; } };
 }
 
-/** Let Vue finish the out-in cycle's settling timers before teardown. */
+/** Let the swap's choreography timers (480ms sweep cleanup) settle. */
 async function settle(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 80));
+}
+
+/** Outlive the 480ms leaving-body cleanup timer. */
+async function outliveSwap(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 540));
 }
 
 afterEach(() => {
@@ -105,25 +110,43 @@ describe("HkStepFlow", () => {
     await nextTick();
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 60));
-    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("d-body");
-    await settle();
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("d-body");
+    await outliveSwap();
+    // The leaving body is gone after the sweep window; exactly one body
+    // remains and it is the new step's.
+    const bodies = t.container.querySelectorAll(".hk-stepflow-body");
+    expect(bodies.length).toBe(1);
+    expect(bodies[0]!.className).toBe("hk-stepflow-body active");
+    expect(bodies[0]!.textContent).toBe("d-body");
   });
 
-  it("slides forward when moving to a later step and back when returning", async () => {
-    const t = mountStepFlow({ initial: "b" });
-    const bodyClass = (): string =>
-      t.container.querySelector(".hk-stepflow-body")?.className ?? "";
-
-    t.setCurrent("c");
-    await nextTick();
-    // out-in: the old body is mid-leave on this tick.
-    expect(bodyClass()).toContain("hk-stepflow-fwd-leave-active");
-
-    await settle();
+  it("crossfades both bodies for the whole swap window (2026-09-21 spec)", async () => {
+    const t = mountStepFlow({ initial: "a" });
     t.setCurrent("b");
     await nextTick();
-    expect(bodyClass()).toContain("hk-stepflow-back-leave-active");
-    await settle();
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    // Both bodies coexist; the leaving one is out of the flow and the
+    // pair carries the crossfade's END opacities (armed inline —
+    // happy-dom does not run the stylesheet transition).
+    expect(leaving).not.toBeNull();
+    expect(active).not.toBeNull();
+    expect(leaving?.textContent).toBe("a-body");
+    expect(active?.textContent).toBe("b-body");
+    expect(leaving?.style.opacity).toBe("0");
+    expect(active?.style.opacity).toBe("1");
+    // A rapid re-swap mid-fade drops the stale leaving body outright.
+    t.setCurrent("c");
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    const after = t.container.querySelectorAll(".hk-stepflow-body");
+    expect(after.length).toBe(2);
+    expect(t.container.querySelector(".hk-stepflow-body.leaving")?.textContent).toBe("b-body");
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("c-body");
+    await outliveSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
   });
 
   it("passes key/index/direction to scoped slots across navigation", async () => {
@@ -177,7 +200,7 @@ describe("HkStepFlow", () => {
     await nextTick();
     await settle();
     expect(selected).toEqual(["a"]);
-    expect(container.querySelector(".hk-stepflow-body")?.textContent).toBe("");
+    expect(container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("");
     await settle();
   });
 
@@ -188,7 +211,7 @@ describe("HkStepFlow", () => {
       t.setCurrent("does-not-exist");
       await nextTick();
       await settle();
-      const body = t.container.querySelector(".hk-stepflow-body");
+      const body = t.container.querySelector(".hk-stepflow-body.active");
       expect(body).not.toBeNull();
       expect(body?.textContent).toBe("");
       expect(warnSpy.mock.calls.some((args) => String(args[0]).includes("Slot"))).toBe(false);

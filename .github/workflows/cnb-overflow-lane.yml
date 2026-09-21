@@ -31,6 +31,6 @@ jobs:
       target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}
       task: cargo-check
       lane: pr-${{ github.event.pull_request.number || 'manual' }}
-      force_cnb: true
+      queue_threshold: 3
       poll_minutes: 10
     secrets: inherit

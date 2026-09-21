@@ -290,19 +290,26 @@ describe("useSizeMorph clip reveal", () => {
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
     expect(h.frame.style.height).toBe("300px");
+    // Resident promotion: clip-mode frames carry will-change from the
+    // arm moment, not per sweep (2026-09-21 round-5 report: a per-sweep
+    // promotion read as a one-frame see-through).
+    expect(h.frame.style.willChange).toBe("clip-path");
 
     h.setNatural(360);
     FakeResizeObserver.instances[0]!.callback();
     await settle();
     // The pin landed at the new height with no height animation staged.
     expect(h.frame.style.height).toBe("360px");
-    // The sweep runs: end-state clip + layer promotion in flight.
+    // The sweep runs: end-state clip (promotion stays resident).
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
     expect(h.frame.style.willChange).toBe("clip-path");
     expect(h.frame.style.transition).toBe("");
 
     fireTransitionEnd(h.frame, "clip-path");
     expect(h.frame.style.clipPath).toBe("");
+    // Still resident until stop/hold.
+    expect(h.frame.style.willChange).toBe("clip-path");
+    h.stop();
     expect(h.frame.style.willChange).toBe("");
   });
 
@@ -313,14 +320,12 @@ describe("useSizeMorph clip reveal", () => {
 
     h.setNatural(360);
     h.remeasure();
-    // Staged synchronously — new pin, start inset, layer promotion —
-    // but NO sweep yet: the reveal must let the promoted layer raster
-    // the resized box first (2026-09-21 chest report — a same-task
-    // sweep outran the raster thread and the revealed band composited
-    // as black tiles).
+    // Staged synchronously — new pin, start inset — but NO sweep yet:
+    // the reveal must let the resident layer raster the resized box
+    // first (2026-09-21 chest report — a same-task sweep outran the
+    // raster thread and the revealed band composited as black tiles).
     expect(h.frame.style.height).toBe("360px");
     expect(h.frame.style.clipPath).toBe("inset(60px 0 0 0 round 0px 0px 0px 0px)");
-    expect(h.frame.style.willChange).toBe("clip-path");
 
     // The hold is TWO frames, not one: after the first frame the staged
     // start inset must still be in place (a one-frame warmup would have
@@ -332,7 +337,7 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
     fireTransitionEnd(h.frame, "clip-path");
     expect(h.frame.style.clipPath).toBe("");
-    expect(h.frame.style.willChange).toBe("");
+    expect(h.frame.style.willChange).toBe("clip-path");
   });
 
   it("reports the sweep to the animation bus only once it starts", async () => {
@@ -396,29 +401,68 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
   });
 
-  it("keeps the height morph for shrink and sub-threshold growth", async () => {
+  it("conceals shrink through clip-path and re-pins atomically at the end", async () => {
     const h = mountHarness(400);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
 
-    // Shrink: no clip state, the pin flips under the height transition.
+    // Shrink CONCEALS (round-5 report: the snap read as "no animation"):
+    // the box keeps the OLD pin while the top edge folds down through
+    // the closing inset — the pin swap lands only at the sweep's end.
     h.setNatural(320);
     FakeResizeObserver.instances[0]!.callback();
     await settle();
+    // Warmup + sweep in flight: clip folding toward inset(80px), height
+    // still the old pin.
+    expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.height).toBe("400px");
+    // The sweep ends: atomic re-pin — height jumps to the target with
+    // the clip cleared in one transition-off task (visually a no-op).
+    fireTransitionEnd(h.frame, "clip-path");
     expect(h.frame.style.height).toBe("320px");
     expect(h.frame.style.clipPath).toBe("");
-    expect(h.frame.style.willChange).toBe("");
 
     // Sub-threshold growth (2px < REVEAL_MIN_PX): snaps, no reveal.
     h.setNatural(322);
     h.remeasure();
     expect(h.frame.style.height).toBe("322px");
     expect(h.frame.style.clipPath).toBe("");
+
+    // Sub-threshold shrink (−2px): snaps too, no conceal.
+    h.setNatural(320);
+    h.remeasure();
+    expect(h.frame.style.height).toBe("320px");
+    expect(h.frame.style.clipPath).toBe("");
+  });
+
+  it("lands an interrupted conceal atomically on the next dance", async () => {
+    const h = mountHarness(400);
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(320);
+    h.remeasure();
+    await settle();
+    expect(h.frame.style.clipPath).toBe("inset(80px 0 0 0 round 0px 0px 0px 0px)");
+    expect(h.frame.style.height).toBe("400px");
+
+    // A growth lands mid-conceal: the teardown must land the target pin
+    // ATOMICALLY (clearing the clip alone would pop the box back to
+    // full height for a frame), then the new reveal stages from the
+    // CONCEALED height (360 − 320 = 40px).
+    h.setNatural(360);
+    h.remeasure();
+    expect(h.frame.style.height).toBe("360px");
+    expect(h.frame.style.clipPath).toBe("inset(40px 0 0 0 round 0px 0px 0px 0px)");
+    await settle();
+    expect(h.frame.style.clipPath).toBe("inset(0px 0 0 0 round 0px 0px 0px 0px)");
   });
 
   it("never clips without the mode flag (desktop height morph intact)", async () => {
     const h = mountHarness(300);
     h.start();
+    // No resident promotion either — the desktop surface never promotes.
+    expect(h.frame.style.willChange).toBe("");
 
     h.setNatural(400);
     FakeResizeObserver.instances[0]!.callback();
@@ -426,6 +470,13 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.height).toBe("400px");
     expect(h.frame.style.clipPath).toBe("");
     expect(h.frame.style.willChange).toBe("");
+
+    // Desktop shrink keeps the plain height morph (no conceal).
+    h.setNatural(240);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(h.frame.style.height).toBe("240px");
+    expect(h.frame.style.clipPath).toBe("");
   });
 
   it("clears an in-flight reveal when a new dance starts", async () => {
@@ -486,22 +537,22 @@ describe("useSizeMorph clip reveal", () => {
     h.remeasure();
     expect(h.frame.style.clipPath).not.toBe("");
 
-    // A SHRINK lands before the reveal finished: unlike a follow-up
-    // growth (which restages its own clip), the height-morph branch
-    // writes no clip at all — the dance-start teardown is the only
-    // thing that returns the frame to CSS ownership (R1 mutation M1
-    // evidence: without it the stale inset + will-change ride the
-    // shrink and linger at rest). It must also cancel the pending
-    // warmup, or a stale sweep lands after the shrink.
+    // A SHRINK lands before the reveal's warmup fired: the teardown
+    // drops the staged reveal (clip off — the reveal branch's teardown
+    // never pops the box, it already sits at its pin) and the new dance
+    // CONCEALS toward 310: the box keeps the 380 pin while the edge
+    // folds, so no height change is visible until the atomic re-pin.
+    // (R1 mutation M1 lineage: without the dance-start teardown a stale
+    // clip rode the next morph and lingered at rest.)
     h.setNatural(310);
     h.remeasure();
+    expect(h.frame.style.height).toBe("380px");
+    expect(h.frame.style.clipPath).toBe("");
+    await settle();
+    expect(h.frame.style.clipPath).toBe("inset(70px 0 0 0 round 0px 0px 0px 0px)");
+    fireTransitionEnd(h.frame, "clip-path");
     expect(h.frame.style.height).toBe("310px");
     expect(h.frame.style.clipPath).toBe("");
-    expect(h.frame.style.willChange).toBe("");
-
-    await settle();
-    expect(h.frame.style.clipPath).toBe("");
-    expect(h.frame.style.willChange).toBe("");
   });
 
   it("releases the clip state on stop so the leave animation owns the frame", async () => {

@@ -17,7 +17,13 @@
   border: 1px solid var(--hk-breadcrumb-border, rgba(0, 0, 0, 0.06));
   border-radius: var(--radius-md, 0.5rem);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(var(--blur-md));
+  /* Family blur pattern (HkModal/HkDrawer/HkPopover): host-tunable, and
+     stood down on phones — the strip floats over every popup, so its
+     backdrop-filter re-samples the whole blurred band each time the sheet
+     behind it resizes or swaps content. On the phone GPU that re-filter
+     read as a one-shot flash on every wizard step change (2026-09-21
+     chest report, round 5). */
+  backdrop-filter: var(--hk-modal-breadcrumb-blur, blur(var(--blur-md)));
   pointer-events: none;
   user-select: none;
   animation: hk-modal-breadcrumb-in var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
@@ -226,5 +232,15 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-modal-breadcrumb {
     animation: none;
+  }
+}
+
+/* Phone stand-down for the strip's blur (see the base rule): the default
+ * is NONE on ≤767px; a host that explicitly wants the finish back can set
+ * --hk-modal-breadcrumb-blur-mobile (the same knob family the modal,
+ * drawer and popover sheets already expose). */
+@media (max-width: 767px) {
+  .hk-modal-breadcrumb {
+    backdrop-filter: var(--hk-modal-breadcrumb-blur-mobile, none);
   }
 }

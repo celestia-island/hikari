@@ -7,6 +7,7 @@ import {
   CONTEXT_HOLD_MS,
   useContextMenu,
   useContextMenuTrigger,
+  type ContextMenuApi,
   type ContextMenuRequest,
 } from "./useContextMenu";
 
@@ -229,6 +230,64 @@ describe("useContextMenu + HkContextMenuProvider", () => {
     const labels = menuRows().map((r) => r.textContent);
     expect(labels).toContain("Racer C");
     expect(labels).not.toContain("Racer B");
+  });
+
+  it("remounts on a programmatic replace so a stale cascade cannot survive (R3 W4b)", async () => {
+    let captured: ContextMenuApi | null = null;
+    const Inner = defineComponent({
+      name: "ProgrammaticReplaceInner",
+      setup() {
+        captured = useContextMenu();
+        const openA = () => {
+          captured!.open({
+            x: 80,
+            y: 80,
+            title: "First",
+            items: [
+              { key: "a1", label: "Alpha One" },
+              { key: "a2", label: "Alpha Two", children: [{ key: "a2a", label: "Nested" }] },
+            ],
+          });
+        };
+        return () => (
+          <button class="open-btn" onClick={openA}>open</button>
+        );
+      },
+    });
+    const Host = defineComponent({
+      setup() {
+        return () => (
+          <HkContextMenuProvider>
+            <Inner />
+          </HkContextMenuProvider>
+        );
+      },
+    });
+    mountToDom(Host);
+    (document.querySelector(".open-btn") as HTMLElement).click();
+    await settle();
+    // Open the cascade: two panels live.
+    menuRows().find((r) => r.textContent === "Alpha Two")!.click();
+    await settle();
+    expect(popouts().length).toBe(2);
+
+    // Replace PROGRAMMATICALLY — no click that would first close the
+    // menu via outside-click (that path hides the replace branch; the
+    // canvas long-press opens land exactly here). The provider must
+    // remount, so the open submenu state of the OLD menu cannot leak
+    // into the new one.
+    captured!.open({
+      x: 120,
+      y: 80,
+      title: "Second",
+      items: [{ key: "b1", label: "Beta One" }],
+    });
+    await settle();
+    await until(() => popouts().length <= 1);
+    expect(popouts()).toHaveLength(1);
+    const labels = menuRows().map((r) => r.textContent);
+    expect(labels).toContain("Beta One");
+    expect(labels).not.toContain("Nested"); // the stale cascade is gone
   });
 
   it("keeps a menu the select handler opens (the finished menu's trailing close must not kill it)", async () => {

@@ -439,7 +439,8 @@ export default defineComponent({
       edgeHoldOrigin = { x: event.clientX, y: event.clientY };
       const x = event.clientX;
       const y = event.clientY;
-      edgeHoldTimer = setTimeout(() => {        edgeHoldTimer = null;
+      edgeHoldTimer = setTimeout(() => {
+        edgeHoldTimer = null;
         const edge = edgeById(id);
         edgeHoldEdgeId = null;
         edgeHoldOrigin = null;

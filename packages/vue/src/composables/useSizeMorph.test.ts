@@ -777,3 +777,177 @@ describe("useSizeMorph hold + deferRemeasure", () => {
     expect(h.frame.style.height).toBe("200px");
   });
 });
+
+// ── Fold riders (collectRide, 2026-09-23 round 14) ─────────────────
+// The clip sweep's edge must not slice the content it passes over: the
+// host's chrome and content block ride the edge in lockstep (same
+// duration/easing, flipped in the same task), staged in the clip's own
+// transition-disabled task so the morph's first painted frame is
+// pixel-identical to the last pre-morph one.
+
+describe("useSizeMorph fold riders", () => {
+  it("stages riders with the clip and flips them with the sweep (reveal)", async () => {
+    const rider = document.createElement("div");
+    const counter = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }, { el: counter, counterOnReveal: true }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+
+    h.setNatural(360);
+    h.remeasure();
+    // Staged in the clip's transition-disabled task: the block sits at
+    // its pre-growth offset, the counter at the mirrored negative, and
+    // the promotion is already up (the warmup is the raster window). The
+    // transform leg is staged at a zero clock — instant — so nothing of
+    // the ride animates before the sweep starts.
+    expect(rider.style.transform).toBe("translateY(60px)");
+    expect(counter.style.transform).toBe("translateY(-60px)");
+    expect(rider.style.transition).toBe("transform 0s");
+    expect(rider.style.willChange).toBe("transform");
+
+    // Two warmup frames, then the sweep: riders flip to their targets
+    // under a transition that mirrors the frame's own clip transition.
+    await busFrames(2);
+    expect(rider.style.transform).toBe("translateY(0px)");
+    expect(counter.style.transform).toBe("translateY(0px)");
+    expect(rider.style.transition).toMatch(/^transform 150ms /);
+    expect(rider.style.willChange).toBe("transform");
+
+    // The landing clears the rides with the frame.
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(rider.style.transform).toBe("");
+    expect(rider.style.transition).toBe("");
+    expect(rider.style.willChange).toBe("");
+    expect(counter.style.transform).toBe("");
+    h.stop();
+  });
+
+  it("rides a conceal downward with the block and lands atomically", async () => {
+    const rider = document.createElement("div");
+    const h = mountHarness(360, 360, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    expect(h.frame.style.height).toBe("360px");
+
+    h.setNatural(300);
+    h.remeasure();
+    // Conceal start: zero offset (the block is where it was).
+    expect(rider.style.transform).toBe("translateY(0px)");
+
+    await busFrames(2);
+    // The sweep folds the edge down and the rider glides WITH it.
+    expect(rider.style.transform).toBe("translateY(60px)");
+
+    // Landing: the re-pin and the ride's release land in one task — the
+    // layout drops delta while the delta offset disappears.
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(rider.style.transform).toBe("");
+    expect(h.frame.style.height).toBe("300px");
+    h.stop();
+  });
+
+  it("clears riders when an interrupting dance re-stages mid-sweep", async () => {
+    const rider = document.createElement("div");
+    let collected = 0;
+    const h = mountHarness(300, 300, {
+      collectRide: () => {
+        collected += 1;
+        return [{ el: rider }];
+      },
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    await busFrames(2);
+    expect(collected).toBe(1);
+    // A second growth mid-sweep: the old ride is cleared (atomically
+    // with the interrupted sweep's landing) and re-collected for the new
+    // dance's own stage.
+    h.setNatural(420);
+    h.remeasure();
+    expect(rider.style.transform).toBe("translateY(60px)");
+    expect(collected).toBe(2);
+    // The successor sweep runs and lands on its own terms.
+    await busFrames(2);
+    expect(rider.style.transform).toBe("translateY(0px)");
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(rider.style.transform).toBe("");
+    h.stop();
+  });
+
+  it("never collects riders for non-sweep morphs", async () => {
+    const rider = document.createElement("div");
+    let collected = 0;
+    const h = mountHarness(300, 300, {
+      collectRide: () => {
+        collected += 1;
+        return [{ el: rider }];
+      },
+    });
+    h.start();
+    // Desktop height mode (no clip flag): a growth morphs the height,
+    // never stages a sweep, never collects a ride.
+    h.setNatural(360);
+    h.remeasure();
+    expect(collected).toBe(0);
+    expect(rider.style.transform).toBe("");
+    // Sub-threshold deltas on clip mode stay snaps — still no ride.
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.setNatural(362);
+    h.remeasure();
+    expect(collected).toBe(0);
+    expect(rider.style.transform).toBe("");
+    h.stop();
+  });
+
+  it("keeps a rider's own transition legs live through the ride", async () => {
+    // The entering step body is MID-FADE when a shrink stages its ride;
+    // an inline transition override would cancel the running opacity
+    // transition and snap the body to full opacity — the very flash this
+    // round removes. The ride's transform leg must be APPENDED to the
+    // element's own computed transition, and the settle must hand back
+    // exactly the stylesheet state.
+    const rider = document.createElement("div");
+    const OWN = "opacity 150ms cubic-bezier(0.4, 0, 0.2, 1) 0s";
+    const real = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(
+      (el: Element, pseudoElt?: string | null): CSSStyleDeclaration => {
+        const cs = real(el, pseudoElt ?? undefined);
+        if (el === rider) {
+          return Object.create(cs, {
+            transition: { get: () => OWN },
+            transitionProperty: { get: () => "opacity" },
+            transitionDuration: { get: () => "150ms" },
+            transitionTimingFunction: { get: () => "cubic-bezier(0.4, 0, 0.2, 1)" },
+          }) as CSSStyleDeclaration;
+        }
+        return cs;
+      },
+    );
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // Stage: the own legs lead, the zero-clock transform leg appends.
+    expect(rider.style.transition).toBe(`${OWN}, transform 0s`);
+    await busFrames(2);
+    // Flip: the transform leg rides the mirrored clock, own legs intact.
+    expect(rider.style.transition).toBe(
+      `${OWN}, transform 150ms cubic-bezier(0.4, 0, 0.2, 1)`,
+    );
+    fireTransitionEnd(h.frame, "clip-path");
+    // Settle: inline fully released — the stylesheet (the own legs) owns
+    // the element again.
+    expect(rider.style.transition).toBe("");
+    expect(rider.style.transform).toBe("");
+    h.stop();
+  });
+});

@@ -76,10 +76,29 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(decl).toContain("opacity");
     expect(decl).toContain(PHASE);
     expect(decl).toContain("cubic-bezier(0.4, 0, 0.2, 1)");
-    // The negative delay starts the fade already partway up its curve,
-    // closing the blank-body window between the two phases.
-    expect(decl).toContain("-40ms");
+    // No delay tricks: the enter fade starts from TRUE zero (round 14 —
+    // the -40ms negative delay landed the first frame at ~0.53 opacity,
+    // which read as a pop). The blank window is closed by the component's
+    // overlap edge instead (see HkStepFlow.test.tsx).
+    expect(decl).not.toMatch(/-?\d*\.?\d+m?s\s*$/);
     expect(decl, "the enter phase never travels").not.toContain("transform");
+  });
+
+  it("registers the entering body as a counter rider of the sheet's fold", () => {
+    // The ride channel: the entering body holds its final position while
+    // the hosting sheet's content block glides with the fold edge (round
+    // 14; vertical travel of the new body was the round-7 rejection).
+    expect(tsx).toContain("useSheetRide");
+    expect(tsx).toContain("counterOnReveal: true");
+    expect(tsx).toContain("unregisterRide");
+    // The reveal itself stays imperative and class-based — no style
+    // writes join the component (see the no-styles contract below).
+    expect(tsx).toContain('classList.remove("hk-stepflow-enter-pending")');
+  });
+
+  it("fires the enter edge early so no blank body paints between phases", () => {
+    expect(tsx).toContain("ENTER_EDGE_SHARE = 0.8");
+    expect(tsx).toContain("earlyTimer");
   });
 
   it("stages the new body with opacity only — NO visibility flip", () => {
@@ -151,6 +170,9 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(tsx).toContain("SWAP_WATCHDOG_GRACE_MS");
     expect(tsx).toContain('addEventListener("transitionend"');
     expect(tsx).toContain("event.target === el");
+    // A riding body's transform leg fires its own transitionend at the
+    // fold's landing — only the phase-owning opacity edge may advance.
+    expect(tsx).toContain('event.propertyName === "opacity"');
   });
 
   it("recycles the old DOM node at the phase boundary", () => {

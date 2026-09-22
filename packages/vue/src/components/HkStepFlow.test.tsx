@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick, ref } from "vue";
+import { createApp, defineComponent, h, nextTick, provide, ref } from "vue";
 
 import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
+import { SHEET_RIDE_KEY } from "../runtime/sheetRide";
+import type { RideEntry } from "../composables/useSizeMorph";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -120,11 +122,16 @@ function restoreHeights(): void {
 
 function endTransition(el: Element | null | undefined): void {
   if (!el) throw new Error("endTransition: element missing");
-  el.dispatchEvent(new Event("transitionend", { bubbles: true }));
+  // Real engines always carry propertyName on transitionend; the phase
+  // closers guard on it (a riding body's transform leg fires its own).
+  const ev = new Event("transitionend", { bubbles: true });
+  Object.defineProperty(ev, "propertyName", { value: "opacity" });
+  el.dispatchEvent(ev);
 }
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   restoreHeights();
   for (const app of mounts.splice(0)) app.unmount();
   for (const el of containers.splice(0)) el.remove();
@@ -282,6 +289,113 @@ describe("HkStepFlow simplified swap (motion enabled)", () => {
     const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(active?.textContent).toBe("c-body");
     expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
+  });
+
+  it("fires the enter edge at 80% of the exit phase, before transitionend", async () => {
+    // Round 14: the strictly sequential edge (transitionend) left a
+    // recycle→patch→fade pipeline gap that painted an empty body — the
+    // "the new list always flickers once" report. The overlap edge must
+    // advance the phase on its own timer, and the pending class must
+    // already be off the entering element SYNCHRONOUSLY (imperative
+    // flip), not one Vue patch later.
+    vi.useFakeTimers();
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    t.setCurrent("b");
+    await flushSwap();
+    expect(
+      t.container.querySelector(".hk-stepflow-body.active")?.classList.contains("hk-stepflow-enter-pending"),
+    ).toBe(true);
+    // 0.8 × 150ms = 120ms — the early edge fires with no transitionend.
+    vi.advanceTimersByTime(121);
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
+    await flushSwap();
+    // The old node was recycled with its ~0.1-opacity tail: one body left.
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    // A late transitionend from the (already recycled) leaving body is a
+    // guarded no-op.
+    endTransition(t.container.querySelector(".hk-stepflow-body"));
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+  });
+
+  it("ignores transitionend events for non-opacity properties", async () => {
+    // A riding body's transform leg (the sheet fold) fires its own
+    // transitionend at the fold's landing — the swap must not settle
+    // while the enter fade is still running.
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active).not.toBeNull();
+    const stray = new Event("transitionend", { bubbles: true });
+    Object.defineProperty(stray, "propertyName", { value: "transform" });
+    active!.dispatchEvent(stray);
+    await flushSwap();
+    // The stray event did not settle the swap: the opacity edge still
+    // owns the phase (the watchdog would eventually close it too).
+    expect(t.container.querySelector(".hk-stepflow-body.active")).not.toBeNull();
+    endTransition(active);
+    await flushSwap();
+    expect(t.container.querySelector(".hk-stepflow-body")?.className).toBe(
+      "hk-stepflow-body active",
+    );
+  });
+
+  it("registers the entering body as a counter rider with the hosting sheet", async () => {
+    stubMotion();
+    const registered: RideEntry[] = [];
+    const unregistered: RideEntry[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const current = ref("a");
+    const Wrapper = defineComponent({
+      setup() {
+        provide(SHEET_RIDE_KEY, {
+          register: (entry: RideEntry) => {
+            registered.push(entry);
+            return () => unregistered.push(entry);
+          },
+          snapshot: () => registered,
+        });
+        return () =>
+          h(HkStepFlow, {
+            steps: STEPS,
+            modelValue: current.value,
+            "onUpdate:modelValue": (key: string) => { current.value = key; },
+          }, {
+            a: () => h("p", "a"),
+            b: () => h("p", "b"),
+            c: () => h("p", "c"),
+            d: () => h("p", "d"),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+
+    current.value = "b";
+    await flushSwap();
+    // Registered before the sheet could stage any sweep, as a reveal
+    // COUNTER (the entering body holds its final position while the
+    // sheet's block rides the fold).
+    expect(registered).toHaveLength(1);
+    expect(registered[0]!.counterOnReveal).toBe(true);
+    expect(registered[0]!.el.classList.contains("hk-stepflow-body")).toBe(true);
+    expect(unregistered).toHaveLength(0);
+    // Settle the swap: the registration is released exactly once.
+    endTransition(container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    endTransition(container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    expect(unregistered).toHaveLength(1);
+    expect(unregistered[0]).toBe(registered[0]);
   });
 });
 

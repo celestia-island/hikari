@@ -11,7 +11,8 @@ import { attachOverlayScrollbars, type OverlayScrollbarHandle } from "../composa
 import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
-import { useSizeMorph } from "../composables/useSizeMorph";
+import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
+import { provideSheetRide } from "../runtime/sheetRide";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -210,10 +211,35 @@ export default defineComponent({
     // running animation (2026-09-16 chest field report — the frame
     // snapped 459→697px mid-unfold). The open phase edge flushes the
     // deferred growth with an animated remeasure.
+    // Fold-ride registry (round 14): descendants register elements the
+    // fold must not slice or drag (the stepflow's entering body rides as
+    // a counter on reveals); merged into collectRide below.
+    const sheetRide = provideSheetRide();
     const morph = useSizeMorph(contentRef, innerRef, {
       deferRemeasure: () =>
         machine.phase.value === "openingFrom" ||
         machine.phase.value === "openingTo",
+      // The sheet's chrome and content probe ride the fold edge in
+      // lockstep with the clip sweep: the title bar glides with the edge
+      // instead of being sliced by it mid-sweep, the content block starts
+      // at its pre-morph position (a grow no longer teleports the stack
+      // upward behind the staged clip), and a shrink's landing re-pin is
+      // visually a no-op instead of a delta snap (2026-09-23 round-14
+      // chest report: "the title collapses — clipped mid-text, never
+      // dragged with the fold").
+      collectRide: (): RideEntry[] => {
+        const out: RideEntry[] = [];
+        const frame = contentRef.value;
+        if (frame) {
+          const header = frame.querySelector<HTMLElement>(".hk-modal-header");
+          if (header) out.push({ el: header });
+          const subheader = frame.querySelector<HTMLElement>(".hk-modal-subheader");
+          if (subheader) out.push({ el: subheader });
+        }
+        if (innerRef.value) out.push({ el: innerRef.value });
+        out.push(...sheetRide.snapshot());
+        return out;
+      },
       // Republish the morph's real sweep span and its landing on the body
       // element (bubbling), so content choreography can park against the
       // landing geometry and release exactly when it happens instead of

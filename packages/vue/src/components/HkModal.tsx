@@ -242,9 +242,6 @@ export default defineComponent({
         morph.remeasure();
       }
     };
-    onMounted(() => {
-      bodyRef.value?.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
-    });
     onBeforeUnmount(() => {
       bodyRef.value?.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
       clearMorphDuration();
@@ -454,6 +451,26 @@ export default defineComponent({
         // cleared its clocks and walked the phase to `closed`).
       },
     });
+
+    // The swap listener must follow the ELEMENT, not the component
+    // lifecycle: the render returns null until `machine.mounted` flips, so
+    // an onMounted-time attach silently missed for every
+    // mount-closed-then-open consumer — i.e. every chest wizard
+    // (2026-09-22 R1 verification finding: this wiring was dead at
+    // runtime, which is why the sheet kept morphing on the observer's
+    // 150ms debounce and the 0.3s stylesheet default). Post-flush on the
+    // mount flag instead: the listener lands on the real node and comes
+    // off with it.
+    watch(
+      machine.mounted,
+      (isMounted) => {
+        const el = bodyRef.value;
+        if (!el) return;
+        if (isMounted) el.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+        else el.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+      },
+      { flush: "post", immediate: true },
+    );
 
     // --- Windowed mode ---
 

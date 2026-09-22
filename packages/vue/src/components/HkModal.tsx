@@ -13,7 +13,11 @@ import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph } from "../composables/useSizeMorph";
 
-import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+import {
+  SHEET_SWEEP_SETTLE_EVENT,
+  SHEET_SWEEP_STAGE_EVENT,
+  STEPFLOW_SWAP_EVENT,
+} from "./HkStepFlow";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -205,6 +209,20 @@ export default defineComponent({
       deferRemeasure: () =>
         machine.phase.value === "openingFrom" ||
         machine.phase.value === "openingTo",
+      // Republish the morph's real sweep span and its landing on the body
+      // element (bubbling), so content choreography can park against the
+      // landing geometry and release exactly when it happens instead of
+      // guessing the cap and the warmup (2026-09-22 verification finding).
+      onSweepStage: (info) => {
+        bodyRef.value?.dispatchEvent(
+          new CustomEvent(SHEET_SWEEP_STAGE_EVENT, { bubbles: true, detail: info }),
+        );
+      },
+      onSweepSettle: () => {
+        bodyRef.value?.dispatchEvent(
+          new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, { bubbles: true }),
+        );
+      },
     });
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;

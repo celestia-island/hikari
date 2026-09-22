@@ -13,6 +13,7 @@ import type { TimelineCollapse, TimelineStep } from "./HkTimeline";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 import {
   reportTransition,
+  scheduleFrame,
   type AnimationHandle,
 } from "../runtime/animationBus";
 
@@ -51,11 +52,11 @@ interface BodyEntry {
  *
  *  All MOTION stays stylesheet-owned (the `data-direction` attribute plus
  *  the `hk-stepflow-leave-to` / `hk-stepflow-enter-pending` classes);
- *  script only schedules the phases and books the cleanup. The entering
- *  body is MOUNTED from frame one but invisible through the exit phase
- *  (`visibility: hidden`), so the flow owns the NEW height immediately
- *  with no mount-time raster gap at the phase boundary — the empty
- *  mid-frame that made the retired `out-in` slide flash. */
+ *  script only schedules the phases, parks geometry against measured
+ *  numbers, and books the cleanup. The entering body is MOUNTED from frame
+ *  one but invisible through the exit phase (`visibility: hidden`), so the
+ *  flow owns the NEW height immediately with no mount-time raster gap at
+ *  the phase boundary. */
 interface RunningSwap {
   leavingId: number;
   enteringId: number;
@@ -67,20 +68,44 @@ interface RunningSwap {
   phaseMs: number;
   /** Height delta (new − old); negative means the sheet must shrink. */
   delta: number;
+  /** True while the sheet's fold is parking the new body: the release then
+   *  follows the sweep's own landing instead of the body's fade. */
+  tail: boolean;
   /** Bus bookkeeping for the CSS window, held for both phases. */
   report: AnimationHandle | null;
   /** Watchdog: advance the phase even if transitionend never arrives. */
   timer: ReturnType<typeof setTimeout> | null;
+  /** Bus one-shot used by the pre-emption fast path. */
+  frame: AnimationHandle | null;
   listenEl: HTMLElement | null;
   onEnded: ((event: TransitionEvent) => void) | null;
+  /** Host element carrying the sheet's sweep events (removed with the phase). */
+  settleEl: HTMLElement | null;
+  onSettle: ((event: Event) => void) | null;
 }
 
 export const STEPFLOW_SWAP_EVENT = "hk-stepflow-swap";
+
+/** The hosting sheet publishes its fold's real span while it stages — the
+ *  only place where the sheet's max-height cap is already accounted for.
+ *  Content parks against these numbers instead of guessing the delta. */
+export const SHEET_SWEEP_STAGE_EVENT = "hk-sheet-sweep-stage";
+
+/** The hosting sheet's fold has landed: the frame is back at its rest
+ *  geometry, so parked content must release exactly here. */
+export const SHEET_SWEEP_SETTLE_EVENT = "hk-sheet-sweep-settle";
 
 /** Extra grace on top of the resolved duration before the watchdog
  *  settles a phase without a transitionend — the same grammar as the
  *  sheet morph's sweep watchdog. */
 const SWAP_WATCHDOG_GRACE_MS = 350;
+
+/** Backstop for a parked fold whose host never publishes a landing: the
+ *  host's own sweep watchdog is duration+350ms, so this outlives it. */
+const TAIL_WATCHDOG_GRACE_MS = 700;
+
+/** Fade level at or below which an outgoing body counts as gone. */
+const FADED_OUT = 0.05;
 
 /**
  * Resolve the body's configured transition duration in milliseconds.
@@ -105,28 +130,20 @@ function bodyTransitionMs(el: HTMLElement | null): number {
   return match[2] === "ms" ? value : value * 1000;
 }
 
-/**
- * Resolve the hosting element whose BOTTOM line is fixed while it grows —
- * i.e. a bottom-docked modal sheet, flagged `--hk-sheet-morph: clip` by
- * the modal's phone block (the same contract useSizeMorph reads to pick
- * its paint-only sweep). Only such a host may anchor the leaving body to
- * the stage's bottom: an in-flow stage (chest's LoginView renders this
- * flow inside a grid-stack crossfade) keeps its TOP line and grows
- * DOWNWARD, where a bottom anchor would push the old body down instead of
- * holding it.
- */
-function sheetClipHost(el: HTMLElement | null): boolean {
-  const frame = el?.closest<HTMLElement>(".hk-modal-content") ?? null;
-  if (!frame) return false;
-  const inline = frame.style.getPropertyValue("--hk-sheet-morph").trim();
-  if (inline) return inline === "clip";
-  try {
-    return (
-      getComputedStyle(frame).getPropertyValue("--hk-sheet-morph").trim() === "clip"
-    );
-  } catch {
-    return false;
-  }
+/** The nearest modal scroll body, i.e. the element the hosting sheet
+ *  dispatches its sweep events on. */
+function hostBody(el: HTMLElement | null): HTMLElement | null {
+  return el?.closest<HTMLElement>(".hk-modal-body") ?? null;
+}
+
+/** Current computed opacity (1 when it cannot be read). */
+function opacityOf(el: HTMLElement | null): number {
+  if (!el) return 1;
+  const view = el.ownerDocument?.defaultView;
+  if (!view) return 1;
+  const raw = view.getComputedStyle(el).opacity ?? "1";
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : 1;
 }
 
 /**
@@ -149,17 +166,21 @@ function sheetClipHost(el: HTMLElement | null): boolean {
  * Height is scheduled per phase and handed to the hosting sheet through
  * `hk-stepflow-swap` (bubbles, detail `{ delta, durationMs, phase }`),
  * whose listener re-measures immediately and morphs its clip over one
- * phase:
+ * phase: a GROW announces at the exit edge (the flow already owns the new
+ * height), a SHRINK pins the flow's old height through the exit phase and
+ * announces at the enter edge.
  *
- * - GROW (new body taller): the flow owns the new height from frame one,
- *   so the event fires at the exit edge and the sheet finishes growing
- *   through the FIRST phase while the old body is still leaving.
- * - SHRINK (new body shorter): the flow's old height is pinned
- *   (`min-height`) through the exit phase so the sheet does not fold
- *   under a body that is still playing; at the enter edge the pin lifts
- *   and the event fires, so the sheet shrinks through the SECOND phase
- *   while the new body appears at its final geometry — it never rides
- *   the descending edge.
+ * Vertical geometry is MEASURED, never assumed, because the host decides
+ * where a growing sheet's lines sit (bottom-docked phone sheet, centred
+ * desktop frame, in-flow stage, or a capped sheet whose box cannot follow
+ * its content at all):
+ *
+ * - the outgoing body gets an inline `top` equal to the distance its stage
+ *   travelled during the swap patch, so it keeps its exact screen line;
+ * - a shrink's new body is parked on the line the sheet's fold will LAND
+ *   on, using the span the sheet publishes (`SHEET_SWEEP_STAGE_EVENT`), and
+ *   is released when that fold lands (`SHEET_SWEEP_SETTLE_EVENT`) — a
+ *   capped sheet publishes a zero span, which parks nothing.
  *
  * Cleanup grammar per phase: the acting body's own transitionend
  * (target-guarded) plus a duration+grace watchdog, so a lost event can
@@ -239,15 +260,17 @@ export default defineComponent({
     // endSwap below).
     let swap: RunningSwap | null = null;
     const swapPhase = ref<"idle" | "exit" | "enter">("idle");
-    /** Set for the enter phase of a SHRINK: parks the new body in the
-     *  stage's bottom band (hk-stepflow-enter-tail) so it already sits at
-     *  its final geometry while the sheet's clip edge folds down onto it. */
+    /** Set for the enter phase of a parked shrink: the new body sits on the
+     *  line the sheet's fold will land on (`hk-stepflow-enter-tail`). */
     const tailPhase = ref(false);
-    /** True while the hosting surface is a bottom-docked clip-mode sheet:
-     *  only then are the bottom anchor and the tail parking correct (see
-     *  sheetClipHost). Resolved per swap, before the bodies patch. */
-    const anchorMode = ref(false);
     const flowRef = ref<HTMLDivElement | null>(null);
+
+    /** Every body element currently on stage, in render order. */
+    function bodyEls(): HTMLElement[] {
+      return Array.from(
+        flowRef.value?.querySelectorAll<HTMLElement>(".hk-stepflow-body") ?? [],
+      );
+    }
 
     /** Pin the flow to the pre-swap height (shrink exit phase). */
     function pinOldHeight(px: number): void {
@@ -260,14 +283,33 @@ export default defineComponent({
       if (el) el.style.minHeight = "";
     }
 
+    /** Drop the measured offsets a parked/leaving body carries. */
+    function clearOffsets(): void {
+      for (const el of bodyEls()) {
+        if (el.style.top) el.style.top = "";
+      }
+    }
+
     function disarmPhase(handle: RunningSwap): void {
       if (handle.timer !== null) clearTimeout(handle.timer);
       handle.timer = null;
+      if (handle.frame) {
+        handle.frame.disconnect();
+        handle.frame = null;
+      }
       if (handle.listenEl && handle.onEnded) {
         handle.listenEl.removeEventListener("transitionend", handle.onEnded);
       }
       handle.listenEl = null;
       handle.onEnded = null;
+      if (handle.settleEl && handle.onSettle) {
+        handle.settleEl.removeEventListener(
+          SHEET_SWEEP_SETTLE_EVENT,
+          handle.onSettle,
+        );
+      }
+      handle.settleEl = null;
+      handle.onSettle = null;
     }
 
     /** Arm a phase's closer: the acting body's own transitionend plus the
@@ -313,11 +355,46 @@ export default defineComponent({
       clearPin();
       const id = handle.leavingId;
       bodies.value = bodies.value.filter((b) => b.id !== id);
+      // A parked body carries a measured offset; once the sheet has landed
+      // its in-flow position is the correct one again.
+      clearOffsets();
+    }
+
+    /** Pre-empt the running swap for a new one, keeping whatever the user
+     *  can actually see on stage. A body that never painted (still pending
+     *  in the exit phase) is dropped outright and the body that IS on
+     *  screen stays as the new swap's leaving body — dropping the visible
+     *  one instead blanked the stage for 134ms on a double-tap (2026-09-22
+     *  R2 verification finding). Returns true when the outgoing body had
+     *  already faded to nothing, so the new swap can skip its exit phase
+     *  rather than replay a beat nobody can see. */
+    function preemptSwap(): boolean {
+      const handle = swap;
+      if (!handle) return false;
+      if (handle.phase !== "exit") {
+        endSwap();
+        return false;
+      }
+      const goneEl =
+        flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-body.leaving") ??
+        null;
+      const faded = opacityOf(goneEl) <= FADED_OUT;
+      // The pending body never painted — drop it, keep the visible one.
+      bodies.value = bodies.value.filter((b) => b.id !== handle.enteringId);
+      const survivor = bodies.value.find((b) => b.id === handle.leavingId);
+      if (survivor) survivor.phase = "active";
+      swap = null;
+      swapPhase.value = "idle";
+      tailPhase.value = false;
+      disarmPhase(handle);
+      handle.report?.disconnect();
+      clearPin();
+      clearOffsets();
+      return faded;
     }
 
     /** Exit → enter edge: drop the old body, reveal the new one, and (for a
-     *  shrink) hand the sheet the new geometry so it folds through this
-     *  phase. */
+     *  shrink the sheet will fold) park the new one on the landing line. */
     function startEnterPhase(): void {
       const handle = swap;
       if (!handle || handle.phase !== "exit") return;
@@ -328,27 +405,62 @@ export default defineComponent({
       const entering = flowRef.value?.querySelector<HTMLElement>(
         ".hk-stepflow-body.active",
       );
-      if (handle.delta < 0) {
-        // Shrink. The sheet must measure the NEW natural height, so the pin
-        // comes off first; the announce then stages its fold synchronously
-        // (the modal's remeasure runs inside the dispatch). Before paint
-        // returns, the flow is re-pinned to the OLD height and the render
-        // parks the new body in the stage's bottom band
-        // (hk-stepflow-enter-tail), i.e. exactly where the descending clip
-        // edge lands: the new content never moves and the sheet's atomic
-        // re-pin lands nothing.
-        clearPin();
-        announce(handle);
-        if (anchorMode.value) {
-          // Only a bottom-docked sheet folds its clip towards the stage's
-          // bottom line, so only there is the parking exact.
-          pinOldHeight(handle.oldH);
-          tailPhase.value = true;
-        }
-      }
       if (!entering) {
         endSwap();
         return;
+      }
+      if (handle.delta < 0) {
+        // Shrink. The sheet must measure the NEW natural height, so the pin
+        // comes off first; the announce then stages its fold synchronously
+        // and publishes the span it will actually sweep (zero when the
+        // sheet is capped and cannot fold). The new body is parked on the
+        // line that fold lands on and released when it lands.
+        const body = hostBody(flowRef.value);
+        let span = 0;
+        if (body) {
+          const onStage = (event: Event) => {
+            const info = (
+              event as CustomEvent<{
+                direction?: string;
+                from?: number;
+                to?: number;
+              }>
+            ).detail;
+            if (
+              info?.direction === "conceal" &&
+              typeof info.from === "number" &&
+              typeof info.to === "number"
+            ) {
+              span = Math.max(0, Math.round(info.from - info.to));
+            }
+          };
+          body.addEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
+          clearPin();
+          announce(handle);
+          body.removeEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
+        } else {
+          clearPin();
+          announce(handle);
+        }
+        if (span > 0 && body) {
+          pinOldHeight(handle.oldH);
+          entering.style.top = `${span}px`;
+          tailPhase.value = true;
+          handle.tail = true;
+          const onSettle = (event: Event) => {
+            if (event.target === body) endSwap();
+          };
+          body.addEventListener(SHEET_SWEEP_SETTLE_EVENT, onSettle);
+          handle.settleEl = body;
+          handle.onSettle = onSettle;
+          // A host that never publishes a landing must not strand the pin
+          // (its own sweep watchdog is duration+350ms).
+          handle.timer = setTimeout(
+            endSwap,
+            handle.phaseMs + TAIL_WATCHDOG_GRACE_MS,
+          );
+          return;
+        }
       }
       armPhase(handle, entering, endSwap);
     }
@@ -369,21 +481,20 @@ export default defineComponent({
       () => props.modelValue,
       async (next, prev) => {
         if (next === prev) return;
-        // A swap while the previous one is still playing: tear it down and
-        // let the new swap own the stage. A still-hidden entering body is
-        // promoted to plain active first (endSwap drops the pending class
-        // through swapPhase), so it never loses its reveal.
-        endSwap();
+        // A swap while the previous one is still playing: keep the visible
+        // body on stage and drop anything that never painted.
+        const skipExit = preemptSwap();
         const leaving = bodies.value.find((b) => b.phase === "active");
         if (!leaving) return;
         // Pre-swap geometry while the leaving body still owns the flow:
-        // its height is the "old" reference for the sheet's delta. The
-        // same element also answers the motion probe.
+        // its height is the "old" reference for the sheet's delta, and its
+        // screen line is where the outgoing body must stay.
         const leavingEl =
           flowRef.value?.querySelector<HTMLElement>(
             ".hk-stepflow-body.active",
           ) ?? null;
         const oldH = leavingEl?.offsetHeight ?? 0;
+        const leaveTop0 = leavingEl?.getBoundingClientRect().top ?? 0;
         const phaseMs = bodyTransitionMs(leavingEl);
 
         if (phaseMs <= 0) {
@@ -406,7 +517,6 @@ export default defineComponent({
           return;
         }
 
-        anchorMode.value = sheetClipHost(flowRef.value);
         leaving.phase = "leaving";
         const entering: BodyEntry = {
           id: mountSeq++,
@@ -423,14 +533,18 @@ export default defineComponent({
           oldH,
           phaseMs,
           delta: 0,
+          tail: false,
           report: null,
           timer: null,
+          frame: null,
           listenEl: null,
           onEnded: null,
+          settleEl: null,
+          onSettle: null,
         };
         swap = handle;
         bodies.value = [...bodies.value, entering];
-        swapPhase.value = "exit";
+        swapPhase.value = skipExit ? "enter" : "exit";
         await nextTick();
         // Preempted while the DOM patched? The newer swap owns the stage —
         // this continuation must not measure, dispatch or arm anything.
@@ -451,10 +565,36 @@ export default defineComponent({
           return;
         }
         handle.delta = newEl.offsetHeight - oldH;
+        // Keep the outgoing body on its pre-swap screen line whatever the
+        // host did to the layout while we patched: the shift is measured,
+        // so a bottom-docked sheet that grew, a capped box that could not,
+        // and an in-flow stage all come out right (a guessed anchor cut
+        // 276px off a capped sheet's outgoing step).
+        const shift = Math.round(leaveTop0 - goneEl.getBoundingClientRect().top);
+        if (shift) goneEl.style.top = `${shift}px`;
+        if (skipExit) {
+          // The outgoing body had already faded out, so replaying its exit
+          // would only show a blank stage: drop it, hand the sheet the new
+          // geometry, and fade the new body in from this edge. One bus
+          // frame commits the staged (invisible) start state so the fade
+          // has a "from".
+          bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
+          handle.phase = "exit";
+          announce(handle);
+          handle.report = reportTransition(phaseMs);
+          handle.frame = scheduleFrame(() => {
+            if (swap !== handle) return;
+            handle.frame = null;
+            handle.phase = "enter";
+            swapPhase.value = "enter";
+            armPhase(handle, newEl, endSwap);
+          });
+          return;
+        }
         if (handle.delta >= 0) {
           // Grow: the flow already owns the new height, so the sheet can
-          // finish growing through THIS phase — the old body slides out
-          // without the frame moving under it.
+          // finish growing through THIS phase — the old body slides out on
+          // the line it was already on.
           announce(handle);
         } else {
           // Shrink: hold the old height while the old body plays; the
@@ -493,11 +633,7 @@ export default defineComponent({
               data-strategy={props.stickyHeader ? pinStrategy.value : undefined}
             />
           )}
-          <div
-            class="hk-stepflow-bodies"
-            data-direction={dir}
-            data-anchor={anchorMode.value ? "bottom" : undefined}
-          >
+          <div class="hk-stepflow-bodies" data-direction={dir}>
             {bodies.value.map((entry) => (
               <div
                 key={entry.id}
@@ -509,8 +645,7 @@ export default defineComponent({
                     : null,
                   entry.id === swap?.enteringId &&
                   swapPhase.value === "enter" &&
-                  tailPhase.value &&
-                  anchorMode.value
+                  tailPhase.value
                     ? "hk-stepflow-enter-tail"
                     : null,
                   entry.id === swap?.leavingId

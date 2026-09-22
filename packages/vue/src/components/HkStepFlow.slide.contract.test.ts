@@ -26,6 +26,10 @@ const src = readFileSync(join(here, "HkStepFlow.scss"), "utf-8");
 const tsx = readFileSync(join(here, "HkStepFlow.tsx"), "utf-8");
 const modal = readFileSync(join(here, "HkModal.tsx"), "utf-8");
 const modalScss = readFileSync(join(here, "HkModal.scss"), "utf-8");
+const morphSrc = readFileSync(
+  join(here, "..", "composables", "useSizeMorph.ts"),
+  "utf-8",
+);
 
 /** Top-level stylesheet rules as (selector-list, body) pairs. Nested
  *  blocks (e.g. the reduced-motion media query) come out as one rule
@@ -110,50 +114,52 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(transitions[0]).toContain("transform");
   });
 
-  it("scopes the bottom anchor and the parking to bottom-docked sheet hosts", () => {
-    // A bottom-docked sheet is the ONE host whose bottom line is fixed
-    // while it grows, so it — and only it — overrides the anchor and gets
-    // the tail parking. The flag is the host contract useSizeMorph already
-    // reads (`--hk-sheet-morph: clip`, set by the modal's phone block).
-    const override = blockFor(
-      '.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.leaving',
-    );
-    expect(override).toContain("bottom: 0");
-    expect(override).toContain("top: auto");
-    // …and the tail rule rides the same host flag.
-    expect(
-      blockFor(
-        '.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.hk-stepflow-enter-tail',
-      ),
-    ).toContain("bottom: 0");
-    expect(tsx).toContain("sheetClipHost");
-    expect(tsx).toContain('closest<HTMLElement>(".hk-modal-content")');
-    expect(tsx).toContain("--hk-sheet-morph");
-    expect(tsx).toContain('"clip"');
-    expect(tsx).toMatch(/data-anchor=\{anchorMode\.value\s*\?\s*"bottom"/);
+  it("measures the outgoing body's shift instead of assuming a host anchor", () => {
+    // The host decides where a growing box's lines sit (bottom-docked sheet,
+    // capped sheet, centred desktop frame, in-flow stage), so the component
+    // measures how far the stage travelled during the swap patch and writes
+    // that as an inline `top`. A CSS anchor can only encode one of those
+    // shapes: the bottom-anchored attempt cut 276px off a capped sheet's
+    // outgoing step (R2 verification finding).
+    expect(tsx).toContain("getBoundingClientRect");
+    expect(tsx).toMatch(/const shift = Math\.round\(leaveTop0 - goneEl\.getBoundingClientRect\(\)\.top\)/);
+    expect(tsx).toMatch(/if \(shift\) goneEl\.style\.top = `\$\{shift\}px`/);
+    // …and the stylesheet keeps ONE anchor, the in-flow-safe top.
+    expect(src).not.toContain("data-anchor");
+    expect(tsx).not.toContain("data-anchor");
+    expect(src).not.toContain("--hk-sheet-morph");
   });
 
-  it("parks a shrink's new body in the bottom band the fold lands on", () => {
-    // Clause 5: the new content must already sit at its final geometry
-    // while the sheet's clip edge folds down, so the atomic re-pin lands
-    // (nearly) nothing. The band is the stage's bottom — the line the fold
-    // descends to — declared as its own rule and bound to a shrink's enter
-    // phase on such a host only.
+  it("parks the new body on the span the sheet publishes and releases on its landing", () => {
+    // Clause 5: the new content must already sit at its final geometry while
+    // the sheet's clip edge folds down. The span comes from the SHEET (the
+    // only place the max-height cap is accounted for), and the release is
+    // tied to the sheet's landing — releasing on the body's own fade left
+    // the frame clipped for up to 334ms and parked content 276px off on a
+    // capped box.
     const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-tail");
     expect(rule).toContain("position: absolute");
-    expect(rule).toContain("bottom: 0");
-    expect(rule, "the parked body must not travel").not.toContain("transform");
-    expect(tsx).toContain("hk-stepflow-enter-tail");
-    expect(tsx).toMatch(/tailPhase\.value\s*=\s*true/);
-    // The parking is gated on the anchored host, and the order matters:
-    // measure (pin off) → announce → re-pin the old height + park, all
-    // before the browser can paint.
+    const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
+    expect(transitions, "the parked body does not animate its offset").toHaveLength(0);
+    expect(tsx).toContain("SHEET_SWEEP_STAGE_EVENT");
+    expect(tsx).toContain("SHEET_SWEEP_SETTLE_EVENT");
+    expect(tsx).toMatch(/direction === "conceal"/);
+    expect(tsx).toMatch(/span = Math\.max\(0, Math\.round\(info\.from - info\.to\)\)/);
+    expect(tsx).toMatch(/if \(span > 0 && body\)/);
+    expect(tsx).toMatch(/entering\.style\.top = `\$\{span\}px`/);
+    expect(tsx).toMatch(/TAIL_WATCHDOG_GRACE_MS/);
+    // The order matters: pin off (so the sheet measures the NEW natural
+    // height) → announce (the sheet stages and publishes) → park.
     expect(tsx).toMatch(
-      /if \(anchorMode\.value\) \{[\s\S]{0,300}?pinOldHeight\(handle\.oldH\);[\s\S]{0,120}?tailPhase\.value = true;/,
+      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1600}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
     );
-    expect(tsx).toMatch(
-      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
-    );
+    // The host side republishes the morph's own numbers.
+    expect(modal).toContain("onSweepStage");
+    expect(modal).toContain("onSweepSettle");
+    expect(modal).toContain("SHEET_SWEEP_STAGE_EVENT");
+    expect(modal).toContain("SHEET_SWEEP_SETTLE_EVENT");
+    expect(morphSrc).toContain("options.onSweepStage?.");
+    expect(morphSrc).toContain("options.onSweepSettle?.");
   });
 
   it("stages the new body laid out but invisible so the bodies cannot overlap", () => {
@@ -220,21 +226,25 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(tsx).toContain("data-direction={dir}");
   });
 
-  it("keeps all motion in the stylesheet — the only inline write is the height pin", () => {
+  it("keeps all motion in the stylesheet — inline writes are geometry staging only", () => {
     // The 2026-09-22 directive: CSS is the base. The component toggles
-    // classes and (for a shrink's exit phase) pins the flow's old height;
-    // it must never write motion styles.
+    // classes and writes only MEASURED geometry (the shrink's height pin and
+    // the outgoing/parked bodies' offsets); it must never write motion
+    // styles or animate a body itself.
     expect(tsx).not.toContain("style.transition");
     expect(tsx).not.toContain("style.transform");
     expect(tsx).not.toContain("style.opacity");
     expect(tsx).not.toContain("translateY");
-    // The one permitted inline write, and it is geometry staging only.
     expect(tsx).toContain("style.minHeight");
+    expect(tsx).toMatch(/style\.top = /);
   });
 
   it("books every phase window on the animation context, never a bare rAF", () => {
     expect(tsx).toContain('from "../runtime/animationBus"');
     expect(tsx).toContain("reportTransition(");
+    // The pre-emption fast path stages a start state for one frame: that is
+    // exactly what the shared bus one-shot is for.
+    expect(tsx).toContain("scheduleFrame(");
     expect(tsx).not.toContain("requestAnimationFrame(");
     // No frame-loop state control survives: the exit class flips in the
     // swap patch itself and the staged state is long-lived, so the old
@@ -270,23 +280,6 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(tsx).toMatch(/handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\)[\s\S]{0,200}?announce\(handle\)/);
     // The event carries the phase length so the sheet can match it.
     expect(tsx).toContain("durationMs: handle.phaseMs");
-  });
-
-  it("dispatches the swap passthrough so the host sheet morphs in lockstep", () => {
-    expect(tsx).toContain("STEPFLOW_SWAP_EVENT");
-    expect(tsx).toMatch(/new CustomEvent\(STEPFLOW_SWAP_EVENT/);
-    expect(modal).toContain('addEventListener(STEPFLOW_SWAP_EVENT');
-    expect(modal).toMatch(/removeEventListener\(STEPFLOW_SWAP_EVENT/);
-    // The modal side consumes the phase length and overrides the phone
-    // clip's duration token for that one morph — the stylesheet default
-    // (0.3s) stays the family standard for every other morph.
-    expect(modal).toContain("durationMs");
-    expect(modal).toContain("--hk-modal-morph-duration");
-    expect(modal).toMatch(/style\.setProperty\("--hk-modal-morph-duration"/);
-    expect(modal).toMatch(/style\.removeProperty\("--hk-modal-morph-duration"\)/);
-    expect(modalScss).toMatch(
-      /clip-path var\(--hk-modal-morph-duration, 0\.3s\)/,
-    );
   });
 
   it("retires the crossfade ride, the simultaneous staged class and out-in", () => {

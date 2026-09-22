@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+import HkStepFlow, {
+  SHEET_SWEEP_SETTLE_EVENT,
+  SHEET_SWEEP_STAGE_EVENT,
+  STEPFLOW_SWAP_EVENT,
+} from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
 
 /**
@@ -43,19 +47,32 @@ function mountStepFlow(options: {
   timelineClickable?: boolean;
   collapse?: string;
   seen?: StepFlowSlotProps[];
-  /** Mount inside a bottom-docked clip-mode sheet host (HkModal's phone
-   *  form factor) instead of a plain in-flow stage. */
+  /** Mount inside a modal body host (HkModal's scroll container), i.e. the
+   *  host shape whose sheet publishes sweep spans. */
   sheetHost?: boolean;
+  /** Span the simulated sheet publishes when it stages a fold. */
+  sweepSpan?: { from: number; to: number } | null;
 } = {}): StepFlowHarness {
   const container = document.createElement("div");
   if (options.sheetHost) {
-    const frame = document.createElement("div");
-    frame.className = "hk-modal-content";
-    // The host flag the flow (and useSizeMorph) reads: inline first.
-    frame.style.setProperty("--hk-sheet-morph", "clip");
-    frame.appendChild(container);
-    document.body.appendChild(frame);
-    containers.push(frame);
+    const body = document.createElement("div");
+    body.className = "hk-modal-body";
+    body.appendChild(container);
+    document.body.appendChild(body);
+    containers.push(body);
+    // Stand in for the hosting modal: when the flow announces the enter
+    // edge of a shrink, publish the fold span the sheet would publish.
+    if (options.sweepSpan) {
+      const span = options.sweepSpan;
+      container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+        if ((e as CustomEvent).detail?.phase !== "enter") return;
+        body.dispatchEvent(
+          new CustomEvent(SHEET_SWEEP_STAGE_EVENT, {
+            detail: { direction: "conceal", from: span.from, to: span.to },
+          }),
+        );
+      });
+    }
   } else {
     document.body.appendChild(container);
   }
@@ -419,13 +436,17 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(events.length).toBe(1);
   });
 
-  it("holds a SHRINK through the exit phase, then folds at the enter edge", async () => {
+  it("holds a SHRINK, then parks the new body on the line the sheet lands on", async () => {
     stubMotion();
     stubHeights((text) => (text === "a-body" ? 220 : 100));
-    const t = mountStepFlow({ initial: "a", sheetHost: true });
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100 },
+    });
     const events: CustomEvent[] = [];
     // What the hosting sheet would measure when it handles the announce:
-    // the pin must be OFF at that instant (the modal reads the frame's NEW
+    // the pin must be OFF at that instant (the sheet reads the frame's NEW
     // natural height) and back ON immediately after.
     const pinAtAnnounce: string[] = [];
     t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
@@ -442,13 +463,9 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(events.length).toBe(0);
     const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
     expect(bodies?.style.minHeight).toBe("220px");
-    // A bottom-docked clip-mode sheet is the one host whose bottom line is
-    // fixed: it declares the bottom anchor for the leaving body.
-    expect(bodies?.getAttribute("data-anchor")).toBe("bottom");
-    // Enter edge: the sheet is told to fold now, and the flow re-pins its
-    // OLD height for the fold while the new body parks in the stage's
-    // bottom band — the band the descending clip edge lands on, so the new
-    // content already sits at its final geometry.
+
+    // Enter edge: the sheet is told to fold, publishes its real span, and
+    // the flow parks the new body exactly on the landing line.
     endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
     await flushSwap();
     expect(events.length).toBe(1);
@@ -460,49 +477,145 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(detail.delta).toBe(-120);
     expect(detail.phase).toBe("enter");
     expect(detail.durationMs).toBe(150);
-    expect(bodies?.style.minHeight).toBe("220px");
-    // …and the measurement window really was open at the announce.
     expect(pinAtAnnounce).toEqual([""]);
+    expect(bodies?.style.minHeight).toBe("220px");
     const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(active?.textContent).toBe("b-body");
     expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
     expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
+    expect(active?.style.top).toBe("120px");
 
-    // The fold's own end releases both the tail parking and the pin.
-    endTransition(active);
+    // The sheet's landing releases the parking and the pin together — not
+    // the body's own fade (which would leave the frame clipped).
+    t.container
+      .closest(".hk-modal-body")!
+      .dispatchEvent(new CustomEvent(SHEET_SWEEP_SETTLE_EVENT));
     await flushSwap();
     expect(bodies?.style.minHeight).toBe("");
-    expect(
-      t.container
-        .querySelector<HTMLElement>(".hk-stepflow-body.active")
-        ?.classList.contains("hk-stepflow-enter-tail"),
-    ).toBe(false);
+    const settled = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(settled?.classList.contains("hk-stepflow-enter-tail")).toBe(false);
+    expect(settled?.style.top).toBe("");
   });
 
-  it("keeps an in-flow host's shrink on the top anchor without parking", async () => {
+  it("does not park anything when the sheet reports a zero span (capped box)", async () => {
     stubMotion();
     stubHeights((text) => (text === "a-body" ? 220 : 100));
-    const t = mountStepFlow({ initial: "a" });
+    // A capped sheet cannot fold: it publishes from == to. Parking against
+    // a guessed delta instead cut 276px off the outgoing step (R2 finding).
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 220 },
+    });
     const events: CustomEvent[] = [];
     t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
       events.push(e as CustomEvent);
     });
     t.setCurrent("b");
     await flushSwap();
-    const stage = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
-    expect(stage?.getAttribute("data-anchor")).toBeNull();
-    expect(stage?.style.minHeight).toBe("220px");
     endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
     await flushSwap();
-    // The height handoff still happens, but no tail parking: an in-flow
-    // host has no clip fold to park against, and the pin lifts so the
-    // stage can take the new height.
     expect(events.length).toBe(1);
-    expect((events[0]!.detail as { phase: string }).phase).toBe("enter");
-    expect(stage?.style.minHeight).toBe("");
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    // Nothing is held: the stage takes the new height immediately and the
+    // new body fades in in place.
+    expect(bodies?.style.minHeight).toBe("");
     const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(false);
-    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
+    expect(active?.style.top ?? "").toBe("");
+  });
+
+  it("releases a parked fold on the watchdog when the sheet never lands", async () => {
+    // The enter-phase watchdog is load-bearing: a host that never publishes
+    // its landing must not strand the pin and the parked body forever
+    // (removing it survived the suite before this test existed).
+    stubMotion("20ms");
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    expect(bodies?.style.minHeight).toBe("220px");
+    expect(
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail"),
+    ).toBe(true);
+    // 20ms phase + 700ms tail grace, with no settle event at all.
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(bodies?.style.minHeight).toBe("");
+    const settled = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(settled?.classList.contains("hk-stepflow-enter-tail")).toBe(false);
+    expect(settled?.style.top).toBe("");
+  });
+
+  it("ignores a stale phase watchdog from the previous swap", async () => {
+    // endSwap must disarm the outgoing phase: a stale watchdog otherwise
+    // tears the NEXT swap down 184ms early and clips its content (the
+    // mutation that removes disarmPhase survived the suite before this).
+    stubMotion("20ms");
+    const t = mountStepFlow({ initial: "a" });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+
+    // Let most of the settled swap's watchdog window pass, THEN start a
+    // fresh swap: its own deadline lands at ~300ms + 370ms, while the
+    // first swap's (now stale) timer is due at ~370ms — so a missing
+    // disarm would advance the live swap roughly 300ms early.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    t.setCurrent("c");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    // The stale closer must not have ended the live swap early.
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    expect(leaving?.textContent).toBe("b-body");
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+    endTransition(leaving);
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("c-body");
+  });
+
+  it("keeps the outgoing body on its pre-swap screen line by measurement", async () => {
+    // The host decides where a growing box's lines sit, so the shift is
+    // measured: this stubs the two rect reads the component performs (the
+    // body before the patch and after it) and pins the inline offset.
+    stubMotion();
+    const rects = { active: 500, leaving: 380 };
+    const proto = HTMLElement.prototype as unknown as {
+      getBoundingClientRect: () => DOMRect;
+    };
+    const realRect = proto.getBoundingClientRect;
+    proto.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+      const top = this.classList.contains("hk-stepflow-body")
+        ? this.classList.contains("leaving")
+          ? rects.leaving
+          : rects.active
+        : 0;
+      return { top, left: 0, bottom: top, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    };
+    try {
+      const t = mountStepFlow({ initial: "a" });
+      t.setCurrent("b");
+      await flushSwap();
+      const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+      expect(leaving?.style.top).toBe("120px");
+    } finally {
+      proto.getBoundingClientRect = realRect;
+    }
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {
@@ -546,22 +659,21 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
   });
 
-  it("promotes a still-hidden body when a re-swap pre-empts the exit phase", async () => {
+  it("keeps the visible body on stage when a re-swap pre-empts the exit phase", async () => {
     stubMotion();
     const t = mountStepFlow({ initial: "a" });
     t.setCurrent("b");
     await flushSwap();
-    // b is still pending (the exit phase is running); swap again.
+    // b is still pending (invisible); swap again mid-exit.
     t.setCurrent("c");
     await flushSwap();
     const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
     const pending = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
-    // The pre-empted target becomes the leaving body — it is never left
-    // hidden, and only one body ever leaves.
-    expect(leaving?.textContent).toBe("b-body");
+    // The body the user is looking at keeps leaving; the never-painted one
+    // is dropped (promoting it blanked the stage for 134ms).
+    expect(leaving?.textContent).toBe("a-body");
     expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(true);
-    expect(leaving?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
     expect(pending?.textContent).toBe("c-body");
     expect(pending?.classList.contains("hk-stepflow-enter-pending")).toBe(true);
     endTransition(leaving);

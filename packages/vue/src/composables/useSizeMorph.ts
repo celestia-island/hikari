@@ -68,6 +68,24 @@ export interface SizeMorphOptions {
    *  459→697px mid-unfold). The caller flushes the deferred growth with
    *  an explicit remeasure() at the open edge. */
   deferRemeasure?: () => boolean;
+  /** Clip-mode sweep staged: reports the sweep's direction and the pinned
+   *  heights it runs between, at the moment the start state is committed
+   *  (before the warmup). Hosts forward this to their content so it can
+   *  position against the LANDING geometry instead of guessing: the cap
+   *  makes `from − to` the only correct answer, and only the morph knows
+   *  it (2026-09-22 stepflow verification finding — a content-side guess
+   *  of the delta cut 276px off a capped sheet's outgoing step). */
+  onSweepStage?: (info: {
+    direction: "reveal" | "conceal";
+    from: number;
+    to: number;
+  }) => void;
+  /** Clip-mode sweep landed: the frame is back at its rest geometry
+   *  (transitionend, its own watchdog, or an interrupting dance). Content
+   *  holding geometry for the sweep — e.g. a parked body waiting for the
+   *  fold — must release it here; releasing on its own clock instead left
+   *  the frame clipped for up to 334ms (same finding). */
+  onSweepSettle?: () => void;
 }
 
 /**
@@ -227,10 +245,15 @@ export function useSizeMorph(
         revealEl.style.clipPath = "";
       }
     }
+    const landed = revealEl !== null;
     revealEl = null;
     revealEnd = null;
     revealDir = null;
     concealTo = null;
+    // The frame is at rest again (sweep end, its watchdog, or an
+    // interrupting dance): content that parked geometry for the fold
+    // releases it here, not on its own clock.
+    if (landed) options.onSweepSettle?.();
   }
 
   /** Drop the resident layer promotion (hold / release paths). */
@@ -472,6 +495,14 @@ export function useSizeMorph(
       revealEl = f;
       revealDir = reveal ? "reveal" : "conceal";
       concealTo = conceal ? next : null;
+      // Publish the sweep's real span (see onSweepStage): this is the only
+      // place where the cap is already accounted for, so a host content
+      // choreography can park against the landing instead of a guess.
+      options.onSweepStage?.({
+        direction: revealDir,
+        from: pinned,
+        to: next,
+      });
       const dir = revealDir;
       const insetPx = Math.abs(delta);
       let framesLeft = REVEAL_WARMUP_FRAMES;

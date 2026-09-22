@@ -78,10 +78,13 @@
 
 .hk-stepflow-body.leaving {
   position: absolute;
-  // Default anchor: the stage's TOP. An in-flow stage keeps its top line
-  // and grows downward, so the old body holds its screen position there
-  // (chest's LoginView renders HStepFlow inside a grid-stack crossfade —
-  // not a modal). Bottom-docked sheet hosts override this below.
+  // Default anchor: the stage's TOP. The component measures how far the
+  // stage travelled during the swap patch and writes that as an inline
+  // `top`, which is the only correct answer across host shapes — a
+  // bottom-docked sheet whose box grew, a capped box that could not grow,
+  // and an in-flow stage all differ, and a CSS anchor can only encode one
+  // of them (a guessed bottom anchor cut 276px off a capped sheet's
+  // outgoing step).
   top: 0;
   left: 0;
   right: 0;
@@ -94,30 +97,13 @@
     transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
 }
 
-// Bottom-docked sheet hosts — flagged `--hk-sheet-morph: clip` by the
-// modal's phone block, the same contract useSizeMorph reads to pick its
-// paint-only sweep. Theirs is the BOTTOM line that does not move when the
-// box grows, so the old body anchors there and holds its exact screen
-// position while the sheet expands above it (2026-09-22 user directive: a
-// grow must not carry the old content up). Identical to the default top
-// anchor whenever the stage and the body are the same height — i.e. every
-// shrink's exit phase.
-.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.leaving,
-.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.hk-stepflow-enter-tail {
-  top: auto;
-  bottom: 0;
-}
-
-// The staged new body of a SHRINK's enter phase (bottom-docked sheets
-// only): the flow hands the sheet the new geometry to fold towards, then
-// re-pins itself to the OLD height and parks the new body in the stage's
-// bottom band — the band the descending clip edge folds down onto, so the
-// new content already sits at its final screen position when the sheet's
-// atomic re-pin lands (2026-09-22 user directive: the new content appears
-// directly at the target height instead of following the top edge down).
+// The parked new body of a shrink whose sheet will fold. Out of flow (the
+// stage keeps the OLD height through the fold) and offset by the span the
+// sheet published, so it already sits on the line the fold lands on; the
+// component releases both when the sheet reports that landing.
 .hk-stepflow-body.hk-stepflow-enter-tail {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
 }

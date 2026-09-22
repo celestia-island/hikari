@@ -409,11 +409,14 @@ export default defineComponent({
       tailPhase.value = false;
       disarmPhase(handle);
       handle.report?.disconnect();
-      clearPin();
-      // Deliberately NOT clearOffsets(): the survivor is still on stage and
-      // its measured line must hold while the sheet sits at the height it
-      // grew to — clearing it teleported the outgoing body by the whole
-      // delta in a single frame (real-browser verification finding N1).
+      // Deliberately NEITHER clearOffsets() NOR clearPin(): the survivor is
+      // still on stage and must hold its measured line, and the stage must
+      // keep standing at the height the sheet is still pinned to. Clearing
+      // the offset teleported the visible body by the whole delta in one
+      // frame, and clearing the pin collapsed the stage below the sheet —
+      // so the re-armed swap read a zero delta and skipped its park
+      // handshake entirely (real-browser findings F1a/F1b). Both are cleared
+      // when the swap itself ends.
       return faded;
     }
 
@@ -532,8 +535,18 @@ export default defineComponent({
         // its height is the "old" reference for the sheet's delta, and its
         // screen line is where the outgoing body must stay.
         const leavingEl = elFor(leaving.id);
-        const oldH = leavingEl?.offsetHeight ?? 0;
         const leaveTop0 = leavingEl?.getBoundingClientRect().top ?? 0;
+        // The "old" reference is the STAGE's rendered height, not the body's:
+        // after a pre-emption the stage still carries the height the sheet
+        // pinned itself to (the dropped body owned the flow), so a body-based
+        // reading mis-signed the delta — the flow read a grow while the sheet
+        // staged a conceal, skipped its park handshake, and left the new body
+        // unparked under a running fold (real-engine finding N1/N4/N7/N10).
+        // On the ordinary path the stage is exactly the active body's height.
+        const stageEl =
+          flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-bodies") ?? null;
+        const stageH = stageEl?.offsetHeight ?? 0;
+        const oldH = stageH > 0 ? stageH : (leavingEl?.offsetHeight ?? 0);
         const phaseMs = bodyTransitionMs(leavingEl);
 
         if (phaseMs <= 0) {

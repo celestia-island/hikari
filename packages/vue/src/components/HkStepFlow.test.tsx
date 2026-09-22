@@ -158,6 +158,17 @@ function stubHeights(byText: (text: string) => number): void {
   Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
     configurable: true,
     get(this: HTMLElement) {
+      // The stage's height is its in-flow body's (the leaving one is out of
+      // flow) held up by its own pin, exactly as the browser resolves it —
+      // the component reads it as the swap's "old" reference.
+      if (this.classList?.contains("hk-stepflow-bodies")) {
+        const inFlow = Array.from(this.children).find(
+          (child) => !(child as HTMLElement).classList.contains("leaving"),
+        ) as HTMLElement | undefined;
+        const flowH = inFlow ? byText(inFlow.textContent ?? "") : 0;
+        const pinned = Number.parseFloat(this.style.minHeight) || 0;
+        return Math.max(pinned, flowH);
+      }
       return this.classList?.contains("hk-stepflow-body")
         ? byText(this.textContent ?? "")
         : 0;
@@ -742,6 +753,134 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
     expect(active?.style.top).toBe("120px");
     expect(bodies?.style.minHeight).toBe("220px");
+  });
+
+  it("keeps the outgoing body's measured line across a pre-emption", async () => {
+    // F1a: the survivor is still on stage and the sheet is still at the
+    // height it grew to, so its compensating offset must survive the
+    // pre-emption and only be cleared when that swap ends (clearing it
+    // teleported the visible body by the whole delta in one frame).
+    stubMotion();
+    let leaveTop = 500;
+    const proto = HTMLElement.prototype as unknown as {
+      getBoundingClientRect: () => DOMRect;
+    };
+    const realRect = proto.getBoundingClientRect;
+    proto.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+      const top = this.classList.contains("hk-stepflow-body")
+        ? this.classList.contains("leaving")
+          ? leaveTop
+          : 500
+        : 0;
+      return { top, left: 0, bottom: top, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    };
+    try {
+      const t = mountStepFlow({ initial: "a" });
+      let announces = 0;
+      t.container.addEventListener(STEPFLOW_SWAP_EVENT, () => {
+        // The sheet pins its new height once; after that the layout does not
+        // move again, so the second swap's own measurement reads zero and
+        // ONLY a preserved offset can keep the body on its line.
+        announces += 1;
+        if (announces === 1) leaveTop = 100;
+      });
+      t.setCurrent("b");
+      await flushSwap();
+      const first = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+      expect(first?.style.top).toBe("400px");
+      // Navigate again while that body is still exiting.
+      t.setCurrent("c");
+      await flushSwap();
+      const survivor = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+      expect(survivor?.textContent).toBe("a-body");
+      expect(survivor?.style.top).toBe("400px");
+      // …and it is dropped with the swap, offset and all.
+      endTransition(survivor);
+      await flushSwap();
+      endTransition(t.container.querySelector(".hk-stepflow-body.active"));
+      await flushSwap();
+      expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("c-body");
+      expect(
+        t.container.querySelector<HTMLElement>(".hk-stepflow-body.active")?.style.top ?? "",
+      ).toBe("");
+    } finally {
+      proto.getBoundingClientRect = realRect;
+    }
+  });
+
+  it("keeps the park when another surface publishes a landing", async () => {
+    // The flow listens for landings on ITS host body only, so another
+    // surface's settle cannot reach the park at all. (The two guard clauses
+    // inside the listener — target and swap identity — are formally
+    // redundant with that scoping and with disarmPhase; they are kept as
+    // belt-and-braces and are not mutation-reachable.)
+    stubMotion();
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    expect(
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail"),
+    ).toBe(true);
+    expect(bodies?.style.minHeight).toBe("220px");
+
+    const foreign = document.createElement("div");
+    foreign.className = "hk-modal-body";
+    document.body.appendChild(foreign);
+    containers.push(foreign);
+    foreign.dispatchEvent(new CustomEvent(SHEET_SWEEP_SETTLE_EVENT));
+    await flushSwap();
+    expect(bodies?.style.minHeight).toBe("220px");
+    expect(
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail"),
+    ).toBe(true);
+  });
+
+  it("measures a pre-empted swap against the stage the sheet is pinned to", async () => {
+    // F1b: the stage still carries the DROPPED pending body's height (that is
+    // what the sheet pinned itself to), so a body-based delta reads the
+    // shorter survivor, mis-signs as a grow, and skips the park handshake —
+    // leaving the new body unparked under a running fold.
+    stubMotion();
+    stubHeights((text) => (text === "b-body" ? 220 : 100));
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100 },
+    });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    // Second navigation mid-exit (the survivor is NOT faded): the ordinary
+    // exit → enter path, with the stage's pin still standing.
+    t.setCurrent("c");
+    await flushSwap();
+    // Only the first swap's grow announcement so far: a shrink announces at
+    // its enter edge.
+    expect(events.length).toBe(1);
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    expect(events.length).toBe(2);
+    const detail = events[1]!.detail as { delta: number; phase: string };
+    expect(detail.delta).toBe(-120);
+    expect(detail.phase).toBe("enter");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
+    expect(active?.style.top).toBe("120px");
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

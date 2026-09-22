@@ -159,6 +159,10 @@ describe("HkStepFlow slide contract", () => {
     // freeze the swap (same grammar as the sheet morph).
     expect(tsx).toContain("SWAP_WATCHDOG_GRACE_MS");
     expect(tsx).toContain("addEventListener(\"transitionend\"");
+    // transitionend bubbles — only the leaving body's own transitions may
+    // settle the swap (R3 spot mutation: removing this guard survived the
+    // suite, so it is pinned here).
+    expect(tsx).toContain("event.target === goneEl");
   });
 
   it("dispatches the swap passthrough so the host sheet morphs in lockstep", () => {

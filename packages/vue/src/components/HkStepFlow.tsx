@@ -283,6 +283,9 @@ export default defineComponent({
         bodies.value = [...bodies.value, entering];
         swapStage.value = "staged";
         await nextTick();
+        // Preempted while the DOM patched? The newer swap owns the stage —
+        // this continuation must not measure, dispatch or arm anything.
+        if (swap !== handle) return;
         const newEl = flowRef.value?.querySelector<HTMLElement>(
           ".hk-stepflow-body.active",
         );

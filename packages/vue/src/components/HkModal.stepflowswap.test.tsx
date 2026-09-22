@@ -2,11 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
-import {
-  SHEET_SWEEP_SETTLE_EVENT,
-  SHEET_SWEEP_STAGE_EVENT,
-  STEPFLOW_SWAP_EVENT,
-} from "./HkStepFlow";
+import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+
+const SHEET_SWEEP_STAGE_EVENT = "hk-sheet-sweep-stage";
+const SHEET_SWEEP_SETTLE_EVENT = "hk-sheet-sweep-settle";
 
 /**
  * Behavioural contract for the stepflow → sheet morph handoff

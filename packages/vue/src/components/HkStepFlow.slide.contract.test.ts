@@ -1,20 +1,11 @@
 /**
- * Source contract for the stepflow two-phase swap (2026-09-22 user
- * directive, round 10: the old and the new body must NEVER be on screen
- * together — the simultaneous cross-slide read as a doubled ghost of
- * overlapping text — so the swap runs an exit phase (old body alone,
- * sliding out) and then an enter phase (new body alone, fading in
- * place), each half of the family duration; the sheet's height morph is
- * scheduled onto one of those phases depending on the direction of the
- * size change).
- *
- * The stylesheet owns ALL motion: direction, travel and easings are
- * attribute/class driven, so a refactor cannot silently reintroduce
- * inline-style choreography, a vertical ride, the simultaneous staged
- * grammar, or the retired out-in classes. The component side is pinned to
- * the animation-context bookkeeping (reportTransition, no bare rAF, every
- * phase timer carrying the shared grace) and to deterministic settling
- * where no transition runs (reduced motion / stylesheet-less runtimes).
+ * Source contract for the simplified stepflow swap (2026-09-22 user
+ * directive, round 12: "reduce the property count — only opacity, and
+ * recycle the old element at the right time"). The stage is a grid, the
+ * motion is opacity-only (plus the leaving body's direction slide), and
+ * the old DOM node is recycled at the phase boundary. No visibility
+ * flips, no absolute positioning, no height pins, no measured offsets,
+ * no park mechanism.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -24,16 +15,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "HkStepFlow.scss"), "utf-8");
 const tsx = readFileSync(join(here, "HkStepFlow.tsx"), "utf-8");
-const modal = readFileSync(join(here, "HkModal.tsx"), "utf-8");
-const morphSrc = readFileSync(
-  join(here, "..", "composables", "useSizeMorph.ts"),
-  "utf-8",
-);
 
-/** Top-level stylesheet rules as (selector-list, body) pairs. Nested
- *  blocks (e.g. the reduced-motion media query) come out as one rule
- *  whose body carries the inner braces — the direction rules this
- *  contract binds are all top-level. */
 function extractRules(source: string): { selector: string; body: string }[] {
   const rules: { selector: string; body: string }[] = [];
   let i = 0;
@@ -60,9 +42,6 @@ function extractRules(source: string): { selector: string; body: string }[] {
 
 const scssRules = extractRules(src);
 
-/** The declaration body of the ONE rule whose selector list carries the
- *  exact selector — zero hits means the selector vanished, two means the
- *  contract's premise broke; both are red. */
 function blockFor(selector: string): string {
   const hits = scssRules.filter((r) =>
     r.selector.split(",").map((s) => s.trim()).includes(selector),
@@ -72,233 +51,110 @@ function blockFor(selector: string): string {
 }
 
 const PHASE = "calc(var(--hk-stepflow-duration, 0.3s) / 2)";
-const TRAVEL_POSITIVE = "translateX(var(--hk-stepflow-travel, 24px))";
-const TRAVEL_NEGATIVE = "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))";
 
-describe("HkStepFlow two-phase swap contract", () => {
+describe("HkStepFlow simplified swap contract", () => {
   it("pins the shared duration and travel tokens", () => {
     const root = src.match(/\.hk-step-flow\s*\{[^}]*\}/)![0]!;
     expect(root).toContain("--hk-stepflow-duration: 0.3s;");
     expect(root).toContain("--hk-stepflow-travel: 24px;");
   });
 
+  it("uses a single grid cell for every body — no absolute positioning", () => {
+    const stage = blockFor(".hk-stepflow-bodies");
+    expect(stage).toContain("display: grid");
+    const body = src.match(/\.hk-stepflow-body\s*\{[^}]*\}/)![0]!;
+    expect(body).toContain("grid-area: 1 / 1");
+    expect(src).not.toContain("position: absolute");
+    expect(src).not.toContain("position:relative");
+  });
+
   it("declares the in-place enter grammar on the base body rule", () => {
-    // The new body FADES IN PLACE for the second phase: opacity only, one
-    // phase long, expressive ease-out — and explicitly no travel.
     const rule = src.match(/\.hk-stepflow-body\s*\{[^}]*\}/)![0]!;
     const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
     expect(transitions).toHaveLength(1);
     const decl = transitions[0]!;
     expect(decl).toContain("opacity");
     expect(decl).toContain(PHASE);
-    // A STANDARD ease: the expressive ease-out put the first painted frame
-    // at ~50% opacity, which read as the new content flashing in.
     expect(decl).toContain("cubic-bezier(0.4, 0, 0.2, 1)");
     expect(decl, "the enter phase never travels").not.toContain("transform");
   });
 
-  it("keeps the leaving body out of the flow with the leave grammar", () => {
-    const rule = src.match(/\.hk-stepflow-body\.leaving\s*\{[^}]*\}/)![0]!;
-    expect(rule).toContain("position: absolute");
-    expect(rule).toContain("pointer-events: none");
-    // Default anchor is the TOP: an in-flow stage keeps its top line and
-    // grows downward, so that is where the old body holds its position
-    // (chest's LoginView renders this flow in a grid-stack crossfade).
-    expect(rule).toContain("top: 0");
-    expect(rule, "the default anchor is not the bottom").not.toContain("bottom: 0");
-    // The slide keeps its classic accelerating ease-in; the fade gets its
-    // own gentler curve so the old content eases out over several frames.
-    expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
-    expect(rule).toContain("cubic-bezier(0.4, 0, 0.6, 1)");
-    expect(rule).toContain(PHASE);
-    const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
-    expect(transitions).toHaveLength(1);
-    expect(transitions[0]).toContain("opacity");
-    expect(transitions[0]).toContain("transform");
-  });
-
-  it("measures the outgoing body's shift instead of assuming a host anchor", () => {
-    // The host decides where a growing box's lines sit (bottom-docked sheet,
-    // capped sheet, centred desktop frame, in-flow stage), so the component
-    // measures how far the stage travelled during the swap patch and writes
-    // that as an inline `top`. A CSS anchor can only encode one of those
-    // shapes: the bottom-anchored attempt cut 276px off a capped sheet's
-    // outgoing step (R2 verification finding).
-    expect(tsx).toContain("getBoundingClientRect");
-    expect(tsx).toMatch(/const shift = Math\.round\(leaveTop0 - goneEl\.getBoundingClientRect\(\)\.top\)/);
-    expect(tsx).toMatch(/if \(shift\) goneEl\.style\.top = `\$\{shift\}px`/);
-    // …and the stylesheet keeps ONE anchor, the in-flow-safe top.
-    expect(src).not.toContain("data-anchor");
-    expect(tsx).not.toContain("data-anchor");
-    expect(src).not.toContain("--hk-sheet-morph");
-  });
-
-  it("parks the new body on the span the sheet publishes and releases on its landing", () => {
-    // Clause 5: the new content must already sit at its final geometry while
-    // the sheet's clip edge folds down. The span comes from the SHEET (the
-    // only place the max-height cap is accounted for), and the release is
-    // tied to the sheet's landing — releasing on the body's own fade left
-    // the frame clipped for up to 334ms and parked content 276px off on a
-    // capped box.
-    const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-tail");
-    expect(rule).toContain("position: absolute");
-    const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
-    expect(transitions, "the parked body does not animate its offset").toHaveLength(0);
-    expect(tsx).toContain("SHEET_SWEEP_STAGE_EVENT");
-    expect(tsx).toContain("SHEET_SWEEP_SETTLE_EVENT");
-    expect(tsx).toMatch(/direction === "conceal"/);
-    expect(tsx).toMatch(/span = Math\.max\(0, Math\.round\(info\.from - info\.to\)\)/);
-    expect(tsx).toMatch(/span > 0\)[\s\S]{0,200}?parkTail\(/);
-    expect(tsx).toMatch(/entering\.style\.top = `\$\{span\}px`/);
-    expect(tsx).toMatch(/TAIL_WATCHDOG_GRACE_MS/);
-    // The order matters: the stage probe is attached, the pin comes off (so
-    // the sheet measures the NEW natural height), the announce stages and
-    // publishes the fold, and only then does the park land.
-    expect(tsx).toMatch(
-      /addEventListener\(SHEET_SWEEP_STAGE_EVENT, onStage\);[\s\S]{0,200}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
-    );
-    // The host side republishes the morph's own numbers.
-    expect(modal).toContain("onSweepStage");
-    expect(modal).toContain("onSweepSettle");
-    expect(modal).toContain("SHEET_SWEEP_STAGE_EVENT");
-    expect(modal).toContain("SHEET_SWEEP_SETTLE_EVENT");
-    expect(morphSrc).toContain("options.onSweepStage?.");
-    expect(morphSrc).toContain("options.onSweepSettle?.");
-  });
-
-  it("stages the new body laid out but invisible so the bodies cannot overlap", () => {
-    // The round-10 ghost fix: the entering body exists from frame one (so
-    // the flow owns the new height immediately) but is unpaintable for the
-    // whole exit phase.
+  it("stages the new body with opacity only — NO visibility flip", () => {
     const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-pending");
-    expect(rule).toContain("visibility: hidden");
     expect(rule).toContain("opacity: 0");
-    expect(rule, "the staged body never travels").not.toContain("transform");
-    // …and the component binds it to the EXIT phase only: the class lifts
-    // at the phase-2 edge, which is what starts the fade in place.
-    expect(tsx).toContain("hk-stepflow-enter-pending");
-    expect(tsx).toContain('swapPhase.value === "exit"');
-    // The component must announce the enter edge as a distinct phase.
-    expect(tsx).toMatch(/phase\s*=\s*"enter"/);
-    expect(tsx).toMatch(/swapPhase\.value\s*=\s*"enter"/);
+    expect(rule).toContain("pointer-events: none");
+    expect(rule).toContain("align-self: end");
+    expect(rule, "visibility re-rasters the layer — the flash source").not.toContain("visibility");
+  });
+
+  it("keeps the leaving body's fade gentle while the slide accelerates", () => {
+    const rule = src.match(/\.hk-stepflow-body\.leaving\s*\{[^}]*\}/)![0]!;
+    expect(rule).toContain("pointer-events: none");
+    expect(rule).toContain("cubic-bezier(0.4, 0, 0.6, 1)");
+    expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
+    expect(rule).toContain(PHASE);
   });
 
   it("binds each direction's travel sign to its exact selector", () => {
-    // Only the LEAVING body travels (the entering one appears in place), so
-    // the direction grammar binds exactly four selectors, sign-bound: a
-    // sign inversion must go red. forward exits LEFT (−travel), back exits
-    // RIGHT (+travel); RTL mirrors the mapping.
     const body = ".hk-stepflow-body";
     const stage = ".hk-stepflow-bodies";
     const ltr: Array<[string, string]> = [
-      [`${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, TRAVEL_NEGATIVE],
-      [`${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, TRAVEL_POSITIVE],
+      [`${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
+      [`${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, "translateX(var(--hk-stepflow-travel, 24px))"],
     ];
     const rtl: Array<[string, string]> = [
-      [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, TRAVEL_POSITIVE],
-      [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, TRAVEL_NEGATIVE],
+      [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, "translateX(var(--hk-stepflow-travel, 24px))"],
+      [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
     ];
-    for (const [selector, sign] of ltr) {
+    for (const [selector, sign] of [...ltr, ...rtl]) {
       const block = blockFor(selector);
       expect(block, `${selector} must carry ${sign}`).toContain(sign);
-      const other = sign === TRAVEL_POSITIVE ? TRAVEL_NEGATIVE : TRAVEL_POSITIVE;
-      expect(block, `${selector} must not carry ${other}`).not.toContain(other);
-      expect(block).toContain("opacity: 0");
     }
-    // RTL blocks are transform-only overrides over the LTR grammar.
-    for (const [selector, sign] of rtl) {
-      const block = blockFor(selector);
-      expect(block, `${selector} must carry ${sign}`).toContain(sign);
-      const other = sign === TRAVEL_POSITIVE ? TRAVEL_NEGATIVE : TRAVEL_POSITIVE;
-      expect(block, `${selector} must not carry ${other}`).not.toContain(other);
-    }
-    // No direction rule may hang off the staged or entering class — the
-    // new body never travels, in any direction (checked per RULE: the
-    // class name also appears in comments, so a raw regex over the file
-    // would false-positive across rule boundaries).
-    const pendingRules = scssRules.filter((r) =>
-      r.selector.includes("hk-stepflow-enter-pending"),
-    );
-    expect(pendingRules.length).toBeGreaterThan(0);
-    for (const r of pendingRules) {
-      expect(r.body, r.selector).not.toContain("transform");
-      expect(r.selector).not.toContain("data-direction");
-    }
-    // The stage keeps its relative positioning for the overlay grammar.
-    expect(src).toMatch(/\.hk-stepflow-bodies\s*\{[^}]*position:\s*relative/);
-    // The component renders the direction attribute the CSS keys off.
     expect(tsx).toContain("data-direction={dir}");
   });
 
-  it("keeps all motion in the stylesheet — inline writes are geometry staging only", () => {
-    // The 2026-09-22 directive: CSS is the base. The component toggles
-    // classes and writes only MEASURED geometry (the shrink's height pin and
-    // the outgoing/parked bodies' offsets); it must never write motion
-    // styles or animate a body itself.
+  it("keeps all motion in the stylesheet — the component writes no styles", () => {
     expect(tsx).not.toContain("style.transition");
     expect(tsx).not.toContain("style.transform");
     expect(tsx).not.toContain("style.opacity");
+    expect(tsx).not.toContain("style.top");
+    expect(tsx).not.toContain("style.minHeight");
     expect(tsx).not.toContain("translateY");
-    expect(tsx).toContain("style.minHeight");
-    expect(tsx).toMatch(/style\.top = /);
   });
 
-  it("books every phase window on the animation context, never a bare rAF", () => {
+  it("has no leftover park/pin/sweep-consumer machinery", () => {
+    expect(tsx).not.toContain("pinOldHeight");
+    expect(tsx).not.toContain("clearPin");
+    expect(tsx).not.toContain("holdLine");
+    expect(tsx).not.toContain("parkTail");
+    expect(tsx).not.toContain("stageShrinkFold");
+    expect(tsx).not.toContain("hk-stepflow-enter-tail");
+    expect(tsx).not.toContain("SHEET_SWEEP_STAGE_EVENT");
+    expect(tsx).not.toContain("SHEET_SWEEP_SETTLE_EVENT");
+    expect(src).not.toContain("hk-stepflow-enter-tail");
+    expect(src).not.toContain("min-height");
+  });
+
+  it("books every phase window on the animation context", () => {
     expect(tsx).toContain('from "../runtime/animationBus"');
     expect(tsx).toContain("reportTransition(");
-    // The pre-emption fast path stages a start state for one frame: that is
-    // exactly what the shared bus one-shot is for.
-    expect(tsx).toContain("scheduleFrame(");
     expect(tsx).not.toContain("requestAnimationFrame(");
-    // No frame-loop state control survives: the exit class flips in the
-    // swap patch itself and the staged state is long-lived, so the old
-    // staging frame is gone. Every phase timer must still carry the shared
-    // grace so a lost transitionend cannot strand a phase.
-    expect(tsx).toMatch(
-      /setTimeout\([^,]+,\s*handle\.phaseMs\s*\+\s*SWAP_WATCHDOG_GRACE_MS\)/,
-    );
+    expect(tsx).not.toContain("scheduleFrame(");
   });
 
   it("settles deterministically where no transition runs", () => {
-    // The duration probe: zero (reduced motion / stylesheet-less runtime)
-    // selects the atomic instant-settle path — the debt pin for chest's
-    // transitionend-less wizard tests.
     expect(tsx).toContain("bodyTransitionMs");
     expect(tsx).toContain("transitionDuration");
-    // The motion path keeps a watchdog so a lost transitionend cannot
-    // freeze a phase (same grammar as the sheet morph).
     expect(tsx).toContain("SWAP_WATCHDOG_GRACE_MS");
     expect(tsx).toContain('addEventListener("transitionend"');
-    // transitionend bubbles — only the acting body's own transitions may
-    // advance a phase (R3 spot mutation: removing this guard survived the
-    // suite, so it is pinned here).
     expect(tsx).toContain("event.target === el");
   });
 
-  it("schedules the sheet morph onto the phase that owns the height change", () => {
-    // Grow: the flow owns the new height from frame one → announced at the
-    // EXIT edge. Shrink: the flow holds its old height → announced at the
-    // ENTER edge (the pin lifts in the same step).
-    expect(tsx).toMatch(/delta\s*>=\s*0/);
-    expect(tsx).toContain("pinOldHeight(");
-    // Both edges route through the shared helpers: the ordinary path holds
-    // the old height while the old body plays and hands the sheet over at
-    // the enter edge; the fast path does the same at its single edge.
-    expect(tsx).toContain("stageShrinkFold(");
-    expect(tsx).toContain("parkTail(");
-    expect(tsx).toMatch(
-      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,200}?stageShrinkFold\(handle\)/,
-    );
-    expect(tsx).toMatch(/\} else \{[\s\S]{0,220}?pinOldHeight\(oldH\);/);
-    // The event carries the phase length so the sheet can match it.
-    expect(tsx).toContain("durationMs: handle.phaseMs");
+  it("recycles the old DOM node at the phase boundary", () => {
+    expect(tsx).toMatch(/bodies\.value = bodies\.value\.filter\(\(b\) => b\.id !== handle\.leavingId\)/);
   });
 
-  it("retires the crossfade ride, the simultaneous staged class and out-in", () => {
-    // Neither the round-7 vertical ride, the round-9 simultaneous staged
-    // class, nor the pre-0.55.38 Vue transition class grammar may sneak
-    // back in, and no media block may fork step-body behaviour per
-    // viewport.
+  it("retires the old vocabulary and media forks", () => {
     expect(tsx).not.toContain("hk-stepflow-fwd");
     expect(tsx).not.toContain("hk-stepflow-back");
     expect(tsx).not.toContain("hk-stepflow-enter-from");
@@ -308,7 +164,7 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(src).not.toMatch(/@media[^{]*max-width/);
   });
 
-  it("zeroes the transition under reduced motion so the probe settles", () => {
+  it("zeroes the transition under reduced motion", () => {
     expect(src).toMatch(
       /prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]{0,160}?\.hk-stepflow-body\s*\{\s*transition:\s*none/,
     );

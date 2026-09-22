@@ -13,11 +13,16 @@ import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph } from "../composables/useSizeMorph";
 
-import {
-  SHEET_SWEEP_SETTLE_EVENT,
-  SHEET_SWEEP_STAGE_EVENT,
-  STEPFLOW_SWAP_EVENT,
-} from "./HkStepFlow";
+import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+
+/** The hosting sheet publishes its fold's real span while it stages — the
+ *  only place where the sheet's max-height cap is already accounted for.
+ *  Content parks against these numbers instead of guessing the delta. */
+const SHEET_SWEEP_STAGE_EVENT = "hk-sheet-sweep-stage";
+
+/** The hosting sheet's fold has landed: the frame is back at its rest
+ *  geometry, so parked content must release exactly here. */
+const SHEET_SWEEP_SETTLE_EVENT = "hk-sheet-sweep-settle";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";

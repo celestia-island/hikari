@@ -272,6 +272,22 @@ export default defineComponent({
       );
     }
 
+    /** The element rendering one body entry. Class-based queries are NOT
+     *  usable here: pre-empting mutates the entries synchronously while
+     *  Vue's re-render (and therefore the classes) only lands on the next
+     *  flush, so a `.active` query right after a pre-emption still returns
+     *  the body the pre-emption just demoted — which measured the WRONG
+     *  "old" height and silently disabled both the shrink handshake and the
+     *  grow compensation (real-engine verification finding). */
+    function elFor(id: number | undefined): HTMLElement | null {
+      if (id === undefined) return null;
+      return (
+        flowRef.value?.querySelector<HTMLElement>(
+          `[data-body-id="${id}"]`,
+        ) ?? null
+      );
+    }
+
     /** Pin the flow to the pre-swap height (shrink exit phase). */
     function pinOldHeight(px: number): void {
       const el = flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-bodies");
@@ -375,9 +391,7 @@ export default defineComponent({
         endSwap();
         return false;
       }
-      const goneEl =
-        flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-body.leaving") ??
-        null;
+      const goneEl = elFor(handle.leavingId);
       const faded = opacityOf(goneEl) <= FADED_OUT;
       // The pending body never painted — drop it, keep the visible one.
       bodies.value = bodies.value.filter((b) => b.id !== handle.enteringId);
@@ -400,6 +414,70 @@ export default defineComponent({
       return faded;
     }
 
+    /** Shrink enter edge, step 1: hand the sheet the NEW natural height (the
+     *  pin comes off first) and read back the fold span it stages. Zero
+     *  means the sheet cannot fold (capped, or no fold at all), in which
+     *  case the new body is not parked. */
+    function stageShrinkFold(handle: RunningSwap): number {
+      const body = hostBody(flowRef.value);
+      let span = 0;
+      if (body) {
+        const onStage = (event: Event) => {
+          const info = (
+            event as CustomEvent<{
+              direction?: string;
+              from?: number;
+              to?: number;
+            }>
+          ).detail;
+          if (
+            info?.direction === "conceal" &&
+            typeof info.from === "number" &&
+            typeof info.to === "number"
+          ) {
+            span = Math.max(0, Math.round(info.from - info.to));
+          }
+        };
+        body.addEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
+        clearPin();
+        announce(handle);
+        body.removeEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
+        return span;
+      }
+      clearPin();
+      announce(handle);
+      return 0;
+    }
+
+    /** Shrink enter edge, step 2: hold the stage at its old height and park
+     *  the new body on the line the fold lands on, releasing with the fold
+     *  itself (or the backstop when the host never reports a landing). */
+    function parkTail(
+      handle: RunningSwap,
+      entering: HTMLElement,
+      span: number,
+    ): void {
+      pinOldHeight(handle.oldH);
+      entering.style.top = `${span}px`;
+      tailPhase.value = true;
+      handle.tail = true;
+      const body = hostBody(flowRef.value);
+      if (body) {
+        const onSettle = (event: Event) => {
+          if (event.target === body) endSwap();
+        };
+        body.addEventListener(SHEET_SWEEP_SETTLE_EVENT, onSettle);
+        handle.settleEl = body;
+        handle.onSettle = onSettle;
+      }
+      // A host that never publishes a landing must not strand the pin (its
+      // own sweep watchdog is duration+350ms).
+      handle.timer = setTimeout(
+        endSwap,
+        handle.phaseMs + TAIL_WATCHDOG_GRACE_MS,
+      );
+    }
+
     /** Exit → enter edge: drop the old body, reveal the new one, and (for a
      *  shrink the sheet will fold) park the new one on the landing line. */
     function startEnterPhase(): void {
@@ -409,63 +487,15 @@ export default defineComponent({
       handle.phase = "enter";
       swapPhase.value = "enter";
       bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
-      const entering = flowRef.value?.querySelector<HTMLElement>(
-        ".hk-stepflow-body.active",
-      );
+      const entering = elFor(handle.enteringId);
       if (!entering) {
         endSwap();
         return;
       }
       if (handle.delta < 0) {
-        // Shrink. The sheet must measure the NEW natural height, so the pin
-        // comes off first; the announce then stages its fold synchronously
-        // and publishes the span it will actually sweep (zero when the
-        // sheet is capped and cannot fold). The new body is parked on the
-        // line that fold lands on and released when it lands.
-        const body = hostBody(flowRef.value);
-        let span = 0;
-        if (body) {
-          const onStage = (event: Event) => {
-            const info = (
-              event as CustomEvent<{
-                direction?: string;
-                from?: number;
-                to?: number;
-              }>
-            ).detail;
-            if (
-              info?.direction === "conceal" &&
-              typeof info.from === "number" &&
-              typeof info.to === "number"
-            ) {
-              span = Math.max(0, Math.round(info.from - info.to));
-            }
-          };
-          body.addEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
-          clearPin();
-          announce(handle);
-          body.removeEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
-        } else {
-          clearPin();
-          announce(handle);
-        }
-        if (span > 0 && body) {
-          pinOldHeight(handle.oldH);
-          entering.style.top = `${span}px`;
-          tailPhase.value = true;
-          handle.tail = true;
-          const onSettle = (event: Event) => {
-            if (event.target === body) endSwap();
-          };
-          body.addEventListener(SHEET_SWEEP_SETTLE_EVENT, onSettle);
-          handle.settleEl = body;
-          handle.onSettle = onSettle;
-          // A host that never publishes a landing must not strand the pin
-          // (its own sweep watchdog is duration+350ms).
-          handle.timer = setTimeout(
-            endSwap,
-            handle.phaseMs + TAIL_WATCHDOG_GRACE_MS,
-          );
+        const span = stageShrinkFold(handle);
+        if (span > 0) {
+          parkTail(handle, entering, span);
           return;
         }
       }
@@ -496,10 +526,7 @@ export default defineComponent({
         // Pre-swap geometry while the leaving body still owns the flow:
         // its height is the "old" reference for the sheet's delta, and its
         // screen line is where the outgoing body must stay.
-        const leavingEl =
-          flowRef.value?.querySelector<HTMLElement>(
-            ".hk-stepflow-body.active",
-          ) ?? null;
+        const leavingEl = elFor(leaving.id);
         const oldH = leavingEl?.offsetHeight ?? 0;
         const leaveTop0 = leavingEl?.getBoundingClientRect().top ?? 0;
         const phaseMs = bodyTransitionMs(leavingEl);
@@ -509,11 +536,10 @@ export default defineComponent({
           // or a stylesheet-less runtime such as a test environment) —
           // swap the bodies atomically so the DOM never carries two
           // steps, then still poke the hosting sheet to remeasure.
-          bodies.value = [{ id: mountSeq++, key: next, phase: "active" }];
+          const atomicId = mountSeq++;
+          bodies.value = [{ id: atomicId, key: next, phase: "active" }];
           await nextTick();
-          const newEl = flowRef.value?.querySelector<HTMLElement>(
-            ".hk-stepflow-body.active",
-          );
+          const newEl = elFor(atomicId);
           const delta = (newEl?.offsetHeight ?? oldH) - oldH;
           flowRef.value?.dispatchEvent(
             new CustomEvent(STEPFLOW_SWAP_EVENT, {
@@ -558,12 +584,8 @@ export default defineComponent({
         // Preempted while the DOM patched? The newer swap owns the stage —
         // this continuation must not measure, dispatch or arm anything.
         if (swap !== handle) return;
-        const newEl = flowRef.value?.querySelector<HTMLElement>(
-          ".hk-stepflow-body.active",
-        );
-        const goneEl = flowRef.value?.querySelector<HTMLElement>(
-          ".hk-stepflow-body.leaving",
-        );
+        const newEl = elFor(entering.id);
+        const goneEl = elFor(handle.leavingId);
         if (!newEl || !goneEl) {
           // The flow went away mid-swap (unmount) — restore one body.
           swap = null;
@@ -574,13 +596,17 @@ export default defineComponent({
           return;
         }
         handle.delta = newEl.offsetHeight - oldH;
-        // Keep the outgoing body on its pre-swap screen line whatever the
-        // host did to the layout while we patched: the shift is measured,
-        // so a bottom-docked sheet that grew, a capped box that could not,
-        // and an in-flow stage all come out right (a guessed anchor cut
-        // 276px off a capped sheet's outgoing step).
-        const shift = Math.round(leaveTop0 - goneEl.getBoundingClientRect().top);
-        if (shift) goneEl.style.top = `${shift}px`;
+        // The outgoing body must keep its pre-swap screen line. Its stage
+        // only moves when the HOST reacts to the height handoff (a
+        // bottom-docked sheet pins the new height the moment the sheet is
+        // told), so the shift is measured AFTER that handoff — measuring it
+        // before left the compensation at zero on exactly the surface it
+        // exists for, and the outgoing body rode the sheet's instant growth
+        // out of view (real-engine verification finding, 2026-09-22).
+        const holdLine = (): void => {
+          const shift = Math.round(leaveTop0 - goneEl.getBoundingClientRect().top);
+          if (shift) goneEl.style.top = `${shift}px`;
+        };
         if (skipExit) {
           // The outgoing body had already faded out, so replaying its exit
           // would only show a blank stage: drop it, hand the sheet the new
@@ -591,15 +617,32 @@ export default defineComponent({
           // "enter" right away, so a navigation inside that single frame
           // takes the safe endSwap path instead of the exit branch.
           bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
-          handle.phase = "exit";
-          announce(handle);
+          // The faded body is gone, so this edge IS the enter edge: a grow
+          // hands the sheet its new height here, a shrink runs the same
+          // measurement + parking handshake the ordinary path runs.
           handle.phase = "enter";
+          let parked = false;
+          if (handle.delta < 0) {
+            const span = stageShrinkFold(handle);
+            if (span > 0) {
+              parkTail(handle, newEl, span);
+              parked = true;
+            }
+          } else {
+            announce(handle);
+          }
+          holdLine();
           handle.report = reportTransition(phaseMs);
+          // Commit the staged (invisible) start state for one bus frame,
+          // then lift it: that is what gives the fade its "from" AND what
+          // applies the parked body's tail class. A parked fold is already
+          // armed on the sheet's landing, so only an unparked one needs the
+          // body's own closer here.
           handle.frame = scheduleFrame(() => {
             if (swap !== handle) return;
             handle.frame = null;
             swapPhase.value = "enter";
-            armPhase(handle, newEl, endSwap);
+            if (!parked) armPhase(handle, newEl, endSwap);
           });
           return;
         }
@@ -608,6 +651,7 @@ export default defineComponent({
           // finish growing through THIS phase — the old body slides out on
           // the line it was already on.
           announce(handle);
+          holdLine();
         } else {
           // Shrink: hold the old height while the old body plays; the
           // sheet folds in the second phase (startEnterPhase).
@@ -649,6 +693,7 @@ export default defineComponent({
             {bodies.value.map((entry) => (
               <div
                 key={entry.id}
+                data-body-id={entry.id}
                 class={[
                   "hk-stepflow-body",
                   entry.phase,

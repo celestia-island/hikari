@@ -672,6 +672,78 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("a-body");
   });
 
+  it("compensates the shift the sheet causes when it lands the new height", async () => {
+    // The stage only moves when the HOST reacts to the handoff (a
+    // bottom-docked sheet pins the new height the moment it is told), so
+    // the shift must be measured AFTER the announce. Measuring before it
+    // left the compensation at zero on exactly that surface and the
+    // outgoing body rode the sheet's instant growth out of view (real
+    // browser verification finding). This stub moves the leaving body only
+    // once the swap event fires, so a pre-announce measurement reads zero.
+    stubMotion();
+    let leaveTop = 500;
+    const proto = HTMLElement.prototype as unknown as {
+      getBoundingClientRect: () => DOMRect;
+    };
+    const realRect = proto.getBoundingClientRect;
+    proto.getBoundingClientRect = function (this: HTMLElement): DOMRect {
+      const top = this.classList.contains("hk-stepflow-body")
+        ? this.classList.contains("leaving")
+          ? leaveTop
+          : 500
+        : 0;
+      return { top, left: 0, bottom: top, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    };
+    try {
+      const t = mountStepFlow({ initial: "a" });
+      t.container.addEventListener(STEPFLOW_SWAP_EVENT, () => {
+        // What the sheet's instant pin does to the content: the stage jumps
+        // up by the delta.
+        leaveTop = 100;
+      });
+      t.setCurrent("b");
+      await flushSwap();
+      const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+      expect(leaving?.style.top).toBe("400px");
+    } finally {
+      proto.getBoundingClientRect = realRect;
+    }
+  });
+
+  it("parks the new body too when a shrink takes the faded fast path", async () => {
+    // The fast path IS the enter edge for a faded outgoing body, so a
+    // shrink must run the same measurement + parking handshake there
+    // instead of morphing in the exit slot (real-browser finding P5).
+    stubMotion("0.15s", { leavingOpacity: "0" });
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    // Swap again while the exiting body reads as fully faded: the new swap
+    // drops it and goes straight to its enter edge — as a shrink.
+    t.setCurrent("c");
+    await flushSwap();
+    // The staged frame commits the fade's "from" and applies the park.
+    for (const cb of frames.splice(0)) cb(0);
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active?.textContent).toBe("c-body");
+    expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
+    expect(active?.style.top).toBe("120px");
+    expect(bodies?.style.minHeight).toBe("220px");
+  });
+
   it("advances both phases on the watchdog when transitionend never arrives", async () => {
     stubMotion("20ms");
     const t = mountStepFlow({ initial: "a" });

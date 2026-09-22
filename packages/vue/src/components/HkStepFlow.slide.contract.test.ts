@@ -144,13 +144,14 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(tsx).toContain("SHEET_SWEEP_SETTLE_EVENT");
     expect(tsx).toMatch(/direction === "conceal"/);
     expect(tsx).toMatch(/span = Math\.max\(0, Math\.round\(info\.from - info\.to\)\)/);
-    expect(tsx).toMatch(/if \(span > 0 && body\)/);
+    expect(tsx).toMatch(/span > 0\)[\s\S]{0,200}?parkTail\(/);
     expect(tsx).toMatch(/entering\.style\.top = `\$\{span\}px`/);
     expect(tsx).toMatch(/TAIL_WATCHDOG_GRACE_MS/);
-    // The order matters: pin off (so the sheet measures the NEW natural
-    // height) → announce (the sheet stages and publishes) → park.
+    // The order matters: the stage probe is attached, the pin comes off (so
+    // the sheet measures the NEW natural height), the announce stages and
+    // publishes the fold, and only then does the park land.
     expect(tsx).toMatch(
-      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1600}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
+      /addEventListener\(SHEET_SWEEP_STAGE_EVENT, onStage\);[\s\S]{0,200}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
     );
     // The host side republishes the morph's own numbers.
     expect(modal).toContain("onSweepStage");
@@ -276,7 +277,15 @@ describe("HkStepFlow two-phase swap contract", () => {
     // ENTER edge (the pin lifts in the same step).
     expect(tsx).toMatch(/delta\s*>=\s*0/);
     expect(tsx).toContain("pinOldHeight(");
-    expect(tsx).toMatch(/handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\)[\s\S]{0,200}?announce\(handle\)/);
+    // Both edges route through the shared helpers: the ordinary path holds
+    // the old height while the old body plays and hands the sheet over at
+    // the enter edge; the fast path does the same at its single edge.
+    expect(tsx).toContain("stageShrinkFold(");
+    expect(tsx).toContain("parkTail(");
+    expect(tsx).toMatch(
+      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,200}?stageShrinkFold\(handle\)/,
+    );
+    expect(tsx).toMatch(/\} else \{[\s\S]{0,220}?pinOldHeight\(oldH\);/);
     // The event carries the phase length so the sheet can match it.
     expect(tsx).toContain("durationMs: handle.phaseMs");
   });

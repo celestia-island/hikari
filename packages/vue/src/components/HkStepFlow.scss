@@ -1,125 +1,85 @@
-// Two-phase step bodies for HkStepFlow.
+// Step-flow bodies: two-phase sequential swap (2026-09-22 user directive).
 //
-// A swap runs TWO phases, each half of `--hk-stepflow-duration` (0.15s of
-// the 0.3s family standard):
-//
-//   EXIT  — the OLD body alone is visible: `hk-stepflow-leave-to` slides
-//           it out (forward exits left, back exits right) and fades it,
-//           with the sharp ease-in;
-//   ENTER — the old body is gone and the NEW one fades in PLACE (no
-//           travel) with the expressive ease-out.
-//
-// The new body is mounted from frame one with `hk-stepflow-enter-pending`
-// (invisible, but laid out so the flow owns the new height immediately),
-// which is what makes the two bodies structurally unable to overlap —
-// the doubled-ghost flash of the simultaneous cross-slide (2026-09-22
-// user directive, round 10).
-//
-// This stylesheet owns ALL of the motion: direction, travel distance and
-// easings are driven by the `data-direction` attribute and those two
-// classes; the component only flips them and schedules the phases. The
-// sheet's own morph is phase-matched by the hosting modal, which reads
-// the swap event's `durationMs`.
-//
-// Duration and travel resolve from local custom properties so consumers
-// can tune every phase at once; the 0.3s default matches the phone
-// sheet's morph window so the sweep and the slide land together.
+// The stage is a GRID with every body in the SAME cell — both the old and
+// the new body overlay each other without any positioning tricks, and the
+// cell sizes itself to whichever body is taller. The swap is therefore
+// JUST opacity: the entering body starts transparent (already painted, so
+// the fade never re-rasters a layer), the leaving body fades and slides
+// out, and the old DOM node is recycled once it is gone (2026-09-22 user
+// directive, round 12: "reduce the property count — only opacity, and
+// recycle the old element at the right time"). No visibility flips, no
+// absolute positioning, no height pins, no measured offsets — every one
+// of those changed the render tree mid-animation and read as a flash on
+// the phone GPU.
 
 .hk-step-flow {
   --hk-stepflow-duration: 0.3s;
   --hk-stepflow-travel: 24px;
 }
 
-// Breathing room between the step indicator and the step bodies. Without
-// it the timeline row butts directly against the first body element (modal
-// wizards read as cramped). Tune or remove per host through
-// --hk-stepflow-header-gap; the sticky mode folds the gap into the pinned
-// header's own padding so the surface tint stays continuous while the
-// body scrolls underneath.
+// Breathing room between the step indicator and the step bodies.
 .hk-step-flow > .hk-timeline {
   margin-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
 // Sticky header mode: positioning, surface and the whitespace contract
-// live on the shared .hk-scroll-pin rules (HkScrollPin.scss) — the
-// timeline root carries the class plus data-side/data-strategy. This
-// block keeps only what is step-flow-specific: the body gap folded into
-// the pinned header's own padding (so the tint stays continuous while
-// the body scrolls) and the legacy styling knobs mapped onto the pin's
-// custom properties. The doubled class selector must beat
-// .hk-scroll-pin's own declarations regardless of import order.
+// live on the shared .hk-scroll-pin rules (HkScrollPin.scss).
 .hk-step-flow[data-sticky-header] > .hk-timeline.hk-scroll-pin {
   --hk-scroll-pin-z: var(--hk-stepflow-sticky-z, 10);
   --hk-scroll-pin-bg: var(
     --hk-stepflow-sticky-bg,
     color-mix(in srgb, var(--hi-color-surface, #f0f4f8) 95%, transparent)
   );
-  // --hk-stepflow-sticky-top lifts the pin below a host chrome edge; this
-  // doubled selector outranks .hk-scroll-pin's own `top:` in every
-  // strategy, so the knob always wins when set.
   top: var(--hk-stepflow-sticky-top, 0px);
   margin-bottom: 0;
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-// The swap stage: the entering body owns the flow's height; the leaving
-// one overlays it, out of flow and pointer-transparent for the exit.
+// The swap stage: a single grid cell that every body shares.
 .hk-stepflow-bodies {
-  position: relative;
+  display: grid;
 }
 
+// Every body occupies the same cell: the container's height is the taller
+// of the two during a swap (so the hosting sheet sees the NEW geometry as
+// soon as the swap starts for a grow, and keeps the OLD geometry until the
+// old node is recycled for a shrink — exactly the height schedule the
+// directive asks for, with no pin).
 .hk-stepflow-body {
-  // ENTER grammar (what a body computes once its `hk-stepflow-enter-pending`
-  // class lifts at the phase-2 edge): a plain fade in place — the new
-  // content never travels (2026-09-22 user directive). A STANDARD ease, not
-  // the expressive ease-out: the front-loaded curve put the first painted
-  // frame at ~50% opacity (half the distance in ~11% of the phase), which
-  // read on the device as the new content flashing in — the standard curve
-  // starts at ~20% instead (2026-09-22 device report, round 11).
+  grid-area: 1 / 1;
+  // ENTER: fade in place with a standard ease — no travel, no other
+  // property. The element is laid out and PAINTED from the moment it
+  // mounts (opacity: 0 is compositor-only), so the first frame of the
+  // fade never triggers a re-raster.
   transition:
     opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hk-stepflow-body.leaving {
-  position: absolute;
-  // Default anchor: the stage's TOP. The component measures how far the
-  // stage travelled during the swap patch and writes that as an inline
-  // `top`, which is the only correct answer across host shapes — a
-  // bottom-docked sheet whose box grew, a capped box that could not grow,
-  // and an in-flow stage all differ, and a CSS anchor can only encode one
-  // of them (a guessed bottom anchor cut 276px off a capped sheet's
-  // outgoing step).
-  top: 0;
-  left: 0;
-  right: 0;
+// The staged new body: transparent, untouchable, and at the CELL BOTTOM
+// until the enter edge. Deliberately NO `visibility: hidden` — that property
+// changes the render tree and the phone GPU re-rasters the layer when it
+// flips, which was the flash the user kept seeing (round 12 directive).
+// `align-self: end` does two things with zero positioning tricks: it stops
+// the grid from STRETCHING the shorter entering body to the old cell height
+// (so its measured height is the true content height, and the shrink's
+// delta sign is correct), and it puts the body where the folded sheet will
+// land it — the cell bottom is anchored to the sheet footer, so the content
+// appears at its final line instead of being wiped by the descending fold
+// edge and jumping at the landing.
+.hk-stepflow-body.hk-stepflow-enter-pending {
+  opacity: 0;
   pointer-events: none;
-  // LEAVE grammar: the slide keeps its accelerating ease-in; the FADE gets
-  // its own gentler curve so the old content eases out over several frames
-  // instead of dropping 0.40 -> 0.03 in one (same device report).
+  align-self: end;
+}
+
+// The leaving body: fades out and slides in its direction. The slide is
+// the classic accelerating ease; the fade gets its own gentler curve so
+// the old content eases out over several frames.
+.hk-stepflow-body.leaving {
+  pointer-events: none;
   transition:
     opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.6, 1),
     transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
-}
-
-// The parked new body of a shrink whose sheet will fold. Out of flow (the
-// stage keeps the OLD height through the fold) and offset by the span the
-// sheet published, so it already sits on the line the fold lands on; the
-// component releases both when the sheet reports that landing.
-.hk-stepflow-body.hk-stepflow-enter-tail {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
-// The staged new body: LAID OUT (so the flow owns the new height from
-// frame one — the sheet can grow through the exit phase) but invisible,
-// which is what guarantees the old and new bodies are never on screen
-// together. `visibility` (not display/removal) keeps it measurable and
-// keeps a re-swap from ever destroying its reveal.
-.hk-stepflow-body.hk-stepflow-enter-pending {
-  opacity: 0;
-  visibility: hidden;
 }
 
 // Direction-aware travel, on the LEAVING body only: forward exits LEFT,
@@ -135,8 +95,7 @@
   transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
-/* RTL: reading direction flips, so the exit mirrors — forward exits right
- * (house pattern: HkListTransition.scss [dir="rtl"] form). */
+/* RTL: reading direction flips, so the exit mirrors. */
 [dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to {
   transform: translateX(var(--hk-stepflow-travel, 24px));
 }
@@ -146,9 +105,7 @@
 }
 
 /* Reduced motion: bodies swap instantly. The component's duration probe
- * reads the zeroed duration and settles without staging, so this block
- * is the single switch for the whole choreography (the sheet morph
- * collapses the same way through its own duration tokens). */
+ * reads the zeroed duration and settles without staging. */
 @media (prefers-reduced-motion: reduce) {
   .hk-stepflow-body {
     transition: none;

@@ -410,7 +410,10 @@ export default defineComponent({
       disarmPhase(handle);
       handle.report?.disconnect();
       clearPin();
-      clearOffsets();
+      // Deliberately NOT clearOffsets(): the survivor is still on stage and
+      // its measured line must hold while the sheet sits at the height it
+      // grew to — clearing it teleported the outgoing body by the whole
+      // delta in a single frame (real-browser verification finding N1).
       return faded;
     }
 
@@ -464,7 +467,9 @@ export default defineComponent({
       const body = hostBody(flowRef.value);
       if (body) {
         const onSettle = (event: Event) => {
-          if (event.target === body) endSwap();
+          // Only THIS swap's park may be released: an interrupted sweep of
+          // an older swap publishes its landing on the same element.
+          if (event.target === body && swap === handle) endSwap();
         };
         body.addEventListener(SHEET_SWEEP_SETTLE_EVENT, onSettle);
         handle.settleEl = body;

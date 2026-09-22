@@ -89,24 +89,28 @@ describe("HkStepFlow simplified swap contract", () => {
     // the hosting sheet's content block glides with the fold edge (round
     // 14; vertical travel of the new body was the round-7 rejection).
     expect(tsx).toContain("useSheetRide");
-    expect(tsx).toContain("counterOnReveal: true");
+    expect(tsx).toContain("counter: true");
     expect(tsx).toContain("unregisterRide");
     // The reveal itself stays imperative and class-based — no style
     // writes join the component (see the no-styles contract below).
-    expect(tsx).toContain('classList.remove("hk-stepflow-enter-pending")');
+    expect(tsx).toContain('classList.remove("hk-stepflow-enter-hidden")');
   });
 
   it("fires the enter edge early so no blank body paints between phases", () => {
-    expect(tsx).toContain("ENTER_EDGE_SHARE = 0.8");
+    expect(tsx).toContain("ENTER_EDGE_SHARE = 0.65");
     expect(tsx).toContain("earlyTimer");
   });
 
-  it("stages the new body with opacity only — NO visibility flip", () => {
-    const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-pending");
-    expect(rule).toContain("opacity: 0");
-    expect(rule).toContain("pointer-events: none");
-    expect(rule).toContain("align-self: end");
-    expect(rule, "visibility re-rasters the layer — the flash source").not.toContain("visibility");
+  it("stages the new body in two independently-released layers — NO visibility flip", () => {
+    const anchor = blockFor(".hk-stepflow-body.hk-stepflow-enter-pending");
+    expect(anchor).toContain("pointer-events: none");
+    expect(anchor).toContain("align-self: end");
+    expect(anchor, "opacity must not ride the anchoring layer").not.toContain("opacity");
+    const hidden = blockFor(".hk-stepflow-body.hk-stepflow-enter-hidden");
+    expect(hidden).toContain("opacity: 0");
+    expect(hidden.trim(), "anchoring must not ride the opacity layer").toBe("opacity: 0;");
+    const declarations = scssRules.map((r) => r.body).join("\n");
+    expect(declarations, "visibility re-rasters the layer — the flash source").not.toContain("visibility");
   });
 
   it("keeps the leaving body's fade gentle while the slide accelerates", () => {

@@ -61,13 +61,16 @@ export interface SizeMorph {
 export interface RideEntry {
   /** The element whose translateY must track the fold edge. */
   el: HTMLElement;
-  /** Ride AGAINST a reveal: the element starts at its FINAL screen
-   *  position (translateY(-delta) cancelling the block ride) instead of
-   *  the pre-growth one. The stepflow's entering body uses this — its
-   *  content must never move while the fold sweeps past it (2026-09-22
-   *  round-7 rejection: new content following the rising edge reads as
-   *  vertical travel). A conceal always rides WITH the block. */
-  counterOnReveal?: boolean;
+  /** Hold the element at its FINAL viewport position while the block
+   *  rides: staged at the mirrored offset in BOTH directions (−delta on
+   *  a reveal, +delta on a conceal — the layout sits at the other end of
+   *  the sweep in each direction), gliding to zero as the sweep runs and
+   *  landing exactly at the re-pinned geometry. The stepflow's entering
+   *  body uses this: its content must never move as the fold sweeps
+   *  (round-7 rejection), and a one-sided counter rode the block AND
+   *  inherited the block's ride on shrinks — a 2×delta sink with a delta
+   *  jump at the landing (2026-09-23 R1 rig finding). */
+  counter?: boolean;
 }
 
 export interface SizeMorphOptions {
@@ -244,7 +247,7 @@ export function useSizeMorph(
    *  stage→flip→settle lifecycle and cleared atomically with the frame. */
   let rideEls: Array<{
     el: HTMLElement;
-    counterOnReveal?: boolean;
+    counter?: boolean;
     /** The element's OWN computed transition shorthand, captured at stage
      *  time: the ride's inline override must keep those legs live — the
      *  stepflow's entering body is often MID-FADE when a shrink stages,
@@ -496,7 +499,11 @@ export function useSizeMorph(
       const mirror = clipTransitionMirror(f, durationMs);
       for (const r of rideEls) {
         r.el.style.transition = riderTransitionCss(r.ownTransition, mirror);
-        r.el.style.transform = `translateY(${dir === "reveal" ? 0 : insetPx}px)`;
+        // Normal riders follow the edge (0 on a reveal, +delta down on a
+        // conceal); a counter glides to zero in both directions — its
+        // layout swap at the landing is exactly the ride it releases.
+        const target = r.counter ? 0 : dir === "reveal" ? 0 : insetPx;
+        r.el.style.transform = `translateY(${target}px)`;
       }
     }
   }
@@ -664,21 +671,27 @@ export function useSizeMorph(
     // offset (a reveal's content block starts at its OLD position,
     // cancelling the instant re-layout the new pin caused; a conceal
     // starts at zero) so the first painted frame of the morph is
-    // pixel-identical to the last one before it. The transform leg is
-    // staged at a zero clock (instant) while the element's OWN transition
-    // legs stay live; the promotion (will-change) rides along here on
-    // purpose — the warmup that follows is exactly the window the layer's
-    // raster needs before it moves.
+    // pixel-identical to the last one before it. A COUNTER stages at the
+    // mirrored offset in both directions — its layout sits at the far
+    // end of the sweep (final on a reveal, pre-collapse on a conceal),
+    // so ±delta lands it at its final viewport position either way. The
+    // transform leg is staged at a zero clock (instant) while the
+    // element's OWN transition legs stay live; the promotion (will-change)
+    // rides along here on purpose — the warmup that follows is exactly
+    // the window the layer's raster needs before it moves.
     if (reveal || conceal) {
       rideEls = (options.collectRide?.() ?? []).map((entry) => ({
         el: entry.el,
-        counterOnReveal: entry.counterOnReveal,
+        counter: entry.counter,
         ownTransition: ownTransitionOf(entry.el),
       }));
       for (const r of rideEls) {
         r.el.style.transition = riderTransitionCss(r.ownTransition, "transform 0s");
         r.el.style.willChange = "transform";
-        const startPx = reveal ? (r.counterOnReveal ? -delta : delta) : 0;
+        // The counter's stage is −delta in BOTH directions: on a reveal
+        // (delta>0) that is the pre-growth offset down; on a conceal
+        // (delta<0) it is the collapsed layout's missing height up.
+        const startPx = r.counter ? -delta : reveal ? delta : 0;
         r.el.style.transform = `translateY(${startPx}px)`;
       }
     }

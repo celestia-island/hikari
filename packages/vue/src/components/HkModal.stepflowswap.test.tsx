@@ -349,7 +349,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
               const node = el as HTMLElement | null;
               if (node && registry && !registered) {
                 registered = true;
-                registry.register({ el: node, counterOnReveal: true });
+                registry.register({ el: node, counter: true });
               }
             },
           }, "rider");
@@ -382,7 +382,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
 
     const frame = () => document.querySelector<HTMLElement>(".hk-modal-content")!;
     const header = () => document.querySelector<HTMLElement>(".hk-modal-header")!;
-    const inner = () => document.querySelector<HTMLElement>(".hk-modal-body-inner")!;
+    const bodyBlock = () => document.querySelector<HTMLElement>(".hk-modal-body")!;
     const riderEl = () => document.querySelector<HTMLElement>(".rider-el")!;
     expect(registered).toBe(true);
 
@@ -408,7 +408,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
       );
     await nextTick();
     expect(header().style.transform).toBe("translateY(200px)");
-    expect(inner().style.transform).toBe("translateY(200px)");
+    expect(bodyBlock().style.transform).toBe("translateY(200px)");
     expect(riderEl().style.transform).toBe("translateY(-200px)");
     expect(header().style.willChange).toBe("transform");
 
@@ -427,7 +427,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
     Object.defineProperty(ev, "propertyName", { value: "clip-path" });
     frame().dispatchEvent(ev);
     expect(header().style.transform).toBe("");
-    expect(inner().style.transform).toBe("");
+    expect(bodyBlock().style.transform).toBe("");
     expect(riderEl().style.transform).toBe("");
     expect(header().style.willChange).toBe("");
   });

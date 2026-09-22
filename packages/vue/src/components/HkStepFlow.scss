@@ -61,10 +61,20 @@
     opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// The staged new body: transparent, untouchable, and at the CELL BOTTOM
-// until the enter edge. Deliberately NO `visibility: hidden` — that property
-// changes the render tree and the phone GPU re-rasters the layer when it
-// flips, which was the flash the user kept seeing (round 12 directive).
+// The staged new body, staged in two independently-released layers:
+//
+// - `hk-stepflow-enter-pending` = END ANCHORING (align-self: end +
+//   pointer-events: none). It holds from mount until the RECYCLE patch —
+//   the one that collapses the cell — because a visible body without it
+//   stretches to the still-tall cell and jumps a full delta the frame
+//   its fade starts.
+// - `hk-stepflow-enter-hidden` = OPACITY 0. It comes off at the ENTER
+//   EDGE (0.65 of the exit phase, imperatively) so the fade starts in
+//   the same frame the old body's fading tail still covers the stage.
+//
+// Deliberately NO `visibility: hidden` anywhere — that property changes
+// the render tree and the phone GPU re-rasters the layer when it flips,
+// which was the flash the user kept seeing (round 12 directive).
 // `align-self: end` does two things with zero positioning tricks: it stops
 // the grid from STRETCHING the shorter entering body to the old cell height
 // (so its measured height is the true content height, and the shrink's
@@ -73,9 +83,12 @@
 // appears at its final line instead of being wiped by the descending fold
 // edge and jumping at the landing.
 .hk-stepflow-body.hk-stepflow-enter-pending {
-  opacity: 0;
   pointer-events: none;
   align-self: end;
+}
+
+.hk-stepflow-body.hk-stepflow-enter-hidden {
+  opacity: 0;
 }
 
 // The leaving body: fades out and slides in its direction. The slide is

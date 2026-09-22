@@ -790,7 +790,7 @@ describe("useSizeMorph fold riders", () => {
     const rider = document.createElement("div");
     const counter = document.createElement("div");
     const h = mountHarness(300, 300, {
-      collectRide: () => [{ el: rider }, { el: counter, counterOnReveal: true }],
+      collectRide: () => [{ el: rider }, { el: counter, counter: true }],
     });
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -826,8 +826,9 @@ describe("useSizeMorph fold riders", () => {
 
   it("rides a conceal downward with the block and lands atomically", async () => {
     const rider = document.createElement("div");
+    const counter = document.createElement("div");
     const h = mountHarness(360, 360, {
-      collectRide: () => [{ el: rider }],
+      collectRide: () => [{ el: rider }, { el: counter, counter: true }],
     });
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -835,17 +836,25 @@ describe("useSizeMorph fold riders", () => {
 
     h.setNatural(300);
     h.remeasure();
-    // Conceal start: zero offset (the block is where it was).
+    // Conceal start: the block rides from zero; the COUNTER stages at
+    // +|delta| — the collapsed layout sits that far above its final
+    // position, so the counter's viewport position is already final
+    // (R1 rig finding: a one-sided counter rode the block AND inherited
+    // it — a 2×delta sink with a delta jump at the landing).
     expect(rider.style.transform).toBe("translateY(0px)");
+    expect(counter.style.transform).toBe("translateY(60px)");
 
     await busFrames(2);
-    // The sweep folds the edge down and the rider glides WITH it.
+    // The sweep folds the edge down: the block glides WITH it, the
+    // counter glides to zero — static at final the whole way.
     expect(rider.style.transform).toBe("translateY(60px)");
+    expect(counter.style.transform).toBe("translateY(0px)");
 
     // Landing: the re-pin and the ride's release land in one task — the
     // layout drops delta while the delta offset disappears.
     fireTransitionEnd(h.frame, "clip-path");
     expect(rider.style.transform).toBe("");
+    expect(counter.style.transform).toBe("");
     expect(h.frame.style.height).toBe("300px");
     h.stop();
   });

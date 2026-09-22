@@ -210,19 +210,44 @@ export default defineComponent({
     let unmounted = false;
 
     // HkStepFlow swaps dispatch STEPFLOW_SWAP_EVENT (bubbling) from the
-    // flow root the moment the entering body owns the flow height. The
-    // morph's settle debounce is tuned for streaming bursts, but a step
-    // swap is one clean change whose sheet sweep must start on the SAME
-    // frames as the crossfade (2026-09-21 user spec, round 7) — so the
-    // event short-circuits straight into remeasure().
-    const onStepflowSwap = (): void => {
-      if (machine.phase.value === "open") morph.remeasure();
+    // flow root at the edge where the sheet must morph: the exit edge for
+    // a GROW (the new height is already in the flow, so the sheet finishes
+    // growing while the old body leaves) and the enter edge for a SHRINK
+    // (the flow held its old height until the old body finished playing).
+    // The morph's settle debounce is tuned for streaming bursts; a step
+    // swap is one clean change whose sweep must land INSIDE its 0.15s
+    // phase (2026-09-22 user directive, round 10) — so the event
+    // short-circuits straight into remeasure() and overrides the sheet's
+    // own sweep duration for this one morph (the stylesheet default stays
+    // the 0.3s family standard for every other morph). The override is
+    // cleared on the same duration+grace watchdog the sweep itself uses.
+    let morphDurationTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearMorphDuration = (): void => {
+      if (morphDurationTimer !== null) {
+        clearTimeout(morphDurationTimer);
+        morphDurationTimer = null;
+      }
+      contentRef.value?.style.removeProperty("--hk-modal-morph-duration");
+    };
+    const onStepflowSwap = (event: Event): void => {
+      if (machine.phase.value !== "open") return;
+      const frame = contentRef.value;
+      const ms = (event as CustomEvent<{ durationMs?: number }>).detail?.durationMs;
+      if (frame && typeof ms === "number" && ms > 0) {
+        frame.style.setProperty("--hk-modal-morph-duration", `${ms}ms`);
+        morph.remeasure();
+        if (morphDurationTimer !== null) clearTimeout(morphDurationTimer);
+        morphDurationTimer = setTimeout(clearMorphDuration, ms + 350);
+      } else {
+        morph.remeasure();
+      }
     };
     onMounted(() => {
       bodyRef.value?.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
     });
     onBeforeUnmount(() => {
       bodyRef.value?.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+      clearMorphDuration();
     });
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);

@@ -13,7 +13,6 @@ import type { TimelineCollapse, TimelineStep } from "./HkTimeline";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 import {
   reportTransition,
-  scheduleFrame,
   type AnimationHandle,
 } from "../runtime/animationBus";
 
@@ -40,23 +39,37 @@ interface BodyEntry {
   /** The step key this body renders. */
   key: string;
   /** `active` bodies sit in the flow; a `leaving` body is out of flow
-   *  (absolutely positioned) for the slide's duration. */
+   *  (absolutely positioned) for the exit phase. */
   phase: "active" | "leaving";
 }
 
-/** A swap in flight: the leaving body slides out while the entering one
- *  slides in. All MOTION is stylesheet-owned (the `data-direction`
- *  attribute plus the `hk-stepflow-enter-from`/`hk-stepflow-leave-to` classes); script only
- *  schedules the staging frame on the shared animation bus and books
- *  the cleanup. */
+/** A swap in flight. Two PHASES, each half of `--hk-stepflow-duration`:
+ *  the exit phase slides the old body out on its own, the enter phase
+ *  fades the new one in place — the two bodies are never visible at the
+ *  same time (2026-09-22 user directive, round 10: the simultaneous
+ *  cross-slide read as a doubled ghost of overlapping text).
+ *
+ *  All MOTION stays stylesheet-owned (the `data-direction` attribute plus
+ *  the `hk-stepflow-leave-to` / `hk-stepflow-enter-pending` classes);
+ *  script only schedules the phases and books the cleanup. The entering
+ *  body is MOUNTED from frame one but invisible through the exit phase
+ *  (`visibility: hidden`), so the flow owns the NEW height immediately
+ *  with no mount-time raster gap at the phase boundary — the empty
+ *  mid-frame that made the retired `out-in` slide flash. */
 interface RunningSwap {
   leavingId: number;
   enteringId: number;
-  /** The staging frame handle (disconnected when a re-swap pre-empts). */
-  frame: AnimationHandle | null;
-  /** Bus bookkeeping for the CSS sweep, held for its duration. */
+  /** Which phase is playing. */
+  phase: "exit" | "enter";
+  /** Body height before the swap — the sheet morph's "from" reference. */
+  oldH: number;
+  /** Resolved phase duration (ms): half the total swap window. */
+  phaseMs: number;
+  /** Height delta (new − old); negative means the sheet must shrink. */
+  delta: number;
+  /** Bus bookkeeping for the CSS window, held for both phases. */
   report: AnimationHandle | null;
-  /** Watchdog: settle even if transitionend never arrives. */
+  /** Watchdog: advance the phase even if transitionend never arrives. */
   timer: ReturnType<typeof setTimeout> | null;
   listenEl: HTMLElement | null;
   onEnded: ((event: TransitionEvent) => void) | null;
@@ -65,24 +78,26 @@ interface RunningSwap {
 export const STEPFLOW_SWAP_EVENT = "hk-stepflow-swap";
 
 /** Extra grace on top of the resolved duration before the watchdog
- *  settles the swap without a transitionend — the same grammar as the
+ *  settles a phase without a transitionend — the same grammar as the
  *  sheet morph's sweep watchdog. */
 const SWAP_WATCHDOG_GRACE_MS = 350;
 
 /**
  * Resolve the body's configured transition duration in milliseconds.
- * A zero result means the swap settles INSTANTLY: reduced-motion users
- * (the stylesheet zeroes the transition) and stylesheet-less runtimes
- * (test environments) both get a deterministic single-body DOM with no
- * timers to outlive and no transitionend to wait for.
+ * The stylesheet sizes one PHASE (`calc(duration / 2)`), so this reads
+ * the phase length directly. A zero result means the swap settles
+ * INSTANTLY: reduced-motion users (the stylesheet zeroes the transition)
+ * and stylesheet-less runtimes (test environments) both get a
+ * deterministic single-body DOM with no timers to outlive and no
+ * transitionend to wait for.
  */
 function bodyTransitionMs(el: HTMLElement | null): number {
   if (!el) return 0;
   const view = el.ownerDocument?.defaultView;
   if (!view) return 0;
   const raw = view.getComputedStyle(el).transitionDuration ?? "";
-  // Multiple entries ("0.3s, 0.3s") share one duration here — the first
-  // is representative; "0.3s" and "300ms" forms both parse.
+  // Multiple entries ("0.15s, 0.15s") share one duration here — the first
+  // is representative; "0.15s" and "150ms" forms both parse.
   const first = raw.split(",")[0]?.trim() ?? "";
   const match = /^([0-9]*\.?[0-9]+)(ms|s)$/.exec(first);
   if (!match) return 0;
@@ -97,25 +112,35 @@ function bodyTransitionMs(el: HTMLElement | null): number {
  * component only translates `modelValue` changes into body swaps and
  * echoes timeline selections upward.
  *
- * The swap choreography (2026-09-22 user directive: back to the classic
- * direction-aware slide, re-based on pure CSS with the animation context
- * driving state) — old and new bodies slide SIMULTANEOUSLY for the whole
- * `--hk-stepflow-duration` (default 0.3s): forward advances exit left /
- * enter from the right, back mirrors it. The entering body owns the
- * flow's height from frame one (so the hosting sheet's morph targets the
- * NEW geometry immediately) while the leaving body overlays it out of
- * flow; travel distance, direction and easings all live in the
- * stylesheet. State flips are scheduled on the shared animation bus:
- * one staging frame after the DOM patch commits the start states, both
- * bodies' classes flip in the same patch so leave and enter start on
- * the same style recalculation — the simultaneous grammar is what keeps
- * the retired `out-in` slide's empty mid-frame (and its raster flash)
- * from coming back.
+ * The swap choreography (2026-09-22 user directive, round 10):
  *
- * Each swap also dispatches `hk-stepflow-swap` (bubbles, detail
- * `{ delta }`) from the flow root — the hosting modal listens for it and
- * re-measures immediately, skipping the morph's settle debounce so the
- * sheet's clip sweep starts on the same frame as the slide.
+ * - EXIT phase (first half of `--hk-stepflow-duration`, 0.15s of the
+ *   0.3s family standard): only the OLD body is visible; it slides out
+ *   (forward exits left, back exits right) and fades. The new body is
+ *   already mounted and owns the flow's height, but is held invisible
+ *   (`hk-stepflow-enter-pending`), so old and new can never overlap.
+ * - ENTER phase (second half): the old body is dropped and the new one
+ *   fades in PLACE — no travel, matching the directive.
+ *
+ * Height is scheduled per phase and handed to the hosting sheet through
+ * `hk-stepflow-swap` (bubbles, detail `{ delta, durationMs, phase }`),
+ * whose listener re-measures immediately and morphs its clip over one
+ * phase:
+ *
+ * - GROW (new body taller): the flow owns the new height from frame one,
+ *   so the event fires at the exit edge and the sheet finishes growing
+ *   through the FIRST phase while the old body is still leaving.
+ * - SHRINK (new body shorter): the flow's old height is pinned
+ *   (`min-height`) through the exit phase so the sheet does not fold
+ *   under a body that is still playing; at the enter edge the pin lifts
+ *   and the event fires, so the sheet shrinks through the SECOND phase
+ *   while the new body appears at its final geometry — it never rides
+ *   the descending edge.
+ *
+ * Cleanup grammar per phase: the acting body's own transitionend
+ * (target-guarded) plus a duration+grace watchdog, so a lost event can
+ * never strand a phase. Every swap also books the whole window on the
+ * shared animation context (`reportTransition`).
  */
 export default defineComponent({
   name: "HkStepFlow",
@@ -184,27 +209,102 @@ export default defineComponent({
     const bodies = ref<BodyEntry[]>([
       { id: mountSeq++, key: props.modelValue, phase: "active" },
     ]);
-    // `swap` is a plain let; `swapStage` carries the reactivity. Every
-    // mutation of `swap` is paired with either a `swapStage` or a
-    // `bodies` write, so renders always re-read the pair (see the watch
-    // and endSwap below).
+    // `swap` is a plain let; `swapPhase` carries the reactivity. Every
+    // mutation of `swap` is paired with a `swapPhase` or a `bodies`
+    // write, so renders always re-read the pair (see the watch and
+    // endSwap below).
     let swap: RunningSwap | null = null;
-    const swapStage = ref<"idle" | "staged" | "running">("idle");
+    const swapPhase = ref<"idle" | "exit" | "enter">("idle");
     const flowRef = ref<HTMLDivElement | null>(null);
+
+    /** Pin the flow to the pre-swap height (shrink exit phase). */
+    function pinOldHeight(px: number): void {
+      const el = flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-bodies");
+      if (el && px > 0) el.style.minHeight = `${px}px`;
+    }
+
+    function clearPin(): void {
+      const el = flowRef.value?.querySelector<HTMLElement>(".hk-stepflow-bodies");
+      if (el) el.style.minHeight = "";
+    }
+
+    function disarmPhase(handle: RunningSwap): void {
+      if (handle.timer !== null) clearTimeout(handle.timer);
+      handle.timer = null;
+      if (handle.listenEl && handle.onEnded) {
+        handle.listenEl.removeEventListener("transitionend", handle.onEnded);
+      }
+      handle.listenEl = null;
+      handle.onEnded = null;
+    }
+
+    /** Arm a phase's closer: the acting body's own transitionend plus the
+     *  duration+grace watchdog, both routed to the same `advance`. */
+    function armPhase(
+      handle: RunningSwap,
+      el: HTMLElement,
+      advance: () => void,
+    ): void {
+      const onEnded = (event: TransitionEvent) => {
+        // transitionend bubbles — only the acting body's own property
+        // transitions may advance the swap.
+        if (event.target === el) advance();
+      };
+      el.addEventListener("transitionend", onEnded);
+      handle.listenEl = el;
+      handle.onEnded = onEnded;
+      handle.timer = setTimeout(advance, handle.phaseMs + SWAP_WATCHDOG_GRACE_MS);
+    }
+
+    /** Shared by both phases: fire the sheet passthrough for this edge. */
+    function announce(handle: RunningSwap): void {
+      flowRef.value?.dispatchEvent(
+        new CustomEvent(STEPFLOW_SWAP_EVENT, {
+          bubbles: true,
+          detail: {
+            delta: handle.delta,
+            durationMs: handle.phaseMs,
+            phase: handle.phase,
+          },
+        }),
+      );
+    }
 
     function endSwap(): void {
       if (!swap) return;
       const handle = swap;
       swap = null;
-      swapStage.value = "idle";
-      handle.frame?.disconnect();
-      if (handle.timer !== null) clearTimeout(handle.timer);
+      swapPhase.value = "idle";
+      disarmPhase(handle);
       handle.report?.disconnect();
-      if (handle.listenEl && handle.onEnded) {
-        handle.listenEl.removeEventListener("transitionend", handle.onEnded);
-      }
+      clearPin();
       const id = handle.leavingId;
       bodies.value = bodies.value.filter((b) => b.id !== id);
+    }
+
+    /** Exit → enter edge: drop the old body, reveal the new one, and (for a
+     *  shrink) lift the height pin so the sheet folds through this phase. */
+    function startEnterPhase(): void {
+      const handle = swap;
+      if (!handle || handle.phase !== "exit") return;
+      disarmPhase(handle);
+      handle.phase = "enter";
+      swapPhase.value = "enter";
+      bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
+      const entering = flowRef.value?.querySelector<HTMLElement>(
+        ".hk-stepflow-body.active",
+      );
+      if (handle.delta < 0) {
+        // Shrink: the sheet morphs NOW (the second phase), with the new
+        // body already at its final geometry.
+        clearPin();
+        announce(handle);
+      }
+      if (!entering) {
+        endSwap();
+        return;
+      }
+      armPhase(handle, entering, endSwap);
     }
 
     // Sticky-header whitespace strategy (2026-09-14): the timeline is the
@@ -223,11 +323,10 @@ export default defineComponent({
       () => props.modelValue,
       async (next, prev) => {
         if (next === prev) return;
-        // A swap while the previous one is still sliding: drop the old
-        // leaving body outright and let the new swap own the stage. (If
-        // the previous entering body had not visibly settled yet it now
-        // becomes the leaving one and exits from its mid-flight state —
-        // one frame of re-staging, matching the classic grammar.)
+        // A swap while the previous one is still playing: tear it down and
+        // let the new swap own the stage. A still-hidden entering body is
+        // promoted to plain active first (endSwap drops the pending class
+        // through swapPhase), so it never loses its reveal.
         endSwap();
         const leaving = bodies.value.find((b) => b.phase === "active");
         if (!leaving) return;
@@ -239,9 +338,9 @@ export default defineComponent({
             ".hk-stepflow-body.active",
           ) ?? null;
         const oldH = leavingEl?.offsetHeight ?? 0;
-        const durationMs = bodyTransitionMs(leavingEl);
+        const phaseMs = bodyTransitionMs(leavingEl);
 
-        if (durationMs <= 0) {
+        if (phaseMs <= 0) {
           // Instant settle: no transition is configured (reduced motion,
           // or a stylesheet-less runtime such as a test environment) —
           // swap the bodies atomically so the DOM never carries two
@@ -255,7 +354,7 @@ export default defineComponent({
           flowRef.value?.dispatchEvent(
             new CustomEvent(STEPFLOW_SWAP_EVENT, {
               bubbles: true,
-              detail: { delta },
+              detail: { delta, durationMs: 0, phase: "instant" },
             }),
           );
           return;
@@ -267,13 +366,16 @@ export default defineComponent({
           key: next,
           phase: "active",
         };
-        // Register the swap BEFORE the reactive mutations so the staged
-        // render already sees which entry is entering (hk-stepflow-enter-from) —
-        // `swap` itself is not reactive.
+        // Register the swap BEFORE the reactive mutations so the exit
+        // render already knows which entry is leaving (leave-to) and which
+        // one is pending (invisible) — `swap` itself is not reactive.
         const handle: RunningSwap = {
           leavingId: leaving.id,
           enteringId: entering.id,
-          frame: null,
+          phase: "exit",
+          oldH,
+          phaseMs,
+          delta: 0,
           report: null,
           timer: null,
           listenEl: null,
@@ -281,7 +383,7 @@ export default defineComponent({
         };
         swap = handle;
         bodies.value = [...bodies.value, entering];
-        swapStage.value = "staged";
+        swapPhase.value = "exit";
         await nextTick();
         // Preempted while the DOM patched? The newer swap owns the stage —
         // this continuation must not measure, dispatch or arm anything.
@@ -295,43 +397,25 @@ export default defineComponent({
         if (!newEl || !goneEl) {
           // The flow went away mid-swap (unmount) — restore one body.
           swap = null;
+          swapPhase.value = "idle";
+          clearPin();
           leaving.phase = "active";
           bodies.value = [leaving];
-          swapStage.value = "idle";
           return;
         }
-        const delta = newEl.offsetHeight - oldH;
-        // Tell the hosting sheet to morph NOW (skip the settle debounce)
-        // so its clip sweep runs on the same frames as this slide.
-        flowRef.value?.dispatchEvent(
-          new CustomEvent(STEPFLOW_SWAP_EVENT, {
-            bubbles: true,
-            detail: { delta },
-          }),
-        );
-        handle.report = reportTransition(durationMs);
-        handle.listenEl = goneEl;
-        // Staging frame on the shared bus: commit the staged start states
-        // (the forced layout read), then flip BOTH bodies' classes in one
-        // patch — the leave and enter transitions start on the very same
-        // style recalculation.
-        handle.frame = scheduleFrame(() => {
-          if (swap !== handle) return;
-          handle.frame = null;
-          void flowRef.value?.offsetHeight;
-          const onEnded = (event: TransitionEvent) => {
-            // transitionend bubbles — only the leaving body's own
-            // property transitions may settle the swap.
-            if (event.target === goneEl) endSwap();
-          };
-          goneEl.addEventListener("transitionend", onEnded);
-          handle.onEnded = onEnded;
-          handle.timer = setTimeout(
-            endSwap,
-            durationMs + SWAP_WATCHDOG_GRACE_MS,
-          );
-          swapStage.value = "running";
-        });
+        handle.delta = newEl.offsetHeight - oldH;
+        if (handle.delta >= 0) {
+          // Grow: the flow already owns the new height, so the sheet can
+          // finish growing through THIS phase — the old body slides out
+          // without the frame moving under it.
+          announce(handle);
+        } else {
+          // Shrink: hold the old height while the old body plays; the
+          // sheet folds in the second phase (startEnterPhase).
+          pinOldHeight(oldH);
+        }
+        handle.report = reportTransition(phaseMs * 2);
+        armPhase(handle, goneEl, startEnterPhase);
       },
       { flush: "post" },
     );
@@ -369,10 +453,10 @@ export default defineComponent({
                 class={[
                   "hk-stepflow-body",
                   entry.phase,
-                  entry.id === swap?.enteringId && swapStage.value === "staged"
-                    ? "hk-stepflow-enter-from"
+                  entry.id === swap?.enteringId && swapPhase.value === "exit"
+                    ? "hk-stepflow-enter-pending"
                     : null,
-                  entry.id === swap?.leavingId && swapStage.value === "running"
+                  entry.id === swap?.leavingId
                     ? "hk-stepflow-leave-to"
                     : null,
                 ]}

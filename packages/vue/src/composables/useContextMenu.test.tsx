@@ -385,6 +385,22 @@ describe("useContextMenu + HkContextMenuProvider", () => {
     unbind();
   });
 
+  it("keeps real right-clicks working inside the suppression window (only long-press synthesis is swallowed)", () => {
+    const target = document.createElement("div");
+    target.setAttribute("data-bind-target", "");
+    document.body.appendChild(target);
+    const { opens, api } = mockApi();
+    const unbind = bindContextMenu(target, api, (point) => {
+      return { x: point.x, y: point.y, items: [{ key: "a", label: "A" }] };
+    });
+    // Two genuine pointer right-clicks, ~0ms apart: BOTH open (a
+    // desktop user re-aiming fast must not lose the second menu).
+    target.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    target.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    expect(opens).toHaveLength(2);
+    unbind();
+  });
+
   it("lets a null build defer to outer bindings without preventing", () => {
     const target = document.createElement("div");
     target.setAttribute("data-bind-target", "");

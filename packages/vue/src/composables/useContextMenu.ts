@@ -110,6 +110,12 @@ export function bindContextMenu(
   let holdTimer: ReturnType<typeof setTimeout> | null = null;
   let holdOrigin: { x: number; y: number } | null = null;
   let lastOpenedAt = 0;
+  /** The kind that last opened a menu — the suppression window only
+   *  guards the LONG-PRESS path (platforms synthesize a native
+   *  contextmenu right after ours). A desktop user right-clicking twice
+   *  within the window is two REAL gestures: the second one must open
+   *  its own menu, never be swallowed. */
+  let lastOpenKind: ContextTriggerPoint["kind"] | null = null;
 
   const cancelHold = () => {
     if (holdTimer !== null) {
@@ -123,6 +129,7 @@ export function bindContextMenu(
     const request = build(point);
     if (!request) return false;
     lastOpenedAt = performance.now();
+    lastOpenKind = point.kind;
     api.open(request);
     return true;
   };
@@ -130,7 +137,10 @@ export function bindContextMenu(
   const onContextMenu = (event: MouseEvent) => {
     // Our own long-press just opened the menu; a synthesized native
     // event for the same gesture must not re-open (or replace) it.
-    if (performance.now() - lastOpenedAt < CONTEXT_SUPPRESS_MS) {
+    if (
+      lastOpenKind === "longpress"
+      && performance.now() - lastOpenedAt < CONTEXT_SUPPRESS_MS
+    ) {
       event.preventDefault();
       return;
     }

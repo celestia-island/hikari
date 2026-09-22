@@ -21,6 +21,50 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "HkStepFlow.scss"), "utf-8");
 const tsx = readFileSync(join(here, "HkStepFlow.tsx"), "utf-8");
 
+/** Top-level stylesheet rules as (selector-list, body) pairs. Nested
+ *  blocks (e.g. the reduced-motion media query) come out as one rule
+ *  whose body carries the inner braces — the direction rules this
+ *  contract binds are all top-level. */
+function extractRules(source: string): { selector: string; body: string }[] {
+  const rules: { selector: string; body: string }[] = [];
+  let i = 0;
+  while (i < source.length) {
+    const open = source.indexOf("{", i);
+    if (open === -1) break;
+    const selector = source
+      .slice(i, open)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "")
+      .trim();
+    let depth = 1;
+    let j = open + 1;
+    while (j < source.length && depth > 0) {
+      if (source[j] === "{") depth += 1;
+      else if (source[j] === "}") depth -= 1;
+      j += 1;
+    }
+    rules.push({ selector, body: source.slice(open + 1, j - 1) });
+    i = j;
+  }
+  return rules;
+}
+
+const scssRules = extractRules(src);
+
+/** The declaration body of the ONE rule whose selector list carries the
+ *  exact selector — zero hits means the selector vanished, two means the
+ *  contract's premise broke; both are red. */
+function blockFor(selector: string): string {
+  const hits = scssRules.filter((r) =>
+    r.selector.split(",").map((s) => s.trim()).includes(selector),
+  );
+  expect(hits, `exactly one rule carries ${selector}`).toHaveLength(1);
+  return hits[0]!.body;
+}
+
+const TRAVEL_POSITIVE = "translateX(var(--hk-stepflow-travel, 24px))";
+const TRAVEL_NEGATIVE = "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))";
+
 describe("HkStepFlow slide contract", () => {
   it("pins the shared duration and travel tokens", () => {
     const root = src.match(/\.hk-step-flow\s*\{[^}]*\}/)![0]!;
@@ -49,27 +93,42 @@ describe("HkStepFlow slide contract", () => {
     expect(rule).toContain("var(--hk-stepflow-duration, 0.3s)");
   });
 
-  it("drives the travel direction purely from data-direction attributes", () => {
-    // Forward advances exit left / enter from the right; back mirrors.
-    expect(src).toContain(
-      '.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-enter-from',
-    );
-    expect(src).toContain(
-      '.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to',
-    );
-    expect(src).toContain(
-      '.hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-enter-from',
-    );
-    expect(src).toContain(
-      '.hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-leave-to',
-    );
-    expect(src).toContain("translateX(var(--hk-stepflow-travel, 24px))");
-    expect(src).toContain("translateX(calc(-1 * var(--hk-stepflow-travel, 24px))");
+  it("binds each direction's travel sign to its exact selector", () => {
+    // The classic vocabulary, sign-bound (2026-09-22 R1 teeth gap: pinning
+    // selector strings plus the EXISTENCE of both translateX forms stayed
+    // green under a sign inversion — each selector must bind its sign):
+    // forward = enter from the RIGHT (+travel), exit LEFT (−travel);
+    // back mirrors; RTL flips the whole mapping.
+    const body = ".hk-stepflow-body";
+    const stage = ".hk-stepflow-bodies";
+    const ltr: Array<[string, string]> = [
+      [`${stage}[data-direction="forward"] ${body}.hk-stepflow-enter-from`, TRAVEL_POSITIVE],
+      [`${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, TRAVEL_NEGATIVE],
+      [`${stage}[data-direction="back"] ${body}.hk-stepflow-enter-from`, TRAVEL_NEGATIVE],
+      [`${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, TRAVEL_POSITIVE],
+    ];
+    const rtl: Array<[string, string]> = [
+      [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-enter-from`, TRAVEL_NEGATIVE],
+      [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, TRAVEL_POSITIVE],
+      [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-enter-from`, TRAVEL_POSITIVE],
+      [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, TRAVEL_NEGATIVE],
+    ];
+    for (const [selector, sign] of ltr) {
+      const block = blockFor(selector);
+      expect(block, `${selector} must carry ${sign}`).toContain(sign);
+      const other = sign === TRAVEL_POSITIVE ? TRAVEL_NEGATIVE : TRAVEL_POSITIVE;
+      expect(block, `${selector} must not carry ${other}`).not.toContain(other);
+      expect(block).toContain("opacity: 0");
+    }
+    // RTL blocks are transform-only overrides over the LTR grammar.
+    for (const [selector, sign] of rtl) {
+      const block = blockFor(selector);
+      expect(block, `${selector} must carry ${sign}`).toContain(sign);
+      const other = sign === TRAVEL_POSITIVE ? TRAVEL_NEGATIVE : TRAVEL_POSITIVE;
+      expect(block, `${selector} must not carry ${other}`).not.toContain(other);
+    }
     // The stage keeps its relative positioning for the overlay grammar.
     expect(src).toMatch(/\.hk-stepflow-bodies\s*\{[^}]*position:\s*relative/);
-    // RTL mirrors the slide (house pattern).
-    expect(src).toContain('[dir="rtl"] .hk-stepflow-bodies[data-direction="forward"]');
-    expect(src).toContain('[dir="rtl"] .hk-stepflow-bodies[data-direction="back"]');
     // The component renders the direction attribute the CSS keys off.
     expect(tsx).toContain("data-direction={dir}");
   });

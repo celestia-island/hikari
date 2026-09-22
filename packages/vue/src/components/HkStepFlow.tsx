@@ -71,6 +71,10 @@ interface RunningSwap {
   /** True while the sheet's fold is parking the new body: the release then
    *  follows the sweep's own landing instead of the body's fade. */
   tail: boolean;
+  /** Identity of the sweep this park belongs to: an interrupting dance
+   *  publishes the settle of the sweep IT tore down, so only a settle that
+   *  names this sweep may release the park. */
+  sweep: number | null;
   /** Bus bookkeeping for the CSS window, held for both phases. */
   report: AnimationHandle | null;
   /** Watchdog: advance the phase even if transitionend never arrives. */
@@ -360,7 +364,7 @@ export default defineComponent({
       );
     }
 
-    function endSwap(): void {
+    function endSwap(immediate = false): void {
       if (!swap) return;
       const handle = swap;
       swap = null;
@@ -368,12 +372,21 @@ export default defineComponent({
       tailPhase.value = false;
       disarmPhase(handle);
       handle.report?.disconnect();
-      clearPin();
       const id = handle.leavingId;
       bodies.value = bodies.value.filter((b) => b.id !== id);
-      // A parked body carries a measured offset; once the sheet has landed
-      // its in-flow position is the correct one again.
-      clearOffsets();
+      // Let go of the held geometry only once the layout is back: a parked
+      // body is out of flow until Vue flushes the class change, and a
+      // remeasure inside that window reads the collapsed height — it folded
+      // the sheet 300px too far after an interrupting dance (real-engine
+      // finding). On teardown there is nothing left to measure, so the
+      // unmount path clears immediately.
+      const release = (): void => {
+        if (swap) return;
+        clearPin();
+        clearOffsets();
+      };
+      if (immediate) release();
+      else void nextTick(release);
     }
 
     /** Pre-empt the running swap for a new one, keeping whatever the user
@@ -424,9 +437,10 @@ export default defineComponent({
      *  pin comes off first) and read back the fold span it stages. Zero
      *  means the sheet cannot fold (capped, or no fold at all), in which
      *  case the new body is not parked. */
-    function stageShrinkFold(handle: RunningSwap): number {
+    function stageShrinkFold(handle: RunningSwap): { span: number; sweep: number | null } {
       const body = hostBody(flowRef.value);
       let span = 0;
+      let sweep: number | null = null;
       if (body) {
         const onStage = (event: Event) => {
           const info = (
@@ -434,6 +448,7 @@ export default defineComponent({
               direction?: string;
               from?: number;
               to?: number;
+              sweep?: number;
             }>
           ).detail;
           if (
@@ -442,17 +457,18 @@ export default defineComponent({
             typeof info.to === "number"
           ) {
             span = Math.max(0, Math.round(info.from - info.to));
+            sweep = typeof info.sweep === "number" ? info.sweep : null;
           }
         };
         body.addEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
         clearPin();
         announce(handle);
         body.removeEventListener(SHEET_SWEEP_STAGE_EVENT, onStage);
-        return span;
+        return { span, sweep };
       }
       clearPin();
       announce(handle);
-      return 0;
+      return { span: 0, sweep: null };
     }
 
     /** Shrink enter edge, step 2: hold the stage at its old height and park
@@ -462,17 +478,31 @@ export default defineComponent({
       handle: RunningSwap,
       entering: HTMLElement,
       span: number,
+      sweep: number | null,
     ): void {
       pinOldHeight(handle.oldH);
       entering.style.top = `${span}px`;
       tailPhase.value = true;
       handle.tail = true;
+      handle.sweep = sweep;
       const body = hostBody(flowRef.value);
       if (body) {
         const onSettle = (event: Event) => {
-          // Only THIS swap's park may be released: an interrupted sweep of
-          // an older swap publishes its landing on the same element.
-          if (event.target === body && swap === handle) endSwap();
+          // Only THIS swap's park, and only the sweep it parked against, may
+          // be released: every interrupting dance publishes the settle of
+          // the sweep it tore down, which arrives here too.
+          if (event.target !== body || swap !== handle) return;
+          const info = (
+            event as CustomEvent<{ sweep?: number }>
+          ).detail;
+          if (
+            handle.sweep !== null &&
+            typeof info?.sweep === "number" &&
+            info.sweep !== handle.sweep
+          ) {
+            return;
+          }
+          endSwap();
         };
         body.addEventListener(SHEET_SWEEP_SETTLE_EVENT, onSettle);
         handle.settleEl = body;
@@ -501,9 +531,9 @@ export default defineComponent({
         return;
       }
       if (handle.delta < 0) {
-        const span = stageShrinkFold(handle);
+        const { span, sweep } = stageShrinkFold(handle);
         if (span > 0) {
-          parkTail(handle, entering, span);
+          parkTail(handle, entering, span, sweep);
           return;
         }
       }
@@ -585,6 +615,7 @@ export default defineComponent({
           phaseMs,
           delta: 0,
           tail: false,
+          sweep: null,
           report: null,
           timer: null,
           frame: null,
@@ -641,9 +672,9 @@ export default defineComponent({
           handle.phase = "enter";
           let parked = false;
           if (handle.delta < 0) {
-            const span = stageShrinkFold(handle);
+            const { span, sweep } = stageShrinkFold(handle);
             if (span > 0) {
-              parkTail(handle, newEl, span);
+              parkTail(handle, newEl, span, sweep);
               parked = true;
             }
           } else {
@@ -687,7 +718,7 @@ export default defineComponent({
     });
 
     onBeforeUnmount(() => {
-      endSwap();
+      endSwap(true);
     });
 
     return () => {

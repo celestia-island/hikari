@@ -79,13 +79,23 @@ export interface SizeMorphOptions {
     direction: "reveal" | "conceal";
     from: number;
     to: number;
+    /** Identity of this sweep, echoed by onSweepSettle: a consumer that
+     *  parks geometry for a fold must only release on ITS OWN sweep, since
+     *  an interrupting dance publishes the interrupted sweep's settle. */
+    sweep: number;
   }) => void;
   /** Clip-mode sweep landed: the frame is back at its rest geometry
    *  (transitionend, its own watchdog, or an interrupting dance). Content
    *  holding geometry for the sweep — e.g. a parked body waiting for the
    *  fold — must release it here; releasing on its own clock instead left
    *  the frame clipped for up to 334ms (same finding). */
-  onSweepSettle?: () => void;
+  onSweepSettle?: (info: {
+    /** The sweep this settle belongs to (see onSweepStage.sweep): every
+     *  teardown — its own end, its watchdog, or an interrupting dance —
+     *  publishes it, so a consumer holding geometry for one sweep can tell
+     *  its own from another's. */
+    sweep: number;
+  }) => void;
 }
 
 /**
@@ -195,6 +205,9 @@ export function useSizeMorph(
    *  at open and KEEPING it means step morphs never cross a layer
    *  boundary at all. */
   let residentWill = false;
+  /** Identity of the sweep currently staged/folding, echoed to consumers. */
+  let sweepSeq = 0;
+  let activeSweep = 0;
 
   /** Land a conceal atomically: pin the target height and clear the clip
    *  in one transition-disabled task. Called from the sweep's end, from
@@ -245,15 +258,20 @@ export function useSizeMorph(
         revealEl.style.clipPath = "";
       }
     }
-    const landed = revealEl !== null;
+    const hadSweep = revealEl !== null;
+    const sweptId = activeSweep;
     revealEl = null;
     revealEnd = null;
     revealDir = null;
     concealTo = null;
     // The frame is at rest again (sweep end, its watchdog, or an
     // interrupting dance): content that parked geometry for the fold
-    // releases it here, not on its own clock.
-    if (landed) options.onSweepSettle?.();
+    // releases it here, not on its own clock. The identity and the
+    // interruption flag let a consumer tell its own landing from another
+    // dance's teardown.
+    if (hadSweep) {
+      options.onSweepSettle?.({ sweep: sweptId });
+    }
   }
 
   /** Drop the resident layer promotion (hold / release paths). */
@@ -498,10 +516,12 @@ export function useSizeMorph(
       // Publish the sweep's real span (see onSweepStage): this is the only
       // place where the cap is already accounted for, so a host content
       // choreography can park against the landing instead of a guess.
+      activeSweep = ++sweepSeq;
       options.onSweepStage?.({
         direction: revealDir,
         from: pinned,
         to: next,
+        sweep: activeSweep,
       });
       const dir = revealDir;
       const insetPx = Math.abs(delta);

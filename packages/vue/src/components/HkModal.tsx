@@ -218,9 +218,12 @@ export default defineComponent({
           new CustomEvent(SHEET_SWEEP_STAGE_EVENT, { bubbles: true, detail: info }),
         );
       },
-      onSweepSettle: () => {
+      onSweepSettle: (info) => {
         bodyRef.value?.dispatchEvent(
-          new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, { bubbles: true }),
+          new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, {
+            bubbles: true,
+            detail: info,
+          }),
         );
       },
     });

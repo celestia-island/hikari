@@ -51,7 +51,7 @@ function mountStepFlow(options: {
    *  host shape whose sheet publishes sweep spans. */
   sheetHost?: boolean;
   /** Span the simulated sheet publishes when it stages a fold. */
-  sweepSpan?: { from: number; to: number } | null;
+  sweepSpan?: { from: number; to: number; sweep?: number } | null;
 } = {}): StepFlowHarness {
   const container = document.createElement("div");
   if (options.sheetHost) {
@@ -68,7 +68,12 @@ function mountStepFlow(options: {
         if ((e as CustomEvent).detail?.phase !== "enter") return;
         body.dispatchEvent(
           new CustomEvent(SHEET_SWEEP_STAGE_EVENT, {
-            detail: { direction: "conceal", from: span.from, to: span.to },
+            detail: {
+              direction: "conceal",
+              from: span.from,
+              to: span.to,
+              sweep: span.sweep ?? 1,
+            },
           }),
         );
       });
@@ -881,6 +886,55 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
     expect(active?.style.top).toBe("120px");
+  });
+
+  it("releases a park only on the sweep it parked against, and only after the layout is back", async () => {
+    // Phase 4 of the real-engine teardown chain: an interrupting dance
+    // publishes the settle of the sweep IT tore down, so a park must ignore
+    // a foreign sweep's settle — and when its own arrives, the held pin and
+    // offset are released a flush later, once the parked body is back in
+    // flow (releasing them while it is still absolute let a remeasure read
+    // the collapsed height and fold the sheet 300px too far).
+    stubMotion();
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100, sweep: 7 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    const body = t.container.closest(".hk-modal-body")!;
+    const parked = () =>
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail") ?? false;
+    expect(parked()).toBe(true);
+    expect(bodies?.style.minHeight).toBe("220px");
+
+    // A settle from ANOTHER sweep (the dance it interrupted): ignored.
+    body.dispatchEvent(
+      new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, {
+        detail: { sweep: 6 },
+      }),
+    );
+    await flushSwap();
+    expect(parked()).toBe(true);
+    expect(bodies?.style.minHeight).toBe("220px");
+
+    // Its own sweep's settle: released, and the geometry goes a flush later.
+    body.dispatchEvent(
+      new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, {
+        detail: { sweep: 7 },
+      }),
+    );
+    expect(bodies?.style.minHeight).toBe("220px");
+    await flushSwap();
+    expect(parked()).toBe(false);
+    expect(bodies?.style.minHeight).toBe("");
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

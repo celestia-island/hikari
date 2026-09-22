@@ -277,7 +277,9 @@ describe("HkModal publishes its own fold for the step flow", () => {
     content = 300;
     rig.announceSwap({ delta: -200, durationMs: 150, phase: "enter" });
     await nextTick();
-    expect(stages).toEqual([{ direction: "conceal", from: 596, to: 396 }]);
+    expect(stages).toEqual([
+      { direction: "conceal", from: 596, to: 396, sweep: expect.any(Number) },
+    ]);
 
     // …and the landing is published when the sweep finishes.
     for (let i = 0; i < 4; i += 1) {

@@ -68,6 +68,34 @@ export interface SizeMorphOptions {
    *  459→697px mid-unfold). The caller flushes the deferred growth with
    *  an explicit remeasure() at the open edge. */
   deferRemeasure?: () => boolean;
+  /** Clip-mode sweep staged: reports the sweep's direction and the pinned
+   *  heights it runs between, at the moment the start state is committed
+   *  (before the warmup). Hosts forward this to their content so it can
+   *  position against the LANDING geometry instead of guessing: the cap
+   *  makes `from − to` the only correct answer, and only the morph knows
+   *  it (2026-09-22 stepflow verification finding — a content-side guess
+   *  of the delta cut 276px off a capped sheet's outgoing step). */
+  onSweepStage?: (info: {
+    direction: "reveal" | "conceal";
+    from: number;
+    to: number;
+    /** Identity of this sweep, echoed by onSweepSettle: a consumer that
+     *  parks geometry for a fold must only release on ITS OWN sweep, since
+     *  an interrupting dance publishes the interrupted sweep's settle. */
+    sweep: number;
+  }) => void;
+  /** Clip-mode sweep landed: the frame is back at its rest geometry
+   *  (transitionend, its own watchdog, or an interrupting dance). Content
+   *  holding geometry for the sweep — e.g. a parked body waiting for the
+   *  fold — must release it here; releasing on its own clock instead left
+   *  the frame clipped for up to 334ms (same finding). */
+  onSweepSettle?: (info: {
+    /** The sweep this settle belongs to (see onSweepStage.sweep): every
+     *  teardown — its own end, its watchdog, or an interrupting dance —
+     *  publishes it, so a consumer holding geometry for one sweep can tell
+     *  its own from another's. */
+    sweep: number;
+  }) => void;
 }
 
 /**
@@ -177,6 +205,13 @@ export function useSizeMorph(
    *  at open and KEEPING it means step morphs never cross a layer
    *  boundary at all. */
   let residentWill = false;
+  /** Identity of the sweep currently staged/folding, echoed to consumers. */
+  let sweepSeq = 0;
+  let activeSweep = 0;
+  /** A background (observer-driven) measurement arrived while a sweep was in
+   *  flight: it is flushed once that sweep lands, because measuring through
+   *  a live sweep tears it down and republishes its teardown as a landing. */
+  let pendingMeasure = false;
 
   /** Land a conceal atomically: pin the target height and clear the clip
    *  in one transition-disabled task. Called from the sweep's end, from
@@ -227,10 +262,29 @@ export function useSizeMorph(
         revealEl.style.clipPath = "";
       }
     }
+    const hadSweep = revealEl !== null;
+    const sweptId = activeSweep;
     revealEl = null;
     revealEnd = null;
     revealDir = null;
     concealTo = null;
+    // The frame is at rest again (sweep end, its watchdog, or an
+    // interrupting dance): content that parked geometry for the fold
+    // releases it here, not on its own clock. The identity and the
+    // interruption flag let a consumer tell its own landing from another
+    // dance's teardown.
+    if (hadSweep) {
+      options.onSweepSettle?.({ sweep: sweptId });
+    }
+    if (pendingMeasure) {
+      pendingMeasure = false;
+      // The sweep is out of the way: flush the measurement it deferred. It
+      // stays a BACKGROUND measurement — one bus frame later an explicit
+      // announce may already have staged the successor fold, and an
+      // interrupting flush would tear that down and replay it (real-engine
+      // finding, the last intermittent race in this handshake).
+      scheduleFrame(() => remeasure(false));
+    }
   }
 
   /** Drop the resident layer promotion (hold / release paths). */
@@ -372,8 +426,17 @@ export function useSizeMorph(
       : CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
   }
 
-  function remeasure(): void {
+  function remeasure(interrupt = true): void {
     if (!armed) return;
+    if (!interrupt && revealEl !== null) {
+      // A background measurement must never tear down a live sweep: doing so
+      // republished the sweep's own teardown as its LANDING, so a consumer
+      // parking geometry for that fold released it ~2ms in and the sheet
+      // undid and replayed the fold (real-engine finding). The change is
+      // measured as soon as the sweep lands instead.
+      pendingMeasure = true;
+      return;
+    }
     const f = frame.value;
     const c = content.value;
     if (!f || !c) return;
@@ -472,6 +535,16 @@ export function useSizeMorph(
       revealEl = f;
       revealDir = reveal ? "reveal" : "conceal";
       concealTo = conceal ? next : null;
+      // Publish the sweep's real span (see onSweepStage): this is the only
+      // place where the cap is already accounted for, so a host content
+      // choreography can park against the landing instead of a guess.
+      activeSweep = ++sweepSeq;
+      options.onSweepStage?.({
+        direction: revealDir,
+        from: pinned,
+        to: next,
+        sweep: activeSweep,
+      });
       const dir = revealDir;
       const insetPx = Math.abs(delta);
       let framesLeft = REVEAL_WARMUP_FRAMES;
@@ -532,7 +605,7 @@ export function useSizeMorph(
       // even parked, so this hop is safe in every motion state.
       raf = scheduleFrame(() => {
         raf = null;
-        remeasure();
+        remeasure(false);
       });
     }, 150);
   }
@@ -579,6 +652,7 @@ export function useSizeMorph(
     // cycle carries.
     chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
     stopReveal();
+    pendingMeasure = false;
     // The leave fold no longer clips; drop the resident promotion with
     // it (start() re-applies on the next open).
     clearResidentWill();

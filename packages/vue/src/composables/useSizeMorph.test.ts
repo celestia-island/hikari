@@ -313,6 +313,85 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.willChange).toBe("");
   });
 
+  it("never tears a live sweep down for a background measurement", async () => {
+    // A debounced observer measurement arriving mid-sweep used to call
+    // stopReveal(), which republished that sweep's teardown as its LANDING —
+    // a consumer parking geometry for the fold released it ~2ms in and the
+    // sheet undid and replayed the fold (real-engine finding). The
+    // background measurement is deferred until the sweep lands instead.
+    const settled: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepSettle: (info) => settled.push(info),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // Staged synchronously: the sweep is in flight.
+    expect(h.frame.style.clipPath).toBe("inset(60px 0 0 0 round 0px 0px 0px 0px)");
+
+    // A content change arrives while it is still sweeping.
+    h.setContentNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    // The live sweep survived it…
+    expect(settled).toEqual([]);
+
+    // …its own landing still reports, and the deferred measurement then runs.
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(settled).toHaveLength(1);
+    expect(h.frame.style.clipPath).toBe("");
+  });
+
+  it("keeps a deferred flush from tearing down the successor sweep", async () => {
+    // The flush of a deferred measurement must stay a background measurement:
+    // if it interrupts, a fold staged by an explicit announce in the frame
+    // before it is torn down and replayed (real-engine race, N7).
+    const settled: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepSettle: (info) => settled.push(info),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // A background change arrives mid-sweep and is deferred…
+    h.setContentNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(settled).toEqual([]);
+    // …the sweep lands, which schedules its flush…
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(settled).toHaveLength(1);
+    // …and an explicit announce stages the successor before that flush runs.
+    h.setNatural(420);
+    h.remeasure();
+    await settle();
+    // The flush left the successor alone: an interrupting flush would tear
+    // it down and publish a second settle for it.
+    expect(settled).toHaveLength(1);
+    h.stop();
+  });
+
+  it("mints a fresh sweep identity per staged sweep", async () => {
+    // The park's scoping is only meaningful if every sweep has its own id: a
+    // constant would let an interrupting teardown pass as the park's landing
+    // (mutation-reachable gap found by the audit).
+    const staged: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepStage: (info) => staged.push({ sweep: info.sweep }),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    fireTransitionEnd(h.frame, "clip-path");
+    h.setNatural(320);
+    h.remeasure();
+    expect(staged.map((s) => s.sweep)).toEqual([1, 2]);
+    h.stop();
+  });
+
   it("holds the staged clip through a two-frame warmup before the sweep starts", async () => {
     const h = mountHarness(300);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");

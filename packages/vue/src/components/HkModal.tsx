@@ -13,7 +13,11 @@ import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph } from "../composables/useSizeMorph";
 
-import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+import {
+  SHEET_SWEEP_SETTLE_EVENT,
+  SHEET_SWEEP_STAGE_EVENT,
+  STEPFLOW_SWAP_EVENT,
+} from "./HkStepFlow";
 import HButton from "./HkButton";
 import HFab from "./HkFab";
 import HSpinner from "./HkSpinner";
@@ -205,24 +209,70 @@ export default defineComponent({
       deferRemeasure: () =>
         machine.phase.value === "openingFrom" ||
         machine.phase.value === "openingTo",
+      // Republish the morph's real sweep span and its landing on the body
+      // element (bubbling), so content choreography can park against the
+      // landing geometry and release exactly when it happens instead of
+      // guessing the cap and the warmup (2026-09-22 verification finding).
+      onSweepStage: (info) => {
+        bodyRef.value?.dispatchEvent(
+          new CustomEvent(SHEET_SWEEP_STAGE_EVENT, { bubbles: true, detail: info }),
+        );
+      },
+      onSweepSettle: (info) => {
+        bodyRef.value?.dispatchEvent(
+          new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, {
+            bubbles: true,
+            detail: info,
+          }),
+        );
+      },
     });
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
     // HkStepFlow swaps dispatch STEPFLOW_SWAP_EVENT (bubbling) from the
-    // flow root the moment the entering body owns the flow height. The
-    // morph's settle debounce is tuned for streaming bursts, but a step
-    // swap is one clean change whose sheet sweep must start on the SAME
-    // frames as the crossfade (2026-09-21 user spec, round 7) — so the
-    // event short-circuits straight into remeasure().
-    const onStepflowSwap = (): void => {
-      if (machine.phase.value === "open") morph.remeasure();
+    // flow root at the edge where the sheet must morph: the exit edge for
+    // a GROW (the new height is already in the flow, so the sheet finishes
+    // growing while the old body leaves) and the enter edge for a SHRINK
+    // (the flow held its old height until the old body finished playing).
+    // The morph's settle debounce is tuned for streaming bursts; a step
+    // swap is one clean change whose sweep must land INSIDE its 0.15s
+    // phase (2026-09-22 user directive, round 10) — so the event
+    // short-circuits straight into remeasure() and overrides the sheet's
+    // own sweep duration for this one morph (the stylesheet default stays
+    // the 0.3s family standard for every other morph). The override is
+    // cleared on the same duration+grace watchdog the sweep itself uses.
+    let morphDurationTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearMorphDuration = (): void => {
+      if (morphDurationTimer !== null) {
+        clearTimeout(morphDurationTimer);
+        morphDurationTimer = null;
+      }
+      contentRef.value?.style.removeProperty("--hk-modal-morph-duration");
     };
-    onMounted(() => {
-      bodyRef.value?.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
-    });
+    const onStepflowSwap = (event: Event): void => {
+      if (machine.phase.value !== "open") {
+        // A swap announced while the surface is closing/opening: drop any
+        // override a previous morph left behind instead of letting it ride
+        // into the next open (it is otherwise only cleared by its own
+        // ms+350 timer).
+        clearMorphDuration();
+        return;
+      }
+      const frame = contentRef.value;
+      const ms = (event as CustomEvent<{ durationMs?: number }>).detail?.durationMs;
+      if (frame && typeof ms === "number" && ms > 0) {
+        frame.style.setProperty("--hk-modal-morph-duration", `${ms}ms`);
+        morph.remeasure();
+        if (morphDurationTimer !== null) clearTimeout(morphDurationTimer);
+        morphDurationTimer = setTimeout(clearMorphDuration, ms + 350);
+      } else {
+        morph.remeasure();
+      }
+    };
     onBeforeUnmount(() => {
       bodyRef.value?.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+      clearMorphDuration();
     });
 
     const overlayZ = computed(() => handle.value?.zIndex ?? 0);
@@ -429,6 +479,26 @@ export default defineComponent({
         // cleared its clocks and walked the phase to `closed`).
       },
     });
+
+    // The swap listener must follow the ELEMENT, not the component
+    // lifecycle: the render returns null until `machine.mounted` flips, so
+    // an onMounted-time attach silently missed for every
+    // mount-closed-then-open consumer — i.e. every chest wizard
+    // (2026-09-22 R1 verification finding: this wiring was dead at
+    // runtime, which is why the sheet kept morphing on the observer's
+    // 150ms debounce and the 0.3s stylesheet default). Post-flush on the
+    // mount flag instead: the listener lands on the real node and comes
+    // off with it.
+    watch(
+      machine.mounted,
+      (isMounted) => {
+        const el = bodyRef.value;
+        if (!el) return;
+        if (isMounted) el.addEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+        else el.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+      },
+      { flush: "post", immediate: true },
+    );
 
     // --- Windowed mode ---
 

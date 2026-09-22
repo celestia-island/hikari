@@ -1,19 +1,29 @@
-// Direction-aware sliding step bodies for HkStepFlow.
+// Two-phase step bodies for HkStepFlow.
 //
-// A swap renders BOTH bodies for the whole duration: the entering one in
-// the flow (so the container's height — and the hosting sheet's morph —
-// are the NEW geometry from frame one) and the leaving one absolutely
-// positioned over it. This stylesheet owns ALL of the motion: direction,
-// travel distance and easings are driven by the `data-direction`
-// attribute and the staged `hk-stepflow-enter-from` / `hk-stepflow-leave-to` classes; the
-// component only toggles those classes on a shared-animation-bus frame
-// so the leave and the enter transitions start on the same style
-// recalculation (2026-09-22 user directive: back to the classic slide,
-// CSS as the base, animation context scheduling, zero black flashes).
+// A swap runs TWO phases, each half of `--hk-stepflow-duration` (0.15s of
+// the 0.3s family standard):
+//
+//   EXIT  — the OLD body alone is visible: `hk-stepflow-leave-to` slides
+//           it out (forward exits left, back exits right) and fades it,
+//           with the sharp ease-in;
+//   ENTER — the old body is gone and the NEW one fades in PLACE (no
+//           travel) with the expressive ease-out.
+//
+// The new body is mounted from frame one with `hk-stepflow-enter-pending`
+// (invisible, but laid out so the flow owns the new height immediately),
+// which is what makes the two bodies structurally unable to overlap —
+// the doubled-ghost flash of the simultaneous cross-slide (2026-09-22
+// user directive, round 10).
+//
+// This stylesheet owns ALL of the motion: direction, travel distance and
+// easings are driven by the `data-direction` attribute and those two
+// classes; the component only flips them and schedules the phases. The
+// sheet's own morph is phase-matched by the hosting modal, which reads
+// the swap event's `durationMs`.
 //
 // Duration and travel resolve from local custom properties so consumers
 // can tune every phase at once; the 0.3s default matches the phone
-// sheet's morph duration so the sweep and the slide land together.
+// sheet's morph window so the sweep and the slide land together.
 
 .hk-step-flow {
   --hk-stepflow-duration: 0.3s;
@@ -52,60 +62,83 @@
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-// The swap stage: entering bodies own the flow's height; the leaving one
-// overlays it, out of flow and pointer-transparent for the slide.
+// The swap stage: the entering body owns the flow's height; the leaving
+// one overlays it, out of flow and pointer-transparent for the exit.
 .hk-stepflow-bodies {
   position: relative;
 }
 
 .hk-stepflow-body {
-  // Enter grammar (the base rule is what an ENTERING body computes once
-  // its staged `hk-stepflow-enter-from` class lifts): the classic expressive ease-out.
+  // ENTER grammar (what a body computes once its `hk-stepflow-enter-pending`
+  // class lifts at the phase-2 edge): a plain fade in place — the new
+  // content never travels (2026-09-22 user directive).
   transition:
-    opacity var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hk-stepflow-body.leaving {
   position: absolute;
+  // Default anchor: the stage's TOP. The component measures how far the
+  // stage travelled during the swap patch and writes that as an inline
+  // `top`, which is the only correct answer across host shapes — a
+  // bottom-docked sheet whose box grew, a capped box that could not grow,
+  // and an in-flow stage all differ, and a CSS anchor can only encode one
+  // of them (a guessed bottom anchor cut 276px off a capped sheet's
+  // outgoing step).
   top: 0;
   left: 0;
   right: 0;
   pointer-events: none;
-  // Leave grammar: the sharp ease-in counterpart. Read when the staged
-  // `hk-stepflow-leave-to` class lands, so the exit keeps its own easing.
+  // LEAVE grammar: the sharp ease-in counterpart, applied for the whole
+  // exit phase (the class lands on the same patch that flips the body
+  // into `leaving`, so the slide starts from the already-painted state).
   transition:
-    opacity var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.5, 0, 0.75, 0),
-    transform var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
+    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0),
+    transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
 }
 
-// Direction-aware travel (the classic slide vocabulary): forward advances
-// exit LEFT and enter from the RIGHT; back mirrors. `hk-stepflow-enter-from` is the
-// entering body's staged start state, `hk-stepflow-leave-to` the leaving body's end
-// state — both removed/applied together one bus frame after staging.
-.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-enter-from,
+// The parked new body of a shrink whose sheet will fold. Out of flow (the
+// stage keeps the OLD height through the fold) and offset by the span the
+// sheet published, so it already sits on the line the fold lands on; the
+// component releases both when the sheet reports that landing.
+.hk-stepflow-body.hk-stepflow-enter-tail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+// The staged new body: LAID OUT (so the flow owns the new height from
+// frame one — the sheet can grow through the exit phase) but invisible,
+// which is what guarantees the old and new bodies are never on screen
+// together. `visibility` (not display/removal) keeps it measurable and
+// keeps a re-swap from ever destroying its reveal.
+.hk-stepflow-body.hk-stepflow-enter-pending {
+  opacity: 0;
+  visibility: hidden;
+}
+
+// Direction-aware travel, on the LEAVING body only: forward exits LEFT,
+// back exits RIGHT (the classic vocabulary). The entering body appears in
+// place, so it carries no direction rule at all.
+.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to {
+  opacity: 0;
+  transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
+}
+
 .hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-leave-to {
   opacity: 0;
   transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
-.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to,
-.hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-enter-from {
-  opacity: 0;
-  transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
+/* RTL: reading direction flips, so the exit mirrors — forward exits right
+ * (house pattern: HkListTransition.scss [dir="rtl"] form). */
+[dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to {
+  transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
-/* RTL: reading direction flips, so the slide mirrors — forward enters
- * from the left and exits right (house pattern: HkListTransition.scss
- * [dir="rtl"] form). */
-[dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-enter-from,
 [dir="rtl"] .hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-leave-to {
   transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
-}
-
-[dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to,
-[dir="rtl"] .hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-enter-from {
-  transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
 /* Reduced motion: bodies swap instantly. The component's duration probe

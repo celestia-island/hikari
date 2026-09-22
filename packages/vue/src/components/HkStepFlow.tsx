@@ -12,6 +12,7 @@ import HkTimeline from "./HkTimeline";
 import type { TimelineCollapse, TimelineStep } from "./HkTimeline";
 import { SCROLL_HOST_CLASS } from "./HkScrollPin";
 import { reportTransition, type AnimationHandle } from "../runtime/animationBus";
+import { useSheetRide } from "../runtime/sheetRide";
 
 // Sticky header mode rides the shared scroll-pin contract (class + data
 // attributes on the timeline root); the pin stylesheet ships those
@@ -46,7 +47,19 @@ interface BodyEntry {
  *  is recycled at the phase boundary — no visibility flips, no absolute
  *  positioning, no height pins, no measured offsets (2026-09-22 user
  *  directive, round 12: those all changed the render tree mid-animation
- *  and read as a flash on the phone GPU). */
+ *  and read as a flash on the phone GPU). The enter EDGE fires early, at
+ *  ENTER_EDGE_SHARE of the exit phase, and flips the opacity-hiding
+ *  class off the entering element imperatively — the fade starts while
+ *  the old body's fading tail still covers the stage, and the old node
+ *  is recycled RECYCLE_SHARE in, in the same patch that drops the
+ *  entering body's end anchoring (round 14: the strictly sequential edge
+ *  painted a ~33ms blank body plus the old negative-delay pop — the
+ *  "the model list always flickers once" report). Inside a fold-riding
+ *  sheet the entering body also registers
+ *  as a COUNTER rider: the sheet's content block glides with the fold
+ *  edge, and the new content must not glide with it (round-7 rejection)
+ *  — it fades in at its final position while the block settles around
+ *  it. */
 interface RunningSwap {
   leavingId: number;
   enteringId: number;
@@ -61,6 +74,12 @@ interface RunningSwap {
   report: AnimationHandle | null;
   /** Watchdog: advance the phase even if transitionend never arrives. */
   timer: ReturnType<typeof setTimeout> | null;
+  /** Overlap edge: advance to the enter phase before the exit transition
+   *  fully ends, so the new fade starts while the old tail still covers
+   *  the stage (round 14 — the sequential edge painted a blank window). */
+  earlyTimer: ReturnType<typeof setTimeout> | null;
+  /** Unregister the entering body's fold-ride (see useSheetRide). */
+  unregisterRide: (() => void) | null;
   listenEl: HTMLElement | null;
   onEnded: ((event: TransitionEvent) => void) | null;
 }
@@ -70,6 +89,22 @@ export const STEPFLOW_SWAP_EVENT = "hk-stepflow-swap";
 /** Extra grace on top of the resolved duration before the watchdog
  *  settles a phase without a transitionend. */
 const SWAP_WATCHDOG_GRACE_MS = 350;
+
+/** Where in the exit phase the enter edge fires (0–1). 0.65 starts the
+ *  entering fade while the outgoing body is still ~0.35 — the old tail
+ *  then covers the new fade's sub-threshold ramp, so the sequential
+ *  grammar never paints a readable-empty frame (the round-14 R1 rig
+ *  measured a 17–34ms sub-perceptual valley at 0.8; at 0.65 the crossing
+ *  lands at the perceptual threshold itself). The two bodies are never
+ *  both READABLE — the newcomer stays under ~0.15 through the overlap. */
+const ENTER_EDGE_SHARE = 0.65;
+
+/** Where in the exit phase the old node is finally recycled (0–1): late
+ *  enough that the leaving fade is at ~0.07 (its removal is
+ *  imperceptible), early enough to stay inside the same overall window.
+ *  The recycle patch also drops the entering body's end anchoring, so
+ *  the cell's collapse and the stretch land as one flush. */
+const RECYCLE_SHARE = 0.9;
 
 /** Fade level at or below which an outgoing body counts as gone. */
 const FADED_OUT = 0.05;
@@ -116,12 +151,22 @@ function opacityOf(el: HTMLElement | null): number {
  *   as the swap starts for a grow, and keeps the old geometry until the
  *   old node is recycled for a shrink, with no pin.
  * - EXIT phase (first half): the old body slides out and fades; the new
- *   body is mounted but transparent (`hk-stepflow-enter-pending` =
- *   `opacity: 0` + `pointer-events: none`, deliberately NOT
- *   `visibility: hidden` — that flip re-rasters the layer on the phone
- *   GPU, which was the flash the user kept seeing).
- * - ENTER phase (second half): the old node is recycled; the new body
- *   fades in place.
+ *   body is mounted staged — end-anchored and hidden
+ *   (`hk-stepflow-enter-pending` + `hk-stepflow-enter-hidden`,
+ *   deliberately NOT `visibility: hidden` — that flip re-rasters the
+ *   layer on the phone GPU, which was the flash the user kept seeing).
+ * - ENTER phase (second half): the enter EDGE (65% of the exit phase,
+ *   round 14, 2026-09-23) imperatively releases the entering body's
+ *   opacity while the old tail is still ~0.35 — the old covers the new
+ *   fade's sub-threshold ramp, so no readable-empty frame ever paints
+ *   between the phases. The old node is recycled at 90% (≈0.07 opacity,
+ *   imperceptible) in the same patch that drops the end anchoring, so
+ *   the cell's collapse and the stretch land as one flush.
+ * - Inside a fold-riding sheet (HkModal's clip morph), the entering body
+ *   registers as a COUNTER rider (see runtime/sheetRide): the sheet's
+ *   content block glides with the fold edge — the title is never sliced
+ *   — while the new content fades in at its FINAL position (vertical
+ *   travel of the new body was the round-7 rejection).
  * - The height handoff to the hosting sheet rides `hk-stepflow-swap`
  *   (bubbles, detail `{ delta, durationMs, phase }`), whose listener
  *   re-measures immediately and morphs over one phase.
@@ -175,7 +220,15 @@ export default defineComponent({
     ]);
     let swap: RunningSwap | null = null;
     const swapPhase = ref<"idle" | "exit" | "enter">("idle");
+    /** True once the leaving body was recycled and the entering body's
+     *  end anchoring dropped with it (see recycleLeaving) — the render
+     *  keys the anchoring class off it so the vdom agrees with the
+     *  imperative edge flip. */
+    const swapRecycled = ref(false);
     const flowRef = ref<HTMLDivElement | null>(null);
+    // The hosting sheet's fold-ride registry (HkModal provides it); null
+    // standalone or on desktop-style hosts — no registration, no ride.
+    const sheetRide = useSheetRide();
 
     /** The element rendering one body entry. */
     function elFor(id: number | undefined): HTMLElement | null {
@@ -190,6 +243,8 @@ export default defineComponent({
     function disarmPhase(handle: RunningSwap): void {
       if (handle.timer !== null) clearTimeout(handle.timer);
       handle.timer = null;
+      if (handle.earlyTimer !== null) clearTimeout(handle.earlyTimer);
+      handle.earlyTimer = null;
       if (handle.listenEl && handle.onEnded) {
         handle.listenEl.removeEventListener("transitionend", handle.onEnded);
       }
@@ -197,15 +252,21 @@ export default defineComponent({
       handle.onEnded = null;
     }
 
-    /** Arm a phase's closer: the acting body's own transitionend plus the
-     *  duration+grace watchdog, both routed to the same `advance`. */
+    /** Arm a phase's closer: the acting body's own opacity transitionend
+     *  plus the duration+grace watchdog, both routed to the same
+     *  `advance`. The property guard matters once the body rides a sheet
+     *  fold: the ride's transform leg lives on the SAME element and its
+     *  transitionend (the fold's landing) must not settle the swap while
+     *  the fade is still running. */
     function armPhase(
       handle: RunningSwap,
       el: HTMLElement,
       advance: () => void,
     ): void {
       const onEnded = (event: TransitionEvent) => {
-        if (event.target === el) advance();
+        if (event.target === el && event.propertyName === "opacity") {
+          advance();
+        }
       };
       el.addEventListener("transitionend", onEnded);
       handle.listenEl = el;
@@ -234,6 +295,8 @@ export default defineComponent({
       swapPhase.value = "idle";
       disarmPhase(handle);
       handle.report?.disconnect();
+      handle.unregisterRide?.();
+      handle.unregisterRide = null;
       const id = handle.leavingId;
       bodies.value = bodies.value.filter((b) => b.id !== id);
     }
@@ -251,6 +314,8 @@ export default defineComponent({
       }
       const goneEl = elFor(handle.leavingId);
       const faded = opacityOf(goneEl) <= FADED_OUT;
+      handle.unregisterRide?.();
+      handle.unregisterRide = null;
       bodies.value = bodies.value.filter((b) => b.id !== handle.enteringId);
       const survivor = bodies.value.find((b) => b.id === handle.leavingId);
       if (!survivor) {
@@ -268,31 +333,70 @@ export default defineComponent({
       return faded;
     }
 
-    /** Exit → enter edge: recycle the old node and reveal the new one. */
+    /** Exit → enter edge: release the new body's fade and schedule the
+     *  old node's recycling. The edge fires at ENTER_EDGE_SHARE of the
+     *  exit phase (early timer) or at the leaving body's transitionend,
+     *  whichever comes first — the phase guard below makes double
+     *  arrival a no-op. The old node is NOT recycled here: its fading
+     *  tail stays on stage covering the new fade's first sub-threshold
+     *  frames, and the recycle lands RECYCLE_SHARE later (still inside
+     *  the leaving fade, at ~0.07 opacity) in the same patch that drops
+     *  the entering body's end anchoring — so the cell's collapse and
+     *  the stretch never paint as separate frames. */
     function startEnterPhase(): void {
       const handle = swap;
       if (!handle || handle.phase !== "exit") return;
       disarmPhase(handle);
       handle.phase = "enter";
       swapPhase.value = "enter";
-      bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
       const entering = elFor(handle.enteringId);
       if (!entering) {
+        bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
         endSwap();
         return;
       }
-      // A shrink hands the sheet its new geometry at THIS edge. The
-      // announce runs AFTER the flush — the old node was recycled in the
-      // filter above, and the sheet must measure the COLLAPSED cell (the
-      // announcing-before-flush variant read the old content and skipped
-      // the fold, leaving it to the observer's 150ms debounce, which
-      // wiped the fading-in content and jumped at the landing).
+      // Release the entering body's OPACITY imperatively — the fade
+      // starts at the next style flush instead of after Vue's async
+      // patch, so the recycle→patch→fade pipeline never paints an empty
+      // body (round 14 — that gap, on top of the old negative delay, was
+      // the "the new list always flickers once" report). Only the
+      // opacity-hiding class comes off; the END ANCHORING
+      // (`hk-stepflow-enter-pending`) must survive until the cell
+      // collapses — without it the body would stretch to the still-tall
+      // cell the instant it becomes visible and jump a full delta.
+      entering.classList.remove("hk-stepflow-enter-hidden");
+      // Recycle the old node (and drop the anchoring with it) one share
+      // later — see recycleLeaving. Both shares are positions on the
+      // PHASE clock (swap start), so the gap between the edges is their
+      // difference.
+      handle.earlyTimer = setTimeout(
+        () => recycleLeaving(handle),
+        Math.max(
+          0,
+          Math.round(handle.phaseMs * (RECYCLE_SHARE - ENTER_EDGE_SHARE)),
+        ),
+      );
+      armPhase(handle, entering, endSwap);
+    }
+
+    /** Recycle the leaving body at the scheduled moment: the same patch
+     *  removes the old node AND the entering body's end anchoring, so the
+     *  cell's collapse and the stretch land in one flush. A shrink hands
+     *  the sheet its new geometry HERE (after the flush — the sheet must
+     *  measure the COLLAPSED cell; announcing before the flush read the
+     *  old content and skipped the fold, leaving it to the observer's
+     *  150ms debounce, which wiped the fading-in content and jumped at
+     *  the landing). */
+    function recycleLeaving(handle: RunningSwap): void {
+      if (swap !== handle || handle.phase !== "enter") return;
+      handle.earlyTimer = null;
+      swapRecycled.value = true;
+      bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
       if (handle.delta < 0) {
         void nextTick(() => {
           if (swap === handle) announce(handle);
         });
       }
-      armPhase(handle, entering, endSwap);
     }
 
     // Sticky-header whitespace strategy (2026-09-14): see HkScrollPin.
@@ -339,12 +443,15 @@ export default defineComponent({
           delta: 0,
           report: null,
           timer: null,
+          earlyTimer: null,
+          unregisterRide: null,
           listenEl: null,
           onEnded: null,
         };
         swap = handle;
         bodies.value = [...bodies.value, entering];
         swapPhase.value = "exit";
+        swapRecycled.value = false;
         await nextTick();
         if (swap !== handle) return;
         const newEl = elFor(entering.id);
@@ -357,12 +464,22 @@ export default defineComponent({
           return;
         }
         handle.delta = newEl.offsetHeight - oldH;
+        // Fold-ride (round 14): inside a sheet whose fold rides its
+        // content, the entering body registers as a COUNTER rider so it
+        // holds its final position while the block glides — BEFORE the
+        // grow announce below, because the sheet's remeasure collects
+        // riders synchronously as it stages the sweep.
+        handle.unregisterRide = sheetRide
+          ? sheetRide.register({ el: newEl, counter: true })
+          : null;
         if (skipExit) {
           // The faded body is gone: this edge IS the enter edge. Tell the
           // sheet and let the new body fade in from this moment.
           bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
           handle.phase = "enter";
           swapPhase.value = "enter";
+          swapRecycled.value = true;
+          newEl.classList.remove("hk-stepflow-enter-hidden");
           announce(handle);
           handle.report = reportTransition(phaseMs);
           handle.timer = setTimeout(endSwap, handle.phaseMs + SWAP_WATCHDOG_GRACE_MS);
@@ -374,6 +491,14 @@ export default defineComponent({
           announce(handle);
         }
         handle.report = reportTransition(phaseMs * 2);
+        // Overlap edge: fire the enter phase at ENTER_EDGE_SHARE of the
+        // exit duration — the outgoing body is still visibly fading, and
+        // its tail covers the new fade's sub-threshold ramp so no blank
+        // body ever paints between the phases.
+        handle.earlyTimer = setTimeout(
+          () => startEnterPhase(),
+          Math.max(0, Math.round(handle.phaseMs * ENTER_EDGE_SHARE)),
+        );
         armPhase(handle, goneEl, startEnterPhase);
       },
       { flush: "post" },
@@ -413,8 +538,17 @@ export default defineComponent({
                 class={[
                   "hk-stepflow-body",
                   entry.phase,
-                  entry.id === swap?.enteringId && swapPhase.value === "exit"
+                  // End anchoring: from mount until the RECYCLE patch
+                  // collapses the cell (see recycleLeaving) — never
+                  // dropped by the fade release, or the body would
+                  // stretch to the still-tall cell and jump.
+                  entry.id === swap?.enteringId && !swapRecycled.value
                     ? "hk-stepflow-enter-pending"
+                    : null,
+                  // Opacity hiding: only until the enter edge releases
+                  // the fade (imperatively there, reactively here).
+                  entry.id === swap?.enteringId && swapPhase.value === "exit"
+                    ? "hk-stepflow-enter-hidden"
                     : null,
                   entry.id === swap?.leavingId
                     ? "hk-stepflow-leave-to"

@@ -3,6 +3,7 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
+import { useSheetRide } from "../runtime/sheetRide";
 
 const SHEET_SWEEP_STAGE_EVENT = "hk-sheet-sweep-stage";
 const SHEET_SWEEP_SETTLE_EVENT = "hk-sheet-sweep-settle";
@@ -324,5 +325,110 @@ describe("HkModal publishes its own fold for the step flow", () => {
     await vi.advanceTimersByTimeAsync(1200);
     expect(stages).toEqual([]);
     expect(settled).toBe(0);
+  });
+
+  it("rides its chrome and registered descendants with the staged fold", async () => {
+    // Round 14: the fold's clip edge must never slice the title. When a
+    // sweep stages, the modal's chrome and content probe ride the edge,
+    // and a descendant that registered through the sheet-ride registry
+    // (the way HkStepFlow registers its entering body) rides as a
+    // reveal COUNTER — staged at the mirrored negative offset.
+    vi.useFakeTimers();
+    freezeRaf();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+
+    let registered = false;
+    const Rider = defineComponent({
+      setup() {
+        const registry = useSheetRide();
+        return () =>
+          h("div", {
+            class: "rider-el",
+            ref: (el: unknown) => {
+              const node = el as HTMLElement | null;
+              if (node && registry && !registered) {
+                registered = true;
+                registry.register({ el: node, counter: true });
+              }
+            },
+          }, "rider");
+      },
+    });
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, {
+            modelValue: open.value,
+            closable: true,
+            title: "ride-test",
+            "onUpdate:modelValue": (v: boolean) => { open.value = v; },
+          }, {
+            default: () => h("div", { class: "swap-body" }, [h(Rider)]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    open.value = true;
+    await vi.advanceTimersByTimeAsync(600);
+
+    const frame = () => document.querySelector<HTMLElement>(".hk-modal-content")!;
+    const header = () => document.querySelector<HTMLElement>(".hk-modal-header")!;
+    const bodyBlock = () => document.querySelector<HTMLElement>(".hk-modal-body")!;
+    const riderEl = () => document.querySelector<HTMLElement>(".rider-el")!;
+    expect(registered).toBe(true);
+
+    // The sweep needs real frames from here on.
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+
+    // A GROW announced at the flow's exit edge: content 500 -> 700, so
+    // the frame folds +200. The chrome rides at the pre-growth offset,
+    // the registered counter at the mirrored negative.
+    content = 700;
+    document
+      .querySelector<HTMLElement>(".hk-modal-body .swap-body")!
+      .dispatchEvent(
+        new CustomEvent(STEPFLOW_SWAP_EVENT, {
+          bubbles: true,
+          detail: { delta: 200, durationMs: 150, phase: "exit" },
+        }),
+      );
+    await nextTick();
+    expect(header().style.transform).toBe("translateY(200px)");
+    expect(bodyBlock().style.transform).toBe("translateY(200px)");
+    expect(riderEl().style.transform).toBe("translateY(-200px)");
+    expect(header().style.willChange).toBe("transform");
+
+    // Two warmup frames, then the sweep: everything flips to its target
+    // under the mirrored transform transition.
+    for (let i = 0; i < 2; i += 1) {
+      for (const cb of frames.splice(0)) cb(i * 16);
+      await vi.advanceTimersByTimeAsync(16);
+    }
+    expect(header().style.transform).toBe("translateY(0px)");
+    expect(riderEl().style.transform).toBe("translateY(0px)");
+    expect(header().style.transition).toMatch(/^transform 0\.3s /);
+
+    // The landing releases the rides with the frame.
+    const ev = new Event("transitionend");
+    Object.defineProperty(ev, "propertyName", { value: "clip-path" });
+    frame().dispatchEvent(ev);
+    expect(header().style.transform).toBe("");
+    expect(bodyBlock().style.transform).toBe("");
+    expect(riderEl().style.transform).toBe("");
+    expect(header().style.willChange).toBe("");
   });
 });

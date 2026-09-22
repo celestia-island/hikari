@@ -58,6 +58,21 @@ export interface SizeMorph {
   remeasure(): void;
 }
 
+export interface RideEntry {
+  /** The element whose translateY must track the fold edge. */
+  el: HTMLElement;
+  /** Hold the element at its FINAL viewport position while the block
+   *  rides: staged at the mirrored offset in BOTH directions (−delta on
+   *  a reveal, +delta on a conceal — the layout sits at the other end of
+   *  the sweep in each direction), gliding to zero as the sweep runs and
+   *  landing exactly at the re-pinned geometry. The stepflow's entering
+   *  body uses this: its content must never move as the fold sweeps
+   *  (round-7 rejection), and a one-sided counter rode the block AND
+   *  inherited the block's ride on shrinks — a 2×delta sink with a delta
+   *  jump at the landing (2026-09-23 R1 rig finding). */
+  counter?: boolean;
+}
+
 export interface SizeMorphOptions {
   /** While this returns true, resize-driven re-measurements are deferred
    *  (the current pin stays). HkModal freezes the frame's height during
@@ -68,6 +83,21 @@ export interface SizeMorphOptions {
    *  459→697px mid-unfold). The caller flushes the deferred growth with
    *  an explicit remeasure() at the open edge. */
   deferRemeasure?: () => boolean;
+  /** Fold riders (2026-09-23 round-14 chest report): elements collected
+   *  when a clip sweep is STAGED whose translateY must track the sweep's
+   *  clip edge in lockstep. Without a ride the content tree sits at the
+   *  sweep's LAYOUT geometry while the clip edge sweeps over it, so the
+   *  moving edge slices through whatever crosses it — on the sheet that
+   *  was the title bar (cut mid-text through the sweep) and, on shrinks,
+   *  the whole column snapping down delta at the atomic re-pin. Riders
+   *  start at their pre-morph visual offset in the SAME transition-
+   *  disabled task that stages the clip (so the first painted frame is
+   *  pixel-identical to the pre-morph one), then glide to zero-offset
+   *  under a transform transition that mirrors the frame's own clip-path
+   *  transition (same duration, same easing, flipped in the same task) —
+   *  compositor-side and in exact lockstep with the edge. The settle
+   *  clears them atomically with the frame's own landing. */
+  collectRide?: () => RideEntry[];
   /** Clip-mode sweep staged: reports the sweep's direction and the pinned
    *  heights it runs between, at the moment the start state is committed
    *  (before the warmup). Hosts forward this to their content so it can
@@ -212,6 +242,108 @@ export function useSizeMorph(
    *  flight: it is flushed once that sweep lands, because measuring through
    *  a live sweep tears it down and republishes its teardown as a landing. */
   let pendingMeasure = false;
+  /** Riders of the sweep currently staged/folding (see collectRide): their
+   *  inline transform/transition/will-change is owned by the sweep's own
+   *  stage→flip→settle lifecycle and cleared atomically with the frame. */
+  let rideEls: Array<{
+    el: HTMLElement;
+    counter?: boolean;
+    /** The element's OWN computed transition shorthand, captured at stage
+     *  time: the ride's inline override must keep those legs live — the
+     *  stepflow's entering body is often MID-FADE when a shrink stages,
+     *  and cancelling a running opacity transition snaps it to 1. */
+    ownTransition: string;
+  }> = [];
+
+  /** Split a computed transition-list value at TOP-LEVEL commas only —
+   *  `cubic-bezier(0.4, 0, 0.2, 1)` must survive as one token. */
+  function splitTopLevel(value: string): string[] {
+    const out: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < value.length; i++) {
+      const ch = value[i];
+      if (ch === "(") depth += 1;
+      else if (ch === ")") depth -= 1;
+      else if (ch === "," && depth === 0) {
+        out.push(value.slice(start, i).trim());
+        start = i + 1;
+      }
+    }
+    out.push(value.slice(start).trim());
+    return out.filter((token) => token !== "");
+  }
+
+  /** Compose the riders' transform transition as an exact mirror of the
+   *  frame's own clip-path transition (same duration, same easing), so the
+   *  ride and the edge stay in compositor lockstep. Read at the FLIP (the
+   *  frame's inline transition is live again there, so the computed values
+   *  are the ones the clip itself animates under); a zero/absent read
+   *  (no layout engine, SSR) falls back to the sweep's resolved duration
+   *  and the family's standard ease. */
+  function clipTransitionMirror(f: HTMLElement, fallbackMs: number): string {
+    let duration = `${fallbackMs}ms`;
+    let easing = "cubic-bezier(0.4, 0, 0.2, 1)";
+    try {
+      const cs = getComputedStyle(f);
+      const props = splitTopLevel(cs.transitionProperty ?? "");
+      const idx = props.findIndex((p) => p === "clip-path");
+      const durations = splitTopLevel(cs.transitionDuration ?? "");
+      const easings = splitTopLevel(cs.transitionTimingFunction ?? "");
+      const d = idx >= 0 ? durations[idx] : durations[0];
+      if (d && /\d/.test(d) && !/^0s?$/i.test(d.replace(/\s/g, ""))) {
+        duration = d;
+      }
+      const e = idx >= 0 ? easings[idx] : easings[0];
+      if (e) easing = e;
+    } catch {
+      // Keep the family defaults.
+    }
+    return `transform ${duration} ${easing}`;
+  }
+
+  /** Compose the riders' inline transition: the element's OWN stylesheet
+   *  transitions stay live (an override would cancel a running one — the
+   *  entering step body is mid-fade when a shrink stages its ride), with
+   *  the transform leg appended at the given clock. An element with no
+   *  own transitions carries the transform leg alone. */
+  function riderTransitionCss(own: string, transformLeg: string): string {
+    if (!own || own === "none") return transformLeg;
+    return `${own}, ${transformLeg}`;
+  }
+
+  /** The element's computed transition shorthand ("" when unreadable). */
+  function ownTransitionOf(el: HTMLElement): string {
+    try {
+      const own = getComputedStyle(el).transition ?? "";
+      return own === "none" ? "" : own;
+    } catch {
+      return "";
+    }
+  }
+
+  /** Clear the riders atomically: the transform leg and the promotion
+   *  come off with the element's own transitions kept live, one layout
+   *  flush, then the inline transition itself is dropped — all inside
+   *  the caller's already-atomic settle task, so the ride's zero-offset
+   *  never animates on the way out. A conceal pairs this with
+   *  finishConceal's re-pin: the layout drops delta while the ride's
+   *  delta offset disappears — net zero, no visible step. */
+  function clearRiders(): void {
+    if (rideEls.length === 0) return;
+    for (const r of rideEls) {
+      // Transform is no longer in the list → the offset release is
+      // instant; opacity (still listed with its own clock) keeps running.
+      r.el.style.transition = r.ownTransition || "none";
+      r.el.style.transform = "";
+      r.el.style.willChange = "";
+    }
+    void frame.value?.offsetHeight;
+    for (const r of rideEls) {
+      r.el.style.transition = "";
+    }
+    rideEls = [];
+  }
 
   /** Land a conceal atomically: pin the target height and clear the clip
    *  in one transition-disabled task. Called from the sweep's end, from
@@ -255,6 +387,10 @@ export function useSizeMorph(
     if (revealEl && revealEnd) {
       revealEl.removeEventListener("transitionend", revealEnd);
     }
+    // The riders come off in the same atomic task as the frame's own
+    // landing (see clearRiders): a conceal's re-pin then swaps the layout
+    // under them with the offset already gone.
+    clearRiders();
     if (revealEl) {
       if (revealDir === "conceal" && concealTo != null) {
         finishConceal(revealEl);
@@ -355,6 +491,21 @@ export function useSizeMorph(
       dir === "reveal"
         ? `inset(0px 0 0 0 round ${radii})`
         : `inset(${insetPx}px 0 0 0 round ${radii})`;
+    // The riders flip WITH the clip, in the same task, under a mirrored
+    // transform transition — same duration, same easing, same start
+    // moment, so the ride tracks the edge sample-for-sample. Their own
+    // transition legs (an entering body mid-fade) stay live in the list.
+    if (rideEls.length > 0) {
+      const mirror = clipTransitionMirror(f, durationMs);
+      for (const r of rideEls) {
+        r.el.style.transition = riderTransitionCss(r.ownTransition, mirror);
+        // Normal riders follow the edge (0 on a reveal, +delta down on a
+        // conceal); a counter glides to zero in both directions — its
+        // layout swap at the landing is exactly the ride it releases.
+        const target = r.counter ? 0 : dir === "reveal" ? 0 : insetPx;
+        r.el.style.transform = `translateY(${target}px)`;
+      }
+    }
   }
 
   /** Clip-mode opt-in, owned by CSS: the modal's mobile media block
@@ -515,6 +666,34 @@ export function useSizeMorph(
       f.style.clipPath = `inset(0px 0 0 0 round ${radii})`;
     } else if (pinned > 0) {
       f.style.height = `${pinned}px`;
+    }
+    // Riders stage with the clip: they snap to their pre-morph visual
+    // offset (a reveal's content block starts at its OLD position,
+    // cancelling the instant re-layout the new pin caused; a conceal
+    // starts at zero) so the first painted frame of the morph is
+    // pixel-identical to the last one before it. A COUNTER stages at the
+    // mirrored offset in both directions — its layout sits at the far
+    // end of the sweep (final on a reveal, pre-collapse on a conceal),
+    // so ±delta lands it at its final viewport position either way. The
+    // transform leg is staged at a zero clock (instant) while the
+    // element's OWN transition legs stay live; the promotion (will-change)
+    // rides along here on purpose — the warmup that follows is exactly
+    // the window the layer's raster needs before it moves.
+    if (reveal || conceal) {
+      rideEls = (options.collectRide?.() ?? []).map((entry) => ({
+        el: entry.el,
+        counter: entry.counter,
+        ownTransition: ownTransitionOf(entry.el),
+      }));
+      for (const r of rideEls) {
+        r.el.style.transition = riderTransitionCss(r.ownTransition, "transform 0s");
+        r.el.style.willChange = "transform";
+        // The counter's stage is −delta in BOTH directions: on a reveal
+        // (delta>0) that is the pre-growth offset down; on a conceal
+        // (delta<0) it is the collapsed layout's missing height up.
+        const startPx = r.counter ? -delta : reveal ? delta : 0;
+        r.el.style.transform = `translateY(${startPx}px)`;
+      }
     }
     // Flush the staged state (new pin + clip start, or the old pin)
     // before re-enabling the transition, so the sweep starts from the

@@ -50,13 +50,14 @@
   // ENTER: fade in place from TRUE zero with a standard ease — no travel,
   // no delay tricks. The element is laid out and PAINTED from the moment
   // it mounts (opacity: 0 is compositor-only), and the COMPONENT fires
-  // the enter edge at 80% of the exit phase and flips the pending class
-  // off imperatively, so the fade's first frame lands in the same frame
-  // the old body's ~0.1-opacity tail is recycled (round 14, 2026-09-23:
-  // the earlier -40ms negative delay traded the blank window for a
-  // first-frame 0.53 pop — "the model list always flickers once" — while
-  // the sequential edge still painted a ~33ms empty body between the
-  // recycle patch and the fade start; the overlap edge removes both).
+  // the enter edge at 65% of the exit phase and flips the opacity-hiding
+  // class off imperatively, so the fade ramps up under the old body's
+  // still-visible tail (recycled at 90%, by then ~0.07) — no empty body
+  // ever paints between the phases (round 14, 2026-09-23: the earlier
+  // -40ms negative delay traded the blank window for a first-frame 0.53
+  // pop — "the model list always flickers once" — while the sequential
+  // edge still painted a ~33ms empty body; the overlap edge removes
+  // both).
   transition:
     opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
 }

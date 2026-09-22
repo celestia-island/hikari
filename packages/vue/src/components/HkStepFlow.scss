@@ -78,13 +78,11 @@
 
 .hk-stepflow-body.leaving {
   position: absolute;
-  // Anchored to the stage's BOTTOM, not its top. The sheet is bottom-docked
-  // and the stage ends on a screen line that does not move when the box
-  // grows, so the old body keeps its exact screen position while the sheet
-  // grows upward around it (2026-09-22 user directive: a grow must not
-  // carry the old content up). Identical to a top anchor whenever the stage
-  // and the body are the same height — i.e. every shrink's exit phase.
-  bottom: 0;
+  // Default anchor: the stage's TOP. An in-flow stage keeps its top line
+  // and grows downward, so the old body holds its screen position there
+  // (chest's LoginView renders HStepFlow inside a grid-stack crossfade —
+  // not a modal). Bottom-docked sheet hosts override this below.
+  top: 0;
   left: 0;
   right: 0;
   pointer-events: none;
@@ -96,12 +94,26 @@
     transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
 }
 
-// The staged new body of a SHRINK's enter phase: the flow hands the sheet
-// the new geometry to fold towards, then re-pins itself to the OLD height
-// and parks the new body in the stage's bottom band — the band the
-// descending clip edge folds down onto. The new content therefore sits at
-// its FINAL screen position for the whole fold and the sheet's atomic
-// re-pin lands nothing (2026-09-22 user directive: the new content appears
+// Bottom-docked sheet hosts — flagged `--hk-sheet-morph: clip` by the
+// modal's phone block, the same contract useSizeMorph reads to pick its
+// paint-only sweep. Theirs is the BOTTOM line that does not move when the
+// box grows, so the old body anchors there and holds its exact screen
+// position while the sheet expands above it (2026-09-22 user directive: a
+// grow must not carry the old content up). Identical to the default top
+// anchor whenever the stage and the body are the same height — i.e. every
+// shrink's exit phase.
+.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.leaving,
+.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.hk-stepflow-enter-tail {
+  top: auto;
+  bottom: 0;
+}
+
+// The staged new body of a SHRINK's enter phase (bottom-docked sheets
+// only): the flow hands the sheet the new geometry to fold towards, then
+// re-pins itself to the OLD height and parks the new body in the stage's
+// bottom band — the band the descending clip edge folds down onto, so the
+// new content already sits at its final screen position when the sheet's
+// atomic re-pin lands (2026-09-22 user directive: the new content appears
 // directly at the target height instead of following the top edge down).
 .hk-stepflow-body.hk-stepflow-enter-tail {
   position: absolute;

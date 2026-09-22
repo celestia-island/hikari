@@ -43,9 +43,22 @@ function mountStepFlow(options: {
   timelineClickable?: boolean;
   collapse?: string;
   seen?: StepFlowSlotProps[];
+  /** Mount inside a bottom-docked clip-mode sheet host (HkModal's phone
+   *  form factor) instead of a plain in-flow stage. */
+  sheetHost?: boolean;
 } = {}): StepFlowHarness {
   const container = document.createElement("div");
-  document.body.appendChild(container);
+  if (options.sheetHost) {
+    const frame = document.createElement("div");
+    frame.className = "hk-modal-content";
+    // The host flag the flow (and useSizeMorph) reads: inline first.
+    frame.style.setProperty("--hk-sheet-morph", "clip");
+    frame.appendChild(container);
+    document.body.appendChild(frame);
+    containers.push(frame);
+  } else {
+    document.body.appendChild(container);
+  }
   containers.push(container);
 
   const current = ref(options.initial ?? "a");
@@ -387,9 +400,12 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     await flushSwap();
     expect(events.length).toBe(1);
     expect((events[0]!.detail as { delta: number }).delta).toBe(120);
-    expect(
-      t.container.querySelector<HTMLElement>(".hk-stepflow-bodies")?.style.minHeight,
-    ).toBe("");
+    const stage = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    expect(stage?.style.minHeight).toBe("");
+    // An in-flow stage (a non-modal host such as chest's LoginView) keeps
+    // the default TOP anchor: its top line is the fixed one, so a bottom
+    // anchor would push the old body down instead of holding it.
+    expect(stage?.getAttribute("data-anchor")).toBeNull();
     // A grow never parks the new body in the tail band and never pins: the
     // flow owns the new height from frame one.
     expect(
@@ -406,7 +422,7 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
   it("holds a SHRINK through the exit phase, then folds at the enter edge", async () => {
     stubMotion();
     stubHeights((text) => (text === "a-body" ? 220 : 100));
-    const t = mountStepFlow({ initial: "a" });
+    const t = mountStepFlow({ initial: "a", sheetHost: true });
     const events: CustomEvent[] = [];
     // What the hosting sheet would measure when it handles the announce:
     // the pin must be OFF at that instant (the modal reads the frame's NEW
@@ -426,6 +442,9 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(events.length).toBe(0);
     const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
     expect(bodies?.style.minHeight).toBe("220px");
+    // A bottom-docked clip-mode sheet is the one host whose bottom line is
+    // fixed: it declares the bottom anchor for the leaving body.
+    expect(bodies?.getAttribute("data-anchor")).toBe("bottom");
     // Enter edge: the sheet is told to fold now, and the flow re-pins its
     // OLD height for the fold while the new body parks in the stage's
     // bottom band — the band the descending clip edge lands on, so the new
@@ -458,6 +477,32 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
         .querySelector<HTMLElement>(".hk-stepflow-body.active")
         ?.classList.contains("hk-stepflow-enter-tail"),
     ).toBe(false);
+  });
+
+  it("keeps an in-flow host's shrink on the top anchor without parking", async () => {
+    stubMotion();
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    const stage = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    expect(stage?.getAttribute("data-anchor")).toBeNull();
+    expect(stage?.style.minHeight).toBe("220px");
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    // The height handoff still happens, but no tail parking: an in-flow
+    // host has no clip fold to park against, and the pin lifts so the
+    // stage can take the new height.
+    expect(events.length).toBe(1);
+    expect((events[0]!.detail as { phase: string }).phase).toBe("enter");
+    expect(stage?.style.minHeight).toBe("");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(false);
+    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

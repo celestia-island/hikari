@@ -96,11 +96,11 @@ describe("HkStepFlow two-phase swap contract", () => {
     const rule = src.match(/\.hk-stepflow-body\.leaving\s*\{[^}]*\}/)![0]!;
     expect(rule).toContain("position: absolute");
     expect(rule).toContain("pointer-events: none");
-    // Bottom-anchored: the stage's bottom line does not move when the sheet
-    // grows, so the old body keeps its exact screen position (a grow must
-    // not carry it up); the top anchor is explicitly retired.
-    expect(rule).toContain("bottom: 0");
-    expect(rule, "the leaving body must not be top-anchored").not.toContain("top: 0");
+    // Default anchor is the TOP: an in-flow stage keeps its top line and
+    // grows downward, so that is where the old body holds its position
+    // (chest's LoginView renders this flow in a grid-stack crossfade).
+    expect(rule).toContain("top: 0");
+    expect(rule, "the default anchor is not the bottom").not.toContain("bottom: 0");
     // The classic sharp ease-in on leave, for BOTH opacity and travel.
     expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
     expect(rule).toContain(PHASE);
@@ -110,21 +110,49 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(transitions[0]).toContain("transform");
   });
 
+  it("scopes the bottom anchor and the parking to bottom-docked sheet hosts", () => {
+    // A bottom-docked sheet is the ONE host whose bottom line is fixed
+    // while it grows, so it — and only it — overrides the anchor and gets
+    // the tail parking. The flag is the host contract useSizeMorph already
+    // reads (`--hk-sheet-morph: clip`, set by the modal's phone block).
+    const override = blockFor(
+      '.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.leaving',
+    );
+    expect(override).toContain("bottom: 0");
+    expect(override).toContain("top: auto");
+    // …and the tail rule rides the same host flag.
+    expect(
+      blockFor(
+        '.hk-stepflow-bodies[data-anchor="bottom"] .hk-stepflow-body.hk-stepflow-enter-tail',
+      ),
+    ).toContain("bottom: 0");
+    expect(tsx).toContain("sheetClipHost");
+    expect(tsx).toContain('closest<HTMLElement>(".hk-modal-content")');
+    expect(tsx).toContain("--hk-sheet-morph");
+    expect(tsx).toContain('"clip"');
+    expect(tsx).toMatch(/data-anchor=\{anchorMode\.value\s*\?\s*"bottom"/);
+  });
+
   it("parks a shrink's new body in the bottom band the fold lands on", () => {
     // Clause 5: the new content must already sit at its final geometry
     // while the sheet's clip edge folds down, so the atomic re-pin lands
-    // nothing. The band is the stage's bottom (the line the fold descends
-    // to), declared as its own rule and bound to a shrink's enter phase.
+    // (nearly) nothing. The band is the stage's bottom — the line the fold
+    // descends to — declared as its own rule and bound to a shrink's enter
+    // phase on such a host only.
     const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-tail");
     expect(rule).toContain("position: absolute");
     expect(rule).toContain("bottom: 0");
     expect(rule, "the parked body must not travel").not.toContain("transform");
     expect(tsx).toContain("hk-stepflow-enter-tail");
     expect(tsx).toMatch(/tailPhase\.value\s*=\s*true/);
-    // The order matters: measure (pin off) → announce → re-pin the old
-    // height, all before the browser can paint.
+    // The parking is gated on the anchored host, and the order matters:
+    // measure (pin off) → announce → re-pin the old height + park, all
+    // before the browser can paint.
     expect(tsx).toMatch(
-      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);[\s\S]{0,400}?pinOldHeight\(handle\.oldH\)/,
+      /if \(anchorMode\.value\) \{[\s\S]{0,300}?pinOldHeight\(handle\.oldH\);[\s\S]{0,120}?tailPhase\.value = true;/,
+    );
+    expect(tsx).toMatch(
+      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);/,
     );
   });
 

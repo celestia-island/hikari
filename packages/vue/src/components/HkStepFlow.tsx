@@ -106,6 +106,30 @@ function bodyTransitionMs(el: HTMLElement | null): number {
 }
 
 /**
+ * Resolve the hosting element whose BOTTOM line is fixed while it grows —
+ * i.e. a bottom-docked modal sheet, flagged `--hk-sheet-morph: clip` by
+ * the modal's phone block (the same contract useSizeMorph reads to pick
+ * its paint-only sweep). Only such a host may anchor the leaving body to
+ * the stage's bottom: an in-flow stage (chest's LoginView renders this
+ * flow inside a grid-stack crossfade) keeps its TOP line and grows
+ * DOWNWARD, where a bottom anchor would push the old body down instead of
+ * holding it.
+ */
+function sheetClipHost(el: HTMLElement | null): boolean {
+  const frame = el?.closest<HTMLElement>(".hk-modal-content") ?? null;
+  if (!frame) return false;
+  const inline = frame.style.getPropertyValue("--hk-sheet-morph").trim();
+  if (inline) return inline === "clip";
+  try {
+    return (
+      getComputedStyle(frame).getPropertyValue("--hk-sheet-morph").trim() === "clip"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Generic step-flow container: an optional HkTimeline header bound to
  * `modelValue` plus a direction-aware sliding body fed purely by named
  * slots keyed by step key. Navigation state lives in the consumer — the
@@ -219,6 +243,10 @@ export default defineComponent({
      *  stage's bottom band (hk-stepflow-enter-tail) so it already sits at
      *  its final geometry while the sheet's clip edge folds down onto it. */
     const tailPhase = ref(false);
+    /** True while the hosting surface is a bottom-docked clip-mode sheet:
+     *  only then are the bottom anchor and the tail parking correct (see
+     *  sheetClipHost). Resolved per swap, before the bodies patch. */
+    const anchorMode = ref(false);
     const flowRef = ref<HTMLDivElement | null>(null);
 
     /** Pin the flow to the pre-swap height (shrink exit phase). */
@@ -311,8 +339,12 @@ export default defineComponent({
         // re-pin lands nothing.
         clearPin();
         announce(handle);
-        pinOldHeight(handle.oldH);
-        tailPhase.value = true;
+        if (anchorMode.value) {
+          // Only a bottom-docked sheet folds its clip towards the stage's
+          // bottom line, so only there is the parking exact.
+          pinOldHeight(handle.oldH);
+          tailPhase.value = true;
+        }
       }
       if (!entering) {
         endSwap();
@@ -374,6 +406,7 @@ export default defineComponent({
           return;
         }
 
+        anchorMode.value = sheetClipHost(flowRef.value);
         leaving.phase = "leaving";
         const entering: BodyEntry = {
           id: mountSeq++,
@@ -460,7 +493,11 @@ export default defineComponent({
               data-strategy={props.stickyHeader ? pinStrategy.value : undefined}
             />
           )}
-          <div class="hk-stepflow-bodies" data-direction={dir}>
+          <div
+            class="hk-stepflow-bodies"
+            data-direction={dir}
+            data-anchor={anchorMode.value ? "bottom" : undefined}
+          >
             {bodies.value.map((entry) => (
               <div
                 key={entry.id}
@@ -472,7 +509,8 @@ export default defineComponent({
                     : null,
                   entry.id === swap?.enteringId &&
                   swapPhase.value === "enter" &&
-                  tailPhase.value
+                  tailPhase.value &&
+                  anchorMode.value
                     ? "hk-stepflow-enter-tail"
                     : null,
                   entry.id === swap?.leavingId

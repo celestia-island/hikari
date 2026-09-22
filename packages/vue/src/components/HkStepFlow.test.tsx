@@ -1,17 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkStepFlow from "./HkStepFlow";
+import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
 
 /**
  * HkStepFlow contract tests. House style: no @vue/test-utils dependency —
  * raw createApp mounts on shared containers torn down after each case.
  *
- * Note on transition-class assertions: happy-dom does not run stylesheet
- * transitions, so Vue's `out-in` leave phase leaves the leave-from/leave-
- * active classes in place until its rAF/settling timers fire — checking
- * class names right after `nextTick` is deterministic here.
+ * Two environment shapes are exercised:
+ *
+ * - DEFAULT (happy-dom, no stylesheet): the component's duration probe
+ *   reads a zero transition duration, so every swap settles INSTANTLY —
+ *   one body in the DOM, no timers to outlive, no transitionend to wait
+ *   for. This is the deterministic shape chest's wizard tests rely on.
+ * - MOTION STUBBED (`getComputedStyle` reports 0.3s): the full staged
+ *   slide choreography runs — staged start classes, one bus frame, then
+ *   the synchronized leave/enter transitions and the watchdog cleanup.
  */
 
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -68,17 +73,38 @@ function mountStepFlow(options: {
   return { container, setCurrent: (key) => { current.value = key; } };
 }
 
-/** Let the swap's choreography timers (480ms sweep cleanup) settle. */
-async function settle(): Promise<void> {
+/** Let the swap watch's async flush (post render + internal nextTick) land. */
+async function flushSwap(): Promise<void> {
+  await nextTick();
+  await nextTick();
+  await nextTick();
+}
+
+/** Wait for the animation bus's staging frame(s) to fire. */
+async function awaitBusFrame(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 80));
 }
 
-/** Outlive the 480ms leaving-body cleanup timer. */
+/** Outlive the watchdog (0.3s stubbed duration + 350ms grace). */
 async function outliveSwap(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 540));
+  await new Promise((resolve) => setTimeout(resolve, 720));
+}
+
+/** Force the motion path: the duration probe sees a 0.3s transition. */
+function stubMotion(duration = "0.3s"): void {
+  const real = window.getComputedStyle.bind(window);
+  vi.spyOn(window, "getComputedStyle").mockImplementation(
+    (el: Element, pseudoElt?: string | null): CSSStyleDeclaration => {
+      if (el instanceof HTMLElement && el.classList.contains("hk-stepflow-body")) {
+        return { transitionDuration: duration } as CSSStyleDeclaration;
+      }
+      return real(el, pseudoElt ?? undefined);
+    },
+  );
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const app of mounts.splice(0)) app.unmount();
   for (const el of containers.splice(0)) el.remove();
 });
@@ -107,46 +133,42 @@ describe("HkStepFlow", () => {
     const t = mountStepFlow({ initial: "a" });
     expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("a-body");
     t.setCurrent("d");
-    await nextTick();
-    await nextTick();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("d-body");
-    await outliveSwap();
-    // The leaving body is gone after the sweep window; exactly one body
-    // remains and it is the new step's.
+    await flushSwap();
+    // Stylesheet-less runtime → instant settle: exactly one body, the new
+    // step's, with no leaving residue and no timers to outlive.
     const bodies = t.container.querySelectorAll(".hk-stepflow-body");
     expect(bodies.length).toBe(1);
     expect(bodies[0]!.className).toBe("hk-stepflow-body active");
     expect(bodies[0]!.textContent).toBe("d-body");
   });
 
-  it("crossfades both bodies for the whole swap window (2026-09-21 spec)", async () => {
+  it("settles deterministically to a single body where no transition runs", async () => {
+    // The 2026-09-22 debt pin: chest's LoginView MFA suite broke because
+    // the crossfade kept a leaving body alive for hundreds of ms in
+    // transitionend-less environments. With a zero probed duration the
+    // swap is atomic — the DOM NEVER carries two steps.
     const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
     t.setCurrent("b");
-    await nextTick();
-    await nextTick();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
-    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    // Both bodies coexist; the leaving one is out of the flow and the
-    // pair carries the crossfade's END opacities (armed inline —
-    // happy-dom does not run the stylesheet transition).
-    expect(leaving).not.toBeNull();
-    expect(active).not.toBeNull();
-    expect(leaving?.textContent).toBe("a-body");
-    expect(active?.textContent).toBe("b-body");
-    expect(leaving?.style.opacity).toBe("0");
-    expect(active?.style.opacity).toBe("1");
-    // A rapid re-swap mid-fade drops the stale leaving body outright.
-    t.setCurrent("c");
-    await nextTick();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-    const after = t.container.querySelectorAll(".hk-stepflow-body");
-    expect(after.length).toBe(2);
-    expect(t.container.querySelector(".hk-stepflow-body.leaving")?.textContent).toBe("b-body");
-    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("c-body");
-    await outliveSwap();
+    await flushSwap();
     expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("b-body");
+    expect(t.container.querySelector(".hk-stepflow-body.leaving")).toBeNull();
+    // Rapid successive swaps stay single-bodied the whole way through.
+    t.setCurrent("c");
+    await flushSwap();
+    t.setCurrent("d");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("d-body");
+    // The sheet passthrough fired for every swap, carrying a numeric delta.
+    expect(events.length).toBe(3);
+    for (const e of events) {
+      expect(typeof (e.detail as { delta: number }).delta).toBe("number");
+    }
   });
 
   it("passes key/index/direction to scoped slots across navigation", async () => {
@@ -155,18 +177,17 @@ describe("HkStepFlow", () => {
     expect(seen.map((s) => `${s.key}:${s.index}:${s.direction}`)).toEqual(["a:0:forward"]);
 
     t.setCurrent("c");
-    await settle();
+    await flushSwap();
     expect(seen.at(-1)).toEqual({ key: "c", index: 2, direction: "forward" });
 
     t.setCurrent("b");
-    await settle();
+    await flushSwap();
     expect(seen.at(-1)).toEqual({ key: "b", index: 1, direction: "back" });
 
     // Returning forward again flips the direction back.
     t.setCurrent("d");
-    await settle();
+    await flushSwap();
     expect(seen.at(-1)?.direction).toBe("forward");
-    await settle();
   });
 
   it("emits update:modelValue when a clickable completed step is selected", async () => {
@@ -198,10 +219,9 @@ describe("HkStepFlow", () => {
     expect(first?.getAttribute("data-status")).toBe("completed");
     first.dispatchEvent(new MouseEvent("click"));
     await nextTick();
-    await settle();
+    await flushSwap();
     expect(selected).toEqual(["a"]);
     expect(container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("");
-    await settle();
   });
 
   it("renders an empty body without warnings for an unknown key", async () => {
@@ -210,7 +230,7 @@ describe("HkStepFlow", () => {
       const t = mountStepFlow({ initial: "a" });
       t.setCurrent("does-not-exist");
       await nextTick();
-      await settle();
+      await flushSwap();
       const body = t.container.querySelector(".hk-stepflow-body.active");
       expect(body).not.toBeNull();
       expect(body?.textContent).toBe("");
@@ -262,9 +282,99 @@ describe("HkStepFlow", () => {
     // remembered index follows the array to 3, so 1 < 3 correctly reads BACK.
     current.value = "c";
     await nextTick();
-    await settle();
+    await flushSwap();
     expect(seen.at(-1)).toEqual({ key: "c", index: 1, direction: "back" });
-    await settle();
+  });
+});
+
+// ── Motion-stubbed slide choreography ─────────────────────────────────
+// `getComputedStyle` reports a 0.3s duration for step bodies, so the full
+// staged slide runs: staged start classes → one bus frame → synchronized
+// leave/enter transitions → transitionend/watchdog cleanup.
+describe("HkStepFlow slide swap (motion enabled)", () => {
+  it("stages both bodies, then starts the synchronized slide on the bus frame", async () => {
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+
+    // Staged: both bodies coexist; the leaving one overlays the flow
+    // WITHOUT its end state yet, the entering one holds its start state.
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(leaving).not.toBeNull();
+    expect(active).not.toBeNull();
+    expect(leaving?.textContent).toBe("a-body");
+    expect(active?.textContent).toBe("b-body");
+    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(false);
+    expect(active?.classList.contains("hk-stepflow-enter-from")).toBe(true);
+    expect(
+      t.container.querySelector(".hk-stepflow-bodies")?.getAttribute("data-direction"),
+    ).toBe("forward");
+    // The sheet passthrough fired as the entering body took the flow.
+    expect(events.length).toBe(1);
+
+    // The bus frame flips both bodies together: leave end state on, enter
+    // start state off — both transitions start on one recalculation.
+    await awaitBusFrame();
+    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(true);
+    expect(active?.classList.contains("hk-stepflow-enter-from")).toBe(false);
+    // The slide is still in flight: both bodies remain mounted.
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+
+    // happy-dom never fires transitionend — the watchdog settles the swap.
+    await outliveSwap();
+    const bodies = t.container.querySelectorAll(".hk-stepflow-body");
+    expect(bodies.length).toBe(1);
+    expect(bodies[0]!.className).toBe("hk-stepflow-body active");
+    expect(bodies[0]!.textContent).toBe("b-body");
+  });
+
+  it("mirrors the direction attribute for back navigation", async () => {
+    stubMotion();
+    const t = mountStepFlow({ initial: "c" });
+    t.setCurrent("a");
+    await flushSwap();
+    expect(
+      t.container.querySelector(".hk-stepflow-bodies")?.getAttribute("data-direction"),
+    ).toBe("back");
+    // Same staged grammar, mirrored travel lives in the stylesheet.
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(leaving?.textContent).toBe("c-body");
+    expect(active?.classList.contains("hk-stepflow-enter-from")).toBe(true);
+    await awaitBusFrame();
+    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(true);
+    await outliveSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+  });
+
+  it("drops the stale leaving body outright on a rapid re-swap", async () => {
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    t.setCurrent("b");
+    await flushSwap();
+    await awaitBusFrame();
+    // The first swap is running; re-swap before it settles.
+    t.setCurrent("c");
+    await flushSwap();
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+    expect(leaving?.textContent).toBe("b-body");
+    expect(active?.textContent).toBe("c-body");
+    // The new swap restages: no leftover end state on the new leaving body.
+    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(false);
+    expect(active?.classList.contains("hk-stepflow-enter-from")).toBe(true);
+    await awaitBusFrame();
+    await outliveSwap();
+    const bodies = t.container.querySelectorAll(".hk-stepflow-body");
+    expect(bodies.length).toBe(1);
+    expect(bodies[0]!.textContent).toBe("c-body");
   });
 });
 

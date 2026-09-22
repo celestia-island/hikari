@@ -91,7 +91,9 @@ describe("HkStepFlow two-phase swap contract", () => {
     const decl = transitions[0]!;
     expect(decl).toContain("opacity");
     expect(decl).toContain(PHASE);
-    expect(decl).toContain("cubic-bezier(0.16, 1, 0.3, 1)");
+    // A STANDARD ease: the expressive ease-out put the first painted frame
+    // at ~50% opacity, which read as the new content flashing in.
+    expect(decl).toContain("cubic-bezier(0.4, 0, 0.2, 1)");
     expect(decl, "the enter phase never travels").not.toContain("transform");
   });
 
@@ -104,8 +106,10 @@ describe("HkStepFlow two-phase swap contract", () => {
     // (chest's LoginView renders this flow in a grid-stack crossfade).
     expect(rule).toContain("top: 0");
     expect(rule, "the default anchor is not the bottom").not.toContain("bottom: 0");
-    // The classic sharp ease-in on leave, for BOTH opacity and travel.
+    // The slide keeps its classic accelerating ease-in; the fade gets its
+    // own gentler curve so the old content eases out over several frames.
     expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
+    expect(rule).toContain("cubic-bezier(0.4, 0, 0.6, 1)");
     expect(rule).toContain(PHASE);
     const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
     expect(transitions).toHaveLength(1);

@@ -76,6 +76,9 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(decl).toContain("opacity");
     expect(decl).toContain(PHASE);
     expect(decl).toContain("cubic-bezier(0.4, 0, 0.2, 1)");
+    // The negative delay starts the fade already partway up its curve,
+    // closing the blank-body window between the two phases.
+    expect(decl).toContain("-40ms");
     expect(decl, "the enter phase never travels").not.toContain("transform");
   });
 

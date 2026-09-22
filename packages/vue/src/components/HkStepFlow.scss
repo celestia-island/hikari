@@ -50,9 +50,14 @@
   // ENTER: fade in place with a standard ease — no travel, no other
   // property. The element is laid out and PAINTED from the moment it
   // mounts (opacity: 0 is compositor-only), so the first frame of the
-  // fade never triggers a re-raster.
+  // fade never triggers a re-raster. The NEGATIVE delay starts the fade
+  // already partway up its curve, so the new content crosses the eye's
+  // perceptual threshold (~0.15 opacity) the moment the old one drops
+  // below it — without it, the strictly sequential grammar leaves a
+  // ~70-125ms blank body window between the two phases, which was the
+  // "flicker" the user's device kept reporting (round 12, second video).
   transition:
-    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
+    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1) -40ms;
 }
 
 // The staged new body: transparent, untouchable, and at the CELL BOTTOM

@@ -88,6 +88,24 @@
   }
 }
 
+/* ---- Raw slot glyphs ----
+   The same fixed-glyph contract covers a raw svg passed as slot content
+   (the lucide `<Icon size={14}/>` child pattern): as a flex item of the
+   button it inherits flex-shrink:1, and under a squeezed host row the
+   host reset's `svg { max-width: 100% }` clamps it to the button's
+   SHRUNKEN content box — measured 3.3x14 in a real browser (chest admin
+   table action cells, 2026-09-23 user report: 行内操作按钮莫名其妙变成
+   一条小竖线). flex:none pins the glyph to its intrinsic size; the
+   button's automatic minimum size then covers the full glyph, so an
+   auto-layout table column or toolbar row grows to fit instead of
+   shrinking the controls into slivers. Only the DIRECT child needs the
+   guard: a glyph wrapped in a span (the .hk-btn-icon box, an inline
+   label, …) sits behind a non-replaced flex item whose min-content
+   already carries the svg's intrinsic size. */
+.hk-btn > svg {
+  flex: none;
+}
+
 /* ---- Icon-only square ---- */
 /* An icon-only HkButton (glyph, no label) occupies a SQUARE footprint
    by default: padding collapses fully and width locks to the size

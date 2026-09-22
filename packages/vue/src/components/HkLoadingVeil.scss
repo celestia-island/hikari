@@ -5,19 +5,19 @@
 .hk-loading-veil {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--hk-z-toast, 9000) + 100);
+  z-index: calc(var(--hk-z-toast, 4000) + 100);
   display: flex;
   align-items: center;
   justify-content: center;
   // Semi-transparent backdrop with a slight blur: the page beneath
   // stays readable (orientation) but clearly inactive.
-  background: rgb(var(--color-bg, 255 255 255) / 0.55);
+  background: rgb(var(--color-background, 214 236 240) / 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   pointer-events: all;
   animation: hk-loading-veil-in 150ms ease-out;
 
-  // Dark theme rides the same bg token — no separate overrides needed.
+  // Both light and dark themes ride the --color-background token.
 }
 
 .hk-loading-veil-body {
@@ -27,7 +27,7 @@
   gap: 12px;
   padding: 24px 32px;
   border-radius: 12px;
-  background: rgb(var(--color-surface, 255 255 255) / 0.85);
+  background: rgb(var(--color-surface, 240 244 248) / 0.85);
   box-shadow: 0 8px 32px rgb(0 0 0 / 0.12);
 }
 
@@ -35,8 +35,8 @@
   display: inline-block;
   width: 28px;
   height: 28px;
-  border: 3px solid rgb(var(--color-border, 200 200 200) / 0.4);
-  border-top-color: rgb(var(--color-primary, 59 130 246));
+  border: 3px solid rgb(var(--color-border, 100 100 100) / 0.4);
+  border-top-color: rgb(var(--color-primary, 122 162 247));
   border-radius: 50%;
   animation: hk-loading-veil-spin 0.8s linear infinite;
 }

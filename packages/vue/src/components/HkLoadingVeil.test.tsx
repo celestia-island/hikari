@@ -18,7 +18,7 @@ import HkLoadingVeil from "./HkLoadingVeil";
 
 const mounts: Array<() => void> = [];
 
-function mountVeil(props: Record<string, unknown> = {}) {
+function mountVeil(props: { active?: boolean; label?: string } = {}) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const active = ref(props.active ?? false);

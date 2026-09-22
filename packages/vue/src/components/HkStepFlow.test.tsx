@@ -134,13 +134,14 @@ async function outliveSwap(): Promise<void> {
 function stubMotion(
   duration = "0.15s",
   opts: { leavingOpacity?: string } = {},
-): void {
+): (next: string) => void {
   const real = window.getComputedStyle.bind(window);
+  let current = duration;
   vi.spyOn(window, "getComputedStyle").mockImplementation(
     (el: Element, pseudoElt?: string | null): CSSStyleDeclaration => {
       if (el instanceof HTMLElement && el.classList.contains("hk-stepflow-body")) {
         return {
-          transitionDuration: duration,
+          transitionDuration: current,
           opacity: el.classList.contains("leaving")
             ? (opts.leavingOpacity ?? "1")
             : "1",
@@ -149,6 +150,9 @@ function stubMotion(
       return real(el, pseudoElt ?? undefined);
     },
   );
+  return (next: string) => {
+    current = next;
+  };
 }
 
 /** happy-dom reports every box as 0px tall and never transitions, so the
@@ -979,6 +983,29 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     );
     await flushSwap();
     expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBeGreaterThan(0);
+  });
+
+  it("releases a pin a pre-emption preserved when motion collapses mid-flight", async () => {
+    // The pinned stage outlives the swap that owned it if the next
+    // navigation resolves to the instant path (motion collapsed mid-flight,
+    // e.g. a reduced-motion flip): that path creates no successor, so it has
+    // to release the pin itself or the stage stays stuck at the old height.
+    const setDuration = stubMotion();
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({ initial: "a", sheetHost: true });
+    t.setCurrent("b");
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    expect(bodies?.style.minHeight).toBe("220px");
+
+    // Motion collapses before the next navigation.
+    setDuration("0s");
+    t.setCurrent("c");
+    await flushSwap();
+    expect(bodies?.style.minHeight).toBe("");
+    expect(t.container.querySelector<HTMLElement>(".hk-stepflow-body.active")?.textContent).toBe(
+      "c-body",
+    );
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

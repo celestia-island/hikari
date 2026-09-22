@@ -145,7 +145,10 @@ function opacityOf(el: HTMLElement | null): number {
   if (!el) return 1;
   const view = el.ownerDocument?.defaultView;
   if (!view) return 1;
-  const raw = view.getComputedStyle(el).opacity ?? "1";
+  const raw = view.getComputedStyle(el).opacity;
+  // An empty/unparseable value means "could not read", not "0": treating it
+  // as faded would take the fast path for a body the user can see.
+  if (raw === undefined || raw.trim() === "") return 1;
   const value = Number(raw);
   return Number.isFinite(value) ? value : 1;
 }
@@ -522,6 +525,12 @@ export default defineComponent({
       // own sweep watchdog is duration+350ms).
       handle.timer = setTimeout(
         endSwap,
+        handle.phaseMs + TAIL_WATCHDOG_GRACE_MS,
+      );
+      // The park outlives one phase, so the bus window is re-booked to cover
+      // it (the earlier report only spanned the two phases).
+      handle.report?.disconnect();
+      handle.report = reportTransition(
         handle.phaseMs + TAIL_WATCHDOG_GRACE_MS,
       );
     }

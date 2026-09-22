@@ -278,8 +278,12 @@ export function useSizeMorph(
     }
     if (pendingMeasure) {
       pendingMeasure = false;
-      // The sweep is out of the way: flush the measurement it deferred.
-      scheduleFrame(() => remeasure());
+      // The sweep is out of the way: flush the measurement it deferred. It
+      // stays a BACKGROUND measurement — one bus frame later an explicit
+      // announce may already have staged the successor fold, and an
+      // interrupting flush would tear that down and replay it (real-engine
+      // finding, the last intermittent race in this handshake).
+      scheduleFrame(() => remeasure(false));
     }
   }
 

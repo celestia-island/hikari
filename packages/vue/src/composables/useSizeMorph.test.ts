@@ -343,6 +343,36 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("");
   });
 
+  it("keeps a deferred flush from tearing down the successor sweep", async () => {
+    // The flush of a deferred measurement must stay a background measurement:
+    // if it interrupts, a fold staged by an explicit announce in the frame
+    // before it is torn down and replayed (real-engine race, N7).
+    const settled: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepSettle: (info) => settled.push(info),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // A background change arrives mid-sweep and is deferred…
+    h.setContentNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    expect(settled).toEqual([]);
+    // …the sweep lands, which schedules its flush…
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(settled).toHaveLength(1);
+    // …and an explicit announce stages the successor before that flush runs.
+    h.setNatural(420);
+    h.remeasure();
+    await settle();
+    // The flush left the successor alone: an interrupting flush would tear
+    // it down and publish a second settle for it.
+    expect(settled).toHaveLength(1);
+    h.stop();
+  });
+
   it("mints a fresh sweep identity per staged sweep", async () => {
     // The park's scoping is only meaningful if every sweep has its own id: a
     // constant would let an interrupting teardown pass as the park's landing

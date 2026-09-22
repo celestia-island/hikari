@@ -251,7 +251,14 @@ export default defineComponent({
       contentRef.value?.style.removeProperty("--hk-modal-morph-duration");
     };
     const onStepflowSwap = (event: Event): void => {
-      if (machine.phase.value !== "open") return;
+      if (machine.phase.value !== "open") {
+        // A swap announced while the surface is closing/opening: drop any
+        // override a previous morph left behind instead of letting it ride
+        // into the next open (it is otherwise only cleared by its own
+        // ms+350 timer).
+        clearMorphDuration();
+        return;
+      }
       const frame = contentRef.value;
       const ms = (event as CustomEvent<{ durationMs?: number }>).detail?.durationMs;
       if (frame && typeof ms === "number" && ms > 0) {

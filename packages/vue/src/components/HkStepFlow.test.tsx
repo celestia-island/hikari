@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
+import { readHkRuntime } from "../runtime/registry";
 import HkStepFlow, {
   SHEET_SWEEP_SETTLE_EVENT,
   SHEET_SWEEP_STAGE_EVENT,
@@ -1006,6 +1007,37 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(t.container.querySelector<HTMLElement>(".hk-stepflow-body.active")?.textContent).toBe(
       "c-body",
     );
+  });
+
+  it("leaves no orphaned transition booked when a fast-path park releases", async () => {
+    // The park books the longer window its fold needs; the fast path must not
+    // re-book over it (that orphans the handle and keeps the animation bus —
+    // and its registry — reporting a transition nobody owns).
+    stubMotion("0.15s", { leavingOpacity: "0" });
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100, sweep: 5 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    t.setCurrent("c");
+    await flushSwap();
+    for (const cb of frames.splice(0)) cb(0);
+    await flushSwap();
+    const body = t.container.closest(".hk-modal-body")!;
+    body.dispatchEvent(
+      new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, { detail: { sweep: 5 } }),
+    );
+    await flushSwap();
+    expect(readHkRuntime("animationBus")?.transitions ?? 0).toBe(0);
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

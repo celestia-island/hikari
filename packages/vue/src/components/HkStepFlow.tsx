@@ -705,7 +705,12 @@ export default defineComponent({
             announce(handle);
           }
           holdLine();
-          handle.report = reportTransition(phaseMs);
+          if (!parked) {
+            // A park already booked the longer window it needs; re-booking
+            // here would orphan that handle and keep the animation bus (and
+            // its registry) reporting a transition nobody owns.
+            handle.report = reportTransition(phaseMs);
+          }
           // Commit the staged (invisible) start state for one bus frame,
           // then lift it: that is what gives the fade its "from" AND what
           // applies the parked body's tail class. A parked fold is already

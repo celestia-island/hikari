@@ -410,10 +410,17 @@ export default defineComponent({
       bodies.value = bodies.value.filter((b) => b.id !== handle.enteringId);
       const survivor = bodies.value.find((b) => b.id === handle.leavingId);
       if (!survivor) {
-        // No visible body left to carry the stage: end the swap cleanly
-        // rather than dropping the last body (a navigation inside the
-        // fast-path frame must never leave the queue empty).
+        // No visible body left to carry the stage: end the swap cleanly and
+        // RE-SEED one for the current step. The branch is unreachable by
+        // construction today (the only place that drops a leavingId flips
+        // the phase in the same statement block), but falling through it
+        // would leave the queue empty and every later navigation would bail
+        // — a permanently blank flow (audit finding), so it re-seeds rather
+        // than trusting the invariant.
         endSwap();
+        bodies.value = [
+          { id: mountSeq++, key: props.modelValue, phase: "active" },
+        ];
         return false;
       }
       survivor.phase = "active";
@@ -586,6 +593,11 @@ export default defineComponent({
           // steps, then still poke the hosting sheet to remeasure.
           const atomicId = mountSeq++;
           bodies.value = [{ id: atomicId, key: next, phase: "active" }];
+          // A pin preserved across a pre-emption would otherwise outlive the
+          // swap that owned it (strandable when the motion path collapses
+          // mid-flight, e.g. a reduced-motion flip) and poison the next
+          // "old" height read.
+          clearPin();
           await nextTick();
           const newEl = elFor(atomicId);
           const delta = (newEl?.offsetHeight ?? oldH) - oldH;

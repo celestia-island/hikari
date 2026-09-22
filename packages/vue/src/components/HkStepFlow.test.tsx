@@ -937,6 +937,50 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(bodies?.style.minHeight).toBe("");
   });
 
+  it("holds a park across a navigation and only lets go when its own sweep lands", async () => {
+    // The enter-phase pre-emption path: navigating while a parked fold is
+    // still sweeping must NOT release the pin or the parked body's offset
+    // (clearing them synchronously moved a visible body by the whole fold
+    // span in one frame — audit finding NEW-C, the F1a defect on the other
+    // pre-emption route).
+    stubMotion();
+    stubHeights((text) => (text === "a-body" ? 220 : 100));
+    const t = mountStepFlow({
+      initial: "a",
+      sheetHost: true,
+      sweepSpan: { from: 220, to: 100, sweep: 7 },
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
+    const body = t.container.closest(".hk-modal-body")!;
+    expect(bodies?.style.minHeight).toBe("220px");
+
+    // The parked body's own measured offset, which only survives if the
+    // pre-emption leaves the held geometry alone.
+    const parkedEl = t.container.querySelector<HTMLElement>(
+      ".hk-stepflow-body.active",
+    );
+    expect(parkedEl?.style.top).toBe("120px");
+
+    // Navigate while the fold is still sweeping.
+    t.setCurrent("c");
+    await flushSwap();
+    // The held geometry survived the pre-emption: the body that was parked
+    // is now the outgoing one and still carries its line.
+    const survivor = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    expect(survivor?.style.top).toBe("120px");
+    expect(bodies?.style.minHeight).not.toBe("");
+    // …and the swap that owns it finally releases it.
+    body.dispatchEvent(
+      new CustomEvent(SHEET_SWEEP_SETTLE_EVENT, { detail: { sweep: 7 } }),
+    );
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBeGreaterThan(0);
+  });
+
   it("advances both phases on the watchdog when transitionend never arrives", async () => {
     stubMotion("20ms");
     const t = mountStepFlow({ initial: "a" });

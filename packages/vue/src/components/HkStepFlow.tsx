@@ -215,6 +215,10 @@ export default defineComponent({
     // endSwap below).
     let swap: RunningSwap | null = null;
     const swapPhase = ref<"idle" | "exit" | "enter">("idle");
+    /** Set for the enter phase of a SHRINK: parks the new body in the
+     *  stage's bottom band (hk-stepflow-enter-tail) so it already sits at
+     *  its final geometry while the sheet's clip edge folds down onto it. */
+    const tailPhase = ref(false);
     const flowRef = ref<HTMLDivElement | null>(null);
 
     /** Pin the flow to the pre-swap height (shrink exit phase). */
@@ -275,6 +279,7 @@ export default defineComponent({
       const handle = swap;
       swap = null;
       swapPhase.value = "idle";
+      tailPhase.value = false;
       disarmPhase(handle);
       handle.report?.disconnect();
       clearPin();
@@ -283,7 +288,8 @@ export default defineComponent({
     }
 
     /** Exit → enter edge: drop the old body, reveal the new one, and (for a
-     *  shrink) lift the height pin so the sheet folds through this phase. */
+     *  shrink) hand the sheet the new geometry so it folds through this
+     *  phase. */
     function startEnterPhase(): void {
       const handle = swap;
       if (!handle || handle.phase !== "exit") return;
@@ -295,10 +301,18 @@ export default defineComponent({
         ".hk-stepflow-body.active",
       );
       if (handle.delta < 0) {
-        // Shrink: the sheet morphs NOW (the second phase), with the new
-        // body already at its final geometry.
+        // Shrink. The sheet must measure the NEW natural height, so the pin
+        // comes off first; the announce then stages its fold synchronously
+        // (the modal's remeasure runs inside the dispatch). Before paint
+        // returns, the flow is re-pinned to the OLD height and the render
+        // parks the new body in the stage's bottom band
+        // (hk-stepflow-enter-tail), i.e. exactly where the descending clip
+        // edge lands: the new content never moves and the sheet's atomic
+        // re-pin lands nothing.
         clearPin();
         announce(handle);
+        pinOldHeight(handle.oldH);
+        tailPhase.value = true;
       }
       if (!entering) {
         endSwap();
@@ -455,6 +469,11 @@ export default defineComponent({
                   entry.phase,
                   entry.id === swap?.enteringId && swapPhase.value === "exit"
                     ? "hk-stepflow-enter-pending"
+                    : null,
+                  entry.id === swap?.enteringId &&
+                  swapPhase.value === "enter" &&
+                  tailPhase.value
+                    ? "hk-stepflow-enter-tail"
                     : null,
                   entry.id === swap?.leavingId
                     ? "hk-stepflow-leave-to"

@@ -96,6 +96,11 @@ describe("HkStepFlow two-phase swap contract", () => {
     const rule = src.match(/\.hk-stepflow-body\.leaving\s*\{[^}]*\}/)![0]!;
     expect(rule).toContain("position: absolute");
     expect(rule).toContain("pointer-events: none");
+    // Bottom-anchored: the stage's bottom line does not move when the sheet
+    // grows, so the old body keeps its exact screen position (a grow must
+    // not carry it up); the top anchor is explicitly retired.
+    expect(rule).toContain("bottom: 0");
+    expect(rule, "the leaving body must not be top-anchored").not.toContain("top: 0");
     // The classic sharp ease-in on leave, for BOTH opacity and travel.
     expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
     expect(rule).toContain(PHASE);
@@ -103,6 +108,24 @@ describe("HkStepFlow two-phase swap contract", () => {
     expect(transitions).toHaveLength(1);
     expect(transitions[0]).toContain("opacity");
     expect(transitions[0]).toContain("transform");
+  });
+
+  it("parks a shrink's new body in the bottom band the fold lands on", () => {
+    // Clause 5: the new content must already sit at its final geometry
+    // while the sheet's clip edge folds down, so the atomic re-pin lands
+    // nothing. The band is the stage's bottom (the line the fold descends
+    // to), declared as its own rule and bound to a shrink's enter phase.
+    const rule = blockFor(".hk-stepflow-body.hk-stepflow-enter-tail");
+    expect(rule).toContain("position: absolute");
+    expect(rule).toContain("bottom: 0");
+    expect(rule, "the parked body must not travel").not.toContain("transform");
+    expect(tsx).toContain("hk-stepflow-enter-tail");
+    expect(tsx).toMatch(/tailPhase\.value\s*=\s*true/);
+    // The order matters: measure (pin off) → announce → re-pin the old
+    // height, all before the browser can paint.
+    expect(tsx).toMatch(
+      /handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\);[\s\S]{0,200}?announce\(handle\);[\s\S]{0,400}?pinOldHeight\(handle\.oldH\)/,
+    );
   });
 
   it("stages the new body laid out but invisible so the bodies cannot overlap", () => {
@@ -216,7 +239,7 @@ describe("HkStepFlow two-phase swap contract", () => {
     // ENTER edge (the pin lifts in the same step).
     expect(tsx).toMatch(/delta\s*>=\s*0/);
     expect(tsx).toContain("pinOldHeight(");
-    expect(tsx).toMatch(/handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,220}?clearPin\(\)[\s\S]{0,80}?announce\(handle\)/);
+    expect(tsx).toMatch(/handle\.delta\s*<\s*0\s*\)\s*\{[\s\S]{0,1400}?clearPin\(\)[\s\S]{0,200}?announce\(handle\)/);
     // The event carries the phase length so the sheet can match it.
     expect(tsx).toContain("durationMs: handle.phaseMs");
   });

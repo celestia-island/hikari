@@ -390,6 +390,13 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(
       t.container.querySelector<HTMLElement>(".hk-stepflow-bodies")?.style.minHeight,
     ).toBe("");
+    // A grow never parks the new body in the tail band and never pins: the
+    // flow owns the new height from frame one.
+    expect(
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail"),
+    ).toBe(false);
     endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
     await flushSwap();
     // No second announcement: the sheet already owns the new geometry.
@@ -401,8 +408,16 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     stubHeights((text) => (text === "a-body" ? 220 : 100));
     const t = mountStepFlow({ initial: "a" });
     const events: CustomEvent[] = [];
+    // What the hosting sheet would measure when it handles the announce:
+    // the pin must be OFF at that instant (the modal reads the frame's NEW
+    // natural height) and back ON immediately after.
+    const pinAtAnnounce: string[] = [];
     t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
       events.push(e as CustomEvent);
+      pinAtAnnounce.push(
+        (t.container.querySelector<HTMLElement>(".hk-stepflow-bodies")?.style
+          .minHeight) ?? "missing",
+      );
     });
     t.setCurrent("b");
     await flushSwap();
@@ -411,8 +426,10 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(events.length).toBe(0);
     const bodies = t.container.querySelector<HTMLElement>(".hk-stepflow-bodies");
     expect(bodies?.style.minHeight).toBe("220px");
-    // Enter edge: the pin lifts and the sheet is told to fold now, with
-    // the new body already at its final geometry.
+    // Enter edge: the sheet is told to fold now, and the flow re-pins its
+    // OLD height for the fold while the new body parks in the stage's
+    // bottom band — the band the descending clip edge lands on, so the new
+    // content already sits at its final geometry.
     endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
     await flushSwap();
     expect(events.length).toBe(1);
@@ -424,10 +441,23 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     expect(detail.delta).toBe(-120);
     expect(detail.phase).toBe("enter");
     expect(detail.durationMs).toBe(150);
-    expect(bodies?.style.minHeight).toBe("");
+    expect(bodies?.style.minHeight).toBe("220px");
+    // …and the measurement window really was open at the announce.
+    expect(pinAtAnnounce).toEqual([""]);
     const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
     expect(active?.textContent).toBe("b-body");
     expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
+    expect(active?.classList.contains("hk-stepflow-enter-tail")).toBe(true);
+
+    // The fold's own end releases both the tail parking and the pin.
+    endTransition(active);
+    await flushSwap();
+    expect(bodies?.style.minHeight).toBe("");
+    expect(
+      t.container
+        .querySelector<HTMLElement>(".hk-stepflow-body.active")
+        ?.classList.contains("hk-stepflow-enter-tail"),
+    ).toBe(false);
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

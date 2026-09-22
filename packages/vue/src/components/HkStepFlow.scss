@@ -78,7 +78,13 @@
 
 .hk-stepflow-body.leaving {
   position: absolute;
-  top: 0;
+  // Anchored to the stage's BOTTOM, not its top. The sheet is bottom-docked
+  // and the stage ends on a screen line that does not move when the box
+  // grows, so the old body keeps its exact screen position while the sheet
+  // grows upward around it (2026-09-22 user directive: a grow must not
+  // carry the old content up). Identical to a top anchor whenever the stage
+  // and the body are the same height — i.e. every shrink's exit phase.
+  bottom: 0;
   left: 0;
   right: 0;
   pointer-events: none;
@@ -88,6 +94,20 @@
   transition:
     opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0),
     transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+// The staged new body of a SHRINK's enter phase: the flow hands the sheet
+// the new geometry to fold towards, then re-pins itself to the OLD height
+// and parks the new body in the stage's bottom band — the band the
+// descending clip edge folds down onto. The new content therefore sits at
+// its FINAL screen position for the whole fold and the sheet's atomic
+// re-pin lands nothing (2026-09-22 user directive: the new content appears
+// directly at the target height instead of following the top edge down).
+.hk-stepflow-body.hk-stepflow-enter-tail {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
 // The staged new body: LAID OUT (so the flow owns the new height from

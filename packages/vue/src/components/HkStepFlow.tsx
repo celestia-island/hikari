@@ -450,6 +450,9 @@ export default defineComponent({
       let sweep: number | null = null;
       if (body) {
         const onStage = (event: Event) => {
+          // Same target discipline as the settle twin below: only this
+          // flow's own host may stage geometry for it.
+          if (event.target !== body) return;
           const info = (
             event as CustomEvent<{
               direction?: string;

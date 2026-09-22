@@ -281,13 +281,21 @@ describe("HkModal publishes its own fold for the step flow", () => {
       { direction: "conceal", from: 596, to: 396, sweep: expect.any(Number) },
     ]);
 
-    // …and the landing is published when the sweep finishes.
+    // …and the landing is published when the sweep finishes, carrying the
+    // sweep's own identity (without it a consumer cannot tell its landing
+    // from another dance's teardown).
+    const landed: Array<{ sweep?: number }> = [];
+    rig.bodyEl()!.addEventListener(SHEET_SWEEP_SETTLE_EVENT, (e) => {
+      landed.push((e as CustomEvent<{ sweep?: number }>).detail ?? {});
+    });
     for (let i = 0; i < 4; i += 1) {
       for (const cb of frames.splice(0)) cb(i * 16);
       await vi.advanceTimersByTimeAsync(60);
     }
     await vi.advanceTimersByTimeAsync(1200);
     expect(settled).toBeGreaterThan(0);
+    expect(landed.length).toBeGreaterThan(0);
+    expect(typeof landed[0]?.sweep).toBe("number");
   });
 
   it("publishes NOTHING when the sheet is capped and cannot fold", async () => {

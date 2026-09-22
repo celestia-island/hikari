@@ -343,6 +343,25 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.clipPath).toBe("");
   });
 
+  it("mints a fresh sweep identity per staged sweep", async () => {
+    // The park's scoping is only meaningful if every sweep has its own id: a
+    // constant would let an interrupting teardown pass as the park's landing
+    // (mutation-reachable gap found by the audit).
+    const staged: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepStage: (info) => staged.push({ sweep: info.sweep }),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    fireTransitionEnd(h.frame, "clip-path");
+    h.setNatural(320);
+    h.remeasure();
+    expect(staged.map((s) => s.sweep)).toEqual([1, 2]);
+    h.stop();
+  });
+
   it("holds the staged clip through a two-frame warmup before the sweep starts", async () => {
     const h = mountHarness(300);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");

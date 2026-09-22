@@ -111,6 +111,7 @@ beforeEach(() => {
 
 afterEach(() => {
   globalThis.ResizeObserver = originalRO;
+  vi.restoreAllMocks();
   vi.useRealTimers();
   for (const m of mounts.splice(0)) {
     m.app.unmount();
@@ -955,6 +956,62 @@ describe("useSizeMorph fold riders", () => {
     fireTransitionEnd(h.frame, "clip-path");
     // Settle: inline fully released — the stylesheet (the own legs) owns
     // the element again.
+    expect(rider.style.transition).toBe("");
+    expect(rider.style.transform).toBe("");
+    h.stop();
+  });
+});
+
+describe("useSizeMorph fold rider settle handoff", () => {
+  it("hands the rider back its own transition legs at the settle flush", async () => {
+    // R2 finding 1: clearRiders' first pass must WRITE the element's own
+    // computed transition (not "none") before the flush — an override
+    // there cancels a mid-flight opacity transition on a real engine,
+    // which is exactly the snap this round removes. happy-dom cannot run
+    // transitions, so the witness is the inline value CAPTURED AT THE
+    // FLUSH the settle itself performs (the frame's offsetHeight read).
+    const rider = document.createElement("div");
+    const OWN = "opacity 150ms cubic-bezier(0.4, 0, 0.2, 1) 0s";
+    const real = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation(
+      (el: Element, pseudoElt?: string | null): CSSStyleDeclaration => {
+        const cs = real(el, pseudoElt ?? undefined);
+        if (el === rider) {
+          return Object.create(cs, {
+            transition: { get: () => OWN },
+            transitionProperty: { get: () => "opacity" },
+            transitionDuration: { get: () => "150ms" },
+            transitionTimingFunction: { get: () => "cubic-bezier(0.4, 0, 0.2, 1)" },
+          }) as CSSStyleDeclaration;
+        }
+        return cs;
+      },
+    );
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    await busFrames(2);
+
+    // Capture the rider's inline transition at every layout flush the
+    // settle performs — the handoff must be visible there.
+    const atFlush: string[] = [];
+    Object.defineProperty(h.frame, "offsetHeight", {
+      configurable: true,
+      get() {
+        atFlush.push(rider.style.transition);
+        return 360;
+      },
+    });
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(
+      atFlush,
+      "the settle's own flush must observe the rider's own legs",
+    ).toContain(OWN);
+    // …and the inline override is fully released afterwards.
     expect(rider.style.transition).toBe("");
     expect(rider.style.transform).toBe("");
     h.stop();

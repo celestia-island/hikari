@@ -3,7 +3,7 @@ import { createApp, defineComponent, h, nextTick, provide, ref } from "vue";
 
 import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
-import { SHEET_RIDE_KEY } from "../runtime/sheetRide";
+import { provideSheetRide, SHEET_RIDE_KEY, type SheetRideRegistry } from "../runtime/sheetRide";
 import type { RideEntry } from "../composables/useSizeMorph";
 
 const mounts: ReturnType<typeof createApp>[] = [];
@@ -409,21 +409,17 @@ describe("HkStepFlow simplified swap (motion enabled)", () => {
 
   it("registers the entering body as a counter rider with the hosting sheet", async () => {
     stubMotion();
-    const registered: RideEntry[] = [];
-    const unregistered: RideEntry[] = [];
+    // The REAL registry (not a mock): the swap must actually hold and
+    // release its registration — a mock's unregister callback could be a
+    // no-op and every assertion here would still pass (R2 finding 2).
+    let registry: SheetRideRegistry | null = null;
     const container = document.createElement("div");
     document.body.appendChild(container);
     containers.push(container);
     const current = ref("a");
     const Wrapper = defineComponent({
       setup() {
-        provide(SHEET_RIDE_KEY, {
-          register: (entry: RideEntry) => {
-            registered.push(entry);
-            return () => unregistered.push(entry);
-          },
-          snapshot: () => registered,
-        });
+        registry = provideSheetRide();
         return () =>
           h(HkStepFlow, {
             steps: STEPS,
@@ -446,17 +442,31 @@ describe("HkStepFlow simplified swap (motion enabled)", () => {
     // Registered before the sheet could stage any sweep, as a reveal
     // COUNTER (the entering body holds its final position while the
     // sheet's block rides the fold).
-    expect(registered).toHaveLength(1);
-    expect(registered[0]!.counter).toBe(true);
-    expect(registered[0]!.el.classList.contains("hk-stepflow-body")).toBe(true);
-    expect(unregistered).toHaveLength(0);
-    // Settle the swap: the registration is released exactly once.
+    const held = registry!.snapshot();
+    expect(held).toHaveLength(1);
+    expect(held[0]!.counter).toBe(true);
+    expect(held[0]!.el.classList.contains("hk-stepflow-body")).toBe(true);
+    // Settle the swap: the registration is released — the registry the
+    // sheet reads is actually empty again.
     endTransition(container.querySelector(".hk-stepflow-body.leaving"));
     await settleEnter();
     endTransition(container.querySelector(".hk-stepflow-body.active"));
     await flushSwap();
-    expect(unregistered).toHaveLength(1);
-    expect(unregistered[0]).toBe(registered[0]);
+    expect(registry!.snapshot()).toHaveLength(0);
+
+    // A preempted swap (exit phase interrupted by the next navigation,
+    // twice in a row) must not leak registrations either.
+    current.value = "c";
+    await flushSwap();
+    expect(registry!.snapshot()).toHaveLength(1);
+    current.value = "d";
+    await flushSwap();
+    endTransition(container.querySelector(".hk-stepflow-body.leaving"));
+    await settleEnter();
+    endTransition(container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    expect(registry!.snapshot()).toHaveLength(0);
+    expect(container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
   });
 });
 

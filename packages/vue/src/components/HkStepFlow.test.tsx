@@ -123,13 +123,23 @@ async function outliveSwap(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 900));
 }
 
-/** Force the motion path: the duration probe sees a phase-length transition. */
-function stubMotion(duration = "0.15s"): void {
+/** Force the motion path: the duration probe sees a phase-length transition.
+ *  `leavingOpacity` models how far an exit has run (the pre-emption fast
+ *  path keys off a body that has already faded to nothing). */
+function stubMotion(
+  duration = "0.15s",
+  opts: { leavingOpacity?: string } = {},
+): void {
   const real = window.getComputedStyle.bind(window);
   vi.spyOn(window, "getComputedStyle").mockImplementation(
     (el: Element, pseudoElt?: string | null): CSSStyleDeclaration => {
       if (el instanceof HTMLElement && el.classList.contains("hk-stepflow-body")) {
-        return { transitionDuration: duration } as CSSStyleDeclaration;
+        return {
+          transitionDuration: duration,
+          opacity: el.classList.contains("leaving")
+            ? (opts.leavingOpacity ?? "1")
+            : "1",
+        } as CSSStyleDeclaration;
       }
       return real(el, pseudoElt ?? undefined);
     },
@@ -616,6 +626,50 @@ describe("HkStepFlow two-phase swap (motion enabled)", () => {
     } finally {
       proto.getBoundingClientRect = realRect;
     }
+  });
+
+  it("never empties the queue when a pre-emption lands inside the fast-path frame", async () => {
+    // The skipExit fast path drops its outgoing body and commits the new
+    // one's staged state on the next bus frame. A navigation INSIDE that
+    // frame used to re-enter the exit branch, drop the only remaining body
+    // and leave the queue permanently empty (R3 audit finding L1). The
+    // phase now flips to "enter" immediately and preemptSwap falls back to
+    // endSwap when the body it names is already gone.
+    stubMotion("0.15s", { leavingOpacity: "0" });
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+
+    const t = mountStepFlow({ initial: "a" });
+    t.setCurrent("b");
+    await flushSwap();
+    // b is pending; swap again: the leaving body reads as fully faded, so
+    // the new swap takes the fast path and queues its staging frame.
+    t.setCurrent("c");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("c-body");
+
+    // A change INSIDE that frame must not empty the queue…
+    t.setCurrent("d");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBeGreaterThan(0);
+    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(active?.textContent).toBe("d-body");
+    // …and the swap still settles once the queued bus frame runs.
+    for (const cb of frames.splice(0)) cb(0);
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
+    await flushSwap();
+    endTransition(t.container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
+    // Still navigable afterwards (the failure mode was permanent blankness).
+    t.setCurrent("a");
+    await flushSwap();
+    expect(t.container.querySelector(".hk-stepflow-body.active")?.textContent).toBe("a-body");
   });
 
   it("advances both phases on the watchdog when transitionend never arrives", async () => {

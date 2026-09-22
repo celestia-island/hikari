@@ -382,7 +382,14 @@ export default defineComponent({
       // The pending body never painted — drop it, keep the visible one.
       bodies.value = bodies.value.filter((b) => b.id !== handle.enteringId);
       const survivor = bodies.value.find((b) => b.id === handle.leavingId);
-      if (survivor) survivor.phase = "active";
+      if (!survivor) {
+        // No visible body left to carry the stage: end the swap cleanly
+        // rather than dropping the last body (a navigation inside the
+        // fast-path frame must never leave the queue empty).
+        endSwap();
+        return false;
+      }
+      survivor.phase = "active";
       swap = null;
       swapPhase.value = "idle";
       tailPhase.value = false;
@@ -544,7 +551,9 @@ export default defineComponent({
         };
         swap = handle;
         bodies.value = [...bodies.value, entering];
-        swapPhase.value = skipExit ? "enter" : "exit";
+        // Always staged: the new body is invisible for this frame, so the
+        // fast path below can commit that start state before its fade.
+        swapPhase.value = "exit";
         await nextTick();
         // Preempted while the DOM patched? The newer swap owns the stage —
         // this continuation must not measure, dispatch or arm anything.
@@ -575,17 +584,20 @@ export default defineComponent({
         if (skipExit) {
           // The outgoing body had already faded out, so replaying its exit
           // would only show a blank stage: drop it, hand the sheet the new
-          // geometry, and fade the new body in from this edge. One bus
-          // frame commits the staged (invisible) start state so the fade
-          // has a "from".
+          // geometry, and fade the new body in from this edge. The render
+          // still carries `swapPhase = "exit"`, i.e. the new body's staged
+          // invisible start state, so the bus frame below commits that
+          // state before the fade gets its "from" — and the phase is marked
+          // "enter" right away, so a navigation inside that single frame
+          // takes the safe endSwap path instead of the exit branch.
           bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
           handle.phase = "exit";
           announce(handle);
+          handle.phase = "enter";
           handle.report = reportTransition(phaseMs);
           handle.frame = scheduleFrame(() => {
             if (swap !== handle) return;
             handle.frame = null;
-            handle.phase = "enter";
             swapPhase.value = "enter";
             armPhase(handle, newEl, endSwap);
           });

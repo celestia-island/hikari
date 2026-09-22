@@ -25,7 +25,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(here, "HkStepFlow.scss"), "utf-8");
 const tsx = readFileSync(join(here, "HkStepFlow.tsx"), "utf-8");
 const modal = readFileSync(join(here, "HkModal.tsx"), "utf-8");
-const modalScss = readFileSync(join(here, "HkModal.scss"), "utf-8");
 const morphSrc = readFileSync(
   join(here, "..", "composables", "useSizeMorph.ts"),
   "utf-8",

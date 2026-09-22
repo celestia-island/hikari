@@ -313,6 +313,36 @@ describe("useSizeMorph clip reveal", () => {
     expect(h.frame.style.willChange).toBe("");
   });
 
+  it("never tears a live sweep down for a background measurement", async () => {
+    // A debounced observer measurement arriving mid-sweep used to call
+    // stopReveal(), which republished that sweep's teardown as its LANDING —
+    // a consumer parking geometry for the fold released it ~2ms in and the
+    // sheet undid and replayed the fold (real-engine finding). The
+    // background measurement is deferred until the sweep lands instead.
+    const settled: Array<{ sweep: number }> = [];
+    const h = mountHarness(300, 300, {
+      onSweepSettle: (info) => settled.push(info),
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.start();
+    h.setNatural(360);
+    h.remeasure();
+    // Staged synchronously: the sweep is in flight.
+    expect(h.frame.style.clipPath).toBe("inset(60px 0 0 0 round 0px 0px 0px 0px)");
+
+    // A content change arrives while it is still sweeping.
+    h.setContentNatural(320);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    // The live sweep survived it…
+    expect(settled).toEqual([]);
+
+    // …its own landing still reports, and the deferred measurement then runs.
+    fireTransitionEnd(h.frame, "clip-path");
+    expect(settled).toHaveLength(1);
+    expect(h.frame.style.clipPath).toBe("");
+  });
+
   it("holds the staged clip through a two-frame warmup before the sweep starts", async () => {
     const h = mountHarness(300);
     h.frame.style.setProperty("--hk-sheet-morph", "clip");

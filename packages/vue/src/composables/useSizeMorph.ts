@@ -208,6 +208,10 @@ export function useSizeMorph(
   /** Identity of the sweep currently staged/folding, echoed to consumers. */
   let sweepSeq = 0;
   let activeSweep = 0;
+  /** A background (observer-driven) measurement arrived while a sweep was in
+   *  flight: it is flushed once that sweep lands, because measuring through
+   *  a live sweep tears it down and republishes its teardown as a landing. */
+  let pendingMeasure = false;
 
   /** Land a conceal atomically: pin the target height and clear the clip
    *  in one transition-disabled task. Called from the sweep's end, from
@@ -271,6 +275,11 @@ export function useSizeMorph(
     // dance's teardown.
     if (hadSweep) {
       options.onSweepSettle?.({ sweep: sweptId });
+    }
+    if (pendingMeasure) {
+      pendingMeasure = false;
+      // The sweep is out of the way: flush the measurement it deferred.
+      scheduleFrame(() => remeasure());
     }
   }
 
@@ -413,8 +422,17 @@ export function useSizeMorph(
       : CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
   }
 
-  function remeasure(): void {
+  function remeasure(interrupt = true): void {
     if (!armed) return;
+    if (!interrupt && revealEl !== null) {
+      // A background measurement must never tear down a live sweep: doing so
+      // republished the sweep's own teardown as its LANDING, so a consumer
+      // parking geometry for that fold released it ~2ms in and the sheet
+      // undid and replayed the fold (real-engine finding). The change is
+      // measured as soon as the sweep lands instead.
+      pendingMeasure = true;
+      return;
+    }
     const f = frame.value;
     const c = content.value;
     if (!f || !c) return;
@@ -583,7 +601,7 @@ export function useSizeMorph(
       // even parked, so this hop is safe in every motion state.
       raf = scheduleFrame(() => {
         raf = null;
-        remeasure();
+        remeasure(false);
       });
     }, 150);
   }
@@ -630,6 +648,7 @@ export function useSizeMorph(
     // cycle carries.
     chromeAllowance = CHROME_ALLOWANCE_FLOOR + CHROME_ALLOWANCE_SLACK;
     stopReveal();
+    pendingMeasure = false;
     // The leave fold no longer clips; drop the resident promotion with
     // it (start() re-applies on the next open).
     clearResidentWill();

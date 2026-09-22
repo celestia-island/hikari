@@ -71,9 +71,13 @@
 .hk-stepflow-body {
   // ENTER grammar (what a body computes once its `hk-stepflow-enter-pending`
   // class lifts at the phase-2 edge): a plain fade in place — the new
-  // content never travels (2026-09-22 user directive).
+  // content never travels (2026-09-22 user directive). A STANDARD ease, not
+  // the expressive ease-out: the front-loaded curve put the first painted
+  // frame at ~50% opacity (half the distance in ~11% of the phase), which
+  // read on the device as the new content flashing in — the standard curve
+  // starts at ~20% instead (2026-09-22 device report, round 11).
   transition:
-    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hk-stepflow-body.leaving {
@@ -89,11 +93,11 @@
   left: 0;
   right: 0;
   pointer-events: none;
-  // LEAVE grammar: the sharp ease-in counterpart, applied for the whole
-  // exit phase (the class lands on the same patch that flips the body
-  // into `leaving`, so the slide starts from the already-painted state).
+  // LEAVE grammar: the slide keeps its accelerating ease-in; the FADE gets
+  // its own gentler curve so the old content eases out over several frames
+  // instead of dropping 0.40 -> 0.03 in one (same device report).
   transition:
-    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.6, 1),
     transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
 }
 

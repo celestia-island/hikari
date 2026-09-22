@@ -80,6 +80,7 @@ export { default as HRadio } from "./components/HkRadio";
 export { default as HScrollContainer } from "./components/HkScrollContainer";
 export { default as HSearchInput } from "./components/HkSearchInput";
 export { default as HSplash } from "./components/HkSplash";
+export { default as HkLoadingVeil } from "./components/HkLoadingVeil";
 export { default as HSelect } from "./components/HkSelect";
 export { default as HSelectPanel, type SelectPanelPlacement } from "./components/HkSelectPanel";
 export { default as HSidebar } from "./components/HkSidebar";

@@ -4,6 +4,7 @@ import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
 import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
 import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
+import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
 import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
@@ -281,6 +282,17 @@ function getAllThemePresets(): Record<string, ThemePreset> {
 export function initTheme() {
   if (initialized) return;
   initialized = true;
+  // hikari's own groups (shape/radius) land BEFORE the first applyTheme so
+  // their cssvars ride the very first emission. Registration is keyed by
+  // group id, so a host that wants its own `shape` has three viable orders:
+  //   1. register it AFTER initTheme() — this call has already run;
+  //   2. never call initTheme() — nothing registers the standard group;
+  //   3. call registerStandardThemeGroups() FIRST yourself, then register
+  //      your own `shape`: the idempotence latch makes THIS call a no-op,
+  //      so a replacement landed before initTheme() still survives.
+  // Only a bare replacement registered before this point, with no explicit
+  // registerStandardThemeGroups() call, is overwritten here.
+  registerStandardThemeGroups();
   const storedMode = localStorage.getItem(STORAGE_MODE_KEY) as ThemeMode | null;
   if (storedMode === "dark" || storedMode === "light") {
     currentMode.value = storedMode;

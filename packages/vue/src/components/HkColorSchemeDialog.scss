@@ -64,6 +64,31 @@
   padding: var(--space-4, 0.25rem) var(--space-4, 0.25rem) var(--space-8, 0.5rem);
 }
 
+/* Non-color slot cell (number slider / enum tab strip). A picker labels
+   itself; a slider and a tab strip do not, so the field supplies the slot
+   label — and the slider, whose value is otherwise only exposed through
+   aria-valuetext, prints it in the unit its cssvar is written with. */
+.s-scheme-group-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.125rem);
+  min-width: 0;
+}
+
+.s-scheme-group-field-label {
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-scheme-group-field-value {
+  font-size: var(--text-2xs, 0.625rem);
+  color: rgb(var(--color-muted));
+  font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 767px) {
   .s-scheme-group-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

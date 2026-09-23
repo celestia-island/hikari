@@ -435,6 +435,15 @@ export {
   type HAboutLinkIcon,
 } from "./components/HkAboutModal";
 export { HkLogWindow as HLogWindow, type HLogTab } from "./components/HkLogWindow";
+export {
+  HkSettingsBody as HSettingsBody,
+  HkSettingsDialog as HSettingsDialog,
+  HkSettingsGroup as HSettingsGroup,
+  HkSettingsSub as HSettingsSub,
+  HkSettingsHint as HSettingsHint,
+  type HkSettingsSection,
+} from "./components/HkSettingsDialog";
+
 export { HkCookieConsent as HCookieConsent } from "./components/HkCookieConsent";
 export {
   HkAttachmentModal as HAttachmentModal,

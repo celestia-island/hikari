@@ -146,44 +146,6 @@ describe("HkModal stepflow swap handoff", () => {
     expect(rig.morphToken()).toBe("");
   });
 
-
-  it("ignores announcements while the surface is still unfolding", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    const rig = await mountRig();
-    rig.open.value = true;
-    // The machine's phase is opening* here: the morph is not armed yet, so
-    // an override would be stranded on the frame.
-    await vi.advanceTimersByTimeAsync(10);
-    if (rig.bodyEl()) {
-      rig.announceSwap({ delta: 60, durationMs: 150, phase: "exit" });
-      await nextTick();
-    }
-    expect(rig.morphToken()).toBe("");
-    await vi.advanceTimersByTimeAsync(600);
-    expect(rig.morphToken()).toBe("");
-  });
-
-  it("drops the override when the modal unmounts mid-sweep", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
-
-    rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
-    await nextTick();
-    const frame = rig.frameEl()!;
-    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
-
-    // Unmount with the sweep still in flight: the timer must not outlive
-    // the component, and the token must not survive on the detached node.
-    for (const app of mounts.splice(0)) app.unmount();
-    await nextTick();
-    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("");
-  });
 });
 
 describe("HkModal publishes its own fold for the step flow", () => {
@@ -354,55 +316,6 @@ describe("HkModal publishes its own fold for the step flow", () => {
     expect(rig.morphToken()).toBe("");
   });
 
-  it("unfreezes via the safety timer when the settle never arrives", async () => {
-    // A flow unmounted mid-slide never sends the morph event — the
-    // safety unfreeze must not only drop the flag but FLUSH the
-    // measurement the freeze dropped (adversarial finding: without the
-    // flush the sheet sits at its old height until the next content
-    // change).
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    stubClip();
-    stubBox(500, Number.POSITIVE_INFINITY);
-    const roInstances: Array<{ callback: () => void }> = [];
-    vi.stubGlobal("ResizeObserver", class {
-      callback: () => void;
-      constructor(cb: () => void) {
-        this.callback = cb;
-        roInstances.push(this);
-      }
-      observe() {}
-      disconnect() {}
-    });
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(700);
-    const frame = rig.frameEl()!;
-    expect(frame.style.height).toBe("596px");
-
-    // The slide window freezes; the content grew and the observer event
-    // was dropped (gated); no morph event will ever come.
-    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
-    await nextTick();
-    content = 560;
-    roInstances[0]!.callback();
-    await vi.advanceTimersByTimeAsync(400);
-    expect(frame.style.height).toBe("596px");
-
-    // Past ms + 650 the safety unfreeze runs AND flushes: the pin
-    // reflects the growth without any event.
-    await vi.advanceTimersByTimeAsync(700);
-    expect(frame.style.height).toBe("656px");
-    // …and a later morph event still works (no stranded freeze).
-    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
-    await nextTick();
-    expect(rig.morphToken()).toBe("300ms");
-    await vi.advanceTimersByTimeAsync(700);
-    expect(rig.morphToken()).toBe("");
-    restoreBox();
-  });
-
   it("ignores announcements while the surface is still unfolding", async () => {
     vi.useFakeTimers();
     freezeRaf();
@@ -442,7 +355,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
   });
 });
 
-describe("HkModal publishes its own fold for the step flow", () => {
+describe("HkModal rides its chrome and gates the slide window", () => {
   /** Box model: the frame hugs its content up to `cap`; the content probe
    *  reports `content` plus the chrome the calibration measures. */
   let content = 0;
@@ -500,12 +413,9 @@ describe("HkModal publishes its own fold for the step flow", () => {
 
   
 
-
   
 
-
   
-
 
   it("unfreezes via the safety timer when the settle never arrives", async () => {
     // A flow unmounted mid-slide never sends the morph event — the

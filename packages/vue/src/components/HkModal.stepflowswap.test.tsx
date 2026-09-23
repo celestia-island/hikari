@@ -3,7 +3,6 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkModal from "./HkModal";
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
-import { useSheetRide } from "../runtime/sheetRide";
 
 const SHEET_SWEEP_STAGE_EVENT = "hk-sheet-sweep-stage";
 const SHEET_SWEEP_SETTLE_EVENT = "hk-sheet-sweep-settle";
@@ -120,8 +119,8 @@ describe("HkModal stepflow swap handoff", () => {
     expect(rig.bodyEl()).not.toBeNull();
     expect(rig.morphToken()).toBe("");
 
-    // A swap that owns the height in its FIRST phase.
-    rig.announceSwap({ delta: 120, durationMs: 150, phase: "exit" });
+    // The morph window (after the slide settles) owns the height.
+    rig.announceSwap({ delta: 120, durationMs: 150, phase: "morph" });
     await nextTick();
     expect(rig.morphToken()).toBe("150ms");
 
@@ -147,43 +146,6 @@ describe("HkModal stepflow swap handoff", () => {
     expect(rig.morphToken()).toBe("");
   });
 
-  it("ignores announcements while the surface is still unfolding", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    const rig = await mountRig();
-    rig.open.value = true;
-    // The machine's phase is opening* here: the morph is not armed yet, so
-    // an override would be stranded on the frame.
-    await vi.advanceTimersByTimeAsync(10);
-    if (rig.bodyEl()) {
-      rig.announceSwap({ delta: 60, durationMs: 150, phase: "exit" });
-      await nextTick();
-    }
-    expect(rig.morphToken()).toBe("");
-    await vi.advanceTimersByTimeAsync(600);
-    expect(rig.morphToken()).toBe("");
-  });
-
-  it("drops the override when the modal unmounts mid-sweep", async () => {
-    vi.useFakeTimers();
-    freezeRaf();
-    stubDurations();
-    const rig = await mountRig();
-    rig.open.value = true;
-    await vi.advanceTimersByTimeAsync(600);
-
-    rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
-    await nextTick();
-    const frame = rig.frameEl();
-    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
-
-    // Unmount with the sweep still in flight: the timer must not outlive
-    // the component, and the token must not survive on the detached node.
-    for (const app of mounts.splice(0)) app.unmount();
-    await nextTick();
-    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("");
-  });
 });
 
 describe("HkModal publishes its own fold for the step flow", () => {
@@ -327,28 +289,244 @@ describe("HkModal publishes its own fold for the step flow", () => {
     expect(settled).toBe(0);
   });
 
-  it("rides its chrome and registered descendants with the staged fold", async () => {
-    // Round 14: the fold's clip edge must never slice the title. When a
-    // sweep stages, the modal's chrome and content probe ride the edge,
-    // and a descendant that registered through the sheet-ride registry
-    // (the way HkStepFlow registers its entering body) rides as a
-    // reveal COUNTER — staged at the mirrored negative offset.
+  it("freezes the sheet for the slide window and unfreezes at the morph edge", async () => {
+    // Round 16 two-window protocol: the "swap" phase holds the sheet's
+    // pin (observer-driven remeasures must not chase the flow's cell
+    // mid-slide) until the "morph" phase lifts the freeze and measures.
+    // The freeze-flag plumbing itself (gate and release of background
+    // measurements) is unit-witnessed in useSizeMorph.test.ts.
+    vi.useFakeTimers();
+    freezeRaf();
+    stubDurations();
+    const rig = await mountRig();
+    rig.open.value = true;
+    await vi.advanceTimersByTimeAsync(600);
+    expect(rig.morphToken()).toBe("");
+
+    // The slide window: freeze — no morph token, no measurement.
+    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
+    await nextTick();
+    expect(rig.morphToken()).toBe("");
+
+    // The morph window: the freeze lifts and the override lands.
+    rig.announceSwap({ delta: 120, durationMs: 300, phase: "morph" });
+    await nextTick();
+    expect(rig.morphToken()).toBe("300ms");
+    await vi.advanceTimersByTimeAsync(700);
+    expect(rig.morphToken()).toBe("");
+  });
+
+  it("ignores announcements while the surface is still unfolding", async () => {
+    vi.useFakeTimers();
+    freezeRaf();
+    stubDurations();
+    const rig = await mountRig();
+    rig.open.value = true;
+    // The machine's phase is opening* here: the morph is not armed yet, so
+    // an override would be stranded on the frame.
+    await vi.advanceTimersByTimeAsync(10);
+    if (rig.bodyEl()) {
+      rig.announceSwap({ delta: 60, durationMs: 150, phase: "exit" });
+      await nextTick();
+    }
+    expect(rig.morphToken()).toBe("");
+    await vi.advanceTimersByTimeAsync(600);
+    expect(rig.morphToken()).toBe("");
+  });
+
+  it("drops the override when the modal unmounts mid-sweep", async () => {
+    vi.useFakeTimers();
+    freezeRaf();
+    stubDurations();
+    const rig = await mountRig();
+    rig.open.value = true;
+    await vi.advanceTimersByTimeAsync(600);
+
+    rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
+    await nextTick();
+    const frame = rig.frameEl()!;
+    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
+
+    // Unmount with the sweep still in flight: the timer must not outlive
+    // the component, and the token must not survive on the detached node.
+    for (const app of mounts.splice(0)) app.unmount();
+    await nextTick();
+    expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("");
+  });
+});
+
+describe("HkModal rides its chrome and gates the slide window", () => {
+  /** Box model: the frame hugs its content up to `cap`; the content probe
+   *  reports `content` plus the chrome the calibration measures. */
+  let content = 0;
+  let cap = Number.POSITIVE_INFINITY;
+  const realOffsetHeight = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "offsetHeight",
+  );
+
+  function stubBox(initialContent: number, capPx: number): void {
+    content = initialContent;
+    cap = capPx;
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        if (this.classList.contains("hk-modal-content")) {
+          return Math.min(content + 96, cap);
+        }
+        if (this.classList.contains("hk-modal-body-inner")) return content;
+        return 0;
+      },
+    });
+  }
+
+  function restoreBox(): void {
+    if (realOffsetHeight) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "offsetHeight",
+        realOffsetHeight,
+      );
+    }
+  }
+
+  function stubClip(): void {
+    const real = window.getComputedStyle.bind(window);
+    vi.stubGlobal("getComputedStyle", (el: Element, ...rest: unknown[]) => {
+      const style = real(el as Element, ...(rest as []));
+      if (!(el instanceof HTMLElement)) return style;
+      if (el.classList.contains("hk-modal-content")) {
+        return {
+          ...style,
+          transitionDuration: "0.3s",
+          getPropertyValue: (name: string) =>
+            name === "--hk-sheet-morph" ? "clip" : style.getPropertyValue(name),
+        } as CSSStyleDeclaration;
+      }
+      return style;
+    });
+  }
+
+  afterEach(() => {
+    restoreBox();
+  });
+
+  
+
+  
+
+  
+
+  it("unfreezes via the safety timer when the settle never arrives", async () => {
+    // A flow unmounted mid-slide never sends the morph event — the
+    // safety unfreeze must not only drop the flag but FLUSH the
+    // measurement the freeze dropped (adversarial finding: without the
+    // flush the sheet sits at its old height until the next content
+    // change).
+    vi.useFakeTimers();
+    freezeRaf();
+    stubDurations();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+    const roInstances: Array<{ callback: () => void }> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      callback: () => void;
+      constructor(cb: () => void) {
+        this.callback = cb;
+        roInstances.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    });
+    const rig = await mountRig();
+    rig.open.value = true;
+    await vi.advanceTimersByTimeAsync(700);
+    const frame = rig.frameEl()!;
+    expect(frame.style.height).toBe("596px");
+
+    // The slide window freezes; the content grew and the observer event
+    // was dropped (gated); no morph event will ever come.
+    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
+    await nextTick();
+    content = 560;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(frame.style.height).toBe("596px");
+
+    // Past ms + 650 the safety unfreeze runs AND flushes: the pin
+    // reflects the growth without any event.
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("656px");
+    // …and a later morph event still works (no stranded freeze).
+    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
+    await nextTick();
+    expect(rig.morphToken()).toBe("300ms");
+    await vi.advanceTimersByTimeAsync(700);
+    expect(rig.morphToken()).toBe("");
+    restoreBox();
+  });
+  it("gates the observer while the slide window freezes the sheet", async () => {
+    // Round 16 wiring witness (the adversarial round's MuD survived
+    // against everything else): the "swap" event must route into the
+    // morph's deferRemeasure gate — an observer-driven growth mid-slide
+    // leaves the pin untouched, and the very same observer path measures
+    // again once the morph edge unfroze it (the last clause also proves
+    // the observer path is ALIVE in this harness, so the hold clause is
+    // not vacuously green).
+    vi.useFakeTimers();
+    stubDurations();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+    const roInstances: Array<{ callback: () => void }> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      callback: () => void;
+      constructor(cb: () => void) {
+        this.callback = cb;
+        roInstances.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    });
+    // No rAF stub: happy-dom maps rAF onto its timer queue, so the
+    // debounce AND the frame hops all run under the fake clock.
+    const rig = await mountRig();
+    rig.open.value = true;
+    await vi.advanceTimersByTimeAsync(700);
+    const frame = rig.frameEl()!;
+    expect(frame.style.height).toBe("596px");
+
+    // The slide window: frozen. The observer fires; the pin holds.
+    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
+    await nextTick();
+    content = 560;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("596px");
+
+    // The morph edge unfreezes and measures the accumulated growth.
+    rig.announceSwap({ delta: 24, durationMs: 300, phase: "morph" });
+    await nextTick();
+    expect(frame.style.height).not.toBe("596px");
+
+    // Harness validity + unfreeze proof: the SAME observer path now
+    // moves the pin without any event.
+    content = 700;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("796px");
+    restoreBox();
+  });
+
+  it("rides its chrome with the staged fold", async () => {
+    // Round 16: only the host chrome rides (header/subheader/body
+    // block) — the per-swap registry is retired with the concurrent
+    // choreography. This pins the modal-level collection + the resident
+    // promotion (round 15); the ride's flip/settle lifecycle is
+    // unit-witnessed in useSizeMorph.test.ts.
     vi.useFakeTimers();
     freezeRaf();
     stubClip();
     stubBox(500, Number.POSITIVE_INFINITY);
-
-    // The rider models the stepflow's ENTERING body: registered
-    // MID-CYCLE (never at arm time), so it stays on the per-swap
-    // promotion path — resident promotion is the chrome's alone.
-    let lateRegistry: ReturnType<typeof useSheetRide> = null;
-    const Rider = defineComponent({
-      setup() {
-        lateRegistry = useSheetRide();
-        return () => h("div", { class: "rider-el" }, "rider");
-      },
-    });
-
     const container = document.createElement("div");
     document.body.appendChild(container);
     containers.push(container);
@@ -362,7 +540,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
             title: "ride-test",
             "onUpdate:modelValue": (v: boolean) => { open.value = v; },
           }, {
-            default: () => h("div", { class: "swap-body" }, [h(Rider)]),
+            default: () => h("div", { class: "swap-body" }, "step content"),
           });
       },
     });
@@ -376,60 +554,28 @@ describe("HkModal publishes its own fold for the step flow", () => {
     const frame = () => document.querySelector<HTMLElement>(".hk-modal-content")!;
     const header = () => document.querySelector<HTMLElement>(".hk-modal-header")!;
     const bodyBlock = () => document.querySelector<HTMLElement>(".hk-modal-body")!;
-    const riderEl = () => document.querySelector<HTMLElement>(".rider-el")!;
-    expect(lateRegistry).not.toBeNull();
-    // Register only AFTER the surface armed — the per-swap timing.
-    lateRegistry!.register({ el: riderEl(), counter: true });
 
-    // The sweep needs real frames from here on.
-    const frames: FrameRequestCallback[] = [];
-    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
-      frames.push(cb);
-      return frames.length;
-    });
-    vi.stubGlobal("cancelAnimationFrame", () => {});
+    // Resident promotion from the arm moment (round 15).
+    expect(header().style.willChange).toBe("transform");
+    expect(bodyBlock().style.willChange).toBe("transform");
 
-    // A GROW announced at the flow's exit edge: content 500 -> 700, so
-    // the frame folds +200. The chrome rides at the pre-growth offset,
-    // the registered counter at the mirrored negative.
+    // The morph window (round 16 protocol) stages the fold: the chrome
+    // sits at its pre-growth offset, instantly.
     content = 700;
     document
       .querySelector<HTMLElement>(".hk-modal-body .swap-body")!
       .dispatchEvent(
         new CustomEvent(STEPFLOW_SWAP_EVENT, {
           bubbles: true,
-          detail: { delta: 200, durationMs: 150, phase: "exit" },
+          detail: { delta: 200, durationMs: 300, phase: "morph" },
         }),
       );
     await nextTick();
     expect(header().style.transform).toBe("translateY(200px)");
     expect(bodyBlock().style.transform).toBe("translateY(200px)");
-    expect(riderEl().style.transform).toBe("translateY(-200px)");
-    expect(header().style.willChange).toBe("transform");
 
-    // Two warmup frames, then the sweep: everything flips to its target
-    // under the mirrored transform transition.
-    for (let i = 0; i < 2; i += 1) {
-      for (const cb of frames.splice(0)) cb(i * 16);
-      await vi.advanceTimersByTimeAsync(16);
-    }
-    expect(header().style.transform).toBe("translateY(0px)");
-    expect(riderEl().style.transform).toBe("translateY(0px)");
-    expect(header().style.transition).toMatch(/^transform 0\.3s /);
-
-    // The landing releases the rides with the frame — but the CHROME
-    // keeps its resident promotion (round 15: demoting at the settle
-    // put the phone-GPU raster race back at every landing = black
-    // blocks). Only the per-swap registration (the Rider div, not in
-    // the frame at arm time) releases its layer.
-    const ev = new Event("transitionend");
-    Object.defineProperty(ev, "propertyName", { value: "clip-path" });
-    frame().dispatchEvent(ev);
-    expect(header().style.transform).toBe("");
-    expect(bodyBlock().style.transform).toBe("");
-    expect(riderEl().style.transform).toBe("");
-    expect(header().style.willChange).toBe("transform");
-    expect(bodyBlock().style.willChange).toBe("transform");
-    expect(riderEl().style.willChange).toBe("");
+    // (The landing's release + resident survival are unit-witnessed in
+    // useSizeMorph.test.ts — this rig's frozen rAF never starts the
+    // sweep, so there is no listener to land here.)
   });
 });

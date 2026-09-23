@@ -394,3 +394,96 @@ describe("HkTimeline window mode", () => {
     expect(selected).toEqual(["b"]);
   });
 });
+
+describe("HkTimeline navigation motion (round 16)", () => {
+  function mountTimeline(steps: number, initial: string) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const current = ref(initial);
+    const all = Array.from({ length: steps }, (_v, i) => ({
+      key: `s${i}`,
+      label: `Step ${i}`,
+    }));
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTimeline, {
+            steps: all,
+            currentKey: current.value,
+            collapse: "never" as never,
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, current };
+  }
+
+  it("positions the full-mode halo on the active step and slides it on navigation", async () => {
+    const { container, current } = mountTimeline(4, "s1");
+    // happy-dom has no layout engine: give the step nodes deterministic
+    // offsets so the halo's measured transform is observable.
+    const steps = () =>
+      Array.from(container.querySelectorAll<HTMLElement>(".hk-timeline-step"));
+    for (const [i, step] of steps().entries()) {
+      Object.defineProperty(step, "offsetLeft", {
+        configurable: true,
+        get: () => i * 100,
+      });
+      Object.defineProperty(step, "offsetWidth", {
+        configurable: true,
+        get: () => 80,
+      });
+    }
+    await nextTick();
+    await nextTick();
+    const halo = container.querySelector<HTMLElement>(".hk-timeline-halo");
+    expect(halo).not.toBeNull();
+    // Active = s1 (second node): translateX(100 - pad).
+    expect(halo!.style.transform).toBe("translateX(94px)");
+    expect(halo!.style.width).toBe("92px");
+    expect(halo!.hasAttribute("data-placed")).toBe(true);
+
+    current.value = "s3";
+    await nextTick();
+    await nextTick();
+    // Slid to the fourth node.
+    expect(halo!.style.transform).toBe("translateX(294px)");
+  });
+
+  it("marks the navigation direction for the window-mode wipe", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const current = ref("s1");
+    const all = Array.from({ length: 5 }, (_v, i) => ({
+      key: `s${i}`,
+      label: `Step ${i}`,
+    }));
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTimeline, {
+            steps: all,
+            currentKey: current.value,
+            collapse: "always" as never,
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const host = () => container.querySelector<HTMLElement>(".hk-timeline")!;
+    expect(host().getAttribute("data-mode")).toBe("window");
+    // First render: no direction known yet — no wipe on open.
+    expect(host().hasAttribute("data-dir")).toBe(false);
+    current.value = "s2";
+    await nextTick();
+    expect(host().getAttribute("data-dir")).toBe("forward");
+    current.value = "s0";
+    await nextTick();
+    expect(host().getAttribute("data-dir")).toBe("back");
+  });
+});

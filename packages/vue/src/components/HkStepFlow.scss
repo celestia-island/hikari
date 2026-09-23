@@ -1,16 +1,18 @@
-// Step-flow bodies: two-phase sequential swap (2026-09-22 user directive).
+// Step-flow bodies: the classic direction-aware crossfade (2026-09-23
+// user directive, round 16). The stage is a GRID with every body in the
+// SAME cell, and the swap is ONE window of simultaneous opacity+slide:
+// the entering body mounts staged (transparent, offset to its direction
+// side — an initial state, so the mount frame animates nothing) and is
+// released in the same frame the leaving body's exit starts; the two
+// slide apart like the classic stepper. The sheet's height is FROZEN
+// for the whole window (the component's swap event asks the host to
+// hold its pin) and the height morph plays ALONE afterwards — the
+// concurrent choreography this replaces overloaded the phone GPU's
+// raster thread (whole-region black flashes).
 //
-// The stage is a GRID with every body in the SAME cell — both the old and
-// the new body overlay each other without any positioning tricks, and the
-// cell sizes itself to whichever body is taller. The swap is therefore
-// JUST opacity: the entering body starts transparent (already painted, so
-// the fade never re-rasters a layer), the leaving body fades and slides
-// out, and the old DOM node is recycled once it is gone (2026-09-22 user
-// directive, round 12: "reduce the property count — only opacity, and
-// recycle the old element at the right time"). No visibility flips, no
-// absolute positioning, no height pins, no measured offsets — every one
-// of those changed the render tree mid-animation and read as a flash on
-// the phone GPU.
+// Deliberately NO visibility flips (that property changes the render
+// tree and the phone GPU re-rasters the layer when it flips), no
+// absolute positioning, no height pins.
 
 .hk-step-flow {
   --hk-stepflow-duration: 0.3s;
@@ -35,76 +37,50 @@
   padding-bottom: var(--hk-stepflow-header-gap, var(--space-16, 1rem));
 }
 
-// The swap stage: a single grid cell that every body shares.
+// The swap stage: a single grid cell that every body shares. The cell
+// sizes itself to the taller body, and with the sheet frozen nothing
+// about the container's geometry changes while the bodies crossfade.
 .hk-stepflow-bodies {
   display: grid;
 }
 
-// Every body occupies the same cell: the container's height is the taller
-// of the two during a swap (so the hosting sheet sees the NEW geometry as
-// soon as the swap starts for a grow, and keeps the OLD geometry until the
-// old node is recycled for a shrink — exactly the height schedule the
-// directive asks for, with no pin).
+// Every body occupies the same cell, TOP-ALIGNED at its natural height
+// (the classic slide look — the shorter body starts at the same top
+// line as its partner). The natural height is also what the component
+// measures at the morph edge: under the grid default (stretch) a
+// shorter entering body would be pulled to the taller leaving body's
+// height and every shrink would read delta 0 — the sheet would hold its
+// old height until the freeze's safety unfreeze snapped it a second
+// late (round 16, caught in review).
 .hk-stepflow-body {
   grid-area: 1 / 1;
-  // ENTER: fade in place from TRUE zero with a standard ease — no travel,
-  // no delay tricks. The element is laid out and PAINTED from the moment
-  // it mounts (opacity: 0 is compositor-only), and the COMPONENT fires
-  // the enter edge at 65% of the exit phase and flips the opacity-hiding
-  // class off imperatively, so the fade ramps up under the old body's
-  // still-visible tail (recycled at 90%, by then ~0.07) — no empty body
-  // ever paints between the phases (round 14, 2026-09-23: the earlier
-  // -40ms negative delay traded the blank window for a first-frame 0.53
-  // pop — "the model list always flickers once" — while the sequential
-  // edge still painted a ~33ms empty body; the overlap edge removes
-  // both).
+  align-self: start;
   transition:
-    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1),
+    transform var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-// The staged new body, staged in two independently-released layers:
-//
-// - `hk-stepflow-enter-pending` = END ANCHORING (align-self: end +
-//   pointer-events: none). It holds from mount until the RECYCLE patch —
-//   the one that collapses the cell — because a visible body without it
-//   stretches to the still-tall cell and jumps a full delta the frame
-//   its fade starts.
-// - `hk-stepflow-enter-hidden` = OPACITY 0. It comes off at the ENTER
-//   EDGE (0.65 of the exit phase, imperatively) so the fade starts in
-//   the same frame the old body's fading tail still covers the stage.
-//
-// Deliberately NO `visibility: hidden` anywhere — that property changes
-// the render tree and the phone GPU re-rasters the layer when it flips,
-// which was the flash the user kept seeing (round 12 directive).
-// `align-self: end` does two things with zero positioning tricks: it stops
-// the grid from STRETCHING the shorter entering body to the old cell height
-// (so its measured height is the true content height, and the shrink's
-// delta sign is correct), and it puts the body where the folded sheet will
-// land it — the cell bottom is anchored to the sheet footer, so the content
-// appears at its final line instead of being wiped by the descending fold
-// edge and jumping at the landing.
-.hk-stepflow-body.hk-stepflow-enter-pending {
+// The staged entering body and the exiting leaving one stay untouchable
+// for the window.
+.hk-stepflow-body.hk-stepflow-enter-from,
+.hk-stepflow-body.hk-stepflow-leave-to {
   pointer-events: none;
-  align-self: end;
 }
 
-.hk-stepflow-body.hk-stepflow-enter-hidden {
+// Direction-aware travel, classic vocabulary: forward enters from the
+// RIGHT and exits LEFT; back mirrors. The leaving body carries the
+// leave-to offset; the entering body's enter-from offset is its mount
+// state (see the component).
+.hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-enter-from {
   opacity: 0;
+  transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
-// The leaving body: fades out and slides in its direction. The slide is
-// the classic accelerating ease; the fade gets its own gentler curve so
-// the old content eases out over several frames.
-.hk-stepflow-body.leaving {
-  pointer-events: none;
-  transition:
-    opacity calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.4, 0, 0.6, 1),
-    transform calc(var(--hk-stepflow-duration, 0.3s) / 2) cubic-bezier(0.5, 0, 0.75, 0);
+.hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-enter-from {
+  opacity: 0;
+  transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
 }
 
-// Direction-aware travel, on the LEAVING body only: forward exits LEFT,
-// back exits RIGHT (the classic vocabulary). The entering body appears in
-// place, so it carries no direction rule at all.
 .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to {
   opacity: 0;
   transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
@@ -115,7 +91,15 @@
   transform: translateX(var(--hk-stepflow-travel, 24px));
 }
 
-/* RTL: reading direction flips, so the exit mirrors. */
+/* RTL: reading direction flips, so both vocabularies mirror. */
+[dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-enter-from {
+  transform: translateX(calc(-1 * var(--hk-stepflow-travel, 24px)));
+}
+
+[dir="rtl"] .hk-stepflow-bodies[data-direction="back"] .hk-stepflow-body.hk-stepflow-enter-from {
+  transform: translateX(var(--hk-stepflow-travel, 24px));
+}
+
 [dir="rtl"] .hk-stepflow-bodies[data-direction="forward"] .hk-stepflow-body.hk-stepflow-leave-to {
   transform: translateX(var(--hk-stepflow-travel, 24px));
 }

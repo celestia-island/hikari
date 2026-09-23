@@ -176,6 +176,54 @@ export default defineComponent({
       computeTimelineWindow(props.steps, props.currentKey),
     );
 
+    // ── Navigation motion (2026-09-23 user directive, round 16) ──────
+    // The stepper must not hard-cut between steps: the status colors
+    // crossfade (stylesheet), the window-mode cells wipe in from the
+    // navigation side (keyed remount + data-dir), and the full-mode
+    // active halo slides between step nodes (measured transform).
+    let prevIndex = currentIndex.value;
+    /** Set once the first navigation revealed a direction; drives the
+     *  window-mode wipe's side via the host attribute. */
+    const navDir = ref<"forward" | "back" | null>(null);
+    watch(currentIndex, (idx) => {
+      if (idx >= 0 && prevIndex >= 0 && idx !== prevIndex) {
+        navDir.value = idx > prevIndex ? "forward" : "back";
+      }
+      prevIndex = idx;
+    });
+
+    /** The sliding full-mode highlight. */
+    const halo = ref<HTMLElement | null>(null);
+    function positionHalo(): void {
+      const hostEl = host.value;
+      const haloEl = halo.value;
+      if (!hostEl || !haloEl) return;
+      const step = hostEl.querySelector<HTMLElement>(
+        '.hk-timeline-step[data-status="active"]',
+      );
+      if (!step) return;
+      const vertical = props.orientation === "vertical";
+      const pad = 6;
+      if (vertical) {
+        haloEl.style.transform = `translateY(${Math.max(0, step.offsetTop - pad)}px)`;
+        haloEl.style.width = "";
+        haloEl.style.height = `${step.offsetHeight + pad * 2}px`;
+      } else {
+        haloEl.style.transform = `translateX(${Math.max(0, step.offsetLeft - pad)}px)`;
+        haloEl.style.height = "";
+        haloEl.style.width = `${step.offsetWidth + pad * 2}px`;
+      }
+      // The very first placement must not animate from nothing — only
+      // subsequent moves ride the CSS transition.
+      haloEl.setAttribute("data-placed", "");
+    }
+    watch(
+      () => [props.currentKey, props.orientation] as const,
+      () => {
+        void nextTick(positionHalo);
+      },
+    );
+
     function statusOf(idx: number): TimelineStepStatus {
       return idx < currentIndex.value
         ? "completed"
@@ -212,10 +260,16 @@ export default defineComponent({
 
     onMounted(() => {
       if (typeof ResizeObserver !== "undefined") {
-        observer = new ResizeObserver(() => measure());
+        observer = new ResizeObserver(() => {
+          measure();
+          positionHalo();
+        });
         if (host.value) observer.observe(host.value);
       }
-      void nextTick(measure);
+      void nextTick(() => {
+        measure();
+        positionHalo();
+      });
     });
 
     onBeforeUnmount(() => {
@@ -305,6 +359,7 @@ export default defineComponent({
             class="hk-timeline"
             data-orientation={props.orientation}
             data-mode="window"
+            data-dir={navDir.value ?? undefined}
           >
             {(w.beforeIndex >= 0 || w.afterIndex >= 0) && (
               <div class="hk-timeline-links" aria-hidden="true">
@@ -371,7 +426,9 @@ export default defineComponent({
           class="hk-timeline"
           data-orientation={props.orientation}
           data-mode="full"
+          data-dir={navDir.value ?? undefined}
         >
+          <div ref={halo} class="hk-timeline-halo" aria-hidden="true" />
           {props.steps.map((_step, idx) => {
             const isLast = idx === props.steps.length - 1;
             return renderStep(idx, { connector: !isLast, last: isLast });

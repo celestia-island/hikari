@@ -12,7 +12,6 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
-import { provideSheetRide } from "../runtime/sheetRide";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -211,12 +210,15 @@ export default defineComponent({
     // running animation (2026-09-16 chest field report — the frame
     // snapped 459→697px mid-unfold). The open phase edge flushes the
     // deferred growth with an animated remeasure.
-    // Fold-ride registry (round 14): descendants register elements the
-    // fold must not slice or drag (the stepflow's entering body rides as
-    // a counter); merged into collectRide below.
-    const sheetRide = provideSheetRide();
+    // The freeze flag (round 16): while a stepflow SLIDE is in flight the
+    // sheet's height must not chase the flow's changing cell — the gate
+    // below also returns true then, and the morph window's own event
+    // flushes the frozen change with an explicit remeasure.
+    let swapFrozen = false;
+    let swapFreezeTimer: ReturnType<typeof setTimeout> | null = null;
     const morph = useSizeMorph(contentRef, innerRef, {
       deferRemeasure: () =>
+        swapFrozen ||
         machine.phase.value === "openingFrom" ||
         machine.phase.value === "openingTo",
       // The sheet's chrome and content block ride the fold edge in
@@ -245,7 +247,6 @@ export default defineComponent({
         // untransformed; the block's own poke below the frame lands
         // off-screen on a bottom-docked sheet.
         if (bodyRef.value) out.push({ el: bodyRef.value });
-        out.push(...sheetRide.snapshot());
         return out;
       },
       // Republish the morph's real sweep span and its landing on the body
@@ -269,18 +270,19 @@ export default defineComponent({
     let previouslyFocused: HTMLElement | null = null;
     let unmounted = false;
 
-    // HkStepFlow swaps dispatch STEPFLOW_SWAP_EVENT (bubbling) from the
-    // flow root at the edge where the sheet must morph: the exit edge for
-    // a GROW (the new height is already in the flow, so the sheet finishes
-    // growing while the old body leaves) and the enter edge for a SHRINK
-    // (the flow held its old height until the old body finished playing).
-    // The morph's settle debounce is tuned for streaming bursts; a step
-    // swap is one clean change whose sweep must land INSIDE its 0.15s
-    // phase (2026-09-22 user directive, round 10) — so the event
-    // short-circuits straight into remeasure() and overrides the sheet's
-    // own sweep duration for this one morph (the stylesheet default stays
-    // the 0.3s family standard for every other morph). The override is
-    // cleared on the same duration+grace watchdog the sweep itself uses.
+    // HkStepFlow swaps dispatch STEPFLOW_SWAP_EVENT (bubbling) with the
+    // two-window protocol (2026-09-23 user directive, round 16): the
+    // slide window announces `{phase: "swap"}` — the sheet FREEZES its
+    // height (observer-driven remeasures gated; a safety timer unfreezes
+    // if the settle never arrives, e.g. the flow unmounts mid-slide) —
+    // and the morph window that follows announces `{phase: "morph",
+    // delta, durationMs}` once the content settled: the freeze lifts and
+    // the remeasure short-circuits the settle debounce, overriding the
+    // sheet's own sweep duration for this one morph (the stylesheet
+    // default stays the 0.3s family standard for every other morph; the
+    // override is cleared on the same duration+grace watchdog the sweep
+    // itself uses). `{phase: "instant"}` (reduced motion, no-transition
+    // runtimes) skips the freeze entirely and just pokes the sheet.
     let morphDurationTimer: ReturnType<typeof setTimeout> | null = null;
     const clearMorphDuration = (): void => {
       if (morphDurationTimer !== null) {
@@ -289,17 +291,47 @@ export default defineComponent({
       }
       contentRef.value?.style.removeProperty("--hk-modal-morph-duration");
     };
+    const clearSwapFreeze = (flush = false): void => {
+      const timed = swapFreezeTimer !== null;
+      swapFrozen = false;
+      if (swapFreezeTimer !== null) {
+        clearTimeout(swapFreezeTimer);
+        swapFreezeTimer = null;
+      }
+      // The safety unfreeze (no morph event ever arrived — e.g. the flow
+      // unmounted mid-slide) must not just drop the flag: the slide-time
+      // content change was DROPPED, not queued, so without a flush here
+      // the sheet would sit at its old height until the next content
+      // change (adversarial round finding).
+      if (flush && timed) morph.remeasure();
+    };
     const onStepflowSwap = (event: Event): void => {
       if (machine.phase.value !== "open") {
         // A swap announced while the surface is closing/opening: drop any
-        // override a previous morph left behind instead of letting it ride
-        // into the next open (it is otherwise only cleared by its own
-        // ms+350 timer).
+        // override or freeze a previous window left behind instead of
+        // letting it ride into the next open.
+        clearSwapFreeze();
         clearMorphDuration();
         return;
       }
+      const detail = (event as CustomEvent<{
+        phase?: string;
+        durationMs?: number;
+      }>).detail;
+      if (detail?.phase === "swap") {
+        // The slide window: hold the pin no matter what the flow's cell
+        // does, and arm the safety unfreeze (the morph window's own
+        // event clears it earlier on the happy path).
+        swapFrozen = true;
+        if (swapFreezeTimer !== null) clearTimeout(swapFreezeTimer);
+        const ms = typeof detail.durationMs === "number" ? detail.durationMs : 300;
+        swapFreezeTimer = setTimeout(() => clearSwapFreeze(true), ms + 650);
+        return;
+      }
+      // Morph / instant: the content settled — unfreeze and measure now.
+      clearSwapFreeze();
       const frame = contentRef.value;
-      const ms = (event as CustomEvent<{ durationMs?: number }>).detail?.durationMs;
+      const ms = detail?.durationMs;
       if (frame && typeof ms === "number" && ms > 0) {
         frame.style.setProperty("--hk-modal-morph-duration", `${ms}ms`);
         morph.remeasure();
@@ -311,6 +343,7 @@ export default defineComponent({
     };
     onBeforeUnmount(() => {
       bodyRef.value?.removeEventListener(STEPFLOW_SWAP_EVENT, onStepflowSwap);
+      clearSwapFreeze();
       clearMorphDuration();
     });
 

@@ -22,50 +22,40 @@ import {
   type TokenGroupSlot,
 } from "@celestia-island/hikari";
 
+// Relative on purpose. The package root re-exports this component, so reading
+// the preset table through "@celestia-island/hikari" would close a loop whose
+// module-init order decides whether the table exists yet. Theme-internal
+// modules never import components, so this edge cannot loop.
+import { stockDefaultPreset, themePresets } from "../theme";
+
 import "./HkColorSchemeDialog.scss";
 
 
-const defaultDark: ThemeSchemeTokens = {
-  primary: { r: 255, g: 107, b: 157 },
-  secondary: { r: 199, g: 146, b: 234 },
-  accent: { r: 253, g: 235, b: 139 },
-  text: { r: 228, g: 228, b: 231 },
-  muted: { r: 180, g: 180, b: 180 },
-  border: { r: 255, g: 255, b: 255 },
-  focusedBorder: { r: 255, g: 107, b: 157 },
-  background: { r: 14, g: 14, b: 30 },
-  surface: { r: 24, g: 24, b: 42 },
-  selectedBackground: { r: 70, g: 70, b: 85 },
-  selectedText: { r: 240, g: 240, b: 240 },
-  statusBarBackground: { r: 24, g: 24, b: 42 },
-  success: { r: 114, g: 241, b: 184 },
-  error: { r: 255, g: 107, b: 107 },
-  warning: { r: 253, g: 235, b: 139 },
-  info: { r: 110, g: 231, b: 239 },
-  onSolidText: { r: 255, g: 255, b: 255 },
-  onSolidIcon: { r: 255, g: 255, b: 255 },
-};
-
-const defaultLight: ThemeSchemeTokens = {
-  primary: { r: 214, g: 51, b: 132 },
-  secondary: { r: 156, g: 106, b: 222 },
-  accent: { r: 230, g: 167, b: 0 },
-  text: { r: 30, g: 30, b: 30 },
-  muted: { r: 80, g: 80, b: 80 },
-  border: { r: 0, g: 0, b: 0 },
-  focusedBorder: { r: 214, g: 51, b: 132 },
-  background: { r: 245, g: 245, b: 240 },
-  surface: { r: 255, g: 255, b: 255 },
-  selectedBackground: { r: 200, g: 200, b: 205 },
-  selectedText: { r: 40, g: 40, b: 45 },
-  statusBarBackground: { r: 230, g: 230, b: 225 },
-  success: { r: 16, g: 185, b: 129 },
-  error: { r: 239, g: 68, b: 68 },
-  warning: { r: 245, g: 158, b: 11 },
-  info: { r: 6, g: 182, b: 212 },
-  onSolidText: { r: 255, g: 255, b: 255 },
-  onSolidIcon: { r: 255, g: 255, b: 255 },
-};
+/**
+ * Seed palette for a NEW custom scheme, read from the live preset table
+ * instead of kept as a second hand-copied palette. The copies that used to
+ * live here had drifted from the schemes they mirrored and then outlived
+ * them — the "second copy of a palette decision" failure class the shipped
+ * sheet guard in styles/channelFallbacks.test.ts exists to catch.
+ *
+ * The table is CONSUMER-OWNED, so `default` is not guaranteed to be there:
+ * chest clears every stock key at boot and registers only its brand line
+ * (brandPresets.ts). Hence the three-step resolution — the stock entry, then
+ * whatever the consumer registered, then the shipped palette, which
+ * `stockDefaultPreset` keeps reachable by name (same object, not a copy). An
+ * unconditional `themePresets.default[mode]` here mounts fine in every test
+ * in this repo and throws at mount inside chest.
+ *
+ * Resolved PER CALL rather than frozen into a module-scope constant. A frozen
+ * copy hides the seed from any test that mutates the table, which is exactly
+ * how the provenance case in HkColorSchemeEditor.test.ts pins the invariant:
+ * it moves the table and requires the editor to follow.
+ */
+function seedScheme(mode: "dark" | "light"): ThemeSchemeTokens {
+  const preset =
+    themePresets.default ?? Object.values(themePresets)[0] ?? stockDefaultPreset;
+  return { ...preset[mode] };
+}
 
 type ColorTokenKey = keyof ThemeSchemeTokens;
 /** Required (always-present) token slots — excludes the optional on-solid content colors. */
@@ -141,9 +131,9 @@ export interface HCustomTheme {
 export const HkColorSchemeEditor = defineComponent({
   name: "HkColorSchemeEditor",
   props: {
-    /** Prefill dark tokens; defaults to the hikari synthwave dark scheme. */
+    /** Prefill dark tokens; defaults to the stock default preset's dark scheme. */
     initialDark: { type: Object as PropType<ThemeSchemeTokens>, default: undefined },
-    /** Prefill light tokens; defaults to the hikari synthwave light scheme. */
+    /** Prefill light tokens; defaults to the stock default preset's light scheme. */
     initialLight: { type: Object as PropType<ThemeSchemeTokens>, default: undefined },
     /** Prefill extension token groups (per mode); defaults to registry defaults. */
     initialGroups: { type: Object as PropType<ThemeTokenGroupModes>, default: undefined },
@@ -165,8 +155,8 @@ export const HkColorSchemeEditor = defineComponent({
     const modeTab = ref<string>("dark");
     const themeName = ref(props.initialName ?? "");
 
-    const dark = reactive<ThemeSchemeTokens>({ ...defaultDark });
-    const light = reactive<ThemeSchemeTokens>({ ...defaultLight });
+    const dark = reactive<ThemeSchemeTokens>({ ...seedScheme("dark") });
+    const light = reactive<ThemeSchemeTokens>({ ...seedScheme("light") });
 
     // Extension token groups, edited per mode like the accent tokens.
     // Seeded from the prefilled custom theme (if any) falling back to the
@@ -207,8 +197,8 @@ export const HkColorSchemeEditor = defineComponent({
     function reset(): void {
       modeTab.value = useTheme().effectiveMode.value;
       themeName.value = props.initialName ?? t("hikari::theme.customThemeName");
-      Object.assign(dark, props.initialDark ?? defaultDark);
-      Object.assign(light, props.initialLight ?? defaultLight);
+      Object.assign(dark, props.initialDark ?? seedScheme("dark"));
+      Object.assign(light, props.initialLight ?? seedScheme("light"));
       // Optional slots: a legacy prefill omitting them must reset to white
       // (Object.assign alone leaves stale in-editor values in place).
       for (const k of contentTokens) {

@@ -7,7 +7,7 @@ import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from 
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
 import { getGeolocation, getTimePeriod, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
-const DEFAULT_THEME = "synthwave84";
+const DEFAULT_THEME = "default";
 const STORAGE_THEME_KEY = "hikari-theme";
 export const THEME_MODE_STORAGE_KEY = "hikari-theme-mode";
 const STORAGE_MODE_KEY = THEME_MODE_STORAGE_KEY;

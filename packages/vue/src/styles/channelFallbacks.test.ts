@@ -25,6 +25,13 @@ import { describe, expect, it } from "vitest";
  * what the seeded composition already declares, and no shipped sheet may
  * carry the retired family at all.
  *
+ * Scope note (2026-09-24): this guard reads SHIPPED SHEETS only. The pink
+ * needles below are not a claim that the colour is dead everywhere — the
+ * stock preset table collapsed to one `default` theme whose LIGHT scheme
+ * carries `#d63384` as its primary again, applied at runtime by initTheme().
+ * The seed and every fallback stay blue: a sheet that hard-codes the pink
+ * is still the regression this guard exists to catch.
+ *
  * Slots with no seed are listed in UNSEEDED rather than skipped silently:
  * `--color-bg-secondary` / `--color-bg-tertiary` are retired spellings
  * (their `#18181b` / `#27272a` fallbacks always win) and `--color-danger` is
@@ -97,7 +104,8 @@ function fallbacks(source: string): { slot: string; value: string; line: number 
 function retiredHits(source: string): string[] {
   const flat = source.toLowerCase().replace(/[\s,]+/g, "");
   return [
-    // synthwave84's pink pair
+    // the retired pink family (also the collapsed default's light primary —
+    // sheets must still never hard-code it)
     "#ff6b9d",
     "#d63384",
     "255107157",

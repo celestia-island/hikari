@@ -7,7 +7,7 @@ import * as hikari from './index'
 // foundation.scss). Applied at bootstrap before mount, per the hook contract.
 hikari.applyViewportPolicy({ allowZoomOut: true })
 
-localStorage.setItem('hikari-theme', 'tokyonight')
+localStorage.setItem('hikari-theme', 'default')
 initTheme()
 
 const tpl = (window as any).__HIKARI_TPL__

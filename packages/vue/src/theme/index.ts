@@ -1,7 +1,7 @@
 export { initTheme, useTheme } from "./useTheme";
 export { initFontContext, applyFontContext, resetFontContext, useFontContext, HIKARI_FONT_SANS, HIKARI_FONT_MONO, HIKARI_FONT_READING } from "./fontContext";
 export type { FontContextOverrides } from "./fontContext";
-export { themePresets, tokensToCSSVars, getThemeTokens, loadCustomThemes, saveCustomThemes, addCustomTheme, removeCustomTheme } from "./presets";
+export { themePresets, stockDefaultPreset, tokensToCSSVars, getThemeTokens, loadCustomThemes, saveCustomThemes, addCustomTheme, removeCustomTheme } from "./presets";
 export type { ThemeTokenRGB, ThemeSchemeTokens, ThemePreset, CustomThemePreset, ThemeId, ThemeMode, ThemeTokenGroupValues, ThemeTokenGroupModes } from "./presets";
 export type { ThemeTokens } from "./presets";
 export {

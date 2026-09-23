@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick, onMounted, ref, type Ref } from "vue";
 
-import { registerTokenGroup, useTheme, type TokenGroupDefinition } from "../theme";
+import { registerTokenGroup, themePresets, useTheme, type TokenGroupDefinition } from "../theme";
 import { HkColorSchemeEditor, type HCustomTheme } from "./HkColorSchemeEditor";
 
 // Fresh file = fresh registry module instance: no groups are registered
@@ -247,14 +247,16 @@ describe("HkColorSchemeEditor", () => {
     await nextTick();
 
     const before = ref.value!.getDraft();
-    expect(before.dark.primary).toEqual({ r: 255, g: 107, b: 157 });
+    // Seeded from the stock preset table: assert against it rather than a
+    // literal that has to be re-typed every time the default scheme moves.
+    expect(before.dark.primary).toEqual(themePresets.default.dark.primary);
 
     await setPrimaryHex("00ff00");
     expect(ref.value!.getDraft().dark.primary).toEqual({ r: 0, g: 255, b: 0 });
 
     ref.value!.reset();
     await nextTick();
-    expect(ref.value!.getDraft().dark.primary).toEqual({ r: 255, g: 107, b: 157 });
+    expect(ref.value!.getDraft().dark.primary).toEqual(themePresets.default.dark.primary);
   });
 
   it("reset() re-seeds on-solid slots to white when the prefill omits them", async () => {
@@ -313,5 +315,92 @@ describe("HkColorSchemeEditor", () => {
     expect(label).toBeUndefined();
     exposed!.setThemeName("Host owned name");
     expect(exposed!.getDraft().name).toBe("Host owned name");
+  });
+});
+
+describe("HkColorSchemeEditor seed provenance", () => {
+  /**
+   * Behavioural, not textual.
+   *
+   * An earlier cut of this guard scanned the component source for hard-coded
+   * palette literals. Mutation rounds killed it three times over: a re-spelled
+   * literal, a hex literal, a member access and a reordered key object all
+   * walked through it, while its exact-string anchors went red on a mere
+   * reformat. Text cannot pin this invariant.
+   *
+   * So pin the invariant itself — move the stock table and require the editor
+   * to follow. A hard-coded seed cannot, whatever spelling it uses, and no
+   * formatting choice can make this false-positive.
+   */
+  it("seeds the dark scheme from the live preset table", async () => {
+    const sentinel = { r: 7, g: 8, b: 9 };
+    const scheme = themePresets.default.dark;
+    const original = scheme.primary;
+    scheme.primary = sentinel;
+    try {
+      const { ref } = mountEditor();
+      await nextTick();
+      expect(ref.value!.getDraft().dark.primary).toEqual(sentinel);
+    } finally {
+      scheme.primary = original;
+    }
+  });
+
+  it("seeds the light scheme from the live preset table", async () => {
+    const sentinel = { r: 11, g: 12, b: 13 };
+    const scheme = themePresets.default.light;
+    const original = scheme.primary;
+    scheme.primary = sentinel;
+    try {
+      const { ref } = mountEditor();
+      await nextTick();
+      expect(ref.value!.getDraft().light.primary).toEqual(sentinel);
+    } finally {
+      scheme.primary = original;
+    }
+  });
+
+  it("survives a consumer that clears the stock keys", async () => {
+    // Chest does exactly this at boot: every stock key is deleted and only its
+    // brand line is registered (brandPresets.ts), so `themePresets.default` is
+    // simply absent downstream. An unconditional dereference mounts fine in
+    // every test in this repo and throws at mount inside that consumer — this
+    // case is the only thing that can see it.
+    const table = themePresets as Record<string, (typeof themePresets)[string]>;
+    const stock = table.default;
+    const brand = {
+      id: "brand",
+      name: "Brand",
+      dark: { ...stock.dark, primary: { r: 1, g: 2, b: 3 } },
+      light: { ...stock.light, primary: { r: 4, g: 5, b: 6 } },
+    };
+    for (const key of Object.keys(table)) delete table[key];
+    table.brand = brand;
+    try {
+      const { ref } = mountEditor();
+      await nextTick();
+      // Seeded from the consumer's line, not from a missing stock entry.
+      expect(ref.value!.getDraft().dark.primary).toEqual(brand.dark.primary);
+      expect(ref.value!.getDraft().light.primary).toEqual(brand.light.primary);
+    } finally {
+      delete table.brand;
+      table.default = stock;
+    }
+  });
+
+  it("still seeds when the table is empty altogether", async () => {
+    // Defensive arm: a consumer that clears the table without registering
+    // anything leaves `stockDefaultPreset` as the only reachable palette. The
+    // editor must mount rather than throw.
+    const table = themePresets as Record<string, (typeof themePresets)[string]>;
+    const stock = table.default;
+    delete table.default;
+    try {
+      const { ref } = mountEditor();
+      await nextTick();
+      expect(ref.value!.getDraft().dark.primary).toEqual(stock.dark.primary);
+    } finally {
+      table.default = stock;
+    }
   });
 });

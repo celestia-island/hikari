@@ -3,7 +3,7 @@ import { initTheme } from './theme/useTheme'
 import * as hikari from './index'
 import './demo.scss'
 
-localStorage.setItem('hikari-theme', 'tokyonight')
+localStorage.setItem('hikari-theme', 'default')
 initTheme()
 
 const tpl = new URLSearchParams(location.search).get('tpl') || (window as any).__TEMPLATE__ || '<div style="padding:1rem;color:var(--color-text-secondary)">No template provided</div>'

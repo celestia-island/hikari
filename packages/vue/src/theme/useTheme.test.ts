@@ -130,9 +130,18 @@ describe("useTheme lean cssvar injection", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBeTruthy();
     expect(document.documentElement.getAttribute("data-mode")).toBeTruthy();
     // Swapping theme keeps ONE managed block (no duplicates per apply) and
-    // actually re-applies: the block content changes with the preset.
+    // actually re-applies: the block content changes with the scheme. The
+    // stock table holds a single preset, so a real swap registers a custom
+    // derived from it and switches to that.
     const before = document.head.querySelector("style[data-hikari-theme-vars]")!.textContent;
-    theme.useTheme().setTheme("nord");
+    const th = theme.useTheme();
+    th.addCustomTheme({
+      id: "swap-probe",
+      name: "Swap probe",
+      dark: { ...th.presets.default.dark, primary: { r: 1, g: 2, b: 3 } },
+      light: { ...th.presets.default.light, primary: { r: 4, g: 5, b: 6 } },
+    });
+    th.setTheme("swap-probe");
     const blocks = document.head.querySelectorAll("style[data-hikari-theme-vars]");
     expect(blocks).toHaveLength(1);
     expect(blocks[0].textContent).toMatch(/^html:root\{/);
@@ -164,7 +173,14 @@ describe("useTheme lean cssvar injection", () => {
     expect(computed()).toBe(themed);
 
     // Re-applying the theme must keep winning, too (no one-shot luck).
-    theme.useTheme().setTheme("nord");
+    const th = theme.useTheme();
+    th.addCustomTheme({
+      id: "seed-probe",
+      name: "Seed probe",
+      dark: { ...th.presets.default.dark, primary: { r: 9, g: 9, b: 9 } },
+      light: { ...th.presets.default.light, primary: { r: 9, g: 9, b: 9 } },
+    });
+    th.setTheme("seed-probe");
     expect(computed()).not.toBe("122 162 247");
     seed.remove();
   });
@@ -201,34 +217,37 @@ describe("useTheme preset/custom shadowing", () => {
   // flagged custom — the in-place preset override grammar. The primary
   // shifts so an applied override is distinguishable from the factory.
   function override(id: string) {
-    const nord = presetModule.themePresets.nord;
+    const base = presetModule.themePresets.default;
     return {
       id,
       name: `${id} (edited)`,
-      dark: { ...nord.dark, primary: { r: 1, g: 2, b: 3 } },
-      light: { ...nord.light },
+      dark: { ...base.dark, primary: { r: 1, g: 2, b: 3 } },
+      light: { ...base.light },
     };
   }
 
   it("allThemeList dedupes a builtin id shadowed by a custom, flagging it custom", () => {
     theme.initTheme();
     const th = theme.useTheme();
-    th.addCustomTheme(override("nord"));
-    const rows = th.allThemeList.value.filter((r) => r.id === "nord");
+    th.addCustomTheme(override("default"));
+    const rows = th.allThemeList.value.filter((r) => r.id === "default");
     expect(rows).toHaveLength(1);
     expect(rows[0].isCustom).toBe(true);
-    expect(rows[0].name).toBe("nord (edited)");
-    // Pure custom ids stay listed as customs; untouched builtins stay builtin.
-    expect(th.allThemeList.value.some((r) => r.id === "gruvbox" && !r.isCustom)).toBe(true);
+    expect(rows[0].name).toBe("default (edited)");
+    // Pure custom ids stay listed as customs, and the shadowed builtin is not
+    // duplicated into a second, factory-backed row.
+    th.addCustomTheme({ ...override("default"), id: "my-own" });
+    expect(th.allThemeList.value.some((r) => r.id === "my-own" && r.isCustom)).toBe(true);
+    expect(th.allThemeList.value.filter((r) => r.id === "default")).toHaveLength(1);
   });
 
   it("applyTheme renders the shadowing custom's tokens", () => {
     theme.initTheme();
     const th = theme.useTheme();
-    th.setTheme("nord");
+    th.setTheme("default");
     const before = document.head.querySelector("style[data-hikari-theme-vars]")!.textContent;
-    th.addCustomTheme(override("nord"));
-    th.setTheme("nord");
+    th.addCustomTheme(override("default"));
+    th.setTheme("default");
     const after = document.head.querySelector("style[data-hikari-theme-vars]")!.textContent;
     expect(after).not.toBe(before);
   });
@@ -236,21 +255,21 @@ describe("useTheme preset/custom shadowing", () => {
   it("removing a shadowed builtin id restores the factory preset selection", () => {
     theme.initTheme();
     const th = theme.useTheme();
-    th.addCustomTheme(override("nord"));
-    th.setTheme("nord");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("nord");
-    th.removeCustomTheme("nord");
+    th.addCustomTheme(override("default"));
+    th.setTheme("default");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("default");
+    th.removeCustomTheme("default");
     // Still on the id — now backed by the factory preset again.
-    expect(th.currentTheme.value).toBe("nord");
-    expect(th.allThemeList.value.find((r) => r.id === "nord")?.isCustom).toBe(false);
-    expect(th.customThemes.value.some((c) => c.id === "nord")).toBe(false);
+    expect(th.currentTheme.value).toBe("default");
+    expect(th.allThemeList.value.find((r) => r.id === "default")?.isCustom).toBe(false);
+    expect(th.customThemes.value.some((c) => c.id === "default")).toBe(false);
   });
 
   it("removing a pure custom id resets the selection to the default theme", () => {
     theme.initTheme();
     const th = theme.useTheme();
-    th.setTheme("nord");
-    th.addCustomTheme({ ...override("nord"), id: "my-own" });
+    th.setTheme("default");
+    th.addCustomTheme({ ...override("default"), id: "my-own" });
     th.setTheme("my-own");
     expect(document.documentElement.getAttribute("data-theme")).toBe("my-own");
     th.removeCustomTheme("my-own");

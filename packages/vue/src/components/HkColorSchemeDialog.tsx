@@ -28,9 +28,9 @@ export const HColorSchemeDialog = defineComponent({
   name: "HkColorSchemeDialog",
   props: {
     modelValue: { type: Boolean, required: true },
-    /** Prefill dark tokens; defaults to the hikari synthwave dark scheme. */
+    /** Prefill dark tokens; defaults to the stock default preset's dark scheme. */
     initialDark: { type: Object as PropType<ThemeSchemeTokens>, default: undefined },
-    /** Prefill light tokens; defaults to the hikari synthwave light scheme. */
+    /** Prefill light tokens; defaults to the stock default preset's light scheme. */
     initialLight: { type: Object as PropType<ThemeSchemeTokens>, default: undefined },
     /** Prefill extension token groups (per mode); defaults to registry defaults. */
     initialGroups: { type: Object as PropType<ThemeTokenGroupModes>, default: undefined },

@@ -11,25 +11,16 @@
   // Per-theme colors (kept in sync with src/theme/presets.ts).
   // Each entry exposes the primary accent and the background for dark/light,
   // so the pre-paint loading screen matches the theme the main app will apply.
+  // The stock table is ONE theme: the four editor-derived presets collapsed
+  // into `default`, whose dark scheme is the black-blue pair and whose light
+  // scheme is the pink/paper pair.
   var THEMES = {
-    synthwave84: {
-      dark:  { primary: [255, 107, 157], bg: [14, 14, 30],   surface: [24, 24, 42] },
-      light: { primary: [214, 51, 132],  bg: [245, 245, 240], surface: [255, 255, 255] }
-    },
-    nord: {
+    default: {
       dark:  { primary: [136, 192, 208], bg: [22, 27, 38],   surface: [34, 40, 54] },
-      light: { primary: [94, 129, 172],  bg: [236, 239, 244], surface: [229, 233, 240] }
-    },
-    gruvbox: {
-      dark:  { primary: [251, 189, 84],  bg: [20, 20, 20],   surface: [34, 32, 30] },
-      light: { primary: [204, 128, 49],  bg: [251, 241, 199], surface: [242, 229, 188] }
-    },
-    tokyonight: {
-      dark:  { primary: [122, 162, 247], bg: [14, 15, 24],   surface: [22, 24, 36] },
-      light: { primary: [52, 96, 189],   bg: [231, 233, 241], surface: [221, 223, 231] }
+      light: { primary: [214, 51, 132],  bg: [245, 245, 240], surface: [255, 255, 255] }
     }
   };
-  var FALLBACK_THEME = THEMES.synthwave84;
+  var FALLBACK_THEME = THEMES.default;
   // Page-declared brand themes (optional): a site may declare
   // window.__celestiaThemes (extra presets keyed by theme id) and
   // window.__celestiaDefaultTheme in its index.html before this script runs.
@@ -117,7 +108,7 @@
     return isDaytimeFallback() ? "light" : "dark";
   }
 
-  var tid = localStorage.getItem(storagePrefix() + "theme") || window.__celestiaDefaultTheme || "synthwave84";
+  var tid = localStorage.getItem(storagePrefix() + "theme") || window.__celestiaDefaultTheme || "default";
   var mode = resolveMode(localStorage.getItem(storagePrefix() + "theme-mode") || "system");
   var theme = THEMES[tid] || FALLBACK_THEME;
   var scheme = theme[mode] || theme.dark;

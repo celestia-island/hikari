@@ -100,29 +100,50 @@ export function removeCustomTheme(id: string) {
 
 const rgb = (r: number, g: number, b: number): ThemeTokenRGB => ({ r, g, b });
 
+/**
+ * The stock preset table holds exactly ONE theme.
+ *
+ * `default` carries the pair the library has always fallen back to: its
+ * light scheme is the historical pink/paper palette and its dark scheme the
+ * black-blue one. The four editor-derived looks (Synthwave '84, Nord,
+ * Gruvbox, Tokyo Night) were collapsed into this single pair on user
+ * direction — the library stops shipping competing aesthetics. A consumer
+ * that wants a distinct brand registers its own preset (chest's `sc` is the
+ * reference), and a user who wants another look edits this one through the
+ * theme dialog and keeps it as a custom scheme.
+ *
+ * Values are carried over VERBATIM from the entries this collapse retired —
+ * `synthwave84.light` into the light scheme, `nord.dark` into the dark one.
+ * Nothing was restyled: the dark scheme therefore keeps Nord's pale Polar
+ * Water primary (#88C0D0) and, with it, the near-black on-solid ink slots
+ * that pale primary requires (white on it is ~1.9:1). A stored id from the
+ * retired set is no longer a known theme, so `storedThemeId()` drops it and
+ * the engine resolves this default instead.
+ */
 export const themePresets: Record<ThemeId, ThemePreset> = {
-  synthwave84: {
-    id: "synthwave84",
-    name: "Synthwave '84",
+  default: {
+    id: "default",
+    name: "Default",
     dark: {
-      primary: rgb(255, 107, 157),
-      secondary: rgb(199, 146, 234),
-      accent: rgb(253, 235, 139),
-      text: rgb(245, 245, 247),
+      primary: rgb(136, 192, 208),
+      secondary: rgb(143, 188, 187),
+      accent: rgb(94, 129, 172),
+      text: rgb(247, 249, 252),
       muted: rgb(180, 180, 180),
       border: rgb(128, 128, 128),
-      focusedBorder: rgb(255, 107, 157),
-      background: rgb(14, 14, 30),
-      surface: rgb(24, 24, 42),
+      focusedBorder: rgb(136, 192, 208),
+      background: rgb(22, 27, 38),
+      surface: rgb(34, 40, 54),
       selectedBackground: rgb(70, 70, 85),
       selectedText: rgb(248, 248, 250),
-      statusBarBackground: rgb(24, 24, 42),
-      success: rgb(114, 241, 184),
-      error: rgb(255, 107, 107),
-      warning: rgb(253, 235, 139),
-      info: rgb(110, 231, 239),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
+      statusBarBackground: rgb(34, 40, 54),
+      success: rgb(163, 190, 140),
+      error: rgb(191, 97, 106),
+      warning: rgb(208, 135, 112),
+      info: rgb(136, 192, 208),
+      // The pale primary puts dark ink on solid fills (white is ~1.9:1).
+      onSolidText: rgb(46, 52, 64),
+      onSolidIcon: rgb(46, 52, 64),
     },
     light: {
       primary: rgb(214, 51, 132),
@@ -145,145 +166,21 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       onSolidIcon: rgb(255, 255, 255),
     },
   },
-  nord: {
-    id: "nord",
-    name: "Nord",
-    dark: {
-      primary: rgb(136, 192, 208),
-      secondary: rgb(143, 188, 187),
-      accent: rgb(94, 129, 172),
-      text: rgb(247, 249, 252),
-      muted: rgb(180, 180, 180),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(136, 192, 208),
-      background: rgb(22, 27, 38),
-      surface: rgb(34, 40, 54),
-      selectedBackground: rgb(70, 70, 85),
-      selectedText: rgb(248, 248, 250),
-      statusBarBackground: rgb(34, 40, 54),
-      success: rgb(163, 190, 140),
-      error: rgb(191, 97, 106),
-      warning: rgb(208, 135, 112),
-      info: rgb(136, 192, 208),
-      // Nord's dark primary is the pale Polar Water #88C0D0: the Nord
-      // design language puts dark ink on it (white is ~1.9:1).
-      onSolidText: rgb(46, 52, 64),
-      onSolidIcon: rgb(46, 52, 64),
-    },
-    light: {
-      primary: rgb(94, 129, 172),
-      secondary: rgb(136, 192, 208),
-      accent: rgb(143, 188, 187),
-      text: rgb(30, 30, 30),
-      muted: rgb(80, 80, 80),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(94, 129, 172),
-      background: rgb(236, 239, 244),
-      surface: rgb(229, 233, 240),
-      selectedBackground: rgb(200, 200, 205),
-      selectedText: rgb(40, 40, 45),
-      statusBarBackground: rgb(220, 224, 232),
-      success: rgb(163, 190, 140),
-      error: rgb(191, 97, 106),
-      warning: rgb(208, 135, 112),
-      info: rgb(136, 192, 208),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
-    },
-  },
-  gruvbox: {
-    id: "gruvbox",
-    name: "Gruvbox",
-    dark: {
-      primary: rgb(251, 189, 84),
-      secondary: rgb(177, 161, 134),
-      accent: rgb(214, 160, 115),
-      text: rgb(247, 238, 214),
-      muted: rgb(180, 180, 180),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(251, 189, 84),
-      background: rgb(20, 20, 20),
-      surface: rgb(34, 32, 30),
-      selectedBackground: rgb(70, 70, 85),
-      selectedText: rgb(248, 248, 250),
-      statusBarBackground: rgb(34, 32, 30),
-      success: rgb(169, 195, 85),
-      error: rgb(251, 118, 118),
-      warning: rgb(251, 189, 84),
-      info: rgb(131, 191, 152),
-      // Gruvbox's dark primary is the warm yellow #FBBD54: gruvbox always
-      // inks dark fg on it (white is ~1.7:1).
-      onSolidText: rgb(40, 40, 40),
-      onSolidIcon: rgb(40, 40, 40),
-    },
-    light: {
-      primary: rgb(204, 128, 49),
-      secondary: rgb(168, 135, 81),
-      accent: rgb(186, 128, 82),
-      text: rgb(30, 30, 30),
-      muted: rgb(80, 80, 80),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(204, 128, 49),
-      background: rgb(251, 241, 199),
-      surface: rgb(242, 229, 188),
-      selectedBackground: rgb(200, 200, 205),
-      selectedText: rgb(40, 40, 45),
-      statusBarBackground: rgb(235, 225, 185),
-      success: rgb(121, 153, 50),
-      error: rgb(204, 69, 57),
-      warning: rgb(204, 128, 49),
-      info: rgb(70, 120, 104),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
-    },
-  },
-  tokyonight: {
-    id: "tokyonight",
-    name: "Tokyo Night",
-    dark: {
-      primary: rgb(122, 162, 247),
-      secondary: rgb(125, 207, 255),
-      accent: rgb(247, 118, 142),
-      text: rgb(220, 229, 252),
-      muted: rgb(180, 180, 180),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(122, 162, 247),
-      background: rgb(14, 15, 24),
-      surface: rgb(22, 24, 36),
-      selectedBackground: rgb(70, 70, 85),
-      selectedText: rgb(248, 248, 250),
-      statusBarBackground: rgb(22, 24, 36),
-      success: rgb(158, 206, 106),
-      error: rgb(247, 118, 142),
-      warning: rgb(255, 183, 87),
-      info: rgb(125, 207, 255),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
-    },
-    light: {
-      primary: rgb(52, 96, 189),
-      secondary: rgb(56, 157, 192),
-      accent: rgb(225, 72, 96),
-      text: rgb(30, 30, 30),
-      muted: rgb(80, 80, 80),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(52, 96, 189),
-      background: rgb(231, 233, 241),
-      surface: rgb(221, 223, 231),
-      selectedBackground: rgb(200, 200, 205),
-      selectedText: rgb(40, 40, 45),
-      statusBarBackground: rgb(215, 217, 227),
-      success: rgb(86, 159, 86),
-      error: rgb(225, 72, 96),
-      warning: rgb(206, 145, 60),
-      info: rgb(56, 157, 192),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
-    },
-  },
 };
 
 export type ThemeTokens = ThemeSchemeTokens;
+
+/**
+ * The shipped default preset, addressable even after a consumer replaces the
+ * table. Chest clears EVERY stock key at boot and registers only its brand
+ * line (`brandPresets.ts`), so `themePresets.default` is not guaranteed to
+ * exist downstream — a component that dereferences it unconditionally dies
+ * at mount in that consumer while every test in this repo stays green.
+ *
+ * This is not a second copy of the palette: it is the same object the table
+ * was built from, kept reachable by name.
+ */
+export const stockDefaultPreset: ThemePreset = themePresets.default;
 
 export function getThemeTokens(
   name: string,

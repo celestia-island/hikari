@@ -1,0 +1,78 @@
+# CNB dev-workspace CI lane — creation-time cargo validation billed to the dev quota
+# pool (1600 free core-hours/month vs 160 for builds). The dispatcher starts this
+# workspace per spilled SHA (workspace/start accepts ref=<sha>), the vscode:go marker
+# below keeps everything pre-environment, and the daemon stops the workspace as soon as
+# the `cargo-check` stage is terminal — which is why clippy runs *inside* that stage
+# instead of in a stage of its own: a later stage would be killed by that stop, and the
+# spilled farm run would be cancelled on a green that never covered clippy.
+#
+# What the stage reproduces, so cancelling a queued farm run on green loses no signal:
+#   cargo check --workspace --lib
+#       = the ci-farm build lane's command verbatim (the existing cnb/cargo-check
+#         status keeps exactly the meaning it had)
+#   cargo clippy --all-targets --all-features -- -D warnings
+#       = .github/workflows/clippy.yml's stable leg verbatim
+# Clippy is skipped when the check already failed (same code, no new information), and
+# either failure makes the stage non-zero. Known gaps: clippy.yml's nightly leg and its
+# pre-fetched MDI icons are not reproduced (build.rs embeds the 92-icon packed archive
+# instead), and ci.yml's --cfg releasing / wasm32-wasip2 lint steps have no counterpart.
+#
+# RUSTUP_HOME lives on the cache volume because this image ships rustup without the
+# stable clippy component (rust-toolchain.toml pulls it), so the default $HOME/.rustup
+# would re-download the toolchain on every single run.
+$:
+  vscode:
+    - name: ci-workspace
+      runner:
+        cpus: 4
+      docker:
+        image: rust:1-bookworm
+        volumes:
+          - /ws-cache:copy-on-write
+      env:
+        CARGO_HOME: /ws-cache/cargo-home
+        CARGO_TARGET_DIR: /ws-cache/target
+        RUSTUP_HOME: /ws-cache/rustup
+        CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+      stages:
+        - name: verify-ref
+          script: |
+            set -u
+            head=$(git rev-parse HEAD)
+            parents=$(git rev-list --parents -n1 HEAD | wc -w)
+            echo "workspace checkout: $head ($((parents - 1)) parents)"
+            # Spilled refs are synthetic merges of master and the PR head, so a real
+            # spill checkout always has two parents. One parent means the workspace
+            # landed on some other tree, and validating the wrong tree is worse than
+            # failing: the dispatcher cancels the farm run on this lane's verdict.
+            if [ "$parents" -lt 3 ]; then
+              echo "REF ERROR: expected the dispatcher's 2-parent spill merge, got $((parents - 1)) parent(s)"
+              exit 1
+            fi
+        - name: cargo-check
+          script: |
+            set -u
+            code=0
+            # Jobs with no output for ten minutes are killed, and both cargo runs send
+            # everything to a file — keep the job visibly alive while they work.
+            ( while :; do sleep 120; echo "[ws] cargo still running $(date -u +%H:%M:%S)"; done ) &
+            hb=$!
+            apt-get update -qq >/dev/null 2>&1 || true
+            apt-get install -y -qq libasound2-dev libudev-dev >/dev/null 2>&1 || echo "apt partial (continuing)"
+            for m in shittim-chest entelecheia arona malkuth plana hikari kirino evernight celestia-devtools evernight-appliance celestia-integration akivili hifumi cherino kei noa yuuka; do
+              git config --global url."https://cnb:${CNB_TOKEN}@cnb.cool/celestia-island/${m}".insteadOf "https://github.com/celestia-island/${m}"
+            done
+            timeout 2700 cargo check --workspace --lib > /ws-check.log 2>&1 || code=$?
+            tail -20 /ws-check.log
+            echo "WS_CARGO_CHECK_EXIT=$code"
+            if [ "$code" = "0" ]; then
+              timeout 2700 cargo clippy --all-targets --all-features -- -D warnings > /ws-clippy.log 2>&1 || code=$?
+              tail -40 /ws-clippy.log
+              echo "WS_CARGO_CLIPPY_EXIT=$code"
+            else
+              echo "WS_CARGO_CLIPPY_EXIT=skipped (cargo check already failed)"
+            fi
+            kill "$hb" 2>/dev/null || true
+            exit $code
+        - name: vscode-ready
+          type: vscode:go

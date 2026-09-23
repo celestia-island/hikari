@@ -1,11 +1,23 @@
-name: CI (GitHub-hosted fallback)
+name: Web Tests (hosted)
+
+# Sole CI coverage for packages/vue (vitest + vue-tsc) — the farm's cargo
+# lanes (Format / Clippy / Run Tests) and the CNB overflow lane cover the Rust
+# half, so the former all-in-one "CI (GitHub-hosted fallback)" lint-test job
+# was pure duplication and was removed on 2026-09-23 (user-approved narrowing).
+# Paths are restricted to the web subtree: Rust-only changes never touch it.
 
 on:
   workflow_dispatch:
   push:
     branches: [ master ]
+    paths:
+      - "packages/vue/**"
+      - ".github/workflows/ci-hosted.yml"
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
+    paths:
+      - "packages/vue/**"
+      - ".github/workflows/ci-hosted.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,30 +27,6 @@ permissions:
   contents: read
 
 jobs:
-  lint-test:
-    name: fmt + clippy + test (hosted)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-      - name: Format
-        run: cargo fmt --all -- --check
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Check
-        run: cargo check --workspace
-      - name: Test
-        run: cargo test --workspace
-
-  # The Vue/TS half of the library (packages/vue) ships as TS source and
-  # is gated locally by vitest + vue-tsc on every change — but until this
-  # job existed, NO CI workflow ever ran that suite (the `just test` lane
-  # is cargo-only), so regression coverage existed only on the author's
-  # machine. happy-dom keeps it browser-free; the frozen install is the
-  # same proven shape the npm-release workflow uses for this directory.
   web-test:
     name: "web: vitest + vue-tsc (hosted)"
     runs-on: ubuntu-latest

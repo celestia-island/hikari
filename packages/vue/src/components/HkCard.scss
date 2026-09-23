@@ -53,3 +53,38 @@
   padding: var(--space-12) var(--space-16);
   border-top: 1px solid var(--border-faint);
 }
+
+/* Scrollable card: the body becomes the flex host of an embedded
+   HkScrollContainer, so the card carries the ONE library scrollbar
+   system instead of every consumer nesting its own scroll layer.
+   Header and footer stay natural-height; the body fills the remainder.
+   Content padding lives INSIDE the scroll region (the pad wrapper the
+   component renders when `padded` is set) so the overlay scrollbar
+   hugs the card edge while content keeps its inset while scrolling. */
+.hk-card-scrollable {
+  display: flex;
+  flex-direction: column;
+
+  > .hk-card-header,
+  > .hk-card-footer {
+    flex: none;
+  }
+
+  > .hk-card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  > .hk-card-body > .hk-card-body-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .hk-card-body-pad {
+    padding: var(--space-16);
+  }
+}

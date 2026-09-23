@@ -818,9 +818,8 @@ describe("useSizeMorph hold + deferRemeasure", () => {
 describe("useSizeMorph fold riders", () => {
   it("stages riders with the clip and flips them with the sweep (reveal)", async () => {
     const rider = document.createElement("div");
-    const counter = document.createElement("div");
     const h = mountHarness(300, 300, {
-      collectRide: () => [{ el: rider }, { el: counter, counter: true }],
+      collectRide: () => [{ el: rider }],
     });
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -828,12 +827,10 @@ describe("useSizeMorph fold riders", () => {
     h.setNatural(360);
     h.remeasure();
     // Staged in the clip's transition-disabled task: the block sits at
-    // its pre-growth offset, the counter at the mirrored negative, and
-    // the promotion is already up (the warmup is the raster window). The
-    // transform leg is staged at a zero clock — instant — so nothing of
-    // the ride animates before the sweep starts.
+    // its pre-growth offset and the promotion is already up (the warmup
+    // is the raster window). The transform leg is staged at a zero clock
+    // — instant — so nothing of the ride animates before the sweep.
     expect(rider.style.transform).toBe("translateY(60px)");
-    expect(counter.style.transform).toBe("translateY(-60px)");
     expect(rider.style.transition).toBe("transform 0s");
     expect(rider.style.willChange).toBe("transform");
 
@@ -841,7 +838,6 @@ describe("useSizeMorph fold riders", () => {
     // under a transition that mirrors the frame's own clip transition.
     await busFrames(2);
     expect(rider.style.transform).toBe("translateY(0px)");
-    expect(counter.style.transform).toBe("translateY(0px)");
     expect(rider.style.transition).toMatch(/^transform 150ms /);
     expect(rider.style.willChange).toBe("transform");
 
@@ -850,15 +846,13 @@ describe("useSizeMorph fold riders", () => {
     expect(rider.style.transform).toBe("");
     expect(rider.style.transition).toBe("");
     expect(rider.style.willChange).toBe("");
-    expect(counter.style.transform).toBe("");
     h.stop();
   });
 
   it("rides a conceal downward with the block and lands atomically", async () => {
     const rider = document.createElement("div");
-    const counter = document.createElement("div");
     const h = mountHarness(360, 360, {
-      collectRide: () => [{ el: rider }, { el: counter, counter: true }],
+      collectRide: () => [{ el: rider }],
     });
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
     h.start();
@@ -866,25 +860,17 @@ describe("useSizeMorph fold riders", () => {
 
     h.setNatural(300);
     h.remeasure();
-    // Conceal start: the block rides from zero; the COUNTER stages at
-    // +|delta| — the collapsed layout sits that far above its final
-    // position, so the counter's viewport position is already final
-    // (R1 rig finding: a one-sided counter rode the block AND inherited
-    // it — a 2×delta sink with a delta jump at the landing).
+    // Conceal start: the block rides from zero (it is where it was).
     expect(rider.style.transform).toBe("translateY(0px)");
-    expect(counter.style.transform).toBe("translateY(60px)");
 
     await busFrames(2);
-    // The sweep folds the edge down: the block glides WITH it, the
-    // counter glides to zero — static at final the whole way.
+    // The sweep folds the edge down and the block glides WITH it.
     expect(rider.style.transform).toBe("translateY(60px)");
-    expect(counter.style.transform).toBe("translateY(0px)");
 
     // Landing: the re-pin and the ride's release land in one task — the
     // layout drops delta while the delta offset disappears.
     fireTransitionEnd(h.frame, "clip-path");
     expect(rider.style.transform).toBe("");
-    expect(counter.style.transform).toBe("");
     expect(h.frame.style.height).toBe("300px");
     h.stop();
   });
@@ -1145,6 +1131,37 @@ describe("useSizeMorph resident rider promotion", () => {
     h.content.appendChild(rider);
     h.start();
     expect(rider.style.willChange).toBe("");
+    h.stop();
+  });
+});
+
+describe("useSizeMorph deferRemeasure gate (freeze protocol witness)", () => {
+  it("gates background measurements while deferred and releases after", async () => {
+    // Round 16: HkModal's slide-window freeze is a deferRemeasure input
+    // — the morph must hold the pin while gated and measure again the
+    // moment the gate opens (a stale gate would starve the observer
+    // forever). Witnessed here at the composable level where the bus's
+    // frames run.
+    let gated = true;
+    const h = mountHarness(300, 300, { deferRemeasure: () => gated });
+    h.start();
+    expect(h.frame.style.height).toBe("300px");
+
+    // Content grows while gated: the pin must hold.
+    h.setNatural(400);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    await busFrames(3);
+    expect(h.frame.style.height).toBe("300px");
+
+    // The gate opens (the morph edge): the very next background
+    // measurement goes through.
+    gated = false;
+    h.setNatural(420);
+    FakeResizeObserver.instances[0]!.callback();
+    await settle();
+    await busFrames(3);
+    expect(h.frame.style.height).toBe("420px");
     h.stop();
   });
 });

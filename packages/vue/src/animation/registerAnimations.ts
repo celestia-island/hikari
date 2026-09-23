@@ -84,6 +84,13 @@ registerCssAnimation("hk-image-preview-shimmer", { infinite: true });
 registerCssAnimation("hk-progress-indeterminate", { infinite: true });
 // components/HkPasswordSurface.scss — caps-lock warning flash (plays once).
 registerCssAnimation("hk-pwd-flash");
+
+// Timeline navigation wipes (HkTimeline, 2026-09-23 round 16): the
+// window-mode cells slide in from the navigation side — one-shot.
+registerCssAnimation("hk-timeline-wipe");
+registerCssAnimation("hk-timeline-wipe-back");
+registerCssAnimation("hk-timeline-wipe-v");
+registerCssAnimation("hk-timeline-wipe-back-v");
 // components/HkPasswordSurface.scss — breathing hint glow (loops forever).
 registerCssAnimation("hk-pwd-breathe", { infinite: true });
 // components/HkPickerPane.scss — date/time picker view drill forward

@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick, provide, ref } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkStepFlow, { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 import type { StepFlowSlotProps } from "./HkStepFlow";
-import { provideSheetRide, SHEET_RIDE_KEY, type SheetRideRegistry } from "../runtime/sheetRide";
-import type { RideEntry } from "../composables/useSizeMorph";
 
 const mounts: ReturnType<typeof createApp>[] = [];
 const containers: HTMLElement[] = [];
@@ -200,35 +198,115 @@ describe("HkStepFlow", () => {
   });
 });
 
-describe("HkStepFlow simplified swap (motion enabled)", () => {
-  it("shows only the old body through the exit phase, then fades the new one in", async () => {
+describe("HkStepFlow split-window swap (motion enabled)", () => {
+  it("slides both bodies across one window, then morphs the sheet after", async () => {
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+
+    // Slide window: both bodies on stage — the leaving one exiting, the
+    // entering one released from its staged offset (imperatively, same
+    // frame as the patch). The FIRST event froze the sheet.
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    const entering = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(true);
+    expect(entering?.classList.contains("hk-stepflow-enter-from")).toBe(false);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.detail).toMatchObject({ phase: "swap", durationMs: 150 });
+    expect(events[0]!.detail.delta).toBe(0);
+
+    // The slide settles: the old node is recycled and the sheet gets its
+    // new height — the morph window's event, alone.
+    endTransition(entering);
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("b-body");
+    expect(events).toHaveLength(2);
+    expect(events[1]!.detail).toMatchObject({ phase: "morph", durationMs: 150 });
+    expect(typeof events[1]!.detail.delta).toBe("number");
+  });
+
+  it("holds the frozen sheet through rapid re-navigation (preempt keeps the visible body)", async () => {
     stubMotion();
     const t = mountStepFlow({ initial: "a" });
     t.setCurrent("b");
     await flushSwap();
-
-    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
-    const pending = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(leaving?.classList.contains("hk-stepflow-leave-to")).toBe(true);
-    expect(pending?.classList.contains("hk-stepflow-enter-pending")).toBe(true);
-    expect(pending?.classList.contains("hk-stepflow-enter-hidden")).toBe(true);
-
-    endTransition(leaving);
-    await settleEnter();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
-    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(active?.textContent).toBe("b-body");
-    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
-    expect(active?.classList.contains("hk-stepflow-enter-hidden")).toBe(false);
-
-    endTransition(active);
+    t.setCurrent("c");
     await flushSwap();
-    expect(t.container.querySelector(".hk-stepflow-body")?.className).toBe(
-      "hk-stepflow-body active",
-    );
+    // The mock reports opacity 1 for every body, so the ENTERING one
+    // (b, visibly fading in) is the survivor — it becomes the new
+    // swap's leaving body and finishes its slide naturally.
+    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
+    expect(leaving?.textContent).toBe("b-body");
+    const pending = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    expect(pending?.textContent).toBe("c-body");
+    expect(pending?.classList.contains("hk-stepflow-enter-from")).toBe(false);
+    endTransition(pending);
+    await flushSwap();
+    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("c-body");
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
   });
 
-  it("announces a GROW at the exit edge and a SHRINK at the enter edge", async () => {
+  it("advances on the watchdog when transitionend never arrives", async () => {
+    stubMotion("20ms");
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+    await outlivePhase();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(events).toHaveLength(2);
+    expect(events[1]!.detail.phase).toBe("morph");
+  });
+
+  it("settles instantly with a single morph-less poke where no transition runs", async () => {
+    stubMotion("0s");
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("b-body");
+    expect(events).toHaveLength(1);
+    expect(events[0]!.detail.phase).toBe("instant");
+  });
+
+  it("ignores transitionend events for non-opacity properties", async () => {
+    stubMotion();
+    const t = mountStepFlow({ initial: "a" });
+    const events: CustomEvent[] = [];
+    t.container.addEventListener(STEPFLOW_SWAP_EVENT, (e) => {
+      events.push(e as CustomEvent);
+    });
+    t.setCurrent("b");
+    await flushSwap();
+    const entering = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
+    // A stray transform end (the slide's other leg) must not settle the
+    // swap early — the morph window would hand the sheet a stale height.
+    const stray = new Event("transitionend", { bubbles: true });
+    Object.defineProperty(stray, "propertyName", { value: "transform" });
+    entering!.dispatchEvent(stray);
+    await flushSwap();
+    expect(events).toHaveLength(1);
+    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
+    endTransition(entering);
+    await flushSwap();
+    expect(events).toHaveLength(2);
+  });
+
+  it("announces the measured height delta at the morph edge", async () => {
     stubMotion();
     stubHeights((text) => (text === "a-body" ? 100 : 220));
     const t = mountStepFlow({ initial: "a" });
@@ -238,235 +316,19 @@ describe("HkStepFlow simplified swap (motion enabled)", () => {
     });
     t.setCurrent("b");
     await flushSwap();
-    expect(events.length).toBe(1);
-    expect((events[0]!.detail as { phase: string }).phase).toBe("exit");
-    expect((events[0]!.detail as { delta: number }).delta).toBe(120);
-    // Drive the first swap to completion before starting the second.
-    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
-    await settleEnter();
     endTransition(t.container.querySelector(".hk-stepflow-body.active"));
     await flushSwap();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
-
+    expect(events).toHaveLength(2);
+    expect((events[1]!.detail as { delta: number }).delta).toBe(120);
+    // And the reverse direction hands back the negative delta.
+    endTransition(t.container.querySelector(".hk-stepflow-body.active"));
+    await flushSwap();
     t.setCurrent("a");
     await flushSwap();
-    expect(events.length).toBe(1);
-    endTransition(t.container.querySelector(".hk-stepflow-body.leaving"));
-    await settleEnter();
-    expect(events.length).toBe(2);
-    expect((events[1]!.detail as { phase: string }).phase).toBe("enter");
-    expect((events[1]!.detail as { delta: number }).delta).toBe(-120);
-  });
-
-  it("advances both phases on the watchdog when transitionend never arrives", async () => {
-    stubMotion("20ms");
-    const t = mountStepFlow({ initial: "a" });
-    t.setCurrent("b");
-    await flushSwap();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
-    await outlivePhase();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
-    await outlivePhase();
-    expect(t.container.querySelector(".hk-stepflow-body")?.className).toBe(
-      "hk-stepflow-body active",
-    );
-  });
-
-  it("keeps the visible body on stage when a re-swap pre-empts the exit phase", async () => {
-    stubMotion();
-    const t = mountStepFlow({ initial: "a" });
-    t.setCurrent("b");
-    await flushSwap();
-    t.setCurrent("c");
-    await flushSwap();
-    const leaving = t.container.querySelector<HTMLElement>(".hk-stepflow-body.leaving");
-    const pending = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(leaving?.textContent).toBe("a-body");
-    expect(pending?.textContent).toBe("c-body");
-    endTransition(leaving);
-    await settleEnter();
     endTransition(t.container.querySelector(".hk-stepflow-body.active"));
     await flushSwap();
-    expect(t.container.querySelector(".hk-stepflow-body")?.textContent).toBe("c-body");
-  });
-
-  it("fades the new body in immediately when the outgoing one already faded", async () => {
-    stubMotion("0.15s", { leavingOpacity: "0" });
-    const t = mountStepFlow({ initial: "a" });
-    t.setCurrent("b");
-    await flushSwap();
-    t.setCurrent("c");
-    await flushSwap();
-    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(active?.textContent).toBe("c-body");
-    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
-  });
-
-  it("fires the enter edge at 65% and recycles at 90%, before transitionend", async () => {
-    // Round 14: the strictly sequential edge (transitionend) left a
-    // recycle→patch→fade pipeline gap that painted an empty body — the
-    // "the new list always flickers once" report. The overlap edge must
-    // advance the phase on its own timer and release the fade
-    // SYNCHRONOUSLY (imperative class flip) while the old body stays on
-    // stage; the recycle lands a share later in the same patch that
-    // drops the end anchoring.
-    vi.useFakeTimers();
-    stubMotion();
-    const t = mountStepFlow({ initial: "a" });
-    t.setCurrent("b");
-    await flushSwap();
-    const staged = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(staged?.classList.contains("hk-stepflow-enter-pending")).toBe(true);
-    expect(staged?.classList.contains("hk-stepflow-enter-hidden")).toBe(true);
-
-    // 0.65 × 150ms ≈ 98ms — the enter edge fires with no transitionend:
-    // the fade is released imperatively, the anchoring HOLDS (the cell is
-    // still the old, taller one), and the old body is still on stage.
-    vi.advanceTimersByTime(99);
-    const active = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(active?.classList.contains("hk-stepflow-enter-hidden")).toBe(false);
-    expect(active?.classList.contains("hk-stepflow-enter-pending")).toBe(true);
-    await flushSwap();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(2);
-
-    // 0.9 × 150ms = 135ms — the recycle: the old node goes, and the SAME
-    // patch drops the anchoring (no stretch-jump frame between them).
-    vi.advanceTimersByTime(37);
-    await flushSwap();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
-    const settled = t.container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(settled?.classList.contains("hk-stepflow-enter-pending")).toBe(false);
-    expect(settled?.classList.contains("hk-stepflow-enter-hidden")).toBe(false);
-
-    // A late transitionend from the (already recycled) leaving body is a
-    // guarded no-op.
-    endTransition(settled);
-    await flushSwap();
-    expect(t.container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
-  });
-
-  it("ignores transitionend events for non-opacity properties", async () => {
-    // A riding body's transform leg (the sheet fold) fires its own
-    // transitionend at the fold's landing — the swap must not settle
-    // while the enter fade is still running. The witness is the ride
-    // registration: settling releases it, so a stray transform end must
-    // leave it held and only the opacity edge may release it.
-    stubMotion();
-    const registered: RideEntry[] = [];
-    const unregistered: RideEntry[] = [];
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    containers.push(container);
-    const current = ref("a");
-    const Wrapper = defineComponent({
-      setup() {
-        provide(SHEET_RIDE_KEY, {
-          register: (entry: RideEntry) => {
-            registered.push(entry);
-            return () => unregistered.push(entry);
-          },
-          snapshot: () => registered,
-        });
-        return () =>
-          h(HkStepFlow, {
-            steps: STEPS,
-            modelValue: current.value,
-            "onUpdate:modelValue": (key: string) => { current.value = key; },
-          }, {
-            a: () => h("p", "a"), b: () => h("p", "b"),
-            c: () => h("p", "c"), d: () => h("p", "d"),
-          });
-      },
-    });
-    const app = createApp(Wrapper);
-    mounts.push(app);
-    app.mount(container);
-
-    current.value = "b";
-    await flushSwap();
-    endTransition(container.querySelector(".hk-stepflow-body.leaving"));
-    await settleEnter();
-    const active = container.querySelector<HTMLElement>(".hk-stepflow-body.active");
-    expect(active).not.toBeNull();
-    expect(unregistered).toHaveLength(0);
-
-    // The fold lands mid-fade: its transform transitionend must not
-    // settle the swap (the registration stays held).
-    const stray = new Event("transitionend", { bubbles: true });
-    Object.defineProperty(stray, "propertyName", { value: "transform" });
-    active!.dispatchEvent(stray);
-    await flushSwap();
-    expect(unregistered).toHaveLength(0);
-
-    // The opacity edge owns the settle.
-    endTransition(active);
-    await flushSwap();
-    expect(unregistered).toHaveLength(1);
-    expect(container.querySelector(".hk-stepflow-body")?.className).toBe(
-      "hk-stepflow-body active",
-    );
-  });
-
-  it("registers the entering body as a counter rider with the hosting sheet", async () => {
-    stubMotion();
-    // The REAL registry (not a mock): the swap must actually hold and
-    // release its registration — a mock's unregister callback could be a
-    // no-op and every assertion here would still pass (R2 finding 2).
-    let registry: SheetRideRegistry | null = null;
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    containers.push(container);
-    const current = ref("a");
-    const Wrapper = defineComponent({
-      setup() {
-        registry = provideSheetRide();
-        return () =>
-          h(HkStepFlow, {
-            steps: STEPS,
-            modelValue: current.value,
-            "onUpdate:modelValue": (key: string) => { current.value = key; },
-          }, {
-            a: () => h("p", "a"),
-            b: () => h("p", "b"),
-            c: () => h("p", "c"),
-            d: () => h("p", "d"),
-          });
-      },
-    });
-    const app = createApp(Wrapper);
-    mounts.push(app);
-    app.mount(container);
-
-    current.value = "b";
-    await flushSwap();
-    // Registered before the sheet could stage any sweep, as a reveal
-    // COUNTER (the entering body holds its final position while the
-    // sheet's block rides the fold).
-    const held = registry!.snapshot();
-    expect(held).toHaveLength(1);
-    expect(held[0]!.counter).toBe(true);
-    expect(held[0]!.el.classList.contains("hk-stepflow-body")).toBe(true);
-    // Settle the swap: the registration is released — the registry the
-    // sheet reads is actually empty again.
-    endTransition(container.querySelector(".hk-stepflow-body.leaving"));
-    await settleEnter();
-    endTransition(container.querySelector(".hk-stepflow-body.active"));
-    await flushSwap();
-    expect(registry!.snapshot()).toHaveLength(0);
-
-    // A preempted swap (exit phase interrupted by the next navigation,
-    // twice in a row) must not leak registrations either.
-    current.value = "c";
-    await flushSwap();
-    expect(registry!.snapshot()).toHaveLength(1);
-    current.value = "d";
-    await flushSwap();
-    endTransition(container.querySelector(".hk-stepflow-body.leaving"));
-    await settleEnter();
-    endTransition(container.querySelector(".hk-stepflow-body.active"));
-    await flushSwap();
-    expect(registry!.snapshot()).toHaveLength(0);
-    expect(container.querySelectorAll(".hk-stepflow-body").length).toBe(1);
+    expect(events).toHaveLength(4);
+    expect((events[3]!.detail as { delta: number }).delta).toBe(-120);
   });
 });
 

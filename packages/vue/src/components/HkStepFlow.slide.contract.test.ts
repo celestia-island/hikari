@@ -1,11 +1,11 @@
 /**
- * Source contract for the simplified stepflow swap (2026-09-22 user
- * directive, round 12: "reduce the property count — only opacity, and
- * recycle the old element at the right time"). The stage is a grid, the
- * motion is opacity-only (plus the leaving body's direction slide), and
- * the old DOM node is recycled at the phase boundary. No visibility
- * flips, no absolute positioning, no height pins, no measured offsets,
- * no park mechanism.
+ * Source contract for the split-window stepflow swap (2026-09-23 user
+ * directive, round 16): the content swap and the sheet's height change
+ * play as TWO SEQUENTIAL windows. The slide window is the classic
+ * direction-aware crossfade over one grid cell with the sheet's height
+ * FROZEN; the morph window hands the sheet its new height only after
+ * the slide settled. No counter rides, no ride registry, no
+ * phase-overlap edges — the concurrent era's machinery is retired.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -50,9 +50,10 @@ function blockFor(selector: string): string {
   return hits[0]!.body;
 }
 
-const PHASE = "calc(var(--hk-stepflow-duration, 0.3s) / 2)";
+const DURATION = "var(--hk-stepflow-duration, 0.3s)";
+const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
 
-describe("HkStepFlow simplified swap contract", () => {
+describe("HkStepFlow split-window swap contract", () => {
   it("pins the shared duration and travel tokens", () => {
     const root = src.match(/\.hk-step-flow\s*\{[^}]*\}/)![0]!;
     expect(root).toContain("--hk-stepflow-duration: 0.3s;");
@@ -68,67 +69,30 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(src).not.toContain("position:relative");
   });
 
-  it("declares the in-place enter grammar on the base body rule", () => {
+  it("declares ONE slide window: opacity and transform share duration and ease", () => {
     const rule = src.match(/\.hk-stepflow-body\s*\{[^}]*\}/)![0]!;
     const transitions = rule.match(/transition:\s*[^;}]+/g) ?? [];
     expect(transitions).toHaveLength(1);
-    const decl = transitions[0]!;
-    expect(decl).toContain("opacity");
-    expect(decl).toContain(PHASE);
-    expect(decl).toContain("cubic-bezier(0.4, 0, 0.2, 1)");
-    // No delay tricks: the enter fade starts from TRUE zero (round 14 —
-    // the -40ms negative delay landed the first frame at ~0.53 opacity,
-    // which read as a pop). The blank window is closed by the component's
-    // overlap edge instead (see HkStepFlow.test.tsx).
+    const decl = transitions[0]!.replace(/\s+/g, " ");
+    expect(decl).toContain(`opacity ${DURATION} ${EASE}`);
+    expect(decl).toContain(`transform ${DURATION} ${EASE}`);
+    // No delay tricks and no per-property duration split — the classic
+    // crossfade is one window.
     expect(decl).not.toMatch(/-?\d*\.?\d+m?s\s*$/);
-    expect(decl, "the enter phase never travels").not.toContain("transform");
-  });
-
-  it("registers the entering body as a counter rider of the sheet's fold", () => {
-    // The ride channel: the entering body holds its final position while
-    // the hosting sheet's content block glides with the fold edge (round
-    // 14; vertical travel of the new body was the round-7 rejection).
-    expect(tsx).toContain("useSheetRide");
-    expect(tsx).toContain("counter: true");
-    expect(tsx).toContain("unregisterRide");
-    // The reveal itself stays imperative and class-based — no style
-    // writes join the component (see the no-styles contract below).
-    expect(tsx).toContain('classList.remove("hk-stepflow-enter-hidden")');
-  });
-
-  it("fires the enter edge early so no blank body paints between phases", () => {
-    expect(tsx).toContain("ENTER_EDGE_SHARE = 0.65");
-    expect(tsx).toContain("earlyTimer");
-  });
-
-  it("stages the new body in two independently-released layers — NO visibility flip", () => {
-    const anchor = blockFor(".hk-stepflow-body.hk-stepflow-enter-pending");
-    expect(anchor).toContain("pointer-events: none");
-    expect(anchor).toContain("align-self: end");
-    expect(anchor, "opacity must not ride the anchoring layer").not.toContain("opacity");
-    const hidden = blockFor(".hk-stepflow-body.hk-stepflow-enter-hidden");
-    expect(hidden).toContain("opacity: 0");
-    expect(hidden.trim(), "anchoring must not ride the opacity layer").toBe("opacity: 0;");
-    const declarations = scssRules.map((r) => r.body).join("\n");
-    expect(declarations, "visibility re-rasters the layer — the flash source").not.toContain("visibility");
-  });
-
-  it("keeps the leaving body's fade gentle while the slide accelerates", () => {
-    const rule = src.match(/\.hk-stepflow-body\.leaving\s*\{[^}]*\}/)![0]!;
-    expect(rule).toContain("pointer-events: none");
-    expect(rule).toContain("cubic-bezier(0.4, 0, 0.6, 1)");
-    expect(rule).toContain("cubic-bezier(0.5, 0, 0.75, 0)");
-    expect(rule).toContain(PHASE);
   });
 
   it("binds each direction's travel sign to its exact selector", () => {
     const body = ".hk-stepflow-body";
     const stage = ".hk-stepflow-bodies";
     const ltr: Array<[string, string]> = [
+      [`${stage}[data-direction="forward"] ${body}.hk-stepflow-enter-from`, "translateX(var(--hk-stepflow-travel, 24px))"],
+      [`${stage}[data-direction="back"] ${body}.hk-stepflow-enter-from`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
       [`${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
       [`${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, "translateX(var(--hk-stepflow-travel, 24px))"],
     ];
     const rtl: Array<[string, string]> = [
+      [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-enter-from`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
+      [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-enter-from`, "translateX(var(--hk-stepflow-travel, 24px))"],
       [`[dir="rtl"] ${stage}[data-direction="forward"] ${body}.hk-stepflow-leave-to`, "translateX(var(--hk-stepflow-travel, 24px))"],
       [`[dir="rtl"] ${stage}[data-direction="back"] ${body}.hk-stepflow-leave-to`, "translateX(calc(-1 * var(--hk-stepflow-travel, 24px))"],
     ];
@@ -148,20 +112,44 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(tsx).not.toContain("translateY");
   });
 
-  it("has no leftover park/pin/sweep-consumer machinery", () => {
-    expect(tsx).not.toContain("pinOldHeight");
-    expect(tsx).not.toContain("clearPin");
-    expect(tsx).not.toContain("holdLine");
-    expect(tsx).not.toContain("parkTail");
-    expect(tsx).not.toContain("stageShrinkFold");
-    expect(tsx).not.toContain("hk-stepflow-enter-tail");
-    expect(tsx).not.toContain("SHEET_SWEEP_STAGE_EVENT");
-    expect(tsx).not.toContain("SHEET_SWEEP_SETTLE_EVENT");
-    expect(src).not.toContain("hk-stepflow-enter-tail");
-    expect(src).not.toContain("min-height");
+  it("has no leftover concurrent-era machinery", () => {
+    // Comments may reference the retired concepts; the CODE may not.
+    const bare = tsx
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "");
+    for (const gone of [
+      "counter",
+      "sheetRide",
+      "useSheetRide",
+      "unregisterRide",
+      "ENTER_EDGE_SHARE",
+      "RECYCLE_SHARE",
+      "swapRecycled",
+      "hk-stepflow-enter-hidden",
+      "hk-stepflow-enter-pending",
+      "align-self",
+      "SHEET_SWEEP_STAGE_EVENT",
+      "SHEET_SWEEP_SETTLE_EVENT",
+    ]) {
+      expect(bare, `${gone} must be gone from the component`).not.toContain(gone);
+      expect(src, `${gone} must be gone from the stylesheet`).not.toContain(gone);
+    }
   });
 
-  it("books every phase window on the animation context", () => {
+  it("announces the two-window protocol on the swap event", () => {
+    expect(tsx).toContain('phase: "swap"');
+    expect(tsx).toContain('phase: "morph"');
+    expect(tsx).toContain('phase: "instant"');
+    // The slide window freezes the sheet BEFORE the patch that mounts
+    // the entering body.
+    const swapIdx = tsx.indexOf('phase: "swap"');
+    const freezeIdx = tsx.indexOf("bodies.value = [...bodies.value, entering]");
+    expect(swapIdx).toBeGreaterThan(-1);
+    expect(freezeIdx).toBeGreaterThan(-1);
+    expect(swapIdx).toBeLessThan(freezeIdx);
+  });
+
+  it("books the slide window on the animation context", () => {
     expect(tsx).toContain('from "../runtime/animationBus"');
     expect(tsx).toContain("reportTransition(");
     expect(tsx).not.toContain("requestAnimationFrame(");
@@ -173,23 +161,21 @@ describe("HkStepFlow simplified swap contract", () => {
     expect(tsx).toContain("transitionDuration");
     expect(tsx).toContain("SWAP_WATCHDOG_GRACE_MS");
     expect(tsx).toContain('addEventListener("transitionend"');
-    expect(tsx).toContain("event.target === el");
-    // A riding body's transform leg fires its own transitionend at the
-    // fold's landing — only the phase-owning opacity edge may advance.
+    expect(tsx).toContain("event.target === enteringEl");
     expect(tsx).toContain('event.propertyName === "opacity"');
   });
 
-  it("recycles the old DOM node at the phase boundary", () => {
-    expect(tsx).toMatch(/bodies\.value = bodies\.value\.filter\(\(b\) => b\.id !== handle\.leavingId\)/);
+  it("releases the staged offset imperatively in the mount frame's successor", () => {
+    expect(tsx).toContain('classList.remove("hk-stepflow-enter-from")');
   });
 
   it("retires the old vocabulary and media forks", () => {
     expect(tsx).not.toContain("hk-stepflow-fwd");
     expect(tsx).not.toContain("hk-stepflow-back");
-    expect(tsx).not.toContain("hk-stepflow-enter-from");
+    expect(tsx).not.toContain("hk-stepflow-enter-tail");
     expect(src).not.toContain("hk-stepflow-fwd");
     expect(src).not.toContain("hk-stepflow-back");
-    expect(src).not.toContain("hk-stepflow-enter-from");
+    expect(src).not.toContain("min-height");
     expect(src).not.toMatch(/@media[^{]*max-width/);
   });
 

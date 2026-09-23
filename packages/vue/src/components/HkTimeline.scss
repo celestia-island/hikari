@@ -417,3 +417,123 @@
     transition: none;
   }
 }
+
+// ── Navigation motion (2026-09-23 user directive, round 16) ──────────
+// The stepper never hard-cuts: status colors crossfade, the full-mode
+// active halo slides between step nodes, and the window-mode cells wipe
+// in from the navigation side. All of it rides the family's standard
+// duration/ease and collapses under reduced motion.
+
+.hk-timeline {
+  --hk-timeline-motion: 0.3s;
+  --hk-timeline-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Status crossfade: the data-status driven colors (indicator fill/border,
+// label color, connector fill) transition instead of flipping.
+.hk-timeline-step [data-el="indicator"],
+.hk-timeline-step [data-el="label"],
+.hk-timeline-step [data-el="connector"] {
+  transition:
+    background-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    color var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    border-color var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
+}
+
+// Full mode: the active halo — a measured pill behind the active step
+// (the component positions it via transform/size), sliding between
+// nodes with the same clock. The first placement is instant (data-placed
+// gates the transition) so opening the sheet does not animate it.
+.hk-timeline[data-mode="full"] {
+  position: relative;
+}
+
+.hk-timeline-halo {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hi-color-primary) 10%, transparent);
+  pointer-events: none;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.hk-timeline[data-orientation="vertical"] .hk-timeline-halo {
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: 100%;
+  height: auto;
+}
+
+.hk-timeline-halo[data-placed] {
+  transition:
+    transform var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    width var(--hk-timeline-motion) var(--hk-timeline-motion-ease),
+    height var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
+}
+
+// Window mode: each cell's step content is keyed by its step key, so a
+// navigation remounts it — wipe in from the navigation side. data-dir is
+// absent on the very first render, so opening does not animate.
+.hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+  animation: hk-timeline-wipe var(--hk-timeline-motion) var(--hk-timeline-motion-ease);
+}
+
+.hk-timeline[data-mode="window"][data-dir="back"] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-back;
+}
+
+.hk-timeline[data-orientation="vertical"][data-mode="window"][data-dir] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-v;
+}
+
+.hk-timeline[data-orientation="vertical"][data-mode="window"][data-dir="back"] .hk-timeline-step {
+  animation-name: hk-timeline-wipe-back-v;
+}
+
+@keyframes hk-timeline-wipe {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-v {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes hk-timeline-wipe-back-v {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-timeline-step [data-el="indicator"],
+  .hk-timeline-step [data-el="label"],
+  .hk-timeline-step [data-el="connector"] {
+    transition: none;
+  }
+
+  .hk-timeline[data-mode="window"][data-dir] .hk-timeline-step {
+    animation: none;
+  }
+
+  .hk-timeline-halo[data-placed] {
+    transition: none;
+  }
+}

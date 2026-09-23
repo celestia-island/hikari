@@ -1170,11 +1170,19 @@ describe("useSizeMorph deferRemeasure gate (freeze protocol witness)", () => {
 
 describe("useSizeMorph heightMorph (round 18)", () => {
   it("transitions the pin with an inline height transition and cleans up", async () => {
-    const h = mountHarness(300, 300);
+    // A resident rider (the host chrome) is promoted at arm time — the
+    // morph must demote it too: the body block is a flex child, so its
+    // box resizes every frame of a height transition.
+    const rider = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
     h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
     h.start();
     expect(h.frame.style.height).toBe("300px");
     expect(h.frame.style.willChange).toBe("clip-path");
+    expect(rider.style.willChange).toBe("transform");
 
     h.setNatural(400);
     (h as unknown as { heightMorph: (ms: number) => void }).heightMorph(300);
@@ -1184,20 +1192,70 @@ describe("useSizeMorph heightMorph (round 18)", () => {
     expect(h.frame.style.transition).toContain("300ms");
     // No clip staging, no riders — this is a plain height animation.
     expect(h.frame.style.clipPath).toBe("");
-    // The resident layer promotion is LIFTED for the animation's
-    // duration (round 19: the per-frame texture re-allocation of a
-    // composited layer during height animation composites as
-    // transparent on phone GPUs — the background flash-through).
+    // EVERY resident promotion is lifted for the animation's duration
+    // (round 19: the frame; round 20: the riders too — the body block
+    // is a flex child, so its box resizes every frame and its
+    // composited texture re-allocates every frame, which is the
+    // content-area flash-through the phone kept reporting). The morph
+    // flag is up so the stylesheet can drop per-frame backdrop-filter
+    // work as well.
     expect(h.frame.style.willChange).toBe("");
+    expect(rider.style.willChange).toBe("");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(true);
 
-    // The transitionend cleans the inline override AND restores the
-    // resident promotion (the frame is at rest).
+    // The transitionend cleans the inline override, drops the morph
+    // flag and restores every promotion (the frame is at rest).
     const ev = new Event("transitionend");
     Object.defineProperty(ev, "propertyName", { value: "height" });
     h.frame.dispatchEvent(ev);
     expect(h.frame.style.transition).toBe("");
     expect(h.frame.style.willChange).toBe("clip-path");
+    expect(rider.style.willChange).toBe("transform");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(false);
     h.stop();
+  });
+
+  it("keeps the demotion across overlapping morphs (generation guard)", async () => {
+    // A second navigation can land while the first height animation is
+    // still running. The superseded morph's watchdog must NOT restore
+    // the promotions in the middle of the successor's animation — the
+    // rig caught a re-promoted rider there. Only the newest generation
+    // restores, and it restores the ORIGINAL values (the first
+    // demotion's snapshot), not the empty ones it observed.
+    vi.useFakeTimers();
+    const rider = document.createElement("div");
+    const h = mountHarness(300, 300, {
+      collectRide: () => [{ el: rider }],
+    });
+    h.frame.style.setProperty("--hk-sheet-morph", "clip");
+    h.content.appendChild(rider);
+    h.start();
+    expect(rider.style.willChange).toBe("transform");
+
+    // Morph #1 starts at t=0 (watchdog at 120+350ms).
+    h.setNatural(400);
+    h.heightMorph(120);
+    expect(rider.style.willChange).toBe("");
+    // Morph #2 lands 100ms later (its own watchdog at 570ms).
+    vi.advanceTimersByTime(100);
+    h.setNatural(500);
+    h.heightMorph(120);
+    // #1's watchdog (470ms) fires inside #2's window — and must not
+    // touch the successor's demotion.
+    vi.advanceTimersByTime(380);
+    expect(
+      rider.style.willChange,
+      "the superseded morph must not re-promote mid-animation",
+    ).toBe("");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(true);
+
+    // #2's own window closes: everything comes back.
+    vi.advanceTimersByTime(120);
+    expect(rider.style.willChange).toBe("transform");
+    expect(h.frame.style.willChange).toBe("clip-path");
+    expect(h.frame.hasAttribute("data-hk-morphing")).toBe(false);
+    h.stop();
+    vi.useRealTimers();
   });
 
   it("is a no-op for sub-threshold deltas", async () => {

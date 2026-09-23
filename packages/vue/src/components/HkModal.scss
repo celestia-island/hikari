@@ -451,6 +451,18 @@
     backdrop-filter: var(--hk-modal-overlay-blur-mobile, none);
   }
 
+  // Height-morph window (round 20): while the sheet's height animates
+  // every frame, a backdrop-filter anywhere in the resizing subtree has
+  // to re-render its backdrop surface every frame — the same per-frame
+  // surface churn that made promoted layers flash through on phone
+  // GPUs, and the 2026-09-15 report's patchy-flicker source. The morph
+  // flags the frame, and the sticky step indicator drops its blur for
+  // the window (its 95%-opaque background keeps it visually
+  // indistinguishable).
+  .hk-modal-content[data-hk-morphing] .hk-scroll-pin {
+    backdrop-filter: none;
+  }
+
   .hk-modal-content {
     // Phone-sheet transition = clip-path ONLY (2026-09-21, two Xiaomi
     // WebView chest reports same day):

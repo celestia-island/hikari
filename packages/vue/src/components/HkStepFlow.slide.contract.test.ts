@@ -65,6 +65,9 @@ describe("HkStepFlow split-window swap contract", () => {
     expect(stage).toContain("display: grid");
     const body = src.match(/\.hk-stepflow-body\s*\{[^}]*\}/)![0]!;
     expect(body).toContain("grid-area: 1 / 1");
+    // Natural height at the top line: stretch would fake the entering
+    // body's height on shrinks (delta 0, late snap) — see SCSS note.
+    expect(body).toContain("align-self: start");
     expect(src).not.toContain("position: absolute");
     expect(src).not.toContain("position:relative");
   });
@@ -127,7 +130,7 @@ describe("HkStepFlow split-window swap contract", () => {
       "swapRecycled",
       "hk-stepflow-enter-hidden",
       "hk-stepflow-enter-pending",
-      "align-self",
+      "align-self: end",
       "SHEET_SWEEP_STAGE_EVENT",
       "SHEET_SWEEP_SETTLE_EVENT",
     ]) {

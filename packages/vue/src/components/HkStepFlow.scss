@@ -44,11 +44,17 @@
   display: grid;
 }
 
-// Every body occupies the same cell. One transition list owns the whole
-// slide window: opacity and transform share the duration and the
-// standard ease, so the crossfade and the travel land together.
+// Every body occupies the same cell, TOP-ALIGNED at its natural height
+// (the classic slide look — the shorter body starts at the same top
+// line as its partner). The natural height is also what the component
+// measures at the morph edge: under the grid default (stretch) a
+// shorter entering body would be pulled to the taller leaving body's
+// height and every shrink would read delta 0 — the sheet would hold its
+// old height until the freeze's safety unfreeze snapped it a second
+// late (round 16, caught in review).
 .hk-stepflow-body {
   grid-area: 1 / 1;
+  align-self: start;
   transition:
     opacity var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1),
     transform var(--hk-stepflow-duration, 0.3s) cubic-bezier(0.4, 0, 0.2, 1);

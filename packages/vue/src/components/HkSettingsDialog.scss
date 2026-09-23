@@ -1,0 +1,169 @@
+// HkSettingsDialog — the sectioned settings shell (rail + pane) and its
+// content vocabulary (group / sub / hint). Grammar extracted from the
+// wowsp settings window (the pattern this component upstreams): values
+// are the L2 scale tokens wowsp already used, so existing surfaces
+// migrate without repainting.
+//
+// Scroll ownership: inside the dialog (host class `hk-settings-host`)
+// the shell gets a STABLE height sized under the modal body scroller's
+// inner padding, so HkModal's floating overlay scrollbar stays idle and
+// the pane's own edge bar is the only scrollbar. The negative-margin
+// trick puts that edge — and its scrollbar — flush with the modal
+// window's right edge; the padding re-applies the content inset between
+// the scrollbar and the cards. A page-embedded body (no host class)
+// skips both: plain scroll container, host-managed layout.
+
+.hk-settings {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-20);
+
+  /* ── section rail (mirrors the main sidebar nav look) ── */
+  &__rail {
+    flex: none;
+    width: 10.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-12) var(--space-4) 0;
+    border-right: 1px solid rgb(var(--color-border) / 15%);
+    overflow-y: auto;
+  }
+
+  &__rail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-8) var(--space-12);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    text-align: left;
+    color: rgb(var(--color-muted));
+    font-size: var(--text-sm);
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+      color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+
+    &:hover:not(:disabled) {
+      color: rgb(var(--color-text));
+      background: rgb(var(--color-primary) / 8%);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgb(var(--color-primary));
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    &.is-active {
+      color: rgb(var(--color-primary));
+      background: rgb(var(--color-primary) / 12%);
+      font-weight: 500;
+    }
+  }
+
+  &__rail-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-20);
+    height: var(--space-20);
+  }
+
+  &__rail-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── content pane: one section at a time, this is the scroller ── */
+  &__pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    overflow-y: auto;
+  }
+}
+
+/* ── Dialog host: stable frame + flush scrollbar edge ────────────────── */
+
+/* Give the body inner a definite height so the shell's fit is computed
+   against the real scroll area (wowsp's host rule, verbatim). */
+.hk-settings-host .hk-modal-body-inner {
+  height: 100%;
+}
+
+.hk-settings-host .hk-settings {
+  height: var(--hk-settings-height, calc(70vh - 6.5rem));
+}
+
+/* Cancel the modal body's fixed right padding so the pane's scrollbar
+   sits flush at the window edge; re-apply the inset between the bar and
+   the cards. HkModal retunes the body padding to 1rem under 768px —
+   follow it or the pane overshoots the edge. */
+.hk-settings-host .hk-settings__pane {
+  margin-right: calc(-1 * var(--hk-modal-padding-body, 1.5rem));
+  padding-right: var(--space-28);
+
+  @media (max-width: 767px) {
+    margin-right: -1rem;
+    padding-right: var(--space-20);
+  }
+}
+
+/* ── Content vocabulary ───────────────────────────────────────────────── */
+
+/* One titled card per settings area. Slightly translucent so the cards
+   sit quietly on image wallpapers. */
+.hk-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-20);
+  background: rgb(var(--color-surface) / 55%);
+  border: 1px solid rgb(var(--color-border) / 15%);
+  border-radius: var(--radius-md);
+}
+
+.hk-settings-group-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: rgb(var(--color-text));
+}
+
+/* Titled sub-block inside a group. */
+.hk-settings-sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+}
+
+.hk-settings-sub-title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: rgb(var(--color-muted));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* The small muted explanation line under a control. */
+.hk-settings-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: rgb(var(--color-muted));
+}

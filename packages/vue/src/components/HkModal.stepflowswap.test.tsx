@@ -196,7 +196,7 @@ describe("HkModal stepflow swap handoff", () => {
 
     rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
     await nextTick();
-    const frame = rig.frameEl();
+    const frame = rig.frameEl()!;
     expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
 
     // Unmount with the sweep still in flight: the timer must not outlive
@@ -425,7 +425,7 @@ describe("HkModal publishes its own fold for the step flow", () => {
 
     rig.announceSwap({ delta: 80, durationMs: 150, phase: "exit" });
     await nextTick();
-    const frame = rig.frameEl();
+    const frame = rig.frameEl()!;
     expect(frame?.style.getPropertyValue("--hk-modal-morph-duration")).toBe("150ms");
 
     // Unmount with the sweep still in flight: the timer must not outlive
@@ -602,6 +602,58 @@ describe("HkModal publishes its own fold for the step flow", () => {
     expect(rig.morphToken()).toBe("300ms");
     await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
+  });
+
+  it("gates the observer while the slide window freezes the sheet", async () => {
+    // Round 16 wiring witness (the adversarial round's MuD survived
+    // against everything else): the "swap" event must route into the
+    // morph's deferRemeasure gate — an observer-driven growth mid-slide
+    // leaves the pin untouched, and the very same observer path measures
+    // again once the morph edge unfroze it (the last clause also proves
+    // the observer path is ALIVE in this harness, so the hold clause is
+    // not vacuously green).
+    vi.useFakeTimers();
+    stubDurations();
+    stubClip();
+    stubBox(500, Number.POSITIVE_INFINITY);
+    const roInstances: Array<{ callback: () => void }> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      callback: () => void;
+      constructor(cb: () => void) {
+        this.callback = cb;
+        roInstances.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    });
+    // No rAF stub: happy-dom maps rAF onto its timer queue, so the
+    // debounce AND the frame hops all run under the fake clock.
+    const rig = await mountRig();
+    rig.open.value = true;
+    await vi.advanceTimersByTimeAsync(700);
+    const frame = rig.frameEl()!;
+    expect(frame.style.height).toBe("596px");
+
+    // The slide window: frozen. The observer fires; the pin holds.
+    rig.announceSwap({ delta: 0, durationMs: 300, phase: "swap" });
+    await nextTick();
+    content = 560;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("596px");
+
+    // The morph edge unfreezes and measures the accumulated growth.
+    rig.announceSwap({ delta: 24, durationMs: 300, phase: "morph" });
+    await nextTick();
+    expect(frame.style.height).not.toBe("596px");
+
+    // Harness validity + unfreeze proof: the SAME observer path now
+    // moves the pin without any event.
+    content = 700;
+    roInstances[0]!.callback();
+    await vi.advanceTimersByTimeAsync(700);
+    expect(frame.style.height).toBe("796px");
+    restoreBox();
   });
 
   it("rides its chrome with the staged fold", async () => {

@@ -27,7 +27,11 @@
 // top, single-line label below), and horizontal link segments join the
 // neighbouring node centers on an overlay — continuing past a side's edge
 // with a fading gradient where further hidden steps go on.
-.hk-timeline[data-mode="window"] {
+.hk-timeline[data-mode="window"]:not(.hk-scroll-pin) {
+  // The relative anchor is for the links overlay; a sticky step header
+  // (the scroll-pin contract) is its own containing block and must keep
+  // position: sticky — the escape keeps this rule from out-specifying
+  // it (same fight the full-mode halo rule lost in round 16).
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

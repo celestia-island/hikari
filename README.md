@@ -182,7 +182,7 @@ For local development against an upstream working copy, use `celestia-devtools l
 
 ### Theme initialization
 
-Components consume the theme through CSS variables (`--color-*`, `--hi-*`). Call `initTheme()` once at app startup to inject the active preset (synthwave84 by default) with light/dark mode and custom-theme support:
+Components consume the theme through CSS variables (`--color-*`, `--hi-*`). Call `initTheme()` once at app startup to inject the active preset (the single `default` preset — pink/paper in light mode, black-blue in dark) with light/dark mode and custom-theme support:
 
 ```ts
 import { initTheme } from "@celestia-island/hikari";

@@ -199,7 +199,7 @@ describe("clampToSlot", () => {
 describe("group cssvars", () => {
   it("emits --<group>-<slot> vars merged into the scheme map", () => {
     const vars = tokensToCSSVars(
-      themePresets.nord.dark,
+      themePresets.default.dark,
       groupTokensToCSSVars(resolveGroupTokens("dark")),
     );
     expect(vars["--color-primary"]).toBe("136 192 208");
@@ -210,7 +210,7 @@ describe("group cssvars", () => {
 
   it("emits preset-group overrides when provided", () => {
     const vars = tokensToCSSVars(
-      themePresets.nord.dark,
+      themePresets.default.dark,
       groupTokensToCSSVars(
         resolveGroupTokens("dark", { "test-wires": { "power-l1": { r: 7, g: 8, b: 9 } } }),
       ),
@@ -221,7 +221,7 @@ describe("group cssvars", () => {
   });
 
   it("keeps tokensToCSSVars backward compatible without groups", () => {
-    const vars = tokensToCSSVars(themePresets.nord.dark);
+    const vars = tokensToCSSVars(themePresets.default.dark);
     expect(vars["--test-wires-power-l1"]).toBeUndefined();
     expect(Object.keys(vars).every((k) => k.startsWith("--color-") || k.startsWith("--hi-"))).toBe(true);
   });
@@ -229,7 +229,7 @@ describe("group cssvars", () => {
 
 describe("on-solid content color tokens", () => {
   it("emits theme-configurable text/icon triplets plus aliases", () => {
-    const vars = tokensToCSSVars(themePresets.synthwave84.dark);
+    const vars = tokensToCSSVars(themePresets.default.light);
     expect(vars["--color-on-solid-text"]).toBe("255 255 255");
     expect(vars["--color-on-solid-icon"]).toBe("255 255 255");
     // The legacy hardcoded-white name now aliases the text slot.
@@ -238,19 +238,16 @@ describe("on-solid content color tokens", () => {
     expect(vars["--hi-color-icon-on-solid"]).toBe("rgb(var(--color-on-solid-icon, 255 255 255))");
   });
 
-  it("tunes the pale gruvbox/nord dark primaries to dark ink", () => {
-    // Their dark primaries are light enough that white content is illegible
-    // (~1.7:1 / ~1.9:1); the presets carry near-black slots instead.
-    const gruvbox = tokensToCSSVars(themePresets.gruvbox.dark);
-    expect(gruvbox["--color-on-solid-text"]).toBe("40 40 40");
-    expect(gruvbox["--color-on-solid-icon"]).toBe("40 40 40");
-    const nord = tokensToCSSVars(themePresets.nord.dark);
-    expect(nord["--color-on-solid-text"]).toBe("46 52 64");
-    expect(nord["--color-on-solid-icon"]).toBe("46 52 64");
+  it("tunes the pale default dark primary to dark ink", () => {
+    // The dark primary is light enough that white content is illegible
+    // (~1.9:1); the scheme carries near-black slots instead.
+    const dark = tokensToCSSVars(themePresets.default.dark);
+    expect(dark["--color-on-solid-text"]).toBe("46 52 64");
+    expect(dark["--color-on-solid-icon"]).toBe("46 52 64");
   });
 
   it("scheme objects predating the slots fall back to white (saved custom themes)", () => {
-    const legacy: ThemeSchemeTokens = { ...themePresets.nord.dark };
+    const legacy: ThemeSchemeTokens = { ...themePresets.default.dark };
     delete legacy.onSolidText;
     delete legacy.onSolidIcon;
     const vars = tokensToCSSVars(legacy);
@@ -261,7 +258,7 @@ describe("on-solid content color tokens", () => {
 
   it("custom slot values flow through to the triplets", () => {
     const vars = tokensToCSSVars({
-      ...themePresets.nord.dark,
+      ...themePresets.default.dark,
       onSolidText: { r: 10, g: 20, b: 30 },
       onSolidIcon: { r: 40, g: 50, b: 60 },
     });
@@ -272,12 +269,12 @@ describe("on-solid content color tokens", () => {
 });
 
 describe("custom theme storage with groups", () => {
-  const scheme = themePresets.nord.dark;
+  const scheme = themePresets.default.dark;
   const themeWithGroups: CustomThemePreset = {
     id: "custom-theme-1",
     name: "Wired",
     dark: scheme,
-    light: themePresets.nord.light,
+    light: themePresets.default.light,
     groups: {
       dark: { "test-wires": { "power-l1": { r: 210, g: 50, b: 50 } } },
       light: { "test-wires": { "power-l1": { r: 170, g: 30, b: 30 } } },

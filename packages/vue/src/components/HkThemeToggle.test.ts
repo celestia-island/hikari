@@ -287,6 +287,9 @@ describe("HkThemeToggle item slots", () => {
   }
 
   it("renders the leading slot on every row in place of the selected-check cell", async () => {
+    // Two rows are the point: the stock table holds ONE preset, so a custom
+    // supplies the second row these per-row assertions sweep.
+    useTheme().addCustomTheme(anyPresetTokens());
     const seen: string[] = [];
     const container = mountSlotted(
       (scope) => { seen.push(scope.id); return h("i", { class: "lead-mark" }); },
@@ -312,7 +315,10 @@ describe("HkThemeToggle item slots", () => {
   });
 
   it("reserves the trailing column and suppresses the built-in delete overlay", async () => {
+    // The stock table holds one preset; two customs give the three rows
+    // (built-in + 2 custom) this column sweep needs.
     useTheme().addCustomTheme(anyPresetTokens());
+    useTheme().addCustomTheme({ ...anyPresetTokens(), id: "test-custom-2", name: "Second custom scheme" });
     const container = mountSlotted(
       () => null,
       (scope) => h("i", { class: "trail-mark", "data-id": scope.id }),
@@ -333,11 +339,14 @@ describe("HkThemeToggle item slots", () => {
       expect(row.querySelector(".s-theme-item-delete")).toBeNull();
       if (row.hasAttribute("data-custom")) customRows += 1;
     }
-    expect(customRows).toBe(1);
+    expect(customRows).toBe(2);
   });
 
   it("scopes each row with its resolved preset definition", async () => {
     const presets: Array<unknown> = [];
+    // Two rows are the point: with a single built-in row the >= 2 bound
+    // would pass on slot re-invocations alone, which is not what this claims.
+    useTheme().addCustomTheme(anyPresetTokens());
     const container = mountSlotted(
       (scope) => { presets.push((scope as { preset?: unknown }).preset); return null; },
       () => null,

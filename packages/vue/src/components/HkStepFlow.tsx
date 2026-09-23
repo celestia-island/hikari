@@ -78,6 +78,14 @@ export const STEPFLOW_SWAP_EVENT = "hk-stepflow-swap";
  *  the swap without a transitionend. */
 const SWAP_WATCHDOG_GRACE_MS = 350;
 
+/** The morph window's sweep length: near-instant. A sustained clip
+ *  animation re-rasters the moving edge per frame — the phone flicker
+ *  the round-17 report caught in the height window even after the
+ *  content had settled. One paint, no edge travel (the 2026-09-21
+ *  shrink-snap decision, applied to stepflow morphs in both
+ *  directions). */
+const STEP_MORPH_SNAP_MS = 1;
+
 /** Fade level above which an entering body counts as the visible one. */
 const FADED_IN = 0.05;
 
@@ -216,7 +224,14 @@ export default defineComponent({
     }
 
     /** Settle the slide: recycle the old node and hand the sheet its new
-     *  height — the morph window plays alone from here. */
+     *  height — the morph window plays alone from here. The morph
+     *  requests a NEAR-INSTANT sweep (1ms): a sustained clip animation
+     *  re-rasters the moving edge every frame, which on the phone GPU
+     *  read as the height window flickering even with the content
+     *  settled (round-17 report; the same mechanism that made shrinks
+     *  snap in 2026-09-21). The height change still lands as its own
+     *  window — it just completes in one paint instead of 300ms of
+     *  edge travel. */
     function endSwap(): void {
       if (!swap) return;
       const handle = swap;
@@ -229,7 +244,7 @@ export default defineComponent({
       bodies.value = bodies.value.filter((b) => b.id !== handle.leavingId);
       announce({
         delta: newH - handle.oldH,
-        durationMs: Math.round(handle.swapMs),
+        durationMs: STEP_MORPH_SNAP_MS,
         phase: "morph",
       });
       swapPhase.value = "idle";

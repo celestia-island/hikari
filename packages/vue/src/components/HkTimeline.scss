@@ -27,12 +27,13 @@
 // top, single-line label below), and horizontal link segments join the
 // neighbouring node centers on an overlay — continuing past a side's edge
 // with a fading gradient where further hidden steps go on.
-.hk-timeline[data-mode="window"]:not(.hk-scroll-pin) {
-  // The relative anchor is for the links overlay; a sticky step header
-  // (the scroll-pin contract) is its own containing block and must keep
-  // position: sticky — the escape keeps this rule from out-specifying
-  // it (same fight the full-mode halo rule lost in round 16).
-  position: relative;
+//
+// The LAYOUT is unconditional: scoping this rule with :not(.hk-scroll-pin)
+// (as a round-16 sticky fix briefly did) deletes the whole three-column
+// grid from every sticky-header timeline — the windowed wizard collapsed
+// to a block stack (circles bunched left, links gone). Only the relative
+// ANCHOR needs the escape, and it gets its own rule below.
+.hk-timeline[data-mode="window"] {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
@@ -43,6 +44,14 @@
   // (Node size, thickness and link-top are the shared tokens on
   // `.hk-timeline`.)
   --hk-timeline-link-clearance: 20px;
+}
+
+// The relative anchor for the links overlay: a sticky step header (the
+// scroll-pin contract) is its own containing block and must keep
+// position: sticky — the escape keeps THIS property only from
+// out-specifying it (the same fight the full-mode halo rule lost).
+.hk-timeline[data-mode="window"]:not(.hk-scroll-pin) {
+  position: relative;
 }
 
 .hk-timeline[data-mode="window"] .hk-timeline-window {

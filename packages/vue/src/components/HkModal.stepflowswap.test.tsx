@@ -308,11 +308,12 @@ describe("HkModal publishes its own fold for the step flow", () => {
     await nextTick();
     expect(rig.morphToken()).toBe("");
 
-    // The morph window: the freeze lifts and the override lands.
-    rig.announceSwap({ delta: 120, durationMs: 300, phase: "morph" });
+    // The morph window: the freeze lifts and the override lands (the
+    // stepflow requests a 1ms snap — see STEP_MORPH_SNAP_MS).
+    rig.announceSwap({ delta: 120, durationMs: 1, phase: "morph" });
     await nextTick();
-    expect(rig.morphToken()).toBe("300ms");
-    await vi.advanceTimersByTimeAsync(700);
+    expect(rig.morphToken()).toBe("1ms");
+    await vi.advanceTimersByTimeAsync(500);
     expect(rig.morphToken()).toBe("");
   });
 
@@ -458,9 +459,9 @@ describe("HkModal rides its chrome and gates the slide window", () => {
     await vi.advanceTimersByTimeAsync(700);
     expect(frame.style.height).toBe("656px");
     // …and a later morph event still works (no stranded freeze).
-    rig.announceSwap({ delta: -40, durationMs: 300, phase: "morph" });
+    rig.announceSwap({ delta: -40, durationMs: 1, phase: "morph" });
     await nextTick();
-    expect(rig.morphToken()).toBe("300ms");
+    expect(rig.morphToken()).toBe("1ms");
     await vi.advanceTimersByTimeAsync(700);
     expect(rig.morphToken()).toBe("");
     restoreBox();
